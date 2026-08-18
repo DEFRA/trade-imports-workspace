@@ -1,0 +1,665 @@
+{
+  "run_id": "EUDPA-328-report-v2",
+  "target": "parity-report",
+  "note": "Work backlog for rebuilding the DR2.1 parity report as a generateable, evidence-carrying decision surface. Derived from REPORT-V2-PLAN.md beside this file. Consumed by a build loop: pop the first todo increment whose dependsOn are all done, do it, set status. Increments are ordered so dependencies precede dependents. Types: tooling (scripts, config, wiring), generator (tim/src/parity code plus tests), data (in-place migration of workareas/journey-builder/EUDPA-328/backlog.json), capture (Playwright and image work), content (LLM fan-out over the 97 findings), packaging (skill, allowlist, docs). gate 'sam' means a human ruling is needed before the increment can start; everything else is a call already taken in the plan. The corpus under change is 97 increments, 49 gate:sam and 21 gate:backend, plus 8 deferred candidates and 1 withdrawn finding.",
+  "increments": [
+    {
+      "id": "inc-001",
+      "type": "tooling",
+      "title": "Rule which frontend commit the evidence pictures are taken at",
+      "detail": "The plan pins the frontend to the corpus SHA 32f6106c so the imagery matches the 97 findings. repos/trade-imports-animals-frontend is 4 commits past that, and one of them is EUDPA-124 port-of-entry typeahead, which is itself the subject of an in-flight finding. Capturing at HEAD would show code the findings do not describe. Sam rules: pin to 32f6106c, or re-capture at HEAD and accept that some of the 49 decisions change. Record the ruling in .corpus-meta.json pins[].pin as 'capture' or 're-run'. Blocks every capture increment; blocks nothing in the generator.",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null,
+      "decision": {
+        "ruling": "answered",
+        "by": "sam",
+        "note": "Latest of both, not the pinned corpus commits. Carry this consequence: findings written against 32f6106c may describe markup the current head no longer shows - inc-014 was withdrawn for exactly that reason - so a picture that contradicts its finding is a signal to re-verify the finding, not a fault in the capture.",
+        "ruledAt": "2026-08-18"
+      }
+    },
+    {
+      "id": "inc-002",
+      "type": "tooling",
+      "title": "Rule whether the prototype corpus is re-pinned from 7da4f70",
+      "detail": "The corpus is defra-design/GB-notification-service at 7da4f70. The designers have since pushed to 491b392; the 8 things that moved are already parked in deferred.json with a revisit trigger. The plan keeps the old pin and treats the drift as recorded. Re-pinning means re-running the whole comparison, not just the report. Sam rules keep or re-pin. Blocks prototype re-capture only.",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null,
+      "decision": {
+        "ruling": "answered",
+        "by": "sam",
+        "note": "Yes, re-pin off 7da4f70 to the prototype head. The address-book push (491b392) is already known to move 15 findings, five of which had their pointers corrected by hand; re-pinning makes that automatic instead.",
+        "ruledAt": "2026-08-18"
+      }
+    },
+    {
+      "id": "inc-003",
+      "type": "tooling",
+      "title": "Rule whether the report becomes the batch ruling surface",
+      "detail": "Pattern 7 says batch the presentation for N-item triage. The plan builds a copy-a-batch-string affordance into each decision block so all 49 sam-gated findings are read in one page and applied in one go via parallel rule-decision.sh calls, keeping next-decision.sh for the ones needing discussion. If Sam prefers to rule one at a time in the terminal, inc-046 is dropped and the report stays read-only. Blocks inc-046 only.",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null,
+      "decision": {
+        "ruling": "answered",
+        "by": "sam",
+        "note": "Yes - the report becomes the batch ruling surface. Sam: \"If the report can become a batch ruling surface, that would be really good.\" It also need not be one page: a small web app you step through is explicitly welcome.",
+        "ruledAt": "2026-08-18"
+      }
+    },
+    {
+      "id": "inc-004",
+      "type": "tooling",
+      "title": "Add tools/parity/corpora.json as the target-as-data corpus profile",
+      "detail": "Mirror tools/journey-builder/targets.json in shape, including the header comment recording why it exists. Per corpus: root, pairingModule (compare/pairs.js), deltasDir, per-side captureDir and screenPrefix and traceDirs, and a repos block for all four cited repos (frontend, prototype, backend, address-book) each with its GitHub owner/repo, localPath and an ordered pathRoots array. pathRoots must be longest-first and cover the 3 frontend prefix variants and the 4 prototype ones, with bare 'app/' last plus an impliedPrefix so it re-normalises. Lives in tools/ rather than tim/src/ because the three existing shell scripts read it too.",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-005",
+      "type": "tooling",
+      "title": "Add 'dropped' to the backlog-set-status.sh whitelist",
+      "detail": "tools/journey-builder/backlog-set-status.sh:29 whitelists todo|inprogress|done|failed|blocked. inc-014 in the parity backlog carries status 'dropped', which was therefore set by hand and cannot be reproduced or re-set by any script. Add dropped to the case list and to the usage line at :2. Standalone fix; nothing else waits on it, but the report depends on a state no script can currently set.",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-006",
+      "type": "generator",
+      "title": "Scaffold the tim parity command surface and its zod schema",
+      "detail": "Add tim/src/commands/parity/index.js wiring report|citations|check|counts|normalise under commander, and tim/src/parity/schema.js. The schema is additive-tolerant and subtractive-strict: unknown keys pass through untouched, a missing or retyped required key throws naming the increment id and the field path. Required: the 15 existing increment keys. Optional: notes, decision, finding, citations, visual. Also parse deferred.json (thinner candidate shape) and .corpus-meta.json. Ship schema.test.js with a good fixture, a fixture missing band that throws with id and field named, and a fixture with an unknown key that parses unchanged. Run id is positional and required, no default.",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-007",
+      "type": "generator",
+      "title": "Add the corpus-profile resolver with a four-step precedence",
+      "detail": "tim/src/parity/corpus-profile.js resolves a corpus from, in order: an explicit --corpus flag, the backlog's top-level corpus field, .corpus-meta.json, then corpora.json default. Copy the shape and the precedence of tools/journey-builder/target-profile.sh:16-61. An unknown corpus id errors listing the known ids. Test the precedence including --corpus beating the backlog field.",
+      "dependsOn": [
+        "inc-004",
+        "inc-006"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-008",
+      "type": "data",
+      "title": "Pass 0: normalise evidence path roots and slash-joined screens in place",
+      "detail": "tim parity normalise --write. Rewrite the 3 frontend and 4 prototype evidence path prefix variants to repo-relative using corpora.json pathRoots. Split the 4 slash-joined screens values (for example 'fe-commodity-search / dr21-what-are-you-importing') into two entries each; 24 of the 97 increments carry at least one. Add a top-level corpus field. Atomic jq-to-tmp-then-mv, in place, never a regeneration: build-increments.js:164 rewrites the whole file and would destroy the 24 notes and 1 ruling already recorded. Verify by asserting next-increment.sh --dry-run and backlog-counts.sh produce byte-identical output before and after.",
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-009",
+      "type": "data",
+      "title": "Write .corpus-meta.json with the four pinned SHAs and derived counts",
+      "detail": "Sibling of .digest-meta.json in workareas/journey-builder/EUDPA-328/, which target-profile.sh:24 already reads. Holds corpus, run_id, capturedOn, pins per repo (full 40-char sha, ref, whether pushed, and for the prototype a movedTo noting 491b392), counts read from compare/deltas/_summary.json and the capture dirs (70 prototype models, 34 frontend models, 468 deltas), and image coverage per side. Backend and address-book SHAs are resolved at this point and marked pin 'verification' with a pinnedAt date, because the corpus never recorded them. Every masthead fact on the page comes from here; nothing is retyped.",
+      "dependsOn": [
+        "inc-001",
+        "inc-008"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-010",
+      "type": "generator",
+      "title": "Build the citation tokeniser",
+      "detail": "tim/src/parity/citations/parse.js. Scan detail, evidence.frontend, evidence.prototype, notes[].note and decision.note for path:N, path:N-M and path:N,M. Split semicolon-joined multi-citations (17 items). Keep parenthetical prose as text attached to the containing sentence, never inside link text (9 items). Resolve bare :NN continuations (77 across 26 increments) to the nearest preceding named file in the same sentence, carrying the side with it; where the sentence alternates sides across a 'vs' construction, as inc-028 does, mark needsHuman and resolve nothing. Tests cover all seven path-root variants, a continuation resolving to the right file and the right side, a semicolon split into N, and parenthetical prose surviving as text.",
+      "dependsOn": [
+        "inc-008"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-011",
+      "type": "generator",
+      "title": "Build the citation resolver that refuses to guess",
+      "detail": "tim/src/parity/citations/resolve.js. 391 of the 516 in-prose references are bare basenames; copy.en.js alone matches 21 files in the frontend, and stub.js, fields.js, routes.js and template.njk are similarly multiply defined. Resolve each against the repo named by that increment's evidence for that side, preferring the candidate sharing the longest path prefix with it, then by whether the path contains the increment's domain. Require a unique winner. Anything still ambiguous throws and is queued, never guessed. Test that an ambiguous basename throws rather than resolving.",
+      "dependsOn": [
+        "inc-010"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-012",
+      "type": "data",
+      "title": "Write citations[] into the backlog and emit the unresolved queue",
+      "detail": "tim parity citations EUDPA-328 --write. Per increment, an ordered citations array: ref (cN), kind (code or capture), side, path, lines, asWritten (the token as it appears in the prose, for round-tripping), anchors (the identifiers or quoted strings the prose attributes to that citation), and resolution (explicit, basename-resolved, continuation or human). kind 'capture' is a real fourth class: about 15 citations point into harness/capture/ or fe-miner/capture/ page models with line ranges. Unresolved tokens go to evidence.json.unresolved with a why and needsHuman. Expected totals to assert: 516 tokens in detail, 194 in evidence.",
+      "dependsOn": [
+        "inc-011",
+        "inc-009"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-013",
+      "type": "data",
+      "title": "Hand-resolve the queued ambiguous citations",
+      "detail": "Work the evidence.json.unresolved list, expected around 30 entries, dominated by the side-alternating bare :NN continuations in the 26 increments that carry them. Set resolution 'human' on each and write via the atomic setter. A citation that cannot be resolved stays unresolved and renders as inert code with a muted 'could not resolve' marker; it is never given a guessed URL.",
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-014",
+      "type": "generator",
+      "title": "Build the GitHub permalink builder with local-only verification",
+      "detail": "tim/src/parity/citations/github-url.js. Form https://github.com/<owner>/<repo>/blob/<full-40-char-sha>/<path>#L<start>-L<end>, single #L<n> for one line. Full SHA, never the short form, because these links must survive. The ref comes from .corpus-meta.json pins keyed by repo, not by side, because four repos are cited. Two local checks at build time: git cat-file -e <sha>:<path> proves the file exists at that commit, git branch -r --contains <sha> proves the pin is pushed. No network calls: HTTP link-checking makes the build non-deterministic, offline-hostile and rate-limited. A citation failing the existence check renders struck through with the reason and is listed in the build summary; the notes already record one such dead backend citation.",
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-015",
+      "type": "generator",
+      "title": "Build the snippet reader and write evidence.json",
+      "detail": "tim/src/parity/citations/snippet.js plus tim parity evidence --write. Read via git -C <localPath> show <sha>:<path> at the pinned commit, never from the working tree, because repos/ checkouts are routinely mid-spike. Slice to the stored range with 2 dimmed context lines either side. Store blob (git rev-parse <sha>:<path>) as the freshness key: matching blob means the snippet is exactly what the URL shows. State is resolved, too-long, unresolved or anchor-missing. Caps: 6 lines or fewer renders inline expanded; 7 to 20 collapses behind a details element; over 20 stores no snippet and the link stands alone. Output workareas/journey-builder/EUDPA-328/evidence.json, tracked, regenerable from scratch, about 200 KB.",
+      "dependsOn": [
+        "inc-014"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-016",
+      "type": "generator",
+      "title": "Enforce the anchor check on every resolved snippet",
+      "detail": "Invariant I7. Assert every string in citations[].anchors appears in the resolved snippet text. inc-052's fields.js range must contain integerInRange; inc-066's upload-config.js range must contain MAX_FILE_SIZE_MB. A miss is a finding about the finding, reported in the build summary and rendered on the card as a warning, never silently patched by widening the range or picking a different file.",
+      "dependsOn": [
+        "inc-015"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-017",
+      "type": "generator",
+      "title": "Build the loader that normalises increments, deferred candidates and withdrawn findings into one shape",
+      "detail": "tim/src/parity/load.js. One ReportItem shape with kind increment|candidate|withdrawn, id, anchor, title, sections, chips, evidence, visual, decision, notes, dependsOn and computed reverse dependents. deferred.json is read explicitly (the current generator never opens it) and its 8 candidates are a thinner shape with no type, band, gate, status or dependsOn. Candidates never enter the band filters, never enter any count and never enter the decision walk. status 'dropped' and the refuted findings both become kind 'withdrawn'. Cards degrade by omitting blocks, never by rendering empty labels.",
+      "dependsOn": [
+        "inc-006"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-018",
+      "type": "generator",
+      "title": "Build the asset resolver as a four-state ladder over pairs.js",
+      "detail": "tim/src/parity/assets/resolve.js. Per side per screen, highest available wins: element crop, full-page shot, page-model plate built from the captured JSON (h1, headings, buttons, field labels in document order, captioned 'page model only'), then a plate naming the exact capture command. Never emit an img for a missing file. Never collapse a one-sided pair to a single column: both slots keep equal width and the empty one carries state 3 or 4, because an asymmetric layout reads as a claim that nothing exists on that side. Screens resolve through compare/pairs.js (29 pairs, 4 onlyFrontend, 23 onlyPrototype), not through screens[], which yields a matched pair for only 21 of the 49 gated findings. Do not iframe the archived HTML: external assets are absent and the layout would be a lie.",
+      "dependsOn": [
+        "inc-017",
+        "inc-008"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-019",
+      "type": "generator",
+      "title": "Build the card renderer with a sentinel-split fallback",
+      "detail": "tim/src/parity/render/card.js and sections.js. One renderer, three kinds. Read finding.* where it exists; fall back to splitting detail on FALSIFIED BY: and CORRECTED DURING VERIFICATION: exactly as build-page.js:52-66 does, so the report ships against the unmigrated backlog. Render the 24 notes and the decision block, which the current page renders neither of. Two fixed columns, frontend left and prototype right, stacking below 1000px with labels kept. Citation markers are per-card superscript numerals in reading order with a sources strip at the foot of each column, not a global bibliography. Falsifier always visible, headed 'This finding is wrong if'. verification collapsed and labelled a verbatim audit record. Golden-HTML tests for one increment, one candidate and one withdrawn card.",
+      "dependsOn": [
+        "inc-018",
+        "inc-015"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-020",
+      "type": "generator",
+      "title": "Build the page shell with every number derived and provenance stamped",
+      "detail": "tim/src/parity/render/page.js and theme.css.js. Masthead facts come from .corpus-meta.json; no count is hardcoded. The current page claims 103 page models (real 104) and 60 corrected (real 39, because 21 of the findings file's 60 correction keys are empty strings). Per-item id anchors so a colleague can be linked to one finding. Free-text search, deep-linkable filter state, dependency-order sort as an option alongside the current type-then-title sort. Keep the light and dark token palette from build-page.js:128-177, which already works. Footer stamps corpus id, run id, all four pinned SHAs, the backlog's sha256 and mtime, schema version, tim version and generation time. Golden test asserts a 3-item fixture renders '3'.",
+      "dependsOn": [
+        "inc-019"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-021",
+      "type": "generator",
+      "title": "Add the contract test that parses the real EUDPA-328 backlog",
+      "detail": "tim/src/parity/report.contract.test.js parses the real workareas/journey-builder/EUDPA-328/backlog.json through the real schema, with test.skipIf on the file being absent. CI on a fresh clone stays green because the workarea is gitignored; Sam's machine catches journey-builder schema drift the instant it happens. Add test:ci to tim/package.json as TZ=UTC vitest run --coverage with reporters, so the pipeline calls a named script and appends nothing.",
+      "dependsOn": [
+        "inc-020"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-022",
+      "type": "generator",
+      "title": "Add report output, serve and open, and image coverage reporting",
+      "detail": "tim parity report EUDPA-328 writes workareas/journey-builder/EUDPA-328/report/index.html plus report/assets/, populated by hardlink from the capture dirs where the filesystem allows and copy otherwise, so 16 MB is not duplicated. --open opens it; a static server rooted at workareas/ makes the same relative paths work over HTTP with lazy loading. stdout and the footer both print image coverage per side (for example 'prototype 40/40 cited screens, frontend 0/27'). --require-images turns any gap into a non-zero exit so a release-grade regeneration can be gated while daily regeneration stays permissive.",
+      "dependsOn": [
+        "inc-020"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-023",
+      "type": "tooling",
+      "title": "Add tools/parity/start-parity.sh as the mode dispatcher",
+      "detail": "Emits MODE: CAPTURE|REPORT|WALK on line 1 then a JSON payload, following the skill-creator convention. Resolves the run id, resolves the corpus profile, checks whether the gitignored capture assets exist and regenerates them on absence, then routes. This is the increment that makes the report generateable from a trigger phrase rather than from memory of a command line.",
+      "dependsOn": [
+        "inc-022"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-024",
+      "type": "tooling",
+      "title": "Delete build-page.js and its npm script",
+      "detail": "Remove workareas/shared/dr21-parity/compare/build-page.js and the build-page entry from compare/package.json once tim parity report renders the unmigrated backlog at least as well. Two generators is worse than one bad one. Leave pairs.js, diff.js, diff-all.js, build-backlog.js, build-increments.js and phase3.workflow.js in place: they built this corpus once, and pairs.js is hand-authored judgement, not reusable code. Also delete the stale backlog-page.html.",
+      "dependsOn": [
+        "inc-022"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-025",
+      "type": "tooling",
+      "title": "Add the atomic slot and citation setters",
+      "detail": "tools/parity/set-slot.sh <inc-id> <slot> --file <path> and tools/parity/set-citations.sh, both copying the jq-to-tmp-then-mv model of rule-decision.sh:55,99-101. Fan-out workers never edit JSON directly; they write a slot file and call the setter. set-citations.sh refuses to run once Pass A is committed, which is how invariant I2 is enforced mechanically rather than by instruction.",
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-026",
+      "type": "generator",
+      "title": "Build the join oracle from increments to upstream findings",
+      "detail": "The findings file workareas/shared/dr21-parity/backlog.json has no id field. It holds 98 titles (97 survived plus 1 refuted), 97 verification, 97 falsifiedBy and 60 correction of which 21 are empty strings, matching the 39 CORRECTED sentinels in the canonical file exactly. Join by ordinal, because build-increments.js preserves order, and assert title equality as the checksum. Title-primary is the weaker key: 98 titles against 97 increments. A failed assertion halts; it is not worked around.",
+      "dependsOn": [
+        "inc-008"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-027",
+      "type": "generator",
+      "title": "Implement tim parity check with invariants I1 to I10",
+      "detail": "Baseline for I1 to I3 is the pre-migration git blob read via git show <sha>:<path>, so the oracle cannot drift. I1 detail byte-identical. I2 citations immutable after Pass A. I3 every file:line token in the frozen detail (516) and evidence (194) appears as some citation's asWritten. I4 the [[cN]] markers in each slot match that slot's cites and both are a subset of citations[].ref. I5 quote conservation, every double-quoted span of 5 chars or more and every backticked identifier survives verbatim, no escape hatch. I6 number conservation through a one-to-twenty word map. I7 the anchor check. I8 word residue at 98% or better, printed per increment, disabled for Pass B by definition. I9 slot sanity including the exact counts 97/39/70 and the word budgets. I10 polarity list, advisory in Pass A and a mandatory signed-off printed list in Pass B. --pass a|b selects the gate set.",
+      "dependsOn": [
+        "inc-026",
+        "inc-016"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-028",
+      "type": "content",
+      "title": "Canary: migrate inc-037 through Pass A and read the residue by hand",
+      "detail": "inc-037 is the largest finding in the corpus at 3,345 characters over five paragraphs. Move its prose into finding.frontend, finding.prototype, finding.difference, finding.correction, finding.falsifiedBy and finding.verification, replacing every citation token with its [[cN]] marker. Move words, do not reword them. Run all ten invariants and read the printed word residue by hand before any of the nine domain workers start. If the residue is not explainable, the slot definitions are wrong, not the finding.",
+      "dependsOn": [
+        "inc-027",
+        "inc-025"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-029",
+      "type": "content",
+      "title": "Pass A: fan out the structure migration across nine domains",
+      "detail": "One STRUCTURE_WRITER worker per domain: germinal-products 18, addresses 13, commodities 13, dashboard 11, general 11, templates 9, transport 9, spine 8, documents 5. Per domain rather than per increment, because vocabulary consistency inside a domain is the point and 97 workers is unreviewable fan-out. Prose is moved verbatim, not reworded; finding.verification is imported verbatim from the upstream field and flagged verbatim true, because it is an audit record and rewording it destroys its value. Every worker writes through set-slot.sh and opens with the bash-hygiene pointer. Commit Pass A on its own, separately from Pass B; the two-commit split is what makes the diff reviewable.",
+      "dependsOn": [
+        "inc-028"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-030",
+      "type": "content",
+      "title": "Author the difference slot for every finding",
+      "detail": "finding.difference is one of only two slots that is authored rather than joined. It states what differs between the two sides and why it matters, in 90 words or fewer. The band and confidence rationale prose carried by 7 and 5 findings respectively goes here rather than into slots that would be empty on 90 and 92 items. Written inside the Pass A fan-out and gated by the same invariants.",
+      "dependsOn": [
+        "inc-029"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-031",
+      "type": "content",
+      "title": "Canary: author one decisionRequired question and show it beside the original",
+      "detail": "Only 22 of the 49 sam-gated findings state the ask in words, and 1 of the 21 backend-gated. The other 47 must be authored, seeded from falsifiedBy, which always encodes the counterfactual. Author one, on a finding whose original does state the ask so the two can be compared, and show Sam the authored question, its options, its consequence and the frozen detail side by side. Cheaper to reject one than 47. Sam confirms the shape and the voice before the fan-out.",
+      "dependsOn": [
+        "inc-030"
+      ],
+      "status": "todo",
+      "gate": "sam"
+    },
+    {
+      "id": "inc-032",
+      "type": "content",
+      "title": "Author decisionRequired for the 47 gated findings with no stated ask",
+      "detail": "audience mirrors gate, source is 'authored' rather than 'extracted', question is one sentence of 25 words or fewer, options only where the prose names them, and consequence states what stays blocked. The report labels every authored question so the reader knows which asks are the migration's reading. Sam rejecting a question as the wrong question is a good outcome and the label invites it. The 23 extracted asks are lifted verbatim.",
+      "dependsOn": [
+        "inc-031"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-033",
+      "type": "content",
+      "title": "Type the cross-references between findings",
+      "detail": "About 5 findings cross-refer in three incompatible notations: increment ids, ordinal finding numbers such as 'finding 1' which is unresolvable against the canonical file, and prose such as 'the root of three separate downstream findings in this band'. Replace all three with finding.relatedTo entries of id, relation and why, so the report can cross-link and the dead ordinal notation is retired.",
+      "dependsOn": [
+        "inc-029"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-034",
+      "type": "content",
+      "title": "Canary: rewrite one finding into GDS plain English and show the diff",
+      "detail": "Run Pass B over one finding only, on the slots frontend, prototype, difference, correction, falsifiedBy and decisionRequired.question. Show Sam the git diff of the structure commit against the rewrite, plus the frozen detail. Technical vocabulary stays: govukServiceNavigation, isGerminalProduct and showTemperatureQuestion are the names of real things. What goes is sentences over 25 words, passives where an actor exists, nested parentheticals and preamble the headings now carry. Sam confirms the voice before nine workers rewrite 97 findings.",
+      "dependsOn": [
+        "inc-032",
+        "inc-033"
+      ],
+      "status": "todo",
+      "gate": "sam"
+    },
+    {
+      "id": "inc-035",
+      "type": "content",
+      "title": "Pass B: fan out the GDS plain-English rewrite across nine domains",
+      "detail": "One COPY_EDITOR worker per domain, same split as Pass A. Word budgets enforced with a visible escape: frontend and prototype 60 words, difference 90, falsifiedBy 40, question 25 and one sentence. Over budget is a hard fail unless finding.longBecause is set, which then shows in review; a silent advisory would be ignored. finding.verification is excluded from the rewrite. finding.detail is frozen and untouched. Commit separately from Pass A so git diff between the two commits is the per-slot before-and-after review surface.",
+      "dependsOn": [
+        "inc-034"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-036",
+      "type": "content",
+      "title": "Adversarial claim verification by a worker that did not write the text",
+      "detail": "One CLAIM_VERIFIER per domain, never that domain's own writer. Reads git diff of the Pass A commit against the Pass B commit for its domain, plus the frozen detail, and answers a fixed rubric per increment: is any count, absolute, identifier or quoted string in the original absent or weakened in the rewrite? This is the same adversarial pairing that produced the verification field in the first place, which is the corpus's own evidence that it works. Also signs off the I10 polarity list, which cannot be mechanised because 'always' legitimately becomes 'on every page'.",
+      "dependsOn": [
+        "inc-035"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-037",
+      "type": "content",
+      "title": "Single-reader consistency pass over the 97 titles and decision questions",
+      "detail": "Nine copy editors will drift in voice. Domain-scoped fan-out fixes vocabulary inside a domain but not across the corpus. One reader passes over the two shortest and highest-traffic fields only, the titles and the decision questions, and levels the voice. Costs little and catches the worst of the drift.",
+      "dependsOn": [
+        "inc-036"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-038",
+      "type": "tooling",
+      "title": "Update next-decision.sh to read finding.* and substitute citation markers",
+      "detail": "next-decision.sh:56 reads detail. Once Pass A lands there are two prose surfaces and the terminal walker shows the old text. Update it to read the finding slots and to substitute each [[cN]] marker back to its asWritten token for the plain-text view, so the terminal and the report agree. Sequence this inside Pass A, not after it.",
+      "dependsOn": [
+        "inc-029"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-039",
+      "type": "capture",
+      "title": "Make both harness capture configs deterministic at 2x",
+      "detail": "harness/playwright.config.js and the nine per-spec configs get deviceScaleFactor 2, reducedMotion reduce, animations disabled and caret hide. Everything today is 1x, which is visibly soft on a Retina display and is the biggest quality gain per line changed. Keep trace on. Declare masks for the three known volatile regions: the declaration page's current date, the confirmation page's generated notification reference, and the documents scan timer, which documents.spec.js:82 already flags as racing the screenshot. Without these a no-op re-capture drifts everything and the drift panel becomes noise. Accept a 1x fallback with dsf recorded in the manifest for dr21-amend-confirmation-modal at 6,450 CSS px, which exceeds Chromium's limit at 2x.",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-040",
+      "type": "capture",
+      "title": "Add pin-checkout.sh to build a pinned frontend clone with an overlaid harness",
+      "detail": "tools/parity/pin-checkout.sh --side frontend --sha <sha> clones the local repo into workareas/shared/dr21-parity/checkouts/frontend@<sha>/, checks out the pinned commit, then overlays the capture tree from the current branch via git checkout <ref> -- <paths>. The manifest records appSha and harnessSha separately so the claim is precise: the application is the corpus SHA, the capture harness is current. Worktrees are not used because they detach from the stack bind-mount. Navigation written against HEAD may fail to drive the older app; failures are recorded per screen and those findings fall back to model and trace evidence with the reason printed.",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-041",
+      "type": "capture",
+      "title": "Move the page-model extractor and capture helper into the frontend repo",
+      "detail": "fit/evidence/{page-model,anchor,capture}.js in trade-imports-animals-frontend becomes the single definition both sides consume. page-model.js:265-268 already insists both sides come from one definition; that definition belongs in a tested, reviewed, CI'd repo rather than in a run artefact. The frontend is type module and the parity harness has no package.json at all, so add workareas/shared/dr21-parity/harness/package.json with type module and convert the 8 prototype specs from require and module.exports to import and export. Mechanical and one-time; the specs' own assertions prove the conversion. corpora.json names the library path.",
+      "dependsOn": [
+        "inc-039"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-042",
+      "type": "capture",
+      "title": "Add a frontend evidence capture project driven by the existing fit specs",
+      "detail": "Add an evidence Playwright project to the frontend config plus a test:fit:capture script, both excluded from test:fit:features and from CI. Capture calls go inside the 26 existing *.fit.spec.js files, guarded by an env flag that only test:fit:capture sets. Those specs already know how to reach each state and already assert the page landed, which is the guarantee an evidence pass needs and cannot cheaply reproduce; the prototype's own capture helper works the same way. Extracting the 26 navigation preambles into fit/screens/ is a real improvement to that repo but a 26-file refactor is not on the critical path of a report. Runs against fit:start (AUTH_ENABLED=false, LIVE_ANIMALS_MODE=stub), so no docker stack, no OIDC and no vestigial :3100. Note the README drift: README.md:72 still says test:features, the script is test:fit:features.",
+      "dependsOn": [
+        "inc-041",
+        "inc-040"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-043",
+      "type": "capture",
+      "title": "Write a per-capture manifest with content hashes and immutable capture ids",
+      "detail": "All artefacts of one capture live under evidence/<side>@<appSha>/ with page/, crop/, model/, html/, trace/ and manifest.json. The manifest is the only index: the report never globs the filesystem and never builds a path by convention, so a frame present in the backlog but absent from the manifest renders as a stated gap, never as a broken img. Each row carries a sha256. Capture ids are immutable and re-capture is additive, so the evidence a ruling was made against survives when the code moves on. Traces are copied to trace/<screen>.zip keyed by screen name, which retires fe-miner/targets.js and its 33 hand-maintained title-matching strings.",
+      "dependsOn": [
+        "inc-042"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-044",
+      "type": "capture",
+      "title": "Rewrite the capture git policy: pixels out, provenance in",
+      "detail": "Keep capture/screens/ gitignored and extend the rule to evidence/*/{page,crop,html,trace}/, but negate evidence/*/manifest.json and evidence/*/model/ so hashes, dimensions, anchor results and provenance are tracked and survive a fresh clone. Rewrite the .gitignore rationale comment, which currently reads '16MB, and no finding cites one' and is about to be false; the real reason is that pixels are regenerable from a pinned SHA in about three minutes. Expect roughly 200 MB on disk once both sides are captured at 2x with highlight variants. check-evidence.sh tells a fresh clone exactly which files are missing and prints the command that regenerates them.",
+      "dependsOn": [
+        "inc-043"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-045",
+      "type": "capture",
+      "title": "Seed anchor candidates from the delta files and restore increment-to-delta provenance",
+      "detail": "compare/deltas/ holds 29 per-pair delta files carrying the element identifiers no finding currently points at. field deltas carry the control name, which is a robust anchor on both codebases because the extractor normalises every control kind to name; only-frontend and only-prototype deltas carry field and values, which become role and text anchors; scalar deltas such as h1 and phaseBanner become region anchors. Rank field-name deltas first, then text values, then scalars. Also write back visual.frames[].fromDelta with file and index, restoring a join that never existed: it is what lets the report say which of the 15 deltas on a pair a given finding is about.",
+      "dependsOn": [
+        "inc-018"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-046",
+      "type": "capture",
+      "title": "Build the semantic anchor descriptor language and its resolver ladder",
+      "detail": "Anchors are stored as descriptors, not CSS: field, radios, role, text, summary-row, task-item, region, insertion, plus a css escape hatch flagged brittle in the report. The resolver walks up from the matched node to the nearest meaningful ancestor (govuk-form-group, fieldset, radios, checkboxes, summary-list row, task-list item, details, inset-text, notification-banner, error-summary, the prototype's bespoke app-* cards) and clips with 24px padding via page.screenshot clip in document coordinates, not locator.screenshot, so neighbours bleed in at the edges and a fragment reads as a place on a page. The ladder asserts exactly one match; zero or many is a typed manifest error rendering as an evidence-broken card. Descriptors transfer across both codebases where a raw CSS string cannot.",
+      "dependsOn": [
+        "inc-045",
+        "inc-043"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-047",
+      "type": "capture",
+      "title": "Emit anchors as data so specs never change again",
+      "detail": "tim parity emit-anchors writes evidence/anchors.frontend.json and anchors.prototype.json from the backlog's visual[], keyed screen then anchor key. The capture helper loads the file for its side and shoots every anchor declared for the screen it was called with. Consequence: adding finding-specific element evidence needs zero spec edits, forever. The same descriptor language declares the masks, so volatile regions live in the same file as the anchors.",
+      "dependsOn": [
+        "inc-046"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-048",
+      "type": "content",
+      "title": "Curate visual frames blind against the page models",
+      "detail": "One EVIDENCE_CURATOR per domain picks the frame kind and the anchors from the seeded candidates plus the page models, which carry every field name, label, heading and paragraph in DOM order. Frame kinds: pair (the default), only (one crop plus an insertion crop of where the missing thing would go), sequence (flow and obligation changes where the difference is when something appears), page (only for genuinely page-level findings), contact-sheet (cross-cutting findings such as no phase banner on any of 34 screens, composed as a CSS grid of existing thumbnails at render time with no new asset), and none with a typed reason. A page frame may not be primary unless the finding is page-level: a finding about a control that shows a whole page has failed. copy-only is not a valid reason for none: a copy difference is the strongest case for a crop.",
+      "dependsOn": [
+        "inc-047"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-049",
+      "type": "content",
+      "title": "Author insertion anchors for the one-sided findings",
+      "detail": "About 53 findings name screens on only one side. For 'the prototype has X and we do not', the evidence is one crop of X plus a crop of the place on our page where it would go, outlined in amber with an authored caption. The delta record says the thing is missing, so it cannot say where it would sit; the first draft comes from the page model's DOM ordering (take the delta's index, name the preceding item on the empty side) but the final call is hand-made. This is the largest single piece of genuine labour in the evidence work and it does not compress.",
+      "dependsOn": [
+        "inc-048"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-050",
+      "type": "capture",
+      "title": "Capture element crops and highlighted full pages on both sides",
+      "detail": "Run capture on both sides with anchors loaded. Per anchor, write the padded crop and a highlight variant of the full page with the anchor outlined, because the crop answers what the control looks like and the highlight answers where on the page it is, and a decision usually needs both; the marginal cost of the second is one extra screenshot call from the same locator. Prototype re-capture is about three minutes for all 70 screens. Record dsf, dimensions, mask list and anchor resolution results per row in the manifest.",
+      "dependsOn": [
+        "inc-049",
+        "inc-039",
+        "inc-002"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-051",
+      "type": "content",
+      "title": "Re-curate the frames against the actual crops",
+      "detail": "A first-pass anchor chosen from a page model will sometimes crop the wrong thing: too tight, wrong ancestor, insertion point off by one. Designing a second pass in is cheaper and more honest than a longer first pass. Only frames flagged reframe are re-shot. Prediction to hold the design to: across the 49 sam-gated findings, frames marked none should be close to zero; more than two or three means the anchors are wrong, not the findings.",
+      "dependsOn": [
+        "inc-050"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-052",
+      "type": "generator",
+      "title": "Render the drift panel and the changed-since-curation ribbon",
+      "detail": "Each curated frame records the sha256 of the image it was curated against. On rebuild, a manifest hash that differs renders the new image with a changed-since-curation ribbon and lists the finding in a drift panel at the top of the page. Sam is never shown a silently swapped picture under a decision he is about to make. This is the most important rule in the evidence design: pixels changing under a pending ruling is the failure mode that would discredit the whole report. It only works because inc-039 made re-capture deterministic.",
+      "dependsOn": [
+        "inc-050",
+        "inc-020"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-053",
+      "type": "tooling",
+      "title": "Add check-evidence.sh and repoint.sh",
+      "detail": "check-evidence.sh reports drift and integrity: missing manifest rows, unresolved anchors, dead citations, stale blob ids, image coverage per side, and the exact commands that would regenerate what is absent. repoint.sh walks each frame showing the old and new image side by side for confirmation when a corpus is re-pinned to a new SHA, so old evidence is superseded deliberately rather than overwritten.",
+      "dependsOn": [
+        "inc-052"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-054",
+      "type": "generator",
+      "title": "Add the batch ruling surface to the decision block",
+      "detail": "Each gated card shows the exact rule-decision.sh argument string with a copy control, so the page is the batch presentation surface pattern 7 asks for: read all 49 in one page, return one batch string, apply it via parallel rule-decision.sh calls, slow-tracking only the ones flagged for discussion. next-decision.sh stays for those. Depends on Sam's ruling in inc-003; if he prefers to rule one at a time in the terminal, drop this increment and the report stays read-only.",
+      "dependsOn": [
+        "inc-003",
+        "inc-020"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-055",
+      "type": "packaging",
+      "title": "Write the parity SKILL.md with capture, report and walk modes",
+      "detail": ".claude/skills/parity/SKILL.md. Triggers: regenerate the parity report, rule the parity decisions, walk parity EUDPA-X, recapture the parity corpus. tools/parity/ has existed since 18 Aug with three correctly parameterised decision scripts and no owning skill. Not a fifth mode on journey-builder: ownership splits along produce and consume, parity builds and adjudicates the backlog while journey-builder consumes status, gate and dependsOn to run the build loop. Both mutate the same file, so state the handoff explicitly in both SKILL.md files.",
+      "dependsOn": [
+        "inc-023"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-056",
+      "type": "packaging",
+      "title": "Write the three worker personas",
+      "detail": "references/EVIDENCE_CURATOR.md (frame kinds, the anchor ladder, the page-frame quality bar, authoring insertion anchors on the empty side), references/COPY_EDITOR.md (the house style, the word budgets, writing back through set-slot.sh and never at render time, because detail is read by next-decision.sh too), and references/CLAIM_VERIFIER.md (the fixed rubric, and that it never reviews its own domain's writing). Every persona opens with the bash-hygiene pointer, per the pattern checklist, because subagents otherwise spam permission prompts.",
+      "dependsOn": [
+        "inc-055"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-057",
+      "type": "packaging",
+      "title": "Register the skill in the allowlist, the routing table and the tools index",
+      "detail": "Add explicit tools/parity/* and tools/parity/*:* entries to .claude/settings.json following the frontend-change precedent, even though tools/** is already globbed, because that is the scaffolder's additive convention. Add one row to the CLAUDE.md skill routing index. Add a parity section to docs/reference/tools-index.md, which currently has no parity entry at all. Add the workarea to docs/reference/workareas.md.",
+      "dependsOn": [
+        "inc-056"
+      ],
+      "status": "todo",
+      "gate": null
+    },
+    {
+      "id": "inc-058",
+      "type": "generator",
+      "title": "Add the artifact export target",
+      "detail": "tim parity report EUDPA-328 --target artifact is a second emitter of the same generator, not a reduced tier. Element crops only, re-encoded to WebP with cwebp at /opt/homebrew/bin/cwebp because Playwright emits PNG and JPEG only, inlined as data URIs. Roughly 250 to 350 crops at 20 to 80 KB each lands in the 4 to 15 MB band, inside the 16 MB rendered ceiling. Page-model plates are text and cost nothing. Full-page shots and traces become links that resolve only on Sam's machine, and the page says so rather than presenting a truncated evidence set as complete. Full-page imagery is not attempted: 70 prototype PNGs are already 16 MB at 1x, and fitting them would mean downsizing, which the brief rules out. No image is ever resized to fit a channel.",
+      "dependsOn": [
+        "inc-052"
+      ],
+      "status": "todo",
+      "gate": null
+    }
+  ]
+}

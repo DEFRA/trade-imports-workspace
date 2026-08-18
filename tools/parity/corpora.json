@@ -1,0 +1,139 @@
+{
+  "_comment": [
+    "Findings-report corpora. The report generator knows nothing about any",
+    "particular comparison; a corpus profile tells it which repos the findings",
+    "cite, where the captured evidence lives, and how to turn a path as written",
+    "in a finding into a path inside a repo. Adding a corpus is a data edit,",
+    "not a script change.",
+    "",
+    "A run picks its corpus from, in order: an explicit --corpus flag, the",
+    "backlog's top-level \"corpus\" field, .corpus-meta.json, then the default",
+    "below. See tim/src/parity/corpus-profile.js, which copies the precedence",
+    "of tools/journey-builder/target-profile.sh.",
+    "",
+    "sides[] is a list, not a pair. The requirements side will not always be a",
+    "prototype and there will not always be two of them; nothing here assumes",
+    "the number two. repos{} is keyed by repo, not by side, because a finding",
+    "on the frontend side routinely cites the backend.",
+    "",
+    "pathRoots is ordered longest-first and each entry strips its prefix to",
+    "leave a repo-relative path. The bare prefixes come last because they are",
+    "prefixes of nothing else; impliedPrefix re-normalises a path that was",
+    "already repo-relative when it was written.",
+    "",
+    "This file lives in tools/ rather than tim/src/ because the shell entry",
+    "points in this directory read it too."
+  ],
+
+  "default": "dr21",
+
+  "corpora": {
+    "dr21": {
+      "description": "The real live-animals frontend against Design release 2.1 of the GB notification service prototype. 97 findings, captured August 2026.",
+      "runId": "EUDPA-328",
+      "backlog": "workareas/journey-builder/EUDPA-328/backlog.json",
+      "deferred": "workareas/journey-builder/EUDPA-328/deferred.json",
+      "meta": "workareas/journey-builder/EUDPA-328/.corpus-meta.json",
+      "evidence": "workareas/journey-builder/EUDPA-328/evidence.json",
+      "reportDir": "workareas/journey-builder/EUDPA-328/report",
+      "workarea": "workareas/shared/dr21-parity",
+      "pairingModule": "workareas/shared/dr21-parity/compare/pairs.js",
+      "deltasDir": "workareas/shared/dr21-parity/compare/deltas",
+      "upstreamFindings": "workareas/shared/dr21-parity/backlog.json",
+
+      "sides": [
+        {
+          "id": "frontend",
+          "label": "Frontend",
+          "role": "implementation",
+          "column": "left",
+          "repo": "frontend",
+          "screenPrefix": "fe-",
+          "captureDir": "workareas/shared/dr21-parity/fe-miner/capture",
+          "modelDir": "workareas/shared/dr21-parity/fe-miner/capture/model",
+          "htmlDir": "workareas/shared/dr21-parity/fe-miner/capture/html",
+          "screensDir": null,
+          "traceDirs": [
+            "workareas/shared/dr21-parity/fe-miner/traces"
+          ]
+        },
+        {
+          "id": "prototype",
+          "label": "Design release 2.1",
+          "role": "requirements",
+          "column": "right",
+          "repo": "prototype",
+          "screenPrefix": "dr21-",
+          "captureDir": "workareas/shared/dr21-parity/harness/capture",
+          "modelDir": "workareas/shared/dr21-parity/harness/capture/model",
+          "htmlDir": "workareas/shared/dr21-parity/harness/capture/html",
+          "screensDir": "workareas/shared/dr21-parity/harness/capture/screens",
+          "traceDirs": [
+            "workareas/shared/dr21-parity/harness/test-results",
+            "workareas/shared/dr21-parity/harness/test-results-addresses"
+          ]
+        }
+      ],
+
+      "repos": {
+        "frontend": {
+          "owner": "DEFRA",
+          "repo": "trade-imports-animals-frontend",
+          "localPath": "repos/trade-imports-animals-frontend",
+          "pathRoots": [
+            { "prefix": "/Users/samfarrington/git/defra/trade-imports-animals/repos/trade-imports-animals-frontend/" },
+            { "prefix": "/Users/samfarrington/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/" },
+            { "prefix": "~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/" },
+            { "prefix": "~/git/defra/trade-imports-animals/repos/trade-imports-animals-frontend/" },
+            { "prefix": "repos/trade-imports-animals-frontend/" },
+            { "prefix": "trade-imports-animals-frontend/" },
+            { "prefix": "src/", "impliedPrefix": "src/" }
+          ]
+        },
+        "prototype": {
+          "owner": "defra-design",
+          "repo": "GB-notification-service",
+          "localPath": null,
+          "localPathAbsolute": "~/git/defra/defra-design/GB-notification-service",
+          "pathRoots": [
+            { "prefix": "/Users/samfarrington/git/defra/defra-design/GB-notification-service/" },
+            { "prefix": "~/git/defra/defra-design/GB-notification-service/" },
+            { "prefix": "GB-notification-service/" },
+            { "prefix": "app/", "impliedPrefix": "app/" }
+          ]
+        },
+        "backend": {
+          "owner": "DEFRA",
+          "repo": "trade-imports-animals-backend",
+          "localPath": "repos/trade-imports-animals-backend",
+          "pathRoots": [
+            { "prefix": "repos/trade-imports-animals-backend/" },
+            { "prefix": "trade-imports-animals-backend/" },
+            { "prefix": "src/", "impliedPrefix": "src/" }
+          ]
+        },
+        "address-book": {
+          "owner": "DEFRA",
+          "repo": "trade-imports-address-book",
+          "localPath": "repos/trade-imports-address-book",
+          "pathRoots": [
+            { "prefix": "repos/trade-imports-address-book/" },
+            { "prefix": "trade-imports-address-book/" },
+            { "prefix": "src/", "impliedPrefix": "src/" }
+          ]
+        }
+      },
+
+      "repoBySideDefault": {
+        "frontend": "frontend",
+        "prototype": "prototype"
+      },
+
+      "captureCitationRoots": [
+        { "prefix": "harness/capture/", "kind": "capture", "side": "prototype" },
+        { "prefix": "fe-miner/capture/", "kind": "capture", "side": "frontend" },
+        { "prefix": "compare/deltas/", "kind": "capture", "side": null }
+      ]
+    }
+  }
+}

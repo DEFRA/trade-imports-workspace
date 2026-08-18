@@ -1,5 +1,5 @@
 #!/bin/bash
-# Set an increment's status (todo|inprogress|done|failed|blocked).
+# Set an increment's status (todo|inprogress|done|failed|blocked|dropped).
 # done accepts --commit SHA; failed requires --reason. Marking failed
 # auto-blocks direct dependents.
 #
@@ -26,7 +26,7 @@ for v in RUN_ID INC STATUS; do
     [[ -z "${!v}" ]] && { echo "Error: missing $v" >&2; exit 1; }
 done
 case "$STATUS" in
-    todo|inprogress|done|failed|blocked) ;;
+    todo|inprogress|done|failed|blocked|dropped) ;;
     *) echo "Error: invalid status '$STATUS'" >&2; exit 1 ;;
 esac
 [[ "$STATUS" == "failed" && -z "$REASON" ]] && { echo "Error: failed requires --reason" >&2; exit 1; }

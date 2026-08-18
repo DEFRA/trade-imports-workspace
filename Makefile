@@ -12,6 +12,7 @@ $(error Cannot read the repo roster from $(MANIFEST). Check the file is there an
 endif
 
 .PHONY: setup link update reset status install lint test \
+        tim-install tim-test tim-lint tim-format \
         start-frontend start-backend start-admin start-gateway start-address-book \
         docker-local-branches docker-compose-up docker-compose-dev docker-compose-down docker-compose-bounce docker-logs docker-restart-backend clean help
 
@@ -108,6 +109,24 @@ install: ## Install dependencies in all repos (npm ci; mvn install -DskipTests)
 		rm -f "$${outs[$$i]}"; \
 	done; \
 	exit $$status
+
+# tim/ is a sub-project of this repo, not one of the cloned repos, so `make
+# install` and `make test` skip it. It also has to be entered rather than
+# addressed with `npm --prefix`: the guard hook redirects a --prefix install to
+# "cd to the real path and run there", and a make recipe is the only place an
+# agent can cd. $(WORKSPACE_ROOT) is already the resolved path.
+
+tim-install: ## Install tim's dependencies (npm ci in tim/)
+	@cd "$(WORKSPACE_ROOT)/tim" && npm ci
+
+tim-test: ## Run tim's unit tests
+	@cd "$(WORKSPACE_ROOT)/tim" && npm test
+
+tim-lint: ## Lint tim
+	@cd "$(WORKSPACE_ROOT)/tim" && npm run lint
+
+tim-format: ## Format tim
+	@cd "$(WORKSPACE_ROOT)/tim" && npm run format
 
 clean: ## Remove node_modules in all Node repos
 	@for repo in $(NODE_REPOS); do \

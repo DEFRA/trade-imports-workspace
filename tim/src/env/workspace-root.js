@@ -7,7 +7,8 @@ const MARKER_FILES = ['Makefile', '.git', 'docs/best-practices']
 
 /**
  * Where CLAUDE.md rule 1 mandates the workspace lives. `tools/*.sh` hardcode
- * this path, so a checkout elsewhere is expected to be symlinked here.
+ * this path, so the workspace is cloned there rather than living under another
+ * name.
  */
 export const CANONICAL_WORKSPACE_PATH = resolve(
   homedir(),
@@ -81,6 +82,6 @@ export const resolveWorkspaceRoot = ({
   if (looksLikeWorkspaceRoot(canonical)) return canonical
   throw new TimError(
     'USAGE',
-    `Cannot find the workspace root. Run from inside the trade-imports workspace checkout, set TIM_WORKSPACE, or symlink your checkout to ${canonical}.`
+    `Cannot find the workspace root. Run from inside the trade-imports workspace checkout, set TIM_WORKSPACE, or clone the workspace to ${canonical}.`
   )
 }

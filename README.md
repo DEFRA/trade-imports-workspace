@@ -20,11 +20,10 @@ Local workspace aggregating the independent GitHub repos of the DEFRA trade impo
 ## Quickstart
 
 The workspace and every helper script under `tools/` hardcode the path
-`~/git/defra/trade-imports-workspace`. If your checkout is
-elsewhere, symlink it before doing anything else:
+`~/git/defra/trade-imports-workspace`, so clone it there:
 
 ```bash
-ln -s "$(pwd)" ~/git/defra/trade-imports-workspace
+git clone git@github.com:DEFRA/trade-imports-workspace.git ~/git/defra/trade-imports-workspace
 ```
 
 Then:

@@ -6,9 +6,9 @@ The load-bearing rules that agents must always honour are kept **inline** below.
 
 ## Load-bearing rules
 
-### 1. Canonical clone location + symlink banner
+### 1. Canonical clone location
 
-The workspace must live at `~/git/defra/trade-imports-workspace`. If your checkout is elsewhere, symlink it — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode this path, so nothing works from a differently-named checkout without the symlink.
+Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode that path, so a checkout under any other name will not work. No env var to set, and no symlink to maintain: the canonical path is the checkout.
 
 ### 2. Branch naming + cross-repo branch parity
 

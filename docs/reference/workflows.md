@@ -7,8 +7,8 @@ make install  # npm install in Node repos
 ```
 
 Scripts under `tools/` reach the workspace at
-`~/git/defra/trade-imports-workspace/` — the path is hardcoded. Either clone
-there, or symlink an existing checkout of any name to that path; both work.
+`~/git/defra/trade-imports-workspace/` — the path is hardcoded, so clone
+it there. A checkout under another name will not work.
 See [`docs/agent-onboarding.md`](../agent-onboarding.md#1-canonical-clone-location)
 for the setup and for the JIRA / GitHub / Confluence credentials the tools
 still need.

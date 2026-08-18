@@ -260,6 +260,67 @@ describe('resolveToken', () => {
     )
   })
 
+  describe('a file that exists in both codebases', () => {
+    const both = new Map([
+      ['frontend', indexByBasename(['src/server/app/routes.js'])],
+      ['prototype', indexByBasename(['app/routes.js'])]
+    ])
+    const routesToken = (line) =>
+      token({
+        pathAsWritten: 'routes.js',
+        asWritten: `routes.js:${line}`,
+        lines: [{ start: line, end: line }],
+        sideHint: null,
+        sentence: `The list is built at routes.js:${line}.`
+      })
+
+    test('is queued rather than settled by the order of the repo list', () => {
+      const result = resolveToken({
+        token: routesToken(40),
+        profile,
+        increment: increment({ evidence: {} }),
+        indexes: both
+      })
+      expect(result.resolution).toBe('unresolved')
+      expect(result.ambiguousRepos).toEqual(['frontend', 'prototype'])
+    })
+
+    test('is settled by arithmetic when only one file is long enough', () => {
+      const lineCount = (repo) => (repo === 'frontend' ? 76 : 10997)
+      const result = resolveToken({
+        token: routesToken(10303),
+        profile,
+        increment: increment({ evidence: {} }),
+        indexes: both,
+        lineCount
+      })
+      expect(result).toMatchObject({ repo: 'prototype', path: 'app/routes.js' })
+      expect(result.why).toMatch(/long enough/)
+    })
+
+    test('stays queued when both files are long enough', () => {
+      const lineCount = () => 20000
+      const result = resolveToken({
+        token: routesToken(10303),
+        profile,
+        increment: increment({ evidence: {} }),
+        indexes: both,
+        lineCount
+      })
+      expect(result.resolution).toBe('unresolved')
+    })
+
+    test('is settled outright by a side hint from a paragraph label', () => {
+      const result = resolveToken({
+        token: { ...routesToken(40), sideHint: 'prototype' },
+        profile,
+        increment: increment({ evidence: {} }),
+        indexes: both
+      })
+      expect(result).toMatchObject({ repo: 'prototype', path: 'app/routes.js' })
+    })
+  })
+
   test('names the file when it is tracked in no repo the corpus cites', () => {
     const result = resolveToken({
       token: token({ pathAsWritten: 'nowhere.js', asWritten: 'nowhere.js:1' }),

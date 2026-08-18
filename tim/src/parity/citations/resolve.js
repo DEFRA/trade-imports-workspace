@@ -30,6 +30,38 @@ export const listTrackedPaths = (repoPath, sha) => {
 }
 
 /**
+ * How many lines a file has at a commit, cached. Used to rule out a candidate
+ * that is too short to hold the cited line.
+ *
+ * @param {object} profile
+ * @param {object} meta - .corpus-meta.json
+ * @returns {(repoKey: string, path: string) => number|null}
+ */
+export const makeLineCounter = (profile, meta) => {
+  const cache = new Map()
+  return (repoKey, path) => {
+    const key = `${repoKey}:${path}`
+    if (cache.has(key)) return cache.get(key)
+    const repo = profile.repos[repoKey]
+    const sha = meta?.pins?.[repoKey]?.sha
+    let count = null
+    if (repo?.absolutePath && sha) {
+      try {
+        count = execFileSync(
+          'git',
+          ['-C', repo.absolutePath, 'show', `${sha}:${path}`],
+          { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+        ).split('\n').length
+      } catch {
+        count = null
+      }
+    }
+    cache.set(key, count)
+    return count
+  }
+}
+
+/**
  * Build a basename index for one repo so a bare reference can find every
  * candidate at once.
  *
@@ -119,7 +151,13 @@ export const rankCandidates = ({ candidates, evidencePath, domain }) => {
  * @param {Map<string, Map<string, string[]>>} args.indexes - repo key to basename index
  * @returns {{repo: string, path: string, resolution: string, why?: string, candidates?: string[]}}
  */
-export const resolveToken = ({ token, profile, increment, indexes }) => {
+export const resolveToken = ({
+  token,
+  profile,
+  increment,
+  indexes,
+  lineCount
+}) => {
   if (token.needsHuman || !token.pathAsWritten) {
     return {
       repo: null,
@@ -157,52 +195,70 @@ export const resolveToken = ({ token, profile, increment, indexes }) => {
       ]
     : Object.keys(profile.repos)
 
+  // `routes.js` is a file in both codebases. With no side to go on, taking the
+  // first repo in the list is not a resolution, it is the order of a JSON
+  // object deciding which side a finding is about.
+  if (!preferredRepo) {
+    let reposHolding = repoOrder.filter(
+      (repoKey) =>
+        narrowBySuffix(
+          indexes.get(repoKey)?.get(name) ?? [],
+          token.pathAsWritten
+        ).length > 0
+    )
+    // A candidate whose file is shorter than the cited line is not a candidate.
+    // The frontend's routes.js is 76 lines and the prototype's is 10,997, so
+    // `routes.js:10303` has exactly one possible home. This is arithmetic, not
+    // a preference.
+    if (reposHolding.length > 1 && lineCount && token.lines.length) {
+      const highest = Math.max(...token.lines.map((line) => line.end))
+      const longEnough = reposHolding.filter((repoKey) =>
+        narrowBySuffix(
+          indexes.get(repoKey)?.get(name) ?? [],
+          token.pathAsWritten
+        ).some((path) => (lineCount(repoKey, path) ?? Infinity) >= highest)
+      )
+      if (longEnough.length > 0) reposHolding = longEnough
+    }
+    if (reposHolding.length === 1) {
+      return resolveWithin({
+        repoKey: reposHolding[0],
+        token,
+        profile,
+        increment,
+        indexes,
+        name,
+        why: `Only ${reposHolding[0]} has a ${name} long enough to have the cited line.`
+      })
+    }
+    if (reposHolding.length > 1) {
+      return {
+        repo: null,
+        path: null,
+        resolution: 'unresolved',
+        ambiguousRepos: reposHolding,
+        why: `"${token.pathAsWritten}" exists in ${reposHolding.join(' and ')}, and nothing in this finding says which side it means.`,
+        candidates: reposHolding.flatMap((repoKey) =>
+          narrowBySuffix(
+            indexes.get(repoKey)?.get(name) ?? [],
+            token.pathAsWritten
+          ).map((path) => `${repoKey}:${path}`)
+        )
+      }
+    }
+  }
+
   for (const repoKey of repoOrder) {
-    const all = indexes.get(repoKey)?.get(name) ?? []
-    if (all.length === 0) continue
-    const candidates = narrowBySuffix(all, token.pathAsWritten)
-
-    // The evidence path to rank against is the one for the side that owns this
-    // repo, not the one the sentence hinted at: we are searching the prototype
-    // repo, so the prototype evidence is what the analyst pointed at.
-    const evidenceSide = sideOwning(profile, repoKey) ?? side
-    const evidencePath = evidencePathFor({
-      increment,
-      side: evidenceSide,
+    if ((indexes.get(repoKey)?.get(name) ?? []).length === 0) continue
+    return resolveWithin({
+      repoKey,
+      token,
       profile,
-      repoKey
+      increment,
+      indexes,
+      name,
+      side
     })
-    const ranked = rankCandidates({
-      candidates,
-      evidencePath,
-      domain: increment.domain
-    })
-
-    if (ranked.length === 1) {
-      return {
-        repo: repoKey,
-        path: ranked[0].path,
-        resolution:
-          token.form === 'continuation' ? 'continuation' : 'basename-resolved'
-      }
-    }
-    const [best, next] = ranked
-    const separated = best.score.some((value, i) => value !== next.score[i])
-    if (separated) {
-      return {
-        repo: repoKey,
-        path: best.path,
-        resolution:
-          token.form === 'continuation' ? 'continuation' : 'basename-resolved'
-      }
-    }
-    return {
-      repo: null,
-      path: null,
-      resolution: 'unresolved',
-      why: `"${name}" matches ${candidates.length} files in ${repoKey} and nothing separates the top two.`,
-      candidates: ranked.slice(0, 6).map((c) => c.path)
-    }
   }
 
   return {
@@ -210,6 +266,59 @@ export const resolveToken = ({ token, profile, increment, indexes }) => {
     path: null,
     resolution: 'unresolved',
     why: `"${name}" is not a tracked file in any repo this corpus cites.`
+  }
+}
+
+/**
+ * Pick one file inside one repo, or refuse.
+ *
+ * @param {object} args
+ * @returns {object}
+ */
+const resolveWithin = ({
+  repoKey,
+  token,
+  profile,
+  increment,
+  indexes,
+  name,
+  side,
+  why
+}) => {
+  const candidates = narrowBySuffix(
+    indexes.get(repoKey)?.get(name) ?? [],
+    token.pathAsWritten
+  )
+  // The evidence path to rank against is the one for the side that owns this
+  // repo, not the one the sentence hinted at: we are searching the prototype
+  // repo, so the prototype evidence is what the analyst pointed at.
+  const evidenceSide = sideOwning(profile, repoKey) ?? side
+  const ranked = rankCandidates({
+    candidates,
+    evidencePath: evidencePathFor({
+      increment,
+      side: evidenceSide,
+      profile,
+      repoKey
+    }),
+    domain: increment.domain
+  })
+  const resolution =
+    token.form === 'continuation' ? 'continuation' : 'basename-resolved'
+
+  if (ranked.length === 1) {
+    return { repo: repoKey, path: ranked[0].path, resolution, why }
+  }
+  const [best, next] = ranked
+  if (best.score.some((value, i) => value !== next.score[i])) {
+    return { repo: repoKey, path: best.path, resolution, why }
+  }
+  return {
+    repo: null,
+    path: null,
+    resolution: 'unresolved',
+    why: `"${name}" matches ${candidates.length} files in ${repoKey} and nothing separates the top two.`,
+    candidates: ranked.slice(0, 6).map((c) => c.path)
   }
 }
 

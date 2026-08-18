@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { citeIncrement, captureRoot } from './run.js'
+import { citeIncrement, captureRoot, repoByParagraph } from './run.js'
 import { indexByBasename } from './resolve.js'
 
 const profile = {
@@ -57,6 +57,44 @@ describe('captureRoot', () => {
 
   test('leaves an ordinary source path alone', () => {
     expect(captureRoot(profile, 'src/server/app/shared/layout.njk')).toBeNull()
+  })
+})
+
+describe('repoByParagraph', () => {
+  const pair = (paragraph, repo) => ({
+    token: { paragraph, field: 'detail' },
+    resolved: { repo }
+  })
+
+  test('claims a paragraph whose citations all landed in one repo', () => {
+    expect(
+      repoByParagraph([pair(0, 'prototype'), pair(0, 'prototype')])
+    ).toEqual(new Map([[0, 'prototype']]))
+  })
+
+  test('claims nothing for a paragraph that disagrees with itself', () => {
+    expect(
+      repoByParagraph([pair(0, 'frontend'), pair(0, 'prototype')])
+    ).toEqual(new Map())
+  })
+
+  test('ignores citations from the evidence fields, which are not paragraphs', () => {
+    expect(
+      repoByParagraph([
+        {
+          token: { paragraph: 0, field: 'evidence.frontend' },
+          resolved: { repo: 'frontend' }
+        }
+      ])
+    ).toEqual(new Map())
+  })
+
+  test('ignores an unresolved citation rather than treating it as evidence', () => {
+    expect(
+      repoByParagraph([
+        { token: { paragraph: 0, field: 'detail' }, resolved: null }
+      ])
+    ).toEqual(new Map())
   })
 })
 

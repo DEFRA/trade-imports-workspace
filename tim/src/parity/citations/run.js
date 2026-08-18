@@ -2,7 +2,12 @@ import { existsSync } from 'node:fs'
 import { readJsonFile, writeJsonAtomic } from '../io.js'
 import { parseBacklog } from '../schema.js'
 import { tokeniseIncrement } from './parse.js'
-import { listTrackedPaths, indexByBasename, resolveToken } from './resolve.js'
+import {
+  listTrackedPaths,
+  indexByBasename,
+  resolveToken,
+  makeLineCounter
+} from './resolve.js'
 
 /**
  * A citation that points into a captured page model or a delta file is a real
@@ -66,8 +71,58 @@ export const buildIndexes = (profile, meta) => {
  * @param {Map} args.indexes
  * @returns {{citations: object[], marked: Record<string, string>, unresolved: object[]}}
  */
-export const citeIncrement = ({ increment, profile, indexes }) => {
-  const tokens = tokeniseIncrement(increment)
+const sideOwning = (profile, repoKey) =>
+  Object.entries(profile.repoBySideDefault ?? {}).find(
+    ([, repo]) => repo === repoKey
+  )?.[0] ?? null
+
+export const sideLabelsOf = (profile) =>
+  (profile.sides ?? [])
+    .filter((side) => side.paragraphLabels?.length)
+    .map((side) => ({ id: side.id, labels: side.paragraphLabels }))
+
+/**
+ * A reference that exists in two repos borrows the side of its neighbours.
+ *
+ * A finding's paragraph is its unit of subject: one paragraph is about the
+ * frontend, the next about the prototype. Where every unambiguous citation in a
+ * paragraph lands in one repo, an ambiguous one in the same paragraph is about
+ * that repo too. Where the paragraph disagrees with itself, nothing is inferred
+ * and the citation stays queued.
+ *
+ * @param {Array<{token: object, resolved: object}>} pairs - First-pass results
+ * @returns {Map<number, string>} paragraph index to repo key
+ */
+export const repoByParagraph = (pairs) => {
+  const byParagraph = new Map()
+  for (const { token, resolved } of pairs) {
+    if (!resolved?.repo || token.field !== 'detail') continue
+    const seen = byParagraph.get(token.paragraph) ?? new Set()
+    seen.add(resolved.repo)
+    byParagraph.set(token.paragraph, seen)
+  }
+  return new Map(
+    [...byParagraph]
+      .filter(([, repos]) => repos.size === 1)
+      .map(([paragraph, repos]) => [paragraph, [...repos][0]])
+  )
+}
+
+export const citeIncrement = ({ increment, profile, indexes, lineCount }) => {
+  const tokens = tokeniseIncrement(increment, sideLabelsOf(profile))
+
+  // Two passes, because a cross-repo ambiguity is settled by what its
+  // neighbours resolved to, which is not known until they have.
+  const firstPass = tokens.map((token) => ({
+    token,
+    resolved:
+      captureRoot(profile, token.pathAsWritten ?? '') ||
+      isCaptureName(profile, token.pathAsWritten ?? '')
+        ? null
+        : resolveToken({ token, profile, indexes, increment, lineCount })
+  }))
+  const paragraphRepo = repoByParagraph(firstPass)
+
   const citations = []
   const unresolved = []
   const byField = new Map()
@@ -87,14 +142,33 @@ export const citeIncrement = ({ increment, profile, indexes }) => {
       ? null
       : isCaptureName(profile, token.pathAsWritten ?? '')
 
-    const resolved =
+    let resolved =
       capture || model
         ? {
             repo: null,
             path: token.pathAsWritten,
             resolution: 'explicit'
           }
-        : resolveToken({ token, profile, increment, indexes })
+        : resolveToken({ token, profile, increment, indexes, lineCount })
+
+    if (resolved.ambiguousRepos) {
+      const borrowed = paragraphRepo.get(token.paragraph)
+      if (borrowed && resolved.ambiguousRepos.includes(borrowed)) {
+        resolved = resolveToken({
+          token: { ...token, sideHint: sideOwning(profile, borrowed) },
+          profile,
+          increment,
+          indexes,
+          lineCount
+        })
+        if (resolved.repo) {
+          resolved = {
+            ...resolved,
+            why: `Repo taken from the rest of this paragraph, every other citation in which is ${borrowed}.`
+          }
+        }
+      }
+    }
 
     const key = keyOf(resolved, token)
     let ref = seen.get(key)
@@ -216,6 +290,7 @@ export const runCitations = ({ profile, write }) => {
   const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
   const meta = readJsonFile(profile.paths.meta)
   const indexes = buildIndexes(profile, meta)
+  const lineCount = makeLineCounter(profile, meta)
 
   const unresolved = []
   const byResolution = {}
@@ -223,7 +298,7 @@ export const runCitations = ({ profile, write }) => {
   let withCitations = 0
 
   const increments = backlog.increments.map((increment) => {
-    const result = citeIncrement({ increment, profile, indexes })
+    const result = citeIncrement({ increment, profile, indexes, lineCount })
     total += result.citations.length
     if (result.citations.length) withCitations += 1
     for (const citation of result.citations) {

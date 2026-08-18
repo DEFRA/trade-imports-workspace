@@ -498,8 +498,11 @@ const GATES = {
  */
 export const runCheck = ({ profile, workspaceRoot, pass = 'a', baseline }) => {
   const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
-  const baselineBacklog = baseline
-    ? readAtRef(workspaceRoot, baseline, profile.paths.backlog)
+  // The baseline is data, not something a person has to remember. --baseline
+  // overrides it for a one-off comparison.
+  const baselineRef = baseline ?? profile.baselines?.passA ?? null
+  const baselineBacklog = baselineRef
+    ? readAtRef(workspaceRoot, baselineRef, profile.paths.backlog)
     : null
   let evidence = null
   try {
@@ -543,8 +546,8 @@ export const runCheck = ({ profile, workspaceRoot, pass = 'a', baseline }) => {
   const text = [
     `Pass ${pass.toUpperCase()} · ${backlog.increments.length} increments`,
     baselineBacklog
-      ? `baseline: ${baseline}`
-      : 'baseline: none — I1 to I3 are informational only',
+      ? `baseline: ${baselineRef}${baseline ? '' : ' (from corpora.json)'}`
+      : `baseline: ${baselineRef ?? 'none'} — not readable, so I1 and I2 are skipped`,
     '',
     ...results.map(
       (result) =>

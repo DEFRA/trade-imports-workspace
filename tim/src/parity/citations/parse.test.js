@@ -3,6 +3,7 @@ import {
   parseLineSpec,
   sentences,
   alternatesSides,
+  labelledParagraphs,
   tokenise,
   citableFields,
   tokeniseIncrement
@@ -157,6 +158,66 @@ describe('tokenise — continuations', () => {
     })
     const continuation = tokens.find((t) => t.form === 'continuation')
     expect(continuation.needsHuman).toBe(true)
+  })
+})
+
+describe('labelledParagraphs', () => {
+  const labels = [
+    { id: 'frontend', labels: ['Frontend'] },
+    { id: 'prototype', labels: ['Prototype'] }
+  ]
+
+  test('finds a label at the start of the text', () => {
+    expect(labelledParagraphs('Frontend: it does X.', labels)).toEqual([
+      { offset: 0, side: 'frontend' }
+    ])
+  })
+
+  test('finds labels in document order across paragraphs', () => {
+    const text = 'Frontend: a.\n\nPrototype: b.'
+    expect(labelledParagraphs(text, labels).map((l) => l.side)).toEqual([
+      'frontend',
+      'prototype'
+    ])
+  })
+
+  test('ignores the word mid-sentence', () => {
+    expect(labelledParagraphs('The Frontend renders it.', labels)).toEqual([])
+  })
+})
+
+describe('tokenise — paragraph labels', () => {
+  const labels = [
+    { id: 'frontend', labels: ['Frontend'] },
+    { id: 'prototype', labels: ['Prototype'] }
+  ]
+
+  test('attributes each paragraph to the side that opens it', () => {
+    const text = 'Frontend: a.js:1 does it.\n\nPrototype: b.js:2 does it.'
+    const tokens = tokenise({ text, field: 'detail', sideLabels: labels })
+    expect(tokens.map((t) => t.sideHint)).toEqual(['frontend', 'prototype'])
+  })
+
+  test('leaves tokens before any label unattributed', () => {
+    const text = 'a.js:1 is shared.\n\nFrontend: b.js:2.'
+    const tokens = tokenise({ text, field: 'detail', sideLabels: labels })
+    expect(tokens.map((t) => t.sideHint)).toEqual([null, 'frontend'])
+  })
+
+  test('an explicit field side hint still wins', () => {
+    const tokens = tokenise({
+      text: 'Frontend: a.js:1.',
+      field: 'evidence.prototype',
+      sideHint: 'prototype',
+      sideLabels: labels
+    })
+    expect(tokens[0].sideHint).toBe('prototype')
+  })
+
+  test('records which paragraph each token sits in', () => {
+    const text = 'a.js:1\n\nb.js:2\n\nc.js:3'
+    const tokens = tokenise({ text, field: 'detail' })
+    expect(tokens.map((t) => t.paragraph)).toEqual([0, 1, 2])
   })
 })
 

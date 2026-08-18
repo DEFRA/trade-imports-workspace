@@ -86,6 +86,32 @@ const COMPARISON = / vs\.? | against /
 export const alternatesSides = (between) => COMPARISON.test(between)
 
 /**
+ * Where a paragraph opens by naming a side — "Frontend: …" then "Prototype: …",
+ * the shape five of the findings use — every citation from there until the next
+ * label belongs to that side.
+ *
+ * This is the only side signal a detail paragraph carries, and it is worth
+ * having: `routes.js` exists in both codebases, so without it the resolver picks
+ * whichever repo it looked in first, which is a guess.
+ *
+ * @param {string} text
+ * @param {Array<{id: string, labels: string[]}>} sideLabels
+ * @returns {Array<{offset: number, side: string}>} In document order
+ */
+export const labelledParagraphs = (text, sideLabels) => {
+  const found = []
+  for (const side of sideLabels) {
+    for (const label of side.labels) {
+      const pattern = new RegExp(`(^|\\n)\\s*${label}\\s*:`, 'gi')
+      for (const match of text.matchAll(pattern)) {
+        found.push({ offset: match.index, side: side.id })
+      }
+    }
+  }
+  return found.sort((a, b) => a.offset - b.offset)
+}
+
+/**
  * Find every citation token in one field of one increment.
  *
  * @param {object} args
@@ -94,10 +120,15 @@ export const alternatesSides = (between) => COMPARISON.test(between)
  * @param {string|null} [args.sideHint] - The side this field is attributed to
  * @returns {Array<object>} Tokens in document order
  */
-export const tokenise = ({ text, field, sideHint = null }) => {
+export const tokenise = ({ text, field, sideHint = null, sideLabels = [] }) => {
   if (typeof text !== 'string' || text.length === 0) return []
   const list = sentences(text)
+  const labels = labelledParagraphs(text, sideLabels)
   const tokens = []
+  const sideAt = (offset) =>
+    sideHint ??
+    labels.filter((label) => label.offset <= offset).pop()?.side ??
+    null
 
   NAMED.lastIndex = 0
   let match
@@ -111,7 +142,7 @@ export const tokenise = ({ text, field, sideHint = null }) => {
       offset: match.index,
       end: match.index + asWritten.length,
       form: 'named',
-      sideHint,
+      sideHint: sideAt(match.index),
       sentence: sentenceAt(list, match.index).text
     })
   }
@@ -138,7 +169,7 @@ export const tokenise = ({ text, field, sideHint = null }) => {
       offset,
       end: offset + match[0].length,
       form: 'continuation',
-      sideHint,
+      sideHint: sideAt(offset),
       sentence: sentence.text,
       antecedent: antecedent?.asWritten ?? null,
       // A comparison between the antecedent and here means the elided file is
@@ -149,6 +180,14 @@ export const tokenise = ({ text, field, sideHint = null }) => {
   }
 
   const ordered = tokens.sort((a, b) => a.offset - b.offset)
+
+  // Which paragraph each token sits in. A finding's paragraphs are its unit of
+  // subject: one is about the frontend, the next about the prototype. That is
+  // what lets an ambiguous reference borrow the side of an unambiguous one
+  // beside it rather than borrow the order of a JSON object.
+  const breaks = [...text.matchAll(/\n{2,}/g)].map((m) => m.index)
+  const paragraphOf = (offset) => breaks.filter((b) => b < offset).length
+  for (const token of ordered) token.paragraph = paragraphOf(token.offset)
 
   // The clause a citation sits in: from the end of the previous citation to
   // the start of the next, clipped to the sentence. This is the window the
@@ -223,7 +262,11 @@ export const citableFields = (increment) => {
  * Every citation token in one increment, in field order then document order.
  *
  * @param {object} increment
+ * @param {Array<{id: string, labels: string[]}>} [sideLabels] - Paragraph
+ *   labels that attribute a block of prose to one side
  * @returns {Array<object>}
  */
-export const tokeniseIncrement = (increment) =>
-  citableFields(increment).flatMap((field) => tokenise(field))
+export const tokeniseIncrement = (increment, sideLabels = []) =>
+  citableFields(increment).flatMap((field) =>
+    tokenise({ ...field, sideLabels })
+  )

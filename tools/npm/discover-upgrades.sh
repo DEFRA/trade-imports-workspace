@@ -22,7 +22,7 @@ REPO_PATH=""
 RUN_ID=""
 STRATEGY="latest"
 JSON_OUTPUT=false
-WORKSPACE_BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades"
+WORKSPACE_BASE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades"
 FORCE=false
 
 show_help() {
@@ -43,9 +43,9 @@ Options:
   --help                 Show this help message
 
 Examples:
-  ./discover-upgrades.sh ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend --run-id EUDPA-20578
-  ./discover-upgrades.sh ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend --run-id EUDPA-20578 --strategy minor
-  ./discover-upgrades.sh ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend --run-id EUDPA-20578 --json
+  ./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend --run-id EUDPA-20578
+  ./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend --run-id EUDPA-20578 --strategy minor
+  ./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend --run-id EUDPA-20578 --json
 
 Environment:
   Requires: npm-check-updates (ncu), jq

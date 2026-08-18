@@ -8,7 +8,7 @@ demand from the JSON.
 ## Location
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
+~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 ```
 
 One file per repo. Initial population: `packages-init.sh` (called by
@@ -89,7 +89,7 @@ state lives in `packages.{repo}.json`.
 | `"done"` | Upgrade committed locally. `commit_sha` populated. | `packages-set-status.sh --status done --commit-sha SHA`. |
 | `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `packages-set-status.sh --status failed --failure-reason "..."`. |
 
-## Helper scripts (all under `~/git/defra/trade-imports-animals-workspace/tools/npm/`)
+## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/npm/`)
 
 | Script | Purpose |
 |---|---|

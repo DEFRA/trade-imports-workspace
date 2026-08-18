@@ -23,7 +23,7 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
    Idempotent; `--refetch` refreshes cached sources.
 2. Fan out THREE `general-purpose` Task subagents in parallel, one per
    source (confluence-v4, skeleton, ixd-canvas), each told:
-   "Follow ~/git/defra/trade-imports-animals-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
+   "Follow ~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
    for source <s>, run-id EUDPA-X."
 3. Verify every extract has `status: "complete"` and non-trivial counts
    (`jq .status,.fields,.pages,.behaviours` per file). Re-spawn gaps —
@@ -60,7 +60,7 @@ Serial by design — increments edit shared files (registry, flow, hub, CYA).
 2. If the increment has `gate: "sam"` or closes a milestone → STOP, present
    to Sam (model-extension design panel / milestone walk-through).
 3. Spawn ONE `general-purpose` Task subagent:
-   "Follow ~/git/defra/trade-imports-animals-workspace/.claude/skills/journey-builder/references/INCREMENT_IMPLEMENTOR.md
+   "Follow ~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/INCREMENT_IMPLEMENTOR.md
    for run-id EUDPA-X, increment <id>." The persona owns the touch-lists
    (vendored `docs/add-a-{page,field,collection}.md`), the enforcedAt
    semantics, the never-author-gates rule (T11), and commit/rollback.

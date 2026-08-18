@@ -28,7 +28,7 @@ done
 [[ -z "$BRANCH" ]] && { echo "--branch required" >&2; exit 1; }
 [[ -z "$REPO" ]] && { echo "--repo required" >&2; exit 1; }
 
-REPO_DIR="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO"
+REPO_DIR="$HOME/git/defra/trade-imports-workspace/repos/$REPO"
 [[ -d "$REPO_DIR/.git" ]] || { echo "Not a git repo: $REPO_DIR" >&2; exit 1; }
 
 current=$(git -C "$REPO_DIR" branch --show-current)

@@ -7,12 +7,12 @@ per in-scope repo. Progress is read out via `upgrade-status.sh` /
 ## Location
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/versions.{repo-name}.json
+~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/{repo-name}/versions.{repo-name}.json
 ```
 
 One file per repo. Initial population: `discover-versions.sh`. All
 subsequent mutations go through the helper trio in
-`~/git/defra/trade-imports-animals-workspace/tools/govuk/`. Never hand-edit.
+`~/git/defra/trade-imports-workspace/tools/govuk/`. Never hand-edit.
 
 Per-version pre-baked CHANGELOG sections sit alongside as
 `version__{v}.changelog.md`. The per-repo best-practices bundle is
@@ -73,7 +73,7 @@ A version with `classification == "noop"` is short-circuited by
 `apply-version.sh` — `version-mark-implemented.sh` is still called
 with no commit SHA so the version disappears from the pending list.
 
-## Helper scripts (under `~/git/defra/trade-imports-animals-workspace/tools/govuk/`)
+## Helper scripts (under `~/git/defra/trade-imports-workspace/tools/govuk/`)
 
 | Script | Purpose |
 |---|---|
@@ -110,7 +110,7 @@ following values, derived from the two columns:
 `discover-versions.sh` also writes a small per-run metadata file:
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
+~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
 ```
 
 Shape:

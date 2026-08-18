@@ -18,7 +18,7 @@
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 RUN_ID=""; SOURCE=""; KIND=""; ID=""; PROVENANCE=""
 KEYS=(); VALS=(); IS_JSON=()

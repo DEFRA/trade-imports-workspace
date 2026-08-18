@@ -16,7 +16,7 @@ export const stackScriptPath = (workspaceRoot, scriptName) => {
   if (!existsSync(path)) {
     throw new TimError(
       'USAGE',
-      `Cannot find ${scriptName} at ${path}. Is this a trade-imports-animals workspace?`
+      `Cannot find ${scriptName} at ${path}. Is this a trade-imports workspace?`
     )
   }
   return path

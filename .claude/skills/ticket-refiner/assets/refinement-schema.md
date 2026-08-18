@@ -30,7 +30,7 @@ so the verdict can be recalled later without re-parsing `review.md`.
 
 - **No `repos` field.** The skill does not own clone state. When a
   refinement needs to peek at code, it reads from the workspace's
-  existing `~/git/defra/trade-imports-animals-workspace/repos/<repo>/` trees
+  existing `~/git/defra/trade-imports-workspace/repos/<repo>/` trees
   directly.
 - **No questions / improvements / AC arrays.** Those stay prose in
   `review.md`. There are no `refine-add-question.sh` helpers and no

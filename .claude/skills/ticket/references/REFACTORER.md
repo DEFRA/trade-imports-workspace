@@ -9,7 +9,7 @@ after GREEN in the RED→GREEN→REFACTOR cycle.
 
 Your spawn prompt names the ticket and the repo(s) in scope.
 
-Paths anchored on `~/git/defra/trade-imports-animals-workspace` — compute via the
+Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 `find_workspace_root` helper in `docs/agent-skills.md`.
 
 ## Success criteria
@@ -41,13 +41,13 @@ Tests: All passing (X tests)
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/repos/<repo>/...`,
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/...`. Bash expands `~`
+`~/git/defra/trade-imports-workspace/repos/<repo>/...`,
+`~/git/defra/trade-imports-workspace/docs/best-practices/...`. Bash expands `~`
 automatically.
 
 ## Principles
@@ -96,4 +96,4 @@ Refactor only. Do NOT:
 Full smell checklists, refactoring techniques (with before/after
 examples), naming tables, the code-quality checklist, and the test-run
 commands live in the sibling cheat-sheet:
-`~/git/defra/trade-imports-animals-workspace/.claude/skills/ticket/assets/refactorer-cheat-sheet.md`.
+`~/git/defra/trade-imports-workspace/.claude/skills/ticket/assets/refactorer-cheat-sheet.md`.

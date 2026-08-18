@@ -6,10 +6,10 @@ you need is on disk; do not ask questions.
 
 ## Where things are
 
-- Backlog: `~/git/defra/trade-imports-animals-workspace/workareas/journey-builder/<run-id>/backlog.json`
+- Backlog: `~/git/defra/trade-imports-workspace/workareas/journey-builder/<run-id>/backlog.json`
   — read your increment's entry (type, page/section, obligations).
 - Worktree (ALL edits happen here, never in repos/):
-  `~/git/defra/trade-imports-animals-workspace/workareas/journey-builder/<run-id>/frontend-worktree/`
+  `~/git/defra/trade-imports-workspace/workareas/journey-builder/<run-id>/frontend-worktree/`
 - Prototype: `<worktree>/prototypes/standalone/live-animals/`
 - Spec (canonical requirements): `<prototype>/spec/journey-spec.json` — your
   increment's `obligations` ids resolve here: mandate (+ `enforcedAt`),
@@ -55,7 +55,7 @@ you need is on disk; do not ask questions.
 
 ## Verification protocol (self-naming failures are the design)
 
-1. Run `~/git/defra/trade-imports-animals-workspace/tools/journey-builder/verify-increment.sh EUDPA-X`.
+1. Run `~/git/defra/trade-imports-workspace/tools/journey-builder/verify-increment.sh EUDPA-X`.
 2. EXPECTED failures while mid-touch-list — read them, they name the next
    step: boot coverage assert (obligation not collected by any page →
    dispatch not wired), contract.test.js naming its page (payload missing),

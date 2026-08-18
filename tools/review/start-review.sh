@@ -20,14 +20,14 @@ if [[ -z "$TICKET" ]] || [[ "$TICKET" == "-h" ]] || [[ "$TICKET" == "--help" ]];
     exit 1
 fi
 
-REVIEW_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET"
+REVIEW_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET"
 
 if [[ -f "$REVIEW_DIR/review-index.md" ]]; then
     echo "MODE: REFRESH"
     echo
-    exec "$HOME/git/defra/trade-imports-animals-workspace/tools/review/refresh/scope.sh" "$TICKET" --write-snapshot "$@"
+    exec "$HOME/git/defra/trade-imports-workspace/tools/review/refresh/scope.sh" "$TICKET" --write-snapshot "$@"
 else
     echo "MODE: FRESH"
     echo
-    exec "$HOME/git/defra/trade-imports-animals-workspace/tools/review/prepare-review.sh" "$TICKET" "$@"
+    exec "$HOME/git/defra/trade-imports-workspace/tools/review/prepare-review.sh" "$TICKET" "$@"
 fi

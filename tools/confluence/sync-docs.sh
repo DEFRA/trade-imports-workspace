@@ -21,7 +21,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_FOLDER_ID="6447269328"
-OUTPUT_DIR="$HOME/git/defra/trade-imports-animals-workspace/docs/confluence"
+OUTPUT_DIR="$HOME/git/defra/trade-imports-workspace/docs/confluence"
 INDEX_FILE="$OUTPUT_DIR/_index.md"
 BASE_URL="${JIRA_BASE_URL:?JIRA_BASE_URL is not set}/wiki"
 DRY_RUN=false

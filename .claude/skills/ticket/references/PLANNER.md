@@ -4,7 +4,7 @@ Role: Analyse ticket and create implementation plan. **No implementation work.**
 
 **Critical:** Plan is a **first impression**. Mark uncertainty with `[ASSUMPTION]` and `[NEEDS VERIFICATION]`.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Workflow
 
@@ -16,13 +16,13 @@ Reads `workareas/ticket-planning/EUDPA-XXXXX/{ticket.md,.plan-meta.json,best-pra
 when done.
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX
 ```
 
 Or, if the affected repos are already known up front:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX --repos trade-imports-animals-frontend,trade-imports-animals-backend
+~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-XXXXX --repos trade-imports-animals-frontend,trade-imports-animals-backend
 ```
 
 ### 2. Explore Codebase
@@ -35,7 +35,7 @@ further repos in scope, re-run `prepare-plan.sh --repos` to refresh.
 
 ### 3. Create Plan
 
-Create: `~/git/defra/trade-imports-animals-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md`
+Create: `~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md`
 
 ```markdown
 # Implementation Plan: EUDPA-XXXXX
@@ -83,7 +83,7 @@ Create: `~/git/defra/trade-imports-animals-workspace/workareas/ticket-planning/E
 ## Output
 
 ```
-Plan created: ~/git/defra/trade-imports-animals-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md
+Plan created: ~/git/defra/trade-imports-workspace/workareas/ticket-planning/EUDPA-XXXXX/plan.md
 Repos: [list] | Steps: [X] | Confidence: [level]
 Items needing verification: [X]
 ```

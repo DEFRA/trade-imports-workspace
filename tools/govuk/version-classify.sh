@@ -40,7 +40,7 @@ case "$CLASSIFICATION" in
     *) echo "Invalid --classification: $CLASSIFICATION (must be todo|noop)" >&2; exit 1 ;;
 esac
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
 [[ -f "$target" ]] || { echo "Versions file not found: $target — run discover-versions.sh first" >&2; exit 1; }
 
 # Verify the version exists.

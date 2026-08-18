@@ -316,7 +316,7 @@ function heading(slide, label, title) {
     });
     s.addText([
       { text: "Logs: ", options: { bold: true } },
-      { text: "docker compose -p trade-imports-animals logs -f", options: { fontFace: MONO } },
+      { text: "docker compose -p trade-imports logs -f", options: { fontFace: MONO } },
       { text: "   ·   stop / restart: ", options: { bold: true } },
       { text: "scripts/stack/{stop,restart}-stack.sh", options: { fontFace: MONO } },
       { text: "   ·   flags & profiles: ", options: { bold: true } },
@@ -331,7 +331,7 @@ function heading(slide, label, title) {
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.green } });
   heading(s, "Try it", "Get the stack running, end to end");
   const steps = [
-    ["1", "Clone & set up", "Clone to ~/git/defra/trade-imports-animals-workspace (symlink if elsewhere), then make setup && make install."],
+    ["1", "Clone & set up", "Clone to ~/git/defra/trade-imports-workspace (symlink if elsewhere), then make setup && make install."],
     ["2", "Bring the stack up", "scripts/stack/run-stack.sh --dev to build from source, then watch the logs."],
     ["3", "Run the E2E suite", "npm run test:docker-compose in the tests repo. Skim make help and CLAUDE.md while it runs."],
   ];

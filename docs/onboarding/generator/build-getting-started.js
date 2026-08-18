@@ -65,7 +65,7 @@ const CONTENT = {
   // [label, text, isCommand] — isCommand renders the text as mono (a literal you type).
   steps: [
     ["Open a terminal", "the Terminal app — your engineer will show you which one", false],
-    ["Go to the workspace", "cd ~/git/defra/trade-imports-animals-workspace", true],
+    ["Go to the workspace", "cd ~/git/defra/trade-imports-workspace", true],
     ["Start the assistant", "claude", true],
   ],
   stepsNote: "Then press Enter and wait for the prompt. The cd line never changes — your engineer can save it as a shortcut.",

@@ -206,7 +206,7 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 
 ## Files in this folder
 
-- `compose.yml` — base, just `name: trade-imports-animals`.
+- `compose.yml` — base, just `name: trade-imports`.
 - `<role>.compose.yml` — per-role service definitions (see layout table above).
 - `dev.compose.yml` — build/target/volumes overlay for `--dev`.
 - `shared.env` — env vars loaded by multiple services (mongo URIs, AWS test

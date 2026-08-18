@@ -7,7 +7,7 @@ make install  # npm install in Node repos
 ```
 
 Scripts under `tools/` assume the workspace lives at
-`~/git/defra/trade-imports-animals-workspace/` — the path is hardcoded. Clone here
+`~/git/defra/trade-imports-workspace/` — the path is hardcoded. Clone here
 and nothing further is needed. See
 [`docs/agent-onboarding.md`](../agent-onboarding.md) for the JIRA /
 GitHub / Confluence credentials the tools still need.

@@ -24,7 +24,7 @@ if [[ -z "$TICKET" ]]; then
     exit 1
 fi
 
-REVIEW_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET"
+REVIEW_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET"
 META_FILE="$REVIEW_DIR/.review-meta.json"
 FILE_REVIEWS_DIR="$REVIEW_DIR/file-reviews"
 

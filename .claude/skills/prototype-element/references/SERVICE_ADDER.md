@@ -7,7 +7,7 @@ and no `contract.test.js` delta**, so nothing goes red first. There is no TDD ga
 here — the discipline is test-first, not baseline-guard.
 
 Reference (single source of truth — follow verbatim, do not restate it):
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/docs/services.md`
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/docs/services.md`
 (the service table names every backing system + its consumers).
 
 ## Shape

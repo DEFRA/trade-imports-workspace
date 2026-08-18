@@ -35,7 +35,7 @@ heal_if_unpinned() {
   git -C "$dir" gc --prune=now --quiet
 }
 
-echo "Updating trade-imports-animals workspace..."
+echo "Updating trade-imports workspace..."
 for repo in "${REPOS[@]}"; do
   dir="$REPOS_DIR/$repo"
   if [ -d "$dir/.git" ]; then

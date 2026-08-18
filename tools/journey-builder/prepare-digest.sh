@@ -13,7 +13,7 @@
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 FRONTEND_REPO="$WORKSPACE/repos/trade-imports-animals-frontend"
 CONFLUENCE_PAGE_ID="6497338582"
 CANVAS_FILE="Notes from chat with interaction design.canvas"

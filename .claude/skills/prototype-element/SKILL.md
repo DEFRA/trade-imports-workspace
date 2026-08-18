@@ -9,7 +9,7 @@ Author ONE increment against the live-animals prototype and stop: read the
 baseline-guard output, follow the vendored `docs/add-a-*.md` recipe verbatim,
 reach green without weakening a test, reseed the blast radius, run one E2E leg,
 commit. Gating and the next increment are the caller's call. Prototype:
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/`;
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/`;
 `npm run` scripts run from the frontend **repo root**. One command per Bash call
 (no `&&`/`;`/`|`); literal `~/git/...` paths (never `$VAR` or `/Users/...`).
 

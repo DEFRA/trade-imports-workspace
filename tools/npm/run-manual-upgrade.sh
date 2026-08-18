@@ -36,7 +36,7 @@ done
 [[ -z "$REPO_NAME" ]] && { echo "--repo required" >&2; exit 2; }
 [[ -z "$PACKAGE" ]] && { echo "--package required" >&2; exit 2; }
 
-PKGS_FILE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/packages.${REPO_NAME}.json"
+PKGS_FILE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/packages.${REPO_NAME}.json"
 [[ -f "$PKGS_FILE" ]] || { echo "Packages file not found: $PKGS_FILE" >&2; exit 2; }
 
 row=$(jq -c --arg p "$PACKAGE" '.packages[] | select(.package == $p)' "$PKGS_FILE")
@@ -45,7 +45,7 @@ row=$(jq -c --arg p "$PACKAGE" '.packages[] | select(.package == $p)' "$PKGS_FIL
 CURRENT=$(echo "$row" | jq -r '.current')
 TARGET=$(echo "$row" | jq -r '.target')
 
-REPO_PATH="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO_NAME"
+REPO_PATH="$HOME/git/defra/trade-imports-workspace/repos/$REPO_NAME"
 [[ -d "$REPO_PATH" ]] || { echo "Repo not found: $REPO_PATH" >&2; exit 2; }
 # Resolve symlinks so npm doesn't rewrite the lockfile relative to the
 # workspace symlink. `cd && pwd -P` is POSIX, works on macOS and Linux

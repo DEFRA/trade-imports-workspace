@@ -1,4 +1,4 @@
-# trade-imports-animals workspace
+# trade-imports workspace
 
 This is a local workspace aggregating 10 independent GitHub repos for the DEFRA trade imports animals service. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.
 
@@ -8,7 +8,7 @@ The load-bearing rules that agents must always honour are kept **inline** below.
 
 ### 1. Canonical clone location + symlink banner
 
-The workspace must live at `~/git/defra/trade-imports-animals-workspace`. If your checkout is elsewhere, symlink it — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode this path, so nothing works from a differently-named checkout without the symlink.
+The workspace must live at `~/git/defra/trade-imports-workspace`. If your checkout is elsewhere, symlink it — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode this path, so nothing works from a differently-named checkout without the symlink.
 
 ### 2. Branch naming + cross-repo branch parity
 
@@ -126,7 +126,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md). Cited by SKILL.md files via
-  `~/git/defra/trade-imports-animals-workspace/docs/best-practices/<topic>/<file>`.
+  `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
 
 ## SonarCloud integration
 

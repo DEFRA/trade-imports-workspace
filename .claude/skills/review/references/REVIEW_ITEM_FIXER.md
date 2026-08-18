@@ -4,12 +4,12 @@ confirm tests are still green, commit.
 
 Your prompt specifies the ticket, item, repo, file, line, issue, and fix.
 
-Paths anchored on `~/git/defra/trade-imports-animals-workspace` — compute via the `find_workspace_root`
+Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the `find_workspace_root`
 helper in `docs/agent-skills.md`.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Inputs (from spawn prompt)
 
@@ -28,7 +28,7 @@ helper in `docs/agent-skills.md`.
 Read the file from the live repo:
 
 ```
-~/git/defra/trade-imports-animals-workspace/repos/{repo}/{file}
+~/git/defra/trade-imports-workspace/repos/{repo}/{file}
 ```
 
 Check whether the specific violation described in the Issue is present
@@ -62,7 +62,7 @@ After editing Node.js files, run Prettier to avoid pre-commit hook
 failures:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-animals-workspace/repos/{repo}/{file}
+~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
 ```
 
 ---
@@ -76,33 +76,33 @@ streaming output or re-run to check partial results.
 
 Unit tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created.
 
 E2E tests (run after any change that could affect the user journey):
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created for the summary line only. If
 failures exist, do NOT grep the output — instead find and read the
 structured artifacts:
 
 ```bash
-find ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
+find ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
 ```
 
 Read each `error-context.md` to diagnose what actually failed.
 
 ### Java repo
 ```bash
-mvn -f ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-backend/pom.xml test > /tmp/backend-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/pom.xml test > /tmp/backend-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created. Surefire also writes per-class
 reports to `target/surefire-reports/`.
 
 **If unit tests fail:**
-- Revert: `git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} checkout -- {file}`
+- Revert: `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file}`
 - Return: `FAILED: #N — unit tests broke after change, reverted`
 
 **If E2E tests fail:**
@@ -117,21 +117,21 @@ reports to `target/surefire-reports/`.
 Each git operation is a separate Bash call — no `cd && git`.
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} add {file}
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} commit -m "fix(EUDPA-XXXXX): [concise description of what was fixed]
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} commit -m "fix(EUDPA-XXXXX): [concise description of what was fixed]
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 ```
 
 If the pre-commit hook fails due to Prettier:
 ```bash
-~/git/defra/trade-imports-animals-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-animals-workspace/repos/{repo}/{file}
+~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
 ```
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} add {file}
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
 ```
 Then retry the commit (a NEW commit; do NOT `--amend`).
 

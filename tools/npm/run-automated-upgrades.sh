@@ -25,7 +25,7 @@ What it does:
   3. Cascade failure (rollback also fails) stops the loop.
   4. Final per-repo summary.
 
-State: ~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
+State: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 
 Rollback safety:
   - Each upgrade is committed separately, locally only.
@@ -61,10 +61,10 @@ if [[ ! "$RUN_ID" =~ ^[A-Z]+-[0-9]+$ ]]; then
     echo "Warning: --run-id '$RUN_ID' does not match Jira-ticket format" >&2
 fi
 
-PKGS_FILE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/packages.${REPO_NAME}.json"
+PKGS_FILE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/packages.${REPO_NAME}.json"
 [[ -f "$PKGS_FILE" ]] || { echo "Packages file not found: $PKGS_FILE" >&2; exit 1; }
 
-REPO_PATH="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO_NAME"
+REPO_PATH="$HOME/git/defra/trade-imports-workspace/repos/$REPO_NAME"
 [[ -d "$REPO_PATH" ]] || { echo "Repo not found: $REPO_PATH" >&2; exit 1; }
 
 echo "==========================================="
@@ -175,22 +175,22 @@ echo
 
 if [[ $SUCCESS -gt 0 ]]; then
     echo "✅ Review successful upgrades:"
-    echo "   git -C ~/git/defra/trade-imports-animals-workspace/repos/$REPO_NAME log --oneline -$SUCCESS"
-    echo "   npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/$REPO_NAME test"
+    echo "   git -C ~/git/defra/trade-imports-workspace/repos/$REPO_NAME log --oneline -$SUCCESS"
+    echo "   npm --prefix ~/git/defra/trade-imports-workspace/repos/$REPO_NAME test"
     echo
 fi
 
 if [[ $FAILED -gt 0 ]]; then
     echo "❌ Failed packages auto-demoted to classification=manual:"
-    echo "   ~/git/defra/trade-imports-animals-workspace/tools/npm/packages-list.sh --run-id $RUN_ID --repo $REPO_NAME --status failed"
+    echo "   ~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id $RUN_ID --repo $REPO_NAME --status failed"
     echo
 fi
 
 if [[ $SUCCESS -gt 0 ]]; then
     echo "🚀 Push when ready:"
-    echo "   git -C ~/git/defra/trade-imports-animals-workspace/repos/$REPO_NAME push origin <branch-name>"
+    echo "   git -C ~/git/defra/trade-imports-workspace/repos/$REPO_NAME push origin <branch-name>"
     echo
 fi
 
 echo "📊 Overall status:"
-echo "   ~/git/defra/trade-imports-animals-workspace/tools/npm/packages-counts.sh --run-id $RUN_ID"
+echo "   ~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id $RUN_ID"

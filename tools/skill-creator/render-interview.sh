@@ -23,7 +23,7 @@ done
 
 [[ -z "$RUN_ID" ]] && { echo "Missing --run-id" >&2; exit 1; }
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/skill-creator/$RUN_ID/decisions.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/skill-creator/$RUN_ID/decisions.json"
 [[ -f "$target" ]] || { echo "No decisions.json at $target" >&2; exit 1; }
 
 name=$(jq -r '.name' "$target")

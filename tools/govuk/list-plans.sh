@@ -67,7 +67,7 @@ case "$FILTER" in
     *) error "Invalid --filter: $FILTER" ;;
 esac
 
-WORKSPACE_BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID"
+WORKSPACE_BASE="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID"
 
 if [[ ! -d "$WORKSPACE_BASE" ]]; then
     error "Workspace not found: $WORKSPACE_BASE. Run discover-versions.sh first."

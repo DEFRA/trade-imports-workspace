@@ -42,7 +42,7 @@ done
 [[ -z "$TICKET" ]] && { echo "Missing ticket" >&2; exit 1; }
 [[ -z "$REPO" ]] && { echo "Missing --repo" >&2; exit 1; }
 
-review_dir="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET"
+review_dir="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET"
 file_review_dir="$review_dir/file-reviews/$REPO"
 items_file="$review_dir/items.${REPO}.json"
 

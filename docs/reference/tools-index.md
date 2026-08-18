@@ -1,7 +1,7 @@
 # Tools (`tools/`)
 
 Shared shell scripts called by skills via
-`~/git/defra/trade-imports-animals-workspace/tools/<domain>/<script>`. Environment:
+`~/git/defra/trade-imports-workspace/tools/<domain>/<script>`. Environment:
 `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY`.
 
 | Script | Args | Purpose |

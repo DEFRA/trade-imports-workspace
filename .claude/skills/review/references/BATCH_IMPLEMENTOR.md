@@ -17,7 +17,7 @@ Pull every item with Disposition=`Fix` and Status=`Not Done` (or
 `Failed` from a prior run that should be retried):
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/review/review-items.sh EUDPA-XXXXX --filter fix --status not-done --json
+~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --filter fix --status not-done --json
 ```
 
 Apply any filters from the trigger:
@@ -54,26 +54,26 @@ grep streaming output or re-run to check partial results.
 
 Unit tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/{repo}-unit-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created.
 
 E2E tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created for the summary. If failures exist,
 do NOT grep the console output — find and read the structured Playwright
 artifacts instead:
 ```bash
-find ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
+find ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
 ```
 
 ### Java repo (backend)
 Runs surefire (unit `*Test`) and failsafe (integration `*IT`,
 Testcontainers-backed) in one pass:
 ```bash
-mvn -f ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-backend/pom.xml verify > /tmp/backend-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-backend/pom.xml verify > /tmp/backend-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created. Confirm both `Tests run:` totals
 (surefire and failsafe) and `BUILD SUCCESS`.
@@ -98,7 +98,7 @@ Process fixes in item-number order within each repo.
 For each item, spawn a `general-purpose` Task subagent. Spawn prompt:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/review/references/REVIEW_ITEM_FIXER.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/REVIEW_ITEM_FIXER.md.
 
 **Ticket:** EUDPA-XXXXX
 **Item:** #{N}
@@ -116,11 +116,11 @@ within the same repo may affect shared files or tests).
 
 | Result | Action |
 |--------|--------|
-| `DONE` | `~/git/defra/trade-imports-animals-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
-| `SKIPPED` | `~/git/defra/trade-imports-animals-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
-| `FAILED` | `~/git/defra/trade-imports-animals-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
+| `DONE` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
+| `SKIPPED` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
+| `FAILED` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
 | `CANNOT START` | **Stop immediately.** Report pre-existing failures. Ask user to resolve before re-running. |
-| `WON'T FIX` | `~/git/defra/trade-imports-animals-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
+| `WON'T FIX` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
 
 ---
 
@@ -131,7 +131,7 @@ running on a review-handoff branch (set up by `share-review.sh` during
 the reviewer's FRESH Step 5.5):
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace rev-parse --abbrev-ref HEAD
+git -C ~/git/defra/trade-imports-workspace rev-parse --abbrev-ref HEAD
 ```
 
 If the branch name is exactly `chore/EUDPA-XXXXX` (matching this
@@ -162,7 +162,7 @@ Failed (Status=Failed in the items table — re-run to retry):
   #{N} [{repo}] — {reason}
   ...
 
-Run `~/git/defra/trade-imports-animals-workspace/tools/review/review-counts.sh EUDPA-XXXXX` for the updated breakdown.
+Run `~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX` for the updated breakdown.
 ```
 
 ---
@@ -186,11 +186,11 @@ On `Y` (default): switch the workspace back and delete the local
 branch.
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace checkout main
+git -C ~/git/defra/trade-imports-workspace checkout main
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace branch -D chore/EUDPA-XXXXX
+git -C ~/git/defra/trade-imports-workspace branch -D chore/EUDPA-XXXXX
 ```
 
 On `n`: skip both prompts.
@@ -205,5 +205,5 @@ Default is **No** — the reviewer may still want to refer back to it.
 On `y`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/github/delete-remote-branch.sh trade-imports-animals-workspace chore/EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/github/delete-remote-branch.sh trade-imports-workspace chore/EUDPA-XXXXX
 ```

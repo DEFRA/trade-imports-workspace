@@ -7,7 +7,7 @@ paper trail.
 ## Location
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/file-reviews/{repo}/{encoded_path}.style.json
+~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/file-reviews/{repo}/{encoded_path}.style.json
 ```
 
 `{encoded_path}` is the file path with `/` replaced by `_`
@@ -101,7 +101,7 @@ underscore) by the aggregator.
 ## Citation convention
 
 `best_practice` is the relative path under
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/` of the rule
+`~/git/defra/trade-imports-workspace/docs/best-practices/` of the rule
 that was violated (e.g. `node/code-style.md`,
 `doc-comments/jsdoc.md`). Only set when the finding maps to a
 best-practices file the reviewer actually loaded.

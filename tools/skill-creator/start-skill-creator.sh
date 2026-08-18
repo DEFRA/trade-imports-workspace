@@ -23,7 +23,7 @@ set -e
 TRIGGER="${1:-}"
 [[ -z "$TRIGGER" ]] && { echo "Usage: $0 \"<trigger phrase>\"" >&2; exit 1; }
 
-WS="$HOME/git/defra/trade-imports-animals-workspace"
+WS="$HOME/git/defra/trade-imports-workspace"
 SKILLS_DIR="$WS/.claude/skills"
 AUDITS_DIR="$WS/workareas/skills-audit"
 INTERVIEWS_DIR="$WS/workareas/skill-creator"

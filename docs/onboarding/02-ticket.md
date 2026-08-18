@@ -51,7 +51,7 @@ Don't memorise the surface — read the current version:
 - `.claude/skills/ticket/SKILL.md` — what it does — straight from source
 - `workareas/ticket-planning/EUDPA-X/` — where the plan and context land
 
-Run `~/git/defra/trade-imports-animals-workspace/tools/auth.sh` first — the skill fetches Jira and GitHub.
+Run `~/git/defra/trade-imports-workspace/tools/auth.sh` first — the skill fetches Jira and GitHub.
 
 ## Try it
 

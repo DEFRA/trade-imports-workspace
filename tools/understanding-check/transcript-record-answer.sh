@@ -29,7 +29,7 @@ done
 
 [[ -z "$TICKET" || -z "$QID" ]] && { echo "Usage: $0 EUDPA-XXXXX --question-id Q3 --answer-file FILE [--skipped]" >&2; exit 1; }
 
-CHECK_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET"
+CHECK_DIR="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET"
 questions="$CHECK_DIR/questions.json"
 target="$CHECK_DIR/transcript.json"
 

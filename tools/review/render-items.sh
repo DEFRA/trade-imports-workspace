@@ -21,7 +21,7 @@ done
 [[ -z "$TICKET" ]] && { echo "Usage: $0 EUDPA-XXXXX --repo REPO" >&2; exit 1; }
 [[ -z "$REPO"   ]] && { echo "--repo required" >&2; exit 1; }
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 [[ -f "$target" ]] || { echo "Items file not found: $target" >&2; exit 1; }
 
 echo "| # | File | Line | Severity | Category | Issue | Fix | Disposition | Status | Notes |"

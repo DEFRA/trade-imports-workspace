@@ -14,13 +14,13 @@ caller's call unless they said otherwise.
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/...`.
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/...`.
 Bash expands `~` automatically. Skill-internal references stay relative.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../docs/agent-skills.md) → "Bash call hygiene".
 For this repo that means `npm --prefix
-~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run <script>`
+~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run <script>`
 — never `cd`.
 
 ## The architecture in one breath
@@ -46,7 +46,7 @@ the rules or the baseline.
 ## When to use
 
 All recipe/guide paths below are inside
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/src/server/app/`.
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/src/server/app/`.
 
 | Trigger | Recipe to follow verbatim |
 |---------|---------------------------|
@@ -82,7 +82,7 @@ ticket planning (`ticket`).
 Before editing, prove the ground is green so failures are yours:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:live-animals
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
 ```
 
 If this is red at baseline, STOP and report — do not build on a broken tree.
@@ -156,23 +156,23 @@ report the failure honestly.
 Run in order; each must be green before the next. One Playwright run at a time.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:live-animals
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend test
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend test
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run lint
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run lint
 ```
 
 ```bash
-PORT=3050 npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:features
+PORT=3050 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:features
 ```
 
 ```bash
-PORT=3050 npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:e2e
+PORT=3050 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:e2e
 ```
 
 The Playwright suites self-host the app (stub mode) — no workspace stack

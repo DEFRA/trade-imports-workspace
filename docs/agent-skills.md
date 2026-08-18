@@ -23,11 +23,11 @@ path that should be workspace-relative.
 Two layers:
 
 - **In LLM-typed commands** (SKILL.md, references/*.md, spawn prompts):
-  use the literal home-relative path `~/git/defra/trade-imports-animals-workspace/...`.
+  use the literal home-relative path `~/git/defra/trade-imports-workspace/...`.
   Bash expands `~` to `$HOME` automatically. Contributors must clone
   to this canonical location for the LLM-typed allowlist to match.
 - **Inside `tools/<domain>/<script>.sh`**: scripts hardcode the path
-  literally as `$HOME/git/defra/trade-imports-animals-workspace/...`. No env var.
+  literally as `$HOME/git/defra/trade-imports-workspace/...`. No env var.
   `$HOME` expands inside the shell at script-run time; it never reaches
   the permission system or an LLM.
 
@@ -46,13 +46,13 @@ parent of the workspace happened to contain a stray `.claude/` directory.
 ## Path conventions
 
 Cross-workspace references in `SKILL.md` use absolute paths anchored on
-`~/git/defra/trade-imports-animals-workspace`:
+`~/git/defra/trade-imports-workspace`:
 
 ```
-Scripts:        ~/git/defra/trade-imports-animals-workspace/tools/<domain>/<script>
-Best-practices: ~/git/defra/trade-imports-animals-workspace/docs/best-practices/<topic>/<file>
-Workareas:      ~/git/defra/trade-imports-animals-workspace/workareas/...
-Other skills:   ~/git/defra/trade-imports-animals-workspace/.claude/skills/<name>/...
+Scripts:        ~/git/defra/trade-imports-workspace/tools/<domain>/<script>
+Best-practices: ~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>
+Workareas:      ~/git/defra/trade-imports-workspace/workareas/...
+Other skills:   ~/git/defra/trade-imports-workspace/.claude/skills/<name>/...
 ```
 
 Skill-internal references stay relative from `SKILL.md`:
@@ -80,7 +80,7 @@ each piece would individually. Symptoms:
 - `$VAR` in the command — Claude Code's "Contains simple_expansion"
   check ([GH#51001](https://github.com/anthropics/claude-code/issues/51001))
   trips before the allowlist matcher sees it. Use literal
-  `~/git/defra/trade-imports-animals-workspace/...` paths.
+  `~/git/defra/trade-imports-workspace/...` paths.
 - `/Users/<you>/git/...` resolved-tilde form — the matcher compares
   literal strings, so `~/git/...` and `/Users/<you>/git/...` are
   *different* prefixes. Always type the `~/` form, never resolve it
@@ -129,7 +129,7 @@ description: ...          # 1-1024 chars; WHAT + WHEN + trigger keywords
 - `references/<NAME>.md` — additional docs loaded on demand.
 - `assets/<NAME>.md` — templates, schemas, static resources.
 - Skills do NOT carry private `scripts/` folders in this workspace: shared
-  shell scripts live at `~/git/defra/trade-imports-animals-workspace/tools/`.
+  shell scripts live at `~/git/defra/trade-imports-workspace/tools/`.
 
 Spawn idiom inside `SKILL.md`:
 
@@ -144,7 +144,7 @@ prose inside the owning skill. They are spawned via the Task tool with
 `subagent_type: general-purpose` and a prompt that begins:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/<owner>/references/<NAME>.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/<owner>/references/<NAME>.md.
 
 <per-spawn context: file/path/commit/output-path>
 ```
@@ -177,6 +177,6 @@ Rationale:
 
 ## Runtime workareas
 
-`~/git/defra/trade-imports-animals-workspace/workareas/` is runtime cache and is gitignored. Skills
+`~/git/defra/trade-imports-workspace/workareas/` is runtime cache and is gitignored. Skills
 populate it (reviews, code-style reviews, ticket plans, upgrades) as they
 run; nothing under `workareas/` is part of the checked-in audit trail.

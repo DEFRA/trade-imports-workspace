@@ -16,14 +16,14 @@ Your spawn prompt gives you:
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/...`. Bash expands `~`.
+`~/git/defra/trade-imports-workspace/...`. Bash expands `~`.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Output contract — one helper call
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/transcript-add-score.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict <PASS|PARTIAL|FAIL> \
@@ -101,7 +101,7 @@ Answer:
 Your call:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/transcript-add-score.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict PASS \
@@ -118,7 +118,7 @@ Same question. Answer:
 Your call:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/transcript-add-score.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict PARTIAL \
@@ -137,7 +137,7 @@ Same question. Answer:
 Your call (the answer never addresses the actual question):
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/transcript-add-score.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/transcript-add-score.sh \
     EUDPA-XXXXX \
     --question-id Q3 \
     --verdict FAIL \

@@ -31,7 +31,7 @@ for v in RUN_ID REPO VERSION REASON; do
     [[ -z "${!v}" ]] && { echo "Missing --${v,,}" >&2; exit 1; }
 done
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
 [[ -f "$target" ]] || { echo "Versions file not found: $target" >&2; exit 1; }
 
 exists=$(jq --arg v "$VERSION" '[.versions[] | select(.version == $v)] | length' "$target")

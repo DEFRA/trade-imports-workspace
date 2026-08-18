@@ -80,9 +80,9 @@ echo
 # Step 1: discover in-scope repos.
 discover_args=(--run-id "$RUN_ID" --branch "$BRANCH")
 [[ -n "$TARGET_VERSION" ]] && discover_args+=(--target "$TARGET_VERSION")
-"$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/discover-repos.sh" "${discover_args[@]}"
+"$HOME/git/defra/trade-imports-workspace/tools/govuk/discover-repos.sh" "${discover_args[@]}"
 
-META_FILE="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/.run-meta.json"
+META_FILE="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/.run-meta.json"
 REPOS=()
 while IFS= read -r line; do
     REPOS+=("$line")
@@ -97,22 +97,22 @@ fi
 echo
 echo "Setting up branch $BRANCH on ${#REPOS[@]} repo(s)..."
 for repo in "${REPOS[@]}"; do
-    "$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/setup-branch.sh" --branch "$BRANCH" --repo "$repo"
+    "$HOME/git/defra/trade-imports-workspace/tools/govuk/setup-branch.sh" --branch "$BRANCH" --repo "$repo"
 done
 
 # Step 3: discover versions per repo.
 echo
 echo "Discovering versions per repo..."
 for repo in "${REPOS[@]}"; do
-    repo_path="$HOME/git/defra/trade-imports-animals-workspace/repos/$repo"
+    repo_path="$HOME/git/defra/trade-imports-workspace/repos/$repo"
     dv_args=("$repo_path" --run-id "$RUN_ID")
     [[ -n "$TARGET_VERSION" ]] && dv_args+=(--target "$TARGET_VERSION")
-    "$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/discover-versions.sh" "${dv_args[@]}"
+    "$HOME/git/defra/trade-imports-workspace/tools/govuk/discover-versions.sh" "${dv_args[@]}"
 done
 
 echo
 echo "=== START COMPLETE ==="
-"$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/list-plans.sh" --run-id "$RUN_ID"
+"$HOME/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh" --run-id "$RUN_ID"
 
 # Step 4: security pre-flight. Surface HIGH/CRITICAL npm advisories per
 # repo before any upgrade work. Report-and-warn only — `npm audit fix`
@@ -125,7 +125,7 @@ echo
 echo "=== SECURITY PRE-FLIGHT (npm audit, HIGH/CRITICAL) ==="
 preflight_flagged=0
 for repo in "${REPOS[@]}"; do
-    repo_path="$HOME/git/defra/trade-imports-animals-workspace/repos/$repo"
+    repo_path="$HOME/git/defra/trade-imports-workspace/repos/$repo"
     audit_json=$(npm --prefix "$repo_path" audit --json 2>/dev/null || true)
     high=$(printf '%s' "$audit_json" | jq -r '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo 0)
     critical=$(printf '%s' "$audit_json" | jq -r '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo 0)

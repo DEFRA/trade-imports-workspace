@@ -132,7 +132,7 @@ Then the run loop, driven by `scripts/stack/`:
 - `scripts/stack/run-stack.sh --dev` — build and run all eight services
   together from your local `repos/` (hot-reload for Node, volume mount for
   Java). Drop `--dev` to run from published images instead.
-- `docker compose -p trade-imports-animals logs -f …` — tail the frontend,
+- `docker compose -p trade-imports logs -f …` — tail the frontend,
   admin and backend logs. `Ctrl-C` stops watching, not the stack.
 - `scripts/stack/bounce-backend.sh` — recreate the backend to pick up
   edited Java source. `scripts/stack/stop-stack.sh` tears the stack down
@@ -155,7 +155,7 @@ live in `scripts/stack/run-stack.sh --help` and `docker/stack/AGENTS.md`.
 Before the next session, get the stack running end to end:
 
 1. Clone the workspace to the canonical location
-   (`~/git/defra/trade-imports-animals-workspace`) — the tooling assumes
+   (`~/git/defra/trade-imports-workspace`) — the tooling assumes
    this path. If yours is elsewhere, symlink it; see
    [`agent-onboarding.md`](../agent-onboarding.md). Then run `make setup`
    and `make install`.

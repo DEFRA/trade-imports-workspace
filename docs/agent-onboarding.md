@@ -20,14 +20,14 @@ for cmd in curl jq gh; do command -v "$cmd" >/dev/null || brew install "$cmd"; d
 ### 1. Canonical clone location
 
 This workspace expects to live at
-`~/git/defra/trade-imports-animals-workspace`. Every LLM-typed Bash
+`~/git/defra/trade-imports-workspace`. Every LLM-typed Bash
 command, every helper script, and the `.claude/settings.json` allowlist
 patterns hardcode that path. No env var to set.
 
 If your checkout is elsewhere, symlink it:
 
 ```bash
-ln -s "$(pwd)" ~/git/defra/trade-imports-animals-workspace
+ln -s "$(pwd)" ~/git/defra/trade-imports-workspace
 ```
 
 (run from your checkout root). `git -C <symlink>` and
@@ -204,8 +204,8 @@ default `+refs/heads/*` fetch refspec drags them in on a bare
 Pin your workspace clone once:
 
 ```bash
-bash tools/git/light-remote.sh --exclude-gh-pages ~/git/defra/trade-imports-animals-workspace
-git -C ~/git/defra/trade-imports-animals-workspace gc --prune=now   # reclaims ~1 GiB if gh-pages was ever fetched
+bash tools/git/light-remote.sh --exclude-gh-pages ~/git/defra/trade-imports-workspace
+git -C ~/git/defra/trade-imports-workspace gc --prune=now   # reclaims ~1 GiB if gh-pages was ever fetched
 ```
 
 Per-ticket review clones under `workareas/` are pinned automatically by

@@ -27,7 +27,7 @@ case "$VERDICT" in
 esac
 
 encoded="${FILE//\//_}"
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"
 [[ -f "$target" ]] || { echo "No review file at $target — call file-review-init.sh first" >&2; exit 1; }
 
 now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

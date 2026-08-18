@@ -36,7 +36,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: DEFRA/trade-imports-animals-workspace
+          repository: DEFRA/trade-imports-workspace
           # Workspace PRs and dispatches must exercise their own stack changes.
           # A caller's event name surfaces here as its own (a frontend PR reads
           # as pull_request), so branch is the discriminator instead: it is
@@ -109,7 +109,7 @@ jobs:
       # service (not the test) are diagnosable. Runs only on failure.
       - name: Capture stack logs
         if: failure()
-        run: docker compose -p trade-imports-animals logs --no-color --timestamps > stack-logs.txt 2>&1 || true
+        run: docker compose -p trade-imports logs --no-color --timestamps > stack-logs.txt 2>&1 || true
 
       - name: Upload stack logs
         if: failure()
@@ -121,7 +121,7 @@ jobs:
 
       - name: Tear down stack
         if: always()
-        run: docker compose -p trade-imports-animals down
+        run: docker compose -p trade-imports down
 
   merge-reports:
     if: always() && needs.e2e.result != 'skipped'

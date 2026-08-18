@@ -1,4 +1,4 @@
-# trade-imports-animals workspace
+# trade-imports workspace
 
 Local workspace aggregating the DEFRA trade imports animals service repos. Not a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.
 
@@ -16,11 +16,11 @@ Local workspace aggregating the DEFRA trade imports animals service repos. Not a
 ## Quickstart
 
 The workspace and every helper script under `tools/` hardcode the path
-`~/git/defra/trade-imports-animals-workspace`. If your checkout is
+`~/git/defra/trade-imports-workspace`. If your checkout is
 elsewhere, symlink it before doing anything else:
 
 ```bash
-ln -s "$(pwd)" ~/git/defra/trade-imports-animals-workspace
+ln -s "$(pwd)" ~/git/defra/trade-imports-workspace
 ```
 
 Then:

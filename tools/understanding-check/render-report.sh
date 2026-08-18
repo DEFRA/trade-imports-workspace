@@ -23,7 +23,7 @@ done
 
 [[ -z "$TICKET" ]] && { echo "Usage: $0 EUDPA-XXXXX [--preview]" >&2; exit 1; }
 
-CHECK_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET"
+CHECK_DIR="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET"
 meta="$CHECK_DIR/.interview-meta.json"
 questions="$CHECK_DIR/questions.json"
 

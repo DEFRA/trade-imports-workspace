@@ -12,12 +12,12 @@ underlying JSON: `assets/version-state-schema.md`.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/list-plan-summaries.sh --run-id EUDPA-XXXXX --json
+~/git/defra/trade-imports-workspace/tools/govuk/list-plan-summaries.sh --run-id EUDPA-XXXXX --json
 ```
 
 Apply `--repo {repo}` from the trigger if the user filtered.
@@ -94,7 +94,7 @@ Implementation:
   without a plan).
 - `S` for any row → call
   ```bash
-  ~/git/defra/trade-imports-animals-workspace/tools/govuk/version-classify.sh \
+  ~/git/defra/trade-imports-workspace/tools/govuk/version-classify.sh \
     --run-id EUDPA-XXXXX --repo {repo} --version {version} \
     --classification noop --summary "walker-skipped"
   ```
@@ -102,7 +102,7 @@ Implementation:
 - `D` → defer to Step 4 (don't mutate yet).
 - `Q` → call
   ```bash
-  ~/git/defra/trade-imports-animals-workspace/tools/govuk/version-mark-failed.sh \
+  ~/git/defra/trade-imports-workspace/tools/govuk/version-mark-failed.sh \
     --run-id EUDPA-XXXXX --repo {repo} --version {version} \
     --reason "walker-quarantined"
   ```
@@ -131,7 +131,7 @@ For each row marked `D`, in input order:
 
 1. **Render the plan:**
    ```bash
-   ~/git/defra/trade-imports-animals-workspace/tools/govuk/render-version-plan.sh \
+   ~/git/defra/trade-imports-workspace/tools/govuk/render-version-plan.sh \
      --run-id EUDPA-XXXXX --repo {repo} --version {version}
    ```
    This prints the JSON plan as markdown including the pre-baked
@@ -159,7 +159,7 @@ Move to the next Discuss row.
 Re-print the work list so the user can see what changed:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/list-plans.sh --run-id EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh --run-id EUDPA-XXXXX
 ```
 
 Then the summary:

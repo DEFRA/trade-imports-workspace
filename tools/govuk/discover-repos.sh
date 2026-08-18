@@ -40,7 +40,7 @@ done
 
 [[ -z "$RUN_ID" ]] && { echo "--run-id required" >&2; exit 1; }
 
-REPOS_DIR="$HOME/git/defra/trade-imports-animals-workspace/repos"
+REPOS_DIR="$HOME/git/defra/trade-imports-workspace/repos"
 [[ -d "$REPOS_DIR" ]] || { echo "Repos dir not found: $REPOS_DIR" >&2; exit 1; }
 
 # Find every package.json in repos/* (depth 2 — one per repo).
@@ -54,7 +54,7 @@ while IFS= read -r pj; do
     [[ "$has_govuk" == "true" ]] && repos+=("$repo")
 done < <(find "$REPOS_DIR" -maxdepth 2 -mindepth 2 -name package.json | sort)
 
-WORKSPACE_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID"
+WORKSPACE_DIR="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID"
 mkdir -p "$WORKSPACE_DIR"
 META_FILE="$WORKSPACE_DIR/.run-meta.json"
 

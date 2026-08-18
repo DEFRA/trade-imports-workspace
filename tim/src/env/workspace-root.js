@@ -13,7 +13,7 @@ export const CANONICAL_WORKSPACE_PATH = resolve(
   homedir(),
   'git',
   'defra',
-  'trade-imports-animals-workspace'
+  'trade-imports-workspace'
 )
 
 const looksLikeWorkspaceRoot = (path) =>
@@ -71,7 +71,7 @@ export const resolveWorkspaceRoot = ({
     if (!looksLikeWorkspaceRoot(resolved)) {
       throw new TimError(
         'USAGE',
-        `Workspace path ${resolved} does not look like a trade-imports-animals workspace (missing Makefile, .git or repos/).`
+        `Workspace path ${resolved} does not look like a trade-imports workspace (missing Makefile, .git or repos/).`
       )
     }
     return resolved

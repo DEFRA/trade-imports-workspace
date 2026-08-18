@@ -5,7 +5,7 @@ and an entry page) as a single TDD increment. Everything you need is in the
 recipe; do not ask questions.
 
 Recipe (single source of truth — follow verbatim, do not restate its steps):
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/docs/add-a-collection.md`
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/docs/add-a-collection.md`
 (7 steps; §7 is nesting). Reference implementations: `features/documents/`
 (list/entry split) and `features/commodities/` (item-scoped conditional).
 `npm run` scripts run from the frontend repo root.

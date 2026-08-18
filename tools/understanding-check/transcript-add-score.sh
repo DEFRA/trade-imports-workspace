@@ -37,7 +37,7 @@ done
 
 case "$VERDICT" in PASS|PARTIAL|FAIL) ;; *) echo "Error: --verdict must be PASS|PARTIAL|FAIL" >&2; exit 1 ;; esac
 
-CHECK_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET"
+CHECK_DIR="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET"
 questions="$CHECK_DIR/questions.json"
 target="$CHECK_DIR/transcript.json"
 

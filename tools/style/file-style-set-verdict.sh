@@ -27,7 +27,7 @@ case "$VERDICT" in
 esac
 
 encoded="${FILE//\//_}"
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/$TICKET/file-reviews/$REPO/$encoded.style.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/file-reviews/$REPO/$encoded.style.json"
 [[ -f "$target" ]] || { echo "No style file at $target — call file-style-init.sh first" >&2; exit 1; }
 
 now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

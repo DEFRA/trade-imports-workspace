@@ -45,7 +45,7 @@ clone_if_missing() {
   fi
 }
 
-echo "Setting up trade-imports-animals workspace..."
+echo "Setting up trade-imports workspace..."
 clone_if_missing trade-imports-animals-frontend
 clone_if_missing trade-imports-animals-backend
 clone_if_missing trade-imports-animals-tests

@@ -62,7 +62,7 @@ fi
 PKG_JSON="$REPO_PATH/package.json"
 [[ -f "$PKG_JSON" ]] || { echo "package.json not found: $PKG_JSON" >&2; exit 1; }
 
-WORKSPACE_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
+WORKSPACE_DIR="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
 mkdir -p "$WORKSPACE_DIR"
 TARGET="$WORKSPACE_DIR/packages.${REPO}.json"
 

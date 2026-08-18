@@ -64,7 +64,7 @@ if ! echo "$RUBRIC_PARTIAL" | grep -Eiq "$categorical_re"; then
     exit 1
 fi
 
-CHECK_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET"
+CHECK_DIR="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET"
 target="$CHECK_DIR/questions.json"
 
 if [[ ! -f "$target" ]]; then

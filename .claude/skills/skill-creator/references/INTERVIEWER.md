@@ -21,11 +21,11 @@ Your job: fill in `answers.*` via
 
 If not already in context:
 
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/skills/patterns.md`
+- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/patterns.md`
   — the 8-pattern checklist (used to phrase each question).
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/skills/anti-patterns.md`
+- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/anti-patterns.md`
   — to call out mismatches as the user answers.
-- `~/git/defra/trade-imports-animals-workspace/.claude/skills/skill-creator/assets/interview-schema.md`
+- `~/git/defra/trade-imports-workspace/.claude/skills/skill-creator/assets/interview-schema.md`
   — the JSON shape `interview-add-answer.sh` writes into.
 
 ## Workflow
@@ -34,7 +34,7 @@ Ask each question on its own turn. Each answer informs the next.
 After every answer, call:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/skill-creator/interview-add-answer.sh \
+~/git/defra/trade-imports-workspace/tools/skill-creator/interview-add-answer.sh \
     --run-id <name> --field <field> --value '<value-json>'
 ```
 
@@ -137,7 +137,7 @@ Save as `answers.triggers.disambiguation` (string). Required —
 Show the user a recap:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/skill-creator/render-interview.sh \
+~/git/defra/trade-imports-workspace/tools/skill-creator/render-interview.sh \
     --run-id <name>
 ```
 
@@ -150,7 +150,7 @@ If yes, re-run `interview-add-answer.sh` for the changed field(s).
 If no, scaffold:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/skill-creator/scaffold-skill.sh \
+~/git/defra/trade-imports-workspace/tools/skill-creator/scaffold-skill.sh \
     --run-id <name>
 ```
 

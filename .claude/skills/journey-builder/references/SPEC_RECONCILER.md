@@ -11,7 +11,7 @@ consumable by the add-page skill and by `spec-lint.sh`'s coverage assert.
 - All spec mutations go through the tools scripts
   (`spec-add-field.sh`, `spec-add-page.sh`, `spec-add-conflict.sh`,
   `spec-add-behaviour.sh`, `spec-add-fieldgroup.sh` under
-  `~/git/defra/trade-imports-animals-workspace/tools/journey-builder/`).
+  `~/git/defra/trade-imports-workspace/tools/journey-builder/`).
   Never edit journey-spec.json or conflicts.json directly.
 - One Bash command per call; `~/` paths only.
 - Precedence when sources disagree: confluence-v4 (fields/mandates) >

@@ -1,0 +1,169 @@
+diff --git a/e2e/journey-smoke.spec.js b/e2e/journey-smoke.spec.js
+index 40a3a437..43cf8291 100644
+--- a/e2e/journey-smoke.spec.js
++++ b/e2e/journey-smoke.spec.js
+@@ -6,6 +6,7 @@ import {
+   completeAnswerSections,
+   journeyUrl,
+   selectSpecies,
++  startNotification,
+   values
+ } from './live-animals-journey.js'
+ 
+@@ -19,18 +20,13 @@ test.describe('live-animals journey glue', () => {
+ 
+     await page.goto('/')
+     await page.getByRole('button', { name: 'Start a new notification' }).click()
+-    await expect(heading('What are you importing?')).toBeVisible()
++    await expect(heading('Origin of the import')).toBeVisible()
+ 
+-    // Until the service filter is passed, journey deep links return to it.
+-    await page.goto(journeyUrl(page, 'origin'))
+-    await expect(heading('What are you importing?')).toBeVisible()
++    // Until the entry page is answered, journey deep links return to it — and
++    // the entry page itself is exempt, so there is no redirect loop.
+     await page.goto(journeyUrl(page))
+-    await expect(heading('What are you importing?')).toBeVisible()
+-
+-    await page
+-      .getByRole('radio', { name: 'Live animals or germinal products' })
+-      .check()
+-    await page.getByRole('button', { name: 'Continue' }).click()
++    await expect(heading('Origin of the import')).toBeVisible()
++    await page.goto(journeyUrl(page, 'origin'))
+     await expect(heading('Origin of the import')).toBeVisible()
+ 
+     await chooseCountryOfOrigin(page)
+@@ -75,13 +71,7 @@ test.describe('live-animals journey glue', () => {
+     page
+   }) => {
+     test.slow()
+-    await page.goto('/')
+-    await page.getByRole('button', { name: 'Start a new notification' }).click()
+-    await page
+-      .getByRole('radio', { name: 'Live animals or germinal products' })
+-      .check()
+-    await page.getByRole('button', { name: 'Continue' }).click()
+-    await page.goto(journeyUrl(page))
++    await startNotification(page)
+     await completeAnswerSections(page)
+ 
+     const [document] = values.documents
+diff --git a/e2e/live-animals-journey.js b/e2e/live-animals-journey.js
+index 65f1edb7..47d451c9 100644
+--- a/e2e/live-animals-journey.js
++++ b/e2e/live-animals-journey.js
+@@ -100,29 +100,27 @@ const SHORT_MONTHS = [
+ ]
+ export const ARRIVAL_DATE_IN_WINDOW_DISPLAY = `${arrivalDate.getUTCDate()} ${SHORT_MONTHS[arrivalDate.getUTCMonth()]} ${arrivalDate.getUTCFullYear()}`
+ 
++const FIXTURE_COUNTRY = COUNTRY_LABELS[values.countryOfOrigin]
++
++export const chooseCountryOfOrigin = async (page, name = FIXTURE_COUNTRY) => {
++  await page.getByLabel('Country of origin').selectOption({ label: name })
++}
++
++/** Origin is the journey's entry page: the entry guard holds a notification
++ * there until it is answered, so reaching the hub means answering it. */
+ export const startNotification = async (page) => {
+   await page.goto('/')
+   await page.getByRole('button', { name: 'Start a new notification' }).click()
+-  await expect(
+-    page.getByRole('heading', { name: 'What are you importing?' })
+-  ).toBeVisible()
+-  await page
+-    .getByRole('radio', { name: 'Live animals or germinal products' })
+-    .check()
+-  await page.getByRole('button', { name: 'Continue' }).click()
+   await expect(
+     page.getByRole('heading', { name: 'Origin of the import' })
+   ).toBeVisible()
++  await chooseCountryOfOrigin(page)
++  await page.getByRole('radio', { name: 'No' }).check()
++  await page.getByRole('button', { name: 'Save and continue' }).click()
+   await page.goto(journeyUrl(page))
+   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+ }
+ 
+-const FIXTURE_COUNTRY = COUNTRY_LABELS[values.countryOfOrigin]
+-
+-export const chooseCountryOfOrigin = async (page, name = FIXTURE_COUNTRY) => {
+-  await page.getByLabel('Country of origin').selectOption({ label: name })
+-}
+-
+ const FIXTURE_PORT = PORTS.find((port) => port.code === values.portOfEntry)
+ const FIXTURE_PORT_OPTION = `${FIXTURE_PORT.name} (${FIXTURE_PORT.code})`
+ 
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index f1854652..a4c60046 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -23,7 +23,6 @@ import {
+ } from './sets/live-animals/journeys/linear/features/transport/port-of-entry/arrival-window.js'
+ import { dispatchPages } from './sets/live-animals/journeys/linear/features/index.js'
+ 
+-import * as importTypeFilter from './sets/live-animals/journeys/linear/features/import-type-filter/controller.js'
+ import * as origin from './sets/live-animals/journeys/linear/features/origin/controller.js'
+ import * as commoditiesSearch from './sets/live-animals/journeys/linear/features/commodities/search/search.controller.js'
+ import * as consignmentDetails from './sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js'
+@@ -69,12 +68,6 @@ const committableCollects = (collects) =>
+   })
+ 
+ const cases = [
+-  {
+-    id: 'import-type-filter',
+-    collects: importTypeFilter.meta.collects,
+-    handler: postHandlerOf(importTypeFilter),
+-    payload: { importType: 'live-animals' }
+-  },
+   {
+     id: 'origin',
+     collects: origin.meta.collects,
+diff --git a/src/server/app/flow/unrecognised-answer-keys.test.js b/src/server/app/flow/unrecognised-answer-keys.test.js
+index 3dbbab5c..177c6751 100644
+--- a/src/server/app/flow/unrecognised-answer-keys.test.js
++++ b/src/server/app/flow/unrecognised-answer-keys.test.js
+@@ -63,7 +63,6 @@ describe('#unrecognisedAnswerKeys', () => {
+   it('Should recognise the flow-only and system keys', () => {
+     expect(
+       unrecognisedAnswerKeys({
+-        importType: 'live-animals',
+         declaration: 'confirmed',
+         referenceNumber: 'GBN-AG-26-0001'
+       })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js b/src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js
+index 70780131..f0c62035 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js
+@@ -18,7 +18,6 @@ import { journeyStrip } from '../../../../../shared/kit.js'
+ 
+ import { routes as hubRoutes } from './hub/controller.js'
+ import { routes as dashboardRoutes } from './dashboard/controller.js'
+-import { routes as filterRoutes } from './import-type-filter/controller.js'
+ import { routes as originRoutes } from './origin/controller.js'
+ import { routes as importReasonRoutes } from './import-reason/controller.js'
+ 
+@@ -109,11 +108,6 @@ describe('journey reference strip', () => {
+     expect(context.journeyStrip).toBeUndefined()
+   })
+ 
+-  it('Should render no strip on the import-type filter', async () => {
+-    const { context } = await renderWith(getHandlerOf(filterRoutes))
+-    expect(context.journeyStrip).toBeNull()
+-  })
+-
+   it('Should render no strip on origin while the journey has no saved answers', async () => {
+     const { context } = await renderWith(getHandlerOf(originRoutes))
+     expect(context.journeyStrip).toBeNull()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+index 61a1e406..c27842e5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+@@ -47,7 +47,6 @@ const comprehensive = characterisationCorpus.find(
+ 
+ const parityFixture = structuredClone(comprehensive)
+ for (const flowOrOutOfScope of [
+-  'importType',
+   'declaration',
+   'referenceNumber',
+   'destinationCountry',

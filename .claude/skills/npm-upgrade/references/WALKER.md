@@ -16,12 +16,12 @@ is no pre-veto walker on the auto side — Phase 2 just runs.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification manual --json
+~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification manual --json
 ```
 
 For an optional repo filter add `--repo {repo}`. Also pull the
@@ -29,7 +29,7 @@ failed-auto demotion side (these are already classified manual via
 demoted_from_auto, but a separate query helps render them first):
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification auto --status failed --json
+~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification auto --status failed --json
 ```
 
 If both queries are empty:
@@ -98,7 +98,7 @@ isn't `I`, `D`, or `S` with a clear error and re-prompt.
 
 For `D`:
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-set-status.sh \
+~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
   --run-id EUDPA-XXXXX --repo {repo} --package {pkg} \
   --status failed --failure-reason "Deferred by walker — file follow-up ticket"
 ```
@@ -132,7 +132,7 @@ commits, and we don't want two implementors racing on the same repo).
 Spawn prompt:
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md.
 
 Run ID: EUDPA-XXXXX
 Repository: {repo}
@@ -140,7 +140,7 @@ Package: {package}
 Current: {current}
 Target: {target}
 
-Context bundle: ~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
+Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
 Files affected (from planner): {files_affected}
 Required changes (from planner): {changes_required_summary}
 ```
@@ -152,7 +152,7 @@ You can also call `run-manual-upgrade.sh` directly if you'd prefer the
 script-driven flow without an extra subagent:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/run-manual-upgrade.sh \
+~/git/defra/trade-imports-workspace/tools/npm/run-manual-upgrade.sh \
   --run-id EUDPA-XXXXX --repo {repo} --package {package}
 ```
 
@@ -172,14 +172,14 @@ repo (it has no unit suite — it IS the E2E suite), so this is the
 first chance to confirm the upgrades didn't break the test runner.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
 ```
 
 Read the log file you just created — summary line only. On failure,
 **do NOT grep the streaming output**. Find the structured artifacts:
 
 ```bash
-find ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
+find ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
 ```
 
 Read each `error-context.md` to diagnose what broke. Surface the
@@ -193,7 +193,7 @@ If no `DONE` package was in the tests repo, skip this step.
 ## Step 5: Final report
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-counts.sh --run-id EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id EUDPA-XXXXX
 ```
 
 Print the summary:

@@ -1,18 +1,18 @@
-Cross-repo consistency analysis for an EUDP Live Animals ticket review.
+Cross-repo consistency analysis for an EUDP trade-imports ticket review.
 
 Identify patterns present in some repos but absent in others. Produce
 one `_consistency-check.md` per repo, using the 0-byte stub as a
 tracking gate.
 
-Paths anchored on `~/git/defra/trade-imports-animals-workspace` — compute via the `find_workspace_root`
+Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the `find_workspace_root`
 helper in `docs/agent-skills.md`.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Workspace
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/
+~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/
 ├── ticket.md              # READ: change intent and AC
 ├── .review-meta.json      # READ: repos, PR numbers, commits
 └── file-reviews/{repo}/
@@ -24,8 +24,8 @@ helper in `docs/agent-skills.md`.
 ### 1. Read context
 
 ```bash
-cat ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/.review-meta.json
-cat ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/ticket.md
+cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.review-meta.json
+cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/ticket.md
 ```
 
 ### 2. Read all diffs (from the workspace cache)
@@ -34,7 +34,7 @@ cat ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/ti
 at:
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/.diffs/{repo-name}.diff
+~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.diffs/{repo-name}.diff
 ```
 
 Read those files directly — no need to call `gh pr diff` or
@@ -67,7 +67,7 @@ For **every** repo in `.review-meta.json`, write to the existing 0-byte
 stub:
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/_consistency-check.md
+~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/_consistency-check.md
 ```
 
 Use this template:

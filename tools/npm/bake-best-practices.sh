@@ -25,10 +25,10 @@ done
 [[ -z "$RUN_ID" ]] && { echo "--run-id required" >&2; exit 1; }
 [[ -z "$REPO" ]] && { echo "--repo required" >&2; exit 1; }
 
-OUT_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
+OUT_DIR="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
 mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/best-practices.md"
-BP_BASE="$HOME/git/defra/trade-imports-animals-workspace/docs/best-practices"
+BP_BASE="$HOME/git/defra/trade-imports-workspace/docs/best-practices"
 
 # Curate the relevant subset. Hapi + govuk-frontend influence upgrade
 # risk (framework alignment); testing/playwright influence whether an

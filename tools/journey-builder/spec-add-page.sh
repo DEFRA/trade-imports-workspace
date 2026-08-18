@@ -6,14 +6,14 @@
 # simple strings (provisionalCopy, notes, ...) via --field K=V.
 #
 # Usage:
-#   spec-add-page.sh EUDPA-X --section origin --section-title "Where the animals come from" \
+#   spec-add-page.sh EUDPA-X --section origin --section-title "Where the goods come from" \
 #       --id country-of-origin --slug origin/country --title "Country of origin" \
 #       --collects countryOfOrigin,regionCodeRequirement,regionCode \
 #       [--json gate='{"...":"..."}'] [--field provisionalCopy=true]
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 RUN_ID=""; SECTION=""; SECTION_TITLE=""; ID=""; SLUG=""; TITLE=""; COLLECTS=""
 KEYS=(); VALS=(); IS_JSON=()

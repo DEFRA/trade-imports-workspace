@@ -51,7 +51,7 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 
     @Override
     protected String getDatabaseName() {
-        return "trade-imports-animals";
+        return "trade-imports";
     }
 
     @Override
@@ -542,7 +542,7 @@ This is project policy for any `@Document` class with mutable collection fields.
 spring:
   data:
     mongodb:
-      uri: ${MONGO_URI:mongodb://localhost:27017/trade-imports-animals}
+      uri: ${MONGO_URI:mongodb://localhost:27017/trade-imports}
       auto-index-creation: false
 ```
 

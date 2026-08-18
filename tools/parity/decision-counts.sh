@@ -5,7 +5,7 @@
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 RUN_ID="${1:-}"
 [[ -z "$RUN_ID" ]] && { echo "Usage: $0 EUDPA-X" >&2; exit 1; }
 

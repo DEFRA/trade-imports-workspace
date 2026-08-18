@@ -1,0 +1,34 @@
+commit 9dc103391ce8f309f142785de623faf0ea3e9e06
+Author: Ian Griffiths <iangriffiths89@gmail.com>
+Date:   Tue Aug 11 15:32:18 2026 +0100
+
+    fix(EUDPA-304): update outbox e2e tests for NotificationEdited page-save events (#105)
+    
+    * fix(EUDPA-304): update outbox e2e tests for NotificationEdited page-save events
+    
+    Page saves now emit NotificationEdited, so tests that asserted on total
+    outbox event counts or assumed aggregateVersion=1 for lifecycle events
+    no longer hold.
+    
+    - Delete "does not write an outbox event before submission" — the
+      invariant it tested no longer exists and a negative poll is flaky
+    - outbox-event-notification: filter by eventType=NotificationSubmitted
+      when polling and fetching; remove toHaveLength(1) and aggregateVersion=1
+    - admin-outbox-events: filter table row by NotificationSubmitted text
+      rather than assuming it is always row 0
+    - outbox-event-amendment: query by eventType=NotificationSubmissionAmended
+      directly; change aggregateVersion assertion from toBe(2) to toBeGreaterThan(1)
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+    
+    * EUDPA-304 - Update tests to account for draft status in status change list
+    
+    ---------
+    
+    Co-authored-by: ian.griffiths <ian.griffiths@defra.onmicrosoft.com>
+    Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+ .../e2e/features/admin/admin-outbox-events.spec.ts | 13 ++++-----
+ .../features/admin/outbox-event-amendment.spec.ts  | 19 +++++++------
+ .../admin/outbox-event-notification.spec.ts        | 31 +++++++---------------
+ 3 files changed, 27 insertions(+), 36 deletions(-)

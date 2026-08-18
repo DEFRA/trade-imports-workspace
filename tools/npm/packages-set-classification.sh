@@ -93,7 +93,7 @@ case "$SAFE" in
     *) echo "Invalid --safe-for-automation: $SAFE (true|false)" >&2; exit 1 ;;
 esac
 
-REPO_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
+REPO_DIR="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
 CANONICAL="$REPO_DIR/packages.${REPO}.json"
 [[ -f "$CANONICAL" ]] || { echo "Packages file not found: $CANONICAL" >&2; exit 1; }
 

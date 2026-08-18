@@ -1,7 +1,7 @@
 # Onboarding
 
-This folder is the onboarding programme for new developers on the
-trade-imports-animals service. It exists in two forms that share one
+This folder is the onboarding programme for new developers joining the
+DEFRA trade-imports workspace. It exists in two forms that share one
 structure:
 
 - **Live sessions** — screenshares with a facilitator, recorded so people
@@ -15,10 +15,10 @@ on your own.
 
 ## Who this is for
 
-Developers joining the team who need to get productive across the eight
-service repos, the local stack, and the day-to-day tooling. It assumes
-you can read Node and Java, but not that you know this workspace, the
-DEFRA trade-imports domain, or the agent harness that sits on top.
+Developers joining the team who need to get productive across the service
+repos, the local stack, and the day-to-day tooling. It assumes you can
+read Node and Java, but not that you know this workspace, the DEFRA
+trade-imports domain, or the agent harness that sits on top.
 
 The development model is **agent-first**: you run `claude` in the workspace
 root and the harness — skills, docs, cross-repo tools — wires itself up.
@@ -99,20 +99,20 @@ tickets with Claude without touching the rest of the programme.
 ## Session 1: the workspace, and running it locally
 
 Two headlines. First, this is **not a monorepo**: it is a local workspace
-that clones eight independent GitHub repos side by side and adds shared
-tooling and cross-repo context on top, while each repo keeps its own git
-history, remotes, and CI.
+that clones the trade-imports repos side by side and adds shared tooling
+and cross-repo context on top, while each repo keeps its own git history,
+remotes, and CI.
 
 Second, and more important, the way you work here is **agent-first**. You
 run `claude` in the workspace root and the harness wires itself up — the
 skills, the docs and best-practices, and the cross-repo tools are all
-there. The skills drive the eight repos for you, rather than you working
-each one by hand. Running the agent here is meaningfully more powerful than
+there. The skills drive the repos for you, rather than you working each
+one by hand. Running the agent here is meaningfully more powerful than
 running it in a single vanilla repo, where you'd get a general assistant
 with one repo's context and none of the team's encoded workflows.
 
 That power is **harness engineering**: rather than every developer holding
-the eight-repo workflow in their head, the workspace makes it a single
+the cross-repo workflow in their head, the workspace makes it a single
 place that the agent wires up for:
 
 - **Documentation** — architecture notes, ADRs, runbooks, best-practice
@@ -122,8 +122,8 @@ place that the agent wires up for:
   so CI is drivable without leaving the workspace.
 - **Dev scripts** — the Makefile and `scripts/` that clone, update, lint
   and test all repos at once.
-- **Docker** — one compose stack under `docker/` that stands up all eight
-  services together, from published images or local source.
+- **Docker** — one compose stack under `docker/` that stands up every
+  service together, from published images or local source.
 - **The agent harness** — the skills and `tools/` that encode the team's
   workflows (ticketing, review, upgrades) as repeatable, tested
   operations.
@@ -133,7 +133,7 @@ what the workspace is and how it's laid out; the reference for that is
 `CLAUDE.md`, and `make help` is how you read the current command surface.
 The hands-on half is the day-one "can I actually build and run this" loop:
 `make setup` and `make install` once, then `scripts/stack/run-stack.sh
---dev` to build and run all eight services from your local `repos/`, tail
+--dev` to build and run every service from your local `repos/`, tail
 the logs to watch them, and the E2E suite in the tests repo to exercise the
 running stack. The stack is driven by the scripts under `scripts/stack/`
 (the `make docker-*` targets are thin wrappers); the flags and profiles

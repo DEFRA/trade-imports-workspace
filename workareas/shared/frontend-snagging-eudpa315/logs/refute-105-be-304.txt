@@ -1,0 +1,62 @@
+commit 674b2ac24e7c59af1ebbfd5668cb55f9cb0006d4
+Author: Ian Griffiths <iangriffiths89@gmail.com>
+Date:   Tue Aug 11 15:31:59 2026 +0100
+
+    feat(EUDPA-304): emit NotificationEdited on every notification page save (#73)
+    
+    * feat(EUDPA-304): emit NotificationEdited on every notification page save
+    
+    - Add NOTIFICATION_EDITED to OutboxEventType with the new
+      uk.gov.defra.trade.imports.animals.* namespace and its schema URL
+    - Rename saveOriginOfImport → saveNotification; update signature to
+      accept correlationId and actor so the outbox event gets the right context
+    - Rewrite updateNotification to follow the same ShedLock + @Transactional
+      pattern as writeWithOutbox, emitting NOTIFICATION_EDITED after every
+      save to an existing DRAFT or AMEND notification
+    - Wire x-cdp-request-id header through the POST /notifications controller
+      endpoint; replace origin-specific @Operation text and log message with
+      generic equivalents
+    - Add integration tests: NotificationEdited delivered to SNS with correct
+      eventType and no publishedAt on the wire; aggregateVersion increments
+      monotonically across page save then submit
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+    
+    * fix(EUDPA-304): remove @Transactional from saveNotification
+    
+    @Transactional enrolled ShedLock's MongoDB writes in the Spring
+    transaction, making the lock acquisition invisible to concurrent
+    sessions until the transaction committed. Two concurrent page-save
+    requests for the same notification would both see no lock, both try
+    to upsert the shedLock document, and one would fail with DuplicateKey
+    → OutboxWriteException → 500 → frontend timeout (cph-scope e2e failure).
+    
+    Submit and amend are unaffected because those lifecycle transitions are
+    never concurrent for the same notification. Page saves can be, so the
+    ShedLock alone is used here for version ordering without a wrapping
+    transaction.
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+    
+    * EUDPA-304 - Update lock so it retries instead of failing immediately
+    
+    * EUDPA-304 - Only add status changes for actual status changes, not every save
+    
+    * EUDPA-304 - Update test so it takes into account status changes from DRAFT
+    
+    ---------
+    
+    Co-authored-by: ian.griffiths <ian.griffiths@defra.onmicrosoft.com>
+    Co-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+ .../notification/NotificationController.java       |  11 +-
+ .../animals/notification/NotificationService.java  | 109 ++++++----
+ .../imports/animals/outbox/OutboxEventType.java    |   7 +-
+ .../imports/animals/outbox/OutboxService.java      |  23 +-
+ .../integration/outbox/OutboxIntegrationBase.java  |  22 ++
+ .../animals/integration/outbox/OutboxPollerIT.java |  55 +++++
+ .../notification/NotificationControllerTest.java   |  29 ++-
+ .../notification/NotificationServiceTest.java      | 240 ++++++++++++++++-----
+ .../animals/outbox/OutboxEventTypeTest.java        |   9 +
+ .../imports/animals/outbox/OutboxServiceTest.java  |  92 ++++++++
+ 10 files changed, 475 insertions(+), 122 deletions(-)

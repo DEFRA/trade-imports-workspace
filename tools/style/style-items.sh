@@ -51,7 +51,7 @@ done
 
 [[ -z "$TICKET" ]] && usage
 
-STYLE_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/$TICKET"
+STYLE_DIR="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET"
 [[ -d "$STYLE_DIR" ]] || { echo "Style review workspace not found: $STYLE_DIR" >&2; exit 1; }
 
 disposition_label() {

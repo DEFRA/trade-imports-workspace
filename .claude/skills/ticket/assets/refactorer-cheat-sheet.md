@@ -7,7 +7,7 @@ checklists, refactoring techniques, naming tables, quality checklist and
 the test-run commands it points at.
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/...`. Bash expands `~` automatically.
+`~/git/defra/trade-imports-workspace/...`. Bash expands `~` automatically.
 
 ## Running tests
 
@@ -16,15 +16,15 @@ streaming output:
 
 ```bash
 # Java (backend / stub / reference-data)
-mvn -f ~/git/defra/trade-imports-animals-workspace/repos/<repo>/pom.xml verify > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+mvn -f ~/git/defra/trade-imports-workspace/repos/<repo>/pom.xml verify > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 ```bash
 # Node unit (frontend / admin)
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/<repo> test > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > /tmp/<repo>-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 ```bash
 # E2E (only when changing tests repo or cross-cutting code)
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 
 Swap `pre` for `post` when re-running after a change.

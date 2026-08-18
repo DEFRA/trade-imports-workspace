@@ -1,17 +1,17 @@
 # GitHub Actions — Best Practices
 
-Applies to every repo in the EUDP Live Animals workspace. Focused on the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse) and the checkout-depth knobs that interact with it. Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here — see the matching follow-up ticket.
+Applies to every repo in the trade-imports workspace. Focused on the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse) and the checkout-depth knobs that interact with it. Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here — see the matching follow-up ticket.
 
 ---
 
 ## 1. Use the workspace reusable `e2e-tests.yml` — don't re-implement
 
-E2E publishes go through the workspace-level reusable workflow at `DEFRA/trade-imports-animals-workspace/.github/workflows/e2e-tests.yml`. Per-repo callers stay thin:
+E2E publishes go through the workspace-level reusable workflow at `DEFRA/trade-imports-workspace/.github/workflows/e2e-tests.yml`. Per-repo callers stay thin:
 
 ```yaml
 jobs:
   e2e:
-    uses: DEFRA/trade-imports-animals-workspace/.github/workflows/e2e-tests.yml@main
+    uses: DEFRA/trade-imports-workspace/.github/workflows/e2e-tests.yml@main
     with:
       branch: ${{ github.head_ref || github.ref_name }}
 ```
@@ -46,7 +46,7 @@ Do **not** introduce additional `gh-pages-*` git branches (one per PR, etc.) —
 
 ## 3. Retention is enforced in the shared cleanup workflow — don't opt out
 
-`gh-pages` retention is handled by `DEFRA/trade-imports-animals-workspace/.github/workflows/cleanup-e2e-reports.yml`. Three jobs route by input:
+`gh-pages` retention is handled by `DEFRA/trade-imports-workspace/.github/workflows/cleanup-e2e-reports.yml`. Three jobs route by input:
 
 | Job | Trigger | Effect |
 |---|---|---|
@@ -59,7 +59,7 @@ Per-repo callers stay thin:
 ```yaml
 jobs:
   cleanup:
-    uses: DEFRA/trade-imports-animals-workspace/.github/workflows/cleanup-e2e-reports.yml@main
+    uses: DEFRA/trade-imports-workspace/.github/workflows/cleanup-e2e-reports.yml@main
     with:
       head-ref: ${{ github.head_ref || '' }}
 ```
@@ -119,7 +119,7 @@ Do not introduce additional third-party publish actions. Keep `peaceiris/actions
 
 ## References
 
-- `~/git/defra/trade-imports-animals-workspace/.github/workflows/e2e-tests.yml` — the publish source of truth
-- `~/git/defra/trade-imports-animals-workspace/.github/workflows/cleanup-e2e-reports.yml` — retention + history-truncation
+- `~/git/defra/trade-imports-workspace/.github/workflows/e2e-tests.yml` — the publish source of truth
+- `~/git/defra/trade-imports-workspace/.github/workflows/cleanup-e2e-reports.yml` — retention + history-truncation
 - `repos/trade-imports-animals-frontend/.github/workflows/lighthouse.yml` — second publisher (concurrency group must match the E2E publisher)
 - `peaceiris/actions-gh-pages` — <https://github.com/peaceiris/actions-gh-pages>

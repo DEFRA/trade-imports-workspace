@@ -1,0 +1,210 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.e2e.spec.js
+index bba286c8..1cd25692 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.e2e.spec.js
+@@ -61,15 +61,12 @@ test.describe('check-answers feature summary rows', () => {
+     )
+   })
+ 
+-  test('untouched journey renders Not provided for missing answers', async ({
++  test('newly entered journey renders Not provided for the answers it has not reached', async ({
+     page
+   }) => {
+     await startNotification(page)
+     await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
+ 
+-    await expect(rowFor(page, copy.rows.countryOfOrigin)).toContainText(
+-      copy.notProvided
+-    )
+     await expect(rowFor(page, copy.rows.internalReference)).toContainText(
+       copy.notProvided
+     )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/contact/contact.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/contact/contact.e2e.spec.js
+index 28d5eeb3..4984eeab 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/contact/contact.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/contact/contact.e2e.spec.js
+@@ -6,19 +6,28 @@ import { copy } from './copy/copy.en.js'
+ 
+ const CONTACT_ADDRESS_INPUT = 'input[name="contactAddress"]'
+ 
++// Origin is the journey entry: the guard holds deep links there until it is
++// answered.
++const answerOrigin = async (page) => {
++  await page.getByLabel('Country of origin').selectOption({ label: 'France' })
++  await page.getByRole('radio', { name: 'No' }).check()
++  await page.getByRole('button', { name: 'Save and continue' }).click()
++}
++
+ const startAtContact = async (page) => {
+   await page.goto('/')
+   await page
+     .locator('form[action="/notifications"]')
+     .getByRole('button')
+     .click()
+-  await page.locator('input[name="importType"][value="live-animals"]').check()
+-  await page.locator('form').getByRole('button').click()
+   await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+ 
+-  await page.goto(
+-    page.url().replace(/\/origin$/, '/consignment/contact/select')
+-  )
++  const contactUrl = page
++    .url()
++    .replace(/\/origin$/, '/consignment/contact/select')
++  await answerOrigin(page)
++
++  await page.goto(contactUrl)
+   await expect(page.getByRole('heading', { name: copy.legend })).toBeVisible()
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.e2e.spec.js
+index dadbd056..a76ee718 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.e2e.spec.js
+@@ -7,17 +7,26 @@ import {
+ } from '../../../../../../../../../e2e/live-animals-journey.js'
+ import { copy } from './copy/copy.en.js'
+ 
++// Origin is the journey entry: the guard holds deep links there until it is
++// answered.
++const answerOrigin = async (page) => {
++  await page.getByLabel('Country of origin').selectOption({ label: 'France' })
++  await page.getByRole('radio', { name: 'No' }).check()
++  await page.getByRole('button', { name: 'Save and continue' }).click()
++}
++
+ const startAtDeclaration = async (page) => {
+   await page.goto('/')
+   await page
+     .locator('form[action="/notifications"]')
+     .getByRole('button')
+     .click()
+-  await page.locator('input[name="importType"][value="live-animals"]').check()
+-  await page.locator('form').getByRole('button').click()
+   await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+ 
+-  await page.goto(page.url().replace(/\/origin$/, '/declaration'))
++  const declarationUrl = page.url().replace(/\/origin$/, '/declaration')
++  await answerOrigin(page)
++
++  await page.goto(declarationUrl)
+   await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.e2e.spec.js
+index 5312ce03..9a4008ae 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.e2e.spec.js
+@@ -47,7 +47,9 @@ const openHubWithCommodityTotals = async (page) => {
+ }
+ 
+ test.describe('hub feature', () => {
+-  test('renders navigation copy and initial task statuses', async ({
++  // Origin is the journey entry, so the earliest hub a notification can reach
++  // already has the origin row answered.
++  test('renders navigation copy and the task statuses of a newly entered journey', async ({
+     page
+   }) => {
+     await startNotification(page)
+@@ -61,13 +63,13 @@ test.describe('hub feature', () => {
+     await expect(
+       origin.getByRole('link', { name: copy.rows.origin.title })
+     ).toBeVisible()
+-    await expect(origin).toContainText(copy.statuses.notYetStarted)
++    await expect(origin).toContainText(copy.statuses.completed)
+ 
+     const commodities = taskRow(page, copy.rows.commodities.title)
+-    await expect(commodities).toContainText(copy.statuses.cannotStartYet)
++    await expect(commodities).toContainText(copy.statuses.notYetStarted)
+     await expect(
+       commodities.getByRole('link', { name: copy.rows.commodities.title })
+-    ).toHaveCount(0)
++    ).toBeVisible()
+ 
+     const review = taskRow(page, copy.rows.review.title)
+     await expect(review).toContainText(copy.statuses.cannotStartYet)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.e2e.spec.js
+index cceca352..d14e77df 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.e2e.spec.js
+@@ -8,26 +8,31 @@ import { copy } from './copy/copy.en.js'
+ const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
+ const PURPOSE_INPUT_SELECTOR = 'input[name="purposeInInternalMarket"]'
+ 
++// Origin is the journey entry: the guard holds deep links there until it is
++// answered.
++const answerOrigin = async (page) => {
++  await page.getByLabel('Country of origin').selectOption({ label: 'France' })
++  await page.getByRole('radio', { name: 'No' }).check()
++  await page.getByRole('button', { name: 'Save and continue' }).click()
++}
++
+ const startAtImportPurpose = async (page) => {
+   await page.goto('/')
+   await page
+     .locator('form[action="/notifications"]')
+     .getByRole('button')
+     .click()
+-  await page.locator('input[name="importType"][value="live-animals"]').check()
+-  await page.locator('form').getByRole('button').click()
+   await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+ 
+-  await page.goto(page.url().replace(/\/origin$/, '/import-reason'))
++  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
++  await answerOrigin(page)
++
++  await page.goto(reasonUrl)
+   await page
+     .locator('input[name="reasonForImport"][value="internalMarket"]')
+     .check()
+   await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-  await page.goto(
+-    page
+-      .url()
+-      .replace(/\/notifications\/([^/]+)$/, '/notifications/$1/import-purpose')
+-  )
++  await page.goto(reasonUrl.replace(/\/import-reason$/, '/import-purpose'))
+   await expect(page.getByRole('heading', { name: copy.legend })).toBeVisible()
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js
+index ba9ed9af..2bd9855e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js
+@@ -16,9 +16,6 @@ const startAtOrigin = async (page) => {
+     .locator('form[action="/notifications"]')
+     .getByRole('button')
+     .click()
+-  await page.locator('input[name="importType"][value="live-animals"]').check()
+-  await page.locator('form').getByRole('button').click()
+-
+   await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+   await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+ }
+@@ -106,8 +103,24 @@ test.describe('origin feature', () => {
+     )
+   })
+ 
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/origin$/, '')
++  test('back link returns to the dashboard while the journey is unanswered', async ({
++    page
++  }) => {
++    await page.getByRole('link', { name: 'Back', exact: true }).click()
++
++    await expect(page).toHaveURL('/')
++  })
++
++  test('back link returns to the notification hub once the journey has answers', async ({
++    page
++  }) => {
++    const originUrl = page.url()
++    const hubUrl = originUrl.replace(/\/origin$/, '')
++
++    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await page.getByRole('radio', { name: copy.regionRequirement.no }).check()
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++    await page.goto(originUrl)
+ 
+     await page.getByRole('link', { name: 'Back', exact: true }).click()
+ 

@@ -28,7 +28,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 TICKET=""
 PR_FILTER=""
@@ -148,8 +148,8 @@ while IFS=$'\t' read -r repo pr; do
 \`\`\`bash
 # Branch-scoped fetch — a bare \`fetch origin\` would also pull the
 # workspace repo's gh-pages (~1 GiB).
-git -C ~/git/defra/trade-imports-animals-workspace fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
-git -C ~/git/defra/trade-imports-animals-workspace checkout $BRANCH
+git -C ~/git/defra/trade-imports-workspace fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+git -C ~/git/defra/trade-imports-workspace checkout $BRANCH
 \`\`\`
 
 Then in a Claude Code session opened at the workspace:

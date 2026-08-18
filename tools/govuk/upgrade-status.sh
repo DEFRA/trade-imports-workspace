@@ -53,4 +53,4 @@ args=(--run-id "$RUN_ID")
 [[ "$SORT_SEMVER" == "true" ]] && args+=(--sort-semver)
 [[ "$JSON_OUTPUT" == "true" ]] && args+=(--json)
 
-exec "$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/list-plans.sh" "${args[@]}"
+exec "$HOME/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh" "${args[@]}"

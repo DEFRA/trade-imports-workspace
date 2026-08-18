@@ -33,7 +33,7 @@ done
 
 [[ -z "$RUN_ID" ]] && { echo "--run-id required" >&2; exit 1; }
 
-WORKSPACE_BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID"
+WORKSPACE_BASE="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID"
 [[ -d "$WORKSPACE_BASE" ]] || { echo "Workspace not found: $WORKSPACE_BASE" >&2; exit 1; }
 
 state_files=()

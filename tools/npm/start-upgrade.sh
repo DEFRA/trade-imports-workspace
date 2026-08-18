@@ -23,18 +23,20 @@
 #              failed-auto) package — the WALKER consumes it.
 #
 # All cross-phase state lives in
-# `~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json`.
+# `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json`.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-DEFAULT_REPOS=(
-    trade-imports-animals-frontend
-    trade-imports-animals-backend
-    trade-imports-animals-tests
-    trade-imports-animals-admin
-)
+REPOS_MANIFEST="$SCRIPT_DIR/../../repos.json"
+
+# The default repo set is whichever roster entries carry
+# `npmUpgradeDefault`. Override per run with --repo.
+DEFAULT_REPOS=()
+while IFS= read -r repo; do
+    DEFAULT_REPOS+=("$repo")
+done < <(jq -r '.repos[] | select(.npmUpgradeDefault) | .name' "$REPOS_MANIFEST")
 
 TICKET=""
 PHASE=""
@@ -45,7 +47,8 @@ usage() {
     cat <<EOF >&2
 Usage: $0 EUDPA-XXXXX --phase 1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
 
-Without --repo, runs against all 4 EUDP Live Animals Node repos.
+Without --repo, runs against every repo flagged npmUpgradeDefault in the
+workspace roster, repos.json.
 EOF
     exit 1
 }
@@ -66,8 +69,8 @@ done
 
 [[ "${#REPOS[@]}" -eq 0 ]] && REPOS=("${DEFAULT_REPOS[@]}")
 
-WORKSPACE_BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$TICKET"
-REPO_BASE="$HOME/git/defra/trade-imports-animals-workspace/repos"
+WORKSPACE_BASE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$TICKET"
+REPO_BASE="$HOME/git/defra/trade-imports-workspace/repos"
 
 phase1() {
     mkdir -p "$WORKSPACE_BASE"
@@ -143,7 +146,7 @@ phase1() {
 
     echo >&2
     echo "Phase 1 setup complete. Spawn one PACKAGE_PLANNER per MANIFEST entry," >&2
-    echo "then run: ~/git/defra/trade-imports-animals-workspace/tools/npm/verify-classification-coverage.sh --run-id $TICKET" >&2
+    echo "then run: ~/git/defra/trade-imports-workspace/tools/npm/verify-classification-coverage.sh --run-id $TICKET" >&2
 }
 
 phase2() {
@@ -251,7 +254,7 @@ phase3() {
 
     echo >&2
     echo "Phase 3 manifest emitted. Spawn the WALKER to triage:" >&2
-    echo "  Follow ~/git/defra/trade-imports-animals-workspace/.claude/skills/npm-upgrade/references/WALKER.md (run-id $TICKET)" >&2
+    echo "  Follow ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/WALKER.md (run-id $TICKET)" >&2
 }
 
 case "$PHASE" in

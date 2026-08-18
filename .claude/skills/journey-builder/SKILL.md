@@ -5,9 +5,10 @@ description: Run the serial build loop over a canonical backlog against whicheve
 
 # journey-builder
 
-Run-id: the EUDPA ticket (**EUDPA-328** is the live run; EUDPA-249 was the
-original prototype programme). State lives in
-`workareas/journey-builder/<run-id>/`.
+Runs the serial build loop in whichever repo the target names. The loop scripts
+know nothing about any particular codebase — adding a commodity line is a data
+edit rather than a script change. Treat the target below as the current one, not
+as this skill's scope.
 
 **The target is data.** `tools/journey-builder/targets.json` declares each
 target — repo, scope, spec dir, implementor skill, paths to stage, and the npm
@@ -15,6 +16,10 @@ script for each rung of the verification ladder. A run picks one from
 `--target`, the backlog's `target` field, `.digest-meta.json`, or the default.
 Never hardcode a path in a script or a persona: the last time the target moved,
 four scripts broke at once.
+
+Run-id: the EUDPA ticket (**EUDPA-328** is the live run; EUDPA-249 was the
+original prototype programme). State lives in
+`workareas/journey-builder/<run-id>/`.
 
 The canonical spec lives in the frontend **worktree** at
 `<workarea>/frontend-worktree/<target scope>/spec/` (branch
@@ -31,7 +36,7 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
    Idempotent; `--refetch` refreshes cached sources.
 2. Fan out THREE `general-purpose` Task subagents in parallel, one per
    source (confluence-v4, skeleton, ixd-canvas), each told:
-   "Follow ~/git/defra/trade-imports-animals-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
+   "Follow ~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
    for source <s>, run-id EUDPA-X."
 3. Verify every extract has `status: "complete"` and non-trivial counts
    (`jq .status,.fields,.pages,.behaviours` per file). Re-spawn gaps —

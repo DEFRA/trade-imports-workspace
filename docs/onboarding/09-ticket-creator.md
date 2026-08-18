@@ -50,7 +50,7 @@ Don't memorise the surface — read the current version:
 - `.claude/skills/ticket-creator/SKILL.md` — what it does — straight from source
 - `workareas/ticket-creation/<slug>/draft.md` — where your draft lives while you refine it
 
-Run `~/git/defra/trade-imports-animals-workspace/tools/auth.sh` first — it reads and writes Jira. An engineer sets this up with you once (see [Getting started](00-getting-started.md)).
+Run `~/git/defra/trade-imports-workspace/tools/auth.sh` first — it reads and writes Jira. An engineer sets this up with you once (see [Getting started](00-getting-started.md)).
 
 ## Try it
 

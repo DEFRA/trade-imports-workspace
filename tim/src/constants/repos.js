@@ -1,33 +1,54 @@
 import { join } from 'node:path'
-import { existsSync, realpathSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
+import { CANONICAL_WORKSPACE_PATH } from '../env/workspace-root.js'
+import { TimError } from '../errors.js'
 
-export const REPOS_DIR = 'repos'
+const MANIFEST_FILE = 'repos.json'
 
-export const NODE_REPOS = Object.freeze([
-  'trade-imports-animals-frontend',
-  'trade-imports-animals-admin',
-  'trade-imports-animals-tests',
-  'trade-imports-defra-id-stub',
-  'trade-imports-ins-frontend'
-])
+/**
+ * Where the repo roster can live, in precedence order. The first entry is the
+ * manifest sitting beside this checkout's `tim/`, which is what a workspace
+ * clone (or `npm link`) resolves. `npm i -g .` copies `tim/` alone, so a
+ * globally installed tim falls back to `TIM_WORKSPACE` and then to the
+ * canonical path CLAUDE.md rule 1 mandates.
+ */
+const manifestCandidates = () => [
+  fileURLToPath(new URL(`../../../${MANIFEST_FILE}`, import.meta.url)),
+  ...(process.env.TIM_WORKSPACE
+    ? [join(process.env.TIM_WORKSPACE, MANIFEST_FILE)]
+    : []),
+  join(CANONICAL_WORKSPACE_PATH, MANIFEST_FILE)
+]
 
-export const JAVA_REPOS = Object.freeze([
-  'trade-imports-animals-backend',
-  'trade-imports-stub',
-  'trade-imports-reference-data',
-  'trade-imports-dynamics-gateway',
-  'trade-imports-address-book'
-])
+const readManifest = () => {
+  const candidates = manifestCandidates()
+  const path = candidates.find((candidate) => existsSync(candidate))
+  if (!path) {
+    throw new TimError(
+      'USAGE',
+      `Cannot find the repo roster ${MANIFEST_FILE}. Looked in: ${candidates.join(', ')}.`
+    )
+  }
+  return JSON.parse(readFileSync(path, 'utf8'))
+}
+
+const manifest = readManifest()
+
+const namesWithStack = (stack) =>
+  manifest.repos.filter((repo) => repo.stack === stack).map((repo) => repo.name)
+
+export const REPOS_DIR = manifest.reposDir
+
+export const NODE_REPOS = Object.freeze(namesWithStack('node'))
+
+export const JAVA_REPOS = Object.freeze(namesWithStack('java'))
 
 export const REPOS = Object.freeze([...NODE_REPOS, ...JAVA_REPOS])
 
-// trade-imports-defra-id-stub's unit tests need the env its
-// docker:test compose harness provides (ENTRA_*, S3) — its own CI only
-// runs `npm run docker:test`, so plain `npm test` is red by design and
-// the workspace test loop must skip it.
-export const UNIT_TEST_EXEMPT_REPOS = Object.freeze([
-  'trade-imports-defra-id-stub'
-])
+export const UNIT_TEST_EXEMPT_REPOS = Object.freeze(
+  manifest.repos.filter((repo) => repo.unitTestExempt).map((repo) => repo.name)
+)
 
 export const repoPath = (workspaceRoot, repoName) =>
   join(workspaceRoot, REPOS_DIR, repoName)
@@ -48,7 +69,7 @@ export const isNodeRepo = (repoName) => NODE_REPOS.includes(repoName)
 
 export const isJavaRepo = (repoName) => JAVA_REPOS.includes(repoName)
 
-export const GITHUB_ORG = 'DEFRA'
+export const GITHUB_ORG = manifest.githubOrg
 
 /**
  * Clone URL for a repo. `TIM_GITHUB_BASE_URL` overrides the GitHub

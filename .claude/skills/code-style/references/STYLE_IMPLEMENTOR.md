@@ -9,7 +9,7 @@ item's outcome, and commit once.
 
 Your prompt specifies the ticket, repo, file, and a JSON array of items.
 
-Paths anchored on `~/git/defra/trade-imports-animals-workspace` — compute via the `find_workspace_root`
+Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the `find_workspace_root`
 helper in `docs/agent-skills.md`.
 
 ## Success criteria
@@ -51,7 +51,7 @@ Reason: unit tests broke after change, all items reverted
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Inputs (from spawn prompt)
 
@@ -64,7 +64,7 @@ Reason: unit tests broke after change, all items reverted
 
 ## Step 1: Verify Each Violation
 
-Read the file at `~/git/defra/trade-imports-animals-workspace/repos/{repo}/{file}` once.
+Read the file at `~/git/defra/trade-imports-workspace/repos/{repo}/{file}` once.
 
 For each item in the input array, decide whether the violation is
 **still present** in the current file:
@@ -78,7 +78,7 @@ If `applicable_items` is empty (every item is already fixed):
 
 - For each item in `skipped_items`:
   ```bash
-  ~/git/defra/trade-imports-animals-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
+  ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
     --disposition Auto-Resolved --note "violation not found"
   ```
 - Return: `{repo}/{file}: 0 done, {N} auto-resolved, 0 failed` and stop.
@@ -89,19 +89,19 @@ If `applicable_items` is empty (every item is already fixed):
 
 > Note: the `npm` test commands below are for the Node repos
 > (frontend/admin/tests). For a `.java` file in a Java repo, substitute
-> the repo's Maven test (`mvn -f ~/git/defra/trade-imports-animals-workspace/repos/{repo} test`)
+> the repo's Maven test (`mvn -f ~/git/defra/trade-imports-workspace/repos/{repo} test`)
 > and skip the E2E `test:docker-compose` step unless the change is behavioural.
 
 Run unit tests in the relevant repo:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/{repo} test > /tmp/style-pre-{repo}.log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/style-pre-{repo}.log 2>&1
 ```
 
 Run E2E tests:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/style-pre-e2e.log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/style-pre-e2e.log 2>&1
 ```
 
 Read each log file once.
@@ -114,7 +114,7 @@ E2E: [pass/fail]
 ```
 
 For E2E failures, also read
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests/test-results/*/error-context.md`
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results/*/error-context.md`
 to confirm the failure isn't related to the file you're about to touch.
 
 ---
@@ -126,19 +126,19 @@ fix anything not in the input list. Don't reformat unrelated code.
 
 The common per-rule fix patterns and the ordering rule (shape-changing
 fixes before renames) live in the sibling cheat-sheet:
-`~/git/defra/trade-imports-animals-workspace/.claude/skills/code-style/assets/style-implementor-cheat-sheet.md`.
+`~/git/defra/trade-imports-workspace/.claude/skills/code-style/assets/style-implementor-cheat-sheet.md`.
 Those patterns are **JS/Node examples — illustrative, not universal law**.
 Consult the best-practices file for your file's language for the full
 rule text, e.g.
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/node/code-style.md` for JS,
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/java/modern-java.md` for Java.
+`~/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md` for JS,
+`~/git/defra/trade-imports-workspace/docs/best-practices/java/modern-java.md` for Java.
 
 After all edits, format the file. **Prettier applies to JS/`.njk` files
 only — never run a `.java` file through Prettier.** For a
 `.js`/`.mjs`/`.cjs`/`.jsx`/`.njk`/spec file:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-animals-workspace/repos/{repo}/{file}
+~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
 ```
 
 For a `.java` file, skip Prettier — the repo's own build/format step
@@ -151,28 +151,28 @@ For a `.java` file, skip Prettier — the repo's own build/format step
 Run unit tests:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/{repo} test > /tmp/style-post-{repo}.log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/style-post-{repo}.log 2>&1
 ```
 
 Run E2E tests:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/style-post-e2e.log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/style-post-e2e.log 2>&1
 ```
 
 **If unit tests fail:**
 
-- Revert the file: `git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} checkout -- {file}`
+- Revert the file: `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file}`
 - For each item in `applicable_items`:
   ```bash
-  ~/git/defra/trade-imports-animals-workspace/tools/style/style-set-status.sh EUDPA-XXXXX --repo {repo} --item {id} \
+  ~/git/defra/trade-imports-workspace/tools/style/style-set-status.sh EUDPA-XXXXX --repo {repo} --item {id} \
     --status Failed --note "unit tests broke after change, reverted"
   ```
 - Return: `{repo}/{file}: 0 done, 0 auto-resolved, {N} failed`
 
 **If E2E tests fail:**
 
-- Read `~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests/test-results/*/error-context.md` to determine if the failure is related to your change.
+- Read `~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results/*/error-context.md` to determine if the failure is related to your change.
 - If related: revert as above and mark all `applicable_items` Failed.
 - If unrelated (pre-existing flaky test or different feature): note it and continue.
 
@@ -184,11 +184,11 @@ One commit per file. Use the Item IDs in the message. Each git op
 is a separate Bash call — no `cd && git`.
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} add {file}
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
 ```
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} commit -m "style(EUDPA-XXXXX): {file} — {N} items
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} commit -m "style(EUDPA-XXXXX): {file} — {N} items
 
 Items: #{id1}, #{id2}, #{id3}
 
@@ -198,16 +198,16 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 If the pre-commit hook fails due to Prettier (JS/`.njk` only — a `.java`
 file is never Prettier-formatted):
 ```bash
-~/git/defra/trade-imports-animals-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-animals-workspace/repos/{repo}/{file}
+~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
 ```
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} add {file}
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
 ```
 Then create a NEW commit (do NOT amend).
 
 Capture the short SHA:
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} rev-parse --short HEAD
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse --short HEAD
 ```
 
 ---
@@ -217,14 +217,14 @@ git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo} rev-parse --shor
 For each item in `applicable_items`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-set-status.sh EUDPA-XXXXX --repo {repo} --item {id} \
+~/git/defra/trade-imports-workspace/tools/style/style-set-status.sh EUDPA-XXXXX --repo {repo} --item {id} \
   --status Done --note "{short-sha}"
 ```
 
 For each item in `skipped_items`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
+~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
   --disposition Auto-Resolved --note "violation not found"
 ```
 
@@ -233,6 +233,6 @@ If during Step 1 you decided an item is a **per-item judgement won't-fix**
 deliberate codebase choice):
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
+~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {id} \
   --disposition "Won't Fix" --note "<one-line reason>"
 ```

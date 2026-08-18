@@ -1,6 +1,6 @@
 # Workspace skill patterns — the 8-pattern checklist
 
-Workspace skills under `~/git/defra/trade-imports-animals-workspace/.claude/skills/`
+Workspace skills under `~/git/defra/trade-imports-workspace/.claude/skills/`
 share a small vocabulary of shapes. Each pattern is a judgment call,
 not a default — the same skill rarely uses all of them. This doc is
 the canonical reference cited by `skill-creator` (CREATE mode applies
@@ -66,7 +66,7 @@ The hard rules, all enforced via the project allowlist:
 - No `find ... -exec`. Use Glob + Read for find-then-read.
 - No env vars (`$VAR`) in LLM-typed Bash — Claude Code prompts on
   expansion. Use literal
-  `~/git/defra/trade-imports-animals-workspace/...` paths.
+  `~/git/defra/trade-imports-workspace/...` paths.
 - No `/Users/<you>/git/...` resolved form either — the matcher
   treats `~/git/...` and `/Users/.../git/...` as different prefixes.
 - No `python3 -c` for JSON — use `jq` or workspace helpers.
@@ -128,8 +128,8 @@ approval is right.
 If yes, add:
 
 ```
-Bash(~/git/defra/trade-imports-animals-workspace/tools/<name>/*)
-Bash(~/git/defra/trade-imports-animals-workspace/tools/<name>/*:*)
+Bash(~/git/defra/trade-imports-workspace/tools/<name>/*)
+Bash(~/git/defra/trade-imports-workspace/tools/<name>/*:*)
 ```
 
 to `.claude/settings.json`. CREATE mode generates the entries as
@@ -169,7 +169,7 @@ citations.
 ## Cross-cutting conventions
 
 - **Path conventions** — literal
-  `~/git/defra/trade-imports-animals-workspace/...` in LLM-typed
+  `~/git/defra/trade-imports-workspace/...` in LLM-typed
   prose. No env vars. See
   [`docs/agent-skills.md`](../../agent-skills.md).
 - **Worker fan-out** — `subagent_type: general-purpose` with a

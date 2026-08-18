@@ -25,7 +25,7 @@ if [[ -z "$TICKET" ]] || [[ "$TICKET" == "-h" ]] || [[ "$TICKET" == "--help" ]];
     exit 1
 fi
 
-STYLE_META="$HOME/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/$TICKET/.style-meta.json"
+STYLE_META="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/.style-meta.json"
 
 if [[ -f "$STYLE_META" ]]; then
     echo "MODE: REFRESH"

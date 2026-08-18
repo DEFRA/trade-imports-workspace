@@ -24,7 +24,7 @@ operator's attention.
 One call runs all repos in parallel and aggregates exit codes:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2
 ```
 
 Stdout is one JSON object:
@@ -54,7 +54,7 @@ Stdout is one JSON object:
 ## Step 2: Report
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-counts.sh --run-id {run-id}
+~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id {run-id}
 ```
 
 ```
@@ -75,11 +75,11 @@ Pull the per-repo `{done}` / `{demoted}` numbers from
 `packages-list.sh`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification auto --status done --json
+~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification auto --status done --json
 ```
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification manual --json
+~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification manual --json
 ```
 
 (Filter the latter for `demoted_from_auto: true` if you want the

@@ -5,7 +5,7 @@
 #   upgrade-one-package.sh --run-id TICKET --repo REPO --package PKG
 #
 # All state lives in
-# ~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
+# ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 #
 # Flow:
 #   1. Mark the package inprogress.
@@ -51,7 +51,7 @@ done
 [[ -z "$REPO_NAME" ]] && { echo "--repo required" >&2; exit 2; }
 [[ -z "$PACKAGE" ]] && { echo "--package required" >&2; exit 2; }
 
-PKGS_FILE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/packages.${REPO_NAME}.json"
+PKGS_FILE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO_NAME/packages.${REPO_NAME}.json"
 [[ -f "$PKGS_FILE" ]] || { echo "Packages file not found: $PKGS_FILE" >&2; exit 2; }
 
 row=$(jq -c --arg p "$PACKAGE" '.packages[] | select(.package == $p)' "$PKGS_FILE")
@@ -61,7 +61,7 @@ CURRENT=$(echo "$row" | jq -r '.current')
 TARGET=$(echo "$row" | jq -r '.target')
 CLASSIFICATION=$(echo "$row" | jq -r '.classification // "null"')
 
-REPO_PATH="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO_NAME"
+REPO_PATH="$HOME/git/defra/trade-imports-workspace/repos/$REPO_NAME"
 [[ -d "$REPO_PATH" ]] || { echo "Repo not found: $REPO_PATH" >&2; exit 2; }
 # Resolve symlinks so npm doesn't rewrite the lockfile relative to the
 # workspace symlink. `cd && pwd -P` is POSIX, works on macOS and Linux

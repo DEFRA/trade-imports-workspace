@@ -1,26 +1,33 @@
 ---
 name: frontend-change
-description: 'Make a change to the live-animals frontend (src/server/app in trade-imports-animals-frontend) by following the repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
+description: 'Make a change to a frontend repo in this workspace (today src/server/app in trade-imports-animals-frontend) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
 ---
 
-Make one change to the live-animals frontend by following the recipe the repo
-already ships. The recipes are the instructions — this skill routes to the right
-one, adds the guard rails the docs assume, and runs the verification ladder. Do
-not restate or improvise around a recipe: read it and follow it, varying as
-little as possible. The outcome is one verified increment staged in
-`repos/trade-imports-animals-frontend`, reported and stopped — commit is the
-caller's call unless they said otherwise.
+Make one change to a frontend repo in this workspace by following the recipe
+that repo already ships. What a change targets is a **repo and a set** — the
+`src/server/app` platform is set-agnostic by construction and the commodity
+line lives in `sets/<set>`, so the domain is an input here, not something this
+skill is welded to. Today the target is `trade-imports-animals-frontend` and
+`sets/live-animals`; the workspace already holds a second frontend repo and
+expects more, so read the target from the caller (or from the build loop's
+target profile) rather than assuming it.
+
+The recipes are the instructions — this skill routes to the right one, adds the
+guard rails the docs assume, and runs the verification ladder. Do not restate or
+improvise around a recipe: read it and follow it, varying as little as possible.
+The outcome is one verified increment staged in the target repo, reported and
+stopped — commit is the caller's call unless they said otherwise.
 
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/...`.
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/...`.
 Bash expands `~` automatically. Skill-internal references stay relative.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../docs/agent-skills.md) → "Bash call hygiene".
 For this repo that means `npm --prefix
-~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run <script>`
+~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run <script>`
 — never `cd`.
 
 ## The architecture in one breath
@@ -46,7 +53,7 @@ the rules or the baseline.
 ## When to use
 
 All recipe/guide paths below are inside
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/src/server/app/`.
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/src/server/app/`.
 
 | Trigger | Recipe to follow verbatim |
 |---------|---------------------------|
@@ -83,7 +90,7 @@ planning (`ticket`).
 Before editing, prove the ground is green so failures are yours:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:live-animals
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
 ```
 
 If this is red at baseline, STOP and report — do not build on a broken tree.
@@ -157,23 +164,23 @@ report the failure honestly.
 Run in order; each must be green before the next. One Playwright run at a time.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:live-animals
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend test
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend test
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run lint
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run lint
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:fit:features
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:fit:features
 ```
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend run test:fit
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:fit
 ```
 
 The Playwright suites self-host the app (stub mode) — no workspace stack

@@ -1,0 +1,89 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js
+index 586b639e..e3344f07 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js
+@@ -14,7 +14,7 @@ import {
+ } from '../../../../../../engine/journey.js'
+ import { routeOptions, surfaceClass } from '../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
+-import { importTypeFilterPage } from '../import-type-filter/page.js'
++import { originPage } from '../origin/page.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
+ import { copy as sharedEn } from '../../../../../../shared/copy.en.js'
+@@ -130,7 +130,7 @@ export const routes = [
+     options: routeOptions,
+     handler: async (request, h) => {
+       const journey = await startJourney(request, h)
+-      return h.redirect(pagePath(journey.journeyId, importTypeFilterPage.slug))
++      return h.redirect(pagePath(journey.journeyId, originPage.slug))
+     }
+   }
+ ]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+index 3bb40f6c..fb223737 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+@@ -1,4 +1,4 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
++import { dashboardPath, hubPath } from '../../../../../../shared/paths.js'
+ import { TEMPLATES } from '../../config.js'
+ import * as state from '../../../../../../engine/index.js'
+ import {
+@@ -17,6 +17,11 @@ import * as kit from '../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
+ import * as countries from '../../../../../../services/countries/index.js'
+ import { hasCommittedNotificationAnswers } from '../../flow/entry-guard.js'
++import { nextRunTarget } from '../../flow/run.js'
++import {
++  beginOpeningRun,
++  openingRunStarted
++} from '../../../../../../flow/run-state.js'
+ import { originPage as page } from './page.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
+@@ -88,6 +93,19 @@ const fields = () =>
+ const journeyIfStarted = (journey, answers) =>
+   hasCommittedNotificationAnswers(answers) ? journey : undefined
+ 
++/** The entry page's back link leaves the journey until the journey has
++ * started — the hub is still behind the entry guard at that point. */
++const backLinkFor = (journey, answers) =>
++  hasCommittedNotificationAnswers(answers)
++    ? hubPath(journey.journeyId)
++    : dashboardPath()
++
++/** Origin is the journey's entry page, so its save is what opens the opening
++ * run. A journey that already has a run record — active or complete — keeps
++ * the sequencing it has. */
++const shouldOpenRun = async (request) =>
++  !(await openingRunStarted(request, request.params.journeyId))
++
+ const render = (
+   h,
+   journey,
+@@ -98,7 +116,7 @@ const render = (
+ ) =>
+   h.view(view, {
+     ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
++      backLink: backLinkFor(journey, answers),
+       journey: journeyIfStarted(journey, answers),
+       journeyId: journey.journeyId,
+       recoverableError
+@@ -145,6 +163,15 @@ const post = async (request, h) => {
+   }
+ 
+   const { scope } = committed
++  if (await shouldOpenRun(request)) {
++    await beginOpeningRun(request, h, request.params.journeyId)
++    return h.redirect(
++      kit.exitTarget(
++        request,
++        nextRunTarget(page.id, scope, request.params.journeyId)
++      )
++    )
++  }
+   return h.redirect(await kit.nextTarget(request, page, scope))
+ }
+ 

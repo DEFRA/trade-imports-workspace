@@ -2,16 +2,16 @@
 # Derive backlog.json (typed, ordered increments) from journey-spec.json.
 #
 # Ordering (M0-gate ruling 2026-07-07: model-extension gates go LAST so M1
-# churns unattended; commodityLines lands without its nested unit-level
-# identifiers):
+# churns unattended; a top-level collection lands without its nested
+# unit-level identifiers):
 #   1. one increment per spec page in section order, EXCEPT pages any of
 #      whose directly-collected obligations (or their non-collection item
 #      fields) carry modelGap — those are deferred to step 4. A collection
 #      page whose gaps come only from NESTED collection members is included
 #      here with deferredNested listing what to leave out.
 #   2. remove-car-section per baseline car section (vendored obligations-v2
-#      domain — see live-animals/PROVENANCE.md)
-#   3. repoint-test-fixtures at the live-animals domain
+#      domain — see the target scope's PROVENANCE.md)
+#   3. repoint-test-fixtures at the target domain
 #   4. model-extension increments (gate: sam, born blocked), then the
 #      deferred gap pages and one add-nested-collection per deferredNested
 #   — all in one linear dependsOn chain (increments edit shared files).
@@ -25,7 +25,7 @@
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 RUN_ID=""; AS_JSON=false
 while [[ $# -gt 0 ]]; do
@@ -81,8 +81,8 @@ jq -n \
 
     # A section containing a collection page folds its empty-collects sibling
     # pages into that increment as entryPages (they are the collection entry
-    # sub-pages — e.g. species select / details / identification under
-    # commodityLines); they are not independent increments.
+    # sub-pages — e.g. the select / details / identification pages under the
+    # parent collection); they are not independent increments.
     [ $spec.sections[] as $sec
       | ([ $sec.pages[] | select([ obs(.collects)[] | select(.kind == "collection") ] | length > 0) ]) as $collPages
       | ([ $sec.pages[] | select(.collects == []) | {id, slug, title} ]) as $emptyPages
@@ -111,7 +111,7 @@ jq -n \
             milestone: (if .section == "origin" then "M0" else "M1" end) }
           + (if (.entryPages // [] | length) > 0 then { entryPages } else {} end)
           + (if (.deferredNested | length) > 0
-             then { deferredNested, note: ("Implement WITHOUT nested collection(s) " + (.deferredNested | join(", ")) + " — they arrive in M2 behind the model-extension gate. Entry sub-pages that exist only for the deferred collection (e.g. animal identification) also wait for M2.") }
+             then { deferredNested, note: ("Implement WITHOUT nested collection(s) " + (.deferredNested | join(", ")) + " — they arrive in M2 behind the model-extension gate. Entry sub-pages that exist only for the deferred collection also wait for M2.") }
              else {} end)
       ] as $step1
 
@@ -128,7 +128,7 @@ jq -n \
     | ( $step1
         + [ $carSections[] | {type: "remove-car-section", section: ., milestone: "M1"} ]
         + [ {type: "repoint-test-fixtures", milestone: "M1",
-             detail: "Re-point engine/test-support fixtures and root model tests at the live-animals domain (commodityLines etc.) per PROVENANCE.md."} ]
+             detail: "Re-point engine/test-support fixtures and root model tests at the target domain per PROVENANCE.md."} ]
         + $extensions + $deferredPages + $nestedIncs )
 
     # number + linear chain + preserve status by content key

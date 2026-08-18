@@ -8,7 +8,7 @@
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 source "$WORKSPACE/tools/journey-builder/target-profile.sh"
 
 RUN_ID=""; INC=""; SUMMARY=""; TARGET_FLAG=""

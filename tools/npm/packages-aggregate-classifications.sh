@@ -35,7 +35,7 @@ done
 
 [[ -z "$RUN_ID" ]] && usage
 
-BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID"
+BASE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID"
 [[ -d "$BASE" ]] || { echo "Run dir not found: $BASE" >&2; exit 1; }
 
 repos=()

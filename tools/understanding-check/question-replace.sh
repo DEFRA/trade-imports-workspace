@@ -50,7 +50,7 @@ if ! echo "$RUBRIC_PARTIAL" | grep -Eiq "$categorical_re"; then
     exit 1
 fi
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET/questions.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET/questions.json"
 [[ -f "$target" ]] || { echo "Error: $target not found" >&2; exit 1; }
 
 found=$(jq --arg id "$ID" '.questions | map(.id == $id) | any' "$target")

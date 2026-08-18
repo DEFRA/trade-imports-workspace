@@ -1,0 +1,179 @@
+diff --git a/src/server/app/engine/journey.test.js b/src/server/app/engine/journey.test.js
+index 79c0d850..1a4f8ea8 100644
+--- a/src/server/app/engine/journey.test.js
++++ b/src/server/app/engine/journey.test.js
+@@ -79,8 +79,8 @@ describe('#currentJourney', () => {
+     await store.seedAnswers(journeyB.journeyId, { countryOfOrigin: 'DE' })
+     const known = [journeyA.journeyId, journeyB.journeyId]
+     const flowOnly = {
+-      [journeyA.journeyId]: { importType: 'live-animals' },
+-      [journeyB.journeyId]: { importType: 'poao' }
++      [journeyA.journeyId]: { declaration: 'confirmed' },
++      [journeyB.journeyId]: { declaration: '' }
+     }
+     const requestA = requestFor(journeyA.journeyId, known)
+     const requestB = requestFor(journeyB.journeyId, known)
+@@ -92,11 +92,11 @@ describe('#currentJourney', () => {
+ 
+     expect(viewA.answers).toMatchObject({
+       countryOfOrigin: 'FR',
+-      importType: 'live-animals'
++      declaration: 'confirmed'
+     })
+     expect(viewB.answers).toMatchObject({
+       countryOfOrigin: 'DE',
+-      importType: 'poao'
++      declaration: ''
+     })
+   })
+ 
+diff --git a/src/server/app/engine/write/flow-only-session.test.js b/src/server/app/engine/write/flow-only-session.test.js
+index e3087187..0e167049 100644
+--- a/src/server/app/engine/write/flow-only-session.test.js
++++ b/src/server/app/engine/write/flow-only-session.test.js
+@@ -7,7 +7,7 @@ import { records as recordsStub } from '../../services/persistence/records/stub/
+ import { session as sessionStub } from '../../services/persistence/session/stub.js'
+ import { journeyRequest, recordingH } from '../test-support.js'
+ 
+-const IMPORT_TYPE_LIVE_ANIMALS = 'live-animals'
++const DECLARATION_CONFIRMED = 'confirmed'
+ 
+ describe('flow-only answers — session round-trip', () => {
+   beforeEach(async () => {
+@@ -17,13 +17,12 @@ describe('flow-only answers — session round-trip', () => {
+     await records.clear()
+   })
+ 
+-  it('Should return importType and declaration from a fresh read after commit without adding them to fulfilment', async () => {
++  it('Should return declaration from a fresh read after commit without adding it to fulfilment', async () => {
+     const journey = await records.create()
+     const writeH = recordingH()
+ 
+     await commit(journeyRequest(journey.journeyId), writeH, {
+-      importType: IMPORT_TYPE_LIVE_ANIMALS,
+-      declaration: 'confirmed'
++      declaration: DECLARATION_CONFIRMED
+     })
+ 
+     expect(
+@@ -38,8 +37,7 @@ describe('flow-only answers — session round-trip', () => {
+     })
+     const fresh = await get(freshRequest, recordingH())
+ 
+-    expect(fresh.answers.importType).toBe(IMPORT_TYPE_LIVE_ANIMALS)
+-    expect(fresh.answers.declaration).toBe('confirmed')
++    expect(fresh.answers.declaration).toBe(DECLARATION_CONFIRMED)
+   })
+ 
+   it('Should load flow-only session state once when a request reads repeatedly', async () => {
+@@ -50,7 +48,7 @@ describe('flow-only answers — session round-trip', () => {
+       app: {},
+       state: {
+         [SESSION_COOKIES.flowOnlyAnswers]: {
+-          [journey.journeyId]: { importType: IMPORT_TYPE_LIVE_ANIMALS }
++          [journey.journeyId]: { declaration: DECLARATION_CONFIRMED }
+         }
+       }
+     })
+diff --git a/src/server/app/services/persistence/session/real.test.js b/src/server/app/services/persistence/session/real.test.js
+index d0b8504f..92edf530 100644
+--- a/src/server/app/services/persistence/session/real.test.js
++++ b/src/server/app/services/persistence/session/real.test.js
+@@ -154,7 +154,7 @@ describe('#session.flowOnlyAnswers (real, yar)', () => {
+     const first = await server.inject({
+       method: 'POST',
+       url: '/flow/J-1',
+-      payload: { importType: 'live-animals' }
++      payload: { declaration: '' }
+     })
+     const second = await server.inject({
+       method: 'POST',
+@@ -180,7 +180,7 @@ describe('#session.flowOnlyAnswers (real, yar)', () => {
+       headers: { cookie }
+     })
+ 
+-    expect(journey1.result.values).toEqual({ importType: 'live-animals' })
++    expect(journey1.result.values).toEqual({ declaration: '' })
+     expect(journey2.result.values).toEqual({ declaration: 'confirmed' })
+     expect(unknown.result.values).toEqual({})
+   })
+diff --git a/src/server/app/services/persistence/session/session.test.js b/src/server/app/services/persistence/session/session.test.js
+index 30fc1831..64439232 100644
+--- a/src/server/app/services/persistence/session/session.test.js
++++ b/src/server/app/services/persistence/session/session.test.js
+@@ -3,7 +3,7 @@ import { session } from './stub.js'
+ import { SESSION_COOKIES } from '../../../engine/persistence/session.js'
+ import { recordingH } from '../../../engine/test-support.js'
+ 
+-const IMPORT_TYPE_LIVE_ANIMALS = 'live-animals'
++const DECLARATION_CONFIRMED = 'confirmed'
+ 
+ const requestKnowing = (...journeyIds) => ({
+   state: { [SESSION_COOKIES.knownJourneys]: journeyIds }
+@@ -81,7 +81,7 @@ describe('#session.flowOnlyAnswers', () => {
+     await session.setFlowOnlyAnswers(
+       h,
+       'journey-1',
+-      { importType: IMPORT_TYPE_LIVE_ANIMALS },
++      { declaration: DECLARATION_CONFIRMED },
+       request
+     )
+ 
+@@ -91,7 +91,7 @@ describe('#session.flowOnlyAnswers', () => {
+         { state: { [SESSION_COOKIES.flowOnlyAnswers]: stored } },
+         'journey-1'
+       )
+-    ).toEqual({ importType: IMPORT_TYPE_LIVE_ANIMALS })
++    ).toEqual({ declaration: DECLARATION_CONFIRMED })
+     expect(
+       await session.flowOnlyAnswers(
+         { state: { [SESSION_COOKIES.flowOnlyAnswers]: stored } },
+@@ -102,20 +102,20 @@ describe('#session.flowOnlyAnswers', () => {
+ 
+   it('Should preserve another journey while updating the current one', async () => {
+     const existing = {
+-      'journey-1': { importType: IMPORT_TYPE_LIVE_ANIMALS }
++      'journey-1': { declaration: '' }
+     }
+     const h = recordingH()
+ 
+     await session.setFlowOnlyAnswers(
+       h,
+       'journey-2',
+-      { declaration: 'confirmed' },
++      { declaration: DECLARATION_CONFIRMED },
+       { state: { [SESSION_COOKIES.flowOnlyAnswers]: existing } }
+     )
+ 
+     expect(h.cookies[SESSION_COOKIES.flowOnlyAnswers]).toEqual({
+       ...existing,
+-      'journey-2': { declaration: 'confirmed' }
++      'journey-2': { declaration: DECLARATION_CONFIRMED }
+     })
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.e2e.spec.js
+index 684bc596..49993811 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.e2e.spec.js
+@@ -99,17 +99,15 @@ test.describe('dashboard feature — empty state and start', () => {
+     )
+   })
+ 
+-  test('starts a new notification at the import-type filter', async ({
+-    page
+-  }) => {
++  test('starts a new notification at the origin page', async ({ page }) => {
+     await page.goto('/')
+ 
+     await page.getByRole('button', { name: copy.startButton }).click()
+ 
+     await expect(
+-      page.getByRole('heading', { name: 'What are you importing?' })
++      page.getByRole('heading', { name: 'Origin of the import' })
+     ).toBeVisible()
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+\/import-type$/)
++    await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+   })
+ })
+ 

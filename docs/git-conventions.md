@@ -1,6 +1,6 @@
 # Git Conventions
 
-Observed across all four repos. The tests repo is the most consistent reference point — follow its patterns.
+Observed across the trade-imports repos. The tests repo is the most consistent reference point — follow its patterns.
 
 ## Branch naming
 

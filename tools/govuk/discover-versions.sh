@@ -18,7 +18,7 @@ REPO_PATH=""
 RUN_ID=""
 TARGET_VERSION=""
 JSON_OUTPUT=false
-WORKSPACE_BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades"
+WORKSPACE_BASE="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades"
 FORCE=false
 
 CHANGELOG_URL="https://raw.githubusercontent.com/alphagov/govuk-frontend/main/CHANGELOG.md"
@@ -253,7 +253,7 @@ if [[ ! -f "$BP_OUT" || "$FORCE" == "true" ]]; then
         echo
         echo "Concatenated at Phase 1. Apply these standards when planning changes."
         for path in "${BP_SOURCES[@]}"; do
-            src="$HOME/git/defra/trade-imports-animals-workspace/$path"
+            src="$HOME/git/defra/trade-imports-workspace/$path"
             echo
             echo "---"
             echo

@@ -3,19 +3,19 @@ Review **one file** as part of a larger ticket review.
 Your prompt specifies the repo, the file path, the commit(s), the mode
 (FRESH / REFRESH / MERGE_RESOLVED), and the ticket ID.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Output — JSON via helper scripts
 
 The per-file review artifact is a JSON file written by helper scripts —
 never by hand. Schema:
-`~/git/defra/trade-imports-animals-workspace/.claude/skills/review/assets/file-review-schema.md`.
+`~/git/defra/trade-imports-workspace/.claude/skills/review/assets/file-review-schema.md`.
 
 You will **not** write markdown. You will call three commands:
 
 ```bash
 # For each finding (run as many times as you have findings):
-~/git/defra/trade-imports-animals-workspace/tools/review/file-review-add-item.sh EUDPA-XXXXX \
+~/git/defra/trade-imports-workspace/tools/review/file-review-add-item.sh EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --line <line> --severity <Critical|Major|Minor> \
     --category <short-tag> \
@@ -24,7 +24,7 @@ You will **not** write markdown. You will call three commands:
     [--best-practice <relative/path.md>]
 
 # Exactly once, at the end:
-~/git/defra/trade-imports-animals-workspace/tools/review/file-review-set-verdict.sh EUDPA-XXXXX \
+~/git/defra/trade-imports-workspace/tools/review/file-review-set-verdict.sh EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --verdict <SAFE|NEEDS_ATTENTION|RISKY> \
     --reason "<one sentence>"
@@ -70,7 +70,7 @@ In every mode:
 
 1. **Per-PR best practices.** Read one file:
    ```
-   ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/best-practices/{repo}.md
+   ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/best-practices/{repo}.md
    ```
    `prepare-review.sh` already concatenated every best-practice file
    applicable to your repo there. Don't walk
@@ -86,7 +86,7 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 3. **Prior consolidated items for this file** — this is the most
    important context:
    ```bash
-   ~/git/defra/trade-imports-animals-workspace/tools/review/review-items.sh EUDPA-XXXXX --repo {repo} --file {file-path}
+   ~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --repo {repo} --file {file-path}
    ```
    Columns: `repo  id  file  line  severity  category  issue  fix  disposition  status  notes`.
 
@@ -120,14 +120,14 @@ In REFRESH / MERGE_RESOLVED only, additionally:
    genuinely new.
 
 4. **Prior per-file review snapshot** — optional reading for context:
-   `~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/{path_with_underscores}.review.json`.
+   `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/{path_with_underscores}.review.json`.
    This is what *you* (or a prior reviewer) wrote last time. The
    consolidated items table above is the canonical source of truth.
 
 ### 3. Get the file-scoped diff
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/github/file-diff.sh {repo} {pr-number} {file-path} --ticket EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/github/file-diff.sh {repo} {pr-number} {file-path} --ticket EUDPA-XXXXX
 ```
 
 Returns only the hunks for your file — don't fetch the whole PR diff.
@@ -140,7 +140,7 @@ In MERGE_RESOLVED mode the prompt also gives you `old_sha` / `new_sha`;
 the resolution delta is:
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} \
+git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} \
     diff {old_sha}..{new_sha} -- {file-path}
 ```
 
@@ -149,7 +149,7 @@ git -C ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX
 The file itself:
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
+~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
 ```
 
 Then follow the relationships worth looking at — pick what's

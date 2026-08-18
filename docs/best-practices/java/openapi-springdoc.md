@@ -102,9 +102,9 @@ Define globally using `@OpenAPIDefinition` on a `@Configuration` class:
 @Configuration
 @OpenAPIDefinition(
     info = @Info(
-        title = "Trade Imports Animals API",
+        title = "Trade Imports API",
         version = "1.0.0",
-        description = "REST API for managing animal import notifications",
+        description = "REST API for managing import notifications",
         contact = @Contact(
             name = "DEFRA Trade Imports Team",
             email = "trade-imports@defra.gov.uk"
@@ -257,7 +257,7 @@ public record DocumentUploadResponse(
 `@Schema` on classes and fields:
 
 ```java
-@Schema(description = "An animal import notification")
+@Schema(description = "An import notification")
 public record NotificationDto(
 
     @Schema(description = "Unique MongoDB document ID", example = "507f1f77bcf86cd799439011",

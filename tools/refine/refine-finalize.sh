@@ -48,7 +48,7 @@ case "$VERDICT" in
         ;;
 esac
 
-REFINE_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/ticket-refinement/$TICKET"
+REFINE_DIR="$HOME/git/defra/trade-imports-workspace/workareas/ticket-refinement/$TICKET"
 META="$REFINE_DIR/.refinement-meta.json"
 
 if [[ ! -f "$META" ]]; then

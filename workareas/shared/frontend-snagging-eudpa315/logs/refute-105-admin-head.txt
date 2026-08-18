@@ -1,0 +1,45 @@
+
+> trade-imports-animals-tests@0.0.0 test:docker-compose
+> npm run _reset_and_clean_and_test_docker_compose -- --grep-invert '@a11y' --project=admin --grep outbox event
+
+
+> trade-imports-animals-tests@0.0.0 _reset_and_clean_and_test_docker_compose
+> npm run database:reseed && npm run _clean && npm run _test_docker_compose -- --grep-invert @a11y --project=admin --grep outbox event
+
+
+> trade-imports-animals-tests@0.0.0 database:reseed
+> ./bin/database-reseed.sh
+
+Workspace stack detected — delegating to scripts/stack/bounce-mongo.sh
+Bouncing mongo (wipes volume, re-runs init scripts)...
+ Container trade-imports-animals-mongodb-1 Recreate 
+ Container trade-imports-animals-mongodb-1 Recreated 
+ Container trade-imports-animals-mongodb-1 Starting 
+ Container trade-imports-animals-mongodb-1 Started 
+ Container trade-imports-animals-mongodb-1 Waiting 
+ Container trade-imports-animals-mongodb-1 Healthy 
+
+> trade-imports-animals-tests@0.0.0 _clean
+> rm -rf test-results playwright-report allure-results allure-report FAILED
+
+
+> trade-imports-animals-tests@0.0.0 _test_docker_compose
+> playwright test --config=playwright.docker-compose.config.ts --grep-invert @a11y --project=admin --grep outbox event
+
+
+Running 7 tests using 4 workers
+
+  ✓  2 [admin] › tests/e2e/features/admin/admin-outbox-events.spec.ts:44:3 › Outbox events (admin) › shows the empty state for an unknown reference number @integration @mongodb (584ms)
+  ✓  5 [admin] › tests/e2e/features/admin/outbox-event-replay.spec.ts:10:3 › Outbox event replay › replays outbox events and shows success banner @compose @integration (3.1s)
+  ✓  6 [admin] › tests/e2e/features/admin/outbox-event-replay.spec.ts:28:3 › Outbox event replay › writes a REPLAY_EVENTS audit record covering both outbox events @compose @integration @mongodb (3.2s)
+  ✘  4 [admin] › tests/e2e/features/admin/outbox-event-notification.spec.ts:35:3 › Notification outbox event › records a NotificationSubmitted outbox event on UI submission @integration @mongodb (12.4s)
+  ✘  3 [admin] › tests/e2e/features/admin/outbox-event-amendment.spec.ts:33:3 › Notification amendment outbox event › records the authenticated actor and cumulative status changes on amendment @integration @mongodb (17.7s)
+  ✓  7 [admin] › tests/e2e/features/admin/outbox-event-withdrawal.spec.ts:15:3 › Notification withdrawal outbox event › does not write a withdrawn event when a draft is deleted @integration @mongodb (11.2s)
+  ✓  1 [admin] › tests/e2e/features/admin/admin-outbox-events.spec.ts:12:3 › Outbox events (admin) › shows the outbox event for a submitted notification @integration @mongodb @smoke (19.8s)
+  ✘  8 [admin] › tests/e2e/features/admin/outbox-event-notification.spec.ts:35:3 › Notification outbox event › records a NotificationSubmitted outbox event on UI submission @integration @mongodb (retry #1) (9.4s)
+  ✘  9 [admin] › tests/e2e/features/admin/outbox-event-amendment.spec.ts:33:3 › Notification amendment outbox event › records the authenticated actor and cumulative status changes on amendment @integration @mongodb (retry #1) (14.7s)
+
+
+  1) [admin] › tests/e2e/features/admin/outbox-event-amendment.spec.ts:33:3 › Notification amendment outbox event › records the authenticated actor and cumulative status changes on amendment @integration @mongodb 
+
+    Error: expect(received).toHaveLength(expected)

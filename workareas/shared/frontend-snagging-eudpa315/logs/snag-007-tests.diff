@@ -1,0 +1,325 @@
+diff --git a/flows/journey.ts b/flows/journey.ts
+index a89d4fa..3e18d38 100644
+--- a/flows/journey.ts
++++ b/flows/journey.ts
+@@ -31,25 +31,30 @@ export class Journey {
+     await this.pages.notificationDashboard.heading.waitFor();
+   }
+ 
++  // Origin is the journey entry: the entry guard holds a new notification there
++  // until it is answered, so reaching the overview means answering it.
+   async startNotification(): Promise<string> {
+     await this.toNotificationDashboard();
+     await this.pages.notificationDashboard.btnCreateNewNotification.click();
+-    await this.pages.importType.heading.waitFor();
+-    const journeyId = this.pages.importType.journeyIdFromUrl();
++    await this.pages.originOfImport.heading.waitFor();
++    const journeyId = this.pages.originOfImport.journeyIdFromUrl();
+     this.context.journeyId = journeyId;
+     this.context.referenceNumber = journeyId;
+-    await this.pages.importType.liveAnimals.check();
+-    await this.pages.importType.continueButton.click();
+-    await this.pages.originOfImport.heading.waitFor();
++    await this.fillOriginOfImport();
++    await this.saveOriginOfImport();
+     await this.pages.overview.open(journeyId);
+     await this.pages.overview.heading.waitFor();
+     return journeyId;
+   }
+ 
++  // Origin unanswered, as a brand-new notification first shows it.
+   async toOriginOfImport(): Promise<void> {
+-    const journeyId = await this.startNotification();
+-    await this.pages.originOfImport.open(journeyId);
++    await this.toNotificationDashboard();
++    await this.pages.notificationDashboard.btnCreateNewNotification.click();
+     await this.pages.originOfImport.heading.waitFor();
++    const journeyId = this.pages.originOfImport.journeyIdFromUrl();
++    this.context.journeyId = journeyId;
++    this.context.referenceNumber = journeyId;
+   }
+ 
+   async fillOriginOfImport(options: JourneyOptions = {}): Promise<void> {
+diff --git a/page-objects/factory.ts b/page-objects/factory.ts
+index 8215bd2..d89d316 100644
+--- a/page-objects/factory.ts
++++ b/page-objects/factory.ts
+@@ -11,7 +11,6 @@ import { CphNumberPage } from './notification/cph-number-page';
+ import { DeclarationPage } from './notification/declaration-page';
+ import { ImportPurposePage } from './notification/import-purpose-page';
+ import { ImportReasonPage } from './notification/import-reason-page';
+-import { ImportTypePage } from './notification/import-type-page';
+ import { NotificationCancelAmendPage } from './notification/notification-cancel-amend-page';
+ import { NotificationDashboardPage } from './notification/notification-dashboard-page';
+ import { NotificationViewPage } from './notification/notification-view-page';
+@@ -32,7 +31,6 @@ export function createPageObjects(page: Page) {
+   return {
+     page,
+     notificationDashboard: new NotificationDashboardPage(page),
+-    importType: new ImportTypePage(page),
+     overview: new OverviewPage(page),
+     originOfImport: new OriginOfImportPage(page),
+     commoditySelection: new CommoditySelectionPage(page),
+diff --git a/page-objects/notification/import-type-page.ts b/page-objects/notification/import-type-page.ts
+deleted file mode 100644
+index 470883e..0000000
+--- a/page-objects/notification/import-type-page.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { type Locator } from '@playwright/test';
+-import { NotificationPage } from '@page-objects/base/base-page';
+-
+-export class ImportTypePage extends NotificationPage {
+-  constructor(page: ConstructorParameters<typeof NotificationPage>[0]) {
+-    super(page, 'import-type');
+-  }
+-
+-  get heading(): Locator {
+-    return this.page.getByRole('heading', { level: 1, name: 'What are you importing?' });
+-  }
+-
+-  get liveAnimals(): Locator {
+-    return this.page.getByRole('radio', { name: 'Live animals or germinal products' });
+-  }
+-
+-  get continueButton(): Locator {
+-    return this.page.getByRole('button', { name: 'Continue' });
+-  }
+-}
+diff --git a/tests/a11y/notification-journey-initial-state.spec.ts b/tests/a11y/notification-journey-initial-state.spec.ts
+index 912788e..ada90be 100644
+--- a/tests/a11y/notification-journey-initial-state.spec.ts
++++ b/tests/a11y/notification-journey-initial-state.spec.ts
+@@ -15,24 +15,21 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+       await runA11yScan();
+     });
+ 
+-    await test.step('Import type', async () => {
+-      await pages.notificationDashboard.btnCreateNewNotification.click();
+-      await pages.importType.heading.waitFor();
+-      await runA11yScan();
+-    });
+-
+     await test.step('Origin of import', async () => {
+-      await pages.importType.liveAnimals.check();
+-      await pages.importType.continueButton.click();
++      await pages.notificationDashboard.btnCreateNewNotification.click();
+       await pages.originOfImport.heading.waitFor();
+       await runA11yScan({ exclude: conditionalRadioInput });
+     });
+ 
++    // The entry guard holds the journey on origin until it is answered, so the
++    // overview is only reachable once origin has been saved.
+     await test.step('Overview', async () => {
+-      await pages.overview.open(pages.originOfImport.journeyIdFromUrl());
++      const journeyId = pages.originOfImport.journeyIdFromUrl();
++      await journey.fillOriginOfImport();
++      await journey.saveOriginOfImport();
++      await pages.overview.open(journeyId);
+       await pages.overview.heading.waitFor();
+       await runA11yScan();
+-      await journey.answerOrigin();
+     });
+ 
+     await test.step('Commodity selection', async () => {
+diff --git a/tests/e2e/features/auth.spec.ts b/tests/e2e/features/auth.spec.ts
+index 42ce86e..1b2c370 100644
+--- a/tests/e2e/features/auth.spec.ts
++++ b/tests/e2e/features/auth.spec.ts
+@@ -55,9 +55,7 @@ test.describe('Authentication', { tag: ['@auth', '@integration'] }, () => {
+     test.beforeEach(async ({ pages }) => {
+       await pages.signIn.signIn();
+       await pages.notificationDashboard.btnCreateNewNotification.click();
+-      journeyId = pages.importType.journeyIdFromUrl();
+-      await pages.importType.liveAnimals.check();
+-      await pages.importType.continueButton.click();
++      journeyId = pages.originOfImport.journeyIdFromUrl();
+       await pages.originOfImport.selectCountry('France');
+       await pages.originOfImport.radioRequiresOriginCode('No').check();
+       await pages.originOfImport.saveAndContinue.click();
+diff --git a/tests/e2e/features/import-type-routing.spec.ts b/tests/e2e/features/import-type-routing.spec.ts
+deleted file mode 100644
+index ee59364..0000000
+--- a/tests/e2e/features/import-type-routing.spec.ts
++++ /dev/null
+@@ -1,38 +0,0 @@
+-import { test, expect } from '@fixtures';
+-
+-test.describe('Import type routing', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+-  test('a blank answer blocks Continue, a non-live-animals answer routes to the holding page, live animals opens the run', async ({
+-    pages,
+-  }) => {
+-    // The entry filter is the service front door: Start a new notification
+-    // lands straight on it.
+-    await pages.notificationDashboard.open();
+-    await pages.notificationDashboard.heading.waitFor();
+-    await pages.notificationDashboard.btnCreateNewNotification.click();
+-    await expect(pages.importType.heading).toBeVisible();
+-    const journeyId = pages.importType.journeyIdFromUrl();
+-
+-    // importType is required to enter the service — a blank Continue fails.
+-    await pages.importType.continueButton.click();
+-    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();
+-    await expect(pages.page.getByRole('link', { name: 'Select what you are importing' })).toBeVisible();
+-
+-    // A non-live-animals type routes to the not-available holding page.
+-    await pages.page.getByRole('radio', { name: 'Products of animal origin or animal by-products' }).check();
+-    await pages.importType.continueButton.click();
+-    await expect(pages.page.getByRole('heading', { name: 'You cannot use this service' })).toBeVisible();
+-
+-    // The holding page offers a way back to change the answer.
+-    await pages.page.getByRole('link', { name: 'Go back and change your answer' }).click();
+-    await expect(pages.importType.heading).toBeVisible();
+-
+-    // Live animals opens the linear run at origin, and the answer persists on
+-    // return to the filter.
+-    await pages.importType.liveAnimals.check();
+-    await pages.importType.continueButton.click();
+-    await expect(pages.originOfImport.heading).toBeVisible();
+-
+-    await pages.importType.open(journeyId);
+-    await expect(pages.importType.liveAnimals).toBeChecked();
+-  });
+-});
+diff --git a/tests/e2e/features/reference-strip.spec.ts b/tests/e2e/features/reference-strip.spec.ts
+index 2a113c2..6850fe8 100644
+--- a/tests/e2e/features/reference-strip.spec.ts
++++ b/tests/e2e/features/reference-strip.spec.ts
+@@ -3,8 +3,7 @@ import { test, expect } from '@fixtures';
+ const GBN_REFERENCE = /GBN-AG-\d{2}-[0-9A-HJKMNP-TV-Z]{6}/;
+ 
+ test.describe('Reference strip', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+-  test('the Draft tag and GBN-AG reference show on the hub and task pages, and are absent on pre-origin surfaces', async ({
+-    journey,
++  test('the Draft tag and GBN-AG reference show on the hub and task pages, and are absent before the first save', async ({
+     pages,
+   }) => {
+     const strip = pages.overview.journeyStrip;
+@@ -14,31 +13,24 @@ test.describe('Reference strip', { tag: ['@integration', '@duplicated-in-fronten
+     await expect(pages.notificationDashboard.heading).toBeVisible();
+     await expect(strip).toHaveCount(0);
+ 
+-    const journeyId = await journey.startNotification();
+-
+-    // The hub carries the strip: blue Draft tag + GBN-AG-shaped reference.
+-    await expect(strip).toBeVisible();
+-    await expect(strip.locator('.govuk-tag')).toHaveText('Draft');
+-    await expect(strip).toContainText(GBN_REFERENCE);
+-
+-    // The import-type filter is a pre-origin surface — never a strip.
+-    await pages.importType.open(journeyId);
+-    await expect(pages.importType.heading).toBeVisible();
+-    await expect(strip).toHaveCount(0);
+-
+-    // Origin shows nothing while the journey has no notification answers — the
+-    // service-routing importType saved by the filter does not count: the
+-    // reference is minted at the origin POST...
+-    await pages.overview.open(journeyId);
+-    await pages.overview.task('Where is this consignment coming from?').click();
++    // The entry page shows nothing while the journey has no notification
++    // answers — the reference is minted at the origin POST...
++    await pages.notificationDashboard.btnCreateNewNotification.click();
+     await expect(pages.originOfImport.heading).toBeVisible();
++    const journeyId = pages.originOfImport.journeyIdFromUrl();
+     await expect(strip).toHaveCount(0);
+ 
+     // ...and carries the strip once its first save has committed answers.
+     await pages.originOfImport.selectCountry('France');
+     await pages.originOfImport.radioRequiresOriginCode('No').check();
+     await pages.originOfImport.saveAndContinue.click();
+-    await expect(pages.overview.heading).toBeVisible();
++
++    // The hub carries the strip: blue Draft tag + GBN-AG-shaped reference.
++    await pages.overview.open(journeyId);
++    await expect(strip).toBeVisible();
++    await expect(strip.locator('.govuk-tag')).toHaveText('Draft');
++    await expect(strip).toContainText(GBN_REFERENCE);
++
+     await pages.overview.task('Where is this consignment coming from?').click();
+     await expect(strip).toBeVisible();
+     await expect(strip).toContainText(GBN_REFERENCE);
+diff --git a/tests/e2e/features/task-page-exits.spec.ts b/tests/e2e/features/task-page-exits.spec.ts
+index 6287b2b..1d5f726 100644
+--- a/tests/e2e/features/task-page-exits.spec.ts
++++ b/tests/e2e/features/task-page-exits.spec.ts
+@@ -2,32 +2,28 @@ import { test, expect } from '@fixtures';
+ 
+ test.describe('Task-page exits', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+   test('Cancel and return to hub discards typed input; Save and return to hub commits and lands on the hub', async ({ journey, pages }) => {
++    // Origin is the journey entry, so it is already answered by the time the
++    // hub is reachable; the internal reference is the field left untouched.
+     await journey.startNotification();
+ 
+-    const originRow = pages.page.locator('.govuk-task-list__item', {
+-      hasText: 'Where is this consignment coming from?',
+-    });
+-
+-    // Cancel leg: choose a country, cancel — nothing is written.
++    // Cancel leg: type an internal reference, cancel — nothing is written.
+     await pages.overview.task('Where is this consignment coming from?').click();
+-    await pages.originOfImport.selectCountry('Belgium');
++    await pages.originOfImport.internalReference.fill('DiscardedRef');
+     await pages.page.getByRole('link', { name: 'Cancel and return to hub' }).click();
+     await expect(pages.overview.heading).toBeVisible();
+-    await expect(originRow).toContainText('Not yet started');
+ 
+     await pages.overview.task('Where is this consignment coming from?').click();
+-    // Nothing was committed, so the server-rendered select is still empty.
+-    await expect(pages.originOfImport.countryOfOrigin).toHaveValue('');
++    // Nothing was committed, so the server-rendered input is still empty.
++    await expect(pages.originOfImport.internalReference).toHaveValue('');
+ 
+     // Save-and-return leg: the named secondary submit commits the page and
+     // redirects to the hub instead of the next flow target.
+-    await pages.originOfImport.selectCountry('France');
++    await pages.originOfImport.internalReference.fill('CommittedRef');
+     await pages.page.getByRole('button', { name: 'Save and return to hub' }).click();
+     await expect(pages.overview.heading).toBeVisible();
+-    await expect(originRow).toContainText('In progress');
+ 
+-    // The committed country code is there on re-entry.
++    // The committed reference is there on re-entry.
+     await pages.overview.task('Where is this consignment coming from?').click();
+-    await expect(pages.originOfImport.countryOfOrigin).toHaveValue('FR');
++    await expect(pages.originOfImport.internalReference).toHaveValue('CommittedRef');
+   });
+ });
+diff --git a/tests/e2e/pages/notification-dashboard-pagination.spec.ts b/tests/e2e/pages/notification-dashboard-pagination.spec.ts
+index 8ba9dab..24d6a31 100644
+--- a/tests/e2e/pages/notification-dashboard-pagination.spec.ts
++++ b/tests/e2e/pages/notification-dashboard-pagination.spec.ts
+@@ -5,7 +5,7 @@ test.describe('Dashboard pagination', { tag: '@integration' }, () => {
+     await journey.toNotificationDashboard();
+     for (let index = 0; index < 26; index += 1) {
+       await pages.notificationDashboard.btnCreateNewNotification.click();
+-      await pages.importType.heading.waitFor();
++      await pages.originOfImport.heading.waitFor();
+       await pages.notificationDashboard.open(false);
+     }
+ 
+diff --git a/tests/e2e/pages/notification-dashboard.spec.ts b/tests/e2e/pages/notification-dashboard.spec.ts
+index 7b1c2ea..c1b6dc4 100644
+--- a/tests/e2e/pages/notification-dashboard.spec.ts
++++ b/tests/e2e/pages/notification-dashboard.spec.ts
+@@ -1,7 +1,7 @@
+ import { test, expect } from '@fixtures';
+ 
+ test.describe('Import notification service dashboard', { tag: '@integration' }, () => {
+-  test('starts a journey at the promoted import-type filter and lists the draft', async ({ journey, pages }) => {
++  test('starts a journey at the origin page and lists the draft', async ({ journey, pages }) => {
+     const journeyId = await journey.startNotification();
+ 
+     await expect(pages.page).toHaveURL(new RegExp(`/notifications/${journeyId}$`));
+@@ -26,10 +26,10 @@ test.describe('Import notification service dashboard', { tag: '@integration' },
+       await expect(pages.notificationDashboard.heading).toBeVisible();
+     });
+ 
+-    test('allows creating a new notification', async ({ journey, pages }) => {
++    test('allows creating a new notification, landing on the journey entry page', async ({ journey, pages }) => {
+       await journey.toNotificationDashboard();
+       await pages.notificationDashboard.btnCreateNewNotification.click();
+-      await expect(pages.importType.heading).toBeVisible();
++      await expect(pages.originOfImport.heading).toBeVisible();
+     });
+ 
+     test('displays the notification list and result count', async ({ apiJourney, pages }) => {

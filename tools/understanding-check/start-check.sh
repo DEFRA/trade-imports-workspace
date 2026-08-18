@@ -20,7 +20,7 @@ if [[ -z "$TICKET" ]] || [[ "$TICKET" == "-h" ]] || [[ "$TICKET" == "--help" ]];
     exit 1
 fi
 
-CHECK_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET"
+CHECK_DIR="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET"
 META="$CHECK_DIR/.interview-meta.json"
 
 if [[ -f "$META" ]]; then
@@ -36,4 +36,4 @@ fi
 
 echo "MODE: FRESH"
 echo
-exec "$HOME/git/defra/trade-imports-animals-workspace/tools/understanding-check/prepare-check.sh" "$TICKET" "$@"
+exec "$HOME/git/defra/trade-imports-workspace/tools/understanding-check/prepare-check.sh" "$TICKET" "$@"

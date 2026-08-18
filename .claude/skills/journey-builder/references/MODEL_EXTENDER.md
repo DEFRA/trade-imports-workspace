@@ -11,7 +11,7 @@ names the growth (e.g. `cross-frame-conditionality`, `sibling-at-least-one`).
 ## Where things are
 - Backlog entry: `~/git/defra/.../workareas/journey-builder/<run-id>/backlog.json`
 - Worktree (ALL edits happen here, never in `repos/`):
-  `~/git/defra/trade-imports-animals-workspace/workareas/journey-builder/<run-id>/frontend-worktree/`
+  `~/git/defra/trade-imports-workspace/workareas/journey-builder/<run-id>/frontend-worktree/`
 - Target scope and spec dir come from the run's target profile
   (`tools/journey-builder/targets.json`) — do not hardcode a path.
 - Verify with `tools/journey-builder/verify-increment.sh <run-id>`, then

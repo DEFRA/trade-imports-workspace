@@ -5,6 +5,17 @@
 - Ticket: [EUDPA-181](https://eaflood.atlassian.net/browse/EUDPA-181)
 - Depends on: [EUDPA-179](https://eaflood.atlassian.net/browse/EUDPA-179) (skills moved to the agentskills.io layout)
 
+## Amendment — 2026-08-18
+
+The workspace repo was renamed from `DEFRA/trade-imports-animals-workspace` to
+`DEFRA/trade-imports-workspace`, and the canonical location it is pinned to
+changed from `~/git/defra/trade-imports-animals-workspace` to
+`~/git/defra/trade-imports-workspace`. The citation paths below have been
+rewritten to the new canonical path so this ADR does not instruct authors to
+write a dead path. Nothing else changes: option (a) still stands, `docs/` is
+still the single canonical documentation root, and best-practices are still
+cited by workspace-absolute path.
+
 ## Context
 
 Documentation in this workspace was split across two locations:
@@ -26,7 +37,7 @@ one obvious place to look.
 Three options were on the table:
 
 - **(a)** Everything under `docs/`; skills reference
-  `~/git/defra/trade-imports-animals-workspace/docs/best-practices/...` by
+  `~/git/defra/trade-imports-workspace/docs/best-practices/...` by
   absolute path from their `SKILL.md`.
 - **(b)** Everything under `docs/`; per-skill `references/` folders hold copies
   or symlinks of the relevant best-practices.
@@ -39,7 +50,7 @@ Adopt **option (a)**. `docs/` is the single canonical root for all
 documentation — both human-readable docs and agent-consumed best-practices.
 Best-practices remain single-sourced under `docs/best-practices/`. Skills
 reference them by the workspace absolute path
-(`~/git/defra/trade-imports-animals-workspace/docs/best-practices/<topic>/<file>`),
+(`~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`),
 which is stable because the workspace is pinned to that canonical location
 (see `docs/agent-onboarding.md`). The `agents/skills/best-practices` symlink is
 gone, along with the whole `agents/` tree.
@@ -56,7 +67,7 @@ by path.
   that follow or refuse to follow them.
 - Skills cite best-practices by an absolute workspace path, so a citation
   resolves the same way from any repo subdirectory. This relies on the
-  workspace living at `~/git/defra/trade-imports-animals-workspace` (symlinked
+  workspace living at `~/git/defra/trade-imports-workspace` (symlinked
   if cloned elsewhere), which is already a hard requirement of the `tools/`
   scripts.
 - Adding or moving a best-practice is a single edit under `docs/best-practices/`;

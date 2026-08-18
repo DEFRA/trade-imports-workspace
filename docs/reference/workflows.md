@@ -6,11 +6,12 @@ make setup    # clone all repos
 make install  # npm install in Node repos
 ```
 
-Scripts under `tools/` assume the workspace lives at
-`~/git/defra/trade-imports-animals-workspace/` — the path is hardcoded. Clone here
-and nothing further is needed. See
-[`docs/agent-onboarding.md`](../agent-onboarding.md) for the JIRA /
-GitHub / Confluence credentials the tools still need.
+Scripts under `tools/` reach the workspace at
+`~/git/defra/trade-imports-workspace/` — the path is hardcoded, so clone
+it there. A checkout under another name will not work.
+See [`docs/agent-onboarding.md`](../agent-onboarding.md#1-canonical-clone-location)
+for the setup and for the JIRA / GitHub / Confluence credentials the tools
+still need.
 
 **Daily update:**
 ```bash

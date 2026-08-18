@@ -1,0 +1,530 @@
+{
+  "run_id": "EUDPA-288",
+  "note": "Hand-authored retrofit backlog for EUDPA-288 Phase 7 — NOT produced by backlog-generate.sh (that derives page increments from the spec, wrong shape here). Consumed by next-increment.sh / verify-increment.sh / commit-increment.sh unchanged: the loop tooling keys on id/dependsOn/status only. Branch spike/EUDPA-288-model-retrofit, cut from spike/EUDPA-249-prototype-layouts (A). Scope ruled M0-M4; M5 deferred behind inc-026.",
+  "increments": [
+    {
+      "id": "inc-001",
+      "type": "ground-truth",
+      "milestone": "M0",
+      "title": "Canonical obligation mapping table A-id <-> B-uuid + B-name",
+      "detail": "Produce mapping.json covering all 44 both ways; machine-check totality (every A id maps, every B uuid maps, no orphans). 28 exact name matches + 13 renames are mechanical; the ~6 genuine deltas go to inc-002.",
+      "dependsOn": [],
+      "status": "done",
+      "commit": "70017b1f3a52887d7dc0015cf2706232dec67aaf",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-002",
+      "type": "ground-truth",
+      "milestone": "M0",
+      "title": "Delta register — RESCOPED by inc-001's findings",
+      "detail": "RESCOPED. Read PLAN Sec 2.1's findings table first (6 divergences inc-001 surfaced) and mapping.json's notes. The register must cover FIVE classes, not one: (1) TOPOLOGY — documents: A is a repeatable collection (cap 10), B is top-level singletons; retrofitting B as-is caps the user at ONE document. This is a REQUIREMENTS ruling for the PO, not port/drop/defer. (2) WHITELIST MEMBERSHIP — earTag/tattoo/cph/containsUnweanedAnimals differ in members, not just vocabulary; B's are V4-audited, A's predate the audit; the earTag gap PROPAGATES through the derived-complement gates on identificationDetails/description. (3) SEMANTIC CONFLICTS — regionCode purge disagreement (one side contradicts V4; touches ruling c-017), transitedCountries opposite mandate. (4) STRUCTURAL KEYS — A-only maxEntriesFrom + requiredAtLeastOne on unitRecord have no B counterpart. (5) TRUE CAPABILITY DELTAS — A-only importType, declaration; B-only commodityType ONLY (poApprovedReferenceNumber is system-minted, responsiblePersonForLoad comes from gov.identity — both on B's own KNOWN_UNWIRED list, neither is a gap). One proposed ruling each, with evidence and a recommendation. Flag which need the PO vs which Sam can rule.",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "done",
+      "commit": "4bf38ea3263bf9fc8e2e6d30e36c60be7c74761d",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-003",
+      "type": "ground-truth",
+      "milestone": "M0",
+      "title": "Settle per-record mandate, multi, pathPrefix by evidence",
+      "detail": "PLAN Sec 5.1-5.3. Per-record mandate: try to construct a rule A expresses and B cannot — if none exists, Phase 5 is not a regression and Paul's YAGNI call stands. multi: confirm the widget->persistence coupling dies with contract.js. pathPrefix: confirm latent (gate-at-depth-1 only) and write the failing depth-2-gate test.",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "done",
+      "commit": "4d3f8164d51c7e9c2abd56523cd81abae1f754fa",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-004",
+      "type": "gate",
+      "milestone": "M0",
+      "gate": "sam",
+      "title": "M0 GATE — rule the capability deltas",
+      "detail": "Sam rules: (1) the 6 capability deltas from inc-002; (2) PLAN Sec 5.5 — drop B's engine tree-walkers and keep A's 3-spine [recommended]. ALREADY RULED 2026-07-17: PLAN Sec 5.4 domain fork (no display logic in the model; strip labels; MDM is the source of options); scope M0-M4; run-id EUDPA-288 Phase 7. Also record the BRIEF:7-8 presentation deviation.",
+      "dependsOn": [
+        "inc-002",
+        "inc-003"
+      ],
+      "status": "done",
+      "commit": null,
+      "failure_reason": null
+    },
+    {
+      "id": "inc-005",
+      "type": "lift",
+      "milestone": "M1",
+      "title": "Vendor B's model core dark",
+      "detail": "obligations/ + domain/ + engine/ + analysis/ + lib/is-blank-value.js (4,672 LOC) under live-animals/model/, plus 6,833 LOC of portable tests. Not wired to anything. Full A suite stays green. Record provenance (source branch + sha).",
+      "dependsOn": [
+        "inc-004"
+      ],
+      "status": "done",
+      "commit": "a58bb55b541af77279163a9a385aa361fed15ed7",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-006",
+      "type": "lift",
+      "milestone": "M1",
+      "title": "Move is-blank-value under the model; fix pathPrefix",
+      "detail": "is-blank-value.js is misfiled in B (lib/ by directory only, zero imports) — move under the model. pathPrefix (helpers.js:577-580) slices at first slash: correct only for gate-at-depth-1. Fix + test even though latent. MODEL_EXTENDER persona: DESIGN-DELTA entry required.",
+      "dependsOn": [
+        "inc-005"
+      ],
+      "status": "done",
+      "commit": "99b698d1dd92b20832f726d3d12d7fbb7865ed18",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-007",
+      "type": "lift",
+      "milestone": "M1",
+      "title": "Apply rename table so B.name == A obligation id",
+      "detail": "B's UUID stays the durable key; name becomes the bridge key. After this A's answers keys and B's names coincide, which is what makes the bridge a lookup rather than a translation. Drives inc-002's rename column.",
+      "dependsOn": [
+        "inc-006"
+      ],
+      "status": "done",
+      "commit": "3a25ac6bfea1f0e37d7dd2f9b838fb737e556934",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-007a",
+      "type": "lift",
+      "milestone": "M1",
+      "title": "Strip domain.labels — no display logic in the model",
+      "detail": "RULING 2026-07-17 (PLAN Sec 5.4). B's domain holds i18n key strings ('internal-market' -> 'domain.reasonForImport.internal-market'). That is display logic in the model. Strip it. Copy lives in the .njk, as it does in A today. The domain never resolved them anyway (it does not import i18n), so this is a clean excision.",
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "done",
+      "commit": "7b94c101fccdf60373193ced8fae387741162df9",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-007b",
+      "type": "lift",
+      "milestone": "M1",
+      "title": "Extend obligation-purity.js to a key-level assert",
+      "detail": "RULING 2026-07-17. A's obligation-purity.js (46 LOC) already asserts a feature's obligations.js may import ONLY another obligations.js or services/<name>/index.js — it encodes 'no display logic in the model' AND permits exactly the MDM route the ruling mandates. Keep it, re-point at the vendored model, and extend: fail the build if any obligation or domain entry carries label/title/titleKey/hint/legend/widget. REPORT:460-465 refutes the import-specifier regex as a structural guarantee ('never inspects a key') — the key-level assert is what turns the ruling into a gate.",
+      "dependsOn": [
+        "inc-007a"
+      ],
+      "status": "done",
+      "commit": "801cd86c5050365fab752fb2ca09d49eac4e6a3b",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-007c",
+      "type": "lift",
+      "milestone": "M1",
+      "title": "Delegate MDM-backed domain options to A's services",
+      "detail": "RULING 2026-07-17: 'use the most realistic source at any given point — we have the MDM integrations, use them.' B declares a staticEnum of 25 countries; A pulls the real list from reference-data via services/countries/client.js, primed at boot. Re-point countries, ports, commodities, document-types, certification-purposes. B's computedEnum(options: (fulfilments, ctx) => string[], {readsFrom}) already has the right signature and A's services are sync after boot priming, so B's contract does not change. Entries with no MDM source stay static, CODES ONLY. Protects the MDM seam REPORT:627 calls 'what A has that B has no answer for and must survive any retrofit'.",
+      "dependsOn": [
+        "inc-007b"
+      ],
+      "status": "done",
+      "commit": "0ddc6f42c08d2359311353363e0510b851d5752a",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-008",
+      "type": "bridge",
+      "milestone": "M2",
+      "title": "bridge/fulfilments.js — answers <-> fulfilments, both ways",
+      "detail": "A: nested POJO, collections as positional arrays, pathKey grammar a.b[0].c (lib/path.js:1-10). B: flat map keyed by UUID, grouped values as records-maps with /-delimited composite keys (line1/unit1). Property-test round-trip both directions. LARGEST SINGLE WORK ITEM — the corpus does not cost this in this direction.",
+      "dependsOn": [
+        "inc-007c"
+      ],
+      "status": "done",
+      "commit": "6bdc58f6eca48d490a9b060ce94a4a9076208e4a",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-009",
+      "type": "bridge",
+      "milestone": "M2",
+      "title": "bridge/scope.js — B implications -> A's scope",
+      "detail": "Project B's {obligationId: implication} onto scope.inScope: Set<pathKey> in A's exact a.b[0].c grammar (hub + status do raw Set.has()), plus answered(id) and readyForCheckYourAnswers.",
+      "dependsOn": [
+        "inc-008"
+      ],
+      "status": "done",
+      "commit": "e07ea39a5138b9c7da75bb390a82751be36308b7",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-010",
+      "type": "oracle",
+      "milestone": "M2",
+      "title": "model-equivalence.test.js — the differential oracle",
+      "detail": "For every input in A's fixtures + reachability.js's 24-state grid (:8-20) + submitReadySeed (:95-157) + spec/fixtures/happy-path.json: run A-engine and B-engine, assert identical inScope / status / wipe set. The red list IS the real behaviour delta, discovered by machine rather than argued from docs.",
+      "dependsOn": [
+        "inc-009"
+      ],
+      "status": "done",
+      "commit": "a1f37ec52ac312713b6b5a3b67912968f99c21a5",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-011",
+      "type": "gate",
+      "milestone": "M2",
+      "gate": "sam",
+      "title": "M2 GATE — divergence register review",
+      "detail": "THE MOMENT OF TRUTH. Present the oracle's red list: every point where B's model disagrees with A's shipped behaviour, each classified as (i) B is right, fix A's expectation; (ii) A is right, fix B; (iii) genuine requirement question for the PO. Everything to here is additive and dark — the plan can still be abandoned cheaply at this gate.",
+      "dependsOn": [
+        "inc-010"
+      ],
+      "status": "done",
+      "commit": null,
+      "failure_reason": null
+    },
+    {
+      "id": "inc-012",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Barrel: get + makeScope over B, behind MODEL=a|b",
+      "detail": "engine/index.js is the 9-function seam 19 of 24 controllers use. One increment per function. get(request,h) -> {journey, answers, scope} must keep answers as the id-keyed nested POJO — every controller, every mapper and happy-path.json assume it.",
+      "dependsOn": [
+        "inc-011"
+      ],
+      "status": "done",
+      "commit": "25e676ba53348036f3d9b352e9b207387908acbd",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-013",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Barrel: commit over B (reconcile + destroyWiped)",
+      "detail": "Must reconcile-and-wipe or the conditional-reveal pages leak stale data. B's convergePurge is a fixpoint (evaluator.js:136-187) — A's reconcile is too, so semantics should align; the oracle says whether they do.",
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "done",
+      "commit": "2e25f57d333766ec74eda8307aa75ddf874c18b1",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-014",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Barrel: collectionView + collectionCapAt over B",
+      "detail": "collectionView(answers, path) -> [{index, path, entry, complete}] (9 call sites). collectionCapAt via maxEntriesFrom (4 sites, all animal-identification.controller.js).",
+      "dependsOn": [
+        "inc-013"
+      ],
+      "status": "done",
+      "commit": "90eec8c6c634efdf2b95ae71faaecee98e481ef4",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-015",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Barrel: append/update/remove/reconcileEntriesAt over B",
+      "detail": "A's collection identity is a positional array index; B's is a stable never-recycled composite string key. This is where that difference actually bites. reconcileEntriesAt has 2 call sites (consignment-details:195, search:134).",
+      "dependsOn": [
+        "inc-014"
+      ],
+      "status": "done",
+      "commit": "b05858212b7b358b88d88a12dcac29109240a4d0",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-016",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Barrel: submitJourney over B",
+      "detail": "Gated on scope.readyForCheckYourAnswers. B has no submit at all (provably dead SUBMITTED branch) — this stays A's, sourced from B's status.",
+      "dependsOn": [
+        "inc-015"
+      ],
+      "status": "done",
+      "commit": "99a0439c2732dee416a65da3d9f19f0b66631e41",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-016a",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Apply the 3 ruled B-fixes (c-017 region x2, c-038 transit); shrink oracle KNOWN sets",
+      "detail": "The M2 DIVERGENCE-REGISTER's 3 ruled 'fix B' one-liners, isolated before the status-engine swap so 'apply the rulings' is separate + verifiable from 'swap the status engine'. Edit B's manifest (model/obligations/obligations.js): (1) regionOfOriginCode gate the no/unset branch inScope:false via equalsGate(regionOfOriginCodeRequirement,'yes',...) so it wipes on 'no' (c-017 — Sam struck B's retain claim by name), and DELETE B's misleading 'V4 does not purge regionCode' comment; (2) transitedCountries whenTrue branch status:'mandatory' (c-038 REQUIRED under land transport). Then shrink model-equivalence.test.js's KNOWN_SCOPE_BONLY/KNOWN_STATUS/KNOWN_WIPE_AONLY sets to empty and assert the oracle now finds ZERO behavioural divergences A-vs-B. MODEL_EXTENDER discipline: DESIGN-DELTA entry, backwards-compat (these are the ruled-correct behaviours). Some of the 8 MODEL=b failures should clear here (B's scope now matches A). Update retrofit/DIVERGENCE-REGISTER.md to mark the 3 resolved.",
+      "dependsOn": [
+        "inc-016"
+      ],
+      "status": "done",
+      "commit": "d1b530264db6aaf7fb8ddbf84dc78443e9c19517",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-016b",
+      "type": "model-extension",
+      "milestone": "M3",
+      "gate": "sam-informed",
+      "title": "Give B a documents collection (D1 topology) — unblocks inc-017 flow re-point",
+      "detail": "MODEL_EXTENDER, pre-ruled (V4 = cap-10 documents collection; c-034/journey-spec:1353; register D1 'A right'). Discovered blocking inc-017: A's dispatch totality expects the 4 accompanyingDocument* fields nested under a `documents` collection (path documents.accompanyingDocumentType), but B models them TOP-LEVEL singletons, so a B-manifest walk fails 'collected by no page'. Give B a `documents` group obligation and make the 4 accompanyingDocument{Type,AttachmentType,Reference,DateOfIssue} `within: documents` (mirror A's features/documents/obligations.js: collection with 4 items; cap 10 enforced controller-side in A, so no maxEntriesFrom needed on the model). Convert accompanyingDocumentBlockApplyTo from a SCALAR presentGate (reads fulfilments[type.id]) to a PER-RECORD projecting gate (like allowListed does for unitRecord/permanentAddress): for each document instance, if its accompanyingDocumentType is present, that instance's other fields are in scope. This is per-record SCOPE (B expresses it), NOT per-record mandate (Phase-5, which B can't) — inc-003 confirmed. If B's helpers can't express per-record present-projection without a new helper, add a minimal one (DESIGN-DELTA + coverage/witness per the STRUCTURED_HELPER_TYPES tax). Then: update B model tests asserting the old top-level shape; simplify inc-008's bridge DOCUMENT_FIELD_AIDS special-casing (documents is now a normal A-collection<->B-collection mapping); update the oracle's isStructuralBOnly/isStructuralAOnly (documents should now AGREE as a normal collection, not be excluded). Default a byte-identical; oracle stays zero-divergence (or documents newly AGREES). Mark D1 RESOLVED in retrofit/DIVERGENCE-REGISTER.md.",
+      "dependsOn": [
+        "inc-016a"
+      ],
+      "status": "done",
+      "commit": "e837a43aa2cdcac7574ac0f048f00998f19942ff",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-017",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Re-point flow/ onto B's manifest",
+      "detail": "flow/ (dispatch, prerequisites, gates, navigation, entry-guard) is MODEL-SIDE not presentation — it imports registry.js directly and owns enforcedAt + collects. Keep A's boot-time asserts (dispatch.js:33-63 duplicate-owner + uncovered-obligation): B has an equivalent (flow/boot-totality.js) but A's is the one wired in. NOTE: task-rows.js + section-status.js are NOT re-pointed here — they are RETIRED at inc-017a per Sam's 2026-07-17 ruling (take B's status derivation). PRECONDITION inc-016b (documents collection) resolves the D1 blocker. Re-point walkObligations (dispatch totality + prerequisites) and registry.byId/.system (entry-guard) to B's manifest via a small flow-level walk adapter; SYSTEM_POPULATED set {poApprovedReferenceNumber, responsiblePersonForLoad, commodityType} excluded from totality; ENFORCED_AT_CONTINUE flow-level set {countryOfOrigin, commoditySelection} replaces obligation.enforcedAt scan.",
+      "dependsOn": [
+        "inc-016a"
+      ],
+      "status": "done",
+      "commit": "52e6d950c9ac167d690f6c4e61196788f9f52353",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-017a",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Take B's status derivation, retire A's status trio",
+      "detail": "RULING 2026-07-17 (PLAN Sec 5.5, reverses the original recommendation): 'go with Paul's approach — my engine etc should mostly go and use his.' Feed A's flow tree to B's containerStatus/journeyState/pageStatus (they take the tree as an ARGUMENT, so they accept A's tree once it exposes {children[], presents[], presentsForEach{}}). DELETE A's engine/status.js, flow/task-rows.js, flow/section-status.js. Collapse hub/controller.js GROUPS (spine 3) to a single derivation over B's engine. Re-point CYA-readiness + section-status onto B. This retires the hand-maintained 3-spine (BRIEF:41) and banks dimension #8's one-spine win. The oracle SEES this (status is one of its 3 axes) — must be green under BOTH flags before inc-018. Boundary preserved: hub template still maps status->GDS tag (hub/controller.js:120-135 stays); we take B's derivation, not B's templates (Sec 5.4 untouched). SUBSTANTIVE part of M3, not a footnote.",
+      "dependsOn": [
+        "inc-017"
+      ],
+      "status": "done",
+      "commit": "0b00f45ad113449b9a814f5c8a728ed8558fa4ea",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-018",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "enforcedAt A-side; importType not admitted to the model",
+      "detail": "RULED A-side (Sam 2026-07-17). A derives flow prerequisites from enforcedAt:'continue' (flow/prerequisites.js); B's mandatoryToProceed is discarded with B's flow tree. Keep A's prerequisites.js, source from a per-obligation key. importType joins the enforcedAt=continue level as the service-entry filter (c-024) and is NOT admitted to B's manifest — it is a flow-layer entry filter, never reaches the V4 wire contract, so B rightly has no counterpart.",
+      "dependsOn": [
+        "inc-017a"
+      ],
+      "status": "done",
+      "commit": "79875b006aafe77d2597081e89cf3ac64379d23e",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-019",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Leak B — animal-identification reads gate ASTs -> B's .metadata",
+      "detail": "animal-identification.controller.js:3 imports engine/evaluate/predicate.js directly; :42-43 and :67-68 reach into obligation.activatedBy.includes / .notInUnionOf. Re-point to B's .metadata sidecar. STRICT IMPROVEMENT: .metadata is a designed, coverage-gated API (analysis/coverage.test.js pins it both ways by static source scan); the AST read never was.",
+      "dependsOn": [
+        "inc-018"
+      ],
+      "status": "done",
+      "commit": "e053c886977850d1165731a2e221dd05390cb06e",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-020",
+      "type": "cutover",
+      "milestone": "M3",
+      "title": "Leaks E + F — imports that bypass the barrel",
+      "detail": "E: SUBMITTED imported from engine/persistence/records.js by confirmation, dashboard, declaration, kit. F: flow/entry-guard.js imported by origin + import-type-filter controllers.",
+      "dependsOn": [
+        "inc-019"
+      ],
+      "status": "done",
+      "commit": "9be0bbbb9192b99fc13e90e6bf87db9af2d0ac73",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-021",
+      "type": "gate",
+      "milestone": "M3",
+      "gate": "sam",
+      "title": "M3 GATE — full E2E + Mongo parity under both flag values",
+      "detail": "verify-increment.sh --e2e (needs the workspace stack up). Both MODEL=a and MODEL=b must pass unit + E2E + the skeleton-vs-prototype Mongo parity compare. Milestone walk-through with Sam.",
+      "dependsOn": [
+        "inc-020"
+      ],
+      "status": "done",
+      "commit": "eb4f91fad07f98ed5fc37557ab45b57236c864b7",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-022",
+      "type": "retire",
+      "milestone": "M4",
+      "title": "Delete A's model",
+      "detail": "engine/evaluate/, registry.js, 12 per-feature obligations.js. KEEP obligation-purity.js — per the 2026-07-17 ruling it is the enforcement of no-display-logic-in-the-model, extended at inc-011a. Re-point at the vendored model, do not delete.",
+      "dependsOn": [
+        "inc-025"
+      ],
+      "status": "done",
+      "commit": "436d31e85d9f711a434ebda7d7225deb88c829a2",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-023",
+      "type": "retire",
+      "milestone": "M4",
+      "title": "Retire A prover + oracle; DELETE A model",
+      "detail": "With runtime decoupled (inc-022b), A is referenced only by A prover + oracle + A-tests. (1) Retire A prover: port analysis/reachability.js two flow-level checks (no-owning-page, owning-page-unreachable-in-scope via simulateJourney) onto B graph prover, then delete A reachability.js (frees its registry/reconcile/predicate imports). (2) Retire the oracle (model-equivalence.test.js + scope.test.js A-vs-B diffs + status.test.js A-vs-B): job done, zero divergence recorded; note in DIVERGENCE-REGISTER. (3) DELETE A model: registry.js, engine/evaluate/{reconcile,predicate,complete}.js, engine/status.js, makeScopeA, the 12 features/*/obligations.js. KEEP obligation-purity.js (re-point to vendored model), cardinality.js/collectionCapAt (inc-024a), lib/*. grep-confirm zero importers before each rm; green wins ties. Unit + E2E/parity green B-only.",
+      "dependsOn": [
+        "inc-022b"
+      ],
+      "status": "done",
+      "commit": "3c2142e2bcbbca0fe1b69b8e5ec2eeb1872633bd",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-024",
+      "type": "retire",
+      "milestone": "M4",
+      "title": "Leak C — CYA's 6 hand-copied gates -> derive from .metadata",
+      "detail": "BIGGEST LATENT-DRIFT WIN. check-answers/controller.js (495 LOC) hand-re-implements at least 6 gate conditions the model already declares: :111 regionOfOriginCodeRequirement, :150 reasonForImport, :275 overlandMeans, :301-307 activeTransporter, plus unweanedApplies/packagesApply/cphApplies imported from OTHER controllers. Swapping the model does not fix this — it doubles the places it can drift.",
+      "dependsOn": [
+        "inc-021"
+      ],
+      "status": "done",
+      "commit": "ca2e31c75d5cc4dd0acc4d2ecab48b635a473481",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-024a",
+      "type": "retire",
+      "milestone": "M4",
+      "title": "maxEntriesFrom — the one genuine A-can/B-cannot capability (DEFERRED to here by Sam)",
+      "detail": "RULING 2026-07-17: 'defer — needs handling but push to the end; get the thing mostly done then come back.' This is the ONLY thing A expresses that B genuinely cannot (inc-003 audited all 15 A keys). Caps animal identifiers at numberOfAnimals; ruled by c-031, built at A's inc-063/DESIGN-DELTA #15. UNDER-SCOPED: it is ADMISSION CONTROL (appendEntryAt rejects at the cap, never trims), and B has NO admission-control surface AND no numeric channel (scope is boolean, status an enum, minEntries is a literal not a reference; buildImplication's group branch evaluator.js:515-525 ignores applyTo's records). Recommended home: A-side write-path (A's barrel already exposes collectionCapAt) rather than extending B's evaluator — cheaper, no MODEL_EXTENDER, no change to B's contract. Confirm that call when picked up. NOTE requiredAtLeastOne is NOT part of this — it is a one-line wire of B's generic requires.minEntries onto unitRecord (do it wherever unitRecord is first vendored).",
+      "dependsOn": [
+        "inc-023"
+      ],
+      "status": "done",
+      "commit": "80e4df8bd1a492b9431601ff3034afa6c8897e95",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-025",
+      "type": "retire",
+      "milestone": "M4",
+      "title": "Remove the MODEL flag",
+      "detail": "Single model. Update docs/ + DESIGN-DELTA.md + PROVENANCE.md.",
+      "dependsOn": [
+        "inc-024"
+      ],
+      "status": "done",
+      "commit": "c3544f5805bc70f377d49268313f929a84e9bf30",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-026",
+      "type": "wins",
+      "milestone": "M5",
+      "gate": "sam",
+      "title": "M5 GATE — is banking the recoverable wins in scope?",
+      "detail": "RULED 2026-07-20: retrofit M0-M4 complete + validated (unit 1116, E2E+parity 105/105). M5 MODEL work (inc-028 domain-validation, inc-030 prover-in-CI) DEFERRED/skipped by Sam. Chosen instead: doc-refresh (inc-030c) + flaky-spec hardening (inc-030b).",
+      "dependsOn": [
+        "inc-024a"
+      ],
+      "status": "done",
+      "commit": null,
+      "failure_reason": null
+    },
+    {
+      "id": "inc-027",
+      "type": "wins",
+      "milestone": "M5",
+      "title": "multi in the domain alphabet",
+      "detail": "Downgraded from prerequisite to cleanup in this direction: the widget->persistence coupling (contract.js:331-335 array-coerces only when widget==='checkboxes') dies with contract.js, and A's controllers hand-read their own payloads. Still worth it for the CYA and validation paths.",
+      "dependsOn": [
+        "inc-026"
+      ],
+      "status": "deferred",
+      "commit": null,
+      "failure_reason": "M5 model work deferred by Sam 2026-07-20 (retrofit complete; only doc+spec cleanup chosen)"
+    },
+    {
+      "id": "inc-028",
+      "type": "wins",
+      "milestone": "M5",
+      "title": "Domain-driven validation",
+      "detail": "Dimension 6. Replace Joi-per-controller with domain predicates. Optional — A's Joi layer (lib/validate/, 201 LOC) has zero model coupling and works. Only worth it if the second source of truth for 'legal value' is actually hurting.",
+      "dependsOn": [
+        "inc-027"
+      ],
+      "status": "deferred",
+      "commit": null,
+      "failure_reason": "M5 model work deferred by Sam 2026-07-20 (retrofit complete; only doc+spec cleanup chosen)"
+    },
+    {
+      "id": "inc-030",
+      "type": "wins",
+      "milestone": "M5",
+      "title": "B's prover + coverage gates over the real graph in CI",
+      "detail": "dependsOn coverage assertion (obligations/coverage.test.js:240-249) + the static-source-scan gate pinning STRUCTURED_HELPER_TYPES <-> dispatch both ways (analysis/coverage.test.js:183-187). Also fix the coverage blind spot REPORT:656-658 names on BOTH sides: coverage.include is ['src/**/*.js'], so the ~33k prototype lines are invisible to vitest and SonarCloud alike. One-line fix. NOTE inc-029 (code<->label seam) was dropped — rejected by the 2026-07-17 no-display-logic-in-the-model ruling.",
+      "dependsOn": [
+        "inc-028"
+      ],
+      "status": "deferred",
+      "commit": null,
+      "failure_reason": "M5 model work deferred by Sam 2026-07-20 (retrofit complete; only doc+spec cleanup chosen)"
+    },
+    {
+      "id": "inc-022b",
+      "type": "cutover",
+      "milestone": "M4",
+      "title": "Decouple the remaining kept B files from A (prep for deletion)",
+      "detail": "inc-022 decoupled statusOfFromB + collects. Remaining LIVE A deps in KEPT B files (block deletion): scope.js projectAOnlyFlowScope uses A reconcile + walk (importType/declaration scope + anyInstanceAnswered); collection-view.js + cardinality.js use registry.byPath; section-status.js + hub/controller.js import the 5 status constants from engine/status.js; animal-identification.controller.js imports A identifier obligations from features/commodities/obligations.js for render config. Re-point each to a B-native source (B manifest byPath/walk equivalents; move the 5 status constants to a B-side module or the bridge; importType/declaration scope re-implemented without reconcile). After this A is referenced ONLY by the oracle + A prover (reachability.js) + A-model tests. Default byte-identical, unit + E2E green.",
+      "dependsOn": [
+        "inc-022"
+      ],
+      "status": "done",
+      "commit": "29a3bc3406c0ce078d13b5499be9942344ac4ebe",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-030b",
+      "type": "cleanup",
+      "milestone": "M5",
+      "title": "Harden the flaky address-picker E2E spec",
+      "detail": "live-animals.spec.js ~:1497: asserts exact link Page 8 against a shared mutable server-side address book (create-address appends; repeated runs / parallel ordering shift 40->41+ records = 9 pages). Change to assert the last-page link derived from the ACTUAL total shown (Showing 5 of N), not a literal Page 8. Keep the assertion intent (pagination window renders first+last+ellipsis). Verify with 2 consecutive E2E runs.",
+      "dependsOn": [
+        "inc-026"
+      ],
+      "status": "done",
+      "commit": "31b223023497050e4f886f3e9c0c68f3ac6b5969",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-030c",
+      "type": "cleanup",
+      "milestone": "M5",
+      "title": "Refresh prototype docs to the B-only tree",
+      "detail": "docs/{architecture,add-a-field,add-a-page,obligation-model,engine,flow-and-gates}.md + PROVENANCE.md still describe the deleted A registry.js / per-feature obligations.js / A evaluator architecture. Update to the retrofit end-state: B is the sole obligation model under model/ (obligations/evaluator/domain/engine/analysis), collects are explicit string arrays, status via model/bridge/status.js, flow via flow/obligation-source.js, maxEntriesFrom via flow-level MAX_ENTRIES_FROM, obligation-purity scans model/. Cite model/DESIGN-DELTA.md as the change log. Do not touch code.",
+      "dependsOn": [
+        "inc-030b"
+      ],
+      "status": "done",
+      "commit": "7cbd824d5f8aba6eab050d45d7f90583290c7436",
+      "failure_reason": null
+    },
+    {
+      "id": "inc-030d",
+      "type": "cleanup",
+      "milestone": "M5",
+      "title": "Remove FromB/A-B residue from code symbols + comments",
+      "detail": "B is simply THE model now. Rename bridge-internal symbols carrying migration residue: makeScopeFromB, statusOfFromB, wipeSetFromB, entryCompleteFromB, rawInScopeFromB (drop the FromB suffix; reconcile any collision with engine/read.js makeScope sensibly — the public engine/index.js barrel names stay stable), projectAOnlyFlowScope (drop A; it projects the flow-only obligations importType/declaration that arent in the notification model). Scrub code COMMENTS in model/bridge/*, engine/*, flow/* that narrate MODEL=b / A-side / from B / the A or B model — describe the current single model. Do NOT touch model/DESIGN-DELTA.md or PROVENANCE.md (those are the changelog — history belongs there). Green: unit + prettier + eslint; parent runs E2E+parity.",
+      "dependsOn": [
+        "inc-030c"
+      ],
+      "status": "done",
+      "commit": "19bdc947d5180ae390852367b188f4ab5a5c2e41",
+      "failure_reason": null
+    }
+  ]
+}

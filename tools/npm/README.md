@@ -1,6 +1,6 @@
 # NPM Dependency Upgrade Tools
 
-Tools for discovering and managing npm dependency upgrades across EUDP Live Animals repositories.
+Tools for discovering and managing npm dependency upgrades across the EUDP trade-imports repositories.
 
 ## Scripts
 
@@ -23,16 +23,16 @@ Options:
 **Examples:**
 ```bash
 # Discover all outdated dependencies
-./discover-upgrades.sh ~/git/defra/eudp-live-animals/eudp-live-animals-qa-automation
+./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend
 
 # Only find minor and patch upgrades
-./discover-upgrades.sh ~/git/defra/eudp-live-animals/eudp-live-animals-qa-automation --strategy minor
+./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend --strategy minor
 
 # Output JSON for programmatic use
-./discover-upgrades.sh ~/git/defra/eudp-live-animals/eudp-live-animals-qa-automation --json
+./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend --json
 
 # Force re-discovery (preserves completed work)
-./discover-upgrades.sh ~/git/defra/eudp-live-animals/eudp-live-animals-qa-automation --force
+./discover-upgrades.sh ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend --force
 ```
 
 **Workspace Structure:**
@@ -86,7 +86,7 @@ With `--force`:
 `.upgrades-meta.json` tracks all upgrade details:
 ```json
 {
-  "repo_name": "eudp-live-animals-qa-automation",
+  "repo_name": "trade-imports-animals-frontend",
   "repo_path": "/path/to/repo",
   "workspace_dir": "/path/to/workspace",
   "created": "2026-02-06T13:10:05Z",

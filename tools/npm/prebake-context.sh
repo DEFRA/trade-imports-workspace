@@ -46,7 +46,7 @@ done
 [[ -z "$REPO" ]] && usage
 [[ -z "$PACKAGE" ]] && usage
 
-WORKSPACE_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
+WORKSPACE_DIR="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO"
 PKGS_FILE="$WORKSPACE_DIR/packages.${REPO}.json"
 [[ -f "$PKGS_FILE" ]] || { echo "Packages file not found: $PKGS_FILE" >&2; exit 1; }
 
@@ -78,7 +78,7 @@ jq -nc \
 mv "$CTX_DIR/package-meta.json.tmp" "$CTX_DIR/package-meta.json"
 
 # --- usages.txt (grep over repos/{repo}/src) ---
-REPO_SRC="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO/src"
+REPO_SRC="$HOME/git/defra/trade-imports-workspace/repos/$REPO/src"
 USAGES_TMP="$CTX_DIR/usages.txt.tmp"
 {
     if [[ -d "$REPO_SRC" ]]; then

@@ -1,27 +1,36 @@
 # Local Setup
 
+The workspace aggregates several services; the diagram below is the animals
+service plus the shared front door. The full repo map is in the root
+[`CLAUDE.md`](../CLAUDE.md).
+
 ## How the services connect
 
 ```
 Browser
   │
-  ├──▶ Frontend (port 3000)  ──▶ Backend API (port 8085)  ──▶ MongoDB (27017)
-  │                                                         ──▶ Floci / AWS (4566)
+  ├──▶ Animals frontend (3000)  ──▶ Backend API (8085)  ──▶ MongoDB (27017)
+  │                                                      ──▶ Floci / AWS (4566)
   │
-  └──▶ Admin (port 3001)     ──▶ Backend API (port 8085)
+  ├──▶ Admin (3001)             ──▶ Backend API (8085)
+  │
+  └──▶ INS frontend (3002)      ──▶ Address book API (8089)
+                                ──▶ Reference data (8086)
 
-All three Node services ──▶ Redis (6379) for sessions
-All three Node services ──▶ Defra ID stub (3007) for OIDC auth
+Every Node service ──▶ Redis (6379) for sessions
+Every Node service ──▶ Defra ID stub (3007) for OIDC auth
 
-Playwright tests (no port) ──▶ Frontend + Admin
+Playwright tests (no port) ──▶ Animals frontend + Admin
 ```
 
 ### Key wiring
 
 | Env var | Set to (in the stack) | Purpose |
 |---------|-----------------------|---------|
-| `TRADE_IMPORTS_ANIMALS_BACKEND_URL` | `http://host.docker.internal:8085` | Frontend → Backend |
+| `TRADE_IMPORTS_ANIMALS_BACKEND_URL` | `http://host.docker.internal:8085` | Animals frontend → Backend |
 | `TRADE_IMPORTS_ANIMALS_BACKEND_URL` | `http://host.docker.internal:8085` | Admin → Backend |
+| `TRADE_IMPORTS_ADDRESS_BOOK_URL` | `http://host.docker.internal:8089` | INS frontend → Address book |
+| `TRADE_IMPORTS_REFERENCE_DATA_URL` | `http://host.docker.internal:8086` | INS frontend → Reference data |
 | `DEFRA_ID_OIDC_CONFIGURATION_URL` | `http://host.docker.internal:3007/...` | OIDC discovery |
 | `REDIS_HOST` | `host.docker.internal` | Session cache |
 | `MONGO_URI` | `mongodb://host.docker.internal:27017` | Backend → MongoDB |
@@ -43,9 +52,12 @@ Services started:
 
 | Service | Port | Image |
 |---------|------|-------|
-| Frontend | 3000 | `defradigital/trade-imports-animals-frontend:latest` |
-| Backend | 8085 | `defradigital/trade-imports-animals-backend:latest` |
+| Animals frontend | 3000 | `defradigital/trade-imports-animals-frontend:latest` |
+| Animals backend | 8085 | `defradigital/trade-imports-animals-backend:latest` |
 | Admin | 3001 | `defradigital/trade-imports-animals-admin:latest` |
+| INS frontend | 3002 | `defradigital/trade-imports-ins-frontend:latest` |
+| Address book | 8089 | `defradigital/trade-imports-address-book:latest` |
+| Dynamics gateway | 8088 | `defradigital/trade-imports-dynamics-gateway:latest` |
 | Defra ID stub | 3007 | `defradigital/trade-imports-defra-id-stub` |
 | Trade imports stub | 8087 | `defradigital/trade-imports-stub` |
 | Reference data | 8086 | `defradigital/trade-imports-reference-data` |
@@ -71,8 +83,8 @@ Tear down and wipe volumes (mongo data, floci state):
 
 ## Option 2 — Full stack from source (recommended for cross-service development)
 
-Builds the six repo-backed services from their local source under `repos/`
-and starts the full stack with volume mounts. Node services get hot-reload on
+Builds the repo-backed services from their local source under `repos/` and
+starts the full stack with volume mounts. Node services get hot-reload on
 `src/` changes; the backend runs `mvn spring-boot:run`.
 
 ```bash
@@ -109,7 +121,9 @@ The backend does **not** hot-reload — recreate the container after changing Ja
 ## Option 3 — One service natively, the rest in the stack
 
 Exclude the service you're developing from the stack and run it from source.
-Valid exclude labels: `frontend`, `backend`, `admin`, `stub`, `defra-id-stub`, `reference-data`, `gateway`.
+Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`,
+`defra-id-stub`, `reference-data`, `address-book`, `gateway` (the authoritative
+list is the `services` array at the top of `scripts/stack/run-stack.sh`).
 
 ```bash
 # Terminal 1 — everything except the backend
@@ -169,12 +183,15 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 
 | Service | Port |
 |---------|------|
-| Frontend | 3000 |
+| Animals frontend | 3000 |
 | Admin | 3001 |
+| INS frontend | 3002 |
 | Defra ID stub | 3007 |
-| Backend | 8085 |
+| Animals backend | 8085 |
 | Reference data | 8086 |
 | Trade imports stub | 8087 |
+| Dynamics gateway | 8088 |
+| Address book | 8089 |
 | cdp-uploader | 7337 |
 | Floci | 4566 |
 | MongoDB | 27017 |

@@ -5,7 +5,7 @@
 # Syncs a Confluence folder tree to local Markdown files.
 # Re-runnable — overwrites existing files on each run.
 #
-# Default root: https://eaflood.atlassian.net/wiki/spaces/EUDP/folder/6447269328
+# Default root folder id: 6447269328 — override with --root-id.
 #
 # Usage: ./sync-docs.sh [--dry-run] [--root-id ID]
 #
@@ -21,11 +21,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_FOLDER_ID="6447269328"
-OUTPUT_DIR="$HOME/git/defra/trade-imports-animals-workspace/docs/confluence"
+OUTPUT_DIR="$HOME/git/defra/trade-imports-workspace/docs/confluence"
 INDEX_FILE="$OUTPUT_DIR/_index.md"
 BASE_URL="${JIRA_BASE_URL:?JIRA_BASE_URL is not set}/wiki"
 DRY_RUN=false
 TOTAL_PAGES=0
+PAGE_ID=""
 
 # ── Argument parsing ───────────────────────────────────────────────────────────
 
@@ -39,12 +40,20 @@ while [[ $# -gt 0 ]]; do
       ROOT_FOLDER_ID="${2:?--root-id requires a value}"
       shift 2
       ;;
+    --page-id)
+      PAGE_ID="${2:?--page-id requires a value}"
+      shift 2
+      ;;
     -h|--help)
-      echo "Usage: ./sync-docs.sh [--dry-run] [--root-id ID]"
+      echo "Usage: ./sync-docs.sh [--dry-run] [--root-id ID] [--page-id ID]"
       echo ""
       echo "Options:"
       echo "  --dry-run       Print what would be synced without writing files"
       echo "  --root-id ID    Confluence folder/page ID to use as root (default: 6447269328)"
+      echo "  --page-id ID    Refresh just this one page, in place, and stop."
+      echo "                  Much faster than a full tree walk when you are"
+      echo "                  iterating on a single page. The page must already"
+      echo "                  have been synced once so its path is known."
       exit 0
       ;;
     *)
@@ -211,7 +220,7 @@ init_index() {
   mkdir -p "$OUTPUT_DIR"
   {
     printf '# Confluence Docs\n\n'
-    printf '> Synced from [EUDP Confluence](%s/wiki/spaces/EUDP/folder/%s) on %s\n\n' \
+    printf '> Synced from [Confluence](%s/wiki/pages/viewpage.action?pageId=%s) on %s\n\n' \
       "$JIRA_BASE_URL" "$ROOT_FOLDER_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
   } > "$INDEX_FILE"
 }
@@ -315,13 +324,46 @@ sync_node() {
   fi
 }
 
+# ── Single-page refresh ────────────────────────────────────────────────────────
+# Rewrites one already-synced page in place. Finding the existing file by its
+# frontmatter page id means we inherit whatever nesting the full sync gave it,
+# without having to resolve the folder ancestry ourselves.
+
+sync_single_page() {
+  local page_id="$1"
+  local existing page_json title version
+
+  existing=$(grep -rl --include='*.md' "^confluence-page-id: \"${page_id}\"$" "$OUTPUT_DIR" 2>/dev/null | head -1)
+
+  if [[ -z "$existing" ]]; then
+    echo "Error: no synced file found for page $page_id under $OUTPUT_DIR" >&2
+    echo "Run a full sync first so its path is known: $0" >&2
+    exit 1
+  fi
+
+  page_json=$(fetch_page_content "$page_id")
+  title=$(echo "$page_json"   | jq -r '.title')
+  version=$(echo "$page_json" | jq -r '.version.number')
+
+  write_page_file "$page_json" "$existing"
+
+  if [[ "$DRY_RUN" != "true" ]]; then
+    echo "Synced '$title' (version $version) → ${existing#"$OUTPUT_DIR"/}"
+  fi
+}
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 main() {
   validate_env
 
+  if [[ -n "$PAGE_ID" ]]; then
+    sync_single_page "$PAGE_ID"
+    return
+  fi
+
   echo "Syncing Confluence docs..."
-  echo "  Root: ${JIRA_BASE_URL}/wiki/spaces/EUDP/folder/${ROOT_FOLDER_ID}"
+  echo "  Root: ${JIRA_BASE_URL}/wiki/pages/viewpage.action?pageId=${ROOT_FOLDER_ID}"
   echo "  Output: $OUTPUT_DIR"
   [[ "$DRY_RUN" == "true" ]] && echo "  Mode: DRY RUN (no files written)"
   echo ""

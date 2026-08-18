@@ -1,7 +1,7 @@
 # Session 1: the workspace, and running it locally
 
 **Objective:** understand the agent-first development model, explain what
-this workspace is and isn't, find your way around the eight repos and the
+this workspace is and isn't, find your way around the repos and the
 docs, know where to look for the current truth on anything, and bring the
 full stack up on your own machine.
 
@@ -9,13 +9,14 @@ Companion deck: `01-workspace.pptx`.
 
 ## What it is
 
-A local workspace that clones eight independent GitHub repos side by side
-and adds shared tooling and cross-repo context on top.
+A local workspace that clones the trade-imports repos side by side, each
+one an independent GitHub repo, and adds shared tooling and cross-repo
+context on top.
 
 The thing to hold onto: **this is not a monorepo**. Each repo keeps its
 own git history, its own remotes, and its own CI. The workspace doesn't
 own them — it sits alongside them and gives you one place to work across
-all eight at once.
+all of them at once.
 
 ## How you work: agent-first
 
@@ -24,14 +25,14 @@ a single repo and work by hand. You run `claude` in the workspace root,
 and the harness wires itself up: the skills, the docs and best-practices,
 and the cross-repo tools are all there out of the box. The skills then do
 the cross-repo work for you — creating and refining tickets, planning and
-implementing changes, reviewing PRs, running upgrades — driving the eight
-repos through the shared `tools/` and the `tim` CLI.
+implementing changes, reviewing PRs, running upgrades — driving the repos
+through the shared `tools/` and the `tim` CLI.
 
 That's the point of the workspace. Running `claude` here is meaningfully
 more powerful than running it in a single vanilla repo. In a vanilla repo
 you get a general assistant with one repo's context and none of the team's
 encoded workflows. Here you get a project-aware agent: the team's
-ticketing, review and upgrade skills, all eight repos in view, and the
+ticketing, review and upgrade skills, every repo in view, and the
 best-practice guides baked in.
 
 One caveat worth knowing early: if you `cd` into `repos/<service>` and run
@@ -42,8 +43,9 @@ round.
 
 ## Why it exists
 
-The service spans eight repos in two stacks. Without something on top,
-every developer has to carry the whole cross-repo workflow in their head.
+The trade-imports estate spans a set of repos in two stacks, and it keeps
+growing. Without something on top, every developer has to carry the whole
+cross-repo workflow in their head.
 The workspace turns that workflow into **harness engineering**: a single,
 shared, tested place for the things the agent wires up when you run it
 here.
@@ -56,14 +58,14 @@ It's the one place for:
 - **Pipelines** — helpers for triggering and reading CI runs without
   leaving the workspace.
 - **Dev scripts** — clone, update, lint and test every repo at once.
-- **Docker** — one compose stack that stands up all eight services
-  together, from published images or from your local source.
+- **Docker** — one compose stack that stands up every service together,
+  from published images or from your local source.
 - **The agent harness** — skills and shared scripts that encode the team's
   workflows (ticketing, review, upgrades) as repeatable operations.
 
 ## The shape of the system
 
-There are eight repos under `repos/`, but the useful way to hold them is by
+The repos all sit under `repos/`, but the useful way to hold them is by
 role, not as a flat list. Most are real services you build; a few are
 **stubs** that stand in for systems outside your control, so the whole
 thing runs end-to-end on your machine.
@@ -88,7 +90,7 @@ running the agent from inside a sub-repo loses the workspace skills.
 
 ## Where things live
 
-- `repos/` — the eight service repos.
+- `repos/` — the service repos.
 - `docs/` — all documentation, including `docs/best-practices/` per stack
   and `docs/confluence/` (the synced mirror).
 - `tools/` — shared shell scripts the skills call.
@@ -123,16 +125,16 @@ worth knowing the scripts are the real thing.
 
 First-time setup, run once:
 
-- `make setup` — clone all eight repos into `repos/`. Idempotent, so it's
+- `make setup` — clone every repo into `repos/`. Idempotent, so it's
   safe to re-run.
 - `make install` — `npm install` across the Node repos.
 
 Then the run loop, driven by `scripts/stack/`:
 
-- `scripts/stack/run-stack.sh --dev` — build and run all eight services
+- `scripts/stack/run-stack.sh --dev` — build and run every service
   together from your local `repos/` (hot-reload for Node, volume mount for
   Java). Drop `--dev` to run from published images instead.
-- `docker compose -p trade-imports-animals logs -f …` — tail the frontend,
+- `docker compose -p trade-imports logs -f …` — tail the frontend,
   admin and backend logs. `Ctrl-C` stops watching, not the stack.
 - `scripts/stack/bounce-backend.sh` — recreate the backend to pick up
   edited Java source. `scripts/stack/stop-stack.sh` tears the stack down
@@ -155,7 +157,7 @@ live in `scripts/stack/run-stack.sh --help` and `docker/stack/AGENTS.md`.
 Before the next session, get the stack running end to end:
 
 1. Clone the workspace to the canonical location
-   (`~/git/defra/trade-imports-animals-workspace`) — the tooling assumes
+   (`~/git/defra/trade-imports-workspace`) — the tooling assumes
    this path. If yours is elsewhere, symlink it; see
    [`agent-onboarding.md`](../agent-onboarding.md). Then run `make setup`
    and `make install`.

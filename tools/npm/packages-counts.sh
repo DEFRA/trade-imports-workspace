@@ -31,7 +31,7 @@ done
 
 [[ -z "$RUN_ID" ]] && usage
 
-BASE="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID"
+BASE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID"
 [[ -d "$BASE" ]] || { [[ "$JSON" == "1" ]] && echo '{"total":0,"by_classification":[],"by_status":[],"by_risk":[]}' && exit 0; echo "Run dir not found: $BASE" >&2; exit 1; }
 
 files=()

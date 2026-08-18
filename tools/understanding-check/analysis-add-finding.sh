@@ -54,7 +54,7 @@ if [[ ${#FIELD_KEYS[@]} -eq 0 ]]; then
     exit 1
 fi
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET/analysis.$REPO.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET/analysis.$REPO.json"
 [[ -f "$target" ]] || { echo "Error: $target not found — run prepare-check.sh first" >&2; exit 1; }
 
 # Build the fields object from KEY=VALUE pairs.

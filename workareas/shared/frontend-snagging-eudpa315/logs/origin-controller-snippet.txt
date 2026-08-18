@@ -1,0 +1,26 @@
+    )
+  )
+
+const journeyIfStarted = (journey, answers) =>
+  hasCommittedNotificationAnswers(answers) ? journey : undefined
+
+/** The entry page's back link leaves the journey until the journey has
+ * started — the hub is still behind the entry guard at that point. */
+const backLinkFor = (journey, answers) =>
+  hasCommittedNotificationAnswers(answers)
+    ? hubPath(journey.journeyId)
+    : dashboardPath()
+
+/** Origin is the journey's entry page, so its save is what opens the opening
+ * run. A journey that already has a run record — active or complete — keeps
+ * the sequencing it has. */
+const shouldOpenRun = async (request) =>
+  !(await openingRunStarted(request, request.params.journeyId))
+
+const render = (
+  h,
+  journey,
+  values,
+  errors = {},
+  answers = values,
+  recoverableError = false

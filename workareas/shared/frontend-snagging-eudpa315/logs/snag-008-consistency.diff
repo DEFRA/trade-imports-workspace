@@ -1,0 +1,394 @@
+diff --git a/e2e/journey-smoke.spec.js b/e2e/journey-smoke.spec.js
+index 43cf8291..33d85ef3 100644
+--- a/e2e/journey-smoke.spec.js
++++ b/e2e/journey-smoke.spec.js
+@@ -22,10 +22,8 @@ test.describe('live-animals journey glue', () => {
+     await page.getByRole('button', { name: 'Start a new notification' }).click()
+     await expect(heading('Origin of the import')).toBeVisible()
+ 
+-    // Until the entry page is answered, journey deep links return to it — and
+-    // the entry page itself is exempt, so there is no redirect loop.
+-    await page.goto(journeyUrl(page))
+-    await expect(heading('Origin of the import')).toBeVisible()
++    // The entry page is exempt from the guard, so revisiting it is not a
++    // redirect loop.
+     await page.goto(journeyUrl(page, 'origin'))
+     await expect(heading('Origin of the import')).toBeVisible()
+ 
+@@ -67,6 +65,25 @@ test.describe('live-animals journey glue', () => {
+     await expect(heading('Overview')).toBeVisible()
+   })
+ 
++  test('a notification created in another session, holding no answers, is sent back to the entry page', async ({
++    page,
++    browser
++  }) => {
++    await page.goto('/')
++    await page.getByRole('button', { name: 'Start a new notification' }).click()
++    await expect(
++      page.getByRole('heading', { name: 'Origin of the import' })
++    ).toBeVisible()
++    const hubUrl = new URL(journeyUrl(page), page.url()).toString()
++
++    const stranger = await browser.newContext()
++    const strangerPage = await stranger.newPage()
++    await strangerPage.goto(hubUrl)
++
++    await expect(strangerPage).toHaveURL(`${hubUrl}/origin`)
++    await stranger.close()
++  })
++
+   test('collection changes from check answers retain change context until their explicit exits', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+index dd9a07da..8105fa04 100644
+--- a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
++++ b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+@@ -33,8 +33,17 @@ task-row ids under visible headings and supplies their presentation order.
+ `nextRunTarget`. [`entry-guard.js`](../journeys/linear/flow/entry-guard.js) owns the
+ journey's redirect policy before handlers run.
+ 
+-The origin page is the journey entry. A new notification is held there by the
+-guard until it is answered, and saving it is what opens the opening run.
++The opening run begins when the notification is created — the dashboard's
++create POST in
++[`features/dashboard/controller.js`](../journeys/linear/features/dashboard/controller.js)
++is the only caller of `beginOpeningRun`. The origin page is the journey entry
++and an ordinary page otherwise: it has no opening-run special case.
++
++The guard admits a request when the opening run has begun for that journey in
++this session, or the journey carries committed user answers. A journey with
++neither — a deep link to an id this session never created and that holds no
++answers — is sent to the origin page. The origin page and its children are
++exempt from the guard, so there is no redirect loop.
+ 
+ ## Registration wiring
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js
+index e3344f07..4cbae86e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js
+@@ -13,6 +13,7 @@ import {
+   startJourney
+ } from '../../../../../../engine/journey.js'
+ import { routeOptions, surfaceClass } from '../../../../../../shared/kit.js'
++import { beginOpeningRun } from '../../../../../../flow/run-state.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
+ import { originPage } from '../origin/page.js'
+ import { copy as en } from './copy/copy.en.js'
+@@ -130,6 +131,7 @@ export const routes = [
+     options: routeOptions,
+     handler: async (request, h) => {
+       const journey = await startJourney(request, h)
++      await beginOpeningRun(request, h, journey.journeyId)
+       return h.redirect(pagePath(journey.journeyId, originPage.slug))
+     }
+   }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js
+index 747657f1..d26bcbd9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js
+@@ -21,12 +21,14 @@ import {
+   pagePath
+ } from '../../../../../../shared/paths.js'
+ import { CYA_SLUG, SURFACES } from '../../../../../../shared/kit.js'
++import { RUN_ACTIVE } from '../../../../../../flow/run-state.js'
+ 
+ import { routes } from './controller.js'
+ import { authenticatedCredentials } from '../../../../../../engine/test-support.js'
+ 
+ const COPY_AS_NEW_ACTION = 'Copy as new'
+ const CREATED_AT_ASCENDING_SORT = 'createdAt,asc'
++const ORIGIN_SLUG = 'origin'
+ 
+ const handlerOf = (method, pathSuffix) =>
+   routes.find(
+@@ -42,12 +44,16 @@ const startPost = routes.find(
+ const buildRequest = ({
+   knownJourneyIds = [],
+   journeyId,
+-  query = {}
++  query = {},
++  openingRun
+ } = {}) => ({
+   payload: {},
+   params: journeyId ? { journeyId } : {},
+   query,
+-  state: { [SESSION_COOKIES.knownJourneys]: knownJourneyIds },
++  state: {
++    [SESSION_COOKIES.knownJourneys]: knownJourneyIds,
++    ...(openingRun ? { [SESSION_COOKIES.openingRun]: openingRun } : {})
++  },
+   headers: {},
+   auth: {
+     isAuthenticated: true,
+@@ -496,3 +502,56 @@ describe('dashboard start with an in-flight draft', () => {
+     ).toEqual({ countryOfOrigin: 'FR' })
+   })
+ })
++
++describe('dashboard start opens the opening run', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++  })
++  beforeEach(() => records.clear())
++
++  it('Should begin the opening run for the new notification before any page is answered', async () => {
++    const h = buildH()
++
++    await startPost(buildRequest(), h)
++
++    const newJourneyId =
++      h.captured.cookies[SESSION_COOKIES.knownJourneys].at(-1)
++    expect(h.captured.redirect).toBe(pagePath(newJourneyId, ORIGIN_SLUG))
++    expect(h.captured.cookies[SESSION_COOKIES.openingRun]).toEqual({
++      [newJourneyId]: RUN_ACTIVE
++    })
++  })
++
++  it('Should leave an earlier notification run record intact', async () => {
++    const h = buildH()
++
++    await startPost(
++      buildRequest({ openingRun: { 'an-earlier-journey': RUN_ACTIVE } }),
++      h
++    )
++
++    const newJourneyId =
++      h.captured.cookies[SESSION_COOKIES.knownJourneys].at(-1)
++    expect(h.captured.cookies[SESSION_COOKIES.openingRun]).toEqual({
++      'an-earlier-journey': RUN_ACTIVE,
++      [newJourneyId]: RUN_ACTIVE
++    })
++  })
++
++  it('Should NOT begin a run when an existing notification is amended', async () => {
++    const draft = await startDraft()
++    const h = buildH()
++
++    await amendPost(
++      buildRequest({
++        knownJourneyIds: [draft.journeyId],
++        journeyId: draft.journeyId
++      }),
++      h
++    )
++
++    expect(h.captured.redirect).toBe(hubPath(draft.journeyId))
++    expect(SESSION_COOKIES.openingRun in h.captured.cookies).toBe(false)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+index 13ce800d..7cfa0cf7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+@@ -17,11 +17,6 @@ import * as kit from '../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
+ import * as countries from '../../../../../../services/countries/index.js'
+ import { hasCommittedNotificationAnswers } from '../../flow/entry-guard.js'
+-import { nextRunTarget } from '../../flow/run.js'
+-import {
+-  beginOpeningRun,
+-  openingRunStarted
+-} from '../../../../../../flow/run-state.js'
+ import { originPage as page } from './page.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
+@@ -100,14 +95,6 @@ const backLinkFor = (journey, answers) =>
+     ? hubPath(journey.journeyId)
+     : dashboardPath()
+ 
+-/** Origin is the journey's entry page, so its save is what opens the opening
+- * run — but only for a journey that is genuinely fresh. A journey that already
+- * has a run record, or that already carries committed answers from an earlier
+- * session, keeps the sequencing it has. */
+-const shouldOpenRun = async (request, answersBeforeCommit) =>
+-  !(await openingRunStarted(request, request.params.journeyId)) &&
+-  !hasCommittedNotificationAnswers(answersBeforeCommit)
+-
+ const render = (
+   h,
+   journey,
+@@ -148,8 +135,6 @@ const post = async (request, h) => {
+     )
+   }
+ 
+-  const { answers: answersBeforeCommit } = await state.get(request, h)
+-
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+@@ -167,15 +152,6 @@ const post = async (request, h) => {
+   }
+ 
+   const { scope } = committed
+-  if (await shouldOpenRun(request, answersBeforeCommit)) {
+-    await beginOpeningRun(request, h, request.params.journeyId)
+-    return h.redirect(
+-      kit.exitTarget(
+-        request,
+-        nextRunTarget(page.id, scope, request.params.journeyId)
+-      )
+-    )
+-  }
+   return h.redirect(await kit.nextTarget(request, page, scope))
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js
+index 2bd9855e..0c23d574 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.e2e.spec.js
+@@ -2,7 +2,10 @@ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ 
+ import { countriesOrigin } from '../../../../../../services/_capture/fixtures.js'
+-import { validatorDefaults } from '../../../../../../shared/copy.en.js'
++import {
++  copy as sharedCopy,
++  validatorDefaults
++} from '../../../../../../shared/copy.en.js'
+ import { copy } from './copy/copy.en.js'
+ 
+ const france = countriesOrigin.find(({ code }) => code === 'FR')
+@@ -127,6 +130,18 @@ test.describe('origin feature', () => {
+     await expect(page).toHaveURL(hubUrl)
+   })
+ 
++  test('cancel and return to hub reaches the hub on a notification with no answers', async ({
++    page
++  }) => {
++    const hubUrl = page.url().replace(/\/origin$/, '')
++
++    await page
++      .getByRole('link', { name: sharedCopy.saveActions.cancelAndReturnToHub })
++      .click()
++
++    await expect(page).toHaveURL(hubUrl)
++  })
++
+   test('has no serious or critical axe violations', async ({ page }) => {
+     await expectNoSeriousOrCriticalAxeViolations(page, 'Origin')
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+index 21a7019f..6d35da9c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+@@ -95,29 +95,38 @@ const originPayload = {
+   regionOfOriginCodeRequirement: 'no'
+ }
+ 
+-const journeyEntryOpensTheRun = () => {
+-  it('Should land Start a new notification on origin, with no run begun yet', async () => {
+-    const h = captureH()
+-    await startPostHandler()(buildRequest(undefined), h)
+-    const journeyId = h.captured.cookies[SESSION_COOKIES.knownJourneys][0]
+-    expect(h.captured.redirect).toBe(pagePath(journeyId, ORIGIN_SLUG))
+-    expect(SESSION_COOKIES.openingRun in h.captured.cookies).toBe(false)
+-  })
++const createNotification = async (overrides) => {
++  const h = captureH()
++  await startPostHandler()(buildRequest(undefined, overrides), h)
++  return {
++    journeyId: h.captured.cookies[SESSION_COOKIES.knownJourneys][0],
++    record: h.captured.cookies[SESSION_COOKIES.openingRun],
++    h
++  }
++}
+ 
+-  it('Should begin the run when origin is saved on a journey that never entered, and sequence on to the commodities page rather than the hub', async () => {
+-    const { journeyId, h } = await drive(postHandlerOf(origin), {
+-      payload: originPayload
+-    })
+-    expect(h.captured.redirect).toBe(pagePath(journeyId, 'commodities'))
++const creatingANotificationOpensTheRun = () => {
++  it('Should land Start a new notification on origin with the run already begun', async () => {
++    const { journeyId, h } = await createNotification()
++    expect(h.captured.redirect).toBe(pagePath(journeyId, ORIGIN_SLUG))
+     expect(h.captured.cookies[SESSION_COOKIES.openingRun]).toEqual(
+       active(journeyId)
+     )
+   })
+ 
+-  it('Should NOT begin the run when origin is re-saved on a journey that already has committed answers', async () => {
++  it('Should sequence a created notification on from origin to the commodities page rather than the hub', async () => {
++    const { journeyId, record } = await createNotification()
++    const h = captureH()
++    await postHandlerOf(origin)(
++      buildRequest(journeyId, { payload: originPayload, record }),
++      h
++    )
++    expect(h.captured.redirect).toBe(pagePath(journeyId, 'commodities'))
++  })
++
++  it('Should NOT begin the run when origin is saved — origin is an ordinary page now', async () => {
+     const { journeyId, h } = await drive(postHandlerOf(origin), {
+-      payload: originPayload,
+-      seed: { countryOfOrigin: 'FR' }
++      payload: originPayload
+     })
+     expect(h.captured.redirect).toBe(hubPath(journeyId))
+     expect(SESSION_COOKIES.openingRun in h.captured.cookies).toBe(false)
+@@ -231,7 +240,7 @@ const deepLinkGuardTests = () => {
+     expect(guardedJourneyPath(pagePath('j-1', 'notification-view'))).toBe(true)
+   })
+ 
+-  it('Should redirect a fresh journey to the entry page', async () => {
++  it('Should redirect a journey with neither a run record nor answers to the entry page', async () => {
+     const journey = await store.create()
+     const target = await entryGuardTarget(
+       buildRequest(journey.journeyId, { path: hubPath(journey.journeyId) }),
+@@ -240,6 +249,15 @@ const deepLinkGuardTests = () => {
+     expect(target).toBe(pagePath(journey.journeyId, ORIGIN_SLUG))
+   })
+ 
++  it('Should admit a notification created in this session before any page is answered', async () => {
++    const { journeyId, record } = await createNotification()
++    const target = await entryGuardTarget(
++      buildRequest(journeyId, { path: hubPath(journeyId), record }),
++      captureH()
++    )
++    expect(target).toBeNull()
++  })
++
+   it('Should let a journey with a committed answer straight through', async () => {
+     const journey = await store.create()
+     await store.seedAnswers(journey.journeyId, { countryOfOrigin: 'FR' })
+@@ -303,7 +321,7 @@ describe('the opening run', () => {
+   })
+   beforeEach(() => store.clear())
+ 
+-  describe('starting a notification opens it', journeyEntryOpensTheRun)
++  describe('creating a notification opens it', creatingANotificationOpensTheRun)
+ 
+   describe(
+     'save-and-continue follows the run sequence',
+@@ -398,22 +416,13 @@ describe('the opening run', () => {
+   })
+ 
+   describe('the run is scoped to its journey', () => {
+-    it('Should open its own run rather than inherit a record belonging to a different journey', async () => {
+-      const journey = await store.create()
+-      const h = captureH()
+-      await postHandlerOf(origin)(
+-        buildRequest(journey.journeyId, {
+-          payload: originPayload,
+-          record: active('some-other-journey')
+-        }),
+-        h
+-      )
+-      expect(h.captured.redirect).toBe(
+-        pagePath(journey.journeyId, 'commodities')
+-      )
++    it('Should open its own run alongside a record belonging to a different journey', async () => {
++      const { journeyId, h } = await createNotification({
++        record: active('some-other-journey')
++      })
+       expect(h.captured.cookies[SESSION_COOKIES.openingRun]).toEqual({
+         'some-other-journey': RUN_ACTIVE,
+-        [journey.journeyId]: RUN_ACTIVE
++        [journeyId]: RUN_ACTIVE
+       })
+     })
+   })

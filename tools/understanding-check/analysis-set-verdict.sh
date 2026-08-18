@@ -33,7 +33,7 @@ if [[ ${#WHY} -gt 300 ]]; then
     exit 1
 fi
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET/analysis.$REPO.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET/analysis.$REPO.json"
 [[ -f "$target" ]] || { echo "Error: $target not found" >&2; exit 1; }
 
 completed_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

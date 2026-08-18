@@ -1,0 +1,314 @@
+import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
+import { loadCorpusProfile } from '../../parity/corpus-profile.js'
+import { readJsonFile, writeJsonAtomic } from '../../parity/io.js'
+import { parseBacklog } from '../../parity/schema.js'
+import { normaliseBacklog } from '../../parity/normalise.js'
+import { runCounts } from '../../parity/counts.js'
+import { runCitations } from '../../parity/citations/run.js'
+import { runEvidence } from '../../parity/citations/evidence.js'
+import { runReport } from '../../parity/render/run.js'
+import { serveReport } from '../../parity/render/serve.js'
+import { runCheck } from '../../parity/check.js'
+import { buildCorpusMeta } from '../../parity/meta.js'
+import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
+import { isTimError } from '../../errors.js'
+
+const SCHEMA_VERSION = 1
+
+const emit = (text) => process.stdout.write(`${text}\n`)
+const emitError = (text) => process.stderr.write(`${text}\n`)
+
+/**
+ * Every parity subcommand does the same three things: resolve the workspace
+ * and the corpus, run one pure function over the corpus, then print the
+ * result as text or as one JSON line. Wrapping that once keeps the
+ * subcommands to their own logic.
+ *
+ * @param {object} args
+ * @param {(context: object, opts: object) => Promise<any>} args.run
+ * @param {(result: any) => string} args.renderText
+ * @param {string} args.timVersion
+ * @returns {Function} A commander action
+ */
+export const makeParityAction = ({ run, renderText, timVersion }) =>
+  async function parityAction(...positional) {
+    const args = positional.slice(0, -2)
+    const opts = this.optsWithGlobals()
+    try {
+      const workspaceRoot = resolveWorkspaceRoot({ explicit: opts.workspace })
+      const runId = args[0] ?? opts.run
+      const profile = loadCorpusProfile({
+        workspaceRoot,
+        runId,
+        explicit: opts.corpus
+      })
+      const result = await run({ workspaceRoot, runId, profile, args }, opts)
+      if (opts.json) {
+        emit(
+          JSON.stringify({
+            ok: true,
+            schema_version: SCHEMA_VERSION,
+            tim_version: timVersion,
+            result,
+            errors: [],
+            metadata: { ranAt: new Date().toISOString() }
+          })
+        )
+      } else {
+        emit(renderText(result))
+      }
+      process.exit(result?.exitNonZero ? ERROR : OK)
+    } catch (error) {
+      if (isTimError(error) && opts.json) {
+        emit(
+          JSON.stringify({
+            ok: false,
+            schema_version: SCHEMA_VERSION,
+            tim_version: timVersion,
+            result: null,
+            errors: [{ code: error.code, message: error.message }]
+          })
+        )
+      } else {
+        emitError(error.message ?? String(error))
+      }
+      process.exit(
+        isTimError(error) && ['USAGE', 'NOT_FOUND'].includes(error.code)
+          ? USAGE
+          : ERROR
+      )
+    }
+  }
+
+const renderNormalise = (result) => {
+  const lines = [
+    `${result.changed.length} of ${result.total} increments normalised.`
+  ]
+  for (const change of result.changed) {
+    const parts = []
+    if (change.evidence.length)
+      parts.push(`evidence: ${change.evidence.join(', ')}`)
+    if (change.screens.length)
+      parts.push(`screens: ${change.screens.join(' | ')}`)
+    lines.push(`  ${change.id}  ${parts.join('   ')}`)
+  }
+  lines.push(
+    result.written
+      ? `Written to ${result.path}`
+      : 'Dry run — nothing written. Pass --write to apply.'
+  )
+  return lines.join('\n')
+}
+
+export const register = (program, { timVersion }) => {
+  const parity = program
+    .command('parity')
+    .description('Build and check the findings report for a comparison corpus')
+    .option('--corpus <id>', 'Override the corpus resolved from the backlog')
+
+  parity
+    .command('normalise <runId>')
+    .description(
+      'Pass 0: rewrite evidence path roots to repo-relative, split slash-joined screens, stamp the corpus id'
+    )
+    .option('--write', 'Apply the changes rather than reporting them')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => {
+          const raw = readJsonFile(profile.paths.backlog)
+          const parsed = parseBacklog(raw)
+          const { backlog, changes } = normaliseBacklog(parsed, profile)
+          if (opts.write) writeJsonAtomic(profile.paths.backlog, backlog)
+          return {
+            total: parsed.increments.length,
+            changed: changes,
+            written: Boolean(opts.write),
+            path: profile.paths.backlog
+          }
+        },
+        renderText: renderNormalise,
+        timVersion
+      })
+    )
+
+  parity
+    .command('meta <runId>')
+    .description(
+      'Write .corpus-meta.json — the pins, the captures and every derived count the masthead uses'
+    )
+    .option('--write', 'Write the file rather than printing it')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => {
+          const meta = buildCorpusMeta({
+            profile,
+            pinSpec: profile.pins ?? {},
+            captureSpec: profile.captures ?? {},
+            capturedOn: new Date().toISOString().slice(0, 10)
+          })
+          if (opts.write) writeJsonAtomic(profile.paths.meta, meta)
+          return {
+            meta,
+            written: Boolean(opts.write),
+            path: profile.paths.meta
+          }
+        },
+        renderText: ({ meta, written, path }) =>
+          [
+            ...Object.entries(meta.pins).map(
+              ([key, pin]) =>
+                `pin  ${key.padEnd(14)} ${pin.short}  ${pin.pushed ? 'pushed' : 'NOT PUSHED'}  ${pin.subject ?? ''}`
+            ),
+            ...Object.entries(meta.captures).map(
+              ([side, capture]) =>
+                `shot ${side.padEnd(14)} ${String(capture.sha).padEnd(8)}  ${capture.screenshots} shots, ${capture.models} models, ${capture.deviceScaleFactor}x  ${capture.matchesPin ? 'matches the pin' : 'DOES NOT match the pin'}`
+            ),
+            written ? `Written to ${path}` : 'Dry run — pass --write to apply.'
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('counts <runId>')
+    .description('Every derived number the report puts on the page')
+    .action(
+      makeParityAction({
+        run: ({ profile }) => runCounts({ profile }),
+        renderText: (result) =>
+          Object.entries(result.counts)
+            .map(([key, value]) => `${key.padEnd(28)} ${JSON.stringify(value)}`)
+            .join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('citations <runId>')
+    .description(
+      'Extract citations[] from the prose and queue anything ambiguous for a human'
+    )
+    .option('--write', 'Write citations[] into the backlog')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runCitations({ profile, write: opts.write }),
+        renderText: (result) =>
+          [
+            `${result.total} citations across ${result.increments} increments.`,
+            ...Object.entries(result.byResolution).map(
+              ([kind, n]) => `  ${kind.padEnd(20)} ${n}`
+            ),
+            `${result.unresolved.length} queued for a human.`,
+            result.written
+              ? `Written to ${result.path}`
+              : 'Dry run — pass --write to apply.'
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('evidence <runId>')
+    .description(
+      'Resolve every citation to a permalink and a snippet at the pinned commit'
+    )
+    .option('--write', 'Write evidence.json')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => runEvidence({ profile, write: opts.write }),
+        renderText: (result) =>
+          [
+            `${result.resolved} of ${result.total} citations resolved to a snippet.`,
+            ...Object.entries(result.byState).map(
+              ([state, n]) => `  ${state.padEnd(20)} ${n}`
+            ),
+            result.outOfRange.length
+              ? `${result.outOfRange.length} citations whose identifier is in the file but outside the cited lines — the range drifted.`
+              : 'Every cited range contains what the prose says it does.',
+            result.anchorMisses.length
+              ? `${result.anchorMisses.length} citations whose identifier is absent from the whole file at the pin — the premise moved: ${result.anchorMisses.map((m) => `${m.increment}/${m.ref}`).join(', ')}`
+              : 'No citation has lost its identifier.',
+            result.written
+              ? `Written to ${result.path}`
+              : 'Dry run — pass --write to apply.'
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('report <runId>')
+    .description('Render the findings report')
+    .option('--open', 'Open the report when it is written')
+    .option(
+      '--target <name>',
+      'Emitter: local (full resolution) or artifact (crops only)',
+      'local'
+    )
+    .option(
+      '--require-images',
+      'Exit non-zero when any cited screen has no image on either side'
+    )
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runReport({
+            profile,
+            target: opts.target,
+            open: opts.open,
+            requireImages: opts.requireImages
+          }),
+        renderText: (result) =>
+          [
+            `Wrote ${result.path} (${(result.bytes / 1024).toFixed(0)} KB).`,
+            `${result.items.increments} findings, ${result.items.candidates} deferred candidates, ${result.items.withdrawn} withdrawn.`,
+            ...result.imageCoverage.map(
+              (c) => `images: ${c.side} ${c.have}/${c.want} cited screens`
+            ),
+            ...result.warnings.map((w) => `warning: ${w}`)
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('serve <runId>')
+    .description('Serve the report at full resolution over HTTP')
+    .option('--port <n>', 'Port to listen on', '4328')
+    .action(async function serveAction(runId, opts) {
+      const globals = this.optsWithGlobals()
+      const workspaceRoot = resolveWorkspaceRoot({
+        explicit: globals.workspace
+      })
+      const profile = loadCorpusProfile({
+        workspaceRoot,
+        runId,
+        explicit: globals.corpus
+      })
+      const { url } = await serveReport({
+        root: profile.paths.reportDir,
+        port: Number(opts.port)
+      })
+      process.stdout.write(`${url}\n`)
+    })
+
+  parity
+    .command('check <runId>')
+    .description('Run the migration invariants I1 to I10')
+    .option('--pass <a|b>', 'Which gate set to apply', 'a')
+    .option('--baseline <ref>', 'Git ref holding the pre-migration backlog')
+    .action(
+      makeParityAction({
+        run: ({ profile, workspaceRoot }, opts) =>
+          runCheck({
+            profile,
+            workspaceRoot,
+            pass: opts.pass,
+            baseline: opts.baseline
+          }),
+        renderText: (result) => result.text,
+        timVersion
+      })
+    )
+}

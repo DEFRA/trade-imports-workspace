@@ -119,17 +119,17 @@ describe('resolveCorpusId precedence', () => {
 
   test('reads the corpus field off the backlog', () => {
     writeRunFile('RUN-1', 'backlog.json', { corpus: 'beta' })
-    expect(resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-1' }).id).toBe(
-      'beta'
-    )
+    expect(
+      resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-1' }).id
+    ).toBe('beta')
   })
 
   test('falls through to .corpus-meta.json when the backlog is silent', () => {
     writeRunFile('RUN-1', 'backlog.json', { run_id: 'RUN-1' })
     writeRunFile('RUN-1', '.corpus-meta.json', { corpus: 'beta' })
-    expect(resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-1' })).toEqual(
-      { id: 'beta', source: '.corpus-meta.json' }
-    )
+    expect(
+      resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-1' })
+    ).toEqual({ id: 'beta', source: '.corpus-meta.json' })
   })
 
   test('an explicit --corpus beats the backlog field', () => {

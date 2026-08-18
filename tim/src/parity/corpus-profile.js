@@ -13,8 +13,7 @@ const readJson = (path) => {
   }
 }
 
-const readJsonIfPresent = (path) =>
-  existsSync(path) ? readJson(path) : null
+const readJsonIfPresent = (path) => (existsSync(path) ? readJson(path) : null)
 
 /**
  * Expand a leading ~ against the current user's home directory. Paths in the

@@ -33,7 +33,10 @@ export const citationSchema = passthrough({
   kind: z.enum(['code', 'capture']),
   side: nullableString,
   repo: nullableString,
-  path: z.string(),
+  // Null on a citation that could not be resolved. A citation that names no
+  // file is information — it is queued for a human and rendered as inert code
+  // with the reason — so the schema has to be able to hold one.
+  path: nullableString,
   lines: z
     .object({ start: z.number().int(), end: z.number().int() })
     .nullable()
@@ -81,21 +84,12 @@ export const findingSchema = passthrough({
 })
 
 export const visualFrameSchema = passthrough({
-  kind: z.enum([
-    'pair',
-    'only',
-    'sequence',
-    'page',
-    'contact-sheet',
-    'none'
-  ]),
+  kind: z.enum(['pair', 'only', 'sequence', 'page', 'contact-sheet', 'none']),
   reason: z.string().optional(),
   screens: z.record(z.string(), z.string()).optional(),
   anchors: z.record(z.string(), z.unknown()).optional(),
   curatedAgainst: z.record(z.string(), z.string()).optional(),
-  fromDelta: z
-    .object({ file: z.string(), index: z.number().int() })
-    .optional(),
+  fromDelta: z.object({ file: z.string(), index: z.number().int() }).optional(),
   caption: z.string().optional(),
   reframe: z.boolean().optional()
 })
@@ -207,10 +201,7 @@ export const parseIncrement = (raw, index) => {
 export const parseBacklog = (raw) => {
   const outer = backlogSchema.safeParse(raw)
   if (!outer.success) {
-    throw new TimError(
-      'PARSE',
-      `backlog: ${describe(firstIssue(outer.error))}`
-    )
+    throw new TimError('PARSE', `backlog: ${describe(firstIssue(outer.error))}`)
   }
   return {
     ...outer.data,

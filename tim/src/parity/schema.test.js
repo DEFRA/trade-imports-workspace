@@ -12,7 +12,8 @@ const goodIncrement = () => ({
   milestone: 'M0',
   domain: 'dashboard',
   title: 'No page in the frontend renders a phase banner.',
-  detail: 'The frontend beforeContent block renders breadcrumbs and nothing else.',
+  detail:
+    'The frontend beforeContent block renders breadcrumbs and nothing else.',
   screens: ['fe-dashboard-empty', 'dr21-dashboard'],
   evidence: {
     frontend: 'src/server/app/shared/layout.njk:41-53',

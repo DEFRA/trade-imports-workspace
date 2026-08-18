@@ -7,7 +7,7 @@
 
 set -e
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 RUN_ID=""; ID=""; STATUS=""; NOTE=""
 while [[ $# -gt 0 ]]; do

@@ -46,18 +46,18 @@ for v in RUN_ID REPO VERSION; do
     [[ -z "${!v}" ]] && { echo "Missing --${v,,}" >&2; exit 1; }
 done
 
-TOOLS="$HOME/git/defra/trade-imports-animals-workspace/tools/govuk"
-REPO_DIR="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO"
+TOOLS="$HOME/git/defra/trade-imports-workspace/tools/govuk"
+REPO_DIR="$HOME/git/defra/trade-imports-workspace/repos/$REPO"
 [[ -d "$REPO_DIR/.git" ]] || { echo "Not a git repo: $REPO_DIR" >&2; exit 1; }
 
-# `npm --prefix` through the trade-imports-animals-workspace symlink
+# `npm --prefix` through the trade-imports-workspace symlink
 # corrupts the lockfile (npm resolves the prefix oddly and writes a
 # package-lock.json that `npm ci` later rejects as out of sync). Resolve
 # REPO_DIR to its real, non-symlinked path for all npm operations. Git
 # operations can stay on REPO_DIR — git follows the symlink fine.
 REPO_DIR_REAL=$(cd "$REPO_DIR" && pwd -P)
 
-STATE_FILE="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
+STATE_FILE="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
 [[ -f "$STATE_FILE" ]] || { echo "Versions file not found: $STATE_FILE" >&2; exit 1; }
 
 entry=$(jq --arg v "$VERSION" '.versions[] | select(.version == $v)' "$STATE_FILE")

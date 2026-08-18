@@ -6,7 +6,7 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
 ---
 
-Pre-merge understanding check for an EUDP Live Animals ticket: surface
+Pre-merge understanding check for an EUDP trade-imports ticket: surface
 the parts of the diff the developer might not have internalised, ask
 about them, score answers against categorical rubrics, and produce a
 coaching report. Designed for PRs completed with AI assistance, where
@@ -15,11 +15,11 @@ local code-edit fluency outpaces understanding.
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-animals-workspace/workareas/`. Bash expands `~` to
+`~/git/defra/trade-imports-workspace/tools/<domain>/`,
+`~/git/defra/trade-imports-workspace/docs/best-practices/`,
+`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
 your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-animals-workspace/...` — no env var needed.
+`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -36,7 +36,7 @@ by name via the Task tool.
   one combined session in the parent terminal.
 
 State for a ticket lives under
-`~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXX/`.
+`~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXX/`.
 JSON canonical:
 
 | File | Mutated by | Purpose |
@@ -80,12 +80,12 @@ talk to the developer.
 | `references/SCORER.md` | Step 6 — one per question, parallel | per-question `score` entry in `transcript.json` (rubricMatch quoted from rubric) |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/understanding-check/references/<NAME>.md.`
+beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/understanding-check/references/<NAME>.md.`
 
 ## Step 0: Start the check
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/start-check.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/understanding-check/start-check.sh EUDPA-XXXXX
 ```
 
 First line of output is `MODE: FRESH` or `MODE: RESUME`. Branch on it:
@@ -126,14 +126,14 @@ Reading `.interview-meta.json` gives you the repo list under `.prs[]`.
 Spawn prompt template (one per repo):
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/understanding-check/references/ANALYST.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/understanding-check/references/ANALYST.md.
 
 **Ticket:** EUDPA-XXXXX
 **Target repo:** [repo-name]
-**Diff:** ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/.diffs/[repo-name].diff
-**Best-practices bundle:** ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/best-practices/[repo-name].md
-**Output JSON path:** ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/analysis.[repo-name].json
-**Ticket summary file:** ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/ticket.md
+**Diff:** ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/.diffs/[repo-name].diff
+**Best-practices bundle:** ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/best-practices/[repo-name].md
+**Output JSON path:** ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/analysis.[repo-name].json
+**Ticket summary file:** ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/ticket.md
 ```
 
 Wait for all analysts to finish. Confirm one `analysis.{repo}.json`
@@ -144,10 +144,10 @@ exists per repo with `verdict: "complete"`.
 One spawn (combines all per-repo analyses into a unified question set):
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/understanding-check/references/QUESTION_GENERATOR.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/understanding-check/references/QUESTION_GENERATOR.md.
 
 **Ticket:** EUDPA-XXXXX
-**Workspace:** ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/
+**Workspace:** ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/
 ```
 
 The generator reads every `analysis.{repo}.json`, emits 8-12 questions
@@ -170,7 +170,7 @@ interview starts, render the question set + analysis summary as a
 preview and present it to the user:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX --preview
+~/git/defra/trade-imports-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX --preview
 ```
 
 Show the preview and prompt:
@@ -226,11 +226,11 @@ sharpest reasoning step and is worth the latency/cost. Analysis and
 question generation can inherit the default model.
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/understanding-check/references/SCORER.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/understanding-check/references/SCORER.md.
 
 **Ticket:** EUDPA-XXXXX
 **Question id:** Q3
-**Workspace:** ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/
+**Workspace:** ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/
 ```
 
 Each scorer reads the question + rubric + answer + anchored diff hunk,
@@ -244,7 +244,7 @@ hedged "I'm not sure" judgements — see
 ## Step 7: Verify coverage and finalise
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/verify-coverage.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/understanding-check/verify-coverage.sh EUDPA-XXXXX
 ```
 
 Gates the verdict step. Exits non-zero if:
@@ -256,7 +256,7 @@ Gates the verdict step. Exits non-zero if:
 Then apply the deterministic counting rule:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/finalize-verdict.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/understanding-check/finalize-verdict.sh EUDPA-XXXXX
 ```
 
 The script reads `transcript.json`, applies
@@ -267,7 +267,7 @@ recorded during the run automatically downgrade `pass` → `needs-review`.
 Then render the report:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/understanding-check/render-report.sh EUDPA-XXXXX
 ```
 
 `report.md` has 10 sections (header, ticket summary, change summary,
@@ -300,13 +300,13 @@ Per-question outcomes:
 - Q1 [category]: VERDICT — rubric clause "..."
 - ...
 
-Report: ~/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/EUDPA-XXXXX/report.md
+Report: ~/git/defra/trade-imports-workspace/workareas/understanding-checks/EUDPA-XXXXX/report.md
 Section 10 of the report is a paste-ready PR comment.
 ```
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-animals-workspace/tools/understanding-check/`:
+All under `~/git/defra/trade-imports-workspace/tools/understanding-check/`:
 
 | Script | Purpose |
 |---|---|

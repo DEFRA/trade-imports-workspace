@@ -1,9 +1,16 @@
 ---
 name: journey-builder
-description: Build the real live-animals journey prototype (prototypes/standalone/live-animals in trade-imports-animals-frontend) on the obligations-v2 page-owned-spine model. Digest mode distils the requirement sources — Confluence "Live Animals Data Fields V4", the src/server skeleton journey, the interaction-design canvas — into a canonical machine-readable spec (journey-spec.json + conflicts.json) reviewed at a spec gate. Backlog mode derives ordered increments from the spec; build mode runs the serial implementor loop (one INCREMENT_IMPLEMENTOR subagent per increment, parent re-verifies, commit-or-rollback), halting at model-extension gates and milestone walk-throughs. Use when the user asks to digest journey requirements, regenerate the backlog, run/resume the build loop, or verify the prototype (triggers: "digest journey requirements", "journey spec", "journey-builder", "build the live-animals prototype", "run the loop"). NOT for the car-insurance spike itself or for generic ticket work.
+description: Build a journey prototype in whichever frontend repo the run's target names (today prototypes/standalone/live-animals in trade-imports-animals-frontend) on the obligations-v2 page-owned-spine model. Digest mode distils the requirement sources — Confluence "Live Animals Data Fields V4", the src/server skeleton journey, the interaction-design canvas — into a canonical machine-readable spec (journey-spec.json + conflicts.json) reviewed at a spec gate. Backlog mode derives ordered increments from the spec; build mode runs the serial implementor loop (one INCREMENT_IMPLEMENTOR subagent per increment, parent re-verifies, commit-or-rollback), halting at model-extension gates and milestone walk-throughs. Use when the user asks to digest journey requirements, regenerate the backlog, run/resume the build loop, or verify the prototype (triggers: "digest journey requirements", "journey spec", "journey-builder", "build the live-animals prototype", "run the loop"). NOT for the car-insurance spike itself or for generic ticket work.
 ---
 
 # journey-builder
+
+Builds a journey prototype in a frontend repo. The loop scripts know nothing
+about any particular codebase — a target names the repo to work in, what to
+stage and how to verify, so adding a commodity line is a data edit rather than a
+script change. The target today is `trade-imports-animals-frontend`
+(`prototypes/standalone/live-animals`), and the paths below name it directly;
+treat that as the current target, not as this skill's scope.
 
 Run-id: the EUDPA ticket (currently **EUDPA-249** — no separate ticket for
 this programme). State lives in
@@ -23,7 +30,7 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
    Idempotent; `--refetch` refreshes cached sources.
 2. Fan out THREE `general-purpose` Task subagents in parallel, one per
    source (confluence-v4, skeleton, ixd-canvas), each told:
-   "Follow ~/git/defra/trade-imports-animals-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
+   "Follow ~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
    for source <s>, run-id EUDPA-X."
 3. Verify every extract has `status: "complete"` and non-trivial counts
    (`jq .status,.fields,.pages,.behaviours` per file). Re-spawn gaps —
@@ -60,7 +67,7 @@ Serial by design — increments edit shared files (registry, flow, hub, CYA).
 2. If the increment has `gate: "sam"` or closes a milestone → STOP, present
    to Sam (model-extension design panel / milestone walk-through).
 3. Spawn ONE `general-purpose` Task subagent:
-   "Follow ~/git/defra/trade-imports-animals-workspace/.claude/skills/journey-builder/references/INCREMENT_IMPLEMENTOR.md
+   "Follow ~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/INCREMENT_IMPLEMENTOR.md
    for run-id EUDPA-X, increment <id>." The persona owns the touch-lists
    (vendored `docs/add-a-{page,field,collection}.md`), the enforcedAt
    semantics, the never-author-gates rule (T11), and commit/rollback.

@@ -57,7 +57,7 @@ case "$SEVERITY" in
     *) echo "Invalid --severity: $SEVERITY (must be Critical|Major|Minor)" >&2; exit 1 ;;
 esac
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${REPO}.json"
 
 # Initialise if missing so callers don't have to know.
 if [[ ! -f "$target" ]]; then

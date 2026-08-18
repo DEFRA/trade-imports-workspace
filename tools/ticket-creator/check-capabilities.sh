@@ -24,7 +24,7 @@
 
 set -euo pipefail
 
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 CAP_PAGE_ID="6468764101"
 QUIET=false
 SYNC=true

@@ -1,0 +1,277 @@
+{
+  "scope": "tim config + docs — pathspec 'tim' excluding 'tim/src' (21 tracked files) plus the untracked, globally-gitignored tim/.claude/settings.local.json",
+  "generatedAt": "2026-08-18",
+  "filesScanned": [
+    "tim/.claude/hooks/announce-rails.sh",
+    "tim/.claude/hooks/forbid-spy-assertions.sh",
+    "tim/.claude/hooks/format-and-lint-changed.sh",
+    "tim/.claude/hooks/guard-git-push.sh",
+    "tim/.claude/hooks/guard-npm-install.sh",
+    "tim/.claude/hooks/npm-allowlist.txt",
+    "tim/.claude/hooks/nudge-tests-if-src-touched.sh",
+    "tim/.claude/hooks/require-sibling-test.sh",
+    "tim/.claude/rules/cli-patterns.md",
+    "tim/.claude/rules/client-patterns.md",
+    "tim/.claude/rules/ink-screen-patterns.md",
+    "tim/.claude/rules/test-patterns.md",
+    "tim/.claude/settings.json",
+    "tim/.claude/settings.local.json",
+    "tim/.gitignore",
+    "tim/.prettierrc.js",
+    "tim/CLAUDE.md",
+    "tim/README.md",
+    "tim/eslint.config.js",
+    "tim/package-lock.json",
+    "tim/package.json",
+    "tim/vitest.config.js"
+  ],
+  "filesWithNoFindings": [
+    "tim/.claude/hooks/announce-rails.sh",
+    "tim/.claude/hooks/forbid-spy-assertions.sh",
+    "tim/.claude/hooks/format-and-lint-changed.sh",
+    "tim/.claude/hooks/guard-npm-install.sh",
+    "tim/.claude/hooks/npm-allowlist.txt",
+    "tim/.claude/hooks/nudge-tests-if-src-touched.sh",
+    "tim/.claude/hooks/require-sibling-test.sh",
+    "tim/.claude/rules/cli-patterns.md",
+    "tim/.claude/rules/client-patterns.md",
+    "tim/.claude/rules/ink-screen-patterns.md",
+    "tim/.claude/rules/test-patterns.md",
+    "tim/.claude/settings.json",
+    "tim/.gitignore",
+    "tim/.prettierrc.js",
+    "tim/eslint.config.js",
+    "tim/package-lock.json",
+    "tim/vitest.config.js"
+  ],
+  "findings": [
+    {
+      "file": "tim/package.json",
+      "line": 4,
+      "current": "\"description\": \"Trade Imports CLI — Node.js Ink/React TUI for the trade-imports-animals workspace\",",
+      "classification": "RENAME",
+      "proposed": "\"description\": \"Trade Imports CLI — Node.js Ink/React TUI for the trade-imports workspace\",",
+      "why": "R5: the CLI keeps the name tim and the TIM_* env vars; only its identity strings drop the animals. The npm package name is already 'tim' and the bin is already 'tim', so nothing functional moves. Deterministic swap of the substring 'the trade-imports-animals workspace' -> 'the trade-imports workspace'."
+    },
+    {
+      "file": "tim/CLAUDE.md",
+      "line": 3,
+      "current": "Node.js Ink/React CLI for the trade-imports-animals workspace. Dual-runs alongside the bash tooling in `../tools/`. See `README.md` for usage.",
+      "classification": "RENAME",
+      "proposed": "Node.js Ink/React CLI for the trade-imports workspace. Dual-runs alongside the bash tooling in `../tools/`. See `README.md` for usage.",
+      "why": "Same identity string as package.json:4. R5. Same deterministic substring swap; nothing else in this file names a commodity line."
+    },
+    {
+      "file": "tim/README.md",
+      "line": 3,
+      "current": "Node.js Ink/React CLI for the [trade-imports-animals](../) workspace. Dual-runs alongside the bash tooling in [`../tools/`](../tools/) — start here when you want a tested, library-backed alternative to a `tools/*.sh` script or a `Makefile` target.",
+      "classification": "GENERICISE",
+      "proposed": "Node.js Ink/React CLI for the [trade-imports workspace](../). Dual-runs alongside the bash tooling in [`../tools/`](../tools/) — start here when you want a tested, library-backed alternative to a `tools/*.sh` script or a `Makefile` target.",
+      "why": "Not a plain substring swap: the animals token is the LINK TEXT of a markdown link whose target is `../`. A blind sed on 'trade-imports-animals' leaves the awkward '[trade-imports](../) workspace'. Rewrite the link so the whole phrase 'trade-imports workspace' is the link text. Behaviourally inert — the `../` target is relative and survives the repo move."
+    },
+    {
+      "file": "tim/README.md",
+      "line": 57,
+      "current": "| Start → Frontend (npm run dev) | `tim start frontend` |  (and lines 58-59: Backend / mvn spring-boot:run, Admin / npm run dev)",
+      "classification": "REVIEW",
+      "proposed": "Leave the wording as-is for this migration; raise separately whether `tim start <service>` should be config-driven.",
+      "why": "SILENT ASSUMPTION, not a string. The documented command surface hard-codes exactly three startable services (frontend / backend / admin) — which today resolve to the animals sub-repos. That is fine under R2 while animals is the only commodity line, but once the workspace is generic a second line would need `tim start` to read a service list from config rather than from a fixed three-way subcommand set. The hard-coding itself lives in `tim/src/commands/` (out of this scope). Human must rule: leave as an animals-shaped convenience, or make it config-driven. Same question applies to `tim docker bounce-backend` (line 55)."
+    },
+    {
+      "file": "tim/.claude/hooks/guard-git-push.sh",
+      "line": 45,
+      "current": "  git checkout -b feat/EUDPA-XXXX-tim-<slug>",
+      "classification": "KEEP",
+      "proposed": "no change",
+      "why": "R6: EUDPA is the live Jira project key and stays functional. Reported as a hardcode site — this is one of the places a future single-source-of-truth for the project key would have to reach. It is guidance text inside a heredoc, not a matcher, so it never affects the guard's behaviour."
+    },
+    {
+      "file": "tim/.claude/hooks/guard-git-push.sh",
+      "line": 46,
+      "current": "  git push -u origin feat/EUDPA-XXXX-tim-<slug>",
+      "classification": "KEEP",
+      "proposed": "no change",
+      "why": "R6, as line 45. Hardcode site recorded for a later project-key indirection."
+    },
+    {
+      "file": "tim/.claude/hooks/guard-git-push.sh",
+      "line": 47,
+      "current": "  # open PR against main in DEFRA/trade-imports-animals",
+      "classification": "RENAME",
+      "proposed": "  # open PR against main in DEFRA/trade-imports-workspace",
+      "why": "This is the GitHub slug of the WORKSPACE repo, not a sub-repo, so R2 does not protect it. Note it is ALREADY inaccurate today — the real remote is DEFRA/trade-imports-animals-workspace (git remote -v confirmed), so the hook has been printing a slug that does not exist. The migration fixes it. Purely advisory heredoc text; the guard matches on 'git push' and the literal branch name 'main' only, so no behaviour depends on this string."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 4,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/ticket/prepare-plan.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/ticket/prepare-plan.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. The EUDPA-211 fragment is a historical per-ticket allowlist entry and stays (R6). FILE IS UNTRACKED — globally gitignored via ~/.config/git/ignore (**/.claude/settings.local.json), so it is not part of the repo migration; see notes."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 6,
+      "current": "\"Bash(PLAYWRIGHT_ENVIRONMENT=dev npm test --prefix=/Users/samfarrington/git/defra/trade-imports-animals/repos/trade-imports-animals-tests -- --project=frontend-chromium --grep \\\"@adhoc-413\\\")\"",
+      "classification": "REVIEW",
+      "proposed": "Depends on whether the local checkout directory is renamed.",
+      "why": "Two different things on one line. The trailing `repos/trade-imports-animals-tests` is a real sub-repo and is KEEP under R2. The leading `/Users/samfarrington/git/defra/trade-imports-animals` is the RAW LOCAL CHECKOUT directory, not the canonical symlinked path from R1 — R1 covers `.../trade-imports-animals-workspace`, this is a different string. Human must rule whether the local checkout dir at ~/git/defra/trade-imports-animals is also renamed (and the R1 symlink repointed). Also note this entry uses an absolute /Users/ path, which the memory rule about ~/ says should be a tilde anyway."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 7,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/ticket/prepare-implement.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/ticket/prepare-implement.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 8,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/github/prs.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/github/prs.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 9,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/ticket/setup-branch.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/ticket/setup-branch.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 12,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/github-actions/list-runs.sh trade-imports-animals-frontend *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/github-actions/list-runs.sh trade-imports-animals-frontend *)\"",
+      "why": "R1 canonical-path swap on the PREFIX only. The `trade-imports-animals-frontend` argument is a real sub-repo slug and is KEEP under R2 — an anchored replace of the path prefix must not touch it. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 13,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/github-actions/list-runs.sh trade-imports-animals-tests *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/github-actions/list-runs.sh trade-imports-animals-tests *)\"",
+      "why": "R1 path prefix only; the `trade-imports-animals-tests` argument is a sub-repo, KEEP under R2. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 14,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/github-actions/wait-for-run.sh trade-imports-animals-tests *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/github-actions/wait-for-run.sh trade-imports-animals-tests *)\"",
+      "why": "R1 path prefix only; sub-repo argument KEEP under R2. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 16,
+      "current": "\"Bash(curl -s \\\"https://sonarcloud.io/api/issues/search?pullRequest=127&componentKeys=DEFRA_trade-imports-animals-frontend&ps=20\\\")\"",
+      "classification": "KEEP",
+      "proposed": "no change",
+      "why": "R2 explicitly protects SonarCloud project keys for the animals sub-repos. DEFRA_trade-imports-animals-frontend is the live key for a repo that is not being renamed. Also a historical PR-127-specific entry."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 17,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/ticket-creator/prepare-ticket-creation.sh *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/ticket-creator/prepare-ticket-creation.sh *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 19,
+      "current": "\"Bash(curl -s \\\"https://sonarcloud.io/api/issues/search?pullRequest=127&componentKeys=DEFRA_trade-imports-animals-frontend&ps=20&additionalFields=_all\\\")\"",
+      "classification": "KEEP",
+      "proposed": "no change",
+      "why": "R2 — live SonarCloud project key for an animals sub-repo. As line 16."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 20,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/jira/create-ticket.sh *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 21,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/review/start-review.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/review/start-review.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap; EUDPA-211 stays per R6. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 22,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/github/file-diff.sh trade-imports-animals-frontend *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/github/file-diff.sh trade-imports-animals-frontend *)\"",
+      "why": "R1 path prefix only; sub-repo argument KEEP under R2. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 23,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/review/file-review-add-item.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/review/file-review-add-item.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 24,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/review/file-review-set-verdict.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/review/file-review-set-verdict.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 25,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/github/file-diff.sh trade-imports-animals-tests *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/github/file-diff.sh trade-imports-animals-tests *)\"",
+      "why": "R1 path prefix only; sub-repo argument KEEP under R2. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 26,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/review/verify-coverage.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/review/verify-coverage.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 27,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/review/aggregate-file-reviews.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/review/aggregate-file-reviews.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 28,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/jira/ticket.sh EUDPA-214 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/jira/ticket.sh EUDPA-214 *)\"",
+      "why": "R1 canonical-path swap; EUDPA-214 stays per R6. Untracked file."
+    },
+    {
+      "file": "tim/.claude/settings.local.json",
+      "line": 29,
+      "current": "\"Bash(~/git/defra/trade-imports-animals-workspace/tools/review/render-items.sh EUDPA-211 *)\"",
+      "classification": "RENAME",
+      "proposed": "\"Bash(~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-211 *)\"",
+      "why": "R1 canonical-path swap. Untracked file."
+    }
+  ],
+  "crossScopeNotes": [
+    "tim/src/env/workspace-root.js:16 hard-codes the string 'trade-imports-animals-workspace' and tim/src/env/workspace-root.test.js:106 asserts join(homedir(),'git','defra','trade-imports-animals-workspace'). Both are OUT of this scope (tim/src) but they are the implementation behind the `--workspace <path>` / `TIM_WORKSPACE` overrides documented in tim/README.md lines 89 and 108. Whoever surveys tim/src must land the R1 swap there; nothing in this scope needs to change alongside it because the README never names the default path.",
+    "workareas/ is out of scope per R3 and was not surveyed."
+  ]
+}

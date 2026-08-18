@@ -59,7 +59,7 @@ case "$STATUS" in
     *) echo "Invalid --status: $STATUS" >&2; exit 1 ;;
 esac
 
-TARGET="$HOME/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/$RUN_ID/$REPO/packages.${REPO}.json"
+TARGET="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$RUN_ID/$REPO/packages.${REPO}.json"
 [[ -f "$TARGET" ]] || { echo "Packages file not found: $TARGET" >&2; exit 1; }
 
 exists=$(jq --arg p "$PACKAGE" '[.packages[] | select(.package == $p)] | length' "$TARGET")

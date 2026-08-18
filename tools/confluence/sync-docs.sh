@@ -5,7 +5,7 @@
 # Syncs a Confluence folder tree to local Markdown files.
 # Re-runnable — overwrites existing files on each run.
 #
-# Default root: https://eaflood.atlassian.net/wiki/spaces/EUDP/folder/6447269328
+# Default root folder id: 6447269328 — override with --root-id.
 #
 # Usage: ./sync-docs.sh [--dry-run] [--root-id ID]
 #
@@ -21,7 +21,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_FOLDER_ID="6447269328"
-OUTPUT_DIR="$HOME/git/defra/trade-imports-animals-workspace/docs/confluence"
+OUTPUT_DIR="$HOME/git/defra/trade-imports-workspace/docs/confluence"
 INDEX_FILE="$OUTPUT_DIR/_index.md"
 BASE_URL="${JIRA_BASE_URL:?JIRA_BASE_URL is not set}/wiki"
 DRY_RUN=false
@@ -220,7 +220,7 @@ init_index() {
   mkdir -p "$OUTPUT_DIR"
   {
     printf '# Confluence Docs\n\n'
-    printf '> Synced from [EUDP Confluence](%s/wiki/spaces/EUDP/folder/%s) on %s\n\n' \
+    printf '> Synced from [Confluence](%s/wiki/pages/viewpage.action?pageId=%s) on %s\n\n' \
       "$JIRA_BASE_URL" "$ROOT_FOLDER_ID" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
   } > "$INDEX_FILE"
 }
@@ -363,7 +363,7 @@ main() {
   fi
 
   echo "Syncing Confluence docs..."
-  echo "  Root: ${JIRA_BASE_URL}/wiki/spaces/EUDP/folder/${ROOT_FOLDER_ID}"
+  echo "  Root: ${JIRA_BASE_URL}/wiki/pages/viewpage.action?pageId=${ROOT_FOLDER_ID}"
   echo "  Output: $OUTPUT_DIR"
   [[ "$DRY_RUN" == "true" ]] && echo "  Mode: DRY RUN (no files written)"
   echo ""

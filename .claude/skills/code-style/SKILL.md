@@ -1,12 +1,12 @@
 ---
 name: code-style
-description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP Live Animals PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 17-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
+description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP trade-imports PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 17-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
 ---
 
-Multi-language code-style review and remediation for EUDP Live Animals
+Multi-language code-style review and remediation for EUDP trade-imports
 tickets (Java, GDS/Nunjucks, Playwright, k6, Node). The per-file reviewer
 persona (`references/STYLE_FILE_REVIEWER.md`) is written
 language-neutrally and takes its ruleset from the pre-baked
@@ -17,7 +17,7 @@ playwright, k6; additive, so a Playwright spec gets both playwright and
 node) that is the single source of truth for the file-type mapping.
 
 Per-repo state lives in
-`~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
+`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
 — canonical JSON, mutated only via `style-*.sh` helpers. The `## Items`
 markdown table in `style-review.{repo}.md` is a rendered view (via
 `render-items.sh`). See `assets/items-table.md` for the JSON schema
@@ -26,9 +26,9 @@ and allowed Disposition/Status values.
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-animals-workspace/workareas/`. Bash expands `~` to
+`~/git/defra/trade-imports-workspace/tools/<domain>/`,
+`~/git/defra/trade-imports-workspace/docs/best-practices/`,
+`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
 your home directory automatically. Scripts under `tools/` resolve the
 workspace path against the user's home directory internally — no env
 var needed.
@@ -62,12 +62,12 @@ write per-file JSONs, run the helper scripts and commit.
 | `references/STYLE_IMPLEMENTOR.md` | IMPLEMENTATION Step I3 (sequential, one group at a time) | source edits + commit |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/code-style/references/<NAME>.md.`
+beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/<NAME>.md.`
 
 ## Step 0: Start the review
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/start-style.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/style/start-style.sh EUDPA-XXXXX
 ```
 
 Single dispatch — detects FRESH vs REFRESH from workspace state and
@@ -97,7 +97,7 @@ Bash tool auto-backgrounds it, **wait for the harness's
 
 `start-style.sh` ran `prepare-style.sh` which produced:
 
-- `~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/`
+- `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/`
   with `.style-meta.json`, per-repo `file-reviews/{repo}/` subtrees,
   per-file `.style.json` placeholders, and per-(repo,topic)
   `style-rules.{repo}.{topic}.md` bundles.
@@ -121,19 +121,19 @@ Emit ALL Task calls in a single assistant response — do NOT spawn one, await t
 ### Spawn prompt template
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
 
 **Mode: FRESH**
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
 **Style rules bundle(s):** (one per topic in this file's `.style-meta.json#source_files[].topics`; a Playwright spec lists both its playwright and node bundle)
-- ~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo-name].[topic].md
+- ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo-name].[topic].md
 
 **Your assigned file:**
 - Repository: [repo-name]
 - Path: [file-path]
 - Topics: [comma-separated topics for this file]
 - PR: #[pr-number]
-- Snapshot path (read-only): ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/repos/[repo-name]/[file-path]
+- Snapshot path (read-only): ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/[repo-name]/[file-path]
 ```
 
 The reviewer writes findings to the per-file JSON placeholder via the
@@ -143,7 +143,7 @@ markdown, no placeholder path needed in the spawn prompt.
 ## Step 3: Verify Coverage
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/review/verify-style-coverage.sh EUDPA-XXXXX
+~/git/defra/trade-imports-workspace/tools/review/verify-style-coverage.sh EUDPA-XXXXX
 ```
 
 (The script lives under `tools/review/` for cross-skill reasons but
@@ -155,7 +155,7 @@ coverage.**
 For each repo with source files:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --write-items
+~/git/defra/trade-imports-workspace/tools/style/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --write-items
 ```
 
 This rolls per-file `.style.json` todos into the canonical
@@ -166,11 +166,11 @@ new work.
 ## Step 5: Write Per-Repo Summaries
 
 For each repo, write
-`~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md`:
+`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --section file-summary
-~/git/defra/trade-imports-animals-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
+~/git/defra/trade-imports-workspace/tools/style/aggregate-file-reviews.sh EUDPA-XXXXX --repo {repo} --section file-summary
+~/git/defra/trade-imports-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
 ```
 
 Skeleton:
@@ -198,7 +198,7 @@ changes.
 ## Step 6: Set Per-Repo Verdicts
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-counts.sh EUDPA-XXXXX --repo {repo} --json
+~/git/defra/trade-imports-workspace/tools/style/style-counts.sh EUDPA-XXXXX --repo {repo} --json
 ```
 
 Use the breakdown to set the verdict line in the per-repo file header
@@ -231,7 +231,7 @@ since the last refresh and stop.
 ## Step R3.5: Load full item inventory
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-items.sh EUDPA-XXXXX --json
+~/git/defra/trade-imports-workspace/tools/style/style-items.sh EUDPA-XXXXX --json
 ```
 
 Use this when reconciling agent results in R6:
@@ -248,19 +248,19 @@ Deleted files: mark their items as `Auto-Resolved` via `style-mark.sh`.
 Spawn `general-purpose` Task subagents in parallel (up to 100), one per
 entry in List A (Mode=REFRESH), List C (Mode=MERGE_RESOLVED), and List D
 (Mode=FRESH; coverage gap). Each spawn prompt begins with
-`Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.`
+`Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.`
 
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
 
 ### Spawn prompt — REFRESH (List A)
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md.
 
 **Mode: REFRESH**
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
 **Style rules bundle(s):** (one per topic in this file's `.style-meta.json#source_files[].topics`; a Playwright spec lists both its playwright and node bundle)
-- ~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo].[topic].md
+- ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.[repo].[topic].md
 
 **Your assigned file:**
 - Repository: [repo]
@@ -295,8 +295,8 @@ Once all refresh reviewers finish, fold their findings into the
 consolidated items file and re-render the markdown view:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/refresh/reconcile.sh EUDPA-XXXXX --repo {repo} --json > /tmp/refresh-summary-{repo}.json
-~/git/defra/trade-imports-animals-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
+~/git/defra/trade-imports-workspace/tools/style/refresh/reconcile.sh EUDPA-XXXXX --repo {repo} --json > /tmp/refresh-summary-{repo}.json
+~/git/defra/trade-imports-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
 ```
 
 The reconciler trusts the STYLE_FILE_REVIEWER persona contract: each
@@ -330,7 +330,7 @@ for E2E tests to pass.
 Group all open Fix items by `(repo, file)`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-items.sh EUDPA-XXXXX --filter fix --status not-done --by-file --json
+~/git/defra/trade-imports-workspace/tools/style/style-items.sh EUDPA-XXXXX --filter fix --status not-done --by-file --json
 ```
 
 Output is `[{repo, file, items: [...]}, ...]`. Each group is one work
@@ -364,7 +364,7 @@ then alphabetical by file):
 Spawn a `general-purpose` Task subagent. Spawn prompt:
 
 ```
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/code-style/references/STYLE_IMPLEMENTOR.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/code-style/references/STYLE_IMPLEMENTOR.md.
 
 **Ticket:** EUDPA-XXXXX
 **Repo:** {repo}
@@ -461,7 +461,7 @@ Summary:
 - Total items: [X]
 - Files reviewed: [X] (verified 100% coverage)
 
-Per-repo files: ~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
+Per-repo files: ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
 ```
 
 **Refresh review:**
@@ -476,12 +476,12 @@ Summary:
 - Per-repo verdicts:
   - {repo}: [VERDICT] ({N} items)
 
-Per-repo files: ~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
+Per-repo files: ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-review.{repo}.md
 ```
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-animals-workspace/tools/style/`:
+All under `~/git/defra/trade-imports-workspace/tools/style/`:
 
 | Script | Purpose |
 |---|---|

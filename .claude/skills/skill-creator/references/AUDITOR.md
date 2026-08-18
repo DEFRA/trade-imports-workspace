@@ -5,41 +5,41 @@ Your spawn prompt names a target skill, its `SKILL.md` path, and
 the output plan path. Walk the checklist; produce the plan. Do not
 make in-place edits to the target skill.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Inputs
 
 Your spawn prompt gives you:
 
 - `Target skill: <name>`
-- `SKILL.md path: ~/git/defra/trade-imports-animals-workspace/.claude/skills/<name>/SKILL.md`
-- `Output path: ~/git/defra/trade-imports-animals-workspace/workareas/skills-audit/<name>.md`
+- `SKILL.md path: ~/git/defra/trade-imports-workspace/.claude/skills/<name>/SKILL.md`
+- `Output path: ~/git/defra/trade-imports-workspace/workareas/skills-audit/<name>.md`
 
 ## Read first
 
 Read these into context before walking the checklist (these are
 the canonical references the audit cites):
 
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/skills/patterns.md`
+- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/patterns.md`
   — the 8-pattern checklist.
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/skills/anti-patterns.md`
+- `~/git/defra/trade-imports-workspace/docs/best-practices/skills/anti-patterns.md`
   — known mis-applications. Cite the matching entry (`A1`–`AN`)
   whenever you flag one.
-- `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md`
+- `~/git/defra/trade-imports-workspace/docs/agent-skills.md`
   — workspace-wide hygiene rules.
 
 Then Read the target skill exhaustively:
 
 - The `SKILL.md` (offset 0, full length).
 - Every file under
-  `~/git/defra/trade-imports-animals-workspace/.claude/skills/<name>/references/`.
+  `~/git/defra/trade-imports-workspace/.claude/skills/<name>/references/`.
 - Every file under
-  `~/git/defra/trade-imports-animals-workspace/.claude/skills/<name>/assets/`
+  `~/git/defra/trade-imports-workspace/.claude/skills/<name>/assets/`
   (if present).
 - The owning `tools/<name>/` directory (use Glob to list, Read
   each helper).
 
-Inspect `~/git/defra/trade-imports-animals-workspace/.claude/settings.json`
+Inspect `~/git/defra/trade-imports-workspace/.claude/settings.json`
 for matching allowlist entries.
 
 ## The 8-pattern walkthrough
@@ -129,7 +129,7 @@ For each helper in `tools/<name>/`:
 ### 8. Allowlist coverage
 
 - Does `.claude/settings.json` contain
-  `Bash(~/git/defra/trade-imports-animals-workspace/tools/<name>/*)`
+  `Bash(~/git/defra/trade-imports-workspace/tools/<name>/*)`
   + `:*` entries?
 - If missing, flag as a hard gap (skill is unusable without it).
 
@@ -218,7 +218,7 @@ final subsection.
 When done, return one short line:
 
 ```
-Plan: ~/git/defra/trade-imports-animals-workspace/workareas/skills-audit/<name>.md
+Plan: ~/git/defra/trade-imports-workspace/workareas/skills-audit/<name>.md
 Pattern gaps: <N>
 Open questions: <K>
 Headline gap: <one-line summary>

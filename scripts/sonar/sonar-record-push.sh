@@ -11,7 +11,7 @@
 # Fast + fail-open: never blocks the push, never errors out of the way.
 # Targets bash 3.2 (macOS stock): no associative arrays, no `set -u`.
 
-ROOT="${CLAUDE_PROJECT_DIR:-$HOME/git/defra/trade-imports-animals}"
+ROOT="${CLAUDE_PROJECT_DIR:-$HOME/git/defra/trade-imports-workspace}"
 # Deterministic, gitignored workspace-local state so the record hook and the
 # check hook always agree (a per-session $TMPDIR can differ between launch
 # contexts). Survives reboots.

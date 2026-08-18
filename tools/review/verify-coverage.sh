@@ -23,7 +23,7 @@ if [[ -z "$TICKET" ]]; then
     exit 1
 fi
 
-REVIEW_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET"
+REVIEW_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET"
 META_FILE="$REVIEW_DIR/.review-meta.json"
 FILE_REVIEWS_DIR="$REVIEW_DIR/file-reviews"
 
@@ -65,7 +65,7 @@ for ((i=0; i<pr_count; i++)); do
     pr_number=$(echo "$prs_json" | jq -r ".[$i].pr")
 
     # Get file list from PR
-    files=$("$HOME/git/defra/trade-imports-animals-workspace/tools/github/pr-details.sh" "$repo" "$pr_number" files 2>/dev/null) || continue
+    files=$("$HOME/git/defra/trade-imports-workspace/tools/github/pr-details.sh" "$repo" "$pr_number" files 2>/dev/null) || continue
 
     while IFS= read -r filepath; do
         [[ -z "$filepath" ]] && continue

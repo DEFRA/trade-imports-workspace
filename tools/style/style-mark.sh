@@ -57,7 +57,7 @@ case "$DISPOSITION" in
     "") STATUS="" ;;
 esac
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/code-style-reviews/$TICKET/items.${REPO}.json"
 [[ -f "$target" ]] || { echo "Items file not found: $target" >&2; exit 1; }
 
 exists=$(jq --argjson id "$ITEM" '[.items[] | select(.id == $id)] | length' "$target")

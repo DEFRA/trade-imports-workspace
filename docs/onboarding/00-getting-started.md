@@ -34,7 +34,7 @@ You do this once, on a screenshare. An engineer sits with you and sorts the plum
 Once setup is done, this is the whole routine, every time:
 
 1. **Open a terminal** — the Terminal app — your engineer will show you which one
-2. **Go to the workspace** — `cd ~/git/defra/trade-imports-animals-workspace`
+2. **Go to the workspace** — `cd ~/git/defra/trade-imports-workspace`
 3. **Start the assistant** — `claude`
 
 Then press Enter and wait for the prompt. The cd line never changes — your engineer can save it as a shortcut.

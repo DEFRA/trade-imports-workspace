@@ -21,11 +21,11 @@ done
 
 [[ -z "$TICKET" ]] && { echo "Usage: $0 EUDPA-XXXXX [--json]" >&2; exit 1; }
 
-CHECK_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET"
+CHECK_DIR="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET"
 meta="$CHECK_DIR/.interview-meta.json"
 [[ -f "$meta" ]] || { echo "Error: $meta not found" >&2; exit 1; }
 
-counts_json=$("$HOME/git/defra/trade-imports-animals-workspace/tools/understanding-check/counts.sh" "$TICKET" --json)
+counts_json=$("$HOME/git/defra/trade-imports-workspace/tools/understanding-check/counts.sh" "$TICKET" --json)
 
 # Apply the rule, first match wins:
 #   FAIL >= 3 OR security_fails >= 1 -> high-risk (2)

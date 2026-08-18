@@ -7,7 +7,7 @@ is a *rendered view* — never the source of truth.
 ## Location
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/items.{repo}.json
+~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/items.{repo}.json
 ```
 
 One file per repo. Initial population: `aggregate-file-reviews.sh`
@@ -59,7 +59,7 @@ helpers under `tools/review/`. Never hand-edit.
 | `Failed` | Implementor tried and failed. | `review-set-status.sh --status Failed`. |
 | `—` | Status doesn't apply (Won't Fix / Auto-Resolved). | Auto-set by `review-mark.sh` for non-Fix dispositions. |
 
-## Helper scripts (all under `~/git/defra/trade-imports-animals-workspace/tools/review/`)
+## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/review/`)
 
 | Script | Purpose |
 |---|---|

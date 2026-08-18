@@ -10,7 +10,7 @@
 # its best-practices files.
 #
 # Writes to:
-#   ~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md
+#   ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md
 #
 # Per-repo (even though today's content is identical across repos) leaves room
 # for per-repo divergence without changing the reviewer's prompt shape.
@@ -26,7 +26,7 @@ if [[ -z "$TICKET" ]] || [[ -z "$REPO" ]] || [[ -z "$TOPIC" ]]; then
     exit 1
 fi
 
-ROOT="$HOME/git/defra/trade-imports-animals-workspace"
+ROOT="$HOME/git/defra/trade-imports-workspace"
 STYLE_DIR="$ROOT/workareas/code-style-reviews/$TICKET"
 out="$STYLE_DIR/style-rules.${REPO}.${TOPIC}.md"
 

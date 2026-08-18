@@ -17,7 +17,7 @@ done
 
 [[ -z "$TICKET" || -z "$ID" ]] && { echo "Usage: $0 EUDPA-XXXXX --id Q3" >&2; exit 1; }
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/understanding-checks/$TICKET/questions.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/understanding-checks/$TICKET/questions.json"
 [[ -f "$target" ]] || { echo "Error: $target not found" >&2; exit 1; }
 
 found=$(jq --arg id "$ID" '.questions | map(.id == $id) | any' "$target")

@@ -30,7 +30,7 @@ case "$MODE" in
 esac
 
 encoded="${FILE//\//_}"
-out="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"
+out="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"
 
 mkdir -p "$(dirname "$out")"
 

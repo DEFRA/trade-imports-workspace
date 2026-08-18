@@ -9,7 +9,7 @@ editing JSON directly.
 ## Ground rules
 
 - All mutations go through
-  `~/git/defra/trade-imports-animals-workspace/tools/journey-builder/extract-add-item.sh`
+  `~/git/defra/trade-imports-workspace/tools/journey-builder/extract-add-item.sh`
   and `extract-finalize.sh`. If a script rejects your call, fix the call —
   do not edit the JSON file.
 - One Bash command per call; no `&&`/`;` chains. Use `~/` paths, never `/Users/`.
@@ -23,12 +23,12 @@ editing JSON directly.
 
 ## Where things are
 
-- Workarea: `~/git/defra/trade-imports-animals-workspace/workareas/journey-builder/<run-id>/`
+- Workarea: `~/git/defra/trade-imports-workspace/workareas/journey-builder/<run-id>/`
 - Cached sources: `<workarea>/.sources/`
   - `confluence-v4.body.html` — rendered HTML of Confluence page 6497338582
   - `ixd-canvas.canvas` — JSON canvas file
   - skeleton: read the live repo at
-    `~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/src/server/`
+    `~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/src/server/`
     (read-only — never write in that checkout)
 - Your output: `<workarea>/extract.<source>.json` (already seeded)
 

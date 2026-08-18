@@ -4,7 +4,7 @@ You add ONE already-agreed page (a vertical slice plus three registrations) as a
 single TDD increment. Everything you need is in the recipe; do not ask questions.
 
 Recipe (single source of truth — follow verbatim, do not restate its steps):
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/docs/add-a-page.md`
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/docs/add-a-page.md`
 (10 steps). `npm run` scripts run from the frontend repo root.
 
 ## Loop

@@ -1,6 +1,6 @@
 ---
 name: prototype-element
-description: Add one already-agreed element — a field, page, collection or service — to the live-animals prototype (prototypes/standalone/live-animals in trade-imports-animals-frontend), one TDD increment at a time. Four modes parameterised by element type; each follows the vendored docs/add-a-{field,page,collection}.md recipe (or docs/services.md) verbatim rather than restating it. The value-add over the docs is the baseline-guard read (run the unit suite first so buildDispatch + contract.test go red and name the next edit), the required-field blast-radius reseed, the boot-replication rule, ≤3-self-repair discipline and one E2E leg — then one commit and stop. Use when the user asks to add a field/page/collection/service to the prototype (triggers: "add a field to the prototype", "add a page", "add a collection", "add a service", "prototype-element add-{field,page,collection,service}"). NOT for producing or regenerating the spec/backlog, NOT for a serial multi-increment build loop, and NOT for growing the engine — those are journey-builder.
+description: Add one already-agreed element — a field, page, collection or service — to a frontend repo's journey prototype (today prototypes/standalone/live-animals in trade-imports-animals-frontend), one TDD increment at a time. Four modes parameterised by element type; each follows the vendored docs/add-a-{field,page,collection}.md recipe (or docs/services.md) verbatim rather than restating it. The value-add over the docs is the baseline-guard read (run the unit suite first so buildDispatch + contract.test go red and name the next edit), the required-field blast-radius reseed, the boot-replication rule, ≤3-self-repair discipline and one E2E leg — then one commit and stop. Use when the user asks to add a field/page/collection/service to the prototype (triggers: "add a field to the prototype", "add a page", "add a collection", "add a service", "prototype-element add-{field,page,collection,service}"). NOT for producing or regenerating the spec/backlog, NOT for a serial multi-increment build loop, and NOT for growing the engine — those are journey-builder.
 ---
 
 # prototype-element
@@ -9,7 +9,7 @@ Author ONE increment against the live-animals prototype and stop: read the
 baseline-guard output, follow the vendored `docs/add-a-*.md` recipe verbatim,
 reach green without weakening a test, reseed the blast radius, run one E2E leg,
 commit. Gating and the next increment are the caller's call. Prototype:
-`~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/`;
+`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/prototypes/standalone/live-animals/`;
 `npm run` scripts run from the frontend **repo root**. One command per Bash call
 (no `&&`/`;`/`|`); literal `~/git/...` paths (never `$VAR` or `/Users/...`).
 

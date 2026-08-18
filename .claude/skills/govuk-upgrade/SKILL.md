@@ -1,6 +1,6 @@
 ---
 name: govuk-upgrade
-description: 'Upgrade the govuk-frontend package across every EUDP Live Animals Node.js repo that consumes it. A four-stage workflow driven by canonical per-repo JSON state (`versions.{repo}.json`): Phase 1 = `start-upgrade.sh` (ticket → branch → discover repos → seed state + pre-bake CHANGELOG sections + best-practices bundle), Phase 2 = fan-out one `general-purpose` Task subagent per pending version following `references/VERSION_PLANNER.md` (uses `version-classify.sh` + `version-add-change.sh`), optional Walker = batch triage of pending plans following `references/PLAN_WALKER.md`, Phase 3 = strict-semver-order `apply-version.sh` per `todo` version (package.json + npm install + npm test + commit + state transition), then E2E once at the end. Stays inside the govuk-frontend toolbox — Nunjucks macros, govuk-* utility classes, no custom CSS or hand-rolled components. Triggers: "upgrade govuk-frontend", "govuk upgrade", "govuk-frontend upgrade", "bump govuk-frontend", "walk govuk EUDPA-XXX", "start-upgrade.sh". NOT for non-govuk-frontend npm bumps — use `npm-upgrade`. NOT for raising the tracking ticket itself — use `ticket-creator`.'
+description: 'Upgrade the govuk-frontend package across every EUDP trade-imports Node.js repo that consumes it. A four-stage workflow driven by canonical per-repo JSON state (`versions.{repo}.json`): Phase 1 = `start-upgrade.sh` (ticket → branch → discover repos → seed state + pre-bake CHANGELOG sections + best-practices bundle), Phase 2 = fan-out one `general-purpose` Task subagent per pending version following `references/VERSION_PLANNER.md` (uses `version-classify.sh` + `version-add-change.sh`), optional Walker = batch triage of pending plans following `references/PLAN_WALKER.md`, Phase 3 = strict-semver-order `apply-version.sh` per `todo` version (package.json + npm install + npm test + commit + state transition), then E2E once at the end. Stays inside the govuk-frontend toolbox — Nunjucks macros, govuk-* utility classes, no custom CSS or hand-rolled components. Triggers: "upgrade govuk-frontend", "govuk upgrade", "govuk-frontend upgrade", "bump govuk-frontend", "walk govuk EUDPA-XXX", "start-upgrade.sh". NOT for non-govuk-frontend npm bumps — use `npm-upgrade`. NOT for raising the tracking ticket itself — use `ticket-creator`.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX [--target X.Y.Z]'
@@ -14,11 +14,11 @@ them in strict order with a commit per version.
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-animals-workspace/workareas/`. Bash expands `~` to
+`~/git/defra/trade-imports-workspace/tools/<domain>/`,
+`~/git/defra/trade-imports-workspace/docs/best-practices/`,
+`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
 your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-animals-workspace/...` — no env var needed.
+`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -55,7 +55,7 @@ membership.
 | `references/VERSION_PLANNER.md` | `references/PHASE_2_MANAGER.md` Step 2 — one per unplanned version, parallel fan-out | `version-classify.sh` + `version-add-change.sh` against `versions.{repo}.json` |
 
 Spawn idiom inside Phase 2: Task tool with `subagent_type: general-purpose`
-and a prompt beginning `Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/govuk-upgrade/references/VERSION_PLANNER.md.`
+and a prompt beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/govuk-upgrade/references/VERSION_PLANNER.md.`
 `general-purpose` carries `Tools: *` so the worker can Read the pre-baked
 changelog, Grep the repo, and call the `version-*` helpers.
 
@@ -66,7 +66,7 @@ Ask the user which ticket this upgrade tracks. Three paths:
 1. **Existing ticket** — they give an `EUDPA-XXXXX`. Branch is
    `chore/EUDPA-XXXXX`. Proceed to Step 2.
 2. **Create a new ticket** — call
-   `~/git/defra/trade-imports-animals-workspace/tools/jira/create-ticket.sh`
+   `~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh`
    with DevOps conventions: parent `EUDPA-144`, labels
    `DevOps` + `tech-improvement`, priority Medium, type Task. See the
    `ticket-creator` skill for the GDS question-gathering flow. Capture
@@ -78,13 +78,13 @@ Ask the user which ticket this upgrade tracks. Three paths:
 ## Step 2: Run Phase 1 dispatcher
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/start-upgrade.sh --ticket EUDPA-XXXXX [--target 6.1.0]
+~/git/defra/trade-imports-workspace/tools/govuk/start-upgrade.sh --ticket EUDPA-XXXXX [--target 6.1.0]
 ```
 
 Or with a custom branch:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/start-upgrade.sh --branch <branch-name> [--target 6.1.0]
+~/git/defra/trade-imports-workspace/tools/govuk/start-upgrade.sh --branch <branch-name> [--target 6.1.0]
 ```
 
 `start-upgrade.sh` writes `.run-meta.json`, ensures every in-scope repo
@@ -148,13 +148,13 @@ problem-solve. Wait for instruction.
 
 Best-practices (load when the changelog warrants):
 
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/node/govuk-frontend.md` — primary technical reference.
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/gds/components.md` — GDS component rules.
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/gds/patterns.md` — question-page / task-list patterns.
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/gds/accessibility.md` — WCAG / a11y.
-- `~/git/defra/trade-imports-animals-workspace/docs/best-practices/gds/styles.md` — typography + colour utilities.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/node/govuk-frontend.md` — primary technical reference.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md` — GDS component rules.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/patterns.md` — question-page / task-list patterns.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/accessibility.md` — WCAG / a11y.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/gds/styles.md` — typography + colour utilities.
 
-Scripts (`~/git/defra/trade-imports-animals-workspace/tools/govuk/`):
+Scripts (`~/git/defra/trade-imports-workspace/tools/govuk/`):
 
 - `start-upgrade.sh` — Phase 1 dispatcher: `.run-meta.json`, branch setup, version discovery, security pre-flight (`npm audit` per repo).
 - `discover-repos.sh` — write run-level `.run-meta.json` (in-scope repos).

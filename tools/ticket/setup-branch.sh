@@ -56,7 +56,7 @@ if [[ -z "$TICKET" ]] || [[ -z "$REPO" ]] || [[ -z "$SLUG" ]]; then
     exit 1
 fi
 
-REPO_DIR="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO"
+REPO_DIR="$HOME/git/defra/trade-imports-workspace/repos/$REPO"
 if [[ ! -d "$REPO_DIR/.git" ]]; then
     echo "Error: repo not found or not a git checkout: $REPO_DIR" >&2
     exit 1

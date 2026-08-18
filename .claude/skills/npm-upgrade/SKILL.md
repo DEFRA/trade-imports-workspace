@@ -1,23 +1,23 @@
 ---
 name: npm-upgrade
-description: 'Upgrade (non-govuk-frontend) npm packages across the EUDP Live Animals repos via a three-phase workflow plus interactive walker — discover outdated packages, classify each as auto (no code changes) or manual (breaking changes), run automated upgrades with rollback safety, produce a handoff manifest for the remaining manual work, then walk the manual list keystroke-by-keystroke and spawn a per-package implementor worker on demand. Per-package classification and implementation state lives in canonical JSON (`packages.{repo}.json`) — no markdown plan files on disk. Fans out per-package research in Phase 1 to `general-purpose` Task subagents following `references/PACKAGE_PLANNER.md`, and per-package implementation from the walker to subagents following `references/MANUAL_UPGRADE_IMPLEMENTOR.md`. Use when the user asks to bring npm packages up to date across repos (triggers: "upgrade npm deps", "upgrade npm dependencies", "upgrade dependencies", "run npm upgrades", "walk upgrade EUDPA-XXX", "triage upgrade EUDPA-XXX", "implement upgrade EUDPA-XXX"). NOT for one-off `npm install <pkg>` work, and NOT for govuk-frontend specifically — use the `govuk-upgrade` skill for that (single package, changelog-driven, per-version sequencing).'
+description: 'Upgrade (non-govuk-frontend) npm packages across the EUDP trade-imports repos via a three-phase workflow plus interactive walker — discover outdated packages, classify each as auto (no code changes) or manual (breaking changes), run automated upgrades with rollback safety, produce a handoff manifest for the remaining manual work, then walk the manual list keystroke-by-keystroke and spawn a per-package implementor worker on demand. Per-package classification and implementation state lives in canonical JSON (`packages.{repo}.json`) — no markdown plan files on disk. Fans out per-package research in Phase 1 to `general-purpose` Task subagents following `references/PACKAGE_PLANNER.md`, and per-package implementation from the walker to subagents following `references/MANUAL_UPGRADE_IMPLEMENTOR.md`. Use when the user asks to bring npm packages up to date across repos (triggers: "upgrade npm deps", "upgrade npm dependencies", "upgrade dependencies", "run npm upgrades", "walk upgrade EUDPA-XXX", "triage upgrade EUDPA-XXX", "implement upgrade EUDPA-XXX"). NOT for one-off `npm install <pkg>` work, and NOT for govuk-frontend specifically — use the `govuk-upgrade` skill for that (single package, changelog-driven, per-version sequencing).'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX [--repo R] [--phase 1|2|3]'
 ---
 
-Three-phase npm dependency upgrade workflow for EUDP Live Animals. Phase
-1 discovers + plans, Phase 2 applies the no-code-change upgrades, Phase
-3 reports what still needs human work.
+Three-phase npm dependency upgrade workflow for the EUDP trade-imports
+workspace. Phase 1 discovers + plans, Phase 2 applies the no-code-change
+upgrades, Phase 3 reports what still needs human work.
 
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/tools/<domain>/`,
-`~/git/defra/trade-imports-animals-workspace/docs/best-practices/`,
-`~/git/defra/trade-imports-animals-workspace/workareas/`. Bash expands `~` to
+`~/git/defra/trade-imports-workspace/tools/<domain>/`,
+`~/git/defra/trade-imports-workspace/docs/best-practices/`,
+`~/git/defra/trade-imports-workspace/workareas/`. Bash expands `~` to
 your home directory automatically. Scripts under `tools/` hardcode the workspace path as
-`$HOME/git/defra/trade-imports-animals-workspace/...` — no env var needed.
+`$HOME/git/defra/trade-imports-workspace/...` — no env var needed.
 Skill-internal references stay relative
 (`references/<NAME>.md`, `assets/<NAME>.md`); subagents are addressed
 by name via the Task tool.
@@ -32,7 +32,7 @@ by name via the Task tool.
 | `references/MANUAL_UPGRADE_IMPLEMENTOR.md` | `references/WALKER.md` `I` keystroke — one per package the operator chooses to implement | source edits + commit + JSON status row update |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/npm-upgrade/references/<NAME>.md.`
+beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/<NAME>.md.`
 `general-purpose` carries `Tools: *` so workers can WebFetch
 changelogs, Grep the codebase, and (for the implementor) edit source
 files and run tests.
@@ -52,17 +52,22 @@ extension conventions, and global rules shared by all phases.
 
 ## Repos
 
-All EUDP Live Animals Node repos under `~/git/defra/trade-imports-animals-workspace/repos/`:
+The workspace roster lives in one place —
+`~/git/defra/trade-imports-workspace/repos.json`. This skill covers the
+entries flagged `npmUpgradeDefault`, all checked out under
+`~/git/defra/trade-imports-workspace/repos/`. `start-upgrade.sh` reads
+the same flag, so ask the roster rather than a copied list:
 
-- trade-imports-animals-frontend
-- trade-imports-animals-backend
-- trade-imports-animals-tests
-- trade-imports-animals-admin
+```bash
+jq -r '.repos[] | select(.npmUpgradeDefault) | .name' ~/git/defra/trade-imports-workspace/repos.json
+```
+
+Pass `--repo <name>` to run against a different set.
 
 ## Step 1: Establish Run ID
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-frontend branch --show-current
+git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend branch --show-current
 ```
 
 Parse `EUDPA-XXXXX` from the branch name (e.g.
@@ -78,27 +83,27 @@ it below would diverge from theirs.
 
 ```bash
 # Check local (separate Bash calls — no pipes)
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo-name} branch --list "feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --list "feature/{run-id}-npm-dependency-upgrades"
 ```
 
 ```bash
 # Check remote
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo-name} branch --remotes --list "origin/feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --remotes --list "origin/feature/{run-id}-npm-dependency-upgrades"
 ```
 
 ```bash
 # Switch if it exists locally
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo-name} checkout "feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout "feature/{run-id}-npm-dependency-upgrades"
 ```
 
 ```bash
 # Exists only on the remote — create it tracking origin, never bare
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo-name} checkout -b "feature/{run-id}-npm-dependency-upgrades" --track "origin/feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "feature/{run-id}-npm-dependency-upgrades" --track "origin/feature/{run-id}-npm-dependency-upgrades"
 ```
 
 ```bash
 # Missing in both — create it fresh
-git -C ~/git/defra/trade-imports-animals-workspace/repos/{repo-name} checkout -b "feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "feature/{run-id}-npm-dependency-upgrades"
 ```
 
 All repos must be on the feature branch before continuing.
@@ -179,7 +184,7 @@ repo / single package / planning-only batches.
 - `references/MANUAL_UPGRADE_IMPLEMENTOR.md` — per-package atomic edit-test-commit-rollback worker (spawned by the WALKER on `I`).
 - `assets/packages-table.md` — canonical JSON schema for `packages.{repo}.json`.
 
-Scripts (`~/git/defra/trade-imports-animals-workspace/tools/npm/`):
+Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
 
 - `start-upgrade.sh` — single dispatcher (phase 1 / 2 / 3).
 - `discover-upgrades.sh` — discovery + seed `packages.{repo}.json`.

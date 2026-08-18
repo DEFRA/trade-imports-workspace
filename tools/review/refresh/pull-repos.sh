@@ -10,7 +10,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 TICKET=""
 REPO_FILTER=""
@@ -33,7 +33,7 @@ done
 
 [[ -z "$TICKET" ]] && usage
 
-REVIEW_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET"
+REVIEW_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET"
 META_FILE="$REVIEW_DIR/.review-meta.json"
 [[ -f "$META_FILE" ]] || { echo "Meta file not found: $META_FILE" >&2; exit 1; }
 

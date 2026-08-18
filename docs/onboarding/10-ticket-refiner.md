@@ -50,7 +50,7 @@ Don't memorise the surface — read the current version:
 - `.claude/skills/ticket-refiner/SKILL.md` — what it does — straight from source
 - `workareas/ticket-refinement/EUDPA-X/review.md` — where the review and verdict land
 
-Run `~/git/defra/trade-imports-animals-workspace/tools/auth.sh` first — it reads Jira and Confluence. An engineer sets this up with you once (see [Getting started](00-getting-started.md)).
+Run `~/git/defra/trade-imports-workspace/tools/auth.sh` first — it reads Jira and Confluence. An engineer sets this up with you once (see [Getting started](00-getting-started.md)).
 
 ## Try it
 

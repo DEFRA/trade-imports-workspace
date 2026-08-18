@@ -1,14 +1,14 @@
-# trade-imports-animals workspace
+# trade-imports workspace
 
-This is a local workspace aggregating 10 independent GitHub repos for the DEFRA trade imports animals service. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.
+This is a local workspace aggregating the independent GitHub repos of the DEFRA trade imports services. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.
 
 The load-bearing rules that agents must always honour are kept **inline** below. The volatile reference catalogues (make targets, common workflows, the `tools/` index, worker references, the workareas map) live as topic files under [`docs/reference/`](docs/reference/) — see the [Reference catalogues](#reference-catalogues) pointer near the foot of this file.
 
 ## Load-bearing rules
 
-### 1. Canonical clone location + symlink banner
+### 1. Canonical clone location
 
-The workspace must live at `~/git/defra/trade-imports-animals-workspace`. If your checkout is elsewhere, symlink it — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode this path, so nothing works from a differently-named checkout without the symlink.
+Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode that path, so a checkout under any other name will not work. No env var to set, and no symlink to maintain: the canonical path is the checkout.
 
 ### 2. Branch naming + cross-repo branch parity
 
@@ -39,7 +39,7 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `govuk-upgrade` | "upgrade govuk-frontend", "govuk upgrade", "walk govuk EUDPA-X", "implement govuk EUDPA-X" | Per-version govuk-frontend upgrade with CHANGELOG-driven plans (JSON-state, dispatcher, walker). |
 | `skill-creator` | "scaffold skill `<name>`", "skill-create `<name>`", "new workspace skill `<name>`", "audit skill `<name>`", "audit skills" | Meta-skill — CREATE scaffolds a new workspace skill; AUDIT walks an existing skill against the 8-pattern checklist. |
 | `understanding-check` | "interview EUDPA-X", "check understanding EUDPA-X", "understanding-check EUDPA-X" | Pre-merge author-understanding check on an AI-assisted PR. |
-| `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on the live-animals frontend (src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout. |
+| `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on a frontend repo (today `trade-imports-animals-frontend`, src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout. |
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 
@@ -95,8 +95,8 @@ is covered by tim — the JSON envelope is schema-versioned and stable.
 ## Workspace stack (what `make docker-compose-*` delegates to)
 
 `scripts/stack/run-stack.sh` brings up the full stack from Dockerhub — the
-only compose stack in the workspace and all 8 repos. Supports `-b <branch>`
-(probe for branch-tagged images), `-d/--dev` (build the 6 repo-backed
+only compose stack in the workspace and its repos. Supports `-b <branch>`
+(probe for branch-tagged images), `-d/--dev` (build the repo-backed
 services from local source under `repos/`), `-e <service>` (exclude one so
 you can run it natively), and `--profile <name>` (run only a subset of
 tiers). In `--dev` mode the Java backend, stub and reference-data hot-reload
@@ -126,7 +126,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 - `docs/best-practices/` — tech-specific practice guides
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md). Cited by SKILL.md files via
-  `~/git/defra/trade-imports-animals-workspace/docs/best-practices/<topic>/<file>`.
+  `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
 
 ## SonarCloud integration
 

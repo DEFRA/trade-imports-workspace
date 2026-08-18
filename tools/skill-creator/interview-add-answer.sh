@@ -43,7 +43,7 @@ case "$RUN_ID" in
         exit 1 ;;
 esac
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/skill-creator/$RUN_ID/decisions.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/skill-creator/$RUN_ID/decisions.json"
 [[ -f "$target" ]] || { echo "No decisions.json at $target — run start-skill-creator.sh first" >&2; exit 1; }
 
 # Build the jq path expression from a dotted field (e.g. fanout.enabled

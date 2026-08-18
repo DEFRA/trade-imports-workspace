@@ -99,7 +99,7 @@ test.describe('Origin journey', () => {
   test('should display origin page heading @compose', async ({ pages }) => {
     await pages.origin.goto()
     await expect(pages.origin.heading).toBeVisible()
-    await expect(pages.origin.heading).toHaveText('Where are the animals coming from?')
+    await expect(pages.origin.heading).toHaveText('Where are the goods coming from?')
   })
 
   test('should show error when no country selected @compose', async ({ pages }) => {
@@ -232,7 +232,7 @@ await expect(locator).toHaveCSS('color', 'rgb(0, 0, 0)')
 // Page-level assertions
 await expect(page).toHaveURL('/origin')
 await expect(page).toHaveURL(/\/notifications\/\d+/)
-await expect(page).toHaveTitle('Origin — Trade Imports Animals')
+await expect(page).toHaveTitle('Origin — Import Notifications')
 
 // Non-locator assertions
 expect(someArray).toHaveLength(3)
@@ -273,7 +273,7 @@ export class OriginPage {
 
   // Convention in this project
   readonly expectedUrl = '/origin'
-  readonly expectedHeading = 'Where are the animals coming from?'
+  readonly expectedHeading = 'Where are the goods coming from?'
 
   constructor(page: Page) {
     this.page = page

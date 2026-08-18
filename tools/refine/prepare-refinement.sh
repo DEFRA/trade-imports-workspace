@@ -8,13 +8,13 @@
 #
 # Does NOT clone repos and does NOT bake per-repo best-practices.
 # The skill reads the workspace's existing
-# ~/git/defra/trade-imports-animals-workspace/repos/<repo>/ trees directly when
+# ~/git/defra/trade-imports-workspace/repos/<repo>/ trees directly when
 # it needs to peek at code.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILL_ASSETS="$HOME/git/defra/trade-imports-animals-workspace/.claude/skills/ticket-refiner/assets"
+SKILL_ASSETS="$HOME/git/defra/trade-imports-workspace/.claude/skills/ticket-refiner/assets"
 
 TICKET=""
 JSON_OUTPUT=false
@@ -41,7 +41,7 @@ if [[ -z "$TICKET" ]]; then
     exit 1
 fi
 
-REFINE_DIR="$HOME/git/defra/trade-imports-animals-workspace/workareas/ticket-refinement/$TICKET"
+REFINE_DIR="$HOME/git/defra/trade-imports-workspace/workareas/ticket-refinement/$TICKET"
 
 log() {
     if [[ "$JSON_OUTPUT" == "false" ]]; then
@@ -64,7 +64,7 @@ log "Creating refinement workspace..."
 mkdir -p "$REFINE_DIR"
 
 log "Fetching ticket details..."
-ticket_json=$("$HOME/git/defra/trade-imports-animals-workspace/tools/jira/ticket.sh" "$TICKET" json 2>/dev/null) || error "Failed to fetch ticket $TICKET"
+ticket_json=$("$HOME/git/defra/trade-imports-workspace/tools/jira/ticket.sh" "$TICKET" json 2>/dev/null) || error "Failed to fetch ticket $TICKET"
 
 ticket_key=$(echo "$ticket_json" | jq -r '.key')
 ticket_summary=$(echo "$ticket_json" | jq -r '.fields.summary')
@@ -78,7 +78,7 @@ ticket_labels=$(echo "$ticket_labels_json" | jq -r 'join(", ")')
 ticket_description=$(echo "$ticket_json" | jq -r '.renderedFields.description // "No description"')
 
 log "Fetching comments..."
-comments_json=$("$HOME/git/defra/trade-imports-animals-workspace/tools/jira/comments.sh" "$TICKET" json 2>/dev/null) || comments_json="[]"
+comments_json=$("$HOME/git/defra/trade-imports-workspace/tools/jira/comments.sh" "$TICKET" json 2>/dev/null) || comments_json="[]"
 comments_count=$(echo "$comments_json" | jq 'length')
 
 log "Checking for Confluence links..."
@@ -90,7 +90,7 @@ if [[ -n "$confluence_links" ]]; then
     while IFS= read -r link; do
         [[ -z "$link" ]] && continue
         log "  Fetching: $link"
-        page_content=$("$HOME/git/defra/trade-imports-animals-workspace/tools/confluence/page.sh" "$link" 2>/dev/null) || continue
+        page_content=$("$HOME/git/defra/trade-imports-workspace/tools/confluence/page.sh" "$link" 2>/dev/null) || continue
         confluence_content+="### $(echo "$page_content" | head -2 | tail -1 | sed 's/Title: //')"$'\n\n'
         confluence_content+="$page_content"$'\n\n'
     done <<< "$confluence_links"

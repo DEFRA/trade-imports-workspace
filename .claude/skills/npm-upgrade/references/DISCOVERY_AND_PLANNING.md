@@ -16,8 +16,8 @@ do not override classifications, do not touch source files.
 
 - `{run-id}` — Jira ticket, e.g. EUDPA-20578.
 
-Repos default to all 4 EUDP Live Animals Node repos under
-`~/git/defra/trade-imports-animals-workspace/repos/`. Strategy defaults to
+Repos default to the Node repos the skill lists under `## Repos`, all of them
+beneath `~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
 `latest`.
 
 ---
@@ -28,13 +28,13 @@ One call sets up everything: discovery, per-repo best-practices
 bundle, per-package context pre-bake, and emits a JSON spawn manifest.
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1
 ```
 
 Optionally narrow to a subset:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor
 ```
 
 Stdout shape (between sentinel lines):
@@ -62,7 +62,7 @@ hydrates anything marked partial/false.
 ### Spawn prompt template
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-animals-workspace/.claude/skills/npm-upgrade/references/PACKAGE_PLANNER.md.
+Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/PACKAGE_PLANNER.md.
 
 Run ID: {ticket}
 Repository: {repo}
@@ -72,7 +72,7 @@ Target: {target}
 Upgrade type: {upgrade_type}
 Dependency: {dependency_type}
 
-Context bundle: ~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/{ticket}/{repo}/.context/{normalized-package}/
+Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{ticket}/{repo}/.context/{normalized-package}/
   - package-meta.json (always present)
   - usages.txt (Grep over repos/{repo}/src — may be empty if no usages found)
   - changelog.md (present iff context_baked != false and "changelog" not in context_missing)
@@ -81,7 +81,7 @@ Context bundle: ~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrad
 context_baked: {context_baked}
 context_missing: {context_missing}
 
-Per-repo best practices: ~/git/defra/trade-imports-animals-workspace/workareas/npm-upgrades/{ticket}/{repo}/best-practices.md
+Per-repo best practices: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{ticket}/{repo}/best-practices.md
 ```
 
 Where `{normalized-package}` substitutes `/` with `__` (so
@@ -94,7 +94,7 @@ Where `{normalized-package}` substitutes `/` with `__` (so
 After all subagents return, run the gate:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/verify-classification-coverage.sh --run-id {run-id}
+~/git/defra/trade-imports-workspace/tools/npm/verify-classification-coverage.sh --run-id {run-id}
 ```
 
 Exit 0 → every package has `classification != null`. Move to Step 4.
@@ -108,7 +108,7 @@ retry, list them in the Phase 1 report as INCOMPLETE and stop.
 ## Step 4: Report
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/packages-counts.sh --run-id {run-id}
+~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id {run-id}
 ```
 
 Format the operator-facing summary verbatim from that output, then

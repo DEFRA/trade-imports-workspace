@@ -2,7 +2,7 @@
 # Run an npm command inside a workspace repo, resolving the repo path
 # to its canonical (de-symlinked) form first.
 #
-# Why: if `~/git/defra/trade-imports-animals-workspace/` is a symlink
+# Why: if `~/git/defra/trade-imports-workspace/` is a symlink
 # (e.g. the checkout lives elsewhere and the canonical path is
 # symlinked to it), `npm --prefix <symlinked-path> install` makes npm
 # rewrite every `node_modules/X` entry in `package-lock.json` to a
@@ -38,7 +38,7 @@ done
 [[ -z "$REPO" ]] && usage
 [[ $# -gt 0 ]] || { echo "Missing npm subcommand" >&2; usage; }
 
-REPO_PATH="$HOME/git/defra/trade-imports-animals-workspace/repos/$REPO"
+REPO_PATH="$HOME/git/defra/trade-imports-workspace/repos/$REPO"
 [[ -d "$REPO_PATH" ]] || { echo "Repo not found: $REPO_PATH" >&2; exit 1; }
 
 # `cd && pwd -P` is POSIX — works on macOS and Linux without realpath

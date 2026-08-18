@@ -15,7 +15,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-ROOT="$HOME/git/defra/trade-imports-animals-workspace"
+ROOT="$HOME/git/defra/trade-imports-workspace"
 PREPARE_REVIEW="$ROOT/tools/review/prepare-review.sh"
 PR_DETAILS="$ROOT/tools/github/pr-details.sh"
 FILE_STYLE_INIT="$SCRIPT_DIR/file-style-init.sh"

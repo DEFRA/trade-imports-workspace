@@ -402,7 +402,7 @@ app:
 spring:
   data:
     mongodb:
-      uri: ${MONGO_URI:mongodb://localhost:27017/trade-imports-animals}
+      uri: ${MONGO_URI:mongodb://localhost:27017/trade-imports}
   cache:
     type: caffeine
 

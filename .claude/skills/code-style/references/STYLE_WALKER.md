@@ -12,12 +12,12 @@ Items schema: `assets/items-table.md`.
 
 ---
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/style-items.sh EUDPA-XXXXX --filter pending --json
+~/git/defra/trade-imports-workspace/tools/style/style-items.sh EUDPA-XXXXX --filter pending --json
 ```
 
 Apply trigger filters:
@@ -116,7 +116,7 @@ For each item marked `D`, in input order:
 
 1. **Read the file** from the workspace snapshot copy:
    ```
-   ~/git/defra/trade-imports-animals-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
+   ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/{file-path}
    ```
    Use the Read tool with `offset` / `limit` to grab ~10 lines around
    the reported line.
@@ -133,7 +133,7 @@ For each item marked `D`, in input order:
    - "leave it" → `style-mark.sh ... --disposition "Won't Fix" --note "{reason}"`
    - "defer to PR thread / standup / wider conversation":
      ```bash
-     ~/git/defra/trade-imports-animals-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
+     ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
      ```
 
 Move to the next Discuss item.
@@ -146,7 +146,7 @@ Re-render the markdown items view so the user can see the dispositions
 they just set:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
+~/git/defra/trade-imports-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
 ```
 
 Print the summary:

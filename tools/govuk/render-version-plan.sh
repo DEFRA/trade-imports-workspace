@@ -30,7 +30,7 @@ for v in RUN_ID REPO VERSION; do
     [[ -z "${!v}" ]] && { echo "Missing --${v,,}" >&2; exit 1; }
 done
 
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/versions.${REPO}.json"
 [[ -f "$target" ]] || { echo "Versions file not found: $target" >&2; exit 1; }
 
 entry=$(jq --arg v "$VERSION" '.versions[] | select(.version == $v)' "$target")
@@ -77,7 +77,7 @@ fi
 echo
 echo "## Changelog"
 echo
-changelog_file="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/version__${VERSION}.changelog.md"
+changelog_file="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/$REPO/version__${VERSION}.changelog.md"
 if [[ -f "$changelog_file" ]]; then
     cat "$changelog_file"
 else

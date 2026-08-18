@@ -36,7 +36,7 @@ case "$SEVERITY" in
 esac
 
 encoded="${FILE//\//_}"
-target="$HOME/git/defra/trade-imports-animals-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"
+target="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/file-reviews/$REPO/$encoded.review.json"
 [[ -f "$target" ]] || { echo "No review file at $target — call file-review-init.sh first" >&2; exit 1; }
 
 next_id=$(jq '(.todos | map(.id) | max // 0) + 1' "$target")

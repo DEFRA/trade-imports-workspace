@@ -21,10 +21,10 @@ You receive these parameters in your spawn prompt:
 ## Path conventions
 
 Cross-workspace paths use the literal home-relative form —
-`~/git/defra/trade-imports-animals-workspace/...`. Bash expands `~`.
+`~/git/defra/trade-imports-workspace/...`. Bash expands `~`.
 Skill-internal references stay relative to the skill folder.
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 ## Output contract
 
@@ -33,7 +33,7 @@ Canonical state lives at the `Output JSON path` you receive. Mutate it
 
 ```bash
 # Append a finding to one of the sections.
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/analysis-add-finding.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-add-finding.sh \
     EUDPA-XXXXX \
     --repo <repo> \
     --section <keyDesignDecisions|edgeCases|failureModes|securityRisks|dataOrApiChanges|testCoverageNotes|aiSuspectedRegions> \
@@ -42,7 +42,7 @@ Canonical state lives at the `Output JSON path` you receive. Mutate it
     --field <field-name>=<value>  [--field ...]
 
 # Mark this repo's analysis complete (sets verdict=complete + completed_at).
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/analysis-set-verdict.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-set-verdict.sh \
     EUDPA-XXXXX --repo <repo> --change-summary "..." --why-it-changed "..."
 ```
 
@@ -105,7 +105,7 @@ before scanning the diff.
 ### Worked example 1 — keyDesignDecision (good)
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/analysis-add-finding.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-add-finding.sh \
     EUDPA-XXXXX \
     --repo trade-imports-animals-backend \
     --section keyDesignDecisions \
@@ -121,7 +121,7 @@ choice the author should be able to defend.
 ### Worked example 2 — aiSuspectedRegion (good)
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/understanding-check/analysis-add-finding.sh \
+~/git/defra/trade-imports-workspace/tools/understanding-check/analysis-add-finding.sh \
     EUDPA-XXXXX \
     --repo trade-imports-animals-frontend \
     --section aiSuspectedRegions \

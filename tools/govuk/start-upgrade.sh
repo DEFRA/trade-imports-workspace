@@ -19,6 +19,8 @@
 
 set -e
 
+PROJECT_KEY="${JIRA_PROJECT_KEY:-EUDPA}"
+
 TICKET=""
 BRANCH=""
 TARGET_VERSION=""
@@ -36,8 +38,9 @@ Usage:
 
 If --ticket is given the branch is chore/EUDPA-XXXX. If --branch is given
 the branch is used verbatim; a Jira ticket prefix is preferred (DevOps
-ticket conventions: parent EUDPA-144, labels DevOps+tech-improvement,
-priority Medium, type Task — see ticket-creator skill).
+ticket conventions: your project's DevOps parent epic, labels
+DevOps+tech-improvement, priority Medium, type Task — see ticket-creator
+skill).
 EOF
             exit 0
             ;;
@@ -56,15 +59,15 @@ if [[ -z "$TICKET" && -z "$BRANCH" ]]; then
 fi
 
 if [[ -n "$TICKET" ]]; then
-    [[ "$TICKET" =~ ^EUDPA-[0-9]+$ ]] || {
-        echo "--ticket must match EUDPA-NNNN (got: $TICKET)" >&2
+    [[ "$TICKET" =~ ^${PROJECT_KEY}-[0-9]+$ ]] || {
+        echo "--ticket must match ${PROJECT_KEY}-NNNN (got: $TICKET)" >&2
         exit 1
     }
     BRANCH="chore/$TICKET"
     RUN_ID="$TICKET"
 else
     # Derive run-id from branch if it embeds a ticket; else use a slug.
-    if [[ "$BRANCH" =~ (EUDPA-[0-9]+) ]]; then
+    if [[ "$BRANCH" =~ (${PROJECT_KEY}-[0-9]+) ]]; then
         RUN_ID="${BASH_REMATCH[1]}"
     else
         RUN_ID=$(printf '%s' "$BRANCH" | tr '/' '_' | tr -c '[:alnum:]_-' '_')
@@ -80,9 +83,9 @@ echo
 # Step 1: discover in-scope repos.
 discover_args=(--run-id "$RUN_ID" --branch "$BRANCH")
 [[ -n "$TARGET_VERSION" ]] && discover_args+=(--target "$TARGET_VERSION")
-"$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/discover-repos.sh" "${discover_args[@]}"
+"$HOME/git/defra/trade-imports-workspace/tools/govuk/discover-repos.sh" "${discover_args[@]}"
 
-META_FILE="$HOME/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/$RUN_ID/.run-meta.json"
+META_FILE="$HOME/git/defra/trade-imports-workspace/workareas/govuk-upgrades/$RUN_ID/.run-meta.json"
 REPOS=()
 while IFS= read -r line; do
     REPOS+=("$line")
@@ -97,22 +100,22 @@ fi
 echo
 echo "Setting up branch $BRANCH on ${#REPOS[@]} repo(s)..."
 for repo in "${REPOS[@]}"; do
-    "$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/setup-branch.sh" --branch "$BRANCH" --repo "$repo"
+    "$HOME/git/defra/trade-imports-workspace/tools/govuk/setup-branch.sh" --branch "$BRANCH" --repo "$repo"
 done
 
 # Step 3: discover versions per repo.
 echo
 echo "Discovering versions per repo..."
 for repo in "${REPOS[@]}"; do
-    repo_path="$HOME/git/defra/trade-imports-animals-workspace/repos/$repo"
+    repo_path="$HOME/git/defra/trade-imports-workspace/repos/$repo"
     dv_args=("$repo_path" --run-id "$RUN_ID")
     [[ -n "$TARGET_VERSION" ]] && dv_args+=(--target "$TARGET_VERSION")
-    "$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/discover-versions.sh" "${dv_args[@]}"
+    "$HOME/git/defra/trade-imports-workspace/tools/govuk/discover-versions.sh" "${dv_args[@]}"
 done
 
 echo
 echo "=== START COMPLETE ==="
-"$HOME/git/defra/trade-imports-animals-workspace/tools/govuk/list-plans.sh" --run-id "$RUN_ID"
+"$HOME/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh" --run-id "$RUN_ID"
 
 # Step 4: security pre-flight. Surface HIGH/CRITICAL npm advisories per
 # repo before any upgrade work. Report-and-warn only — `npm audit fix`
@@ -125,7 +128,7 @@ echo
 echo "=== SECURITY PRE-FLIGHT (npm audit, HIGH/CRITICAL) ==="
 preflight_flagged=0
 for repo in "${REPOS[@]}"; do
-    repo_path="$HOME/git/defra/trade-imports-animals-workspace/repos/$repo"
+    repo_path="$HOME/git/defra/trade-imports-workspace/repos/$repo"
     audit_json=$(npm --prefix "$repo_path" audit --json 2>/dev/null || true)
     high=$(printf '%s' "$audit_json" | jq -r '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo 0)
     critical=$(printf '%s' "$audit_json" | jq -r '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo 0)

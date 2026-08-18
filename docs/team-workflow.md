@@ -2,13 +2,15 @@
 
 ## Repos
 
-Most tickets touch all three of these:
+The authoritative repo map is the root [`CLAUDE.md`](../CLAUDE.md). Most tickets touch a
+frontend, its backend and the matching test suite — for the animals service that is:
 
 - `repos/trade-imports-animals-frontend` — user-facing web application
 - `repos/trade-imports-animals-backend` — API / business logic service
 - `repos/trade-imports-animals-tests` — end-to-end / integration test suite
 
-A single ticket may span all three; coordinate cross-repo changes through the tests and workspace repos.
+Other services in the workspace follow the same shape. A single ticket may span all three;
+coordinate cross-repo changes through the tests and workspace repos.
 
 
 ## Ticket Lifecycle

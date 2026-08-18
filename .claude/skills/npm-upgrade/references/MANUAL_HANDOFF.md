@@ -21,7 +21,7 @@ worker) own implementation.
 ## Step 1: Dispatch — emit handoff manifest
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/npm/start-upgrade.sh {run-id} --phase 3
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 3
 ```
 
 Stdout shape:

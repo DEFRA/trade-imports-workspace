@@ -103,7 +103,7 @@ describe('resolveWorkspaceRoot', () => {
 
   test('CANONICAL_WORKSPACE_PATH is the location tools/ scripts hardcode', () => {
     expect(CANONICAL_WORKSPACE_PATH).toBe(
-      join(homedir(), 'git', 'defra', 'trade-imports-animals-workspace')
+      join(homedir(), 'git', 'defra', 'trade-imports-workspace')
     )
   })
 })

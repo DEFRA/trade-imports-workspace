@@ -1,0 +1,886 @@
+{
+  "scope": "root files (CLAUDE.md, README.md, Makefile, .gitignore, .mcp.json), .github/, docker/, scripts/ — 35 tracked files, surveyed 2026-08-18 on branch feat/EUDPA-328-dr21-parity",
+  "filesScannedWithNoFindings": [
+    ".github/actions/report-e2e-status/action.yml",
+    ".github/actions/report-lighthouse-status/action.yml",
+    ".github/workflows/tim-ci.yml",
+    ".gitignore",
+    "docker/stack/database.compose.yml",
+    "docker/stack/scripts/mongodb/10-database-setup.js",
+    "docker/stack/shared.env",
+    "docker/stack/stubs.compose.yml",
+    "docker/stack/toxiproxy/toxiproxy.json",
+    "scripts/stack/bounce-mongo.sh",
+    "scripts/stack/lib/colour.sh",
+    "scripts/stack/lib/compose.sh",
+    "scripts/stack/lib/flags.sh",
+    "scripts/stack/restart-stack.sh",
+    "scripts/stack/stop-stack.sh"
+  ],
+  "findings": [
+    {
+      "file": "CLAUDE.md",
+      "line": 1,
+      "current": "# trade-imports-animals workspace",
+      "classification": "GENERICISE",
+      "proposed": "# trade-imports workspace",
+      "why": "Front-door title. The workspace itself is no longer animals-scoped; it aggregates the trade-imports repo family of which the animals line is one member."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 3,
+      "current": "This is a local workspace aggregating 10 independent GitHub repos for the DEFRA trade imports animals service. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.",
+      "classification": "GENERICISE",
+      "proposed": "This is a local workspace aggregating 10 independent GitHub repos for the DEFRA trade imports services. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.",
+      "why": "Prose asserts the workspace serves one commodity line. Drop 'animals' from the service description; the repo map below already names which repos are the animals ones."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 11,
+      "current": "The workspace must live at `~/git/defra/trade-imports-animals-workspace`.",
+      "classification": "RENAME",
+      "proposed": "The workspace must live at `~/git/defra/trade-imports-workspace`.",
+      "why": "R1 canonical path. Mechanical swap of trade-imports-animals-workspace -> trade-imports-workspace."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 15,
+      "current": "- Branch naming: `feat/EUDPA-XXXX[-slug]` or `chore/EUDPA-XXXX[-slug]` (also `fix/EUDPA-XXXX[-slug]`).",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA is the live Jira project key and stays functional. Recorded as a hardcode site: this is the normative branch-naming rule, so it is the natural place to point at a future single source of truth for the project key."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 35,
+      "current": "| `ticket` | \"plan EUDPA-\", \"implement EUDPA-\", ... |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA trigger phrase for a live skill. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 36,
+      "current": "| `review` | \"review EUDPA-\", \"re-review\", ... |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA trigger phrase. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 37,
+      "current": "| `code-style` | \"style review EUDPA-\", \"walk style EUDPA-\", \"fix style EUDPA-\", ... |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA trigger phrases. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 38,
+      "current": "| `npm-upgrade` | ... \"walk upgrade EUDPA-X\", \"implement upgrade EUDPA-X\" | ... |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA trigger phrases. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 39,
+      "current": "| `govuk-upgrade` | ... \"walk govuk EUDPA-X\", \"implement govuk EUDPA-X\" | ... |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA trigger phrases. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 41,
+      "current": "| `understanding-check` | \"interview EUDPA-X\", \"check understanding EUDPA-X\", \"understanding-check EUDPA-X\" | ... |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA trigger phrases. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 42,
+      "current": "| `frontend-change` | ... | One recipe-verbatim increment on the live-animals frontend (src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout. |",
+      "classification": "REVIEW",
+      "proposed": "Either (a) keep as-is but name the repo explicitly — 'One recipe-verbatim increment on the live-animals frontend (`trade-imports-animals-frontend`, src/server/app)' — declaring the skill as animals-scoped by design; or (b) reword to a target-profile phrasing once the skill itself becomes multi-domain.",
+      "why": "This is the workspace's biggest silent domain assumption in scope: a WORKSPACE-owned skill hardcoded to the live-animals journey, advertised from the generic workspace's routing table. The wording follows the ruling on the skill, not the other way round — a human must decide whether workspace skills stay animals-scoped or become target-profile driven (journey-builder already has tools/journey-builder/targets.json, so precedent exists). Changing the skill is outside this scope; only the row's wording is."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 50,
+      "current": "| `repos/trade-imports-animals-frontend` | DEFRA/trade-imports-animals-frontend | User-facing web application | Node.js |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real GitHub repo slug and clone folder."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 51,
+      "current": "| `repos/trade-imports-animals-backend` | DEFRA/trade-imports-animals-backend | API / business logic service | Java / Spring Boot |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real GitHub repo slug and clone folder."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 52,
+      "current": "| `repos/trade-imports-animals-tests` | DEFRA/trade-imports-animals-tests | End-to-end / integration test suite | Node.js |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real GitHub repo slug and clone folder."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 53,
+      "current": "| `repos/trade-imports-animals-admin` | DEFRA/trade-imports-animals-admin | Internal admin interface | Node.js |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real GitHub repo slug and clone folder."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 57,
+      "current": "... Azure Service Bus (ADR-EUDP-001 Option B) ...",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "ADR-EUDP-001 is the identifier of a published architecture decision record — a historical citation, not a live project key. Renaming it would break the reference."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 64,
+      "current": "cd repos/trade-imports-animals-frontend   # then use claude, git, npm etc. as normal",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real clone folder used as a worked example."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 81,
+      "current": "tim jira ticket EUDPA-X # equivalent of tools/jira/ticket.sh",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA in a usage example against the live project. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 83,
+      "current": "tim github prs EUDPA-X  # equivalent of tools/github/prs.sh",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA in a usage example against the live project. Hardcode site recorded."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 129,
+      "current": "  `~/git/defra/trade-imports-animals-workspace/docs/best-practices/<topic>/<file>`.",
+      "classification": "RENAME",
+      "proposed": "  `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.",
+      "why": "R1 canonical path. This exact string is the citation form SKILL.md files use, so the same swap must land across .claude/skills/ in the same change (out of this scope, flagged for the executor)."
+    },
+    {
+      "file": "CLAUDE.md",
+      "line": 133,
+      "current": "`trade-imports-animals-frontend`, `-admin`, `-backend`, and `-dynamics-gateway` each have a SonarCloud Claude Code integration ...",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — names real sub-repos with real SonarCloud projects."
+    },
+    {
+      "file": "README.md",
+      "line": 1,
+      "current": "# trade-imports-animals workspace",
+      "classification": "GENERICISE",
+      "proposed": "# trade-imports workspace",
+      "why": "Public front door of the new github.com/DEFRA/trade-imports-workspace repo. Must not name a commodity line."
+    },
+    {
+      "file": "README.md",
+      "line": 3,
+      "current": "Local workspace aggregating the DEFRA trade imports animals service repos. Not a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.",
+      "classification": "GENERICISE",
+      "proposed": "Local workspace aggregating the DEFRA trade imports service repos. Not a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.",
+      "why": "Same domain assumption as CLAUDE.md:3. Note while rewriting: the repo table at lines 9-14 is also STALE — it lists 6 repos where the workspace now aggregates 10 (missing trade-imports-defra-id-stub, -dynamics-gateway, -address-book, -ins-frontend). Rewrite the table wholesale from CLAUDE.md's repo map rather than patching line by line."
+    },
+    {
+      "file": "README.md",
+      "line": 9,
+      "current": "| `repos/trade-imports-animals-frontend` | [DEFRA/trade-imports-animals-frontend](https://github.com/DEFRA/trade-imports-animals-frontend) | User-facing web application | Node.js |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo slug and URL."
+    },
+    {
+      "file": "README.md",
+      "line": 10,
+      "current": "| `repos/trade-imports-animals-backend` | [DEFRA/trade-imports-animals-backend](https://github.com/DEFRA/trade-imports-animals-backend) | API / business logic service | Java / Spring Boot |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo slug and URL."
+    },
+    {
+      "file": "README.md",
+      "line": 11,
+      "current": "| `repos/trade-imports-animals-tests` | [DEFRA/trade-imports-animals-tests](https://github.com/DEFRA/trade-imports-animals-tests) | End-to-end / integration tests | Node.js / Playwright |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo slug and URL."
+    },
+    {
+      "file": "README.md",
+      "line": 12,
+      "current": "| `repos/trade-imports-animals-admin` | [DEFRA/trade-imports-animals-admin](https://github.com/DEFRA/trade-imports-animals-admin) | Internal admin interface | Node.js |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo slug and URL."
+    },
+    {
+      "file": "README.md",
+      "line": 19,
+      "current": "`~/git/defra/trade-imports-animals-workspace`. If your checkout is",
+      "classification": "RENAME",
+      "proposed": "`~/git/defra/trade-imports-workspace`. If your checkout is",
+      "why": "R1 canonical path."
+    },
+    {
+      "file": "README.md",
+      "line": 23,
+      "current": "ln -s \"$(pwd)\" ~/git/defra/trade-imports-animals-workspace",
+      "classification": "RENAME",
+      "proposed": "ln -s \"$(pwd)\" ~/git/defra/trade-imports-workspace",
+      "why": "R1 canonical path — the literal symlink command users copy-paste."
+    },
+    {
+      "file": "README.md",
+      "line": 48,
+      "current": "cd repos/trade-imports-animals-frontend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real clone folder used as a worked example."
+    },
+    {
+      "file": "Makefile",
+      "line": 2,
+      "current": "REPOS         := trade-imports-animals-frontend trade-imports-animals-backend trade-imports-animals-tests trade-imports-animals-admin trade-imports-stub trade-imports-reference-data trade-imports-defra-id-stub trade-imports-dynamics-gateway trade-imports-address-book trade-imports-ins-frontend",
+      "classification": "REVIEW",
+      "proposed": "Individual repo names are KEEP (R2). The REVIEW is structural: introduce one source of truth for the repo roster (e.g. repos.json at the workspace root, or reuse tim's config) that the Makefile, scripts/setup.sh and scripts/update.sh all read, instead of three hand-maintained copies.",
+      "why": "The roster is hardcoded THREE times and the copies have already drifted: Makefile lists 10 repos, scripts/setup.sh lists 10, scripts/update.sh's fallback lists only 8 (missing trade-imports-address-book and trade-imports-ins-frontend), so `bash scripts/update.sh` with no args silently skips two repos. A generic workspace that may later host a different repo family needs the roster to be data, not three literals. Requires a human ruling on where the single source lives — this is a behaviour change, not a rename."
+    },
+    {
+      "file": "Makefile",
+      "line": 4,
+      "current": "NODE_REPOS    := trade-imports-animals-frontend trade-imports-animals-tests trade-imports-animals-admin trade-imports-defra-id-stub trade-imports-ins-frontend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real clone folder names. Covered structurally by the Makefile:2 REVIEW."
+    },
+    {
+      "file": "Makefile",
+      "line": 5,
+      "current": "JAVA_REPOS    := trade-imports-animals-backend trade-imports-stub trade-imports-reference-data trade-imports-dynamics-gateway trade-imports-address-book",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real clone folder names. Covered structurally by the Makefile:2 REVIEW."
+    },
+    {
+      "file": "Makefile",
+      "line": 6,
+      "current": "CANONICAL_PATH := $(HOME)/git/defra/trade-imports-animals-workspace",
+      "classification": "RENAME",
+      "proposed": "CANONICAL_PATH := $(HOME)/git/defra/trade-imports-workspace",
+      "why": "R1 canonical path, written as a literal. Note this is a Make variable, not a shell env var, so R1's 'never an env var' rule is satisfied as-is."
+    },
+    {
+      "file": "Makefile",
+      "line": 23,
+      "current": "link: ## Symlink ~/git/defra/trade-imports-animals-workspace -> this checkout (required by tools/)",
+      "classification": "RENAME",
+      "proposed": "link: ## Symlink ~/git/defra/trade-imports-workspace -> this checkout (required by tools/)",
+      "why": "R1 canonical path in the `make help` text."
+    },
+    {
+      "file": "Makefile",
+      "line": 171,
+      "current": "\tdocker compose -p trade-imports-animals logs -f trade-imports-animals-frontend trade-imports-animals-admin trade-imports-animals-backend",
+      "classification": "RENAME",
+      "proposed": "\tdocker compose -p trade-imports logs -f trade-imports-animals-frontend trade-imports-animals-admin trade-imports-animals-backend",
+      "why": "R4 — the `-p` project name becomes trade-imports; the three SERVICE names after `logs -f` are R2 KEEPs and must NOT be touched. This line is the clearest trap for a naive global sed."
+    },
+    {
+      "file": "Makefile",
+      "line": 197,
+      "current": "\tnpm --prefix $(REPOS_DIR)/trade-imports-animals-frontend run dev",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — clone folder of a real animals sub-repo."
+    },
+    {
+      "file": "Makefile",
+      "line": 200,
+      "current": "\tSPRING_PROFILES_ACTIVE=local mvn -f $(REPOS_DIR)/trade-imports-animals-backend/pom.xml spring-boot:run",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — clone folder of a real animals sub-repo."
+    },
+    {
+      "file": "Makefile",
+      "line": 203,
+      "current": "\tPORT=3001 npm --prefix $(REPOS_DIR)/trade-imports-animals-admin run dev",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — clone folder of a real animals sub-repo."
+    },
+    {
+      "file": ".mcp.json",
+      "line": 5,
+      "current": "\"args\": [\"run\", \"mcp\", \"--project\", \"DEFRA_trade-imports-animals-frontend\"]",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — live SonarCloud project key for a real animals sub-repo."
+    },
+    {
+      "file": ".mcp.json",
+      "line": 9,
+      "current": "\"args\": [\"run\", \"mcp\", \"--project\", \"DEFRA_trade-imports-animals-admin\"]",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — live SonarCloud project key for a real animals sub-repo."
+    },
+    {
+      "file": ".mcp.json",
+      "line": 13,
+      "current": "\"args\": [\"run\", \"mcp\", \"--project\", \"DEFRA_trade-imports-animals-backend\"]",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — live SonarCloud project key for a real animals sub-repo."
+    },
+    {
+      "file": ".github/workflows/e2e-tests.yml",
+      "line": 39,
+      "current": "          repository: DEFRA/trade-imports-animals-workspace",
+      "classification": "RENAME",
+      "proposed": "          repository: DEFRA/trade-imports-workspace",
+      "why": "This is the WORKSPACE's own GitHub slug, not a sub-repo — it moves to DEFRA/trade-imports-workspace. HIGH BREAKAGE RISK: this checkout is what every sub-repo's caller workflow pulls when it calls this reusable E2E workflow, so it must land in the same push as the GitHub repo rename, and any caller referencing `DEFRA/trade-imports-animals-workspace/.github/workflows/e2e-tests.yml@main` in the 10 sub-repos must be updated too (out of this scope)."
+    },
+    {
+      "file": ".github/workflows/e2e-tests.yml",
+      "line": 57,
+      "current": "          if docker manifest inspect \"defradigital/trade-imports-animals-tests:${tag}\" >/dev/null 2>&1; then",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — published Dockerhub image of a real animals sub-repo."
+    },
+    {
+      "file": ".github/workflows/e2e-tests.yml",
+      "line": 74,
+      "current": "            defradigital/trade-imports-animals-tests:${{ steps.branch-tag.outputs.tests-tag }} \\",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — published Dockerhub image of a real animals sub-repo."
+    },
+    {
+      "file": ".github/workflows/e2e-tests.yml",
+      "line": 93,
+      "current": "            defradigital/trade-imports-animals-tests:${{ steps.branch-tag.outputs.tests-tag }} \\",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — published Dockerhub image of a real animals sub-repo."
+    },
+    {
+      "file": ".github/workflows/e2e-tests.yml",
+      "line": 112,
+      "current": "        run: docker compose -p trade-imports-animals logs --no-color --timestamps > stack-logs.txt 2>&1 || true",
+      "classification": "RENAME",
+      "proposed": "        run: docker compose -p trade-imports logs --no-color --timestamps > stack-logs.txt 2>&1 || true",
+      "why": "R4 — compose project name. Must change in the SAME commit as docker/stack/compose.yml:1, or CI log capture silently attaches to a non-existent project and emits nothing."
+    },
+    {
+      "file": ".github/workflows/e2e-tests.yml",
+      "line": 124,
+      "current": "        run: docker compose -p trade-imports-animals down",
+      "classification": "RENAME",
+      "proposed": "        run: docker compose -p trade-imports down",
+      "why": "R4 — compose project name. Must change with compose.yml:1 or teardown leaks the stack on the runner."
+    },
+    {
+      "file": ".github/workflows/publish-branch.yml",
+      "line": 7,
+      "current": "        description: 'Docker image name (e.g. trade-imports-animals-frontend)'",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — a concrete, real image name used as an illustrative example in an input description. Harmless and more useful than an abstract placeholder; the workflow itself is already fully generic (image-name is an input)."
+    },
+    {
+      "file": ".github/workflows/cleanup-e2e-reports.yml",
+      "line": 94,
+      "current": "          git commit -m \"chore: prune + orphan-reset gh-pages (EUDPA-199)\" --allow-empty",
+      "classification": "GENERICISE",
+      "proposed": "          git commit -m \"chore: prune + orphan-reset gh-pages\" --allow-empty",
+      "why": "Not an animals token but a stale hardcoded ticket key baked into a message written on EVERY run — every future gh-pages reset is attributed to a long-closed ticket. Dropping it is safe (message text is not parsed anywhere) and removes one EUDPA hardcode without touching R6's live usage."
+    },
+    {
+      "file": "docker/stack/compose.yml",
+      "line": 1,
+      "current": "name: trade-imports-animals",
+      "classification": "RENAME",
+      "proposed": "name: trade-imports",
+      "why": "R4 — compose project name. BREAKAGE: docker compose namespaces containers, the default network and named/anon volumes by project name, so any stack running under the old name is orphaned by this change — its containers keep running, `stop-stack.sh` under the new name will not see them, and mongo/floci volumes are effectively abandoned. Sequence: tear the stack down under the OLD name first (`docker compose -p trade-imports-animals down --volumes --remove-orphans`), then land the rename, then bring it back up."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 11,
+      "current": "./scripts/stack/run-stack.sh -b feat/EUDPA-123              # branch tag where published, latest elsewhere",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — EUDPA in a usage example against the live project. Hardcode site recorded."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 37,
+      "current": "| `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book` | `backend` |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose SERVICE names, which are unchanged."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 38,
+      "current": "| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend` | `frontend` |",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose SERVICE names, which are unchanged."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 80,
+      "current": "# ... then in IntelliJ: run trade-imports-animals-backend with SPRING_PROFILES_ACTIVE=local",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — names the real animals backend repo/module opened in the IDE."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 106,
+      "current": "`Trade-Imports-Animals-Admin-Secret` header) to move them back onto the source",
+      "classification": "REVIEW",
+      "proposed": "Leave the doc text exactly as written for now — it quotes a live HTTP header. Raise separately against trade-imports-dynamics-gateway: a generic (non-animals) service defines an animals-named admin header, which is the same genericisation defect one repo down. If the gateway renames it, this doc line follows.",
+      "why": "The header name is a wire-protocol contract owned by trade-imports-dynamics-gateway, not by the workspace. Renaming it here would make the runbook wrong and would not change behaviour; renaming it in the gateway is a breaking API change needing its own ticket. A human must decide whether the gateway header rename is in or out of the migration."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 113,
+      "current": "cd repos/trade-imports-animals-tests",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real clone folder in the E2E recipe."
+    },
+    {
+      "file": "docker/stack/AGENTS.md",
+      "line": 209,
+      "current": "- `compose.yml` — base, just `name: trade-imports-animals`.",
+      "classification": "RENAME",
+      "proposed": "- `compose.yml` — base, just `name: trade-imports`.",
+      "why": "R4 — documentation of the compose project name; must move with docker/stack/compose.yml:1."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 2,
+      "current": "  trade-imports-animals-backend:",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose service name matching the real repo/image."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 19,
+      "current": "      - TRADE_IMPORTS_ANIMALS_BACKEND_BASE_URL=http://host.docker.internal:8085",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — explicitly named as a keeper. Env var consumed by the animals backend itself."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 21,
+      "current": "      - CDP_DOCUMENTS_BUCKET=trade-imports-animals-documents",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real S3 bucket name provisioned for the animals backend (and mirrored in infrastructure.compose.yml CONSUMER_BUCKETS). Renaming it here would desync the local stack from the deployed resource."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 22,
+      "current": "      - OUTBOX_SNS_TOPIC_ARN=${OUTBOX_SNS_TOPIC_ARN:-arn:aws:sns:eu-west-2:000000000000:trade_imports_animals_eu_notifications.fifo}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — AWS resource ARN of an animals-service topic. The underscore form tradeimportsanimals-style token is part of a real resource name."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 32,
+      "current": "    image: defradigital/trade-imports-animals-backend:${TRADE_IMPORTS_ANIMALS_BACKEND:-latest}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real Dockerhub image plus the image-tag override env var run-stack.sh exports for it."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 54,
+      "current": "      - NOTIFICATION_SQS_QUEUE_URL=${NOTIFICATION_SQS_QUEUE_URL:-http://host.docker.internal:4566/000000000000/trade_imports_animals_eu_notifications_gateway.fifo}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real AWS queue name in the animals notification pipeline; must match trade-imports-dynamics-gateway/servicebus/setup-notification-pipeline.sh."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 55,
+      "current": "      - NOTIFICATION_SQS_ARN=${NOTIFICATION_SQS_ARN:-arn:aws:sqs:eu-west-2:000000000000:trade_imports_animals_eu_notifications_gateway.fifo}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real AWS resource ARN."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 56,
+      "current": "      - NOTIFICATION_SQS_DLQ_URL=${NOTIFICATION_SQS_DLQ_URL:-http://host.docker.internal:4566/000000000000/trade_imports_animals_eu_notifications_gateway-deadletter.fifo}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real AWS resource name."
+    },
+    {
+      "file": "docker/stack/backend.compose.yml",
+      "line": 57,
+      "current": "      - NOTIFICATION_SQS_DLQ_ARN=${NOTIFICATION_SQS_DLQ_ARN:-arn:aws:sqs:eu-west-2:000000000000:trade_imports_animals_eu_notifications_gateway-deadletter.fifo}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real AWS resource ARN."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 2,
+      "current": "  trade-imports-animals-admin:",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose service name matching the real repo/image."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 15,
+      "current": "      - TRADE_IMPORTS_ANIMALS_BACKEND_URL=http://host.docker.internal:8085",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — explicitly named as a keeper. Consumed by the admin app."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 28,
+      "current": "    image: defradigital/trade-imports-animals-admin:${TRADE_IMPORTS_ANIMALS_ADMIN:-latest}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real Dockerhub image plus its image-tag override env var."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 32,
+      "current": "  trade-imports-animals-frontend:",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose service name matching the real repo/image."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 49,
+      "current": "      - TRADE_IMPORTS_ANIMALS_BACKEND_URL=http://host.docker.internal:8085",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — explicitly named as a keeper. Consumed by the animals frontend."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 52,
+      "current": "      - LIVE_ANIMALS_MODE=real",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — config var owned by trade-imports-animals-frontend and only meaningful to it. Noted, not changed: this is the one place the workspace stack encodes a commodity-line journey toggle, but it is set on the animals frontend service only, so it does not leak into the generic tooling. If the frontend ever renames the flag, this line follows it."
+    },
+    {
+      "file": "docker/stack/frontend.compose.yml",
+      "line": 64,
+      "current": "    image: defradigital/trade-imports-animals-frontend:${TRADE_IMPORTS_ANIMALS_FRONTEND:-latest}",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real Dockerhub image plus its image-tag override env var."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 2,
+      "current": "  trade-imports-animals-frontend:",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose service name overlay key; must match frontend.compose.yml."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 4,
+      "current": "      context: ../../repos/trade-imports-animals-frontend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — build context path into the real clone folder."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 11,
+      "current": "      - ../../repos/trade-imports-animals-frontend/src:/home/node/src",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — bind mount from the real clone folder."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 18,
+      "current": "  trade-imports-animals-admin:",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose service name overlay key."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 20,
+      "current": "      context: ../../repos/trade-imports-animals-admin",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — build context path into the real clone folder."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 22,
+      "current": "    # See the note on trade-imports-animals-frontend above.",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — comment cross-referencing a real service name."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 26,
+      "current": "      - ../../repos/trade-imports-animals-admin/src:/home/node/src",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — bind mount from the real clone folder."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 33,
+      "current": "  trade-imports-animals-backend:",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose service name overlay key."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 35,
+      "current": "      context: ../../repos/trade-imports-animals-backend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — build context path into the real clone folder."
+    },
+    {
+      "file": "docker/stack/dev.compose.yml",
+      "line": 39,
+      "current": "      - ../../repos/trade-imports-animals-backend/src:/app/src",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — bind mount from the real clone folder."
+    },
+    {
+      "file": "docker/stack/infrastructure.compose.yml",
+      "line": 15,
+      "current": "      CONSUMER_BUCKETS: cdp-uploader-quarantine,trade-imports-animals-documents",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real S3 bucket name; must stay in lockstep with backend.compose.yml:21 CDP_DOCUMENTS_BUCKET or uploads break."
+    },
+    {
+      "file": "scripts/setup.sh",
+      "line": 48,
+      "current": "echo \"Setting up trade-imports-animals workspace...\"",
+      "classification": "GENERICISE",
+      "proposed": "echo \"Setting up trade-imports workspace...\"",
+      "why": "Workspace identity string in user-facing output. Not a repo name — the workspace is what is being set up."
+    },
+    {
+      "file": "scripts/setup.sh",
+      "line": 49,
+      "current": "clone_if_missing trade-imports-animals-frontend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo cloned from github.com/DEFRA/. Covered structurally by the Makefile:2 roster REVIEW."
+    },
+    {
+      "file": "scripts/setup.sh",
+      "line": 50,
+      "current": "clone_if_missing trade-imports-animals-backend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo cloned from github.com/DEFRA/."
+    },
+    {
+      "file": "scripts/setup.sh",
+      "line": 51,
+      "current": "clone_if_missing trade-imports-animals-tests",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo cloned from github.com/DEFRA/."
+    },
+    {
+      "file": "scripts/setup.sh",
+      "line": 52,
+      "current": "clone_if_missing trade-imports-animals-admin",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo cloned from github.com/DEFRA/."
+    },
+    {
+      "file": "scripts/update.sh",
+      "line": 13,
+      "current": "    trade-imports-animals-frontend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo name in the fallback roster. Covered structurally by the Makefile:2 roster REVIEW."
+    },
+    {
+      "file": "scripts/update.sh",
+      "line": 14,
+      "current": "    trade-imports-animals-backend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo name in the fallback roster."
+    },
+    {
+      "file": "scripts/update.sh",
+      "line": 15,
+      "current": "    trade-imports-animals-tests",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo name in the fallback roster."
+    },
+    {
+      "file": "scripts/update.sh",
+      "line": 16,
+      "current": "    trade-imports-animals-admin",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo name in the fallback roster."
+    },
+    {
+      "file": "scripts/update.sh",
+      "line": 38,
+      "current": "echo \"Updating trade-imports-animals workspace...\"",
+      "classification": "GENERICISE",
+      "proposed": "echo \"Updating trade-imports workspace...\"",
+      "why": "Workspace identity string in user-facing output."
+    },
+    {
+      "file": "scripts/sonar/sonar-check-pending.sh",
+      "line": 18,
+      "current": "ROOT=\"${CLAUDE_PROJECT_DIR:-$HOME/git/defra/trade-imports-animals}\"",
+      "classification": "REVIEW",
+      "proposed": "Decide the CHECKOUT directory name after migration, then set the literal accordingly — most likely `$HOME/git/defra/trade-imports-workspace`. Do NOT assume it equals the R1 canonical symlink path without a ruling.",
+      "why": "This is a DIFFERENT string from the R1 canonical symlink path: it is the fallback for the local checkout directory (no -workspace suffix today), used only when CLAUDE_PROJECT_DIR is unset. Its fate depends on whether Sam re-clones to ~/git/defra/trade-imports-workspace or keeps the existing ~/git/defra/trade-imports-animals directory with a symlink over it. Get it wrong and the Sonar hook silently reads .sonar-checks/ from a path that does not exist — fail-open, so no error, just no findings surfaced. Must match sonar-record-push.sh:14 exactly (the two hooks share STATE_DIR)."
+    },
+    {
+      "file": "scripts/sonar/sonar-record-push.sh",
+      "line": 14,
+      "current": "ROOT=\"${CLAUDE_PROJECT_DIR:-$HOME/git/defra/trade-imports-animals}\"",
+      "classification": "REVIEW",
+      "proposed": "Same ruling and same literal as sonar-check-pending.sh:18 — the two must be changed together or the record hook and the check hook write/read different STATE_DIRs.",
+      "why": "Checkout-directory fallback, not the canonical symlink path. Fail-open by design, so a mismatch produces silence rather than an error — the worst kind of breakage to leave to a sweep."
+    },
+    {
+      "file": "scripts/sonar/sonar-record-push.sh",
+      "line": 21,
+      "current": "# \"animals\" segment.",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "Accurate explanatory note that the dynamics-gateway SonarCloud key lacks the 'animals' segment the other three keys carry. Still true after migration."
+    },
+    {
+      "file": "scripts/sonar/sonar-record-push.sh",
+      "line": 22,
+      "current": "SONAR_REPOS=\"trade-imports-animals-frontend:DEFRA_trade-imports-animals-frontend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — clone folder plus live SonarCloud project key."
+    },
+    {
+      "file": "scripts/sonar/sonar-record-push.sh",
+      "line": 23,
+      "current": "trade-imports-animals-admin:DEFRA_trade-imports-animals-admin",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — clone folder plus live SonarCloud project key."
+    },
+    {
+      "file": "scripts/sonar/sonar-record-push.sh",
+      "line": 24,
+      "current": "trade-imports-animals-backend:DEFRA_trade-imports-animals-backend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — clone folder plus live SonarCloud project key."
+    },
+    {
+      "file": "scripts/stack/bounce-backend.sh",
+      "line": 21,
+      "current": "exec docker compose \"${COMPOSE_FILES[@]}\" \"${profile_args[@]}\" up --force-recreate --no-deps --wait trade-imports-animals-backend",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — compose SERVICE name. Note the script derives the project name from compose.yml via -f rather than -p, so the R4 rename needs no edit here."
+    },
+    {
+      "file": "scripts/stack/lib/init-scripts.sh",
+      "line": 4,
+      "current": "# Ownership (EUDPA-178/EUDPA-165): the backend repo owns the Floci provisioning",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R6 — historical ticket citation in a comment explaining a design decision. Hardcode site recorded; a later cleanup could drop the keys entirely (git history is the source of truth) but that is a code-style call, not genericisation."
+    },
+    {
+      "file": "scripts/stack/lib/init-scripts.sh",
+      "line": 91,
+      "current": "  stage_source trade-imports-animals-tests \"$ref\" seeds/mongodb \"$STAGED_DIR/mongodb\"",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo name, used both as repos/<name> and as github.com/DEFRA/<name> for the sparse fetch."
+    },
+    {
+      "file": "scripts/stack/lib/init-scripts.sh",
+      "line": 94,
+      "current": "  stage_source trade-imports-animals-backend \"$ref\" compose/start-floci.sh \"$STAGED_DIR/floci\"",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — real repo name, used both as repos/<name> and as github.com/DEFRA/<name> for the sparse fetch."
+    },
+    {
+      "file": "scripts/stack/run-stack.sh",
+      "line": 10,
+      "current": "  \"frontend|trade-imports-animals-frontend|TRADE_IMPORTS_ANIMALS_FRONTEND\"",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — label|compose-service-and-Dockerhub-image|image-tag-env-var triple. All three parts name the real animals frontend; the env var must match frontend.compose.yml:64."
+    },
+    {
+      "file": "scripts/stack/run-stack.sh",
+      "line": 11,
+      "current": "  \"backend|trade-imports-animals-backend|TRADE_IMPORTS_ANIMALS_BACKEND\"",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — must match backend.compose.yml:32."
+    },
+    {
+      "file": "scripts/stack/run-stack.sh",
+      "line": 12,
+      "current": "  \"admin|trade-imports-animals-admin|TRADE_IMPORTS_ANIMALS_ADMIN\"",
+      "classification": "KEEP",
+      "proposed": "",
+      "why": "R2 — must match frontend.compose.yml:28."
+    }
+  ]
+}

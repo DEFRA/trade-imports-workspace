@@ -8,7 +8,7 @@ truth.
 ## Location
 
 ```
-~/git/defra/trade-imports-animals-workspace/workareas/code-style-reviews/EUDPA-XXXXX/items.{repo}.json
+~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/items.{repo}.json
 ```
 
 One file per repo. Initial population: `aggregate-file-reviews.sh`
@@ -71,7 +71,7 @@ style vocabulary.
 | `Failed` | Implementor tried and failed. | `style-set-status.sh --status Failed`. |
 | `—` | Status doesn't apply (Won't Fix / Auto-Resolved). | Auto-set by `style-mark.sh` for non-Fix dispositions. |
 
-## Helper scripts (all under `~/git/defra/trade-imports-animals-workspace/tools/style/`)
+## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/style/`)
 
 | Script | Purpose |
 |---|---|

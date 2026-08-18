@@ -16,7 +16,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE="$HOME/git/defra/trade-imports-animals-workspace"
+WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 TICKET=""
 REPOS=""

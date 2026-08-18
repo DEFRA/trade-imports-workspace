@@ -1,6 +1,6 @@
 # Phase 3 Manager — Implementation
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 **Job:** Apply every `todo`-classified version per repo in strict semver
 ascending order. Stop a repo on first failure.
@@ -19,7 +19,7 @@ package.json / install / test / commit / state-transition cycle to
 ## Step 1: Snapshot work
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/upgrade-status.sh --run-id {run-id}
+~/git/defra/trade-imports-workspace/tools/govuk/upgrade-status.sh --run-id {run-id}
 ```
 
 If `Todo: 0 Failed: 0`: report "Nothing to implement. Phase 3 complete."
@@ -29,13 +29,13 @@ If `Todo: 0 Failed: 0`: report "Nothing to implement. Phase 3 complete."
 Read the in-scope repo list from `.run-meta.json`:
 
 ```bash
-jq -r '.repos[]' ~/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
+jq -r '.repos[]' ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
 ```
 
 For each repo, list pending versions in semver order:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/upgrade-status.sh \
+~/git/defra/trade-imports-workspace/tools/govuk/upgrade-status.sh \
   --run-id {run-id} --repo {repo-name} --filter pending --sort-semver --json
 ```
 
@@ -46,7 +46,7 @@ For each pending entry in that order:
 Read the plan (renders the JSON entry as markdown):
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/render-version-plan.sh \
+~/git/defra/trade-imports-workspace/tools/govuk/render-version-plan.sh \
   --run-id {run-id} --repo {repo-name} --version {version}
 ```
 
@@ -58,7 +58,7 @@ them in Step 2b.)
 ### 2b. Apply
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/apply-version.sh \
+~/git/defra/trade-imports-workspace/tools/govuk/apply-version.sh \
   --run-id {run-id} --repo {repo-name} --version {version}
 ```
 
@@ -82,7 +82,7 @@ repo**. Do not proceed to its next pending version.
 ## Step 3: Report
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/upgrade-status.sh --run-id {run-id}
+~/git/defra/trade-imports-workspace/tools/govuk/upgrade-status.sh --run-id {run-id}
 ```
 
 ```
@@ -139,7 +139,7 @@ From the tests repo, run the docker-compose suite (reseeds the DB,
 cleans, then runs Playwright against the dockerised stack):
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-animals-workspace/repos/trade-imports-animals-tests run test:docker-compose
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose
 ```
 
 (`test:docker-compose` is the local E2E entry point — the same script CI

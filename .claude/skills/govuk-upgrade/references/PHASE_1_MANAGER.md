@@ -1,6 +1,6 @@
 # Phase 1 Manager — Version Discovery
 
-**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-animals-workspace/docs/agent-skills.md` → "Bash call hygiene".
+**Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
 **Job:** Verify Phase 1 ran (via `start-upgrade.sh`) and present its
 output. Phase 1 itself is fully scripted — this manager exists for the
@@ -18,7 +18,7 @@ asks (e.g. to change the target with `--target`).
 ## Step 1: Confirm `.run-meta.json` exists
 
 ```bash
-ls ~/git/defra/trade-imports-animals-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
+ls ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{run-id}/.run-meta.json
 ```
 
 If missing: instruct the user to run
@@ -28,7 +28,7 @@ first. Stop.
 ## Step 2: Present a status snapshot
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/govuk/list-plans.sh --run-id {run-id}
+~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh --run-id {run-id}
 ```
 
 Report verbatim, then ask: "Phase 1 complete. Proceed to Phase 2

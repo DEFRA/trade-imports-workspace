@@ -32,7 +32,7 @@ is observable behaviour for an end user, **Task** otherwise.
 Labels are camelCase by convention in this project — `technicalImprovement`,
 not `tech-improvement` or `technical_improvement`. The authoritative
 list of accepted EUDPA labels lives in
-[`~/git/defra/trade-imports-animals-workspace/.claude/skills/ticket-creator/assets/known-labels.md`](../../../.claude/skills/ticket-creator/assets/known-labels.md).
+[`~/git/defra/trade-imports-workspace/.claude/skills/ticket-creator/assets/known-labels.md`](../../../.claude/skills/ticket-creator/assets/known-labels.md).
 Prefer reusing an existing label over coining a new one.
 
 ## Acceptance criteria style
@@ -65,7 +65,7 @@ When the user needs help picking a parent epic, list the open epics
 on the EUDPA board via `tools/jira/list-board-epics.sh`:
 
 ```bash
-~/git/defra/trade-imports-animals-workspace/tools/jira/list-board-epics.sh 13780
+~/git/defra/trade-imports-workspace/tools/jira/list-board-epics.sh 13780
 ```
 
 That prints `KEY — summary` lines for each open epic. Pass `json`

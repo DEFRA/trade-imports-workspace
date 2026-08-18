@@ -23,7 +23,7 @@ const W = 13.333, H = 7.5, M = 0.7, BAND = 0.28;
 
 const band = (s) => s.addShape("rect", { x: 0, y: 0, w: BAND, h: H, fill: { color: C.blue } });
 const footer = (s, n) => {
-  s.addText("trade-imports-animals onboarding", { x: M, y: H - 0.5, w: 7, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey });
+  s.addText("trade-imports workspace onboarding", { x: M, y: H - 0.5, w: 7, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey });
   s.addText(`${n}`, { x: W - 1.2, y: H - 0.5, w: 0.6, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey, align: "right" });
 };
 const heading = (s, label, title) => {
@@ -41,7 +41,7 @@ function buildDeck(spec) {
   let s = pres.addSlide();
   s.background = { color: C.white };
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.blue } });
-  s.addText("TRADE-IMPORTS-ANIMALS ONBOARDING", { x: 1.1, y: 1.55, w: 10, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0 });
+  s.addText("TRADE-IMPORTS WORKSPACE ONBOARDING", { x: 1.1, y: 1.55, w: 10, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0 });
   s.addText(`Session ${spec.n}`, { x: 1.05, y: 2.05, w: 11, h: 0.7, fontFace: FONT, fontSize: 24, bold: true, color: C.grey, margin: 0 });
   s.addText(spec.skill, { x: 1.0, y: 2.7, w: 11.6, h: 1.2, fontFace: MONO, fontSize: 52, bold: true, color: C.blueDark, margin: 0 });
   s.addText(spec.oneLiner, { x: 1.05, y: 4.5, w: 10.8, h: 1.2, fontFace: FONT, fontSize: 18, color: C.black, italic: true, margin: 0 });

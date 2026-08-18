@@ -1,0 +1,137 @@
+import { readFileSync } from 'node:fs'
+import { readJsonFile, writeJsonAtomic } from './io.js'
+import { parseBacklog } from './schema.js'
+import { TimError } from '../errors.js'
+
+export const SLOTS = [
+  'frontend',
+  'prototype',
+  'difference',
+  'correction',
+  'falsifiedBy',
+  'verification',
+  'longBecause'
+]
+
+const findIncrement = (backlog, id) => {
+  const increment = backlog.increments.find((entry) => entry.id === id)
+  if (!increment) {
+    throw new TimError('NOT_FOUND', `${id} is not in this backlog.`)
+  }
+  return increment
+}
+
+const writeIncrement = (profile, backlog, id, mutate) => {
+  const increments = backlog.increments.map((increment) =>
+    increment.id === id ? mutate(increment) : increment
+  )
+  return writeJsonAtomic(profile.paths.backlog, { ...backlog, increments })
+}
+
+/**
+ * Set one prose slot on one increment, from a file.
+ *
+ * Fan-out workers never edit the JSON. They write a slot file and call this, so
+ * a worker cannot reformat the whole backlog, cannot touch a second increment,
+ * and cannot edit `detail` — which is the migration's only oracle and is frozen
+ * forever.
+ *
+ * @param {object} args
+ * @param {object} args.profile
+ * @param {string} args.id
+ * @param {string} args.slot
+ * @param {string} args.file - Path to a file holding the new text
+ * @returns {object}
+ */
+export const setSlot = ({ profile, id, slot, file }) => {
+  if (!SLOTS.includes(slot)) {
+    throw new TimError(
+      'USAGE',
+      `"${slot}" is not a prose slot. Choose one of: ${SLOTS.join(', ')}.`
+    )
+  }
+  const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
+  findIncrement(backlog, id)
+  const text = readFileSync(file, 'utf8').trim()
+
+  const result = writeIncrement(profile, backlog, id, (increment) => ({
+    ...increment,
+    finding: { ...(increment.finding ?? {}), [slot]: text }
+  }))
+
+  return {
+    id,
+    slot,
+    words: text.split(/\s+/).filter(Boolean).length,
+    ...result
+  }
+}
+
+/**
+ * Set the decision question on one increment.
+ *
+ * @param {object} args
+ * @param {object} args.profile
+ * @param {string} args.id
+ * @param {object} args.decisionRequired
+ * @returns {object}
+ */
+export const setDecisionRequired = ({ profile, id, decisionRequired }) => {
+  const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
+  const increment = findIncrement(backlog, id)
+  if (!increment.gate) {
+    throw new TimError(
+      'USAGE',
+      `${id} is not gated, so it has no decision to ask about.`
+    )
+  }
+  const result = writeIncrement(profile, backlog, id, (entry) => ({
+    ...entry,
+    finding: {
+      ...(entry.finding ?? {}),
+      decisionRequired: {
+        audience: entry.gate,
+        ...decisionRequired
+      }
+    }
+  }))
+  return { id, ...result }
+}
+
+/**
+ * Resolve one queued citation by hand.
+ *
+ * The setter exists so a human resolution is recorded the same way a machine
+ * one is — with a repo, a path and a resolution of "human" — rather than by
+ * hand-editing JSON, where nothing would record that a person decided it.
+ *
+ * @param {object} args
+ * @returns {object}
+ */
+export const setCitation = ({ profile, id, ref, repo, path, why }) => {
+  const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
+  const increment = findIncrement(backlog, id)
+  const citation = (increment.citations ?? []).find(
+    (entry) => entry.ref === ref
+  )
+  if (!citation) {
+    throw new TimError('NOT_FOUND', `${id} has no citation ${ref}.`)
+  }
+  const result = writeIncrement(profile, backlog, id, (entry) => ({
+    ...entry,
+    citations: entry.citations.map((c) =>
+      c.ref === ref
+        ? {
+            ...c,
+            repo,
+            path,
+            resolution: 'human',
+            needsHuman: false,
+            why: why ?? `Resolved by hand: ${c.why ?? 'was ambiguous'}`,
+            candidates: undefined
+          }
+        : c
+    )
+  }))
+  return { id, ref, repo, path, ...result }
+}

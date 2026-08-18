@@ -18,8 +18,8 @@ export const markedProse = (increment) => {
   if (citations.length === 0) return {}
   const byWritten = new Map()
   for (const citation of citations) {
-    if (!byWritten.has(citation.asWritten)) {
-      byWritten.set(citation.asWritten, citation.ref)
+    for (const form of [citation.asWritten, ...(citation.alsoWritten ?? [])]) {
+      if (!byWritten.has(form)) byWritten.set(form, citation.ref)
     }
   }
 

@@ -3,6 +3,7 @@ import { relative } from 'node:path'
 import { readJsonFile } from './io.js'
 import { parseBacklog } from './schema.js'
 import { markersIn, wordCount } from './render/prose.js'
+import { tokeniseIncrement } from './citations/parse.js'
 import { isWithdrawn } from './counts.js'
 
 const SLOTS = [
@@ -110,8 +111,9 @@ const allSlotText = (increment) => Object.values(slotsOf(increment)).join('\n')
 /** I1. detail is frozen forever — it is the only oracle that proves the
  * structure pass and the language pass lost nothing. */
 export const checkDetailFrozen = (increments, baseline) => {
-  if (!baseline)
+  if (!baseline) {
     return { id: 'I1', state: 'skipped', why: 'No baseline ref available.' }
+  }
   const before = new Map(baseline.increments.map((inc) => [inc.id, inc.detail]))
   const changed = increments
     .filter((inc) => before.has(inc.id) && before.get(inc.id) !== inc.detail)
@@ -128,8 +130,9 @@ export const checkDetailFrozen = (increments, baseline) => {
 /** I2. citations are immutable after Pass A. Markers may move between slots; a
  * citation may never be deleted or edited. */
 export const checkCitationsImmutable = (increments, baseline) => {
-  if (!baseline)
+  if (!baseline) {
     return { id: 'I2', state: 'skipped', why: 'No baseline ref available.' }
+  }
   const before = new Map(
     baseline.increments.map((inc) => [inc.id, inc.citations ?? []])
   )
@@ -165,23 +168,24 @@ export const checkCitationsImmutable = (increments, baseline) => {
 /** I3. every file:line token in the frozen detail and in evidence appears as
  * some citation's asWritten. */
 export const checkTokensCovered = (increments) => {
-  const TOKEN =
-    /([A-Za-z0-9_@.\-/]*[A-Za-z0-9_-]\.[A-Za-z0-9]{1,6}):(\d+(?:-\d+)?)/g
   const missing = []
   let seen = 0
   for (const increment of increments) {
     const written = new Set(
-      (increment.citations ?? []).map((citation) => citation.asWritten)
+      (increment.citations ?? []).flatMap((citation) => [
+        citation.asWritten,
+        ...(citation.alsoWritten ?? [])
+      ])
     )
-    const haystack = [
-      increment.detail,
-      ...Object.values(increment.evidence ?? {})
-    ]
-      .filter((v) => typeof v === 'string')
-      .join('\n')
-    for (const match of haystack.matchAll(TOKEN)) {
+    // The tokeniser itself, not a second regex that has to be kept in step with
+    // it. A duplicate pattern that read `path:74` where the tokeniser read
+    // `path:74,76-77` reported the same citation as both present and missing.
+    for (const token of tokeniseIncrement(increment)) {
+      if (token.form !== 'named') continue
       seen += 1
-      if (!written.has(match[0])) missing.push(`${increment.id}: ${match[0]}`)
+      if (!written.has(token.asWritten)) {
+        missing.push(`${increment.id}: ${token.asWritten}`)
+      }
     }
   }
   return {
@@ -203,8 +207,9 @@ export const checkMarkers = (increments) => {
     for (const [slot, text] of Object.entries(slotsOf(increment))) {
       const used = markersIn(text)
       for (const ref of used) {
-        if (!refs.has(ref))
+        if (!refs.has(ref)) {
           problems.push(`${increment.id}/${slot}: [[${ref}]] is not a citation`)
+        }
       }
       const declared = cites[slot]
       if (declared && declared.sort().join() !== [...used].sort().join()) {
@@ -226,6 +231,15 @@ export const checkMarkers = (increments) => {
 const QUOTED_SPAN = /"([^"]{5,})"/g
 const BACKTICKED = /`([^`]+)`/g
 
+// An invariant that compares the frozen detail against the migrated slots has
+// nothing to say until at least one finding has been migrated. Saying "0 quoted
+// spans survive" would read as a clean bill of health on work not yet done.
+const notYetMigrated = (id) => ({
+  id,
+  state: 'skipped',
+  why: 'No finding has been migrated into finding.* yet.'
+})
+
 /** I5. quote conservation. Every double-quoted span of five characters or
  * more, and every backticked identifier in the frozen detail, appears verbatim
  * in some slot. No escape hatch.
@@ -236,14 +250,18 @@ const BACKTICKED = /`([^`]+)`/g
 export const checkQuotes = (increments) => {
   const problems = []
   let checked = 0
+  const migrated = increments.filter((inc) => inc.finding)
+  if (migrated.length === 0) return notYetMigrated('I5')
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue
     const wanted = new Set()
-    for (const match of increment.detail.matchAll(QUOTED_SPAN))
+    for (const match of increment.detail.matchAll(QUOTED_SPAN)) {
       wanted.add(match[1])
-    for (const match of increment.detail.matchAll(BACKTICKED))
+    }
+    for (const match of increment.detail.matchAll(BACKTICKED)) {
       wanted.add(match[1])
+    }
     for (const value of wanted) {
       checked += 1
       if (!slots.includes(value)) {
@@ -277,6 +295,7 @@ const numbersIn = (text) => {
 export const checkNumbers = (increments) => {
   const problems = []
   let checked = 0
+  if (increments.every((inc) => !inc.finding)) return notYetMigrated('I6')
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue
@@ -333,6 +352,7 @@ const tokensOf = (text) =>
  * tokens present across the slots. Disabled for Pass B by definition. */
 export const checkResidue = (increments, threshold = 0.98) => {
   const rows = []
+  if (increments.every((inc) => !inc.finding)) return notYetMigrated('I8')
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue

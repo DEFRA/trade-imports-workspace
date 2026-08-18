@@ -42,6 +42,10 @@ export const citationSchema = passthrough({
     .nullable()
     .optional(),
   asWritten: z.string(),
+  // Other forms the same target was written in — a bare basename in the prose
+  // against the full path in the evidence field. Kept so a token can be
+  // round-tripped whichever way the analyst wrote it.
+  alsoWritten: z.array(z.string()).optional(),
   anchors: z.array(z.string()).optional(),
   resolution: z.enum([
     'explicit',

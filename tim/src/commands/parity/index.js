@@ -10,6 +10,7 @@ import { runReport } from '../../parity/render/run.js'
 import { serveReport } from '../../parity/render/serve.js'
 import { runCheck } from '../../parity/check.js'
 import { buildCorpusMeta } from '../../parity/meta.js'
+import { setSlot, setDecisionRequired, setCitation } from '../../parity/set.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 
@@ -86,10 +87,12 @@ const renderNormalise = (result) => {
   ]
   for (const change of result.changed) {
     const parts = []
-    if (change.evidence.length)
+    if (change.evidence.length) {
       parts.push(`evidence: ${change.evidence.join(', ')}`)
-    if (change.screens.length)
+    }
+    if (change.screens.length) {
       parts.push(`screens: ${change.screens.join(' | ')}`)
+    }
     lines.push(`  ${change.id}  ${parts.join('   ')}`)
   }
   lines.push(
@@ -268,6 +271,73 @@ export const register = (program, { timVersion }) => {
             ),
             ...result.warnings.map((w) => `warning: ${w}`)
           ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('set-slot <runId> <incrementId> <slot>')
+    .description(
+      'Write one prose slot on one increment from a file — the only way a fan-out worker touches the backlog'
+    )
+    .requiredOption('--file <path>', 'File holding the new text')
+    .action(
+      makeParityAction({
+        run: ({ profile, args }, opts) =>
+          setSlot({
+            profile,
+            id: args[1],
+            slot: args[2],
+            file: opts.file
+          }),
+        renderText: (r) => `${r.id}.finding.${r.slot} set — ${r.words} words.`,
+        timVersion
+      })
+    )
+
+  parity
+    .command('set-decision <runId> <incrementId>')
+    .description('Write the decision question for one gated increment')
+    .requiredOption('--question <text>', 'One sentence, 25 words or fewer')
+    .option('--source <kind>', 'extracted or authored', 'authored')
+    .option('--option <text...>', 'An option the prose names')
+    .option('--consequence <text>', 'What stays blocked if it is not settled')
+    .action(
+      makeParityAction({
+        run: ({ profile, args }, opts) =>
+          setDecisionRequired({
+            profile,
+            id: args[1],
+            decisionRequired: {
+              question: opts.question,
+              source: opts.source,
+              options: opts.option ?? undefined,
+              consequence: opts.consequence
+            }
+          }),
+        renderText: (r) => `${r.id}.finding.decisionRequired set.`,
+        timVersion
+      })
+    )
+
+  parity
+    .command('set-citation <runId> <incrementId> <ref>')
+    .description('Resolve one queued citation by hand')
+    .requiredOption('--repo <key>', 'Repo key from corpora.json')
+    .requiredOption('--path <path>', 'Repo-relative path')
+    .option('--why <text>', 'Why this is the right file')
+    .action(
+      makeParityAction({
+        run: ({ profile, args }, opts) =>
+          setCitation({
+            profile,
+            id: args[1],
+            ref: args[2],
+            repo: opts.repo,
+            path: opts.path,
+            why: opts.why
+          }),
+        renderText: (r) => `${r.id}/${r.ref} -> ${r.repo}:${r.path}`,
         timVersion
       })
     )

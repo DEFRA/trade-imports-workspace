@@ -130,6 +130,20 @@ export const citeIncrement = ({ increment, profile, indexes }) => {
         })
       }
       citations.push(citation)
+    } else {
+      // The same target written a second way — a bare basename in the prose and
+      // the full path in the evidence field. Both forms have to be recorded or
+      // invariant I3, which asks whether every token in the frozen detail is
+      // covered by some citation, reports the second one as uncited.
+      const citation = citations.find((entry) => entry.ref === ref)
+      if (citation.asWritten !== token.asWritten) {
+        citation.alsoWritten = [
+          ...new Set([...(citation.alsoWritten ?? []), token.asWritten])
+        ]
+      }
+      citation.anchors = [
+        ...new Set([...(citation.anchors ?? []), ...anchorsNear(token)])
+      ]
     }
 
     if (!byField.has(token.field)) byField.set(token.field, [])

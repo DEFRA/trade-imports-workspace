@@ -25,7 +25,7 @@ help: ## Show this help
 setup: ## Clone all repos into repos/
 	@bash scripts/setup.sh
 
-link: ## Symlink ~/git/defra/trade-imports-workspace -> this checkout (required by tools/)
+link: ## Escape hatch: symlink ~/git/defra/trade-imports-workspace -> this checkout (normally just clone there)
 	@if [ "$(WORKSPACE_ROOT)" = "$(CANONICAL_PATH)" ]; then \
 		echo "Already at canonical path — no symlink needed."; \
 		exit 0; \

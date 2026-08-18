@@ -96,7 +96,7 @@ const CONTENT = {
 // ---- Slide primitives (shared shape with the skill decks) ---------------
 const band = (s) => s.addShape("rect", { x: 0, y: 0, w: BAND, h: H, fill: { color: C.blue } });
 const footer = (s, n) => {
-  s.addText("trade-imports-animals onboarding", { x: M, y: H - 0.5, w: 7, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey });
+  s.addText("trade-imports workspace onboarding", { x: M, y: H - 0.5, w: 7, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey });
   s.addText(`${n}`, { x: W - 1.2, y: H - 0.5, w: 0.6, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey, align: "right" });
 };
 const heading = (s, label, title) => {
@@ -143,7 +143,7 @@ function build() {
   let s = pres.addSlide();
   s.background = { color: C.white };
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.blue } });
-  s.addText("TRADE-IMPORTS-ANIMALS ONBOARDING", { x: 1.1, y: 1.45, w: 10, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0 });
+  s.addText("TRADE-IMPORTS WORKSPACE ONBOARDING", { x: 1.1, y: 1.45, w: 10, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0 });
   s.addText(CONTENT.subtitle, { x: 1.05, y: 1.95, w: 11, h: 0.6, fontFace: FONT, fontSize: 20, bold: true, color: C.grey, margin: 0 });
   s.addText(CONTENT.title, { x: 1.0, y: 2.55, w: 11.6, h: 1.2, fontFace: FONT, fontSize: 52, bold: true, color: C.blueDark, margin: 0 });
   s.addText(CONTENT.oneLiner, { x: 1.05, y: 4.4, w: 10.8, h: 1.2, fontFace: FONT, fontSize: 18, color: C.black, italic: true, margin: 0 });

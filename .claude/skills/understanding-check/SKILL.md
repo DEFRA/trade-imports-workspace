@@ -6,7 +6,7 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
 ---
 
-Pre-merge understanding check for an EUDP Live Animals ticket: surface
+Pre-merge understanding check for an EUDP trade-imports ticket: surface
 the parts of the diff the developer might not have internalised, ask
 about them, score answers against categorical rubrics, and produce a
 coaching report. Designed for PRs completed with AI assistance, where

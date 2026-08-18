@@ -2,23 +2,24 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPOS_DIR="$SCRIPT_DIR/../repos"
+MANIFEST="$SCRIPT_DIR/../repos.json"
 LIGHT_REMOTE="$SCRIPT_DIR/../tools/git/light-remote.sh"
 
-# Accepts repo names as arguments, falls back to hardcoded list
+if ! command -v jq >/dev/null 2>&1; then
+  echo "This script needs jq to read the repo roster ($MANIFEST). Install jq and run it again." >&2
+  exit 1
+fi
+
+REPOS_DIR="$SCRIPT_DIR/../$(jq -r '.reposDir' "$MANIFEST")"
+
+# Accepts repo names as arguments, falls back to the whole roster
 if [ $# -gt 0 ]; then
   REPOS=("$@")
 else
-  REPOS=(
-    trade-imports-animals-frontend
-    trade-imports-animals-backend
-    trade-imports-animals-tests
-    trade-imports-animals-admin
-    trade-imports-stub
-    trade-imports-reference-data
-    trade-imports-defra-id-stub
-    trade-imports-dynamics-gateway
-  )
+  REPOS=()
+  while IFS= read -r repo; do
+    REPOS+=("$repo")
+  done < <(jq -r '.repos[].name' "$MANIFEST")
 fi
 
 # One-off migration for clones born before the exclusion refspec: pin

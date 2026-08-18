@@ -1,4 +1,4 @@
-Cross-repo consistency analysis for an EUDP Live Animals ticket review.
+Cross-repo consistency analysis for an EUDP trade-imports ticket review.
 
 Identify patterns present in some repos but absent in others. Produce
 one `_consistency-check.md` per repo, using the 0-byte stub as a

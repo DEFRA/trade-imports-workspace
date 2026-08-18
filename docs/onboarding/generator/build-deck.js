@@ -41,7 +41,7 @@ function band(slide) {
   slide.addShape("rect", { x: 0, y: 0, w: BAND, h: H, fill: { color: C.blue } });
 }
 function footer(slide, n) {
-  slide.addText("trade-imports-animals onboarding", {
+  slide.addText("trade-imports workspace onboarding", {
     x: M, y: H - 0.5, w: 7, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey, align: "left",
   });
   slide.addText(`${n}`, {
@@ -76,14 +76,14 @@ function heading(slide, label, title) {
   const pres = new pptxgen();
   pres.defineLayout({ name: "W", width: W, height: H });
   pres.layout = "W";
-  pres.author = "trade-imports-animals";
+  pres.author = "trade-imports workspace";
   pres.title = "Session 1 — The workspace";
 
   // ============================ Slide 1 — Title ============================
   let s = pres.addSlide();
   s.background = { color: C.white };
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.blue } });
-  s.addText("TRADE-IMPORTS-ANIMALS ONBOARDING", {
+  s.addText("TRADE-IMPORTS WORKSPACE ONBOARDING", {
     x: 1.1, y: 1.5, w: 10, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0,
   });
   s.addText("Session 1", {
@@ -103,17 +103,17 @@ function heading(slide, label, title) {
   heading(s, "What it is", "A workspace, not a monorepo");
   // left prose
   s.addText([
-    { text: "A local workspace that clones eight independent GitHub repos side by side and adds shared tooling on top.", options: { breakLine: true, paraSpaceAfter: 14 } },
+    { text: "A local workspace that clones the trade-imports repos side by side and adds shared tooling on top.", options: { breakLine: true, paraSpaceAfter: 14 } },
     { text: "Each repo keeps its own git history, its own remotes, and its own CI.", options: { breakLine: true, paraSpaceAfter: 14 } },
-    { text: "The workspace doesn't own them — it sits alongside and lets you work across all eight at once.", options: {} },
+    { text: "The workspace doesn't own them — it sits alongside and lets you work across all of them at once.", options: {} },
   ], { x: M, y: 2.0, w: 6.0, h: 3.2, fontFace: FONT, fontSize: 16, color: C.black, valign: "top", margin: 0 });
   // "Not a monorepo" pill
   s.addShape("roundRect", { x: M, y: 5.4, w: 3.6, h: 0.7, rectRadius: 0.08, fill: { color: C.blue } });
   s.addText("NOT a monorepo", { x: M, y: 5.4, w: 3.6, h: 0.7, fontFace: FONT, fontSize: 16, bold: true, color: C.white, align: "center", valign: "middle", margin: 0 });
-  // right panel: 8 chips + shared tooling layer
+  // right panel: repo chips + shared tooling layer
   const px = 7.3, pw = 5.3;
   s.addShape("rect", { x: px, y: 1.95, w: pw, h: 4.2, fill: { color: C.lightGrey } });
-  s.addText("8 independent repos", { x: px + 0.25, y: 2.1, w: pw - 0.5, h: 0.35, fontFace: FONT, fontSize: 12, bold: true, color: C.grey, margin: 0 });
+  s.addText("Independent repos", { x: px + 0.25, y: 2.1, w: pw - 0.5, h: 0.35, fontFace: FONT, fontSize: 12, bold: true, color: C.grey, margin: 0 });
   const chips = ["frontend", "backend", "tests", "admin", "stub", "reference-data", "defra-id-stub", "dynamics-gateway"];
   chips.forEach((c, i) => {
     const col = i % 2, row = Math.floor(i / 2);
@@ -145,7 +145,7 @@ function heading(slide, label, title) {
       { x: M, head: "claude in a vanilla repo", hc: C.grey, tc: C.grey,
         items: ["A general assistant", "One repo's context", "None of the team's workflows", "You wire up everything by hand"] },
       { x: M + 5.75 + 0.45, head: "claude in this workspace", hc: C.blue, tc: C.black,
-        items: ["Ticketing, review & upgrade skills", "All eight repos in view", "Best-practice guides baked in", "Shared cross-repo tools"] },
+        items: ["Ticketing, review & upgrade skills", "Every repo in view", "Best-practice guides baked in", "Shared cross-repo tools"] },
     ];
     cols.forEach((col) => {
       s.addShape("rect", { x: col.x, y: colY, w: colW, h: colHd, fill: { color: col.hc } });
@@ -172,7 +172,7 @@ function heading(slide, label, title) {
     [I.book, "Documentation", "Architecture, ADRs, runbooks, best-practice guides, synced Confluence."],
     [I.pipe, "Pipelines", "Trigger and read CI runs without leaving the workspace."],
     [I.term, "Dev scripts", "Clone, update, lint and test every repo at once."],
-    [I.docker, "Docker", "One compose stack stands up all eight services together."],
+    [I.docker, "Docker", "One compose stack stands up every service together."],
     [I.robot, "The agent harness", "Skills and shared scripts that encode the team's workflows."],
   ];
   const cardY = 2.6, cardH = 0.74, gap = 0.1;
@@ -230,7 +230,7 @@ function heading(slide, label, title) {
     });
     s.addText([
       { text: "The stubs fake the systems outside your control", options: { bold: true, color: C.black } },
-      { text: " — so the whole service runs end-to-end on your machine. Full roles and the live repo map live in CLAUDE.md.", options: {} },
+      { text: " — so the whole stack runs end-to-end on your machine. Full roles and the live repo map live in CLAUDE.md.", options: {} },
     ], { x: M, y: gy + hdH + panelH + 0.2, w: 11.95, h: 0.5, fontFace: FONT, fontSize: 13, color: C.grey, margin: 0 });
   }
   footer(s, 5);
@@ -241,7 +241,7 @@ function heading(slide, label, title) {
   band(s);
   heading(s, "Orientation", "Where things live");
   const dirs = [
-    ["repos/", "the eight service repos"],
+    ["repos/", "the service repos"],
     ["docs/", "all documentation + best-practices + synced Confluence"],
     ["tools/", "shared shell scripts the skills call"],
     ["scripts/", "setup, update and the Docker stack runner"],
@@ -290,13 +290,13 @@ function heading(slide, label, title) {
   s.background = { color: C.white };
   band(s);
   heading(s, "Hands on", "Running it locally");
-  s.addText("Can you actually build and run all eight services? The stack is driven by the scripts under scripts/stack/ — the make docker-* targets are just thin wrappers around them.", {
+  s.addText("Can you actually build and run the whole stack? The stack is driven by the scripts under scripts/stack/ — the make docker-* targets are just thin wrappers around them.", {
     x: M, y: 1.7, w: 11.8, h: 0.55, fontFace: FONT, fontSize: 15, color: C.grey, margin: 0,
   });
   {
     const cardY = 2.6, hdH = 0.6, bodyH = 2.7, cW = 3.717, cGap = 0.4;
     const cards = [
-      { step: "1 · Set up (once)", cmds: [["make setup", "clone all eight repos"], ["make install", "npm deps across Node repos"]] },
+      { step: "1 · Set up (once)", cmds: [["make setup", "clone every repo"], ["make install", "npm deps across Node repos"]] },
       { step: "2 · Run from source", cmds: [["scripts/stack/run-stack.sh --dev", "build & run all services"], ["scripts/stack/bounce-backend.sh", "pick up edited Java source"]] },
       { step: "3 · Verify", cmds: [["cd …-tests", "the E2E suite lives here"], ["npm run test:docker-compose", "exercise the running stack"]] },
     ];

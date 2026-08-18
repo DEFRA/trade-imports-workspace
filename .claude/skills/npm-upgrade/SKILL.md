@@ -1,14 +1,14 @@
 ---
 name: npm-upgrade
-description: 'Upgrade (non-govuk-frontend) npm packages across the EUDP Live Animals repos via a three-phase workflow plus interactive walker — discover outdated packages, classify each as auto (no code changes) or manual (breaking changes), run automated upgrades with rollback safety, produce a handoff manifest for the remaining manual work, then walk the manual list keystroke-by-keystroke and spawn a per-package implementor worker on demand. Per-package classification and implementation state lives in canonical JSON (`packages.{repo}.json`) — no markdown plan files on disk. Fans out per-package research in Phase 1 to `general-purpose` Task subagents following `references/PACKAGE_PLANNER.md`, and per-package implementation from the walker to subagents following `references/MANUAL_UPGRADE_IMPLEMENTOR.md`. Use when the user asks to bring npm packages up to date across repos (triggers: "upgrade npm deps", "upgrade npm dependencies", "upgrade dependencies", "run npm upgrades", "walk upgrade EUDPA-XXX", "triage upgrade EUDPA-XXX", "implement upgrade EUDPA-XXX"). NOT for one-off `npm install <pkg>` work, and NOT for govuk-frontend specifically — use the `govuk-upgrade` skill for that (single package, changelog-driven, per-version sequencing).'
+description: 'Upgrade (non-govuk-frontend) npm packages across the EUDP trade-imports repos via a three-phase workflow plus interactive walker — discover outdated packages, classify each as auto (no code changes) or manual (breaking changes), run automated upgrades with rollback safety, produce a handoff manifest for the remaining manual work, then walk the manual list keystroke-by-keystroke and spawn a per-package implementor worker on demand. Per-package classification and implementation state lives in canonical JSON (`packages.{repo}.json`) — no markdown plan files on disk. Fans out per-package research in Phase 1 to `general-purpose` Task subagents following `references/PACKAGE_PLANNER.md`, and per-package implementation from the walker to subagents following `references/MANUAL_UPGRADE_IMPLEMENTOR.md`. Use when the user asks to bring npm packages up to date across repos (triggers: "upgrade npm deps", "upgrade npm dependencies", "upgrade dependencies", "run npm upgrades", "walk upgrade EUDPA-XXX", "triage upgrade EUDPA-XXX", "implement upgrade EUDPA-XXX"). NOT for one-off `npm install <pkg>` work, and NOT for govuk-frontend specifically — use the `govuk-upgrade` skill for that (single package, changelog-driven, per-version sequencing).'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX [--repo R] [--phase 1|2|3]'
 ---
 
-Three-phase npm dependency upgrade workflow for EUDP Live Animals. Phase
-1 discovers + plans, Phase 2 applies the no-code-change upgrades, Phase
-3 reports what still needs human work.
+Three-phase npm dependency upgrade workflow for the EUDP trade-imports
+workspace. Phase 1 discovers + plans, Phase 2 applies the no-code-change
+upgrades, Phase 3 reports what still needs human work.
 
 ## Path conventions
 
@@ -52,12 +52,17 @@ extension conventions, and global rules shared by all phases.
 
 ## Repos
 
-All EUDP Live Animals Node repos under `~/git/defra/trade-imports-workspace/repos/`:
+The workspace roster lives in one place —
+`~/git/defra/trade-imports-workspace/repos.json`. This skill covers the
+entries flagged `npmUpgradeDefault`, all checked out under
+`~/git/defra/trade-imports-workspace/repos/`. `start-upgrade.sh` reads
+the same flag, so ask the roster rather than a copied list:
 
-- trade-imports-animals-frontend
-- trade-imports-animals-backend
-- trade-imports-animals-tests
-- trade-imports-animals-admin
+```bash
+jq -r '.repos[] | select(.npmUpgradeDefault) | .name' ~/git/defra/trade-imports-workspace/repos.json
+```
+
+Pass `--repo <name>` to run against a different set.
 
 ## Step 1: Establish Run ID
 

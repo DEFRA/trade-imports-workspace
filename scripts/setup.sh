@@ -2,9 +2,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPOS_DIR="$SCRIPT_DIR/../repos"
+MANIFEST="$SCRIPT_DIR/../repos.json"
 LIGHT_REMOTE="$SCRIPT_DIR/../tools/git/light-remote.sh"
-GITHUB_ORG="DEFRA"
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "This script needs jq to read the repo roster ($MANIFEST). Install jq and run it again." >&2
+  exit 1
+fi
+
+REPOS_DIR="$SCRIPT_DIR/../$(jq -r '.reposDir' "$MANIFEST")"
+GITHUB_ORG="$(jq -r '.githubOrg' "$MANIFEST")"
 
 mkdir -p "$REPOS_DIR"
 
@@ -46,14 +53,7 @@ clone_if_missing() {
 }
 
 echo "Setting up trade-imports workspace..."
-clone_if_missing trade-imports-animals-frontend
-clone_if_missing trade-imports-animals-backend
-clone_if_missing trade-imports-animals-tests
-clone_if_missing trade-imports-animals-admin
-clone_if_missing trade-imports-stub
-clone_if_missing trade-imports-reference-data
-clone_if_missing trade-imports-defra-id-stub
-clone_if_missing trade-imports-dynamics-gateway
-clone_if_missing trade-imports-address-book
-clone_if_missing trade-imports-ins-frontend
+while IFS= read -r repo; do
+  clone_if_missing "$repo"
+done < <(jq -r '.repos[].name' "$MANIFEST")
 echo "Done."

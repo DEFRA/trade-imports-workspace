@@ -1,9 +1,16 @@
 ---
 name: journey-builder
-description: Build the real live-animals journey prototype (prototypes/standalone/live-animals in trade-imports-animals-frontend) on the obligations-v2 page-owned-spine model. Digest mode distils the requirement sources — Confluence "Live Animals Data Fields V4", the src/server skeleton journey, the interaction-design canvas — into a canonical machine-readable spec (journey-spec.json + conflicts.json) reviewed at a spec gate. Backlog mode derives ordered increments from the spec; build mode runs the serial implementor loop (one INCREMENT_IMPLEMENTOR subagent per increment, parent re-verifies, commit-or-rollback), halting at model-extension gates and milestone walk-throughs. Use when the user asks to digest journey requirements, regenerate the backlog, run/resume the build loop, or verify the prototype (triggers: "digest journey requirements", "journey spec", "journey-builder", "build the live-animals prototype", "run the loop"). NOT for the car-insurance spike itself or for generic ticket work.
+description: Build a journey prototype in whichever frontend repo the run's target names (today prototypes/standalone/live-animals in trade-imports-animals-frontend) on the obligations-v2 page-owned-spine model. Digest mode distils the requirement sources — Confluence "Live Animals Data Fields V4", the src/server skeleton journey, the interaction-design canvas — into a canonical machine-readable spec (journey-spec.json + conflicts.json) reviewed at a spec gate. Backlog mode derives ordered increments from the spec; build mode runs the serial implementor loop (one INCREMENT_IMPLEMENTOR subagent per increment, parent re-verifies, commit-or-rollback), halting at model-extension gates and milestone walk-throughs. Use when the user asks to digest journey requirements, regenerate the backlog, run/resume the build loop, or verify the prototype (triggers: "digest journey requirements", "journey spec", "journey-builder", "build the live-animals prototype", "run the loop"). NOT for the car-insurance spike itself or for generic ticket work.
 ---
 
 # journey-builder
+
+Builds a journey prototype in a frontend repo. The loop scripts know nothing
+about any particular codebase — a target names the repo to work in, what to
+stage and how to verify, so adding a commodity line is a data edit rather than a
+script change. The target today is `trade-imports-animals-frontend`
+(`prototypes/standalone/live-animals`), and the paths below name it directly;
+treat that as the current target, not as this skill's scope.
 
 Run-id: the EUDPA ticket (currently **EUDPA-249** — no separate ticket for
 this programme). State lives in

@@ -19,6 +19,8 @@
 
 set -e
 
+PROJECT_KEY="${JIRA_PROJECT_KEY:-EUDPA}"
+
 TICKET=""
 BRANCH=""
 TARGET_VERSION=""
@@ -36,8 +38,9 @@ Usage:
 
 If --ticket is given the branch is chore/EUDPA-XXXX. If --branch is given
 the branch is used verbatim; a Jira ticket prefix is preferred (DevOps
-ticket conventions: parent EUDPA-144, labels DevOps+tech-improvement,
-priority Medium, type Task — see ticket-creator skill).
+ticket conventions: your project's DevOps parent epic, labels
+DevOps+tech-improvement, priority Medium, type Task — see ticket-creator
+skill).
 EOF
             exit 0
             ;;
@@ -56,15 +59,15 @@ if [[ -z "$TICKET" && -z "$BRANCH" ]]; then
 fi
 
 if [[ -n "$TICKET" ]]; then
-    [[ "$TICKET" =~ ^EUDPA-[0-9]+$ ]] || {
-        echo "--ticket must match EUDPA-NNNN (got: $TICKET)" >&2
+    [[ "$TICKET" =~ ^${PROJECT_KEY}-[0-9]+$ ]] || {
+        echo "--ticket must match ${PROJECT_KEY}-NNNN (got: $TICKET)" >&2
         exit 1
     }
     BRANCH="chore/$TICKET"
     RUN_ID="$TICKET"
 else
     # Derive run-id from branch if it embeds a ticket; else use a slug.
-    if [[ "$BRANCH" =~ (EUDPA-[0-9]+) ]]; then
+    if [[ "$BRANCH" =~ (${PROJECT_KEY}-[0-9]+) ]]; then
         RUN_ID="${BASH_REMATCH[1]}"
     else
         RUN_ID=$(printf '%s' "$BRANCH" | tr '/' '_' | tr -c '[:alnum:]_-' '_')

@@ -79,7 +79,7 @@ Three-level chain:
 {# layouts/page.njk — extends GOV.UK base, adds project chrome #}
 {% extends "govuk/template.njk" %}
 
-{% block pageTitle %}{{ pageTitle }} — Trade Imports Animals{% endblock %}
+{% block pageTitle %}{{ pageTitle }} — {{ serviceName }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ getAssetPath('application.css') }}">
@@ -115,7 +115,7 @@ Three-level chain:
 {# origin.njk — page template #}
 {% extends "layouts/page.njk" %}
 
-{% set pageTitle = "Where are the animals coming from?" %}
+{% set pageTitle = "Where are the goods coming from?" %}
 
 {% block mainContent %}
   <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
@@ -642,7 +642,7 @@ export const originController = {
 
     // Pass context to template
     return h.view('origin/origin', {
-      pageTitle: 'Where are the animals coming from?',
+      pageTitle: 'Where are the goods coming from?',
       countryCode,
       countryOptions: countries.map(c => ({ value: c.code, text: c.name })),
       errors,      // field-level errors: { countryCode: 'Select a country' }
@@ -660,7 +660,7 @@ export const originController = {
 
 {% extends "layouts/page.njk" %}
 
-{% set pageTitle = "Where are the animals coming from?" %}
+{% set pageTitle = "Where are the goods coming from?" %}
 
 {% block mainContent %}
   <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
@@ -853,14 +853,14 @@ Nunjucks's `throwOnUndefined: false` only protects the *final* missing key. Acce
 
 **13. Rendering raw enum / camelCase API values directly**
 
-Backend constants like `VETERINARY_HEALTH_CERTIFICATE`, `unweanedAnimals`, `certifiedFor` are not user-facing strings. Render via a `label` filter with an explicit override map and a generic camelCase-to-Sentence-case fallback.
+Backend constants like `VETERINARY_HEALTH_CERTIFICATE`, `placeOfDestination`, `certifiedFor` are not user-facing strings. Render via a `label` filter with an explicit override map and a generic camelCase-to-Sentence-case fallback.
 
 ```js
 // nunjucks.js — register filter
 const overrides = {
   VETERINARY_HEALTH_CERTIFICATE: 'Veterinary health certificate',
   ITAHC: 'ITAHC',
-  unweanedAnimals: 'Unweaned animals'
+  placeOfDestination: 'Place of destination'
 }
 env.addFilter('label', (value) =>
   overrides[value] ?? value.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim()

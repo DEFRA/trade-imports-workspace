@@ -16,8 +16,8 @@ do not override classifications, do not touch source files.
 
 - `{run-id}` — Jira ticket, e.g. EUDPA-20578.
 
-Repos default to all 4 EUDP Live Animals Node repos under
-`~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
+Repos default to the Node repos the skill lists under `## Repos`, all of them
+beneath `~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
 `latest`.
 
 ---

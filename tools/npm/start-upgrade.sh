@@ -29,12 +29,14 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-DEFAULT_REPOS=(
-    trade-imports-animals-frontend
-    trade-imports-animals-backend
-    trade-imports-animals-tests
-    trade-imports-animals-admin
-)
+REPOS_MANIFEST="$SCRIPT_DIR/../../repos.json"
+
+# The default repo set is whichever roster entries carry
+# `npmUpgradeDefault`. Override per run with --repo.
+DEFAULT_REPOS=()
+while IFS= read -r repo; do
+    DEFAULT_REPOS+=("$repo")
+done < <(jq -r '.repos[] | select(.npmUpgradeDefault) | .name' "$REPOS_MANIFEST")
 
 TICKET=""
 PHASE=""
@@ -45,7 +47,8 @@ usage() {
     cat <<EOF >&2
 Usage: $0 EUDPA-XXXXX --phase 1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
 
-Without --repo, runs against all 4 EUDP Live Animals Node repos.
+Without --repo, runs against every repo flagged npmUpgradeDefault in the
+workspace roster, repos.json.
 EOF
     exit 1
 }

@@ -6,7 +6,7 @@ Companion deck: `02-ticket.pptx`.
 
 ## What it's for
 
-A ticket rarely lives in one repo. Before you write a line you're piecing together its Jira description and comments, any Confluence design notes, which of the eight repos and which stacks it touches, and the conventions each repo expects. That context-gathering is slow, easy to get wrong, and different every time.
+A ticket rarely lives in one repo. Before you write a line you're piecing together its Jira description and comments, any Confluence design notes, which repos and which stacks it touches, and the conventions each repo expects. That context-gathering is slow, easy to get wrong, and different every time.
 
 The ticket skill does that legwork and turns it into a written plan you can challenge before any code exists — then implements against the plan, repo by repo, keeping the tests green the whole way. You stay the decision-maker; it removes the grind around the decisions.
 

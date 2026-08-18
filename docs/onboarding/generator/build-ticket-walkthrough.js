@@ -50,7 +50,7 @@ const W = 13.333, H = 7.5, M = 0.7, BAND = 0.28;
 const band = (s) => s.addShape("rect", { x: 0, y: 0, w: BAND, h: H, fill: { color: C.blue } });
 
 const footer = (s, n) => {
-  s.addText("trade-imports-animals onboarding · ticket deep dive", { x: M, y: H - 0.5, w: 9, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey });
+  s.addText("trade-imports workspace onboarding · ticket deep dive", { x: M, y: H - 0.5, w: 9, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey });
   s.addText(`${n}`, { x: W - 1.2, y: H - 0.5, w: 0.6, h: 0.3, fontFace: FONT, fontSize: 9, color: C.midGrey, align: "right" });
 };
 
@@ -139,7 +139,7 @@ let s;
 s = pres.addSlide();
 s.background = { color: C.white };
 s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.blue } });
-s.addText("TRADE-IMPORTS-ANIMALS ONBOARDING · DEEP DIVE", { x: 1.1, y: 1.35, w: 11, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0 });
+s.addText("TRADE-IMPORTS WORKSPACE ONBOARDING · DEEP DIVE", { x: 1.1, y: 1.35, w: 11, h: 0.4, fontFace: FONT, fontSize: 14, bold: true, color: C.blue, charSpacing: 3, margin: 0 });
 s.addText("Session 2 — companion walkthrough", { x: 1.05, y: 1.85, w: 11, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.grey, margin: 0 });
 s.addText("ticket", { x: 1.0, y: 2.45, w: 11.6, h: 1.1, fontFace: MONO, fontSize: 52, bold: true, color: C.blueDark, margin: 0 });
 s.addText("A real run, end to end — EUDPA-213, Java hot-reload across four repos", { x: 1.05, y: 3.75, w: 11.2, h: 0.5, fontFace: FONT, fontSize: 18, color: C.black, margin: 0 });

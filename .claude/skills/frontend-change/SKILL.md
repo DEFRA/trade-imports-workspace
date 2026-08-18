@@ -1,15 +1,22 @@
 ---
 name: frontend-change
-description: 'Make a change to the live-animals frontend (src/server/app in trade-imports-animals-frontend) by following the repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for the prototype (use prototype-element / journey-builder), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
+description: 'Make a change to a frontend repo in this workspace (today src/server/app in trade-imports-animals-frontend) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for the prototype (use prototype-element / journey-builder), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
 ---
 
-Make one change to the live-animals frontend by following the recipe the repo
-already ships. The recipes are the instructions — this skill routes to the right
-one, adds the guard rails the docs assume, and runs the verification ladder. Do
-not restate or improvise around a recipe: read it and follow it, varying as
-little as possible. The outcome is one verified increment staged in
-`repos/trade-imports-animals-frontend`, reported and stopped — commit is the
-caller's call unless they said otherwise.
+Make one change to a frontend repo in this workspace by following the recipe
+that repo already ships. What a change targets is a **repo and a set** — the
+`src/server/app` platform is set-agnostic by construction and the commodity
+line lives in `sets/<set>`, so the domain is an input here, not something this
+skill is welded to. Today the target is `trade-imports-animals-frontend` and
+`sets/live-animals`; the workspace already holds a second frontend repo and
+expects more, so read the target from the caller (or from the build loop's
+target profile) rather than assuming it.
+
+The recipes are the instructions — this skill routes to the right one, adds the
+guard rails the docs assume, and runs the verification ladder. Do not restate or
+improvise around a recipe: read it and follow it, varying as little as possible.
+The outcome is one verified increment staged in the target repo, reported and
+stopped — commit is the caller's call unless they said otherwise.
 
 ## Path conventions
 

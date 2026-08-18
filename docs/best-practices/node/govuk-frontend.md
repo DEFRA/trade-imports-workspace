@@ -246,7 +246,7 @@ Import multiple from one file is not supported — one `{% from %}` per componen
   id: "countryCode",
   name: "countryCode",
   label: { text: "Country of origin", classes: "govuk-label--m" },
-  hint: { text: "Select the country the animals are coming from" },
+  hint: { text: "Select the country the goods are coming from" },
   errorMessage: errors.countryCode and { text: errors.countryCode },
   value: countryCode,
   items: [{ value: "", text: "Select a country" }] + countryOptions
@@ -418,7 +418,7 @@ Tag colour modifiers: `govuk-tag--grey`, `govuk-tag--green`, `govuk-tag--turquoi
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
 {{ govukInsetText({
-  text: "You can only import live animals from approved countries."
+  text: "You can only import goods from approved countries."
 }) }}
 ```
 
@@ -483,7 +483,7 @@ Tag colour modifiers: `govuk-tag--grey`, `govuk-tag--green`, `govuk-tag--turquoi
 
 {% extends "layouts/page.njk" %}
 
-{% set pageTitle = "Where are the animals coming from?" %}
+{% set pageTitle = "Where are the goods coming from?" %}
 
 {% block mainContent %}
   {# Error summary — always before the form, always present in DOM when errors exist #}
@@ -502,7 +502,7 @@ Tag colour modifiers: `govuk-tag--grey`, `govuk-tag--green`, `govuk-tag--turquoi
       id: "countryCode",
       name: "countryCode",
       label: { text: "Country of origin", classes: "govuk-label--m" },
-      hint: { text: "Select the country the animals are coming from" },
+      hint: { text: "Select the country the goods are coming from" },
       errorMessage: errors.countryCode and { text: errors.countryCode },
       value: countryCode,
       items: [{ value: "", text: "Select a country" }] + countryOptions
@@ -747,7 +747,7 @@ Components follow the `macro.njk` + `template.njk` pattern under `src/server/com
 {% from "common/components/heading/macro.njk" import appHeading %}
 
 {{ appHeading({
-  text: "Where are the animals coming from?",
+  text: "Where are the goods coming from?",
   caption: "New import notification",
   classes: "govuk-heading-xl"
 }) }}
@@ -952,20 +952,20 @@ A `<table>` rendered next to a heading is not programmatically associated with i
 
 **17. Inputs inside table rows without per-row labels**
 
-The column header alone is not sufficient for a per-row input. A screen reader user navigating the inputs hears "5" without knowing which species or row it belongs to. Give each input an `aria-label` that includes the row context.
+The column header alone is not sufficient for a per-row input. A screen reader user navigating the inputs hears "5" without knowing which item or row it belongs to. Give each input an `aria-label` that includes the row context.
 
 ```nunjucks
 {# Wrong — input has no row context for screen readers #}
 <td class="govuk-table__cell">
-  <input class="govuk-input govuk-input--width-3" name="count-{{ species.id }}" type="number">
+  <input class="govuk-input govuk-input--width-3" name="count-{{ item.id }}" type="number">
 </td>
 
 {# Correct — aria-label binds the input to its row #}
 <td class="govuk-table__cell">
   <input class="govuk-input govuk-input--width-3"
-         name="count-{{ species.id }}"
+         name="count-{{ item.id }}"
          type="number"
-         aria-label="Number of animals for {{ species.name }}">
+         aria-label="Quantity for {{ item.name }}">
 </td>
 ```
 

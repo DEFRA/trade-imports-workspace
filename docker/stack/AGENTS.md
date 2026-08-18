@@ -1,7 +1,7 @@
 # Workspace docker stack — agent index
 
 The wrapper-managed stack (this folder + `scripts/stack/`) is the **only**
-compose stack in the workspace and all ten repos — the
+compose stack in the workspace and its repos — the
 `make docker-compose-*` targets delegate to these wrappers.
 
 ## Stand up / tear down
@@ -9,7 +9,7 @@ compose stack in the workspace and all ten repos — the
 ```bash
 ./scripts/stack/run-stack.sh                                # all services on :latest
 ./scripts/stack/run-stack.sh -b feat/EUDPA-123              # branch tag where published, latest elsewhere
-./scripts/stack/run-stack.sh -d                             # build the 8 repo-backed services from local source
+./scripts/stack/run-stack.sh -d                             # build the repo-backed services from local source
 ./scripts/stack/run-stack.sh -e backend                     # run backend in IntelliJ / npm; rest in docker
 ./scripts/stack/run-stack.sh --profile frontend --profile infrastructure --profile database
                                                             # only those profiles; intended for "running other tiers natively"
@@ -36,7 +36,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book` | `backend` |
 | `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend` | `frontend` |
-| `dev.compose.yml` (--dev only) | build/target/volumes overlay for the 8 repo-backed services | — |
+| `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 
 ## Choosing between `-d`, `-e`, and `--profile`
 
@@ -55,13 +55,14 @@ compose freely.
 
 ## `--exclude` (`-e`) labels
 
-Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `reference-data`, `address-book`, `gateway`.
+Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `defra-id-stub`, `reference-data`, `address-book`, `gateway`
+— the labels in `run-stack.sh`'s `services` array.
 Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
 `host.docker.internal:<port>`.
 
-Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002, backend 8085, stub 8087,
-reference-data 8086, address-book 8089, gateway 8088.
+Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002, defra-id-stub 3007,
+backend 8085, reference-data 8086, stub 8087, gateway 8088, address-book 8089.
 
 ## `--profile` semantics (strict)
 

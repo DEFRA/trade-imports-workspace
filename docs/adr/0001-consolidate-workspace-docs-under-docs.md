@@ -5,6 +5,17 @@
 - Ticket: [EUDPA-181](https://eaflood.atlassian.net/browse/EUDPA-181)
 - Depends on: [EUDPA-179](https://eaflood.atlassian.net/browse/EUDPA-179) (skills moved to the agentskills.io layout)
 
+## Amendment — 2026-08-18
+
+The workspace repo was renamed from `DEFRA/trade-imports-animals-workspace` to
+`DEFRA/trade-imports-workspace`, and the canonical location it is pinned to
+changed from `~/git/defra/trade-imports-animals-workspace` to
+`~/git/defra/trade-imports-workspace`. The citation paths below have been
+rewritten to the new canonical path so this ADR does not instruct authors to
+write a dead path. Nothing else changes: option (a) still stands, `docs/` is
+still the single canonical documentation root, and best-practices are still
+cited by workspace-absolute path.
+
 ## Context
 
 Documentation in this workspace was split across two locations:

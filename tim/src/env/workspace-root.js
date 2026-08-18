@@ -81,6 +81,6 @@ export const resolveWorkspaceRoot = ({
   if (looksLikeWorkspaceRoot(canonical)) return canonical
   throw new TimError(
     'USAGE',
-    `Cannot find the workspace root. Run from inside the trade-imports-animals checkout, set TIM_WORKSPACE, or symlink your checkout to ${canonical}.`
+    `Cannot find the workspace root. Run from inside the trade-imports workspace checkout, set TIM_WORKSPACE, or symlink your checkout to ${canonical}.`
   )
 }

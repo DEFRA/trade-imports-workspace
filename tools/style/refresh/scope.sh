@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the four refresh work-lists (A/B/C/D) for an EUDPA code-style review
+# Build the four refresh work-lists (A/B/C/D) for a code-style review
 # in one shot, filtered to reviewable source files (any path that file-topics.sh
 # maps to >= 1 topic). Mirrors review-side scope.sh but writes snapshots to
 # .style-meta.json#re_reviews[] and reuses review-side helpers for git plumbing

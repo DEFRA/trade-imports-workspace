@@ -98,9 +98,7 @@ Read `ticket.md` to internalise the summary, AC and comments. The helper has alr
 The workspace already has the canonical clones at
 `~/git/defra/trade-imports-workspace/repos/<repo>/`. Read directly from those
 working trees when you need to peek at code — do **not** clone anywhere.
-See the workspace `CLAUDE.md` repo map for the authoritative repo list
-(`trade-imports-animals-frontend`, `-backend`, `-admin`, `-tests`,
-`trade-imports-stub`, `trade-imports-reference-data`).
+See the workspace `CLAUDE.md` repo map for the authoritative repo list.
 
 ### Investigate
 **Features:** Where does it fit? Patterns to follow? Similar features?

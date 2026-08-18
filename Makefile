@@ -1,10 +1,15 @@
 SHELL         := /bin/bash
-REPOS         := trade-imports-animals-frontend trade-imports-animals-backend trade-imports-animals-tests trade-imports-animals-admin trade-imports-stub trade-imports-reference-data trade-imports-defra-id-stub trade-imports-dynamics-gateway trade-imports-address-book trade-imports-ins-frontend
-REPOS_DIR     := repos
-NODE_REPOS    := trade-imports-animals-frontend trade-imports-animals-tests trade-imports-animals-admin trade-imports-defra-id-stub trade-imports-ins-frontend
-JAVA_REPOS    := trade-imports-animals-backend trade-imports-stub trade-imports-reference-data trade-imports-dynamics-gateway trade-imports-address-book
+MANIFEST      := repos.json
+REPOS         := $(shell jq -r '.repos[].name' $(MANIFEST) 2>/dev/null)
+REPOS_DIR     := $(shell jq -r '.reposDir' $(MANIFEST) 2>/dev/null)
+NODE_REPOS    := $(shell jq -r '.repos[] | select(.stack == "node") | .name' $(MANIFEST) 2>/dev/null)
+JAVA_REPOS    := $(shell jq -r '.repos[] | select(.stack == "java") | .name' $(MANIFEST) 2>/dev/null)
 CANONICAL_PATH := $(HOME)/git/defra/trade-imports-workspace
 WORKSPACE_ROOT := $(abspath .)
+
+ifeq ($(strip $(REPOS)),)
+$(error Cannot read the repo roster from $(MANIFEST). Check the file is there and jq is installed, and run make from the workspace root)
+endif
 
 .PHONY: setup link update reset status install lint test \
         start-frontend start-backend start-admin start-gateway start-address-book \

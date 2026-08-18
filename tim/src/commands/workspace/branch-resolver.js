@@ -1,4 +1,5 @@
 const TICKET_PREFIX = 'EUDPA'
+const TICKET_REF_PATTERN = new RegExp(`^(?:${TICKET_PREFIX}-)?(\\d+)$`, 'i')
 
 /**
  * Normalise a branch argument into a ticket reference, or null when it
@@ -8,7 +9,7 @@ const TICKET_PREFIX = 'EUDPA'
  * @returns {string|null}
  */
 export const parseTicketRef = (input = '') => {
-  const match = input.trim().match(/^(?:EUDPA-)?(\d+)$/i)
+  const match = input.trim().match(TICKET_REF_PATTERN)
   return match ? `${TICKET_PREFIX}-${match[1]}` : null
 }
 

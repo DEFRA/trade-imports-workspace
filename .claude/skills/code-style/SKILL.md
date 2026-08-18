@@ -1,12 +1,12 @@
 ---
 name: code-style
-description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP Live Animals PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 17-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
+description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP trade-imports PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 17-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
 ---
 
-Multi-language code-style review and remediation for EUDP Live Animals
+Multi-language code-style review and remediation for EUDP trade-imports
 tickets (Java, GDS/Nunjucks, Playwright, k6, Node). The per-file reviewer
 persona (`references/STYLE_FILE_REVIEWER.md`) is written
 language-neutrally and takes its ruleset from the pre-baked

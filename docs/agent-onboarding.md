@@ -19,20 +19,27 @@ for cmd in curl jq gh; do command -v "$cmd" >/dev/null || brew install "$cmd"; d
 
 ### 1. Canonical clone location
 
-This workspace expects to live at
-`~/git/defra/trade-imports-workspace`. Every LLM-typed Bash
-command, every helper script, and the `.claude/settings.json` allowlist
-patterns hardcode that path. No env var to set.
+The workspace must be reachable at `~/git/defra/trade-imports-workspace`.
+Every LLM-typed Bash command, every helper script, and the
+`.claude/settings.json` allowlist patterns hardcode that path. No env var
+to set.
 
-If your checkout is elsewhere, symlink it:
+The canonical path does **not** have to be the checkout itself — it may be a
+symlink, and on machines whose checkout predates the repo rename it usually
+is. Either arrangement works:
 
 ```bash
-ln -s "$(pwd)" ~/git/defra/trade-imports-workspace
+# Option A — clone straight to the canonical path
+git clone git@github.com:DEFRA/trade-imports-workspace.git ~/git/defra/trade-imports-workspace
+
+# Option B — keep an existing checkout under any name and symlink it
+ln -s "$(pwd)" ~/git/defra/trade-imports-workspace   # run from your checkout root
 ```
 
-(run from your checkout root). `git -C <symlink>` and
-`git -C <symlink>/repos/<repo>` both resolve correctly — the symlink is
-transparent for everything `tools/` touches.
+`git -C <symlink>` and `git -C <symlink>/repos/<repo>` both resolve
+correctly — the symlink is transparent for everything `tools/` touches. What
+matters is that `~/git/defra/trade-imports-workspace` exists and points at a
+workspace checkout; the directory's own name is irrelevant.
 
 ### 2. Get Your Credentials
 

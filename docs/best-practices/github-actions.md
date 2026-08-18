@@ -1,6 +1,6 @@
 # GitHub Actions — Best Practices
 
-Applies to every repo in the EUDP Live Animals workspace. Focused on the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse) and the checkout-depth knobs that interact with it. Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here — see the matching follow-up ticket.
+Applies to every repo in the trade-imports workspace. Focused on the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse) and the checkout-depth knobs that interact with it. Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here — see the matching follow-up ticket.
 
 ---
 

@@ -228,8 +228,33 @@ export const checkMarkers = (increments) => {
   }
 }
 
-const QUOTED_SPAN = /"([^"]{5,})"/g
+// Every quoted span, then filtered by length — not `"([^"]{5,})"`, which skips
+// a short quote like "it's" and then pairs its closing quote with the next
+// opening one, inventing a span that was never in the text.
+const QUOTED_SPAN = /"([^"\n]*)"/g
+const MIN_QUOTE = 5
 const BACKTICKED = /`([^`]+)`/g
+
+const quotedSpans = (text) =>
+  [...text.matchAll(QUOTED_SPAN)]
+    .map((match) => match[1])
+    .filter((span) => span.length >= MIN_QUOTE)
+
+// A finding is migrated when its prose has moved, not when it has merely
+// acquired a decision question: a gated finding can carry finding.decisionRequired
+// long before Pass A reaches its domain.
+const PROSE_SLOTS = [
+  'frontend',
+  'prototype',
+  'difference',
+  'falsifiedBy',
+  'verification'
+]
+
+const isMigrated = (increment) =>
+  PROSE_SLOTS.some(
+    (slot) => (increment.finding?.[slot] ?? '').trim().length > 0
+  )
 
 // An invariant that compares the frozen detail against the migrated slots has
 // nothing to say until at least one finding has been migrated. Saying "0 quoted
@@ -250,15 +275,12 @@ const notYetMigrated = (id) => ({
 export const checkQuotes = (increments) => {
   const problems = []
   let checked = 0
-  const migrated = increments.filter((inc) => inc.finding)
+  const migrated = increments.filter(isMigrated)
   if (migrated.length === 0) return notYetMigrated('I5')
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue
-    const wanted = new Set()
-    for (const match of increment.detail.matchAll(QUOTED_SPAN)) {
-      wanted.add(match[1])
-    }
+    const wanted = new Set(quotedSpans(increment.detail))
     for (const match of increment.detail.matchAll(BACKTICKED)) {
       wanted.add(match[1])
     }
@@ -278,6 +300,34 @@ export const checkQuotes = (increments) => {
   }
 }
 
+// The sentinel labels that build-increments.js used to join three fields into
+// one string. They are structure, not content: the slots carry them as section
+// headings now, so their words are not a loss.
+const SENTINELS =
+  /(CORRECTED DURING VERIFICATION|FALSIFIED BY|Frontend|Prototype)\s*:/g
+
+/**
+ * The frozen detail with every citation token removed, so the invariants
+ * compare claims rather than line numbers.
+ *
+ * The tokeniser finds the tokens rather than a second regex: a comma-joined
+ * `view-model.js:92,110-112` is one citation, and a pattern that only matched
+ * `path:NN-NN` left 110 and 112 behind to be reported as lost numbers.
+ *
+ * @param {object} increment
+ * @returns {string}
+ */
+export const withoutCitations = (increment) => {
+  const tokens = tokeniseIncrement(increment)
+    .filter((token) => token.field === 'detail')
+    .sort((a, b) => b.offset - a.offset)
+  let text = increment.detail
+  for (const token of tokens) {
+    text = text.slice(0, token.offset) + ' ' + text.slice(token.end)
+  }
+  return text.replace(SENTINELS, ' ')
+}
+
 const numbersIn = (text) => {
   const found = new Set()
   for (const match of text.matchAll(/\b(\d[\d,]*)\b/g)) {
@@ -295,15 +345,11 @@ const numbersIn = (text) => {
 export const checkNumbers = (increments) => {
   const problems = []
   let checked = 0
-  if (increments.every((inc) => !inc.finding)) return notYetMigrated('I6')
+  if (!increments.some(isMigrated)) return notYetMigrated('I6')
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue
-    // Line numbers belong to citations, not to the claim.
-    const detail = increment.detail.replace(
-      /[A-Za-z0-9_@.\-/]+\.[A-Za-z0-9]{1,6}:\d+(-\d+)?/g,
-      ''
-    )
+    const detail = withoutCitations(increment)
     const after = numbersIn(slots)
     for (const value of numbersIn(detail)) {
       checked += 1
@@ -352,12 +398,12 @@ const tokensOf = (text) =>
  * tokens present across the slots. Disabled for Pass B by definition. */
 export const checkResidue = (increments, threshold = 0.98) => {
   const rows = []
-  if (increments.every((inc) => !inc.finding)) return notYetMigrated('I8')
+  if (!increments.some(isMigrated)) return notYetMigrated('I8')
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue
     const after = new Set(tokensOf(slots))
-    const before = tokensOf(increment.detail)
+    const before = tokensOf(withoutCitations(increment))
     const missing = before.filter((word) => !after.has(word))
     const ratio = before.length ? 1 - missing.length / before.length : 1
     rows.push({ id: increment.id, ratio, missing: [...new Set(missing)] })
@@ -378,28 +424,55 @@ export const checkResidue = (increments, threshold = 0.98) => {
   }
 }
 
-/** I9. slot sanity, including the exact counts and the word budgets. */
-export const checkSlots = (increments, expected) => {
+/**
+ * I9. slot sanity.
+ *
+ * Three things are checked and each has its own scope, which the plan's single
+ * gate conflated:
+ *
+ * - Five slots non-empty on every MIGRATED finding. True from the first one.
+ * - The corpus-wide counts — correction on 39, a question on all 70 gated —
+ *   only once every finding is migrated. Asserting them against a part-migrated
+ *   file just reports the work not yet done as a failure.
+ * - The word budgets only in Pass B. Pass A moves prose verbatim, so a finding
+ *   whose original ran to 104 words is over budget by construction; failing it
+ *   there would mean rewording in the pass whose whole guarantee is that it
+ *   does not reword.
+ *
+ * @param {object[]} increments
+ * @param {object} [expected] - Corpus-wide counts from .corpus-meta.json
+ * @param {string} [pass]
+ * @returns {object}
+ */
+export const checkSlots = (increments, expected, pass = 'a') => {
   const problems = []
-  const migrated = increments.filter((inc) => inc.finding)
+  const migrated = increments.filter(isMigrated)
+  const live = increments.filter((inc) => !isWithdrawn(inc))
+  const complete = migrated.length === live.length && live.length > 0
   const nonEmpty = (slot) =>
     migrated.filter((inc) => (inc.finding?.[slot] ?? '').trim().length > 0)
       .length
 
-  if (migrated.length) {
-    for (const slot of [
-      'frontend',
-      'prototype',
-      'difference',
-      'falsifiedBy',
-      'verification'
-    ]) {
-      if (nonEmpty(slot) !== migrated.length) {
-        problems.push(
-          `${slot} empty on ${migrated.length - nonEmpty(slot)} of ${migrated.length} migrated findings`
-        )
-      }
+  for (const slot of [
+    'frontend',
+    'prototype',
+    'difference',
+    'falsifiedBy',
+    'verification'
+  ]) {
+    if (migrated.length && nonEmpty(slot) !== migrated.length) {
+      problems.push(
+        `${slot} empty on ${migrated.length - nonEmpty(slot)} of ${migrated.length} migrated findings`
+      )
     }
+  }
+
+  const gated = live.filter((inc) => inc.gate)
+  const withQuestion = gated.filter(
+    (inc) => inc.finding?.decisionRequired?.question
+  )
+
+  if (complete) {
     if (
       expected?.corrected !== undefined &&
       nonEmpty('correction') !== expected.corrected
@@ -408,40 +481,40 @@ export const checkSlots = (increments, expected) => {
         `correction on ${nonEmpty('correction')}, expected ${expected.corrected}`
       )
     }
+    if (withQuestion.length !== gated.length) {
+      problems.push(
+        `${gated.length - withQuestion.length} of ${gated.length} gated findings have no decision question`
+      )
+    }
   }
 
-  const gated = increments.filter((inc) => inc.gate && !isWithdrawn(inc))
-  const withQuestion = gated.filter(
-    (inc) => inc.finding?.decisionRequired?.question
-  )
-  if (migrated.length && withQuestion.length !== gated.length) {
-    problems.push(
-      `${gated.length - withQuestion.length} of ${gated.length} gated findings have no decision question`
-    )
-  }
-
-  for (const increment of migrated) {
-    for (const [slot, budget] of Object.entries(BUDGETS)) {
-      const text =
-        slot === 'question'
-          ? increment.finding?.decisionRequired?.question
-          : increment.finding?.[slot]
-      if (!text) continue
-      const words = wordCount(text)
-      if (words > budget && !increment.finding.longBecause) {
-        problems.push(
-          `${increment.id}/${slot}: ${words} words over a ${budget} budget with no longBecause`
-        )
+  if (pass === 'b') {
+    for (const increment of migrated) {
+      for (const [slot, budget] of Object.entries(BUDGETS)) {
+        const text =
+          slot === 'question'
+            ? increment.finding?.decisionRequired?.question
+            : increment.finding?.[slot]
+        if (!text) continue
+        const words = wordCount(text)
+        if (words > budget && !increment.finding.longBecause) {
+          problems.push(
+            `${increment.id}/${slot}: ${words} words over a ${budget} budget with no longBecause`
+          )
+        }
       }
     }
   }
 
+  const scope = complete
+    ? 'all findings migrated'
+    : `${migrated.length} of ${live.length} findings migrated, so the corpus-wide counts are not asserted yet`
   return {
     id: 'I9',
     state: problems.length ? 'fail' : 'pass',
     detail: problems.length
       ? problems.slice(0, 12).join('; ')
-      : `${migrated.length} migrated findings, ${withQuestion.length} of ${gated.length} gated carry a question`
+      : `${scope}; ${withQuestion.length} of ${gated.length} gated carry a question`
   }
 }
 
@@ -534,7 +607,7 @@ export const runCheck = ({ profile, workspaceRoot, pass = 'a', baseline }) => {
           why: 'Disabled for Pass B by definition — the words change.'
         }
       : checkResidue(backlog.increments),
-    checkSlots(backlog.increments, meta?.counts),
+    checkSlots(backlog.increments, meta?.counts, pass),
     checkPolarity(backlog.increments, baselineBacklog)
   ]
 

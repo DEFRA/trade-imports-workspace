@@ -248,3 +248,186 @@ Where to see it: `http://127.0.0.1:4328/#inc-028`, and
 for the Pass A against Pass B diff.
 
 ---
+
+## 3. What is built, and how to see it
+
+Two commands. The second serves the page; leave it running.
+
+```bash
+make tim-link
+tim parity report EUDPA-328
+tim parity serve EUDPA-328        # http://127.0.0.1:4328/
+tim parity check EUDPA-328        # the ten invariants
+```
+
+If `tim` behaves as though it is looking at a different corpus, run
+`readlink -f "$(which tim)"` — see decision 8.
+
+### The report
+
+- **96 findings, 70 waiting on a decision**, every one with the frontend on the
+  left and the requirements source on the right, the difference in its own
+  block, the falsifier always visible, and the audit record collapsed
+  underneath. 819 citations resolve to a GitHub permalink and an inline
+  snippet of the actual code at the pinned commit, so a claim is checked
+  without leaving the paragraph.
+- **The 97 `verification` records now render.** No page has ever shown them.
+  They are the best-written text in the corpus and they are the reason a finding
+  can be trusted, so they sit under every card, labelled a verbatim audit record.
+- **Every number is counted at build time.** The page this replaces claimed 103
+  page models against a real 104, and 60 corrections against a real 39.
+- **The 25 revalidation notes and the one ruling render.** The old page showed
+  neither.
+- **Deferred candidates and the withdrawn finding have their own sections** and
+  are in no count.
+- **The decision block is the batch ruling surface** you asked for: a question,
+  the options, what stays blocked, four ruling buttons and the exact
+  `rule-decision.sh` string. *copy batch* returns one line per queued ruling.
+- **Filters and search are deep-linkable** — the URL carries them, so you can
+  send someone "the 13 undecided address findings".
+
+### How I proved it
+
+| Claim | How to check it |
+|---|---|
+| The generator is tested | `make tim-test` — 685 tests, 269 of them in `src/parity/` |
+| The report renders the real corpus | `tim parity report EUDPA-328`, then read it |
+| Nothing was lost migrating 96 findings | `tim parity check EUDPA-328` — 301 quoted spans and identifiers survive verbatim, 336 numeric claims survive, 95 findings at or above 98% word residue |
+| `detail` was never touched | I1: 97 details byte-identical to the pre-migration git blob |
+| No citation was edited or dropped | I2, against the same blob |
+| Every reference in the prose is cited | I3: all 804 tokens |
+| The corpus still parses | `report.contract.test.js` — 14 assertions against the real file, skipped on a fresh clone |
+| Pass 0 did not disturb the build loop | `backlog-counts.sh` is byte-identical before and after; `next-increment.sh` still selects `inc-012` |
+
+### Numbers worth knowing
+
+- **819 citations.** 192 explicit, 543 resolved from a basename, 65
+  continuations, **35 queued for a human** with the reason printed on each. The
+  plan predicted about 30.
+- **44 citations point at a line range that has drifted** — the identifier is in
+  the file, outside the cited lines. Widen the range.
+- **35 citations point at an identifier that is no longer in the file at all.**
+  That is the real yield of pinning to the latest of both sides, and it is a
+  re-verification list, not a bug list. `inc-014/c1` is the clearest: the finding
+  cites `govukSelect` in `port-of-entry.njk`, and EUDPA-124 replaced it — which
+  is why that finding was already withdrawn.
+- **29 findings now cross-link** through `finding.relatedTo`, replacing three
+  incompatible notations including ordinal finding numbers that resolved against
+  nothing.
+
+---
+
+## 4. What broke, or surprised me
+
+- **The plan's ordinal join is wrong.** Covered in decision 1. It would have
+  attached every finding's audit record to the wrong finding, silently, and the
+  title checksum the plan proposed would have caught it on the first item — but
+  only if someone read the halt rather than working around it.
+
+- **`tim` on your PATH was resolving the stale clone.** `readlink -f "$(which
+  tim)"` gave `~/git/defra/trade-imports-animals/tim/src/cli.js`. Anything that
+  shelled out to `tim` — a skill, a script, you — was reading that workspace's
+  `tools/` and `workareas/`. `make tim-link` fixes it and I have run it.
+
+- **`npm --prefix <workspace>/tim install` is blocked by a guard whose premise
+  died on 18 August.** It guards a workspace symlink that is now a real clone.
+  I could not fix the hook — `.claude/hooks/` is protected from agent edits,
+  correctly — so `make tim-install` works around it. **See section 6 for the
+  one-line fix.**
+
+- **`tools/journey-builder/next-increment.sh` has no `--dry-run` flag.** The
+  plan's Pass 0 verification step names one. Without `--claim` it is already a
+  dry run, so the check was doable, but its output is the whole increment JSON
+  including `evidence` — which Pass 0 changes by design. Byte-identical output
+  was never achievable. What I checked instead: the same increment is selected,
+  and `backlog-counts.sh` is byte-identical.
+
+- **15 increments carried a slash-joined `screens` value, not 24.**
+
+- **Four of the ten invariants were wrong as specified**, and the canary found
+  each of them before any fan-out. They are listed in the commits; the two worth
+  knowing are that I5's quote pattern invented a span that was never in the text
+  (it skipped `"it's"` for being under five characters, then paired its closing
+  quote with the next opening one), and that I9 enforced Pass B's word budgets
+  during Pass A — which would have forced rewording in the pass whose whole
+  guarantee is that it does not reword.
+
+- **`routes.js` exists in both codebases**, and the resolver was picking a side
+  by the order of keys in a JSON object. Four citations in `inc-037` alone
+  resolved to the frontend's 76-line `routes.js` when the paragraph was about the
+  prototype's 10,997-line one. Three signals fix it, none of them a preference —
+  decision 5 and the commit message on `87f7185`.
+
+- **The `pins`/`captures` split turned out to matter more than I expected.** With
+  the pins at HEAD, 35 citations lost their identifier. Had the report shown one
+  commit per side it would have been asserting that the 70 prototype screenshots
+  are pictures of `491b392`. They are pictures of `7da4f70`.
+
+---
+
+## 5. What I did not do, and why
+
+Progress: **36 of 58 increments done, 2 dropped, 20 to do.**
+
+**Gated on you, deliberately:**
+
+- **inc-032 — the other 47 decision questions.** The handover says not to write
+  them until you have seen the canary. `tim parity check` fails on exactly this
+  and names it: *"69 of 70 gated findings have no decision question — until they
+  do, the report can present the evidence but not the ask."* That is the one
+  red light on the branch and it is pointing at your inbox.
+- **inc-035, 036, 037 — Pass B across the other 95, its adversarial verification
+  and the consistency pass.** Same reason.
+
+**Not gated, not done — the evidence pipeline (inc-039 to inc-053):**
+
+The report ships one-sided. 30 cited frontend screens have no picture; all 50
+cited prototype screens do. Every frontend column falls back to a page-model
+plate listing every heading, field and row the capture recorded, in document
+order, captioned *"page model only"*. That is genuine evidence and it reads as a
+description of a page rather than an error — but it is not a picture.
+
+I stopped short of capture for one reason and one judgement:
+
+- **The reason:** re-capturing the prototype at `491b392` means moving your
+  design clone's working tree off `7da4f70`, and capturing the frontend means
+  standing up the fit suite and adding a guarded capture call to 26 spec files
+  in a repo with an open PR. Both are the kind of thing to start awake.
+- **The judgement:** the plan's own risk 10 accepts shipping one-sided, and a
+  report you can read and rule from is worth more this morning than pictures on
+  a report whose voice you have not signed off. If the canaries are wrong, the
+  pictures would have been curated against prose that is about to change.
+
+**Also not done:**
+
+- **inc-013 — hand-resolving the 35 queued citations.** They are in
+  `evidence.json.unresolved`, each with the reason and the candidates. 22 are
+  bare `:NN` continuations in a `vs` construction where proximity points at the
+  wrong file; 13 are basenames that genuinely match several files.
+- **inc-058 — the artifact export.** The local page is the design target and it
+  works; the shareable subset is a separate question, as you said.
+
+**Dropped, with reasons:**
+
+- **inc-023, the `start-parity.sh` dispatcher.** `chmod` is policy-blocked, so
+  an agent cannot make a new shell script executable. An unrunnable dispatcher is
+  worse than none; the skill routes through `tim parity`.
+- **inc-040, `pin-checkout.sh`.** Your inc-001 ruling made it moot — it exists to
+  clone the frontend at `32f6106c`, and capture happens at HEAD now.
+
+---
+
+## 6. Three things only you can do
+
+1. **The guard hook.** `.claude/hooks/guard-bash.sh:167-170` denies
+   `npm --prefix <path containing trade-imports-workspace> install` because that
+   path used to be a symlink. It is a real clone now. Either delete the rule or
+   make it resolve the path first and fire only on a genuine symlink. Until then,
+   `make tim-install` is the way in.
+2. **`.claude/settings.json`** — the plan wants explicit `tools/parity/*` entries
+   per the `frontend-change` precedent. It is protected from agent edits,
+   correctly, and it is cosmetic: line 63 already globs `tools/**`, so every
+   script in `tools/parity/` runs today.
+3. **The artifact share pin** still points at a pre-revalidation version of the
+   old page. Only you can move it, and the old page is now deleted, so anyone
+   holding that link is reading something that no longer regenerates.

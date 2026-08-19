@@ -204,7 +204,9 @@ export const ensureApp = async ({
   const env = { PORT: String(port), ...(app.env ?? {}) }
   const readyTimeoutMs = app.readyTimeoutMs ?? 180_000
 
-  log(`Nothing on ${baseUrl}. Starting the ${label}: ${argv.join(' ')} in ${cwd}`)
+  log(
+    `Nothing on ${baseUrl}. Starting the ${label}: ${argv.join(' ')} in ${cwd}`
+  )
   const child = launch({ argv, cwd, env })
   const stop = stopper(child)
 

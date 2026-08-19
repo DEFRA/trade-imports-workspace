@@ -159,10 +159,7 @@ describe('specsIn', () => {
     writeFileSync(join(dir, 'origin-and-reason.pw.js'), '')
     writeFileSync(join(dir, 'addresses.pw.js'), '')
 
-    expect(specsIn(dir)).toEqual([
-      'addresses.pw.js',
-      'origin-and-reason.pw.js'
-    ])
+    expect(specsIn(dir)).toEqual(['addresses.pw.js', 'origin-and-reason.pw.js'])
   })
 
   test('ignores anything that is not a spec, so a note beside them is harmless', () => {

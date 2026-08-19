@@ -31,11 +31,12 @@ describe('repo constants', () => {
     ])
   })
 
-  test('JAVA_REPOS lists the five Java repos', () => {
+  test('JAVA_REPOS lists the six Java repos', () => {
     expect([...JAVA_REPOS].sort()).toEqual([
       'trade-imports-address-book',
       'trade-imports-animals-backend',
       'trade-imports-dynamics-gateway',
+      'trade-imports-ins-backend',
       'trade-imports-reference-data',
       'trade-imports-stub'
     ])

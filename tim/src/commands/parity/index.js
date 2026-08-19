@@ -12,6 +12,7 @@ import { buildCorpusMeta } from '../../parity/meta.js'
 import { runSplitSentinels } from '../../parity/split-sentinels.js'
 import { runManifest } from '../../parity/manifest.js'
 import { runCapture } from '../../parity/capture/run.js'
+import { runCoverage } from '../../parity/coverage.js'
 import {
   runCheckEvidence,
   renderCheckEvidence,
@@ -386,7 +387,6 @@ export const register = (program, { timVersion }) => {
       })
     )
 
-
   parity
     .command('manifest <runId>')
     .description(
@@ -443,6 +443,43 @@ export const register = (program, { timVersion }) => {
               ? 'The run did not finish cleanly. Read the output above, then look at the trace in the run directory.'
               : `Index them next: tim parity manifest <runId> --side ${r.side} --sha ${r.sha.slice(0, 8)} --write`
           ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('coverage <runId>')
+    .description(
+      "Did we get everything? Enumerate a side's screens from its source and diff that against what the capture recorded"
+    )
+    .option('--side <id>', 'Just one side')
+    .option('--strict', 'Exit non-zero while any enumerated screen is missing')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => {
+          const result = runCoverage({ profile, side: opts.side })
+          return {
+            ...result,
+            exitNonZero: Boolean(opts.strict) && !result.complete
+          }
+        },
+        renderText: (r) =>
+          r.sides
+            .flatMap((side) =>
+              side.enumerated
+                ? [
+                    `${side.side}: ${side.covered} of ${side.expected} pages captured, plus ${side.states.length} states of them${side.manifestFound ? '' : ' — nothing has been captured for this side yet'}.`,
+                    ...side.missing.map((entry) =>
+                      `  not captured  ${entry.screen.padEnd(44)} ${entry.why ?? ''}`.trimEnd()
+                    ),
+                    ...side.unexplained.map(
+                      (screen) =>
+                        `  unexplained   ${screen.padEnd(44)} captured, but nothing in the source accounts for it`
+                    )
+                  ]
+                : [`${side.side}: ${side.why}`]
+            )
+            .join('\n'),
         timVersion
       })
     )

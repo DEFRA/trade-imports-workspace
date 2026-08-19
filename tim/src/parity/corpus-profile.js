@@ -162,6 +162,7 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
         raw.seals ?? `${raw.workarea}/evidence/seals.json`
       ),
       pairingModule: absolutise(workspaceRoot, raw.pairingModule),
+      enumeratorModule: absolutise(workspaceRoot, raw.enumeratorModule),
       deltasDir: absolutise(workspaceRoot, raw.deltasDir),
       upstreamFindings: absolutise(workspaceRoot, raw.upstreamFindings)
     }

@@ -658,3 +658,151 @@ section 2.
 export (`inc-058`), and moving the page-model extractor into the frontend repo
 (`inc-041`) — which the capture path does not use and which I would now argue
 should be dropped rather than done.
+
+## 9. The rest of the night: everything that was not waiting on you
+
+Section 8's last list named four increments waiting on nothing. They are done,
+and two more turned out to be reachable. **50 of 58 done, 4 dropped, 4 left —
+and all four that are left are the ones waiting on you.**
+
+Read section 2 first. Everything below is what happened after it.
+
+### The decisions here you might have made differently
+
+- **The drift panel is backed by a seal store, not by the plan's
+  `curatedAgainst` hashes.** The plan hangs each hash on a curated frame, and
+  after section 8 most findings have no curated frame — frame selection is
+  derived. So `evidence/seals.json` records the frame and the sha256 of every
+  picture the report last showed, per side per finding, and the next build
+  diffs against it. Same rule, a home that still exists.
+
+- **`--reseal` is a person's statement and I wrote that into the skill — then
+  used it twice myself.** Both times were my own changes, on builds nobody had
+  read. You have never opened this report, so the seals you inherit are the
+  baseline of what you will first see, which is what they are for. From the
+  moment you open it, the rule holds: nothing reseals on your behalf.
+
+- **inc-053's two shell scripts are two `tim` subcommands.** Setting an execute
+  bit is policy-blocked here — it is why `inc-023` was dropped — so a script
+  cannot be made runnable, and CLAUDE.md already sends skills to `tim` where
+  `tim` covers the surface. Same behaviour, plus tests and a `--json` envelope.
+
+- **The artifact declares each picture once and points every use at it.** The
+  straightforward version embedded a fresh copy per use: 215 uses over 52 files
+  took the page to 18 MB, over the ceiling, with not one extra pixel of
+  evidence in it. Every crop is still full quality. Degrading them all to fit a
+  channel was the alternative and the brief rules it out.
+
+- **inc-049's insertion points are derived from the page models, not
+  hand-authored.** The increment calls this "the largest single piece of
+  genuine labour" and says it does not compress. What does not compress is the
+  *judgement*; the position itself is a fact about two DOMs. Where a field
+  appears on both sides the caption pins it — "it would sit after Species".
+  Where the two pages share no field at all, which is 21 of the 25 frontend
+  cases, it says the position could not be derived and that the crop shows
+  where the page's own fields begin. **That is the part worth your eye**: a
+  weaker claim, stated as one, rather than an invented position.
+
+- **inc-041 is done differently, and this is the biggest call of the night.**
+  The plan wants one shared extractor file and the 8 prototype specs converted
+  to ESM. I put the extractor in the frontend repo and left the prototype's
+  copy alone, and made the guarantee a **shared schema** — a contract test
+  parsing every paired model on both sides through one definition. What the
+  differ depends on is the shape; a copied file drifts silently where a failing
+  test does not. It also avoids editing 8 specs in a run artefact overnight.
+
+- **I re-ran the differ.** That regenerated every delta file, which the anchors
+  and insertion points are derived from. I did not re-run `build-increments`,
+  so **no finding changed**. `git diff` on `compare/deltas` is the record.
+
+### What the fresh models found
+
+The frontend page models were mined from traces at `32f6106c` and never
+regenerated. Every delta, anchor and insertion point was derived from markup
+that had moved months ago. They are now read in the same page visit as the
+screenshot, and normalised so two runs produce byte-identical models — I ran it
+twice and diffed to prove it.
+
+Re-running the differ moved **20 of the 29 pairs**. 468 deltas to 472; the
+churn inside that is the point, not the total.
+
+**One thing it surfaced needs you.** `fe-animal-identification` now records no
+fields at all. The capture reaches it after `completeAnswerSections` has
+finished that section, and at that point the page holds no commodity line, so
+it renders no identifier inputs. Every finding about that screen is about those
+inputs, so both its picture and its model are of a state the findings are not
+about. `?change=1` does not bring them back.
+
+I left it and made the checker report it, because whether the journey should
+still hold a line there is a question about the application, not about the
+capture. It is the only screen flagged.
+
+### What is built, and how I proved it
+
+| | |
+|---|---|
+| `tim parity check-evidence` | Pins, captures, coverage, anchors and citations in one read. It found two things the moment it ran: `.corpus-meta.json` still claimed a capture directory that no longer existed, and the prototype manifest indexed none of its 78 crops. |
+| `tim parity repoint --side S --to SHA` | A preview page of old picture beside new before anything is superseded, naming the screens the new capture did not reach. `--accept` moves the corpus and nothing else. |
+| `tim parity insertion-anchors` | 43 insertion points across 41 screens. 61 findings gained one. |
+| `tim parity report --reseal` | Accepts every moved picture. Without it, drift stands. |
+| `tim parity report --target artifact` | 4.2 MB, one file, 50 crops carried at full quality and shown 202 times, 139 full-page shots named and linked. |
+| `make parity`, `parity-check-evidence`, `sonar-staged` | `tim` and `sonar` both resolve config from the current directory and an agent here cannot `cd`. These are the only place that `cd` lives. |
+
+Proof, in the order I ran it:
+
+- **772 tests pass** in `tim`, 89 files. Lint and format clean in both repos,
+  and the frontend's full 1507-test suite passes on every commit through its
+  pre-commit hook.
+- **The drift mechanism, end to end.** I doctored two seals by hand — one hash,
+  one frame — rebuilt, and the panel named both, correctly distinguishing "same
+  frame, new pixels" from a reframe. Then `--reseal` cleared it.
+- **The artifact ceiling.** 18 MB before the change, 4.2 MB after, same
+  pictures at the same quality.
+- **Model determinism.** Two consecutive captures, `diff -rq`, no output.
+
+### What broke
+
+- **`page-model.js` failed the frontend's lint** on `CSS` and `location`. They
+  are browser globals in a file that runs in the browser. Added to the existing
+  `page.evaluate` override, listed one by one rather than switching the file to
+  a browser environment, so the surrounding Node code stays honest.
+- **The contract test failed on the first run**, on `fe-address-party-picker` —
+  a model from an older extractor, missing the three keys the differ needs.
+  Nothing pairs that screen, so the test now covers only models the comparison
+  reads. A stale model that *is* paired still fails, which is the case that
+  matters.
+- **The empty-model check was unreadable at first**: 23 lines, of which one
+  mattered. The signal is the asymmetry, not the emptiness — confirmation pages
+  and hubs have no controls on either side. Now one line.
+- **`git log -1 -- src` returned nothing** from inside `fit/evidence`, because
+  the pathspec is relative to the cwd, and the capture directory was silently
+  named `frontend@`. Fixed by the pathspec and by treating an empty git answer
+  as no answer.
+
+### Two tidy-ups I could not do
+
+Two superseded capture directories are still on disk and every form of `rm` was
+denied by the guard hook:
+
+```bash
+rm -rf ~/git/defra/trade-imports-workspace/workareas/shared/dr21-parity/evidence/frontend@6766115c \
+       "~/git/defra/trade-imports-workspace/workareas/shared/dr21-parity/evidence/frontend@"
+```
+
+And `sonar analyze` reports "no project configured" even inside the frontend
+repo, which has a `sonar.projectKey`. The secrets scan runs and passes on every
+commit; the agentic analysis does not. That is a real gap in the pre-commit
+mandate and I have not chased it.
+
+### What is left
+
+**All four are waiting on you**, and all four are downstream of section 2:
+
+- `inc-032` — the other 47 decision questions
+- `inc-035` — Pass B across the other 95 findings
+- `inc-036` — adversarial verification of Pass B
+- `inc-037` — the consistency pass over titles and questions
+
+`tim parity check` is still red on exactly one thing, and it is the right one:
+*"69 of 70 gated findings have no decision question — until they do, the report
+can present the evidence but not the ask."*

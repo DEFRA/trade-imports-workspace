@@ -394,8 +394,12 @@ export const checkAnchorsInvariant = (evidence) => {
   }
 }
 
+// "vs" and "versus" are here for a structural reason, not because they are
+// common. The old prose said "'Consignment details' vs 'Commodity details'"
+// because it had one paragraph to say it in; the two columns say it now. The
+// connective is layout that became words, and it becomes layout again.
 const STOPWORDS = new Set(
-  'a an the and or but of to in on at is are was were be been being it its this that these those with for from as by not no so than then there their they them he she we you i if into over under between about which who whom whose what when where why how do does did done has have had will would can could should may might must new same also only just still yet each any all both more most other another such own too very s t'.split(
+  'a an the and or but of to in on at is are was were be been being it its this that these those with for from as by not no so than then there their they them he she we you i if into over under between about which who whom whose what when where why how do does did done has have had will would can could should may might must new same also only just still yet each any all both more most other another such own too very vs versus s t'.split(
     ' '
   )
 )
@@ -498,7 +502,7 @@ export const checkSlots = (increments, expected, pass = 'a') => {
     }
     if (withQuestion.length !== gated.length) {
       problems.push(
-        `${gated.length - withQuestion.length} of ${gated.length} gated findings have no decision question`
+        `${gated.length - withQuestion.length} of ${gated.length} gated findings have no decision question — until they do, the report can present the evidence but not the ask`
       )
     }
   }

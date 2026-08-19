@@ -47,6 +47,30 @@ describe.skipIf(!present)('the real EUDPA-328 corpus', () => {
     expect(dangling).toEqual([])
   })
 
+  test('every relatedTo names an increment that exists', () => {
+    // The corpus used to cross-refer in three incompatible notations, one of
+    // them ordinal finding numbers that resolve against nothing. A dangling
+    // relatedTo would put that back.
+    const { increments } = parseBacklog(readJsonFile(backlogPath))
+    const ids = new Set(increments.map((i) => i.id))
+    const dangling = increments.flatMap((increment) =>
+      (increment.finding?.relatedTo ?? [])
+        .filter((relation) => !ids.has(relation.id))
+        .map((relation) => `${increment.id} -> ${relation.id}`)
+    )
+    expect(dangling).toEqual([])
+  })
+
+  test('no finding is related to itself', () => {
+    const { increments } = parseBacklog(readJsonFile(backlogPath))
+    const selfRefs = increments
+      .filter((increment) =>
+        (increment.finding?.relatedTo ?? []).some((r) => r.id === increment.id)
+      )
+      .map((increment) => increment.id)
+    expect(selfRefs).toEqual([])
+  })
+
   test('deferred candidates parse in their own thinner shape', () => {
     const deferredPath = join(runDir, 'deferred.json')
     if (!existsSync(deferredPath)) return

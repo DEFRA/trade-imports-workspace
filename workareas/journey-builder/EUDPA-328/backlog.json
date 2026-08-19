@@ -275,7 +275,24 @@
         "prototype": "Templates and Address book point at capabilities the frontend does not have — dr21-dashboard-templates and friends are unpaired prototype screens.",
         "difference": "Raised once as a service-wide pattern, not six times — it appears in all six of my pairs and will appear in every other band's too, so it needs a single owner. The phase banner is unambiguous and cheap. The navigation is not. Deduplicate against whichever band claims the service chrome.",
         "falsifiedBy": "Another band already owning this, or a ruling that the alpha phase banner is deliberately omitted until the service reaches beta.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-001",
+            "relation": "duplicate-of",
+            "why": "The phase-banner half of this service-wide finding is raised there; deduplicate against whichever band claims the service chrome."
+          },
+          {
+            "id": "inc-002",
+            "relation": "duplicate-of",
+            "why": "The service-navigation half is raised there."
+          },
+          {
+            "id": "inc-010",
+            "relation": "duplicate-of",
+            "why": "The phase banner is also raised once in the general band."
+          }
+        ]
       },
       "citations": [
         {
@@ -434,7 +451,29 @@
         "difference": "This one gap is the root of three separate downstream findings in this band (germinal quantity fields on Commodity details, germinal identifier set on Identification details, the Temperature question and certification-purpose suppression on Additional details). It is listed as its own increment because those three cannot land until a commodity can be marked as a germinal product at all. The design decision: whether germinal products are in scope for the live-animals service at all, or belong to a separate notification type.",
         "correction": "Two traces of germinal products DO exist in the frontend, just outside the grepped path/terms, and neither weakens the finding: [[c7]] (PACKAGE_COUNT_COMMODITIES) names semen and embryo/ova commodities such as '05111000 - Semen - Cattle' and '05119985 - Embryos/Ova - Cattle', and [[c8]] carries a 'Germinal products' certification purpose. Neither is a selectable commodity and neither carries a germinal flag, so the class remains unrepresentable — but 'no concept of' should read 'no selectable germinal commodity and no germinal flag'.",
         "falsifiedBy": "A decision record placing germinal products out of scope for this service, or any `isGerminalProduct`-equivalent flag already present in the frontend's commodity model.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-090",
+            "relation": "root-of",
+            "why": "The germinal quantity fields on Commodity details are one of the three downstream findings this gap blocks."
+          },
+          {
+            "id": "inc-092",
+            "relation": "root-of",
+            "why": "The germinal identifier set on Identification details is the second."
+          },
+          {
+            "id": "inc-096",
+            "relation": "root-of",
+            "why": "The Temperature question and certification-purpose suppression on Additional details is the third."
+          },
+          {
+            "id": "inc-088",
+            "relation": "blocked-by",
+            "why": "Nothing germinal can be selected until the catalogue can express a germinal commodity, which is the backend half of the same gap."
+          }
+        ]
       },
       "citations": [
         {
@@ -1843,7 +1882,14 @@
         "prototype": "All four prototype pages in the band open with a caption paragraph naming the journey section: 'About the consignment' ([[c1]]), 'Description of the goods' ([[c2]]), 'About the consignment' ([[c3]]), 'Commodity details' ([[c4]]). Grepping the prototype's design-release-2.1 views for 'caption' shows the same pattern on origin-of-the-import, roles-and-addresses, transporter, transit-countries, permanent-address and the dashboards — it is the release's standard page header.",
         "difference": "SERVICE-WIDE — raised once here, not once per page, and it reaches well beyond this band. The mechanical differ could not see this — it records `caption: null` on both sides, because the prototype's caption uses a bespoke `app-*__caption` class rather than `govuk-caption-l`, so the cartographer did not classify it as one. Flagged `needs-design-decision` because the section names themselves are a content-design artefact (they must match whatever the hub/overview calls each section), not a mechanical copy port.",
         "falsifiedBy": "A caption rendered by the frontend's shared/layout.njk for all journey pages — the captured DOM for all four frontend screens shows none, and the models record `caption: null`.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-008",
+            "relation": "duplicate-of",
+            "why": "Both are the service-wide page-caption finding, raised once per band; they need one owner."
+          }
+        ]
       },
       "citations": [
         {
@@ -3302,7 +3348,14 @@
         "prototype": "The prototype branches the review rows on entry.isGerminalProduct: Net weight (formatted '<n> kg'), Type of package, Number of packages for germinal; Number of animals plus any packagingFields otherwise ([[c1]], mirrored for the template review at [[c2]]).",
         "difference": "Listed separately from the field findings because check-answers has its own applicability module ([[c4]]) that must learn the same gate.",
         "falsifiedBy": "species-card-rows already branching on commodity family, or the germinal review rows matching the live-animal set.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-090",
+            "relation": "depends-on",
+            "why": "The review rows can only branch on germinal once the fields they would show exist."
+          }
+        ]
       },
       "citations": [
         {
@@ -3934,7 +3987,14 @@
         "difference": "With numberOfAnimals no longer applicable on germinal lines (previous finding) recordCountEquals has no field to read, so the cardinality rule needs a germinal branch of its own.",
         "correction": "Slightly overstated in one place. [[c6]] already carries a counterNoCap variant ('Enter details for {species}') and [[c7]] selects it when cap === null, and collectionCapAt ([[c8]]) deliberately returns null — i.e. uncapped, not broken — when the count field is unanswered. So dropping numberOfAnimals on germinal lines degrades to an unlimited add-another loop with the no-counter heading already rendering correctly; what is missing is a rule that pins the cap at exactly 1, not the heading copy.",
         "falsifiedBy": "getIdentificationEntryCount returning numberOfPackages rather than 1 for germinal, or a germinal capture showing an 'n of total' counter.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-019",
+            "relation": "depends-on",
+            "why": "\"Previous finding\" — this cardinality rule only breaks once numberOfAnimals stops applying to germinal lines."
+          }
+        ]
       },
       "citations": [
         {
@@ -4670,7 +4730,14 @@
         "prototype": "Verified: GET /templates/:templateId/use renders nothing. It calls resetNotificationJourneySession, then seedNotificationSessionFromTemplate, then redirects to /notification-hub ([[c1]]). The capture confirms it — [[c2]] records the url as /design-release-2.1/notification-hub and its h1 as 'Overview'.",
         "difference": "So the templates band is three new pages, not four; the fourth is an entry point onto a screen that already has a frontend counterpart (fe-hub). Banded frontend-only for the flow wiring; the template it reads from is the needs-backend piece above.",
         "falsifiedBy": "A DR2.1 view rendered at /templates/:id/use, or a captured use-template screen whose url is not the notification hub.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-087",
+            "relation": "blocked-by",
+            "why": "The use-template action reads from a template record that does not yet exist."
+          }
+        ]
       },
       "citations": [
         {
@@ -5075,7 +5142,14 @@
         "prototype": "DR2.1 moved the route into review from a task row to a page-level call to action, which also removes the sixth task-list group and its 'Cannot start yet' gating (buildReviewItem in [[c1]]).",
         "difference": "This travels with the section-spine finding above — the prototype's six sections are six content sections precisely because review is no longer one of them — but it is a separable increment: add the primary button and drop the review row.",
         "falsifiedBy": "A ruling to keep review as a task row so its readiness status stays visible on the hub; the prototype's button gives no completeness signal.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-058",
+            "relation": "travels-with",
+            "why": "\"The section-spine finding above\" — the prototype's six sections are six content sections precisely because review is no longer one of them."
+          }
+        ]
       },
       "citations": [
         {
@@ -6347,7 +6421,14 @@
         "prototype": "The prototype's is three paragraphs ending in an outbound link — 'You can look up commodity codes using the [Trade Tariff tool](https://www.gov.uk/trade-tariff) (opens in a new tab)' ([[c3]], the anchor at [[c4]] carrying `target=\"_blank\" rel=\"noreferrer noopener\"`). Its inset text also states 'Consignments that do not require a health certificate must still be notified.' ([[c6]]).",
         "difference": "Both sides render a `govukDetails` summarised 'Help with commodity codes'. The bodies are not comparable in kind. The inset text differs the same way: the frontend drops the second obligation the prototype states. That sentence tells a user with no health certificate that they are still in scope; its absence could plausibly cause a missed notification. Separated from the search-control finding because it lands independently — the help content and inset are useful whether or not the search box is ever built. `frontend-only`: the frontend's copy module already supports it, and the details macro is already wired.",
         "falsifiedBy": "The Trade Tariff link or the 'must still be notified' sentence appearing elsewhere in the frontend journey — a grep for 'Trade Tariff' and 'trade-tariff' across the whole live-animals set returns nothing.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-040",
+            "relation": "separated-from",
+            "why": "Separated from the search-control finding because the help content and inset land independently of whether the search box is ever built."
+          }
+        ]
       },
       "citations": [
         {
@@ -6577,7 +6658,14 @@
         "prototype": "The prototype heads the page \"Add the county parish holding number (CPH)\" and keeps \"CPH number\" as the field legend ([[c3]], [[c4]]).",
         "difference": "The prototype's version tells the user what to do and uses sentence case; the frontend's is title-cased and names a thing rather than asking for one.",
         "falsifiedBy": "If the h1 is being carried as an accessible label for the input and changing it would orphan the field, the split needs the three-part input from the related finding to land first.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-016",
+            "relation": "depends-on",
+            "why": "If the h1 is carrying the accessible label for the input, splitting it needs the three-part input from that finding to land first."
+          }
+        ]
       },
       "citations": [
         {
@@ -6741,7 +6829,14 @@
         "difference": "The frontend's example teaches users a grouping that does not exist.",
         "correction": "One sub-claim is mischaracterised: the regex /^(\\d{1,2})\\/(\\d{1,3})\\/(\\d{1,4})$/ is at [[c5]] (not 2772) and it belongs to splitCphNumber, which splits an already-stored value back into three boxes for re-display. It is not an input validator - the prototype validates nothing (see the CPH three-part finding). The finding's conclusion is unaffected: the 2/3/4 shape is evidenced by the three inputs' maxlengths and the prototype hint.",
         "falsifiedBy": "If APHA publishes CPH numbers in a 3/3/3 grouping, the frontend hint is right and the prototype's is wrong.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-016",
+            "relation": "adjacent-to",
+            "why": "The 2/3/4 grouping the hint should teach is the grouping the three-part input would enforce."
+          }
+        ]
       },
       "citations": [
         {
@@ -7411,7 +7506,14 @@
         "prototype": "The prototype renders a govukDetails summarised \"What is a CPH number?\" containing two paragraphs - \"A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.\" and \"You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK.\" with the last clause as a link ([[c1]]).",
         "difference": "The prototype's link href is \"#\", so the real GOV.UK destination is still an open question.",
         "falsifiedBy": "If the GOV.UK holding-details page the link points at does not exist, the second paragraph cannot be shipped as written and the finding shrinks to the first paragraph only.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-030",
+            "relation": "adjacent-to",
+            "why": "Both are CPH page content: this is the missing help block, that is the heading."
+          }
+        ]
       },
       "citations": [
         {
@@ -7754,7 +7856,14 @@
         "difference": "Templates need the equivalent decided before the view page has a purpose.",
         "correction": "The detail's inline line citations are largely wrong and should be replaced. The Change hrefs are at [[c16]] and 6751 (not '[[c2]], [[c3]], [[c4]], [[c5]], [[c6]]'); the card ids are at 6703, 6715, 6727, 6738 and 6748 (not '6685/6694/6712/6730/6748'). changeBase at [[c1]] and handleViewTemplatePage at 6809-6823 are right. Also the card link text is 'View template' / 'Use template', not 'View' / 'Use'.",
         "falsifiedBy": "A DR2.1 route handling template edit or delete, or ids on view-template matching the Change anchors.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-079",
+            "relation": "part-of",
+            "why": "The view-template page is one of the three."
+          }
+        ]
       },
       "citations": [
         {
@@ -8682,7 +8791,19 @@
         "prototype": "POST /templates/create trims req.body.templateName, writes it to the session and redirects to /templates ([[c1]]). No template is created; the list is unchanged. The view is a single text input with novalidate and no error summary ([[c2]]). Every field a template actually carries — country of origin, region code, commodity code, species, reason for import, purpose, certified-for, five party addresses, CPH — exists only as fixture data ([[c3]]), authored by hand.",
         "difference": "So the journey from 'Enter template name' to a populated template is undesigned. Someone has to rule on where template content comes from — a fresh guided pass, a save-as-template action on an existing notification, or a save-as-template action at the point of submission — before this page can be built.",
         "falsifiedBy": "A prototype route or view that captures template content beyond the name, or a DR2.1 screen offering 'save as template' from a notification.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-079",
+            "relation": "part-of",
+            "why": "The create-template page is one of the three."
+          },
+          {
+            "id": "inc-087",
+            "relation": "blocked-by",
+            "why": "Nothing can be created until templates have a store."
+          }
+        ]
       },
       "citations": [
         {
@@ -10205,7 +10326,14 @@
         "difference": "So the one attribute that says what regime a template belongs to has a single worked value and no counter-example, which leaves the discriminator's meaning and its effect on the Use flow undefined. The discriminator question is shared with the germinal-products band; what is specific here is that templates surface it and the prototype never exercises it.",
         "correction": "Two scope corrections. (1) 'No counter-example' is true of templates only. The notification fixture does carry the other value — [[c12]], [[c13]], [[c14]], [[c15]] are all 'Germinal products' — and [[c16]] derives categoryLabel for notification cards (falling back to 'Germinal products' when hasGerminalProductsOnly). That is display derivation, not behavioural branching, so the finding stands, but the claim must be stated as 'no germinal TEMPLATE exists', not 'the label has no worked counter-example anywhere'. (2) The release carries eight germinal captures, not five (three what-are-you-importing variants, three consignment-details variants, animal-identification-details-germinal and additional-animal-details-germinal).",
         "falsifiedBy": "A germinal template in dashboard-templates.js, or DR2.1 code that branches on categoryLabel.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-088",
+            "relation": "shares-question-with",
+            "why": "The regime discriminator question is shared with the germinal-products band; what is specific here is that templates surface it and the prototype never exercises it."
+          }
+        ]
       },
       "citations": [
         {
@@ -11247,7 +11375,14 @@
         "prototype": "hasConsignmentDetails requires numberOfAnimals[speciesId] to be a whole number >= 1 for every selected species ([[c1]]), but germinal lines never render or store numberOfAnimals ([[c2]], [[c3]]), so it is permanently false for a germinal-only consignment. It gates the hub task status ([[c4]]), the review card error state ([[c5]]) and hasNotificationComplete ([[c6]]) — so the prototype has no definition of a complete germinal consignment.",
         "difference": "The completeness rule for a germinal line (net weight + package type + package count, presumably) has to be stated before the obligation change can be made safely. No germinal hub or review capture exists to check the rendered outcome, so this is a source reading, not an observed one.",
         "falsifiedBy": "A germinal-only hub or review capture showing Commodity details as Complete, or hasConsignmentDetails branching on germinal.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-019",
+            "relation": "depends-on",
+            "why": "The completeness trap is created by numberOfAnimals ceasing to apply on germinal lines."
+          }
+        ]
       },
       "citations": [
         {
@@ -11662,7 +11797,14 @@
         "difference": "Lead 6 confirmed. This is a cardinality-and-status question about the commodity-line collection, not a template tweak.",
         "correction": "Real but partly derivative and one supporting claim is imprecise. The status conflict itself is finding 4; what this adds is the observed fact that DR2.1 renders both field sets in a single form rather than splitting the pages. Note also that buildGroups' per-group showPackages is not itself the blocker — a mixed consignment already yields different showPackages per commodity group — so 'the frontend cannot express this' is really about the per-line optional/mandatory status split and the differing field sets, not about group construction.",
         "falsifiedBy": "The mixed capture showing germinal and live commodities on separate pages, or a per-line status mechanism already present in buildGroups.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-020",
+            "relation": "derives-from",
+            "why": "The optional/mandatory status conflict itself is that finding; this one adds the observed fact that DR2.1 renders both field sets in one form."
+          }
+        ]
       },
       "citations": [
         {
@@ -12248,7 +12390,14 @@
         "difference": "A divergence running the other way, recorded because it will surface the moment the catalogue is filled out. Confidence `medium` on the interpretation, not the facts: the code on both sides is unambiguous, but which behaviour is right is a policy question about whether every animal in a consignment must be individually identified. Raising it now because filling the catalogue turns a one-commodity edge case into a twelve-commodity behaviour difference.",
         "correction": "Two factual slips to fix, neither changing the conclusion. (1) The early return is not in buildAnimalIdentificationSpeciesPanels — that function is at [[c3]] and drops nulls via `.filter(Boolean)` at [[c4]]. The `if (fields.length === 0) return null` is in getSpeciesIdentificationState at [[c5]] (the cited 1563-1567 window is right, the function name is not). (2) 'the nine prototype commodities with identifiers: []' should be twelve — the finding itself then lists twelve and later says 'twelve-commodity behaviour difference'. I confirmed twelve: chicken, turkey, duck, goose, guinea fowl, rabbit, camel, ostrich, parrot, reptile, bees, ornamental fish. Sheep and goat are NOT in that set (they carry an inline ear-tag identifier), and germinal commodities are not either (they resolve by code).",
         "falsifiedBy": "A default identifier field applied by the prototype to commodities with an empty `identifiers` array — the early `return null` at [[c6]] rules that out, so this would only be falsified by a policy source saying poultry and fish need no per-animal identifier.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-089",
+            "relation": "surfaces-when",
+            "why": "Filling the catalogue turns a one-commodity edge case into a twelve-commodity behaviour difference."
+          }
+        ]
       },
       "citations": [
         {
@@ -12662,7 +12811,14 @@
             "Neither yet. Get the V4 data-fields spec or an IPAFFS extract first — the falsifier says that is what settles it."
           ],
           "consequence": "Blocks inc-076, which reuses this band's identifier set. It also leaves the frontend collecting an identifier the design does not ask for, on every cattle record submitted meanwhile."
-        }
+        },
+        "relatedTo": [
+          {
+            "id": "inc-006",
+            "relation": "adjacent-to",
+            "why": "\"The microchip gap being the previous finding\" — the two sides' 01061900 identifier sets agree apart from microchip, which is that finding."
+          }
+        ]
       },
       "citations": [
         {
@@ -12779,7 +12935,14 @@
         "prototype": "The prototype drives it from per-commodity `unweanedOptions` data, and only two commodities declare it: Cattle ([[c3]]) and Pig ([[c4]]). The horse entry at [[c5]] has no `unweanedOptions` key at all, so horses do not trigger it. The prototype adds a second suppression the frontend has no equivalent of: [[c6]] returns no options when every selected commodity code is 01061900, so a Cat/Dog/Ferret-only consignment skips the question even if some other rule would have fired.",
         "difference": "Cattle agrees on both sides. The horse divergence is a straight contradiction and needs a ruling. The pig half is blocked behind the catalogue finding — the frontend has no pig commodity to gate.",
         "falsifiedBy": "A `unweanedOptions` key on the prototype's horse commodity (there is none at [[c5]]), or a spec source confirming unweaned applies to equines — either would make the frontend correct and close the horse half.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-089",
+            "relation": "blocked-by",
+            "why": "\"The pig half is blocked behind the catalogue finding\" — the frontend has no pig commodity to gate."
+          }
+        ]
       },
       "citations": [
         {
@@ -13534,7 +13697,14 @@
         "prototype": "For germinal, getSpeciesIdentificationState forces an active editable form even when every field is filled ([[c1]]), returns savedAnimals: [] and savedAnimalsTable: null, and hardcodes isComplete: false ([[c2]]). The captured germinal page has no saved-records table and no 'Save and add another'.",
         "difference": "The isComplete: false constant is the part needing a ruling — it means a germinal panel can never settle, which reads as an unfinished prototype branch rather than an intended rule.",
         "falsifiedBy": "isComplete being computed rather than constant for germinal, or a germinal capture showing a saved-records table.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-018",
+            "relation": "adjacent-to",
+            "why": "Both describe the germinal identification panel's departure from the counter-driven record loop."
+          }
+        ]
       },
       "citations": [
         {
@@ -14479,7 +14649,14 @@
         "prototype": "The captured prototype screen is the submitted-notification view with the amend modal, not a cancel-amend page. The prototype is itself inconsistent here: delete is a page (delete-notification.html) while cancel-amend is a modal.",
         "difference": "The pairing fe-cancel-amend / dr21-notifications-cancel-amend is materially mismatched — so nearly all of that delta file's 33 only-prototype summaryRows and 32 headings are pairing artefacts, not gaps. The real difference underneath is the interaction pattern: a modal that requires JavaScript versus a server-rendered page. GDS guidance favours a page, so this is a design ruling on which pattern DR2.1 actually intends, plus a no-JS position if the modal wins.",
         "falsifiedBy": "A DR2.1 cancel-amend page view existing that the cartographer did not capture; I found only the modal partial and its include.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-070",
+            "relation": "adjacent-to",
+            "why": "The prototype is inconsistent between the two: delete is a page, cancel-amend is a modal."
+          }
+        ]
       },
       "citations": [
         {
@@ -14633,7 +14810,14 @@
         "difference": "But the split does not map onto the frontend. The seed writes a species selection ([[c6]]) and no commodity-line quantities anywhere in [[c3]], so that single row would resolve to IN_PROGRESS, not FULFILLED ([[c7]] — required parts present, some started, none complete). The prototype's clean 'three green then a blue' hub is therefore not achievable without either splitting the commodities row or accepting a part-done tag. Someone has to rule which.",
         "correction": "One nuance worth carrying: the IN_PROGRESS outcome is a sound inference from the row's declared parts, not something observed — nobody has run a seeded frontend journey. The row's status derives from the commodityLines collection parts rather than from page completion, so the ruling needed is specifically about that collection's quantity leaves. Cite [[c8]] for requiredPartsStatus.",
         "falsifiedBy": "A template fixture that carries commodity-line quantities, or a ruling that an IN_PROGRESS commodities row is the intended reading.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-087",
+            "relation": "blocked-by",
+            "why": "Pre-completing hub tasks from a template needs a template store to read from."
+          }
+        ]
       },
       "citations": [
         {
@@ -14872,7 +15056,14 @@
         "difference": "Consequently the 16 deltas on the fe-transporter-type / dr21-transporter pair are almost entirely an artefact of comparing two unrelated pages (a type question against a selection table) and should not be treated as page-level findings. The real flow delta is where the type question sits.",
         "correction": "Corrected claim: fe-transporter-type has TWO DR2.1 counterparts, not one — dr21-transporter for its guidance block and dr21-transporter-add for its type question. Keep the existing pair and additionally pair fe-transporter-type against dr21-transporter-add rather than swapping. The surviving, actionable finding is the flow-change alone: DR2.1 asks transporter type only after the user has failed to find the transporter in the /transporter list, inside an 'add a new transporter' sub-flow whose cancel exits to the dashboard ([[c9]] returns '/'), whereas the frontend asks type first as an in-journey page. Note this substantially overlaps finding 1 and should be merged with it. Drop the 'the 16 deltas are almost entirely an artefact' de-scoping — it is inverted.",
         "falsifiedBy": "dr21-transporter-add turning out to collect a different question from fe-transporter-type, or the DR2.1 route table showing /transporter/add reachable before /transporter.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-077",
+            "relation": "overlaps",
+            "why": "Both are about where the transporter type question sits relative to the saved-transporter list; the verification note says they should be merged."
+          }
+        ]
       },
       "citations": [
         {
@@ -15852,7 +16043,14 @@
         "difference": "Lead 4 confirmed and I rule it a prototype defect, not a design intent. The ruling matters only as an instruction not to copy the prototype string when the grid is built. Raised because it is the one place where copying DR2.1 verbatim would import a bug.",
         "correction": "Correct as evidence, but it implies no frontend change today — the frontend has neither the grid nor the link, so this is a note not to copy the prototype string if and when a selected-commodities grid is built, rather than a parity gap to close.",
         "falsifiedBy": "A germinal capture where the change link reads 'Change number of packages', or a germinal branch on changeCountLabel in routes.js.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-011",
+            "relation": "depends-on",
+            "why": "The instruction not to copy the prototype's 'Change number of animals' string only bites if and when the selected-commodities grid is built, which is that finding."
+          }
+        ]
       },
       "citations": [
         {
@@ -16944,7 +17142,14 @@
         "difference": "This is consequential on the one-page-with-reveals decision: once four follow-up question groups share the page, the h1 can no longer be one of the questions. Ruling on the reveal layout rules on this heading too.",
         "correction": "Worth adding for the ruling: the frontend already owns a short topic string - [[c5]] is title: 'Reason for import', which is what the document title and breadcrumb use (fe-import-reason.json title). So the change is which existing string becomes the h1, not the authoring of new copy.",
         "falsifiedBy": "If the reveal layout is rejected and the frontend keeps a page per question, GDS guidance favours the question as the h1 and the prototype's heading is the wrong pattern to copy.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-061",
+            "relation": "decided-by",
+            "why": "\"Ruling on the reveal layout rules on this heading too\" — once four follow-up groups share the page the h1 can no longer be one of the questions."
+          }
+        ]
       },
       "citations": [
         {
@@ -17110,7 +17315,14 @@
         "difference": "Building the templates list means deciding what a template sorts and searches by — last used, created, name, commodity — rather than porting the notification set.",
         "correction": "Two small factual tightenings: the captured select also carries a leading empty 'Select one' option (four options in total, not three), and the templates page does have one working control — a 'Create new template' button at [[c8]] — so 'inert' applies to the sort select specifically, not to the page's controls generally.",
         "falsifiedBy": "A DR2.1 change that wraps the templates sort select in a form and orders the list, which would make the options a deliberate choice rather than a copy artefact.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-079",
+            "relation": "part-of",
+            "why": "The templates list page is one of the three new pages that umbrella increment registers."
+          }
+        ]
       },
       "citations": [
         {
@@ -19703,7 +19915,19 @@
         "prototype": "The prototype inserts a section with h2 \"At a glance\" and two article cards carrying a title, a description, a live count and a link — Action needed / \"Tasks requiring your attention\" → /actions, and Status updates / \"Changes in the past 24 hours\" → /changes. The counts come from [[c3]] (`glanceCounts.actionNeeded`, `glanceCounts.statusChange`), derived from getDashboardActionNotifications and getDashboardStatusChangeNotifications.",
         "difference": "Both counts need new backend aggregation before the section can show real numbers.",
         "falsifiedBy": "A backend /notifications endpoint already returning per-user counts of notifications needing action or changed in the last 24 hours.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-082",
+            "relation": "links-to",
+            "why": "The Action needed glance card links to that page."
+          },
+          {
+            "id": "inc-080",
+            "relation": "links-to",
+            "why": "The Status updates glance card links to that page."
+          }
+        ]
       },
       "citations": [
         {
@@ -21833,7 +22057,24 @@
         "frontend": "The frontend renders only Number of animals and Number of packages ([[c10]]) and validates only those two ([[c11]]). There is no net weight and no package type anywhere in the set.",
         "prototype": "Proof on the prototype side: [[c1]] branches on `species.isGerminalProduct` — the true branch renders `netWeight[<speciesId>]` with a `kg` suffix ([[c2]]), a `packageType[<speciesId>]` govukSelect ([[c3]]) and `numberOfPackages[<speciesId>]` ([[c4]]); the false branch renders only `numberOfAnimals[<speciesId>]` plus optional packaging fields ([[c5]]). Every one of the three validators guards on germinal: validateNumberOfPackages ([[c6]]), validateNetWeight ([[c7]]) and validatePackageType ([[c8]]) all `return` early unless `isGerminalProductCommodity(match.commodity)`. The package-type list is 26 options ([[c9]]).",
         "difference": "The capture worker's lead is CORRECT but needs one important correction: DR2.1 does validate netWeight, packageType and numberOfPackages, but those three are germinal-product-only, not universal, and they *replace* numberOfAnimals rather than sitting alongside it. `needs-backend` because net weight and package type are new persisted commodity-line attributes, not view-layer work.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-093",
+            "relation": "splits-into",
+            "why": "Net weight is the persisted-attribute half of this gap."
+          },
+          {
+            "id": "inc-094",
+            "relation": "splits-into",
+            "why": "Package type is the other persisted-attribute half."
+          },
+          {
+            "id": "inc-020",
+            "relation": "adjacent-to",
+            "why": "The third field, numberOfPackages, is the status-conflict finding rather than a missing field."
+          }
+        ]
       },
       "citations": [
         {
@@ -23833,7 +24074,19 @@
         "frontend": "The frontend builds `privateTransporterRecord(values)` and commits it into journey answers ([[c3]]) — one-shot, per-notification, never reusable. Its form is [[c1]].",
         "prototype": "DR2.1's `saveAddedTransporter` ([[c4]]) unshifts the record onto `sessionData.addedTransporters` so it appears in the /transporter table on every subsequent notification (surfaced via getAllTransporters, [[c5]]), and when the flow was entered from the address book it also writes an address-book entry under `category: 'transporter'` ([[c6]]). Its form is [[c2]].",
         "difference": "The two forms are field-for-field equivalent — same nine fields, only the internal name prefixes and two label wordings differ — so the 29 mechanical deltas on this pair are overwhelmingly naming noise. The real difference is what happens on submit. DR2.1 therefore treats private transporters as reusable party records; the frontend treats them as free text.",
-        "pass": "a"
+        "pass": "a",
+        "relatedTo": [
+          {
+            "id": "inc-007",
+            "relation": "overlaps",
+            "why": "The two label wordings that differ — 'Postal or zip code' and 'Telephone number' — are the service-wide address-label finding."
+          },
+          {
+            "id": "inc-027",
+            "relation": "overlaps",
+            "why": "The phone hint DR2.1 attaches here is the same hint that finding covers."
+          }
+        ]
       },
       "citations": [
         {

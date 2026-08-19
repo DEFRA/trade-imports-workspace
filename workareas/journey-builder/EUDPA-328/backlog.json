@@ -1839,10 +1839,10 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "A caption rendered by the frontend's shared/layout.njk for all journey pages — the captured DOM for all four frontend screens shows none, and the models record `caption: null`.",
         "frontend": "The frontend renders a bare `<h1 class=\"govuk-heading-l\">` on all four ([[c5]], [[c6]], [[c7]], [[c8]]). A grep for `govuk-caption` across the whole live-animals set returns exactly one hit: [[c9]].",
         "prototype": "All four prototype pages in the band open with a caption paragraph naming the journey section: 'About the consignment' ([[c1]]), 'Description of the goods' ([[c2]]), 'About the consignment' ([[c3]]), 'Commodity details' ([[c4]]). Grepping the prototype's design-release-2.1 views for 'caption' shows the same pattern on origin-of-the-import, roles-and-addresses, transporter, transit-countries, permanent-address and the dashboards — it is the release's standard page header.",
         "difference": "SERVICE-WIDE — raised once here, not once per page, and it reaches well beyond this band. The mechanical differ could not see this — it records `caption: null` on both sides, because the prototype's caption uses a bespoke `app-*__caption` class rather than `govuk-caption-l`, so the cartographer did not classify it as one. Flagged `needs-design-decision` because the section names themselves are a content-design artefact (they must match whatever the hub/overview calls each section), not a mechanical copy port.",
+        "falsifiedBy": "A caption rendered by the frontend's shared/layout.njk for all journey pages — the captured DOM for all four frontend screens shows none, and the models record `caption: null`.",
         "pass": "a"
       },
       "citations": [
@@ -2106,10 +2106,10 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "If the service has been assessed past alpha, the banner text and tag are wrong and the work is to add a beta banner instead - the gap stands either way.",
         "frontend": "The frontend's shared layout beforeContent renders breadcrumbs and a back link only ([[c4]]); grepping the whole of src/server for phaseBanner or govukPhaseBanner returns nothing.",
         "prototype": "The prototype's beforeContent block renders govukPhaseBanner with tag \"Alpha\" and the text \"This is a new service. Help us improve it and give your feedback by email.\" on origin ([[c1]]), reason for import ([[c2]]) and CPH ([[c3]]), and it drove the phaseBanner delta on all four of my pairs. The feedback link in the prototype is href=\"#\", so the real destination is unresolved.",
         "difference": "Raised once as a service-wide pattern.",
+        "falsifiedBy": "If the service has been assessed past alpha, the banner text and tag are wrong and the work is to add a beta banner instead - the gap stands either way.",
         "pass": "a"
       },
       "citations": [
@@ -2284,10 +2284,10 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "A selected-commodities summary rendered by a shared layout partial rather than the feature template — shared/layout.njk would have to be carrying it, and the captured DOM for fe-animal-identification shows no such block.",
         "frontend": "The frontend's page goes h1 → inset text → straight into the identification cards ([[c6]]). There is no summary, and the only 'Add a commodity' link lives in the `{% else %}` empty-state branch ([[c7]]), so a user who has commodities never sees it.",
         "prototype": "The prototype opens the identification page with a four-column summary of what is being imported — Commodity code, Common name, a quantity column whose header switches between 'Number of animals' and 'Number of packages' (`quantityColumnLabel`, [[c1]]), and a Change link per row pointing back to the search with `?resetSearch=1` ([[c2]]). Below it sits an 'Add another commodity' link ([[c3]]), and each species panel carries a 'Change number of animals' link back to consignment-details ([[c4]], label set at [[c5]]).",
         "difference": "The three navigational escape hatches — change the commodity, add another, change the count — are all absent, which matters most on the count: the frontend enforces record-count-equals-numberOfAnimals ([[c8]]) and shows an over-count error ([[c9]]) with no link to the page where the count can be fixed. `frontend-only` — every value needed is already in the view model (the cards carry species, code and cap), and the same summary table already exists one page earlier at consignment-details/_selected-commodities-table.njk.",
+        "falsifiedBy": "A selected-commodities summary rendered by a shared layout partial rather than the feature template — shared/layout.njk would have to be carrying it, and the captured DOM for fe-animal-identification shows no such block.",
         "pass": "a"
       },
       "citations": [
@@ -2595,10 +2595,10 @@
         }
       ],
       "finding": {
-        "falsifiedBy": "The frontend hub rendering address lines (e.g. `hubRow` taking an address summary rather than `.name`), or a captured populated frontend hub showing more than the party name. The capture available is the empty state, so the value shape is evidenced from the controller, not the DOM.",
         "frontend": "`rows()` maps each party to a summary-list row whose value is `answers[party.id]?.name` or 'Not added yet' ([[c1]]), rendered as one `govukSummaryList` ([[c2]]). The name is all the user sees — no address lines, no country. The delta records five `summaryRows` on the frontend and none on the prototype.",
         "prototype": "Each role is a `<section>` with its own h2 heading, hint paragraph (and bullet hint-list for permanent address), and when an address is held an inset block carrying the name plus every address line and a 'Change' link ([[c3]], sections built in [[c4]]). The captured populated hub proves it renders the whole block: [[c5]] shows name 'Green Valley Farm' followed by five address lines inside `govuk-inset-text`.",
         "difference": "The delta lists the six prototype h2s as only-prototype precisely because the frontend has collapsed all six roles into one summary list. Restating the address on the hub is the difference that matters for checking work before submission.",
+        "falsifiedBy": "The frontend hub rendering address lines (e.g. `hubRow` taking an address summary rather than `.name`), or a captured populated frontend hub showing more than the party name. The capture available is the empty state, so the value shape is evidenced from the controller, not the DOM.",
         "pass": "a"
       },
       "citations": [
@@ -2806,11 +2806,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "correction": "Trivial citation slip: the 'The trader does not pick a type; the filename carries it' docstring is at [[c7]], not [[c3]]. The primary citation ([[c8]]) is correct.",
-        "falsifiedBy": "A backend contract that will not accept a trader-supplied document type, or a decision that filename derivation is the intended UX.",
         "frontend": "The frontend's upload form collects only reference, date of issue and file ([[c1]]); type is inferred by token-matching the filename against the document-types enum, falling back to 'OTHER' ([[c2]]; the docstring at [[c3]] states outright 'The trader does not pick a type; the filename carries it').",
         "prototype": "DR2.1 renders a `Document type` govukSelect ([[c4]]) whose options ([[c5]]) are the same enum the frontend already owns, minus HEALTH_CERTIFICATE and with ITAHC relabelled 'Intra Trade Animal Health Certificate (ITAHC)'.",
         "difference": "The obligation model already declares `accompanyingDocumentType` mandatory ([[c6]]), so this is a missing collection surface for a field the model already requires — no backend change needed.",
+        "correction": "Trivial citation slip: the 'The trader does not pick a type; the filename carries it' docstring is at [[c7]], not [[c3]]. The primary citation ([[c8]]) is correct.",
+        "falsifiedBy": "A backend contract that will not accept a trader-supplied document type, or a decision that filename derivation is the intended UX.",
         "pass": "a"
       },
       "citations": [
@@ -3298,10 +3298,10 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "species-card-rows already branching on commodity family, or the germinal review rows matching the live-animal set.",
         "frontend": "The frontend row set is fixed — commodity code, common name, species, number of animals, then number of packages only when packagesApply ([[c3]]) — so a germinal line would render an empty Number of animals row and drop the three fields that matter.",
         "prototype": "The prototype branches the review rows on entry.isGerminalProduct: Net weight (formatted '<n> kg'), Type of package, Number of packages for germinal; Number of animals plus any packagingFields otherwise ([[c1]], mirrored for the template review at [[c2]]).",
         "difference": "Listed separately from the field findings because check-answers has its own applicability module ([[c4]]) that must learn the same gate.",
+        "falsifiedBy": "species-card-rows already branching on commodity family, or the germinal review rows matching the live-animal set.",
         "pass": "a"
       },
       "citations": [
@@ -3478,11 +3478,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "correction": "Two details are loose. The prototype does not enforce 9 digits at all - validateCphNumber ([[c5]]) returns an empty errors object and only joins the parts as `${county}/${parish}/${holding}` at [[c6]]; the 2/3/4 shape rests on the maxlength attributes alone. And the stored values are not identical: the prototype stores the slashed string \"12/345/6789\" while the frontend stores 9 bare digits, so joining the three parts in the controller is still contained but needs an explicit strip. The cited range [[c2]] covers splitCphNumber and parseCphNumberBody; the canonicalising join is at [[c6]].",
-        "falsifiedBy": "If GDS guidance for this service has ruled against splitting a single reference number across three boxes - the same argument that applies to splitting a National Insurance number - the frontend's single field is the correct pattern and only the hint needs fixing.",
         "frontend": "The frontend renders one govukInput at width-10 ([[c3]]) and normalises by stripping slashes to 9 bare digits ([[c4]]).",
         "prototype": "The prototype uses the govukDateInput macro as a three-part number input under the legend \"CPH number\" - County (width-2, maxlength 2), Parish (width-3, maxlength 3), Holding number (width-4, maxlength 4), each inputmode=numeric with pattern [0-9]* ([[c1]]), posting as cphNumber-county / -parish / -holding and canonicalising to CC/PPP/HHHH ([[c2]]).",
         "difference": "The stored value is 9 digits either way, so the three parts can be joined in the controller without touching the wire contract.",
+        "correction": "Two details are loose. The prototype does not enforce 9 digits at all - validateCphNumber ([[c5]]) returns an empty errors object and only joins the parts as `${county}/${parish}/${holding}` at [[c6]]; the 2/3/4 shape rests on the maxlength attributes alone. And the stored values are not identical: the prototype stores the slashed string \"12/345/6789\" while the frontend stores 9 bare digits, so joining the three parts in the controller is still contained but needs an explicit strip. The cited range [[c2]] covers splitCphNumber and parseCphNumberBody; the canonicalising join is at [[c6]].",
+        "falsifiedBy": "If GDS guidance for this service has ruled against splitting a single reference number across three boxes - the same argument that applies to splitting a National Insurance number - the frontend's single field is the correct pattern and only the hint needs fixing.",
         "pass": "a"
       },
       "citations": [
@@ -3710,8 +3710,12 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
+        "frontend": "The frontend takes the whole code as one free-text field labelled \"Region of origin code\" hinted \"For example, FR-75\" ([[c5]]) and caps the entire string at REGION_CODE_MAX_LENGTH = 5 ([[c6]], applied at [[c7]]).",
+        "prototype": "The prototype shows a read-only govuk-input__prefix carrying the ISO alpha-2 code for the chosen country ([[c1]], fed by getCountryRegionPrefix at [[c2]] over app/data/country-region-prefixes.js) and takes only the suffix in an input capped at maxlength=5 ([[c3]]). On POST it upper-cases the suffix and joins the two as `${prefix}-${suffix}` ([[c4]]), so a stored code can be up to 8 characters.",
+        "difference": "\"FR-75\" fits by exactly one character; any country whose region suffix is longer than two characters cannot be entered at all. The composed value is still a single string on the wire, so the change is contained in the origin feature.",
         "correction": "\"FR-75\" is exactly 5 characters, so it fits with zero characters to spare, not \"by exactly one character\". Note also the prototype's suffix box itself allows up to 5 characters (not 2), so a composed code runs up to 8; the frontend's whole-string cap of 5 blocks any suffix longer than 2. Everything else stands.",
-        "falsifiedBy": "If the reference-data service defines region-of-origin codes without a country prefix, or if the accepted format really is capped at 5 characters end to end, the prototype's prefix affix is decoration and only the max-length is wrong."
+        "falsifiedBy": "If the reference-data service defines region-of-origin codes without a country prefix, or if the accepted format really is capped at 5 characters end to end, the prototype's prefix affix is decoration and only the max-length is wrong.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -3925,8 +3929,12 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
+        "frontend": "The frontend models the opposite invariant: unitRecord.requires.recordCountEquals points at numberOfAnimals.id ([[c3]]), the card caps entry at collectionCapAt ([[c4]]) and the copy is counter/overCount/allEntered ([[c5]]).",
+        "prototype": "getIdentificationEntryCount returns a hard 1 for germinal commodities and numberOfAnimals[speciesId] otherwise ([[c1]]), and the germinal panel heading drops the counter — 'Enter details for Bos taurus' rather than 'Enter details for X n of total' ([[c2]]), which the capture confirms.",
+        "difference": "With numberOfAnimals no longer applicable on germinal lines (previous finding) recordCountEquals has no field to read, so the cardinality rule needs a germinal branch of its own.",
         "correction": "Slightly overstated in one place. [[c6]] already carries a counterNoCap variant ('Enter details for {species}') and [[c7]] selects it when cap === null, and collectionCapAt ([[c8]]) deliberately returns null — i.e. uncapped, not broken — when the count field is unanswered. So dropping numberOfAnimals on germinal lines degrades to an unlimited add-another loop with the no-counter heading already rendering correctly; what is missing is a rule that pins the cap at exactly 1, not the heading copy.",
-        "falsifiedBy": "getIdentificationEntryCount returning numberOfPackages rather than 1 for germinal, or a germinal capture showing an 'n of total' counter."
+        "falsifiedBy": "getIdentificationEntryCount returning numberOfPackages rather than 1 for germinal, or a germinal capture showing an 'n of total' counter.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -4218,7 +4226,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "A germinal capture showing a Number of animals input, or validateNumberOfAnimals not short-circuiting for germinal."
+        "frontend": "The frontend obligation numberOfAnimals is within commodityLine with status 'mandatory' and no applyTo ([[c1]]), and fieldsFor always adds an integerInRange check for every line ([[c2]]).",
+        "prototype": "In DR2.1 the Number of animals input lives only in the non-germinal else-branch of the template ([[c3]]) and validateNumberOfAnimals returns early for germinal species ([[c4]]).",
+        "difference": "Adding germinal lines therefore requires numberOfAnimals to gain an applyTo that excludes germinal commodities — it is not enough to hide the input, because the obligation drives hub/check-answers completeness and the unit-record count check.",
+        "falsifiedBy": "A germinal capture showing a Number of animals input, or validateNumberOfAnimals not short-circuiting for germinal.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -4394,7 +4406,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "validateNumberOfPackages applying to non-germinal species, or the frontend numberOfPackages obligation being status:'mandatory'."
+        "frontend": "The frontend goes the other way — the obligation is status:'optional' gated by the package-count allowlist ([[c3]]) and integerInRange permits '' via Joi .allow('') ([[c4]]), so it is optional for every commodity on the list. Its copy reads 'Number of packages (optional)' with the same hint ([[c7]]).",
+        "prototype": "Lead 2 confirmed exactly: validateNumberOfPackages returns early for any species whose commodity is not germinal ([[c1]]), so the live-animal 'Number of packages (when required)' input is parsed and stored ([[c2]]) but never checked, while the germinal one demands a whole number greater than 0. Its copy reads germinal 'Number of packages' with no hint ([[c5]]) and DR2.1 live 'Number of packages (when required)' hint 'Such as crates, bags or boxes' ([[c6]]).",
+        "difference": "Building germinal means one field name whose status is decided per line by the line's commodity, which the current single-status obligation cannot express. Copy differs three ways too.",
+        "falsifiedBy": "validateNumberOfPackages applying to non-germinal species, or the frontend numberOfPackages obligation being status:'mandatory'.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -4650,7 +4666,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "A DR2.1 view rendered at /templates/:id/use, or a captured use-template screen whose url is not the notification hub."
+        "frontend": "The frontend already implements this shape: copyPost calls copyJourney and redirects to hubPath(copied.journeyId) with no new page ([[c3]]), and [[c4]] shows copyJourney creating the record and registering it in the session. A use-template action is the same handler with a template as the source instead of a journey.",
+        "prototype": "Verified: GET /templates/:templateId/use renders nothing. It calls resetNotificationJourneySession, then seedNotificationSessionFromTemplate, then redirects to /notification-hub ([[c1]]). The capture confirms it — [[c2]] records the url as /design-release-2.1/notification-hub and its h1 as 'Overview'.",
+        "difference": "So the templates band is three new pages, not four; the fourth is an entry point onto a screen that already has a frontend counterpart (fe-hub). Banded frontend-only for the flow wiring; the template it reads from is the needs-backend piece above.",
+        "falsifiedBy": "A DR2.1 view rendered at /templates/:id/use, or a captured use-template screen whose url is not the notification hub.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -4792,8 +4812,12 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
+        "frontend": "check-answers/template.njk is reused for the submitted notification view ([[c1]] sets readOnly when journey.status === SUBMITTED, and the template already guards copy/delete actions on it at lines 31-52). The submit block at 108-114 has no such guard, so a submitted, read-only notification still shows 'Now submit your notification', 'Continue to the declaration to submit your notification.' and a live Continue button.",
+        "prototype": "The prototype is explicit that this block is variant-scoped.",
+        "difference": "Worth noting this is arguably a defect in its own right, not only a parity gap.",
         "correction": "Substance stands. Two tightenings: the finding's `screens` list includes fe-cancel-amend, which is the frontend's separate cancel-amend confirm page, not the read-only notification view — only fe-check-answers is relevant. And the corpus contains no capture of the read-only view, so the defect is evidenced by code inspection rather than by a captured DOM.",
-        "falsifiedBy": "A route-level guard elsewhere that rejects the POST for submitted journeys and a separate template used for the read-only view — I found only one template and one POST handler ([[c2]])."
+        "falsifiedBy": "A route-level guard elsewhere that rejects the POST for submitted journeys and a separate template used for the read-only view — I found only one template and one POST handler ([[c2]]).",
+        "pass": "a"
       },
       "citations": [
         {
@@ -4942,7 +4966,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "The frontend having no standalone create-notification route to link to, which would make this dependent on the 'entry' band instead."
+        "frontend": "A user who has just submitted and wants to raise another must go via the dashboard in the frontend.",
+        "prototype": "The prototype gives a direct route.",
+        "difference": "A small but real onward-journey gap. Cheap increment; the only question is where the frontend's create-notification entry point lives (DR2.1 has dr21-create-notification as an unpaired screen, so the destination may not exist yet).",
+        "falsifiedBy": "The frontend having no standalone create-notification route to link to, which would make this dependent on the 'entry' band instead.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -5043,7 +5071,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "A ruling to keep review as a task row so its readiness status stays visible on the hub; the prototype's button gives no completeness signal."
+        "frontend": "Review is a task row in the frontend, with its own 'Cannot start yet' gating.",
+        "prototype": "DR2.1 moved the route into review from a task row to a page-level call to action, which also removes the sixth task-list group and its 'Cannot start yet' gating (buildReviewItem in [[c1]]).",
+        "difference": "This travels with the section-spine finding above — the prototype's six sections are six content sections precisely because review is no longer one of them — but it is a separable increment: add the primary button and drop the review row.",
+        "falsifiedBy": "A ruling to keep review as a task row so its readiness status stays visible on the hub; the prototype's button gives no completeness signal.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -5254,7 +5286,11 @@
         }
       ],
       "finding": {
-        "falsifiedBy": "A 'Same as consignee' control, or any copy-from-another-party action, appearing in the frontend addresses feature — or design ruling that the shortcut was a prototype experiment rejected in research."
+        "frontend": "The hub's only per-row action is a single Add/Change link to the party picker ([[c8]], rendered by [[c9]]). The importer hint already says 'This is usually the same as the consignee. You can select a different person if needed.' ([[c10]]) — the frontend states the shortcut in prose but never offers it. Nothing named `sameAs` exists anywhere under features/addresses or features/contact.",
+        "prototype": "Sections flagged `canUseSameAsConsignee` ([[c1]] importer, [[c2]] place-of-destination) render a submit button styled as a link beside the normal Add link when a consignee address is already held ([[c3]]; [[c4]]). Posting it copies the consignee's id, name, address lines and country straight into the target section and re-renders the hub ([[c5]] → copyConsigneeAddressToSection, [[c6]]). The captured screen shows both buttons live: [[c7]] (`same-as-consignee:importer`, `same-as-consignee:place-of-destination`).",
+        "difference": "Lead CONFIRMED. All the data needed is already in journey state, so this is frontend-only work.",
+        "falsifiedBy": "A 'Same as consignee' control, or any copy-from-another-party action, appearing in the frontend addresses feature — or design ruling that the shortcut was a prototype experiment rejected in research.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -5734,8 +5770,12 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
+        "frontend": "The frontend's secondary action is a full 'No, return to X' sentence rendered as a button.",
+        "prototype": "The prototype's secondary action is a link rather than a button (matching GDS guidance for a single primary action), and its text is 'Go back'.",
+        "difference": "Raised once for both confirm screens rather than twice. Two coupled changes. The link form loses the destination, so the copy half is a judgement call on a destructive page; the button-to-link half is straightforwardly in the govuk toolbox.",
         "correction": "One precision point: the frontend's secondary action is already an anchor (govukButton is passed an href — fe-cancel-amend.json records it under `links` with isButton: true), so the change is button-styling to link-styling on an element that is a link either way, not a genuine button-to-link element swap. That makes the visual half a pure class change; the copy half ('No, return to X' collapsing to 'Go back', losing the named destination) remains the judgement call.",
-        "falsifiedBy": "An accessibility or research decision favouring an explicit named destination on destructive confirms, which would keep the frontend wording."
+        "falsifiedBy": "An accessibility or research decision favouring an explicit named destination on destructive confirms, which would keep the frontend wording.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -5860,7 +5900,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "Finding the hint already present in another frontend phone field's copy, in which case this is a per-page omission rather than a service-wide one."
+        "frontend": "[[c1]] renders the telephone input with a label and no hint, and [[c2]] has no hint key for it.",
+        "prototype": "DR2.1 attaches `hint: { text: 'For international numbers include the country code' }` to the phone input on both add-transporter forms ([[c3]] and [[c4]]).",
+        "difference": "Given the transporter stub data is dominated by non-UK parties ([[c5]] is Swiss and Belgian), this is a substantive hint, not decoration. Raising as one finding across both prototype screens rather than per-page.",
+        "falsifiedBy": "Finding the hint already present in another frontend phone field's copy, in which case this is a per-page omission rather than a service-wide one.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -6299,7 +6343,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "The Trade Tariff link or the 'must still be notified' sentence appearing elsewhere in the frontend journey — a grep for 'Trade Tariff' and 'trade-tariff' across the whole live-animals set returns nothing."
+        "frontend": "The frontend's `govukDetails` body is a single sentence, 'Commodity codes are used to classify goods for import and export.' ([[c1]], rendered at [[c2]]). Its inset text reads 'Each health certificate requires a separate notification.' ([[c5]]).",
+        "prototype": "The prototype's is three paragraphs ending in an outbound link — 'You can look up commodity codes using the [Trade Tariff tool](https://www.gov.uk/trade-tariff) (opens in a new tab)' ([[c3]], the anchor at [[c4]] carrying `target=\"_blank\" rel=\"noreferrer noopener\"`). Its inset text also states 'Consignments that do not require a health certificate must still be notified.' ([[c6]]).",
+        "difference": "Both sides render a `govukDetails` summarised 'Help with commodity codes'. The bodies are not comparable in kind. The inset text differs the same way: the frontend drops the second obligation the prototype states. That sentence tells a user with no health certificate that they are still in scope; its absence could plausibly cause a missed notification. Separated from the search-control finding because it lands independently — the help content and inset are useful whether or not the search box is ever built. `frontend-only`: the frontend's copy module already supports it, and the details macro is already wired.",
+        "falsifiedBy": "The Trade Tariff link or the 'must still be notified' sentence appearing elsewhere in the frontend journey — a grep for 'Trade Tariff' and 'trade-tariff' across the whole live-animals set returns nothing.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -6525,7 +6573,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "If the h1 is being carried as an accessible label for the input and changing it would orphan the field, the split needs the three-part input from the related finding to land first."
+        "frontend": "The frontend uses \"County Parish Holding (CPH)\" as both the input label and the page heading via isPageHeading ([[c1]], [[c2]]).",
+        "prototype": "The prototype heads the page \"Add the county parish holding number (CPH)\" and keeps \"CPH number\" as the field legend ([[c3]], [[c4]]).",
+        "difference": "The prototype's version tells the user what to do and uses sentence case; the frontend's is title-cased and names a thing rather than asking for one.",
+        "falsifiedBy": "If the h1 is being carried as an accessible label for the input and changing it would orphan the field, the split needs the three-part input from the related finding to land first.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -6684,8 +6736,12 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
+        "frontend": "The frontend hints \"For example, 123456789 or 123/456/789.\" ([[c1]]). It still validates, because the controller strips slashes before checking for 9 digits ([[c4]]), so the wrong example is invisible to the tests and only misleads the user.",
+        "prototype": "A CPH is county 2 digits, parish 3, holding 4 - the prototype hints \"For example 12/345/6789\" ([[c2]]) and its parser only accepts that shape, /^(\\d{1,2})\\/(\\d{1,3})\\/(\\d{1,4})$/ ([[c3]]).",
+        "difference": "The frontend's example teaches users a grouping that does not exist.",
         "correction": "One sub-claim is mischaracterised: the regex /^(\\d{1,2})\\/(\\d{1,3})\\/(\\d{1,4})$/ is at [[c5]] (not 2772) and it belongs to splitCphNumber, which splits an already-stored value back into three boxes for re-display. It is not an input validator - the prototype validates nothing (see the CPH three-part finding). The finding's conclusion is unaffected: the 2/3/4 shape is evidenced by the three inputs' maxlengths and the prototype hint.",
-        "falsifiedBy": "If APHA publishes CPH numbers in a 3/3/3 grouping, the frontend hint is right and the prototype's is wrong."
+        "falsifiedBy": "If APHA publishes CPH numbers in a 3/3/3 grouping, the frontend hint is right and the prototype's is wrong.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -6861,7 +6917,11 @@
         }
       ],
       "finding": {
-        "falsifiedBy": "The frontend's journey strip or task list already calling the section 'Consignment parties' (making this consistent), or design confirming 'Consignment addresses' as the settled section name."
+        "frontend": "fe-miner/capture/html/fe-address-picker-consignee.html renders `govuk-caption-l\">Consignment addresses` ([[c4]]). The frontend hub has no caption at all ([[c6]]).",
+        "prototype": "[[c1]] renders `<p class=\"app-consignment-address-select-page__caption\">Consignment parties</p>` ([[c2]], rendered at [[c3]]). The prototype also carries that caption above the hub's own h1 ([[c5]]), and its permanent-address pages carry the same caption ([[c7]], [[c8]]), so 'Consignment parties' is the prototype's name for this whole cluster.",
+        "difference": "The differ reported the prototype caption as null on every picker; that is a mining artefact, not a missing caption — the prototype uses a bespoke class rather than `govuk-caption-l`, so the miner did not pick it up. Checked against the raw capture. So the real deltas are (a) the section is called 'Consignment parties' in the prototype and 'Consignment addresses' in the frontend, and (b) the prototype also captions the hub. Medium confidence because it is a small change with a large blast radius if the section name feeds task-list rows and check-answers card titles elsewhere.",
+        "falsifiedBy": "The frontend's journey strip or task list already calling the section 'Consignment parties' (making this consistent), or design confirming 'Consignment addresses' as the settled section name.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -7141,7 +7201,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "The definition sentence appearing in features/contact copy, or content design ruling the prototype's sentence inaccurate."
+        "frontend": "Frontend hint, rendered as the radios' hint ([[c1]]): 'Selecting a contact copies their name and address into this notification.' — a description of the mechanism. The add-address route is a bare link 'Add a new contact address' ([[c5]], [[c6]]).",
+        "prototype": "Prototype intro paragraph: 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.' ([[c2]]) — a definition of the role, which is what the user needs to choose correctly. The prototype also heads the list 'Select an address' ([[c3]], the only-prototype h2 in the delta) and puts the add-address route in a help line: 'If the correct address is not shown, add a new branch address, then return to this page.' ([[c4]]).",
+        "difference": "Note the vocabulary split: the prototype calls the thing a 'branch address', the frontend a 'contact address'. That needs a ruling alongside the copy.",
+        "falsifiedBy": "The definition sentence appearing in features/contact copy, or content design ruling the prototype's sentence inaccurate.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -7343,7 +7407,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "If the GOV.UK holding-details page the link points at does not exist, the second paragraph cannot be shipped as written and the finding shrinks to the first paragraph only."
+        "falsifiedBy": "If the GOV.UK holding-details page the link points at does not exist, the second paragraph cannot be shipped as written and the finding shrinks to the first paragraph only.",
+        "frontend": "The frontend template opens straight from the error summary onto the form and the single input ([[c2]]) and its copy file holds no help strings at all ([[c3]]).",
+        "prototype": "The prototype renders a govukDetails summarised \"What is a CPH number?\" containing two paragraphs - \"A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.\" and \"You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK.\" with the last clause as a link ([[c1]]).",
+        "difference": "The prototype's link href is \"#\", so the real GOV.UK destination is still an open question.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -7497,7 +7565,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "Finding this guidance rendered from a shared layout or an interstitial page in the frontend, or a content-design decision to drop it."
+        "falsifiedBy": "Finding this guidance rendered from a shared layout or an interstitial page in the frontend, or a content-design decision to drop it.",
+        "frontend": "[[c1]] puts the h1 straight above the form; [[c2]] has no guidance keys at all.",
+        "prototype": "DR2.1 carries, before the form: an intro paragraph covering ITAHC attachment, adding later, uploading before arrival at the UK port, English-language and all-pages requirements ([[c3]]); a bulleted 'Other documents you may need to attach include' list ([[c4]]); and a `govukDetails` 'Check which additional documents you must upload' containing a two-column Consignment / Documents needed table with three rows (animals not needing a health certificate, livestock transiting bluetongue restricted territories, rodents for research) and a 'Check the documents you need' GOV.UK link opening in a new tab ([[c5]]).",
+        "difference": "None of that content exists anywhere in the frontend documents feature.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -7678,7 +7750,11 @@
       "failure_reason": null,
       "finding": {
         "correction": "The detail's inline line citations are largely wrong and should be replaced. The Change hrefs are at [[c16]] and 6751 (not '[[c2]], [[c3]], [[c4]], [[c5]], [[c6]]'); the card ids are at 6703, 6715, 6727, 6738 and 6748 (not '6685/6694/6712/6730/6748'). changeBase at [[c1]] and handleViewTemplatePage at 6809-6823 are right. Also the card link text is 'View template' / 'Use template', not 'View' / 'Use'.",
-        "falsifiedBy": "A DR2.1 route handling template edit or delete, or ids on view-template matching the Change anchors."
+        "falsifiedBy": "A DR2.1 route handling template edit or delete, or ids on view-template matching the Change anchors.",
+        "frontend": "Contrast the frontend's notification cards, which carry a full action vocabulary — View, Amend, Resume, Cancel amendment as links plus copy and delete as POST forms ([[c14]], [[c15]]).",
+        "prototype": "Each of the five review cards on view-template carries a Change link pointing at `${changeBase}#<slug>` ([[c1]] with [[c2]], [[c3]], [[c4]], [[c5]], [[c6]]), but the id the card actually renders is `template-<slug>` ([[c7]]/6694/6712/6730/6748 fed through [[c8]]). The anchors resolve to nothing — the links reload the same page. The captured DOM agrees: [[c9]] lists five Change hrefs all pointing back at /design-release-2.1/templates/rice-lane-city-farm. The page's primary button, 'Save and continue' ([[c10]]), posts to handleViewTemplatePage, which sets session templateName and redirects to /templates ([[c11]]) — nothing is saved and nothing continues. The card on the list offers only View and Use ([[c12]]); there is no delete, rename or duplicate route among the six mounted at [[c13]].",
+        "difference": "Templates need the equivalent decided before the view page has a purpose.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -8602,7 +8678,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "A prototype route or view that captures template content beyond the name, or a DR2.1 screen offering 'save as template' from a notification."
+        "falsifiedBy": "A prototype route or view that captures template content beyond the name, or a DR2.1 screen offering 'save as template' from a notification.",
+        "frontend": "The frontend has no analogue to lean on: its only creation path is createPost, which starts an empty journey and sends the user to the first question ([[c4]]); there is no 'save these answers as a named thing' action anywhere in the app.",
+        "prototype": "POST /templates/create trims req.body.templateName, writes it to the session and redirects to /templates ([[c1]]). No template is created; the list is unchanged. The view is a single text input with novalidate and no error summary ([[c2]]). Every field a template actually carries — country of origin, region code, commodity code, species, reason for import, purpose, certified-for, five party addresses, CPH — exists only as fixture data ([[c3]]), authored by hand.",
+        "difference": "So the journey from 'Enter template name' to a populated template is undesigned. Someone has to rule on where template content comes from — a fresh guided pass, a save-as-template action on an existing notification, or a save-as-template action at the point of submission — before this page can be built.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -8754,7 +8834,11 @@
         }
       ],
       "finding": {
-        "falsifiedBy": "An address-book record route existing in trade-imports-animals-frontend, or a ruling that the address book UI lives entirely in ins-frontend and the journey should keep the inline disclosure."
+        "falsifiedBy": "An address-book record route existing in trade-imports-animals-frontend, or a ruling that the address book UI lives entirely in ins-frontend and the journey should keep the inline disclosure.",
+        "frontend": "The last table cell is a `<details>` element whose summary reads 'View details' with visually-hidden ' for <name>', expanding to the address lines already on the page ([[c1]]). The deltas record these as only-frontend `detailsSummaries` ('View details for Origin Farm', etc.) while the same rows appear as only-prototype `links` named 'View details'. The frontend has no address-book UI whatsoever — `services/address-book/index.js` is an in-process stub with no routes, and nothing under src/server/app serves an `/address-book` path.",
+        "prototype": "The cell is an anchor to `/address-book/<id>?return=<section path>` ([[c2]]; href built by [[c3]] and attached per row at [[c4]]). That is a navigation away to the address book's own record page and back, not an in-page expander.",
+        "difference": "So this is not a template tweak: it is a decision about whether the record page belongs to this frontend or to the INS front-door that owns the address book.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -8968,7 +9052,11 @@
         }
       ],
       "finding": {
-        "falsifiedBy": "Finding a search input, results region or `data-module` attribute anywhere under features/commodities/search/ in the frontend; or the prototype's search working with JavaScript disabled (which would mean a server-rendered fallback already exists to copy)."
+        "falsifiedBy": "Finding a search input, results region or `data-module` attribute anywhere under features/commodities/search/ in the frontend; or the prototype's search working with JavaScript disabled (which would mean a server-rendered fallback already exists to copy).",
+        "frontend": "The frontend loops `commodityGroups` and emits one `govukCheckboxes` fieldset per commodity ([[c1]]), fed by [[c2]], which maps `commodities.list()` — five entries — into five legends holding eight species checkboxes in total. There is no text input, no search button, no results region and no selected-items list; grepping the whole commodities feature for `data-module` returns nothing, so there is no client-side enhancement of any kind.",
+        "prototype": "The prototype's control is a JS-driven combobox: [[c3]] inlines the catalogue as `commoditiesSearchJson`, [[c4]] is the `input[type=search]` named `commoditySearch` with `aria-controls=\"commodity-search-results\"`, [[c5]] the live results `<ul>`, [[c6]] the selected-items panel with its `Clear all` button, and [[c7]] the four hidden fields (`commodityId`, `commodityCode`, `selectedSpecies`, `commoditySelections`) that carry the selection across the POST. The behaviour lives in app/assets/javascripts/commodity-search.js (694 lines). The post-search state confirms the shape: dr21-what-are-you-importing-results shows a `commodity-selection` checkbox group of 18 options appearing after a 'cattle' search, i.e. the checkboxes are the *result* of a search, not the whole catalogue.",
+        "difference": "VERIFIED — this is the largest interaction gap in the band, and the capture worker's lead is correct in substance but imprecise in detail. The design decision this needs: the prototype's search is JS-only — the search button is `type=\"button\"` ([[c8]]) and the results list is injected by script, so with JS off the user can select nothing. The frontend cannot copy that posture as-is, so someone must rule on the no-JS fallback (server-rendered search POST, or a progressively-enhanced accessible autocomplete) before this is buildable.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -9269,7 +9357,11 @@
       "commit": null,
       "failure_reason": null,
       "finding": {
-        "falsifiedBy": "C640 turning out to be prototype placeholder data with no agreed source, or a ruling that customs guidance lives outside this service."
+        "falsifiedBy": "C640 turning out to be prototype placeholder data with no agreed source, or a ruling that customs guidance lives outside this service.",
+        "frontend": "The frontend never surfaces the customs document code, nor the warning that the wrong reference or code delays the consignment, anywhere.",
+        "prototype": "This is the block behind the two only-prototype warningText entries in the cancel-amend delta. The code is hardcoded to C640 in the prototype.",
+        "difference": "It carries information the frontend never surfaces anywhere: the customs document code, and the warning that the wrong reference or code delays the consignment. The design decision is whether C640 is a constant for live animals or must come from reference data. The Copy buttons are a JS affordance and need a no-JS position.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -9372,7 +9464,11 @@
       "failure_reason": null,
       "finding": {
         "correction": "Three refinements. (1) The card/body contradiction holds for three of the four fixtures — glen-keen-farm has consignor = consignee = 'Glen Keen Farm' = its own place of origin, so it is self-consistent. (2) The review card displays the shared address in four roles; placeOfDestination is seeded but never shown, so 'five roles' is the session write and 'four' the rendered evidence. (3) The fixtures do carry useSameAddressForParties: true ([[c11]]), but grep shows routes.js never reads it — the fan-out is unconditional, so the flag is dead data, not the 'same address for all parties' control the falsifier calls for. It is worth flagging as evidence of design intent that was never wired.",
-        "falsifiedBy": "A prototype template whose card consignor/consignee are derived from its review body, or a DR2.1 'same address for all parties' control on the template itself."
+        "falsifiedBy": "A prototype template whose card consignor/consignee are derived from its review body, or a DR2.1 'same address for all parties' control on the template itself.",
+        "frontend": "The frontend has no shared-address concept to inherit: each party commits its own {name, address} snapshot under its own key ([[c9]]), and the picker re-finds the source record by name within that role's book ([[c10]]).",
+        "prototype": "The seed fans review.placeOfOrigin out across placeOfOrigin, consignor, consignee, importer and placeOfDestination ([[c1]]), and the review view model shows that same address for four of them ([[c2]]). But the list card for the same template advertises Consignee 'Glen Keen Farm' and Consignor 'Rice Lane City Farm' ([[c3]]) — two different parties. The captured screens show both halves of the contradiction: [[c4]] has the differing card values, [[c5]] has one address repeated four times. Acorn Farm disagrees with itself the same way: card origin 'Republic of Ireland' ([[c6]]) against review countryOfOrigin 'France' ([[c7]]) and a Romanian place of origin ([[c8]]).",
+        "difference": "The card fields and the template body are simply not derived from one another. A template must state, per role, what it carries — and whether a template address the user has never had in that role's book is legitimate.",
+        "pass": "a"
       },
       "citations": [
         {
@@ -9692,7 +9788,11 @@
       "failure_reason": null,
       "finding": {
         "correction": "The falsifier parenthetical is wrong and should be struck: validateAnimalIdentifiers ([[c8]]) returns `{ errors: {}, errorList: [], values }` unconditionally — the prototype never raises an error for a missing identifier, germinal or otherwise. So germinal identifier fields ARE effectively optional in the prototype (completeness only drives the save-and-add-another flow via isAnimalIdentifierEntryComplete). This does not touch the finding: the gap is that the fields and the date control do not exist frontend-side at all.",
-        "falsifiedBy": "Finding a donor-ID / collection-date identifier in the frontend's copy or identifier obligations; or germinal identifier fields turning out to be optional in the prototype (validateAnimalIdentifiers at [[c9]] treats them like any other field, so they are not)."
+        "falsifiedBy": "Finding a donor-ID / collection-date identifier in the frontend's copy or identifier obligations; or germinal identifier fields turning out to be optional in the prototype (validateAnimalIdentifiers at [[c9]] treats them like any other field, so they are not).",
+        "frontend": "The frontend's identifier vocabulary is fixed at six fields — passport, tattoo, ear tag, horse name, identification details, description ([[c5]]) — all rendered as plain `govukInput` ([[c6]]). There is no donor ID, no collection date and no identification number, and no date control on this page at all.",
+        "prototype": "The prototype maps both germinal CN codes (05119985 and 05111000) to a three-field identifier set: `donor-id` (text), `collection-date` (type `date`, hint 'For example, 27/3/2026') and `identification-number` (text) — [[c1]]. The date field is rendered with the MoJ date picker: [[c2]] branches on `field.type == \"date\"` and calls `mojDatePicker`. Germinal panels also behave differently — [[c3]] gives them a single editable form rather than the per-animal save-and-add-another loop, and [[c4]] suppresses the saved-animals table for them.",
+        "difference": "The design decision beyond the fields themselves: the germinal single-form panel is a different interaction from the frontend's counter-driven 'record N of M' card, so someone must rule on whether the frontend's unitRecord model (which requires record count to equal numberOfAnimals — [[c7]]) even applies when the quantity is packages rather than animals.",
+        "pass": "a"
       },
       "citations": [
         {

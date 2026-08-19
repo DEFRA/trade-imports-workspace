@@ -383,6 +383,16 @@ const offFlowScreens = (featuresDir) =>
  * @param {string} args.repoPath - The frontend checkout
  * @returns {Array<{screen: string, why: string}>}
  */
+// Screen ids are kebab-case throughout the corpus, but a page identity in the
+// journey is whatever its author typed — `importTypeFilter` sits beside
+// `additional-details`. Kebab-casing the fallback keeps one convention without
+// needing a table entry per camelCase page, and a screen id that does not match
+// the convention is worse than it looks: the capture files a picture under it,
+// the pairing looks for it under the other spelling, and the screen reads as
+// both missing and unexplained at once.
+const kebab = (id) =>
+  id.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
+
 const frontendScreens = ({ repoPath }) => {
   const featuresDir = path.join(repoPath, FEATURES)
   const identities = pageIdentities(featuresDir)
@@ -401,7 +411,7 @@ const frontendScreens = ({ repoPath }) => {
           `${FLOW} sequences "${constant}", which no page.js under ${FEATURES} declares.`
         )
       }
-      for (const screen of SCREENS_OF_PAGE[page.id] ?? [page.id]) {
+      for (const screen of SCREENS_OF_PAGE[page.id] ?? [kebab(page.id)]) {
         found.push({
           screen: `fe-${screen}`,
           why: `${FLOW}, section "${sectionId}", page "${page.id}"`

@@ -60,9 +60,12 @@ current. The run id is **`EUDPA-328-DR1`** and the corpus is **`dr1`**.
 
 **Not done:**
 
-- **The frontend capture is `PARTIAL`** — 31 of 33 screens from a run that was
-  stopped part-way, so no frontend spec has ever had a clean pass. The corpus
-  says PARTIAL in as many words. **Re-run it before anything is ruled from it.**
+- **The frontend capture is `PARTIAL`** — 31 of 33 pages, 12 of 14 specs
+  passing. Two named gaps, both real rather than missing pictures:
+  **`fe-exit-date`**, where the spec cannot open the temporary-admission-of-horses
+  branch that reveals the page, and **`fe-additional-details`**, which is never
+  reached. Fix those two, re-run, and drop the word PARTIAL from the corpus
+  entry then — not before.
 - **`pairs.cjs` does not exist.** `corpora.json` points the `dr1` corpus at
   `workareas/shared/dr1-parity/pairs.cjs` and nothing has written it. Screen
   pairing is per-corpus code, not data. Without it the report cannot put the
@@ -198,9 +201,22 @@ the canary, then carry on with everything that does not depend on it.
 ## Where you are
 
 - Workspace: `~/git/defra/trade-imports-workspace`. **Never**
-  `~/git/defra/trade-imports-animals` — a stale clone. Pass
+  `~/git/defra/trade-imports-animals` — a stale clone whose `CLAUDE.md`
+  describes an older workspace under a different name. Pass
   `--workspace ~/git/defra/trade-imports-workspace` unless your shell is
   already inside the right checkout.
+- **Check what branch you are on, in the workspace AND in
+  `repos/trade-imports-animals-frontend`.** Both were left on
+  `spike/trace-to-requirements` at one point, and on that branch the frontend
+  has no `fit:start` script and the workspace has no dr1-parity files — so the
+  capture fails in a way that looks like a broken tool rather than a wrong
+  checkout. Both should be on `main`.
+- **The frontend capture runs on port 3005, not 3000.** The workspace stack
+  runs its own build of the frontend on 3000, and tim uses whatever is already
+  listening rather than starting a second copy — so on 3000 a capture with the
+  stack up photographs the container instead of the stubbed run, and says
+  nothing about having done so. The prototype is on 3010. Both were verified
+  with the full stack running.
 - Frontend: `repos/trade-imports-animals-frontend`
 - Prototype: `~/git/defra/defra-design/GB-notification-service`
 - Your workarea: `workareas/shared/dr1-parity/`

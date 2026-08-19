@@ -151,6 +151,10 @@ export const checkCitationsImmutable = (increments, baseline) => {
         problems.push(`${increment.id}/${citation.ref} deleted`)
         continue
       }
+      // A citation that was queued had nothing to be immutable about — the
+      // queue is precisely where a person decides what it points at. It is
+      // frozen from the moment it stops being unresolved, not before.
+      if (citation.resolution === 'unresolved') continue
       if (
         current.path !== citation.path ||
         current.side !== citation.side ||

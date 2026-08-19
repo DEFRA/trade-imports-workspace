@@ -233,4 +233,73 @@ describe('setCitation', () => {
       setCitation({ profile, id: 'inc-001', ref: 'c9', repo: 'x', path: 'y' })
     ).toThrow(/no citation c9/)
   })
+
+  test('corrects the line range when the queued token pointed at the wrong lines', () => {
+    setCitation({
+      profile,
+      id: 'inc-001',
+      ref: 'c1',
+      repo: 'frontend',
+      path: 'a/stub.js',
+      lines: '41-53'
+    })
+    const [citation] = readJsonFile(profile.paths.backlog).increments[0]
+      .citations
+    expect(citation.lines).toEqual({ start: 41, end: 53 })
+    expect(citation.ranges).toEqual([{ start: 41, end: 53 }])
+  })
+
+  test('reads a single line as a one-line range', () => {
+    setCitation({
+      profile,
+      id: 'inc-001',
+      ref: 'c1',
+      repo: 'frontend',
+      path: 'a/stub.js',
+      lines: '41'
+    })
+    const [citation] = readJsonFile(profile.paths.backlog).increments[0]
+      .citations
+    expect(citation.lines).toEqual({ start: 41, end: 41 })
+  })
+
+  test('refuses a line spec that is not one', () => {
+    expect(() =>
+      setCitation({
+        profile,
+        id: 'inc-001',
+        ref: 'c1',
+        repo: 'frontend',
+        path: 'a/stub.js',
+        lines: 'somewhere'
+      })
+    ).toThrow(/not a line or a line range/)
+  })
+
+  test('refuses to touch a citation that is already resolved', () => {
+    write([
+      increment({
+        citations: [
+          {
+            ref: 'c1',
+            kind: 'code',
+            side: 'frontend',
+            repo: 'frontend',
+            path: 'a/stub.js',
+            asWritten: 'stub.js:1',
+            resolution: 'explicit'
+          }
+        ]
+      })
+    ])
+    expect(() =>
+      setCitation({
+        profile,
+        id: 'inc-001',
+        ref: 'c1',
+        repo: 'frontend',
+        path: 'b/stub.js'
+      })
+    ).toThrow(/frozen from the moment it stops being queued/)
+  })
 })

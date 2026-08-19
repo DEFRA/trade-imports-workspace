@@ -179,7 +179,7 @@ export const setDecisionRequired = ({ profile, id, decisionRequired }) => {
  * @param {object} args
  * @returns {object}
  */
-export const setCitation = ({ profile, id, ref, repo, path, why }) => {
+export const setCitation = ({ profile, id, ref, repo, path, lines, why }) => {
   const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
   const increment = findIncrement(backlog, id)
   const citation = (increment.citations ?? []).find(
@@ -188,6 +188,18 @@ export const setCitation = ({ profile, id, ref, repo, path, why }) => {
   if (!citation) {
     throw new TimError('NOT_FOUND', `${id} has no citation ${ref}.`)
   }
+  if (citation.resolution !== 'unresolved') {
+    throw new TimError(
+      'USAGE',
+      `${id}/${ref} is already resolved (${citation.resolution}). A citation is frozen from the moment it stops being queued.`
+    )
+  }
+
+  // Lines may be corrected here and only here. A queued citation's range came
+  // from a token nobody had yet agreed pointed at anything, and re-pinning a
+  // side routinely moves the line the analyst meant by a few dozen.
+  const range = lines ? parseRange(lines, id, ref) : null
+
   const result = writeIncrement(profile, backlog, id, (entry) => ({
     ...entry,
     citations: entry.citations.map((c) =>
@@ -196,6 +208,7 @@ export const setCitation = ({ profile, id, ref, repo, path, why }) => {
             ...c,
             repo,
             path,
+            ...(range ? { lines: range, ranges: [range] } : {}),
             resolution: 'human',
             needsHuman: false,
             why: why ?? `Resolved by hand: ${c.why ?? 'was ambiguous'}`,
@@ -204,5 +217,16 @@ export const setCitation = ({ profile, id, ref, repo, path, why }) => {
         : c
     )
   }))
-  return { id, ref, repo, path, ...result }
+  return { id, ref, repo, path, lines: range, ...result }
+}
+
+const parseRange = (spec, id, ref) => {
+  const [start, end] = String(spec).split('-').map(Number)
+  if (!Number.isFinite(start)) {
+    throw new TimError(
+      'USAGE',
+      `${id}/${ref}: "${spec}" is not a line or a line range, like 41 or 41-53.`
+    )
+  }
+  return { start, end: Number.isFinite(end) ? end : start }
 }

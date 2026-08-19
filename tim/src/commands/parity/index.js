@@ -379,6 +379,7 @@ export const register = (program, { timVersion }) => {
     .description('Resolve one queued citation by hand')
     .requiredOption('--repo <key>', 'Repo key from corpora.json')
     .requiredOption('--path <path>', 'Repo-relative path')
+    .option('--lines <spec>', 'Correct the line or range, like 41 or 41-53')
     .option('--why <text>', 'Why this is the right file')
     .action(
       makeParityAction({
@@ -389,9 +390,11 @@ export const register = (program, { timVersion }) => {
             ref: args[2],
             repo: opts.repo,
             path: opts.path,
+            lines: opts.lines,
             why: opts.why
           }),
-        renderText: (r) => `${r.id}/${r.ref} -> ${r.repo}:${r.path}`,
+        renderText: (r) =>
+          `${r.id}/${r.ref} -> ${r.repo}:${r.path}${r.lines ? `:${r.lines.start}${r.lines.end !== r.lines.start ? `-${r.lines.end}` : ''}` : ''}`,
         timVersion
       })
     )

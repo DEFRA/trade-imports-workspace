@@ -258,3 +258,184 @@ describe('runAnchors', () => {
     )
   })
 })
+
+const field = (name, label, kind = 'input:text') => ({ kind, name, label })
+
+const writeModel = (side, screen, allFields) => {
+  const dir = join(root, 'model', side)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, `${screen}.json`), JSON.stringify({ allFields }))
+}
+
+const anchorsOn = (result, side, screen) =>
+  sideNamed(result, side).file.screens[screen]
+
+describe('runAnchors against the page models', () => {
+  test('a control both sides have is cropped from the control itself', () => {
+    writeBacklog([increment({ controls: ['species'] })])
+    writeModel('frontend', 'fe-documents', [field('species', 'Species')])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('species', 'Species')
+    ])
+
+    const result = runAnchors({ profile })
+
+    expect(anchorsOn(result, 'frontend', 'fe-documents')).toEqual([
+      {
+        kind: 'field',
+        name: 'species',
+        key: 'field-species',
+        why: 'named by inc-001'
+      }
+    ])
+    expect(anchorsOn(result, 'prototype', 'dr1-upload-documents')).toEqual([
+      {
+        kind: 'field',
+        name: 'species',
+        key: 'field-species',
+        why: 'named by inc-001'
+      }
+    ])
+    expect([
+      sideNamed(result, 'frontend').insertions,
+      sideNamed(result, 'prototype').insertions
+    ]).toEqual([0, 0])
+  })
+
+  test('a control only the other side has becomes an insertion on this one', () => {
+    writeBacklog([increment()])
+    writeModel('frontend', 'fe-documents', [
+      field('species', 'Species'),
+      field('quantity', 'Quantity')
+    ])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('species', 'Species'),
+      field('accompanyingDocumentType', 'Document type'),
+      field('quantity', 'Quantity')
+    ])
+
+    const result = runAnchors({ profile })
+
+    // The crop is of a control that is there, captioned with the one that is
+    // not — a reader cannot see an absence.
+    expect(anchorsOn(result, 'frontend', 'fe-documents')).toEqual([
+      {
+        kind: 'field',
+        name: 'species',
+        key: 'field-species',
+        why: 'insertion point named by inc-001',
+        insertions: [
+          {
+            missing: ['accompanyingDocumentType'],
+            relation: 'after',
+            named: 'Species',
+            caption:
+              'This side has no Document type. It would sit after Species.'
+          }
+        ]
+      }
+    ])
+    expect(anchorsOn(result, 'prototype', 'dr1-upload-documents')).toEqual([
+      {
+        kind: 'field',
+        name: 'accompanyingDocumentType',
+        key: 'field-accompanyingdocumenttype',
+        why: 'named by inc-001'
+      }
+    ])
+    expect({
+      anchors: sideNamed(result, 'frontend').anchors,
+      insertions: sideNamed(result, 'frontend').insertions
+    }).toEqual({ anchors: 0, insertions: 1 })
+  })
+
+  test('the caption stays honest where the two pages share no field', () => {
+    writeBacklog([increment({ controls: ['cphNumber-county'] })])
+    writeModel('frontend', 'fe-documents', [
+      field('countyParishHoldingCph', 'CPH')
+    ])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('cphNumber-county', 'County'),
+      field('cphNumber-parish', 'Parish')
+    ])
+
+    const result = runAnchors({ profile })
+
+    const [anchor] = anchorsOn(result, 'frontend', 'fe-documents')
+    expect(anchor.key).toBe('field-countyparishholdingcph')
+    expect(anchor.insertions[0].caption).toContain(
+      'rather than where the missing one would go'
+    )
+    expect(anchor.insertions[0].caption).not.toContain('would sit')
+  })
+
+  test('a control on no side is counted and named rather than dropped', () => {
+    writeBacklog([increment({ controls: ['unweanedAnimals'] })])
+    writeModel('frontend', 'fe-documents', [field('species', 'Species')])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('species', 'Species')
+    ])
+
+    const result = runAnchors({ profile })
+
+    expect(sideNamed(result, 'frontend').unresolved).toEqual([
+      {
+        increment: 'inc-001',
+        anchor: 'field-unweanedanimals',
+        named: 'unweanedAnimals',
+        screen: 'fe-documents'
+      }
+    ])
+    expect(anchorsOn(result, 'frontend', 'fe-documents')).toBeUndefined()
+  })
+
+  test('a control named by its label resolves against that label', () => {
+    writeBacklog([increment({ controls: ['Port of entry'] })])
+    writeModel('frontend', 'fe-documents', [
+      field('portOfEntry', 'Port of entry')
+    ])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('portOfEntry', 'Port of entry')
+    ])
+
+    const result = runAnchors({ profile })
+
+    expect(anchorsOn(result, 'frontend', 'fe-documents')[0]).toEqual({
+      kind: 'label',
+      text: 'Port of entry',
+      key: 'label-port-of-entry',
+      why: 'named by inc-001'
+    })
+  })
+
+  test('a landmark that is itself a finding keeps its own reason', () => {
+    writeBacklog([
+      increment(),
+      increment({ id: 'inc-002', controls: ['species'] })
+    ])
+    writeModel('frontend', 'fe-documents', [field('species', 'Species')])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('species', 'Species'),
+      field('accompanyingDocumentType', 'Document type')
+    ])
+
+    const result = runAnchors({ profile })
+
+    const [anchor] = anchorsOn(result, 'frontend', 'fe-documents')
+    expect(anchor.why).toBe('named by inc-002')
+    expect(anchor.insertions[0].caption).toContain('no Document type')
+  })
+
+  test('an uncaptured screen keeps its anchors and says it went unchecked', () => {
+    writeBacklog([increment()])
+    writeModel('prototype', 'dr1-upload-documents', [
+      field('accompanyingDocumentType', 'Document type')
+    ])
+
+    const result = runAnchors({ profile })
+
+    expect(sideNamed(result, 'frontend').uncaptured).toEqual(['fe-documents'])
+    expect(anchorsOn(result, 'frontend', 'fe-documents')).toHaveLength(1)
+    expect(sideNamed(result, 'frontend').unresolved).toEqual([])
+  })
+})

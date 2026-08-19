@@ -82,6 +82,22 @@ describe('insertionPoint', () => {
     expect(point).toMatchObject({ relation: 'page', anchor: null })
   })
 
+  test('the anchor key is the one the crop file on disk carries', () => {
+    const point = insertionPoint({
+      missing: field('accompanyingDocumentType', 'Document type'),
+      sourceModel: {
+        allFields: [
+          field('cphNumber-county', 'County'),
+          field('accompanyingDocumentType', 'Document type')
+        ]
+      },
+      targetModel: { allFields: [field('cphNumber-county', 'County')] }
+    })
+    // The same key anchors.js computes — a field name keeps only its letters
+    // and digits. Two conventions and the report looks for a crop nobody wrote.
+    expect(point.anchor.key).toBe('field-cphnumbercounty')
+  })
+
   test('an unnamed control is anchored by its label', () => {
     const point = insertionPoint({
       missing: field('x', 'X'),

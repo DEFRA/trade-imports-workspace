@@ -1,8 +1,14 @@
 /**
  * A hidden crumb or sort field is machinery, not something on the page, so it
  * is never an insertion point and never a shared landmark.
+ *
+ * @param {{kind?: string, name?: string}} field
+ * @returns {boolean}
  */
-const visible = (field) => field.kind !== 'hidden' && field.name !== 'crumb'
+export const isVisibleControl = (field) =>
+  field.kind !== 'hidden' && field.name !== 'crumb'
+
+const visible = isVisibleControl
 
 const key = (field) => field.name ?? `unnamed:${field.label ?? ''}`
 
@@ -11,11 +17,18 @@ const anchorFor = (field) =>
     ? { kind: 'field', name: field.name }
     : { kind: 'label', text: field.label ?? '' }
 
+// The same key the crop files on disk are named by — see anchorKey in
+// anchors.js. A field keeps only its letters and digits, so a crop of
+// `cphNumber-county` is looked up under the one name both stages compute.
 const anchorKey = (anchor) =>
-  `${anchor.kind}-${(anchor.name ?? anchor.text ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')}`
+  anchor.kind === 'field'
+    ? `field-${String(anchor.name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')}`
+    : `label-${String(anchor.text)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}`
 
 /**
  * Where on the empty side a one-sided control would sit.

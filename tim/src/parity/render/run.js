@@ -53,7 +53,23 @@ const proseOf = (item) =>
     .filter(Boolean)
     .join('\n')
 
-const attachAssets = ({
+/**
+ * Hang the best picture available on each side of each finding.
+ *
+ * An anchor the finding's own prose names is cropped from the control itself.
+ * Where the prose names nothing on this side — the side with nothing to show —
+ * an insertion anchor is offered instead, and its captions travel with the
+ * asset so the card can say what is missing and where it would go.
+ *
+ * @param {object} args
+ * @param {object[]} args.items - Report items, mutated in place
+ * @param {object[]} args.sides
+ * @param {Map} args.pairIndex - From indexPairs
+ * @param {string} args.assetDir
+ * @param {Record<string, Record<string, object[]>>} args.anchors - By side, by screen
+ * @param {boolean} [args.inline] - The artifact target places no files
+ */
+export const attachAssets = ({
   items,
   sides,
   pairIndex,

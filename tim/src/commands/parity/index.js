@@ -150,17 +150,35 @@ const renderIngest = (result) =>
       : 'Nothing written. Drop --dry-run to apply.'
   ].join('\n')
 
+// The four numbers together are the honest coverage statement for element
+// evidence: what is cropped from the control itself, what is shown as an
+// absence, what resolved nowhere, and what named no control at all.
 const renderAnchors = (result) =>
   result.sides
-    .flatMap((side) => [
-      `${side.side}: ${side.anchors} anchors across ${side.screens} screens.`,
-      side.withoutControls.length
-        ? `  ${side.withoutControls.length} findings name no control, so they fall back to a whole-page shot: ${side.withoutControls.join(', ')}`
-        : '  Every finding on this side names a control.',
-      side.written
-        ? `  Written to ${side.path}`
-        : `  Nothing written. Pass --write to apply, to ${side.path}`
-    ])
+    .flatMap((side) =>
+      [
+        `${side.side}: ${side.anchors} anchors and ${side.insertions} insertion points across ${side.screens} screens.`,
+        side.unresolved.length
+          ? `  ${side.unresolved.length} controls resolve on no side, so nothing is cropped for them: ${side.unresolved
+              .map((entry) => `${entry.increment} ${entry.named}`)
+              .join(', ')}`
+          : '  Every control a finding names resolves on a side.',
+        side.withoutControls.length
+          ? `  ${side.withoutControls.length} findings name no control, so they fall back to a whole-page shot: ${side.withoutControls.join(', ')}`
+          : '  Every finding on this side names a control.',
+        side.withoutPlacement.length
+          ? `  ${side.withoutPlacement.length} absences have no field on their page to point at: ${side.withoutPlacement
+              .map((entry) => `${entry.increment} ${entry.named}`)
+              .join(', ')}`
+          : null,
+        side.uncaptured.length
+          ? `  ${side.uncaptured.length} screens have no page model yet, so their anchors go unchecked: ${side.uncaptured.join(', ')}`
+          : null,
+        side.written
+          ? `  Written to ${side.path}`
+          : `  Nothing written. Pass --write to apply, to ${side.path}`
+      ].filter(Boolean)
+    )
     .join('\n')
 
 export const register = (program, { timVersion }) => {

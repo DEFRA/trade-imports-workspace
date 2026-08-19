@@ -309,6 +309,66 @@ export const assignIds = ({ findings, existing, replace }) => {
   )
 }
 
+/** An id this tool already assigned, rather than a file slug an author wrote. */
+const INCREMENT_ID = /^inc-\d+$/
+
+/** The name a finding file is cross-referred by: its file name without .json. */
+const slugOf = (file) => file.replace(/\.json$/, '')
+
+/**
+ * Point every relatedTo at the increment it means.
+ *
+ * An author writes a cross-reference before any increment id exists — this run
+ * is what hands them out — so the contract has them name the other finding by
+ * its file slug. Turning that into an id here, in the same pass that assigns
+ * the ids, is what lets a finding refer to one written later in the same batch.
+ *
+ * A slug that resolves to nothing stops the run and names the file and the
+ * slug. The alternatives are both worse: a dangling id surfaces three commands
+ * later as a failing contract test, and a dropped entry is a link the report
+ * never shows and nobody ever misses.
+ *
+ * A finding naming itself is rejected rather than dropped, for the same reason
+ * every other malformed field is. Dropping it would leave the author believing
+ * they had written a cross-reference, and the slug they meant is unrecoverable
+ * — only they know which other finding it was.
+ *
+ * @param {object} args
+ * @param {object} args.finding - A validated finding
+ * @param {string} args.id - The increment id this run gave it
+ * @param {Map<string, string>} args.slugs - Every slug in the run, to its id
+ * @returns {object[] | undefined} relatedTo with ids resolved, shape untouched
+ * @throws {TimError} PARSE, naming the file and the slug
+ */
+export const resolveRelatedTo = ({ finding, id, slugs }) => {
+  if (!finding.relatedTo) return undefined
+  return finding.relatedTo.map((relation) => {
+    if (typeof relation?.id !== 'string' || relation.id.trim() === '') {
+      fail(
+        finding.file,
+        '"relatedTo" holds an entry with no "id". Name the other finding by its file slug.'
+      )
+    }
+    const named = relation.id.trim()
+    // An id that is already resolved passes straight through, so re-ingesting a
+    // merged backlog resolves the same field twice to the same answer.
+    const resolved = INCREMENT_ID.test(named) ? named : slugs.get(named)
+    if (!resolved) {
+      fail(
+        finding.file,
+        `"relatedTo" names "${named}", which is no finding in this run. Use the other finding's file name without ".json".`
+      )
+    }
+    if (resolved === id) {
+      fail(
+        finding.file,
+        `"relatedTo" names "${named}", which is this finding itself.`
+      )
+    }
+    return { ...relation, id: resolved }
+  })
+}
+
 const authoredFields = ({ finding, id, corpus }) => ({
   id,
   slice: finding.slice,
@@ -461,6 +521,9 @@ export const runIngest = ({
     replace
   })
   const byId = new Map(existingIncrements.map((i) => [i.id, i]))
+  const slugs = new Map(
+    [...ids].map(([file, incrementId]) => [slugOf(file), incrementId])
+  )
 
   // A finding whose file has gone leaves the backlog with it — striking a
   // finding is a deliberate act. Striking one somebody has already ruled on or
@@ -478,8 +541,12 @@ export const runIngest = ({
   }
 
   const frozen = []
-  const increments = findings.map((finding) => {
-    const id = ids.get(finding.file)
+  const increments = findings.map((authored) => {
+    const id = ids.get(authored.file)
+    const finding = {
+      ...authored,
+      relatedTo: resolveRelatedTo({ finding: authored, id, slugs })
+    }
     const previous = replace ? undefined : byId.get(id)
     if (!previous) return born({ finding, id, corpus: profile.id })
     const wouldBe = composeDetail(finding.slots)

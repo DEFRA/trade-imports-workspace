@@ -426,6 +426,129 @@ describe('runIngest', () => {
     expect(result.total).toBe(1)
   })
 
+  test('resolves a relatedTo file slug to the id that file was given', () => {
+    writeFinding('documents--size.json')
+    writeFinding(
+      'documents--type.json',
+      finding({
+        relatedTo: [
+          {
+            id: 'documents--size',
+            relation: 'travels-with',
+            why: 'Both are upload rules.'
+          }
+        ]
+      })
+    )
+
+    ingest()
+
+    const byId = Object.fromEntries(backlog().increments.map((i) => [i.id, i]))
+    expect(byId['inc-001'].source).toBe('documents--size.json')
+    expect(byId['inc-002'].finding.relatedTo).toEqual([
+      {
+        id: 'inc-001',
+        relation: 'travels-with',
+        why: 'Both are upload rules.'
+      }
+    ])
+  })
+
+  test('resolves a reference to a finding written later in the same batch', () => {
+    writeFinding(
+      'documents--size.json',
+      finding({
+        relatedTo: [
+          {
+            id: 'documents--type',
+            relation: 'depends-on',
+            why: 'The limit only bites once a type is asked for.'
+          }
+        ]
+      })
+    )
+    writeFinding('documents--type.json')
+
+    ingest()
+
+    const [first, second] = backlog().increments
+    expect(second.source).toBe('documents--type.json')
+    expect(first.finding.relatedTo).toEqual([
+      {
+        id: second.id,
+        relation: 'depends-on',
+        why: 'The limit only bites once a type is asked for.'
+      }
+    ])
+  })
+
+  test('leaves an id that is already an increment id alone on a re-ingest', () => {
+    const related = [
+      {
+        id: 'inc-002',
+        relation: 'travels-with',
+        why: 'Already resolved by an earlier run.'
+      }
+    ]
+    writeFinding('documents--size.json', finding({ relatedTo: related }))
+    writeFinding('documents--type.json')
+
+    ingest()
+    const first = backlog().increments[0].finding.relatedTo
+    ingest()
+    const second = backlog().increments[0].finding.relatedTo
+
+    expect(first).toEqual(related)
+    expect(second).toEqual(related)
+  })
+
+  test('names the file and the slug when a relatedTo resolves to nothing', () => {
+    writeFinding(
+      'documents--type.json',
+      finding({
+        relatedTo: [
+          {
+            id: 'documents--file-size-limit',
+            relation: 'travels-with',
+            why: 'A slug nobody wrote.'
+          }
+        ]
+      })
+    )
+
+    expect(() => ingest()).toThrow(
+      /documents--type\.json.*relatedTo.*documents--file-size-limit/s
+    )
+  })
+
+  test('refuses a finding that names itself, naming the file', () => {
+    writeFinding(
+      'documents--type.json',
+      finding({
+        relatedTo: [
+          {
+            id: 'documents--type',
+            relation: 'duplicate-of',
+            why: 'Itself.'
+          }
+        ]
+      })
+    )
+
+    expect(() => ingest()).toThrow(/documents--type\.json.*itself/s)
+  })
+
+  test('refuses a relatedTo entry that names no finding at all', () => {
+    writeFinding(
+      'documents--type.json',
+      finding({
+        relatedTo: [{ relation: 'travels-with', why: 'No id at all.' }]
+      })
+    )
+
+    expect(() => ingest()).toThrow(/documents--type\.json.*relatedTo/s)
+  })
+
   test('refuses when the findings directory does not exist', () => {
     rmSync(findingsDir(profile), { recursive: true, force: true })
 

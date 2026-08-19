@@ -28,13 +28,23 @@ export const expandHome = (path) =>
 /**
  * Resolve which corpus a run belongs to, in the same order as
  * tools/journey-builder/target-profile.sh: an explicit flag, the backlog's own
- * corpus field, .corpus-meta.json, then the file's default.
+ * corpus field, .corpus-meta.json, the corpus that declares this run id, then
+ * the file's default.
+ *
+ * The run id is matched against `runId` last but before the default, and that
+ * order matters. Falling straight through to the default means a run id with
+ * no backlog on disk yet — a comparison being set up, which is exactly when
+ * mistakes are cheap to make and expensive to notice — quietly resolves to
+ * whichever corpus happens to be default and reports on somebody else's
+ * evidence as though it were yours. A named run that no corpus claims is an
+ * error, not a default.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} [args.runId] - Used to find the backlog and meta files
  * @param {string} [args.explicit] - Value of --corpus
  * @returns {{id: string, source: string}}
+ * @throws {TimError} NOT_FOUND when a run id belongs to no corpus
  */
 export const resolveCorpusId = ({ workspaceRoot, runId, explicit }) => {
   const corporaPath = join(workspaceRoot, CORPORA_FILE)
@@ -51,6 +61,16 @@ export const resolveCorpusId = ({ workspaceRoot, runId, explicit }) => {
     if (backlog?.corpus) return { id: backlog.corpus, source: 'backlog.json' }
     const meta = readJsonIfPresent(join(runDir, '.corpus-meta.json'))
     if (meta?.corpus) return { id: meta.corpus, source: '.corpus-meta.json' }
+
+    const declaring = Object.entries(corpora.corpora ?? {}).find(
+      ([, corpus]) => corpus.runId === runId
+    )
+    if (declaring) return { id: declaring[0], source: 'runId in corpora.json' }
+
+    throw new TimError(
+      'NOT_FOUND',
+      `No corpus claims the run "${runId}". Nothing under workareas/journey-builder/${runId} names a corpus, and no corpus in ${CORPORA_FILE} declares that runId. Add it, or pass --corpus.`
+    )
   }
 
   return { id: corpora.default, source: 'corpora.json default' }

@@ -1,6 +1,12 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runStreamed } from '../../exec/exec.js'
@@ -23,6 +29,12 @@ export const timRoot = resolve(here, '..', '..', '..')
 export const SPEC_GLOB = '*.pw.js'
 
 /**
+ * Where a run's generated config and Playwright's own artefacts go, under
+ * tim's package root. Gitignored: every file in it is generated per run.
+ */
+export const RUNS_DIR = '.parity-runs'
+
+/**
  * The specs a side has, in the order Playwright will run them.
  *
  * @param {string} specDir
@@ -38,22 +50,28 @@ export const specsIn = (specDir) =>
 /**
  * The commit an application is at.
  *
- * The last commit that touched `src`, not HEAD. The capture directory is named
- * after it, so naming it after HEAD would orphan every picture each time this
- * harness itself was edited — and the pixels would be identical.
+ * Where a side names `sourcePath`, this is the last commit that touched it
+ * rather than HEAD. The capture directory is named after the answer, so for a
+ * repo that also holds the harness, naming it after HEAD orphans every picture
+ * each time the harness is edited — and those pixels are identical.
  *
- * An empty answer is treated as no answer: `git log` exits zero and prints
- * nothing when a pathspec matches no commit, and a blank sha would name the
- * capture directory `frontend@` without anything failing.
+ * Where a side names none, it is HEAD, because the alternative is guessing a
+ * directory name. The previous guess was a hardcoded `src`, which is right for
+ * the frontend and wrong for a Prototype Kit application whose source is
+ * `app/`: git exits zero and prints nothing for a pathspec that matches no
+ * commit, so every prototype capture landed in a directory called
+ * `prototype@unknown` without anything failing.
  *
  * @param {string} repoPath
+ * @param {string} [sourcePath] - Directory whose history names the commit
  * @returns {string} Full forty-character sha, or 'unknown'
  */
-export const appSha = (repoPath) => {
+export const appSha = (repoPath, sourcePath) => {
+  const pathspec = sourcePath ? ['--', `:/${sourcePath}`] : []
   try {
     const out = execFileSync(
       'git',
-      ['-C', repoPath, 'log', '-1', '--format=%H', '--', ':/src'],
+      ['-C', repoPath, 'log', '-1', '--format=%H', ...pathspec],
       { encoding: 'utf8' }
     ).trim()
     return out || 'unknown'
@@ -272,7 +290,7 @@ export const runCapture = async ({
   }
 
   const appRoot = paths.appRoot
-  const sha = appRoot ? appSha(appRoot) : 'unknown'
+  const sha = appRoot ? appSha(appRoot, sideProfile.sourcePath) : 'unknown'
   const resolved = resolveCapturePaths({ profile, side, sha })
 
   const context = {
@@ -281,13 +299,27 @@ export const runCapture = async ({
     modelDir: resolved.modelDir,
     anchorsPath: resolved.anchorsPath,
     specDir,
+    // A spec names a screen; the corpus says which comparison it belongs to. A
+    // spec that spelt the prefix itself would drift the moment a second corpus
+    // reused it.
+    screenPrefix: sideProfile.screenPrefix ?? '',
+    // Where a spec imports the recorder from. Specs live in the corpus
+    // workarea, outside tim's package, so there is no bare specifier that
+    // resolves — and a relative path back into tim would break the moment a
+    // corpus nested its specs one level deeper.
+    support: join(here, 'spec.js'),
     appSha: sha,
     harnessSha: harnessSha(workspaceRoot),
     deviceScaleFactor: profile.captures?.[side]?.deviceScaleFactor ?? 2,
     viewport: { width: 1280, height: 1200 }
   }
 
-  const runDir = mkdtempSync(join(tmpdir(), `tim-parity-capture-${side}-`))
+  // Inside tim, not in the system temp directory. Playwright resolves the
+  // config's own imports relative to the config file, so a config in /tmp
+  // cannot find @playwright/test and dies before it reads a single spec.
+  const runsRoot = join(timRoot, RUNS_DIR)
+  mkdirSync(runsRoot, { recursive: true })
+  const runDir = mkdtempSync(join(runsRoot, `${side}-`))
   const contextPath = join(runDir, 'context.json')
   const configPath = join(runDir, 'playwright.config.js')
   writeFileSync(contextPath, `${JSON.stringify(context, null, 2)}\n`, 'utf8')
@@ -330,6 +362,13 @@ export const runCapture = async ({
     await app.stop()
   }
 
+  // A clean run leaves nothing behind: the config is generated, the context is
+  // generated, and Playwright's artefacts are of a run that had nothing to
+  // report. A failed run keeps all of it, because the trace in there is the
+  // only account of what the browser actually saw.
+  const failed = exitCode !== 0
+  if (!failed) rmSync(runDir, { recursive: true, force: true })
+
   return {
     side,
     sha,
@@ -337,7 +376,7 @@ export const runCapture = async ({
     specDir,
     captureDir: context.captureDir,
     modelDir: context.modelDir,
-    config: configPath,
-    exitNonZero: exitCode !== 0
+    runDir: failed ? runDir : null,
+    exitNonZero: failed
   }
 }

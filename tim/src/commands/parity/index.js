@@ -440,7 +440,7 @@ export const register = (program, { timVersion }) => {
             `Pictures: ${r.captureDir}`,
             `Page models: ${r.modelDir}`,
             r.exitNonZero
-              ? 'The run did not finish cleanly. Read the output above, then look at the trace in the run directory.'
+              ? `The run did not finish cleanly. Read the output above, then the trace in ${r.runDir}.`
               : `Index them next: tim parity manifest <runId> --side ${r.side} --sha ${r.sha.slice(0, 8)} --write`
           ].join('\n'),
         timVersion
@@ -468,7 +468,8 @@ export const register = (program, { timVersion }) => {
             .flatMap((side) =>
               side.enumerated
                 ? [
-                    `${side.side}: ${side.covered} of ${side.expected} pages captured, plus ${side.states.length} states of them${side.manifestFound ? '' : ' — nothing has been captured for this side yet'}.`,
+                    `${side.side}: ${side.covered} of ${side.expected} pages captured, plus ${side.states.length} states of them.`,
+                    ...(side.why ? [`  ${side.why}`] : []),
                     ...side.missing.map((entry) =>
                       `  not captured  ${entry.screen.padEnd(44)} ${entry.why ?? ''}`.trimEnd()
                     ),

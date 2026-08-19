@@ -199,6 +199,33 @@ describe('coverageForSide', () => {
     expect([result.manifestFound, result.complete]).toEqual([false, false])
   })
 
+  test('says the corpus declares no capture, rather than that the pictures are missing', () => {
+    const profile = profileFor()
+    profile.captures = {}
+
+    const result = coverageForSide({
+      profile,
+      side: profile.sides[0],
+      enumerators: { prototype: () => [{ screen: 'p-origin' }] }
+    })
+
+    expect(result.declared).toBeNull()
+    expect(result.why).toMatch(/declares no capture for this side/)
+  })
+
+  test('says a declared capture has no manifest, which is a different fault', () => {
+    const result = coverageForSide({
+      profile: profileFor(),
+      side: profileFor().sides[0],
+      enumerators: { prototype: () => [{ screen: 'p-origin' }] }
+    })
+
+    expect(result.declared).toBe('abc12345')
+    expect(result.why).toMatch(
+      /declares a capture at abc12345 but there is no manifest/
+    )
+  })
+
   test('says which side has no enumerator rather than reporting it as covered', () => {
     const result = coverageForSide({
       profile: profileFor(),

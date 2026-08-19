@@ -148,6 +148,18 @@ describe('resolveCorpusId precedence', () => {
       })
     ).toEqual({ id: 'alpha', source: '--corpus' })
   })
+
+  test('falls back to the corpus that declares the run id, before any file exists', () => {
+    expect(
+      resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-1' })
+    ).toEqual({ id: 'alpha', source: 'runId in corpora.json' })
+  })
+
+  test('refuses a run id no corpus claims, rather than reporting on another comparison', () => {
+    expect(() =>
+      resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-NOBODY' })
+    ).toThrow(/No corpus claims the run "RUN-NOBODY"/)
+  })
 })
 
 describe('loadCorpusProfile', () => {

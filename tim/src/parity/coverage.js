@@ -122,6 +122,11 @@ export const coverageForSide = ({ profile, side, enumerators }) => {
 
   const repoPath = profile.repos[side.repo]?.absolutePath ?? null
   const expected = enumerate({ repoPath, side }) ?? []
+
+  // Which pictures count is the corpus's statement, not a directory listing.
+  // Capture ids are immutable — a capture at a new commit writes a new
+  // directory rather than overwriting the old one — so several may sit side by
+  // side, and only `captures` says which one the comparison rests on.
   const declared = profile.captures?.[side.id]?.sha ?? null
   const captureDir =
     side.evidenceRoot && declared
@@ -129,6 +134,11 @@ export const coverageForSide = ({ profile, side, enumerators }) => {
       : side.captureDir
 
   const { screens, path, found } = capturedScreens(captureDir)
+  const why = declared
+    ? found
+      ? null
+      : `The corpus declares a capture at ${declared} but there is no manifest at ${path}.`
+    : 'The corpus declares no capture for this side, so nothing here counts as captured yet. Run the capture, then record its sha under "captures" in tools/parity/corpora.json.'
   const { missing, states, unexplained, both } = compareCoverage({
     expected,
     captured: screens
@@ -137,8 +147,10 @@ export const coverageForSide = ({ profile, side, enumerators }) => {
   return {
     side: side.id,
     enumerated: true,
+    declared,
     manifest: path,
     manifestFound: found,
+    why,
     expected: expected.length,
     captured: screens.length,
     covered: both.length,

@@ -32,6 +32,160 @@
   "default": "dr21",
 
   "corpora": {
+    "dr1": {
+      "description": "The live-animals frontend against Design release 1 — the signed-off visual definition of the service, served at the prototype's root URLs. A work list, not a negotiation: where the frontend differs from DR1 the frontend is wrong.",
+      "runId": "EUDPA-328-DR1",
+      "backlog": "workareas/journey-builder/EUDPA-328-DR1/backlog.json",
+      "deferred": "workareas/journey-builder/EUDPA-328-DR1/deferred.json",
+      "meta": "workareas/journey-builder/EUDPA-328-DR1/.corpus-meta.json",
+      "evidence": "workareas/journey-builder/EUDPA-328-DR1/evidence.json",
+      "reportDir": "workareas/journey-builder/EUDPA-328-DR1/report",
+      "workarea": "workareas/shared/dr1-parity",
+      "pairingModule": "workareas/shared/dr1-parity/pairs.cjs",
+      "enumeratorModule": "workareas/shared/dr1-parity/enumerate.cjs",
+
+      "sides": [
+        {
+          "id": "frontend",
+          "label": "Frontend",
+          "role": "implementation",
+          "column": "left",
+          "repo": "frontend",
+          "paragraphLabels": ["Frontend", "The frontend"],
+          "screenPrefix": "fe-",
+          "_sourcePathComment": "The capture directory is named after the last commit that touched src, not HEAD, so editing the harness does not orphan identical pixels.",
+          "sourcePath": "src",
+          "captureDir": "workareas/shared/dr1-parity/capture/frontend",
+          "modelDir": "workareas/shared/dr1-parity/capture/model/frontend",
+          "htmlDir": "workareas/shared/dr1-parity/capture/html/frontend",
+          "evidenceRoot": "workareas/shared/dr1-parity/evidence",
+          "screensDir": null,
+          "app": {
+            "baseURL": "http://localhost:3000",
+            "startPath": "/",
+            "startCommand": "npm run fit:start",
+            "cwd": "repos/trade-imports-animals-frontend",
+            "readyTimeoutMs": 180000
+          },
+          "captureCommand": "tim parity capture EUDPA-328-DR1 --side frontend",
+          "traceDirs": []
+        },
+        {
+          "id": "prototype",
+          "label": "Design release 1",
+          "role": "requirements",
+          "column": "right",
+          "repo": "prototype",
+          "paragraphLabels": ["Prototype", "The prototype", "DR1"],
+          "screenPrefix": "dr1-",
+          "captureDir": "workareas/shared/dr1-parity/capture/prototype",
+          "modelDir": "workareas/shared/dr1-parity/capture/model/prototype",
+          "htmlDir": "workareas/shared/dr1-parity/capture/html/prototype",
+          "evidenceRoot": "workareas/shared/dr1-parity/evidence",
+          "screensDir": null,
+          "_appComment": [
+            "DR1 IS the root URLs. app/views/index.html is a release chooser",
+            "and calls the root journey 'the current design release journey at",
+            "the root URLs'; app/routes.js mounts only testing,",
+            "design-release-2 and design-release-2.1, so the root router is DR1.",
+            "",
+            "3010: the workspace stack already owns 3000/3001/3007/3100/3200.",
+            "Serve the kit in dev mode (`npm run dev`), not `serve`: production",
+            "mode forces https on a plaintext server and sets secure-only",
+            "cookies, which breaks the kit's sessions over http. The kit accepts",
+            "TCP connections before an HTTP probe settles under Node 24, so wait",
+            "on the port rather than on a request."
+          ],
+          "app": {
+            "baseURL": "http://localhost:3010",
+            "startPath": "/create-notification",
+            "startCommand": "npm run dev",
+            "cwd": "~/git/defra/defra-design/GB-notification-service",
+            "readyTimeoutMs": 180000
+          },
+          "captureCommand": "tim parity capture EUDPA-328-DR1 --side prototype",
+          "traceDirs": []
+        }
+      ],
+
+      "repos": {
+        "frontend": {
+          "owner": "DEFRA",
+          "repo": "trade-imports-animals-frontend",
+          "localPath": "repos/trade-imports-animals-frontend",
+          "pathRoots": [
+            { "prefix": "~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/" },
+            { "prefix": "repos/trade-imports-animals-frontend/" },
+            { "prefix": "trade-imports-animals-frontend/" },
+            { "prefix": "src/", "impliedPrefix": "src/" }
+          ]
+        },
+        "prototype": {
+          "owner": "defra-design",
+          "repo": "GB-notification-service",
+          "localPath": null,
+          "localPathAbsolute": "~/git/defra/defra-design/GB-notification-service",
+          "pathRoots": [
+            { "prefix": "~/git/defra/defra-design/GB-notification-service/" },
+            { "prefix": "GB-notification-service/" },
+            { "prefix": "app/", "impliedPrefix": "app/" }
+          ]
+        },
+        "backend": {
+          "owner": "DEFRA",
+          "repo": "trade-imports-animals-backend",
+          "localPath": "repos/trade-imports-animals-backend",
+          "pathRoots": [
+            { "prefix": "repos/trade-imports-animals-backend/" },
+            { "prefix": "trade-imports-animals-backend/" },
+            { "prefix": "src/", "impliedPrefix": "src/" }
+          ]
+        },
+        "address-book": {
+          "owner": "DEFRA",
+          "repo": "trade-imports-address-book",
+          "localPath": "repos/trade-imports-address-book",
+          "pathRoots": [
+            { "prefix": "repos/trade-imports-address-book/" },
+            { "prefix": "trade-imports-address-book/" },
+            { "prefix": "src/", "impliedPrefix": "src/" }
+          ]
+        }
+      },
+
+      "repoBySideDefault": {
+        "frontend": "frontend",
+        "prototype": "prototype"
+      },
+
+      "pins": {
+        "frontend": { "ref": "HEAD", "why": "Photograph the latest of both sides, as ruled for the DR2.1 run." },
+        "prototype": { "ref": "origin/main", "why": "Same." },
+        "backend": { "ref": "HEAD", "why": "A verification pin, not a comparison pin." },
+        "address-book": { "ref": "HEAD", "why": "Same as backend." }
+      },
+
+      "_captureComment": [
+        "What the pictures on disk are actually of. A pin is where the",
+        "citations point; a capture is where the pixels came from. Capture ids",
+        "are immutable — a capture at a new commit writes a new directory",
+        "rather than overwriting the old one — so this is the one place that",
+        "says which directory the comparison rests on."
+      ],
+      "captures": {
+        "prototype": {
+          "sha": "491b3926",
+          "on": "2026-08-19",
+          "deviceScaleFactor": 2,
+          "note": "First slice only: origin-and-reason. 10 screens — origin, the commodity page empty and with results, reason-for-import collapsed and with each of its four reveals open, its error state, and CPH."
+        }
+      },
+
+      "captureCitationRoots": [
+        { "prefix": "capture/", "kind": "capture", "side": null }
+      ]
+    },
+
     "dr21": {
       "description": "The real live-animals frontend against Design release 2.1 of the GB notification service prototype. 97 findings, captured August 2026.",
       "runId": "EUDPA-328",
@@ -54,6 +208,7 @@
           "repo": "frontend",
           "paragraphLabels": ["Frontend", "The frontend"],
           "screenPrefix": "fe-",
+          "sourcePath": "src",
           "captureDir": "workareas/shared/dr21-parity/fe-miner/capture",
           "modelDir": "workareas/shared/dr21-parity/fe-miner/capture/model",
           "modelsFrom": {

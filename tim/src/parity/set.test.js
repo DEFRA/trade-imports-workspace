@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { readJsonFile } from './io.js'
-import { setSlot, setDecisionRequired, setCitation } from './set.js'
+import { setSlot, setSlots, setDecisionRequired, setCitation } from './set.js'
 
 let dir
 let profile
@@ -110,6 +110,58 @@ describe('setSlot', () => {
       file: slotFile('one two three four')
     })
     expect(result.words).toBe(4)
+  })
+})
+
+describe('setSlots', () => {
+  test('writes many slots across many increments in one go', () => {
+    setSlots({
+      profile,
+      slots: {
+        'inc-001': { frontend: 'a', prototype: 'b' },
+        'inc-002': { difference: 'c' }
+      },
+      pass: 'a'
+    })
+    const [first, second] = readJsonFile(profile.paths.backlog).increments
+    expect(first.finding).toMatchObject({
+      frontend: 'a',
+      prototype: 'b',
+      pass: 'a'
+    })
+    expect(second.finding).toMatchObject({ difference: 'c', pass: 'a' })
+  })
+
+  test('refuses the whole batch when one increment is unknown', () => {
+    expect(() =>
+      setSlots({ profile, slots: { 'inc-999': { frontend: 'a' } } })
+    ).toThrow(/inc-999 is not in this backlog/)
+    expect(
+      readJsonFile(profile.paths.backlog).increments[0].finding
+    ).toBeUndefined()
+  })
+
+  test('refuses the whole batch when one slot name is wrong', () => {
+    expect(() =>
+      setSlots({ profile, slots: { 'inc-001': { detail: 'nope' } } })
+    ).toThrow(/not a prose slot/)
+    expect(readJsonFile(profile.paths.backlog).increments[0].detail).toBe(
+      'The frozen original.'
+    )
+  })
+
+  test('leaves an increment the batch does not name alone', () => {
+    setSlots({ profile, slots: { 'inc-001': { frontend: 'a' } } })
+    expect(
+      readJsonFile(profile.paths.backlog).increments[1].finding
+    ).toBeUndefined()
+  })
+
+  test('trims each value', () => {
+    setSlots({ profile, slots: { 'inc-001': { frontend: '  a  \n' } } })
+    expect(
+      readJsonFile(profile.paths.backlog).increments[0].finding.frontend
+    ).toBe('a')
   })
 })
 

@@ -78,6 +78,23 @@ describe.skipIf(!present)('the real EUDPA-328 corpus', () => {
     expect(without.map((item) => item.id)).toEqual([])
   })
 
+  test('every live finding still reaches its audit record through the join', () => {
+    // verification is never copied into the backlog. This is what guarantees it
+    // is still there, and it is the reason nothing has to promise not to edit it.
+    const profile = loadCorpusProfile({ workspaceRoot, runId: 'EUDPA-328' })
+    const { findings } = loadCorpus({ profile })
+    const without = findings.filter((item) => !item.sections.verification)
+    expect(without.map((item) => item.id)).toEqual([])
+  })
+
+  test('no finding has had its verification copied into the backlog', () => {
+    const { increments } = parseBacklog(readJsonFile(backlogPath))
+    const copied = increments
+      .filter((increment) => increment.finding?.verification)
+      .map((increment) => increment.id)
+    expect(copied).toEqual([])
+  })
+
   test('the counts add up: findings plus withdrawn is what is in the file', () => {
     const profile = loadCorpusProfile({ workspaceRoot, runId: 'EUDPA-328' })
     const { counts } = runCounts({ profile })

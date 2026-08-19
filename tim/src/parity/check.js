@@ -247,18 +247,23 @@ const quotedSpans = (text) =>
 // A finding is migrated when its prose has moved, not when it has merely
 // acquired a decision question: a gated finding can carry finding.decisionRequired
 // long before Pass A reaches its domain.
-const PROSE_SLOTS = [
-  'frontend',
-  'prototype',
-  'difference',
-  'falsifiedBy',
-  'verification'
-]
+//
+// `verification` is not in this list and is not copied into the backlog. It
+// stays in the upstream findings file and is joined by title at load time, so
+// nothing in this pipeline can write it — a stronger guarantee than copying 97
+// dense paragraphs in and promising not to touch them, and it keeps the prose
+// diff readable. The contract test asserts every live finding still joins to one.
+const PROSE_SLOTS = ['frontend', 'prototype', 'difference', 'falsifiedBy']
+
+// Migration means the body has been assigned across the side columns — the part
+// that is judgement. `correction` and `falsifiedBy` arrive mechanically from
+// the sentinels in the frozen detail, and a finding that has had only that has
+// not been migrated: counting it as migrated would report the body still
+// sitting in `detail` as content lost.
+const SIDE_SLOTS = ['frontend', 'prototype']
 
 const isMigrated = (increment) =>
-  PROSE_SLOTS.some(
-    (slot) => (increment.finding?.[slot] ?? '').trim().length > 0
-  )
+  SIDE_SLOTS.some((slot) => (increment.finding?.[slot] ?? '').trim().length > 0)
 
 // An invariant that compares the frozen detail against the migrated slots has
 // nothing to say until at least one finding has been migrated. Saying "0 quoted
@@ -283,9 +288,14 @@ export const checkQuotes = (increments) => {
   if (migrated.length === 0) return notYetMigrated('I5')
   for (const increment of increments) {
     const slots = allSlotText(increment)
-    if (!slots.trim()) continue
-    const wanted = new Set(quotedSpans(increment.detail))
-    for (const match of increment.detail.matchAll(BACKTICKED)) {
+    if (!isMigrated(increment)) continue
+    // Citations first. The corpus routinely backticks a reference —
+    // `consignment-address-sections.js:78-96` — and a migration replaces it
+    // with its marker, so treating it as an identifier to conserve would fail
+    // the finding for doing exactly what it was asked to do.
+    const source = withoutCitations(increment)
+    const wanted = new Set(quotedSpans(source))
+    for (const match of source.matchAll(BACKTICKED)) {
       wanted.add(match[1])
     }
     for (const value of wanted) {
@@ -352,7 +362,7 @@ export const checkNumbers = (increments) => {
   if (!increments.some(isMigrated)) return notYetMigrated('I6')
   for (const increment of increments) {
     const slots = allSlotText(increment)
-    if (!slots.trim()) continue
+    if (!isMigrated(increment)) continue
     const detail = withoutCitations(increment)
     const after = numbersIn(slots)
     for (const value of numbersIn(detail)) {
@@ -406,7 +416,7 @@ export const checkResidue = (increments, threshold = 0.98) => {
   let rewritten = 0
   for (const increment of increments) {
     const slots = allSlotText(increment)
-    if (!slots.trim()) continue
+    if (!isMigrated(increment)) continue
     // A finding that has had Pass B has had its words changed on purpose, so
     // residue means nothing for it — whichever pass the check was asked for.
     if (increment.finding?.pass === 'b') {
@@ -464,13 +474,7 @@ export const checkSlots = (increments, expected, pass = 'a') => {
     migrated.filter((inc) => (inc.finding?.[slot] ?? '').trim().length > 0)
       .length
 
-  for (const slot of [
-    'frontend',
-    'prototype',
-    'difference',
-    'falsifiedBy',
-    'verification'
-  ]) {
+  for (const slot of PROSE_SLOTS) {
     if (migrated.length && nonEmpty(slot) !== migrated.length) {
       problems.push(
         `${slot} empty on ${migrated.length - nonEmpty(slot)} of ${migrated.length} migrated findings`
@@ -543,8 +547,8 @@ export const checkPolarity = (increments, baseline) => {
     ? new Map(baseline.increments.map((inc) => [inc.id, inc]))
     : null
   for (const increment of increments) {
+    if (!isMigrated(increment)) continue
     const now = allSlotText(increment)
-    if (!now.trim()) continue
     // The frozen detail is the fallback, not an empty string. A baseline taken
     // before the migration has no slots at all, and comparing against nothing
     // reports every softening as no change — the exact silence this list

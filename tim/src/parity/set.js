@@ -76,6 +76,69 @@ export const setSlot = ({ profile, id, slot, file, pass }) => {
 }
 
 /**
+ * Set many slots across many increments in one atomic write.
+ *
+ * The per-slot setter is what a fan-out worker uses, because a worker touching
+ * one slot at a time cannot corrupt the file. This is for a single writer
+ * migrating a batch: one read, one write, and the same refusals — an unknown
+ * slot name, an unknown increment id, and never `detail`.
+ *
+ * @param {object} args
+ * @param {object} args.profile
+ * @param {Record<string, Record<string, string>>} args.slots - id to slot to text
+ * @param {string} [args.pass]
+ * @returns {object}
+ */
+export const setSlots = ({ profile, slots, pass }) => {
+  const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
+  const known = new Set(backlog.increments.map((increment) => increment.id))
+
+  for (const [id, values] of Object.entries(slots)) {
+    if (!known.has(id)) {
+      throw new TimError('NOT_FOUND', `${id} is not in this backlog.`)
+    }
+    for (const slot of Object.keys(values)) {
+      if (!SLOTS.includes(slot)) {
+        throw new TimError(
+          'USAGE',
+          `${id}: "${slot}" is not a prose slot. Choose one of: ${SLOTS.join(', ')}.`
+        )
+      }
+    }
+  }
+
+  const increments = backlog.increments.map((increment) => {
+    const values = slots[increment.id]
+    if (!values) return increment
+    const trimmed = Object.fromEntries(
+      Object.entries(values).map(([slot, text]) => [slot, String(text).trim()])
+    )
+    return {
+      ...increment,
+      finding: {
+        ...(increment.finding ?? {}),
+        ...trimmed,
+        ...(pass ? { pass } : {})
+      }
+    }
+  })
+
+  const result = writeJsonAtomic(profile.paths.backlog, {
+    ...backlog,
+    increments
+  })
+  return {
+    increments: Object.keys(slots).length,
+    slots: Object.values(slots).reduce(
+      (n, values) => n + Object.keys(values).length,
+      0
+    ),
+    pass: pass ?? null,
+    ...result
+  }
+}
+
+/**
  * Set the decision question on one increment.
  *
  * @param {object} args

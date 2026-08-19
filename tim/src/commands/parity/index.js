@@ -10,7 +10,13 @@ import { runReport } from '../../parity/render/run.js'
 import { serveReport } from '../../parity/render/serve.js'
 import { runCheck } from '../../parity/check.js'
 import { buildCorpusMeta } from '../../parity/meta.js'
-import { setSlot, setDecisionRequired, setCitation } from '../../parity/set.js'
+import { runSplitSentinels } from '../../parity/split-sentinels.js'
+import {
+  setSlot,
+  setSlots,
+  setDecisionRequired,
+  setCitation
+} from '../../parity/set.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 
@@ -294,6 +300,51 @@ export const register = (program, { timVersion }) => {
           }),
         renderText: (r) =>
           `${r.id}.finding.${r.slot} set — ${r.words} words${r.pass ? `, pass ${r.pass.toUpperCase()}` : ''}.`,
+        timVersion
+      })
+    )
+
+  parity
+    .command('split-sentinels <runId>')
+    .description(
+      'Pass A, the mechanical half: fill correction and falsifiedBy verbatim from the sentinels in the frozen detail'
+    )
+    .option('--write', 'Apply rather than reporting')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runSplitSentinels({ profile, write: opts.write }),
+        renderText: (r) =>
+          [
+            `correction filled on ${r.filled.correction}, falsifiedBy on ${r.filled.falsifiedBy}.`,
+            r.withoutFalsifier.length
+              ? `no falsifier in detail: ${r.withoutFalsifier.join(', ')}`
+              : 'every finding carries a falsifier.',
+            r.written
+              ? `Written to ${r.path}`
+              : 'Dry run — pass --write to apply.'
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('set-slots <runId>')
+    .description(
+      'Write many slots across many increments in one atomic write, from a JSON file of {id: {slot: text}}'
+    )
+    .requiredOption('--file <path>', 'JSON file of slots')
+    .option('--pass <a|b>', 'Which migration pass wrote this text')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          setSlots({
+            profile,
+            slots: readJsonFile(opts.file),
+            pass: opts.pass
+          }),
+        renderText: (r) =>
+          `${r.slots} slots across ${r.increments} increments${r.pass ? `, pass ${r.pass.toUpperCase()}` : ''}.`,
         timVersion
       })
     )

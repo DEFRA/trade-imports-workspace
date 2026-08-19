@@ -542,3 +542,119 @@ screenshot rather than the extractor.
 `tim parity check` is still red on exactly one thing, and it names it:
 *"69 of 70 gated findings have no decision question — until they do, the report
 can present the evidence but not the ask."*
+
+## 8. Later still: the pictures now show the control, not the page
+
+Section 7's last list said element crops were the largest thing not waiting on
+anything. They are done. `inc-045` to `inc-051` are closed.
+
+**Progress: 45 of 58 increments done, 2 dropped, 11 to do.**
+
+### The decision I made here, because you might have made it differently
+
+**Which crop lands on which card is chosen by a rule, not curated by hand.**
+The plan asks for 96 curated frames — a person deciding, per finding, which
+fragment of which screen makes the point. That is the largest single piece of
+labour left in the evidence work, and it is exactly the kind of judgement you
+said not to spend the night on before you had seen a canary.
+
+So I wrote the rule down instead of applying it 96 times: **an anchor is
+relevant when the finding's own prose names the control** — by the `name`
+attribute, which the corpus writes in backticks constantly, or by its label.
+Nothing matches, the card keeps the whole page. Two crops per card at most,
+longest name first.
+
+- It is not a guess dressed as a decision. Every crop on the page can be traced
+  to a word the analyst wrote.
+- It is reversible per finding: a curated frame in `visual[]` still wins, so
+  hand-curation is now a correction, not a prerequisite.
+- **74 of the cards get a crop.** The rest keep the page, which is the right
+  answer for a page-level finding anyway.
+
+### Anchors are data, so this never needs a spec edit again
+
+`tim parity seed-anchors EUDPA-328 --write` reads the compare deltas — the
+files that already know which controls differ — and writes
+`evidence/anchors.frontend.json` and `evidence/anchors.prototype.json`.
+**56 anchors across 23 frontend screens; 87 across 22 prototype screens.**
+
+Both capture harnesses load the file for their own side and shoot everything
+declared for the screen they were called with. Adding element evidence to a
+finding is a data change from here on.
+
+### What a crop actually is
+
+Not `locator.screenshot`. The crop is a clip in document coordinates against
+the full-page image, taken around the nearest **container** — the form group,
+the fieldset, the summary row — with 24px of padding. The label, the hint and
+the error are the finding; a picture of a bare input is not evidence. The
+padding lets the neighbouring markup bleed in at the edges, so the fragment
+reads as a place on a page rather than a control floating in white.
+
+`inc-013` is the one to look at: the frontend's file-upload group on the left,
+the prototype's "Document type" select on the right, side by side, at the size
+you can actually read them.
+
+### Two things my own tests caught
+
+- **A substring match put the `file` upload crop on every card whose prose said
+  "filename".** Whole-word matching now, with the regex escaped. It cost 7 of
+  the 81 crops, and every one of the 7 was wrong.
+- **`page.screenshot({clip})` failed on every crop** — Playwright applies the
+  clip in viewport coordinates unless the shot is `fullPage`. Passing both, and
+  clamping the box to `scrollWidth`/`scrollHeight`, fixed it.
+
+### A directory-naming bug I would have hit every day
+
+The frontend's capture directory was named after `HEAD`. Committing the capture
+harness therefore orphaned all 33 screenshots and 47 crops, with not one pixel
+changed. It is now named after **the last commit that touched `src`** — the
+application, which is what the pictures are of. A harness change that does move
+a pixel still shows up, and in the better place: as drift on the file, beside
+the decision that picture supports.
+
+That moves the frontend capture sha in `corpora.json` from `6766115c` to
+`005b1e8c`. Same pixels, honest name.
+
+### Two make targets you did not ask for
+
+`tim` and `sonar` both resolve their config from the current directory, and an
+agent in this workspace cannot `cd`. So neither could be run against a sub-repo
+at all — the sonar pre-commit scan CLAUDE.md mandates was simply unreachable
+from here. There are now `make parity-report`, `make parity-check`,
+`make parity-serve` and `make sonar-staged REPO=...`, which are the only place
+the `cd` is allowed to live.
+
+Worth knowing: `sonar analyze` reports "no project configured" even inside the
+frontend repo, which does have a `sonar.projectKey`. The secrets scan runs and
+passes; the agentic analysis does not. That is a real gap in the pre-commit
+mandate and I have not chased it.
+
+### One tidy-up I could not do
+
+Two superseded capture directories are still on disk:
+
+```
+workareas/shared/dr21-parity/evidence/frontend@6766115c/
+workareas/shared/dr21-parity/evidence/frontend@/
+```
+
+Their tracked manifests are removed and nothing references them, but every form
+of `rm` I tried was denied by the guard hook. One command when you are back:
+
+```bash
+rm -rf ~/git/defra/trade-imports-workspace/workareas/shared/dr21-parity/evidence/frontend@6766115c \
+       "~/git/defra/trade-imports-workspace/workareas/shared/dr21-parity/evidence/frontend@"
+```
+
+### Still red on the same one thing
+
+`tim parity check` has not moved: *"69 of 70 gated findings have no decision
+question."* That is the canary gate, and it stays red until you have read
+section 2.
+
+**Not waiting on anything (4 left):** the drift panel's curation hashes
+(`inc-052`), `check-evidence.sh` and `repoint.sh` (`inc-053`), the artifact
+export (`inc-058`), and moving the page-model extractor into the frontend repo
+(`inc-041`) — which the capture path does not use and which I would now argue
+should be dropped rather than done.

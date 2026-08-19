@@ -4,9 +4,26 @@ Paste everything below the line to a fresh orchestrator.
 
 ---
 
-You are running a parity comparison between the DEFRA live-animals import
-notification frontend and **Design Release 1** of the GOV.UK prototype, and
-rendering it as a decision surface a person can rule from.
+You are comparing the DEFRA live-animals import notification frontend against
+**Design Release 1** of the GOV.UK prototype, and turning the differences into
+a work list.
+
+**Why this exists.** The frontend was built against an out-of-date prototype.
+DR1 is the signed-off visual definition of the application. Your output is the
+work needed to bring the frontend up to match it.
+
+That framing matters. This is not a negotiation — the design is settled. Where
+the frontend differs from DR1 the frontend is wrong, unless the finding itself
+is mistaken. So findings are born as work, and a ruling is needed only where a
+finding's *correctness* is in doubt, never where its desirability is.
+
+The previous run against DR2.1 worked the other way round, because that release
+was in flux and half the differences were genuinely open design questions. Do
+not carry that posture over. The band names and the ruling vocabulary you
+inherit — `needs-design-decision`, accept/reject/defer — were built for that
+other job. If they feel like they are asking Sam to approve the design rather
+than confirm a finding, say so; they probably need re-shaping, and that is a
+conversation to have after the first delta counts land, not before.
 
 ## Where you are
 
@@ -86,10 +103,23 @@ Everything is `tim parity <subcommand> <runId>`; `--json` on any of them.
 | `check-evidence [--strict]` | Pin drift, capture integrity, screens with no picture, dead citations — the only command that reads all of them together |
 | `repoint --side S --to SHA` | Preview old picture beside new before superseding a capture |
 
-Capture on the frontend side:
-`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:fit:capture`
+Capture lives in `tools/parity/capture/` — its own npm project, because these
+are requirements-gathering tools rather than tests and do not belong in either
+application's repo. Read its `README.md`.
 
-Capture on the prototype side: a Playwright harness you will build — see below.
+```bash
+cd ~/git/defra/trade-imports-workspace/tools/parity/capture
+npm install && npm run install:browser   # one-time, ask Sam — the hook blocks it
+export CAPTURE_EVIDENCE_DIR=~/git/defra/trade-imports-workspace/workareas/shared/dr1-parity/evidence
+export CAPTURE_MODEL_DIR=~/git/defra/trade-imports-workspace/workareas/shared/dr1-parity/capture/frontend/model
+npm run capture:frontend
+```
+
+Both variables are **required** — the capture refuses to start without them,
+deliberately, because a default would file DR1's evidence under the DR2.1
+corpus it is replacing.
+
+The prototype side is `npm run capture:prototype`, whose walker you will build.
 
 ## This is the first run of these tools on a second corpus
 
@@ -103,25 +133,20 @@ one-off.
 
 Known breakages, in the order you will hit them:
 
-1. **Capture output defaults point at the DR2.1 workarea.** Four of them:
-   `capture.js:14-18` and `page-model.js:386-391` in the frontend, and
-   `CAPTURE_DIR` / `EVIDENCE_ROOT` in the harness extractor. All are
-   env-overridable — `FIT_CAPTURE_DIR`, `FIT_MODEL_DIR`, `CAPTURE_DIR`,
-   `EVIDENCE_DIR` — but the default is the trap. Set them first.
-2. **Nothing keeps capture output out of git.** `.gitignore:22-24` negates
-   `workareas/shared/`, and only `*.log` and `test-results/` are excluded
-   below. Add a rule before your first capture or you will commit 100,000 lines
-   of PNGs and page models.
-3. **Screen pairing is code, not data.** You must hand-author
+1. **The frontend capture has never run from its new home.** It moved out of
+   the frontend repo into `tools/parity/capture/` and its imports, its git
+   `cwd` and its output paths were all rewired in the move. Nobody has run it
+   since. Expect the first run to fail; the fix belongs in the tool.
+2. **Screen pairing is code, not data.** You must hand-author
    `workareas/shared/dr1-parity/compare/pairs.js` mapping `fe-*` to `dr1-*`,
    plus `onlyFrontend` and `onlyPrototype`. Keep the CommonJS contract exactly:
    `module.pairs`, `module.onlyFrontend`, `module.onlyPrototype`, and each pair
    `{frontend, prototype}`.
-4. **`compare/build-increments.js:14` writes to a hardcoded stale path** —
+3. **`compare/build-increments.js:14` writes to a hardcoded stale path** —
    `~/git/defra/trade-imports-animals/workareas/journey-builder/EUDPA-328`,
    which is both the pre-migration workspace name and the old run id. Derive it
    from the corpus profile. Same for `compare/phase3.workflow.js:10`.
-5. **The side ids must stay `frontend` and `prototype`.** They are literal keys
+4. **The side ids must stay `frontend` and `prototype`.** They are literal keys
    in the finding schema and the invariant checker. Change the *labels*, not
    the ids.
 
@@ -177,8 +202,10 @@ with everything that does not depend on it.
 
 1. Read `SKILL.md`, then `MERGE-PLAN.md` beside this file for what the tooling
    is and what is known broken.
-2. Set the four capture-output env vars and add the `.gitignore` rule. Prove it
-   by running one capture and checking `git status` is clean.
+2. Set `CAPTURE_EVIDENCE_DIR` and `CAPTURE_MODEL_DIR`, then run
+   `npm run capture:frontend` from `tools/parity/capture/`. It has never run
+   from its new home — getting it green is your first real task, and it proves
+   the whole capture path. Check `git status` is clean afterwards.
 3. Add a `dr1` corpus to `tools/parity/corpora.json`: sides keep the ids
    `frontend` and `prototype`, label the second one "Design release 1",
    `screenPrefix: 'dr1-'`, paths under `workareas/shared/dr1-parity/`. Omit

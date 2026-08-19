@@ -1,147 +1,114 @@
-# Landing the parity tooling, retiring the DR2.1 corpus
+# What landed, and what DR1 is for
 
-Written 19 August 2026, after a seven-agent review of all three repos. The
-detail behind every claim here was verified against the files, not inferred.
+Supersedes the three-PR plan that was here. Sam's corrections, applied: no PRs
+on the workspace, no tickets for anything outside `repos/`, and the capture
+harness belongs in the workspace because it is not a test.
 
-## What is worth keeping
+## Done
 
-The comparison generator. Given a corpus — two or more sides, their repos,
-their pins and their captures — it resolves every `file:line` in the findings
-to a permalink and a snippet, shoots the control each finding is about on both
-sides, works out where a control that exists on only one side *would* sit on
-the other, records the picture you were last shown so a re-capture cannot
-silently change what a ruling was made against, and renders the whole thing as
-a static page you can rule from. It is about 11,600 lines with 777 tests, and
-almost all of it reads the corpus as data.
+**The tooling is on `main`.** The whole branch fast-forwarded — 49 commits, all
+history intact. The objects were already pushed so this cost nothing: the repo
+is 12.89 MiB total. `archive/dr21-parity-corpus` tags the tip, so every
+capture, page model and delta stays restorable whatever happens to the working
+tree.
 
-The DR2.1 corpus itself — 97 findings, 241,353 insertions of captures, page
-models and deltas — is being retired in favour of Design Release 1.
+**The capture harness moved into `tools/parity/capture/`.** It is its own npm
+project with its own Playwright, because a spec in the workspace cannot resolve
+`@playwright/test` out of another repo's `node_modules`.
 
-## Three PRs, in order
+```
+tools/parity/capture/
+  package.json          its own Playwright
+  page-model.js         the structural extractor, one copy, shared
+  frontend/             capture.js, walk.spec.js, playwright.config.js
+  prototype/            (the DR1 walker goes here)
+```
 
-### PR-1 — build-loop genericisation (workspace, small)
+It borrows each application's own journey helpers rather than forking them —
+the frontend's `fit/live-animals-journey.js`, the designer's
+`journey-demo/e2e/journey.js`. **The app owns how to reach a screen; this owns
+what to record when it gets there.**
 
-The `journey-builder` target-profile work that was half-finished before any of
-this started. Four live-animals facts still sit in `prepare-digest.sh` and
-belong in `targets.json`: the Confluence page id `6497338582`, the canvas
-filename, the `spike/$RUN_ID-live-animals-spec` branch slug, and the journey
-name written into `.digest-meta.json`.
+**The frontend repo is clean.** It carries a single two-line change now — the
+fit suite getting its own default port, a genuine fix to its own suite — on
+`chore/EUDPA-328-fit-port`. Everything else came out.
 
-Independent of everything else. Lands first so PR-2 branches off a clean main.
+**Two defaults were removed, not repointed.** `CAPTURE_EVIDENCE_DIR` and
+`CAPTURE_MODEL_DIR` are required and the capture refuses to start without them.
+They used to default into the DR2.1 corpus, so a DR1 run would have quietly
+filed its evidence under the comparison it was replacing.
 
-### PR-2 — the parity tooling (workspace, ~11,600 lines)
+**Four `.gitignore` rules** now keep captured pixels and page models out of
+`workareas/shared/`. Without them one capture run commits ~100,000 lines. The
+DR2.1 corpus did exactly that.
 
-`tim/src/parity/`, `tools/parity/`, the `parity` skill, the docs. Five commits
-rather than one squash, so review is possible:
+## One thing needs you
 
-1. `tim parity` library + CLI wiring
-2. `tools/parity` entry points + `corpora.json`
-3. the promoted capture and diff modules (see below)
-4. tracking policy — `.gitignore`, `workareas.md`, two carried backlogs
-5. docs — skill, CLAUDE.md, tools index, retirement note
+The harness's Playwright is not installed — the guard hook blocks `npm install`
+from an agent. One-time:
 
-**Three files get promoted out of the workarea and into the tooling tree**,
-because they are corpus-free and everyone will need them:
+```bash
+cd ~/git/defra/trade-imports-workspace/tools/parity/capture
+npm install
+npm run install:browser
+```
 
-| From | To |
-|---|---|
-| `harness/e2e/page-model.js` | `tools/parity/capture/page-model.js` |
-| `compare/diff.js` | `tools/parity/compare/diff.js` |
-| `compare/diff-all.js` | `tools/parity/compare/diff-all.js` |
+Until that runs the frontend capture cannot be verified end to end. Everything
+else is committed and pushed.
 
-Four path couplings get fixed on the way: the literal `dr21` evidence default,
-a dead `.app-dr2-dashboard-glance-card` selector two releases stale, the
-side-named `anchors.prototype.json` leaf, and `diff-all.js`'s `../fe-miner` and
-`../harness` relative roots, which should come from the corpus profile.
+## What the DR1 comparison is for
 
-**Five cheap corrections that must not reach main:**
+This changes the tooling's shape, so it is worth stating exactly.
 
-- `next-decision.sh:18` defaults `--gate` to `sam`; make it required
-- `corpora.json:100-101,115` carry literal `/Users/samfarrington/` prefixes when
-  the `~/` variants beside them already work
-- `corpora.json:24-25` claims the `tools/parity` shell scripts read that file.
-  None of the three does
-- `CLAUDE.md:44` — the `parity` row is separated from the routing table by a
-  blank line and renders as stray pipe-delimited text
-- `docs/reference/workareas.md:28` hardcodes `dr21-parity` inside an otherwise
-  durable policy doc; `:33` says "Eight files" over eight bullets
+**We built against an out-of-date prototype. DR1 is the signed-off visual
+definition of the app. The job is to bring the frontend up to match it.**
 
-### PR-3 — evidence capture (frontend, 6 files, 998 lines)
+That is not what the DR2.1 report was. That was a negotiation surface — 70
+findings gated on a ruling, because the design itself was in flux and half the
+differences were open questions. Against a signed-off definition there is far
+less to decide: a difference means the frontend is wrong, and the output is a
+work list.
 
-Test-only. No production code touched, no new dependencies, one new Playwright
-project gated behind `FIT_CAPTURE`.
+Consequences, none of them yet applied:
 
-**One thing must change before it is raised.** `fit/evidence/capture.js:17` and
-`fit/evidence/page-model.js:390` default to writing into
-`~/git/defra/trade-imports-workspace/workareas/shared/dr21-parity/…` — a
-production repo whose test suite writes into another repo's workarea by
-default. Both are already env-overridable; the fix is to make the *default*
-repo-local (`fit/evidence/capture/`) and gitignore it.
+- **The `needs-design-decision` band largely evaporates.** It existed because
+  DR2.1 was moving. Against a signed-off definition the honest bands are closer
+  to *frontend work*, *needs backend*, and *disputed* — the last being small,
+  for cases where the definition looks wrong rather than the app.
+- **The default disposition flips.** Today a finding is born awaiting a ruling.
+  It should be born as accepted work, with rulings reserved for findings whose
+  correctness is in doubt.
+- **The gate stops being "does Sam agree with this design"** and becomes "is
+  this finding correct" — a much cheaper question, and one an adversarial
+  verifier can largely answer.
+- **The report becomes a work list, and the handoff already exists.**
+  `journey-builder` consumes `status`, `gate` and `dependsOn` to run a build
+  loop over whatever has been accepted, and its increment types — add-page,
+  add-section, add-field, obligation-change, flow-change, copy-change — are
+  already how findings are classified. "Difference found" to "frontend changed"
+  is one existing skill boundary, not a new thing to design.
 
-## What is left behind, and why that is safe
+Whether to re-shape the bands before the DR1 run or after the first pass: I
+would do it after. The delta counts will tell you whether the distinction still
+earns its place.
 
-Nothing is deleted until the branch tip is tagged. Everything below stays
-recoverable from that tag forever.
+## Knowingly deferred
 
-| Left behind | Size | Why |
-|---|---|---|
-| Captures, page models, deltas | 239 files, ~110,000 lines | Regenerable in ~25s per side from a pinned commit |
-| `prior/` | 99 files, 31,192 lines | Superseded DR2 evidence |
-| `phase0/` | 10 files | Smoke output from the first day |
-| `frontend-snagging-eudpa315/logs/` | 52 files, 5,112 lines | A different ticket's agent scratch |
-| `journey-builder/EUDPA-328/*.json` | ~75,000 lines | The retired corpus |
-
-Two older backlogs — `EUDPA-249` and `EUDPA-288`, 1,522 lines — do go to main.
-The `workareas/shared/` tracking rule exists for exactly that.
-
-A one-page `RETIREMENT.md` replaces the eleven narrative files: what was built,
-why DR2.1 is retired, the archive tag and how to restore any file from it, the
-two capture SHAs, and what the 49 gated-but-unruled findings represent.
-
-The harness README's "Gotchas" section is promoted to
-`docs/best-practices/playwright/prototype-kit.md` — dev mode because production
-forces https and secure cookies, wait on the TCP port not an HTTP probe under
-Node 24, `workers: 1` because the kit races session state, `deviceScaleFactor:
-2` with `reducedMotion` for byte-identical re-runs, one port per worker.
-
-## Decisions only you can make
-
-1. **Which ticket?** EUDPA-328 was the DR2.1 comparison and its outcome is now
-   "retired". Landing tooling under a ticket whose subject is being abandoned
-   reads oddly. A new chore ticket, with EUDPA-328 closed against
-   `RETIREMENT.md`, is the honest framing.
-2. **Is DR1 settled, or is it the designer's current preference?** If it could
-   move again there is a case for holding PR-2 until the tooling has run
-   end-to-end on a second corpus once — it never has. PR-1 and PR-3 land
-   regardless.
-3. **Should the frontend own `fit/evidence/` at all?** The alternative is to
-   move the whole capture library into the workspace and leave the production
-   repo with only the Playwright project gate. That halves the fork risk — the
-   extractor exists twice today, ESM in the frontend and CommonJS in the
-   harness — but the extractor then cannot use the app's own test fixtures.
-   This changes what PR-3 *is*, so it wants deciding before review.
-4. **What is the DR1 comparison for?** Against DR2.1 the report was a decision
-   surface: 70 findings gated on your ruling. DR1 is described in the
-   prototype's own index as *"the current design release journey… use this for
-   stable reference work"*. If DR1 is a stable reference, the same tooling is
-   answering a different question — conformance rather than negotiation — and
-   the three bands (`frontend-only`, `needs-design-decision`, `needs-backend`)
-   and the ruling vocabulary may need rethinking rather than re-pointing.
-
-## Known limits of what is being merged
-
-- **A third kind of comparison will not work as data.** `corpora.json` says
-  `sides[]` is a list and nothing counts to two. That is true of the columns,
-  the coverage report and the asset ladder — but the *finding schema* has
-  `frontend` and `prototype` as literal keys in `schema.js:79-80`,
-  `set.js:7-8`, `check.js:10-11`, `load.js:72-73` and `counts.js:106`. A corpus
-  whose sides are named differently would parse, then render two empty columns
-  and report 0% migrated, silently. **This does not block DR1**, whose sides
-  keep those names. It is the first follow-up ticket.
-- **Screen pairing is per-corpus code, not data.** `corpora.json` points
+- **A third kind of comparison will not work as data.** `sides[]` is genuinely
+  a list for the columns, coverage and asset ladder — but the finding schema
+  has `frontend` and `prototype` as literal keys in `schema.js:79-80`,
+  `set.js:7-8`, `check.js:10-11`, `load.js:72-73`, `counts.js:106`. A corpus
+  whose sides are named differently would parse, render two empty columns and
+  report 0% migrated, silently. **This does not block DR1**, whose sides keep
+  those names.
+- **Screen pairing is per-corpus code**, not data — `corpora.json` points
   `pairingModule` at a hand-authored CommonJS file. DR1 needs its own.
-- **The three bands are hardcoded** in `render/page.js:14-33`, with their
-  labels duplicated in `render/card.js:4-8`. Two lists that can drift.
-
-Six follow-up tickets should be raised and linked from PR-2 before review, so
-the deferred work is visible rather than discovered.
+- **The three bands are hardcoded** in `render/page.js:14-33`, labels
+  duplicated in `render/card.js:4-8`. The band rethink above wants them in
+  `corpora.json` anyway.
+- **`compare/build-increments.js:14`** writes to a hardcoded stale path
+  containing both the pre-migration workspace name and the old run id.
+- **The prototype harness still lives in `workareas/shared/dr21-parity/`** with
+  ten near-identical configs and `BASE` as a per-spec constant. The DR1 walker
+  should be built in `tools/parity/capture/prototype/` from the designer's own
+  `walk.spec.js` instead — see `HANDOVER.md`.

@@ -1,0 +1,40 @@
+{
+  "slice": "addresses",
+  "title": "Every address form in DR1 labels the same two fields \"Postcode or Zip code\" and \"Phone number\"; the frontend labels them \"Postal or zip code\" and \"Telephone number\".",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transporter-private",
+    "dr1-transporter-add-private"
+  ],
+  "controls": [
+    "postalOrZipCode",
+    "telephoneNumber"
+  ],
+  "finding": {
+    "frontend": "Wherever the frontend asks a user to type an address rather than pick one, the postcode field is labelled \"Postal or zip code\" and the phone field \"Telephone number\". The private transporter form shows both, and its captured page renders them exactly so (src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:58-59,74-75, strings at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:108,110). The permanent-address block inside the animal identification card repeats the same two labels from its own copy file (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:102,105), and so do the validation messages on both forms. So the two strings are authored twice, in two feature copy files, and both spellings disagree with DR1.",
+    "prototype": "DR1 authors both labels once per form partial and spells them the same way every time: \"Postcode or Zip code\" and \"Phone number\". The private transporter form uses them (app/views/partials/transporter-add-private-fields.html:62,100), and so do the address book's manual add form and the permanent-address new-address form, which are the other two places DR1 asks a user to type an address. The captured private transporter page renders both.",
+    "difference": "Change both labels to DR1's wording in each feature copy file that holds them — the transport copy and the commodities copy — and bring the matching validation messages with them, since each names the field it is about. Two strings in two files, and no behaviour changes. Do it in one pass rather than per form, because the point of the change is that every address form in the service asks for the same thing in the same words.",
+    "falsifiedBy": "A DR1 address form labelling either field the way the frontend does, or a GDS content decision for this service fixing \"Postal or zip code\" and \"Telephone number\" as the house terms.",
+    "correction": "Added by the verifier. This is the previous run's inc-007, which the addresses slice and the transport slice each struck as belonging to the other, leaving it owned by nobody — no finding in the run carries it. It was re-derived rather than carried: the labels really do differ, and the difference is observable on a captured pair, the frontend private transporter form against DR1's, which is one of the corpus pairs and not one of the address-book add forms that sit outside DR1's screen set. The earlier reasoning that sent it away from both slices was that the labels only appear on address-book add forms; that is wrong, because the frontend asks for a typed address in two places inside the corpus — the private transporter form and the permanent-address block in the identification card — and DR1 asks in the equivalent places. Filed under the addresses slice because that is the slice that was asked to establish whether it was homeless; whoever schedules it should note that the strings it changes live in the transport and commodities feature copy, not in the addresses one. The transport slice's verifier reached the same conclusion independently and recorded it on transport--private-transporter-phone-hint-missing, asking for exactly this file; this is the finding that note points at."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:108-110",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:62"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-phone-hint-missing",
+      "relation": "travels-with",
+      "why": "the same phone field on the same form — that finding adds its hint, this one changes its label"
+    },
+    {
+      "id": "addresses--permanent-address-page",
+      "relation": "adjacent-to",
+      "why": "the second place the frontend uses these labels is the permanent-address block that finding wants moved onto its own page"
+    }
+  ],
+  "carriedFrom": "inc-007"
+}

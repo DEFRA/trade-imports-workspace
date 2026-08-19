@@ -1,0 +1,33 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 titles the notification list page \"Dashboard\"; the frontend gives it no page name, so its browser tab reads the service name twice.",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "fe-dashboard-empty", "dr1-dashboard"],
+  "controls": [],
+  "finding": {
+    "frontend": "The notification list is the only page in the service whose page name is the service name. Its browser tab, its bookmark and the page announcement a screen reader makes on arrival all read \"Import notification service | Import notification service\", because the page supplies \"Import notification service\" as its own title (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2) and the shared layout then appends the service name to it (src/server/app/shared/layout.njk:17). Both captured dashboard states do this. A user with several tabs open cannot tell this one from any other page of the service, and the repetition carries no information.",
+    "prototype": "DR1 titles the same page \"Dashboard - Import notification service - GOV.UK\". The page name is set deliberately and separately from the heading — app/views/dashboard.html:12 sets `pageName` to \"Dashboard\" while the h1 below it stays \"Import notification service\" — so DR1 states plainly that the page is called Dashboard in the tab and the service is named once. All four captured DR1 dashboard states carry it. The same word is the page's caption above the h1 and the active item in the service navigation bar, so DR1 names the page Dashboard in three places and the frontend in none.",
+    "difference": "Give the notification list a page name of its own — \"Dashboard\", which is what DR1 calls it — in src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2 and its Welsh pair, leaving the h1 as \"Import notification service\" because DR1 keeps that heading too. This is the title only; it does not touch the heading, the caption or the navigation. It travels with the two other findings that name this page: the caption finding gives it the \"Dashboard\" caption above the h1, and the navigation finding gives it the active Dashboard nav item. It is independent of the title-format finding — that one changes the separator and the suffix for every page, this one changes what this page calls itself — and the two want doing together so the dashboard's title is only rewritten once.",
+    "falsifiedBy": "Finding either captured frontend dashboard with a browser title that names the page as anything other than the service name.",
+    "correction": "Added by the verifier. No finding in the service-wide slice or the dashboard slice named this: the title-format finding covers the separator and the GOV.UK suffix and states that all 33 frontend titles follow one pattern, which is true of the format but hides that on two of them the page name is the service name; the dashboard slice's fourteen findings are all about the list, the cards and the filters. Verified from the page models — both frontend dashboards title \"Import notification service | Import notification service\" against DR1's four dashboard states at \"Dashboard - Import notification service - GOV.UK\" — and from source on both sides, where DR1's `pageName` is authored at app/views/dashboard.html:12 rather than inherited, so this is a DR1 decision and not Prototype Kit furniture."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2",
+    "prototype": "app/views/dashboard.html:12"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--page-title-format",
+      "relation": "travels-with",
+      "why": "both rewrite the browser title of this page, one the format and one the page name; doing them apart rewrites the same string twice"
+    },
+    {
+      "id": "service-wide--section-caption",
+      "relation": "travels-with",
+      "why": "DR1 names this page Dashboard in the caption as well as the title, and the caption finding supplies the caption"
+    }
+  ]
+}

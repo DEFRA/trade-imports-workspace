@@ -1,0 +1,20 @@
+{
+  "slice": "transport",
+  "title": "DR1 hints the arrival date with an example date; the frontend hints it with the two ends of the valid window, so a user reads two dates that are not their answer before reaching the field.",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": ["arrivalDateAtPort"],
+  "finding": {
+    "frontend": "The hint under Arrival date at port of entry reads \"The expected date of arrival at the port of entry. Enter a date between\" the earliest and the latest date the service will accept, both computed from the day the page is viewed (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:4-7, window at src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/arrival-window.js). The first sentence is DR1's; the second is the frontend's own, and it puts two live dates in front of a user who has to work out that neither of them is the answer being asked for.",
+    "prototype": "DR1 hints the same field \"The expected date of arrival at the port of entry. For example, 27/3/2026\" (app/views/partials/arrival-date-picker.html:13). The example is a fixed string rather than a computed one, and it shows the format rather than the boundaries. DR1 enforces the same window silently and only names the boundaries when a date falls outside them.",
+    "difference": "Replace the second sentence of the hint with DR1's example. The window itself does not change — both services accept today minus seven days to today plus six months, inclusive at both ends — so this is copy only and no validation moves. Decide at the same time whether the example date stays fixed, as DR1 has it, or is generated: a fixed date will look stale within the year.",
+    "falsifiedBy": "Finding DR1's arrival-date hint naming the ends of the valid window rather than giving an example date."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:4-7",
+    "prototype": "app/views/partials/arrival-date-picker.html:13"
+  }
+}

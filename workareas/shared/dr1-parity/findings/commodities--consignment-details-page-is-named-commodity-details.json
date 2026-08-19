@@ -1,0 +1,35 @@
+{
+  "slice": "commodities",
+  "title": "DR1 calls the page where a user enters animal and package counts 'Commodity details'; the frontend calls it 'Consignment details', a name DR1 gives to nothing.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [
+    { "kind": "label", "text": "Consignment details" },
+    { "kind": "label", "text": "Commodity details" }
+  ],
+  "finding": {
+    "frontend": "The heading a user reads at the top of the page is 'Consignment details', and so is the browser tab and the last crumb of the breadcrumb trail — all three come from the one string src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:16, which the template renders as the h1 (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:9) and the layout uses as the page name. Nothing else on the page says 'commodity' except the table caption. The name is misleading as well as different: this page asks only about the commodities on the notification, while the things a user would call consignment details — where it is coming from, when it arrives, who is transporting it — are asked on other pages entirely.",
+    "prototype": "DR1 heads the same page 'Commodity details' and titles the tab the same way, under the caption 'About the consignment' (app/views/consignment-details.html:3, rendered at :44-45). The name is used consistently: the hub task that opens the page is called 'Commodity details' too, so a user who clicks a task arrives at a page with the task's name on it.",
+    "difference": "Change the page name from 'Consignment details' to 'Commodity details' in the commodities copy file, English and Welsh. One string carries the h1, the browser tab and the breadcrumb leaf, so all three move together. Specs that assert the heading or the title on this page need updating. This is the page's name, not the shape of the title — the hyphen-and-GOV.UK title format is a separate service-wide finding, and the two are independent.",
+    "falsifiedBy": "Finding 'Consignment details' as the heading of DR1's commodity-details page, or 'Commodity details' as the heading of the frontend's."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:16",
+    "prototype": "app/views/consignment-details.html:44-45"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--page-title-format",
+      "relation": "travels-with",
+      "why": "Both land in the browser tab, but that finding changes how the parts are joined and this one changes what the page is called. Neither depends on the other."
+    },
+    {
+      "id": "hub--commodity-details-task",
+      "relation": "travels-with",
+      "why": "DR1's hub task and the page it opens share the name; renaming the page makes the new task and its destination agree."
+    }
+  ]
+}

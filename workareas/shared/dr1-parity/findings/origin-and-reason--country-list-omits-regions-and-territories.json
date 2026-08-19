@@ -9,14 +9,21 @@
     "fe-origin",
     "dr1-origin-of-the-import",
     "fe-destination-country",
-    "dr1-reason-for-import-transhipment-revealed"
+    "dr1-reason-for-import-transhipment-revealed",
+    "fe-transit-countries",
+    "dr1-transit-countries"
   ],
-  "controls": ["countryOfOrigin", "destinationCountry"],
+  "controls": [
+    "countryOfOrigin",
+    "destinationCountry",
+    "transitedCountries"
+  ],
   "finding": {
     "frontend": "Both the country of origin and the destination country are drawn from one list of 31 entries, all of them sovereign states, and the same list serves both pages (src/server/app/services/countries/index.js:24, and src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js:27 reads it for the destination question). It holds four countries DR1 does not offer — Iceland, Liechtenstein, Norway and Switzerland — and no regions or territories at all. Three entries are also named differently: Czechia, Ireland and 'Netherlands (the)'.",
     "prototype": "DR1 offers 41 entries on both questions: the 27 member states plus fourteen regions and dependencies, each labelled with its parent in brackets — Azores (Portugal), Canary Islands (Spain), Ceuta (Spain), French Guiana (France), Guadeloupe (France), Guernsey (United Kingdom), Isle of Man (United Kingdom), Jersey (United Kingdom), Madeira (Portugal), Martinique (France), Mayotte (France), Melilla (Spain), Reunion (France) and Saint Martin (France). It names the three contested entries Czech Republic, Republic of Ireland and Netherlands. It offers no EFTA states. The list is release-agnostic data in app/data/countries.js:1-79 and it also feeds the region-of-origin prefix table, so an entry missing from it has no prefix either.",
     "difference": "Replace the country list with DR1's 41 entries and its labels, on both the origin and destination questions. It is one list change in the countries service and both pages pick it up. Settle whether dropping Iceland, Liechtenstein, Norway and Switzerland is intended before removing them — DR1 not offering them may be an omission rather than a rule, and the frontend's list comes from a reference data service rather than a file, so the change may be a query rather than an edit.",
-    "falsifiedBy": "Finding that DR1's country select is populated from a design-release-specific list, so that the fourteen regions are visible only to a DR2 session and a DR1 user sees the same 31 states the frontend offers."
+    "falsifiedBy": "Finding that DR1's country select is populated from a design-release-specific list, so that the fourteen regions are visible only to a DR2 session and a DR1 user sees the same 31 states the frontend offers.",
+    "correction": "Both counts re-derived and correct; one supporting sentence imprecise. COUNTS: the frontend's captured origin select carries 33 options — a 'Select a country' placeholder, a disabled divider rule and 31 countries — which is 27 EU member states plus Iceland, Liechtenstein, Norway and Switzerland, and no regions or territories. Counted from the rendered DOM at capture/html/frontend/fe-origin.html, not from source. DR1's captured selects carry 42 options — a 'Select one' placeholder and 41 entries — which is 27 member states, 11 territories and 3 crown dependencies. Counted from capture/html/prototype/dr1-reason-for-import-transhipment-revealed.html, where both country selects carry the same 41 and both port selects the same 10. The fourteen named in the prototype slot match app/data/countries.js exactly. The three renaming differences are confirmed verbatim: Czechia / Czech Republic, Ireland / Republic of Ireland, 'Netherlands (the)' / Netherlands. THE OPEN QUESTION IS CORRECTLY LEFT OPEN: the finding says to settle whether dropping Iceland, Liechtenstein, Norway and Switzerland is intended rather than asserting the omission is a defect, which is the right treatment — nothing in DR1 states a rule excluding EFTA, it simply has no entries for them. IMPRECISE, slot left as it stands: 'The list is release-agnostic data in app/data/countries.js:1-79 and it also feeds the region-of-origin prefix table'. countries.js does not feed the prefix table. The prefixes are a separate file, app/data/country-region-prefixes.js, keyed on the same label strings — so the dependency is real and the consequence stated is right (an entry with no matching key gets no prefix), but the two are parallel tables, not one feeding the other. Whoever does the work needs both files. HOW CHECKED: counted option elements in both captured DOMs; read app/data/countries.js and app/data/country-region-prefixes.js; read src/server/app/services/countries/index.js and its stub, which confirm the frontend list is fetched from the reference data service under GBNAG_SPS_EX with a captured fixture standing in under stub mode."
   },
   "evidence": {
     "frontend": "src/server/app/services/countries/index.js:24",

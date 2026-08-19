@@ -1,0 +1,40 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend's dashboard lists a draft so the user can resume it; DR1's dashboard cannot show a draft at all, while its own status filter offers Draft as something to filter by.",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Draft" },
+    { "kind": "label", "text": "Resume" }
+  ],
+  "finding": {
+    "frontend": "The dashboard is where a user goes back to unfinished work. A draft appears in the list with a blue Draft tag and a Resume link that takes the user back to the notification's task list (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:43-52). On the captured page the only notification in the list is a draft, so the dashboard is doing nothing else at that moment.",
+    "prototype": "A DR1 user never sees a draft on the dashboard. The list the root view renders (app/views/dashboard.html:253-254) is filtered before it arrives: the dashboard always uses an in-progress view of the notifications, and that view drops every record marked as a draft and every record marked as submission-complete. The DR1 fixture holds eight notifications, two of them drafts and two of them completed, and only the remaining four ever appear — which is why the page reads \"Show 1-4 of 4 results\". Nothing in the root design offers a way to see the other four: the root view renders no tabs and no link anywhere carries a tab, and the tab links the shared code builds all point at the design release 2.1 dashboard rather than at this one. At the same time DR1's own status filter offers Draft as one of the seven statuses a user may filter the list to (app/views/dashboard.html:153), which is a status the list it filters can never contain.",
+    "difference": "This one needs a person, because DR1 states two things that cannot both be true. Either the dashboard is deliberately a list of live consignments and drafts belong somewhere else, in which case the design owes an answer to where a user resumes unfinished work and the Draft option should come off the status filter; or the dashboard is meant to list drafts like the frontend does and the exclusion is an accident. The accident reading is the more likely one on the evidence: the filtering, the tab names and the tab links are all furniture belonging to the later design release, shared by both dashboards through one view model, and the root design uses none of it except the side effect. What settles it is a designer saying whether a draft is meant to appear on the DR1 dashboard. If it is, no frontend work follows and the note is against the prototype. If it is not, the frontend's dashboard needs a stated home for drafts before anything is removed from it, because resuming a draft is the only way back into an unfinished notification today.",
+    "falsifiedBy": "Seeing a notification with a Draft tag in the list on DR1's dashboard at its root mount, without adding a query parameter the design never links to.",
+    "correction": "Written by the verifier, not the author. The author found the mechanism, judged it absurd against a frontend whose dashboard exists so a user can resume a draft, and left it out of the corpus as a paragraph in a report. I verified the mechanism and disagree with leaving it out. It holds, and it is broader than described: the same filter hides completed notifications as well as drafts, so four of DR1's eight fixture records are unreachable, not two. It is also sharper than described, because DR1 contradicts itself here rather than merely being odd — a design cannot both offer \"filter the list to Draft\" and render a list that can never hold one. That contradiction is what the disputed band exists for, and a known inconsistency in a signed-off design is exactly the thing that gets rediscovered expensively once someone builds against it. Checked by reading the shared dashboard view model, confirming the root view references none of the tab model, confirming no view links to a tab, counting the fixture records by their variant, and counting the four cards in capture/html/prototype/dr1-dashboard.html against the eight in the fixture. One honest caveat: the tab value is read from the query string, so a hand-typed address at the root mount would render the drafts. The design never links to it, so no user reaches it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:43-52",
+    "prototype": "app/views/dashboard.html:253-254"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--status-filter",
+      "relation": "travels-with",
+      "why": "the Draft option in DR1's status filter is one half of the contradiction this finding names, so whoever settles the option set settles this too"
+    },
+    {
+      "id": "dashboard--results-count-wording",
+      "relation": "travels-with",
+      "why": "the count DR1 prints is the count after the hidden filter, so it reads 4 of 4 rather than 4 of 8"
+    }
+  ]
+}

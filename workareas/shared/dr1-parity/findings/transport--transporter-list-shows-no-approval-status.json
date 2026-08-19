@@ -3,7 +3,7 @@
   "title": "DR1 shows each transporter's approval status as a tag — Approved or New — beside its approval number; the frontend shows no status at all, so a user cannot tell an approved transporter from an unapproved one.",
   "domain": "transport",
   "type": "add-field",
-  "band": "needs-backend",
+  "band": "frontend-work",
   "confidence": "high",
   "screens": ["fe-transporter-commercial", "dr1-transporter"],
   "controls": [
@@ -13,8 +13,9 @@
   "finding": {
     "frontend": "Each transporter is one radio, labelled with the name and hinted with the address and approval number joined by an em dash (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:92-93). Nothing on the page says whether the transporter is approved. The page heading calls them \"approved commercial transporters\", so a user is left to infer that everything on the list is approved — but the underlying records carry no status field to make that true (src/server/app/services/commercial-transporters/records.js:7-29), so the claim is an assumption rather than a fact the service checked.",
     "prototype": "DR1's table has a Status column, and each row renders a govuk-tag: green Approved for most records, and a pink New for two of the eight (app/views/transporter.html:148-149, app/data/transporters.js). The status sits next to the approval number so a user choosing between two similar records can see which one the service has already approved, and can see when a transporter they added themselves has not been approved yet.",
-    "difference": "Add an approval status to each transporter record and show it on the list. The status has to come from whatever service owns the transporter register — the frontend's records are a local list with no status field, and inventing one in the frontend would mean the page asserting something nothing verified. Land the API field first, then the column.",
-    "falsifiedBy": "Finding a status, approval-state or equivalent field on the transporter records the frontend reads, whether from the local list or the service that will replace it."
+    "difference": "Add an approval status to each transporter record and show it on the list. The frontend's commercial list is a hardcoded module the frontend owns, so the field can be added there today and DR1 hardcodes its own statuses the same way — no API has to land first. What does have to be settled is what the two existing records may honestly be labelled, because marking them Approved in the frontend asserts something nothing verified. Ask whoever owns the list, then add the column. When the register moves behind a service the status travels with it.",
+    "falsifiedBy": "Finding a status, approval-state or equivalent field on the transporter records the frontend reads, whether from the local list or the service that will replace it.",
+    "correction": "CLAIMED: DR1 shows an Approved or New tag per transporter, the frontend shows none, and an API field has to land first. BOTH SIDES CONFIRMED: DR1's table carries a Status column rendering a green Approved on six records and a pink New on two (app/data/transporters.js, legible in the captured dr1-transporter screenshot), and the frontend's two records carry no status property at all (src/server/app/services/commercial-transporters/records.js:7-29). BAND WRONG, changed to frontend-work: needs-backend means an API, contract or persistence change has to land first, and none does. The frontend's commercial list is a hardcoded module inside the frontend repo — its own comment says it stays local until a ticket extends the address-book contract — so adding a status property is a frontend edit, and DR1 hardcodes status in exactly the same way. The finding's real reservation is that a hardcoded Approved asserts something unverified, which is a question for the list's owner rather than a technical dependency; the difference has been reworded to say that instead. The observation itself stands untouched."
   },
   "evidence": {
     "frontend": "src/server/app/services/commercial-transporters/records.js:7-29",

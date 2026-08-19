@@ -1,0 +1,21 @@
+{
+  "slice": "review",
+  "title": "The confirmation page's 'contact HMRC' link lands the user on HMRC's general contact page; DR1 sends them to the customs, international trade and excise enquiries page.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-confirmation", "dr1-notification-submitted"],
+  "controls": ["contact HMRC"],
+  "finding": {
+    "frontend": "Under 'Getting help' the sentence 'If you need help with your customs declaration, contact HMRC.' links to https://www.gov.uk/government/organisations/hm-revenue-customs/contact (src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:37). That is HMRC's contact index, listing every tax and every helpline, so a user who has just submitted an import notification has to find the right one themselves.",
+    "prototype": "The same sentence in DR1 links to https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries (app/views/notification-submitted.html:74-75) — the page for the enquiry this user actually has. The visible link text is 'contact HMRC' on both sides.",
+    "difference": "Change the href on the confirmation page's customs link to DR1's customs, international trade and excise enquiries URL. One attribute in one template; the link text and the sentence around it already match. Leave the target and rel attributes alone — DR1 opens the link in a new tab, which the frontend rightly does not, and that difference is not part of this.",
+    "falsifiedBy": "Finding that DR1's submitted page links 'contact HMRC' to the same general HMRC contact page the frontend uses."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:37",
+    "prototype": "app/views/notification-submitted.html:73-76"
+  },
+  "relatedTo": []
+}

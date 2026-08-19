@@ -1,0 +1,23 @@
+{
+  "slice": "review",
+  "title": "The review page shortens the means-of-transport row to 'Means of transport', where DR1 and the frontend's own arrival page both call it 'Means of transport to the port of entry'.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Means of transport", "Means of transport to the port of entry"],
+  "finding": {
+    "frontend": "In the Arrival details card the row is keyed 'Means of transport', from src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71. The page that collects the answer labels the same field 'Means of transport to the port of entry', at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:16. So a user who answered the question under one name reads it back under a shorter one that no longer says which leg of the journey the answer is about.",
+    "prototype": "DR1 uses the full label in both places. Its Arrival details page labels the select 'Means of transport to the port of entry', and its review row is keyed the same (app/routes.js:4681). Nothing is dropped between asking and reading back.",
+    "difference": "Change the review row label from 'Means of transport' to 'Means of transport to the port of entry' in the English and Welsh check-answers copy files. One string in each. The input page already carries DR1's wording, so nothing else moves, and this is independent of the disputed arrival-date row directly above it.",
+    "falsifiedBy": "Finding that DR1's review row is keyed 'Means of transport' rather than 'Means of transport to the port of entry', which would make the frontend's shorter label the matching one."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71",
+    "prototype": "app/routes.js:4681"
+  },
+  "relatedTo": [
+    { "id": "review--arrival-date-row-label", "relation": "travels-with", "why": "the two rows sit next to each other in the same Arrival details card, but only this one is settled" }
+  ]
+}

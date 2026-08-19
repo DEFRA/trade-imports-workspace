@@ -1,0 +1,29 @@
+{
+  "slice": "identification",
+  "title": "The identification page's green button reads 'Save and finish' where every other page in both services reads 'Save and continue', and DR1 reads 'Save and continue' here too.",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    { "kind": "label", "text": "Save and finish" }
+  ],
+  "finding": {
+    "frontend": "At the foot of the identification page the green button reads 'Save and finish' — the only page in the service where it does not read 'Save and continue'. Every other journey page takes the shared macro's default (src/server/app/shared/save-actions.njk:5); this page passes an override at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25, using the string at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:95. The button behaves like every other Save and continue: it saves whatever is in the open record and moves the person to the next page.",
+    "prototype": "DR1's identification page ends with 'Save and continue', the same words as the rest of its journey, and does the same thing — it captures the open record for any single-animal species and moves on (app/views/animal-identification-details.html:144-148, handled at app/routes.js:10415-10423). DR1 keeps 'Save and finish' for a different job entirely: it is the in-panel button on the last outstanding animal of a species, meaning finish this species, not finish this page.",
+    "difference": "Change the identification page's primary button to 'Save and continue' and let it take the shared default, in English and Welsh. Small on its own, but it stops mattering less once identification--save-and-add-another-always-shown lands: that finding puts 'Save and finish' on the in-card button for the last outstanding record, and if the page-level button still says the same words the page would show two identically labelled buttons doing different things. Doing this one first, or with it, avoids that.",
+    "falsifiedBy": "Finding DR1's identification page ending in a button labelled anything other than 'Save and continue', or finding the frontend's 'Save and finish' does something its 'Save and continue' does not."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25",
+    "prototype": "app/views/animal-identification-details.html:144-148"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--save-and-add-another-always-shown",
+      "relation": "travels-with",
+      "why": "that finding gives 'Save and finish' to the in-card button, so this page must stop using the same words for a different action"
+    }
+  ]
+}

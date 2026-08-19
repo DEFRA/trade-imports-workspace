@@ -1,0 +1,43 @@
+{
+  "slice": "addresses",
+  "title": "DR1's address pickers offer only the addresses held for that role; the frontend offers the whole address book to all five, so a Danish meat exporter can be chosen as the place of origin, the consignee and the importer.",
+  "domain": "addresses",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignor-or-exporter",
+    "fe-address-picker-consignee",
+    "fe-address-picker-importer",
+    "fe-address-picker-place-of-destination",
+    "dr1-consignment-address-select"
+  ],
+  "controls": [
+    { "kind": "field", "name": "party" },
+    { "kind": "label", "text": "Showing 5 of 13 addresses" }
+  ],
+  "finding": {
+    "frontend": "All five pickers search one book and take no role: place of origin, consignor or exporter, consignee, importer and place of destination each read \"Showing 5 of 13 addresses\" over the same thirteen records in the same order. The service says why in its own contract — \"Addresses have no type in the address book (D3) — the same record may be a consignor on one notification and a consignee on the next. So every picker searches one book, and no function here takes a role\" (src/server/app/services/address-book/index.js:12-15), and the search and listing functions take an organisation and a query and nothing else (:94,103). The place-of-origin picture shows the result: the first row a trader is offered as the farm the animals set out from is Astra Rosales in Bern, followed by Tech Imports Ltd in London. Nothing on the page narrows the list and nothing warns that a record is the wrong kind of thing for the role, so the trader does the sorting themselves, five times, from a list that grows with the organisation's whole book.",
+    "prototype": "DR1 scopes each picker to its role. Every address record carries a type — `type: 'place-of-origin'` on the Romanian farms, and so on (app/data/consignment-addresses.js:3-4) — and the picker filters the thirty-three records down to the ones whose type matches the section it was opened from, with consignor accepting consignor and exporter as aliases (app/routes.js:3457-3465). The place-of-origin picker shows nine of nine results, all of them farms, and the count line says nine out of nine rather than nine out of thirty-three, because the role list is the whole list as far as that page is concerned.",
+    "difference": "Scope each picker to the role it was opened from, so the count and the table describe the addresses that can actually be that party. This cannot be done in the frontend today: no record in the book carries a type, a category or a use, so there is nothing to filter on — the address book has to start distinguishing what a record can be used for, and the picker has to be able to ask for that. It is the same gap the contact page runs into from the other direction, and the two want one answer about what an address record is, not two. Until that lands the pickers offer choices DR1 rules out. If the answer turns out to be that a record may serve any role, DR1's filtering falls away and the finding becomes a question about the count line only.",
+    "falsifiedBy": "A DR1 picker rendering a record whose type does not match the section it was opened from, or an address-book record shape carrying a role, type or use the frontend could filter on today.",
+    "correction": "Added by the verifier; not carried from the previous run and not raised by the slice. The slice noticed the scoping in passing — the pagination finding describes DR1 as rendering \"every address for the role\" — but wrote no finding for it, and the contact-list finding covers only the contact page's separate branch collection. Checked on both sides rather than reasoned about: all five frontend pickers were read as captured and each says \"Showing 5 of 13 addresses\", while DR1's says \"Showing 9 out of 9 results\" against a source collection of thirty-three records, filtered through a section-to-type alias map. The needs-backend band follows from the frontend's own record shape, which carries an id, a name, an address and a country and no notion of what the record is for."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/address-book/index.js:12-15",
+    "prototype": "app/data/consignment-addresses.js:1-14"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--contact-list-not-branch-scoped",
+      "relation": "travels-with",
+      "why": "both need the address book to say what a record may be used for, and both are blocked on the same record-shape decision"
+    },
+    {
+      "id": "addresses--picker-pagination",
+      "relation": "travels-with",
+      "why": "dropping pagination without scoping would put all thirteen records on one page for every role, a longer list than DR1 ever shows"
+    }
+  ]
+}

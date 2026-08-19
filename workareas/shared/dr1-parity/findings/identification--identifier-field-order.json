@@ -1,0 +1,32 @@
+{
+  "slice": "identification",
+  "title": "DR1 puts each commodity's identifier boxes in the order that commodity's own list gives; the frontend puts them in one fixed order for every animal, so a cow is asked for its passport before its ear tag.",
+  "domain": "identification",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": ["animalIdentifierEarTag-0"],
+  "finding": {
+    "frontend": "The boxes come out in the same order whatever animal is being identified, because the order is a property of the service rather than of the commodity: the identification copy block declares passport, tattoo, ear tag and horse name in that sequence and the card renders whichever of them are in scope without resorting them (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:21-30). On the captured cow the person is asked for Passport number, then Tattoo, then Ear tag number. The two free-text fallbacks are appended after the typed fields by the same rule.",
+    "prototype": "DR1 asks for each commodity's identifiers in the order that commodity's own list sets, and the orders genuinely differ: cattle is Ear tag then Passport, a horse is Microchip, Passport, Horse name, and a cat, dog or ferret is Microchip, Passport, Tattoo (app/data/commodity-identifiers.js:3-19). The panel simply loops the list it is handed, so the data is the order. On the captured cattle panel the person is asked for the ear tag first — the identifier a cow actually carries — and the passport second.",
+    "difference": "Move the identifier order off the copy block and onto the commodity, so each commodity carries its identifiers as an ordered list and the card renders them in that order. Two of the frontend's commodities disagree with DR1 today: a cow should read Ear tag then Passport where it currently reads Passport then Ear tag, and a horse should read Microchip, Passport, Horse name. This has to be settled before the microchip field is added, because a global order has nowhere to put a field that DR1 asks for first on some commodities and not at all on others, and after tattoo comes off cattle, because until then the cow panel has a third box in the middle of the pair.",
+    "falsifiedBy": "Finding DR1's cattle panel render Passport above Ear tag, or finding the frontend sort a commodity's identifier fields by anything other than the order they are declared in the copy block."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:21-30",
+    "prototype": "app/data/commodity-identifiers.js:3-19"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--microchip-identifier-missing",
+      "relation": "travels-with",
+      "why": "the microchip is the first field on both DR1 panels that have one, which a single global order cannot express"
+    },
+    {
+      "id": "identification--tattoo-offered-for-cattle",
+      "relation": "depends-on",
+      "why": "the cow's pair only reads as a pair once the tattoo box between them has gone"
+    }
+  ]
+}

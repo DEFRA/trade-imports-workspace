@@ -1,0 +1,40 @@
+{
+  "slice": "identification",
+  "title": "DR1 heads these two pages 'Identification details' and 'Additional details'; the frontend calls them 'Animal identification details' and 'Additional animal details'.",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-animal-identification",
+    "dr1-animal-identification-details",
+    "fe-additional-details",
+    "dr1-additional-animal-details"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Animal identification details" },
+    { "kind": "label", "text": "Additional animal details" }
+  ],
+  "finding": {
+    "frontend": "The person reads 'Animal identification details' at the top of the first page and 'Additional animal details' at the top of the second. Both are authored as the page's own title — src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:43 and src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:2 — and the same string is used for the browser tab, so the word 'animal' is repeated in both places on both pages.",
+    "prototype": "DR1 heads the same two pages 'Identification details' (app/views/animal-identification-details.html:47) and 'Additional details' (app/views/additional-animal-details.html:38). Neither carries the word 'animal', because the caption above each heading already says what the page is about — 'About the consignment' on the first and 'Commodity details' on the second — so the heading only has to name the thing being detailed.",
+    "difference": "Rename the two page headings to DR1's wording, in English and Welsh. This is the page's own heading only: what the hub calls these two tasks is hub--task-row-labels, which asks for the same two words there and says in as many words that the page headings are compared on their own screens. Do the section captions first or at the same time — service-wide--section-caption adds them, and without a caption above it 'Additional details' is a heading that says less than the one it replaces.",
+    "falsifiedBy": "Finding either DR1 page headed with the word 'animal' in it, or finding the frontend's headings come from the hub's task labels rather than from the pages' own copy."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:43",
+    "prototype": "app/views/animal-identification-details.html:47"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-row-labels",
+      "relation": "travels-with",
+      "why": "the same two renamings, one on the hub row and one on the page it leads to"
+    },
+    {
+      "id": "service-wide--section-caption",
+      "relation": "depends-on",
+      "why": "DR1's shorter headings work because a caption above them names the section; the frontend has no captions yet"
+    }
+  ]
+}

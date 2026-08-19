@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "The frontend will not let a user past the transit-countries page until at least one country is ticked; DR1 treats the answer as optional and lets a user continue having named none.",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transit-countries", "dr1-transit-countries"],
+  "controls": ["transitedCountries"],
+  "finding": {
+    "frontend": "Once the means of transport is Railway or Road Vehicle the transit-countries page joins the journey, and the page refuses an empty answer: submitting with no box ticked returns the page with \"Select at least one country the consignment will travel through\" (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:37-39, copy at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:54-55). The obligation model says the same: transitedCountries is in scope and mandatory whenever the means of transport is RAILWAY or ROAD_VEHICLE (src/server/app/sets/live-animals/obligations/sections/transport.js:92-104), so the task stays incomplete and the notification cannot be reviewed until a country is named. A consignment moving by road or rail that passes through no third country has nothing true to tick, and the only way past the page is to name a country the animals do not travel through.",
+    "prototype": "DR1 shows the same page under the same rule and never validates it. The POST handler saves whatever list arrived and redirects onward (app/routes.js:10503-10537); there is no error branch for transit countries anywhere in the route file, and the completeness helper is explicit that transit countries are optional and any saved list, including an empty one, is acceptable (app/routes.js:1932-1935). A user who travels through nowhere adds nothing and presses Save and continue.",
+    "difference": "Make transitedCountries optional while it is in scope: drop the empty-answer error from the page, and change the obligation from mandatory to optional so the hub and the review page stop holding the notification open waiting for an answer. The gate that decides whether the page appears at all does not change — Railway or Road Vehicle, on both sides. Do this with the type-ahead change or after it, since both edit the same page and the two are one visit.",
+    "falsifiedBy": "DR1 rejecting an empty transit-country list on submit — an error message, an entry in the error summary, or a redirect back to the page with nothing saved."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/transport.js:92-104",
+    "prototype": "app/routes.js:1932-1935"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transit-countries-checkboxes-not-typeahead",
+      "relation": "travels-with",
+      "why": "Both change the same page and the same control"
+    }
+  ]
+}

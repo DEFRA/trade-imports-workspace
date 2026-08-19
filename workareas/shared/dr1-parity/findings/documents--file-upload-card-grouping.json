@@ -1,0 +1,35 @@
+{
+  "slice": "documents",
+  "title": "DR1 puts the document being added, and the button that saves it, inside a bordered group headed \"File upload\"; the frontend runs the whole page as one flat column so nothing shows which button acts on the row in front of the user.",
+  "domain": "documents",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "fe-documents-populated",
+    "dr1-upload-documents",
+    "dr1-upload-documents-populated"
+  ],
+  "controls": [
+    { "kind": "label", "text": "File upload" }
+  ],
+  "finding": {
+    "frontend": "The upload page is a single unbroken column: heading, Document reference, Date of issue, the file field, \"Save and add another\", the saved-documents table, then \"Continue\", \"Save and return to hub\" and \"Cancel and return to hub\" (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-92). There is no heading, border or container of any kind between them, so \"Save and add another\" and \"Continue\" read as two buttons in the same list. A user cannot see from the page that the first acts on the fields above it and the second leaves the page — which is the difference that costs them the row they have typed.",
+    "prototype": "The fields, \"Save and add another\" and the saved-documents table sit inside a bordered section headed \"File upload\", labelled to the group by aria-labelledby (app/views/upload-documents.html:92-240). The page-level actions — \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\" — sit outside the border, below it (:242-260). The grouping is what tells the user which button belongs to the document in front of them and which belongs to the page, and it holds on every state of the page: dr1-upload-documents shows the empty group, dr1-upload-documents-populated shows the saved row inside the same border.",
+    "difference": "Wrap the reference, type, date and attachment fields, the \"Save and add another\" button and the saved-documents table in a bordered group with an h2 of \"File upload\", and leave the page-level save actions outside it. Use a govuk-frontend container rather than a bespoke card — the summary-card border is the closest match already in the toolbox — and reference the h2 from the group so the grouping is announced as well as drawn. No behaviour changes; this is layout and one heading.",
+    "falsifiedBy": "Finding any heading, border or container on the frontend's upload page that separates the fields and \"Save and add another\" from the page-level Continue.",
+    "correction": "Written by the verifier. The author's eleven findings account for every visible string on the page except this one, the two field hints and the save-action labels. This is not Prototype-Kit chrome — the kit's own layout draws none of it; the container is a bespoke app-upload-documents-card the designer added, and the real service can draw the same thing from the govuk-frontend toolbox. It is raised separately from documents--continue-discards-unsaved-row because that finding changes what Continue does and this one changes what the page shows; either can land without the other, and the page reads wrong until both do."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-92",
+    "prototype": "app/views/upload-documents.html:92-96"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--continue-discards-unsaved-row",
+      "relation": "travels-with",
+      "why": "the grouping is what tells the user which button acts on the row the other finding says is thrown away"
+    }
+  ]
+}

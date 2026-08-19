@@ -1,0 +1,40 @@
+{
+  "slice": "origin-and-reason",
+  "title": "The frontend explains the destination country, the port of exit and the exit date with guidance DR1 does not have; DR1 asks all three with a bare label, and one of the frontend's sentences will be untrue once the exit port list is corrected.",
+  "domain": "origin",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-destination-country",
+    "dr1-reason-for-import-transhipment-revealed",
+    "fe-port-of-exit",
+    "dr1-reason-for-import-transit-revealed",
+    "fe-exit-date",
+    "dr1-reason-for-import-temporary-admission-horses-revealed"
+  ],
+  "controls": ["destinationCountry", "portOfExit", "exitDate"],
+  "finding": {
+    "frontend": "Each of the three follow-up questions carries a line of grey guidance under its label. Destination country reads 'The country the consignment travels on to after Great Britain.' Port of exit reads 'Choose where the consignment will leave Great Britain. Exit and entry share the same port list.' Exit date reads 'The date the animals are expected to leave Great Britain. For example, 27/3/2026' — the example, plus a sentence of explanation in front of it (src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:5, src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:5, src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:5).",
+    "prototype": "DR1 asks all three with a label and nothing else. The captured reason page carries hints on the five reason radios and on the eleven internal-market purpose radios, and exactly one field hint — 'For example, 27/3/2026' on the exit date. Neither destination-country select and neither port-of-exit select has a hint at all: the label sits straight above the control (app/views/reason-for-import.html). The reasons themselves are where DR1 puts the explanation, and by the time a reveal opens the user has already read which reason they are in.",
+    "difference": "Drop the destination-country hint and the port-of-exit hint, and cut the exit-date hint back to its example, so the three follow-up questions read as DR1 asks them. Do this with the reveal move rather than before it: once the questions sit under the reason they answer, the reason's own hint is the explanation and repeating it under the field is the duplication DR1 avoids. The port-of-exit sentence has a second reason to go — 'Exit and entry share the same port list' is a statement of fact about the current list, and it becomes untrue the moment the exit list is narrowed to animal border control posts.",
+    "falsifiedBy": "Finding a hint rendered under either destination-country select or either port-of-exit select on DR1's reason page, or a second sentence in DR1's exit-date hint.",
+    "correction": "Added by the verifier; not in the slice as written. The slice covered the three questions' control type, list contents, obligations and error wording, but nothing recorded that the frontend adds explanatory hints DR1 does not carry. HOW ESTABLISHED: grepped govuk-hint in capture/html/prototype/dr1-reason-for-import-transhipment-revealed.html, which returns 17 hits — one per reason radio, one per purpose radio, and one field hint, temporary-admission-exit-date-hint — and none attached to transhipment-destination-country, transit-destination-country, transit-exit-border-control-post or temporary-admission-port-of-exit. Confirmed the frontend side renders its three hints in capture/html/frontend/fe-destination-country.html, fe-port-of-exit.html and fe-exit-date.html, and read the three copy files. Kept as one finding rather than three because it is one editorial decision about how the follow-up questions are asked. The port-of-exit sentence is also mentioned inside origin-and-reason--port-of-exit-offers-every-uk-port, which asks for it to go for a different reason; whichever lands first should take it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:3-6",
+    "prototype": "app/views/reason-for-import.html:47-62"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--reason-follow-ups-inline-not-four-pages",
+      "relation": "travels-with",
+      "why": "the hints only stop making sense once the questions sit under the reason that explains them, so this rides with the reveal move"
+    },
+    {
+      "id": "origin-and-reason--port-of-exit-offers-every-uk-port",
+      "relation": "travels-with",
+      "why": "both ask for the 'Exit and entry share the same port list' sentence to go, for different reasons"
+    }
+  ]
+}

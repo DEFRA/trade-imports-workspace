@@ -1,0 +1,23 @@
+{
+  "slice": "review",
+  "title": "The review page labels the contact address row 'Address'; DR1 labels it 'Contact address'.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Address", "Contact address"],
+  "finding": {
+    "frontend": "The 'Contact address for this consignment' card holds one row keyed 'Address'. The card reuses the generic address label at src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:76 — the same string the Transport details card uses for the transporter's address — from src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js:19. Read out of context, on a page that already lists six other addresses, the row does not say which address it is.",
+    "prototype": "DR1's card of the same title holds one row keyed 'Contact address' (app/routes.js:4851), naming the address rather than repeating the generic word.",
+    "difference": "Give the contact address card its own row label. Add a `contactAddress` entry reading 'Contact address' to the rows section of the English and Welsh check-answers copy files and point contact-address.js at it, rather than editing the shared `address` string, which the Transport details card also uses and which matches DR1 there.",
+    "falsifiedBy": "Finding that DR1's contact address card keys its row 'Address' rather than 'Contact address'."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js:19",
+    "prototype": "app/routes.js:4851"
+  },
+  "relatedTo": [
+    { "id": "review--review-page-section-spine", "relation": "travels-with", "why": "the spine rework lifts this card into a numbered section of its own, which is when its row label is being looked at anyway" }
+  ]
+}

@@ -6,12 +6,13 @@
   "band": "frontend-work",
   "confidence": "high",
   "screens": ["fe-hub", "dr1-notification-hub"],
-  "controls": ["Back"],
+  "controls": [{ "kind": "label", "text": "Back" }],
   "finding": {
     "frontend": "The overview page — the task list for a notification — carries a \"Back\" link pointing at the dashboard (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:167). It is the only page in the service that renders no breadcrumb trail, so the back link is its sole route out, and it is labelled \"Back\" rather than naming where it goes.",
     "prototype": "DR1's overview page has no back link — its `beforeContent` block at app/views/notification-hub.html:9-16 renders the phase banner and nothing else, where every DR1 journey page adds a back link after it. It is the top of the notification, and the way out of it is the Dashboard item in the service navigation bar, which is on every page. Of DR1's 40 captured screens, the six without a back link are the four dashboard states, the overview and the confirmation page — every page that is a starting point rather than a step.",
     "difference": "Stop rendering the back link on the overview page. This depends on the navigation bar carrying a Dashboard item first: the overview has no breadcrumb, so the back link is currently the only way off the page short of the browser's own, and removing it before the navigation is populated would strand the user. Sequence it after the navigation work.",
-    "falsifiedBy": "Finding a back link rendered on DR1's notification-hub view or in its captured DOM."
+    "falsifiedBy": "Finding a back link rendered on DR1's notification-hub view or in its captured DOM.",
+    "correction": "Claim sound; one field fixed. Re-derived from the DOMs: 6 of the 40 DR1 screens render no back link and they are exactly the four dashboard states, the overview and the confirmation, as the finding says; 3 of the 33 frontend screens render none — the confirmation and the two dashboards — so the overview is the sole page where the two sides disagree, and the finding is the only thing that difference can be. Both frontend citations are exact: `backLink: dashboardPath()` is at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:167, inside the cited :160-170. The claim that the overview renders no breadcrumb is confirmed at :168, `breadcrumbs: false`. What was wrong was the `controls` entry, which was the bare string \"Back\": with no whitespace in it the contract reads that as a field's `name` attribute, and no field is called Back, so the element crop would have found nothing. Rewritten as an explicit label."
   },
   "evidence": {
     "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:160-170",

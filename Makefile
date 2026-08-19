@@ -13,6 +13,7 @@ endif
 
 .PHONY: setup link update reset status install lint test \
         tim-install tim-link tim-test tim-lint tim-format \
+        parity-report parity-check parity-serve sonar-staged \
         start-frontend start-backend start-admin start-gateway start-address-book \
         docker-local-branches docker-compose-up docker-compose-dev docker-compose-down docker-compose-bounce docker-logs docker-restart-backend clean help
 
@@ -131,6 +132,29 @@ tim-lint: ## Lint tim
 
 tim-format: ## Format tim
 	@cd "$(WORKSPACE_ROOT)/tim" && npm run format
+
+# tim resolves its corpus paths from the current directory, so running it from
+# a repo — or from another checkout of this workspace — reads the wrong
+# corpora.json and fails with a confusing ENOENT. These targets pin the
+# directory. CORPUS defaults to the parity corpus in flight.
+
+CORPUS ?= EUDPA-328
+
+parity-report: ## Build the parity findings report (CORPUS=EUDPA-328)
+	@cd "$(WORKSPACE_ROOT)" && tim parity report $(CORPUS) $(ARGS)
+
+parity-check: ## Run the parity invariants (CORPUS=EUDPA-328)
+	@cd "$(WORKSPACE_ROOT)" && tim parity check $(CORPUS) $(ARGS)
+
+parity-serve: ## Serve the built parity report on 127.0.0.1:4328
+	@cd "$(WORKSPACE_ROOT)" && tim parity serve $(CORPUS) $(ARGS)
+
+# The sonar CLI refuses any file outside its current directory, so an agent
+# working from this workspace cannot run the pre-commit scan CLAUDE.md asks
+# for. REPO names the repo under repos/; omit it to scan this workspace.
+
+sonar-staged: ## Sonar-scan staged files (REPO=trade-imports-animals-frontend)
+	@cd "$(if $(REPO),$(REPOS_DIR)/$(REPO),$(WORKSPACE_ROOT))" && sonar analyze $(if $(ARGS),$(ARGS),--staged)
 
 clean: ## Remove node_modules in all Node repos
 	@for repo in $(NODE_REPOS); do \

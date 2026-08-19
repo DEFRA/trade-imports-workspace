@@ -12,6 +12,7 @@ import { runCheck } from '../../parity/check.js'
 import { buildCorpusMeta } from '../../parity/meta.js'
 import { runSplitSentinels } from '../../parity/split-sentinels.js'
 import { runManifest } from '../../parity/manifest.js'
+import { runSeedAnchors } from '../../parity/anchors.js'
 import {
   setSlot,
   setSlots,
@@ -301,6 +302,30 @@ export const register = (program, { timVersion }) => {
           }),
         renderText: (r) =>
           `${r.id}.finding.${r.slot} set — ${r.words} words${r.pass ? `, pass ${r.pass.toUpperCase()}` : ''}.`,
+        timVersion
+      })
+    )
+
+  parity
+    .command('seed-anchors <runId>')
+    .description(
+      'Derive element anchors from the delta files, so a capture can shoot the control a finding is about rather than the page it sits on'
+    )
+    .option('--write', 'Write the anchor files')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runSeedAnchors({ profile, write: opts.write }),
+        renderText: (r) =>
+          [
+            ...r.sides.map(
+              (side) =>
+                `${side.side.padEnd(12)} ${side.anchors} anchors across ${side.screens} screens -> ${side.path}`
+            ),
+            r.written ? '' : 'Dry run — pass --write to apply.'
+          ]
+            .filter(Boolean)
+            .join('\n'),
         timVersion
       })
     )

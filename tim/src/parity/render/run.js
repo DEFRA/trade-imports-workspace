@@ -11,9 +11,9 @@ import { join, relative, basename } from 'node:path'
 import { execFile } from 'node:child_process'
 import { loadCorpus } from '../load.js'
 import { runCounts } from '../counts.js'
-import { sha256File } from '../io.js'
+import { sha256File, readJsonFile } from '../io.js'
 import { loadPairs, indexPairs, screenPairsFor } from '../assets/pairs.js'
-import { resolveRow, imageCoverage } from '../assets/resolve.js'
+import { resolveRow, imageCoverage, anchorsNamedIn } from '../assets/resolve.js'
 import { renderPage } from './page.js'
 
 const ASSET_DIR = 'assets'
@@ -39,13 +39,34 @@ export const placeAsset = (from, toDir) => {
   return name
 }
 
-const attachAssets = ({ items, sides, pairIndex, assetDir }) => {
+const proseOf = (item) =>
+  [
+    item.sections.frontend?.text,
+    item.sections.prototype?.text,
+    item.sections.difference?.text,
+    item.sections.body?.text,
+    item.detail
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+const attachAssets = ({ items, sides, pairIndex, assetDir, anchors }) => {
   for (const item of items) {
     const rows = screenPairsFor({ screens: item.screens, pairIndex, sides })
     const frames = item.visual.length ? item.visual : [null]
+    const prose = proseOf(item)
     item.assets = rows.flatMap((row) =>
       frames.map((frame) => {
-        const resolved = resolveRow({ sides, row, frame })
+        const anchorKeys = Object.fromEntries(
+          sides.map((side) => [
+            side.id,
+            anchorsNamedIn({
+              anchors: anchors[side.id]?.[row[side.id]?.screen] ?? [],
+              prose
+            })
+          ])
+        )
+        const resolved = resolveRow({ sides, row, frame, anchorKeys })
         for (const side of sides) {
           const asset = resolved[side.id]
           if (
@@ -92,7 +113,29 @@ export const runReport = ({
   mkdirSync(assetDir, { recursive: true })
 
   const renderable = [...corpus.findings, ...corpus.withdrawn]
-  attachAssets({ items: renderable, sides: profile.sides, pairIndex, assetDir })
+  const anchors = Object.fromEntries(
+    profile.sides.map((side) => {
+      const path = side.evidenceRoot
+        ? join(
+            profile.workspaceRoot,
+            side.evidenceRoot,
+            `anchors.${side.id}.json`
+          )
+        : null
+      return [
+        side.id,
+        path && existsSync(path) ? (readJsonFile(path).screens ?? {}) : {}
+      ]
+    })
+  )
+
+  attachAssets({
+    items: renderable,
+    sides: profile.sides,
+    pairIndex,
+    assetDir,
+    anchors
+  })
 
   const coverage = imageCoverage(renderable, profile.sides)
 

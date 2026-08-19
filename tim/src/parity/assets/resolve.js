@@ -99,7 +99,7 @@ export const modelPlate = (model) => {
  * @param {string} [args.why] - Why this screen was chosen, carried through
  * @returns {object}
  */
-export const resolveSideAsset = ({ side, screen, frame, why }) => {
+export const resolveSideAsset = ({ side, screen, frame, why, anchorKeys }) => {
   if (!screen) {
     return {
       state: 'absent',
@@ -110,14 +110,23 @@ export const resolveSideAsset = ({ side, screen, frame, why }) => {
     }
   }
 
-  const anchorKey = frame?.anchors?.[side.id]?.key
-  const crop = anchorKey
-    ? fileIfPresent(
-        join(side.captureDir, 'crop', `${screen}__${anchorKey}.png`)
-      )
-    : null
-  if (crop) {
-    return { state: 'crop', side: side.id, screen, why, anchorKey, ...crop }
+  // Crops live beside the page shots, in the same capture directory.
+  const cropRoot = side.screensDir
+    ? join(side.screensDir, '..', 'crop')
+    : join(side.captureDir, 'crop')
+
+  // A curated frame's anchor wins; anything the finding's own prose named comes
+  // next. A page-level shot under a finding about one control has failed, so
+  // the ladder tries hard to find a crop before it settles for the page.
+  const keys = [frame?.anchors?.[side.id]?.key, ...(anchorKeys ?? [])].filter(
+    Boolean
+  )
+
+  for (const anchorKey of keys) {
+    const crop = fileIfPresent(join(cropRoot, `${screen}__${anchorKey}.png`))
+    if (crop) {
+      return { state: 'crop', side: side.id, screen, why, anchorKey, ...crop }
+    }
   }
 
   const page = side.screensDir
@@ -157,7 +166,7 @@ export const resolveSideAsset = ({ side, screen, frame, why }) => {
  * @param {object} [args.frame]
  * @returns {Record<string, object>}
  */
-export const resolveRow = ({ sides, row, frame }) =>
+export const resolveRow = ({ sides, row, frame, anchorKeys }) =>
   Object.fromEntries(
     sides.map((side) => [
       side.id,
@@ -165,10 +174,49 @@ export const resolveRow = ({ sides, row, frame }) =>
         side,
         screen: row[side.id]?.screen ?? null,
         why: row[side.id]?.why,
-        frame
+        frame,
+        anchorKeys: anchorKeys?.[side.id]
       })
     ])
   )
+
+/**
+ * Which anchors on a screen this finding is actually about.
+ *
+ * Nobody has curated frames yet, and curating 96 of them blind against page
+ * models is the largest single piece of labour in the evidence work. This is
+ * the automatic first pass, and its rule is stated rather than guessed: an
+ * anchor is relevant when the finding's own prose names the control — by its
+ * `name` attribute, which the corpus writes in backticks constantly, or by its
+ * label. Where nothing matches, the card keeps the whole page.
+ *
+ * @param {object} args
+ * @param {object[]} args.anchors - Anchors declared for this screen
+ * @param {string} args.prose - The finding's text
+ * @param {number} [args.limit]
+ * @returns {string[]} Anchor keys, most specific first
+ */
+export const anchorsNamedIn = ({ anchors, prose, limit = 2 }) => {
+  const haystack = prose.toLowerCase()
+  return (anchors ?? [])
+    .map((anchor) => {
+      const name = (anchor.name ?? anchor.text ?? '').toLowerCase()
+      if (name.length < 4) return null
+      // Whole words only. A substring match puts `file` on any card whose prose
+      // says "filename", and a crop of the wrong control under a finding is
+      // exactly the confident wrongness this pipeline refuses everywhere else.
+      const pattern = new RegExp(
+        `\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`
+      )
+      return pattern.test(haystack)
+        ? { key: anchor.key, weight: name.length }
+        : null
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, limit)
+    .map((match) => match.key)
+}
 
 /**
  * Coverage per side across the screens the findings actually cite. Reported on

@@ -12,15 +12,12 @@ import { buildCorpusMeta } from '../../parity/meta.js'
 import { runSplitSentinels } from '../../parity/split-sentinels.js'
 import { runManifest } from '../../parity/manifest.js'
 import { runCapture } from '../../parity/capture/run.js'
-import { runMap } from '../../parity/capture/cartography/run.js'
-import { runSeedAnchors } from '../../parity/anchors.js'
 import {
   runCheckEvidence,
   renderCheckEvidence,
   blockers
 } from '../../parity/check-evidence.js'
 import { runRepoint } from '../../parity/repoint.js'
-import { runInsertionAnchors } from '../../parity/insertion.js'
 import {
   setSlot,
   setSlots,
@@ -389,61 +386,6 @@ export const register = (program, { timVersion }) => {
       })
     )
 
-  parity
-    .command('seed-anchors <runId>')
-    .description(
-      'Derive element anchors from the delta files, so a capture can shoot the control a finding is about rather than the page it sits on'
-    )
-    .option('--write', 'Write the anchor files')
-    .action(
-      makeParityAction({
-        run: ({ profile }, opts) =>
-          runSeedAnchors({ profile, write: opts.write }),
-        renderText: (r) =>
-          [
-            ...r.sides.map(
-              (side) =>
-                `${side.side.padEnd(12)} ${side.anchors} anchors across ${side.screens} screens -> ${side.path}`
-            ),
-            r.written ? '' : 'Dry run — pass --write to apply.'
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        timVersion
-      })
-    )
-
-  parity
-    .command('insertion-anchors <runId>')
-    .description(
-      'Derive where a one-sided control would sit on the side that lacks it, and fold the landmark into the anchor files'
-    )
-    .option('--write', 'Write the anchor files')
-    .action(
-      makeParityAction({
-        run: ({ profile }, opts) =>
-          runInsertionAnchors({ profile, write: opts.write }),
-        renderText: (r) =>
-          [
-            ...r.sides.map(
-              (side) =>
-                `${side.side.padEnd(12)} ${side.insertions} insertion points across ${side.screens} screens -> ${side.path}`
-            ),
-            r.skipped?.length
-              ? `${r.skipped.length} could not be placed:\n${r.skipped
-                  .slice(0, 12)
-                  .map(
-                    (s) => `  - ${s.side}/${s.screen} ${s.missing}: ${s.why}`
-                  )
-                  .join('\n')}`
-              : '',
-            r.written ? '' : 'Dry run — pass --write to apply.'
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        timVersion
-      })
-    )
 
   parity
     .command('manifest <runId>')
@@ -471,85 +413,16 @@ export const register = (program, { timVersion }) => {
     )
 
   parity
-    .command('map <runId>')
-    .description(
-      'Walk one side with no knowledge of its journey and record which screens it has, how to reach them, and what it could not reach'
-    )
-    .requiredOption('--side <id>', 'Which side to map')
-    .option('--base-url <url>', 'Where the application is running')
-    .option('--start-path <path>', 'Where the walk begins')
-    .option('--budget-steps <n>', 'Stop after this many forward steps')
-    .option('--budget-minutes <n>', 'Stop after this long')
-    .option(
-      '--data-state <text>',
-      'What state the data was in',
-      'fresh session'
-    )
-    .option('--headed', 'Watch the crawl in a browser window')
-    .option('--write', 'Write the map, the hints stub and the page models')
-    .option(
-      '--check',
-      'Exit non-zero while anything is unexplored, blocked or unfilled'
-    )
-    .action(
-      makeParityAction({
-        run: ({ profile, workspaceRoot }, opts) =>
-          runMap({
-            profile,
-            workspaceRoot,
-            side: opts.side,
-            baseUrl: opts.baseUrl,
-            startPath: opts.startPath,
-            budgets: {
-              ...(opts.budgetSteps ? { steps: Number(opts.budgetSteps) } : {}),
-              ...(opts.budgetMinutes
-                ? { wallClockMs: Number(opts.budgetMinutes) * 60_000 }
-                : {})
-            },
-            dataState: opts.dataState,
-            headed: opts.headed,
-            write: opts.write,
-            check: opts.check
-          }),
-        renderText: (r) =>
-          [
-            `${r.side}: ${r.coverage.screensMapped} screens across ${r.coverage.routeTemplatesSeen} routes. Stopped by ${r.stoppedBy}.`,
-            ...r.screens.map((screen) =>
-              `  ${screen.id.padEnd(44)} ${screen.blocked ? `blocked: ${screen.blocked}` : screen.terminal ? 'end of the journey' : ''}`.trimEnd()
-            ),
-            `${r.coverage.frontierRemaining} choices left unexplored, ${r.coverage.blockedScreens} screens blocked, ${r.coverage.unfilledFields} fields nothing could fill.`,
-            ...r.blockers.map((b) => `  - ${b}`),
-            `${r.capturable} of ${r.coverage.screensMapped} screens can be walked again by the capture stage.`,
-            ...r.unexpressible.map((u) => `  - ${u.screen}: ${u.why}`),
-            ...r.warnings.map((w) => `  ! ${w.screen}: ${w.why}`),
-            r.written
-              ? [
-                  `Map: ${r.mapPath}`,
-                  r.routePlanWritten
-                    ? `Route plan for the capture: ${r.routePlanPath}`
-                    : r.routePlanRemoved
-                      ? `No screen can be walked again, so the stale route plan at ${r.routePlanPath} has been deleted. Capture has nothing to walk until you map again.`
-                      : 'No screen can be walked again, so no route plan was written.',
-                  `Hints to fill in: ${r.hintsPath}`,
-                  `Page models the crawl read: ${r.modelDir}`
-                ].join('\n')
-              : 'Nothing written — pass --write to keep the map.'
-          ].join('\n'),
-        timVersion
-      })
-    )
-
-  parity
     .command('capture <runId>')
     .description(
-      'Walk one side and record what it does — a screenshot, an element crop per anchor and a page model for every screen the route plan reaches'
+      "Run one side's capture specs and record what the application does — a screenshot, an element crop per anchor and a page model for every screen a spec names"
     )
     .requiredOption('--side <id>', 'Which side to capture')
     .option(
-      '--plan <path>',
-      'Route plan to walk, if not the one the discovery stage wrote for this side'
+      '--specs <path>',
+      "Run specs from somewhere other than this side's directory in the corpus"
     )
-    .option('--headed', 'Watch the walk in a browser window')
+    .option('--headed', 'Watch the run in a browser window')
     .action(
       makeParityAction({
         run: ({ profile, workspaceRoot }, opts) =>
@@ -557,16 +430,17 @@ export const register = (program, { timVersion }) => {
             profile,
             workspaceRoot,
             side: opts.side,
-            plan: opts.plan,
+            specs: opts.specs,
             headed: opts.headed
           }),
         renderText: (r) =>
           [
-            `${r.side} at ${r.sha.slice(0, 8)}: walked ${r.screens} screens from ${r.routePlan}.`,
+            `${r.side} at ${r.sha.slice(0, 8)}: ran ${r.specs.length} specs from ${r.specDir}.`,
+            ...r.specs.map((spec) => `  ${spec}`),
             `Pictures: ${r.captureDir}`,
             `Page models: ${r.modelDir}`,
             r.exitNonZero
-              ? 'The walk did not finish cleanly. Read the run above, then look at the trace in the run directory.'
+              ? 'The run did not finish cleanly. Read the output above, then look at the trace in the run directory.'
               : `Index them next: tim parity manifest <runId> --side ${r.side} --sha ${r.sha.slice(0, 8)} --write`
           ].join('\n'),
         timVersion

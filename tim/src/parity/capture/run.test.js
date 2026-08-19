@@ -4,7 +4,8 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { loadCorpusProfile } from '../corpus-profile.js'
 import {
-  WALK_FILE,
+  SPEC_GLOB,
+  specsIn,
   playwrightBin,
   playwrightConfigSource,
   resolveCapturePaths
@@ -112,17 +113,14 @@ describe('resolveCapturePaths', () => {
     )
   })
 
-  test('expects the route plan in the corpus workarea', () => {
+  test("expects a side's capture specs in the corpus workarea", () => {
     const paths = resolveCapturePaths({
       profile: profile(),
       side: 'frontend',
       sha: 'abcdefgh'
     })
-    expect(paths.routePlanPath).toBe(
-      join(
-        workspaceRoot,
-        'workareas/shared/alpha/cartography/frontend.routes.json'
-      )
+    expect(paths.specDir).toBe(
+      join(workspaceRoot, 'workareas/shared/alpha/specs/frontend')
     )
   })
 
@@ -154,16 +152,39 @@ describe('resolveCapturePaths', () => {
   })
 })
 
-const plan = {
-  side: 'frontend',
-  app: { baseURL: 'http://localhost:3060', server: null },
-  prelude: [],
-  routes: [{ screen: 'fe-hub', steps: [] }]
-}
+describe('specsIn', () => {
+  test('lists the specs a side has, in the order they will run', () => {
+    const dir = join(workspaceRoot, 'specs')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'origin-and-reason.pw.js'), '')
+    writeFileSync(join(dir, 'addresses.pw.js'), '')
+
+    expect(specsIn(dir)).toEqual([
+      'addresses.pw.js',
+      'origin-and-reason.pw.js'
+    ])
+  })
+
+  test('ignores anything that is not a spec, so a note beside them is harmless', () => {
+    const dir = join(workspaceRoot, 'mixed')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'addresses.pw.js'), '')
+    writeFileSync(join(dir, 'README.md'), '')
+    writeFileSync(join(dir, 'helpers.js'), '')
+
+    expect(specsIn(dir)).toEqual(['addresses.pw.js'])
+  })
+
+  test('says a side has none rather than throwing, when nobody has written any', () => {
+    expect(specsIn(join(workspaceRoot, 'nothing-here'))).toEqual([])
+  })
+})
 
 const config = (overrides = {}) =>
   playwrightConfigSource({
-    plan,
+    specDir: '/corpus/specs/frontend',
+    side: 'frontend',
+    baseURL: 'http://localhost:3060',
     contextPath: '/tmp/run/context.json',
     outputDir: '/tmp/run/test-results',
     deviceScaleFactor: 2,
@@ -172,16 +193,17 @@ const config = (overrides = {}) =>
   })
 
 describe('playwrightConfigSource', () => {
-  test('runs only the walk, which is not named like a test', () => {
-    expect(config()).toContain(`testMatch: "${WALK_FILE}"`)
-    expect(WALK_FILE).not.toMatch(/\.spec\.js$/)
+  test("runs the side's specs, which are not named like tests", () => {
+    expect(config()).toContain('testDir: "/corpus/specs/frontend"')
+    expect(config()).toContain(`testMatch: "${SPEC_GLOB}"`)
+    expect(SPEC_GLOB).not.toMatch(/\.spec\.js$/)
   })
 
-  test('serves the application at the base URL the plan discovered', () => {
+  test('points the browser at the base URL the corpus names', () => {
     expect(config()).toContain('baseURL: "http://localhost:3060"')
   })
 
-  test('walks one journey at a time, because journey state lives in the session', () => {
+  test('runs one spec at a time, because journey state lives in the session', () => {
     expect(config()).toContain('workers: 1')
   })
 
@@ -191,24 +213,8 @@ describe('playwrightConfigSource', () => {
     expect(config()).toContain("reducedMotion: 'reduce'")
   })
 
-  test('starts nothing when the plan says the application is already up', () => {
+  test('leaves serving the application to tim, which can say what it started', () => {
     expect(config()).not.toContain('webServer')
-  })
-
-  test('starts the application the plan named, on the port it named', () => {
-    const withServer = config({
-      plan: {
-        ...plan,
-        app: {
-          baseURL: 'http://localhost:3060',
-          server: { command: 'npm start', cwd: '/repo', port: 3060 }
-        }
-      }
-    })
-    expect(withServer).toContain('command: "npm start"')
-    expect(withServer).toContain('cwd: "/repo"')
-    expect(withServer).toContain('port: 3060')
-    expect(withServer).toContain('"PORT":"3060"')
   })
 
   test('runs headless unless asked to be watched', () => {

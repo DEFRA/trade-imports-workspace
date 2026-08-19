@@ -1,11 +1,10 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runStreamed } from '../../exec/exec.js'
 import { TimError } from '../../errors.js'
-import { loadRoutePlan, plannedScreens } from './route-plan.js'
 import { ensureApp } from './app-server.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -13,8 +12,28 @@ const here = dirname(fileURLToPath(import.meta.url))
 /** tim's package root, which is where its own Playwright lives. */
 export const timRoot = resolve(here, '..', '..', '..')
 
-/** The file Playwright runs. Not `*.spec.js`: it is not a test, and vitest collects that name. */
-export const WALK_FILE = 'walk.pw.js'
+/**
+ * What a capture spec is called.
+ *
+ * `.pw.js` rather than `.spec.js` for two reasons: these are not tests —
+ * nothing in them asserts that an application is correct — and tim's own vitest
+ * run collects `**\/*.spec.js`, so a spec named that way would be run as a unit
+ * test on every commit.
+ */
+export const SPEC_GLOB = '*.pw.js'
+
+/**
+ * The specs a side has, in the order Playwright will run them.
+ *
+ * @param {string} specDir
+ * @returns {string[]} File names, sorted
+ */
+export const specsIn = (specDir) =>
+  existsSync(specDir)
+    ? readdirSync(specDir)
+        .filter((name) => name.endsWith('.pw.js'))
+        .sort()
+    : []
 
 /**
  * The commit an application is at.
@@ -72,7 +91,7 @@ export const harnessSha = (workspaceRoot) => {
  * @param {object} args.profile - A loaded corpus profile
  * @param {string} args.side - Side id
  * @param {string} args.sha - The commit the application is at
- * @returns {{side: string, captureDir: string, modelDir: string, anchorsPath: string, routePlanPath: string, appRoot: string|null}}
+ * @returns {{side: string, captureDir: string, modelDir: string, anchorsPath: string, specDir: string, appRoot: string|null}}
  * @throws {TimError} NOT_FOUND for an unknown side, USAGE for a side the corpus never gave paths
  */
 export const resolveCapturePaths = ({ profile, side, sha }) => {
@@ -102,11 +121,7 @@ export const resolveCapturePaths = ({ profile, side, sha }) => {
     captureDir: join(evidenceRoot, `${side}@${sha.slice(0, 8)}`),
     modelDir: sideProfile.modelDir,
     anchorsPath: join(evidenceRoot, `anchors.${side}.json`),
-    routePlanPath: join(
-      profile.paths.workarea,
-      'cartography',
-      `${side}.routes.json`
-    ),
+    specDir: join(profile.paths.workarea, 'specs', side),
     appRoot: profile.repos[sideProfile.repo]?.absolutePath ?? null
   }
 }
@@ -115,12 +130,17 @@ export const resolveCapturePaths = ({ profile, side, sha }) => {
  * The Playwright config for one capture run.
  *
  * Generated rather than checked in, because the corpus profile is the source
- * of truth for where the evidence goes and the route plan is the source of
- * truth for how the application is served. A committed config is a second
- * place to keep those in step.
+ * of truth for where the evidence goes and for how the application is served.
+ * A committed config is a second place to keep those in step.
+ *
+ * There is no `webServer` block. tim starts the application itself, before
+ * Playwright runs, so that a stopped one is reported as a stopped application
+ * rather than as a connection refused on somebody's first goto.
  *
  * @param {object} args
- * @param {object} args.plan - The route plan
+ * @param {string} args.specDir - Where this side's specs live
+ * @param {string} args.side
+ * @param {string} args.baseURL
  * @param {string} args.contextPath - File holding the capture context
  * @param {string} args.outputDir - Where Playwright puts its own artefacts
  * @param {number} args.deviceScaleFactor
@@ -129,42 +149,29 @@ export const resolveCapturePaths = ({ profile, side, sha }) => {
  * @returns {string} Config source
  */
 export const playwrightConfigSource = ({
-  plan,
+  specDir,
+  side,
+  baseURL,
   contextPath,
   outputDir,
   deviceScaleFactor,
   viewport,
   headed
 }) => {
-  const server = plan.app.server
-    ? `
-  webServer: {
-    command: ${JSON.stringify(plan.app.server.command)},
-    cwd: ${JSON.stringify(plan.app.server.cwd ?? process.cwd())},
-    env: ${JSON.stringify({
-      PORT: String(plan.app.server.port),
-      ...(plan.app.server.env ?? {})
-    })},
-    port: ${plan.app.server.port},
-    reuseExistingServer: true,
-    timeout: 180_000
-  },`
-    : ''
-
   return `import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: ${JSON.stringify(here)},
-  testMatch: ${JSON.stringify(WALK_FILE)},
-  // One journey, walked end to end. Parallelism interleaves two walks into one
-  // session, and these applications keep journey state in the session.
+  testDir: ${JSON.stringify(specDir)},
+  testMatch: ${JSON.stringify(SPEC_GLOB)},
+  // These applications keep journey state in the session, so two specs running
+  // at once interleave into one session and photograph each other's pages.
   workers: 1,
   timeout: 1_800_000,
   expect: { timeout: 15_000 },
   outputDir: ${JSON.stringify(outputDir)},
   reporter: [['list']],
   use: {
-    baseURL: ${JSON.stringify(plan.app.baseURL)},
+    baseURL: ${JSON.stringify(baseURL)},
     headless: ${headed ? 'false' : 'true'},
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
@@ -176,7 +183,7 @@ export default defineConfig({
     video: 'off',
     trace: 'retain-on-failure'
   },
-  projects: [{ name: ${JSON.stringify(plan.side)}, use: { ...devices['Desktop Chrome'] } }],${server}
+  projects: [{ name: ${JSON.stringify(side)}, use: { ...devices['Desktop Chrome'] } }],
   metadata: { captureContext: ${JSON.stringify(contextPath)} }
 })
 `
@@ -216,17 +223,16 @@ export const playwrightBin = (root = timRoot) => {
 /**
  * Capture one side of a comparison.
  *
- * Reads the route plan the discovery stage produced, writes the capture
- * context and a Playwright config into a temporary directory, and drives the
- * runner. The context file is how the walk learns where to write: the profile
- * decides, not the environment.
+ * Runs this side's capture specs, having written the capture context and a
+ * Playwright config into a temporary directory. The context file is how a spec
+ * learns where to write: the profile decides, not the environment.
  *
  * @param {object} args
  * @param {object} args.profile
  * @param {string} args.workspaceRoot
  * @param {string} args.side
  * @param {boolean} [args.headed]
- * @param {string} [args.plan] - Override the route plan path
+ * @param {string} [args.specs] - Run specs from somewhere other than the corpus
  * @param {Function} [args.ensure] - App starter, injected by the tests
  * @param {(line: string) => void} [args.log] - Progress, on stderr by default
  * @returns {Promise<object>}
@@ -236,7 +242,7 @@ export const runCapture = async ({
   workspaceRoot,
   side,
   headed,
-  plan: planOverride,
+  specs: specDirOverride,
   ensure = ensureApp,
   log = (line) => process.stderr.write(`${line}\n`)
 }) => {
@@ -249,14 +255,21 @@ export const runCapture = async ({
   }
 
   const paths = resolveCapturePaths({ profile, side, sha: 'pending' })
-  const routePlanPath = planOverride ?? paths.routePlanPath
-  if (!existsSync(routePlanPath)) {
+  const specDir = specDirOverride ?? paths.specDir
+  const specs = specsIn(specDir)
+  if (specs.length === 0) {
     throw new TimError(
       'NOT_FOUND',
-      `No route plan at ${routePlanPath}. Map the application first — nothing can be captured until something has worked out which screens it has and how to reach them.`
+      `No capture specs at ${specDir}. A spec drives the application to the screens it names and records each one; write one there — ${SPEC_GLOB}, not .spec.js — before capturing.`
     )
   }
-  const plan = loadRoutePlan(routePlanPath)
+
+  if (!sideProfile.app?.baseURL) {
+    throw new TimError(
+      'USAGE',
+      `Side "${side}" names no app.baseURL in tools/parity/corpora.json, so there is nowhere for the specs to point a browser.`
+    )
+  }
 
   const appRoot = paths.appRoot
   const sha = appRoot ? appSha(appRoot) : 'unknown'
@@ -267,7 +280,7 @@ export const runCapture = async ({
     captureDir: resolved.captureDir,
     modelDir: resolved.modelDir,
     anchorsPath: resolved.anchorsPath,
-    routePlanPath,
+    specDir,
     appSha: sha,
     harnessSha: harnessSha(workspaceRoot),
     deviceScaleFactor: profile.captures?.[side]?.deviceScaleFactor ?? 2,
@@ -281,7 +294,9 @@ export const runCapture = async ({
   writeFileSync(
     configPath,
     playwrightConfigSource({
-      plan,
+      specDir,
+      side,
+      baseURL: sideProfile.app.baseURL,
       contextPath,
       outputDir: join(runDir, 'test-results'),
       deviceScaleFactor: context.deviceScaleFactor,
@@ -291,12 +306,12 @@ export const runCapture = async ({
     'utf8'
   )
 
-  // The walk photographs a running application. Left to Playwright, a stopped
+  // The specs photograph a running application. Left to Playwright, a stopped
   // one arrives as ERR_CONNECTION_REFUSED on the first goto, which names
   // neither the application nor how to serve it.
   const app = await ensure({
     app: sideProfile.app,
-    baseUrl: plan.app?.baseURL ?? sideProfile.app?.baseURL,
+    baseUrl: sideProfile.app.baseURL,
     label: side,
     log
   })
@@ -318,10 +333,10 @@ export const runCapture = async ({
   return {
     side,
     sha,
-    screens: plannedScreens(plan).length,
+    specs,
+    specDir,
     captureDir: context.captureDir,
     modelDir: context.modelDir,
-    routePlan: routePlanPath,
     config: configPath,
     exitNonZero: exitCode !== 0
   }

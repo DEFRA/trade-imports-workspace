@@ -1,11 +1,19 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  rmSync
+} from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import {
   resolveCorpusId,
   loadCorpusProfile,
-  stripPathRoot
+  stripPathRoot,
+  DEFAULT_BANDS
 } from './corpus-profile.js'
 
 const corporaFixture = {
@@ -88,6 +96,14 @@ const corporaFixture = {
       pairingModule: 'b.js',
       deltasDir: 'b',
       upstreamFindings: 'b.json',
+      bands: [
+        {
+          id: 'disputed',
+          label: 'Disputed',
+          blurb: 'The finding may be wrong.'
+        },
+        { id: 'frontend-work', label: 'Frontend work', blurb: 'Just build it.' }
+      ],
       sides: [],
       repos: {}
     }
@@ -159,6 +175,51 @@ describe('resolveCorpusId precedence', () => {
     expect(() =>
       resolveCorpusId({ workspaceRoot: workspace, runId: 'RUN-NOBODY' })
     ).toThrow(/No corpus claims the run "RUN-NOBODY"/)
+  })
+})
+
+describe('the band taxonomy belongs to the corpus', () => {
+  test('a corpus that declares bands gets its own, in the order it wrote them', () => {
+    const profile = loadCorpusProfile({
+      workspaceRoot: workspace,
+      explicit: 'beta'
+    })
+    expect(profile.bands.map((band) => band.id)).toEqual([
+      'disputed',
+      'frontend-work'
+    ])
+    expect(profile.bands[0].label).toBe('Disputed')
+  })
+
+  test('a corpus that declares none falls back to the historic three', () => {
+    const profile = loadCorpusProfile({ workspaceRoot: workspace })
+    expect(profile.bands).toEqual(DEFAULT_BANDS)
+  })
+
+  test('every corpus in the real file declares usable bands', () => {
+    // The report renders a section per band. A duplicate id would render the
+    // same findings twice; a missing label or blurb would render a nameless
+    // section. Neither is caught by anything else.
+    const realRoot = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      '..'
+    )
+    const { corpora } = JSON.parse(
+      readFileSync(join(realRoot, 'tools', 'parity', 'corpora.json'), 'utf8')
+    )
+    const faults = Object.entries(corpora).flatMap(([id, corpus]) => {
+      const bands = corpus.bands ?? DEFAULT_BANDS
+      const ids = bands.map((band) => band.id)
+      const duplicates =
+        new Set(ids).size === ids.length ? [] : [`${id}: duplicate band id`]
+      const blank = bands
+        .filter((band) => !band.id || !band.label || !band.blurb)
+        .map((band) => `${id}/${band.id ?? '?'}: missing label or blurb`)
+      return [...duplicates, ...blank]
+    })
+    expect(faults).toEqual([])
   })
 })
 

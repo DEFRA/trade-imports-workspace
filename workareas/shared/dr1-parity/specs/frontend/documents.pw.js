@@ -22,7 +22,13 @@ const DOCUMENT_REFERENCE = 'GBHC1234567890'
 
 // The date of issue has no accepted window — unlike the arrival date, its
 // validator is built with neither a min nor a max — so a fixed value is safe
-// and keeps two runs at one commit producing the same bytes.
+// and never silently expires.
+//
+// It does not make two runs at one commit identical, and nothing here could.
+// The notification reference is minted per run and printed in the Draft tag on
+// every journey page, so the screenshots and the manifest's `url` differ every
+// time. The page model and the captured HTML are the stable pair: both are
+// masked, and the reference is what the mask replaces.
 const DOCUMENT_DATE_OF_ISSUE = '12/12/2025'
 
 // The trader never chooses a document type: it is derived from the filename by

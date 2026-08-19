@@ -13,6 +13,8 @@ import { runSplitSentinels } from '../../parity/split-sentinels.js'
 import { runManifest } from '../../parity/manifest.js'
 import { runCapture } from '../../parity/capture/run.js'
 import { runCoverage } from '../../parity/coverage.js'
+import { runIngest } from '../../parity/ingest.js'
+import { runAnchors } from '../../parity/anchors.js'
 import {
   runCheckEvidence,
   renderCheckEvidence,
@@ -116,6 +118,50 @@ const renderNormalise = (result) => {
   )
   return lines.join('\n')
 }
+
+const countLine = (label, counts) =>
+  `${label.padEnd(10)} ${Object.entries(counts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, n]) => `${key} ${n}`)
+    .join('   ')}`
+
+const renderIngest = (result) =>
+  [
+    `${result.total} findings from ${result.findingsDir} — ${result.new} new, ${result.refreshed} refreshed, ${result.carriedOver} carried over from the previous run.`,
+    countLine('band', result.byBand),
+    countLine('domain', result.byDomain),
+    countLine('type', result.byType),
+    ...(result.dropped.length
+      ? [
+          `${result.dropped.length} increments left the backlog because their finding files are gone: ${result.dropped.join(', ')}`
+        ]
+      : []),
+    ...result.assignment.map(
+      (entry) =>
+        `  ${entry.id}  ${entry.isNew ? 'new     ' : 'existing'}  ${entry.file}`
+    ),
+    ...(result.screensCheckable
+      ? []
+      : [
+          'No side has a capture manifest yet, so no screen id could be checked against one.'
+        ]),
+    result.written
+      ? `Written to ${result.path}`
+      : 'Nothing written. Drop --dry-run to apply.'
+  ].join('\n')
+
+const renderAnchors = (result) =>
+  result.sides
+    .flatMap((side) => [
+      `${side.side}: ${side.anchors} anchors across ${side.screens} screens.`,
+      side.withoutControls.length
+        ? `  ${side.withoutControls.length} findings name no control, so they fall back to a whole-page shot: ${side.withoutControls.join(', ')}`
+        : '  Every finding on this side names a control.',
+      side.written
+        ? `  Written to ${side.path}`
+        : `  Nothing written. Pass --write to apply, to ${side.path}`
+    ])
+    .join('\n')
 
 export const register = (program, { timVersion }) => {
   const parity = program
@@ -439,6 +485,7 @@ export const register = (program, { timVersion }) => {
             ...r.specs.map((spec) => `  ${spec}`),
             `Pictures: ${r.captureDir}`,
             `Page models: ${r.modelDir}`,
+            ...(r.htmlDir ? [`Rendered pages: ${r.htmlDir}`] : []),
             r.exitNonZero
               ? `The run did not finish cleanly. Read the output above, then the trace in ${r.runDir}.`
               : `Index them next: tim parity manifest <runId> --side ${r.side} --sha ${r.sha.slice(0, 8)} --write`
@@ -481,6 +528,48 @@ export const register = (program, { timVersion }) => {
                 : [`${side.side}: ${side.why}`]
             )
             .join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('ingest <runId>')
+    .description(
+      "Assemble backlog.json from the finding files agents wrote under the corpus workarea's findings/ directory"
+    )
+    .option(
+      '--replace',
+      'Rebuild from scratch rather than merging. Refuses while any increment holds a ruling'
+    )
+    .option('--dry-run', 'Report what would be written and write nothing')
+    .option('--target <name>', 'Build-loop target the backlog names')
+    .action(
+      makeParityAction({
+        run: ({ profile, workspaceRoot }, opts) =>
+          runIngest({
+            profile,
+            workspaceRoot,
+            replace: opts.replace,
+            dryRun: opts.dryRun,
+            target: opts.target
+          }),
+        renderText: renderIngest,
+        timVersion
+      })
+    )
+
+  parity
+    .command('anchors <runId>')
+    .description(
+      'Derive the element crops from the controls each finding names, so a finding about one control is shown by that control'
+    )
+    .option('--side <id>', 'Just one side')
+    .option('--write', 'Write anchors.<side>.json rather than reporting it')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runAnchors({ profile, side: opts.side, write: opts.write }),
+        renderText: renderAnchors,
         timVersion
       })
     )

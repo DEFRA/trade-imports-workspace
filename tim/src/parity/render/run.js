@@ -224,6 +224,7 @@ export const runReport = ({
   const backlogStat = statSync(profile.paths.backlog)
   const html = renderPage({
     corpus: profile.id,
+    bands: profile.bands,
     meta: corpus.meta,
     counts,
     findings: corpus.findings,

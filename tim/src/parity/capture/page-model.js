@@ -36,18 +36,50 @@ export const EXTRACTOR = () => {
     return wrapping ? text(wrapping) : null
   }
 
-  const hintFor = (el) => {
+  const describedHint = (el) => {
+    if (!el) return null
     const described = (el.getAttribute('aria-describedby') || '')
       .split(/\s+/)
       .filter(Boolean)
       .map((id) => document.getElementById(id))
       .filter(Boolean)
       .filter((node) => node.classList.contains('govuk-hint'))
-    if (described.length) return described.map(text).join(' ')
+    return described.length ? described.map(text).join(' ') : null
+  }
+
+  // A hint another control points its aria-describedby at belongs to that
+  // control. On a search-and-choose screen the search box and the results list
+  // share one form group, so without this the search box's hint is read as a
+  // hint on the list beside it — and on every one of its hundred options.
+  const describedByAnother = (hint, el) =>
+    !!hint.id &&
+    [...document.querySelectorAll('[aria-describedby]')].some(
+      (owner) =>
+        owner !== el &&
+        !owner.contains(el) &&
+        (owner.getAttribute('aria-describedby') || '')
+          .split(/\s+/)
+          .includes(hint.id)
+    )
+
+  const formGroupHint = (el) => {
     const group = el.closest('.govuk-form-group')
     const hint = group ? group.querySelector(':scope > .govuk-hint') : null
+    if (!hint || describedByAnother(hint, el)) return null
     return text(hint)
   }
+
+  // govukRadios, govukCheckboxes and govukDateInput hang a group's hint off the
+  // fieldset and render it inside the fieldset, so it is neither on the control
+  // nor a child of the form group. Walking to the fieldset is what reaches it.
+  const hintFor = (el) =>
+    describedHint(el) ??
+    describedHint(el.closest('fieldset')) ??
+    formGroupHint(el)
+
+  // An option's own hint is always bound to it by aria-describedby. Anything
+  // wider hands every option in the group the same borrowed text.
+  const optionHint = (el) => describedHint(el)
 
   const OPTION_TYPES = new Set(['radio', 'checkbox'])
 
@@ -79,7 +111,7 @@ export const EXTRACTOR = () => {
           options: siblings.map((s) => ({
             value: s.value,
             label: closestLabelText(s),
-            hint: hintFor(s),
+            hint: optionHint(s),
             conditional: !!(
               s.getAttribute('data-aria-controls') ||
               s.getAttribute('aria-controls')

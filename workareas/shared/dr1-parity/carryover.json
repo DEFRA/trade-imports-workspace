@@ -1,0 +1,946 @@
+{
+  "note": "This is a triage index, not a set of findings. It says, for each of the 97 findings the DR2.1 run produced, whether the same gap still exists when the frontend is compared against Design Release 1 — and nothing more. It does not rewrite a single finding, does not rank them, and does not decide whether any of them is worth doing; the authoring pass still has to write the DR1 finding, and a `carries` verdict is permission to copy the substance across, not the copy itself. Every verdict was settled by reading the prototype's own source at the root mount, which is DR1, rather than by looking at pictures — so `why` cites the line that settles it and `dr1Evidence` names the file the re-reading should open. The rule to apply when reading it: a verdict is a claim about the prototype, never about the frontend. `retired` means DR1 has no such thing to compare against, so the frontend matching or not matching it says nothing; `changed` means DR1 has the thing but in a different shape, and the finding must be rewritten from the DR1 view rather than copied; `carries` means the DR1 source still says what the finding says it says; `recheck` means source alone could not settle it and the named evidence is needed. Where a verdict and the older prose disagree, the verdict is the later reading and wins — but re-open the cited line before acting on it, because these citations are into a prototype that is still being edited and a line number is the first thing to go stale.",
+  "source": "workareas/journey-builder/EUDPA-328/backlog.json",
+  "findings": [
+    {
+      "id": "inc-001",
+      "title": "No page in the frontend renders a phase banner, where every DR2.1 page carries an Alpha banner with a feedback link.",
+      "verdict": "carries",
+      "why": "Every DR1 root view renders the Alpha phase banner with the feedback link in its own beforeContent block, e.g. app/views/dashboard.html:12-17 and app/views/cph-number.html:12-17. The banner is not a DR2.1 addition.",
+      "dr1Evidence": "app/views/dashboard.html:12-17",
+      "screens": [
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-002",
+      "title": "The frontend renders a service navigation bar with no navigation links, so the prototype's Dashboard / Templates / Address book / Manage account / Log out cross-service nav has no counterpart.",
+      "verdict": "changed",
+      "why": "DR1 does get a service navigation bar, but the four-item one: layouts/main.html:100-126 renders Dashboard / Address book / Manage account / Log out and the Templates item at :80-84 is inside the isDesignRelease2Version branch. The finding must drop Templates from the list it says the frontend is missing.",
+      "dr1Evidence": "app/views/layouts/main.html:99-126",
+      "screens": [
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-003",
+      "title": "The frontend renders no phase banner and an empty service navigation; every DR2.1 screen carries an Alpha banner and a five-item nav.",
+      "verdict": "changed",
+      "why": "The phase-banner half carries, but the nav is four items in DR1 not five (layouts/main.html:99-126 — Templates is DR2-only), and two of the frontend screens the finding attaches to, delete and cancel-amend, have no DR1 counterpart at all (routes.js:5612, 9653).",
+      "dr1Evidence": "app/views/layouts/main.html:99-126",
+      "screens": [
+        "dr1-notification-hub",
+        "dr1-review-notification",
+        "dr1-declaration",
+        "dr1-notification-submitted"
+      ]
+    },
+    {
+      "id": "inc-004",
+      "title": "Germinal products (semen, embryos and ova) are a whole commodity class the frontend has no concept of, and they change what three of the four pages in this band ask for.",
+      "verdict": "retired",
+      "why": "getSearchCommodities (routes.js:65-75) returns the plain commodity list and only concatenates germinalProductCommodities when _isDesignRelease21Version is on the session. A DR1 user cannot put a germinal commodity into a notification, so none of the three pages the finding says germinal changes ever changes.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-005",
+      "title": "Additional details is missing the storage-temperature question, and unlike the prototype the frontend always asks the certification-purpose question.",
+      "verdict": "retired",
+      "why": "Both halves die. getAdditionalAnimalDetailsConfig (routes.js:1186-1197) sets showTemperatureQuestion = hasGerminalProductsOnly(sessionData), which is never true in DR1, so DR1 has no storage-temperature question; and showCertificationPurposeQuestion is defined as !showTemperatureQuestion, so DR1 always asks certification purpose — exactly what the finding faults the frontend for.",
+      "dr1Evidence": "app/routes.js:1186-1197",
+      "screens": []
+    },
+    {
+      "id": "inc-006",
+      "title": "Microchip is missing as an identifier type across the whole service — the prototype offers it for horses and for all 01061900 commodities.",
+      "verdict": "carries",
+      "why": "The identifier sets are release-agnostic data: app/data/commodity-identifiers.js:5 gives 01061900 Microchip / Passport / Tattoo and :14 gives 0101 (horses) Microchip / Passport / Horse name. DR1 offers microchip on exactly the commodities the finding names.",
+      "dr1Evidence": "app/data/commodity-identifiers.js:3-19",
+      "screens": [
+        "dr1-animal-identification-details"
+      ]
+    },
+    {
+      "id": "inc-007",
+      "title": "Address entry forms disagree on two field labels service-wide: the frontend says 'Postal or zip code' and 'Telephone number', the prototype says 'Postcode or Zip code' and 'Phone number'.",
+      "verdict": "carries",
+      "why": "The labels live in shared partials with no DR2.1 override: partials/address-book-manual-address-fields.html:64 says 'Postcode or Zip code' and :102 says 'Phone number', and partials/transporter-add-private-fields.html:62,100 and permanent-address-new-address-fields.html:64,86 repeat them.",
+      "dr1Evidence": "app/views/partials/address-book-manual-address-fields.html:64,102",
+      "screens": [
+        "dr1-consignment-address-select",
+        "dr1-transporter-add-private"
+      ]
+    },
+    {
+      "id": "inc-008",
+      "title": "Every prototype journey page carries a section caption above the h1; no frontend journey page has one.",
+      "verdict": "carries",
+      "why": "Every DR1 journey view carries a caption above the h1 — origin-of-the-import.html:39, reason-for-import.html:41, cph-number.html:32 — and the caption text matches DR2.1 on all three of the pages this finding names.",
+      "dr1Evidence": "app/views/origin-of-the-import.html:39",
+      "screens": [
+        "dr1-origin-of-the-import",
+        "dr1-reason-for-import",
+        "dr1-cph-number"
+      ]
+    },
+    {
+      "id": "inc-009",
+      "title": "Every prototype page in this band carries a section caption above the H1; the frontend has captions on one page in the entire service.",
+      "verdict": "carries",
+      "why": "All four pages in the band carry a caption in DR1: what-are-you-importing.html:38, consignment-details.html:44, animal-identification-details.html:46, additional-animal-details.html:37. One caption value differs — DR1's commodity-details caption reads 'About the consignment' where DR2.1 reads 'Description of the goods' — so the authored copy for that page must be taken from the root view.",
+      "dr1Evidence": "app/views/consignment-details.html:44",
+      "screens": [
+        "dr1-what-are-you-importing",
+        "dr1-consignment-details",
+        "dr1-animal-identification-details",
+        "dr1-additional-animal-details"
+      ]
+    },
+    {
+      "id": "inc-010",
+      "title": "The prototype shows an Alpha phase banner on every page; the frontend's shared layout renders none anywhere in the service.",
+      "verdict": "carries",
+      "why": "Same mechanism as inc-001 — the Alpha banner is in every root view's beforeContent block, e.g. origin-of-the-import.html:12-17, reason-for-import.html:14-19, cph-number.html:12-17. This finding, inc-001 and inc-003 are three statements of one gap.",
+      "dr1Evidence": "app/views/origin-of-the-import.html:12-17",
+      "screens": [
+        "dr1-origin-of-the-import",
+        "dr1-reason-for-import",
+        "dr1-cph-number"
+      ]
+    },
+    {
+      "id": "inc-011",
+      "title": "Identification details is missing the selected-commodities summary block and its Change / Add another commodity / Change number of animals links.",
+      "verdict": "carries",
+      "why": "The root identification page renders the selected-commodities grid with its Change link per row and the Add another commodity link (animal-identification-details.html:59-82), and each species panel header carries 'Change number of animals' (:97).",
+      "dr1Evidence": "app/views/animal-identification-details.html:59-98",
+      "screens": [
+        "dr1-animal-identification-details"
+      ]
+    },
+    {
+      "id": "inc-012",
+      "title": "The prototype hub shows each role's full selected address under its own h2 section heading; the frontend hub shows only the party name in a summary-list row.",
+      "verdict": "carries",
+      "why": "The DR1 hub renders each role as its own section with an h2 heading (roles-and-addresses.html:56) and, once answered, the selected address name plus every address line in an inset block (:59-68). Only the DR2.1 success banner is absent, which this finding is not about.",
+      "dr1Evidence": "app/views/roles-and-addresses.html:53-72",
+      "screens": [
+        "dr1-roles-and-addresses",
+        "dr1-roles-and-addresses-complete"
+      ]
+    },
+    {
+      "id": "inc-013",
+      "title": "DR2.1 asks the user to choose a document type; the frontend guesses it from the uploaded filename.",
+      "verdict": "carries",
+      "why": "The DR1 upload page asks the user to pick a document type from a select before saving the row (upload-documents.html:118-128) and shows the chosen type back in the saved-documents table (:203,215).",
+      "dr1Evidence": "app/views/upload-documents.html:118-128",
+      "screens": [
+        "dr1-upload-documents",
+        "dr1-upload-documents-populated"
+      ]
+    },
+    {
+      "id": "inc-014",
+      "title": "The frontend's port-of-entry hint promises type-to-search but the control is a plain 80-option select; DR2.1 ships an actual typeahead.",
+      "verdict": "carries",
+      "why": "DR1's port of entry is a real typeahead, not a select: arrival-details.html:64 mounts data-module=\"app-airport-search\" over a search input with a results list and a hidden portOfEntry field (:94-104).",
+      "dr1Evidence": "app/views/arrival-details.html:50-105",
+      "screens": [
+        "dr1-arrival-details"
+      ]
+    },
+    {
+      "id": "inc-015",
+      "title": "The germinal review card lists Net weight, Type of package and Number of packages where the frontend species card always lists Number of animals",
+      "verdict": "retired",
+      "why": "The germinal review card only exists for a species the DR1 commodity list cannot contain — getSearchCommodities (routes.js:65-75) withholds germinalProductCommodities from a DR1 session, so consignment-details.html never takes the germinal branch (which is itself DR2.1-only, design-release-2.1/consignment-details.html:100-137).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-016",
+      "title": "The prototype captures the CPH number as three labelled parts sized 2/3/4; the frontend takes it as one free-text field.",
+      "verdict": "carries",
+      "why": "The CPH input is a shared partial with no DR2.1 override: partials/cph-number-input.html:17-53 renders a govukDateInput of three labelled parts — County width-2, Parish width-3, Holding number width-4.",
+      "dr1Evidence": "app/views/partials/cph-number-input.html:17-53",
+      "screens": [
+        "dr1-cph-number"
+      ]
+    },
+    {
+      "id": "inc-017",
+      "title": "The prototype composes the region of origin code from a country-derived prefix plus a 5-character suffix; the frontend asks for the whole code in a single 5-character field.",
+      "verdict": "carries",
+      "why": "partials/region-of-origin-code-input.html:20-31 is shared and renders a read-only country-derived prefix beside a single 5-character suffix input, and origin-of-the-import.html:58 feeds it the prefix table.",
+      "dr1Evidence": "app/views/partials/region-of-origin-code-input.html:20-31",
+      "screens": [
+        "dr1-origin-of-the-import"
+      ]
+    },
+    {
+      "id": "inc-018",
+      "title": "Germinal species take exactly one identification record regardless of quantity, while the frontend requires one unit record per animal counted",
+      "verdict": "retired",
+      "why": "Germinal species are unreachable in DR1 (routes.js:65-75), so no consignment ever takes the one-record-per-species identification path this finding compares against.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-019",
+      "title": "numberOfAnimals is unconditionally mandatory in the frontend but is never asked or validated on a germinal line",
+      "verdict": "retired",
+      "why": "There is no germinal line in a DR1 consignment (routes.js:65-75), so numberOfAnimals is asked and validated on every species DR1 can hold — the obligation disagreement the finding describes cannot arise.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-020",
+      "title": "numberOfPackages carries opposite obligation statuses on the two sides: mandatory for germinal in DR2.1, optional for everything in the frontend, and never validated for live animals in DR2.1",
+      "verdict": "retired",
+      "why": "The mandatory-for-germinal branch of numberOfPackages exists only in design-release-2.1/consignment-details.html:100-137; the DR1 root view has only the optional packagingFields loop (consignment-details.html:110-123), so both sides agree that packages are optional.",
+      "dr1Evidence": "app/views/consignment-details.html:96-125",
+      "screens": []
+    },
+    {
+      "id": "inc-021",
+      "title": "'Use template' is a redirect, not a page — the fourth templates screen is the notification hub, and the frontend already has this exact flow shape in copy-as-new.",
+      "verdict": "retired",
+      "why": "The use-template landing redirect is behind the DR2 session guard — routes.js:9577 returns to '/' when isDesignRelease2SessionData is false. DR1 has no templates at all.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-022",
+      "title": "The frontend's read-only notification view still renders 'Now submit your notification' and a POST Continue button; the prototype suppresses the submit form on every non-draft variant.",
+      "verdict": "changed",
+      "why": "DR1 does have one read-only variant — /review-notification?submitted=<id> renders with readOnly:true (routes.js:10024-10037) and review-notification.html:189 wraps the submit form in {% if not readOnly %} — but it has no amend, no cancel-amend and no draft/action-required variants, all of which are DR2-gated (routes.js:9619,9653,5541). The finding shrinks from 'every non-draft variant' to the single submitted view.",
+      "dr1Evidence": "app/views/review-notification.html:189-197",
+      "screens": [
+        "dr1-review-notification"
+      ]
+    },
+    {
+      "id": "inc-023",
+      "title": "The prototype confirmation page offers 'Create a new notification' as an onward route; the frontend offers only 'Return to your dashboard'.",
+      "verdict": "carries",
+      "why": "The DR1 confirmation page offers both onward routes — notification-submitted.html:54 'Return to your dashboard' and :57 'Create a new notification'.",
+      "dr1Evidence": "app/views/notification-submitted.html:49-59",
+      "screens": [
+        "dr1-notification-submitted"
+      ]
+    },
+    {
+      "id": "inc-024",
+      "title": "The prototype hub ends with a 'Review and submit' primary button and has no review task row; the frontend hub has a 'Check and submit' task row and only a secondary 'Return to dashboard' button.",
+      "verdict": "carries",
+      "why": "The DR1 hub ends with a primary 'Review and submit' button and a secondary 'Return to dashboard' (notification-hub.html:81-93), and the six task sections built at routes.js:5748-5836 contain no review row.",
+      "dr1Evidence": "app/views/notification-hub.html:81-93",
+      "screens": [
+        "dr1-notification-hub"
+      ]
+    },
+    {
+      "id": "inc-025",
+      "title": "The prototype offers a 'Same as consignee' one-click copy on the hub for importer and place of destination; the frontend only tells the user they are usually the same and makes them pick again.",
+      "verdict": "carries",
+      "why": "The DR1 hub renders the copy shortcuts as submit buttons styled as links — roles-and-addresses.html:93 'Same as place of origin' and :99 'Same as consignee' — driven by canUseSameAsConsignee in the shared data/consignment-address-sections.js:54,68.",
+      "dr1Evidence": "app/views/roles-and-addresses.html:82-102",
+      "screens": [
+        "dr1-roles-and-addresses"
+      ]
+    },
+    {
+      "id": "inc-026",
+      "title": "Destructive-confirm pages use a warning button plus a secondary button in the frontend and a warning button plus a text link in the prototype.",
+      "verdict": "retired",
+      "why": "Neither destructive-confirm page exists in DR1: renderDeleteNotificationPage redirects to the dashboard when isDesignRelease2SessionData is false (routes.js:5612) and cancel-amend does the same (routes.js:9653). There is no DR1 screen to compare the button pattern against.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-027",
+      "title": "DR2.1 hints that international phone numbers need a country code on both transporter forms; the frontend gives no phone hint anywhere.",
+      "verdict": "carries",
+      "why": "Both transporter forms are shared partials and both hint the country code: partials/transporter-add-private-fields.html:100-104 and partials/transporter-add-commercial-fields.html:222-226.",
+      "dr1Evidence": "app/views/partials/transporter-add-private-fields.html:100-104",
+      "screens": [
+        "dr1-transporter-add-private",
+        "dr1-transporter-add-commercial"
+      ]
+    },
+    {
+      "id": "inc-028",
+      "title": "Four of the eleven internal-market purpose hints carry grammar and GDS style defects in the frontend that the prototype has already corrected.",
+      "verdict": "carries",
+      "why": "The eleven internal-market purposes and their hint text live in app/data/internal-market-purposes.js, a single release-agnostic file rendered through partials/internal-market-purpose-select.html — DR1 shows the same corrected wording.",
+      "dr1Evidence": "app/data/internal-market-purposes.js",
+      "screens": [
+        "dr1-reason-for-import-internal-market-revealed"
+      ]
+    },
+    {
+      "id": "inc-029",
+      "title": "The commodity search page omits the Trade Tariff tool link and the three-paragraph explanation of what a commodity code is.",
+      "verdict": "carries",
+      "why": "what-are-you-importing.html:119-131 builds the commodity-codes help block, including the link to the Trade Tariff tool at :123, and renders it on the DR1 page.",
+      "dr1Evidence": "app/views/what-are-you-importing.html:119-131",
+      "screens": [
+        "dr1-what-are-you-importing"
+      ]
+    },
+    {
+      "id": "inc-030",
+      "title": "The CPH page heading is a bare label in the frontend and an instruction in the prototype.",
+      "verdict": "carries",
+      "why": "The DR1 CPH heading is the instruction 'Add the county parish holding number (CPH)' (cph-number.html:33), with the bare label 'CPH number' demoted to the fieldset legend inside the shared input partial (partials/cph-number-input.html:8).",
+      "dr1Evidence": "app/views/cph-number.html:33",
+      "screens": [
+        "dr1-cph-number"
+      ]
+    },
+    {
+      "id": "inc-031",
+      "title": "The frontend's CPH hint shows a 3/3/3 grouping, which is not the CPH format.",
+      "verdict": "carries",
+      "why": "The DR1 hint reads 'For example 12/345/6789' (partials/cph-number-input.html:12) over 2/3/4-width parts (:22,34,46) — the shared partial, so the 3/3/3 grouping the finding faults is a frontend-only invention.",
+      "dr1Evidence": "app/views/partials/cph-number-input.html:12",
+      "screens": [
+        "dr1-cph-number"
+      ]
+    },
+    {
+      "id": "inc-032",
+      "title": "The prototype captions the addresses hub and every address spoke 'Consignment parties'; the frontend captions only the spokes, and captions them 'Consignment addresses'.",
+      "verdict": "carries",
+      "why": "DR1 captions both the hub and the spoke 'Consignment parties' — roles-and-addresses.html:30 and consignment-address-select.html:41 — and the same caption appears on cph-number.html:32 and permanent-address-animals.html:34.",
+      "dr1Evidence": "app/views/roles-and-addresses.html:30",
+      "screens": [
+        "dr1-roles-and-addresses",
+        "dr1-consignment-address-select"
+      ]
+    },
+    {
+      "id": "inc-033",
+      "title": "The prototype's contact page explains what a contact address is; the frontend only explains what selecting one does.",
+      "verdict": "carries",
+      "why": "The DR1 contact page opens with the explanation of what a contact address is — contact-address-for-consignment.html:50-52, 'the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks'.",
+      "dr1Evidence": "app/views/contact-address-for-consignment.html:50-52",
+      "screens": [
+        "dr1-contact-address-for-consignment"
+      ]
+    },
+    {
+      "id": "inc-034",
+      "title": "The prototype's CPH page carries a \"What is a CPH number?\" details block explaining the number and where to find it; the frontend page has no help content at all.",
+      "verdict": "carries",
+      "why": "The 'What is a CPH number?' details block, with the 9-digit explanation and the where-to-find-it link, is on the DR1 page at cph-number.html:45-51.",
+      "dr1Evidence": "app/views/cph-number.html:45-51",
+      "screens": [
+        "dr1-cph-number"
+      ]
+    },
+    {
+      "id": "inc-035",
+      "title": "The whole DR2.1 documents guidance block — ITAHC intro, 'other documents you may need', and the expandable 'which additional documents' table — is absent from the frontend.",
+      "verdict": "carries",
+      "why": "The whole guidance block is on the DR1 page: the ITAHC intro at upload-documents.html:39 and the expandable 'Check which additional documents you must upload' at :52.",
+      "dr1Evidence": "app/views/upload-documents.html:36-80",
+      "screens": [
+        "dr1-upload-documents"
+      ]
+    },
+    {
+      "id": "inc-036",
+      "title": "Template lifecycle after creation is undefined: the Change links are dead anchors, 'Save and continue' saves nothing, and there is no rename or delete.",
+      "verdict": "retired",
+      "why": "Both template screens are behind the DR2 session guard — renderViewTemplatePage routes.js:7073 and renderDashboardTemplatesPage routes.js:7275 both redirect when isDesignRelease2SessionData is false. DR1 has no template lifecycle to leave undefined.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-037",
+      "title": "The prototype collects permanent address as a consignment-level address role with its own two-page flow off the addresses hub; the frontend collects it as free-text address fields inside each animal identification record.",
+      "verdict": "changed",
+      "why": "DR1 does collect permanent address as a consignment-level role off the addresses hub (data/consignment-address-sections.js:79-96, gated on species by routes.js:2036-2038), but it is a one-page flow, not two: GET /permanent-address immediately redirects to /permanent-address/select (routes.js:10789-10801) and renderPermanentAddressPage (routes.js:2780) is never called, so permanent-address.html is dead code. The 'Are all the animals going to the place of destination?' question the finding describes is not asked.",
+      "dr1Evidence": "app/routes.js:10789-10801",
+      "screens": [
+        "dr1-roles-and-addresses",
+        "dr1-permanent-address-animals"
+      ]
+    },
+    {
+      "id": "inc-038",
+      "title": "The prototype defines no way to author a template's content — creation captures a name and nothing else.",
+      "verdict": "retired",
+      "why": "renderCreateTemplatePage redirects to '/' when the DR2 session flag is absent (routes.js:7286). There is no template-creation screen in DR1 whose content model could be undefined.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-039",
+      "title": "The prototype links each picker row to a full address-book record page; the frontend expands the address inline in a details disclosure and has no address record page at all.",
+      "verdict": "carries",
+      "why": "Each DR1 picker row ends in a 'View details' link (consignment-address-select.html:151) whose href is buildAddressViewHref into the address-book record page (routes.js:3562), and buildConsignmentAddressResults is release-agnostic (routes.js:3550-3567).",
+      "dr1Evidence": "app/views/consignment-address-select.html:151",
+      "screens": [
+        "dr1-consignment-address-select"
+      ]
+    },
+    {
+      "id": "inc-040",
+      "title": "The frontend has no commodity search control at all — it renders five fixed checkbox fieldsets, where the prototype runs a type-ahead search over the whole commodity catalogue with a selected-items panel.",
+      "verdict": "carries",
+      "why": "DR1's commodity page is the type-ahead: what-are-you-importing.html:63-64 mounts data-module=\"app-commodity-search\" over the whole catalogue JSON, with a results panel (:93) and a selected-items panel (:100-107).",
+      "dr1Evidence": "app/views/what-are-you-importing.html:60-115",
+      "screens": [
+        "dr1-what-are-you-importing",
+        "dr1-what-are-you-importing-results"
+      ]
+    },
+    {
+      "id": "inc-041",
+      "title": "The prototype's submitted-notification view opens with an 'Import reference numbers' block (notification reference, customs document code C640, copy buttons and a customs warning); the frontend view has no equivalent.",
+      "verdict": "retired",
+      "why": "The Import reference numbers block renders only when pageHeader is set (design-release-2.1/review-notification.html:53-77), and pageHeader is only ever populated by resolveDesignRelease2ReviewPageOptions behind the isDr2 guard at routes.js:5541. The DR1 root review view has no such section.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-042",
+      "title": "A template writes one address into five party roles, contradicting the consignor and consignee its own card advertises.",
+      "verdict": "retired",
+      "why": "Templates are unreachable in DR1 (routes.js:7073, 7275), so a template cannot write anything into the party roles.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-043",
+      "title": "Identification details has no germinal identifier set — the prototype asks for Donor ID, Collection date and Identification number, including a date picker the frontend has no equivalent of on this page.",
+      "verdict": "retired",
+      "why": "The germinal identifier set belongs to commodity codes 05119985 and 05111000 (data/commodity-identifiers.js:20-29), which a DR1 user cannot select (routes.js:65-75); and the date-picker branch that renders Collection date exists only in design-release-2.1/animal-identification-details.html:111-129, not in the root view.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-044",
+      "title": "Means of transport is four radios in the frontend and a select in DR2.1.",
+      "verdict": "carries",
+      "why": "DR1's means of transport is a govukSelect over meansOfTransportItems (arrival-details.html:110-119), not radios.",
+      "dr1Evidence": "app/views/arrival-details.html:110-119",
+      "screens": [
+        "dr1-arrival-details"
+      ]
+    },
+    {
+      "id": "inc-045",
+      "title": "Templates carry a category label with no germinal-products example, so what a template is scoped to is unspecified.",
+      "verdict": "retired",
+      "why": "Both the templates list (routes.js:7275) and germinal commodities (routes.js:65-75) are absent from DR1, so neither half of the finding has a subject.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-046",
+      "title": "The prototype picks country of origin with a type-ahead search over a full country list; the frontend uses a govukSelect dropdown of 33 fixed options.",
+      "verdict": "carries",
+      "why": "DR1's country of origin is a type-ahead over the full country list — origin-of-the-import.html:55 mounts data-module=\"app-country-search\" and :57 feeds it countriesJson from data/countries.js.",
+      "dr1Evidence": "app/views/origin-of-the-import.html:53-97",
+      "screens": [
+        "dr1-origin-of-the-import"
+      ]
+    },
+    {
+      "id": "inc-047",
+      "title": "Transit countries is a full checkbox list capped at 12 in the frontend, and an unbounded typeahead with an add/remove selected-list in DR2.1.",
+      "verdict": "carries",
+      "why": "DR1's transit countries is the unbounded typeahead with a selected list — transit-countries.html:73 mounts data-module=\"app-transit-country-search\" and :134 renders the per-country Remove link. The dr1-transit-countries-selected state was captured.",
+      "dr1Evidence": "app/views/transit-countries.html:73,134",
+      "screens": [
+        "dr1-transit-countries",
+        "dr1-transit-countries-selected"
+      ]
+    },
+    {
+      "id": "inc-048",
+      "title": "A germinal-only notification can never mark Commodity details complete in DR2.1, because completeness is defined solely in terms of numberOfAnimals",
+      "verdict": "retired",
+      "why": "A germinal-only notification cannot exist in DR1 (routes.js:65-75), so the completeness rule the finding says it can never satisfy is never reached.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-049",
+      "title": "A mixed consignment is never asked the storage Temperature question even though it contains germinal goods",
+      "verdict": "retired",
+      "why": "A mixed live-animal and germinal consignment is unreachable in DR1 (routes.js:65-75), and the temperature question itself only renders for hasGerminalProductsOnly (routes.js:1188).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-050",
+      "title": "A mixed live-animal and germinal consignment renders both question sets on one page, so numberOfPackages carries two different obligation statuses simultaneously",
+      "verdict": "retired",
+      "why": "Mixed consignments need a germinal commodity, which DR1 does not offer (routes.js:65-75), and the two-question-set page is the DR2.1-only branch at design-release-2.1/consignment-details.html:100-137.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-051",
+      "title": "Document count cap disagrees: the frontend obligation allows 10, DR2.1 states and enforces 15.",
+      "verdict": "carries",
+      "why": "DR1 states the fifteen-file cap in its own guidance — upload-documents.html:168 'up to a maximum of 15 files' — and the corpus already holds the enforcement state dr1-upload-documents-limit-error.",
+      "dr1Evidence": "app/views/upload-documents.html:168",
+      "screens": [
+        "dr1-upload-documents",
+        "dr1-upload-documents-limit-error"
+      ]
+    },
+    {
+      "id": "inc-052",
+      "title": "Number of animals is mandatory in the prototype but saves blank in the frontend, which its own test asserts as intended behaviour.",
+      "verdict": "carries",
+      "why": "The number-of-animals validation is release-agnostic: routes.js:832 raises 'Enter the number of animals' on a blank value and :841 rejects a non-positive one, for every species DR1 can hold.",
+      "dr1Evidence": "app/routes.js:802-845",
+      "screens": [
+        "dr1-consignment-details"
+      ]
+    },
+    {
+      "id": "inc-053",
+      "title": "The prototype gives commodities with no typed identifier no identification panel at all; the frontend asks them for free-text Identification details and Animal description.",
+      "verdict": "carries",
+      "why": "Only four live-animal codes have identifier sets in the shared data/commodity-identifiers.js:3-19; every other commodity returns an empty list, and routes.js:5779 drops the whole Identification details task row when hasAnimalIdentifiersRequired is false. DR1 asks such commodities nothing.",
+      "dr1Evidence": "app/data/commodity-identifiers.js:3-19",
+      "screens": [
+        "dr1-animal-identification-details",
+        "dr1-notification-hub"
+      ]
+    },
+    {
+      "id": "inc-054",
+      "title": "The prototype hub never blocks a task: every row is always a link with a two-state tag, while the frontend gates rows behind entry conditions and shows 'Cannot start yet'.",
+      "verdict": "carries",
+      "why": "getNotificationHubViewModel (routes.js:5734-5836) is release-agnostic and gives every row an href and one of exactly two tags, Complete or To do. There is no blocked state and no 'Cannot start yet' anywhere in the DR1 hub.",
+      "dr1Evidence": "app/routes.js:5734-5836",
+      "screens": [
+        "dr1-notification-hub"
+      ]
+    },
+    {
+      "id": "inc-055",
+      "title": "The two sides disagree about which commodities get a Tattoo field — the frontend offers it for cattle, the prototype does not.",
+      "verdict": "carries",
+      "why": "data/commodity-identifiers.js:9-12 gives cattle (0102) only Ear tag and Passport; Tattoo appears solely under 01061900 (:7). The data file is shared, so DR1 agrees with DR2.1 here.",
+      "dr1Evidence": "app/data/commodity-identifiers.js:9-12",
+      "screens": [
+        "dr1-animal-identification-details"
+      ]
+    },
+    {
+      "id": "inc-056",
+      "title": "The unweaned-animals question applies to different commodities on each side — the frontend asks it for horses, the prototype does not, and the prototype asks it for pigs.",
+      "verdict": "carries",
+      "why": "getUnweanedOptions (routes.js:1169-1183) returns nothing when every selected code is 01061900 — horses — and otherwise keys off each commodity's unweanedOptions in data/commodities.js. Release-agnostic, so DR1 asks the question of the same set the finding names.",
+      "dr1Evidence": "app/routes.js:1169-1183",
+      "screens": [
+        "dr1-additional-animal-details"
+      ]
+    },
+    {
+      "id": "inc-057",
+      "title": "Adding an address from a picker returns to the picker with the new address pre-selected and a success banner in the prototype; the frontend commits it and drops the user back on the hub with no confirmation.",
+      "verdict": "carries",
+      "why": "In DR1 the picker's add link is /address-book/add?from=<section> (routes.js:3598-3600), which sets the consignment return (routes.js:9719-9725); on completion the new address is synced into the section and consignmentAddressSuccessMessage is set (routes.js:8149-8154), and consignment-address-select.html:31-37 renders the success banner. The behaviour carries even though DR1 reaches the add form through the address book rather than an in-journey page.",
+      "dr1Evidence": "app/views/consignment-address-select.html:31-37",
+      "screens": [
+        "dr1-consignment-address-select",
+        "dr1-contact-address-for-consignment"
+      ]
+    },
+    {
+      "id": "inc-058",
+      "title": "DR2.1 restructured the notification into a six-part spine (About the consignment / Description of the goods / Transport and arrival / Documents / Consignment parties / Contact address); the frontend hub uses a different six and the check-answers page uses only four.",
+      "verdict": "carries",
+      "why": "DR1 already uses the same six-part spine: routes.js:5751-5832 builds the hub as 1. About the consignment through 6. Contact address, and review-notification.html:41-155 repeats those six section headings. Only the finding's framing ('DR2.1 restructured') needs rewriting; the six-against-six-and-four comparison is unchanged.",
+      "dr1Evidence": "app/routes.js:5751-5832",
+      "screens": [
+        "dr1-notification-hub",
+        "dr1-review-notification"
+      ]
+    },
+    {
+      "id": "inc-059",
+      "title": "Germinal identification is a single always-editable form with no add-another loop, no saved-records table, and it never reports itself complete",
+      "verdict": "retired",
+      "why": "The germinal identification form is unreachable in DR1 because germinal commodities are (routes.js:65-75).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-060",
+      "title": "The prototype address picker shows the whole role list on one page and filters it live as the user types; the frontend paginates five per page behind a Search submit button.",
+      "verdict": "carries",
+      "why": "buildConsignmentAddressResults returns the whole role list unpaginated (routes.js:3550-3567) and consignment-address-select.html:70 mounts data-module=\"app-consignment-address-search\" to filter the rendered rows live. DR1's place-of-origin picker uses this same plain search rather than DR2.1's country typeahead, so the finding carries and is if anything cleaner here.",
+      "dr1Evidence": "app/views/consignment-address-select.html:70-92",
+      "screens": [
+        "dr1-consignment-address-select"
+      ]
+    },
+    {
+      "id": "inc-061",
+      "title": "The prototype asks reason for import and all four of its follow-up questions on one page as conditional reveals; the frontend spreads them across five sequential pages.",
+      "verdict": "carries",
+      "why": "buildImportReasonItems (routes.js:8778-8818) attaches all four conditional reveals — internal market, transhipment, transit and temporary admission horses — to the single radio group rendered at reason-for-import.html:47-61, and the corpus holds all four revealed states as DR1 screens.",
+      "dr1Evidence": "app/routes.js:8778-8818",
+      "screens": [
+        "dr1-reason-for-import",
+        "dr1-reason-for-import-internal-market-revealed",
+        "dr1-reason-for-import-transhipment-revealed",
+        "dr1-reason-for-import-transit-revealed",
+        "dr1-reason-for-import-temporary-admission-horses-revealed"
+      ]
+    },
+    {
+      "id": "inc-062",
+      "title": "The prototype confirms cancelling an amendment in an in-page modal on the notification view; the frontend navigates to a dedicated confirm page.",
+      "verdict": "retired",
+      "why": "There is no amendment journey in DR1 — /notifications/amend and /notifications/cancel-amend both redirect when the DR2 session flag is absent (routes.js:9619, 9653) — so there is nothing to cancel and no modal to compare.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-063",
+      "title": "The prototype's part-complete hub after using a template cannot be reproduced: the frontend's commodities task row spans two pages the template only half-fills.",
+      "verdict": "retired",
+      "why": "The use-template landing is DR2-gated (routes.js:9577), so DR1 has no part-complete-hub-from-a-template state to reproduce.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-064",
+      "title": "The transporter pairing in pairs.js is wrong: fe-transporter-type's counterpart is dr21-transporter-add, not dr21-transporter, and DR2.1 sits the type question one step deeper in the flow.",
+      "verdict": "retired",
+      "why": "Its substance is that a harness file, pairs.js, pairs the wrong two screens — not anything a user can see or do, so by the corpus's own rule it is not a finding. DR1 has its own pairing (workareas/shared/dr1-parity/pairs.cjs) which already sits fe-transporter-type against dr1-transporter-add and fe-transporter-commercial against dr1-transporter.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-065",
+      "title": "Dashboard sort offers a different option set from the prototype and requires an explicit \"Update sort\" submit the prototype does not have.",
+      "verdict": "recheck",
+      "why": "The option set is identical in DR1 — buildDashboardSortItems falls through to dashboardData.sortItems for a non-testing session (routes.js:6716-6724), giving Select one / Newest first / Oldest first / Arrival date — but DR1's select sits in a GET form with no submit button (dashboard.html:246-262), no auto-submit script exists under app/assets/javascripts/, and getDashboardViewModel never sorts by the value. Whether an inert prototype control is a DR1 requirement at all needs the captured dr1-dashboard beside a click.",
+      "dr1Evidence": "app/views/dashboard.html:246-262",
+      "screens": [
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-066",
+      "title": "DR2.1 promises a 50MB upload limit that the frontend cannot deliver — its 10MB cap is set by the CDP ingress, not by choice.",
+      "verdict": "carries",
+      "why": "DR1 promises the same limit — upload-documents.html:166 'files that are smaller than 50MB'. The frontend's 10MB CDP ingress cap is unaffected by which release it is compared against.",
+      "dr1Evidence": "app/views/upload-documents.html:166",
+      "screens": [
+        "dr1-upload-documents"
+      ]
+    },
+    {
+      "id": "inc-067",
+      "title": "DR2.1 tells the user commercial transporters can only be Northern Irish; the frontend states no such restriction.",
+      "verdict": "carries",
+      "why": "The restriction is in shared data — data/transporter-types.js:9 hints 'This can only be a commercial transporter from Northern Ireland.' on the commercial option rendered by transporter-add.html.",
+      "dr1Evidence": "app/data/transporter-types.js:9",
+      "screens": [
+        "dr1-transporter-add"
+      ]
+    },
+    {
+      "id": "inc-068",
+      "title": "On a germinal-only identification page the grid header switches to 'Number of packages' but the per-panel change link still reads 'Change number of animals'",
+      "verdict": "retired",
+      "why": "The quantity column only relabels itself via quantityColumnLabel in design-release-2.1/animal-identification-details.html:65; the DR1 root view hardcodes 'Number of animals' (animal-identification-details.html:64) and there are no germinal panels to trigger the mismatch.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-069",
+      "title": "The dashboard doubles as the service start page — h1, intro paragraph and start button — where the prototype's dashboard is a named landing page with two entry actions and no service description.",
+      "verdict": "changed",
+      "why": "DR1's dashboard is much closer to the frontend's than DR2.1's is: its h1 is the service name 'Import notification service' under a 'Dashboard' caption (dashboard.html:29-31) and it offers one entry action, 'Create a new notification' (:33-37), where DR2.1 has 'Live animals & germinal products' and two buttons. Only the frontend's intro paragraph is left as a difference.",
+      "dr1Evidence": "app/views/dashboard.html:26-40",
+      "screens": [
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-070",
+      "title": "The delete-confirmation page names the notification and sets an expectation about delayed effect in the prototype; the frontend page is generic and instant.",
+      "verdict": "retired",
+      "why": "Delete is DR2-gated — renderDeleteNotificationPage redirects to the dashboard when isDesignRelease2SessionData is false (routes.js:5612) — so DR1 has no delete-confirmation page to compare.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-071",
+      "title": "The DR2.1 declaration text has been substantively rewritten and expanded; the frontend still carries the shorter earlier wording.",
+      "verdict": "carries",
+      "why": "app/views/declaration.html and design-release-2.1/declaration.html differ only in the form action; the DR1 declaration carries the same expanded wording verbatim. The finding needs its release name changed and nothing else.",
+      "dr1Evidence": "app/views/declaration.html",
+      "screens": [
+        "dr1-declaration"
+      ]
+    },
+    {
+      "id": "inc-072",
+      "title": "The frontend calls the second party 'Consignor or exporter'; the prototype calls it 'Consignor' on the hub, in the picker heading and in the add link.",
+      "verdict": "carries",
+      "why": "data/consignment-address-sections.js:17-19 is shared and names the role 'Consignor' in the hub heading, the picker heading and the 'Add a consignor' link.",
+      "dr1Evidence": "app/data/consignment-address-sections.js:17-19",
+      "screens": [
+        "dr1-roles-and-addresses",
+        "dr1-consignment-address-select"
+      ]
+    },
+    {
+      "id": "inc-073",
+      "title": "The prototype's review page labels the arrival date 'Arrival date at destination' while its own input page labels the same field 'Arrival date at port of entry' — a prototype inconsistency that leaves the correct frontend label undecided.",
+      "verdict": "carries",
+      "why": "The inconsistency is in shared code: the review card key is 'Arrival date at destination' (routes.js:4677) while the input page's own label, in the shared partials/arrival-date-picker.html:9, is 'Arrival date at port of entry'. DR1 reproduces it exactly.",
+      "dr1Evidence": "app/routes.js:4677 and app/views/partials/arrival-date-picker.html:9",
+      "screens": [
+        "dr1-review-notification",
+        "dr1-arrival-details"
+      ]
+    },
+    {
+      "id": "inc-074",
+      "title": "The reason-for-import page heading is the question itself in the frontend and a short topic heading in the prototype, with the question demoted to a visually hidden legend.",
+      "verdict": "carries",
+      "why": "DR1's page heading is the short topic 'Main reason for import' (reason-for-import.html:42) with the question 'What is the main reason for importing the animals?' as a govuk-visually-hidden legend (:51-53).",
+      "dr1Evidence": "app/views/reason-for-import.html:42,47-54",
+      "screens": [
+        "dr1-reason-for-import"
+      ]
+    },
+    {
+      "id": "inc-075",
+      "title": "The templates list's sort control is inert and borrows notification vocabulary that does not apply to a template.",
+      "verdict": "retired",
+      "why": "The templates list is DR2-gated (routes.js:7275), so DR1 has no template sort control to be inert.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-076",
+      "title": "Three of the four page titles in the band differ, and the two sides disagree on how the packages field's optionality is worded.",
+      "verdict": "carries",
+      "why": "The DR1 page titles are identical to DR2.1's — 'Commodity details', 'Identification details', 'Additional details' set at consignment-details.html:23, animal-identification-details.html:25 and additional-animal-details.html:23 — and the packages field's optionality wording comes from the shared packagingFields in routes.js.",
+      "dr1Evidence": "app/views/consignment-details.html:23",
+      "screens": [
+        "dr1-consignment-details",
+        "dr1-animal-identification-details",
+        "dr1-additional-animal-details"
+      ]
+    },
+    {
+      "id": "inc-077",
+      "title": "DR2.1 opens the transporter journey with a searchable list of saved transporters; the frontend has no such page and jumps straight to the type question.",
+      "verdict": "carries",
+      "why": "DR1 opens the transport task on the saved-transporter list — transporter.html:75 mounts data-module=\"app-transporter-search\" over a table of Name / Address / Approval number / Type rows with a radio per row (:108-120), and only then offers 'Add a transporter'.",
+      "dr1Evidence": "app/views/transporter.html:75-160",
+      "screens": [
+        "dr1-transporter"
+      ]
+    },
+    {
+      "id": "inc-078",
+      "title": "The frontend cannot add a commercial transporter at all — DR2.1 has a full create form including a transporter authorisation number the frontend never collects.",
+      "verdict": "carries",
+      "why": "The DR1 commercial form is the full one, and it opens with 'Transporter authorisation number' (partials/transporter-add-commercial-fields.html:9-11) — the field the finding says the frontend never collects. dr1-transporter-add-commercial is in the DR1 corpus with no frontend counterpart.",
+      "dr1Evidence": "app/views/partials/transporter-add-commercial-fields.html:9-11",
+      "screens": [
+        "dr1-transporter-add-commercial"
+      ]
+    },
+    {
+      "id": "inc-079",
+      "title": "The frontend has no templates capability at all: six prototype routes and four screens have no counterpart in the route registry or the path space.",
+      "verdict": "retired",
+      "why": "All six template routes redirect out for a DR1 session (routes.js:7275, 7286, 7073, 7096, 9577), so there is no templates capability in DR1 for the frontend to be missing.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-080",
+      "title": "There is no \"Changes in past 24 hours\" view — the prototype's /changes page, grouping recently-changed notifications by status-change category, has no frontend counterpart.",
+      "verdict": "retired",
+      "why": "renderDashboardChangesPage redirects to the dashboard when the DR2 session flag is absent (routes.js:7356). DR1 has no /changes view.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-081",
+      "title": "There is no \"Consignments due at the border control post\" view — the prototype's /inspection page, including its BCP guidance details, has no frontend counterpart.",
+      "verdict": "retired",
+      "why": "renderDashboardInspectionPage is behind the same guard (routes.js:7390). DR1 has no /inspection view.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-082",
+      "title": "There is no \"Tasks requiring your attention\" view — the prototype's /actions page, reached from the At a glance card, has no frontend counterpart.",
+      "verdict": "retired",
+      "why": "renderDashboardActionsPage is behind the same guard (routes.js:7338), and the At a glance card that links to it does not exist in DR1's dashboard either.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-083",
+      "title": "The dashboard has no \"At a glance\" section — the prototype's two counted summary cards (Action needed, Status updates) and their onward links do not exist in the frontend.",
+      "verdict": "changed",
+      "why": "DR1 does have an 'At a glance' section, but a different one: three cards headed Alerts, Errors and Messages (dashboard.html:38-72) whose counts are hardcoded to zero (routes.js:7205-7209) and whose 'View' links are href=\"#\". Action needed and Status updates, with their real counts and onward pages, are DR2.1 only.",
+      "dr1Evidence": "app/views/dashboard.html:38-72",
+      "screens": [
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-084",
+      "title": "The dashboard has no additional-filters panel — the prototype's date-range radios, start/end date pickers, By type select and Status select are all absent.",
+      "verdict": "changed",
+      "why": "DR1 has a filter surface, just a different one: a left-hand 'Filter notifications' sidebar of three collapsibles — Search by, Status and By date — carrying a status select, today/tomorrow/next-seven-days radios and start and end date pickers (dashboard.html:74-247). There is no 'By type' select and no 'Additional filters' disclosure, and the corpus already holds dr1-dashboard-filters-open and dr1-dashboard-filters-date-picker-open.",
+      "dr1Evidence": "app/views/dashboard.html:74-247",
+      "screens": [
+        "dr1-dashboard",
+        "dr1-dashboard-filters-open",
+        "dr1-dashboard-filters-date-picker-open"
+      ]
+    },
+    {
+      "id": "inc-085",
+      "title": "The dashboard notification list is undivided — the prototype's In progress / Drafts / Completed tabs, with a count on the active tab and a matching section subheading, have no frontend counterpart.",
+      "verdict": "retired",
+      "why": "DR1's dashboard has no tabs to compare against — the tabItems built at routes.js:7174-7194 all point at /design-release-2.1 and the root dashboard.html never renders them; it shows one undivided list with a results count (dashboard.html:250-330), exactly as the finding says the frontend does.",
+      "dr1Evidence": "app/views/dashboard.html:250-330",
+      "screens": []
+    },
+    {
+      "id": "inc-086",
+      "title": "The prototype models a post-submission 'action required' state — outstanding items listed on the confirmation page, a distinct status tag and a warning on the notification view — which the frontend does not model at all.",
+      "verdict": "changed",
+      "why": "Two of the three limbs survive: DR1's confirmation page does list outstanding items under 'Before the consignment is imported' (notification-submitted.html:27-37) and its dashboard fixture does carry a 'Submitted action required' status (data/dashboard-notifications.js:7). The third — the action-required warning on the notification view — is DR2-only, since reviewVariant 'action-required' can only be reached through resolveDesignRelease2ReviewPageOptions behind the isDr2 guard at routes.js:5541.",
+      "dr1Evidence": "app/views/notification-submitted.html:27-37",
+      "screens": [
+        "dr1-notification-submitted",
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-087",
+      "title": "Nothing on either side can persist a template — the records port is entirely notification-shaped and the prototype's templates are a hard-coded fixture.",
+      "verdict": "retired",
+      "why": "Templates are unreachable in DR1 (routes.js:7275, 7286, 7073), so there is no persistence gap to record.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-088",
+      "title": "The frontend commodity catalogue contains no germinal-product commodities, so every germinal screen in DR2.1 is unreachable from the real frontend",
+      "verdict": "retired",
+      "why": "getSearchCommodities withholds germinalProductCommodities from a DR1 session (routes.js:65-75), so DR1's own catalogue has no germinal products either. The frontend matching it is correct behaviour, not a gap.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-089",
+      "title": "The frontend's commodity catalogue is a five-entry stub; the prototype carries 21 live-animal commodities under their real IPAFFS names, so the frontend cannot express most consignments.",
+      "verdict": "carries",
+      "why": "data/commodities.js holds all 21 live-animal commodities under their IPAFFS names, from Cattle to Ornamental fish, and getSearchCommodities returns exactly that list for a DR1 session (routes.js:66-68).",
+      "dr1Evidence": "app/data/commodities.js",
+      "screens": [
+        "dr1-what-are-you-importing",
+        "dr1-consignment-details"
+      ]
+    },
+    {
+      "id": "inc-090",
+      "title": "Commodity details is missing the germinal-product quantity fields — the prototype asks for net weight, type of package and number of packages instead of number of animals.",
+      "verdict": "retired",
+      "why": "The net weight / type of package / number of packages branch exists only in design-release-2.1/consignment-details.html:100-137 and only fires for a germinal species, which DR1 cannot hold (routes.js:65-75).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-091",
+      "title": "Dashboard search is scoped to reference number only, where the prototype searches keyword, notification number, commodity and consignee/importer.",
+      "verdict": "recheck",
+      "why": "DR1 does ask for all four of those terms, but as three separate inputs inside a collapsible 'Search by' section of the filter sidebar — Keyword or notification number, Commodity code or name, Consignee/Importer (dashboard.html:88-176) — not one search box with a hint. It also appears to be decorative: getDashboardViewModel (routes.js:7138-7255) reads no keyword, commodity or consignee query and filters nothing. The pictures plus a typed search decide whether DR1's dashboard search is a requirement or scaffolding.",
+      "dr1Evidence": "app/views/dashboard.html:88-176",
+      "screens": [
+        "dr1-dashboard",
+        "dr1-dashboard-filters-open"
+      ]
+    },
+    {
+      "id": "inc-092",
+      "title": "Germinal identification asks Donor ID, Collection date and Identification number — none of the six frontend identifier fields, and the frontend has no date-typed identifier",
+      "verdict": "retired",
+      "why": "Donor ID, Collection date and Identification number belong to commodity codes 05119985 and 05111000 (data/commodity-identifiers.js:20-29), which a DR1 user cannot select (routes.js:65-75).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-093",
+      "title": "Germinal lines ask Net weight in kilograms — a field the frontend has neither in its form nor in its backend payload",
+      "verdict": "retired",
+      "why": "Net weight is only asked on a germinal line (design-release-2.1/consignment-details.html:104-118), and DR1 has no germinal lines (routes.js:65-75).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-094",
+      "title": "Germinal lines ask Type of package from a fixed 26-item list — the frontend has no package-type field and no such reference list",
+      "verdict": "retired",
+      "why": "The 26-item package-type select is the germinal branch at design-release-2.1/consignment-details.html:120-132; DR1's root view never renders it because germinal commodities are unreachable (routes.js:65-75).",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-095",
+      "title": "The dashboard notification card omits the quantity, the commodity category label and the inspection tag that the prototype card carries.",
+      "verdict": "retired",
+      "why": "DR1's notification card carries reference, Commodity, Status, Origin and Arrival date at destination and nothing else (dashboard.html:283-320) — no quantity, no commodity category label and no inspection tag. All three come from the DR2.1-only partial design-release-2.1/dashboard-notification-card.html.",
+      "dr1Evidence": "app/views/dashboard.html:283-320",
+      "screens": [
+        "dr1-dashboard"
+      ]
+    },
+    {
+      "id": "inc-096",
+      "title": "On a germinal-only consignment DR2.1 removes the certification-purpose question entirely and asks a mandatory Temperature question instead; the frontend asks certification unconditionally and has no temperature field",
+      "verdict": "retired",
+      "why": "The swap is driven by showTemperatureQuestion = hasGerminalProductsOnly (routes.js:1188-1193), which is never true in DR1, so DR1 asks certification purpose unconditionally and has no temperature question — the same shape as the frontend.",
+      "dr1Evidence": null,
+      "screens": []
+    },
+    {
+      "id": "inc-097",
+      "title": "DR2.1 saves an added private transporter into a reusable transporter book (and optionally the address book); the frontend stores it only on the notification.",
+      "verdict": "carries",
+      "why": "saveAddedTransporter (routes.js:3310-3345) is release-agnostic: it pushes every added transporter onto sessionData.addedTransporters, which is what the /transporter list reads, and copies it into the address book when the add came from there.",
+      "dr1Evidence": "app/routes.js:3310-3345",
+      "screens": [
+        "dr1-transporter",
+        "dr1-transporter-add-private"
+      ]
+    }
+  ],
+  "counts": {
+    "retired": 37,
+    "carries": 50,
+    "changed": 8,
+    "recheck": 2
+  }
+}

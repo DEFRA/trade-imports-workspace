@@ -45,9 +45,11 @@ const ANIMAL_COUNT = '1'
 
 const EAR_TAG = 'UK123456789012'
 
-// Aberdeen Harbour. Port option values are the raw codes and carry an embedded
-// space; the visible text is "<name> (<code>)". Both are spelt out because the
-// widget needs the text and the assertion needs the value.
+// Aberdeen Harbour. Port option values are the raw codes and the visible text
+// is "<name> (<code>)". Most codes carry an embedded space — "GB ABD" — but the
+// catalogue breaks that exactly once, at "GBSHS", so the value can never be
+// derived from the name by rule. Both halves are spelt out because the widget
+// needs the text and the assertion needs the value.
 const PORT_OPTION = 'Aberdeen Harbour (GB ABD)'
 const PORT_CODE = 'GB ABD'
 
@@ -69,10 +71,15 @@ const CPH_NUMBER = '123456789'
 // gate never opens and the failure surfaces as a missing link on the hub with
 // nothing pointing back here.
 //
-// So it is derived from today, and it is the one value in this slice whose
-// pixels change from day to day. That is a real cost against two runs at one
-// commit producing the same bytes, and it is unavoidable: the window moves
-// whatever we do. Only the check-your-answers screen shows it.
+// So it is derived from today. It is not, though, the only thing that moves
+// between runs: the notification reference is minted per run and printed in the
+// Draft tag on every journey page, so screenshot bytes and the manifest's `url`
+// change on every capture whether or not anything else did. What IS stable at
+// one commit is the page model and the captured HTML — both are masked, and the
+// reference and the journey id are what the mask replaces. Read a changed
+// screenshot hash as "recaptured", never as "changed"; read a changed model as
+// a change. This date is one of the few things the mask does not cover, and it
+// shows on the check-your-answers screen alone.
 //
 // The format is d/M/yyyy with no leading zeros — that is what the field's own
 // formatter writes back, so writing "03/01/2026" would disagree with the value
@@ -169,6 +176,16 @@ const answerCommodities = async (page) => {
   // stays blank and the commodities row never completes.
   await page.locator('#numberOfAnimalsQuantity-0').fill(ANIMAL_COUNT)
   await saveAndContinue(page)
+
+  // Nothing has opened the hub yet, so the opening run is still sequencing and
+  // import reason is its next step. Assert it: consignment details re-renders
+  // itself on a validation error, and without this the walk carries on with the
+  // count unanswered and only stops four helpers later, at the review gate,
+  // pointing at nothing.
+  await expect(
+    page,
+    'the opening run should carry on from consignment details to the reason'
+  ).toHaveURL(/\/import-reason$/)
 }
 
 const answerImportReason = async (page) => {
@@ -206,10 +223,13 @@ const answerAnimalIdentification = async (page) => {
   // a CSS locator on the name and value would match both and click the decoy.
   await page.getByRole('button', { name: 'Save and finish' }).click()
 
+  // Back to the hub, and that is knowable rather than incidental: the
+  // animalIdentification section holds this page and no other, so there is no
+  // next page in the section and the hub is where saving goes.
   await expect(
     page,
-    'saving the identifier should leave the identification page'
-  ).not.toHaveURL(/\/commodities\/identification$/)
+    'saving the identifier should return to the hub'
+  ).toHaveURL(/\/notifications\/[^/]+$/)
 }
 
 const answerAdditionalDetails = async (page) => {
@@ -239,6 +259,12 @@ const answerAdditionalDetails = async (page) => {
 // review gate stays shut with nothing on the arrival page to show for it.
 // Choose from the listbox, then assert the hidden select actually carries the
 // code.
+//
+// `exact: true` on the option is load-bearing rather than tidiness. Two names
+// in the catalogue appear twice — "Pembroke Port" and "Port of Sheerness", each
+// against two different codes — so a substring match is ambiguous by
+// construction, and Playwright fails a click on a locator that resolves to more
+// than one node.
 const choosePortOfEntry = async (page) => {
   const combobox = page.getByLabel('Port of entry', { exact: true })
   await combobox.click()

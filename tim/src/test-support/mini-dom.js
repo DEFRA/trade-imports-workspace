@@ -7,16 +7,22 @@
  * only ever exercised by a full capture run — which is how a widget heuristic
  * that turns every text box on the page into a type-ahead ships unnoticed.
  *
- * Deliberately small: element and attribute selectors, classes, ids, `*=`, and
- * comma lists. That is the whole selector vocabulary the extractors use. It is
- * a test double, not a DOM — a selector it does not understand should be a
- * failing test, not a new feature here.
+ * Deliberately small: element and attribute selectors, classes, ids, `*=`,
+ * comma lists, and a leading `:scope >`. That is the whole selector vocabulary
+ * the extractors use. It is a test double, not a DOM — a selector it does not
+ * understand should be a failing test, not a new feature here.
+ *
+ * `:scope >` earns its place because the page model's hint lookup turns on it:
+ * a hint that is a child of the form group belongs to the control, and one a
+ * level deeper inside the fieldset does not. A double that ignored the
+ * combinator would pass whichever way the lookup was written.
  */
 
 const ATTRIBUTE = /\[([\w-]+)(?:(\*?)="([^"]*)")?\]/g
 const CLASS = /\.([\w-]+)/g
 const ID = /#([\w-]+)/g
 const TAG = /^([a-z][a-z0-9-]*)/i
+const SCOPE_CHILD = /^:scope\s*>\s*/
 
 const matchesCompound = (node, selector) => {
   const bare = selector.replace(/\[[^\]]*\]/g, '')
@@ -58,6 +64,10 @@ class MiniElement {
 
   get tagName() {
     return this.tag.toUpperCase()
+  }
+
+  get className() {
+    return this.attrs.class ?? ''
   }
 
   get classList() {
@@ -136,8 +146,24 @@ class MiniElement {
     return null
   }
 
+  contains(node) {
+    let walk = node
+    while (walk) {
+      if (walk === this) return true
+      walk = walk.parentElement
+    }
+    return false
+  }
+
+  // Every part of a comma list is either scoped to the direct children or not.
+  // The extractors never mix the two in one selector, so this does not try to.
   querySelectorAll(selector) {
-    return descendants(this).filter((node) => matches(node, selector))
+    const parts = selector.split(',').map((one) => one.trim())
+    const candidates = parts.every((one) => SCOPE_CHILD.test(one))
+      ? this.children.filter((child) => typeof child !== 'string')
+      : descendants(this)
+    const unscoped = parts.map((one) => one.replace(SCOPE_CHILD, '')).join(',')
+    return candidates.filter((node) => matches(node, unscoped))
   }
 
   querySelector(selector) {
@@ -159,25 +185,40 @@ export const el = (tag, attrs = {}, children = []) =>
 /**
  * Install a document built from one `main` element, and remove it afterwards.
  *
- * The extractors read `document`, `CSS` and nothing else, so those are the two
+ * The extractors read `document`, `CSS` and `location`, so those are the three
  * globals this puts in place.
  *
  * @param {MiniElement} main
+ * @param {object} [page] - What the page-level fields of the model read from
+ * @param {string} [page.title]
+ * @param {string} [page.pathname]
+ * @param {string} [page.search]
  * @returns {() => void} Call it to take the document back down
  */
-export const installDocument = (main) => {
+export const installDocument = (
+  main,
+  { title = '', pathname = '/', search = '' } = {}
+) => {
   const body = el('body', {}, [main])
   const document = {
     body,
+    title,
     querySelector: (selector) =>
       matches(body, selector) ? body : body.querySelector(selector),
+    querySelectorAll: (selector) => body.querySelectorAll(selector),
     getElementById: (id) => body.querySelector(`[id="${id}"]`)
   }
-  const previous = { document: globalThis.document, CSS: globalThis.CSS }
+  const previous = {
+    document: globalThis.document,
+    CSS: globalThis.CSS,
+    location: globalThis.location
+  }
   globalThis.document = document
   globalThis.CSS = { escape: (value) => String(value) }
+  globalThis.location = { pathname, search }
   return () => {
     globalThis.document = previous.document
     globalThis.CSS = previous.CSS
+    globalThis.location = previous.location
   }
 }

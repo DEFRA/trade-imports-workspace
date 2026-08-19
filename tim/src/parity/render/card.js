@@ -1,12 +1,6 @@
 import { esc, renderProse, markersIn } from './prose.js'
 import { proseBlock, sourcesStrip, auditBlock } from './sections.js'
 
-const BAND_LABEL = {
-  'frontend-only': 'Buildable now',
-  'needs-design-decision': 'Needs a decision',
-  'needs-backend': 'Needs backend'
-}
-
 const chip = (text, modifier) =>
   text
     ? `<span class="chip${modifier ? ` ${modifier}` : ''}">${esc(text)}</span>`
@@ -236,9 +230,10 @@ const relatedBlock = ({ item }) => {
  * @param {object} args.item
  * @param {object[]} args.sides
  * @param {string} args.runId
+ * @param {object[]} [args.bands] - The corpus's band taxonomy, for the chip label
  * @returns {string}
  */
-export const renderCard = ({ item, sides, runId }) => {
+export const renderCard = ({ item, sides, runId, bands = [] }) => {
   const citations = new Map(
     item.resolvedCitations.map((entry) => [entry.ref, entry])
   )
@@ -306,11 +301,14 @@ export const renderCard = ({ item, sides, runId }) => {
 </div>`
     : ''
 
+  // A band the corpus does not declare keeps its raw id as its label. The
+  // taxonomy is per-corpus data now, so a band the renderer has never heard of
+  // is ordinary, and printing the id is what makes it findable.
+  const bandLabel =
+    bands.find((band) => band.id === item.band)?.label ?? item.band
+
   const chips = [
-    chip(
-      BAND_LABEL[item.band] ?? item.band,
-      item.band ? `chip--band chip--band-${item.band}` : ''
-    ),
+    chip(bandLabel, item.band ? `chip--band chip--band-${item.band}` : ''),
     chip(item.type),
     chip(item.domain),
     chip(item.milestone),

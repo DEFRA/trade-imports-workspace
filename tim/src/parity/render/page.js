@@ -1,4 +1,5 @@
 import { esc } from './prose.js'
+import { DEFAULT_BANDS } from '../corpus-profile.js'
 import { renderCard } from './card.js'
 import { THEME_CSS } from './theme.js'
 import { spriteStyles } from './artifact.js'
@@ -10,27 +11,6 @@ import { spriteStyles } from './artifact.js'
  */
 export const ASSET_CSS = 'app.css'
 export const ASSET_JS = 'app.js'
-
-const BANDS = [
-  {
-    id: 'frontend-only',
-    label: 'Buildable now',
-    blurb:
-      'No dependency on a ruling or on the backend. These can be scheduled today.'
-  },
-  {
-    id: 'needs-design-decision',
-    label: 'Needs a decision',
-    blurb:
-      'Blocked on a ruling, not on code. This is the section the report exists for.'
-  },
-  {
-    id: 'needs-backend',
-    label: 'Needs backend',
-    blurb:
-      'Blocked on an API or persistence change before the frontend work can start.'
-  }
-]
 
 const TYPE_ORDER = [
   'add-page',
@@ -70,14 +50,14 @@ const captureCard = (
   ${capture.note ? `<span class="pin__why">${esc(capture.note)}</span>` : ''}
 </div>`
 
-const sectionOf = ({ title, blurb, items, sides, runId, id }) => {
+const sectionOf = ({ title, blurb, items, sides, runId, bands, id }) => {
   if (items.length === 0) return ''
   return `<section class="section" id="${esc(id)}">
   <div class="section__head">
     <h2 class="section__title">${esc(title)} <span class="section__count">${items.length}</span></h2>
     <p class="section__blurb">${esc(blurb)}</p>
   </div>
-  ${items.map((item) => renderCard({ item, sides, runId })).join('')}
+  ${items.map((item) => renderCard({ item, sides, runId, bands })).join('')}
 </section>`
 }
 
@@ -237,6 +217,7 @@ document.addEventListener('click', (event) => {
  */
 export const renderPage = ({
   corpus,
+  bands = DEFAULT_BANDS,
   meta,
   counts,
   findings,
@@ -253,21 +234,24 @@ export const renderPage = ({
   const domains = [...new Set(findings.map((item) => item.domain))].sort()
   const types = [...new Set(findings.map((item) => item.type))].sort()
 
-  const bandSections = BANDS.map((band) =>
-    sectionOf({
-      id: band.id,
-      title: band.label,
-      blurb: band.blurb,
-      items: findings
-        .filter((item) => item.band === band.id)
-        .sort(byGateThenType),
-      sides,
-      runId
-    })
-  ).join('')
+  const bandSections = bands
+    .map((band) =>
+      sectionOf({
+        id: band.id,
+        title: band.label,
+        blurb: band.blurb,
+        items: findings
+          .filter((item) => item.band === band.id)
+          .sort(byGateThenType),
+        sides,
+        runId,
+        bands
+      })
+    )
+    .join('')
 
   const unbanded = findings.filter(
-    (item) => !BANDS.some((band) => band.id === item.band)
+    (item) => !bands.some((band) => band.id === item.band)
   )
 
   // The local build is a static app: the stylesheet and the script sit beside
@@ -327,9 +311,11 @@ ${head}
 
   <div class="controls">
     <input type="search" id="q" placeholder="Search every finding…" aria-label="Search findings">
-    <select data-filter="band" aria-label="Band"><option value="">All bands</option>${BANDS.map(
-      (band) => `<option value="${esc(band.id)}">${esc(band.label)}</option>`
-    ).join('')}</select>
+    <select data-filter="band" aria-label="Band"><option value="">All bands</option>${bands
+      .map(
+        (band) => `<option value="${esc(band.id)}">${esc(band.label)}</option>`
+      )
+      .join('')}</select>
     <select data-filter="domain" aria-label="Domain"><option value="">All domains</option>${domains
       .map((d) => `<option value="${esc(d)}">${esc(d)}</option>`)
       .join('')}</select>
@@ -347,10 +333,11 @@ ${head}
     id: 'unbanded',
     title: 'Not in a band',
     blurb:
-      'Findings whose band is not one of the three the report knows about.',
+      'Findings whose band is not one this corpus declares. Nothing is dropped: a band the taxonomy does not name lands here, under its raw name.',
     items: unbanded,
     sides,
-    runId
+    runId,
+    bands
   })}
 
   ${sectionOf({
@@ -360,7 +347,8 @@ ${head}
       'Prototype capabilities the corpus never saw, carrying prototype-side evidence only. They have not had the frontend page model, the both-sides diff, the band or the adversarial verifier that every finding above has had, so they are shown separately and counted in no total.',
     items: candidates,
     sides,
-    runId
+    runId,
+    bands
   })}
 
   ${sectionOf({
@@ -370,7 +358,8 @@ ${head}
       'Findings closed by evidence rather than by a person. Kept in the record so nobody re-raises them the next time the corpus runs.',
     items: withdrawn,
     sides,
-    runId
+    runId,
+    bands
   })}
 
   <footer class="footer">

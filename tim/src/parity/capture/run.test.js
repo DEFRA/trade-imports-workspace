@@ -21,7 +21,7 @@ const side = (id, overrides = {}) => ({
   screenPrefix: `${id}-`,
   captureDir: `workareas/shared/alpha/${id}/capture`,
   modelDir: `workareas/shared/alpha/${id}/capture/model`,
-  htmlDir: null,
+  htmlDir: `workareas/shared/alpha/${id}/capture/html`,
   screensDir: null,
   evidenceRoot: 'workareas/shared/alpha/evidence',
   traceDirs: [],
@@ -45,7 +45,8 @@ const corpora = {
       sides: [
         side('frontend'),
         side('prototype', { repo: 'frontend', evidenceRoot: null }),
-        side('nomodels', { repo: 'frontend', modelDir: null })
+        side('nomodels', { repo: 'frontend', modelDir: null }),
+        side('nohtml', { repo: 'frontend', htmlDir: null })
       ],
       repos: {
         frontend: {
@@ -96,6 +97,29 @@ describe('resolveCapturePaths', () => {
     })
     expect(paths.modelDir).toBe(
       join(workspaceRoot, 'workareas/shared/alpha/frontend/capture/model')
+    )
+  })
+
+  test('puts the rendered pages where the corpus says they live', () => {
+    const paths = resolveCapturePaths({
+      profile: profile(),
+      side: 'frontend',
+      sha: 'abcdefgh'
+    })
+    expect(paths.htmlDir).toBe(
+      join(workspaceRoot, 'workareas/shared/alpha/frontend/capture/html')
+    )
+  })
+
+  test('captures a side that asked for no rendered pages rather than refusing it', () => {
+    const paths = resolveCapturePaths({
+      profile: profile(),
+      side: 'nohtml',
+      sha: 'abcdefgh'
+    })
+    expect(paths.htmlDir).toBe(null)
+    expect(paths.captureDir).toBe(
+      join(workspaceRoot, 'workareas/shared/alpha/evidence/nohtml@abcdefgh')
     )
   })
 

@@ -109,7 +109,7 @@ export const harnessSha = (workspaceRoot) => {
  * @param {object} args.profile - A loaded corpus profile
  * @param {string} args.side - Side id
  * @param {string} args.sha - The commit the application is at
- * @returns {{side: string, captureDir: string, modelDir: string, anchorsPath: string, specDir: string, appRoot: string|null}}
+ * @returns {{side: string, captureDir: string, modelDir: string, htmlDir: string|null, anchorsPath: string, specDir: string, appRoot: string|null}}
  * @throws {TimError} NOT_FOUND for an unknown side, USAGE for a side the corpus never gave paths
  */
 export const resolveCapturePaths = ({ profile, side, sha }) => {
@@ -138,6 +138,9 @@ export const resolveCapturePaths = ({ profile, side, sha }) => {
     evidenceRoot,
     captureDir: join(evidenceRoot, `${side}@${sha.slice(0, 8)}`),
     modelDir: sideProfile.modelDir,
+    // Unlike the models, a missing htmlDir is not refused: a corpus that never
+    // asked for rendered pages still captures pictures and models.
+    htmlDir: sideProfile.htmlDir ?? null,
     anchorsPath: join(evidenceRoot, `anchors.${side}.json`),
     specDir: join(profile.paths.workarea, 'specs', side),
     appRoot: profile.repos[sideProfile.repo]?.absolutePath ?? null
@@ -297,6 +300,7 @@ export const runCapture = async ({
     side,
     captureDir: resolved.captureDir,
     modelDir: resolved.modelDir,
+    htmlDir: resolved.htmlDir,
     anchorsPath: resolved.anchorsPath,
     specDir,
     // A spec names a screen; the corpus says which comparison it belongs to. A
@@ -376,6 +380,7 @@ export const runCapture = async ({
     specDir,
     captureDir: context.captureDir,
     modelDir: context.modelDir,
+    htmlDir: context.htmlDir,
     runDir: failed ? runDir : null,
     exitNonZero: failed
   }

@@ -16,6 +16,35 @@ const readJson = (path) => {
 const readJsonIfPresent = (path) => (existsSync(path) ? readJson(path) : null)
 
 /**
+ * The bands a corpus gets when it declares none.
+ *
+ * These are the three the DR2.1 negotiation was built around. They are the
+ * fallback rather than the definition: a comparison against a signed-off design
+ * has different dispositions, so the taxonomy belongs to the corpus. A profile
+ * written before `bands` existed keeps rendering exactly as it did.
+ */
+export const DEFAULT_BANDS = [
+  {
+    id: 'frontend-only',
+    label: 'Buildable now',
+    blurb:
+      'No dependency on a ruling or on the backend. These can be scheduled today.'
+  },
+  {
+    id: 'needs-design-decision',
+    label: 'Needs a decision',
+    blurb:
+      'Blocked on a ruling, not on code. This is the section the report exists for.'
+  },
+  {
+    id: 'needs-backend',
+    label: 'Needs backend',
+    blurb:
+      'Blocked on an API or persistence change before the frontend work can start.'
+  }
+]
+
+/**
  * Expand a leading ~ against the current user's home directory. Paths in the
  * corpus profile are written the way a person writes them.
  *
@@ -168,6 +197,7 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
     runId: runId ?? raw.runId,
     sides,
     repos,
+    bands: raw.bands ?? DEFAULT_BANDS,
     sideIds: sides.map((side) => side.id),
     sideById: Object.fromEntries(sides.map((side) => [side.id, side])),
     paths: {

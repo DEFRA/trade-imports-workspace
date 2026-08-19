@@ -16,9 +16,12 @@ export const THEME_CSS = `
   --rule-strong: #c3ccc5;
   --accent: #1f5f4e;
   --accent-soft: #e4efe9;
+  --band-default: #56605a;
   --band-frontend-only: #2e6b3e;
+  --band-frontend-work: #2e6b3e;
   --band-needs-design-decision: #8a5a12;
   --band-needs-backend: #34518c;
+  --band-disputed: #6b3f8a;
   --decision-ground: #fdf6e8;
   --decision-rule: #e0c88a;
   --falsifier-ground: #f4f1fb;
@@ -48,9 +51,12 @@ export const THEME_CSS = `
     --rule-strong: #3a423d;
     --accent: #6fbfa6;
     --accent-soft: #1d2a26;
+    --band-default: #7f8a83;
     --band-frontend-only: #6aae76;
+    --band-frontend-work: #6aae76;
     --band-needs-design-decision: #d2a052;
     --band-needs-backend: #7d9ada;
+    --band-disputed: #a98cd6;
     --decision-ground: #241f13;
     --decision-rule: #6b5628;
     --falsifier-ground: #1d1a26;
@@ -76,9 +82,12 @@ export const THEME_CSS = `
   --rule-strong: #3a423d;
   --accent: #6fbfa6;
   --accent-soft: #1d2a26;
+  --band-default: #7f8a83;
   --band-frontend-only: #6aae76;
+  --band-frontend-work: #6aae76;
   --band-needs-design-decision: #d2a052;
   --band-needs-backend: #7d9ada;
+  --band-disputed: #a98cd6;
   --decision-ground: #241f13;
   --decision-rule: #6b5628;
   --falsifier-ground: #1d1a26;
@@ -326,10 +335,15 @@ code.ref { color: var(--ink-muted); }
   background: var(--surface-sunk);
 }
 
-.chip--band { color: #fff; border-color: transparent; }
+/* The taxonomy is per-corpus data but the stylesheet is one file for every
+   corpus, so a band this palette has never heard of must still be legible —
+   without the default background it would be white text on the plain chip. */
+.chip--band { color: #fff; border-color: transparent; background: var(--band-default); }
 .chip--band-frontend-only { background: var(--band-frontend-only); }
+.chip--band-frontend-work { background: var(--band-frontend-work); }
 .chip--band-needs-design-decision { background: var(--band-needs-design-decision); }
 .chip--band-needs-backend { background: var(--band-needs-backend); }
+.chip--band-disputed { background: var(--band-disputed); }
 .chip--gate { border-color: var(--decision-rule); background: var(--decision-ground); color: var(--ink); }
 .chip--ruled { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 

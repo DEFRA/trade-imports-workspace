@@ -70,6 +70,9 @@ const answerOrigin = async (page) => {
     .locator('input[name="regionOfOriginCodeRequirement"][value="no"]')
     .check()
   await saveAndContinue(page)
+  await expect(page, 'origin should hand over to the commodity page').toHaveURL(
+    /\/commodities$/
+  )
 }
 
 const startNotification = async (page) => {
@@ -130,9 +133,6 @@ test('records the notification hub', async ({ page }) => {
   // task row is blocked until countryOfOrigin and commoditySelection are both
   // answered, so without a species the hub photographs as a wall of "Cannot
   // start yet" rather than as the task list a user works from.
-  await expect(page, 'origin should hand over to the commodity page').toHaveURL(
-    /\/commodities$/
-  )
   await page.getByRole('checkbox', { name: SPECIES }).check()
   await saveAndContinue(page)
   await expect(page).toHaveURL(/\/consignment-details$/)

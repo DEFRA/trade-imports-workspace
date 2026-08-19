@@ -8,9 +8,12 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { createHash } from 'node:crypto'
 import {
   CROP_PADDING,
   buildManifest,
+  captureRenderedHtml,
+  captureScreen,
   clampCropBox,
   cropFileName,
   isUsableBox,
@@ -111,6 +114,97 @@ describe('cropFileName', () => {
   })
 })
 
+const HTML = '<html lang="en"><body><h1>Origin of the import</h1></body></html>'
+
+/**
+ * A stand-in for the Playwright page, which is the boundary these functions
+ * talk to. Its screenshot writes a file, because the manifest row's hash is of
+ * whatever landed on disk.
+ */
+const browserPage = (html = HTML) => ({
+  evaluate: async () => ({
+    allFields: [],
+    headings: [{ level: 'h1', text: 'Origin of the import' }]
+  }),
+  screenshot: async ({ path }) => writeFileSync(path, 'not really a png'),
+  content: async () => html,
+  url: () => 'http://localhost:3005/origin',
+  title: async () => 'Origin of the import'
+})
+
+describe('captureRenderedHtml', () => {
+  test('writes the rendered page under the screen id', async () => {
+    const html = await captureRenderedHtml(browserPage(), 'fe-origin', dir)
+    expect(html.file).toBe(join(dir, 'fe-origin.html'))
+    expect(readFileSync(html.file, 'utf8')).toContain(
+      '<h1>Origin of the import</h1>'
+    )
+  })
+
+  test('hashes what landed on disk', async () => {
+    const html = await captureRenderedHtml(browserPage(), 'fe-origin', dir)
+    const bytes = readFileSync(html.file)
+    expect(html.bytes).toBe(bytes.length)
+    expect(html.sha256).toBe(createHash('sha256').update(bytes).digest('hex'))
+  })
+
+  test('a generated reference number does not change the hash run to run', async () => {
+    const withRef = (reference) =>
+      `<html lang="en"><body><p>${reference}</p></body></html>`
+    const first = await captureRenderedHtml(
+      browserPage(withRef('GBN-GB-25-ABC123')),
+      'first',
+      dir
+    )
+    const second = await captureRenderedHtml(
+      browserPage(withRef('GBN-GB-25-ZZZ999')),
+      'second',
+      dir
+    )
+    expect(second.sha256).toBe(first.sha256)
+  })
+
+  test('a side that names no directory for rendered pages gets none', async () => {
+    expect(await captureRenderedHtml(browserPage(), 'fe-origin', null)).toBe(
+      null
+    )
+  })
+})
+
+describe('captureScreen', () => {
+  const screenContext = (overrides) => ({
+    captureDir: join(dir, 'evidence'),
+    modelDir: join(dir, 'model'),
+    htmlDir: join(dir, 'html'),
+    deviceScaleFactor: 2,
+    ...overrides
+  })
+
+  test('leaves the rendered page beside the picture, hashed in the manifest row', async () => {
+    const row = await captureScreen(browserPage(), 'fe-origin', screenContext())
+    expect(row.html.file).toBe(join(dir, 'html', 'fe-origin.html'))
+    expect(readFileSync(row.html.file, 'utf8')).toContain(
+      'Origin of the import'
+    )
+    expect(row.html.sha256).toBe(
+      createHash('sha256').update(readFileSync(row.html.file)).digest('hex')
+    )
+  })
+
+  test('a side that declares no rendered pages still gets a picture and a model', async () => {
+    const row = await captureScreen(
+      browserPage(),
+      'fe-origin',
+      screenContext({ htmlDir: null })
+    )
+    expect(row.html).toBe(null)
+    expect(row.file).toBe('page/fe-origin.png')
+    expect(readFileSync(row.model.file, 'utf8')).toContain(
+      'Origin of the import'
+    )
+  })
+})
+
 describe('mergeManifestRows', () => {
   test('keeps what an earlier run captured', () => {
     const merged = mergeManifestRows(
@@ -130,6 +224,22 @@ describe('mergeManifestRows', () => {
       [{ screen: 'fe-hub', bytes: 2 }]
     )
     expect(merged).toEqual([{ screen: 'fe-hub', bytes: 2 }])
+  })
+
+  test('leaves a row from before rendered pages existed alone', () => {
+    const merged = mergeManifestRows(
+      [{ screen: 'fe-hub', file: 'page/fe-hub.png' }],
+      [{ screen: 'fe-origin', html: { file: 'fe-origin.html' } }]
+    )
+    expect(merged[0]).toEqual({ screen: 'fe-hub', file: 'page/fe-hub.png' })
+  })
+
+  test('folds a re-captured row in whole, rather than key by key', () => {
+    const merged = mergeManifestRows(
+      [{ screen: 'fe-hub', html: { file: 'stale.html' } }],
+      [{ screen: 'fe-hub', file: 'page/fe-hub.png' }]
+    )
+    expect(merged).toEqual([{ screen: 'fe-hub', file: 'page/fe-hub.png' }])
   })
 
   test('copes with no earlier run at all', () => {

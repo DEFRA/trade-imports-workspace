@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
-import { capturePageModel } from './page-model.js'
+import { capturePageModel, maskVolatile } from './page-model.js'
 
 /**
  * Ancestors worth cropping to, nearest first.
@@ -203,14 +203,49 @@ export const captureAnchors = async (page, screen, anchors, context) => {
 }
 
 /**
+ * Write the rendered page for one screen.
+ *
+ * This file is the serialised live DOM, taken after the page's own scripts have
+ * run — not the server's HTTP response. Markup a script injected is in it,
+ * markup a script removed is not, and the response body is nowhere on disk.
+ * That is deliberate: the comparison is between what two applications put in
+ * front of a person, and that is the DOM. Do not read these files as evidence
+ * of what a server sent.
+ *
+ * It earns its place beside the picture and the model because it is the only
+ * lossless one. A model is a fixed vocabulary — headings, fields, summary rows,
+ * task items, links — and a fixed vocabulary decides in advance what a page can
+ * be said to have. Exact copy, button text, table contents, hint wording and
+ * the order things appear in are settled here.
+ *
+ * Masked with the same rules as the model, so a generated reference number does
+ * not change the hash on every run and turn a real change into noise.
+ *
+ * A side that names no htmlDir simply gets no rendered page, the way a side
+ * with no anchors gets no crops.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} screen - Screen id, matching the corpus (for example fe-hub)
+ * @param {string} [dir] - Where this side's rendered pages live
+ * @returns {Promise<{file: string, bytes: number, sha256: string}|null>}
+ */
+export const captureRenderedHtml = async (page, screen, dir) => {
+  if (!dir) return null
+  mkdirSync(dir, { recursive: true })
+  const file = join(dir, `${screen}.html`)
+  writeFileSync(file, `${maskVolatile(await page.content())}\n`, 'utf8')
+  return { file, ...hashOf(file) }
+}
+
+/**
  * Capture one screen, full page, at the settings the report needs.
  *
  * Motion is stopped and the caret is hidden, so two runs against the same
  * commit produce the same bytes. That is what makes a changed hash mean the
  * application changed rather than the clock ticking.
  *
- * The page model is read in the same visit as the screenshot, so the picture
- * and the model are of the same render.
+ * The page model and the rendered page are read in the same visit as the
+ * screenshot, so the picture, the model and the DOM are all of the same render.
  *
  * @param {import('@playwright/test').Page} page
  * @param {string} screen - Screen id, matching the corpus (for example fe-hub)
@@ -244,7 +279,8 @@ export const captureScreen = async (page, screen, context) => {
       context.anchors?.[screen] ?? [],
       context
     ),
-    model: await capturePageModel(page, screen, context.modelDir)
+    model: await capturePageModel(page, screen, context.modelDir),
+    html: await captureRenderedHtml(page, screen, context.htmlDir)
   }
 }
 
@@ -254,6 +290,9 @@ export const captureScreen = async (page, screen, context) => {
  * A run that captured a subset must not erase what an earlier run captured —
  * the report reads the manifest and nothing else, so a dropped row is a stated
  * gap in a report that had the picture all along.
+ *
+ * A row is folded in whole. A screen this run captured brings whatever keys
+ * this run writes; a screen it did not keeps the row it had, keys and all.
  *
  * @param {object[]} existing
  * @param {object[]} rows

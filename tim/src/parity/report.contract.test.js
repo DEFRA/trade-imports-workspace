@@ -122,6 +122,19 @@ describe.skipIf(!present)('the real EUDPA-328 corpus', () => {
     expect(copied).toEqual([])
   })
 
+  test('every live finding sits in a band the corpus declares', () => {
+    // The taxonomy is per-corpus data now. If a band id in the backlog stops
+    // matching one dr21 declares, the finding does not vanish — it drops into
+    // "Not in a band", which is quieter than it should be for 96 rulings.
+    const profile = loadCorpusProfile({ workspaceRoot, runId: 'EUDPA-328' })
+    const declared = new Set(profile.bands.map((band) => band.id))
+    const { findings } = loadCorpus({ profile })
+    const strays = findings
+      .filter((item) => !declared.has(item.band))
+      .map((item) => `${item.id}: ${item.band}`)
+    expect(strays).toEqual([])
+  })
+
   test('the counts add up: findings plus withdrawn is what is in the file', () => {
     const profile = loadCorpusProfile({ workspaceRoot, runId: 'EUDPA-328' })
     const { counts } = runCounts({ profile })

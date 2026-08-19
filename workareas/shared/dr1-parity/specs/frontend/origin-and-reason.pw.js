@@ -27,16 +27,15 @@ const { test, expect, recorder } = await import(
 const COUNTRY_CODE = 'FR'
 const DESTINATION_COUNTRY_CODE = 'DE'
 
-// Aberdeen Harbour. Port option values are the raw codes and they contain a
-// space — "GB ABD", not "GBABD" — with one entry in the catalogue that breaks
-// even that rule ("GBSHS"). Selecting by value avoids the option text, which
-// repeats: "Pembroke Port" and "Port of Sheerness" each appear twice.
-const PORT_CODE = 'GB ABD'
-
 // A Cow line. Cow is what puts the unweaned-animals question on the additional
 // details page and the CPH page in scope, so it keeps this slice's screens in
 // the shape the rest of the comparison photographs.
 const SPECIES = 'Bos taurus'
+
+// Aberdeen Harbour, chosen by option value rather than by visible text. Most
+// port codes carry an embedded space — "GB ABD" — but not all of them, so the
+// value is spelt out here rather than derived from the code in the text.
+const PORT_CODE = 'GB ABD'
 
 // Which reason opens which page. Read straight off the obligations: the four
 // gates are `equalsGate`/`includesGate` over reasonForImport, so this table is
@@ -48,15 +47,16 @@ const SPECIES = 'Bos taurus'
 //   temporaryAdmissionHorses -> port-of-exit, exit-date
 //   reEntry                  -> none of them
 //
-// The exit trio is NOT part of the opening run, so saving import-reason never
-// lands on it however the reason is answered. It is reached from the hub's
-// "Exit details" row, which is `conditional` and disappears entirely for a
-// reason that opens none of the three — which is also the proof the gate fired.
-const REASON = {
-  internalMarket: 'Internal market',
-  transit: 'Transit',
-  temporaryAdmissionHorses: 'Temporary admission horses'
-}
+// The exit trio is NOT part of the opening run. That only means the run never
+// sequences it: every test here opens the hub first, the hub handler closes the
+// opening run, and from then on `nextInSection` picks the next page. All three
+// exit pages sit in the same section as import reason, so saving the reason
+// walks straight into whichever of them the answer put in scope.
+//
+// The hub's "Exit details" row is `conditional` and disappears entirely for a
+// reason that opens none of the three, so the row's presence is the proof the
+// gate fired. Whether the row also offers a way in depends on the reason — see
+// the exit-date test.
 
 const saveAndContinue = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -114,18 +114,22 @@ const unlockTheHub = async (page) => {
   await expect(page).toHaveURL(/\/consignment-details$/)
 }
 
-// Answer the reason and leave. Where it lands depends on the reason — the
-// opening run picks the next step it can reach — so this asserts only that the
-// page accepted the answer and moved, not where to.
-const answerReason = async (page, reason) => {
+// Answer the reason and leave. Where it lands is decided by the reason and by
+// nothing else — `nextInSection` walks the consignment section in order and
+// stops at the first page the answer put in scope — so the caller names the
+// landing and it is asserted positively. "No longer on import reason" would
+// also be true of a redirect back to the hub, which is what a rejected answer
+// looks like.
+const answerReason = async (page, reason, landing) => {
   await openHub(page)
   await page.getByRole('link', { name: 'Main reason for importing' }).click()
   await expect(page).toHaveURL(/\/import-reason$/)
   await page.locator(`input[name="reasonForImport"][value="${reason}"]`).check()
   await saveAndContinue(page)
-  await expect(page, 'the reason should be accepted').not.toHaveURL(
-    /\/import-reason$/
-  )
+  await expect(
+    page,
+    `the ${reason} reason should open the next page in the section`
+  ).toHaveURL(landing)
 }
 
 test.describe.configure({ mode: 'serial' })
@@ -146,8 +150,8 @@ test('records origin', async ({ page }) => {
 
   expect(
     row.title,
-    'the screen should have a title to file it under'
-  ).toBeTruthy()
+    'the manifest row should carry the page title the report files it under'
+  ).toBe('Origin of the import | Import notification service')
 })
 
 test('records the reason for import, and the purpose it opens', async ({
@@ -187,7 +191,7 @@ test('records destination country and port of exit, which transit opens', async 
   page
 }) => {
   await unlockTheHub(page)
-  await answerReason(page, 'transit')
+  await answerReason(page, 'transit', /\/destination-country$/)
   await openHub(page)
 
   // "Exit details" is a conditional row: it is removed from the hub entirely
@@ -225,24 +229,19 @@ test('records exit date, which only temporary admission of horses opens', async 
   page
 }) => {
   await unlockTheHub(page)
-  await answerReason(page, 'temporaryAdmissionHorses')
-  await openHub(page)
 
   // The narrowest of the four gates: exit date is in scope for this reason and
-  // no other. Destination country is out of scope here, so the same row link
-  // that opened destination country under transit opens port of exit instead.
-  await page.getByRole('link', { name: 'Exit details' }).click()
-  await expect(
-    page,
-    'temporary admission should skip destination country and start at port of exit'
-  ).toHaveURL(/\/port-of-exit$/)
-
+  // no other. Saving the reason walks into the first exit page the answer put
+  // in scope, which for temporary admission is port of exit, and saving that
+  // walks on into exit date. Both are ordinary Save-and-continue steps.
+  await answerReason(page, 'temporaryAdmissionHorses', /\/port-of-exit$/)
   await page.locator('#portOfExit').selectOption(PORT_CODE)
   await saveAndContinue(page)
 
-  await expect(page, 'port of exit should carry on to exit date').toHaveURL(
-    /\/exit-date$/
-  )
+  await expect(
+    page,
+    'port of exit should carry on to exit date under this reason'
+  ).toHaveURL(/\/exit-date$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Exit date')
 
   // Nothing is typed in. Worth saying why, because the sibling arrival date on
@@ -251,6 +250,26 @@ test('records exit date, which only temporary admission of horses opens', async 
   // This field has no window at all — `dateText` is built with neither a min
   // nor a max — so an empty capture here is the whole screen, not a shortcut.
   await record.record(page, 'exit-date')
+
+  // Worth recording, because it is asymmetric and a user would meet it. The
+  // "Exit details" row is still on the hub — port of exit and exit date are
+  // both in scope and mandatory under this reason, so the row is neither empty
+  // nor hidden — but the row is gated on its FIRST page alone, destination
+  // country, and that page is out of scope here. So it renders with no link:
+  // both pages behind it are reachable going forwards, and unreachable on the
+  // way back.
+  await openHub(page)
+  const exitDetailsRow = page
+    .locator('.govuk-task-list__item')
+    .filter({ hasText: 'Exit details' })
+  await expect(
+    exitDetailsRow,
+    'temporary admission should keep the exit-details row on the hub'
+  ).toBeVisible()
+  await expect(
+    exitDetailsRow.getByRole('link'),
+    'the exit-details row offers no way back in under this reason'
+  ).toHaveCount(0)
 })
 
 test('records additional animal details', async ({ page }) => {

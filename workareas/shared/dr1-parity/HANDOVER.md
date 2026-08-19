@@ -102,24 +102,63 @@ Everything is `tim parity <subcommand> <runId>`; `--json` on any of them.
 | `check --pass a\|b` | The ten prose-migration invariants |
 | `check-evidence [--strict]` | Pin drift, capture integrity, screens with no picture, dead citations — the only command that reads all of them together |
 | `repoint --side S --to SHA` | Preview old picture beside new before superseding a capture |
+| `map --side S [--write]` | Discovery — crawl a side and record which screens it has and how to reach them |
+| `capture --side S` | Walk the plan the map wrote and record what the application does |
 
-Capture lives in `tools/parity/capture/` — its own npm project, because these
-are requirements-gathering tools rather than tests and do not belong in either
-application's repo. Read its `README.md`.
+**These are requirements-gathering tools, not tests.** They use Playwright
+because Playwright drives browsers. Nothing in them asserts that an application
+is correct: they map an application and record what it currently does, so it
+can be compared against a signed-off design. That is why they live in the
+workspace and not in either application's repo.
+
+For the same reason nothing here may lean on an application's own journey
+helpers — the frontend's `fit/live-animals-journey.js`, the prototype's
+`journey-demo/e2e/journey.js`. **Neither is maintained**, the prototype's
+certainly not, so a harness built on either breaks the first time somebody
+refactors a suite nobody runs. Nothing under `tim/src/parity/capture/` imports
+an application.
+
+That leaves the question the helpers used to answer: which screens does this
+application have, and how do you reach them? The cartographer answers it. So
+capture is two stages, and the second refuses to start without the first:
 
 ```bash
-cd ~/git/defra/trade-imports-workspace/tools/parity/capture
-npm install && npm run install:browser   # one-time, ask Sam — the hook blocks it
-export CAPTURE_EVIDENCE_DIR=~/git/defra/trade-imports-workspace/workareas/shared/dr1-parity/evidence
-export CAPTURE_MODEL_DIR=~/git/defra/trade-imports-workspace/workareas/shared/dr1-parity/capture/frontend/model
-npm run capture:frontend
+tim parity map <runId> --side frontend --write
+tim parity capture <runId> --side frontend
 ```
 
-Both variables are **required** — the capture refuses to start without them,
-deliberately, because a default would file DR1's evidence under the DR2.1
-corpus it is replacing.
+`map` opens the side at the `app.baseURL` and `app.startPath` its corpus entry
+names and crawls with no knowledge of the journey — reading each rendered page,
+filling what the page itself says how to fill, taking one forward action and
+queueing every choice it did not take. `--write` produces, under the corpus
+workarea's `cartography/`, `map.<side>.json`, a `hints.<side>.json` stub with
+one empty entry per field nothing could fill, and `<side>.routes.json` — the
+route plan — plus one page model per screen in the side's `modelDir`. Fill a
+value into the hints file and the next run takes it at the top rung.
 
-The prototype side is `npm run capture:prototype`, whose walker you will build.
+The route plan walks one session end to end, so a screen reachable only from a
+fresh session, or one behind a widget the plan has no word for, is named rather
+than written as a walk that would photograph the wrong page. `map` prints
+`N of M screens can be walked again by the capture stage`. **Read that line** —
+it is the coverage of the capture, not of the map.
+
+`capture` then walks the plan and, on every screen it reaches, takes a
+full-page screenshot, an element crop per anchor and a page model in the same
+page visit, and writes `manifest.json` into the capture directory. A screen it
+could not reach is a stated absence, never a broken image.
+
+Every path comes from the corpus profile. Nothing has a default, deliberately:
+a default would file DR1's evidence under the DR2.1 corpus it is replacing. Add
+the `dr1` corpus first, then map, then capture.
+
+Playwright lives in tim. Until it is installed both commands stop with a typed
+`MISSING_DEP`. One-time, and **Sam has to run it** because the hook blocks
+`npm install` from an agent:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/tim install
+npx --prefix ~/git/defra/trade-imports-workspace/tim playwright install chromium
+```
 
 ## This is the first run of these tools on a second corpus
 
@@ -133,10 +172,13 @@ one-off.
 
 Known breakages, in the order you will hit them:
 
-1. **The frontend capture has never run from its new home.** It moved out of
-   the frontend repo into `tools/parity/capture/` and its imports, its git
-   `cwd` and its output paths were all rewired in the move. Nobody has run it
-   since. Expect the first run to fail; the fix belongs in the tool.
+1. **Neither `map` nor `capture` has ever driven a browser.** Both are new: the
+   capture moved out of its own npm project into `tim/src/parity/capture/`, and
+   the cartographer beside it was written from scratch. Their pure parts are
+   covered by tim's own suite, but everything browser-side — the control
+   reader, the crop arithmetic, the driver's step kinds — has only ever run
+   against a stand-in page. Expect the first live run to be about selectors
+   rather than about logic. The fix belongs in the tool.
 2. **Screen pairing is code, not data.** You must hand-author
    `workareas/shared/dr1-parity/compare/pairs.js` mapping `fe-*` to `dr1-*`,
    plus `onlyFrontend` and `onlyPrototype`. Keep the CommonJS contract exactly:
@@ -150,26 +192,43 @@ Known breakages, in the order you will hit them:
    in the finding schema and the invariant checker. Change the *labels*, not
    the ids.
 
-## Building the DR1 walker
+## Mapping DR1
 
-**Do not port the ten DR2.1 specs.** The prototype repo already has
-`journey-demo/e2e/walk.spec.js` — 124 lines, the interaction designer's own
-walker, last touched 15 July, which already walks the root (DR1) journey with
-no base prefix. It is driven by `journey-demo/e2e/journey.js`, which exports a
-`JOURNEYS` array and complete fill helpers: `fillOrigin`, `fillCommodity`,
-`fillReason`, `fillConsignmentDetails`, `fillAnimalIdentification`,
-`fillAdditionalAnimalDetails`, `fillArrivalDetails`, `fillTransitCountries`,
-`fillTransporter`, `fillUploadDocuments`, `fillRolesAndAddresses`,
-`fillContactAddress`, `fillReview`, `fillDeclaration`.
+**There is no walker to write.** Do not port the ten DR2.1 specs, and do not
+start from the designer's `journey-demo/e2e/walk.spec.js` and its
+`journey-demo/e2e/journey.js` fill helpers. Sam has ruled that those are not
+maintained. A comparison against the signed-off design cannot rest on an
+unmaintained suite in the design repo, and the same goes for the frontend's
+`fit/live-animals-journey.js`.
 
-Start from that. Add capture calls to it. Confirm with Sam whether the designer
-maintains it and whether it is kept green — nothing in the workspace says.
+Instead, map each side and let the route plan fall out of the map:
 
-The DR2.1 harness is worth reading for its hard-won Prototype Kit knowledge
-(`workareas/shared/dr21-parity/harness/README.md`, "Gotchas"): dev mode because
-production forces https and secure cookies, wait on the TCP port not an HTTP
-probe under Node 24, `workers: 1` because the kit races session state,
-`deviceScaleFactor: 2` with `reducedMotion` for byte-identical re-runs.
+```bash
+tim parity map <runId> --side frontend --write
+tim parity map <runId> --side prototype --write
+```
+
+Give each DR1 side an `app` block in `corpora.json` — a `baseURL` and the
+`startPath` the journey begins at. DR1 is the root URLs, so the prototype side's
+`startPath` has no release prefix.
+
+Carry the DR2.1 prototype side's `_appComment` across verbatim; it holds the
+hard-won Prototype Kit knowledge. Serve the kit in dev mode
+(`journey-demo/serve-prototype.js`), not `serve`, because production mode forces
+https on a plaintext server and sets secure-only cookies, which breaks the kit's
+sessions over http. Wait on the TCP port rather than on an HTTP probe: the kit
+accepts connections before a request settles under Node 24. Port 3010 — the
+workspace stack owns 3000, 3001, 3007, 3100 and 3200.
+
+Two other things from the old harness are already in the generated Playwright
+config and need no action: one worker, because the kit races session state, and
+`deviceScaleFactor: 2` with `reducedMotion: 'reduce'` so two runs at one commit
+produce the same bytes.
+
+Expect the first map to leave fields unfilled and choices unexplored — that is
+what `hints.<side>.json` and the frontier are for. Fill the hints file, run it
+again, and read the coverage line at the top of the map before treating it as an
+inventory.
 
 ## Design rules you must not violate
 
@@ -202,17 +261,20 @@ with everything that does not depend on it.
 
 1. Read `SKILL.md`, then `MERGE-PLAN.md` beside this file for what the tooling
    is and what is known broken.
-2. Set `CAPTURE_EVIDENCE_DIR` and `CAPTURE_MODEL_DIR`, then run
-   `npm run capture:frontend` from `tools/parity/capture/`. It has never run
-   from its new home — getting it green is your first real task, and it proves
-   the whole capture path. Check `git status` is clean afterwards.
-3. Add a `dr1` corpus to `tools/parity/corpora.json`: sides keep the ids
+2. Add a `dr1` corpus to `tools/parity/corpora.json` — every path the capture
+   uses comes from it, so nothing can run until it exists. Sides keep the ids
    `frontend` and `prototype`, label the second one "Design release 1",
-   `screenPrefix: 'dr1-'`, paths under `workareas/shared/dr1-parity/`. Omit
-   `baselines.passA` until citations are final. Run `tim parity check-evidence`
-   and expect it to fail — read what it says.
-4. Build the DR1 walker from `walk.spec.js`, capture both sides, and pin to the
-   latest commit of each.
+   `screenPrefix: 'dr1-'`, paths under `workareas/shared/dr1-parity/`, and give
+   each side an `app.baseURL` and `app.startPath`. Omit `baselines.passA` until
+   citations are final. Run `tim parity check-evidence` and expect it to fail —
+   read what it says.
+3. Run `tim parity map <runId> --side frontend --write` with the frontend up.
+   Nothing here has ever driven a browser — getting one map out is your first
+   real task, and it proves the whole discovery path. Check `git status` is
+   clean afterwards.
+4. Map the prototype the same way, capture both sides, and pin to the latest
+   commit of each. Read the map's coverage line and the "can be walked again by
+   the capture stage" count before you trust either side's screen list.
 5. Run the differ, hand-author `pairs.js`, and produce the deltas. **Stop
    there** and show Sam the delta counts before any finding is authored — that
    is the point where you will know whether DR1 is a small comparison or a

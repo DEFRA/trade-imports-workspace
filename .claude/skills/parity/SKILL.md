@@ -1,6 +1,6 @@
 ---
 name: parity
-description: 'Build, check and adjudicate a findings report for a comparison corpus — today DR2.1 (EUDPA-328), 97 findings comparing the live-animals frontend against the Design release 2.1 prototype. Four modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE re-shoots the evidence at the pinned commits (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
+description: 'Build, check and adjudicate a findings report for a comparison corpus — today DR2.1 (EUDPA-328), 97 findings comparing the live-animals frontend against the Design release 2.1 prototype. Four modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE maps an application to work out which screens it has, then re-shoots the evidence at the pinned commits (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
 ---
 
 Render a backlog of findings as a decision surface, and help rule on it.
@@ -168,36 +168,119 @@ the writing, [CLAIM_VERIFIER](references/CLAIM_VERIFIER.md) for the adversarial
 read afterwards, [EVIDENCE_CURATOR](references/EVIDENCE_CURATOR.md) for the
 pictures. **A different worker verifies than wrote.**
 
-### CAPTURE — re-shoot the evidence
+### CAPTURE — map an application, then re-shoot the evidence
 
 Triggers: "recapture the parity corpus".
 
-Capture is the one place a `cd` is genuinely needed, so it stays in shell.
-Before re-capturing, read `.corpus-meta.json`: `pins` is where the citations
-resolve and `captures` is where the pixels came from, and the report says so on
-the page when they disagree. A re-capture is what makes them agree again.
+**These are requirements-gathering tools, not tests.** They use Playwright
+because Playwright drives browsers. Nothing here asserts that an application is
+correct. They map an application and record what it currently does, so it can
+be compared against a signed-off design. That is why they live in the workspace
+and not in either application's repo.
+
+For the same reason nothing here may lean on an application's own journey
+helpers — the frontend's `fit/live-animals-journey.js`, the prototype's
+`journey-demo/e2e/journey.js`. Neither is maintained. A harness built on an
+unmaintained suite breaks the first time somebody refactors a suite nobody
+runs, and it makes the design comparison a hostage to another repo's test code.
+Nothing under `tim/src/parity/capture/` imports an application.
+
+That leaves the question the helpers used to answer: which screens does this
+application have, and how do you reach them? A discovery stage answers it. So
+capture is two stages, and the second refuses to start without the first.
+
+Before either, read `.corpus-meta.json`: `pins` is where the citations resolve
+and `captures` is where the pixels came from, and the report says so on the page
+when they disagree. A re-capture is what makes them agree again.
 
 Capture ids are immutable. A capture at a new commit writes a new directory; it
 never overwrites the old one, because the old evidence is the record of what a
 ruling was made against.
 
+**Stage 1 — map the application.**
+
+```
+tim parity map EUDPA-328 --side frontend --write
+```
+
+The cartographer opens the side at the `app.baseURL` and `app.startPath` its
+corpus entry names, and crawls with no knowledge of the journey: it reads each
+rendered page, fills what the page itself tells it how to fill, takes one
+forward action, and queues every choice it did not take. Values come off a
+five-rung ladder — seeded from the hints file, enumerated from the control,
+mined from the page's own hint or error message, typed, generic — and the rung
+is recorded against every field, so a value in the map carries its provenance
+instead of reading as fact.
+
+`--write` writes four things, three of them under the corpus workarea's
+`cartography/`:
+
+- `map.<side>.json` — the screens, the route to each, the frontier of choices
+  never taken, and its own coverage at the top. A partial map read as a complete
+  one is the failure nobody catches, so the map states what it covers.
+- `hints.<side>.json` — one empty entry per field nothing could fill, with what
+  the application said about it. Put a value in `fields{}` and the next run
+  takes it at rung 1. Knowledge lands in the corpus as data, never in the
+  crawler as a special case.
+- `<side>.routes.json` — the route plan the capture stage walks, derived from
+  the map rather than authored, so nobody keeps a list of screens by hand.
+- one page model per screen, into the side's `modelDir`, so the differ reads
+  what it already reads.
+
+`--check` exits non-zero while anything is unexplored, blocked or unfilled.
+`--budget-steps` and `--budget-minutes` keep a first run short, `--headed` lets
+you watch it, and `--data-state` records the state the data was in: an empty
+dashboard and one holding three notifications are both legitimate and are not
+the same screen.
+
+The route plan walks one session end to end, so a screen reachable only from a
+fresh session, or one behind a widget the plan has no word for, cannot be said
+in that form. Those are named rather than written as a walk that would
+photograph the wrong page. The command prints `N of M screens can be walked
+again by the capture stage` and lists the rest with the reason. Read that line:
+it is the coverage of the capture, not of the map.
+
+**Stage 2 — capture.**
+
+```
+tim parity capture EUDPA-328 --side frontend
+```
+
+It walks the plan and, on every screen it reaches, takes a full-page
+screenshot, an element crop per anchor and a page model — the model in the same
+page visit as the picture, so both are of the same render. It writes
+`manifest.json` into the capture directory itself. A screen it could not reach
+is recorded as a stated absence, never left as a broken image. With no plan on
+disk it stops and names the path the map would have written.
+
+`--plan` walks a plan from somewhere else. `--headed` shows the browser.
+
+Playwright lives in tim. Until it is installed both commands stop with a typed
+`MISSING_DEP`; the fix is `npm install` in `tim/` then `npx playwright install
+chromium`, and Sam has to run it because the guard hook blocks `npm install`
+from an agent.
+
 The full sequence, in order:
 
 ```
+tim parity map EUDPA-328 --side frontend --write
+tim parity map EUDPA-328 --side prototype --write
 tim parity seed-anchors EUDPA-328 --write            # which controls get cropped
 tim parity insertion-anchors EUDPA-328 --write       # where a one-sided control would go
-npm --prefix repos/trade-imports-animals-frontend run test:fit:capture
-<the prototype harness command in corpora.json>
-tim parity manifest EUDPA-328 --side prototype --sha <sha> --dsf 2 --write
+tim parity capture EUDPA-328 --side frontend
+tim parity capture EUDPA-328 --side prototype
 tim parity repoint EUDPA-328 --side <side> --to <sha>   # preview, old beside new
 tim parity repoint EUDPA-328 --side <side> --to <sha> --accept
 tim parity meta EUDPA-328 --write
 tim parity report EUDPA-328
 ```
 
-`seed-anchors` reads the compare deltas and writes `anchors.<side>.json`; both
-harnesses load the file for their own side, so adding element evidence to a
-finding is a data change and never a spec edit.
+`seed-anchors` reads the compare deltas and writes `anchors.<side>.json`; the
+capture loads the file for its own side, so adding element evidence to a
+finding is a data change and never a spec edit. Run it before the capture, not
+after: a side captured before its anchors exist gets full-page shots only.
+`tim parity manifest` is for a capture directory that came from something other
+than `tim parity capture` — the older harnesses wrote no manifest of their own.
 
 `repoint` is not optional politeness. Accepting a new capture supersedes every
 picture in the corpus at once, and the preview is where a lost screen — one the

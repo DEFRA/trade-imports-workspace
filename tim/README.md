@@ -114,7 +114,7 @@ The artifact is the exception and carries its stylesheet and script inline,
 because it exists to be sent to someone and a second and third file that had
 to travel with it would defeat the point.
 
-The evidence — the pictures, and the commits they are of — has its own three
+The evidence — the pictures, and the commits they are of — has its own
 commands. Element crops are declared as data rather than written into a spec,
 and a picture that moves under a pending ruling has to say so:
 
@@ -126,6 +126,42 @@ tim parity check-evidence EUDPA-328 [--strict]   # pin drift, captures, dead cit
 tim parity repoint EUDPA-328 --side frontend --to <sha> [--accept]
 tim parity report EUDPA-328 --reseal         # accept every picture that moved
 ```
+
+The pictures themselves come from two more commands, and both drive a browser:
+
+```bash
+tim parity map EUDPA-328 --side frontend --write       # what screens are there, and how to reach them
+tim parity capture EUDPA-328 --side frontend           # walk the plan the map wrote, and record it
+```
+
+These are requirements-gathering tools, not tests. Playwright is here because
+Playwright drives browsers; nothing in either command asserts that an
+application is correct. They record what an application does today so it can be
+compared against a signed-off design, which is why they live in the workspace
+rather than in either application's repo. For the same reason neither imports an
+application's own journey helpers: those suites are not maintained, so a harness
+built on them breaks the moment somebody refactors one.
+
+`map` crawls a side from the `app.baseURL` and `app.startPath` in its corpus
+entry, with no knowledge of the journey. It reads each rendered page, fills what
+the page tells it how to fill, takes one forward action and queues every choice
+it did not take. Values come off a five-rung ladder — seeded, enumerated, mined
+from a hint or an error message, typed, generic — and the rung is stored against
+every field, so a value carries its provenance. `--write` produces
+`map.<side>.json`, a `hints.<side>.json` stub with one empty entry per field
+nothing could fill, the `<side>.routes.json` route plan, and one page model per
+screen in the side's model directory. `--check` exits non-zero while anything is
+unexplored, blocked or unfilled; `--budget-steps`, `--budget-minutes`,
+`--headed` and `--data-state` cover the rest.
+
+`capture` walks that plan and, on each screen it reaches, takes a full-page
+screenshot, one crop per declared anchor and a page model in the same page
+visit, then writes `manifest.json` beside them. It refuses to start without a
+route plan and prints the path the map would have written. A screen it cannot
+reach is reported as a stated absence, not left as a broken image.
+
+Both need Playwright installed in `tim` — `npm install`, then
+`npx playwright install chromium`. Without it they stop with `MISSING_DEP`.
 
 `report` records what it showed you in `evidence/seals.json`. On the next
 build, any picture that has changed carries a ribbon and is listed above

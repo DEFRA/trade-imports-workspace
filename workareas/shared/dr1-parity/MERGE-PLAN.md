@@ -12,31 +12,46 @@ is 12.89 MiB total. `archive/dr21-parity-corpus` tags the tip, so every
 capture, page model and delta stays restorable whatever happens to the working
 tree.
 
-**The capture harness moved into `tools/parity/capture/`.** It is its own npm
-project with its own Playwright, because a spec in the workspace cannot resolve
-`@playwright/test` out of another repo's `node_modules`.
+**The capture harness is a `tim` surface.** It went first into
+`tools/parity/capture/` as its own npm project; Sam ruled against a standalone
+project, so it now lives in `tim/src/parity/capture/` and Playwright is tim's
+own dependency. There is no separate npm project and no second `node_modules`.
 
 ```
-tools/parity/capture/
-  package.json          its own Playwright
+tim/src/parity/capture/
   page-model.js         the structural extractor, one copy, shared
-  frontend/             capture.js, walk.spec.js, playwright.config.js
-  prototype/            (the DR1 walker goes here)
+  screens.js            screenshots, element crops, manifest
+  route-plan.js         the contract the discovery stage writes to
+  walk.js               the route-plan interpreter — generic steps only
+  walk.pw.js            the Playwright entry (.pw.js: not a spec, and vitest collects *.spec.js)
+  run.js                tim parity capture
+  cartography/          tim parity map — the discovery stage
 ```
 
-It borrows each application's own journey helpers rather than forking them —
-the frontend's `fit/live-animals-journey.js`, the designer's
-`journey-demo/e2e/journey.js`. **The app owns how to reach a screen; this owns
-what to record when it gets there.**
+**It borrows nothing from either application.** The earlier plan had it call
+the frontend's `fit/live-animals-journey.js` and the designer's
+`journey-demo/e2e/journey.js`; Sam ruled that out, because neither is
+maintained. So the harness needed its own answer to "which screens are there
+and how do you reach them", which is what `tim parity map` is: it crawls a side
+from the rendered page alone and writes the route plan `tim parity capture`
+walks. **The map works out what to record and how to get there; the capture
+records it.**
+
+Both are requirements-gathering tools rather than tests. Playwright is there
+because Playwright drives browsers; nothing in either asserts that an
+application is correct.
 
 **The frontend repo is clean.** It carries a single two-line change now — the
 fit suite getting its own default port, a genuine fix to its own suite — on
 `chore/EUDPA-328-fit-port`. Everything else came out.
 
-**Two defaults were removed, not repointed.** `CAPTURE_EVIDENCE_DIR` and
-`CAPTURE_MODEL_DIR` are required and the capture refuses to start without them.
-They used to default into the DR2.1 corpus, so a DR1 run would have quietly
-filed its evidence under the comparison it was replacing.
+**The two environment variables are gone, not repointed.**
+`CAPTURE_EVIDENCE_DIR` and `CAPTURE_MODEL_DIR` used to default into the DR2.1
+corpus, so a DR1 run would have quietly filed its evidence under the comparison
+it was replacing. Every path now comes from the corpus profile and none has a
+default; a side that names no `evidenceRoot` or `modelDir` stops the run and
+says so. The only variable left is `TIM_CAPTURE_CONTEXT`, which `tim parity
+capture` sets itself to hand the Playwright entry one file of resolved paths.
 
 **Four `.gitignore` rules** now keep captured pixels and page models out of
 `workareas/shared/`. Without them one capture run commits ~100,000 lines. The
@@ -44,17 +59,19 @@ DR2.1 corpus did exactly that.
 
 ## One thing needs you
 
-The harness's Playwright is not installed — the guard hook blocks `npm install`
-from an agent. One-time:
+tim's Playwright is not installed — the guard hook blocks `npm install` from an
+agent. One-time:
 
 ```bash
-cd ~/git/defra/trade-imports-workspace/tools/parity/capture
-npm install
-npm run install:browser
+npm --prefix ~/git/defra/trade-imports-workspace/tim install
+npx --prefix ~/git/defra/trade-imports-workspace/tim playwright install chromium
 ```
 
-Until that runs the frontend capture cannot be verified end to end. Everything
-else is committed and pushed.
+Until that runs, `tim parity map` and `tim parity capture` both stop with a
+typed `MISSING_DEP` and neither can be verified end to end. Nothing browser-side
+has ever run: the pure parts are covered by tim's suite, but every selector in
+the control reader and the driver has only met a stand-in page. Everything else
+is committed and pushed.
 
 ## What the DR1 comparison is for
 
@@ -108,7 +125,15 @@ earns its place.
   `corpora.json` anyway.
 - **`compare/build-increments.js:14`** writes to a hardcoded stale path
   containing both the pre-migration workspace name and the old run id.
-- **The prototype harness still lives in `workareas/shared/dr21-parity/`** with
-  ten near-identical configs and `BASE` as a per-spec constant. The DR1 walker
-  should be built in `tools/parity/capture/prototype/` from the designer's own
-  `walk.spec.js` instead — see `HANDOVER.md`.
+- **The retired prototype harness still sits in
+  `workareas/shared/dr21-parity/harness/`** with ten near-identical configs and
+  `BASE` as a per-spec constant. Nothing points at it any more: the DR2.1
+  corpus's `captureCommand` is `tim parity capture`, and DR1 has no walker to
+  write at all — it maps instead. Its Prototype Kit knowledge has been carried
+  into the prototype side's `_appComment` in `corpora.json`. Delete it once a
+  live map has proved that nothing else was in there.
+- **The capture reads the derived route plan, not the map.** `tim parity map`
+  writes `<side>.routes.json` from `map.<side>.json` so the pipeline works end
+  to end, but a plan walks one session, so any screen needing a fresh session
+  or a widget the plan has no word for is listed in `unexpressible[]` and left
+  out. Pointing the capture at the map itself would raise the screen count.

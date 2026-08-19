@@ -1,3 +1,4 @@
+/* global CSS, location */
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -13,11 +14,9 @@ import { join } from 'node:path'
  * This runs in the browser. It has no imports and no closure over anything in
  * this file, because Playwright serialises it and evaluates it in the page.
  *
- * The comparison's other side runs a function that must produce the same shape.
- * The guarantee is a shared schema rather than a shared file — `tim parity`
- * parses every model on both sides through one definition — because the two
- * sides live in different repos and a copied file drifts silently where a
- * failing contract test does not.
+ * One copy exists, here, for every side of every comparison. The shape it
+ * produces is checked by `page-model-schema.js`, which is what the differ and
+ * the report actually depend on.
  *
  * @returns {object}
  */
@@ -192,11 +191,11 @@ export const EXTRACTOR = () => {
       }))
     }))
 
-  // The two codebases build the same UI concepts from different markup: the frontend
-  // uses the govuk-frontend components, while the prototype's spine screens
-  // (notification-hub, review-notification) use bespoke app-* structures. Comparing
-  // `taskLists` to `taskLists` across sides therefore reads as "one side has no task
-  // list at all", which is a false finding on the two most important screens.
+  // The two codebases build the same UI concepts from different markup: one
+  // side uses the govuk-frontend components, the other's spine screens use
+  // bespoke app-* structures. Comparing `taskLists` to `taskLists` across sides
+  // therefore reads as "one side has no task list at all", which is a false
+  // finding on the two most important screens.
   //
   // These three keys capture the concept rather than the component, so a diff
   // compares what the user sees rather than which macro rendered it.
@@ -231,7 +230,8 @@ export const EXTRACTOR = () => {
       value: text(row.querySelector('.govuk-summary-list__value')),
       source: 'govuk-summary-list'
     })),
-    // Raw definition lists outside a govuk-summary-list — the prototype's review cards.
+    // Raw definition lists outside a govuk-summary-list — the prototype's
+    // review cards.
     ...[...main.querySelectorAll('dl')]
       .filter((dl) => !dl.closest('.govuk-summary-list'))
       .flatMap((dl) =>
@@ -245,7 +245,7 @@ export const EXTRACTOR = () => {
       )
   ]
 
-  // Controls are not always inside a <form> — the prototype's dashboard sort select
+  // Controls are not always inside a <form> — one side's dashboard sort select
   // sits outside one — so walking forms alone silently loses them.
   const allFields = fieldsFrom(main)
 
@@ -337,32 +337,6 @@ export const EXTRACTOR = () => {
 }
 
 /**
- * Read one screen's page model and write it where the differ reads models
- * from.
- *
- * Written into the miner's directory rather than beside the screenshots,
- * because that is the path `compare/diff-all.js` reads and the deltas it
- * produces feed the anchors, the insertion points and the findings. A model
- * captured somewhere the differ does not look is a model nothing uses.
- *
- * @param {import('@playwright/test').Page} page
- * @param {string} screen - Screen id, matching the corpus (for example fe-hub)
- * @param {string} [dir] - Override the destination
- * @returns {Promise<object>} The manifest row fragment
- */
-export const capturePageModel = async (page, screen, dir = modelDir()) => {
-  const model = await page.evaluate(EXTRACTOR)
-  mkdirSync(dir, { recursive: true })
-  const file = join(dir, `${screen}.json`)
-  writeFileSync(file, `${stable(model)}\n`, 'utf8')
-  return {
-    fields: (model.allFields ?? []).length,
-    headings: (model.headings ?? []).length,
-    file
-  }
-}
-
-/**
  * The generated notification reference and the journey id change on every run.
  * Left in, every model differs from the last capture, every delta churns, and
  * the anchors and insertion points derived from those deltas churn with them —
@@ -377,25 +351,52 @@ const VOLATILE = [
   [/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'UUID']
 ]
 
-export const stable = (model) =>
+/**
+ * Replace every value that changes run to run with a fixed stand-in.
+ *
+ * Exported so the cartographer masks a URL with the same rules that mask a
+ * model. Two maskers would drift, and the day they drift is the day a screen
+ * id stops matching the model filed under it.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export const maskVolatile = (text) =>
   VOLATILE.reduce(
-    (json, [pattern, replacement]) => json.replace(pattern, replacement),
-    JSON.stringify(model, null, 2)
+    (masked, [pattern, replacement]) => masked.replace(pattern, replacement),
+    text
   )
 
 /**
- * Where page models land.
+ * Serialise a page model with every value that changes run to run replaced by
+ * a fixed stand-in.
  *
- * No default, for the same reason the evidence root has none: a guess files
- * this comparison's models under another comparison, and every delta, anchor
- * and insertion point downstream is derived from them.
+ * @param {object} model
+ * @returns {string} Pretty-printed JSON
  */
-export const modelDir = () => {
-  const dir = process.env.CAPTURE_MODEL_DIR ?? process.env.FIT_MODEL_DIR
-  if (!dir) {
-    throw new Error(
-      'Set CAPTURE_MODEL_DIR to the corpus model directory, for example workareas/shared/dr1-parity/capture/frontend/model.'
-    )
+export const stable = (model) => maskVolatile(JSON.stringify(model, null, 2))
+
+/**
+ * Read one screen's page model and write it where the differ reads models
+ * from.
+ *
+ * The directory is passed in rather than read from the environment: it comes
+ * from the corpus profile, and a model written where the differ does not look
+ * is a model nothing uses.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} screen - Screen id, matching the corpus (for example fe-hub)
+ * @param {string} dir - Where this side's models live
+ * @returns {Promise<{fields: number, headings: number, file: string}>}
+ */
+export const capturePageModel = async (page, screen, dir) => {
+  const model = await page.evaluate(EXTRACTOR)
+  mkdirSync(dir, { recursive: true })
+  const file = join(dir, `${screen}.json`)
+  writeFileSync(file, `${stable(model)}\n`, 'utf8')
+  return {
+    fields: (model.allFields ?? []).length,
+    headings: (model.headings ?? []).length,
+    file
   }
-  return dir
 }

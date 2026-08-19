@@ -431,3 +431,114 @@ I stopped short of capture for one reason and one judgement:
 3. **The artifact share pin** still points at a pre-revalidation version of the
    old page. Only you can move it, and the old page is now deleted, so anyone
    holding that link is reading something that no longer regenerates.
+
+---
+
+## 7. Later the same night: the report is no longer one-sided
+
+Sections 3 and 5 above were written before this. They are left as they were
+because they record what I decided and why at the time, and section 5 said I
+had stopped short of capture. I then reconsidered and did it. What changed my
+mind is in the first bullet.
+
+**Progress: 41 of 58 increments done, 2 dropped, 15 to do.**
+
+### The plan's inc-042 was solving a problem that no longer exists
+
+It calls for a guarded capture line inside each of the 26 `*.fit.spec.js` files,
+on the reasoning that those specs are the only things that know how to reach
+each state, and it explicitly rejects extracting the 26 navigation preambles as
+"a 26-file refactor not on the critical path".
+
+The extraction has already happened. `fit/live-animals-journey.js` in the
+frontend repo **is** the navigation library — `startNotification`,
+`unlockSections`, `completeAnswerSections`, `addDocument`. One new spec that
+uses it reaches everything, and 26 files stay untouched.
+
+That is what changed my mind about capture: what I had costed as a 26-file edit
+in a repo with an open PR turned out to be one new file.
+
+### Both sides now match their pins
+
+The masthead says so for the first time.
+
+| Side | Pin | Pictures | Scale |
+|---|---|---|---|
+| frontend | `6766115c` | 33 screens | 2x |
+| prototype | `491b3926` | 70 screens | 2x |
+
+- **The frontend had zero screenshots and now has 33**, captured in 15 seconds by
+  `npm --prefix repos/trade-imports-animals-frontend run test:fit:capture`.
+  29 of the 30 screens the findings cite have a real picture; every card that had
+  a text plate on the left now has the page.
+- **The prototype is re-captured at `491b392`** — your inc-002 ruling, applied.
+  I fast-forwarded your design clone from `7da4f70`; it is reversible with
+  `git -C ~/git/defra/defra-design/GB-notification-service reset --hard 7da4f70`.
+  All 26 harness specs passed against the moved prototype.
+- **Both sides are at 2x now**, with motion stopped and the caret hidden.
+  Everything was 1x, which is visibly soft on your display and is the largest
+  quality gain per line changed.
+
+### What the re-pin surfaced
+
+23 prototype page models changed, and `git diff` on
+`workareas/shared/dr21-parity/harness/capture/model/` is the record of what the
+address-book push moved. One example worth your eye: the prototype's CPH page
+has gained **"Save and return to hub"** and **"Cancel and return to hub"**
+actions it did not have when the corpus was captured. No finding is about that
+page's form actions, so this is new information rather than a contradiction —
+but it is the kind of thing the re-pin exists to find.
+
+### One screen still has no picture
+
+`fe-cancel-amend`. It needs an amendment in progress, and the dashboard offers
+no **Amend** action in the state the capture run reaches. Recorded as a gap with
+that reason rather than as a failure; the card falls back to its page-model
+plate and says so.
+
+### The citation queue is empty
+
+All 35 hand-resolved, each with the reasoning on the citation itself. Eight of
+them were the re-pin showing its hand: `inc-096`'s note cites five line numbers
+in the prototype's `routes.js` — 9014, 9023, 9038, 1224, 4360 — and every one is
+exact at `7da4f70` and wrong at `491b392`. They now carry their new lines with
+the old ones named.
+
+`inc-087/c3` was the dead backend citation the notes already recorded: there is
+no `NotificationFulfilmentsController`. The endpoint is a `@GetMapping` on
+`NotificationController:155`. The finding's claim is unaffected.
+
+### Pass A is complete, and it is the reason the page reads
+
+All 96 findings are in two columns now, with the words the analyst wrote. That
+is what turns the plan's first complaint — "the decisions are unreadable" — into
+a page you can rule from. The invariants over the whole corpus:
+
+- 301 quoted spans and backticked identifiers survive verbatim
+- 336 numeric claims survive
+- 95 findings at or above 98% word residue
+- the polarity list is empty
+
+Three findings came back for a fix before they were committed, each caught by
+the checker rather than by me re-reading: `inc-003` lost "overlap" and
+"existing"; `inc-047` orphaned "none" from its antecedent when I split the
+sentence carrying it; `inc-076` dropped "carries a different signal".
+
+### What is left, and what it is waiting for
+
+**Waiting on you (4):** the other 47 decision questions, Pass B across the other
+95 findings, its adversarial verification, and the consistency pass over titles
+and questions.
+
+**Not waiting on anything (11):** element crops and the anchor descriptor
+language that drives them (`inc-045` to `inc-051`) — the pictures are whole
+pages, and a finding about one radio group still shows a whole page; the drift
+panel's curation hashes (`inc-052`), which need curated frames to compare
+against; `check-evidence.sh` and `repoint.sh` (`inc-053`); the artifact export
+(`inc-058`); and moving the page-model extractor into the frontend repo
+(`inc-041`), which the new capture path does not need — it uses Playwright's own
+screenshot rather than the extractor.
+
+`tim parity check` is still red on exactly one thing, and it names it:
+*"69 of 70 gated findings have no decision question — until they do, the report
+can present the evidence but not the ask."*

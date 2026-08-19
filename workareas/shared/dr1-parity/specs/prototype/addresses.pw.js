@@ -430,3 +430,51 @@ test('records contact-address-for-consignment', async ({ page }) => {
     'a chosen contact address should advance out of the page'
   ).not.toHaveURL(/\/contact-address-for-consignment$/)
 })
+
+test('records the addresses hub part-answered, where the copy shortcuts render', async ({
+  page
+}) => {
+  await toAddressesHub(page, CATTLE)
+
+  // The two shortcut buttons are why this state needs a screen of its own, and
+  // why neither of the captures above can stand in for it. A section offers
+  // "Same as place of origin" only while a place of origin is on the
+  // notification AND that section is still empty; "Same as consignee" the same
+  // way against the consignee. Both tests sit in the same else-if chain as
+  // `selectedAddress` (roles-and-addresses.html), so answering a section
+  // replaces its shortcut with the inset summary. The empty hub has no source
+  // address to copy from and the complete hub has no empty target to copy into,
+  // which leaves this the only state in which either button is rendered at all.
+  await answerRole(
+    page,
+    SELECTABLE_ROLES.find((role) => role.path === '/place-of-origin')
+  )
+  await answerRole(
+    page,
+    SELECTABLE_ROLES.find((role) => role.path === '/consignee')
+  )
+
+  await expect(
+    page.locator('.app-roles-and-addresses-page__selected-address'),
+    'the place of origin and the consignee, and nothing else, should be answered'
+  ).toHaveCount(2)
+
+  // Counted rather than merely asserted visible, because the counts are what
+  // pin the capture to this state. Cattle's hub is six sections
+  // (app/data/consignment-address-sections.js, code 0102): five roles plus CPH.
+  // Consignor is the one section carrying canUseSameAsPlaceOfOrigin; importer
+  // and place of destination are the two carrying canUseSameAsConsignee. A hub
+  // one role further on would still show a shortcut somewhere and still pass a
+  // bare visibility check.
+  await expect(
+    page.getByRole('button', { name: 'Same as place of origin', exact: true }),
+    'the consignor section should offer to copy the place of origin'
+  ).toHaveCount(1)
+  await expect(
+    page.getByRole('button', { name: 'Same as consignee', exact: true }),
+    'the importer and the place of destination should offer to copy the consignee'
+  ).toHaveCount(2)
+
+  await record.record(page, 'roles-and-addresses-partial')
+})
+

@@ -165,3 +165,50 @@ test('records the delete confirmation', async ({ page }) => {
 
   await record.record(page, 'delete-notification')
 })
+
+test('records the hub before any commodity has been chosen', async ({
+  page
+}) => {
+  await startNotification(page)
+  await answerOrigin(page)
+
+  // Origin answered and the commodity page left alone. The hub above is
+  // photographed with a species chosen, because that is what turns most of the
+  // task list from "Cannot start yet" into links — so this is the state that
+  // one cannot show, and it is the state every user passes through.
+  await expect(page, 'origin should hand over to the commodity page').toHaveURL(
+    /\/commodities$/
+  )
+  await page.goto(hubPath(page))
+  await expect(
+    page.getByRole('heading', { level: 1 }),
+    'the hub should render its task list'
+  ).toHaveText('Overview')
+
+  // buildCommodityTotals returns null while the consignment holds no lines, so
+  // the whole "Your commodities" block is absent rather than showing two zeros.
+  // Asserted against both the heading and the boxes: the heading alone would
+  // still pass if the panels rendered without one.
+  await expect(
+    page.getByRole('heading', { name: 'Your commodities' }),
+    'the commodity totals should not be on the hub before a commodity exists'
+  ).toHaveCount(0)
+  await expect(
+    page.locator('.app-commodity-total'),
+    'and neither should the panels the heading introduces'
+  ).toHaveCount(0)
+
+  // The far end of the blocking, and the one row that is blocked by the whole
+  // journey rather than by one answer: the review section's gate is
+  // readyForCheckYourAnswers, so its row renders as plain text with no way in.
+  const review = page
+    .locator('.govuk-task-list__item')
+    .filter({ hasText: 'Check and submit' })
+  await expect(review).toContainText('Cannot start yet')
+  await expect(
+    review.getByRole('link'),
+    'a blocked row offers no link at all, rather than a link to a refusal'
+  ).toHaveCount(0)
+
+  await record.record(page, 'hub-no-commodity')
+})

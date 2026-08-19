@@ -446,3 +446,73 @@ test('records every page of the spine, then review, declaration and submitted', 
   )
   await record.record(page, 'notification-submitted')
 })
+
+test('records the review page for a notification that is not yet complete', async ({
+  page
+}) => {
+  await start(page)
+
+  // DR1 lets a user open the review page whenever they like: GET
+  // /review-notification (routes.js) has no completeness guard, and
+  // renderReviewNotificationPage builds its view model through
+  // getReviewNotificationViewModelWithErrors — so what an unfinished
+  // notification gets is the same page, carrying an error summary and a
+  // per-card error message naming each section that is still missing. That
+  // state is what this records; the capture above is the same page complete,
+  // where there is nothing to name.
+  //
+  // Reached by answering the first four pages and then going straight to the
+  // review, rather than by walking the spine: everything from animal
+  // identification onwards is left unanswered, which is what puts the later
+  // cards in their error state. Nothing on the way is photographed — the walk
+  // above owns those screens, and two captures of one screen are two chances to
+  // disagree about what state it was in.
+  await expect(page).toHaveURL(/\/origin-of-the-import$/)
+  await fillOrigin(page)
+
+  await expect(page, 'origin should advance to what-are-you-importing').toHaveURL(
+    /\/what-are-you-importing$/
+  )
+  await fillCommodity(page)
+
+  await expect(page, 'the commodity should advance to reason-for-import').toHaveURL(
+    /\/reason-for-import$/
+  )
+  await fillReason(page)
+
+  await expect(page, 'the reason should advance to consignment-details').toHaveURL(
+    /\/consignment-details$/
+  )
+  await fillConsignmentDetails(page)
+
+  // A rejected consignment-details post re-renders at the same URL rather than
+  // erroring elsewhere, so leaving the page is the proof it was accepted.
+  await expect(
+    page,
+    'consignment details should have been accepted and advanced'
+  ).not.toHaveURL(/\/consignment-details$/)
+
+  await page.goto('/review-notification')
+  await expect(page, 'the review page should open on an unfinished notification')
+    .toHaveURL(/\/review-notification$/)
+
+  // Three separate assertions because they are three separate pieces of the
+  // state, and a capture missing any one of them is of a different screen: the
+  // summary at the top, the red edge on each incomplete card
+  // (`--error` on the wrapper), and the message inside it that names what is
+  // missing. A complete notification renders none of the three.
+  await expect(
+    page.locator('.govuk-error-summary__list li'),
+    'the summary should name what is still missing'
+  ).not.toHaveCount(0)
+  await expect(
+    page.locator('.app-review-card-wrapper--error'),
+    'the sections still unanswered should render in their error state'
+  ).not.toHaveCount(0)
+  await expect(
+    page.locator('.app-review-card__error-message'),
+    'each card in error should say what it is waiting for'
+  ).not.toHaveCount(0)
+
+  await record.record(page, 'review-notification-incomplete')
+})

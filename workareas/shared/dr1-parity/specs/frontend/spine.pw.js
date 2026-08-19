@@ -44,6 +44,17 @@ const SPECIES = 'Bos taurus'
 const ANIMAL_COUNT = '1'
 
 const EAR_TAG = 'UK123456789012'
+const SECOND_EAR_TAG = 'UK210987654321'
+
+// The other two commodities the identification states need, named by species
+// for the same reason the Cow line is: the commodity page lists species, not
+// commodities, grouped under a fieldset per commodity.
+//
+// Horse is the only commodity on the horse-name allow-list and Fish is on none
+// of the four typed-identifier lists at all, so between them and the Cow line
+// above every shape the identification card can take is photographed once.
+const HORSE_SPECIES = 'Equus caballus'
+const FISH_SPECIES = 'Salmo salar'
 
 // Aberdeen Harbour. Port option values are the raw codes and the visible text
 // is "<name> (<code>)". Most codes carry an embedded space — "GB ABD" — but the
@@ -368,6 +379,57 @@ const answerContact = async (page) => {
   await saveAndContinue(page)
 }
 
+// Every task row the review gate is blocked on, answered in order. Documents is
+// not among them: that row is optional, which is why the gate opens without it.
+const answerEveryTaskRow = async (page) => {
+  await startNotification(page)
+  await answerOrigin(page)
+  await answerCommodities(page)
+  await answerImportReason(page)
+  await answerAnimalIdentification(page)
+  await answerAdditionalDetails(page)
+  await answerTransport(page)
+  await answerAddresses(page)
+  await answerContact(page)
+}
+
+// Start a notification carrying one commodity line and stop on the
+// identification page, without photographing anything on the way.
+//
+// Parameterised on the species and the count because those are the only two
+// things the identification states below differ by, and each decides a
+// different half of the screen: which identifier fields a card renders is an
+// allow-list keyed on the line's COMMODITY (Cow has an ear tag, Horse a horse
+// name, Fish neither), and how many records the card will take before it closes
+// is the line's own animal count.
+const openIdentificationFor = async (page, { species, animals }) => {
+  await startNotification(page)
+  await answerOrigin(page)
+
+  await page.getByRole('checkbox', { name: species, exact: true }).check()
+  await saveAndContinue(page)
+  await expect(page).toHaveURL(/\/consignment-details$/)
+
+  await page.locator('#numberOfAnimalsQuantity-0').fill(animals)
+  await saveAndContinue(page)
+
+  await openHub(page)
+  await page
+    .getByRole('link', { name: 'Animal identification details' })
+    .click()
+  await expect(page).toHaveURL(/\/commodities\/identification$/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Animal identification details'
+  )
+}
+
+// The identifier inputs are named `<obligation>-<line index>`, so every locator
+// below carries the line it belongs to. A page-wide locator on the obligation
+// name alone would match the first line of a two-line consignment and read as
+// the answer for both.
+const identifierField = (page, obligation, line = 0) =>
+  page.locator(`#${obligation}-${line}`)
+
 test.describe.configure({ mode: 'serial' })
 
 const record = recorder()
@@ -425,15 +487,7 @@ test('records the commodity pages and the contact address', async ({ page }) => 
 test('records check your answers, the declaration, the confirmation and cancelling an amendment', async ({
   page
 }) => {
-  await startNotification(page)
-  await answerOrigin(page)
-  await answerCommodities(page)
-  await answerImportReason(page)
-  await answerAnimalIdentification(page)
-  await answerAdditionalDetails(page)
-  await answerTransport(page)
-  await answerAddresses(page)
-  await answerContact(page)
+  await answerEveryTaskRow(page)
 
   await openHub(page)
 
@@ -508,4 +562,197 @@ test('records check your answers, the declaration, the confirmation and cancelli
   )
 
   await record.record(page, 'cancel-amend')
+})
+
+test('records the identification page with one animal saved and one outstanding, and at its maximum', async ({
+  page
+}) => {
+  // Two animals on the line, because the collection is capped at — and required
+  // to equal — the number of animals. One animal would put the card straight
+  // into its at-maximum state on the first save and there would be no "one
+  // saved, one outstanding" to photograph.
+  await openIdentificationFor(page, { species: SPECIES, animals: '2' })
+
+  // The page is one card per commodity line, and every assertion below is
+  // scoped to this consignment's only card. A page-wide locator would match the
+  // wrong line's records on a two-line consignment; the card carries an id
+  // built from the line index for exactly that reason.
+  const card = page.locator('#identification-card-0')
+  await expect(card, 'the line should have a card of its own').toBeVisible()
+
+  await identifierField(page, 'animalIdentifierEarTag').fill(EAR_TAG)
+
+  // "Save and add another" is the per-card button, named `action` and valued
+  // `add:<line index>`. It appends the record and comes back to this page,
+  // which is what makes a saved record and an empty form appear together.
+  await page.getByRole('button', { name: 'Save and add another' }).click()
+  await expect(
+    page,
+    'saving a record should return to the identification page'
+  ).toHaveURL(/\/commodities\/identification$/)
+
+  // Three things make this the state the findings are about, and each is
+  // asserted rather than assumed: the saved record listed in the card's own
+  // summary list, the counter saying which animal the form is now for, and the
+  // form still being open. A card that had silently rejected the save would
+  // show the same page with the same button and no row.
+  await expect(
+    card.locator('.govuk-summary-list__row'),
+    'one record should have been saved, and only one'
+  ).toHaveCount(1)
+  await expect(
+    card.locator('.govuk-summary-list__key'),
+    'the saved record should be listed as the first animal'
+  ).toHaveText('Animal 1')
+  await expect(
+    card.locator('h3'),
+    'the counter should name the animal the open form is for'
+  ).toHaveText(`Enter details for ${SPECIES} 2 of 2`)
+  await expect(
+    identifierField(page, 'animalIdentifierEarTag'),
+    'the form should be open again, and empty'
+  ).toHaveValue('')
+
+  await record.record(page, 'animal-identification-saved')
+
+  // And one more save closes the card. The counter and every field are replaced
+  // by a single line of text, and the only thing left to do is remove a record
+  // — which is the behaviour a finding reads today from source alone, because
+  // both captures hold zero saved records.
+  await identifierField(page, 'animalIdentifierEarTag').fill(SECOND_EAR_TAG)
+  await page.getByRole('button', { name: 'Save and add another' }).click()
+  await expect(page).toHaveURL(/\/commodities\/identification$/)
+
+  await expect(
+    card.locator('.govuk-summary-list__key'),
+    'both animals should now be listed'
+  ).toHaveText(['Animal 1', 'Animal 2'])
+  await expect(
+    card.getByText(`You have entered details for all 2 ${SPECIES} animals.`, {
+      exact: false
+    }),
+    'a full card should say so in place of the counter'
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Save and add another' }),
+    'a full card offers no way to add another'
+  ).toHaveCount(0)
+  await expect(
+    identifierField(page, 'animalIdentifierEarTag'),
+    'and no form to add it with'
+  ).toHaveCount(0)
+
+  await record.record(page, 'animal-identification-at-maximum')
+})
+
+test('records the identification page for a Horse line', async ({ page }) => {
+  await openIdentificationFor(page, { species: HORSE_SPECIES, animals: '1' })
+
+  // Which identifier fields a card renders is decided by the commodity and by
+  // nothing else — each field is an obligation gated on an allow-list of
+  // commodities. Horse is on the passport and horse-name lists and on no other,
+  // so this card is the only place either the horse-name field or a passport
+  // beside it can be seen. Both halves are asserted: what is there, and what a
+  // Cow card has that this one does not.
+  await expect(
+    identifierField(page, 'horseName'),
+    'a Horse line should ask for the horse name'
+  ).toBeVisible()
+  await expect(
+    identifierField(page, 'animalIdentifierPassport'),
+    'and for a passport number'
+  ).toBeVisible()
+  await expect(
+    identifierField(page, 'animalIdentifierEarTag'),
+    'the ear tag is a Cow field and should not be on a Horse card'
+  ).toHaveCount(0)
+  await expect(
+    identifierField(page, 'animalIdentifierIdentificationDetails'),
+    'and a commodity with typed identifiers should not fall back to free text'
+  ).toHaveCount(0)
+
+  await record.record(page, 'animal-identification-horse')
+})
+
+test('records the identification page for a Fish line', async ({ page }) => {
+  await openIdentificationFor(page, { species: FISH_SPECIES, animals: '1' })
+
+  // Fish is on none of the four typed-identifier allow-lists, and the two
+  // free-text fields are gated on exactly that: their obligations apply when
+  // the commodity is NOT in the union of those lists. So this card is the
+  // fallback in its only form — the state a finding about identification
+  // details or an animal description has nowhere else to resolve against.
+  await expect(
+    identifierField(page, 'animalIdentifierIdentificationDetails'),
+    'a commodity with no typed identifier should fall back to identification details'
+  ).toBeVisible()
+  await expect(
+    identifierField(page, 'animalIdentifierDescription'),
+    'and to a free-text description'
+  ).toBeVisible()
+  for (const typed of [
+    'animalIdentifierPassport',
+    'animalIdentifierTattoo',
+    'animalIdentifierEarTag',
+    'horseName'
+  ]) {
+    await expect(
+      identifierField(page, typed),
+      `${typed} is a typed identifier and should not be on a Fish card`
+    ).toHaveCount(0)
+  }
+
+  await record.record(page, 'animal-identification-fish')
+})
+
+test('records check your answers on a notification that has been submitted', async ({
+  page
+}) => {
+  await answerEveryTaskRow(page)
+  await openHub(page)
+
+  const review = page.getByRole('link', { name: 'Check and submit' })
+  await expect(
+    review,
+    'every task row should be answered, which is what turns the review row into a link'
+  ).toBeVisible()
+  await review.click()
+  await expect(page).toHaveURL(/\/notification-view$/)
+
+  await continueOn(page)
+  await expect(
+    page,
+    'a complete review should reach the declaration'
+  ).toHaveURL(/\/declaration$/)
+  await page.locator('input[name="declaration"]').check()
+  await continueOn(page)
+  await expect(page, 'a confirmed declaration should submit').toHaveURL(
+    /\/confirmation$/
+  )
+
+  // The dashboard is how a user comes back to a notification they have already
+  // sent: a submitted card swaps Resume for View, and View is this same page.
+  // Reached that way rather than by typing the URL, because the question the
+  // capture settles is what a user sees on the route the service offers them.
+  await openDashboard(page)
+  await page.getByRole('link', { name: /^View notification / }).click()
+  await expect(page).toHaveURL(/\/notification-view$/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Check your answers'
+  )
+
+  // What makes this a second screen rather than a second photograph of the
+  // first: the status tag, and the actions a draft has no counterpart to. The
+  // page is rendered read-only on a submitted notification, and read-only is
+  // what puts Copy as new and Delete at the top of it.
+  await expect(
+    page.locator('.app-journey-strip .govuk-tag'),
+    'the journey strip should say the notification has been submitted'
+  ).toHaveText('Submitted')
+  await expect(
+    page.getByRole('button', { name: 'Copy as new' }),
+    'a submitted notification offers to be copied'
+  ).toBeVisible()
+
+  await record.record(page, 'check-answers-submitted')
 })

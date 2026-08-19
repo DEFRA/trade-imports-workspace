@@ -270,6 +270,14 @@ test('records exit date, which only temporary admission of horses opens', async 
     exitDetailsRow.getByRole('link'),
     'the exit-details row offers no way back in under this reason'
   ).toHaveCount(0)
+
+  // Photographed, because the two assertions above are the whole of a real
+  // defect and nothing in the corpus shows it. fe-hub is shot with no reason
+  // answered at all, and with no reason the exit-details row is `conditional`
+  // and removed from the hub altogether — so the visible-but-inert row has
+  // never appeared in a picture. Recorded after the assertions rather than
+  // before, so a hub in any other state cannot be filed under this name.
+  await record.record(page, 'hub-exit-details-blocked')
 })
 
 test('records additional animal details', async ({ page }) => {

@@ -49,10 +49,45 @@ fi
 
 # Human-readable: the point of the walker is to make a ruling cheap, so lead with
 # what the decision actually turns on rather than the full record.
+#
+# Prefers the migrated finding.* slots over the flattened detail, and substitutes
+# each [[cN]] marker back to the reference it stands for, so the terminal and the
+# report say the same thing. Once the migration has run, detail is frozen and no
+# longer the text anyone is meant to read — but it stays the fallback, because
+# the migration lands one domain at a time.
 jq -r '
+    def unmark(citations):
+        . as $text
+        | reduce (citations // [])[] as $c
+            ($text; gsub("\\[\\[" + $c.ref + "\\]\\]"; $c.asWritten));
+
+    . as $inc
+    | (.finding // {}) as $f
+    | ([$f.frontend, $f.prototype, $f.difference] | map(select(. != null and . != "")) | length > 0) as $migrated
+    |
     "\(.id)  [\(.domain)]  \(.type)\n" +
     "\n\(.title)\n" +
-    "\n" + (.detail // "") + "\n" +
+    (if ($f.decisionRequired.question // "") != "" then
+        "\nDECISION NEEDED\n  \($f.decisionRequired.question)\n"
+        + (if (($f.decisionRequired.options // []) | length) > 0 then
+             ($f.decisionRequired.options | map("    - \(.)") | join("\n")) + "\n"
+           else "" end)
+        + (if ($f.decisionRequired.consequence // "") != "" then
+             "  If it is not settled: \($f.decisionRequired.consequence)\n"
+           else "" end)
+        + (if $f.decisionRequired.source == "authored" then
+             "  (Drafted from the falsifier during the migration - check this is the right question.)\n"
+           else "" end)
+     else "" end) +
+    (if $migrated then
+        "\nFRONTEND\n" + (($f.frontend // "-") | unmark($inc.citations)) + "\n"
+        + "\nPROTOTYPE\n" + (($f.prototype // "-") | unmark($inc.citations)) + "\n"
+        + (if ($f.difference // "") != "" then "\nWHAT DIFFERS\n" + ($f.difference | unmark($inc.citations)) + "\n" else "" end)
+        + (if ($f.correction // "") != "" then "\nCORRECTED BY VERIFICATION\n" + ($f.correction | unmark($inc.citations)) + "\n" else "" end)
+        + (if ($f.falsifiedBy // "") != "" then "\nTHIS FINDING IS WRONG IF\n" + ($f.falsifiedBy | unmark($inc.citations)) + "\n" else "" end)
+     else
+        "\n" + (.detail // "") + "\n"
+     end) +
     (if ((.notes // []) | length) > 0 then
         "\nSINCE THE CORPUS WAS CAPTURED:\n"
         + ((.notes | map("  - \(.note)  [\(.at)]")) | join("\n")) + "\n"

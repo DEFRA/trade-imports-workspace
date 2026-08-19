@@ -16,7 +16,8 @@ import { loadPairs, indexPairs, screenPairsFor } from '../assets/pairs.js'
 import { resolveRow, imageCoverage, anchorsNamedIn } from '../assets/resolve.js'
 import { sealsFrom, diffSeals, readSeals, writeSeals } from '../seals.js'
 import { inlineAssets } from './artifact.js'
-import { renderPage } from './page.js'
+import { renderPage, CONTROLS_SCRIPT, ASSET_CSS, ASSET_JS } from './page.js'
+import { THEME_CSS } from './theme.js'
 
 const ASSET_DIR = 'assets'
 
@@ -248,6 +249,15 @@ export const runReport = ({
     target === 'artifact' ? 'artifact.html' : 'index.html'
   )
   writeFileSync(path, html, 'utf8')
+
+  // The local build is a static app rather than one HTML blob: its stylesheet
+  // and script are their own files beside the page. Both are ordinary link and
+  // script tags, never modules and never fetched, so the page opens straight
+  // off the filesystem with no server in front of it.
+  if (!artifact) {
+    writeFileSync(join(outDir, ASSET_CSS), THEME_CSS, 'utf8')
+    writeFileSync(join(outDir, ASSET_JS), CONTROLS_SCRIPT, 'utf8')
+  }
 
   const warnings = []
   if (corpus.joinReport.unmatchedIncrements.length) {

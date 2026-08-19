@@ -7,7 +7,6 @@ import { runCounts } from '../../parity/counts.js'
 import { runCitations } from '../../parity/citations/run.js'
 import { runEvidence } from '../../parity/citations/evidence.js'
 import { runReport } from '../../parity/render/run.js'
-import { serveReport } from '../../parity/render/serve.js'
 import { runCheck } from '../../parity/check.js'
 import { buildCorpusMeta } from '../../parity/meta.js'
 import { runSplitSentinels } from '../../parity/split-sentinels.js'
@@ -285,6 +284,7 @@ export const register = (program, { timVersion }) => {
         renderText: (result) =>
           [
             `Wrote ${result.path} (${(result.bytes / 1024).toFixed(0)} KB).`,
+            `Open it: file://${result.path}`,
             `${result.items.increments} findings, ${result.items.candidates} deferred candidates, ${result.items.withdrawn} withdrawn.`,
             ...result.imageCoverage.map(
               (c) => `images: ${c.side} ${c.have}/${c.want} cited screens`
@@ -562,27 +562,6 @@ export const register = (program, { timVersion }) => {
         timVersion
       })
     )
-
-  parity
-    .command('serve <runId>')
-    .description('Serve the report at full resolution over HTTP')
-    .option('--port <n>', 'Port to listen on', '4328')
-    .action(async function serveAction(runId, opts) {
-      const globals = this.optsWithGlobals()
-      const workspaceRoot = resolveWorkspaceRoot({
-        explicit: globals.workspace
-      })
-      const profile = loadCorpusProfile({
-        workspaceRoot,
-        runId,
-        explicit: globals.corpus
-      })
-      const { url } = await serveReport({
-        root: profile.paths.reportDir,
-        port: Number(opts.port)
-      })
-      process.stdout.write(`${url}\n`)
-    })
 
   parity
     .command('check <runId>')

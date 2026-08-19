@@ -99,12 +99,20 @@ tim parity normalise EUDPA-328 --write   # Pass 0: repo-relative paths, split sc
 tim parity meta EUDPA-328 --write        # pins, captures, every derived count
 tim parity citations EUDPA-328 --write   # extract citations[]; queue the ambiguous
 tim parity evidence EUDPA-328 --write    # permalinks, blob ids, snippets, anchor checks
-tim parity report EUDPA-328              # render report/index.html
+tim parity report EUDPA-328 [--open]     # render report/, and open it
 tim parity report EUDPA-328 --target artifact   # one self-contained file to share
-tim parity serve EUDPA-328               # serve it at full resolution
 tim parity check EUDPA-328 --pass a      # the ten migration invariants
 tim parity counts EUDPA-328 --json       # every number the masthead prints
 ```
+
+`report/` is a static app — `index.html`, `app.css`, `app.js` and `assets/` —
+that opens straight off the filesystem. There is no server: the page never
+fetches and its script is not a module, which are the only two things a
+`file://` page cannot do. Copy the folder anywhere and it still works.
+
+The artifact is the exception and carries its stylesheet and script inline,
+because it exists to be sent to someone and a second and third file that had
+to travel with it would defeat the point.
 
 The evidence — the pictures, and the commits they are of — has its own three
 commands. Element crops are declared as data rather than written into a spec,

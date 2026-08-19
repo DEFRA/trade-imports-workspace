@@ -55,9 +55,15 @@ follow that section.
 Triggers: "regenerate the parity report", "rebuild the findings report".
 
 ```
-tim parity report EUDPA-328
-tim parity serve EUDPA-328          # then open http://127.0.0.1:4328/
+tim parity report EUDPA-328 [--open]
 ```
+
+`report/` is a static app — `index.html`, `app.css`, `app.js`, `assets/` — and
+opens straight off the filesystem. **There is no server and there must not be
+one.** The page never fetches and its script is not a module, which are the
+only two things a `file://` page cannot do; a test holds both. Never introduce
+a `fetch` or an ES module into the page script without replacing the delivery
+first.
 
 `--target artifact` writes `report/artifact.html`, one self-contained file to
 send someone. It is a second emitter of the same generator, not a reduced tier:
@@ -67,8 +73,8 @@ quietly dropped. Nothing is ever downsized to fit a channel. It does not write
 to the seal store — shipping a copy must not change what the local build says
 you have seen.
 
-`report` writes `workareas/journey-builder/<run>/report/index.html` plus
-`report/assets/`, hardlinking the screenshots rather than copying 20 MB. It
+`report` writes `workareas/journey-builder/<run>/report/`, hardlinking the
+screenshots into `assets/` rather than copying 20 MB of them. It
 prints image coverage per side; `--require-images` turns a gap into a non-zero
 exit so a release-grade regeneration can be gated while daily regeneration stays
 permissive.

@@ -3,6 +3,14 @@ import { renderCard } from './card.js'
 import { THEME_CSS } from './theme.js'
 import { spriteStyles } from './artifact.js'
 
+/**
+ * The static app's own files, beside the page. Named here and written by the
+ * renderer, so nothing has to agree about them across two modules by
+ * convention.
+ */
+export const ASSET_CSS = 'app.css'
+export const ASSET_JS = 'app.js'
+
 const BANDS = [
   {
     id: 'frontend-only',
@@ -136,7 +144,7 @@ const driftPanel = (drift, items, runId) => {
 </div>`
 }
 
-const CONTROLS_SCRIPT = `
+export const CONTROLS_SCRIPT = `
 const cards = [...document.querySelectorAll('.card')]
 const search = document.getElementById('q')
 const filters = [...document.querySelectorAll('[data-filter]')]
@@ -262,10 +270,19 @@ export const renderPage = ({
     (item) => !BANDS.some((band) => band.id === item.band)
   )
 
+  // The local build is a static app: the stylesheet and the script sit beside
+  // the page as their own files, so they are diffable, cacheable and readable
+  // on their own. The artifact is one file by definition — it exists to be
+  // sent to someone — so it carries both inline.
+  const standalone = target === 'artifact'
+  const head = standalone
+    ? `<style>${THEME_CSS}</style>
+${spriteStyles(inlining?.sprites)}`
+    : `<link rel="stylesheet" href="${ASSET_CSS}">`
+
   return `<title>${esc(runId)} findings — ${esc(corpus)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>${THEME_CSS}</style>
-${spriteStyles(inlining?.sprites)}
+${head}
 <div class="wrap">
   <header class="masthead">
     <span class="masthead__eyebrow">${esc(runId)} · corpus ${esc(corpus)}</span>
@@ -377,6 +394,11 @@ ${spriteStyles(inlining?.sprites)}
       .join('')}
   </footer>
 </div>
-<script>const RUN_ID = ${JSON.stringify(runId)};${CONTROLS_SCRIPT}</script>
+<script>const RUN_ID = ${JSON.stringify(runId)};</script>
+${
+  standalone
+    ? `<script>${CONTROLS_SCRIPT}</script>`
+    : `<script src="${ASSET_JS}"></script>`
+}
 `
 }

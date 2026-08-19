@@ -13,7 +13,7 @@ endif
 
 .PHONY: setup link update reset status install lint test \
         tim-install tim-link tim-test tim-lint tim-format \
-        parity parity-report parity-check parity-check-evidence parity-serve sonar-staged \
+        parity parity-report parity-check parity-check-evidence parity-open sonar-staged \
         start-frontend start-backend start-admin start-gateway start-address-book \
         docker-local-branches docker-compose-up docker-compose-dev docker-compose-down docker-compose-bounce docker-logs docker-restart-backend clean help
 
@@ -152,8 +152,8 @@ parity-check: ## Run the parity invariants (CORPUS=EUDPA-328)
 parity-check-evidence: ## Report pin drift, capture integrity and dead citations
 	@cd "$(WORKSPACE_ROOT)" && tim parity check-evidence $(CORPUS) $(ARGS)
 
-parity-serve: ## Serve the built parity report on 127.0.0.1:4328
-	@cd "$(WORKSPACE_ROOT)" && tim parity serve $(CORPUS) $(ARGS)
+parity-open: ## Build the parity report and open it
+	@cd "$(WORKSPACE_ROOT)" && tim parity report $(CORPUS) --open $(ARGS)
 
 # The sonar CLI refuses any file outside its current directory, so an agent
 # working from this workspace cannot run the pre-commit scan CLAUDE.md asks

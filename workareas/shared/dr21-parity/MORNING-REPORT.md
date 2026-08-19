@@ -83,6 +83,8 @@ diff; that section you could not.
   but assigned to no command. `serve` exists because the page is full-resolution
   and `file://` cannot lazy-load 20 MB of screenshots. Both are small and both
   are testable surfaces rather than steps in a runbook.
+  **Correction, added later: `serve` is gone.** Its premise was wrong —
+  `loading="lazy"` works perfectly well on `file://`. See section 10.
 
 - **The report shows each finding's two evidence pointers under the column they
   belong to, even where the prose cites nothing.** Eleven findings carry no
@@ -161,9 +163,8 @@ paragraph of `detail`, which is never edited):
 4. **The label.** The card prints *"Drafted from the falsifier during the
    migration — check this is the right question."* under every authored one.
 
-Where to see it: `tim parity serve EUDPA-328`, then
-`http://127.0.0.1:4328/#inc-055`. Or in the terminal:
-`tools/parity/next-decision.sh EUDPA-328 --domain commodities`.
+Where to see it: open `report/index.html` and jump to `#inc-055`. Or in the
+terminal: `tools/parity/next-decision.sh EUDPA-328 --domain commodities`.
 
 ### Canary 2 — one finding rewritten into plain English (inc-034)
 
@@ -243,7 +244,7 @@ sceptical about: an empty list on one finding is weak evidence.
    colon-led list is the clearest way to say three defects; you may find it
    over-friendly for a technical record.
 
-Where to see it: `http://127.0.0.1:4328/#inc-028`, and
+Where to see it: `report/index.html#inc-028`, and
 `git diff 4a7cc95..5bafa0f -- workareas/journey-builder/EUDPA-328/backlog.json`
 for the Pass A against Pass B diff.
 
@@ -251,13 +252,13 @@ for the Pass A against Pass B diff.
 
 ## 3. What is built, and how to see it
 
-Two commands. The second serves the page; leave it running.
+Two commands. The report is a static app and opens straight off the
+filesystem — there is no server.
 
 ```bash
 make tim-link
-tim parity report EUDPA-328
-tim parity serve EUDPA-328        # http://127.0.0.1:4328/
-tim parity check EUDPA-328        # the ten invariants
+tim parity report EUDPA-328 --open   # writes report/ and opens index.html
+tim parity check EUDPA-328           # the ten invariants
 ```
 
 If `tim` behaves as though it is looking at a different corpus, run
@@ -622,7 +623,7 @@ That moves the frontend capture sha in `corpora.json` from `6766115c` to
 agent in this workspace cannot `cd`. So neither could be run against a sub-repo
 at all — the sonar pre-commit scan CLAUDE.md mandates was simply unreachable
 from here. There are now `make parity-report`, `make parity-check`,
-`make parity-serve` and `make sonar-staged REPO=...`, which are the only place
+`make parity-open` and `make sonar-staged REPO=...`, which are the only place
 the `cd` is allowed to live.
 
 Worth knowing: `sonar analyze` reports "no project configured" even inside the
@@ -806,3 +807,52 @@ mandate and I have not chased it.
 `tim parity check` is still red on exactly one thing, and it is the right one:
 *"69 of 70 gated findings have no decision question — until they do, the report
 can present the evidence but not the ask."*
+
+## 10. The server is gone
+
+You said you did not want `make parity-serve`. It should never have existed.
+
+The reason I gave for it in section 1 was wrong: *"`file://` cannot lazy-load
+20 MB of screenshots."* `loading="lazy"` works fine on `file://`. The two
+things a `file://` page genuinely cannot do are `fetch` and load an ES module,
+and the page does neither.
+
+So `report/` is now a static app you double-click:
+
+```
+report/
+  index.html
+  app.css        the stylesheet, its own file
+  app.js         the search, filters and batch-ruling controls, its own file
+  assets/        the screenshots and crops, hardlinked
+```
+
+Copy the folder anywhere and it still works. `tim parity report EUDPA-328
+--open` builds it and opens it; `make parity-open` is the same thing. The
+command now prints the `file://` URL either way.
+
+Two things worth knowing:
+
+- **The artifact still carries its stylesheet and script inline.** It exists to
+  be sent to someone, and a second and third file that had to travel with it
+  would defeat the point. That is the only difference between the two emitters.
+- **Five tests hold the no-server contract**, including that the script never
+  fetches and is never a module. If someone later needs either, they have to
+  replace the delivery first rather than quietly reintroduce a server.
+
+I could not open it in a browser to check: the Playwright tool available to me
+blocks `file:` URLs. What I did verify is that the page links `app.css` and
+`app.js` by relative path, that both files are written, that every image `src`
+is a relative `assets/…` path, and that nothing in the script fetches or
+imports. That is the whole of what determines whether `file://` works — but the
+first click is yours, not mine.
+
+`tim parity serve` and `serve.js` are deleted.
+
+### On Edmund
+
+You offered Edmund as the fallback. I looked: it is your IPAFFS butler —
+tokens, Azure, Jenkins, release notes. Nothing about it fits serving a DEFRA
+trade-imports parity report, and it has no serving surface to extend. Since the
+static app needs no server at all, the question does not arise. Say if you
+meant something else by it.

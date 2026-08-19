@@ -1,5 +1,8 @@
 # Handover — bring the frontend up to Design Release 1
 
+Supersedes the previous handover, which briefed the architecture rewrite. That
+work is done. This one briefs what is left.
+
 Everything below the line is the prompt. Copy it whole.
 
 ---
@@ -17,189 +20,170 @@ settled. Where the frontend differs from DR1 the frontend is wrong, unless the
 finding itself is mistaken. Findings are born as work. A ruling is needed only
 where a finding's *correctness* is in doubt, never where its desirability is.
 
-A previous run against Design Release 2.1 worked the other way round, because
-that release was in flux and half the differences were open design questions.
-Its band names and ruling vocabulary — `needs-design-decision`,
-accept/reject/defer — were built for that other job and are probably the wrong
-shape for this one. Raise it once you have counts; do not re-plumb it up front.
-
 ## The one rule that governs every finding
 
 **You are comparing functionality, not code.** Prototype code is Nunjucks views
-and a 9,000-line `routes.js`. The frontend is Hapi with a journey engine. They
-are not expected to match and never will. What is expected to match is *what a
-user can see and do*.
+and an 11,000-line `routes.js`. The frontend is Hapi with a journey engine.
+They are not expected to match and never will. What is expected to match is
+*what a user can see and do*.
 
 A finding says "DR1 asks the user to choose a document type; the frontend infers
 it from the filename". A finding never says "`routes.js:9014` differs from
 `controller.js:130`". If a finding's substance is a code difference, it is not a
 finding — drop it.
 
-Code references are supporting context, not the comparison. Frontend-side ones
-earn their place: they tell whoever does the work where it lands. Prototype-side
-ones are mostly noise — a line number in throwaway prototype code helps nobody.
-On the previous run 416 of 819 citations pointed into the prototype and consumed
-most of the citation effort. Do not repeat that.
+Code references are supporting context. Frontend-side ones earn their place:
+they tell whoever does the work where it lands. Prototype-side ones are mostly
+noise — on the previous run 416 of 819 citations pointed into throwaway
+prototype code and consumed most of the citation effort. Do not repeat that.
 
-## The architecture, and the two pivots that produced it
+## Where the work stands
 
-Read this before you touch anything, because a lot of code in the repo predates
-it and is to be deleted.
+Read [`ARCHITECTURE.md`](ARCHITECTURE.md) beside this file for the shape, and
+[`SIZING.md`](SIZING.md) for how DR1 was measured from source. Both are
+current. The run id is **`EUDPA-328-DR1`** and the corpus is **`dr1`**.
 
-**Dumb tools, smart agents.** The line is drawn at exactly one place:
+**Done, on `main`:**
 
-> Code is deterministic **only where its entire job is to be identical across
-> two runs.** Everything above that line is judgement, and judgement is an LLM
-> with tools.
+- The crawler, the route-plan vocabulary, the walker and the whole delta-based
+  comparison are deleted — 11,541 lines. Agents write the navigation now, as
+  plain Playwright; deterministic code takes the pictures.
+- `tim parity capture` runs a side's own specs from `<workarea>/specs/<side>/`.
+  It starts the application itself and stops what it started.
+- `tim parity coverage` enumerates a side's screens **statically from source**
+  and diffs that against the manifest. That is the honest replacement for the
+  crawler's frontier and it costs nothing.
+- **The prototype side is complete: 23 of 23 pages plus 17 states, 40 screens.**
+  Coverage reports nothing missing and nothing unexplained.
+- The frontend is enumerated at **33 screens**, read from its journey
+  definition rather than a route table.
 
-Deterministic, and staying that way:
+**Not done:**
 
-- content hashes, capture manifests, the seal store, pins-versus-captures
-- screenshot mechanics — device scale factor, clipping, motion off, caret hidden
-- file placement, the report renderer, the artifact emitter
+- **The frontend capture is `PARTIAL`** — 31 of 33 screens from a run that was
+  stopped part-way, so no frontend spec has ever had a clean pass. The corpus
+  says PARTIAL in as many words. **Re-run it before anything is ruled from it.**
+- **`pairs.cjs` does not exist.** `corpora.json` points the `dr1` corpus at
+  `workareas/shared/dr1-parity/pairs.cjs` and nothing has written it. Screen
+  pairing is per-corpus code, not data. Without it the report cannot put the
+  two sides side by side.
+- **`workareas/journey-builder/EUDPA-328-DR1/` does not exist.** No backlog, no
+  `.corpus-meta.json`, no `evidence.json`. Nothing downstream of the captures
+  has been built.
+- No finding has been authored. That is deliberate — see the gate below.
 
-That is integrity, not interpretation. It is what stops a picture changing
-silently under a ruling somebody is about to make. Do not put judgement in it
-and do not take determinism out of it.
+## Your first four steps
 
-Everything else is an agent with dumb tools underneath — drive to a URL,
-screenshot, dump the DOM, list the controls and their attributes. Raw and
-complete, with no semantic vocabulary. Agents read that and decide what a screen
-*is*, then compare paired screens and author the finding directly.
+1. **Re-run the frontend capture until it is clean.**
+   ```
+   npm --prefix ~/git/defra/trade-imports-workspace/tim run parity -- capture EUDPA-328-DR1 --side frontend --workspace ~/git/defra/trade-imports-workspace
+   ```
+   Six specs already exist under `specs/frontend/`. They were written but never
+   proved. Expect failures and fix them in the specs.
+2. **Get coverage to a stated number on both sides.**
+   ```
+   npm --prefix ~/git/defra/trade-imports-workspace/tim run parity -- coverage EUDPA-328-DR1 --workspace ~/git/defra/trade-imports-workspace
+   ```
+   A screen that turns out to be unreachable is a *stated absence*, not a
+   failure. Say so and leave it uncaptured. A wrong picture is worse than none.
+   Then update the `frontend` entry under `captures` in `tools/parity/corpora.json`
+   with the new sha and a note that says what it covers — and drop the word
+   PARTIAL only when it is genuinely no longer true.
+3. **Write `pairs.cjs`.** Which frontend screen corresponds to which DR1 screen
+   is judgement, and a wrong pairing produces a confident diff of two unrelated
+   pages. The DR2.1 one is the model:
+   `workareas/shared/dr21-parity/compare/pairs.js` — it exports `pairs`,
+   `onlyFrontend` and `onlyPrototype`. **The one-sided lists matter as much as
+   the pairs**: the frontend has 33 screens against DR1's 23, so roughly ten
+   frontend screens answer to nothing in the signed-off design. That asymmetry
+   is the most interesting thing this comparison has found so far.
+4. **Then stop and show Sam the counts and the pairing** before authoring a
+   single finding. That is where you learn what this comparison actually is.
 
-**Pivot one: stop crawling, start writing.** An earlier attempt built a
-general-purpose cartographer that discovered a journey with no prior knowledge —
-a frontier, session replay, a value ladder that inferred what to type from hint
-text and input patterns. Its first live run took eleven minutes and produced
-five defects, every one a judgement failure wearing a code bug's clothes: it
-emitted the locator `[name=""]` and waited thirty seconds for it, twice; it
-tried to fill a select that was hidden behind a collapsed filter panel; it drove
-a date picker through its calendar instead of typing into the input. An agent
-reading those pages would have made none of those mistakes.
+## Then: authoring findings
 
-So agents write the navigation. Plain Playwright, not a plan format — a spec is
-readable, diffable and hand-editable, and Playwright is more expressive than any
-step vocabulary worth inventing.
+Agents read both sides' evidence for one paired screen — the screenshot, the
+page model, the rendered page — and write the finding directly. There is no
+delta format in between and there must not be one again.
 
-**Pivot two: the extractor's vocabulary was the ceiling.** The page-model
-extractor pulls a fixed set of keys — headings, fields, labels, summary rows,
-task items. Three of those keys exist *only* because the two sides build the
-same concept from different markup; the comment on `taskItems` says comparing
-`taskLists` to `taskLists` "reads as 'one side has no task list at all', which
-is a false finding on the two most important screens". That is semantic
-matching, hand-coded, one special case at a time.
+The agent also **names the control its finding is about**, which is what drives
+the element crop. Do not reintroduce inferring it from the finding's own prose.
 
-And because the extractor is a fixed vocabulary, the differ over it is a JSON
-diff — a *structural* comparison. That is why it produced 472 deltas that then
-needed agents to turn into 97 findings. The deltas exist only to serve a
-mechanism nobody needs. Agents compare the two sides' evidence and author
-findings directly.
+A different agent verifies than wrote, and the question it answers is "is this
+finding correct", not "do we want it".
 
-**The cost, so you can weigh it honestly.** Two runs will produce differently
-worded findings. Reproducibility moves from the process to the artefact: what
-was ruled on stays fixed because `detail` is frozen and the backlog is canonical
-JSON, even though re-running the analysis would phrase things differently. That
-is the right trade, but know that you are making it.
+`workareas/journey-builder/EUDPA-328/backlog.json` holds the previous run's 97
+findings. **Read a dozen. They are the standard** for what a good finding looks
+like: functional, falsifiable, and about what a user sees.
 
-## What to delete
+**Many of them do not apply to DR1**, and checking is cheaper than re-deriving:
 
-All of it under `tim/src/parity/capture/`:
+- **Germinal products do not exist in DR1.** `getSearchCommodities` adds them
+  only for a DR2.1 session. That retires inc-004 and the three it roots
+  (inc-090, inc-092, inc-096) plus the backend half inc-088 — 18 findings are
+  tagged `germinal-products`.
+- **Templates do not exist in DR1** — 9 findings.
+- **Neither do amend, copy-as-new or delete.** All are behind the same DR2
+  session guard. The previous handover did not know this.
+- **`/address-book` is shared across all releases**, so those screens are
+  identical in DR1 and DR2.1 and the previous run's 13 address-book findings
+  carry over unchanged. Check them rather than re-deriving them.
 
-- the frontier, session replay and transcripts, the stopping rules, the value
-  ladder, the `remember`/`interpolate` route-plan vocabulary
-- `tim parity map` as a crawler
+## Knowledge already paid for — do not rediscover it
 
-And the mechanical comparison:
+Every one of these cost a failed run. They are in the prototype specs already;
+the frontend is a different codebase, so treat them as the *class* of thing
+that bites rather than as literal selectors.
 
-- `compare/diff.js`, `diff-all.js`, the delta format
-- anchors-derived-from-deltas, insertion-points-derived-from-deltas
+- **A search widget posts a HIDDEN input, and its open results panel overlays
+  the buttons and swallows the mousedown.** Clicking Continue while it is open
+  reaches nothing: no error, no navigation, no POST — the page just sits there.
+  Dismiss the panel, then assert the hidden field is non-empty.
+- **An answered item in a hub still renders a link.** On the addresses hub a
+  "Change" link sits in the same container with the same classes as the "Add"
+  link of an unanswered one, separated only by one extra class. A loop driving
+  off "any link" reopens the first section forever and never visits the rest —
+  and the hub advances anyway, so it surfaces four screens later at review.
+  Two agents wrote that bug independently.
+- **The declaration is a checkbox, not a radio.**
+- **The arrival date has a moving valid window** (today−7d to today+6m). A
+  hardcoded date silently expires and the notification is quietly incomplete
+  until review says so. It is derived from `new Date()`, and it is the one
+  field in the corpus whose pixels change day to day.
+- **`selectedSpecies` is seeded with `"[]"` on page load**, so "assert not
+  empty" passes before anything is selected. Assert against `/^(\[\])?$/`.
+- **The frontend needs `STUB_MODE=true`** or it bounces to an identity provider
+  that is not running. It is already in `corpora.json`.
+- **The Prototype Kit bounces nodemon** while recompiling. Wrap the first
+  navigation in `expect(async () => {...}).toPass({ timeout: 240_000 })`.
 
-Keep the *concepts* those last two produced — element crops, and showing where a
-missing control would sit. An agent authoring a finding just says which control
-it is about, which is better than the current `anchorsNamedIn` hack that infers
-it by whole-word matching against the finding's own prose.
+## How to work
 
-## What is proven, and what is not
-
-- **The report pipeline is proven.** It rendered 97 findings with permalinks,
-  snippets, screenshots, element crops, insertion captions and a drift panel.
-  `tim parity citations|evidence|report|check|check-evidence|repoint` all work.
-  Keep them; they know nothing about how findings were produced.
-- **Recording screens is proven in its old form** — the retired DR2.1 harness
-  captured 70 prototype screens and 33 frontend ones. It is unproven in its new
-  home inside `tim`.
-- **The crawler is disproven.** See above.
-- **Nothing has ever run browser-side from `tim`** except that one eleven-minute
-  crawl.
-
-## What Design Release 1 is
-
-Verified — do not re-derive:
-
-- DR1 is **the root URLs**. There is no `/design-release-1` directory.
-  `app/views/index.html` is a release chooser and describes DR1 as *"The current
-  design release journey at the root URLs. Use this for stable reference work"*,
-  starting at `/create-notification`. `app/routes.js` mounts only `testing`,
-  `design-release-2` and `design-release-2.1`; the root router **is** DR1.
-- DR2 is a copy of DR1, DR2.1 a copy of DR2, both since drifted.
-- **DR1's screen set is smaller than DR2.1's.** The root views have no
-  `create-template`, `view-template`, `dashboard-actions`, `dashboard-changes`,
-  `dashboard-inspection`, `consignment-add-address` or `delete-notification`.
-  Drop the templates and germinal slices.
-- **`/address-book` is shared across all releases** —
-  `app/lib/version-mount.js:45-52`. Those screens are identical in DR1 and
-  DR2.1, so the previous run's 13 address-book findings carry over. Check them
-  rather than re-deriving them.
-- Start the prototype with `npm run dev` in
-  `~/git/defra/defra-design/GB-notification-service`, **not** `serve`:
-  production forces https on a plaintext server and sets secure-only cookies,
-  which breaks the kit's sessions over http. It accepts TCP connections before
-  an HTTP probe settles under Node 24, so wait on the port, not on a request.
-
-## Where you are
-
-- Workspace: `~/git/defra/trade-imports-workspace`. **Never**
-  `~/git/defra/trade-imports-animals` — a stale clone. `tim` walks up from the
-  current directory, so pass `--workspace ~/git/defra/trade-imports-workspace`
-  unless your shell is already inside the right checkout.
-- Frontend: `repos/trade-imports-animals-frontend`
-- Prototype: `~/git/defra/defra-design/GB-notification-service`
-- Your workarea: `workareas/shared/dr1-parity/`
-- The retired DR2.1 corpus is on tag `archive/dr21-parity-corpus`, and its
-  harness is still in `workareas/shared/dr21-parity/harness/`. **Read its ten
-  specs before writing any of your own** — they encode hard-won Prototype Kit
-  knowledge and they are the existence proof that hand-written specs work.
-- `workareas/journey-builder/EUDPA-328/backlog.json` holds the previous run's 97
-  findings. Read a dozen. They are the standard for what a good finding looks
-  like: functional, falsifiable, and about what a user sees.
-
-## How the workspace works
-
-- **Work on `main`.** No PRs, no review. Commit directly and push.
-- **No tickets** for anything outside `repos/`. Repos under `repos/` keep branch
-  and ticket discipline; the workspace does not.
-- **The Makefile is deprecated.** Never add to it. Use
-  `npm --prefix ~/git/defra/trade-imports-workspace/tim run <script>` and
-  `tim … --workspace ~/…/trade-imports-workspace`.
-- `npm install` is blocked by a guard hook. If you need a dependency, edit
-  `package.json` and ask Sam to install it.
-- One Bash command per call. No `&&`, no `;`. Write `~/git/defra/…`, not
-  `/Users/samfarrington/…`.
+- **Orchestrate, do not implement.** Fan out one agent per slice and pair each
+  with a *different* agent whose brief is to find what is wrong. That second
+  pass caught an assertion that could never fail, a navigation check that only
+  asserted the page had changed, and a `goto` with no landing assertion — none
+  of which the authors could see in their own work.
+- **Captures cannot run in parallel.** One server, one session, `workers: 1`.
+  Fan out the *authoring*; serialise the *run*.
+- On failure the run keeps its directory under `tim/.parity-runs/` — read
+  `test-results/*/error-context.md`, which holds a full accessibility snapshot
+  of the failing page. It is the fastest way to see what state it was in.
 
 ## Rules you must not violate
 
 - **`detail` is frozen forever.** It is the only oracle proving a language pass
   lost nothing. Never edit it.
 - **A citation is immutable from the moment it stops being queued.**
-- **Never `--reseal` on Sam's behalf.** The seal store records the picture he was
-  last shown; resealing says "I have looked at these and accept them", which is
-  his statement.
+- **Never `--reseal` on Sam's behalf.** The seal store records the picture he
+  was last shown; resealing is his statement, not a build step.
 - **A whole-page shot may not stand in for a finding about one control.**
 - **Backlogs are canonical JSON**, never prose documents. Write through the
-  setters so a fan-out worker cannot reformat the file or touch a second
-  increment.
-- **A fix belongs in the tool, not in a workaround.** If you find yourself
-  copying a file or hardcoding a path in your workarea, stop and fix the tool.
+  setters.
+- **A fix belongs in the tool, not in a workaround.** If you are copying a file
+  or hardcoding a path in your workarea, stop and fix the tool.
+- **Never mark a capture complete that is not.** Every downstream ruling rests
+  on the picture being of what it claims.
 
 ## Two gates — stop and ask
 
@@ -208,40 +192,35 @@ Verified — do not re-derive:
 - Before rewriting more than one finding into plain English, do exactly one,
   show it beside the original, and wait.
 
-Both exist because they are 40+ and 96 irreversible judgement calls. Produce the
-canary, then carry on with everything that does not depend on it.
+Both exist because they are 40+ and 96 irreversible judgement calls. Produce
+the canary, then carry on with everything that does not depend on it.
 
-## Your first five steps
+## Where you are
 
-1. Read this file, then `MERGE-PLAN.md` beside it, then
-   `.claude/skills/parity/SKILL.md`. Then read the retired harness's ten specs
-   and a dozen findings from the previous run.
-2. **Write the architecture up as a short design note and show Sam before
-   deleting anything.** Two pivots happened fast; he has not seen the shape
-   written down. Name what becomes a tool, what becomes an agent, and what the
-   pipeline is end to end.
-3. Delete what the "What to delete" section names, in its own commit, so the
-   deletion is reviewable separately from the replacement.
-4. Build the spec-writing stage for **one slice only** — the origin-and-reason
-   screens are a good first slice, small and self-contained. Agents read the
-   views and routes, write plain Playwright, and the specs record screens
-   through the existing capture tools. Prove that slice end to end before
-   writing a second.
-5. Add the coverage check: enumerate the prototype's views and route mounts
-   *statically* and diff against what the specs actually captured. That answers
-   "did we get everything" without crawling, which is cheaper and more reliable
-   than the thing it replaces.
-
-Then stop and show Sam the screen counts for both sides before authoring a
-single finding. That is the point where you learn whether DR1 is a small
-comparison or a large one, and it changes everything downstream.
+- Workspace: `~/git/defra/trade-imports-workspace`. **Never**
+  `~/git/defra/trade-imports-animals` — a stale clone. Pass
+  `--workspace ~/git/defra/trade-imports-workspace` unless your shell is
+  already inside the right checkout.
+- Frontend: `repos/trade-imports-animals-frontend`
+- Prototype: `~/git/defra/defra-design/GB-notification-service`
+- Your workarea: `workareas/shared/dr1-parity/`
+- **Work on `main`.** No PRs, no review. Commit directly and push. No tickets
+  for anything outside `repos/`.
+- One Bash command per call. No `&&`, no `;`. Write `~/git/defra/…`, not
+  `/Users/samfarrington/…`.
+- `npm install` is blocked by a guard hook. Edit `package.json` and ask Sam.
 
 ## What nobody has decided
 
-Raise these rather than choosing:
-
-- Does the frontend need re-capturing at all? It has not changed since the
-  previous run, and its screenshots and page models are corpus-independent.
-- Which run id and ticket does DR1 get? Every downstream path depends on it, and
-  two shell scripts only accept an `EUDPA-*` glob.
-- The band taxonomy and ruling vocabulary, per the top of this file.
+- **The band taxonomy and ruling vocabulary.** `needs-design-decision` and
+  accept/reject/defer were built for a negotiation over a design still in flux.
+  Against a signed-off definition the honest bands are closer to *frontend
+  work*, *needs backend* and *disputed*, and a finding should be born as
+  accepted work rather than awaiting a ruling. The bands are hardcoded in
+  `render/page.js:14-33` with labels duplicated in `render/card.js:4-8`; the
+  rethink wants them in `corpora.json`. **Raise it once you have counts** — the
+  counts tell you whether the distinction still earns its place.
+- **Whether the ~10 frontend screens with no DR1 counterpart are in scope.**
+  They may be legitimate additions, or they may be the out-of-date prototype
+  showing through. That is Sam's call and it is probably the biggest question
+  this comparison will put to him.

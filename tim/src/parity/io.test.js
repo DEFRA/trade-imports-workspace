@@ -58,6 +58,12 @@ describe('writeJsonAtomic', () => {
     expect(result.sha256).toBe(sha256File(path))
   })
 
+  test('writes into a directory that does not exist yet', () => {
+    const path = join(dir, 'brand-new-corpus', 'nested', 'out.json')
+    writeJsonAtomic(path, { a: 1 })
+    expect(readJsonFile(path)).toEqual({ a: 1 })
+  })
+
   test('replaces an existing file in one step', () => {
     const path = join(dir, 'out.json')
     writeJsonAtomic(path, { a: 1 })

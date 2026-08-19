@@ -380,6 +380,16 @@ describe('runIngest', () => {
     expect(() => ingest()).toThrow(/finding\.falsifiedBy/)
   })
 
+  test('writes the backlog when its directory does not exist yet', () => {
+    profile.paths.backlog = join(root, 'brand-new-corpus', 'backlog.json')
+    writeFinding('documents--type.json')
+
+    const result = ingest()
+
+    expect(result.written).toBe(true)
+    expect(backlog().increments.map((i) => i.id)).toEqual(['inc-001'])
+  })
+
   test('writes nothing on a dry run, and still reports the counts', () => {
     writeFinding('documents--type.json')
     writeFinding(

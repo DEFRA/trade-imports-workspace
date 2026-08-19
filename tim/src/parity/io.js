@@ -1,4 +1,10 @@
-import { readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs'
+import {
+  readFileSync,
+  writeFileSync,
+  renameSync,
+  existsSync,
+  mkdirSync
+} from 'node:fs'
 import { createHash } from 'node:crypto'
 import { dirname, join, basename } from 'node:path'
 import { TimError } from '../errors.js'
@@ -27,13 +33,19 @@ export const readJsonFile = (path) => {
  * the file is the canonical record of a body of work, and the build loop
  * reads it between every increment.
  *
+ * The directory is created first. A corpus's files all land in one directory
+ * that nothing else makes, so the first write of a new corpus is always into
+ * a directory that has never existed.
+ *
  * @param {string} path
  * @param {any} value
  * @returns {{sha256: string, bytes: number}}
  */
 export const writeJsonAtomic = (path, value) => {
   const body = `${JSON.stringify(value, null, 2)}\n`
-  const tmp = join(dirname(path), `.${basename(path)}.tmp`)
+  const dir = dirname(path)
+  mkdirSync(dir, { recursive: true })
+  const tmp = join(dir, `.${basename(path)}.tmp`)
   writeFileSync(tmp, body, 'utf8')
   renameSync(tmp, path)
   return {

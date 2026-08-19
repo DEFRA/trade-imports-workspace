@@ -155,22 +155,23 @@ code.ref { color: var(--ink-muted); }
   color: var(--ink-muted);
 }
 
+/* Flex rather than grid: a grid leaves the remainder of the last row empty,
+   and an empty cell in a row of numbers reads as a number that failed to
+   render. Flex lets the last row's cells grow to fill it. */
 .figures {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1px;
-  /* Surface, not rule: a row that does not fill would otherwise show the rule
-     colour as a large empty block. */
-  background: var(--surface);
+  background: var(--rule);
   border: 1px solid var(--rule);
   border-radius: 10px;
   overflow: hidden;
 }
 
 .figure {
+  flex: 1 1 9rem;
   background: var(--surface);
   padding: .95rem 1.1rem;
-  box-shadow: 0 0 0 1px var(--rule);
 }
 .figure__n { font-family: var(--display); font-size: 1.85rem; line-height: 1; }
 .figure__label { display: block; margin-top: .3rem; font-size: .78rem; color: var(--ink-muted); }

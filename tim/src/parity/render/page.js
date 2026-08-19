@@ -249,6 +249,8 @@ export const renderPage = ({
     ${figure(counts.deltas ?? '—', 'mechanical deltas')}
     ${figure(counts.deferredCandidates, 'deferred candidates')}
     ${figure(counts.withdrawn, 'withdrawn')}
+    ${figure(counts.citations, 'citations')}
+    ${figure(counts.citationsQueued, 'queued for a human')}
   </div>
 
   <div class="pins">

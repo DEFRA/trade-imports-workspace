@@ -103,8 +103,22 @@ export const runCounts = ({ profile }) => {
       deltas: deltaSummary?.totalDeltas ?? null,
       pairsCompared: deltaSummary?.pairsCompared ?? null,
 
-      migrated: live.filter((inc) => inc.finding).length,
+      migrated: live.filter((inc) => inc.finding?.frontend).length,
       withCitations: live.filter((inc) => inc.citations?.length).length,
+      citations: backlog.increments.reduce(
+        (n, inc) => n + (inc.citations?.length ?? 0),
+        0
+      ),
+      // Citations the resolver refused to guess at. Shown on the page because a
+      // queue nobody can see is a queue nobody works.
+      citationsQueued: backlog.increments.reduce(
+        (n, inc) =>
+          n +
+          (inc.citations ?? []).filter(
+            (citation) => citation.resolution === 'unresolved'
+          ).length,
+        0
+      ),
       withVisual: live.filter((inc) => inc.visual?.length).length
     }
   }

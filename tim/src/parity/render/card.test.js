@@ -257,16 +257,37 @@ describe('shot', () => {
     expect(html).toContain('no counterpart')
   })
 
-  test('flags an image that changed since it was curated', () => {
+  test('flags an image that changed since the reader last saw it', () => {
     const html = shot({
       asset: {
         state: 'page',
         screen: 'x',
         href: 'assets/x.png',
-        drifted: true
+        drifted: true,
+        driftKind: 'image-changed',
+        driftedFrom: 'full page of x'
       },
       side
     })
-    expect(html).toContain('changed since curation')
+    expect(html).toContain('changed since you last looked')
+    // The old frame is the same words as the new one here, so saying it would
+    // read as though nothing had moved.
+    expect(html).not.toContain('was: full page of x')
+  })
+
+  test('says when the frame changed rather than the pixels', () => {
+    const html = shot({
+      asset: {
+        state: 'page',
+        screen: 'x',
+        href: 'assets/x.png',
+        drifted: true,
+        driftKind: 'frame-changed',
+        driftedFrom: 'crop of field-file on x'
+      },
+      side
+    })
+    expect(html).toContain('different frame since you last looked')
+    expect(html).toContain('was: crop of field-file on x')
   })
 })

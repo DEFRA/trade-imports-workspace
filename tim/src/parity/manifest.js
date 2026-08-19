@@ -24,6 +24,42 @@ export const pngSize = (bytes) => {
 }
 
 /**
+ * Element crops, indexed by the screen they were taken from.
+ *
+ * The file name carries both facts — `<screen>__<anchor>.png` — because the
+ * harness that writes them has no manifest of its own. An anchor with a double
+ * underscore in it would split wrong, so the screen is taken from the first
+ * separator only.
+ *
+ * @param {string} dir - The crop directory beside the page shots
+ * @returns {Record<string, object[]>}
+ */
+export const cropsByScreen = (dir) => {
+  if (!existsSync(dir)) return {}
+  const out = {}
+  for (const name of readdirSync(dir)
+    .filter((n) => n.endsWith('.png'))
+    .sort()) {
+    const at = name.indexOf('__')
+    if (at < 1) continue
+    const screen = name.slice(0, at)
+    const anchor = name.slice(at + 2).replace(/\.png$/, '')
+    const bytes = readFileSync(join(dir, name))
+    out[screen] = [
+      ...(out[screen] ?? []),
+      {
+        anchor,
+        file: `crop/${name}`,
+        bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+        size: pngSize(bytes)
+      }
+    ]
+  }
+  return out
+}
+
+/**
  * Build a manifest for a directory of captured screens.
  *
  * The capture harness on one side writes its own manifest as it goes; the
@@ -62,6 +98,8 @@ export const runManifest = ({
     )
   }
 
+  const crops = cropsByScreen(join(dir, '..', 'crop'))
+
   const rows = readdirSync(dir)
     .filter((name) => name.endsWith('.png'))
     .sort()
@@ -74,7 +112,8 @@ export const runManifest = ({
         bytes: bytes.length,
         sha256: createHash('sha256').update(bytes).digest('hex'),
         size: pngSize(bytes),
-        capturedAt: statSync(join(dir, name)).mtime.toISOString()
+        capturedAt: statSync(join(dir, name)).mtime.toISOString(),
+        crops: crops[screen] ?? []
       }
     })
 
@@ -93,6 +132,7 @@ export const runManifest = ({
   return {
     side,
     screens: rows.length,
+    crops: rows.reduce((n, row) => n + row.crops.length, 0),
     path: sideProfile.manifest,
     written: Boolean(write)
   }

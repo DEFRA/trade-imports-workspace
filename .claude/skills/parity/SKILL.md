@@ -73,6 +73,23 @@ tim parity citations EUDPA-328 --write
 tim parity evidence EUDPA-328 --write
 ```
 
+Before a regeneration anyone will rule from, run the evidence check. It is the
+only command that reads pins, captures, coverage and citations together — each
+of them alone can read green over a stale one of the others:
+
+```
+tim parity check-evidence EUDPA-328
+```
+
+A moved pin or a missing capture is blocking, and `--strict` makes it a
+non-zero exit. A citation whose anchor has drifted is not: it is a finding to
+re-verify, which is the expected yield of pinning to HEAD.
+
+**Never `--reseal` on someone's behalf.** The report records the pictures it
+last showed in `evidence/seals.json`; anything that has moved since carries a
+ribbon and is listed at the top of the page. `--reseal` says "I have looked at
+these and accept them", which is a person's statement, not a build step.
+
 ### WALK — present the gated findings and apply a batch of rulings
 
 Triggers: "rule the parity decisions", "walk parity EUDPA-X".
@@ -146,6 +163,32 @@ the page when they disagree. A re-capture is what makes them agree again.
 Capture ids are immutable. A capture at a new commit writes a new directory; it
 never overwrites the old one, because the old evidence is the record of what a
 ruling was made against.
+
+The full sequence, in order:
+
+```
+tim parity seed-anchors EUDPA-328 --write            # which controls get cropped
+npm --prefix repos/trade-imports-animals-frontend run test:fit:capture
+<the prototype harness command in corpora.json>
+tim parity manifest EUDPA-328 --side prototype --sha <sha> --dsf 2 --write
+tim parity repoint EUDPA-328 --side <side> --to <sha>   # preview, old beside new
+tim parity repoint EUDPA-328 --side <side> --to <sha> --accept
+tim parity meta EUDPA-328 --write
+tim parity report EUDPA-328
+```
+
+`seed-anchors` reads the compare deltas and writes `anchors.<side>.json`; both
+harnesses load the file for their own side, so adding element evidence to a
+finding is a data change and never a spec edit.
+
+`repoint` is not optional politeness. Accepting a new capture supersedes every
+picture in the corpus at once, and the preview is where a lost screen — one the
+new run did not reach — is caught before it silently disappears.
+
+Which crop lands on which card is chosen, not curated: an anchor is relevant
+when the finding's own prose names the control, by its `name` attribute or its
+label, matched whole-word. A curated frame in `visual[]` overrides it. Where
+nothing matches, the card keeps the whole page.
 
 ## The invariants, and why each one is there
 

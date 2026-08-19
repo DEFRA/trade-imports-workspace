@@ -151,6 +151,10 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
       evidence: absolutise(workspaceRoot, raw.evidence),
       reportDir: absolutise(workspaceRoot, raw.reportDir),
       workarea: absolutise(workspaceRoot, raw.workarea),
+      seals: absolutise(
+        workspaceRoot,
+        raw.seals ?? `${raw.workarea}/evidence/seals.json`
+      ),
       pairingModule: absolutise(workspaceRoot, raw.pairingModule),
       deltasDir: absolutise(workspaceRoot, raw.deltasDir),
       upstreamFindings: absolutise(workspaceRoot, raw.upstreamFindings)

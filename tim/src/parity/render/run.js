@@ -14,6 +14,7 @@ import { runCounts } from '../counts.js'
 import { sha256File, readJsonFile } from '../io.js'
 import { loadPairs, indexPairs, screenPairsFor } from '../assets/pairs.js'
 import { resolveRow, imageCoverage, anchorsNamedIn } from '../assets/resolve.js'
+import { sealsFrom, diffSeals, readSeals, writeSeals } from '../seals.js'
 import { renderPage } from './page.js'
 
 const ASSET_DIR = 'assets'
@@ -74,17 +75,35 @@ const attachAssets = ({ items, sides, pairIndex, assetDir, anchors }) => {
             (asset.state === 'crop' || asset.state === 'page')
           ) {
             asset.href = `${ASSET_DIR}/${placeAsset(asset.path, assetDir)}`
+            // Hashed unconditionally, because the seal store compares every
+            // picture on every rebuild, not only hand-curated ones.
+            asset.sha256 = sha256File(asset.path)
             const curated = frame?.curatedAgainst?.[side.id]
-            if (curated) {
-              const current = sha256File(asset.path)
-              asset.drifted = curated !== current
-              asset.sha256 = current
-            }
+            if (curated) asset.drifted = curated !== asset.sha256
           }
         }
         return resolved
       })
     )
+  }
+}
+
+/**
+ * Stamp the drift the seal store found onto the assets it belongs to, so the
+ * ribbon sits on the picture that moved rather than on the whole card.
+ *
+ * @param {object} args
+ * @param {object[]} args.items
+ * @param {object[]} args.drift
+ */
+export const markDrift = ({ items, drift }) => {
+  const byId = new Map(items.map((item) => [item.id, item]))
+  for (const entry of drift) {
+    const asset = byId.get(entry.id)?.assets?.[entry.row]?.[entry.side]
+    if (!asset) continue
+    asset.drifted = true
+    asset.driftedFrom = entry.was
+    asset.driftKind = entry.kind
   }
 }
 
@@ -96,13 +115,15 @@ const attachAssets = ({ items, sides, pairIndex, assetDir, anchors }) => {
  * @param {string} [args.target] - local or artifact
  * @param {boolean} [args.open]
  * @param {boolean} [args.requireImages]
+ * @param {boolean} [args.reseal] - Accept every moved picture as the new seal
  * @returns {object}
  */
 export const runReport = ({
   profile,
   target = 'local',
   open,
-  requireImages
+  requireImages,
+  reseal
 }) => {
   const corpus = loadCorpus({ profile })
   const { counts } = runCounts({ profile })
@@ -139,6 +160,18 @@ export const runReport = ({
 
   const coverage = imageCoverage(renderable, profile.sides)
 
+  // Drift is settled before the page is built, so a moved picture carries its
+  // ribbon in the same render that reports it in the panel.
+  const current = sealsFrom(renderable, profile.sides)
+  const sealed = readSeals(profile.paths.seals)
+  const found = diffSeals({ sealed, current })
+  // --reseal means accepted, so the page it produces is the clean one. The
+  // count still goes to stdout: accepting silently would be its own way of
+  // swapping a picture without saying so.
+  const drift = reseal ? [] : found
+  markDrift({ items: renderable, drift })
+  writeSeals({ path: profile.paths.seals, sealed, current, reseal })
+
   const backlogStat = statSync(profile.paths.backlog)
   const html = renderPage({
     corpus: profile.id,
@@ -150,6 +183,7 @@ export const runReport = ({
     joinReport: corpus.joinReport,
     sides: profile.sides,
     runId: profile.runId,
+    drift,
     stamp: {
       timVersion: process.env.npm_package_version ?? 'dev',
       backlogSha: sha256File(profile.paths.backlog),
@@ -177,6 +211,14 @@ export const runReport = ({
       `image gaps: ${gap.map((c) => `${c.side} ${c.want - c.have} screens with no picture`).join('; ')}`
     )
   }
+  if (found.length) {
+    const findings = new Set(found.map((entry) => entry.id)).size
+    warnings.push(
+      reseal
+        ? `accepted ${found.length} moved pictures across ${findings} findings as the new seal.`
+        : `${found.length} pictures moved since they were last shown, across ${findings} findings. They carry a ribbon and are listed at the top of the page. Accept them with --reseal.`
+    )
+  }
 
   if (open) {
     execFile('open', [path], () => {})
@@ -191,6 +233,7 @@ export const runReport = ({
       withdrawn: corpus.withdrawn.length
     },
     imageCoverage: coverage,
+    drift: found,
     warnings,
     exitNonZero: Boolean(requireImages && gap.length)
   }

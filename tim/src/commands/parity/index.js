@@ -14,6 +14,12 @@ import { runSplitSentinels } from '../../parity/split-sentinels.js'
 import { runManifest } from '../../parity/manifest.js'
 import { runSeedAnchors } from '../../parity/anchors.js'
 import {
+  runCheckEvidence,
+  renderCheckEvidence,
+  blockers
+} from '../../parity/check-evidence.js'
+import { runRepoint } from '../../parity/repoint.js'
+import {
   setSlot,
   setSlots,
   setDecisionRequired,
@@ -261,6 +267,10 @@ export const register = (program, { timVersion }) => {
       '--require-images',
       'Exit non-zero when any cited screen has no image on either side'
     )
+    .option(
+      '--reseal',
+      'Accept every picture that moved since it was last shown, clearing the drift panel'
+    )
     .action(
       makeParityAction({
         run: ({ profile }, opts) =>
@@ -268,7 +278,8 @@ export const register = (program, { timVersion }) => {
             profile,
             target: opts.target,
             open: opts.open,
-            requireImages: opts.requireImages
+            requireImages: opts.requireImages,
+            reseal: opts.reseal
           }),
         renderText: (result) =>
           [
@@ -278,6 +289,69 @@ export const register = (program, { timVersion }) => {
               (c) => `images: ${c.side} ${c.have}/${c.want} cited screens`
             ),
             ...result.warnings.map((w) => `warning: ${w}`)
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('check-evidence <runId>')
+    .description(
+      'Report the state of the evidence: pin drift, capture integrity, screens with no picture, anchors that matched nothing, citations whose target has moved'
+    )
+    .option(
+      '--strict',
+      'Exit non-zero when the evidence is not usable as it is'
+    )
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => {
+          const result = runCheckEvidence({ profile })
+          const stops = blockers(result)
+          return {
+            ...result,
+            blockers: stops,
+            exitNonZero: Boolean(opts.strict && stops.length)
+          }
+        },
+        renderText: (result) =>
+          [
+            renderCheckEvidence(result),
+            ...(result.blockers.length
+              ? ['', 'blocking:', ...result.blockers.map((b) => `  - ${b}`)]
+              : [])
+          ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('repoint <runId>')
+    .description(
+      'Preview moving one side to a new capture, old picture beside new, before anything is superseded'
+    )
+    .requiredOption('--side <id>', 'Which side to repoint')
+    .requiredOption('--to <sha>', 'The capture sha to move to')
+    .option('--accept', 'Point the corpus at the new capture')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runRepoint({
+            profile,
+            side: opts.side,
+            to: opts.to,
+            accept: opts.accept
+          }),
+        renderText: (r) =>
+          [
+            `${r.side}: ${r.from ?? 'nothing'} → ${r.to}`,
+            ...Object.entries(r.counts).map(
+              ([verdict, n]) => `  ${String(n).padStart(4)} ${verdict}`
+            ),
+            `Preview: ${r.path}`,
+            r.accepted
+              ? `Accepted. Wrote ${r.written.join(', ')}. Run the report to see the ${r.movedScreens.length} moved screens in the drift panel.`
+              : 'Nothing changed. Look at the preview, then pass --accept.'
           ].join('\n'),
         timVersion
       })
@@ -350,7 +424,7 @@ export const register = (program, { timVersion }) => {
             write: opts.write
           }),
         renderText: (r) =>
-          `${r.screens} screens indexed for ${r.side}.\n${r.written ? `Written to ${r.path}` : 'Dry run — pass --write to apply.'}`,
+          `${r.screens} screens and ${r.crops} element crops indexed for ${r.side}.\n${r.written ? `Written to ${r.path}` : 'Dry run — pass --write to apply.'}`,
         timVersion
       })
     )

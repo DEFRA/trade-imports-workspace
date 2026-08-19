@@ -112,8 +112,16 @@ export const shot = ({ asset, side }) => {
       asset.state === 'crop'
         ? `Element crop · ${esc(asset.anchorKey ?? '')}`
         : 'Full page'
+    // The tooltip only names the old frame on a reframe. On a re-capture the
+    // old frame is the same words as the new one, and a tooltip that repeats
+    // the caption reads as though nothing moved.
+    const reframed = asset.driftKind === 'frame-changed'
     const drift = asset.drifted
-      ? '<span class="ribbon">changed since curation</span>'
+      ? `<span class="ribbon"${reframed && asset.driftedFrom ? ` title="was: ${esc(asset.driftedFrom)}"` : ''}>${
+          reframed
+            ? 'different frame since you last looked'
+            : 'changed since you last looked'
+        }</span>`
       : ''
     return `<div class="shot">${head}
   <figure class="shot__figure" style="position:relative">${drift}

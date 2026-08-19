@@ -105,6 +105,24 @@ tim parity check EUDPA-328 --pass a      # the ten migration invariants
 tim parity counts EUDPA-328 --json       # every number the masthead prints
 ```
 
+The evidence — the pictures, and the commits they are of — has its own three
+commands. Element crops are declared as data rather than written into a spec,
+and a picture that moves under a pending ruling has to say so:
+
+```bash
+tim parity seed-anchors EUDPA-328 --write   # anchors.<side>.json from the compare deltas
+tim parity manifest EUDPA-328 --side prototype --sha 491b3926 --write
+tim parity check-evidence EUDPA-328 [--strict]   # pin drift, captures, dead citations
+tim parity repoint EUDPA-328 --side frontend --to <sha> [--accept]
+tim parity report EUDPA-328 --reseal         # accept every picture that moved
+```
+
+`report` records what it showed you in `evidence/seals.json`. On the next
+build, any picture that has changed carries a ribbon and is listed above
+everything else, so nobody rules on a finding under an image that was swapped
+without them. `repoint` is the same idea for a whole side: it writes a preview
+of old beside new before anything is superseded.
+
 Writers use the setters rather than editing JSON, so a fan-out worker cannot
 reformat the file or touch a second increment:
 

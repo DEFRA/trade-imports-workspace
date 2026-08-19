@@ -627,6 +627,37 @@ details.audit > summary {
   padding: 1rem 1.15rem;
 }
 
+.drift p { margin: .5rem 0 0; }
+
+.drift__list {
+  list-style: none;
+  margin: .8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: .4rem;
+}
+
+.drift__list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .5rem;
+  align-items: baseline;
+  padding-bottom: .4rem;
+  border-bottom: 1px solid var(--warn);
+  font-size: .85rem;
+}
+
+/* The before-and-after is the whole point of the row, so it gets its own line
+   rather than being folded into the title it belongs to. */
+.drift__what {
+  grid-column: 1 / -1;
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: var(--ink-muted);
+}
+
+.drift__accept { font-size: .8rem; color: var(--ink-muted); }
+
 .ribbon {
   position: absolute;
   top: .5rem;

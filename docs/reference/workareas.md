@@ -30,7 +30,7 @@ workareas/shared/dr21-parity/                      → the DR2.1 comparison's ow
 
 ## What is tracked under `workareas/`, and why
 
-Four files, each because it outlives the run that made it:
+Seven files, each because it outlives the run that made it:
 
 - `journey-builder/*/backlog.json` — the executable definition of a body of
   work. Judgement, not cache.
@@ -42,6 +42,18 @@ Four files, each because it outlives the run that made it:
 - `journey-builder/*/evidence.json` — every citation resolved to a permalink, a
   blob id and a snippet. Regenerable, but `git diff` on it after a re-pin is the
   record of which citations moved and which changed content.
+- `shared/*/evidence/anchors.<side>.json` — which controls the capture
+  harnesses crop, generated from the compare deltas. Data rather than code is
+  what stops a spec edit ever being needed to add element evidence to a
+  finding.
+- `shared/*/evidence/seals.json` — the picture the reader was last shown, per
+  side per finding. It cannot be recomputed: it records what a person has seen,
+  and it is the only thing standing between a re-capture and a ruling made
+  against an image nobody looked at.
+- `shared/*/evidence/<side>@<sha>/manifest.json` — the index of one capture:
+  every page shot and element crop, with its hash and size, plus every anchor
+  that matched nothing and why. The report reads this rather than the
+  filesystem, so a missing frame is a stated gap and not a broken image.
 
 Each needs its own `!` negation in `.gitignore`; the directory pattern above it
 stops git descending otherwise. Never use `git add -f`.

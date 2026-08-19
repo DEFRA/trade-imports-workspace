@@ -84,20 +84,54 @@ const byGateThenType = (a, b) => {
   return gate || rank(a) - rank(b) || a.title.localeCompare(b.title)
 }
 
-const driftPanel = (items) => {
-  const drifted = items.filter((item) =>
-    (item.assets ?? []).some((row) =>
-      Object.values(row).some((asset) => asset.drifted)
-    )
-  )
-  if (drifted.length === 0) return ''
+const short = (sha) => (sha ? sha.slice(0, 12) : 'nothing')
+
+/**
+ * What moved, said in the terms that actually differ.
+ *
+ * A re-capture of the same frame prints the two hashes, because the frame
+ * description is identical on both sides of the arrow and would read as though
+ * nothing had happened. A reframe prints the frames, because the hashes are
+ * two unrelated files and comparing them says nothing.
+ */
+const driftRow = (entry, titleOf) => {
+  const what =
+    entry.kind === 'frame-changed'
+      ? `${esc(entry.was)} → ${esc(entry.now)}`
+      : `same frame, new pixels — ${esc(short(entry.wasSha))} → ${esc(short(entry.nowSha))}`
+  return `<li><a href="#${esc(entry.id)}"><code>${esc(entry.id)}</code></a> ${esc(titleOf(entry.id) ?? '')}
+    <span class="drift__what">${esc(entry.side)}: ${what}</span></li>`
+}
+
+/**
+ * Every picture that moved since the reader last saw it.
+ *
+ * This is the most important thing on the page. A reader who rules on a
+ * finding under a picture that was swapped without them has been misled by the
+ * report itself, so the drift is named — which side, from what to what — above
+ * anything they might be here to do.
+ *
+ * @param {object[]} drift - Entries from the seal store
+ * @param {object[]} items - Report items, for their titles
+ * @param {string} runId - Named so the panel can print the command that clears it
+ * @returns {string}
+ */
+const driftPanel = (drift, items, runId) => {
+  if (!drift?.length) return ''
+  const titles = new Map(items.map((item) => [item.id, item.title]))
+  const findings = new Set(drift.map((entry) => entry.id))
+  const reframed = drift.filter((entry) => entry.kind === 'frame-changed')
   return `<div class="drift">
-  <strong>${drifted.length} findings show a picture that changed since it was curated.</strong>
-  <p>Each one is marked with a ribbon on the image. Nobody should be asked to rule on a decision under a picture that was silently swapped, so they are listed here first: ${drifted
-    .map(
-      (item) => `<a href="#${esc(item.id)}"><code>${esc(item.id)}</code></a>`
-    )
-    .join(', ')}.</p>
+  <strong>${drift.length} ${drift.length === 1 ? 'picture has' : 'pictures have'} changed since ${findings.size === 1 ? 'this finding was' : 'these findings were'} last shown.</strong>
+  <p>Nobody should be asked to rule under a picture that was swapped without them, so they are listed here before anything else. Each carries a ribbon on the image itself.${
+    reframed.length
+      ? ` ${reframed.length} of them ${reframed.length === 1 ? 'is' : 'are'} a different frame rather than a re-capture of the same one — a different control, or a page where there was a crop.`
+      : ''
+  }</p>
+  <ul class="drift__list">${drift
+    .map((entry) => driftRow(entry, (id) => titles.get(id)))
+    .join('')}</ul>
+  <p class="drift__accept">Once you have looked, <code>tim parity report ${esc(runId)} --reseal</code> accepts them and clears this panel.</p>
 </div>`
 }
 
@@ -202,6 +236,7 @@ export const renderPage = ({
   joinReport,
   sides,
   runId,
+  drift,
   stamp
 }) => {
   const domains = [...new Set(findings.map((item) => item.domain))].sort()
@@ -262,7 +297,7 @@ export const renderPage = ({
       .join('')}
   </div>
 
-  ${driftPanel(findings)}
+  ${driftPanel(drift, [...findings, ...withdrawn], runId)}
 
   <div class="controls">
     <input type="search" id="q" placeholder="Search every finding…" aria-label="Search findings">

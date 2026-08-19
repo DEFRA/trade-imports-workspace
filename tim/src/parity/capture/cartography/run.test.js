@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  existsSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { resolveMapPaths, runMap } from './run.js'
@@ -93,13 +100,15 @@ describe('resolveMapPaths', () => {
     ).toThrow(/Unknown side "nope". This corpus has: frontend./)
   })
 
-  it('refuses a side the corpus gave no model directory', () => {
+  it('keeps its own page models out of the corpus model directory', () => {
     const root = workarea()
-    const profile = profileFor(root, { modelDir: null })
 
-    expect(() => resolveMapPaths({ profile, side: 'frontend' })).toThrow(
-      /nowhere to put the page models/
-    )
+    const paths = resolveMapPaths({
+      profile: profileFor(root),
+      side: 'frontend'
+    })
+
+    expect(paths.modelDir).toBe(join(root, 'cartography', 'models', 'frontend'))
   })
 })
 
@@ -149,15 +158,41 @@ describe('runMap', () => {
     expect(() => parseMap(written, result.mapPath)).not.toThrow()
   })
 
-  it('writes one page model per screen, where the differ reads them', async () => {
+  it('writes one page model per screen, in its own directory', async () => {
     const root = workarea()
 
     const result = await run(root, { write: true })
 
-    expect(
-      existsSync(join(result.modelDir, 'fe-start.json')) &&
-        existsSync(join(result.modelDir, 'fe-confirmation.json'))
-    ).toBe(true)
+    expect(readdirSync(result.modelDir).sort()).toEqual([
+      'fe-confirmation.json',
+      'fe-start.json'
+    ])
+  })
+
+  it('leaves the corpus own page models exactly as it found them', async () => {
+    const root = workarea()
+    const corpusModels = join(root, 'model')
+    mkdirSync(corpusModels, { recursive: true })
+    writeFileSync(join(corpusModels, 'fe-check-answers.json'), '{}\n', 'utf8')
+
+    await run(root, { write: true })
+
+    expect(readdirSync(corpusModels)).toEqual(['fe-check-answers.json'])
+  })
+
+  it('deletes yesterday route plan when nothing can be walked again', async () => {
+    const root = workarea()
+    const planPath = join(root, 'cartography', 'frontend.routes.json')
+    mkdirSync(join(root, 'cartography'), { recursive: true })
+    writeFileSync(planPath, '{"routes":[{"screen":"fe-gone"}]}\n', 'utf8')
+
+    const result = await run(root, { write: true, budgets: { steps: 0 } })
+
+    expect([result.routePlanWritten, result.routePlanRemoved]).toEqual([
+      false,
+      true
+    ])
+    expect(existsSync(planPath)).toBe(false)
   })
 
   it('writes the route plan the capture stage refuses to walk without', async () => {
@@ -170,6 +205,15 @@ describe('runMap', () => {
       'fe-start',
       'fe-confirmation'
     ])
+  })
+
+  it('refuses to write a map its own schema would reject', async () => {
+    const root = workarea()
+    const rogue = { ...fakeDriver(), model: async () => page({ title: 42 }) }
+
+    await expect(
+      run(root, { write: true, open: async () => rogue })
+    ).rejects.toThrow(/is not a usable map/)
   })
 
   it('writes a hints stub so the next run can be seeded by hand', async () => {

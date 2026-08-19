@@ -218,16 +218,35 @@ describe('playwrightConfigSource', () => {
 })
 
 describe('playwrightBin', () => {
+  const installBin = () => {
+    const bin = join(workspaceRoot, 'node_modules', '.bin')
+    mkdirSync(bin, { recursive: true })
+    writeFileSync(join(bin, 'playwright'), '')
+    return join(bin, 'playwright')
+  }
+
+  const installRunner = () => {
+    const runner = join(workspaceRoot, 'node_modules', '@playwright', 'test')
+    mkdirSync(runner, { recursive: true })
+    writeFileSync(join(runner, 'package.json'), '{}')
+  }
+
   test('says how to install Playwright when tim has not got it', () => {
     expect(() => playwrightBin(workspaceRoot)).toThrow(
       /Playwright is not installed in tim/
     )
   })
 
-  test('returns the runner when it is there', () => {
-    const bin = join(workspaceRoot, 'node_modules', '.bin')
-    mkdirSync(bin, { recursive: true })
-    writeFileSync(join(bin, 'playwright'), '')
-    expect(playwrightBin(workspaceRoot)).toBe(join(bin, 'playwright'))
+  test('is not satisfied by the binary alone, which cannot run "playwright test"', () => {
+    installBin()
+    expect(() => playwrightBin(workspaceRoot)).toThrow(
+      /Playwright is not installed in tim/
+    )
+  })
+
+  test('returns the runner when both halves are there', () => {
+    const bin = installBin()
+    installRunner()
+    expect(playwrightBin(workspaceRoot)).toBe(bin)
   })
 })

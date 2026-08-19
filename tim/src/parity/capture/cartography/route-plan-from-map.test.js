@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
-  asPlanStep,
+  asPlanSteps,
   continues,
+  gotoSteps,
+  newMemory,
   routePlanFromMap
 } from './route-plan-from-map.js'
-import { parseRoutePlan } from '../route-plan.js'
+import { parseRoutePlan, STEP_ACTIONS } from '../route-plan.js'
 
 const step = (action) => ({ screen: 'fe-start', action })
 
@@ -27,23 +29,107 @@ const mapOf = (screens) => ({
   screens
 })
 
-describe('asPlanStep', () => {
+const UUID = '9f1c2b30-4a5e-11ef-9c2d-0242ac120002'
+
+describe('asPlanSteps', () => {
   it('says a fill as a selector and a value', () => {
-    expect(asPlanStep(fill)).toEqual({
-      action: 'fill',
-      selector: '[name="fullName"]',
-      value: 'Cartographer Test'
-    })
+    expect(asPlanSteps(fill, newMemory())).toEqual([
+      {
+        action: 'fill',
+        selector: '[name="fullName"]',
+        value: 'Cartographer Test'
+      }
+    ])
   })
 
   it('says a radio choice as a check on that option', () => {
     expect(
-      asPlanStep({ kind: 'choose', name: 'reason', value: 'transit' })
-    ).toEqual({ action: 'check', selector: '[name="reason"][value="transit"]' })
+      asPlanSteps(
+        { kind: 'choose', name: 'reason', value: 'transit' },
+        newMemory()
+      )
+    ).toEqual([
+      { action: 'check', selector: '[name="reason"][value="transit"]' }
+    ])
   })
 
   it('has no word for a type-ahead', () => {
-    expect(asPlanStep({ kind: 'typeahead', name: 'country' })).toBeNull()
+    expect(
+      asPlanSteps({ kind: 'typeahead', name: 'country' }, newMemory())
+    ).toBeNull()
+  })
+
+  it('has a producer for every word in the plan vocabulary', () => {
+    const crawled = [
+      fill,
+      { kind: 'choose', name: 'reason', value: 'transit' },
+      { kind: 'select', name: 'country', value: 'FR' },
+      submit,
+      { kind: 'follow', href: `/notifications/${UUID}/tasks` }
+    ]
+    // goto also opens the plan's prelude, which every plan carries.
+    const produced = new Set(['goto'])
+    for (const action of crawled) {
+      for (const said of asPlanSteps(action, newMemory())) {
+        produced.add(said.action)
+      }
+    }
+
+    expect([...produced].sort()).toEqual([...STEP_ACTIONS].sort())
+  })
+})
+
+describe('gotoSteps', () => {
+  it('goes straight there when the path holds nothing this run invented', () => {
+    expect(gotoSteps('/import-reason', newMemory())).toEqual([
+      { action: 'goto', path: '/import-reason' }
+    ])
+  })
+
+  it('learns a generated id off the page rather than baking it in', () => {
+    expect(gotoSteps(`/notifications/${UUID}/tasks`, newMemory())).toEqual([
+      {
+        action: 'remember',
+        as: 'notifications',
+        from: 'text',
+        pattern: '/notifications/([^/"?#]+)/tasks'
+      },
+      { action: 'goto', path: '/notifications/{notifications}/tasks' }
+    ])
+  })
+
+  it('asks for the same id once, however many routes need it', () => {
+    const memory = newMemory()
+    gotoSteps(`/notifications/${UUID}/tasks`, memory)
+
+    expect(gotoSteps(`/notifications/${UUID}/origin`, memory)).toEqual([
+      { action: 'goto', path: '/notifications/{notifications}/origin' }
+    ])
+  })
+
+  it('names two generated segments apart', () => {
+    const steps = gotoSteps(
+      `/notifications/${UUID}/consignments/7`,
+      newMemory()
+    )
+
+    expect(steps.map((s) => s.as ?? s.path)).toEqual([
+      'notifications',
+      'consignments',
+      '/notifications/{notifications}/consignments/{consignments}'
+    ])
+  })
+
+  it('anchors each pattern on its own segment, not on the other one', () => {
+    const [first, second] = gotoSteps(
+      `/notifications/${UUID}/consignments/7`,
+      newMemory()
+    )
+
+    expect([first.pattern, second.pattern]).toEqual([
+      '/notifications/([^/"?#]+)/consignments/[^/"?#]+',
+      '/notifications/[^/"?#]+/consignments/([^/"?#]+)'
+    ])
   })
 })
 
@@ -93,6 +179,98 @@ describe('routePlanFromMap', () => {
     const { plan } = routePlanFromMap(mapOf([screen()]))
 
     expect(() => parseRoutePlan(plan, 'derived')).not.toThrow()
+  })
+
+  it('walks to a notification it learns today, not the one it saw yesterday', () => {
+    const { plan } = routePlanFromMap(
+      mapOf([
+        screen(),
+        screen({
+          id: 'fe-notifications-id-tasks',
+          routeTemplate: '/notifications/:id/tasks',
+          heading: 'Your notification',
+          route: [
+            step({ kind: 'follow', href: `/notifications/${UUID}/tasks` })
+          ]
+        })
+      ])
+    )
+
+    expect(plan.routes[1].steps).toEqual([
+      {
+        action: 'remember',
+        as: 'notifications',
+        from: 'text',
+        pattern: '/notifications/([^/"?#]+)/tasks'
+      },
+      { action: 'goto', path: '/notifications/{notifications}/tasks' }
+    ])
+  })
+
+  it('leaves no name claimed by a route it then could not say', () => {
+    const { plan } = routePlanFromMap(
+      mapOf([
+        screen({
+          id: 'fe-port',
+          route: [
+            step({ kind: 'follow', href: `/notifications/${UUID}/tasks` }),
+            step({ kind: 'typeahead', name: 'port', value: 'Dover' })
+          ]
+        }),
+        screen({
+          id: 'fe-tasks',
+          routeTemplate: '/notifications/:id/tasks',
+          heading: 'Your notification',
+          route: [
+            step({ kind: 'follow', href: `/notifications/${UUID}/tasks` })
+          ]
+        })
+      ])
+    )
+
+    expect(plan.routes[0].steps).toEqual([
+      {
+        action: 'remember',
+        as: 'notifications',
+        from: 'text',
+        pattern: '/notifications/([^/"?#]+)/tasks'
+      },
+      { action: 'goto', path: '/notifications/{notifications}/tasks' }
+    ])
+  })
+
+  it('gives a heading-less screen a landmark a real URL can match', () => {
+    const { plan } = routePlanFromMap(
+      mapOf([
+        screen({
+          id: 'fe-notifications-id-tasks',
+          routeTemplate: '/notifications/:id/tasks',
+          heading: null
+        })
+      ])
+    )
+    const { urlPattern } = plan.routes[0].landmark
+
+    expect(
+      new RegExp(urlPattern).test(
+        `http://localhost:3000/notifications/${UUID}/tasks`
+      )
+    ).toBe(true)
+  })
+
+  it('does not let one route template stand in for another', () => {
+    const { plan } = routePlanFromMap(
+      mapOf([
+        screen({ id: 'fe-tasks', routeTemplate: '/tasks', heading: null })
+      ])
+    )
+    const { urlPattern } = plan.routes[0].landmark
+
+    expect(
+      new RegExp(urlPattern).test(
+        `http://localhost:3000/notifications/${UUID}/tasks`
+      )
+    ).toBe(false)
   })
 
   it('names a branch that would need a fresh session rather than walking it wrongly', () => {

@@ -7,7 +7,9 @@ import {
   fingerprint,
   slugFromTemplate,
   screenId,
-  uniqueId
+  uniqueId,
+  urlPatternFor,
+  volatileSegments
 } from './identity.js'
 
 describe('routeTemplate', () => {
@@ -156,5 +158,67 @@ describe('uniqueId', () => {
 
   it('leaves an unused id alone', () => {
     expect(uniqueId('fe-tasks', new Set())).toBe('fe-tasks')
+  })
+})
+
+describe('volatileSegments', () => {
+  it('names which segments the application generated', () => {
+    expect(
+      volatileSegments(
+        '/notifications/9f1c2b30-4a5e-11ef-9c2d-0242ac120002/consignments/7'
+      )
+    ).toEqual([
+      { index: 1, value: '9f1c2b30-4a5e-11ef-9c2d-0242ac120002', token: ':id' },
+      { index: 3, value: '7', token: ':n' }
+    ])
+  })
+
+  it('finds nothing to remember in a path that is all places', () => {
+    expect(volatileSegments('/import-reason')).toEqual([])
+  })
+})
+
+describe('urlPatternFor', () => {
+  const matches = (template, url) =>
+    new RegExp(urlPatternFor(template)).test(url)
+
+  it('matches a real URL of the route it names', () => {
+    expect(
+      matches(
+        '/notifications/:id/tasks',
+        'http://localhost:3000/notifications/9f1c2b30-4a5e-11ef-9c2d-0242ac120002/tasks'
+      )
+    ).toBe(true)
+  })
+
+  it('never matches the template written out as it stands', () => {
+    const asWritten = (template) => new RegExp(template)
+
+    expect(
+      asWritten('/notifications/:id/tasks').test(
+        'http://localhost:3000/notifications/9f1c2b30-4a5e-11ef-9c2d-0242ac120002/tasks'
+      )
+    ).toBe(false)
+  })
+
+  it('does not match a deeper path that merely ends the same way', () => {
+    expect(
+      matches('/tasks', 'http://localhost:3000/notifications/abc/tasks')
+    ).toBe(false)
+  })
+
+  it('holds a numbered segment to digits', () => {
+    expect(
+      matches('/consignments/:n', 'http://localhost:3000/consignments/7')
+    ).toBe(true)
+    expect(
+      matches('/consignments/:n', 'http://localhost:3000/consignments/new')
+    ).toBe(false)
+  })
+
+  it('matches the root of a service, with or without a query', () => {
+    expect(matches('/', 'http://localhost:3000/')).toBe(true)
+    expect(matches('/', 'http://localhost:3000/?from=email')).toBe(true)
+    expect(matches('/', 'http://localhost:3000/dashboard')).toBe(false)
   })
 })

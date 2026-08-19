@@ -521,8 +521,18 @@ export const register = (program, { timVersion }) => {
             ...r.blockers.map((b) => `  - ${b}`),
             `${r.capturable} of ${r.coverage.screensMapped} screens can be walked again by the capture stage.`,
             ...r.unexpressible.map((u) => `  - ${u.screen}: ${u.why}`),
+            ...r.warnings.map((w) => `  ! ${w.screen}: ${w.why}`),
             r.written
-              ? `Map: ${r.mapPath}\nRoute plan for the capture: ${r.routePlanPath}\nHints to fill in: ${r.hintsPath}\nPage models: ${r.modelDir}`
+              ? [
+                  `Map: ${r.mapPath}`,
+                  r.routePlanWritten
+                    ? `Route plan for the capture: ${r.routePlanPath}`
+                    : r.routePlanRemoved
+                      ? `No screen can be walked again, so the stale route plan at ${r.routePlanPath} has been deleted. Capture has nothing to walk until you map again.`
+                      : 'No screen can be walked again, so no route plan was written.',
+                  `Hints to fill in: ${r.hintsPath}`,
+                  `Page models the crawl read: ${r.modelDir}`
+                ].join('\n')
               : 'Nothing written — pass --write to keep the map.'
           ].join('\n'),
         timVersion

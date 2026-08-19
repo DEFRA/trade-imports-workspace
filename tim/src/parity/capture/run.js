@@ -184,13 +184,26 @@ export default defineConfig({
 /**
  * The Playwright runner tim uses.
  *
+ * Two things have to be there, not one. The `playwright` package supplies the
+ * binary; `playwright test` is implemented by `@playwright/test`. Checking only
+ * the binary passes on an install that has one and not the other, and the run
+ * then dies inside Playwright with a message about a missing config rather than
+ * with the one sentence that says what to install.
+ *
  * @param {string} [root]
  * @returns {string} Path to the binary
- * @throws {TimError} MISSING_DEP when it has not been installed
+ * @throws {TimError} MISSING_DEP when either half has not been installed
  */
 export const playwrightBin = (root = timRoot) => {
   const bin = join(root, 'node_modules', '.bin', 'playwright')
-  if (!existsSync(bin)) {
+  const runner = join(
+    root,
+    'node_modules',
+    '@playwright',
+    'test',
+    'package.json'
+  )
+  if (!existsSync(bin) || !existsSync(runner)) {
     throw new TimError(
       'MISSING_DEP',
       'Playwright is not installed in tim. Run "npm install" in tim, then "npx playwright install chromium".'

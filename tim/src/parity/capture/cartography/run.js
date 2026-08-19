@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import { dirname, join } from 'node:path'
 import { TimError } from '../../../errors.js'
 import { writeJsonAtomic } from '../../io.js'
@@ -6,21 +12,26 @@ import { stable } from '../page-model.js'
 import { appSha, harnessSha } from '../run.js'
 import { crawl, DEFAULT_BUDGETS } from './crawl.js'
 import { assembleMap, hintsStub, blockers } from './map.js'
+import { parseMap } from './schema.js'
 import { routePlanFromMap } from './route-plan-from-map.js'
 import { openDriver } from './driver-playwright.js'
 
 /**
  * Where this side's map, its hints and its page models live.
  *
- * Every path comes from the corpus profile. A map written where the capture
- * stage does not look is a map nothing uses, and a model written outside the
- * side's model directory is invisible to the differ.
+ * Every path comes from the corpus profile, and all four sit under the
+ * corpus's own cartography folder. The models deliberately do NOT go to the
+ * side's modelDir: that directory is the corpus's established set of page
+ * models, named semantically, and three commands read it whole with readdir.
+ * Dropping route-derived ids in beside them would inflate the masthead's model
+ * count and push unpaired models through the evidence check, with nothing
+ * saying where they came from.
  *
  * @param {object} args
  * @param {object} args.profile - A loaded corpus profile
  * @param {string} args.side
- * @returns {{side: string, mapPath: string, hintsPath: string, modelDir: string, appRoot: string|null, baseUrl: string|null, startPath: string, screenPrefix: string}}
- * @throws {TimError} NOT_FOUND for an unknown side, USAGE when the corpus gave no model directory
+ * @returns {{side: string, mapPath: string, hintsPath: string, routePlanPath: string, modelDir: string, appRoot: string|null, baseUrl: string|null, startPath: string, screenPrefix: string}}
+ * @throws {TimError} NOT_FOUND for an unknown side
  */
 export const resolveMapPaths = ({ profile, side }) => {
   const sideProfile = profile.sideById[side]
@@ -30,19 +41,13 @@ export const resolveMapPaths = ({ profile, side }) => {
       `Unknown side "${side}". This corpus has: ${profile.sideIds.join(', ')}.`
     )
   }
-  if (!sideProfile.modelDir) {
-    throw new TimError(
-      'USAGE',
-      `Side "${side}" names no modelDir in tools/parity/corpora.json, so there is nowhere to put the page models.`
-    )
-  }
   const cartography = join(profile.paths.workarea, 'cartography')
   return {
     side,
     mapPath: join(cartography, `map.${side}.json`),
     hintsPath: join(cartography, `hints.${side}.json`),
     routePlanPath: join(cartography, `${side}.routes.json`),
-    modelDir: sideProfile.modelDir,
+    modelDir: join(cartography, 'models', side),
     appRoot: profile.repos[sideProfile.repo]?.absolutePath ?? null,
     baseUrl: sideProfile.app?.baseURL ?? null,
     startPath: sideProfile.app?.startPath ?? '/',
@@ -114,19 +119,28 @@ export const runMap = async ({
       }
     })
 
-    const map = assembleMap({
-      side,
-      baseUrl: url,
-      startPath: start,
-      appSha: paths.appRoot ? appSha(paths.appRoot) : 'unknown',
-      harnessSha: harnessSha(workspaceRoot),
-      dataState,
-      budgets,
-      body
-    })
+    // Parsed here rather than trusted, so the schema is load-bearing instead
+    // of decorative: a crawl that stops recording something the report reads
+    // fails now, with the key named, rather than three steps later as a
+    // silently empty section.
+    const map = parseMap(
+      assembleMap({
+        side,
+        baseUrl: url,
+        startPath: start,
+        appSha: paths.appRoot ? appSha(paths.appRoot) : 'unknown',
+        harnessSha: harnessSha(workspaceRoot),
+        dataState,
+        budgets,
+        body
+      }),
+      paths.mapPath
+    )
 
     const { plan, unexpressible } = routePlanFromMap(map)
 
+    let routePlanWritten = false
+    let routePlanRemoved = false
     if (write) {
       mkdirSync(paths.modelDir, { recursive: true })
       for (const { id, pageModel } of models) {
@@ -147,8 +161,17 @@ export const runMap = async ({
         })
       )
       // The capture stage refuses to walk without this, and it is derived
-      // rather than authored so nobody keeps a list of screens by hand.
-      if (plan.routes.length) writeJsonAtomic(paths.routePlanPath, plan)
+      // rather than authored so nobody keeps a list of screens by hand. When
+      // this run can express nothing, yesterday's plan has to go: leaving it
+      // has the capture walk a journey this map never found while the command
+      // reports a fresh mapping.
+      if (plan.routes.length) {
+        writeJsonAtomic(paths.routePlanPath, plan)
+        routePlanWritten = true
+      } else if (existsSync(paths.routePlanPath)) {
+        rmSync(paths.routePlanPath)
+        routePlanRemoved = true
+      }
     }
 
     const stops = blockers(map)
@@ -164,6 +187,7 @@ export const runMap = async ({
         blocked: screen.blocked?.reason ?? null
       })),
       frontier: map.frontier,
+      warnings: map.warnings,
       blockers: stops,
       capturable: plan.routes.length,
       unexpressible,
@@ -171,6 +195,8 @@ export const runMap = async ({
       mapPath: paths.mapPath,
       hintsPath: paths.hintsPath,
       routePlanPath: paths.routePlanPath,
+      routePlanWritten,
+      routePlanRemoved,
       modelDir: paths.modelDir,
       exitNonZero: Boolean(check && stops.length)
     }

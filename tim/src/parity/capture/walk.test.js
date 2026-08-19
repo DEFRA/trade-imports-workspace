@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { checkLandmark, runStep, walk } from './walk.js'
-import { parseRoutePlan } from './route-plan.js'
+import { parseRoutePlan, STEP_ACTIONS } from './route-plan.js'
 
 // The browser is the boundary, so these drive a stand-in Page: it records the
 // navigations and answers the two questions the walk asks a real page —
@@ -123,7 +123,7 @@ describe('runStep', () => {
   })
 
   test('refuses a step that names no element', async () => {
-    await expect(runStep(fakePage(), { action: 'click' }, {})).rejects.toThrow(
+    await expect(runStep(fakePage(), { action: 'fill' }, {})).rejects.toThrow(
       /names no element/
     )
   })
@@ -132,6 +132,22 @@ describe('runStep', () => {
     await expect(
       runStep(fakePage(), { action: 'teleport' }, {})
     ).rejects.toThrow(/Unknown step action "teleport"/)
+  })
+})
+
+describe('STEP_ACTIONS', () => {
+  test('every word in the vocabulary is one the walk can run', async () => {
+    const unknown = []
+    for (const action of STEP_ACTIONS) {
+      await runStep(
+        fakePage(),
+        { action, path: '/', pattern: '(x)' },
+        {}
+      ).catch((error) => {
+        if (/Unknown step action/.test(error.message)) unknown.push(action)
+      })
+    }
+    expect(unknown).toEqual([])
   })
 })
 
@@ -188,7 +204,7 @@ describe('walk', () => {
     const { rows, gaps } = await walk(
       page,
       plan([
-        { screen: 'fe-broken', steps: [{ action: 'click' }] },
+        { screen: 'fe-broken', steps: [{ action: 'fill', value: 'x' }] },
         {
           screen: 'fe-origin',
           landmark: { heading: 'Origin of the import' },

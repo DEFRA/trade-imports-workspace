@@ -10,19 +10,19 @@ import { TimError } from '../../errors.js'
  * those are not maintained, and a capture that depends on them stops working
  * the moment the application's suite is refactored. Every step here is
  * something any GDS page supports.
+ *
+ * Every action here has a producer in the discovery stage. A word only the
+ * walk understands is worse than a smaller vocabulary: it reads as a promise
+ * the plan can express something it never emits, and nobody finds out until
+ * they write it by hand and it does nothing.
  */
 export const STEP_ACTIONS = [
   'goto',
-  'click',
   'fill',
   'check',
   'select',
-  'fillPending',
-  'pickRadios',
   'continue',
-  'remember',
-  'expectHeading',
-  'expectUrl'
+  'remember'
 ]
 
 const stepSchema = z
@@ -34,11 +34,9 @@ const stepSchema = z
     selector: z.string().optional(),
     label: z.string().optional(),
     value: z.string().optional(),
-    text: z.string().optional(),
     pattern: z.string().optional(),
     as: z.string().optional(),
-    from: z.enum(['url', 'text']).optional(),
-    optional: z.boolean().optional()
+    from: z.enum(['url', 'text']).optional()
   })
   .catchall(z.unknown())
 

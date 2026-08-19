@@ -78,20 +78,54 @@ export const CONTROL_EXTRACTOR = () => {
   // The prototype's bespoke country search: a visible text box, a results
   // container of buttons, and a hidden input that carries the value the form
   // actually submits.
+  //
+  // Two signatures, both narrow, because the cost of a false positive is high:
+  // a text box driven as a type-ahead is typed one character at a time and then
+  // waited on for eight seconds for an option that never appears. The input
+  // either says what it is — role=combobox, aria-autocomplete, an owned listbox
+  // — or it sits in a wrapper that has actually rendered an option list. A form
+  // whose class merely contains "search" is a layout choice, and treating one
+  // as a widget turns every text box on the page into a type-ahead.
+  const TOKEN_NAME = /csrf|xsrf|_token|authenticity/i
+
+  const optionIn = (node) =>
+    node ? node.querySelector('[role="option"], [class*="__option"]') : null
+
   const bespokeTypeahead = (el) => {
-    const wrapper = el.closest('[class*="search"], [class*="autocomplete"]')
-    if (!wrapper) return null
-    const hidden = wrapper.querySelector('input[type="hidden"]')
-    if (!hidden) return null
-    const optionNode = wrapper.querySelector(
-      '[class*="__option"], [role="option"]'
-    )
+    const owned =
+      el.getAttribute('aria-owns') || el.getAttribute('aria-controls')
+    const listbox = owned
+      ? document.getElementById(owned.split(/\s+/)[0])
+      : null
+    const declared =
+      el.getAttribute('role') === 'combobox' ||
+      el.hasAttribute('aria-autocomplete') ||
+      el.classList.contains('autocomplete__input') ||
+      Boolean(listbox)
+    const wrapper =
+      el.closest('.autocomplete__wrapper') ||
+      el.closest(
+        '[class*="autocomplete"], [class*="typeahead"], [class*="combobox"]'
+      )
+    const optionNode = optionIn(listbox) || optionIn(wrapper)
+    if (!declared && !optionNode) return null
+
+    // Not any hidden input: a CSRF token sits in the same form and carries
+    // nothing this widget chose, so reading it back would report a type-ahead
+    // as filled when the value the form submits is still empty.
+    const scope = wrapper || el.form
+    const hidden = scope
+      ? [...scope.querySelectorAll('input[type="hidden"]')].find(
+          (input) => !TOKEN_NAME.test(input.name || '')
+        )
+      : null
     return {
       shape: 'bespoke',
-      hiddenName: hidden.name,
-      optionSelector: optionNode
-        ? `.${[...optionNode.classList].join('.')}`
-        : '[role="option"]'
+      hiddenName: hidden ? hidden.name : null,
+      optionSelector:
+        optionNode && optionNode.classList.length
+          ? `.${[...optionNode.classList].join('.')}`
+          : '[role="option"]'
     }
   }
 
@@ -189,12 +223,6 @@ export const CONTROL_EXTRACTOR = () => {
       continue
     }
 
-    const typeahead = bespokeTypeahead(el)
-    if (typeahead) {
-      out.push({ ...shared, kind: 'typeahead', widget: typeahead })
-      continue
-    }
-
     const datePart = datePartOf(el.name)
     if (datePart && el.closest('fieldset')) {
       const group = dateGroups.get(datePart.stem) ?? {
@@ -221,6 +249,15 @@ export const CONTROL_EXTRACTOR = () => {
         kind: 'date',
         shape: type === 'date' ? 'native' : 'picker'
       })
+      continue
+    }
+
+    // Last of the shapes, because a date is the more specific reading: a
+    // picker's calendar is an option list under a wrapper, and a day box lives
+    // inside a fieldset that a widget class can also match.
+    const typeahead = bespokeTypeahead(el)
+    if (typeahead) {
+      out.push({ ...shared, kind: 'typeahead', widget: typeahead })
       continue
     }
 

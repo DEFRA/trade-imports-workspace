@@ -295,3 +295,100 @@ Notes:
 - A cached copy must stay visibly distinct from the frozen snapshot EUDPA-295 adds
   at submit, or someone will eventually refresh the snapshot. 295 already requires
   the two to coexist, so settle the shape while it is unbuilt.
+
+## Round 2 — author's changes (19 Aug, two read-only agents)
+
+Branches re-read at PR heads. Workspace PR #48 also open (drops the now-dead
+`LIVE_ANIMALS_MODE=real` from the stack frontend).
+
+**Fixed**
+
+- **D24 + D26 honoured.** `ConsignmentParty.inlineOnly()` stores place of origin
+  and the consignment contact as copies, stripping any stray `addressId`
+  (`NotificationService.java:477-485`). Frontend decides at one point —
+  `party-picker/selection.js:29-36`, driven by `inline: true` in `parties.js`.
+  Referencable roles are now consignor, consignee, importer, destination.
+- **Email/phone reach GBNAG** via `definedContactFrom` (`TradeParty.java:28,44-49`);
+  the `TODO(EUDPA-294 gap)` is gone.
+- **~20s sequential resolve gone** — virtual-thread fan-out over distinct ids
+  (`ConsignmentPartyResolver.java:96-110`). Timeouts still 2s/2s.
+- **Create-address removed** from the frontend: controller, template, tests, route
+  and `createAddressHref` all deleted; the client has no POST
+  (`address-book/index.js:17-19` — "reads and never writes").
+- **One flag.** `app/services/mode.js` deleted; single `STUB_MODE`
+  (`config.js:247-252`, default false) read via `isStubMode()`.
+- PUT now carries `{notification, actor}`, so draft saves no longer resolve with a
+  null organisation.
+
+**Still open**
+
+- `Actor.organisationId` remains unvalidated request-body input forwarded as the
+  address book's identity header (`ActorRequest.java:11-29`).
+- The consignment contact has **no GBNAG slot at all**
+  (`SpecifiedConsignment.java:31-37`) — confirm whether the document should carry it.
+- `submittedBaseline` still freezes the reference for the four referencable roles
+  (295's job).
+- **No link out to INS.** Create is gone but nothing replaces it — a trader needing
+  a new address has no route from the journey. The cross-app link was supposed to
+  land *before* the page was retired.
+- Cost: still up to **4** lookups per journey page (down from 6) via the global
+  hook, and the dashboard still resolves per row — up to **40** on a 20-row page.
+
+**Sign-in scaffolding — question settled**
+
+Cause is as suspected: the FIT suite previously ran `AUTH_ENABLED=false`
+(`package.json:18`); the branch removed it because the address-book client throws
+without an org (`client.js:22-27`). But nothing became removable — every org-id
+line in the diff is an addition, and copies did not remove the need (pickers read
+live, four refs resolve per read, dashboard resolves per row).
+
+The specs are **not** sign-in tests: 26 files gained a one-line `beforeEach`
+calling a 5-line navigation helper (`fit/sign-in.js:5-9`); only
+`stub-sign-in.test.js` asserts new behaviour, for the route this branch adds; and
+**nothing asserts that real Defra ID sign-in works**. Real sign-in behaviour is
+unchanged apart from strategy registration order (`plugins/auth.js:16-20`).
+
+Reviewable point is the shape, not the specs: the branch ships an unauthenticated
+session-minting route guarded by stub-mode-and-not-production, with
+`NODE_ENV=production` hardcoded in the Dockerfile — three layers, and they hold.
+The author's own commit message notes the stack already has a Defra ID stub, so
+the open question is why the self-contained suite needs an in-app route.
+
+**Test gaps (new)**
+
+- Copy assertions pin only `name` and absent `addressId` — not the address block,
+  email or phone. A copy that dropped the postcode would pass.
+- No E2E exercises an address book that is **down**, and no spec deletes an address
+  then **submits** — the two paths most dependent on the new failure semantics rest
+  on backend unit tests alone.
+
+**Minor residuals**
+
+- `scripts/lighthouse/seed-address-book.js` still POSTs — "never writes" is true of
+  `src/` only.
+- Stale comment `direct-fields.js:11-12` cites the deleted `toRequest`.
+
+## RULING (Sam, meeting) — rip out the org scoping
+
+There is no authorisation in this service. The org-scoping introduced by this PR
+is a half-implementation of it and must come out: **everyone has access to
+everything, exactly as notifications already behave today.** This is not an open
+question — it was decided in the meeting.
+
+Consequence to implement, not to relitigate: the address book requires an
+organisation in the path and the `Trade-Imports-Organisation-Id` header (400
+without it), so removal means a single fixed value, not an absent one. The animals
+frontend (picker reads), the animals backend (submit-time resolve via
+`actor.organisationId`) and the INS frontend (writes) must all use the SAME fixed
+value, or the pickers, the outbox and the address-book UI read different books.
+
+Reverts with it (all added by this PR): `common/helpers/organisation-id.js` and
+its threading through `resolve-parties.js`, `party-picker.controller.js`,
+`contact/controller.js`, `marshal/list-item.js`, `real/lifecycle/read.js`,
+`engine/journey.js`; the dashboard no-org guard (`journey.js:109-111`);
+`organisationId` in `test-support.js` credentials; and the whole sign-in chain —
+`fit/sign-in.js`, 26 `beforeEach` hooks, `stub-sign-in.js` + test, the `auth.js`
+stub branch + test, and `fit:start` back to `AUTH_ENABLED=false`.
+
+Real org scoping returns as its own sweep: owner field on the notification,
+authenticated identity at the backend boundary, org-scoped queries.

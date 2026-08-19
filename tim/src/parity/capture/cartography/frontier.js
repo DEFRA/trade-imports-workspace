@@ -37,11 +37,20 @@ export const makeFrontier = ({ caps = {} } = {}) => {
     if (seen.has(key)) return null
     seen.add(key)
 
-    const taken = perRoute.get(entry.routeTemplate) ?? 0
-    perRoute.set(entry.routeTemplate, taken + 1)
+    // Only a control's alternatives are variants of a route. A task link or a
+    // page link the crawl deferred is a different screen waiting to be mapped,
+    // and counting it against the same cap is how a task list with four tasks
+    // loses its fourth task for the whole run, under a reason that reads as
+    // "you asked for three variants".
+    const isVariant = entry.control != null
+    const taken = isVariant ? (perRoute.get(entry.routeTemplate) ?? 0) : 0
+    if (isVariant) perRoute.set(entry.routeTemplate, taken + 1)
+
+    const cappedVariant =
+      entry.capped || (isVariant && taken >= variantsPerRoute)
 
     let why = null
-    if (entry.capped || taken >= variantsPerRoute) why = 'variant-cap'
+    if (cappedVariant) why = 'variant-cap'
     else if ((entry.prefix?.length ?? 0) > replayDepth) why = 'replay-depth'
     else if (entry.class === 'destructive') why = 'destructive-deferred'
 

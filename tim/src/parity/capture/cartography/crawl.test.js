@@ -295,6 +295,96 @@ describe('crawl', () => {
     ])
   })
 
+  it('does not call a hub it has already emptied the end of the journey', async () => {
+    const routes = {
+      '/start': {
+        model: page({
+          h1: 'Start',
+          taskItems: [
+            { title: 'First', href: '/first' },
+            { title: 'Hub', href: '/hub' }
+          ]
+        })
+      },
+      '/first': {
+        model: page({
+          h1: 'First',
+          taskItems: [{ title: 'Shared', href: '/shared' }]
+        })
+      },
+      '/hub': {
+        model: page({
+          h1: 'Hub',
+          taskItems: [{ title: 'Shared', href: '/shared' }]
+        })
+      },
+      '/shared': { model: page({ h1: 'Shared' }) }
+    }
+
+    const result = await crawl({
+      driver: scriptedDriver({ routes }),
+      today: TODAY
+    })
+
+    const hub = result.screens.find((screen) => screen.id === 'hub')
+    expect(hub.terminal).toBe(false)
+    expect(result.warnings.map((warning) => warning.kind)).toEqual([
+      'nothing-left-to-take'
+    ])
+  })
+
+  it('abandons a replay that landed somewhere else, and says both halves of why', async () => {
+    // A session whose state has expired answers the same submit differently the
+    // second time, which is exactly the case a silent replay files under the
+    // wrong transcript.
+    const pages = {
+      '/start': page({ h1: 'Start', forms: [continueForm] }),
+      '/hub': page({
+        h1: 'Hub',
+        taskItems: [
+          { title: 'First', href: '/first' },
+          { title: 'Second', href: '/second' }
+        ]
+      }),
+      '/first': page({ h1: 'First' }),
+      '/second': page({ h1: 'Second' })
+    }
+    let url = '/start'
+    let sessions = 0
+    const driver = {
+      reset: async () => {
+        sessions += 1
+        url = '/start'
+      },
+      url: () => url,
+      model: async () => pages[url],
+      controls: async () => [],
+      perform: async (step) => {
+        if (step.kind === 'follow') {
+          url = step.href
+          return { done: true }
+        }
+        if (step.kind === 'submit') {
+          if (sessions > 1) return { done: false, why: 'the button had gone' }
+          url = '/hub'
+        }
+        return { done: true }
+      }
+    }
+
+    const result = await crawl({ driver, today: TODAY })
+
+    expect(result.warnings.map((warning) => warning.kind)).toEqual([
+      'action-failed',
+      'replay-diverged'
+    ])
+    expect(result.screens.map((screen) => screen.id)).toEqual([
+      'start',
+      'hub',
+      'first'
+    ])
+  })
+
   it('hands each screen model out as it is read, for the differ to eat', async () => {
     const seen = []
 

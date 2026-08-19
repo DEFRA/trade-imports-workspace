@@ -33,6 +33,60 @@ export const routeTemplate = (url) => {
   return `/${templated.join('/')}`
 }
 
+const TOKEN_PATTERN = {
+  ':id': '[^/]+',
+  ':ref': '[^/]+',
+  ':n': '\\d+'
+}
+
+const escapeLiteral = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * The segments of a URL that were a value rather than a place.
+ *
+ * A plan that hard-codes this afternoon's notification id walks to a
+ * notification that will not exist tomorrow. Saying which segments were
+ * generated is what lets the plan ask the walk to remember them instead of
+ * baking them in.
+ *
+ * @param {string} url - Absolute or path-only
+ * @returns {{index: number, value: string, token: string}[]} Indexes are into the non-empty path segments
+ */
+export const volatileSegments = (url) => {
+  const { pathname } = new URL(url, 'http://cartographer.invalid')
+  const out = []
+  pathname
+    .split('/')
+    .filter(Boolean)
+    .forEach((segment, index) => {
+      const rule = SEGMENT_RULES.find(([pattern]) => pattern.test(segment))
+      if (rule) out.push({ index, value: segment, token: rule[1] })
+    })
+  return out
+}
+
+/**
+ * A regular expression matching every real URL of one route template.
+ *
+ * A route template is a name, not a pattern: no browser ever shows
+ * `/notifications/:id/tasks`, so handing the template straight to a landmark
+ * check records every heading-less screen as a gap and photographs none of
+ * them. Tested against an absolute URL, which is what a page reports.
+ *
+ * @param {string} template - From {@link routeTemplate}
+ * @returns {string} Source for a RegExp
+ */
+export const urlPatternFor = (template) => {
+  const body =
+    template === '/'
+      ? '/?'
+      : template
+          .split('/')
+          .map((segment) => TOKEN_PATTERN[segment] ?? escapeLiteral(segment))
+          .join('/')
+  return `^\\w+://[^/]+${body}(?:[?#]|/?$)`
+}
+
 /**
  * A URL as the map records it: path and query only, volatile values masked.
  *

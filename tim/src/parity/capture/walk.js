@@ -5,11 +5,6 @@ import { TimError } from '../../errors.js'
 const CONTINUE_NAMES =
   /save and continue|continue|accept and submit|confirm|submit|start now/i
 
-const DATE_LIKE = /date/i
-
-const TEXT_INPUTS =
-  'input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]):not([type="submit"]):not([type="button"]):not([type="file"])'
-
 const clickContinue = async (page) => {
   const named = page.locator('button[name="action"][value="continue"]')
   if (await named.count()) {
@@ -17,70 +12,6 @@ const clickContinue = async (page) => {
     return
   }
   await page.getByRole('button', { name: CONTINUE_NAMES }).first().click()
-}
-
-/**
- * Fill every empty visible text box the page renders, and pick the first real
- * option in every empty select.
- *
- * Driven off what is on the page rather than off a fixed field list, because
- * the field list is exactly the thing the comparison is trying to discover. A
- * page that grows a question still gets past.
- */
-const fillPending = async (page, value) => {
-  const inputs = page.locator(TEXT_INPUTS)
-  const count = await inputs.count()
-  for (let i = 0; i < count; i += 1) {
-    const input = inputs.nth(i)
-    if (!(await input.isVisible())) continue
-    if (await input.inputValue()) continue
-
-    const id = (await input.getAttribute('id')) ?? ''
-    const name = (await input.getAttribute('name')) ?? ''
-    if (DATE_LIKE.test(id) || DATE_LIKE.test(name)) {
-      await input.fill('27/3/2026')
-      // A date picker's calendar overlays whatever comes next.
-      await input.press('Escape')
-      continue
-    }
-    await input.fill(value ?? '1')
-  }
-
-  const selects = page.locator('select')
-  const selectCount = await selects.count()
-  for (let i = 0; i < selectCount; i += 1) {
-    const select = selects.nth(i)
-    if (!(await select.isVisible())) continue
-    if (await select.inputValue()) continue
-    const firstReal = await select.evaluate((el) => {
-      const option = [...el.options].find((o) => o.value)
-      return option ? option.value : null
-    })
-    if (firstReal) await select.selectOption(firstReal)
-  }
-}
-
-/** Check the first option of every radio group that has no answer yet. */
-const pickRadios = async (page) => {
-  const names = await page
-    .locator('input[type="radio"]')
-    .evaluateAll((radios) => {
-      const grouped = new Map()
-      for (const radio of radios) {
-        if (!grouped.has(radio.name)) grouped.set(radio.name, [])
-        grouped.get(radio.name).push(radio)
-      }
-      return [...grouped.entries()]
-        .filter(([, group]) => !group.some((radio) => radio.checked))
-        .map(([name]) => name)
-    })
-
-  for (const name of names) {
-    const visible = page
-      .locator(`input[type="radio"][name="${name}"]`)
-      .locator('visible=true')
-    if (await visible.count()) await visible.first().check()
-  }
 }
 
 const target = (page, step) => {
@@ -109,9 +40,6 @@ export const runStep = async (page, step, memory) => {
     case 'goto':
       await page.goto(interpolate(step.path, memory))
       return
-    case 'click':
-      await target(page, step).first().click()
-      return
     case 'fill':
       await target(page, step)
         .first()
@@ -122,12 +50,6 @@ export const runStep = async (page, step, memory) => {
       return
     case 'select':
       await target(page, step).first().selectOption(step.value)
-      return
-    case 'fillPending':
-      await fillPending(page, step.value)
-      return
-    case 'pickRadios':
-      await pickRadios(page)
       return
     case 'continue':
       await clickContinue(page)
@@ -142,27 +64,6 @@ export const runStep = async (page, step, memory) => {
         )
       }
       memory[step.as] = value
-      return
-    }
-    case 'expectHeading': {
-      const count = await page
-        .getByRole('heading', { name: step.text, exact: false })
-        .count()
-      if (count === 0) {
-        throw new TimError(
-          'NOT_FOUND',
-          `Expected the heading "${step.text}" and landed on ${new URL(page.url()).pathname}.`
-        )
-      }
-      return
-    }
-    case 'expectUrl': {
-      if (!new RegExp(step.pattern).test(page.url())) {
-        throw new TimError(
-          'NOT_FOUND',
-          `Expected a URL matching ${step.pattern} and landed on ${new URL(page.url()).pathname}.`
-        )
-      }
       return
     }
     default:

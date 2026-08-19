@@ -43,6 +43,39 @@ describe('makeFrontier', () => {
     ])
   })
 
+  it('does not count a deferred task link against the variant cap', () => {
+    const frontier = makeFrontier({ caps: { variantsPerRoute: 3 } })
+    const task = (to) => ({
+      kind: 'task',
+      screen: 'fe-tasks',
+      routeTemplate: '/notifications/:id/tasks',
+      label: to,
+      value: to,
+      class: 'safe',
+      prefix: []
+    })
+
+    for (const to of ['/a', '/b', '/c', '/d', '/e']) frontier.push(task(to))
+
+    expect(frontier.pending).toBe(5)
+  })
+
+  it('still caps the alternatives of one control', () => {
+    const frontier = makeFrontier({ caps: { variantsPerRoute: 3 } })
+    const task = { ...choice(), kind: 'task', control: undefined, value: '/a' }
+
+    frontier.push(task)
+    for (const value of ['a', 'b', 'c', 'd']) frontier.push(choice({ value }))
+
+    expect(frontier.remaining().map((entry) => entry.why)).toEqual([
+      'unexplored',
+      'unexplored',
+      'unexplored',
+      'unexplored',
+      'variant-cap'
+    ])
+  })
+
   it('refuses a branch that would need a longer replay than the cap allows', () => {
     const frontier = makeFrontier({ caps: { replayDepth: 2 } })
 

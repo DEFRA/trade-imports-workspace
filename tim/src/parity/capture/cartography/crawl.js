@@ -225,19 +225,46 @@ export const crawl = async ({
     return after
   }
 
+  // The transcript a screen is filed under is the walk the capture stage
+  // replays, so a replay that quietly landed somewhere else registers screens
+  // under steps that do not reach them. Losing the branch and saying so is the
+  // honest answer; the alternative is a map that reads as an inventory.
+  const replayLanded = async (screenId) => {
+    const expected = screens.find((entry) => entry.id === screenId)
+    if (!expected) return true
+    const arrived = await observe()
+    if (
+      arrived.routeTemplate === expected.routeTemplate &&
+      arrived.fingerprint === expected.fingerprint
+    ) {
+      return true
+    }
+    warnings.push({
+      screen: screenId,
+      kind: 'replay-diverged',
+      detail: arrived.routeTemplate,
+      why: `replaying the walk that first reached ${screenId} landed on ${arrived.routeTemplate} instead, so this branch was left unmapped`
+    })
+    return false
+  }
+
   const walkFrom = async (prefix, opener, openerScreen) => {
     await driver.reset()
     spent.replays += 1
-    const transcript = [...prefix]
-    for (const step of prefix) await driver.perform(step.action)
+    const transcript = []
+    const from = { id: openerScreen ?? 'frontier' }
+    for (const step of prefix) {
+      await perform(step.action, transcript, { id: step.screen })
+    }
+    if (openerScreen && !(await replayLanded(openerScreen))) return
+
     // A branch that diverges by answering a question differently is still on
     // the screen it diverged from, so the first arrival of a replay is allowed
     // to land somewhere already mapped. Bailing there would explore every
     // branch by walking to it and immediately stopping.
     let resuming = false
     if (opener) {
-      await driver.perform(opener)
-      transcript.push({ screen: openerScreen ?? 'frontier', action: opener })
+      await perform(opener, transcript, from)
       resuming = true
     }
 
@@ -313,11 +340,21 @@ export const crawl = async ({
         })
       }
 
-      if (
-        !chosen ||
-        isTerminal({ outgoing, routeTemplate: view.routeTemplate })
-      ) {
+      // Terminal is a fact about the screen; "nothing left to take" is a fact
+      // about this run. A hub whose every task the crawl has already followed
+      // is not a confirmation page, and writing it into the map as one turns a
+      // revisit into the end of the journey.
+      if (isTerminal({ outgoing, routeTemplate: view.routeTemplate })) {
         if (!known) screen.terminal = true
+        return
+      }
+      if (!chosen) {
+        warnings.push({
+          screen: screen.id,
+          kind: 'nothing-left-to-take',
+          detail: view.routeTemplate,
+          why: 'every way onward from here had already been followed this run, so the branch stops here rather than ending here'
+        })
         return
       }
 

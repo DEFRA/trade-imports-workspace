@@ -45,7 +45,13 @@ const corporaFixture = {
           modelDir: 'workareas/shared/alpha/proto/capture/model',
           htmlDir: 'workareas/shared/alpha/proto/capture/html',
           screensDir: 'workareas/shared/alpha/proto/capture/screens',
-          traceDirs: ['workareas/shared/alpha/proto/test-results']
+          traceDirs: ['workareas/shared/alpha/proto/test-results'],
+          app: {
+            baseURL: 'http://localhost:3010',
+            startPath: '/',
+            startCommand: 'npm run dev',
+            cwd: '~/git/defra/the-prototype'
+          }
         }
       ],
       repos: {
@@ -167,6 +173,14 @@ describe('loadCorpusProfile', () => {
       /\/git\/defra\/the-prototype$/
     )
     expect(profile.repos.prototype.absolutePath).not.toContain(workspace)
+  })
+
+  test('resolves where an application is started from, like any other path', () => {
+    const profile = loadCorpusProfile({ workspaceRoot: workspace })
+    expect(profile.sideById.prototype.app.cwd).toMatch(
+      /\/git\/defra\/the-prototype$/
+    )
+    expect(profile.sideById.frontend.app ?? null).toBeNull()
   })
 
   test('orders every repo path root longest first', () => {

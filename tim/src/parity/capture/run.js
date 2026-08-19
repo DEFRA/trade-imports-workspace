@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { runStreamed } from '../../exec/exec.js'
 import { TimError } from '../../errors.js'
 import { loadRoutePlan, plannedScreens } from './route-plan.js'
+import { ensureApp } from './app-server.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -226,6 +227,8 @@ export const playwrightBin = (root = timRoot) => {
  * @param {string} args.side
  * @param {boolean} [args.headed]
  * @param {string} [args.plan] - Override the route plan path
+ * @param {Function} [args.ensure] - App starter, injected by the tests
+ * @param {(line: string) => void} [args.log] - Progress, on stderr by default
  * @returns {Promise<object>}
  */
 export const runCapture = async ({
@@ -233,7 +236,9 @@ export const runCapture = async ({
   workspaceRoot,
   side,
   headed,
-  plan: planOverride
+  plan: planOverride,
+  ensure = ensureApp,
+  log = (line) => process.stderr.write(`${line}\n`)
 }) => {
   const sideProfile = profile.sideById[side]
   if (!sideProfile) {
@@ -286,11 +291,29 @@ export const runCapture = async ({
     'utf8'
   )
 
-  const { exitCode } = await runStreamed(
-    playwrightBin(),
-    ['test', '--config', configPath],
-    { cwd: timRoot, env: { ...process.env, TIM_CAPTURE_CONTEXT: contextPath } }
-  )
+  // The walk photographs a running application. Left to Playwright, a stopped
+  // one arrives as ERR_CONNECTION_REFUSED on the first goto, which names
+  // neither the application nor how to serve it.
+  const app = await ensure({
+    app: sideProfile.app,
+    baseUrl: plan.app?.baseURL ?? sideProfile.app?.baseURL,
+    label: side,
+    log
+  })
+
+  let exitCode
+  try {
+    ;({ exitCode } = await runStreamed(
+      playwrightBin(),
+      ['test', '--config', configPath],
+      {
+        cwd: timRoot,
+        env: { ...process.env, TIM_CAPTURE_CONTEXT: contextPath }
+      }
+    ))
+  } finally {
+    await app.stop()
+  }
 
   return {
     side,

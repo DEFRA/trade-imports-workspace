@@ -121,6 +121,12 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
 
   const sides = raw.sides.map((side) => ({
     ...side,
+    // Where an application is started from is a path like any other in this
+    // file, written the way a person writes one. Resolving it here keeps the
+    // only place that expands ~ and joins the workspace root in one function.
+    app: side.app
+      ? { ...side.app, cwd: absolutise(workspaceRoot, side.app.cwd) }
+      : (side.app ?? null),
     captureDir: absolutise(workspaceRoot, side.captureDir),
     modelDir: absolutise(workspaceRoot, side.modelDir),
     htmlDir: absolutise(workspaceRoot, side.htmlDir),

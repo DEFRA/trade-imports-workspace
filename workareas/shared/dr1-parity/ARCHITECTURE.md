@@ -174,11 +174,12 @@ missing control would sit. `insertion.js` derives that position from the two
 page models and only needs the missing control's name and label — which an
 agent now states directly. It is an adapter, not a rewrite.
 
-**Not deleted, and this needs your call:** `compare/deltas/` itself. The DR2.1
-report cites it — `captureCitationRoots` in `corpora.json` maps
-`compare/deltas/` to a capture kind. Deleting the data would break citations in
-a report you have already ruled from. My recommendation is to delete the code
-and keep the data, and let the DR2.1 corpus keep its own evidence.
+**`compare/deltas/` — ruled: delete the data too.** The concern was that the
+DR2.1 report cites it through `captureCitationRoots`. Checked before deleting:
+**zero** of the corpus's 819 citations resolve through `compare/deltas/`, so
+the entry was defensive and never exercised. Nothing in the existing report
+lost a reference. `counts` reports `deltas: null` rather than pretending, and
+all ten invariants still run.
 
 ## The uncommitted work in the tree splits cleanly
 
@@ -220,15 +221,30 @@ deliberately.
 
 ## Order of work
 
-1. Commit the surviving half of the working tree. *(no decisions needed)*
-2. Delete what the table names, in one commit.
+1. ~~Commit the surviving half of the working tree.~~ **Done** — `5144389`.
+   Three defects surfaced while proving it: an invalid `TimError` code on the
+   one path that reports a server that never came up, `addressOf` silently
+   accepting `localhost:3010` as port 80 on no host, and a test that froze its
+   clock while advancing nothing, which spun the whole suite without ever
+   yielding to a timer.
+2. ~~Delete what the table names, in one commit.~~ **Done** — `e36c4b6`,
+   11,541 lines out. `tim parity capture` now runs a side's own specs from
+   `<workarea>/specs/<side>/`. Checked before deleting the delta data: zero
+   citations in the corpus resolve through `compare/deltas/`, so the existing
+   report loses no reference.
 3. Build the spec stage for **one slice only** — origin-and-reason: small,
    self-contained, and the retired harness has a spec for the DR2.1 equivalent
-   to read. Prove it end to end before writing a second.
-4. Add the coverage check.
+   to read. Prove it end to end before writing a second. **Blocked on the run
+   id**, below: the specs live in the corpus's workarea, and the corpus needs
+   a name before its paths exist.
+4. ~~Add the coverage check.~~ **Done** — `1b6459b`. `tim parity coverage`,
+   with the enumerator as a per-corpus module the way `pairs.js` is. Its first
+   real run found `dr21-consignment-add-address`, a screen the old harness
+   never photographed and nobody noticed.
 5. **Stop. Show you the screen counts for both sides**, before a single finding
-   is authored. That is where we learn whether DR1 is a small comparison or a
-   large one, and it changes everything downstream.
+   is authored. The static half of this is already done — see
+   [`SIZING.md`](SIZING.md). DR1 is about 46 prototype screens against DR2.1's
+   70, and germinal products alone retire five of the previous run's findings.
 
 ## Three things I am not deciding
 

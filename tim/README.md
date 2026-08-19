@@ -88,6 +88,36 @@ Every command supports:
 - `--verbose` — structured logs to stderr
 - `--workspace <path>` — override the resolved workspace root
 
+### `tim parity` — findings reports
+
+Builds, checks and renders a backlog of comparison findings as a decision
+surface. The corpus is data (`tools/parity/corpora.json`), and `sides[]` is a
+list rather than a pair, so a comparison is not stuck at two sources.
+
+```bash
+tim parity normalise EUDPA-328 --write   # Pass 0: repo-relative paths, split screens
+tim parity meta EUDPA-328 --write        # pins, captures, every derived count
+tim parity citations EUDPA-328 --write   # extract citations[]; queue the ambiguous
+tim parity evidence EUDPA-328 --write    # permalinks, blob ids, snippets, anchor checks
+tim parity report EUDPA-328              # render report/index.html
+tim parity serve EUDPA-328               # serve it at full resolution
+tim parity check EUDPA-328 --pass a      # the ten migration invariants
+tim parity counts EUDPA-328 --json       # every number the masthead prints
+```
+
+Writers use the setters rather than editing JSON, so a fan-out worker cannot
+reformat the file or touch a second increment:
+
+```bash
+tim parity set-slot EUDPA-328 inc-037 frontend --pass a --file slot.txt
+tim parity set-decision EUDPA-328 inc-055 --question "…" --source authored
+tim parity set-citation EUDPA-328 inc-096 c9 --repo prototype --path app/routes.js
+```
+
+Every subcommand takes a positional run id — there is no default, because a
+report that silently rendered the wrong corpus would be worse than one that
+refused.
+
 ### Bypassing the interactive menu
 
 The menu only opens when stdout is a TTY and the user has not asked for plain text. In any of the following situations tim falls back to printing `--help` to stdout, so pipes, CI and skill scripts keep working unchanged:

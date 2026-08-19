@@ -24,6 +24,9 @@ artifacts that downstream `tools/` scripts consume.
 | `understanding-check` | `references/ANALYST.md` | Per-repo diff analyst — emits `analysis.{repo}.json` (one per repo, parallel) |
 | `understanding-check` | `references/QUESTION_GENERATOR.md` | One-shot — combines all per-repo analyses into `questions.json` |
 | `understanding-check` | `references/SCORER.md` | Per-question scorer — must quote the rubric clause that fired (one per question, parallel) |
+| `parity` | `references/COPY_EDITOR.md` | Per-domain plain-English rewrite of finding prose, under word budgets and the quote/number conservation invariants |
+| `parity` | `references/CLAIM_VERIFIER.md` | Per-domain adversarial read of that rewrite — never the domain it wrote |
+| `parity` | `references/EVIDENCE_CURATOR.md` | Per-domain choice of frame kind and anchors, including the hand-authored insertion anchors on one-sided findings |
 
 Cursor reads `.claude/skills/` natively (per
 <https://cursor.com/docs/context/skills>). It has no parallel subagent

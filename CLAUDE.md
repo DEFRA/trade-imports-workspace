@@ -41,6 +41,8 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `understanding-check` | "interview EUDPA-X", "check understanding EUDPA-X", "understanding-check EUDPA-X" | Pre-merge author-understanding check on an AI-assisted PR. |
 | `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on a frontend repo (today `trade-imports-animals-frontend`, src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout. |
 
+| `parity` | "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-", "migrate parity EUDPA-", "recapture the parity corpus" | Build, check and adjudicate a findings report for a comparison corpus. Renders a findings backlog as a decision surface with the code and the pictures in reach; migrates finding prose into structured slots under ten invariants. Hands `status`/`gate`/`dependsOn` to `journey-builder`. |
+
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 
 ## Repo map
@@ -74,14 +76,26 @@ no shell-out to `gh`/`jq`), behaviourally tested, deterministic
 `--json` output for skill use. Dual-runs with the bash; pick whichever.
 
 ```bash
-cd tim && npm i -g .   # tim on PATH (or npm link for live edits)
-tim --help              # full surface
-tim workspace status    # equivalent of `make status` + jq-friendly --json
-tim docker dev          # equivalent of `scripts/stack/run-stack.sh -d`
-tim jira ticket EUDPA-X # equivalent of tools/jira/ticket.sh
-tim auth                # equivalent of tools/auth.sh
-tim github prs EUDPA-X  # equivalent of tools/github/prs.sh
+make tim-link             # tim on PATH, pointing at THIS checkout
+tim --help                # full surface
+tim workspace status      # equivalent of `make status` + jq-friendly --json
+tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
+tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
+tim auth                  # equivalent of tools/auth.sh
+tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
+tim parity report EUDPA-X # render a findings report; see the parity skill
 ```
+
+`make tim-install`, `tim-test`, `tim-lint` and `tim-format` run the
+sub-project's own scripts. They exist because `tim/` is a sub-project of
+this repo rather than one of the cloned repos, so `make install` and
+`make test` skip it — and because the guard hook redirects
+`npm --prefix <workspace>/tim install` to "cd to the real path and run
+there", which a make recipe is the only place to do.
+
+If `tim` behaves as though it is looking at a different workspace, check
+`readlink -f "$(which tim)"` — a `tim` linked from an older clone resolves
+that clone's `tools/` and `workareas/`.
 
 See [`tim/CLAUDE.md`](tim/CLAUDE.md) for rails (test-on-input/output,
 library-first, GDS plain English, `__mocks__`-style network-boundary

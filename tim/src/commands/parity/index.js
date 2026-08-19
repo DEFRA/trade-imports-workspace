@@ -11,6 +11,7 @@ import { serveReport } from '../../parity/render/serve.js'
 import { runCheck } from '../../parity/check.js'
 import { buildCorpusMeta } from '../../parity/meta.js'
 import { runSplitSentinels } from '../../parity/split-sentinels.js'
+import { runManifest } from '../../parity/manifest.js'
 import {
   setSlot,
   setSlots,
@@ -300,6 +301,31 @@ export const register = (program, { timVersion }) => {
           }),
         renderText: (r) =>
           `${r.id}.finding.${r.slot} set — ${r.words} words${r.pass ? `, pass ${r.pass.toUpperCase()}` : ''}.`,
+        timVersion
+      })
+    )
+
+  parity
+    .command('manifest <runId>')
+    .description(
+      'Build the capture manifest for one side, so the report reads an index rather than globbing a directory'
+    )
+    .requiredOption('--side <id>', 'Which side to index')
+    .requiredOption('--sha <sha>', 'The commit the application was at')
+    .option('--dsf <n>', 'Device scale factor the capture used')
+    .option('--write', 'Write the manifest')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runManifest({
+            profile,
+            side: opts.side,
+            sha: opts.sha,
+            deviceScaleFactor: opts.dsf ? Number(opts.dsf) : undefined,
+            write: opts.write
+          }),
+        renderText: (r) =>
+          `${r.screens} screens indexed for ${r.side}.\n${r.written ? `Written to ${r.path}` : 'Dry run — pass --write to apply.'}`,
         timVersion
       })
     )

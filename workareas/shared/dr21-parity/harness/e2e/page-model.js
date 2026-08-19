@@ -257,7 +257,13 @@ async function capture (page, name) {
   fs.writeFileSync(path.join(outDir('html'), `${name}.html`), await page.content())
   await page.screenshot({
     path: path.join(outDir('screens'), `${name}.png`),
-    fullPage: true
+    fullPage: true,
+    // Two runs at the same commit have to produce the same bytes, or the
+    // report's changed-since-curation ribbon fires on every rebuild and stops
+    // being read.
+    animations: 'disabled',
+    caret: 'hide',
+    scale: 'device'
   })
   return model
 }

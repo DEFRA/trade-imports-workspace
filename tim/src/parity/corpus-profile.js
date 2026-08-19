@@ -106,12 +106,29 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
     ])
   )
 
+  // Capture ids are immutable: a capture at a new commit writes a new
+  // directory rather than overwriting the old one, because the old evidence is
+  // the record of what a ruling was made against. So the directory name
+  // carries a sha — and that sha comes from `captures`, which is the one place
+  // it is recorded, rather than being repeated in a path somebody has to
+  // remember to edit after every capture.
+  const captureSha = (sideId) => raw.captures?.[sideId]?.sha ?? null
+  const evidenceDir = (side, leaf) => {
+    const sha = captureSha(side.id)
+    if (!side.evidenceRoot || !sha) return null
+    return join(workspaceRoot, side.evidenceRoot, `${side.id}@${sha}`, leaf)
+  }
+
   const sides = raw.sides.map((side) => ({
     ...side,
     captureDir: absolutise(workspaceRoot, side.captureDir),
     modelDir: absolutise(workspaceRoot, side.modelDir),
     htmlDir: absolutise(workspaceRoot, side.htmlDir),
-    screensDir: absolutise(workspaceRoot, side.screensDir),
+    screensDir:
+      evidenceDir(side, 'page') ?? absolutise(workspaceRoot, side.screensDir),
+    manifest:
+      evidenceDir(side, 'manifest.json') ??
+      absolutise(workspaceRoot, side.manifest),
     traceDirs: (side.traceDirs ?? []).map((dir) =>
       absolutise(workspaceRoot, dir)
     )

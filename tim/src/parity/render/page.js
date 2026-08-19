@@ -237,6 +237,8 @@ export const renderPage = ({
   sides,
   runId,
   drift,
+  target,
+  inlining,
   stamp
 }) => {
   const domains = [...new Set(findings.map((item) => item.domain))].sort()
@@ -272,6 +274,11 @@ export const renderPage = ({
       one is how it was checked. Nothing on this page is typed in: every number is counted
       from the backlog at build time.
     </p>
+    ${
+      target === 'artifact'
+        ? `<p class="masthead__note">This is the shareable copy. It carries every element crop inside the file and links the full-page screenshots, which live on the machine that built it — so the evidence it does not carry is named rather than quietly dropped. The ruling controls write to a backlog this copy cannot reach; rule from the local build.</p>`
+        : ''
+    }
   </header>
 
   <div class="figures">
@@ -355,6 +362,11 @@ export const renderPage = ({
       .join(' · ')}</span>
     <span>join: ${joinReport.matched} of ${joinReport.increments} increments matched a finding by title; an ordinal join would have matched ${joinReport.ordinalAgreement}.</span>
     <span>generated ${esc(stamp.generatedAt)}</span>
+    ${
+      inlining
+        ? `<span>artifact copy: ${inlining.inlined} element crops carried inside this file as WebP (${(inlining.bytes / 1024 / 1024).toFixed(1)} MB); ${inlining.linked} full-page screenshots left where they are and linked. Nothing was downsized to fit.</span>`
+        : ''
+    }
     ${stamp.coverage
       .map(
         (c) =>

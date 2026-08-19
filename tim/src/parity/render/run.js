@@ -15,6 +15,7 @@ import { sha256File, readJsonFile } from '../io.js'
 import { loadPairs, indexPairs, screenPairsFor } from '../assets/pairs.js'
 import { resolveRow, imageCoverage, anchorsNamedIn } from '../assets/resolve.js'
 import { sealsFrom, diffSeals, readSeals, writeSeals } from '../seals.js'
+import { inlineAssets } from './artifact.js'
 import { renderPage } from './page.js'
 
 const ASSET_DIR = 'assets'
@@ -51,7 +52,14 @@ const proseOf = (item) =>
     .filter(Boolean)
     .join('\n')
 
-const attachAssets = ({ items, sides, pairIndex, assetDir, anchors }) => {
+const attachAssets = ({
+  items,
+  sides,
+  pairIndex,
+  assetDir,
+  anchors,
+  inline
+}) => {
   for (const item of items) {
     const rows = screenPairsFor({ screens: item.screens, pairIndex, sides })
     const frames = item.visual.length ? item.visual : [null]
@@ -74,7 +82,11 @@ const attachAssets = ({ items, sides, pairIndex, assetDir, anchors }) => {
             asset.path &&
             (asset.state === 'crop' || asset.state === 'page')
           ) {
-            asset.href = `${ASSET_DIR}/${placeAsset(asset.path, assetDir)}`
+            // The artifact target inlines the crops afterwards and leaves the
+            // page shots behind, so it never wants a copied asset directory.
+            if (!inline) {
+              asset.href = `${ASSET_DIR}/${placeAsset(asset.path, assetDir)}`
+            }
             // Hashed unconditionally, because the seal store compares every
             // picture on every rebuild, not only hand-curated ones.
             asset.sha256 = sha256File(asset.path)
@@ -150,18 +162,23 @@ export const runReport = ({
     })
   )
 
+  const artifact = target === 'artifact'
+
   attachAssets({
     items: renderable,
     sides: profile.sides,
     pairIndex,
     assetDir,
-    anchors
+    anchors,
+    inline: artifact
   })
 
   const coverage = imageCoverage(renderable, profile.sides)
 
   // Drift is settled before the page is built, so a moved picture carries its
-  // ribbon in the same render that reports it in the panel.
+  // ribbon in the same render that reports it in the panel. Sealed against the
+  // resolved assets rather than the emitted ones, so the two targets agree
+  // about what the reader has seen.
   const current = sealsFrom(renderable, profile.sides)
   const sealed = readSeals(profile.paths.seals)
   const found = diffSeals({ sealed, current })
@@ -170,7 +187,15 @@ export const runReport = ({
   // swapping a picture without saying so.
   const drift = reseal ? [] : found
   markDrift({ items: renderable, drift })
-  writeSeals({ path: profile.paths.seals, sealed, current, reseal })
+  // The artifact is a second emitter of the same report, not a second report:
+  // shipping a copy must not change what the local build says you have seen.
+  if (!artifact) {
+    writeSeals({ path: profile.paths.seals, sealed, current, reseal })
+  }
+
+  const inlining = artifact
+    ? inlineAssets({ items: renderable, sides: profile.sides })
+    : null
 
   const backlogStat = statSync(profile.paths.backlog)
   const html = renderPage({
@@ -184,6 +209,8 @@ export const runReport = ({
     sides: profile.sides,
     runId: profile.runId,
     drift,
+    target,
+    inlining,
     stamp: {
       timVersion: process.env.npm_package_version ?? 'dev',
       backlogSha: sha256File(profile.paths.backlog),
@@ -233,6 +260,7 @@ export const runReport = ({
       withdrawn: corpus.withdrawn.length
     },
     imageCoverage: coverage,
+    inlining,
     drift: found,
     warnings,
     exitNonZero: Boolean(requireImages && gap.length)

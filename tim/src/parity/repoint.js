@@ -47,8 +47,9 @@ export const compareCaptures = ({ from, to }) => {
     const now = after.get(screen) ?? null
     if (!was) return { screen, verdict: 'gained', was, now }
     if (!now) return { screen, verdict: 'lost', was, now }
-    if (was.sha256 === now.sha256)
+    if (was.sha256 === now.sha256) {
       return { screen, verdict: 'identical', was, now }
+    }
     return { screen, verdict: 'changed', was, now }
   })
 }

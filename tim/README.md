@@ -100,6 +100,7 @@ tim parity meta EUDPA-328 --write        # pins, captures, every derived count
 tim parity citations EUDPA-328 --write   # extract citations[]; queue the ambiguous
 tim parity evidence EUDPA-328 --write    # permalinks, blob ids, snippets, anchor checks
 tim parity report EUDPA-328              # render report/index.html
+tim parity report EUDPA-328 --target artifact   # one self-contained file to share
 tim parity serve EUDPA-328               # serve it at full resolution
 tim parity check EUDPA-328 --pass a      # the ten migration invariants
 tim parity counts EUDPA-328 --json       # every number the masthead prints

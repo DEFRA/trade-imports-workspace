@@ -155,6 +155,16 @@ code.ref { color: var(--ink-muted); }
   color: var(--ink-muted);
 }
 
+.masthead__note {
+  margin: 1rem 0 0;
+  max-width: 46rem;
+  padding: .7rem .9rem;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  font-size: .9rem;
+  color: var(--ink-muted);
+}
+
 /* Flex rather than grid: a grid leaves the remainder of the last row empty,
    and an empty cell in a row of numbers reads as a number that failed to
    render. Flex lets the last row's cells grow to fill it. */
@@ -543,6 +553,10 @@ code.ref { color: var(--ink-muted); }
 
 .plate--absent { display: flex; flex-direction: column; gap: .5rem; color: var(--ink-muted); }
 .plate--absent code { display: block; overflow-x: auto; white-space: pre; padding: .5rem .6rem; }
+
+.plate--elsewhere { display: flex; flex-direction: column; gap: .5rem; color: var(--ink-muted); }
+.plate--elsewhere strong { color: var(--ink); }
+.plate--elsewhere code { display: block; overflow-x: auto; white-space: pre; font-size: .7rem; padding: .5rem .6rem; }
 
 /* --- sources -------------------------------------------------------- */
 

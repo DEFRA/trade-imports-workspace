@@ -131,6 +131,19 @@ export const shot = ({ asset, side }) => {
 </div>`
   }
 
+  // The artifact target carries element crops and not full pages. Saying so
+  // beats shipping a downsized page shot nobody can read, and beats leaving
+  // the column empty — which would claim there is nothing on this side.
+  if (asset.state === 'page-link') {
+    return `<div class="shot">${head}
+  <div class="plate plate--elsewhere">
+    <strong>Full page, not carried here</strong>
+    <span>This screen has a full-page screenshot. It is 1 to 3 MB and there are dozens of them, so this copy of the report links to it rather than shrinking it to something unreadable.</span>
+    <a href="${esc(asset.href)}"><code>${esc(asset.path)}</code></a>
+  </div>
+</div>`
+  }
+
   if (asset.state === 'model') {
     return `<div class="shot">${head}
   <div class="plate">

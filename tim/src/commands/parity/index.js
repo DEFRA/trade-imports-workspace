@@ -288,6 +288,12 @@ export const register = (program, { timVersion }) => {
             ...result.imageCoverage.map(
               (c) => `images: ${c.side} ${c.have}/${c.want} cited screens`
             ),
+            ...(result.inlining
+              ? [
+                  `carried inside the file: ${result.inlining.inlined} element crops as WebP, ${(result.inlining.bytes / 1024 / 1024).toFixed(1)} MB.`,
+                  `left where they are and linked: ${result.inlining.linked} full-page screenshots.`
+                ]
+              : []),
             ...result.warnings.map((w) => `warning: ${w}`)
           ].join('\n'),
         timVersion

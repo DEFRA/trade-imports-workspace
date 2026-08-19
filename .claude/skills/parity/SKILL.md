@@ -59,6 +59,14 @@ tim parity report EUDPA-328
 tim parity serve EUDPA-328          # then open http://127.0.0.1:4328/
 ```
 
+`--target artifact` writes `report/artifact.html`, one self-contained file to
+send someone. It is a second emitter of the same generator, not a reduced tier:
+the element crops travel inside it as WebP and the full-page screenshots become
+a stated local reference, so what it does not carry is named rather than
+quietly dropped. Nothing is ever downsized to fit a channel. It does not write
+to the seal store — shipping a copy must not change what the local build says
+you have seen.
+
 `report` writes `workareas/journey-builder/<run>/report/index.html` plus
 `report/assets/`, hardlinking the screenshots rather than copying 20 MB. It
 prints image coverage per side; `--require-images` turns a gap into a non-zero

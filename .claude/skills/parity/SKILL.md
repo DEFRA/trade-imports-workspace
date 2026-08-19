@@ -1,14 +1,21 @@
 ---
 name: parity
-description: 'Build, check and adjudicate a findings report for a comparison corpus — today DR2.1 (EUDPA-328), 97 findings comparing the live-animals frontend against the Design release 2.1 prototype. Four modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE maps an application to work out which screens it has, then re-shoots the evidence at the pinned commits (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
+description: 'Build, check and adjudicate a findings report for a comparison corpus. Two corpora today: `dr21` (run EUDPA-328, 97 findings against Design release 2.1, a design still in flux) and `dr1` (run EUDPA-328-DR1, the same live-animals frontend against the signed-off Design release 1). Four modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE re-shoots a side''s evidence by running that side''s own Playwright specs, then checks the result against a static enumeration of its screens (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
 ---
 
 Render a backlog of findings as a decision surface, and help rule on it.
 
-The corpus is data. Today it is one comparison — a frontend against a design
-prototype — but nothing here counts to two: `tools/parity/corpora.json` holds a
-`sides[]` list, and the requirements side will not always be a prototype. Read
-the corpus profile; do not assume the shape.
+The corpus is data. There are two of them — `dr21` and `dr1`, both comparing
+the same frontend against a design prototype — and nothing here counts to two
+inside one comparison either: `tools/parity/corpora.json` holds a `sides[]`
+list, and the requirements side will not always be a prototype. Read the corpus
+profile; do not assume the shape.
+
+Which corpus you are in changes more than the paths. `dr21` compares against a
+design still in flux, so a finding there has to earn its place. `dr1` compares
+against a signed-off definition, so a finding there is born as accepted work.
+See "Bands are per-corpus data" below before you write, rule on or render
+anything.
 
 ## Path conventions
 
@@ -47,6 +54,30 @@ report's masthead prints. Nothing on the page is typed in.
 pass and the language pass lost nothing. Never edit it, never delete it, never
 reword it. The renderer stops reading it once a finding is migrated; the checker
 never stops.
+
+## Bands are per-corpus data
+
+How a comparison sorts its findings is a property of that comparison, so the
+taxonomy lives in `corpora.json` under the corpus's `bands[]` — an ordered list
+of `{ id, label, blurb }`, and the order is render order. It used to be
+hardcoded in `render/page.js`; a corpus that declares no bands still falls back
+to those three through `DEFAULT_BANDS` in `tim/src/parity/corpus-profile.js`, so
+an older corpus renders exactly as it did.
+
+- **`dr21`** keeps `frontend-only` / `needs-design-decision` / `needs-backend`.
+  Those describe a negotiation: 97 findings against a design still in flux,
+  where the middle band is what the report exists for. **Do not reword them** —
+  49 rulings were made under that wording.
+- **`dr1`** has `frontend-work` / `needs-backend` / `disputed`. DR1 is signed
+  off, so a difference is a fault in the frontend and the fix is in the
+  frontend. There is no band for "we might not want this", because that question
+  is closed. `disputed` means the finding's own correctness is in doubt, or DR1
+  contradicts itself — never that the change is unwanted.
+
+Adding or changing a band is a data edit in `corpora.json`, not a code change.
+A finding whose `band` matches no declared band is not silently dropped: the
+renderer collects it under a *Not in a band* section, under its raw name, which
+is how a typo shows up.
 
 ## Modes
 
@@ -111,6 +142,15 @@ these and accept them", which is a person's statement, not a build step.
 
 Triggers: "rule the parity decisions", "walk parity EUDPA-X".
 
+**WALK is a negotiation, and `dr1` is not one.** Accept, reject and defer are
+answers to "do we want this", which is a live question against a design still
+being drawn and a settled one against a design that has been signed off. On
+`dr21` the walk is the point of the report. On `dr1` a finding is accepted the
+moment it is written and verified, and the only thing that can hold it up is
+doubt about whether the finding is *correct* — which is the `disputed` band, not
+a ruling. Do not run a walk over `dr1` looking for desirability decisions;
+there are none to make.
+
 The report is the presentation surface. Open it, filter to *Not yet ruled*, and
 read the decision block at the top of each gated card: one question, the options
 where the prose names them, what stays blocked, and the exact argument string.
@@ -168,26 +208,36 @@ the writing, [CLAIM_VERIFIER](references/CLAIM_VERIFIER.md) for the adversarial
 read afterwards, [EVIDENCE_CURATOR](references/EVIDENCE_CURATOR.md) for the
 pictures. **A different worker verifies than wrote.**
 
-### CAPTURE — map an application, then re-shoot the evidence
+### CAPTURE — re-shoot the evidence, then check you got everything
 
 Triggers: "recapture the parity corpus".
 
 **These are requirements-gathering tools, not tests.** They use Playwright
 because Playwright drives browsers. Nothing here asserts that an application is
-correct. They map an application and record what it currently does, so it can
-be compared against a signed-off design. That is why they live in the workspace
-and not in either application's repo.
+correct. They record what an application currently does, so it can be compared
+against a signed-off design. That is why they live in the workspace and not in
+either application's repo.
 
-For the same reason nothing here may lean on an application's own journey
-helpers — the frontend's `fit/live-animals-journey.js`, the prototype's
-`journey-demo/e2e/journey.js`. Neither is maintained. A harness built on an
-unmaintained suite breaks the first time somebody refactors a suite nobody
-runs, and it makes the design comparison a hostage to another repo's test code.
-Nothing under `tim/src/parity/capture/` imports an application.
+For the same reason **nothing under `tim/` may import an application** — not the
+frontend's `fit/` helpers, not the prototype's `journey-demo/e2e/journey.js`.
+Neither is maintained. A harness built on an unmaintained suite breaks the first
+time somebody refactors a suite nobody runs, and it makes the design comparison
+a hostage to another repo's test code. The specs re-derive widget handling
+themselves, in the spec, where it is visible.
 
-That leaves the question the helpers used to answer: which screens does this
-application have, and how do you reach them? A discovery stage answers it. So
-capture is two stages, and the second refuses to start without the first.
+There used to be a discovery stage — a crawler that worked out which screens an
+application had and how to reach them, a route-plan vocabulary and a walker that
+replayed it. All of it is deleted: 11,541 lines. **Agents write the navigation
+now, as plain Playwright specs, and deterministic code takes the pictures.**
+Any note, plan or handover you meet that talks about a cartographer, a route
+plan, a frontier, a value ladder or a hints file is describing something that no
+longer exists. `tim parity map`, `seed-anchors` and `insertion-anchors` are gone
+with it.
+
+Two commands answer "did we photograph everything", from opposite ends:
+`capture` records what a spec could actually reach, and `coverage` says what the
+side's own source claims it has. Two more sit around them: `anchors` says which
+control each finding is about, and `ingest` assembles the backlog.
 
 Before either, read `.corpus-meta.json`: `pins` is where the citations resolve
 and `captures` is where the pixels came from, and the report says so on the page
@@ -197,88 +247,139 @@ Capture ids are immutable. A capture at a new commit writes a new directory; it
 never overwrites the old one, because the old evidence is the record of what a
 ruling was made against.
 
-**Stage 1 — map the application.**
+**Take the pictures.**
 
 ```
-tim parity map EUDPA-328 --side frontend --write
+tim parity capture EUDPA-328-DR1 --side frontend
 ```
 
-The cartographer opens the side at the `app.baseURL` and `app.startPath` its
-corpus entry names, and crawls with no knowledge of the journey: it reads each
-rendered page, fills what the page itself tells it how to fill, takes one
-forward action, and queues every choice it did not take. Values come off a
-five-rung ladder — seeded from the hints file, enumerated from the control,
-mined from the page's own hint or error message, typed, generic — and the rung
-is recorded against every field, so a value in the map carries its provenance
-instead of reading as fact.
+It runs that side's own hand-written Playwright specs, from
+`<workarea>/specs/<side>/`. The path is computed from the corpus's `workarea`;
+a side does not name it, because a second copy in `corpora.json` would be a
+second source of truth that nothing reads. It starts the application itself when
+nothing is already listening on the side's `app.baseURL`, and stops only what it
+started — so with the workspace stack up on the same port it photographs the
+container instead, which is why the `dr1` frontend is on 3005 rather than 3000.
 
-`--write` writes four things, three of them under the corpus workarea's
-`cartography/`:
+On every screen a spec names it takes **four things in one page visit** — a
+full-page screenshot, an element crop per anchor, a page model and the rendered
+HTML — so all four are of the same render. It writes `manifest.json` into the
+capture directory itself.
 
-- `map.<side>.json` — the screens, the route to each, the frontier of choices
-  never taken, and its own coverage at the top. A partial map read as a complete
-  one is the failure nobody catches, so the map states what it covers.
-- `hints.<side>.json` — one empty entry per field nothing could fill, with what
-  the application said about it. Put a value in `fields{}` and the next run
-  takes it at rung 1. Knowledge lands in the corpus as data, never in the
-  crawler as a special case.
-- `<side>.routes.json` — the route plan the capture stage walks, derived from
-  the map rather than authored, so nobody keeps a list of screens by hand.
-- one page model per screen, into the side's `modelDir`, so the differ reads
-  what it already reads.
+The rendered HTML lands in the side's `htmlDir`. Every corpus profile has named
+that directory from the start and nothing ever wrote it until August 2026, so a
+finding could be argued from a picture and from a model but never from the
+markup. It can be now, and the markup is the cheapest thing to be certain about.
 
-`--check` exits non-zero while anything is unexplored, blocked or unfilled.
-`--budget-steps` and `--budget-minutes` keep a first run short, `--headed` lets
-you watch it, and `--data-state` records the state the data was in: an empty
-dashboard and one holding three notifications are both legitimate and are not
-the same screen.
+`--specs <path>` runs specs from somewhere other than the side's own directory.
+`--headed` shows the browser.
 
-The route plan walks one session end to end, so a screen reachable only from a
-fresh session, or one behind a widget the plan has no word for, cannot be said
-in that form. Those are named rather than written as a walk that would
-photograph the wrong page. The command prints `N of M screens can be walked
-again by the capture stage` and lists the rest with the reason. Read that line:
-it is the coverage of the capture, not of the map.
+**Captures cannot run in parallel.** One server, one session, `workers: 1`. Fan
+out the authoring of specs; serialise the run.
 
-**Stage 2 — capture.**
+**Then check you got everything.**
 
 ```
-tim parity capture EUDPA-328 --side frontend
+tim parity coverage EUDPA-328-DR1 [--side frontend] [--strict]
 ```
 
-It walks the plan and, on every screen it reaches, takes a full-page
-screenshot, an element crop per anchor and a page model — the model in the same
-page visit as the picture, so both are of the same render. It writes
-`manifest.json` into the capture directory itself. A screen it could not reach
-is recorded as a stated absence, never left as a broken image. With no plan on
-disk it stops and names the path the map would have written.
+Coverage enumerates a side's screens **statically from its own source**, through
+the `enumeratorModule` its corpus entry names, and diffs that list against the
+manifest. It is the honest replacement for the crawler's frontier, and it is
+honest for a structural reason: **it cannot be wrong about a screen it never
+reached, because it never has to reach one.** A crawler's coverage number was
+only ever a claim about how far the crawler got.
 
-`--plan` walks a plan from somewhere else. `--headed` shows the browser.
+`--strict` turns a missing screen into a non-zero exit. Without it the command
+just states the position, which reads like:
 
-Playwright lives in tim. Until it is installed both commands stop with a typed
+```
+frontend: 33 of 33 pages captured, plus 0 states of them.
+prototype: 23 of 23 pages captured, plus 17 states of them.
+```
+
+A screen that turns out to be genuinely unreachable is a **stated absence**, not
+a failure. Say so, and leave it uncaptured. A wrong picture is worse than none.
+
+**Say which controls to crop.**
+
+```
+tim parity anchors EUDPA-328-DR1 --side frontend --write
+```
+
+`anchors` derives `anchors.<side>.json`, under the side's `evidenceRoot`, from
+the backlog — specifically from each increment's `controls` array, which the
+agent authoring the finding fills in by naming the control the finding is about.
+It replaces `seed-anchors`, which derived the same file from a compare-delta
+format that no longer exists. The capture loads the file for its own side, so
+adding element evidence to a finding is a data change and never a spec edit.
+
+Without `--write` it reports and writes nothing. Either way it names **every
+increment that named no control** — "N findings name no control, so they fall
+back to a whole-page shot", with the ids. That report is the point of the
+command as much as the file is: **a whole-page shot may not stand in for a
+finding about one control**, so an empty `controls` array has to be a stated
+choice rather than an omission nobody sees.
+
+Run it before the capture, not after: a side captured before its anchors exist
+gets full-page shots only.
+
+**Assemble the backlog.**
+
+```
+tim parity ingest EUDPA-328-DR1 [--replace] [--dry-run]
+```
+
+`ingest` builds `backlog.json` from the one-file-per-finding JSON under
+`<workarea>/findings/`. Read
+[`FINDING-CONTRACT.md`](../../../workareas/shared/dr1-parity/FINDING-CONTRACT.md)
+for that file's shape, and for its two sharp edges:
+
+- **`detail` is composed at the first ingest and frozen from that moment.** It
+  is assembled from the four prose slots the first time ingest sees a finding,
+  and a re-ingest that would change an existing `detail` refuses and names the
+  increment. So the slots must be right *before* the first ingest; afterwards
+  they move only through `tim parity set-slot`.
+- **The increment id is bound to the finding's file name.** Rename the file and
+  the id changes, which reads as "old finding struck, new finding added" and
+  orphans every ruling and citation attached to the old id.
+
+`--replace` rebuilds from scratch and refuses while any increment holds a
+ruling. `--dry-run` reports what it would write and writes nothing.
+
+Playwright lives in tim. Until it is installed `capture` stops with a typed
 `MISSING_DEP`; the fix is `npm install` in `tim/` then `npx playwright install
 chromium`, and Sam has to run it because the guard hook blocks `npm install`
 from an agent.
 
+On a failed run the directory survives under `tim/.parity-runs/`. Read
+`test-results/*/error-context.md` in it: it holds a full accessibility snapshot
+of the failing page, which is the fastest way to see what state the run was
+actually in.
+
 The full sequence, in order:
 
 ```
-tim parity map EUDPA-328 --side frontend --write
-tim parity map EUDPA-328 --side prototype --write
-tim parity seed-anchors EUDPA-328 --write            # which controls get cropped
-tim parity insertion-anchors EUDPA-328 --write       # where a one-sided control would go
-tim parity capture EUDPA-328 --side frontend
-tim parity capture EUDPA-328 --side prototype
-tim parity repoint EUDPA-328 --side <side> --to <sha>   # preview, old beside new
-tim parity repoint EUDPA-328 --side <side> --to <sha> --accept
-tim parity meta EUDPA-328 --write
-tim parity report EUDPA-328
+tim parity capture EUDPA-328-DR1 --side frontend
+tim parity capture EUDPA-328-DR1 --side prototype
+tim parity coverage EUDPA-328-DR1 --strict
+tim parity ingest EUDPA-328-DR1
+tim parity anchors EUDPA-328-DR1 --side frontend --write
+tim parity anchors EUDPA-328-DR1 --side prototype --write
+tim parity capture EUDPA-328-DR1 --side frontend        # re-shoot, now with crops
+tim parity capture EUDPA-328-DR1 --side prototype
+tim parity repoint EUDPA-328-DR1 --side <side> --to <sha>   # preview, old beside new
+tim parity repoint EUDPA-328-DR1 --side <side> --to <sha> --accept
+tim parity meta EUDPA-328-DR1 --write
+tim parity report EUDPA-328-DR1
 ```
 
-`seed-anchors` reads the compare deltas and writes `anchors.<side>.json`; the
-capture loads the file for its own side, so adding element evidence to a
-finding is a data change and never a spec edit. Run it before the capture, not
-after: a side captured before its anchors exist gets full-page shots only.
+**Capture appears twice on purpose.** Anchors come from findings, and findings
+are written from captures, so the first pass round is unavoidably full-page
+only; the crops arrive on the second. Adding element evidence to a finding after
+that is a data change — a name in `controls`, then `anchors` and a re-capture —
+and never a spec edit.
+
 `tim parity manifest` is for a capture directory that came from something other
 than `tim parity capture` — the older harnesses wrote no manifest of their own.
 
@@ -286,19 +387,24 @@ than `tim parity capture` — the older harnesses wrote no manifest of their own
 picture in the corpus at once, and the preview is where a lost screen — one the
 new run did not reach — is caught before it silently disappears.
 
-Which crop lands on which card is chosen, not curated: an anchor is relevant
-when the finding's own prose names the control, by its `name` attribute or its
-label, matched whole-word. A curated frame in `visual[]` overrides it. Where
-nothing matches, the card keeps the whole page.
+Which crop lands on which card is **named, not inferred**. The finding's
+`controls` array says which control it is about: a bare string without
+whitespace is read as a field's `name` attribute, a bare string with whitespace
+as a visible label, and an explicit `{ kind, name | text }` settles the cases
+where either reading is plausible. A curated frame in `visual[]` overrides it.
+Where a finding names no control, the card keeps the whole page — which is why
+`anchors` prints those findings rather than passing over them.
 
-**A reader cannot see an absence.** For "the prototype has X and we do not",
-the side with nothing to show gets an *insertion crop*: a picture of a control
+**A reader cannot see an absence**, and this is the part of the old pipeline
+that has no replacement yet. For "the prototype has X and we do not", the side
+with nothing to show used to get an *insertion crop*: a picture of a control
 that is there, outlined, captioned with what is missing and where it would go.
-The position comes from the two page models, and its confidence is part of the
-caption — where the pages share a field it says "it would sit after Species",
-and where they share nothing it says the position could not be derived rather
-than inventing one. Insertion anchors rank below prose-named ones, so they only
-appear on the side whose prose names no control.
+The renderer still draws one where `anchors.<side>.json` carries an
+`insertions[]` entry, and `tim/src/parity/insertion.js` still holds the
+derivation — but the `insertion-anchors` command that called it is deleted and
+nothing imports the module. So on a corpus captured today, one-sided findings
+show a whole page with nothing outlined. Say so when it matters to a finding;
+do not describe an insertion crop the reader will not be shown.
 
 ## The invariants, and why each one is there
 

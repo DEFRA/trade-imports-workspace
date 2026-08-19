@@ -80,10 +80,20 @@ reveals and error state.
 
 Plus the address book. `/address-book*` is shared across all releases —
 `isSharedExternalPath()`, `version-mount.js:43-51` — so those screens are
-byte-identical in DR1 and DR2.1 and **the previous run's 13 address-book
-findings carry over unchanged**. Check them rather than re-deriving them. The
-DR2.1 harness never captured them as screens, so DR1 will be the first run that
-photographs them.
+byte-identical in DR1 and DR2.1. The DR2.1 harness never captured them as
+screens, so DR1 will be the first run that photographs them.
+
+**An earlier version of this section drew a wrong conclusion from that, and the
+handover repeated it:** that "the previous run's 13 address-book findings carry
+over unchanged". They do not follow from the shared path, because they are not
+about `/address-book`. They are the 13 `domain: addresses` findings, and they
+are about `roles-and-addresses.html`, `consignment-address-select.html`,
+`contact-address-for-consignment.html` and `cph-number.html` — **all four of
+which DR2.1 overrides**, so the pictures behind them are of overridden views and
+"identical in both releases" was never established for any of them. Triaged one
+at a time in `carryover.json`, **11 of the 13 carry on their own evidence**;
+inc-037 is `changed` and inc-091 is `recheck`. The conclusion mostly survived.
+The argument for it did not, and it must not be reused.
 
 ## What this means for the work
 

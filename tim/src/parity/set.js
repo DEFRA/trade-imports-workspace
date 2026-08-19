@@ -43,7 +43,7 @@ const writeIncrement = (profile, backlog, id, mutate) => {
  * @param {string} args.file - Path to a file holding the new text
  * @returns {object}
  */
-export const setSlot = ({ profile, id, slot, file }) => {
+export const setSlot = ({ profile, id, slot, file, pass }) => {
   if (!SLOTS.includes(slot)) {
     throw new TimError(
       'USAGE',
@@ -56,12 +56,20 @@ export const setSlot = ({ profile, id, slot, file }) => {
 
   const result = writeIncrement(profile, backlog, id, (increment) => ({
     ...increment,
-    finding: { ...(increment.finding ?? {}), [slot]: text }
+    finding: {
+      ...(increment.finding ?? {}),
+      [slot]: text,
+      // Which pass this finding has had. The word budgets are a Pass B target,
+      // so the checker has to be able to tell a finding whose prose was moved
+      // from one whose prose was rewritten.
+      ...(pass ? { pass } : {})
+    }
   }))
 
   return {
     id,
     slot,
+    pass: pass ?? null,
     words: text.split(/\s+/).filter(Boolean).length,
     ...result
   }

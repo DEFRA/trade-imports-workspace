@@ -295,7 +295,7 @@ describe('resolveToken', () => {
         lineCount
       })
       expect(result).toMatchObject({ repo: 'prototype', path: 'app/routes.js' })
-      expect(result.why).toMatch(/long enough/)
+      expect(result.why).toMatch(/only the prototype copy reaches line 10303/)
     })
 
     test('stays queued when both files are long enough', () => {

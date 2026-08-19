@@ -205,45 +205,56 @@ export const renderCard = ({ item, sides, runId }) => {
   const idPrefix = item.id
   const s = item.sections
 
-  const evidenceRefs = (sideId) =>
+  // Every citation belongs to exactly one column, so a source is shown once.
+  // A citation says which side it is about, or names a repo one side owns;
+  // anything that answers to neither — a backend class, a captured page model —
+  // goes to a strip of its own rather than being pushed into a side it is not
+  // about.
+  const sideOfCitation = (citation) => {
+    if (citation.side && sides.some((side) => side.id === citation.side)) {
+      return citation.side
+    }
+    return sides.find((side) => side.repo === citation.repo)?.id ?? null
+  }
+
+  const refsForSide = (sideId) =>
     item.citations
-      .filter((citation) => citation.field === `evidence.${sideId}`)
+      .filter((citation) => sideOfCitation(citation) === sideId)
       .map((citation) => citation.ref)
+
+  const unsidedRefs = item.citations
+    .filter((citation) => sideOfCitation(citation) === null)
+    .map((citation) => citation.ref)
 
   const columnFor = (side, section) => {
     const texts = section ? [section.text] : []
     return `<div class="column">
   <span class="column__label">${esc(side.label)}</span>
-  ${section ? renderProse({ text: section.text, citations, idPrefix }) : '<p class="plate__meta">Not described separately in this finding.</p>'}
-  ${sourcesStrip({ texts, citations: item.citations, resolved, idPrefix, extraRefs: evidenceRefs(side.id) })}
+  ${section ? renderProse({ text: section.text, citations, idPrefix }) : '<p class="plate__meta">Not described separately yet. The sources below are what this finding points at on this side.</p>'}
+  ${sourcesStrip({ texts, citations: item.citations, resolved, idPrefix, extraRefs: refsForSide(side.id) })}
 </div>`
   }
 
-  // The pointers the analyst put on the finding, one column each, shown even
-  // where the prose is still one undivided block.
-  const evidenceColumns = `<div class="columns">${sides
-    .map(
-      (side) => `<div class="column">
-  <span class="column__label">${esc(side.label)} — where to look</span>
-  ${sourcesStrip({ texts: [], citations: item.citations, resolved, idPrefix, extraRefs: evidenceRefs(side.id) }) || '<p class="plate__meta">This finding records no pointer on this side.</p>'}
-</div>`
-    )
+  // Two fixed columns, always both, whether or not the prose has been split.
+  // Collapsing to one would read as a claim that there is nothing on that side.
+  const twoColumn = `<div class="columns">${sides
+    .map((side) => columnFor(side, s[side.id]))
     .join('')}</div>`
 
-  const twoColumn =
-    s.frontend || s.prototype
-      ? `<div class="columns">${sides
-          .map((side) => columnFor(side, s[side.id]))
-          .join('')}</div>`
-      : ''
+  const otherSources = unsidedRefs.length
+    ? `<div class="block">
+  <span class="block__label">Other sources</span>
+  ${sourcesStrip({ texts: [], citations: item.citations, resolved, idPrefix, extraRefs: unsidedRefs })}
+</div>`
+    : ''
 
   // Before the structure migration runs, the finding is one block describing
   // both sides. Rendering it as one block is honest; splitting it into two
-  // columns would claim a split that has not happened.
+  // columns would claim a split that has not happened. Its citations are shown
+  // once, under the column they belong to, rather than again here.
   const unsplit = s.body
     ? `<div class="block">
   ${renderProse({ text: s.body.text, citations, idPrefix })}
-  ${sourcesStrip({ texts: [s.body.text], citations: item.citations, resolved, idPrefix })}
 </div>`
     : ''
 
@@ -291,11 +302,11 @@ export const renderCard = ({ item, sides, runId }) => {
   </header>
   <div class="card__body">
     ${decisionBlock({ item, runId, citations })}
-    ${twoColumn}
     ${unsplit}
-    ${item.kind === 'candidate' ? '' : evidenceColumns}
-    ${proseBlock({ label: 'What differs', section: s.difference, citations, idPrefix })}
+    ${item.kind === 'candidate' ? '' : twoColumn}
+    ${otherSources}
     ${frames({ item, sides })}
+    ${proseBlock({ label: 'What differs', section: s.difference, citations, idPrefix })}
     ${proseBlock({ label: 'Corrected by verification', section: s.correction, citations, idPrefix, modifier: 'correction' })}
     ${notesBlock({ item, citations })}
     ${proseBlock({ label: 'This finding is wrong if', section: s.falsifiedBy, citations, idPrefix, modifier: 'falsifier' })}

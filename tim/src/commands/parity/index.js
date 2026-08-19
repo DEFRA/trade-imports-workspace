@@ -281,6 +281,7 @@ export const register = (program, { timVersion }) => {
       'Write one prose slot on one increment from a file — the only way a fan-out worker touches the backlog'
     )
     .requiredOption('--file <path>', 'File holding the new text')
+    .option('--pass <a|b>', 'Which migration pass wrote this text')
     .action(
       makeParityAction({
         run: ({ profile, args }, opts) =>
@@ -288,9 +289,11 @@ export const register = (program, { timVersion }) => {
             profile,
             id: args[1],
             slot: args[2],
-            file: opts.file
+            file: opts.file,
+            pass: opts.pass
           }),
-        renderText: (r) => `${r.id}.finding.${r.slot} set — ${r.words} words.`,
+        renderText: (r) =>
+          `${r.id}.finding.${r.slot} set — ${r.words} words${r.pass ? `, pass ${r.pass.toUpperCase()}` : ''}.`,
         timVersion
       })
     )

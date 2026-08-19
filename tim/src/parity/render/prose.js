@@ -44,6 +44,19 @@ export const renderParagraph = ({ text, citations, idPrefix }) => {
       `${open}<span class="quoted">${body}</span>${close}`
   )
 
+  // Anything the tokeniser never turned into a marker still reads as a
+  // reference to the person looking at it, so it keeps the code treatment the
+  // old page gave it — inert, but no longer pretending to be prose.
+  //
+  // This runs BEFORE the markers, not after: a marker expands to an anchor
+  // whose title attribute holds the reference verbatim, and a later pass would
+  // find `stub.js:109` inside that attribute and wrap it in a <code> tag,
+  // spilling `">` into the visible text.
+  html = html.replace(
+    BARE_REFERENCE,
+    (match) => `<code class="ref">${match}</code>`
+  )
+
   html = html.replace(MARKER, (_, ref) => {
     const citation = citations.get(ref)
     const n = ref.slice(1)
@@ -59,14 +72,6 @@ export const renderParagraph = ({ text, citations, idPrefix }) => {
       .join(' ')
     return `<a class="${classes}" href="#${esc(idPrefix)}-src-${esc(ref)}" title="${esc(label)}"><sup>${esc(n)}</sup></a>`
   })
-
-  // Anything the tokeniser never turned into a marker still reads as a
-  // reference to the person looking at it, so it keeps the code treatment the
-  // old page gave it — inert, but no longer pretending to be prose.
-  html = html.replace(
-    BARE_REFERENCE,
-    (match) => `<code class="ref">${match}</code>`
-  )
 
   return html
 }

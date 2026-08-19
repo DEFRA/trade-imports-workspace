@@ -46,6 +46,8 @@ export const citationSchema = passthrough({
   // against the full path in the evidence field. Kept so a token can be
   // round-tripped whichever way the analyst wrote it.
   alsoWritten: z.array(z.string()).optional(),
+  field: z.string().optional(),
+  fields: z.array(z.string()).optional(),
   anchors: z.array(z.string()).optional(),
   resolution: z.enum([
     'explicit',
@@ -81,6 +83,7 @@ export const findingSchema = passthrough({
   falsifiedBy: z.string().optional(),
   verification: z.string().optional(),
   verbatim: z.boolean().optional(),
+  pass: z.enum(['a', 'b']).optional(),
   longBecause: z.string().optional(),
   cites: z.record(z.string(), z.array(z.string())).optional(),
   decisionRequired: decisionRequiredSchema.optional(),

@@ -186,7 +186,12 @@ export const citeIncrement = ({ increment, profile, indexes, lineCount }) => {
         asWritten: token.asWritten,
         anchors: anchorsNear(token),
         resolution: resolved.resolution,
-        field: token.field
+        field: token.field,
+        // Every field the same target was cited from. The evidence pointer and
+        // a bare mention in the prose routinely dedupe to one citation, and
+        // the report shows a column's evidence pointer separately, so one
+        // field name is not enough to say where a citation came from.
+        fields: [token.field]
       }
       if (model) citation.screen = model.screen
       if (resolved.why) citation.why = resolved.why
@@ -210,6 +215,9 @@ export const citeIncrement = ({ increment, profile, indexes, lineCount }) => {
       // invariant I3, which asks whether every token in the frozen detail is
       // covered by some citation, reports the second one as uncited.
       const citation = citations.find((entry) => entry.ref === ref)
+      if (!citation.fields.includes(token.field)) {
+        citation.fields.push(token.field)
+      }
       if (citation.asWritten !== token.asWritten) {
         citation.alsoWritten = [
           ...new Set([...(citation.alsoWritten ?? []), token.asWritten])

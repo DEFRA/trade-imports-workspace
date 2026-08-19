@@ -199,13 +199,14 @@ export const resolveToken = ({
   // first repo in the list is not a resolution, it is the order of a JSON
   // object deciding which side a finding is about.
   if (!preferredRepo) {
-    let reposHolding = repoOrder.filter(
+    const narrowed = repoOrder.filter(
       (repoKey) =>
         narrowBySuffix(
           indexes.get(repoKey)?.get(name) ?? [],
           token.pathAsWritten
         ).length > 0
     )
+    let reposHolding = narrowed
     // A candidate whose file is shorter than the cited line is not a candidate.
     // The frontend's routes.js is 76 lines and the prototype's is 10,997, so
     // `routes.js:10303` has exactly one possible home. This is arithmetic, not
@@ -228,7 +229,13 @@ export const resolveToken = ({
         increment,
         indexes,
         name,
-        why: `Only ${reposHolding[0]} has a ${name} long enough to have the cited line.`
+        // Say which of the two rules did the work. "Only one repo has this
+        // file" and "only one repo's copy is long enough" are different facts,
+        // and the second is the interesting one.
+        why:
+          narrowed.length > 1
+            ? `${name} is in ${narrowed.join(' and ')}, but only the ${reposHolding[0]} copy reaches line ${Math.max(...token.lines.map((line) => line.end))}.`
+            : undefined
       })
     }
     if (reposHolding.length > 1) {

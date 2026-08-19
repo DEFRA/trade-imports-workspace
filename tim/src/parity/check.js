@@ -23,8 +23,12 @@ export const BUDGETS = {
   question: 25
 }
 
+// "one" is deliberately absent. In this prose it is a pronoun or an article
+// far more often than a count — "each end without a full stop in the frontend
+// and with one in the prototype" — and a conservation check that fires on it
+// teaches its reader to ignore it, which costs more than the case it catches.
+// The numeral 1 is still counted.
 const NUMBER_WORDS = {
-  one: 1,
   two: 2,
   three: 3,
   four: 4,
@@ -399,9 +403,16 @@ const tokensOf = (text) =>
 export const checkResidue = (increments, threshold = 0.98) => {
   const rows = []
   if (!increments.some(isMigrated)) return notYetMigrated('I8')
+  let rewritten = 0
   for (const increment of increments) {
     const slots = allSlotText(increment)
     if (!slots.trim()) continue
+    // A finding that has had Pass B has had its words changed on purpose, so
+    // residue means nothing for it — whichever pass the check was asked for.
+    if (increment.finding?.pass === 'b') {
+      rewritten += 1
+      continue
+    }
     const after = new Set(tokensOf(slots))
     const before = tokensOf(withoutCitations(increment))
     const missing = before.filter((word) => !after.has(word))
@@ -419,7 +430,7 @@ export const checkResidue = (increments, threshold = 0.98) => {
               `${row.id} ${(row.ratio * 100).toFixed(1)}% — residue: ${row.missing.slice(0, 20).join(' ')}`
           )
           .join('\n    ')
-      : `${rows.length} migrated findings at or above ${(threshold * 100).toFixed(0)}%`,
+      : `${rows.length} findings at or above ${(threshold * 100).toFixed(0)}%${rewritten ? `, ${rewritten} skipped as already rewritten` : ''}`,
     rows
   }
 }
@@ -489,7 +500,12 @@ export const checkSlots = (increments, expected, pass = 'a') => {
   }
 
   if (pass === 'b') {
-    for (const increment of migrated) {
+    // Only findings whose prose has actually been through Pass B. A Pass A
+    // finding is over budget by construction, because Pass A moved the words
+    // it found.
+    for (const increment of migrated.filter(
+      (inc) => inc.finding?.pass === 'b'
+    )) {
       for (const [slot, budget] of Object.entries(BUDGETS)) {
         const text =
           slot === 'question'
@@ -529,9 +545,14 @@ export const checkPolarity = (increments, baseline) => {
   for (const increment of increments) {
     const now = allSlotText(increment)
     if (!now.trim()) continue
-    const was = before
+    // The frozen detail is the fallback, not an empty string. A baseline taken
+    // before the migration has no slots at all, and comparing against nothing
+    // reports every softening as no change — the exact silence this list
+    // exists to break.
+    const baselineSlots = before
       ? allSlotText(before.get(increment.id) ?? {})
-      : increment.detail
+      : ''
+    const was = baselineSlots.trim() ? baselineSlots : increment.detail
     const has = (text, word) => new RegExp(`\\b${word}\\b`, 'i').test(text)
     const hedgesAdded = HEDGES.filter(
       (word) => has(now, word) && !has(was, word)

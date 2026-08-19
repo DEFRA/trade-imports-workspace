@@ -466,7 +466,7 @@ export const renderCheckEvidence = (result) => {
     lines.push(
       bullet(
         model.sha
-          ? `${model.side} @ ${model.sha}${model.matchesPin ? ', which is the pin' : ' — older than the pin'}: ${model.how}.`
+          ? `${model.side} @ ${model.sha}${model.matchesPin ? ', which is the pin' : ', which is not the pin — see the capture note in corpora.json'}: ${model.how}.`
           : `${model.side}: no vintage recorded, so a plate built from these says nothing about which commit it is of.`
       )
     )

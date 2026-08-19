@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readJsonFile } from './io.js'
@@ -8,6 +8,8 @@ import { loadCorpusProfile } from './corpus-profile.js'
 import { loadCorpus } from './load.js'
 import { runCounts } from './counts.js'
 import { readSeals } from './seals.js'
+import { parsePageModel } from './page-model-schema.js'
+import { loadPairs, indexPairs } from './assets/pairs.js'
 
 // The real corpus, parsed through the real schema. The workarea is gitignored
 // except for these files, so a fresh clone that has never run the pipeline
@@ -137,6 +139,36 @@ describe.skipIf(!present)('the real EUDPA-328 corpus', () => {
         .map((citation) => `${increment.id}/${citation.ref}`)
     )
     expect(orphans).toEqual([])
+  })
+
+  test('both sides produce page models of the same shape', () => {
+    const profile = loadCorpusProfile({ workspaceRoot, runId: 'EUDPA-328' })
+    // Only the models the comparison reads. A capture directory accumulates
+    // screens nobody paired — `fe-address-party-picker` is one, left over from
+    // an older extractor — and failing on those would make the contract about
+    // tidiness rather than about comparability.
+    const paired = indexPairs(loadPairs(profile.paths.pairingModule))
+    const failures = profile.sides.flatMap((side) => {
+      if (!existsSync(side.modelDir)) return []
+      return readdirSync(side.modelDir)
+        .filter((name) => name.endsWith('.json'))
+        .filter((name) => paired.has(name.replace(/\.json$/, '')))
+        .flatMap((name) => {
+          try {
+            parsePageModel(
+              readJsonFile(join(side.modelDir, name)),
+              `${side.id}/${name}`
+            )
+            return []
+          } catch (error) {
+            return [error.message]
+          }
+        })
+    })
+    // The two extractors live in different repos. This is the contract that
+    // keeps them comparable — a shared file would drift silently, a failing
+    // schema does not.
+    expect(failures).toEqual([])
   })
 
   test('every seal names a frame the report could actually show', () => {

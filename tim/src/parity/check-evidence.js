@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { readJsonFile } from './io.js'
 import { loadCorpus } from './load.js'
@@ -188,6 +188,68 @@ export const citationHealth = (evidence) => {
   }
 }
 
+const visibleFields = (model) =>
+  (model?.allFields ?? []).filter(
+    (field) => field.kind !== 'hidden' && field.name !== 'crumb'
+  ).length
+
+/**
+ * Screens with no control on one side and controls on the other.
+ *
+ * Every delta, anchor and insertion point is derived from the page models, so
+ * a page captured in a state that renders nothing does not merely lose a
+ * plate: it tells the differ that side has no fields there, and the report
+ * then shows an absence that is an artefact of the journey rather than a
+ * difference between the two codebases.
+ *
+ * The asymmetry is the signal, not the emptiness. Confirmation pages, hubs
+ * and review pages have no controls on either side and are not worth a line;
+ * flagging them buries the one screen that matters in twenty that do not.
+ *
+ * @param {object} args
+ * @param {object} args.profile
+ * @param {Map} args.pairIndex
+ * @returns {object[]}
+ */
+export const emptyModels = ({ profile, pairIndex }) => {
+  const modelOf = (side, screen) => {
+    const path = join(side.modelDir, `${screen}.json`)
+    return existsSync(path) ? readJsonFile(path) : null
+  }
+
+  return profile.sides.flatMap((side) => {
+    if (!existsSync(side.modelDir)) return []
+    return readdirSync(side.modelDir)
+      .filter((name) => name.endsWith('.json'))
+      .map((name) => {
+        const screen = name.replace(/\.json$/, '')
+        const model = readJsonFile(join(side.modelDir, name))
+        const partners = profile.sides
+          .filter((other) => other.id !== side.id)
+          .flatMap((other) =>
+            (pairIndex?.get(screen)?.[other.id] ?? [])
+              .map((partner) => ({
+                side: other,
+                screen: partner,
+                fields: visibleFields(modelOf(other, partner))
+              }))
+              .filter((partner) => partner.fields > 0)
+          )
+        return { screen, model, partners }
+      })
+      .filter(
+        ({ model, partners }) => visibleFields(model) === 0 && partners.length
+      )
+      .map(({ screen, model, partners }) => ({
+        side: side.id,
+        screen,
+        h1: model.h1 ?? null,
+        partner: partners[0].screen,
+        partnerFields: partners[0].fields
+      }))
+  })
+}
+
 /**
  * Which commit each side's page models were read at.
  *
@@ -280,6 +342,7 @@ export const runCheckEvidence = ({ profile }) => {
         },
     sealed: Object.keys(seals).length,
     models: modelVintage({ profile, meta }),
+    emptyModels: emptyModels({ profile, pairIndex }),
     regenerate: regenerationCommands({ profile, evidence, meta })
   }
 }
@@ -407,6 +470,20 @@ export const renderCheckEvidence = (result) => {
           : `${model.side}: no vintage recorded, so a plate built from these says nothing about which commit it is of.`
       )
     )
+  }
+
+  if (result.emptyModels.length) {
+    lines.push(
+      '',
+      'screens with no control on one side and controls on the other'
+    )
+    for (const entry of result.emptyModels) {
+      lines.push(
+        bullet(
+          `${entry.side}/${entry.screen} (${entry.h1 ?? 'no heading'}) renders nothing, against ${entry.partnerFields} controls on ${entry.partner}. The differ reads that as "this side has no fields here", which may be a fact about the journey rather than about the two codebases.`
+        )
+      )
+    }
   }
 
   lines.push('', `${result.sealed} findings have a sealed picture.`)

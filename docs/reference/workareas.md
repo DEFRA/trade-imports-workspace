@@ -30,7 +30,7 @@ workareas/shared/dr21-parity/                      → the DR2.1 comparison's ow
 
 ## What is tracked under `workareas/`, and why
 
-Seven files, each because it outlives the run that made it:
+Eight files, each because it outlives the run that made it:
 
 - `journey-builder/*/backlog.json` — the executable definition of a body of
   work. Judgement, not cache.
@@ -50,6 +50,10 @@ Seven files, each because it outlives the run that made it:
   side per finding. It cannot be recomputed: it records what a person has seen,
   and it is the only thing standing between a re-capture and a ruling made
   against an image nobody looked at.
+- `shared/*/compare/deltas/*.json` and the page models they are built from —
+  every difference the report's findings, anchors and insertion points are
+  derived from. Regenerable, but `git diff` after a re-capture is the record of
+  what actually moved in the application.
 - `shared/*/evidence/<side>@<sha>/manifest.json` — the index of one capture:
   every page shot and element crop, with its hash and size, plus every anchor
   that matched nothing and why. The report reads this rather than the

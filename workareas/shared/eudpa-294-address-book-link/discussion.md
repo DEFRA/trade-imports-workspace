@@ -392,3 +392,11 @@ stub branch + test, and `fit:start` back to `AUTH_ENABLED=false`.
 
 Real org scoping returns as its own sweep: owner field on the notification,
 authenticated identity at the backend boundary, org-scoped queries.
+
+### ACCEPTED (Sam, 19 Aug) — no link to the INS address book
+
+The missing signpost from the animals journey to the INS address book is
+**accepted as a temporary measure**. Traders needing a new address hop over
+manually. Closed — supersedes the "no link out to INS" item under Round 2 /
+Still open, and the sequencing note that said the cross-app link had to land
+before create-address was retired.

@@ -12,8 +12,6 @@ $(error Cannot read the repo roster from $(MANIFEST). Check the file is there an
 endif
 
 .PHONY: setup link update reset status install lint test \
-        tim-install tim-link tim-test tim-lint tim-format \
-        parity parity-report parity-check parity-check-evidence parity-open sonar-staged \
         start-frontend start-backend start-admin start-gateway start-address-book \
         docker-local-branches docker-compose-up docker-compose-dev docker-compose-down docker-compose-bounce docker-logs docker-restart-backend clean help
 
@@ -110,57 +108,6 @@ install: ## Install dependencies in all repos (npm ci; mvn install -DskipTests)
 		rm -f "$${outs[$$i]}"; \
 	done; \
 	exit $$status
-
-# tim/ is a sub-project of this repo, not one of the cloned repos, so `make
-# install` and `make test` skip it. It also has to be entered rather than
-# addressed with `npm --prefix`: the guard hook redirects a --prefix install to
-# "cd to the real path and run there", and a make recipe is the only place an
-# agent can cd. $(WORKSPACE_ROOT) is already the resolved path.
-
-tim-install: ## Install tim's dependencies (npm ci in tim/)
-	@cd "$(WORKSPACE_ROOT)/tim" && npm ci
-
-tim-link: ## Put this checkout's tim on PATH (npm link)
-	@cd "$(WORKSPACE_ROOT)/tim" && npm link
-	@echo "tim now resolves to $$(readlink -f "$$(which tim)")"
-
-tim-test: ## Run tim's unit tests
-	@cd "$(WORKSPACE_ROOT)/tim" && npm test
-
-tim-lint: ## Lint tim
-	@cd "$(WORKSPACE_ROOT)/tim" && npm run lint
-
-tim-format: ## Format tim
-	@cd "$(WORKSPACE_ROOT)/tim" && npm run format
-
-# tim resolves its corpus paths from the current directory, so running it from
-# a repo — or from another checkout of this workspace — reads the wrong
-# corpora.json and fails with a confusing ENOENT. These targets pin the
-# directory. CORPUS defaults to the parity corpus in flight.
-
-CORPUS ?= EUDPA-328
-
-parity: ## Any tim parity subcommand (ARGS="meta EUDPA-328 --write")
-	@cd "$(WORKSPACE_ROOT)" && tim parity $(ARGS)
-
-parity-report: ## Build the parity findings report (CORPUS=EUDPA-328)
-	@cd "$(WORKSPACE_ROOT)" && tim parity report $(CORPUS) $(ARGS)
-
-parity-check: ## Run the parity invariants (CORPUS=EUDPA-328)
-	@cd "$(WORKSPACE_ROOT)" && tim parity check $(CORPUS) $(ARGS)
-
-parity-check-evidence: ## Report pin drift, capture integrity and dead citations
-	@cd "$(WORKSPACE_ROOT)" && tim parity check-evidence $(CORPUS) $(ARGS)
-
-parity-open: ## Build the parity report and open it
-	@cd "$(WORKSPACE_ROOT)" && tim parity report $(CORPUS) --open $(ARGS)
-
-# The sonar CLI refuses any file outside its current directory, so an agent
-# working from this workspace cannot run the pre-commit scan CLAUDE.md asks
-# for. REPO names the repo under repos/; omit it to scan this workspace.
-
-sonar-staged: ## Sonar-scan staged files (REPO=trade-imports-animals-frontend)
-	@cd "$(if $(REPO),$(REPOS_DIR)/$(REPO),$(WORKSPACE_ROOT))" && sonar analyze $(if $(ARGS),$(ARGS),--staged)
 
 clean: ## Remove node_modules in all Node repos
 	@for repo in $(NODE_REPOS); do \

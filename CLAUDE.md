@@ -76,7 +76,7 @@ no shell-out to `gh`/`jq`), behaviourally tested, deterministic
 `--json` output for skill use. Dual-runs with the bash; pick whichever.
 
 ```bash
-make tim-link             # tim on PATH, pointing at THIS checkout
+npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
 tim --help                # full surface
 tim workspace status      # equivalent of `make status` + jq-friendly --json
 tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
@@ -86,12 +86,23 @@ tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
 tim parity report EUDPA-X # render a findings report; see the parity skill
 ```
 
-`make tim-install`, `tim-test`, `tim-lint` and `tim-format` run the
-sub-project's own scripts. They exist because `tim/` is a sub-project of
-this repo rather than one of the cloned repos, so `make install` and
-`make test` skip it — and because the guard hook redirects
-`npm --prefix <workspace>/tim install` to "cd to the real path and run
-there", which a make recipe is the only place to do.
+`tim/` is a sub-project of this repo rather than one of the cloned
+repos, so the workspace-wide install, lint and test skip it. Run its own
+scripts against it directly — no `cd` needed, and nothing in the
+Makefile, which is deprecated:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/tim ci
+npm --prefix ~/git/defra/trade-imports-workspace/tim test
+npm --prefix ~/git/defra/trade-imports-workspace/tim run lint
+npm --prefix ~/git/defra/trade-imports-workspace/tim run format
+```
+
+`tim` finds the workspace by walking up from the current directory, then
+falls back to the canonical path. Standing in another checkout — the old
+`trade-imports-animals` clone, say — that walk-up wins and reads the
+wrong data, so pass `--workspace ~/git/defra/trade-imports-workspace`
+when you are not inside this one.
 
 If `tim` behaves as though it is looking at a different workspace, check
 `readlink -f "$(which tim)"` — a `tim` linked from an older clone resolves

@@ -23,10 +23,13 @@ Full rule table: [`docs/agent-skills.md`](../../../docs/agent-skills.md) →
 npm --prefix ~/git/defra/trade-imports-workspace/tim run parity -- <subcommand> …
 ```
 
-or, where `tim` is on PATH and the shell is inside the workspace, `tim parity
-<subcommand>`. `make tim-link` puts this checkout's `tim` on PATH; check it
-first with `readlink -f "$(which tim)"`, because a stale clone's `tim` will
-resolve a different workspace and quietly report a different corpus.
+or, where `tim` is on PATH, `tim parity <subcommand> --workspace
+~/git/defra/trade-imports-workspace`. **Always pass `--workspace` unless the
+shell is already inside this checkout**: `tim` walks up from the current
+directory first, so standing in the stale `trade-imports-animals` clone
+silently resolves a different corpus. Check which binary you have with
+`readlink -f "$(which tim)"`, and put this checkout's on PATH with
+`npm --prefix ~/git/defra/trade-imports-workspace/tim link`.
 
 ## The two files and what each is for
 

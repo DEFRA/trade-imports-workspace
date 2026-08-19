@@ -34,7 +34,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `infrastructure.compose.yml` | `floci`, `floci-init`, `redis`, `cdp-uploader` | `infrastructure` |
 | `infrastructure.compose.yml` | `mssql`, `servicebus-emulator` (Azure Service Bus emulator the dynamics-gateway talks to), `toxiproxy` (sits in front of servicebus-emulator; lets you sever/restore the gateway's ASB connection for DLQ testing) | `servicebus` |
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
-| `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book` | `backend` |
+| `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend` | `backend` |
 | `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend` | `frontend` |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 
@@ -55,14 +55,14 @@ compose freely.
 
 ## `--exclude` (`-e`) labels
 
-Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `defra-id-stub`, `reference-data`, `address-book`, `gateway`
+Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `defra-id-stub`, `reference-data`, `address-book`, `gateway`, `ins-backend`
 — the labels in `run-stack.sh`'s `services` array.
 Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
 `host.docker.internal:<port>`.
 
 Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002, defra-id-stub 3007,
-backend 8085, reference-data 8086, stub 8087, gateway 8088, address-book 8089.
+backend 8085, reference-data 8086, stub 8087, gateway 8088, address-book 8089, ins-backend 8090.
 
 ## `--profile` semantics (strict)
 
@@ -154,7 +154,7 @@ top-level init files), `./.staged/floci`, and `./.staged/servicebus`.
 
 - Node services (frontend, admin, ins-frontend): hot-reload via nodemon on the bind mount
   of `src/`. Just save and refresh.
-- Java backend, stub, reference-data and address-book: hot-reload via Spring Boot DevTools.
+- Java backend, stub, reference-data, address-book and ins-backend: hot-reload via Spring Boot DevTools.
   Each `dev-run` image runs `docker/dev-run.sh`, an mtime-poll loop that
   recompiles `src/ → target/classes` on save, then touches a trigger file so
   DevTools restarts the Spring context in ~1-2s. (We poll mtimes rather than

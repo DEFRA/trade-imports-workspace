@@ -213,3 +213,6 @@ start-gateway: ## Start dynamics gateway from source
 start-address-book: ## Start address book API from source (requires Java 25 + MongoDB on :27017)
 	SPRING_PROFILES_ACTIVE=local PORT=8089 mvn -f $(REPOS_DIR)/trade-imports-address-book/pom.xml spring-boot:run
 
+start-ins-backend: ## Start ins-backend API from source (requires Java 25 + MongoDB on :27017)
+	SPRING_PROFILES_ACTIVE=local PORT=8090 mvn -f $(REPOS_DIR)/trade-imports-ins-backend/pom.xml spring-boot:run
+

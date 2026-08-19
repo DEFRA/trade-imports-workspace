@@ -84,10 +84,167 @@ diff; that section you could not.
   and `file://` cannot lazy-load 20 MB of screenshots. Both are small and both
   are testable surfaces rather than steps in a runbook.
 
-- **The report shows each finding's two evidence pointers as a permanent
-  "where to look" pair, even where the prose cites nothing.** Eleven findings
-  carry no `file:line` inside their text at all, and without this their citations
-  would be the only ones on the page with no snippet under them. It costs a
-  little vertical space on every card and it means every card can be checked.
+- **The report shows each finding's two evidence pointers under the column they
+  belong to, even where the prose cites nothing.** Eleven findings carry no
+  `file:line` inside their text at all, and without this their citations would be
+  the only ones on the page with no snippet under them. Every citation appears
+  exactly once, in the column whose side it names or whose repo it lives in;
+  anything answering to neither — a backend class, a captured page model — gets
+  its own strip rather than being pushed into a side it is not about.
+
+- **I dropped two increments outright rather than half-doing them.**
+  `inc-023` (the `start-parity.sh` dispatcher) because `chmod` is policy-blocked
+  and an unrunnable script is worse than none — the skill routes through
+  `tim parity`, which needs no execute bit. `inc-040` (`pin-checkout.sh`, which
+  clones the frontend at `32f6106c` and overlays the harness) because your
+  inc-001 ruling made it moot: capture happens at HEAD now, so there is nothing
+  to pin a checkout to.
+
+- **`tim parity check` will not let me quietly report progress as success.**
+  Three invariants now say **skipped** rather than **pass** when nothing has
+  been migrated yet, because "0 quoted spans survive" reads as a clean bill of
+  health on work not yet done. That is a deliberate choice to make the report
+  less flattering.
+
+---
+
+## 2. The two canaries
+
+Both are in the backlog and rendered on the page. Nothing else depends on them
+until you have looked.
+
+### Canary 1 — one authored decision question (inc-031)
+
+On **inc-055**, chosen because its original states the ask in prose, so the
+authored version can be read against it.
+
+**The frozen original says it like this** (the last sentence of the second
+paragraph of `detail`, which is never edited):
+
+> Confidence is `medium` rather than `high` because a divergence in this
+> direction may be the frontend being right and the prototype's cattle entry
+> being incomplete — this needs a ruling from whoever owns the IPAFFS identifier
+> mapping, not a unilateral removal.
+
+**The falsifier**, which is where an authored question is meant to come from:
+
+> A source of truth (the V4 data-fields spec or an IPAFFS extract) showing
+> tattoo is a valid cattle identifier, which would make the prototype the stale
+> side and close this with no frontend change.
+
+**The authored `decisionRequired`:**
+
+| Field | Value |
+|---|---|
+| question | Should the frontend keep offering Tattoo as a cattle identifier, or drop it to match the prototype? |
+| audience | sam |
+| source | authored |
+| options | *Keep it.* The frontend is right and the prototype's cattle entry is incomplete.<br>*Drop it.* Match the prototype's two cattle identifiers, ear-tag and passport.<br>*Neither yet.* Get the V4 data-fields spec or an IPAFFS extract first — the falsifier says that is what settles it. |
+| consequence | Blocks inc-076, which reuses this band's identifier set. It also leaves the frontend collecting an identifier the design does not ask for, on every cattle record submitted meanwhile. |
+
+**What I want you to check, in order of how much it matters:**
+
+1. **Is that the right question?** The original says "this needs a ruling from
+   whoever owns the IPAFFS identifier mapping". I turned that into a question
+   about what the frontend does. Those are not the same question — one asks who
+   decides, the other asks what to build. I chose the second because the report
+   is a surface for making the call, not for routing it. If you would rather the
+   47 read as "who owns this?", say so and I will re-derive them all.
+2. **Are three options right, or two?** The third — get the spec first — is not
+   in the prose. It is the falsifier turned into an action. It reads to me as
+   the honest option for a medium-confidence finding, but it also gives every
+   decision an easy way to be deferred, and 47 of those would be a bad outcome.
+3. **Is the consequence pitched right?** I wrote two sentences: what it blocks
+   mechanically, and what it costs while nothing is decided. The second is the
+   one that makes a decision feel worth making, and it is also the one most
+   likely to overstate things.
+4. **The label.** The card prints *"Drafted from the falsifier during the
+   migration — check this is the right question."* under every authored one.
+
+Where to see it: `tim parity serve EUDPA-328`, then
+`http://127.0.0.1:4328/#inc-055`. Or in the terminal:
+`tools/parity/next-decision.sh EUDPA-328 --domain commodities`.
+
+### Canary 2 — one finding rewritten into plain English (inc-034)
+
+On **inc-028** — the copy-change finding whose own subject is the typo
+`"has as it's aim,"`. If a language pass can lose a claim anywhere, it is here:
+a copy editor is exactly the kind of agent that silently fixes the typo it was
+asked to report.
+
+Three states, all real and all in the file. The first is frozen forever.
+
+**Frozen `detail` (never edited, the oracle):**
+
+> Both sides offer the same eleven purposes in the same order with the same
+> labels. The hints differ on four. Sale/gift: the frontend has "has as it's
+> aim," (possessive/contraction error) and "(e.g. a gift)" where the prototype
+> has "has as its aim" and "(for example a gift)." - the GDS style guide bans
+> e.g. (copy.en.js:6 vs internal-market-purposes.js:7). Breeding (copy.en.js:9-10
+> vs :17), Racing/competition/show/training (copy.en.js:12-13 vs :27) and
+> Production (copy.en.js:18-19 vs :42) each end without a full stop in the
+> frontend and with one in the prototype. The remaining seven hints match
+> exactly.
+
+**Pass A — words moved into slots, not reworded:**
+
+| Slot | Text |
+|---|---|
+| frontend | Sale/gift: the frontend has "has as it's aim," (possessive/contraction error) and "(e.g. a gift)" `[[c1]]`. Breeding `[[c3]]`, Racing/competition/show/training `[[c5]]` and Production `[[c7]]` each end without a full stop in the frontend. |
+| prototype | Where the prototype has "has as its aim" and "(for example a gift)." - the GDS style guide bans e.g. `[[c2]]`. Breeding `[[c4]]`, Racing/competition/show/training `[[c6]]` and Production `[[c8]]` each end with one in the prototype. |
+| difference | Both sides offer the same eleven purposes in the same order with the same labels. The hints differ on four. The remaining seven hints match exactly. |
+
+Pass A came out with a **word residue of exactly zero** — every word of the
+frozen detail, minus citations and sentinel labels, survives somewhere in the
+slots. Same for inc-037, the 3,345-character one.
+
+**Pass B — the rewrite. This is the thing to read:**
+
+| Slot | Pass A (words moved) | Pass B (rewritten) |
+|---|---|---|
+| frontend | Sale/gift: the frontend has "has as it's aim," (possessive/contraction error) and "(e.g. a gift)" ¹. Breeding ³, Racing/competition/show/training ⁵ and Production ⁷ each end without a full stop in the frontend. | The sale or gift hint reads "has as it's aim," and "(e.g. a gift)" ¹. Three things are wrong with it: "it's" should be "its", the comma does not belong, and the GDS style guide bans e.g. Three more hints end with no full stop — breeding ³, racing/competition/show/training ⁵ and production ⁷. |
+| prototype | Where the prototype has "has as its aim" and "(for example a gift)." - the GDS style guide bans e.g. ². Breeding ⁴, Racing/competition/show/training ⁶ and Production ⁸ each end with one in the prototype. | The same hint reads "has as its aim" and "(for example a gift)." ². The same three hints each end with a full stop — breeding ⁴, racing/competition/show/training ⁶ and production ⁸. |
+| difference | Both sides offer the same eleven purposes in the same order with the same labels. The hints differ on four. The remaining seven hints match exactly. | Both sides offer the same eleven purposes, in the same order, with the same labels. Four of the hints differ. The remaining seven match exactly. |
+| falsifiedBy | If the frontend copy is the signed-off content-designer wording and the prototype's edits are unreviewed, the direction of travel reverses - but "it's" for "its" is wrong either way. | If the frontend copy is the signed-off content-designer wording and the prototype's edits are unreviewed, the direction of travel reverses. "it's" for "its" is wrong either way. |
+
+**What the rewrite did, deliberately:**
+
+- **Kept every quoted string character for character**, typo included. `"has as
+  it's aim,"` still has the wrong apostrophe and the comma that should not be
+  there, because that *is* the finding.
+- **Moved the "GDS style guide bans e.g." clause from the prototype column to
+  the frontend column.** It is a reason the frontend is wrong, not a fact about
+  the prototype. Markers may move between slots; a citation may never be deleted
+  or edited.
+- **Dropped "(possessive/contraction error)"** — a nested parenthetical — and
+  said the same thing in a sentence: *"it's" should be "its", the comma does not
+  belong.*
+- **Dropped "in the frontend" and "in the prototype".** The column heading says
+  it. That is preamble the headings now carry.
+- **Kept the falsifier conditional.** "If … then" is what a falsifier is. Making
+  it declarative would have turned a condition into a claim.
+
+**What it lost, by the checker's own count:** the words *contraction, without,
+one, sharpen, defect, actual, best, argued*. All eight are explainable — they
+are the words the rewrite deliberately replaced. Nothing else.
+
+**The polarity list is empty.** No hedge introduced, no absolute removed. That is
+the invariant that cannot be automated past this point, so it is the one to be
+sceptical about: an empty list on one finding is weak evidence.
+
+**What I want you to check:**
+
+1. **Voice.** Is that the register you want across 97 findings? It is plainer
+   than the original and slightly longer in the frontend slot, because unpacking
+   a parenthetical costs words.
+2. **The clause I moved between columns.** If moving a reason to the side it is
+   a reason about is wrong, say so now — it will happen on most findings.
+3. **Whether "Three things are wrong with it:" is too chatty.** I think a
+   colon-led list is the clearest way to say three defects; you may find it
+   over-friendly for a technical record.
+
+Where to see it: `http://127.0.0.1:4328/#inc-028`, and
+`git diff 4a7cc95..5bafa0f -- workareas/journey-builder/EUDPA-328/backlog.json`
+for the Pass A against Pass B diff.
 
 ---

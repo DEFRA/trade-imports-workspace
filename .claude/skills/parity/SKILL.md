@@ -176,6 +176,7 @@ The full sequence, in order:
 
 ```
 tim parity seed-anchors EUDPA-328 --write            # which controls get cropped
+tim parity insertion-anchors EUDPA-328 --write       # where a one-sided control would go
 npm --prefix repos/trade-imports-animals-frontend run test:fit:capture
 <the prototype harness command in corpora.json>
 tim parity manifest EUDPA-328 --side prototype --sha <sha> --dsf 2 --write
@@ -197,6 +198,15 @@ Which crop lands on which card is chosen, not curated: an anchor is relevant
 when the finding's own prose names the control, by its `name` attribute or its
 label, matched whole-word. A curated frame in `visual[]` overrides it. Where
 nothing matches, the card keeps the whole page.
+
+**A reader cannot see an absence.** For "the prototype has X and we do not",
+the side with nothing to show gets an *insertion crop*: a picture of a control
+that is there, outlined, captioned with what is missing and where it would go.
+The position comes from the two page models, and its confidence is part of the
+caption — where the pages share a field it says "it would sit after Species",
+and where they share nothing it says the position could not be derived rather
+than inventing one. Insertion anchors rank below prose-named ones, so they only
+appear on the side whose prose names no control.
 
 ## The invariants, and why each one is there
 

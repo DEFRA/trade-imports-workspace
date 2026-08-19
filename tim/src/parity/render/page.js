@@ -1,6 +1,7 @@
 import { esc } from './prose.js'
 import { renderCard } from './card.js'
 import { THEME_CSS } from './theme.js'
+import { spriteStyles } from './artifact.js'
 
 const BANDS = [
   {
@@ -264,6 +265,7 @@ export const renderPage = ({
   return `<title>${esc(runId)} findings — ${esc(corpus)}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>${THEME_CSS}</style>
+${spriteStyles(inlining?.sprites)}
 <div class="wrap">
   <header class="masthead">
     <span class="masthead__eyebrow">${esc(runId)} · corpus ${esc(corpus)}</span>
@@ -364,7 +366,7 @@ export const renderPage = ({
     <span>generated ${esc(stamp.generatedAt)}</span>
     ${
       inlining
-        ? `<span>artifact copy: ${inlining.inlined} element crops carried inside this file as WebP (${(inlining.bytes / 1024 / 1024).toFixed(1)} MB); ${inlining.linked} full-page screenshots left where they are and linked. Nothing was downsized to fit.</span>`
+        ? `<span>artifact copy: ${inlining.inlined} element crops carried inside this file as WebP (${(inlining.bytes / 1024 / 1024).toFixed(1)} MB), shown ${inlining.uses} times; ${inlining.linked} full-page screenshots left where they are and linked. Nothing was downsized to fit.</span>`
         : ''
     }
     ${stamp.coverage

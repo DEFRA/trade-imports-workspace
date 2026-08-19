@@ -2,7 +2,12 @@ import { describe, test, expect, beforeAll, afterAll } from 'vitest'
 import { mkdtempSync, rmSync, writeFileSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { inlineAssets, webpDataUri, cwebpPath } from './artifact.js'
+import {
+  inlineAssets,
+  webpDataUri,
+  cwebpPath,
+  spriteStyles
+} from './artifact.js'
 import { shot } from './card.js'
 
 // A one-pixel PNG, so the encoder has something real to chew on without this
@@ -76,11 +81,34 @@ describe.skipIf(!haveCwebp)('inlineAssets', () => {
     }
   ]
 
-  test('crops travel inside the file', () => {
+  test('crops travel inside the file, declared once and pointed at', () => {
     const list = items()
     const result = inlineAssets({ items: list, sides })
     expect(result.inlined).toBe(1)
-    expect(list[0].assets[0].frontend.href).toMatch(/^data:image\/webp;base64,/)
+    expect(result.sprites[0].uri).toMatch(/^data:image\/webp;base64,/)
+    expect(list[0].assets[0].frontend.spriteId).toBe(result.sprites[0].id)
+  })
+
+  test('the same crop on two cards is carried once, not twice', () => {
+    const list = items()
+    // The landmark a finding's absence is measured from is routinely also a
+    // difference in its own right, so this is the common case rather than an
+    // edge one — and a second copy is megabytes for no extra evidence.
+    list[0].assets.push({
+      frontend: {
+        state: 'crop',
+        screen: 'fe-x',
+        anchorKey: 'field-y',
+        path: png
+      },
+      prototype: { state: 'absent', screen: null }
+    })
+    const result = inlineAssets({ items: list, sides })
+    expect(result.inlined).toBe(1)
+    expect(result.uses).toBe(2)
+    expect(
+      spriteStyles(result.sprites).match(/data:image\/webp/g)
+    ).toHaveLength(1)
   })
 
   test('a full page is linked, not shrunk to fit', () => {

@@ -75,9 +75,32 @@ const attachAssets = ({
             })
           ])
         )
-        const resolved = resolveRow({ sides, row, frame, anchorKeys })
+        // Only offered where the finding's own prose named nothing on this
+        // side, which is the side that has nothing to show — asking "where
+        // would this go" about a control that is present is noise.
+        const insertionKeys = Object.fromEntries(
+          sides.map((side) => [
+            side.id,
+            anchorKeys[side.id].length
+              ? []
+              : (anchors[side.id]?.[row[side.id]?.screen] ?? [])
+                  .filter((anchor) => anchor.insertions?.length)
+                  .map((anchor) => anchor.key)
+          ])
+        )
+        const resolved = resolveRow({
+          sides,
+          row,
+          frame,
+          anchorKeys,
+          insertionKeys
+        })
         for (const side of sides) {
           const asset = resolved[side.id]
+          const anchor = (anchors[side.id]?.[asset.screen] ?? []).find(
+            (entry) => entry.key === asset.anchorKey
+          )
+          if (anchor?.insertions?.length) asset.insertions = anchor.insertions
           if (
             asset.path &&
             (asset.state === 'crop' || asset.state === 'page')

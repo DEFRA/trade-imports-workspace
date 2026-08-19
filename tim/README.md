@@ -111,7 +111,8 @@ commands. Element crops are declared as data rather than written into a spec,
 and a picture that moves under a pending ruling has to say so:
 
 ```bash
-tim parity seed-anchors EUDPA-328 --write   # anchors.<side>.json from the compare deltas
+tim parity seed-anchors EUDPA-328 --write        # anchors.<side>.json from the compare deltas
+tim parity insertion-anchors EUDPA-328 --write   # where a one-sided control would go
 tim parity manifest EUDPA-328 --side prototype --sha 491b3926 --write
 tim parity check-evidence EUDPA-328 [--strict]   # pin drift, captures, dead citations
 tim parity repoint EUDPA-328 --side frontend --to <sha> [--accept]

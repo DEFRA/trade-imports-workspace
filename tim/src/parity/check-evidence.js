@@ -189,6 +189,32 @@ export const citationHealth = (evidence) => {
 }
 
 /**
+ * Which commit each side's page models were read at.
+ *
+ * A page model has no provenance inside it. It is the fallback tier — the
+ * plate a card shows where no screenshot exists — and a plate of unknown
+ * vintage under a pending decision is the same failure as a swapped picture,
+ * in text rather than in pixels.
+ *
+ * @param {object} args
+ * @param {object} args.profile
+ * @param {object} args.meta
+ * @returns {object[]}
+ */
+export const modelVintage = ({ profile, meta }) =>
+  profile.sides.map((side) => {
+    const from = side.modelsFrom ?? null
+    const pin = meta?.pins?.[side.repo ?? side.id]?.sha ?? null
+    return {
+      side: side.id,
+      sha: from?.sha ?? null,
+      how: from?.how ?? null,
+      matchesPin: Boolean(from?.sha && pin && pin.startsWith(from.sha)),
+      why: from?.why ?? null
+    }
+  })
+
+/**
  * Everything the evidence pipeline can say about its own state.
  *
  * The point of gathering it in one command is that no single check is enough:
@@ -253,6 +279,7 @@ export const runCheckEvidence = ({ profile }) => {
           missingFromFile: []
         },
     sealed: Object.keys(seals).length,
+    models: modelVintage({ profile, meta }),
     regenerate: regenerationCommands({ profile, evidence, meta })
   }
 }
@@ -370,6 +397,17 @@ export const renderCheckEvidence = (result) => {
       `${result.citations.missingFromFile.length} name an identifier that is not in the file at all — re-verify the finding, do not nudge the lines.`
     )
   )
+
+  lines.push('', 'page models')
+  for (const model of result.models) {
+    lines.push(
+      bullet(
+        model.sha
+          ? `${model.side} @ ${model.sha}${model.matchesPin ? ', which is the pin' : ' — older than the pin'}: ${model.how}.`
+          : `${model.side}: no vintage recorded, so a plate built from these says nothing about which commit it is of.`
+      )
+    )
+  }
 
   lines.push('', `${result.sealed} findings have a sealed picture.`)
   lines.push('', 'to regenerate')

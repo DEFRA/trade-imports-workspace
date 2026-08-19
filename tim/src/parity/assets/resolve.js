@@ -99,7 +99,14 @@ export const modelPlate = (model) => {
  * @param {string} [args.why] - Why this screen was chosen, carried through
  * @returns {object}
  */
-export const resolveSideAsset = ({ side, screen, frame, why, anchorKeys }) => {
+export const resolveSideAsset = ({
+  side,
+  screen,
+  frame,
+  why,
+  anchorKeys,
+  insertionKeys
+}) => {
   if (!screen) {
     return {
       state: 'absent',
@@ -116,11 +123,18 @@ export const resolveSideAsset = ({ side, screen, frame, why, anchorKeys }) => {
     : join(side.captureDir, 'crop')
 
   // A curated frame's anchor wins; anything the finding's own prose named comes
-  // next. A page-level shot under a finding about one control has failed, so
-  // the ladder tries hard to find a crop before it settles for the page.
-  const keys = [frame?.anchors?.[side.id]?.key, ...(anchorKeys ?? [])].filter(
-    Boolean
-  )
+  // next; an insertion point comes last. A page-level shot under a finding
+  // about one control has failed, so the ladder tries hard to find a crop
+  // before it settles for the page.
+  //
+  // Insertion points rank below prose because they answer a weaker question.
+  // "Where would this go" is only worth asking on the side that has nothing to
+  // show — which is exactly the side whose prose names no control.
+  const keys = [
+    frame?.anchors?.[side.id]?.key,
+    ...(anchorKeys ?? []),
+    ...(insertionKeys ?? [])
+  ].filter(Boolean)
 
   for (const anchorKey of keys) {
     const crop = fileIfPresent(join(cropRoot, `${screen}__${anchorKey}.png`))
@@ -144,6 +158,10 @@ export const resolveSideAsset = ({ side, screen, frame, why, anchorKeys }) => {
       screen,
       why,
       path: modelPath,
+      // Carried so the plate can say which commit it is of. A page model has no
+      // provenance inside it, and a plate of unknown vintage under a decision
+      // is the same failure as a swapped picture, in text.
+      modelsFrom: side.modelsFrom ?? null,
       plate: modelPlate(readJsonFile(modelPath))
     }
   }
@@ -166,7 +184,7 @@ export const resolveSideAsset = ({ side, screen, frame, why, anchorKeys }) => {
  * @param {object} [args.frame]
  * @returns {Record<string, object>}
  */
-export const resolveRow = ({ sides, row, frame, anchorKeys }) =>
+export const resolveRow = ({ sides, row, frame, anchorKeys, insertionKeys }) =>
   Object.fromEntries(
     sides.map((side) => [
       side.id,
@@ -175,7 +193,8 @@ export const resolveRow = ({ sides, row, frame, anchorKeys }) =>
         screen: row[side.id]?.screen ?? null,
         why: row[side.id]?.why,
         frame,
-        anchorKeys: anchorKeys?.[side.id]
+        anchorKeys: anchorKeys?.[side.id],
+        insertionKeys: insertionKeys?.[side.id]
       })
     ])
   )

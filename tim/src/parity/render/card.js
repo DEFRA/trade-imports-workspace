@@ -123,10 +123,32 @@ export const shot = ({ asset, side }) => {
             : 'changed since you last looked'
         }</span>`
       : ''
+    // An insertion crop is a picture of something that is present, standing in
+    // for something that is not. Outlined and captioned, because without both
+    // it reads as a crop of the wrong control.
+    const insertions = asset.insertions ?? []
+    const figureClass = insertions.length
+      ? 'shot__figure shot__figure--insertion'
+      : 'shot__figure'
+
+    const alt = `${esc(side.label)} — ${esc(asset.screen)}`
+    // In the artifact the picture is declared once and pointed at, so it is a
+    // labelled box rather than an img. Everywhere else it stays an img with an
+    // anchor, because a full-resolution original is one click away.
+    const picture = asset.spriteId
+      ? `<div class="sprite" role="img" aria-label="${alt}" style="background-image:var(--${esc(asset.spriteId)})${asset.aspect ? `;aspect-ratio:${esc(asset.aspect)}` : ''}"></div>`
+      : `<a href="${esc(asset.href)}"><img loading="lazy" src="${esc(asset.href)}" alt="${alt}"></a>`
+
     return `<div class="shot">${head}
-  <figure class="shot__figure" style="position:relative">${drift}
-    <a href="${esc(asset.href)}"><img loading="lazy" src="${esc(asset.href)}" alt="${esc(side.label)} — ${esc(asset.screen)}"></a>
-    <figcaption class="shot__caption">${caption}${asset.dsf ? ` · ${esc(asset.dsf)}x` : ''}</figcaption>
+  <figure class="${figureClass}" style="position:relative">${drift}
+    ${picture}
+    ${insertions
+      .map(
+        (insertion) =>
+          `<p class="shot__insertion">${esc(insertion.caption)}</p>`
+      )
+      .join('')}
+    <figcaption class="shot__caption">${insertions.length ? 'Where it would go' : caption}${asset.dsf ? ` · ${esc(asset.dsf)}x` : ''}</figcaption>
   </figure>
 </div>`
   }
@@ -145,11 +167,16 @@ export const shot = ({ asset, side }) => {
   }
 
   if (asset.state === 'model') {
+    const from = asset.modelsFrom
     return `<div class="shot">${head}
   <div class="plate">
     <ul class="plate__rows">${asset.plate.rows.map(plateRow).join('')}</ul>
   </div>
-  <span class="shot__caption">Page model only — no screenshot exists for this screen yet. This is every heading, field and row the capture recorded, in document order.</span>
+  <span class="shot__caption">Page model only — no screenshot exists for this screen yet. This is every heading, field and row the capture recorded, in document order.${
+    from
+      ? ` Read at <code>${esc(from.sha)}</code>, ${esc(from.how)}.${from.why ? ` ${esc(from.why)}` : ''}`
+      : ''
+  }</span>
 </div>`
   }
 

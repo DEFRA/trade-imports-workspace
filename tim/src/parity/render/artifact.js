@@ -3,6 +3,7 @@ import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { TimError } from '../../errors.js'
+import { pngSize } from '../manifest.js'
 
 /**
  * Where cwebp is. Playwright emits PNG and JPEG only, and a PNG screenshot of
@@ -78,7 +79,18 @@ export const webpDataUri = ({ path, quality = 82, bin }) => {
  */
 export const inlineAssets = ({ items, sides, quality }) => {
   const bin = cwebpPath()
-  let inlined = 0
+  // One copy per file, not per use. The same crop lands on several cards — a
+  // landmark is often both a difference in its own right and the insertion
+  // point another finding's absence is measured from — and a fresh copy at
+  // each use took the page to 18 MB, over the ceiling, with not one extra
+  // pixel of evidence in it.
+  //
+  // Each picture is declared once as a CSS custom property and every card
+  // points at it. That is what lets every crop stay at full quality: the
+  // alternative was to degrade them all to fit a channel, which the brief
+  // rules out.
+  const sprites = new Map()
+  let uses = 0
   let bytes = 0
   let linked = 0
 
@@ -88,12 +100,24 @@ export const inlineAssets = ({ items, sides, quality }) => {
         const asset = row[side.id]
         if (!asset?.path) continue
         if (asset.state === 'crop') {
-          const encoded = webpDataUri({ path: asset.path, quality, bin })
-          asset.href = encoded.uri
+          if (!sprites.has(asset.path)) {
+            const encoded = webpDataUri({ path: asset.path, quality, bin })
+            sprites.set(asset.path, {
+              id: `crop-${sprites.size}`,
+              uri: encoded.uri,
+              bytes: encoded.bytes,
+              size: pngSize(readFileSync(asset.path))
+            })
+            bytes += encoded.bytes
+          }
+          const sprite = sprites.get(asset.path)
+          asset.spriteId = sprite.id
+          asset.aspect = sprite.size
+            ? `${sprite.size.width} / ${sprite.size.height}`
+            : null
+          asset.href = null
           asset.inlined = true
-          asset.encodedBytes = encoded.bytes
-          inlined += 1
-          bytes += encoded.bytes
+          uses += 1
           continue
         }
         if (asset.state === 'page') {
@@ -105,5 +129,22 @@ export const inlineAssets = ({ items, sides, quality }) => {
     }
   }
 
-  return { inlined, linked, bytes }
+  return {
+    inlined: sprites.size,
+    uses,
+    linked,
+    bytes,
+    sprites: [...sprites.values()].map(({ id, uri }) => ({ id, uri }))
+  }
 }
+
+/**
+ * The declaration block every inlined crop points at.
+ *
+ * @param {object[]} sprites
+ * @returns {string}
+ */
+export const spriteStyles = (sprites) =>
+  sprites?.length
+    ? `<style>:root{${sprites.map((sprite) => `--${sprite.id}:url("${sprite.uri}")`).join(';')}}</style>`
+    : ''

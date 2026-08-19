@@ -19,6 +19,7 @@ import {
   blockers
 } from '../../parity/check-evidence.js'
 import { runRepoint } from '../../parity/repoint.js'
+import { runInsertionAnchors } from '../../parity/insertion.js'
 import {
   setSlot,
   setSlots,
@@ -290,7 +291,7 @@ export const register = (program, { timVersion }) => {
             ),
             ...(result.inlining
               ? [
-                  `carried inside the file: ${result.inlining.inlined} element crops as WebP, ${(result.inlining.bytes / 1024 / 1024).toFixed(1)} MB.`,
+                  `carried inside the file: ${result.inlining.inlined} element crops as WebP, ${(result.inlining.bytes / 1024 / 1024).toFixed(1)} MB, shown ${result.inlining.uses} times.`,
                   `left where they are and linked: ${result.inlining.linked} full-page screenshots.`
                 ]
               : []),
@@ -402,6 +403,38 @@ export const register = (program, { timVersion }) => {
               (side) =>
                 `${side.side.padEnd(12)} ${side.anchors} anchors across ${side.screens} screens -> ${side.path}`
             ),
+            r.written ? '' : 'Dry run — pass --write to apply.'
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('insertion-anchors <runId>')
+    .description(
+      'Derive where a one-sided control would sit on the side that lacks it, and fold the landmark into the anchor files'
+    )
+    .option('--write', 'Write the anchor files')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) =>
+          runInsertionAnchors({ profile, write: opts.write }),
+        renderText: (r) =>
+          [
+            ...r.sides.map(
+              (side) =>
+                `${side.side.padEnd(12)} ${side.insertions} insertion points across ${side.screens} screens -> ${side.path}`
+            ),
+            r.skipped?.length
+              ? `${r.skipped.length} could not be placed:\n${r.skipped
+                  .slice(0, 12)
+                  .map(
+                    (s) => `  - ${s.side}/${s.screen} ${s.missing}: ${s.why}`
+                  )
+                  .join('\n')}`
+              : '',
             r.written ? '' : 'Dry run — pass --write to apply.'
           ]
             .filter(Boolean)

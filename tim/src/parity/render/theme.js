@@ -526,6 +526,35 @@ code.ref { color: var(--ink-muted); }
   background: var(--surface);
 }
 
+/* The artifact declares each picture once and points every use at it, so a
+   crop there is a labelled box rather than an img. Contain rather than cover:
+   a cropped crop is a different picture. */
+.sprite {
+  display: block;
+  width: 100%;
+  max-height: 30rem;
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: contain;
+}
+
+/* An insertion crop shows something that is present, standing in for
+   something that is not. The outline is on the frame rather than burnt into
+   the pixels, so changing how it reads never needs a re-capture. */
+.shot__figure--insertion {
+  border: 2px solid var(--decision-rule);
+  background: var(--decision-ground);
+}
+
+.shot__insertion {
+  margin: 0;
+  padding: .5rem .6rem;
+  font-size: .8rem;
+  color: var(--ink);
+  background: var(--decision-ground);
+  border-top: 1px solid var(--decision-rule);
+}
+
 .plate {
   border: 1px dashed var(--rule-strong);
   border-radius: 8px;

@@ -47,6 +47,20 @@ const CHOOSER = 'index'
 // screen set; the previous run's 13 address-book findings carry over.
 const isShared = (name) => name.startsWith('address-book')
 
+// A view file is not a screen if nothing renders it. permanent-address.html has
+// a render function, renderPermanentAddressPage (routes.js:2780), and that
+// function is never called: the whole file mentions its name exactly once, at
+// the declaration. Every route that reaches a permanent address goes through
+// renderPermanentAddressAnimalsPage instead, which renders
+// permanent-address-animals.html.
+//
+// Listed rather than detected. A general "is this render function called"
+// check is a call-graph over 11,000 lines to remove one screen, and the day it
+// gets the answer wrong is the day a real screen disappears from the
+// comparison without anyone noticing. A named exclusion carrying its own
+// evidence is falsifiable by reading it.
+const ORPHANED = new Set(['permanent-address'])
+
 /**
  * Every route the router declares, with the method that declares it.
  *
@@ -167,17 +181,258 @@ const dr1Screens = ({ repoPath }) => {
   return viewsIn(viewsRoot)
     .filter((name) => !NOT_A_VIEW.has(name))
     .filter((name) => name !== CHOOSER && !isShared(name))
+    .filter((name) => !ORPHANED.has(name))
     .filter((name) => !(gatedViews.has(name) && !reachableViews.has(name)))
     .sort()
     .map((name) => ({ screen: `dr1-${name}`, why: `app/views/${name}.html` }))
 }
 
+//
+// Which screens does the frontend have?
+//
+// The frontend has no route table worth parsing. It has a journey definition:
+// flow/flow.js lists the sections in order, each section lists page identities,
+// and every page identity is a two-field object in its feature's page.js. That
+// is the file the repo's own docs/add-a-page.md tells an author to edit when
+// they add a page, so reading it is reading what the application says it is.
+//
+// Four facts about the frontend make it readable this way. Each is cited where
+// it is used.
+//
+//   1. A page identity is inert by construction. page.js exports only
+//      { id, slug } and imports nothing, so that flow and the controller can
+//      share one object without a module cycle. Two string literals is exactly
+//      what a regex can read.
+//   2. Not every screen is a flow page. The hub, the cancel-amend prompt and
+//      the delete prompt have a template and a GET route but no page.js,
+//      because they are not steps in the sequence.
+//   3. The five address pickers are one controller over a table. parties.js
+//      holds the five consignment parties and party-picker.controller.js maps
+//      over them, so those five screens are declared as data, not as files.
+//   4. Two pages are photographed as two screens each. The dashboard and the
+//      documents page each render an empty state and a populated state, and
+//      the previous run filed each under its own id. Naming either as one page
+//      here would report it missing forever, because nothing is ever captured
+//      under the bare name.
+//
+const SET = 'src/server/app/sets/live-animals'
+const FEATURES = `${SET}/journeys/linear/features`
+const FLOW = `${SET}/journeys/linear/flow/flow.js`
+const PARTIES = `${FEATURES}/addresses/parties.js`
+
+/**
+ * The corpus screen id for a page, where it is not the page's own id.
+ *
+ * The journey names a page for the thing it collects; the captures name it for
+ * what the user sees. Where the two differ the corpus id wins — a name that
+ * does not match reports one screen as both missing and unexplained.
+ *
+ * A page with two ids is one that renders two states worth comparing, fact 4.
+ */
+const SCREENS_OF_PAGE = {
+  dashboard: ['dashboard-empty', 'dashboard-populated'],
+  commodities: ['commodity-search'],
+  consignmentDetails: ['consignment-details'],
+  animalIdentification: ['animal-identification'],
+  'accompanying-documents': ['documents-empty', 'documents-populated'],
+  addresses: ['addresses-hub'],
+  cphNumber: ['cph-number'],
+  'port-of-entry': ['arrival-details'],
+  transporters: ['transporter-type'],
+  'transporters-select': ['transporter-commercial'],
+  'private-transporter-details': ['transporter-private'],
+  'consignment-contact-select': ['contact'],
+  'notification-view': ['check-answers']
+}
+
+// The corpus id for each party's picker. Four of the five are the party id in
+// kebab case, but consignor is filed as consignor-or-exporter, so the table is
+// written out rather than derived.
+const SCREEN_OF_PARTY = {
+  placeOfOrigin: 'address-picker-place-of-origin',
+  consignor: 'address-picker-consignor-or-exporter',
+  consignee: 'address-picker-consignee',
+  importer: 'address-picker-importer',
+  placeOfDestination: 'address-picker-place-of-destination'
+}
+
+const filesNamed = (dir, name) =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) return filesNamed(full, name)
+    return entry.name === name ? [full] : []
+  })
+
+/**
+ * Every page identity the features declare, keyed by the constant that exports
+ * it — which is the name flow.js refers to it by.
+ *
+ * Fact 1 above.
+ *
+ * @param {string} featuresDir
+ * @returns {Record<string, {id: string, slug: string}>}
+ */
+const pageIdentities = (featuresDir) => {
+  const found = {}
+  for (const file of filesNamed(featuresDir, 'page.js')) {
+    const source = fs.readFileSync(file, 'utf8')
+    const pattern =
+      /export const (\w+)\s*=\s*\{\s*id:\s*'([^']+)',\s*slug:\s*'([^']*)'/g
+    let match
+    while ((match = pattern.exec(source))) {
+      found[match[1]] = { id: match[2], slug: match[3] }
+    }
+  }
+  return found
+}
+
+/**
+ * The journey's sections, each with the page constants it sequences.
+ *
+ * The section id is read backwards from its `pages:` list rather than by
+ * matching a whole section object, so a section that grows a gate or any other
+ * key still reads.
+ *
+ * @param {string} source - flow/flow.js
+ * @returns {Array<{sectionId: string, pageConstants: string[]}>}
+ */
+const flowSections = (source) => {
+  const found = []
+  const pattern = /pages:\s*\[([^\]]*)\]/g
+  let match
+  while ((match = pattern.exec(source))) {
+    const preceding = [
+      ...source.slice(0, match.index).matchAll(/id:\s*'([^']+)'/g)
+    ]
+    found.push({
+      sectionId: preceding[preceding.length - 1]?.[1] ?? '',
+      pageConstants: match[1]
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean)
+    })
+  }
+  return found
+}
+
+/**
+ * The body of one array literal, as text.
+ *
+ * Bracket-matched so that PARTIES stops where PARTIES stops. CONTACT_PARTY sits
+ * directly below it and has the same shape; reading past the closing bracket
+ * would add a sixth picker that no address hub links to.
+ */
+const arrayBody = (source, at) => {
+  let depth = 0
+  for (let i = at; i < source.length; i += 1) {
+    if (source[i] === '[') depth += 1
+    else if (source[i] === ']') {
+      depth -= 1
+      if (depth === 0) return source.slice(at, i + 1)
+    }
+  }
+  return source.slice(at)
+}
+
+/**
+ * The five consignment parties, in the order the hub lists them. Fact 3.
+ *
+ * @param {string} source - addresses/parties.js
+ * @returns {string[]} Party ids
+ */
+const partyIds = (source) => {
+  const body = arrayBody(
+    source,
+    source.indexOf('[', source.indexOf('export const PARTIES'))
+  )
+  return [...body.matchAll(/id:\s*'([^']+)',\s*role:/g)].map((match) => match[1])
+}
+
+/**
+ * The screens that are not journey pages. Fact 2.
+ *
+ * A feature folder holding a template and a controller that serves a GET, but
+ * no page identity, is a screen off the flow. A feature that ever ships a
+ * template before its page.js would be listed here under its folder name,
+ * which reads as an unexplained screen rather than as silence.
+ *
+ * @param {string} featuresDir
+ * @returns {string[]} Folder names, which are the corpus ids
+ */
+const offFlowScreens = (featuresDir) =>
+  fs
+    .readdirSync(featuresDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter((name) => {
+      const dir = path.join(featuresDir, name)
+      const controller = path.join(dir, 'controller.js')
+      if (!fs.existsSync(path.join(dir, 'template.njk'))) return false
+      if (fs.existsSync(path.join(dir, 'page.js'))) return false
+      return (
+        fs.existsSync(controller) &&
+        fs.readFileSync(controller, 'utf8').includes("method: 'GET'")
+      )
+    })
+
+/**
+ * The frontend's screens: the journey's pages, the screens beside the journey,
+ * and one picker per consignment party.
+ *
+ * @param {object} args
+ * @param {string} args.repoPath - The frontend checkout
+ * @returns {Array<{screen: string, why: string}>}
+ */
+const frontendScreens = ({ repoPath }) => {
+  const featuresDir = path.join(repoPath, FEATURES)
+  const identities = pageIdentities(featuresDir)
+  const found = []
+
+  for (const { sectionId, pageConstants } of flowSections(
+    fs.readFileSync(path.join(repoPath, FLOW), 'utf8')
+  )) {
+    for (const constant of pageConstants) {
+      const page = identities[constant]
+      // flow.js can only sequence a page identity that exists, so no match
+      // means the parse has gone stale rather than that the page has gone. Say
+      // so: a quietly shorter list would read as a screen nobody built.
+      if (!page) {
+        throw new Error(
+          `${FLOW} sequences "${constant}", which no page.js under ${FEATURES} declares.`
+        )
+      }
+      for (const screen of SCREENS_OF_PAGE[page.id] ?? [page.id]) {
+        found.push({
+          screen: `fe-${screen}`,
+          why: `${FLOW}, section "${sectionId}", page "${page.id}"`
+        })
+      }
+    }
+  }
+
+  for (const name of offFlowScreens(featuresDir)) {
+    found.push({
+      screen: `fe-${name}`,
+      why: `${FEATURES}/${name}/template.njk, routed outside the flow`
+    })
+  }
+
+  for (const party of partyIds(
+    fs.readFileSync(path.join(repoPath, PARTIES), 'utf8')
+  )) {
+    found.push({
+      screen: `fe-${SCREEN_OF_PARTY[party] ?? party}`,
+      why: `${PARTIES}, party "${party}"`
+    })
+  }
+
+  return found.sort((a, b) => a.screen.localeCompare(b.screen))
+}
+
 module.exports = {
   enumerators: {
-    // The frontend has no enumerator yet. Coverage says so on the side rather
-    // than reporting it as covered, which is the honest answer until somebody
-    // writes one from the journey definition.
-    prototype: dr1Screens
+    prototype: dr1Screens,
+    frontend: frontendScreens
   },
   gatedRoutes,
   routesIn

@@ -60,11 +60,22 @@
           "htmlDir": "workareas/shared/dr1-parity/capture/html/frontend",
           "evidenceRoot": "workareas/shared/dr1-parity/evidence",
           "screensDir": null,
+          "_appComment": [
+            "STUB_MODE is what makes the frontend self-contained. Without it the",
+            "service wants the real Defra ID round-trip and the real backend,",
+            "address book and reference data, none of which a capture run starts;",
+            "the first request is then bounced to an identity provider that is not",
+            "there. The frontend's own playwright.config.js sets the same flag on",
+            "its webServer for the same reason. `npm run fit:start` does not build",
+            "the client bundle, so .public must already hold one — a capture of an",
+            "unstyled page is worse than no capture."
+          ],
           "app": {
             "baseURL": "http://localhost:3000",
             "startPath": "/",
             "startCommand": "npm run fit:start",
             "cwd": "repos/trade-imports-animals-frontend",
+            "env": { "STUB_MODE": "true" },
             "readyTimeoutMs": 180000
           },
           "captureCommand": "tim parity capture EUDPA-328-DR1 --side frontend",

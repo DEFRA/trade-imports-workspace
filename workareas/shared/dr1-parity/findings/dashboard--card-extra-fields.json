@@ -1,0 +1,33 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend's notification card shows Consignee, Consignor, Date created and Date submitted; DR1's card shows only Commodity, Status, Origin and Arrival date at destination.",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [
+    { "kind": "label", "text": "Consignee" },
+    { "kind": "label", "text": "Consignor" },
+    { "kind": "label", "text": "Date created" },
+    { "kind": "label", "text": "Date submitted" }
+  ],
+  "finding": {
+    "frontend": "Each card carries eight name/value pairs over three rows: Commodity, Origin and Arrival at destination; then Consignee, Consignor and Status; then Date created and Date submitted (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:113-153). On the captured draft, four of the eight are blank because the notification has not got that far, so the card is half empty labels.",
+    "prototype": "DR1's card carries four pairs over two rows: Commodity and Status, then Origin and Arrival date at destination (app/views/dashboard.html:264-292). Consignee and consignor are held on the DR1 fixture record (app/data/dashboard-notifications.js) but the card does not print them, and DR1 shows no created or submitted date on the card at all.",
+    "difference": "Cut the card down to the four pairs DR1 specifies: Commodity and Status on the first row, Origin and Arrival date at destination on the second. That removes Consignee, Consignor, Date created and Date submitted. This is one decision about what a card is for — DR1's card identifies a consignment by what is coming, from where and when, and leaves the parties to the notification itself. Take it together with the finding on the arrival label, which renames one of the four survivors.",
+    "falsifiedBy": "Finding a consignee, consignor, created date or submitted date printed on a notification card in DR1's root dashboard view.",
+    "correction": "Pressed hard on this one because it runs the other way — the frontend has more than DR1 — and it survives. Claimed: DR1's card shows four pairs and nothing else. Checked three ways rather than one: the root view's card block has exactly four dt elements (app/views/dashboard.html:265-292) and there is no second detail block, no summary and no expandable region in the card; the captured DOM has four cards each carrying exactly Commodity, Status, Origin, Arrival date at destination and no fifth key; and the picture at evidence/prototype@491b3926/page/dr1-dashboard.png shows the same. It is stronger than written: the DR1 fixture also holds dateSubmitted, commodityLabel, categoryLabel, quantityLabel and quantityValue on every record, and the root card prints none of them either, so the austerity is a deliberate choice across the whole fixture and not just about the two party names. One count is wrong. Claimed: four of the eight frontend pairs are blank on the captured draft. Actually true: five are blank — Commodity, Arrival at destination, Consignee, Consignor and Date submitted — and only Origin, Status and Date created carry a value. Read off capture/model/frontend/fe-dashboard-populated.json and confirmed in the picture."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:113-153",
+    "prototype": "app/views/dashboard.html:264-292"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--card-arrival-label",
+      "relation": "travels-with",
+      "why": "both change the set of labels on the same card, and doing them separately means touching the same block twice"
+    }
+  ]
+}

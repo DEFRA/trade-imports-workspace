@@ -1,0 +1,27 @@
+{
+  "slice": "origin-and-reason",
+  "title": "The frontend refuses to save the origin page until a country of origin is chosen; DR1 lets the user save what they have and shows the task as still to do.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["countryOfOrigin"],
+  "finding": {
+    "frontend": "Save and continue with no country chosen returns the page with 'Select the country where the animal originates from' in the error summary and against the field, and nothing on the page is kept. A user who knows the internal reference but is waiting on the health certificate to confirm the country cannot record what they do know (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67).",
+    "prototype": "DR1 saves whatever is on the origin page and moves on. Country of origin is not checked at all on submit — the only check the page makes is on the region code once Yes is chosen (app/routes.js:245-262). The unanswered country still counts against the task: the hub reads the origin task as complete only when both the country and the region-code answer are present (app/routes.js:232-244), so the gap is shown rather than enforced, and it is caught again at the review page before the declaration.",
+    "difference": "Stop blocking on country of origin at the page and let a partly answered origin page save. Keep the field mandatory for completeness, so the hub still shows the task as unfinished and the review page still stops a submission without it. The same save-what-you-have behaviour already applies on the frontend's reason-for-import page, so the pattern exists — this brings origin into line with it. Check the other pages in this slice for the same mismatch before treating it as an origin-only change.",
+    "falsifiedBy": "Submitting DR1's origin page with the country search empty and being returned to the page with an error about the country."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67",
+    "prototype": "app/routes.js:245-262"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--region-of-origin-code-not-required-when-yes",
+      "relation": "travels-with",
+      "why": "the two sides put the hard stop in opposite places on the same page"
+    }
+  ]
+}

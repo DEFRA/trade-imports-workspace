@@ -1,0 +1,33 @@
+{
+  "slice": "documents",
+  "title": "DR1 gives the user a drop zone that names the chosen file back to them before the row is saved; the frontend gives them the browser's own file button and whatever text the browser puts beside it.",
+  "domain": "documents",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents",
+    "dr1-upload-documents-file-chosen"
+  ],
+  "controls": [
+    { "kind": "field", "name": "file" }
+  ],
+  "finding": {
+    "frontend": "The file control is a plain govukFileUpload with no JavaScript enhancement (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58). What the user sees is the browser's native widget — on the captured screen, a \"Choose File\" button and the browser's own \"No file chosen\" text. There is no drop target: a file dragged onto the page does nothing. The chosen filename is whatever the browser chooses to show, in the browser's own wording, and it is not announced to a screen reader.",
+    "prototype": "The attachment sits in a dashed drop zone (app/views/upload-documents.html:172-180). Inside it a status region, marked aria-live=\"polite\", reads \"No file chosen\" until a file is picked and then reads the filename — dr1-upload-documents-file-chosen shows it reading \"itahc-certificate.pdf\". Below the status are a \"Choose file\" control and the text \"or drop file\", so dragging a file onto the zone is offered as an equal alternative to browsing for one. The zone takes an error style of its own when the attachment fails validation, visible as the red dashed border on dr1-upload-documents-error.",
+    "difference": "Replace the plain file input with a drop zone: a polite live region that names the chosen file, a Choose file control, drag-and-drop onto the zone, and an error state on the zone itself. govuk-frontend's file upload component already ships this behaviour behind its JavaScript-enhanced variant, so the work is enabling and styling that rather than hand-rolling a widget, and the unenhanced input stays as the no-JavaScript fallback.",
+    "falsifiedBy": "Dropping a file onto the frontend's upload page and seeing its name appear before the row is saved."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58",
+    "prototype": "app/views/upload-documents.html:172-180"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--attachment-field-label",
+      "relation": "travels-with",
+      "why": "the label sits directly above the control being replaced"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 searches the notification list on three terms — keyword or notification number, commodity code or name, and consignee or importer; the frontend's one search box matches the reference number only.",
+  "domain": "dashboard",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard-filters-open"],
+  "controls": [
+    { "kind": "field", "name": "referenceNumber" },
+    { "kind": "field", "name": "keyword" },
+    { "kind": "field", "name": "commodity" },
+    { "kind": "field", "name": "consignee" }
+  ],
+  "finding": {
+    "frontend": "The filter panel holds one text box labelled \"Keyword or reference\" and a Search button. The label promises a keyword search but the value is passed straight through as a reference-number match — the controller reads request.query.referenceNumber and hands it to the list read under that name (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:54-59), which puts it on the notifications request as referenceNumber (src/server/app/services/persistence/records/real/lifecycle/read.js:30-34). A user who types a commodity or a consignee's name gets no results.",
+    "prototype": "The sidebar's first collapsible section, \"Search by\", holds three separate labelled boxes: \"Keyword or notification number\", \"Commodity code or name\" and \"Consignee/Importer\" (app/views/dashboard.html:87-132). The three are markup only — they sit outside every form on the page, and getDashboardViewModel never reads a keyword, commodity or consignee value and never filters the list (app/routes.js:7138-7255). DR1 states which three things a user should be able to search on; it does not demonstrate any of them working.",
+    "difference": "Replace the single box with the three DR1 asks for, and make each one search what its label promises. The frontend already carries the reference-number search, so the keyword box is the existing one relabelled and widened from an exact reference match to a keyword match. Commodity and consignee are new: the notifications endpoint accepts page, sort and reference number and nothing else (src/server/app/services/persistence/records/real/lifecycle/read.js:26-34), so both need a search parameter added to the contract, and consignee matching needs the search to reach the party names the address book holds rather than the notification record alone.",
+    "falsifiedBy": "Typing a commodity name or a consignee name into the frontend's search box and getting the matching notification back."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:41-55",
+    "prototype": "app/views/dashboard.html:87-132"
+  },
+  "carriedFrom": "inc-091"
+}

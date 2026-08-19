@@ -1,0 +1,36 @@
+{
+  "slice": "addresses",
+  "title": "DR1 asks, on a page of its own, where each animal will permanently live and offers the place of destination as a one-click answer; the frontend buries the same question as blank address fields inside each animal's identification record.",
+  "domain": "addresses",
+  "type": "add-page",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-animal-identification",
+    "fe-addresses-hub",
+    "dr1-permanent-address-animals",
+    "dr1-roles-and-addresses"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Permanent address" },
+    { "kind": "label", "text": "Same as the place of destination (POD)" }
+  ],
+  "finding": {
+    "frontend": "There is no permanent-address row on the addresses hub — the hub is built from five parties plus a conditional CPH row (src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:48-53) and nothing else. The question is asked instead inside the animal identification card, as a heading \"Permanent address\", the sentence \"A permanent address is required for this animal.\" and a block of blank address inputs — name, two address lines, town, county, postal code, country — repeated for every animal (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43-50, fields at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:32-33, labels at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:90-104). It appears for cats and dogs only (src/server/app/sets/live-animals/services/commodities/stub.js:115). Nothing offers the place of destination the trader has already given: to say an animal lives where the consignment is going, they retype the whole address, once per animal.",
+    "prototype": "Permanent address is a seventh section on the addresses hub, with its own bullet-list hint — a permanent address is where an animal will permanently reside and can be checked by the Animal and Plant Health Agency (APHA) — and an \"Add a permanent address\" link (app/data/consignment-address-sections.js:79-96). Behind it is one page, headed \"Permanent address\" with the question \"Where will their permanent address be?\", holding a card per animal in the consignment (app/views/permanent-address-animals.html:35,64-97). dr1-permanent-address-animals shows two cards, \"Canis familiaris 1\" and \"Canis familiaris 2\", each offering two radios: \"Same as the place of destination (POD)\", hinted with the destination address already on the notification, or \"Enter a new address\", hinted \"This is where they will stay after spending 48 hours at the place of destination.\" It is asked for the whole 01061900 group — cat, dog, ferret and other live mammals (app/data/consignment-address-sections.js:124-131). It is one page, not two: `/permanent-address` writes \"no\" to the same-as-destination answer and redirects straight to the select page (app/routes.js:10789-10801), and the sibling view that asks \"Are all the animals going to the place of destination?\" is dead code — its renderer at app/routes.js:2780 has no callers.",
+    "difference": "Move the question out of the identification card and onto its own page, reached from a permanent-address row on the addresses hub, asking it once per animal with \"Same as the place of destination\" as the first option and the destination address shown as its hint. Take DR1's guidance with it — the two-bullet definition on the hub row, and the 48-hour sentence under the new-address option — since the frontend states neither today. The applicability difference (DR1 also asks it for ferrets and other live mammals) cannot be reproduced until the commodity catalogue grows past its five entries, so it rides with the catalogue rather than with this page.",
+    "falsifiedBy": "A permanent-address entry in the frontend's addresses parties list, or a \"same as the place of destination\" option anywhere in the identification card."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43-50",
+    "prototype": "app/views/permanent-address-animals.html:64-97"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--catalogue-is-a-five-entry-stub",
+      "relation": "adjacent-to",
+      "why": "DR1 asks the question for ferrets and other live mammals, neither of which the frontend catalogue contains"
+    }
+  ],
+  "carriedFrom": "inc-037"
+}

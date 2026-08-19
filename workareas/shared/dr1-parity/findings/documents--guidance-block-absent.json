@@ -1,0 +1,26 @@
+{
+  "slice": "documents",
+  "title": "DR1 opens the upload page with guidance on which documents to attach — an ITAHC instruction, a list of other documents, and an expandable table of consignment-specific requirements with a link to GOV.UK; the frontend goes straight from the heading to the first form field.",
+  "domain": "documents",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Check which additional documents you must upload" }
+  ],
+  "finding": {
+    "frontend": "Under the \"Upload documents\" heading the page renders the Document reference input immediately (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-39). There is no introduction, no list of documents a trader might need, no expandable guidance and no outbound link. The page's copy file holds no guidance keys of any kind (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:1-25). A user who does not already know which documents their consignment needs is told nothing on the page where they have to decide.",
+    "prototype": "Three blocks sit between the heading and the form (app/views/upload-documents.html:38-82). First an intro paragraph: \"You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.\" Then \"Other documents you may need to attach include:\" over two bullets — \"import licences or authorisations\" and \"commercial documents or invoices\". Then a collapsed details component, \"Check which additional documents you must upload\", holding a two-column table headed Consignment / Documents needed with three rows — animals that do not need a health certificate need an exporter's declaration that they are fit to travel; livestock transiting bluetongue restricted territories need a bluetongue declaration GBHC172; rodents imported for research purposes need an RM39 licence and a supplementary health certificate — followed by \"Check the documents you need on GOV.UK (opens in a new tab)\" linking out to the IPAFFS guidance page.",
+    "difference": "Add the three blocks to the upload page between the heading and the form, in DR1's order: the ITAHC intro paragraph, the \"other documents you may need\" bullets, and a govukDetails holding the three-row table and the GOV.UK link. All of it is static content, so it is one template and one copy-file change with no data behind it. Two things need a decision before it is written: whether the outbound link keeps DR1's analytics-tagged URL or points at the plain guidance page, and whether the three table rows are the settled content or a placeholder the content designer will replace.",
+    "falsifiedBy": "Finding any guidance text, bullet list or expandable section between the heading and the Document reference field on the frontend's upload page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-39",
+    "prototype": "app/views/upload-documents.html:38-82"
+  },
+  "carriedFrom": "inc-035"
+}

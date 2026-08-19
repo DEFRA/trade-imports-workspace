@@ -1,0 +1,22 @@
+{
+  "slice": "dashboard",
+  "title": "DR1's dashboard tells a user which submitted notifications still need something from them with a \"Submitted action required\" status; the frontend can only ever say Draft, Submitted, Amending or Deleted.",
+  "domain": "dashboard",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [{ "kind": "label", "text": "Status" }],
+  "finding": {
+    "frontend": "The status tag on a card comes from a fixed map of four journey states: Draft (blue), Submitted (green), Amending (yellow) and Deleted (grey) (src/server/app/shared/kit.js:34-51). Once a notification is submitted it reads Submitted and stays that way, so a user scanning the list cannot tell a notification that is progressing from one that is waiting on them.",
+    "prototype": "Two of the four cards on DR1's dashboard carry an orange \"Submitted action required\" tag beside the green \"Submitted\" of the others (app/views/dashboard.html:269-278, values from app/data/dashboard-notifications.js:7). DR1's status filter names a wider set again — Draft, Submitted, In progress, Approved, Action required, Rejected and Complete — so the dashboard is meant to report where a notification has got to after submission, not just that it was sent.",
+    "difference": "The dashboard needs to show a post-submission status that distinguishes a notification needing the user's attention from one that does not. The frontend cannot produce one today: the status on a row is the journey's own lifecycle state and there is no field on the record that carries a decision or an outstanding requirement back from the authorities. So the record contract needs a status the authorities can set, and the list read has to return it, before the tag can be added and the status filter built on top of it. Agree the full set of values at the same time — DR1 states seven in the filter but only demonstrates three on cards, so the list has to be settled against what the service really reports rather than copied from the prototype fixture.",
+    "falsifiedBy": "Finding any status a frontend notification card can show, other than Draft, Submitted, Amending and Deleted.",
+    "correction": "Verified and it stands, with one overstatement left in place. Claimed: the frontend card can say Draft, Submitted, Amending or Deleted. Actually true: on the dashboard it can only ever say Draft, Submitted or Amending — the controller strips deleted rows out of the list before the cards are built (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:61), so the grey Deleted tag in the map at src/server/app/shared/kit.js:34-51 is unreachable here. The finding is not falsified by that, because its claim is a superset of the truth and the gap it names is still real; the number four is just wrong. Checked by reading toRow (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:12), which takes the tag from journeyStrip, and the DELETED filter one level above it. Everything else confirmed against the pictures and the captured DOM: the DR1 fixture holds eight notifications, four of which the in-progress default hides, and the four that render carry exactly two orange \"Submitted action required\" tags and two green \"Submitted\" tags — counted in capture/html/prototype/dr1-dashboard.html and visible in evidence/prototype@491b3926/page/dr1-dashboard.png. The frontend picture shows one card and one blue Draft tag. The fixture citation app/data/dashboard-notifications.js:7 is exact. dr1-dashboard-after-submission also shows a just-submitted notification carrying the orange tag, which is the strongest single picture for this finding and is not in the screens list."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/kit.js:34-51",
+    "prototype": "app/views/dashboard.html:269-278"
+  },
+  "carriedFrom": "inc-086"
+}

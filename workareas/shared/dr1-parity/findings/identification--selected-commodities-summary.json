@@ -1,0 +1,30 @@
+{
+  "slice": "identification",
+  "title": "DR1 opens identification details with a Selected commodities table and an 'Add another commodity' link; the frontend goes straight into the first animal's fields.",
+  "domain": "identification",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    { "kind": "label", "text": "Selected commodities" }
+  ],
+  "finding": {
+    "frontend": "Below the inset warning the page drops straight to the first commodity heading and its entry form. A person part-way through identifying animals cannot see what the consignment holds, cannot correct a commodity from here, and cannot add another one — the only route back is the Back link or the hub. The template renders the inset and then the cards with nothing between them (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:9-23).",
+    "prototype": "DR1 puts a block headed 'Selected commodities' between the inset text and the first panel. It is a four-column table — Commodity code, Common name, Number of animals, and a Change link on each row that returns to the commodity search — followed by an 'Add another commodity' link (app/views/animal-identification-details.html:55-83). It gives the person the whole consignment at a glance and two ways to correct it without leaving the page.",
+    "difference": "Add the block above the identification cards: a heading, one row per commodity line showing the line's code, common name and number of animals, a Change link per row back to the commodity search, and an 'Add another commodity' link below the table. The row data is already on the page — every card is built from the same commodityLines collection — so this is a view-model and template addition with no new answers collected. Note the frontend's commodity picker is a fixed checkbox list rather than a search, so the Change link's destination is the commodity page, not a search reset.",
+    "falsifiedBy": "Finding a selected-commodities summary, or an 'Add another commodity' link, rendered anywhere on the frontend's animal identification page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:9-23",
+    "prototype": "app/views/animal-identification-details.html:55-83"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--change-number-of-animals-link",
+      "relation": "travels-with",
+      "why": "both restore a route out of the identification page back to the commodity answers"
+    }
+  ],
+  "carriedFrom": "inc-011"
+}

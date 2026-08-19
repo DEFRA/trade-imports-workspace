@@ -1,0 +1,30 @@
+{
+  "slice": "transport",
+  "title": "The frontend's transporter page is headed \"Search for an approved commercial transporter\" but offers no way to search; DR1 puts a search field over name, address and approval number above the list.",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-commercial", "dr1-transporter"],
+  "controls": [
+    { "kind": "field", "name": "search" },
+    { "kind": "label", "text": "Search for an approved commercial transporter" }
+  ],
+  "finding": {
+    "frontend": "`/transporters/select` carries the h1 \"Search for an approved commercial transporter\" and, below it, nothing but two radios — the whole commercial-transporter list rendered at once, each option labelled with the transporter's name and hinted with its address and approval number (src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23). There is no text input, no search button and no filtering of any kind. The page promises a search and does not have one, and the promise gets less true as the list grows: today two records fit on a screen, and the same page would render two hundred the same way.",
+    "prototype": "DR1's list page carries a labelled Search field, hinted \"Name, address or approval number\", directly above the table of transporters (app/views/transporter.html:75-95). Typing filters the rows client-side against a search string built from the record's name, address and approval number, and the server accepts the same query on the form post, so the filter survives without JavaScript.",
+    "difference": "Add a search input above the transporter list, labelled Search and hinted \"Name, address or approval number\", filtering the rows on submit. Either that or the heading has to stop saying \"Search\". This depends on the list page existing in the shape DR1 gives it; it lands with the task-ordering change rather than before it.",
+    "falsifiedBy": "Finding a search or filter control on `/transporters/select` in the rendered page — the captured DOM has one form, one radios group and no input of type search or text."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23",
+    "prototype": "app/views/transporter.html:75-95"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-task-starts-with-type-not-list",
+      "relation": "depends-on",
+      "why": "The search sits on the list page that finding puts first"
+    }
+  ]
+}

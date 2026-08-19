@@ -1,0 +1,25 @@
+{
+  "slice": "identification",
+  "title": "DR1 asks nothing at all about identifying a commodity that has no identifier type of its own; the frontend asks for free-text identification details and an animal description instead.",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    "animalIdentifierIdentificationDetails-0",
+    "animalIdentifierDescription-0"
+  ],
+  "finding": {
+    "frontend": "Every commodity gets an identification record. Where the commodity is on none of the four identifier allowlists — of the five commodities the frontend offers, that is Fish — the record falls back to two free-text fields, 'Identification details' (hinted 'Any other way this animal is identified, if it has no passport, tattoo or ear tag') and 'Animal description'. The fallback obligations apply by the inverse gate at src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:174-198, and the person must still enter one record per animal counted before the task can complete.",
+    "prototype": "DR1 asks for identification only where the commodity has a typed identifier set. Ornamental fish carries an empty identifier list (app/data/commodities.js:281-284), so it gets no panel, and there is no free-text fallback anywhere in DR1. On a consignment where no commodity has identifiers the page does not exist for that person at all: the identification task row is dropped from the notification overview and a request for the page redirects on to additional details.",
+    "difference": "Two changes travel together and both are needed for the page to behave as DR1 does. Drop the identificationDetails and description obligations so a commodity with no typed identifier gets no fields, and make the identification page and its hub task row conditional on at least one commodity line having a typed identifier — today the page is always reachable and the unit-record count rule still demands one record per animal. Check what the at-least-one-identifier rule on the unit record means once the fallbacks are gone: a fish line would have no identifier obligation able to satisfy it.",
+    "falsifiedBy": "Finding a free-text identification or description field rendered on any DR1 identification panel, or a DR1 identification panel rendered for a commodity whose identifier list is empty."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:174-198",
+    "prototype": "app/data/commodities.js:280-289"
+  },
+  "relatedTo": [],
+  "carriedFrom": "inc-053"
+}

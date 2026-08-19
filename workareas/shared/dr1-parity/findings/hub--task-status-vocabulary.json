@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "DR1 tags a hub task either Complete or To do and has no third state; the frontend uses Completed, In progress, Not yet started and Optional.",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Not yet started", "In progress", "Optional", "Completed"],
+  "finding": {
+    "frontend": "The frontend tags each task with one of four words or phrases (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17): 'Completed' in green, 'In progress' in light blue, 'Not yet started' in blue, and 'Optional' rendered as plain grey text with no tag around it at all. The captured hub shows all four: 'Where is this consignment coming from?' is Completed, 'What are you importing?' is In progress, most rows are Not yet started, and 'Uploaded documents' is Optional.",
+    "prototype": "DR1 has exactly two statuses and every task carries one of them: 'Complete' in green or 'To do' in blue (app/routes.js:5735-5736). Every row in the captured DR1 hub, documents included, reads 'To do'. A DR1 user is never told a task is part-done, and is never told on the hub that a task is optional.",
+    "difference": "Reduce the hub's status vocabulary to DR1's two: 'Complete' where the task is finished and 'To do' everywhere else. That retires the part-done state, which DR1 does not distinguish, and the 'Optional' text on the documents row, which in DR1 is just another 'To do'. This is the wording and the set of states on the tag only — whether documents are actually optional to submit is a separate question and belongs to the documents slice, and the blocked-row presentation that carries the fifth phrase 'Cannot start yet' is its own finding.",
+    "falsifiedBy": "A DR1 hub row rendered with any status text other than 'Complete' or 'To do'."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17",
+    "prototype": "app/routes.js:5735-5736"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--blocked-task-rows",
+      "relation": "travels-with",
+      "why": "the fifth frontend status, 'Cannot start yet', goes when the blocked presentation goes"
+    }
+  ]
+}

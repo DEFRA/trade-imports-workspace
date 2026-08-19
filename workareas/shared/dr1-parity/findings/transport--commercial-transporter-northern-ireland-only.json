@@ -1,0 +1,36 @@
+{
+  "slice": "transport",
+  "title": "DR1 tells the user a commercial transporter can only be one from Northern Ireland and holds the form to it; the frontend states no such restriction and offers a Swiss and a Belgian commercial transporter to choose from.",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transporter-type",
+    "fe-transporter-commercial",
+    "dr1-transporter-add",
+    "dr1-transporter-add-commercial"
+  ],
+  "controls": [
+    "transporterType",
+    { "kind": "field", "name": "transporterCommercialCountryDisplay" }
+  ],
+  "finding": {
+    "frontend": "The Commercial radio is hinted \"A business approved to transport animals — you will choose one from a list\" and says nothing about where the transporter may be based (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:79-82). The list it leads to holds two records: García Livestock Transport SL, in Switzerland, and J & G Campbell LTD, in Belgium (src/server/app/services/commercial-transporters/records.js:7-29). Neither is in Northern Ireland, and nothing in the journey tells a user that where the transporter is based matters.",
+    "prototype": "DR1 asserts the restriction three times over. The Commercial option on the type page is hinted \"This can only be a commercial transporter from Northern Ireland.\" (app/data/transporter-types.js:6-10). The add-commercial form's Country select is rendered disabled, showing Northern Ireland, with the real value carried in a hidden field so the user cannot change it (app/views/partials/transporter-add-commercial-fields.html:185-201). And the address lookup on that same form is fed only the Northern Ireland addresses rather than the full set (app/routes.js:3416-3420). It is stated as a rule, not as an example.",
+    "difference": "Add the restriction to the Commercial option's hint, in DR1's words. That is the small half. The large half is that the restriction has to be true of the data as well as the copy: the commercial-transporter list the frontend offers holds a Swiss and a Belgian record, so telling a user commercial transporters are Northern Irish while showing them two that are not is worse than saying nothing. So this is one change with two parts that must land together — the hint, and a commercial list that only holds Northern Irish transporters. It also fixes the Country field on the add-commercial form, if that page is built. Because the frontend's own records contradict the rule, confirm with the service owner that DR1's assertion is the current policy before deleting records; if it is not, this finding is struck rather than implemented.",
+    "falsifiedBy": "Finding the Northern Ireland sentence only in a design-release-2.1 override rather than in the shared transporter-types data — the DR1 type page renders app/data/transporter-types.js and the captured dr1-transporter-add screenshot shows the sentence, so it is DR1's own."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/commercial-transporters/records.js:7-29",
+    "prototype": "app/data/transporter-types.js:6-10"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--cannot-add-a-commercial-transporter",
+      "relation": "travels-with",
+      "why": "The add form is where DR1 enforces the restriction"
+    }
+  ],
+  "carriedFrom": "inc-067"
+}

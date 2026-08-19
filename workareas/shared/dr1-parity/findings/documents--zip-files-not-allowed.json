@@ -1,0 +1,33 @@
+{
+  "slice": "documents",
+  "title": "DR1 warns the user that ZIP files are not allowed for security reasons; the frontend never mentions ZIP and simply refuses the file when it is chosen.",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Your file must be:" },
+    { "kind": "field", "name": "file" }
+  ],
+  "finding": {
+    "frontend": "The requirements list has two bullets and neither refers to archives (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48). A ZIP is refused, because the accepted set is the eight document and image extensions and nothing else (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:3-18), but the user only learns that after choosing the file, from the generic type message \"The selected file must be a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\". Why an archive in particular is refused is never explained.",
+    "prototype": "The fourth bullet of the requirements list reads \"ZIP files are not allowed for security reasons\" (app/views/upload-documents.html:169). It is on the page before the user opens the file picker, and it gives the reason rather than only the rule. It is visible on dr1-upload-documents and on every error state of the page.",
+    "difference": "Add the ZIP bullet to the requirements list under \"Your file must be:\", in DR1's words. This is copy only — the frontend already rejects archives, so no validation changes.",
+    "falsifiedBy": "Finding any statement about ZIP or archive files on the frontend's upload page or in its file-type error message."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48",
+    "prototype": "app/views/upload-documents.html:163-170"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--jpg-not-listed-in-file-types",
+      "relation": "travels-with",
+      "why": "both are bullets of the same requirements list"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "slice": "review",
+  "title": "DR1 lets a user review a half-finished notification and names every section still to be completed on the page itself; the frontend refuses to open the review page until every task is done, so an incomplete notification has no review page at all.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Continue"],
+  "finding": {
+    "frontend": "The whole review section — Check your answers, the declaration and the confirmation — sits behind one gate: `gate: (scope) => scope.readyForCheckYourAnswers` in src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85, where readiness is every applicable task row being complete (src/server/app/flow/section-status.js:11). Until then the page cannot be opened, so there is nowhere the user can see the whole notification with its gaps marked. Once it does open, everything on it is by definition complete: the page has no error summary, no per-card error state and no notion of a missing answer, and its POST handler simply forwards to the declaration without re-checking anything (src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:96-99).",
+    "prototype": "Review your notification is reachable at any time from the hub's Review and submit button, whatever state the notification is in. When something is missing the page reports it in three places at once: an error summary headed 'There is a problem' listing one entry per incomplete card (app/views/review-notification.html:32-37, built at app/routes.js:4520-4527), an inline error message on the card itself reading 'Complete roles and addresses', 'Complete arrival details' and so on (app/routes.js:4473-4482), and the unanswered rows blanked out and marked missing to a screen reader instead of showing a value (app/routes.js:4134-4165). Continue is refused while anything is outstanding — the POST handler re-renders the review page rather than going on to the declaration (app/routes.js:10068-10075).",
+    "difference": "Make the review page reachable at any point and make it the place that reports what is unfinished. Remove the readiness gate from the review page itself (the declaration and confirmation keep theirs), give each card a complete/incomplete state with DR1's 'Complete <card title>' message, build the error summary from the incomplete cards, blank the unanswered values, and move the completeness check onto the POST so Continue re-renders the page instead of advancing. The hub's Check and submit row should then behave like DR1's Review and submit button — always available. This is frontend-only: readiness is already computed per task row, so the states this needs already exist.",
+    "falsifiedBy": "Opening the frontend's Check your answers page on a notification with an unanswered mandatory question — if it renders rather than redirecting, the gate is not what blocks the incomplete review."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85",
+    "prototype": "app/views/review-notification.html:32-37"
+  },
+  "relatedTo": [
+    { "id": "review--missing-answer-copy", "relation": "travels-with", "why": "both decide how the review page presents an answer that is not there" }
+  ]
+}

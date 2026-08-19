@@ -1,0 +1,27 @@
+{
+  "slice": "origin-and-reason",
+  "title": "A user who picks Internal market can walk past the purpose question without answering it; DR1 stops them with 'Select a purpose in the internal market'.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-import-purpose", "dr1-reason-for-import-error"],
+  "controls": ["purposeInInternalMarket"],
+  "finding": {
+    "frontend": "Picking Internal market sends the user to a page of its own, 'Purpose in the internal market', with eleven radios. Save and continue with none of them chosen is accepted: the empty value passes validation, the page saves and the user goes on (src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js:25-30). Nothing on the page says the answer is needed and no error is ever shown for a missing purpose.",
+    "prototype": "DR1 will not let the reason page be saved with Internal market chosen and no purpose behind it. Save and continue returns the page with 'There is a problem' and one entry, 'Select a purpose in the internal market', and the same message appears in red inside the reveal above the eleven radios, with the reveal left open and the red bar running down its edge. The summary link moves focus to the first radio (app/routes.js:1387-1394). This is the state the captured error screen shows.",
+    "difference": "Make the purpose mandatory whenever the reason is Internal market, with the message 'Select a purpose in the internal market' in the summary and against the field. Where the message is shown depends on the reveal change: while purpose is a page of its own the error belongs on that page, and once it moves inline it belongs in the reveal, as DR1 shows it. Do the obligation first — it is a validator change on one page and it stands on its own.",
+    "falsifiedBy": "Submitting DR1's reason page with Internal market chosen and no purpose selected and reaching the next screen."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js:25-30",
+    "prototype": "app/routes.js:1387-1394"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--reason-follow-ups-inline-not-four-pages",
+      "relation": "travels-with",
+      "why": "the reveal change decides where this error is shown"
+    }
+  ]
+}

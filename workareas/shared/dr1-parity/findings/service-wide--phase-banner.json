@@ -1,0 +1,28 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 puts an Alpha phase banner with a feedback link on every page; no page in the frontend has one.",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": [{ "kind": "label", "text": "Alpha" }],
+  "finding": {
+    "frontend": "There is no phase banner anywhere in the service. Between the service name bar and the page content the user meets the breadcrumb trail and the back link and nothing else, so nothing on any page tells them the service is in alpha and nothing invites them to send feedback. The shared layout has no phase-banner block at all — src/server/app/shared/layout.njk:41-53 renders only breadcrumbs and the back link into `beforeContent` — and no feature template adds one. This is service-wide: all 33 captured frontend screens report a null phase banner in the page model.",
+    "prototype": "Every page opens with a GOV.UK phase banner carrying an Alpha tag and the sentence \"This is a new service. Help us improve it and give your feedback by email.\", where \"give your feedback by email\" is a link. It sits directly under the service navigation bar and above the back link. All 40 captured DR1 screens carry it, including the dashboard, the overview, the declaration and the confirmation page. Each view renders it itself in its `beforeContent` block — app/views/origin-of-the-import.html:13-25 is the pattern every other DR1 view repeats.",
+    "difference": "Add a phase banner to the frontend's shared layout so it appears on every page without a per-page change. It belongs in `beforeContent` in src/server/app/shared/layout.njk:41-53, above the existing breadcrumbs and back link, with the tag text and the body sentence in src/server/app/shared/copy.en.js under `layout`, alongside the service name and back-link copy that already live there — and a Welsh pair in copy.cy.js. The one thing DR1 cannot settle is where the feedback link should point: the prototype's href is a dead `#`, so the real destination (a mailbox or a feedback form) has to be supplied before the banner ships. This is design rather than Prototype Kit furniture — the kit does not inject a phase banner, each DR1 view authors it, so the banner and its wording are a deliberate choice.",
+    "falsifiedBy": "Finding a phase banner rendered on any frontend screen — a `govuk-phase-banner` element in any of the 33 captured DOMs, or a `govukPhaseBanner` call anywhere under src/server/app/."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:41-53",
+    "prototype": "app/views/origin-of-the-import.html:13-25"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--service-navigation-items",
+      "relation": "travels-with",
+      "why": "both are missing pieces of the same band of chrome between the GOV.UK header and the page content, and both land in the shared layout"
+    }
+  ],
+  "carriedFrom": "inc-001"
+}

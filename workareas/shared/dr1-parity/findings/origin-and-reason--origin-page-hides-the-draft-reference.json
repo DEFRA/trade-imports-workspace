@@ -1,0 +1,20 @@
+{
+  "slice": "origin-and-reason",
+  "title": "The first page of a new notification is the one page that does not show its draft status and reference; DR1 shows both from the start, and the frontend shows them on every page after it.",
+  "domain": "origin",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["Draft"],
+  "finding": {
+    "frontend": "Origin of the import renders with no status strip. Where every other page in this part of the journey opens with a blue Draft tag and the notification reference beside it, origin opens straight on the h1, and the back link goes to the dashboard rather than the hub. Both are the same deliberate suppression: the strip and the hub link are withheld until the notification has committed answers (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-94). Reason for import, purpose, destination country, port of exit and exit date all carry the strip in the same capture, so the user sees the reference appear only after they have saved once.",
+    "prototype": "DR1 shows the Draft tag and the reference above the caption on origin-of-the-import exactly as it does on every other journey page, from the first visit. The reference is allocated when the notification is started, so there is always something to show. Origin includes the same shared status block every other journey view includes (app/views/origin-of-the-import.html:29).",
+    "difference": "Render the draft status strip on origin from the first visit, so a user can see and quote the reference of the notification they have just started. This turns on whether the frontend allocates a reference before the first save — the capture shows one in the page's own links, so it exists, but confirm it is the reference the user will keep rather than a placeholder. Handle the back link separately: sending a brand-new notification back to the dashboard may be right even once the strip is shown.",
+    "falsifiedBy": "Finding a DR1 origin page reached from a fresh Start a new notification that renders without the Draft tag and reference."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-94",
+    "prototype": "app/views/origin-of-the-import.html:27-30"
+  }
+}

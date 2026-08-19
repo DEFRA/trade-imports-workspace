@@ -1,0 +1,42 @@
+{
+  "slice": "documents",
+  "title": "DR1 asks the user to choose a document type from a list of thirteen before saving a document; the frontend never asks and guesses the type from the uploaded filename.",
+  "domain": "documents",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "fe-documents-populated",
+    "dr1-upload-documents",
+    "dr1-upload-documents-populated",
+    "dr1-upload-documents-error"
+  ],
+  "controls": [
+    { "kind": "field", "name": "documentType" },
+    { "kind": "label", "text": "Document type" }
+  ],
+  "finding": {
+    "frontend": "The upload form asks for a document reference, a date of issue and a file, and nothing else (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:31-58). There is no document-type control anywhere on the page. Once the file is saved the type appears in the Document type column of the saved table, but the user never chose it: the controller derives it from the filename (src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:109-112) by token-matching the filename against the document-types enum, longest match wins, falling back to OTHER when nothing matches. The module's own docstring states the rule outright — \"The trader does not pick a type; the filename carries it\" (src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js:3-18). A user who uploads scan001.pdf gets OTHER; a user who renames the same file itahc.pdf gets ITAHC. The obligation model already declares accompanyingDocumentType mandatory for every document (src/server/app/sets/live-animals/obligations/sections/documents.js:30-35), so a field the model requires has no surface at all.",
+    "prototype": "Between Document reference and Date of issue the card carries a Document type select labelled \"Document type\" (app/views/upload-documents.html:115-130). It opens on the placeholder \"Select one\" and offers thirteen types in this order: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other (app/routes.js:9000-9018). Leaving it unchosen is a validation error, \"Select a document type\", linked to #document-type in the error summary (app/routes.js:9124-9130) and visible on dr1-upload-documents-error. The chosen type is echoed back in the Document type column of the saved table (app/views/upload-documents.html:203,215) — on dr1-upload-documents-populated the saved row reads \"Intra Trade Animal Health Certificate (ITAHC)\".",
+    "difference": "Add a Document type select to the upload form, between the reference and the date of issue, bound to the existing accompanyingDocumentType obligation, with a \"Select one\" placeholder and DR1's thirteen options in DR1's order, and validate it as mandatory when the row is saved. Retire deriveDocumentTypeFromFilename and its test once the field is bound. Two smaller alignments come with the field rather than separately: DR1 spells ITAHC out in full as \"Intra Trade Animal Health Certificate (ITAHC)\" where the frontend's label is the bare acronym \"ITAHC\" (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:27), and the frontend's enum carries a fourteenth type, HEALTH_CERTIFICATE (:39), which DR1 offers only to its internal testing release and not to a design-release user.",
+    "falsifiedBy": "Finding a document-type control the user can set on the frontend's upload page, on the page itself or on any edit route reachable from a saved row."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js:3-23",
+    "prototype": "app/views/upload-documents.html:115-130"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--validation-message-wording",
+      "relation": "travels-with",
+      "why": "the \"Select a document type\" message only becomes reachable once the select exists"
+    },
+    {
+      "id": "documents--continue-discards-unsaved-row",
+      "relation": "travels-with",
+      "why": "DR1 uses a chosen document type as the signal that a row is in progress at the Save and continue exit"
+    }
+  ],
+  "carriedFrom": "inc-013"
+}

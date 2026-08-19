@@ -1,0 +1,39 @@
+{
+  "slice": "addresses",
+  "title": "DR1 collects the CPH number as three boxes sized to its county, parish and holding parts; the frontend takes the whole number in one free-text field.",
+  "domain": "addresses",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-cph-number",
+    "dr1-cph-number"
+  ],
+  "controls": [
+    { "kind": "field", "name": "countyParishHoldingCph" },
+    { "kind": "label", "text": "CPH number" }
+  ],
+  "finding": {
+    "frontend": "One govukInput at width-10 takes the whole number (src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23). fe-cph-number shows a single empty box with nothing to say how the nine digits divide up. On submit the controller strips slashes and checks for exactly nine digits (src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:75-80,32-40), so \"123456789\", \"12/345/6789\" and \"1/2/3456789\" are all accepted and stored identically; a trader who mistypes a digit in the wrong part gets no signal, because nothing on the page knows which part is which.",
+    "prototype": "DR1 uses a three-part input under the legend \"CPH number\" — County at width-2 and maxlength 2, Parish at width-3 and maxlength 3, Holding number at width-4 and maxlength 4, each numeric (app/views/partials/cph-number-input.html:17-53). dr1-cph-number shows the three boxes stepping up in width, which teaches the 2/3/4 shape without a word of copy. The parts post separately and are joined with slashes into \"12/345/6789\" when stored; the answered hub shows that slashed form (dr1-roles-and-addresses-complete).",
+    "difference": "Split the field into County, Parish and Holding number, sized 2/3/4 with numeric input modes and per-part maxlengths, and join them in the controller so the stored value stays the nine bare digits the backend already receives — the wire contract does not move. Validate each part for its own length so the error names the part that is wrong. Note that DR1 itself validates nothing on this page: the 2/3/4 shape rests on the maxlength attributes, so the frontend's nine-digit check is the stricter behaviour and should be kept.",
+    "falsifiedBy": "GDS content or accessibility guidance for this service ruling against splitting a single reference number across three boxes — the argument that applies to a National Insurance number — in which case the single field is right and only the hint is wrong."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23",
+    "prototype": "app/views/partials/cph-number-input.html:17-53"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--cph-hint-grouping",
+      "relation": "travels-with",
+      "why": "the 2/3/4 grouping the hint should teach is the grouping the three boxes would enforce"
+    },
+    {
+      "id": "addresses--cph-heading",
+      "relation": "travels-with",
+      "why": "the frontend's h1 is currently the input's own label, so splitting the input decides where that label goes"
+    }
+  ],
+  "carriedFrom": "inc-016"
+}

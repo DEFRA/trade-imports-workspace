@@ -1,0 +1,21 @@
+{
+  "slice": "transport",
+  "title": "DR1 builds the transit-country list one country at a time through a type-ahead, showing what has been added with a Remove link against each; the frontend renders all thirty-one countries as checkboxes and asks the user to find theirs by eye.",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transit-countries", "dr1-transit-countries", "dr1-transit-countries-selected"],
+  "controls": ["transitedCountries", { "kind": "label", "text": "Enter a country" }],
+  "finding": {
+    "frontend": "The page renders every country in the list as a small checkbox — thirty-one of them, Austria through Switzerland — under the legend \"Select all countries the consignment will travel through\" and the hint \"Select up to 12 countries\" (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:18-24). A user scrolls the whole list to find each country, and once boxes are ticked the only record of what was chosen is the ticks themselves, scattered down the page. The twelve-country cap is enforced on submit, so a user who ticks thirteen finds out after submitting.",
+    "prototype": "DR1 asks \"Enter a country\", hinted \"Enter each country that the consignment will travel through\", with a single search box placeholdered \"Search for a country\" (app/views/transit-countries.html:56-110). Choosing a match adds the country to a summary table headed Country, one row each, with a Remove link (:119-139), and clears the search ready for the next. A user types three letters instead of scanning thirty-one options, and reads back what they have chosen as a short list rather than as ticks in a long one. The same twelve-country cap applies, but DR1 reaches it differently: the search box and its button are disabled once twelve are added, and a screen-reader message says \"Maximum of 12 countries reached. Remove a country to add another.\" (app/assets/javascripts/transit-country-search.js:6, 160-172).",
+    "difference": "Replace the checkbox list with a type-ahead over the same country list plus a table of what has been added, one row per country with a Remove link. Keep the cap at twelve — DR1 caps at twelve too, so the cap is not the difference — but move how it is expressed: DR1 does not state it up front, it disables the search once the twelfth country is added and announces the limit. Whether the frontend keeps its \"Select up to 12 countries\" hint alongside that is a copy choice; the control change is the work.",
+    "falsifiedBy": "Finding a search or filter control on the frontend's transit-countries page, or finding that DR1 lets a user add a thirteenth country."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:18-24",
+    "prototype": "app/views/transit-countries.html:56-140"
+  },
+  "carriedFrom": "inc-047"
+}

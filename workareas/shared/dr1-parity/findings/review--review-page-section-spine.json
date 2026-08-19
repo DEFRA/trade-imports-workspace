@@ -1,0 +1,28 @@
+{
+  "slice": "review",
+  "title": "DR1 lays the review page out as six numbered sections, each card introduced by the question it answers; the frontend uses four sections with no sub-headings below the first.",
+  "domain": "review",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": [
+    { "kind": "label", "text": "1. About the consignment" },
+    { "kind": "label", "text": "2. Description of the goods" },
+    { "kind": "label", "text": "2. Movement" }
+  ],
+  "finding": {
+    "frontend": "Check your answers is built from four sections — 1. About the consignment, 2. Movement, 3. Addresses, 4. Documents — named in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:35-40 and assembled in src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:14-20. Only the first section carries sub-headings above its cards — Consignment details, Commodity details, Species — named at src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:41-45 and attached at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js:20-34. Movement, Addresses and Documents drop their cards straight under the section heading with a null group heading, at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js:12-19 and src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js:16-25. Everything about the goods sits inside section 1, and the contact address sits inside 3. Addresses alongside the five party roles.",
+    "prototype": "Review your notification is six numbered sections in this order: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties, 6. Contact address (app/views/review-notification.html:41-179). Every card is introduced by a sub-heading naming the question it answers — Where is this consignment coming from?, What are you importing?, Main reason for import, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, Contact address for this consignment. Description of the goods is a section in its own right, Documents comes before the parties, and Contact address is its own numbered section rather than a card under Addresses.",
+    "difference": "Rework the section list on Check your answers to DR1's six and re-home the cards accordingly: split the commodity, identification and additional-details cards out of About the consignment into a new Description of the goods section, rename Movement to Transport and arrival, move Documents ahead of the parties, and lift Contact address out of Addresses into a numbered section of its own (renaming Addresses to Consignment parties). Then give every card the sub-heading DR1 gives it, including on the sections that currently pass `heading: null`. This is copy and view-model restructuring only — no new answers are collected, so nothing blocks it. Doing it at the same time as the hub's own section spine keeps the two pages agreeing with each other.",
+    "falsifiedBy": "Finding a second Check your answers layout in the frontend that already renders six sections with per-card sub-headings, so that the captured four-section page is one variant rather than the page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:35-45",
+    "prototype": "app/views/review-notification.html:41-179"
+  },
+  "relatedTo": [
+    { "id": "review--documents-section-hidden-when-empty", "relation": "travels-with", "why": "both change which sections the review page renders and in what order" }
+  ],
+  "carriedFrom": "inc-058"
+}

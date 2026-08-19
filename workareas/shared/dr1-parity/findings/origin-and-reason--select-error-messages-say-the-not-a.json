@@ -1,0 +1,20 @@
+{
+  "slice": "origin-and-reason",
+  "title": "The destination country and port of exit errors read 'Select the …' where DR1 and GDS style read 'Select a …'.",
+  "domain": "origin",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-destination-country", "dr1-reason-for-import-transit-revealed", "fe-port-of-exit"],
+  "controls": ["destinationCountry", "portOfExit"],
+  "finding": {
+    "frontend": "Leaving either select unanswered gives 'Select the destination country' and 'Select the port of exit' (src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:9 and src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:9). The definite article implies the service already knows which one is meant.",
+    "prototype": "DR1's messages for the same two failures are 'Select a destination country' and 'Select a port of exit', on both the transit and the transhipment or temporary-admission branches (app/routes.js:1397-1440). This is the GDS wording for a choice the user has yet to make.",
+    "difference": "Change the two messages to 'Select a destination country' and 'Select a port of exit'. Both sides already require both fields, so nothing but the wording moves. Check the rest of the journey for the same 'Select the …' pattern while the file is open — the phrasing should be consistent across the service rather than fixed on two pages.",
+    "falsifiedBy": "Finding DR1 rendering 'Select the destination country' or 'Select the port of exit' for a missing answer."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:9",
+    "prototype": "app/routes.js:1396-1440"
+  }
+}

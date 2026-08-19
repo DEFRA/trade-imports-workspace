@@ -1,0 +1,28 @@
+{
+  "slice": "identification",
+  "title": "The frontend asks for a tattoo on every cow; DR1 asks a cow only for an ear tag and a passport.",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": ["animalIdentifierTattoo-0"],
+  "finding": {
+    "frontend": "The cow identification record offers three fields in this order — Passport number, Tattoo, Ear tag number. Tattoo is there because Cow is on the tattoo allowlist alongside Cat and Dog (src/server/app/sets/live-animals/services/commodities/stub.js:109), which gates the tattoo obligation at src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:127-135.",
+    "prototype": "DR1's cattle panel offers two fields, Ear tag then Passport. Tattoo is not on the cattle set at all — app/data/commodity-identifiers.js:9-12 gives commodity code 0102 exactly Ear tag and Passport, and Tattoo appears only under 01061900, the cat/dog/ferret code.",
+    "difference": "Remove Cow from the tattoo allowlist in the commodities stub so the tattoo obligation stops applying to cattle lines. Nothing else moves: tattoo stays in scope for cats and dogs, and the at-least-one-identifier rule on the unit record is still satisfiable for a cow through the ear tag or the passport. Any saved cow record already holding a tattoo value is orphaned by the change, so check whether stored answers need clearing when the obligation goes out of scope.",
+    "falsifiedBy": "Finding a Tattoo field on DR1's cattle identification panel, or a cattle entry in app/data/commodity-identifiers.js that carries a tattoo identifier."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:109",
+    "prototype": "app/data/commodity-identifiers.js:9-12"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--microchip-identifier-missing",
+      "relation": "travels-with",
+      "why": "the same per-commodity identifier sets; both are corrections to which identifier types a commodity is asked for"
+    }
+  ],
+  "carriedFrom": "inc-055"
+}

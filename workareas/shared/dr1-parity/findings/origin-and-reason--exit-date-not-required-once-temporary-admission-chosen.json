@@ -1,0 +1,27 @@
+{
+  "slice": "origin-and-reason",
+  "title": "A user importing horses on temporary admission can leave the exit date blank and continue; DR1 asks for it with 'Enter an exit date' and has no such message in the frontend at all.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-exit-date", "dr1-reason-for-import-temporary-admission-horses-revealed"],
+  "controls": ["exitDate"],
+  "finding": {
+    "frontend": "Exit date is a date picker on a page of its own, reached only when the reason is Temporary admission horses. An empty box passes: the only check is that a value, if given, parses as a real date, and the only message the page owns is 'Enter a real exit date' (src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js:21, src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:8). There is no message for the date being missing, because the case never arises.",
+    "prototype": "DR1 requires the exit date once Temporary admission horses is chosen and distinguishes the two failures: an empty box gives 'Enter an exit date' and an unparseable one gives 'Enter a real date', each in the error summary and against the field (app/routes.js:1424-1432). The same submit also requires the port of exit, so a user leaving both blank sees two entries in the summary.",
+    "difference": "Make the exit date mandatory whenever the reason is Temporary admission horses, and add the missing message 'Enter an exit date' alongside the existing invalid-date one. Align the invalid message too — DR1 says 'Enter a real date' where the frontend says 'Enter a real exit date'; keep whichever the service settles on, but do not ship two different phrasings of the same failure across the journey.",
+    "falsifiedBy": "Submitting DR1's reason page with Temporary admission horses chosen, the exit date empty and a port of exit selected, and reaching the next screen."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js:21",
+    "prototype": "app/routes.js:1423-1439"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--reason-follow-ups-inline-not-four-pages",
+      "relation": "travels-with",
+      "why": "the reveal change decides where this error is shown"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "slice": "commodities",
+  "title": "A user can declare only five commodities and eight species in the frontend, where DR1 offers 21 live-animal commodities under their IPAFFS names and around 144 species between them.",
+  "domain": "commodities",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-commodity-search",
+    "dr1-what-are-you-importing-results",
+    "dr1-consignment-details"
+  ],
+  "controls": ["species"],
+  "finding": {
+    "frontend": "The whole catalogue is a hardcoded stub: Cow, Horse, Cat, Dog and Fish, with four species under Cow and one under each of the other four (src/server/app/sets/live-animals/services/commodities/stub.js:1-26). The file's own comment says the non-Cow entries carry one representative species each so that a batch search can select across commodity codes, which is the point — they are placeholders, not a catalogue. There is no client for reference data behind it; src/server/app/sets/live-animals/services/commodities/index.js:17-45 reads the constants directly. A user importing sheep, goats, pigs, poultry, bees or reptiles cannot say so. Two of the five entries do not match DR1 even where they overlap: the frontend calls 0102 'Cow' where DR1 calls it 'Cattle', and its 'Fish (0301)' with the single species Salmo salar is not a commodity DR1 has at all — DR1's fish commodity is 'Ornamental fish' at code 030111 with Cyprinidae, Poeciliidae and Cichlidae.",
+    "prototype": "DR1 holds 21 live-animal commodities under their IPAFFS names — Cattle 0102, Horse 0101, Pig 0103, Sheep 010410, Goat 010420, Chicken 010511, Turkey 010512, Duck 010513, Goose 010514, Guinea fowl 010515, Cat 01061900, Dog 01061900, Ferret 01061900, Other live mammals 01061900, Rabbit 010614, Camel 010613, Ostrich 010633, Parrot 010632, Reptile 010620, Bees 01064100 and Ornamental fish 030111 (app/data/commodities.js). Species lists go deep where the real trade does: 11 under Cattle (app/data/commodities-0102-species.js), 3 under Horse, and 106 under Other live mammals (app/data/commodities-01061900-species.js), with the remaining commodities carrying one to three each — roughly 144 species in all. Depth changes behaviour as well as choice: Other live mammals is the one commodity DR1 lists per species rather than per commodity in the selected-commodities table, so each of its 106 species is added and removed on its own (app/routes.js:623-644).",
+    "difference": "The commodity and species catalogue has to come from reference data rather than a constants file, so this lands behind a reference-data API and a client for it in the frontend — that is the blocking part. Once it does, three things follow in the frontend: commodity display names track the reference data rather than the stub's own vocabulary, the Fish entry is replaced by Ornamental fish 030111, and the selected-commodities table gains the per-species row and per-species Remove that DR1 uses for the 01061900 'Other live mammals' commodity. Everything the frontend keys off a commodity by name today — the packages gate, the identifier sets, the CPH and unweaned rules — keys off names that will change, so those lookups move to codes at the same time.",
+    "falsifiedBy": "Finding the frontend fetching its commodity list from an API rather than from the exported constants in the stub."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:1-26",
+    "prototype": "app/data/commodities.js:9-290"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--no-commodity-search",
+      "relation": "travels-with",
+      "why": "DR1's search control exists because the catalogue is too large to list; the two are the same piece of work seen from either end."
+    }
+  ],
+  "carriedFrom": "inc-089"
+}

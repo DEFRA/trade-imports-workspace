@@ -1,0 +1,20 @@
+{
+  "slice": "origin-and-reason",
+  "title": "The frontend rejects an internal reference containing a space, hyphen or slash; DR1 accepts whatever the user's own system calls the consignment.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["internalReferenceNumber"],
+  "finding": {
+    "frontend": "The field invites 'any internal reference you want to use to identify this consignment', but only letters, numbers and underscores get through. Typing ACME-2026/01, or a reference with a space in it, returns the page with 'Internal reference must only contain letters, numbers and underscores'. There is also a 58-character ceiling, with 'Internal reference must be 58 characters or less' (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:75-82).",
+    "prototype": "DR1 asks the same optional question with the same label and the same hint, and imposes no rule on it at all: the submitted value is trimmed and stored, and no length or character check runs (app/routes.js:9240-9244). A user pastes in whatever reference their own records use.",
+    "difference": "Drop the character rule so hyphens, slashes, spaces and full stops are accepted — the whole point of the field is that it is the user's own reference and the service does not read it. Keep a length ceiling if downstream storage needs one, but say the limit in the hint rather than only in an error, and confirm 58 is a real constraint rather than an arbitrary one, because DR1 states no limit.",
+    "falsifiedBy": "Submitting DR1's origin page with an internal reference containing a hyphen and being returned to the page with an error about the characters used."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:75-82",
+    "prototype": "app/routes.js:9237-9244"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "slice": "hub",
+  "title": "DR1 shows the animals and packages totals from the moment a notification is created; the frontend hides the whole summary, heading and all, until a commodity has been added.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Your commodities"],
+  "finding": {
+    "frontend": "The 'Your commodities' heading and the two totals cards are wrapped in a condition on there being at least one commodity line (src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:8-26), and the totals are built as null when there are none (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-151). On a notification where no commodity has been added the hub therefore opens on the task list with no summary above it, and the summary appears later. The captured hub already has a commodity line, so it shows the cards reading zero.",
+    "prototype": "DR1 renders the summary section unconditionally and shows '0' in each card until there is something to count (app/views/notification-hub.html:26-50). The captured DR1 hub is of a notification where nothing has been answered at all and it still shows 'Your commodities' with 0 animals and 0 packages/boxes. The shape of the page does not change as the notification is filled in.",
+    "difference": "Render the commodity summary on every hub, showing zero in both cards when there is nothing to count, so the page keeps the same shape from the first visit to the last. One condition removed from the template and a zero default where the totals are built.",
+    "falsifiedBy": "A frontend hub on a notification with no commodity added that still shows the 'Your commodities' heading and its two cards."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:8-26",
+    "prototype": "app/views/notification-hub.html:26-50"
+  },
+  "relatedTo": []
+}

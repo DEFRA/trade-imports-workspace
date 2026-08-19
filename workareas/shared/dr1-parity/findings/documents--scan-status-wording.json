@@ -1,0 +1,26 @@
+{
+  "slice": "documents",
+  "title": "DR1 labels a saved document's virus check \"Scanning for virus\" and then \"Check completed\"; the frontend labels the same two states \"Checking\" and \"Safe\".",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-populated",
+    "dr1-upload-documents-populated",
+    "dr1-upload-documents-populated-scanning"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Status" }
+  ],
+  "finding": {
+    "frontend": "The Status column of the saved-documents table shows a tag whose text comes from four scan states: \"Checking\" while the scan is pending, \"Safe\" when it completes, \"Virus found\" when it fails, \"Unknown\" when the status cannot be read (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57, src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:7-24). The captured row on fe-documents-populated reads \"Safe\" in a green tag. Neither shared label matches DR1's: \"Checking\" does not say what is being checked, and \"Safe\" is a verdict about the file where DR1's is a statement about the check.",
+    "prototype": "The same column carries a blue \"Scanning for virus\" tag while the check runs and a green \"Check completed\" tag once it passes (app/routes.js:9077-9086). dr1-upload-documents-populated-scanning is the blue state on a row that has just been saved; dr1-upload-documents-populated is the green one. Each tag is preceded by visually hidden text, \"Virus check status for {document reference}\", so the column is named per row for a screen reader (app/views/upload-documents.html:217-224).",
+    "difference": "Rename the two shared status tags to DR1's wording — pending becomes \"Scanning for virus\", complete becomes \"Check completed\" — in both language copy files, and carry the change into the scan-status announcements the client bundle reads from the same copy. The frontend's two extra states, virus found and unknown, have no DR1 counterpart to align to and keep their current wording. The frontend already has both of DR1's states, so this is copy, not behaviour.",
+    "falsifiedBy": "Finding a frontend document row whose status tag reads \"Scanning for virus\" or \"Check completed\"."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57",
+    "prototype": "app/routes.js:9077-9086"
+  }
+}

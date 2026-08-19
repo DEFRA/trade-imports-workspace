@@ -1,0 +1,34 @@
+{
+  "slice": "hub",
+  "title": "DR1 ends the notification hub with a Review and submit button a user can press at any point; the frontend makes review a task row that cannot be opened until every mandatory answer is given.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Review and submit", "Check and submit", "Return to dashboard"],
+  "finding": {
+    "frontend": "The frontend hub's last group is '6. Check and submit' and it holds one task row, 'Check and submit', hinted 'Check your answers before you submit the notification'. In the capture that row is plain black text with no link and the status 'Cannot start yet'. The only button on the page is a secondary 'Return to dashboard'. The row becomes a link only once the whole notification is ready: the review section is gated on `readyForCheckYourAnswers` (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85), and until that passes the hub renders the row blocked (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:72-91). A user part-way through a notification therefore has no way of opening their check-answers page at all; the only thing on the hub that goes anywhere other than into a task is the button back to the dashboard.",
+    "prototype": "DR1's hub has no review task and no sixth group. The task list ends and two buttons follow it: a primary 'Review and submit' going to the review page, and a secondary 'Return to dashboard' (app/views/notification-hub.html:81-92). The primary button carries no condition, and the review page it leads to has no completeness guard on it (app/routes.js:10006-10016), so a user can go and look at the review of a half-filled notification whenever they want.",
+    "difference": "Drop the 'review' row from the hub's group list, and the '6. Check and submit' group with it, and put a primary 'Review and submit' button above the existing secondary 'Return to dashboard'. The button must not be gated on completeness — gating it would reproduce exactly what the row does today — which makes the dependency the check-answers page itself: it has to render an unfinished notification rather than being closed off by the review section's `readyForCheckYourAnswers` gate. What the check-answers page then says about the parts still outstanding belongs to the review slice.",
+    "falsifiedBy": "Finding a 'Review and submit' button rendered on the frontend hub, or finding DR1's primary hub button wrapped in a condition on the notification being complete.",
+    "correction": "Sound, and checked in both pictures and both DOMs. The frontend hub's last row renders its title as a bare div rather than an anchor, with the status cell reading 'Cannot start yet', and the page's only anchor carrying govuk-button is the secondary 'Return to dashboard'; the DR1 hub's link list ends with two buttons, a primary 'Review and submit' to /review-notification and the secondary 'Return to dashboard'. Both citations resolve: flow.js:81-85 is the review section with gate scope.readyForCheckYourAnswers, controller.js:72-91 is buildReviewItem taking the blocked branch when sectionGatePasses fails. The claim that DR1's review page has no completeness guard was tested rather than assumed — the whole GET handler at app/routes.js:10006-10042 branches only on submitted/reference query parameters and design-release detection, and falls through to rendering the live session, so a half-filled notification renders. One sentence was corrected: the frontend slot said a part-way user 'has no route off the hub except back to the dashboard', which is false as written, since every unblocked task row is a link off the hub. The true and narrower claim, that they cannot reach the check-answers page, now stands in its place."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49",
+    "prototype": "app/views/notification-hub.html:81-92"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-group-structure",
+      "relation": "travels-with",
+      "why": "removing the review row removes the frontend's sixth group, which is part of the same rewrite of the hub's group list"
+    },
+    {
+      "id": "hub--blocked-task-rows",
+      "relation": "travels-with",
+      "why": "the review row is the one blocked row visible in the capture, and both findings end the 'Cannot start yet' presentation"
+    }
+  ],
+  "carriedFrom": "inc-024"
+}

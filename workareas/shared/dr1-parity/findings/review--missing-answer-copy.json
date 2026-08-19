@@ -1,0 +1,23 @@
+{
+  "slice": "review",
+  "title": "Where a question has no answer, the frontend's review page prints 'Not provided' and DR1 prints 'Not applicable'.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Not provided", "Not applicable"],
+  "finding": {
+    "frontend": "An empty answer renders as the string 'Not provided', held once in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3 and used by every row builder under check-answers/view-model/rows/. The captured page shows it against Region of origin code, Internal reference number and Number of packages.",
+    "prototype": "An empty answer renders as 'Not applicable' — every review row value passes through formatReviewValueOrNa, which substitutes that phrase for a null or blank value (app/routes.js:4065-4071). The captured page shows it against Region of origin code and Internal reference number.",
+    "difference": "Change the placeholder on Check your answers from 'Not provided' to 'Not applicable' in the English and Welsh copy files for the check-answers feature. It is one string in each. Note that DR1 only uses this phrase on a card it considers complete — on an incomplete card it blanks the value instead, which is the separate finding about reporting incompleteness on the review page.",
+    "falsifiedBy": "Finding a DR1 review row that prints 'Not provided' for an unanswered question."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3",
+    "prototype": "app/routes.js:4065-4071"
+  },
+  "relatedTo": [
+    { "id": "review--incomplete-notification-cannot-be-reviewed", "relation": "travels-with", "why": "DR1 replaces this placeholder with a blank on a card it has flagged incomplete" }
+  ]
+}

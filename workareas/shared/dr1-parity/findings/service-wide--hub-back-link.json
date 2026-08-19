@@ -1,0 +1,32 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend puts a back link on the notification overview; in DR1 the overview is the top of the notification and has none.",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Back"],
+  "finding": {
+    "frontend": "The overview page — the task list for a notification — carries a \"Back\" link pointing at the dashboard (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:167). It is the only page in the service that renders no breadcrumb trail, so the back link is its sole route out, and it is labelled \"Back\" rather than naming where it goes.",
+    "prototype": "DR1's overview page has no back link — its `beforeContent` block at app/views/notification-hub.html:9-16 renders the phase banner and nothing else, where every DR1 journey page adds a back link after it. It is the top of the notification, and the way out of it is the Dashboard item in the service navigation bar, which is on every page. Of DR1's 40 captured screens, the six without a back link are the four dashboard states, the overview and the confirmation page — every page that is a starting point rather than a step.",
+    "difference": "Stop rendering the back link on the overview page. This depends on the navigation bar carrying a Dashboard item first: the overview has no breadcrumb, so the back link is currently the only way off the page short of the browser's own, and removing it before the navigation is populated would strand the user. Sequence it after the navigation work.",
+    "falsifiedBy": "Finding a back link rendered on DR1's notification-hub view or in its captured DOM."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:160-170",
+    "prototype": "app/views/notification-hub.html:9-16"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--service-navigation-items",
+      "relation": "blocks",
+      "why": "the overview needs a Dashboard item in the navigation bar before it can lose its back link"
+    },
+    {
+      "id": "service-wide--breadcrumb-trail",
+      "relation": "travels-with",
+      "why": "both remove a route out of a page that the populated navigation bar replaces"
+    }
+  ]
+}

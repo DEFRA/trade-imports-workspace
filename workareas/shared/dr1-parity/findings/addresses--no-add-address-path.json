@@ -1,0 +1,40 @@
+{
+  "slice": "addresses",
+  "title": "DR1 lets a trader add a new address from every address picker and from the contact page; the frontend gives them no way to add an address anywhere in the notification journey.",
+  "domain": "addresses",
+  "type": "add-page",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignor-or-exporter",
+    "fe-address-picker-consignee",
+    "fe-address-picker-importer",
+    "fe-address-picker-place-of-destination",
+    "fe-contact",
+    "dr1-consignment-address-select",
+    "dr1-contact-address-for-consignment"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Add a new address" },
+    { "kind": "label", "text": "add a new branch address" }
+  ],
+  "finding": {
+    "frontend": "Every picker ends with one button, Save and continue, and the table above it lists only what the address book already holds (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:69-111). fe-address-picker-place-of-origin shows the search box, the five-row table, the pagination and Save and continue, with no add control between them. The contact page is the same: thirteen radios and the save actions, nothing else (src/server/app/sets/live-animals/journeys/linear/features/contact/template.njk:11-24). The address-book service states the position outright — \"This service reads and never writes. The notification journey selects from the organisation's book; adding, changing and removing the records in it belongs to the INS frontend\" (src/server/app/services/address-book/index.js:17-19) — and both pages' tests assert `createAddressHref` is undefined. So a trader who reaches a picker and finds their consignor is not in the book has nowhere to go from this service: they cannot finish the notification without leaving it, and nothing on the page tells them where to leave it to.",
+    "prototype": "Every picker carries a secondary button, \"Add a new address\", between the results table and Save and continue (app/views/consignment-address-select.html:161-165). It goes to the address book's add flow carrying the party it was launched from; on completion the new record is written into that party's answer — so the trader comes back with it already selected — and a success banner is rendered at the top of the picker (:30-38). The contact page states the same route in a sentence: \"If the correct address is not shown, add a new branch address, then return to this page.\" (app/views/contact-address-for-consignment.html:64-66).",
+    "difference": "Give the trader a way out of the dead end at the point they hit it: an \"Add a new address\" action on each of the five pickers and on the contact page. DR1's own shape is add-then-return-preselected with a success banner, which is what to build towards, and it needs a write path this service does not currently have — the frontend's address-book client is read-only by decision, and creation belongs to the INS front-door. The interim accepted in this workspace is that traders hop across manually, which makes the minimum change a signpost telling them where to go and how to get back; the full DR1 behaviour needs the cross-app link and the return contract. Either way the picker cannot stay as it is, because today it says nothing at all.",
+    "falsifiedBy": "Any control on a frontend picker or on the contact page that leads to adding an address, or any sentence on either page naming where to add one."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/address-book/index.js:17-19",
+    "prototype": "app/views/consignment-address-select.html:161-165"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--view-details-record-page",
+      "relation": "travels-with",
+      "why": "both are links out of the picker into the address book, and both are settled by the same decision about which service owns address records"
+    }
+  ],
+  "carriedFrom": "inc-057"
+}

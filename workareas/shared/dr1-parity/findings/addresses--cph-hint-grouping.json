@@ -1,0 +1,34 @@
+{
+  "slice": "addresses",
+  "title": "The frontend's CPH example teaches a 3/3/3 grouping that no CPH number uses; DR1's example is 12/345/6789.",
+  "domain": "addresses",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-cph-number",
+    "dr1-cph-number"
+  ],
+  "controls": [
+    { "kind": "label", "text": "For example, 123456789 or 123/456/789." },
+    { "kind": "field", "name": "countyParishHoldingCph" }
+  ],
+  "finding": {
+    "frontend": "The hint under the single input reads \"For example, 123456789 or 123/456/789.\" (src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:5), and fe-cph-number renders it directly above the box. A county parish holding number is two digits of county, three of parish and four of holding, so the second example teaches a grouping that does not exist. The mistake never surfaces in testing because the controller strips the slashes before counting digits (src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:77), so a trader who copies the pattern still passes validation — the only casualty is the trader who now believes their number is wrongly formatted, or who transcribes it into the wrong grouping elsewhere.",
+    "prototype": "DR1 hints the same question with \"For example 12/345/6789\" (app/views/partials/cph-number-input.html:14), placed above all three boxes so it explains the whole number rather than any one part. The 2/3/4 shape it teaches is the shape the three boxes enforce through their widths and maxlengths (:21,33,45).",
+    "difference": "Change the example to the real grouping, \"For example 12/345/6789\". Keep the unslashed alternative only if content design wants it, and if so make it consistent with the grouping. Nothing about validation changes: the controller already accepts both forms.",
+    "falsifiedBy": "APHA publishing CPH numbers in a 3/3/3 grouping, which would make the frontend's example right and DR1's wrong."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:1-7",
+    "prototype": "app/views/partials/cph-number-input.html:11-15"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--cph-three-parts",
+      "relation": "travels-with",
+      "why": "the grouping the hint should teach is the grouping the three boxes would enforce"
+    }
+  ],
+  "carriedFrom": "inc-031"
+}

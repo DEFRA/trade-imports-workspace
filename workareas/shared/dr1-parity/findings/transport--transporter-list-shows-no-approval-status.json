@@ -1,0 +1,30 @@
+{
+  "slice": "transport",
+  "title": "DR1 shows each transporter's approval status as a tag — Approved or New — beside its approval number; the frontend shows no status at all, so a user cannot tell an approved transporter from an unapproved one.",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-transporter-commercial", "dr1-transporter"],
+  "controls": [
+    { "kind": "label", "text": "Status" },
+    "commercialTransporter"
+  ],
+  "finding": {
+    "frontend": "Each transporter is one radio, labelled with the name and hinted with the address and approval number joined by an em dash (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:92-93). Nothing on the page says whether the transporter is approved. The page heading calls them \"approved commercial transporters\", so a user is left to infer that everything on the list is approved — but the underlying records carry no status field to make that true (src/server/app/services/commercial-transporters/records.js:7-29), so the claim is an assumption rather than a fact the service checked.",
+    "prototype": "DR1's table has a Status column, and each row renders a govuk-tag: green Approved for most records, and a pink New for two of the eight (app/views/transporter.html:148-149, app/data/transporters.js). The status sits next to the approval number so a user choosing between two similar records can see which one the service has already approved, and can see when a transporter they added themselves has not been approved yet.",
+    "difference": "Add an approval status to each transporter record and show it on the list. The status has to come from whatever service owns the transporter register — the frontend's records are a local list with no status field, and inventing one in the frontend would mean the page asserting something nothing verified. Land the API field first, then the column.",
+    "falsifiedBy": "Finding a status, approval-state or equivalent field on the transporter records the frontend reads, whether from the local list or the service that will replace it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/commercial-transporters/records.js:7-29",
+    "prototype": "app/views/transporter.html:148-149"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-task-starts-with-type-not-list",
+      "relation": "depends-on",
+      "why": "The status column belongs to the list page that finding puts first"
+    }
+  ]
+}

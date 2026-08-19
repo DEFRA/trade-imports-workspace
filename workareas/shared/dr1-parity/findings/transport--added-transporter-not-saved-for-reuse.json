@@ -1,0 +1,28 @@
+{
+  "slice": "transport",
+  "title": "A private transporter added in DR1 joins the transporter list and can be picked again on the next notification; the frontend keeps it on the one notification it was typed into, so a repeat user retypes the same nine fields every time.",
+  "domain": "transport",
+  "type": "add-collection",
+  "band": "needs-backend",
+  "confidence": "medium",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private", "dr1-transporter"],
+  "controls": ["privateTransporter", { "kind": "label", "text": "Save and continue" }],
+  "finding": {
+    "frontend": "`/transporters/private` collects the private transporter's name, five address lines, country, telephone number and email address and commits them onto the notification under `privateTransporter` (src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js). Nothing else reads them. The next notification starts the form blank, and there is nowhere in the service that lists transporters a user has entered before, so a haulier who moves the same animals every week retypes the same record every week.",
+    "prototype": "Saving on DR1's add-private form pushes the transporter onto the user's own transporter records, and the `/transporter` list is built by concatenating those with the eight the service ships (app/routes.js:2903-2905, 3310-3345). The record the user just added is on the list the moment they return to it, alongside the approved ones, with its own Type and Status. Where the add was started from the address book, the same save also copies it into the address book.",
+    "difference": "Give a transporter somewhere to live other than the notification. That is a persistence change first — a per-organisation transporter collection, or an extension of the address book to carry a transporter's approval number, which the frontend's own note says the address book cannot represent today. Once records survive a notification, the list page shows them and the private form becomes an add-to-the-list step rather than a fill-in-the-blanks step. Ordered after the list page exists; useless before it.",
+    "falsifiedBy": "Finding the frontend writing the private transporter anywhere other than the notification's own answers — an address-book write, a per-organisation collection, or any read of previously entered transporters when the form loads."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/commercial-transporters/records.js:1-6",
+    "prototype": "app/routes.js:3310-3345"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-task-starts-with-type-not-list",
+      "relation": "depends-on",
+      "why": "Reuse has no surface until the list page exists"
+    }
+  ],
+  "carriedFrom": "inc-097"
+}

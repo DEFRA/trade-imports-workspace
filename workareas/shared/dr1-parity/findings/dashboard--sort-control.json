@@ -1,0 +1,25 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend sorts the notification list by four arrival and creation orders behind an \"Update sort\" button; DR1 shows a sort control offering Newest first, Oldest first and Arrival date that does nothing when it is used.",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "disputed",
+  "confidence": "medium",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [
+    { "kind": "field", "name": "sort" },
+    { "kind": "label", "text": "Update sort" }
+  ],
+  "finding": {
+    "frontend": "Above the list sits a \"Sort by\" select offering Arrival (newest to oldest), Arrival (oldest to newest), Date created (newest to oldest) and Date created (oldest to newest), followed by a secondary \"Update sort\" button. Nothing happens until the button is pressed; the chosen value then goes to the notifications endpoint as the sort parameter and the list comes back re-ordered (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:63-82, src/server/app/services/persistence/records/real/lifecycle/read.js:26-34).",
+    "prototype": "DR1 shows a \"Sort by:\" select offering Select one, Newest first, Oldest first and Arrival date (app/views/dashboard.html:231-251). It is inert in three separate ways: the select sits in a GET form that has no submit button, no script under app/assets/javascripts submits it on change, and getDashboardViewModel reads query.sort only to mark the chosen option as selected and to build the pagination links — it never re-orders the notifications (app/routes.js:7142, 7168-7171). Choosing an option in the prototype leaves the list in exactly the order it was in.",
+    "difference": "What is in doubt is whether DR1 specifies anything here at all. Two candidate changes hang on it: renaming the frontend's four options to DR1's three plus a \"Select one\" placeholder, and dropping the \"Update sort\" button so the select applies on its own. Neither can be justified from an inert control — a select that never sorts says nothing about which orders a user should be offered, and a form with no submit button is as consistent with unfinished scaffolding as with a design intent to auto-submit. Settle it by asking the designer two questions: is the option set on the dashboard sort control part of the signed-off design, and is the sort meant to apply without a further click? A DR1 wireframe or design note showing the sort control with its intended options and behaviour would settle both; the prototype cannot.",
+    "falsifiedBy": "Choosing an option in DR1's Sort by select and seeing the notification list come back in a different order.",
+    "correction": "All three legs of the inertness claim check out independently, so the disputed band is right and the two designer questions are the right two. Leg one: the captured DR1 dashboard contains exactly one form element in the whole page and it is the sort toolbar (app/views/dashboard.html:231-251), and the captured page model records that form's buttons as an empty list. The picture shows the select standing alone with nothing beside it. Leg two: no file under app/assets/javascripts mentions dashboard-sort, app-dashboard-results or any dashboard selector, and app/assets/javascripts/application.js contains no submit or change handler; the only scripts the rendered page loads are the prototype kit's own, govuk-frontend and moj-frontend. Leg three: sort reaches only buildDashboardSortItems, which sets the selected flag, and buildDashboardPagination, which builds hrefs; the notification array is sliced out of visibleNotifications and is never re-ordered by anything. One mis-citation. Claimed: app/routes.js:7142, 7168-7171. Actually true: 7142 is right for the read, but 7168-7171 is the pagination slice, not the selection and link building — those are app/routes.js:7249 and app/routes.js:7252. I also checked a trap the finding does not mention and it does not bite: buildDashboardSortItems has a second option set behind a testing session flag, but the capture is not a testing session, so the three options plus Select one quoted here are what DR1 really shows — confirmed against the option elements in capture/html/prototype/dr1-dashboard.html."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:63-82",
+    "prototype": "app/views/dashboard.html:231-251"
+  },
+  "carriedFrom": "inc-065"
+}

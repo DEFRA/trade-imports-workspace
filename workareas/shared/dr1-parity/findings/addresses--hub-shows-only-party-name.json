@@ -1,0 +1,35 @@
+{
+  "slice": "addresses",
+  "title": "DR1's addresses hub shows each party's full selected address under its own heading; the frontend hub shows the party's name and nothing else.",
+  "domain": "addresses",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-addresses-hub",
+    "dr1-roles-and-addresses-complete",
+    "dr1-roles-and-addresses"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Place of origin" },
+    { "kind": "label", "text": "Not added yet" }
+  ],
+  "finding": {
+    "frontend": "The hub is a single govukSummaryList (src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:11). Each party is one row: the key holds the party title and its hint, the value holds the selected record's name or \"Not added yet\", and the action is one Add/Change link (src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:32-46). The row is built from `parties[party.id]?.name` (:49), so once a party is answered the only thing on the page is an organisation name — no address lines, no country. A trader with two similarly-named records in their address book cannot tell from the hub which one is on the notification, and the hub is the page they are sent back to after every address spoke.",
+    "prototype": "Each party is a `<section>` with its own h2 heading and a hint paragraph (app/views/roles-and-addresses.html:48-50). When an address is held the section carries a govuk-inset-text block holding the record name on its own line, then every address line, then a Change link (:60-68). dr1-roles-and-addresses-complete shows this for all six sections at once — \"Green Valley Farm\" over five Romanian address lines under Place of origin, \"Northern Livestock Imports Ltd\" over three lines under Consignee and Importer, and the CPH number rendered in the same inset shape (:77-83).",
+    "difference": "Replace the summary list with one section per party: h2 heading, hint paragraph, and — when the party is answered — an inset block carrying the name, every address line and the country, with a Change link beneath it. Give the CPH row the same treatment, which is what DR1 does with it. Nothing new has to be fetched: resolveParties already returns the full record for every answered party on this request (src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:60-62), and the picker already renders address lines from the same shape (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.js).",
+    "falsifiedBy": "An answered frontend hub rendering any address line beneath the party name."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:32-53",
+    "prototype": "app/views/roles-and-addresses.html:48-68"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--same-as-shortcut",
+      "relation": "travels-with",
+      "why": "the copy shortcuts live in the same per-section block, in the branch that runs when no address is held"
+    }
+  ],
+  "carriedFrom": "inc-012"
+}

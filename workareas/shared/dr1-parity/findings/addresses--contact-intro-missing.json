@@ -1,0 +1,34 @@
+{
+  "slice": "addresses",
+  "title": "DR1 tells the trader what a consignment contact address is; the frontend only tells them what happens when they pick one.",
+  "domain": "contact",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-contact",
+    "dr1-contact-address-for-consignment"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Selecting a contact copies their name and address into this notification." },
+    { "kind": "field", "name": "contactAddress" }
+  ],
+  "finding": {
+    "frontend": "The only guidance on the page is the radios' hint, \"Selecting a contact copies their name and address into this notification.\" (src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:4, rendered at src/server/app/sets/live-animals/journeys/linear/features/contact/template.njk:20). It describes what the control does, which the trader can see for themselves, and says nothing about who the contact should be or what they are being signed up for. fe-contact then lists thirteen organisations with no basis on which to choose between them.",
+    "prototype": "DR1 opens the page with a definition of the role: \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\" (app/views/contact-address-for-consignment.html:50-52). The list beneath it is headed \"Select an address\" (:62), so the definition sits between the h1 and the choice, where a trader reads it before deciding.",
+    "difference": "Replace the mechanism sentence with DR1's definition, as an intro paragraph between the heading and the radios rather than as a hint on the fieldset. The sentence carries a real obligation — it tells the trader the contact must be reachable through border checks — which is the thing the frontend currently leaves them to guess.",
+    "falsifiedBy": "The definition sentence, or any sentence describing who the contact should be, appearing in the frontend contact copy."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:1-7",
+    "prototype": "app/views/contact-address-for-consignment.html:50-52"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--contact-list-not-branch-scoped",
+      "relation": "travels-with",
+      "why": "the definition is what makes the narrowed list make sense to a trader"
+    }
+  ],
+  "carriedFrom": "inc-033"
+}

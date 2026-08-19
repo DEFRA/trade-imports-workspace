@@ -1,0 +1,24 @@
+{
+  "slice": "review",
+  "title": "Looking at an already-submitted notification, the frontend still shows 'Now submit your notification' and a Continue button that leads nowhere; DR1 hides the submit form once the notification has been submitted.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Continue"],
+  "finding": {
+    "frontend": "The same page serves as the read-only view of a submitted notification — the controller sets readOnly when the journey status is SUBMITTED (src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:81) and that flag suppresses the Change links, but the submit block at src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114 is outside every readOnly test, so a submitted notification still invites the user to submit it. Pressing Continue goes to the declaration, which then bounces straight to the confirmation page. The captured frontend page is a draft, so this state is not in the corpus.",
+    "prototype": "The review page renders the same cards read-only for a submitted notification, and wraps the whole submit form in a readOnly test so neither the form nor the Continue button appears (app/views/review-notification.html:181-187, reached with readOnly true from app/routes.js:10024-10037). A submitted notification is presented as a record, with no action on it.",
+    "difference": "Wrap the submit heading, the explanatory sentence and the Continue form in the existing readOnly condition on the check-answers template, so a submitted notification shows no submit action. The readOnly flag is already computed and already used on the same page for the Change links, so nothing new has to be worked out.",
+    "falsifiedBy": "Opening the frontend's Check your answers page for a submitted notification and finding no Continue button on it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114",
+    "prototype": "app/views/review-notification.html:181-187"
+  },
+  "relatedTo": [
+    { "id": "review--submit-heading-above-continue", "relation": "travels-with", "why": "both change the block of content below the last card" }
+  ],
+  "carriedFrom": "inc-022"
+}

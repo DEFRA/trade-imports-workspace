@@ -1,0 +1,35 @@
+{
+  "slice": "addresses",
+  "title": "DR1 lets a trader copy an address they have already given into a second party role in one click; the frontend tells them the roles are usually the same and makes them pick again.",
+  "domain": "addresses",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-addresses-hub",
+    "dr1-roles-and-addresses",
+    "dr1-roles-and-addresses-complete"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Same as consignee" },
+    { "kind": "label", "text": "Same as place of origin" }
+  ],
+  "finding": {
+    "frontend": "The hub row for every party offers exactly one action, an Add or Change link to that party's picker (src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:37-46). The importer hint already tells the trader the answer: \"This is usually the same as the consignee. You can select a different person if needed.\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:32). So the frontend states the shortcut in prose and then makes the trader open the picker, search the book again and re-select the record they have just selected. Nothing named `sameAs` exists anywhere under the addresses or contact features.",
+    "prototype": "Three of DR1's six sections carry a copy shortcut, rendered as a submit button styled as a link beside the normal Add link and shown only while that section is still empty (app/views/roles-and-addresses.html:83-101). Consignor offers \"Same as place of origin\" (:91) and importer and place of destination both offer \"Same as consignee\" (:99); the flags that switch them on are `canUseSameAsPlaceOfOrigin` on consignor and `canUseSameAsConsignee` on importer and place of destination (app/data/consignment-address-sections.js:27,54,68). Pressing one copies the source party's record id, name, address lines and country into the target section and re-renders the hub with that section answered.",
+    "difference": "Add a copy action to the hub for the three sections DR1 names, shown only while the target section is empty and the source section is answered: \"Same as place of origin\" on consignor, \"Same as consignee\" on importer and on place of destination. The hub is already a POST form (src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:13-17), and a party answer is now an address-book reference rather than a copied block, so the action writes the source party's `addressId` into the target — no address data is duplicated. This depends on the hub sections finding only for where the button sits, not for whether it works.",
+    "falsifiedBy": "A copy-from-another-party action of any kind appearing on the frontend hub or in either picker."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:32-53",
+    "prototype": "app/views/roles-and-addresses.html:83-101"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--hub-shows-only-party-name",
+      "relation": "travels-with",
+      "why": "both change the same per-section block on the hub"
+    }
+  ],
+  "carriedFrom": "inc-025"
+}

@@ -1,0 +1,28 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 names the section of the notification above each page heading; the frontend gives 28 of its 33 pages no caption at all.",
+  "domain": "service-wide",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-cph-number", "dr1-cph-number"],
+  "controls": [{ "kind": "label", "text": "Consignment parties" }],
+  "finding": {
+    "frontend": "Almost every page opens straight into its h1 with nothing above it, so a user part-way through a long notification cannot tell from the page which part of the notification they are in. On the CPH page the heading \"County Parish Holding (CPH)\" is the first thing under the status strip — src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23 renders the label as the page heading with nothing before it. Only five of the 33 captured screens carry a caption at all: the five address pickers, which say \"Consignment addresses\" from their own template at src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7 rather than from anything shared. The remaining 28 have none.",
+    "prototype": "A short grey caption sits above the h1 naming the section of the notification the page belongs to. The same CPH page reads \"Consignment parties\" above \"Add the county parish holding number (CPH)\" — app/views/cph-number.html:31-34 is one of 35 of the 40 captured DR1 screens that carry one. The captions in use are: \"About the consignment\" (origin, reason for import, what are you importing, consignment details, identification details), \"Commodity details\" (additional details), \"Consignment parties\" (roles and addresses, the address picker, CPH, permanent address), \"Movement\" (transit countries), \"Transport and arrival\" (transporter, arrival details), \"Documents\" (upload documents), \"Add a new transporter\" (the three transporter-add pages) and \"Dashboard\" (the dashboard). The five DR1 screens without one are the overview, the review page, the contact address page, the declaration and the confirmation.",
+    "difference": "Add a caption slot to the shared page-heading pattern so each journey page can name its section, and set it on the 28 frontend pages that have none, using DR1's section names above. The caption belongs in the view model rather than in the template copy of each feature, because the value is a property of where the page sits in the journey — the hub already knows its section grouping, so derive it there rather than hard-coding a string per page. This changes no question and no answer; it is a heading-pattern change only. The five existing captions are handled separately: they are present but name the wrong section.",
+    "falsifiedBy": "Finding a caption rendered above the h1 on a frontend journey page other than the five address pickers — any element carrying caption text between the status strip and the h1 in the 33 captured DOMs."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23",
+    "prototype": "app/views/cph-number.html:31-34"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--picker-caption-wording",
+      "relation": "travels-with",
+      "why": "the five pages that already have a caption need its text corrected in the same pass that adds the other 28"
+    }
+  ],
+  "carriedFrom": "inc-008"
+}

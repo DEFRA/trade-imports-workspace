@@ -1,0 +1,29 @@
+{
+  "slice": "identification",
+  "title": "DR1 lists the animals already identified in a table with a column per identifier; the frontend squashes each one into a single line reading 'Passport: X, Ear tag: Y'.",
+  "domain": "identification",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    { "kind": "label", "text": "Remove" }
+  ],
+  "finding": {
+    "frontend": "Each animal already entered appears as one summary-list row: the key reads 'Animal 1' and the value is every identifier joined into one string — 'Passport: UK123456789, Ear tag: UK123456789012' — with a Remove action on the right. Records with nothing filled read 'No identifier provided'. The row is built at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js:9-19 and rendered at _identification-card.njk:12-24. Comparing two animals means reading two run-on sentences.",
+    "prototype": "DR1 shows the same information as a table. The header names the identifiers the commodity asks for, so a cattle panel heads its columns Animal, Ear tag, Passport; each saved animal is one row, labelled with the species name and its number — 'Syncerus spp. 1' — with its values under the matching columns and a Remove button in the last cell (app/routes.js:1802-1820). A person scanning for a missing ear tag reads down one column.",
+    "difference": "Replace the summary list with a table whose columns are the identifier fields in scope for that commodity line, one row per saved record, keeping the per-row Remove button. The card view model already resolves the scoped fields and each unit's values, so this is a shape change rather than new data. Neither side's populated state is in the capture — both captured pages hold no saved records — so verify the frontend's current rendering against a page with two animals entered before starting.",
+    "falsifiedBy": "Finding DR1's saved animals rendered as a summary list with the identifiers concatenated into one value, rather than as a table with a column per identifier."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js:9-19",
+    "prototype": "app/routes.js:1802-1820"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--save-and-add-another-always-shown",
+      "relation": "travels-with",
+      "why": "both are the mechanism of the add-another loop on this page"
+    }
+  ]
+}

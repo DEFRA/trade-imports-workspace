@@ -1,0 +1,24 @@
+{
+  "slice": "review",
+  "title": "DR1's confirmation page tells a user who submitted an incomplete notification what they still have to do before the consignment is imported; the frontend has no such section.",
+  "domain": "review",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-confirmation", "dr1-notification-submitted"],
+  "controls": ["Before the consignment is imported"],
+  "finding": {
+    "frontend": "Below the reference panel the confirmation page shows the declaration date and then goes to 'Transporting the consignment', at src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:4-21. There is no outstanding-items section, and nothing in the confirmation copy or controller that could produce one. The frontend cannot produce one today either, because it will not let a notification be submitted at all until every task row is complete, so it has no idea of a submission with items left over.",
+    "prototype": "When the notification was submitted with things still outstanding, the page opens under the panel with 'Before the consignment is imported', the line 'You still need to:' and a list of what is left — in the capture, 'upload the health certificate and any other required documents' and 'complete the animal identifier information in the notification' (app/views/notification-submitted.html:27-37). The list is built at submission time from what the notification is missing.",
+    "difference": "This depends on the frontend first allowing an incomplete notification to be submitted, which is the review-page finding about reporting incompleteness on the page rather than blocking entry to it. Once that lands, the declaration handler needs to record which optional-at-submission items were left outstanding, and the confirmation page needs to render them under 'Before the consignment is imported' with 'You still need to:'. Until the submission rule changes there is nothing for this section to show, so it should be scheduled after that finding rather than alongside it.",
+    "falsifiedBy": "Finding that DR1 renders this section on every submitted notification rather than only on an incomplete one, which would make it unconditional page furniture rather than a state the frontend cannot reach."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:4-21",
+    "prototype": "app/views/notification-submitted.html:27-37"
+  },
+  "relatedTo": [
+    { "id": "review--incomplete-notification-cannot-be-reviewed", "relation": "depends-on", "why": "the frontend has to allow an incomplete submission before there is anything to list here" }
+  ],
+  "carriedFrom": "inc-086"
+}

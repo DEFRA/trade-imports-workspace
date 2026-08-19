@@ -1,0 +1,21 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend's secondary save and cancel actions send the user back to \"the hub\"; DR1 calls the same destination the overview, which is what the page itself is called.",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-cph-number", "dr1-transit-countries"],
+  "controls": ["Save and return to hub", "Cancel and return to hub"],
+  "finding": {
+    "frontend": "Every journey page ends with the same three actions: a green \"Save and continue\", a grey \"Save and return to hub\" beside it and a \"Cancel and return to hub\" link underneath. 20 of the 33 captured screens carry that trio, all from one macro at src/server/app/shared/save-actions.njk:3-14 with the strings at src/server/app/shared/copy.en.js:42-46. The word \"hub\" appears nowhere else a user can see it: the page those actions lead to has the heading \"Overview\", so the buttons name a destination the service never shows them.",
+    "prototype": "DR1 uses the same three actions and calls the destination the overview: \"Save and continue\", \"Save and return to overview\" and a \"Cancel and return to overview\" link. 25 of the 40 captured DR1 screens carry that wording — app/views/transit-countries.html:145-161 is one — and DR1's own hub page is headed \"Overview\", so the button and the page it leads to say the same word. DR1 is not uniform about how many actions a page gets: origin, CPH, contact, the declaration and the review page offer only \"Save and continue\". The frontend applying the trio everywhere is not the difference; the noun is.",
+    "difference": "Change the two strings at src/server/app/shared/copy.en.js:44-45 from \"hub\" to \"overview\" and translate the Welsh pair in copy.cy.js to match. Nothing else moves — the macro, the exit value and the routing all stay as they are, since only the visible label is wrong. Frontend specs that locate these controls by their text will need updating in the same change.",
+    "falsifiedBy": "Finding the word \"hub\" used in a visible label anywhere in DR1's root views, or finding the frontend's overview page headed anything other than \"Overview\"."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/copy.en.js:42-46",
+    "prototype": "app/views/transit-countries.html:145-161"
+  },
+  "relatedTo": []
+}

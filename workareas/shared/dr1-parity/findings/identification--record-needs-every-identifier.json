@@ -1,0 +1,27 @@
+{
+  "slice": "identification",
+  "title": "DR1 treats an animal as identified only when every identifier its commodity asks for is filled in; the frontend accepts a record with any one of them.",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": ["animalIdentifierEarTag-0", "animalIdentifierPassport-0"],
+  "finding": {
+    "frontend": "A person can save a cow with only an ear tag, leave the passport box empty, and the record counts. Every identifier field is declared optional and the unit record requires just one of the six to be present (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-102); pressing Save and add another with all boxes empty is the only thing rejected, with the at-least-one-identifier message. Once one record exists per animal counted, the task reports itself complete.",
+    "prototype": "DR1 counts an animal as identified only when every field on its commodity's identifier set holds a value — a cow needs both an ear tag and a passport, a horse needs a microchip, a passport and a horse name (app/routes.js:1526-1563). A partly filled record is stored but does not count: the panel presents the same animal again with the values it already has, the entry counter does not advance, and the identification task never reports complete.",
+    "difference": "Raise the per-record rule from 'at least one identifier' to 'every identifier in scope for this commodity line'. That means changing the unit record's requires from anyOfIds to a rule over the in-scope identifier obligations, and moving the individual identifier obligations from optional to mandatory so each empty box names itself in the error summary rather than the record failing as a whole. Do this after the commodity identifier sets are correct, because the rule is only as good as the set it ranges over — with tattoo still on cattle it would demand a tattoo for every cow. DR1 shows no error message when a record is incomplete, so the messages are the frontend's to author.",
+    "falsifiedBy": "Finding that DR1's identification task reports complete, or that its entry counter advances to the next animal, after a record is saved with one of its identifier fields left empty."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-102",
+    "prototype": "app/routes.js:1526-1563"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--tattoo-offered-for-cattle",
+      "relation": "depends-on",
+      "why": "the rule ranges over whatever identifier set the commodity has, so the sets must be right before every field becomes mandatory"
+    }
+  ]
+}

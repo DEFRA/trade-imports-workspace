@@ -1,0 +1,29 @@
+{
+  "slice": "identification",
+  "title": "The frontend shows 'Save and add another' on every identification record, including a consignment of one animal; DR1 hides it when there is one animal and calls it 'Save and finish' on the last.",
+  "domain": "identification",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    { "kind": "label", "text": "Save and add another" }
+  ],
+  "finding": {
+    "frontend": "The button inside the record loop always reads 'Save and add another' and is always there. On the captured page the consignment holds one cow, the counter reads 'Enter details for Bos taurus 1 of 1', and the button still invites the person to add another — pressing it saves the one record and replaces the whole form with a message saying all details have been entered. The button is rendered unconditionally at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:71-76.",
+    "prototype": "DR1 makes the in-panel button say what is actually left to do. Where the species has one animal there is no in-panel button at all and the page's own Save and continue captures the record; where more remain it reads 'Save and add another'; and on the last outstanding animal it reads 'Save and finish' (app/routes.js:1711-1722). The captured DR1 panel is two cattle with both outstanding, which is why it shows 'Save and add another'.",
+    "difference": "Make the in-card button reflect the records still to enter on that line: no button when the line's number of animals is one, 'Save and finish' when this is the last outstanding record, 'Save and add another' otherwise. The card view model already knows the cap and how many units are saved, so the count is to hand. Leave the page-level buttons alone — they are the journey's own pattern and a separate concern.",
+    "falsifiedBy": "Finding a DR1 species panel for a single animal that renders an in-panel save button, or a DR1 panel on its last outstanding animal whose button still reads 'Save and add another'."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:71-76",
+    "prototype": "app/routes.js:1711-1722"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--saved-records-table",
+      "relation": "travels-with",
+      "why": "both are the mechanism of the add-another loop on this page"
+    }
+  ]
+}

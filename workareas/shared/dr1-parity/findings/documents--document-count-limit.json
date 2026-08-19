@@ -1,0 +1,41 @@
+{
+  "slice": "documents",
+  "title": "DR1 lets a notification carry fifteen documents and says so before the user starts; the frontend stops at ten and only mentions a limit once the user hits it.",
+  "domain": "documents",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "fe-documents-populated",
+    "dr1-upload-documents",
+    "dr1-upload-documents-limit-error"
+  ],
+  "controls": [
+    { "kind": "field", "name": "file" },
+    { "kind": "label", "text": "Save and add another" }
+  ],
+  "finding": {
+    "frontend": "The documents obligation caps the collection at ten entries (src/server/app/sets/live-animals/obligations/sections/documents.js:24-27) and the upload page enforces it: an eleventh Save and add another is refused with the error summary message \"You can add a maximum of 10 documents\" (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73, src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:52-57), anchored to the saved-documents table. Nothing on the page says a limit exists until the user meets it — the requirements list under \"Your file must be:\" carries only a size bullet and a file-type bullet (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48).",
+    "prototype": "The cap is fifteen, and DR1 states it twice. It is the third bullet of the requirements list the user reads before uploading anything, \"up to a maximum of 15 files\" (app/views/upload-documents.html:168), and it is enforced when the sixteenth is attempted: validation short-circuits every other check and returns one error, \"You can upload a maximum of 15 files\", linked to #attachment (app/routes.js:9025, :9103-9112). dr1-upload-documents-limit-error is that refusal.",
+    "difference": "Raise documents.requires.maxEntries from 10 to 15, and add the count to the requirements list the way DR1 does so the user knows the limit before uploading rather than after. The frontend's cap message is reference-numbered against the maximum, so it follows the constant; only the obligation value and the new bullet are handwritten. Whether the message keeps the frontend's \"documents\" or takes DR1's \"files\" is settled in the validation-wording finding, not here.",
+    "falsifiedBy": "Saving an eleventh document on the frontend without the capacity error appearing."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/documents.js:24-27",
+    "prototype": "app/routes.js:9101-9112"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--file-size-limit",
+      "relation": "travels-with",
+      "why": "both limits are stated in the same four-bullet requirements list"
+    },
+    {
+      "id": "documents--validation-message-wording",
+      "relation": "travels-with",
+      "why": "the capacity message is one of the messages whose wording differs"
+    }
+  ],
+  "carriedFrom": "inc-051"
+}

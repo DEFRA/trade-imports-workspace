@@ -1,0 +1,21 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 lets a user narrow the notification list to one status from a list of seven; the frontend offers no status filter at all.",
+  "domain": "dashboard",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard-filters-open"],
+  "controls": [{ "kind": "field", "name": "status" }],
+  "finding": {
+    "frontend": "The whole of the filter surface is a single \"Keyword or reference\" box with a Search button (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56). A user with a long list who wants to see only their drafts, or only the ones that have been submitted, has no way to ask for that.",
+    "prototype": "The filter sidebar carries a collapsible \"Status\" section holding a single select labelled Status, offering Select one, Draft, Submitted, In progress, Approved, Action required, Rejected and Complete (app/views/dashboard.html:134-163). The control is markup only: the sidebar sits outside every form on the page — the rendered dashboard has exactly one form and it is the sort toolbar — and getDashboardViewModel reads query.status but never filters the list with it (app/routes.js:7147, 7166-7171). So DR1 states the requirement to filter by status and demonstrates the control, but a click in the prototype changes nothing.",
+    "difference": "Add a status filter to the dashboard's filter panel, offering the status values the real service actually has. Two things have to be settled before it can be built. First, the list read only accepts page, sort and reference number today (src/server/app/services/persistence/records/real/lifecycle/read.js:26-34), so filtering by status needs the notifications endpoint to accept a status parameter. Second, DR1's seven-value list is larger than the four statuses the frontend can produce — Draft, Submitted, Amending and Deleted (src/server/app/shared/kit.js:34-51) — so the option set has to be agreed against the statuses the service really holds rather than copied from the prototype's select.",
+    "falsifiedBy": "Finding any control on the frontend dashboard, in the filter panel or elsewhere, that narrows the list to notifications of one status."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
+    "prototype": "app/views/dashboard.html:134-163"
+  },
+  "carriedFrom": "inc-084"
+}

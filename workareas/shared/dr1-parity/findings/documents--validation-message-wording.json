@@ -1,0 +1,40 @@
+{
+  "slice": "documents",
+  "title": "Three of the upload page's validation messages are worded differently from DR1's — DR1 says \"Enter a date of issue\", \"Enter a real date\" and \"Upload a document\" where the frontend says \"Enter the date of issue\", \"Enter a real date of issue\" and \"Select a file to upload\".",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents-error",
+    "dr1-upload-documents-continue-error",
+    "dr1-upload-documents-limit-error"
+  ],
+  "controls": [
+    { "kind": "field", "name": "accompanyingDocumentDateOfIssue" },
+    { "kind": "field", "name": "file" }
+  ],
+  "finding": {
+    "frontend": "The page's messages are held in one copy file (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:63-81). A blank date of issue gives \"Enter the date of issue\"; an unparseable one gives \"Enter a real date of issue\"; a missing file gives \"Select a file to upload\"; going over the cap gives \"You can add a maximum of 10 documents\". A blank reference gives \"Enter a document reference\", which is the one message that already matches DR1 word for word.",
+    "prototype": "DR1 raises, in the order the error summary lists them: \"Enter a document reference\" for a blank reference, \"Select a document type\" for an unchosen type, \"Enter a date of issue\" for a blank date, \"Enter a real date\" for a date it cannot parse, \"Upload a document\" for a missing attachment, and \"You can upload a maximum of 15 files\" when the collection is full (app/routes.js:9101-9148). The rendered summary on dr1-upload-documents-error lists all four row errors verbatim, dr1-upload-documents-continue-error lists the three that remain once a type has been chosen, and dr1-upload-documents-limit-error carries the capacity one alone.",
+    "difference": "Bring the four differing messages to DR1's wording: \"Enter a date of issue\", \"Enter a real date\", \"Upload a document\", and \"You can upload a maximum of {max} files\", in both language copy files, and update the tests that assert the current strings. The maximum in the capacity message stays derived from the obligation, so only its wording changes here — the number is the count-limit finding. The frontend's own extra messages — reference length, oversize file, wrong file type, upload failure, unscanned documents, virus found — have no DR1 counterpart and keep their wording.",
+    "falsifiedBy": "Submitting the frontend's upload form empty and reading back \"Enter a date of issue\" and \"Upload a document\" in the error summary."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:63-81",
+    "prototype": "app/routes.js:9101-9148"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--document-count-limit",
+      "relation": "travels-with",
+      "why": "the capacity message's number and its wording are the same string"
+    },
+    {
+      "id": "documents--document-type-not-asked",
+      "relation": "travels-with",
+      "why": "DR1's fourth row message, \"Select a document type\", needs the field before it can be raised"
+    }
+  ]
+}

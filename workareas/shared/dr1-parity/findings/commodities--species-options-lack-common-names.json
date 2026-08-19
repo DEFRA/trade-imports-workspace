@@ -1,0 +1,27 @@
+{
+  "slice": "commodities",
+  "title": "DR1 offers each species as its common name with the Latin name in brackets — 'African buffalo (Syncerus spp.)'; the frontend offers the bare Latin binomial, so a user who does not read Latin cannot tell the options apart.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-commodity-search", "dr1-what-are-you-importing-results"],
+  "controls": ["species"],
+  "finding": {
+    "frontend": "Every species option is labelled with its Latin binomial alone: under Cow (0102) the four choices read Bison bison, Bos spp., Bos taurus and Bubalus bubalis; under Horse, Equus caballus; under Cat, Felis catus; under Dog, Canis lupus familiaris; under Fish, Salmo salar. There is no common name anywhere in the option set, because the catalogue does not hold one — each species is a value and a text and the text is the Latin name (src/server/app/sets/live-animals/services/commodities/stub.js:15-26), rendered straight through as the checkbox label (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:3-14).",
+    "prototype": "DR1 labels a species with its common name first and the Latin name in brackets — 'African buffalo (Syncerus spp.)', 'Banteng (Novibos spp)', 'Domestic cattle (Bos taurus)', 'Water buffalo (Bubalus bubalis)' — falling back to the commodity name in front of the Latin name when a species has no common name of its own (app/assets/javascripts/commodity-search.js:11-17). Every species entry in the catalogue carries a commonName next to its label (app/data/commodities-0102-species.js:3-15). The common name is not decoration: it is what DR1's search matches on first, and the search hint tells the user so — 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).' The results panel is ordered by that display label rather than by the Latin name, which is why Cattle opens with African buffalo rather than Bison bison (app/utils/commodity-search-data.js:1-31).",
+    "difference": "Give every species in the catalogue a common name and render the option label as 'Common name (Latin name)', falling back to 'Commodity name (Latin name)' where a species has no common name. This is presentation plus one extra piece of data per species, so it can be done in the frontend against the current stub before the real catalogue arrives — but it has to be in place before the search control ships, because DR1's search hint promises the user can find a commodity by its common name.",
+    "falsifiedBy": "Finding a common name rendered against any species option on the frontend's What are you importing? page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:15-26",
+    "prototype": "app/data/commodities-0102-species.js:3-15"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--no-commodity-search",
+      "relation": "travels-with",
+      "why": "DR1's search matches on the common name, so the label and the search control depend on the same missing data."
+    }
+  ]
+}

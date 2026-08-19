@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "DR1 gives commodity details a hub task of its own with its own status; the frontend hides that page inside the 'What are you importing?' task, so a user cannot see or start it separately.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["What are you importing?", "Commodity details"],
+  "finding": {
+    "frontend": "One frontend task, 'What are you importing?', covers two pages: the commodity picker and the consignment-details page behind it (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33). Its single status covers both, which is why the captured hub reads 'In progress' — the commodity is chosen but its details are not filled in. There is no separate entry point to the consignment-details page from the hub, and no separate indication of whether it is done. Confusingly, the frontend does use the words 'Commodity details' on the hub, but as the caption of group 2, which holds two different tasks.",
+    "prototype": "DR1 has two tasks. 'What are you importing?' in group 1 covers choosing the commodity, and 'Commodity details' opens the consignment-details page as the first task of group 2, 'Description of the goods', with a status of its own (app/routes.js:5771-5776). A DR1 user can see at a glance that they have picked their commodity but not yet described the consignment, and can go straight to the second without passing through the first.",
+    "difference": "Split the frontend's 'What are you importing?' task in two: leave the commodity picker as task 1 in 'About the consignment', and add a 'Commodity details' task at the head of the second group pointing at the consignment-details page, with its own completeness. The frontend's group 2 caption has to change at the same time so the group is not named after one of the tasks inside it, which the group-structure finding already covers.",
+    "falsifiedBy": "A DR1 hub where the consignment-details page is reached from the 'What are you importing?' task rather than from a task of its own."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33",
+    "prototype": "app/routes.js:5769-5787"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-group-structure",
+      "relation": "travels-with",
+      "why": "the new task lands at the head of group 2 and forces that group's caption to change"
+    }
+  ]
+}

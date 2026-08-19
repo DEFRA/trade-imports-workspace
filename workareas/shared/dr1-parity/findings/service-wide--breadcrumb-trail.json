@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend puts a breadcrumb trail above the back link on almost every page; DR1 has no breadcrumbs anywhere in the service.",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": [{ "kind": "label", "text": "Your notifications" }],
+  "finding": {
+    "frontend": "Every page inside a notification opens with a two-step breadcrumb trail — \"Your notifications\" linking to the dashboard, then the page's own title — sitting above the back link. 30 of the 33 captured screens show a trail with items in it. The trail is always exactly two steps regardless of how deep the page sits, so on the address picker it reads \"Your notifications > Place of origin\" and says nothing about the addresses hub the user came through. The two dashboard screens are worse: they render the breadcrumb navigation landmark with an empty list inside it, so a screen-reader user is announced a breadcrumb that contains nothing. Only the overview page renders no breadcrumb markup at all. The layout builds the trail by default for any page with a title at src/server/app/shared/layout.njk:41-49, using the copy at src/server/app/shared/copy.en.js:14-16.",
+    "prototype": "There are no breadcrumbs on any of DR1's 40 captured screens. A user's route back up is the service navigation bar at the top of the page — Dashboard, Address book — and the back link, and nothing else. DR1 states no third route out of a page.",
+    "difference": "Remove the breadcrumb trail from the shared layout and the \"Your notifications\" string from the shared copy, leaving the back link as the only in-page route backwards — which also removes the empty breadcrumb landmark from the two dashboard screens. This should not land before the service navigation carries a Dashboard item, because until it does the breadcrumb is the only always-present link to the notification list and removing it would leave a user mid-notification with nothing but the back link. Once the nav is populated the two say the same thing twice, in two places, which is what DR1 avoids. Individual pages that pass an explicit `breadcrumbs` value need checking as part of the same change rather than assuming the default is the only caller.",
+    "falsifiedBy": "Finding a breadcrumb element rendered in any DR1 root view or in any of the 40 captured prototype DOMs."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:41-49",
+    "prototype": "app/views/origin-of-the-import.html:13-25"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--service-navigation-items",
+      "relation": "blocks",
+      "why": "the breadcrumb is the only always-present route to the notification list until the navigation bar carries a Dashboard item"
+    }
+  ]
+}

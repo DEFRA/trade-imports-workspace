@@ -1,0 +1,25 @@
+{
+  "slice": "dashboard",
+  "title": "DR1's dashboard opens with an \"At a glance\" band of three counted cards — Alerts, Errors and Messages — that the frontend dashboard has nothing of.",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [
+    { "kind": "label", "text": "At a glance" },
+    { "kind": "label", "text": "View alerts" }
+  ],
+  "finding": {
+    "frontend": "The dashboard goes straight from the entry button to the list of notifications. There is no summary band, so a user has no place to find out that anything needs their attention without reading every card in the list. The template renders the heading, the intro paragraph, the start button and then the notifications heading with nothing between them (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-35).",
+    "prototype": "Between the entry button and the notification list, DR1 shows a band headed \"At a glance\" holding three cards side by side: Alerts (yellow), Errors (red) and Messages (blue). Each card shows an icon, a count, and a link below it — \"View alerts\", \"View errors\", \"View messages\" (app/views/dashboard.html:40-77). In the prototype the three counts are all hardcoded to zero and every link goes nowhere: getDashboardViewModel returns alertCounts of {alerts: 0, errors: 0, messages: 0} (app/routes.js:7205-7209) and the links are href=\"#\". So the picture shows the shape of the band but the prototype never demonstrates it carrying anything.",
+    "difference": "Build a summary band above the notification list with a card per category. The layout, headings and link labels are settled by the design and can be built from the picture. What is not settled by the design is what feeds the counts and where each link goes — the prototype answers neither, because it hardcodes zero and links to \"#\". Nothing in the frontend's record store expresses an alert, an error or a message: the list read asks the notifications endpoint for page, sort and reference number only (src/server/app/services/persistence/records/real/lifecycle/read.js:26-34), and the row model carries reference, status, commodity, origin, arrival, consignor, consignee and two dates (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:10-29). So this needs an agreed source for each of the three counts and a destination page for each link before the band can be more than three zeroes.",
+    "falsifiedBy": "Finding a counted summary band anywhere on the frontend dashboard — a card, a banner or a strip that tells the user how many notifications need attention before they read the list.",
+    "correction": "Sound, with one line number out by two. Claimed: the hardcoded zero counts are at app/routes.js:7205-7209. Actually true: the alertCounts block is app/routes.js:7207-7211. Everything else checks out. The band is at app/views/dashboard.html:39-77 with three cards, three counts and three href=\"#\" links, and the picture at evidence/prototype@491b3926/page/dr1-dashboard.png shows all three counts as 0. The frontend citations are exact: template.njk:27-35 is heading, paragraph, start-button form, notifications heading with nothing between them, and row/index.js:10-29 is the row model carrying exactly the nine values named. The frontend page model records no summary band of any kind. Checked against both pictures and both captured DOMs."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-35",
+    "prototype": "app/views/dashboard.html:40-77"
+  },
+  "carriedFrom": "inc-083"
+}

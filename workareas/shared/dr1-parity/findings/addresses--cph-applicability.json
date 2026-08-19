@@ -1,0 +1,35 @@
+{
+  "slice": "addresses",
+  "title": "DR1 asks for a CPH number on every consignment except horses and the 01061900 group; the frontend asks only when the consignment contains cattle.",
+  "domain": "addresses",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-addresses-hub",
+    "fe-cph-number",
+    "dr1-roles-and-addresses",
+    "dr1-cph-number"
+  ],
+  "controls": [
+    { "kind": "label", "text": "County Parish Holding number (CPH)" },
+    { "kind": "field", "name": "countyParishHoldingCph" }
+  ],
+  "finding": {
+    "frontend": "The CPH row appears on the addresses hub, and the CPH page is reachable, only when a commodity line matches a whitelist of one entry: `CPH_COMMODITIES = ['Cow']` (src/server/app/sets/live-animals/services/commodities/stub.js:119, applied by src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:27-30 and src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:50-52). Everything else in the catalogue — horses, cats, dogs and fish — is never asked for a CPH number. The rule is an allow-list, so every commodity added to the catalogue from now on defaults to not being asked.",
+    "prototype": "DR1 works the opposite way round: the CPH section is in the default set of address sections, and a commodity code has to be listed explicitly to escape it (app/data/consignment-address-sections.js:148-160). Only two escape — 0101, horses, and 01061900, the cat/dog/ferret group, which gets a permanent-address section instead (:101,124). Cattle and pigs are listed explicitly with CPH included (:108,116), and everything else in DR1's catalogue, from sheep and goats through poultry to ornamental fish, falls to the default and is asked for one.",
+    "difference": "Invert the rule: ask for a CPH number unless the consignment's commodity is one that is exempt, and make the exempt list horses and the 01061900 group rather than making cattle the only inclusion. Within today's five-entry catalogue this changes one commodity, fish, which DR1 asks and the frontend does not; the reason to do it anyway is that the allow-list makes every future commodity silently exempt, which is the wrong default for a question DR1 treats as the norm. Whether each newly-included commodity really needs a CPH number is a question for the catalogue work rather than for this rule.",
+    "falsifiedBy": "A DR1 commodity code outside 0101 and 01061900 that is not asked for a CPH number, which would mean the default set is incidental rather than the rule."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:27-30",
+    "prototype": "app/data/consignment-address-sections.js:100-160"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--catalogue-is-a-five-entry-stub",
+      "relation": "adjacent-to",
+      "why": "how much the rule change matters depends on how far the catalogue grows past its five entries"
+    }
+  ]
+}

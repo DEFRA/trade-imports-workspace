@@ -1,0 +1,33 @@
+{
+  "slice": "addresses",
+  "title": "DR1's address picker puts the whole book on one page and narrows it as the trader types; the frontend shows five records at a time behind a Search button and pages through the rest.",
+  "domain": "addresses",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignor-or-exporter",
+    "fe-address-picker-consignee",
+    "fe-address-picker-importer",
+    "fe-address-picker-place-of-destination",
+    "dr1-consignment-address-select"
+  ],
+  "controls": [
+    { "kind": "field", "name": "q" },
+    { "kind": "label", "text": "Search" },
+    { "kind": "label", "text": "Next page" }
+  ],
+  "finding": {
+    "frontend": "The picker shows five records at a time — `PAGE_SIZE = 5` (src/server/app/services/address-book/index.js:10), sliced server-side — with a govukPagination block beneath the table (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:64-66) and a secondary Search button that re-posts the whole form (:86-91). fe-address-picker-place-of-origin reads \"Showing 5 of 13 addresses\" over five rows, then \"1 2 3 Next\". Because the chosen record can be on a page the trader is not looking at, the picker has to restate it in an inset above the table, \"Selected address: …\" (:93-95) — a control that exists only to work around the paging. The page carries no client JavaScript by design (:7-11).",
+    "prototype": "DR1 renders every address for the role in one table with no pagination anywhere on the page, and heads it \"Select an address\" with a live count, \"Showing 9 out of 9 results\" (app/views/consignment-address-select.html:93-97). The search control is a `type=\"search\"` input with a magnifier button that does not submit (:70-90); typing in it hides non-matching rows and rewrites the count as the trader types. dr1-consignment-address-select shows all nine records at once, so a chosen radio is always visible next to Save and continue.",
+    "difference": "Show the whole role list on one page: drop PAGE_SIZE and the pagination block, put the count line above the table, and let search narrow the rendered list rather than fetch a new page. The frontend's stated no-JS baseline is the constraint DR1 does not have — DR1's magnifier button is `type=\"button\"` and a no-JS Enter discards the query, so copying it verbatim would lose a working search for a trader without JavaScript. The portable half is one page, no pagination, count above the table, with the existing server-side search kept as the no-JS fallback and a filter layered on top. The \"Selected address:\" inset can go once the chosen row is always on screen. This assumes an organisation's book stays small enough for one page; if it will not, the finding is about the count line and the search behaviour rather than about removing pagination.",
+    "falsifiedBy": "Pagination appearing in DR1's consignment-address-select template, or an address book large enough that one page is not viable."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:60-96",
+    "prototype": "app/views/consignment-address-select.html:70-97"
+  },
+  "relatedTo": [],
+  "carriedFrom": "inc-060"
+}

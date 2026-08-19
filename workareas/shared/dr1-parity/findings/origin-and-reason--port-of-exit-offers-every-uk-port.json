@@ -1,0 +1,20 @@
+{
+  "slice": "origin-and-reason",
+  "title": "The frontend offers 78 UK ports and airports as the port of exit; DR1 offers only the ten border control posts approved for animals, so a user can choose a port their consignment cannot lawfully leave from.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-port-of-exit", "dr1-reason-for-import-transit-revealed"],
+  "controls": ["portOfExit"],
+  "finding": {
+    "frontend": "Port of exit is a select of 78 entries drawn from the general ports-of-entry reference list — Aberdeen Harbour, Cambridge Airport, Chatham Docks and the rest — each labelled with a UN location code, and the hint says so: 'Choose where the consignment will leave Great Britain. Exit and entry share the same port list.' Nothing marks which of them can handle animals, and any of the 78 is accepted (src/server/app/services/ports/index.js:9-14, src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:5-6).",
+    "prototype": "DR1 offers ten, and every one of them is a border control post designated for live animals, labelled with its BCP code: Edinburgh, Gatwick, Glasgow, three Heathrow posts, Holyhead, Manchester, Prestwick and Stansted (app/data/exit-border-control-posts.js:3-14). Anything else is rejected with 'Select a port of exit'. The same ten serve both the transit reveal and the temporary-admission reveal — DR1 uses one exit list, not one list per reason.",
+    "difference": "Restrict the port of exit to ports designated for live animals and label each with its BCP code, so the user cannot pick a port that cannot receive the consignment. The frontend does not hold that designation: the ports list it reads carries a code and a name and nothing else, so this needs the reference data service either to expose the designation or to serve an animal-BCP list of its own. Until that lands the frontend cannot filter. Drop the 'Exit and entry share the same port list' hint at the same time — DR1's exit list is not the entry list, so the sentence would be wrong.",
+    "falsifiedBy": "Finding a DR1 port-of-exit select offering a port that is not an animal border control post, or finding that the ten-entry list is applied only under a design-release-2 branch."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:3-7",
+    "prototype": "app/data/exit-border-control-posts.js:3-14"
+  }
+}

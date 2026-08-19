@@ -1,0 +1,55 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 asks the four questions that the reason for import opens inline, as reveals under the reason the user picks; the frontend asks them on four pages of their own reached through a separate hub task.",
+  "domain": "origin",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-import-reason",
+    "dr1-reason-for-import",
+    "fe-import-purpose",
+    "dr1-reason-for-import-internal-market-revealed",
+    "fe-destination-country",
+    "dr1-reason-for-import-transhipment-revealed",
+    "fe-port-of-exit",
+    "dr1-reason-for-import-transit-revealed",
+    "fe-exit-date",
+    "dr1-reason-for-import-temporary-admission-horses-revealed"
+  ],
+  "controls": [
+    "reasonForImport",
+    "purposeInInternalMarket",
+    "destinationCountry",
+    "portOfExit",
+    "exitDate"
+  ],
+  "finding": {
+    "frontend": "The frontend asks the main reason on its own page and then, depending on the answer, sends the user on to as many as three further pages, each with its own heading, its own Save and continue and its own return to the hub. Internal market leads to 'Purpose in the internal market'. Transhipment or onward travel leads to 'Destination country'. Transit leads to 'Destination country' and then 'Port of exit', in that order. Temporary admission horses leads to 'Port of exit' and 'Exit date'. Reason and purpose sit in one hub task and the other three sit in a second, conditional task called Exit details (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:34-39). A user answering for transit therefore visits three pages and crosses two hub tasks to answer one question and its consequences.",
+    "prototype": "DR1 asks all of it on one page. The radio group on 'Main reason for import' carries a conditional reveal under four of its five options (app/routes.js:8778-8820), and the questions appear in place the moment the radio is chosen: Internal market reveals the eleven-option 'Purpose in the internal market' radio group; Transhipment or onward travel reveals a Destination country select; Transit reveals Port of exit and then Destination country, in that order; Temporary admission horses reveals an Exit date picker and then a Port of exit select. Re-entry reveals nothing. One page, one Save and continue, one hub task. Every reveal is present in the rendered page and hidden until its radio is chosen, which is why the captured temporary-admission state carries all six reveal fields in its DOM.",
+    "difference": "Move the four follow-up questions onto the reason page as govukRadios conditional reveals and retire the four separate pages, in reveal order per reason: purpose under Internal market; destination country under Transhipment; port of exit then destination country under Transit; exit date then port of exit under Temporary admission horses. Note the transit order is the reverse of the frontend's page order today. Two consequences follow. First, the Exit details hub task disappears, and with it the trap where that task renders as a visible unlinked row under Temporary admission horses because its gate tests only the first of its three pages: DR1 has no equivalent trap because it has no second row to gate, so a reason that opens only exit date and port of exit cannot produce a dead row. That hub change is owned by the hub slice and depends on this one. Second, DR1 holds a separate stored answer per branch, so a user who picks Transit, answers, switches to Transhipment and switches back still sees the transit answers; the frontend's single destinationCountry and portOfExit fields are purged when the reason moves them out of scope, so the same round trip loses them. Decide deliberately whether reveal answers survive a flip.",
+    "falsifiedBy": "Finding that DR1 routes away from /reason-for-import to a separate page for any of purpose, destination country, port of exit or exit date, rather than rendering it in the conditional block on the reason page itself."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:34-39",
+    "prototype": "app/views/reason-for-import.html:47-62"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--exit-details-is-not-a-dr1-task",
+      "relation": "travels-with",
+      "why": "the hub row exists only because these questions live on pages of their own; this finding is its stated dependency"
+    },
+    {
+      "id": "origin-and-reason--purpose-not-required-once-internal-market-chosen",
+      "relation": "travels-with",
+      "why": "DR1 enforces the purpose from the reason page, which is only possible once the question is on that page"
+    },
+    {
+      "id": "origin-and-reason--exit-date-not-required-once-temporary-admission-chosen",
+      "relation": "travels-with",
+      "why": "same enforcement point"
+    }
+  ],
+  "carriedFrom": "inc-061"
+}

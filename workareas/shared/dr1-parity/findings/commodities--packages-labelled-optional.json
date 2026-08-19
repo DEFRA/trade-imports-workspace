@@ -1,0 +1,24 @@
+{
+  "slice": "commodities",
+  "title": "DR1 labels the packages field 'Number of packages (when required)'; the frontend labels it '(optional)', which tells the user it never matters.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [
+    { "kind": "label", "text": "Number of packages (optional)" },
+    { "kind": "label", "text": "Number of packages (when required)" }
+  ],
+  "finding": {
+    "frontend": "The second field on each species line reads 'Number of packages (optional)' with the hint 'Such as crates, bags or boxes' (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:31-34). The GDS '(optional)' suffix says the answer is never needed, which is not what the rule is: the field is asked only for the commodities that can be packaged, and for those it is required when the consignment is in fact packaged.",
+    "prototype": "DR1 labels the same field 'Number of packages (when required)' with the identical hint 'Such as crates, bags or boxes', and carries that label as part of the commodity's own data rather than as page copy (app/data/commodities.js:21-23). Both sides agree on everything else about the field: it appears only for the commodities that have packaging, and neither side rejects it left blank for a live animal — DR1 validates the count only on germinal lines, which a DR1 user cannot create (app/routes.js:900-932).",
+    "difference": "Change the label to 'Number of packages (when required)' in the commodities copy file, English and Welsh. Nothing about the field's obligation changes — the two sides already agree it is not enforced — so this is the label alone.",
+    "falsifiedBy": "Finding '(optional)' rather than '(when required)' on the packages label in DR1's rendered Commodity details page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:31-34",
+    "prototype": "app/data/commodities.js:21-23"
+  },
+  "carriedFrom": "inc-076"
+}

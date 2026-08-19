@@ -1,0 +1,27 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend dashboard opens with a paragraph describing what the service is for; DR1's dashboard has no body text above the notification list.",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [
+    {
+      "kind": "label",
+      "text": "Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification."
+    }
+  ],
+  "finding": {
+    "frontend": "Between the heading and the entry button the dashboard prints \"Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification.\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:3-6). It is the only paragraph on the page, and it reads as the description on a service start page.",
+    "prototype": "DR1's dashboard carries no body text at all. The heading is followed straight away by the \"Create a new notification\" button, then the \"At a glance\" band and the list (app/views/dashboard.html:27-38). The captured page model for dr1-dashboard records an empty paragraph list.",
+    "difference": "Remove the service-description paragraph from the dashboard, in both the English and Welsh copy files (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:3-6 and copy.cy.js) and its render at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:28. DR1 treats this page as a signed-in landing page, not a start page: the user arriving here has already signed in and may already have notifications, so the space goes to the entry action and the summary band instead. If the service description is wanted anywhere, it belongs on the pre-sign-in start page, which is a different page and out of this comparison.",
+    "falsifiedBy": "Finding any body paragraph above the notification list in DR1's root dashboard view.",
+    "correction": "The other inverse-direction finding, pressed as hard as the card one, and it survives. Claimed: DR1's dashboard carries no body text at all. Checked by reading the whole intro section of the root view rather than the cited range — app/views/dashboard.html:27-38 is caption, heading and button with nothing between or after them before the At a glance band — then by the captured page model, which records paragraphs as an empty list, then by the picture at evidence/prototype@491b3926/page/dr1-dashboard.png. Three agree. I also went looking for the place the author assumed the description would live, and it does not exist: DR1 has no service start page. The service navigation's first item points at /index, and app/views/index.html is the prototype kit's own version chooser — \"Choose a prototype version to work on\" with a card per design release — not a page in the service. So the service description appears nowhere in DR1, which is a stronger fact than the finding states. The sentence in difference about a pre-sign-in start page is a recommendation about the real service, not an observation about DR1, and should be read that way."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:3-6",
+    "prototype": "app/views/dashboard.html:27-38"
+  },
+  "carriedFrom": "inc-069"
+}

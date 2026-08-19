@@ -1,0 +1,21 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 shows the draft status and the notification reference from the first page of a new notification; the frontend withholds both until the first answer is saved.",
+  "domain": "service-wide",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": [{ "kind": "label", "text": "Draft" }],
+  "finding": {
+    "frontend": "A strip carrying a blue \"Draft\" tag and the notification reference sits above the page heading on 29 of the 33 captured screens. Origin of the import is the one journey page without it: on a brand-new notification the page shows the heading with nothing above it, so the user starting a notification cannot see its reference until they have saved the first page. The strip is suppressed deliberately — src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-89 passes the journey to the layout only once the notification has committed answers, and src/server/app/shared/layout.njk:65-70 renders nothing when it is absent.",
+    "prototype": "DR1's origin page shows the strip unconditionally: a \"Draft\" tag and the reference GBN-AG-26-7K8M2P sit between the back link and the caption, exactly as they do on every later page. The view includes the shared status partial with no guard at all — app/views/origin-of-the-import.html:29 — and app/views/partials/notification-status.html:18-24 defaults the status text to \"Draft\" when nothing has set one, which is what makes the strip work on a notification that has not been touched yet.",
+    "difference": "Render the status strip on Origin of the import from the first request, by dropping the committed-answers guard at src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-89 so the journey always reaches the layout. This assumes the notification reference exists before the first save; if the frontend only mints a reference on the first commit, that ordering is the real work and the guard is a symptom of it, so check where `journeyId` comes from on a new notification before removing the guard. The back-link target on the same page is computed from the same condition and is correct as it stands — a fresh notification's back link goes to the dashboard — so change only the strip.",
+    "falsifiedBy": "Loading Origin of the import on a notification with no saved answers and seeing a Draft tag and reference above the heading."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-110",
+    "prototype": "app/views/partials/notification-status.html:18-24"
+  },
+  "relatedTo": []
+}

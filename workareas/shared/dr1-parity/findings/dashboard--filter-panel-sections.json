@@ -1,0 +1,42 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 groups the dashboard filters into three collapsed sections a user opens one at a time — Search by, Status, By date; the frontend's filter panel is a single always-open block.",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [{ "kind": "label", "text": "Filter notifications" }],
+  "finding": {
+    "frontend": "The panel beside the list is headed \"Filter notifications\" as a third-level heading, with its one control — the keyword box and its Search button — always visible below it (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56). With one control there is nothing to group, so the panel is as tall as its contents.",
+    "prototype": "DR1's panel carries the plain label \"Filter notifications\" and then three collapsed sections, each a summary row with a chevron: Search by, Status and By date (app/views/dashboard.html:83-227). On first load all three are shut, so the panel is three rows tall and the page opens with the list, not the filters, in the reader's eye; opening a section reveals only that section's controls. dr1-dashboard is the shut state and dr1-dashboard-filters-open is all three open.",
+    "difference": "Group the dashboard filters into three collapsible sections under a \"Filter notifications\" label, shut on load, using the same three section names DR1 uses. This is the container the other three filter findings put controls into, so it wants doing first or alongside them — on its own it collapses one keyword box behind a chevron, which is worse than what is there now. Match DR1's heading treatment too: DR1 labels the panel rather than heading it, so the sections are the only headed things inside it.",
+    "falsifiedBy": "Finding DR1's filter controls all visible at once on first load of the dashboard, with no summary rows to open."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
+    "prototype": "app/views/dashboard.html:83-227"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--search-terms",
+      "relation": "travels-with",
+      "why": "the three search boxes are the contents of the Search by section this finding creates"
+    },
+    {
+      "id": "dashboard--status-filter",
+      "relation": "travels-with",
+      "why": "the status select is the whole of the Status section"
+    },
+    {
+      "id": "dashboard--date-filter",
+      "relation": "travels-with",
+      "why": "the radios and date pickers are the whole of the By date section"
+    }
+  ],
+  "carriedFrom": "inc-084"
+}

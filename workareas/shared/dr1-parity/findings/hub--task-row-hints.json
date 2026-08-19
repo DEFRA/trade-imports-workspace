@@ -1,0 +1,28 @@
+{
+  "slice": "hub",
+  "title": "DR1 puts a line of hint text under one hub task only, naming the four parties; the frontend puts a hint under every task and names a different set of parties.",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Roles and addresses"],
+  "finding": {
+    "frontend": "Every one of the frontend's eleven visible tasks carries a line of grey hint text beneath its link — the rendered hub has eleven task rows and eleven hints (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79). Under 'Roles and addresses' the hint reads 'The consignor, consignee, importer and the places of origin and destination' (:63-66), a list of five roles written as running prose.",
+    "prototype": "DR1's hub carries exactly one hint, and it is on 'Roles and addresses': 'Consignor or Exporter, Consignee, Importer and Place of Destination' (app/routes.js:5818-5824). Every other task is a bare link with its status beside it. The DR1 list names four roles, capitalised as labels rather than written as a sentence, and does not include the place of origin.",
+    "difference": "Remove the hint from every hub task except 'Roles and addresses', and rewrite that one to DR1's wording. This is copy on the hub only — the hints say nothing the task pages do not, and DR1's list of roles under 'Roles and addresses' is a separate question from what roles the addresses hub actually collects, which the addresses slice owns.",
+    "falsifiedBy": "A second hint rendered under any other task in the DR1 hub.",
+    "correction": "Sound, and confirmed in both pictures and both DOMs — the frontend hub renders eleven task rows and eleven elements with class govuk-task-list__hint, and the DR1 hub renders exactly one hint paragraph, under 'Roles and addresses'. Only the DR1 item in the whole hub view model carries a hint property, and the template only emits a hint where one is set (app/views/notification-hub.html:65-67), so the single hint is a property of the data and not of the captured state. The wording comparison holds: five roles in the frontend against four in DR1, with the place of origin dropped. One mis-citation, left as a note rather than a change to the claim: the prototype citation app/routes.js:5818-5824 stops two lines short of the sentence it is supporting. That range covers the close of the documents group, the '5. Consignment parties' title at :5821 and the task's own text at :5824; the hint string itself is at :5826."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79",
+    "prototype": "app/routes.js:5818-5824"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-row-labels",
+      "relation": "travels-with",
+      "why": "same copy file and the same task list"
+    }
+  ]
+}

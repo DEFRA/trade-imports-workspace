@@ -1,0 +1,33 @@
+{
+  "slice": "hub",
+  "title": "A user importing horses temporarily cannot get back to their port of exit and exit date from the hub — the Exit details row is shown but has no link, even though both questions are compulsory.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-hub"],
+  "controls": ["Exit details"],
+  "finding": {
+    "frontend": "The hub's 'Exit details' row stands for three pages in order — destination country, port of exit, exit date (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-39). Whether the row is a link is decided by the first of those pages alone: `rowGatePasses` tests `row.pages[0]` (src/server/app/flow/navigation.js:25). When the reason for import is temporary admission of horses, destination country is out of scope while port of exit and exit date are both in scope and mandatory (src/server/app/sets/live-animals/obligations/sections/import-reason.js:64-113). The row therefore appears on the hub with no link and the status 'Cannot start yet', while the two questions behind it are compulsory. The captured hub does not show this: it was shot on a notification with no reason for import given at all, so the conditional Exit details row is hidden there and the defect has been traced through the source rather than seen in a picture. The user can still reach the two questions going forwards, because `nextInSection` walks past the out-of-scope page to the next one that passes (src/server/app/flow/navigation.js:27-37), so they can complete the notification — but once they have left those pages they cannot get back to change an answer. Two lines above the faulty gate, `rowEntry` already does the right thing: it picks the first page whose gate passes (:20-23).",
+    "prototype": "The question does not arise in DR1, because DR1 has no exit-details task. Port of exit and exit date are asked inline on the reason-for-import page as a conditional reveal under the temporary-admission answer, and they count towards that page's own 'Main reason for import' task (app/routes.js:1361-1364). A DR1 user returns to them by opening 'Main reason for import' again, which is always a link.",
+    "difference": "Make `rowGatePasses` agree with `rowEntry` — a row is enterable when any of its pages passes its gate, not only the first. That is a one-line change in src/server/app/flow/navigation.js and it restores the return route for the temporary-admission case. It is worth doing on its own even though the larger change of folding these questions into the reason-for-import task would remove the row altogether, because that change is bigger and this defect is live today.",
+    "falsifiedBy": "A hub rendered with reason for import set to temporary admission of horses that shows the 'Exit details' row as a working link.",
+    "correction": "The defect is real and every step of it was re-traced at frontend 76a864ba. rowGatePasses is one line and tests row.pages[0] only (src/server/app/flow/navigation.js:25); the Exit details row's pages are destination country, port of exit, exit date in that order (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-39); under temporaryAdmissionHorses destinationCountry is inScope false while portOfExit and exitDate are both inScope with status mandatory (src/server/app/sets/live-animals/obligations/sections/import-reason.js:66-115); pageGatePasses fails on an out-of-scope page (src/server/app/flow/gates.js:23-32), so the row renders blocked while its status is not NA and it is therefore not hidden. The narrow framing was checked and is the right one: the section named 'consignment' holds import reason, import purpose, destination country, port of exit, exit date and additional details in one list (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:48-58), nextInSection skips the pages that fail their gate (navigation.js:27-37), and Save and continue reaches it through nextTarget, whose hub fallback only fires when the user pressed the return-to-overview button (src/server/app/shared/kit.js:76-101). So the pages are reachable going forwards and unreachable on return, which is what the finding says. Two changes made: confidence dropped from high to medium, because the state is not in the corpus at all — fe-hub is the only frontend hub shot and it was captured with no reason for import, so the conditional row is hidden in it; and the frontend slot now says that outright rather than leaving a reader to assume the picture shows a blocked row."
+  },
+  "evidence": {
+    "frontend": "src/server/app/flow/navigation.js:20-25",
+    "prototype": "app/routes.js:1361-1364"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--exit-details-is-not-a-dr1-task",
+      "relation": "travels-with",
+      "why": "the row this defect is in does not exist in DR1 at all, so the larger change makes the defect moot"
+    },
+    {
+      "id": "hub--blocked-task-rows",
+      "relation": "travels-with",
+      "why": "the same row-gating machinery produces both"
+    }
+  ]
+}

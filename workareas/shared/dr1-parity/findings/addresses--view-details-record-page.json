@@ -1,0 +1,34 @@
+{
+  "slice": "addresses",
+  "title": "DR1's \"View details\" opens the address's own record page in the address book; the frontend's expands the same three lines that are already in the row.",
+  "domain": "addresses",
+  "type": "flow-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignee",
+    "dr1-consignment-address-select"
+  ],
+  "controls": [
+    { "kind": "label", "text": "View details" }
+  ],
+  "finding": {
+    "frontend": "The last cell of every picker row is a `<details>` disclosure whose summary reads \"View details\", with a visually hidden \" for <name>\", and which expands to a list of the address lines (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:26-41). Those are the same lines the Address and Country columns already show two cells to the left, so opening it tells the trader nothing they could not already read — there is no contact name, no phone number, no email, no record history and no way to see which other notifications use the record. fe-address-picker-place-of-origin renders the disclosure triangle in every row.",
+    "prototype": "The same cell in DR1 is a link, not a disclosure: \"View details\" goes to the address book's record page for that address, carrying a return path back to the picker (app/views/consignment-address-select.html:152, href built at app/routes.js:3562). The trader leaves the picker, reads the whole record and comes back to the same role with their place kept.",
+    "difference": "Make \"View details\" a link to the address record rather than an in-page expander, and either drop the address lines from the row or keep them and drop the disclosure — today the picker renders the same lines twice. This service has no address record page and cannot grow one on its own: it reads the address book and never writes it, and the record pages belong to the INS front-door (src/server/app/services/address-book/index.js:17-19). So the work is a cross-app link with a return path, which is the same dependency as adding an address from the picker; the two should be settled together. If the ruling is that this service keeps its own read-only record view, that is a page to add here instead.",
+    "falsifiedBy": "An address record route existing in trade-imports-animals-frontend, or the frontend disclosure showing any field the row does not already show."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:26-41",
+    "prototype": "app/views/consignment-address-select.html:150-153"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--no-add-address-path",
+      "relation": "travels-with",
+      "why": "both are journeys out of the picker into the address book and share one decision about which service owns address records"
+    }
+  ],
+  "carriedFrom": "inc-039"
+}

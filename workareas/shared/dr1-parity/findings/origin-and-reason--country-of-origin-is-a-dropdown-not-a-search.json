@@ -1,0 +1,28 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 picks the country of origin by typing into a search box that offers matches as you type; the frontend makes the user open a dropdown and scroll a fixed list.",
+  "domain": "origin",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["countryOfOrigin"],
+  "finding": {
+    "frontend": "Country of origin is a govukSelect. The closed control reads 'Select a country' and opening it gives one long alphabetical list with a divider rule under the placeholder. There is no way to type. The user scrolls (src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22).",
+    "prototype": "DR1 renders a search input with the placeholder 'Search for a country' and a magnifying-glass button. Typing filters a results list that appears under the box, and choosing a result writes the country into a hidden field; a live region announces the match count to screen readers. The list it searches carries regions as well as states, so 'Spain' surfaces Spain, Canary Islands, Ceuta and Melilla together (app/views/origin-of-the-import.html:53-98).",
+    "difference": "Replace the select with the same search-and-choose control DR1 uses. The frontend already has to grow the underlying list to match DR1, so do that first — a search box over 31 entries buys less than a search box over the 41 DR1 offers. Keep a no-JavaScript fallback: DR1's control degrades to a bare text input, which the real service cannot ship, so the fallback has to be a select or a server-rendered results page.",
+    "falsifiedBy": "Finding that DR1's country of origin renders as a plain select for a DR1 session, with the search module mounted only under a design-release-2 flag."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22",
+    "prototype": "app/views/origin-of-the-import.html:53-98"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--country-list-omits-regions-and-territories",
+      "relation": "travels-with",
+      "why": "the control and the list it searches are one piece of work"
+    }
+  ],
+  "carriedFrom": "inc-046"
+}

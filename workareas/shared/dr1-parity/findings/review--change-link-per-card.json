@@ -1,0 +1,21 @@
+{
+  "slice": "review",
+  "title": "DR1 offers one Change link per card in the card heading; the frontend puts a Change link on every summary row, so the captured review page carries 28 of them against DR1's 11.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Change"],
+  "finding": {
+    "frontend": "Every row of every summary list gets its own Change link with visually hidden text naming the row and its card — 'Change country of origin (Import details)', 'Change transporter approval number (Transport details)' and so on — built by src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:17-25 and rendered through govukSummaryList at src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:96-102. The species card additionally carries two Change links side by side in its own heading, one for the commodity and one for the animal identifiers. The captured page holds 28 Change links.",
+    "prototype": "Each card carries exactly one Change link, in the card heading, pointing at the page that owns the whole card (app/views/partials/review-summary-card.html:20-31). Rows themselves carry no links, at app/views/partials/review-summary-row.html:14-24. The captured page holds 11 Change links — one per card, including one for each species card.",
+    "difference": "Move the change action from the row to the card. Drop the per-row `actions` the summary rows carry and give each card a single Change link in its title, targeting the page that collects that card's answers. The species card collapses from two heading links to one. This is a view-model change under check-answers/view-model/, and it is what makes DR1's card layout legible — 28 links on one page is the thing the design moved away from.",
+    "falsifiedBy": "Finding a DR1 review card that carries a Change link on an individual row rather than only in its heading."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js",
+    "prototype": "app/views/partials/review-summary-card.html:20-31"
+  },
+  "relatedTo": []
+}

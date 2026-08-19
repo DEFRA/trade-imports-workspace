@@ -1,0 +1,48 @@
+{
+  "slice": "transport",
+  "title": "DR1 opens the transporter task on a searchable list of approved transporters and only asks whether one is commercial or private when a user needs to add a record that is not there; the frontend asks the type first and branches the whole journey on the answer.",
+  "domain": "transport",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transporter-type",
+    "fe-transporter-commercial",
+    "fe-transporter-private",
+    "dr1-transporter",
+    "dr1-transporter-add"
+  ],
+  "controls": [
+    "transporterId",
+    "transporterType",
+    { "kind": "label", "text": "Add a transporter" }
+  ],
+  "finding": {
+    "frontend": "The transport task reaches the transporter question at `/transporters`, which asks \"What type of transporter will move the animals?\" with two radios, Commercial and Private, and hints that describe what happens next — \"A business approved to transport animals — you will choose one from a list\" and \"You or another individual moving the animals — you will give their address\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:78-87). The answer decides the rest of the task: Commercial goes to `/transporters/select`, a radio list of two records, and Private goes to `/transporters/private`, a blank address form. A user who does not know which sort of record theirs is has to guess before seeing anything, and a user whose transporter is already known to the service still starts by answering a classification question. The three pages are ordered type, then list, then form in the section definition (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67-75).",
+    "prototype": "DR1 opens the task on `/transporter`, which is the record itself: a lead paragraph naming who a transporter is, the transporter-authorisation guidance, then a heading \"Select a transporter\", a Search field hinted \"Name, address or approval number\", and a table of eight approved transporters with a radio in the first column and Name, Address, Approval number, Type and Status columns (app/views/transporter.html:73-160). Both commercial and private transporters sit in one table, distinguished by the Type column, so the type is a property of the record shown rather than a question the user answers. Only under the table is there a secondary \"Add a transporter\" button, and only that button leads to `/transporter/add` — the commercial-or-private question — which opens with the warning \"Before you add this transporter, please ensure you have already searched for it first\" (app/views/transporter-add.html:31-40). Each row also carries a View details link into the transporter's full record.",
+    "difference": "Reverse the order of the task. `/transporters` becomes the list page — search over the transporters the service knows about, one row per record showing its type, with a radio to pick one — and the commercial-or-private question moves behind an \"Add a transporter\" button as the first step of adding a record that is not on the list. The type question keeps its two options but loses the journey-describing hints, because after the move it no longer describes what happens next. Carry the \"Before you add this transporter, please ensure you have already searched for it first\" warning onto the moved page: it only makes sense once searching comes first. This is the parent of the rest of the transporter findings — the missing search box, the missing approval status, the inability to add a commercial transporter, and the fact that an added transporter is not kept for reuse all land on the list page this creates.",
+    "falsifiedBy": "Finding a route in the frontend that reaches a list of transporters without first answering the type question — or finding that DR1 reaches `/transporter/add` from anywhere other than the Add a transporter button on the list."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67-75",
+    "prototype": "app/views/transporter.html:73-160"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-list-has-no-search",
+      "relation": "travels-with",
+      "why": "The search box belongs to the list page this finding creates"
+    },
+    {
+      "id": "transport--cannot-add-a-commercial-transporter",
+      "relation": "travels-with",
+      "why": "The add-commercial form hangs off the Add a transporter button this finding introduces"
+    },
+    {
+      "id": "transport--added-transporter-not-saved-for-reuse",
+      "relation": "travels-with",
+      "why": "Reuse only means anything once there is a list to reuse from"
+    }
+  ],
+  "carriedFrom": "inc-077"
+}

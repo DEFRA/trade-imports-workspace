@@ -1,0 +1,21 @@
+{
+  "slice": "commodities",
+  "title": "DR1 refuses to move on until the user has entered a number of animals for every species on the consignment; the frontend accepts the field left blank and saves the blank.",
+  "domain": "commodities",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [{ "kind": "label", "text": "Number of animals" }],
+  "finding": {
+    "frontend": "Number of animals is validated for shape but not for presence. The rule is integerInRange with a minimum of 1 (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:21-24), and that validator allows the empty string through before the digit check ever runs (src/server/app/lib/validate/validators.js:123-131). So 'ten' is rejected and '' is accepted: Save and continue succeeds, the line is stored with an empty count, and the user reaches the rest of the journey with a consignment that says nothing about how many animals are in it. The behaviour is deliberate rather than accidental — the feature's own test asserts it, storing '' and treating an unanswered count as uncapped rather than zero (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js:150-168).",
+    "prototype": "DR1 treats the count as mandatory for every live-animal species on the page. A blank raises 'Enter the number of animals' against that species' input, and a non-numeric or non-positive value raises 'Enter a whole number greater than 0' (app/routes.js:816-848). The page re-renders with the error and nothing is saved, so a DR1 consignment cannot carry a species with no count.",
+    "difference": "Make Number of animals mandatory on Commodity details — one required rule per species line, with an error naming that line. The knock-on is the frontend's own count-drop check, which today reads a blank count as 'no cap' when deciding whether identifier records would be orphaned; once blank cannot be saved, that branch has no live case and the check compares two real numbers. Update the test that currently asserts the blank saves.",
+    "falsifiedBy": "Submitting Consignment details with Number of animals empty and being shown an error rather than being moved on."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-32",
+    "prototype": "app/routes.js:816-848"
+  },
+  "carriedFrom": "inc-052"
+}

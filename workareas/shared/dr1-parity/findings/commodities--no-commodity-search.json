@@ -1,0 +1,37 @@
+{
+  "slice": "commodities",
+  "title": "DR1 lets the user find a commodity by typing a name, a code or a Latin name into a search box; the frontend prints every species it knows as a flat checkbox list with nothing to search.",
+  "domain": "commodities",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-commodity-search",
+    "dr1-what-are-you-importing",
+    "dr1-what-are-you-importing-results"
+  ],
+  "controls": ["commoditySearch", "species"],
+  "finding": {
+    "frontend": "What are you importing? shows five checkbox fieldsets — Cow (0102), Horse (0101), Cat (01061900), Dog (01061900), Fish (0301) — with all eight species tickable on the page at once and no input to type into. The whole control is a loop over the catalogue: src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:19-29 renders one govukCheckboxes per commodity from src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:3-15. Nothing narrows the list, nothing summarises what has been picked, and the only way to review a selection is to scroll the fieldsets looking for ticks. The corpus screen id fe-commodity-search is a misnomer — there is no search on the page.",
+    "prototype": "DR1 asks the same question through a search control. Under an h2 label 'Search for a commodity' sits the hint 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).' and a single search input with a magnifying-glass button (app/views/what-are-you-importing.html:49-86). Typing three or more characters opens a results panel below the box: matched species are listed as checkbox rows grouped under a commodity header that names the commodity and its code — 'Cattle (0102)' with 'African buffalo (Syncerus spp.)', 'Banteng (Novibos spp)' and the rest beneath it. A query matching the commodity name or the code returns every species of that commodity; otherwise it returns the species whose Latin or common name matches. Ticking a row adds it to a selected-items panel that carries a count heading, a Remove control per item and a Clear all button (:100-108), so the user always sees what is on the notification without scrolling a list. Selections survive leaving and re-entering the page because they are seeded back into the control as JSON (:110-114).",
+    "difference": "Build the search control on What are you importing? — search input with its label and hint, a results panel grouped by commodity header, and a selected-items panel with per-item Remove and Clear all — and stop rendering the catalogue as fixed fieldsets. The control is client-side over a catalogue the page already holds, so nothing blocks it, but it is worth little while the catalogue is five entries: do it alongside sourcing the real catalogue, and give species their common names first so that searching by common name returns something.",
+    "falsifiedBy": "Finding a text or search input on the frontend's What are you importing? page that filters the species list as the user types."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:19-29",
+    "prototype": "app/views/what-are-you-importing.html:49-115"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--catalogue-is-a-five-entry-stub",
+      "relation": "travels-with",
+      "why": "A search box over eight species is a search box over nothing. The control and the catalogue behind it are worth doing together."
+    },
+    {
+      "id": "commodities--species-options-lack-common-names",
+      "relation": "travels-with",
+      "why": "DR1's own hint promises the user can search by common name, which requires the catalogue to hold one per species."
+    }
+  ],
+  "carriedFrom": "inc-040"
+}

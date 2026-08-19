@@ -1,0 +1,38 @@
+{
+  "slice": "service-wide",
+  "title": "DR1's navigation bar carries Dashboard, Address book, Manage account and Log out on every page; the frontend's carries the service name and nothing else.",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": [
+    { "kind": "label", "text": "Dashboard" },
+    { "kind": "label", "text": "Address book" },
+    { "kind": "label", "text": "Manage account" },
+    { "kind": "label", "text": "Log out" }
+  ],
+  "finding": {
+    "frontend": "The navigation bar under the GOV.UK header shows the service name \"Import notification service\" as a link home, and no navigation items at all — the bar is an empty shell on all 33 captured screens. What account actions there are sit somewhere else entirely: a small right-aligned strip below the bar showing the signed-in user's email address and a \"Sign out\" link (src/server/common/components/service-header/template.njk:9-29), which the layout injects at src/server/app/shared/layout.njk:34-39. So the user gets Sign out but has no way from the navigation to reach the dashboard, an address book or their account, and the strip reads as a status line rather than as navigation.",
+    "prototype": "Every page carries a service navigation bar with the service name followed by four items: Dashboard, Address book, Manage account and Log out. The Dashboard item is marked active on the dashboard pages. All 40 captured DR1 screens carry the same four. The nav is authored, not inherited from the kit — app/views/layouts/main.html:104-127 builds it explicitly, and the design-release-2 branch above it adds a fifth item, which is how you can tell the item list is a per-release decision rather than a default.",
+    "difference": "Populate the service navigation in src/server/app/shared/layout.njk:27-32 with the four DR1 items and give the item labels a home in src/server/app/shared/copy.en.js under `layout`, plus the Welsh pair in copy.cy.js. Three of the four have somewhere to point today: Dashboard is the existing notifications list at `/`, Log out is the existing `/auth/sign-out`, and Manage account is a dead `#` in DR1 too so it can wait on a real destination. Address book is the exception — the frontend consumes the address-book service as data but has no page for it, so that item cannot be wired until an address-book page exists; ship it last or ship it pointing at the same placeholder DR1 uses. Once the bar carries Log out, decide what remains of the right-aligned user strip: DR1 shows no signed-in identity anywhere, so keeping the email while adding Log out to the nav would state the same action twice.",
+    "falsifiedBy": "Finding a navigation item other than the service name rendered in the frontend's service navigation bar on any of the 33 captured screens."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:27-39",
+    "prototype": "app/views/layouts/main.html:104-127"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--phase-banner",
+      "relation": "travels-with",
+      "why": "the same band of shared-layout chrome above the page content"
+    },
+    {
+      "id": "service-wide--hub-back-link",
+      "relation": "blocks",
+      "why": "removing the overview page's back link only works once the navigation offers a Dashboard route out"
+    }
+  ],
+  "carriedFrom": "inc-002"
+}

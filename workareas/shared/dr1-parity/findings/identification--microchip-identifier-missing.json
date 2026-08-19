@@ -1,0 +1,30 @@
+{
+  "slice": "identification",
+  "title": "DR1 asks for a microchip number on horses, cats, dogs and ferrets; the frontend has no microchip field anywhere in the service.",
+  "domain": "identification",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    { "kind": "label", "text": "Microchip" }
+  ],
+  "finding": {
+    "frontend": "A person identifying an animal is offered at most four identifier types — passport, tattoo, ear tag and horse name — and which of them appear is decided by four commodity allowlists in src/server/app/sets/live-animals/services/commodities/stub.js:107-113. There is no microchip field on any commodity, and no microchip obligation exists to render one: the six unit-record identifier obligations in src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:113-198 are passport, tattoo, ear tag, horse name and the two free-text fallbacks.",
+    "prototype": "DR1 asks for a microchip on the two identifier sets a companion animal or an equine falls into. A horse (commodity code 0101) is asked for Microchip, Passport and Horse name, and a cat, dog, ferret or other live mammal (all commodity code 01061900) is asked for Microchip, Passport and Tattoo — app/data/commodity-identifiers.js:3-19. Microchip is the first field on both panels, so it is the identifier DR1 puts in front of the person first.",
+    "difference": "Add a microchip identifier to the per-animal record: a new unit-record obligation alongside the existing five in src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js, a MICROCHIP_COMMODITIES allowlist holding Horse, Cat and Dog in the stub's picker-name vocabulary, a label in the identification copy block, and the new obligation id added to the unit record's requires.anyOfIds so a microchip on its own satisfies the at-least-one-identifier rule. Adding it also widens the derived union behind specificIdentifierWhitelists, which is what stops a microchip-only commodity falling through to the free-text fallback fields.",
+    "falsifiedBy": "Finding a microchip field rendered on the frontend's horse, cat or dog identification panel, or finding that DR1's horse and 01061900 identifier sets do not include a Microchip entry."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:107-113",
+    "prototype": "app/data/commodity-identifiers.js:3-19"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--tattoo-offered-for-cattle",
+      "relation": "travels-with",
+      "why": "the same per-commodity identifier sets; both are corrections to which identifier types a commodity is asked for"
+    }
+  ],
+  "carriedFrom": "inc-006"
+}

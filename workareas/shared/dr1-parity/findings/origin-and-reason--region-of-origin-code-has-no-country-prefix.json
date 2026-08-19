@@ -1,0 +1,33 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 fills in the country half of the region of origin code for the user and asks only for the rest; the frontend asks the user to type the whole code themselves.",
+  "domain": "origin",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["regionOfOriginCode"],
+  "finding": {
+    "frontend": "Answering Yes to 'Does the consignment have a region of origin code?' reveals one text box labelled 'Region of origin code', hinted 'For example, FR-75' and five characters wide. The user types the country prefix, the separator and the region part into that one box, and nothing checks that the prefix matches the country they picked above. Five characters is also too short for the example the hint gives once a longer prefix is involved (src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:24-34).",
+    "prototype": "DR1 reveals the same question as a prefixed input. A read-only grey prefix box, derived from the country of origin the user has already chosen, sits immediately left of a five-character text box. The label is 'Enter the region of origin code' and the hint is 'Enter up to 5 characters', which now describes only the part the user has to supply. On submit the prototype joins the two with a hyphen (app/views/partials/region-of-origin-code-input.html:1-31). Picking France shows FR, so the user types 75 and the service records FR-75.",
+    "difference": "Split the field into a country-derived prefix and a suffix input, using the same country-to-prefix mapping the country list already needs, and change the label and hint to match. Widening the input alone is not the fix: the point is that the user cannot get the prefix wrong. This depends on the country list change, because the prefix table is keyed on DR1's country labels. Keep the joined value as what is stored, so nothing downstream has to learn about two fields.",
+    "falsifiedBy": "Finding that the region-of-origin prefix box is rendered only for a design-release-2 session, so a DR1 user types the whole code into one field as the frontend does."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:24-34",
+    "prototype": "app/views/partials/region-of-origin-code-input.html:1-31"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--country-list-omits-regions-and-territories",
+      "relation": "travels-with",
+      "why": "the prefix is looked up from the same country list"
+    },
+    {
+      "id": "origin-and-reason--region-of-origin-code-not-required-when-yes",
+      "relation": "travels-with",
+      "why": "both change the same revealed field"
+    }
+  ],
+  "carriedFrom": "inc-017"
+}

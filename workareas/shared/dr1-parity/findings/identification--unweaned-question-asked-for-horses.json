@@ -1,0 +1,22 @@
+{
+  "slice": "identification",
+  "title": "The frontend asks whether the consignment holds unweaned animals when it holds horses; DR1 asks that question only of cattle and pigs.",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-additional-details", "dr1-additional-animal-details"],
+  "controls": ["containsUnweanedAnimals"],
+  "finding": {
+    "frontend": "'Does the consignment contain any unweaned animals?' is rendered whenever any commodity line is a Cow or a Horse, and is mandatory when it is rendered. The rule is the two-name allowlist at src/server/app/sets/live-animals/services/commodities/stub.js:117, read by the obligation at src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:46-55. A person importing horses alone is asked the question and cannot continue without answering it.",
+    "prototype": "DR1 asks the question only where a selected commodity is one that carries unweaned options, and in DR1's catalogue that is cattle and pigs — not horses, and not sheep or goats (app/routes.js:1158-1183). A horses-only consignment reaches additional details and is asked what the animals are certified for and nothing else. The captured DR1 page shows the question because the consignment is cattle.",
+    "difference": "Correct the unweaned allowlist so it names the commodities DR1 asks the question of. Within the five commodities the frontend offers today that means dropping Horse and leaving Cow, which makes the question disappear from a horses-only consignment. Pig is on DR1's list but is not a commodity the frontend can express at all, so it can only be added once the commodity catalogue is filled out. The question's answer is already purged when it falls out of scope, so no separate cleanup is needed.",
+    "falsifiedBy": "Finding DR1 render the unweaned-animals question on a consignment whose only commodity is a horse, or a horse entry in the prototype's commodity data that carries unweanedOptions."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:117",
+    "prototype": "app/routes.js:1158-1183"
+  },
+  "relatedTo": [],
+  "carriedFrom": "inc-056"
+}

@@ -1,0 +1,20 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 counts the list as \"Show 1-4 of 4 results\" whatever the number; the frontend switches between \"No Results\", \"Showing 1 Result\" and \"Showing 1 to 8 of 20 Results\", with Results capitalised.",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [{ "kind": "label", "text": "Showing 1 Result" }],
+  "finding": {
+    "frontend": "The count above the list is built from four different sentences depending on how many rows came back: \"No Results\", \"Showing 1 Result\", \"Showing 1 of 4 Results\" and \"Showing 1 to 8 of 20 Results\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:37-47). Results and Result are capitalised mid-sentence, and the wording changes shape as the list grows, so the same place on the page reads differently from one visit to the next.",
+    "prototype": "DR1 uses one sentence in one shape — \"Show {start}-{end} of {total} results\", printed above the sort control (app/views/dashboard.html:236, built at app/routes.js:6700-6714). With nothing in the list it reads \"Show 0 of 0 results\". Results is lower case throughout.",
+    "difference": "Replace the four frontend sentences with DR1's single form: a range, a total, and the word results in lower case. Keep one empty-list wording. This also removes the special case where searching for a reference and finding nothing swaps in a different message, since the count sentence then covers it.",
+    "falsifiedBy": "Finding a capitalised \"Results\", or a second wording for the count, in DR1's root dashboard view."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:37-47",
+    "prototype": "app/views/dashboard.html:236"
+  }
+}

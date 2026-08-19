@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "Two ports appear twice in the frontend's port-of-entry list under different codes — Pembroke Port and Port of Sheerness — so a user picking one has to guess which of two identically named entries is the right one; DR1's list names each port once.",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": ["portOfEntry"],
+  "finding": {
+    "frontend": "The port-of-entry search offers seventy-eight ports, and two of them are listed twice. Pembroke Port appears under GB PED and again under GB PEM; Port of Sheerness appears under GBSHS and again under GB SHS, the second of the pair differing only by a space in the code (src/server/app/services/_capture/fixtures/ports-of-entry.json:182-189, 254-261). Typing \"Pembroke\" returns two results with identical text, and the user has no way to tell which one the service expects — the codes are the only thing that separates them and nothing on the page explains what a code means. Whichever they pick is stored, so the same physical port arrives at the backend under two different codes depending on which line the user happened to click.",
+    "prototype": "DR1's catalogue names Sheerness once, under GBSHS, and has no duplicate entry for any port (app/data/uk-airports.js:175). Its search returns one result per port.",
+    "difference": "Remove the duplicates from the port catalogue, keeping one code per port. The list is served by the reference-data service and captured into the frontend only as a fixture, so the fix lands upstream, not in the frontend — and it has to answer which of each pair is canonical before either can be deleted, because notifications may already have been submitted against both. GBSHS against GB SHS looks like the same code with a space lost or gained; GB PED against GB PEM are two distinct codes and may be two real facilities sharing a name, in which case the fix is to name them apart rather than delete one.",
+    "falsifiedBy": "Finding that GB PED and GB PEM, or GBSHS and GB SHS, are two distinct ports the trade-imports reference data intends to offer separately — in which case the defect is the shared name, not the duplication."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/_capture/fixtures/ports-of-entry.json:182-189",
+    "prototype": "app/data/uk-airports.js:175"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--port-of-entry-malformed-names",
+      "relation": "travels-with",
+      "why": "Both are defects in the same reference-data port catalogue and would be fixed in one pass"
+    }
+  ]
+}

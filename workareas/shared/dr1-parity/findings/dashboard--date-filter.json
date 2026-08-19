@@ -1,0 +1,29 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 lets a user narrow the notification list by date — Today, Tomorrow, Next seven days, or a start and end date chosen from a calendar; the frontend has no date filter.",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "dr1-dashboard-filters-open",
+    "dr1-dashboard-filters-date-picker-open"
+  ],
+  "controls": [
+    { "kind": "field", "name": "dateRange" },
+    { "kind": "field", "name": "startDate" },
+    { "kind": "field", "name": "endDate" }
+  ],
+  "finding": {
+    "frontend": "The dashboard has one filter, a keyword box searching the reference number (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:41-55). A user cannot ask which consignments are arriving today, or in the next week, or between two dates. Arrival date is shown on every card and can be sorted on, but it cannot be filtered on.",
+    "prototype": "The filter sidebar's third collapsible section, \"By date\", holds three radios — Today, Tomorrow, Next seven days — followed by a \"Select date range\" block with the hint \"For example, 27/3/2026\" and two date fields, Start date and End date. Each date field carries a calendar button that opens a month calendar with previous/next month controls and Select and Close buttons (app/views/dashboard.html:165-226). Like the rest of the sidebar it is markup only — the sidebar is in no form, and getDashboardViewModel reads dateRange, startDate and endDate but never filters the list by any of them (app/routes.js:7143-7146).",
+    "difference": "Add a date filter to the dashboard's filter panel: the three relative-range radios and a start/end date pair using the MoJ date picker DR1 uses. Which date it filters on has to be stated — DR1's card labels the date \"Arrival date at destination\", which is the only date on a DR1 card, so arrival at destination is the reading, but the prototype never demonstrates it. The list read accepts page, sort and reference number only (src/server/app/services/persistence/records/real/lifecycle/read.js:26-34), so the notifications endpoint has to accept a date range before the control can do anything. Build the relative radios on top of the same range parameter rather than as three more parameters.",
+    "falsifiedBy": "Finding any control on the frontend dashboard that limits the list to notifications arriving in a date range."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:41-55",
+    "prototype": "app/views/dashboard.html:165-226"
+  },
+  "carriedFrom": "inc-084"
+}

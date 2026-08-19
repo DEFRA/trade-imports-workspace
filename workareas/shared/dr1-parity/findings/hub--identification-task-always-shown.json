@@ -1,0 +1,28 @@
+{
+  "slice": "hub",
+  "title": "DR1 shows an identification task only when the chosen commodity has identifiers to give; the frontend always shows one, so a user is told to identify animals the service will not ask them about.",
+  "domain": "hub",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Animal identification details"],
+  "finding": {
+    "frontend": "'Animal identification details' is an unconditional task row (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45): it has no conditional flag, so the hub renders it whatever commodity has been chosen, and whether or not one has been chosen at all. The captured hub is of a notification with no commodity details filled in and the row is there, reading 'Not yet started'.",
+    "prototype": "DR1 adds its 'Identification details' task only when at least one chosen species has identifier fields defined for it (app/routes.js:5777-5781, and the test at :1489-1493). With no species chosen, or with a species that has no identifiers, the task is simply not in the list — which is why the captured DR1 hub shows two tasks in 'Description of the goods' and not three. A DR1 user is never shown an identification task they have nothing to put in.",
+    "difference": "Make the identification task conditional on the chosen commodity actually calling for identifiers, so it disappears from the hub when it does not apply — the hub already has the machinery for this, since the exit-details and transit-countries rows are declared conditional and drop out when their answers are out of scope. What the identification page itself should ask of a commodity with no typed identifiers is a separate finding on that page.",
+    "falsifiedBy": "A DR1 hub showing an 'Identification details' task on a notification whose chosen species has no identifier fields."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45",
+    "prototype": "app/routes.js:5777-5781"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-row-labels",
+      "relation": "travels-with",
+      "why": "the same task is also named differently on the two sides"
+    }
+  ],
+  "carriedFrom": "inc-053"
+}

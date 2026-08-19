@@ -1,0 +1,39 @@
+{
+  "slice": "hub",
+  "title": "The frontend hub's six task groups are named and ordered differently from DR1's six, and put documents, the contact address and the identification task in different places.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": [
+    "2. Commodity details",
+    "3. Movement",
+    "4. Addresses",
+    "5. Documents",
+    "6. Check and submit"
+  ],
+  "finding": {
+    "frontend": "The frontend groups the hub as 1. About the consignment, 2. Commodity details, 3. Movement, 4. Addresses, 5. Documents, 6. Check and submit (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:18-25). Only the first caption matches DR1. Documents comes fifth, after the addresses; the contact address sits inside the Addresses group alongside roles and addresses; and inside group 2 the animal identification task comes after the additional-details task (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49).",
+    "prototype": "DR1 groups the hub as 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties, 6. Contact address (app/routes.js:5751-5832). Documents comes fourth, before the parties; the contact address has a numbered group of its own at the end rather than sharing one with roles and addresses; and inside 'Description of the goods' the identification task comes between commodity details and additional details.",
+    "difference": "Rewrite the hub's group list to DR1's: rename groups 2 to 6, move Documents ahead of the address groups, split the contact address out of the Addresses group into a group of its own at the end, and put the identification task before the additional-details task within group 2. This is one edit to the group definitions and their captions. Two related changes are findings of their own: the sixth frontend group holds only the review row, which goes when the review row becomes a button, and the Exit details task moves out of group 1 when the exit questions fold into the reason for import.",
+    "falsifiedBy": "A DR1 hub rendering its documents group after its consignment-parties group, or rendering the contact address inside the parties group."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49",
+    "prototype": "app/routes.js:5751-5832"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--review-and-submit-button",
+      "relation": "travels-with",
+      "why": "the frontend's sixth group exists only to hold the review row"
+    },
+    {
+      "id": "hub--task-row-labels",
+      "relation": "travels-with",
+      "why": "same copy file, same task list, renaming rather than regrouping"
+    }
+  ],
+  "carriedFrom": "inc-058"
+}

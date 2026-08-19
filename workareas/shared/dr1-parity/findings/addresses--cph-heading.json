@@ -1,0 +1,33 @@
+{
+  "slice": "addresses",
+  "title": "DR1 heads the CPH page with an instruction, \"Add the county parish holding number (CPH)\"; the frontend heads it with the title-cased field name and nothing else.",
+  "domain": "addresses",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-cph-number",
+    "dr1-cph-number"
+  ],
+  "controls": [
+    { "kind": "label", "text": "County Parish Holding (CPH)" }
+  ],
+  "finding": {
+    "frontend": "The page heading is the input's own label promoted with isPageHeading, so \"County Parish Holding (CPH)\" is both the h1 and the field label (src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:2-4, src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:14-18). fe-cph-number shows it title-cased, naming a thing rather than asking for one, and the trader is left to infer that they are meant to type it in. The same term appears title-cased again as the hub row, \"County Parish Holding number (CPH)\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:10) — two spellings of one name in two places.",
+    "prototype": "DR1 heads the page \"Add the county parish holding number (CPH)\" — an instruction, in sentence case (app/views/cph-number.html:33) — and keeps the short label \"CPH number\" as the fieldset legend over the input itself (app/views/partials/cph-number-input.html:8-9). Its hub row for the same section reads \"County parish holding (CPH) number\" (app/data/consignment-address-sections.js:72).",
+    "difference": "Change the h1 to DR1's instruction and give the input its own label, \"CPH number\", so the heading stops doing double duty as the accessible label for the field. Bring the hub row's wording to sentence case at the same time, since it is the same name in the same section. If the three-part input lands first, the legend is the natural home for the short label and this becomes a straight heading change.",
+    "falsifiedBy": "The frontend h1 being needed as the field's accessible label with no other label available, which would make this dependent on splitting the input rather than a copy change on its own."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:1-6",
+    "prototype": "app/views/cph-number.html:33"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--cph-three-parts",
+      "relation": "depends-on",
+      "why": "the h1 is currently the input's accessible label, so where the label goes is settled by whether the input splits"
+    }
+  ],
+  "carriedFrom": "inc-030"
+}

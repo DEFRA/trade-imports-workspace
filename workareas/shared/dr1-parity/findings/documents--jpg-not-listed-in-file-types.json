@@ -1,0 +1,33 @@
+{
+  "slice": "documents",
+  "title": "DR1 lists JPG among the file formats a document can be in; the frontend's list omits JPG even though it accepts .jpg files.",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Your file must be:" },
+    { "kind": "field", "name": "file" }
+  ],
+  "finding": {
+    "frontend": "The second bullet reads \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\" — seven formats, no JPG. A .jpg file is in fact accepted: it is in the allowed set and in the picker's accept attribute (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:10-11,24-26). It disappears from the hint because the hint is built by collapsing the allowed set on MIME type and JPG shares image/jpeg with JPEG, so only the first of the pair survives (:28-36). The same collapsed list is reused verbatim in the rejection message, so a user whose file is rejected for some other reason reads a list that does not include the extension they are holding.",
+    "prototype": "The second bullet reads \"PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX\" — eight formats, JPEG and JPG named separately (app/views/upload-documents.html:167).",
+    "difference": "List JPG alongside JPEG in the file-type hint and in the file-type rejection message. The fix is in how the hint is derived: build the label list from the allowed extensions rather than from their MIME types, so that formats sharing a MIME type are both named. The accepted set itself does not change.",
+    "falsifiedBy": "Finding JPG named in the frontend's file-type hint or in its \"The selected file must be a …\" message."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:28-38",
+    "prototype": "app/views/upload-documents.html:163-170"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--zip-files-not-allowed",
+      "relation": "travels-with",
+      "why": "both are bullets of the same requirements list"
+    }
+  ]
+}

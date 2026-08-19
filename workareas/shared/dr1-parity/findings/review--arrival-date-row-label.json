@@ -1,0 +1,22 @@
+{
+  "slice": "review",
+  "title": "The review page names the arrival date differently on the two sides — 'Arrival date at port of entry' in the frontend, 'Arrival date at destination' in DR1 — but DR1's own input page uses the frontend's wording, so which label is right is undecided.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "disputed",
+  "confidence": "medium",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": ["Arrival date at port of entry", "Arrival date at destination"],
+  "finding": {
+    "frontend": "The arrival date is called 'Arrival date at port of entry' everywhere: on the input page at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:5, in its validation message at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:35, and on the review page at src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70. The frontend is internally consistent.",
+    "prototype": "DR1 disagrees with itself. Its review row is keyed 'Arrival date at destination' (app/routes.js:4677) while the input page that collects the value labels the same field 'Arrival date at port of entry'. The two are the same answer under two names, and the design gives no basis for choosing between them — a port of entry and a place of destination are different places, so this is not a wording preference.",
+    "difference": "Nothing should change in the frontend until the design says which place the arrival date refers to. If it is the port of entry, DR1's review row is the mistake and the frontend already matches. If it is the destination, the frontend has to change both the review row and the input page label, and the validation message with them. Ask the designer which of DR1's own two labels is intended; that single answer settles it and turns this into either a struck finding or a three-string copy change.",
+    "falsifiedBy": "Finding that DR1's input page and review row use the same label as each other, which would mean the prototype does not contradict itself and the frontend is simply wrong."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70",
+    "prototype": "app/routes.js:4677"
+  },
+  "relatedTo": [],
+  "carriedFrom": "inc-073"
+}

@@ -1,0 +1,34 @@
+{
+  "slice": "documents",
+  "title": "DR1 saves a document the user has filled in but not yet added when they press Save and continue, stopping them if it is incomplete; the frontend's Continue throws the part-filled row away without a word.",
+  "domain": "documents",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents-error",
+    "dr1-upload-documents-continue-error"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Continue" },
+    { "kind": "label", "text": "Save and add another" }
+  ],
+  "finding": {
+    "frontend": "The page has two ways forward and only one of them looks at the form. Save and add another validates the row and saves it. Continue does not read the form fields at all — the post handler falls past the add branch, checks only whether any already-saved document is still being scanned, and redirects (src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279). A user who types a reference, picks a date, chooses a file and then presses Continue rather than Save and add another loses all three and is not told. Nothing on the page distinguishes the two buttons' effect on the row in front of the user.",
+    "prototype": "Both exits look at the row. Save and add another validates every field and re-renders with errors if any is missing — dr1-upload-documents-error is that state, listing \"Enter a document reference\", \"Select a document type\", \"Enter a date of issue\" and \"Upload a document\". Save and continue applies the same validation, but only once the user has chosen a document type, treating that as the signal that a row is in progress; if the rest of the row is incomplete the user is held on the page with the same messages (dr1-upload-documents-continue-error, showing the three remaining errors with the type already chosen), and if it is complete the row is saved on the way out (app/routes.js:10173-10192). Pressing Save and continue on a completely untouched row moves on, because uploads are optional.",
+    "difference": "Make Continue read the in-progress row rather than ignore it: if any of reference, type, date or file has been filled in, validate the whole row and hold the user on the page with the same messages Save and add another produces; if it validates, save it before moving on. DR1 uses the document type as the has-the-user-started signal, so this depends on the document-type field existing; until it does, the equivalent signal is any of the three fields being non-empty. The existing scan-settling block on Continue is a frontend extra and stays.",
+    "falsifiedBy": "Filling in a reference, a date and a file on the frontend, pressing Continue, and finding the document in the saved list or being held on the page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279",
+    "prototype": "app/routes.js:10173-10192"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--document-type-not-asked",
+      "relation": "depends-on",
+      "why": "DR1 keys the Save and continue validation on a chosen document type, which the frontend has no field for"
+    }
+  ]
+}

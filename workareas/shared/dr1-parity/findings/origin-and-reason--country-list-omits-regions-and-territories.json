@@ -1,0 +1,37 @@
+{
+  "slice": "origin-and-reason",
+  "title": "A user importing from the Canary Islands, Jersey or French Guiana cannot say so: the frontend's country list holds only sovereign states, where DR1 offers fourteen regions and territories alongside them.",
+  "domain": "origin",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-origin",
+    "dr1-origin-of-the-import",
+    "fe-destination-country",
+    "dr1-reason-for-import-transhipment-revealed"
+  ],
+  "controls": ["countryOfOrigin", "destinationCountry"],
+  "finding": {
+    "frontend": "Both the country of origin and the destination country are drawn from one list of 31 entries, all of them sovereign states, and the same list serves both pages (src/server/app/services/countries/index.js:24, and src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js:27 reads it for the destination question). It holds four countries DR1 does not offer — Iceland, Liechtenstein, Norway and Switzerland — and no regions or territories at all. Three entries are also named differently: Czechia, Ireland and 'Netherlands (the)'.",
+    "prototype": "DR1 offers 41 entries on both questions: the 27 member states plus fourteen regions and dependencies, each labelled with its parent in brackets — Azores (Portugal), Canary Islands (Spain), Ceuta (Spain), French Guiana (France), Guadeloupe (France), Guernsey (United Kingdom), Isle of Man (United Kingdom), Jersey (United Kingdom), Madeira (Portugal), Martinique (France), Mayotte (France), Melilla (Spain), Reunion (France) and Saint Martin (France). It names the three contested entries Czech Republic, Republic of Ireland and Netherlands. It offers no EFTA states. The list is release-agnostic data in app/data/countries.js:1-79 and it also feeds the region-of-origin prefix table, so an entry missing from it has no prefix either.",
+    "difference": "Replace the country list with DR1's 41 entries and its labels, on both the origin and destination questions. It is one list change in the countries service and both pages pick it up. Settle whether dropping Iceland, Liechtenstein, Norway and Switzerland is intended before removing them — DR1 not offering them may be an omission rather than a rule, and the frontend's list comes from a reference data service rather than a file, so the change may be a query rather than an edit.",
+    "falsifiedBy": "Finding that DR1's country select is populated from a design-release-specific list, so that the fourteen regions are visible only to a DR2 session and a DR1 user sees the same 31 states the frontend offers."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/countries/index.js:24",
+    "prototype": "app/data/countries.js:1-79"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--country-of-origin-is-a-dropdown-not-a-search",
+      "relation": "travels-with",
+      "why": "the control and the list it searches are one piece of work"
+    },
+    {
+      "id": "origin-and-reason--region-of-origin-code-has-no-country-prefix",
+      "relation": "travels-with",
+      "why": "DR1 derives the region code prefix from this same list"
+    }
+  ]
+}

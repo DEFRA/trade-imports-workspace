@@ -1,0 +1,27 @@
+{
+  "slice": "commodities",
+  "title": "The frontend puts an example hint under Number of animals — 'For example, 1, 25 or 5000.' — that DR1 does not have.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [{ "kind": "label", "text": "Number of animals" }],
+  "finding": {
+    "frontend": "Each Number of animals input carries the hint 'For example, 1, 25 or 5000.' (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:27-30, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:11-20). On a consignment with several species the hint repeats under every line.",
+    "prototype": "DR1's Number of animals input has a label and nothing else — no hint element and no aria-describedby on the input, where the packages input on the same page does carry a hint (app/views/consignment-details.html:105-114). The two sides agree on the packages hint word for word, so the difference is confined to this one field.",
+    "difference": "Remove the animals hint from the commodities copy file and drop the hint argument from the input in the species-quantities template, in English and Welsh. Keep the packages hint, which matches DR1 exactly.",
+    "falsifiedBy": "Finding a hint rendered under Number of animals on DR1's Commodity details page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:27-30",
+    "prototype": "app/views/consignment-details.html:105-114"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--packages-labelled-optional",
+      "relation": "travels-with",
+      "why": "Both are one-line edits to the same copy block for the two fields on a commodity line."
+    }
+  ]
+}

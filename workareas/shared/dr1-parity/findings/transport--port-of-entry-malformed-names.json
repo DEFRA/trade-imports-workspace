@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "Three port names are malformed in the frontend's port-of-entry list — a misspelt Teesport, a shouted TILBURY and a Portsmouth Port with a doubled space — where DR1 spells every port in ordinary sentence case.",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": ["portOfEntry"],
+  "finding": {
+    "frontend": "Three of the seventy-eight ports a user can pick are written wrong. GB TEE is named \"Teestort\", which is not a place — Teesport is (src/server/app/services/_capture/fixtures/ports-of-entry.json:302-305). GB TIL is named \"TILBURY\" in capitals, sitting on the same list as \"Tilbury Port\" and \"Tilbury 2 Ro-Ro Terminal\" in ordinary case (:294-297). GB PME is named \"Portsmouth  Port\" with two spaces between the words (:266-269). The misspelling is the one that costs a user something: the search matches on the text as written, so typing \"Teesport\" returns nothing and the port looks absent from the service.",
+    "prototype": "DR1's catalogue spells the same places Teesport, Tilbury and Portsmouth, each in ordinary case with single spaces (app/data/uk-airports.js:186-189).",
+    "difference": "Correct the three names in the reference-data port catalogue: Teestort to Teesport, TILBURY to title case, and the doubled space in Portsmouth Port to one. The codes do not change, so nothing already submitted is affected. The list reaches the frontend from the reference-data service and is only captured into the repo as a fixture, so the correction lands upstream and the fixture is recaptured after it.",
+    "falsifiedBy": "Finding that GB TEE is officially registered as \"Teestort\" rather than Teesport in the UN/LOCODE data the reference-data service draws on."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/_capture/fixtures/ports-of-entry.json:294-305",
+    "prototype": "app/data/uk-airports.js:186-189"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--port-of-entry-duplicate-options",
+      "relation": "travels-with",
+      "why": "Both are defects in the same reference-data port catalogue and would be fixed in one pass"
+    }
+  ]
+}

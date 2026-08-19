@@ -1,0 +1,46 @@
+{
+  "slice": "identification",
+  "title": "DR1 lets a consignment of one species be submitted without a single animal identified; the frontend will not let the notification be reviewed until every animal on every line has an identification record.",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-animal-identification",
+    "dr1-review-notification-incomplete",
+    "dr1-review-notification"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Animal identification details" },
+    { "kind": "label", "text": "Identification details" }
+  ],
+  "finding": {
+    "frontend": "Identifying the animals is compulsory on every consignment, and it is compulsory animal by animal. The unit record on each commodity line carries `recordCountEquals` against that line's number of animals, so the line is not finished until it holds exactly as many identification records as animals counted, and each of those records must carry at least one identifier (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-103). Until that is true the 'Animal identification details' row on the hub is not complete, and because the review section is gated on every applicable row being complete (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85), 'Check and submit' reads 'Cannot start yet' — which is what the captured hub shows. A trader bringing in two hundred salmon has to enter two hundred records before the service will show them their own notification.",
+    "prototype": "DR1 asks for identifiers on every species that has an identifier set, but requires them for submission only when the consignment holds more than one species, and even then only one complete record per species: `requiresAnimalIdentifiersForSubmit` is multiple-species AND some-species-has-identifiers, and `hasMinimumAnimalIdentifiersForSubmit` returns true outright when that is false (app/routes.js:1511-1524). So a consignment of a single species can be submitted with nothing identified. dr1-review-notification-incomplete is that case: one species, two cattle, no identifiers entered, and the Identification details card is not marked incomplete and is not among the five entries in the error summary — the five are additional details, arrival details, transport details, roles and addresses and the contact address. `reviewSpeciesCardErrorState` returns no error at all when identifiers are not required for submit (app/routes.js:4456-4459). DR1 does not forget the gap: it carries it forward to the confirmation page as one of two soft follow-ups, 'complete the animal identifier information in the notification' (app/routes.js:5674-5692).",
+    "difference": "Stop making a complete set of identification records a precondition of reviewing and submitting. Follow DR1's rule: identifiers are required for submission only where more than one commodity line has a typed identifier set, and then only one complete record per line, not one per animal. The per-animal count rule stays as the definition of the task being finished — it is what the hub status and the identification page's counter are built on — but it stops gating the review page, and the outstanding identifiers become a follow-up on the confirmation instead. Order this after review--incomplete-notification-cannot-be-reviewed, which moves the completeness check off the page gate and onto the POST; this finding decides what that check includes. It also decides which cards can carry the per-card error state that finding builds, so the two should be picked up together.",
+    "falsifiedBy": "Finding DR1 refuse Continue, or mark the Identification details card incomplete, on the review page of a single-species notification with no identifiers entered.",
+    "correction": "Raised from dr1-review-notification-incomplete, which was captured after the first pass of findings was written, and traced through both sides before being written up. It is not carried over from the DR2.1 run and has not yet been through a second agent. What was seen: the captured DR1 review page is a single-species consignment with no identifiers, and its Identification details card renders with a Change link, no red edge and no 'Complete …' message, while five other cards carry all three. What was read: DR1's rule through requiresAnimalIdentifiersForSubmit, hasMinimumAnimalIdentifiersForSubmit, hasAtLeastOneAnimalIdentifierForSpecies and reviewSpeciesCardErrorState, and the frontend's through the unit record's requires block and the review section's gate. One distinction worth keeping in view, because it is easy to read this as contradicting identification--record-needs-every-identifier: it does not. DR1 has two different thresholds. To call the identification task Complete on its hub it wants every animal identified and every field of every record filled (hasAnimalIdentifiersComplete, app/routes.js:1534-1562, used at :5781). To let the notification be submitted it wants one complete record per species, and only when there is more than one species. The other finding is about the first threshold and this one is about the second. Both are true of DR1 at once."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-103",
+    "prototype": "app/routes.js:1511-1524"
+  },
+  "relatedTo": [
+    {
+      "id": "review--incomplete-notification-cannot-be-reviewed",
+      "relation": "depends-on",
+      "why": "that finding moves the completeness check off the review page's gate; this one says what the check should contain"
+    },
+    {
+      "id": "identification--record-needs-every-identifier",
+      "relation": "adjacent-to",
+      "why": "the same DR1 code, but its other threshold — that finding is what makes the task complete, this one is what lets the notification be submitted"
+    },
+    {
+      "id": "review--confirmation-outstanding-items",
+      "relation": "travels-with",
+      "why": "the identifiers a user is allowed to leave are one of the two bullets DR1 puts on the confirmation page"
+    }
+  ]
+}

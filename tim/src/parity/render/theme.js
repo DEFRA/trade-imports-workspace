@@ -116,6 +116,14 @@ body {
 
 a { color: var(--accent); }
 
+/* Every sentence of finding prose is its own block, so a reader checking a
+   claim can see where it starts. The gap has to be real white space and still
+   read as one paragraph, which puts it at a bit under a third of a line, with
+   the paragraph gap raised to 1rem so the two stay far enough apart to tell
+   apart. Spacing only — the palettes do not touch it. */
+.sentence { display: block; }
+.sentence + .sentence { margin-top: .45rem; }
+
 code, .mono { font-family: var(--mono); font-size: .86em; }
 
 code {
@@ -448,7 +456,7 @@ code.ref { color: var(--ink-muted); }
   padding-bottom: .3rem;
 }
 
-.column p { margin: 0 0 .7rem; }
+.column p { margin: 0 0 1rem; }
 .column p:last-child { margin-bottom: 0; }
 
 .block { display: flex; flex-direction: column; gap: .4rem; }
@@ -461,7 +469,7 @@ code.ref { color: var(--ink-muted); }
   color: var(--ink-faint);
 }
 
-.block p { margin: 0 0 .7rem; }
+.block p { margin: 0 0 1rem; }
 .block p:last-child { margin-bottom: 0; }
 
 .block--falsifier {
@@ -672,7 +680,7 @@ details.audit > summary {
 }
 
 .audit__body { padding: 0 1rem 1rem; }
-.audit__body p { margin: 0 0 .7rem; }
+.audit__body p { margin: 0 0 1rem; }
 .audit__note { font-size: .76rem; color: var(--ink-faint); font-style: italic; }
 
 /* --- drift ---------------------------------------------------------- */

@@ -78,25 +78,55 @@ export const renderParagraph = ({ text, citations, idPrefix }) => {
   return html
 }
 
-// One sentence per line, using the newline the renderer already turns into a
-// <br>. The whitespace between the sentences becomes the break, so the
-// paragraph reaches renderParagraph whole: a quotation or a backticked
-// expression that runs across a sentence boundary still matches as one span.
-const oneSentencePerLine = (paragraph) =>
+// Where one sentence ends and the next begins, marked in the text rather than
+// in the markup so the paragraph still reaches renderParagraph whole: a
+// quotation or a backticked expression that runs across a sentence boundary
+// still matches as one span. A unit separator cannot occur in the prose, which
+// keeps it distinct from the author's own newlines — those are not sentence
+// boundaries and stay plain <br> line breaks.
+const SENTENCE_MARK = '\u001f'
+
+const markSentences = (paragraph) =>
   sentences(paragraph)
     .map((sentence) => sentence.text.trim())
     .filter(Boolean)
-    .join('\n')
+    .join(SENTENCE_MARK)
+
+const TAG = /<(\/?)([a-z]+)([^>]*)>/g
+
+// Cut the rendered paragraph into one block per sentence. A boundary can fall
+// inside a quotation that spans two sentences, so any element still open at
+// the cut is closed and reopened across it — otherwise the sentence blocks and
+// the quote span interleave, and the quote loses its markup on one side.
+const asSentenceBlocks = (html) => {
+  const open = []
+  return html
+    .split(SENTENCE_MARK)
+    .map((segment) => {
+      const reopened = open.map((element) => element.tag).join('')
+      for (const [, closing, name, attributes] of segment.matchAll(TAG)) {
+        if (closing) open.pop()
+        else open.push({ name, tag: `<${name}${attributes}>` })
+      }
+      const closers = [...open]
+        .reverse()
+        .map((element) => `</${element.name}>`)
+        .join('')
+      return `<span class="sentence">${reopened}${segment}${closers}</span>`
+    })
+    .join('')
+}
 
 /**
  * Render a block of prose as the paragraphs its author wrote, one sentence to
- * a line.
+ * a block.
  *
  * The page this replaces wrapped the whole finding in one <p>, so 2 to 6
  * paragraphs collapsed into a wall of text. The median finding is 1,274
  * characters; the longest is 3,345. Paragraphs alone still leave five or six
- * sentences of close reading in a solid block, so each sentence takes its own
- * line — a break rather than a gap, because they are still one paragraph.
+ * sentences of close reading in a solid block, so each sentence becomes its own
+ * block with a little air above it — enough to separate them, less than the gap
+ * that says a new paragraph has started.
  *
  * @param {object} args
  * @param {string} args.text
@@ -109,11 +139,9 @@ export const renderProse = ({ text, citations, idPrefix }) =>
     .split(/\n{2,}/)
     .map((part) => part.trim())
     .filter(Boolean)
-    .map(oneSentencePerLine)
-    .map(
-      (part) =>
-        `<p>${renderParagraph({ text: part, citations, idPrefix }).replace(/\n/g, '<br>')}</p>`
-    )
+    .map(markSentences)
+    .map((part) => renderParagraph({ text: part, citations, idPrefix }))
+    .map((html) => `<p>${asSentenceBlocks(html).replace(/\n/g, '<br>')}</p>`)
     .join('\n')
 
 /**

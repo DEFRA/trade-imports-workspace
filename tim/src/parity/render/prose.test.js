@@ -70,56 +70,71 @@ describe('renderProse', () => {
     expect(html.match(/<p>/g)).toHaveLength(2)
   })
 
-  test('keeps a single newline as a line break inside one paragraph', () => {
+  test('keeps a single newline as a line break, not a sentence block', () => {
     const html = renderProse({
-      text: 'Line one.\nLine two.',
+      text: 'Line one\nline two.',
       citations,
       idPrefix: 'inc-001'
     })
-    expect(html.match(/<p>/g)).toHaveLength(1)
-    expect(html).toContain('<br>')
+    expect(html).toBe(
+      '<p><span class="sentence">Line one<br>line two.</span></p>'
+    )
   })
 
   test('renders nothing for empty prose rather than an empty p', () => {
     expect(renderProse({ text: '   ', citations, idPrefix: 'x' })).toBe('')
   })
 
-  test('breaks the line between two sentences of one paragraph', () => {
+  test('gives each sentence of one paragraph its own block', () => {
     const html = renderProse({
       text: 'The box is one field. The hint says nothing.',
       citations,
       idPrefix: 'inc-001'
     })
-    expect(html).toBe('<p>The box is one field.<br>The hint says nothing.</p>')
+    expect(html).toBe(
+      '<p><span class="sentence">The box is one field.</span><span class="sentence">The hint says nothing.</span></p>'
+    )
   })
 
-  test('does not break inside a sentence that names a dotted file path', () => {
+  test('does not split a sentence that names a dotted file path', () => {
     const html = renderProse({
       text: 'It lives in app/views/design-release-2.1/upload-documents.html and page-model.js reads it.',
       citations,
       idPrefix: 'inc-001'
     })
-    expect(html).not.toContain('<br>')
+    expect(html.match(/class="sentence"/g)).toHaveLength(1)
   })
 
-  test('keeps a citation marker at a sentence end on the link before the break', () => {
+  test('keeps a citation marker at a sentence end inside that sentence block', () => {
     const html = renderProse({
       text: 'The layout renders it (app/routes.js:8778) [[c1]]. The hub does not.',
       citations,
       idPrefix: 'inc-001'
     })
     expect(html).toContain(
-      '<a class="cite" href="#inc-001-src-c1" title="layout.njk:41-53"><sup>1</sup></a>.<br>The hub does not.'
+      '<a class="cite" href="#inc-001-src-c1" title="layout.njk:41-53"><sup>1</sup></a>.</span><span class="sentence">The hub does not.'
     )
   })
 
-  test('leaves a quoted string that ends mid-sentence on one line', () => {
+  test('leaves a quoted string that ends mid-sentence in one block', () => {
     const html = renderProse({
       text: 'The hint reads "This information can be found on the ITAHC." under the field.',
       citations,
       idPrefix: 'inc-001'
     })
-    expect(html).not.toContain('<br>')
+    expect(html.match(/class="sentence"/g)).toHaveLength(1)
+  })
+
+  test('reopens a quotation that runs across a sentence boundary', () => {
+    const html = renderProse({
+      text: 'The banner reads "This is a new service. Help us improve it." today.',
+      citations,
+      idPrefix: 'inc-001'
+    })
+    expect(html).toBe(
+      '<p><span class="sentence">The banner reads &quot;<span class="quoted">This is a new service.</span></span>' +
+        '<span class="sentence"><span class="quoted">Help us improve it.</span>&quot; today.</span></p>'
+    )
   })
 })
 

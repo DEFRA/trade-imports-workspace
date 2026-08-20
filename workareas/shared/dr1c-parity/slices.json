@@ -1,0 +1,232 @@
+{
+  "_comment": [
+    "How the authoring pass is fanned out. Every one of the 127 captured screens",
+    "on the two sides is owned by exactly one slice, and exactly one slice owns",
+    "the chrome.",
+    "",
+    "Slices are named after parts of the service rather than after screens,",
+    "because a finding usually spans two screens and an agent that owns a PART",
+    "can see both. Where a pair crosses a boundary the pair wins: DR1's",
+    "permanent-address page sits in `identification` rather than in `addresses`,",
+    "because its frontend counterpart is not a page at all — it is nine fields",
+    "inside the animal-identification card — and splitting that pair would leave",
+    "neither agent able to see both sides of it.",
+    "",
+    "`service-wide` owns the chrome AND the dashboard. The dashboard is the most",
+    "chrome-heavy screen in the corpus and the only one outside a notification,",
+    "so the slice that has to look hardest at the header, the service navigation",
+    "and the footer is the one that should own it.",
+    "",
+    "Seven screens carry more than one counterpart in pairs.cjs, so `tim parity",
+    "slices --strict` will print split-pair lines. Those are legitimate: DR1 asks",
+    "as radio reveals on one page what the frontend asks across several pages,",
+    "and the reveal states and their frontend pages are deliberately kept in one",
+    "slice (`import-reason`) so one agent sees the whole substitution."
+  ],
+  "slices": [
+    {
+      "id": "service-wide",
+      "chrome": true,
+      "note": "Owns the chrome and is the ONLY slice permitted to raise a chrome finding: the GOV.UK header, the service navigation, the phase banner, the caption above the heading, the back link and breadcrumbs, the footer, the page-title pattern, the signed-in bar, the journey status strip, the error-summary pattern and the save/continue button pattern. Every other slice is told in as many words not to raise one. Also owns the dashboard on both sides.",
+      "screens": [
+        "fe-dashboard",
+        "fe-dashboard-deleted",
+        "fe-dashboard-empty",
+        "fe-dashboard-new-draft",
+        "fe-dashboard-populated",
+        "fe-dashboard-search-no-results",
+        "fe-dashboard-sorted",
+        "dr1-dashboard",
+        "dr1-dashboard-filters-open"
+      ]
+    },
+    {
+      "id": "hub",
+      "chrome": false,
+      "note": "The task list for one notification. Sections, row labels, statuses and summary cards. The two sides group the journey differently, which is this slice's central comparison.",
+      "screens": [
+        "fe-hub",
+        "fe-hub-part-answered",
+        "dr1-notification-hub",
+        "dr1-notification-hub-partly-complete"
+      ]
+    },
+    {
+      "id": "origin",
+      "chrome": false,
+      "note": "Where the consignment comes from, and the region-of-origin code, which is a conditional reveal on both sides.",
+      "screens": [
+        "fe-origin",
+        "fe-origin-error",
+        "fe-origin-region-code-revealed",
+        "dr1-origin-of-the-import",
+        "dr1-origin-of-the-import-region-revealed"
+      ]
+    },
+    {
+      "id": "commodities",
+      "chrome": false,
+      "note": "Choosing what is being imported and detailing it. The two sides differ structurally here: DR1 uses a search widget posting a hidden input, the frontend renders the whole reference list as checkbox fieldsets. Neither the search results state nor the checkbox list has a counterpart of the same shape.",
+      "screens": [
+        "fe-commodity-search",
+        "fe-commodity-search-error",
+        "fe-commodity-search-selected",
+        "fe-consignment-details",
+        "fe-consignment-details-count-drop-error",
+        "fe-consignment-details-error",
+        "dr1-what-are-you-importing",
+        "dr1-what-are-you-importing-results",
+        "dr1-consignment-details"
+      ]
+    },
+    {
+      "id": "identification",
+      "chrome": false,
+      "note": "Per-animal identifiers and the follow-on animal questions. Owns DR1's permanent-address page even though the name suggests addresses: the frontend has no such page, and renders the same nine fields inside the animal-identification card, so only an agent holding both can see the substitution.",
+      "screens": [
+        "fe-animal-identification",
+        "fe-animal-identification-at-maximum",
+        "fe-animal-identification-error",
+        "fe-animal-identification-saved",
+        "fe-additional-details",
+        "dr1-animal-identification-details",
+        "dr1-animal-identification-details-saved",
+        "dr1-additional-animal-details",
+        "dr1-permanent-address-animals",
+        "dr1-permanent-address-animals-new-address-revealed"
+      ]
+    },
+    {
+      "id": "import-reason",
+      "chrome": false,
+      "note": "The reason for import and everything that hangs off it. This is the sharpest structural difference in the corpus: DR1 asks internal-market purpose, transit and transhipment destination country, exit date, port of exit and exit border control post as radio reveals on ONE page; the frontend gives four of them their own pages behind a conditional task row. One DR1 screen and four of its reveal states answer seven frontend screens, so they are deliberately in one slice.",
+      "screens": [
+        "fe-import-reason",
+        "fe-import-reason-transit-selected",
+        "fe-import-purpose",
+        "fe-destination-country",
+        "fe-destination-country-error",
+        "fe-port-of-exit",
+        "fe-port-of-exit-error",
+        "fe-exit-date",
+        "dr1-reason-for-import",
+        "dr1-reason-for-import-internal-market-revealed",
+        "dr1-reason-for-import-temporary-admission-revealed",
+        "dr1-reason-for-import-transhipment-revealed",
+        "dr1-reason-for-import-transit-revealed"
+      ]
+    },
+    {
+      "id": "transport",
+      "chrome": false,
+      "note": "Arrival, transit countries and the transporter. Note two one-sided facts already established: DR1 lets a user enter a commercial transporter that is not in the list, and the frontend's commercial branch is select-only; and the frontend's commercial page is headed 'Search for an approved commercial transporter' while rendering no search box.",
+      "screens": [
+        "fe-arrival-details",
+        "fe-arrival-details-date-picker",
+        "fe-transit-countries",
+        "fe-transit-countries-error",
+        "fe-transit-countries-selected",
+        "fe-transporter-type",
+        "fe-transporter-commercial",
+        "fe-transporter-private",
+        "fe-transporter-private-error",
+        "dr1-arrival-details",
+        "dr1-arrival-details-datepicker-open",
+        "dr1-transit-countries",
+        "dr1-transit-countries-selected",
+        "dr1-transporter",
+        "dr1-transporter-results",
+        "dr1-transporter-add",
+        "dr1-transporter-add-private",
+        "dr1-transporter-add-commercial"
+      ]
+    },
+    {
+      "id": "documents",
+      "chrome": false,
+      "note": "Supporting documents: the upload flow, its scanning and error states, and what each side does with a document's type.",
+      "screens": [
+        "fe-documents",
+        "fe-documents-error",
+        "fe-documents-populated",
+        "fe-documents-scanning",
+        "dr1-upload-documents",
+        "dr1-upload-documents-empty",
+        "dr1-upload-documents-errors",
+        "dr1-upload-documents-populated",
+        "dr1-upload-documents-scanning"
+      ]
+    },
+    {
+      "id": "addresses",
+      "chrome": false,
+      "note": "The consignment parties, the CPH number and the contact address. DR1 serves its five party pickers from ONE view with a different heading and hint each; the frontend has five separate screens. This run captured DR1's other four headings as states, so the pairing is one-to-one at capture level and five-to-one at page level. Does NOT own the address book — that is its own slice.",
+      "screens": [
+        "fe-addresses-hub",
+        "fe-addresses-hub-complete",
+        "fe-addresses-hub-empty",
+        "fe-address-picker-consignee",
+        "fe-address-picker-consignor-or-exporter",
+        "fe-address-picker-consignor-or-exporter-error",
+        "fe-address-picker-importer",
+        "fe-address-picker-place-of-destination",
+        "fe-address-picker-place-of-origin",
+        "fe-address-picker-place-of-origin-no-matches",
+        "fe-address-picker-place-of-origin-page-2",
+        "fe-address-picker-place-of-origin-selected",
+        "fe-cph-number",
+        "fe-cph-number-error",
+        "fe-contact",
+        "dr1-roles-and-addresses",
+        "dr1-roles-and-addresses-answered",
+        "dr1-roles-and-addresses-permanent-address",
+        "dr1-roles-and-addresses-same-as-consignee",
+        "dr1-roles-and-addresses-same-as-place-of-origin",
+        "dr1-consignment-address-select",
+        "dr1-consignment-address-select-consignee",
+        "dr1-consignment-address-select-consignor-or-exporter",
+        "dr1-consignment-address-select-importer",
+        "dr1-consignment-address-select-place-of-destination",
+        "dr1-consignment-address-select-search-filtered",
+        "dr1-cph-number",
+        "dr1-cph-number-details-open",
+        "dr1-contact-address-for-consignment"
+      ]
+    },
+    {
+      "id": "review",
+      "chrome": false,
+      "note": "Check answers, the declaration, confirmation, and the two frontend-only journeys beside them — delete and cancel-amendment. The completeness rules differ substantively: DR1 accepts a submission and asks for documents and identifiers afterwards, where the frontend gates submission on them.",
+      "screens": [
+        "fe-check-answers",
+        "fe-check-answers-incomplete",
+        "fe-check-answers-submitted",
+        "fe-declaration",
+        "fe-declaration-error",
+        "fe-confirmation",
+        "fe-delete-notification",
+        "fe-cancel-amend",
+        "dr1-review-notification",
+        "dr1-review-notification-incomplete",
+        "dr1-declaration",
+        "dr1-declaration-error",
+        "dr1-notification-submitted"
+      ]
+    },
+    {
+      "id": "address-book",
+      "chrome": false,
+      "note": "Eight DR1 screens with no frontend counterpart of any kind. Both previous runs excluded these wholesale on reasoning that does not survive reading the code, so both reported complete coverage against a short list; this run photographed them. The scope question is OPEN and is a person's to settle: the frontend's picker offers no way to add an address, and src/server/app/services/address-book/index.js:17-19 says the service reads and never writes because that belongs to the INS frontend. Raise this as findings with the evidence, state the open question in `difference`, and do NOT decide it.",
+      "screens": [
+        "dr1-address-book",
+        "dr1-address-book-add",
+        "dr1-address-book-add-from-party-picker",
+        "dr1-address-book-edit",
+        "dr1-address-book-lookup",
+        "dr1-address-book-lookup-manual",
+        "dr1-address-book-lookup-results",
+        "dr1-address-book-view"
+      ]
+    }
+  ]
+}

@@ -97,11 +97,22 @@ screen and are owned by the "service-wide" slice. A finding about any of them
 from you is a duplicate, and duplicates cost more than gaps. Raise what is
 specific to your screens.`}
 
-YOUR SCREENS — these and no others. The other slices own the rest:
+WHAT YOUR SLICE IS, written by whoever proved the slicing:
+${slice.note}
+
+YOUR SCREENS — these ${slice.screens.length} and no others. The other slices own the rest:
 ${slice.screens.map((s) => `  ${s}`).join('\n')}
 
-THE PAIRING — which screen answers which, from pairs.cjs:
-${slice.pairing ?? '  (see ' + WORKAREA + '/pairs.cjs for your slice\'s rows)'}
+THE PAIRING — which screen answers which. Read YOUR slice's rows out of:
+  ${WORKAREA}/pairs.cjs
+
+It holds 74 pairs plus two one-sided lists, and **every pair carries a note
+saying what settled it**. Read the notes, not just the pairs. Six pairs are
+marked as ones the pairer was NOT confident in — if one of yours is among them,
+that uncertainty is yours to resolve or to state, not to ignore.
+
+**A screen in the onlyFrontend or onlyPrototype list is the largest kind of gap
+this comparison holds.** If your slice owns one, it is very probably a finding.
 
 WHAT A FINDING IS
 The contract governs. Read it whole; do not work from a summary of it. In

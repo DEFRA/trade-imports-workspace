@@ -3,6 +3,12 @@
 One finding, one file, under `findings/`. A deterministic tool assembles them
 into `backlog.json`; nothing writes that file by hand.
 
+This is **`dr1`'s** contract. Every comparison writes its own, in its own
+workarea, because the band table, the domain list, the evidence path roots and
+the exclusions below are all properties of this comparison. The parity skill's
+AUTHOR mode names which sections a new one has to change and points here as the
+worked example — copy it and edit those, rather than writing one from scratch.
+
 This exists so twelve agents working on twelve slices produce one backlog rather
 than twelve dialects of one.
 

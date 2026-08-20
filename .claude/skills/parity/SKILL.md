@@ -1,6 +1,6 @@
 ---
 name: parity
-description: 'Build, check and adjudicate a findings report for a comparison corpus. Two corpora today: `dr21` (run EUDPA-328, 97 findings against Design release 2.1, a design still in flux) and `dr1` (run EUDPA-328-DR1, the same live-animals frontend against the signed-off Design release 1). Four modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE re-shoots a side''s evidence by running that side''s own Playwright specs, then checks the result against a static enumeration of its screens (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
+description: 'Build, check and adjudicate a findings report for a comparison corpus. Two corpora today: `dr21` (run EUDPA-328, 97 findings against Design release 2.1, a design still in flux) and `dr1` (run EUDPA-328-DR1, the same live-animals frontend against the signed-off Design release 1). Five modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE re-shoots a side''s evidence by running that side''s own Playwright specs, then checks the result against a static enumeration of its screens; AUTHOR derives the findings themselves from the captured evidence — triage the previous corpus, slice the service so every screen is covered exactly once, fan out one authoring agent per slice, verify each slice with a different agent than wrote it, re-capture the states the findings were guessing at, then ingest (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application", "author the parity findings", "write the findings for EUDPA-X", "run the authoring pass", "compare the two sides"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
 ---
 
 Render a backlog of findings as a decision surface, and help rule on it.
@@ -81,8 +81,12 @@ is how a typo shows up.
 
 ## Modes
 
-Emit `MODE: REPORT|WALK|MIGRATE|CAPTURE` on the first line of your reply, then
-follow that section.
+Emit `MODE: REPORT|WALK|MIGRATE|CAPTURE|AUTHOR` on the first line of your reply,
+then follow that section.
+
+They are written in order of how often they are reached, not in pipeline order.
+A comparison runs CAPTURE, then AUTHOR, then REPORT, then MIGRATE, and WALK only
+where the corpus is a negotiation.
 
 ### REPORT — regenerate the page
 
@@ -341,7 +345,7 @@ tim parity ingest EUDPA-328-DR1 [--replace] [--dry-run]
 ```
 
 `ingest` builds `backlog.json` from the one-file-per-finding JSON under
-`<workarea>/findings/`. Read
+`<workarea>/findings/`. Those files are what AUTHOR below produces. Read
 [`FINDING-CONTRACT.md`](../../../workareas/shared/dr1-parity/FINDING-CONTRACT.md)
 for that file's shape, and for its two sharp edges:
 
@@ -415,6 +419,257 @@ derivation — but the `insertion-anchors` command that called it is deleted and
 nothing imports the module. So on a corpus captured today, one-sided findings
 show a whole page with nothing outlined. Say so when it matters to a finding;
 do not describe an insertion crop the reader will not be shown.
+
+### AUTHOR — derive the findings from the evidence
+
+Triggers: "author the parity findings", "write the findings for EUDPA-X", "run
+the authoring pass".
+
+AUTHOR sits between CAPTURE and REPORT. It assumes both sides are photographed,
+`coverage` reports nothing missing and nothing unexplained, and the corpus's
+pairing module exists — `pairs.cjs` in the workarea, saying which screen answers
+which, with the `onlyFrontend` and `onlyPrototype` lists beside it. Without the
+pairing every agent works out for itself what its screen compares against, and
+that judgement is never written down.
+
+**Say what it does not do, first.** AUTHOR produces findings, not rulings. Every
+finding it writes is written by one agent and checked by a different one, and
+when it finishes **no person has read a single one of them.** All 133 findings
+the `dr1` run produced were `status: "todo"` at the end of it. The output is a
+work list somebody still has to open, and six of those 133 were `disputed` — the
+mode's own statement that it could not settle them.
+
+**The contract is step zero.** Before an agent is spawned the corpus needs a
+finding contract: one file in the workarea, beside the findings it governs,
+saying what a finding is and what shape its file takes. `dr1`'s is
+[`FINDING-CONTRACT.md`](../../../workareas/shared/dr1-parity/FINDING-CONTRACT.md)
+and it is the worked example — read it whole before writing another.
+
+It stays in the workarea rather than moving into `references/` because six of
+its sections are per-corpus data and would be wrong the moment they were
+generalised: the band table (bands are per-corpus data — see above), the
+`domain` list, the two `evidence` path roots, the requirements side's view-path
+rule, the "what is not a finding" exclusions, and the volatile values a
+comparison must never compare — on `dr1`, an arrival date whose valid window is
+derived from `new Date()` and whose pixels therefore change daily. Everything
+else in it is corpus-independent and should be carried across a sentence at a
+time. **Do not keep a second copy here.** A contract in two places drifts, and
+the drifted one is the one the agents read.
+
+The contract exists so that ten agents on ten slices produce one backlog rather
+than ten dialects of one. It has to be finished before the first agent starts.
+
+#### 1. Triage the previous corpus first, if there is one
+
+One agent, reading the previous run's `backlog.json` and writing
+`carryover.json` beside the new workarea: per finding, a verdict of `carries`,
+`retired`, `changed` or `recheck`, and the mechanism that settles it — the line
+in the new requirements source that still says what the old finding said it
+said, or the absence that retires it.
+
+**Carrying a finding is cheaper than re-deriving it, and striking one is cheaper
+still.** On `dr1` this triaged the previous 97 findings to 50 carry, 37 retired,
+8 changed and 2 recheck, and 63 of the eventual 133 carried substance across.
+The 37 retirements were mostly whole features the new requirements side does not
+have — 18 germinal products, 8 templates, 6 amend/copy/delete — so more than a
+third of the previous corpus was struck before an authoring agent was spawned.
+
+A verdict is a claim about the requirements side, never about the frontend.
+`retired` means there is nothing to compare against, so the frontend matching or
+not matching says nothing at all. `carries` is permission to copy the substance
+across, not the copy itself: the authoring agent still writes the DR1 finding,
+and records the old id in `carriedFrom`.
+
+This is one agent, one pass, one file. Its brief is the four paragraphs above
+rather than a persona in `references/`, because its whole rubric is four
+verdicts and a citation.
+
+#### 2. Slice by screen, and cover every screen exactly once
+
+`dr1` used ten slices: service-wide, dashboard, hub, origin-and-reason,
+commodities, identification, addresses, transport, documents, review. They are
+named after parts of the service rather than after screens, because a finding
+usually spans two screens and an agent that owns a *part* can see both.
+
+**Prove the slicing before you spawn anything.** Every screen id in both
+sides' `manifest.json` must appear in exactly one slice's screen list — none in
+two, none in none. The pairing says which screens travel together, so a slice
+owning a frontend screen owns the requirements screens it pairs with, and the
+`onlyFrontend` and `onlyPrototype` lists have to be assigned deliberately rather
+than falling off the end. Print both set differences and read them. On `dr1`
+nothing checked this before the agents were spawned, and one finding was found
+homeless by two slices and written by a third — caught by the verification pass,
+which is not what the verification pass is for.
+
+**One slice owns the chrome.** The phase banner, the service navigation, the
+caption above the heading, the back link, the footer, the page title and the
+button pattern appear on every screen, so ten agents left to themselves write
+the same finding ten times. Name one slice — `service-wide` on `dr1` — give it
+the chrome, and tell every other slice **in as many words** not to raise a
+chrome finding. A gap is one missing row in a work list. A duplicate is two
+increments, two ids, two sets of citations, and somebody three months later
+working out whether they are the same change. **Duplicates cost more than
+gaps**, so brief for gaps.
+
+#### 3. One authoring agent per slice, all in parallel
+
+Follow [FINDING_AUTHOR](references/FINDING_AUTHOR.md). Each agent gets six
+things and no fewer:
+
+1. **The contract**, whole. Not a summary of it.
+2. **The pairing** — its slice's rows out of `pairs.cjs`, with the notes saying
+   what settled each non-obvious pair.
+3. **The carryover** — the verdicts for the previous findings that land in its
+   slice, so it starts from what is already known rather than re-deriving it.
+4. **Its screens**, and the statement that the other slices own the rest.
+5. **The evidence paths** — for every one of its screens, on both sides: the
+   full-page screenshot, the page model, and the **rendered DOM**. All three come
+   from one page visit, so they describe the same render.
+6. **What is already known** — the paid-for knowledge for this corpus. An agent
+   that has to rediscover that a search panel swallows the mousedown spends its
+   run on that instead of on findings.
+
+**Tell it to read the pictures.** A finding written from source is a reading,
+not an observation, and a dozen `dr1` findings said so honestly in their own
+`confidence` field. The rendered DOM is the cheapest evidence in the corpus and
+the hardest to argue with; the screenshot is the only thing that shows what a
+user meets.
+
+**Tell it to check the brief.** Three separate agents on this run disproved
+premises they were handed, two of them from the handover: that roughly ten
+frontend screens answered to nothing in DR1 (false — DR1 asks those questions as
+conditional reveals with no view file of their own), that DR1's two save-exits
+use different messages (one validator serves both), and that DR1 says "Consignor
+or exporter" (it says "Consignor"). **That is a feature, and the brief must say
+so**, or an agent reads a contradiction as its own mistake and writes the finding
+the brief expected.
+
+#### 4. A different agent verifies each slice than wrote it
+
+Follow [FINDING_VERIFIER](references/FINDING_VERIFIER.md). Its only question is
+**"is this finding correct"**. Never "do we want it" — against a signed-off
+design that question is closed, and a verifier that starts answering it is
+running a WALK nobody asked for.
+
+**This is the step that earns its keep.** On `dr1` it took 118 findings to 132,
+falsified about a dozen claims outright, and found errors the authors could not
+see in their own work. The classes it catches:
+
+- **A claim about markup dressed as a claim about behaviour.** "The frontend lets
+  you walk past this question" was true of the page and false of the journey, in
+  three separate findings: the obligation model marks the field mandatory and the
+  review gate enforces it. The user cannot submit — they are just never told why.
+- **A claim stated more strongly than the evidence supports.** "A user cannot
+  complete their notification" was a blocked return path, not a blocked journey.
+- **A finding whose own falsifier was never run.** "DR1's address disclosure
+  shows nothing the row does not" — it shows a phone number and an email. The
+  falsifier fired on the finding the moment somebody executed it.
+- **Two findings that are one.** One duplicate struck across 118.
+- **A missed finding.** The net was +14, so the pass adds as well as removes.
+
+It also catches findings that name a control which could never crop — a field
+called "Back", a whole page title used as a label — both of which would have
+fallen back to the whole-page shot the naming rule exists to prevent.
+
+#### 5. Loop back for the states nobody photographed
+
+Authors will name states their claims depend on that no capture holds — a table
+with rows in it, a card at its maximum, an error state, a hub row under a
+particular answer. **Collect those across all slices, then do ONE capture pass.**
+Captures cannot run in parallel: one server, one session, `workers: 1`. Fan out
+the authoring; serialise the run.
+
+Then walk the pictures back into the findings, and **raise a confidence rating
+only where the picture answers the question, never because a picture arrived.**
+On `dr1` nine states were shot, ten findings moved from medium to high, four
+claims were refined, and nothing was falsified. Where only one side is now
+photographed, the finding's `correction` says so and names the state still worth
+shooting.
+
+Expect the pass to find work of its own. `dr1`'s 133rd finding came from this
+step: a new picture showed a second completion threshold no finding owned. The
+capture agent also added a state nobody asked for, having noticed that a piece
+of copy renders only when the card is full — so the finding about it could not
+have resolved against the state that had been requested.
+
+#### 6. Ingest, then anchors, then recapture for the crops
+
+```
+tim parity ingest EUDPA-328-DR1
+tim parity anchors EUDPA-328-DR1 --side <side> --write
+tim parity capture EUDPA-328-DR1 --side <side>
+```
+
+In that order, and the ordering is not arbitrary: `anchors` derives the crops
+from the `controls` each finding names, so the findings must be in the backlog
+before the anchors exist, and the anchors must exist before the capture that
+shoots them. That is why capture appears twice in a full run. See CAPTURE above
+for the whole sequence.
+
+`relatedTo` entries are written as file slugs, because at authoring time no
+`inc-NNN` exists — `ingest` assigns the ids and resolves the slugs in the same
+pass, including forward references to findings written later in the same batch.
+An unresolvable slug is a named error, not a silent drop.
+
+#### The sharp edges, and what each one costs
+
+- **Verify before the first ingest.** `ingest` composes `detail` from the four
+  prose slots the first time it sees a finding and freezes it from that moment;
+  a re-ingest that would change an existing `detail` refuses and names the
+  increment. `detail` is the only oracle proving a later language pass lost
+  nothing, so it must be frozen over verified prose. Afterwards the slots move
+  only through `set-slot`.
+- **Never rename a finding file.** The increment id is bound to it. A rename
+  reads as "old finding struck, new finding added" and orphans every ruling and
+  citation attached to the old id.
+- **Do not delete a control to make a coverage number go green.** `anchors`
+  prints four numbers per side — anchors, insertion points, controls that
+  resolve nowhere, findings that named no control — and they are only worth
+  having while they stay honest. `dr1` keeps three uncroppable controls and two
+  findings that name none, each with its reason recorded. A control that
+  resolves nowhere is named and left uncropped, because inventing a crop is
+  worse than admitting there isn't one.
+- **Make the agents open the crops.** Four were confidently wrong on this run
+  and only looking found them: a white square from a collapsed filter panel, two
+  whole-page shots from a growth loop that stopped on a page container, and a
+  sliver reading "Co" that matched a 1px visually-hidden submit trap.
+- **Captures cannot run in parallel.** Said twice on purpose.
+- **End by naming what you could not settle.** A question only a designer can
+  answer, a requirements source that contradicts itself, a citation pointing at
+  an identifier that is nowhere the finding points. Those belong in the handover
+  as a short list, not buried in 133 findings.
+
+#### What this method does not check
+
+Every item below held on `dr1` and none of them was made to hold. They are the
+places the next run will fail first.
+
+- **Nothing bounds a slice's yield from below.** Ten slices over 133 findings is
+  about thirteen each, which fitted. A slice that ran out of context and
+  truncated would look exactly like a small slice, and nothing would say which.
+  Compare each slice's count against its screen count before accepting the
+  batch, and ask about any slice well under the others.
+- **Nothing detects a cross-slice duplicate.** The verifier is paired per slice,
+  so it never sees two slices at once. One duplicate was struck on `dr1` and
+  that number is not evidence the briefing worked — it is evidence that whatever
+  leaked was small enough for one agent to notice.
+- **Nothing distinguishes a verifier that found nothing from one that looked at
+  nothing.** A correction is recorded when it fires; the non-firing case leaves
+  no trace. Require each verifier to state per finding what it opened and what
+  it ran, so a silent pass is visible as a silent pass.
+- **Nothing pins the applications for the duration of the run.** `dr1`'s
+  captures and citations agree because nobody committed to either application
+  while the run was open. A commit mid-run moves the pins away from the
+  pictures, and `check-evidence` only reports it afterwards.
+- **Nothing stops a capture photographing the wrong application.** `tim` uses
+  whatever is already listening on a side's `app.baseURL` rather than starting a
+  second copy, so a corpus sharing a port with the workspace stack photographs
+  the container and says nothing about having done so. `dr1` moved the frontend
+  to 3005 for that reason. A new corpus picks a new port and the trap is one
+  config line away.
+- **Nothing enforces the ingest gate.** The rule above — verify before the first
+  ingest — is held by reading order alone. One command run early freezes the
+  corpus over unverified prose, permanently.
 
 ## The invariants, and why each one is there
 

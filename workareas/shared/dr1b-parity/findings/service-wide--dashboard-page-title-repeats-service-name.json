@@ -1,6 +1,6 @@
 {
   "slice": "service-wide",
-  "title": "The frontend's notification list is titled \"Import notification service | Import notification service\" in the browser; DR1 titles the same page \"Dashboard\".",
+  "title": "The frontend's notification list never names itself — its browser title reads \"Import notification service | Import notification service\" and it shows no caption; DR1 names the same page \"Dashboard\" in both places.",
   "domain": "service-wide",
   "type": "copy-change",
   "band": "frontend-work",
@@ -9,13 +9,21 @@
   "controls": [],
   "finding": {
     "frontend": "Both dashboard captures carry the browser title \"Import notification service | Import notification service\". The service name is printed twice because the page supplies the service name as its own title (`src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2`) and the shared layout then appends the service name to whatever the page supplied (`src/server/app/shared/layout.njk:17`). Every other frontend screen names itself properly in the same slot — \"Declaration\", \"Overview\", \"Upload documents\" — so the front door is the one page whose tab, history entry and screen-reader page announcement say nothing about what the page is.",
-    "prototype": "DR1 sets the same page's title to \"Dashboard\" (`app/views/dashboard.html:12`), which the layout renders as \"Dashboard - Import notification service - GOV.UK\". DR1's heading on that page is \"Import notification service\", the same words the frontend uses, so the difference is confined to the title.",
-    "difference": "Give the dashboard a page title of its own, distinct from the heading. DR1's word for it is \"Dashboard\". One string, in the dashboard's copy file; the heading stays as it is on both sides. The Welsh copy file needs the equivalent string.",
-    "falsifiedBy": "Finding a captured frontend dashboard whose browser title names the page rather than repeating the service name."
+    "prototype": "DR1 sets the same page's title to \"Dashboard\" (`app/views/dashboard.html:12`), which the layout renders as \"Dashboard - Import notification service - GOV.UK\". It also prints \"Dashboard\" on the page itself, as a caption immediately above the heading, on all four of its dashboard captures. The heading under that caption is \"Import notification service\", the same words the frontend uses, so both sides say the same thing in the heading and DR1 alone says which page this is.",
+    "difference": "Name the dashboard, in the two places DR1 names it: give it a page title of its own, distinct from the heading, and print the same word as a caption above the heading. DR1's word for both is \"Dashboard\". One new string in the dashboard's copy file serves both, plus its Welsh equivalent; the template gains one caption element; the heading stays as it is on both sides. The caption is the same element the wider caption finding asks for on the journey pages, so if that lands first this page can follow its markup.",
+    "falsifiedBy": "Finding a captured frontend dashboard whose browser title names the page rather than repeating the service name, or one that prints a caption above its heading.",
+    "verification": "Read both dashboard DOMs and dr1-dashboard's, and read dashboard.html:12 and layout.njk:17. Both frontend captures carry `<title>Import notification service | Import notification service</title>` and dr1-dashboard carries \"Dashboard - Import notification service - GOV.UK\", and the cause is as described — the page supplies the service name as its own title and layout.njk:17 appends the service name again. I dumped the `<title>` of all 40 frontend captures to check the \"every other screen names itself\" claim: 38 of the other 38 name their page, and the two dashboards are the only repeats. dashboard.html:12 is `{% set pageName = \"Dashboard\" %}` as cited. CORRECT on the title, with the omission recorded below.",
+    "correction": "The title claim is right; the sentence \"the difference is confined to the title\" is not, and it understated the work. dr1-dashboard.html renders `<p class=\"app-dashboard-intro__caption\">Dashboard</p>` at line 234, directly above `<h1 class=\"app-dashboard-intro__heading\">Import notification service</h1>` at line 235, and all four DR1 dashboard captures carry it. The frontend's fe-dashboard-populated.html has nothing above its `<h1 class=\"govuk-heading-xl\">Import notification service</h1>` — no caption of any class. So a user of DR1 is told this page is the Dashboard twice and a user of the frontend is told neither time. `prototype` and `difference` widened to cover the caption, and `falsifiedBy` widened with it. This was found by re-counting the caption finding, which does not claim the dashboard either: its enumeration covers the journey pages only, so without this edit the four dashboard captions were owned by no finding in the slice."
   },
   "evidence": {
     "frontend": "src/server/app/shared/layout.njk:17",
     "prototype": "app/views/dashboard.html:12"
   },
-  "relatedTo": []
+  "relatedTo": [
+    {
+      "id": "service-wide--section-caption-missing",
+      "relation": "travels-with",
+      "why": "The same caption element, above the same slot. That finding covers DR1's journey pages and stops short of the dashboard; this one covers the dashboard's own caption, so one pass over the caption markup can do both."
+    }
+  ]
 }

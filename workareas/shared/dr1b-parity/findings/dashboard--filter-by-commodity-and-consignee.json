@@ -10,11 +10,20 @@
   "finding": {
     "frontend": "The frontend's filter panel holds one text input labelled \"Keyword or reference\" and a Search button, and nothing else (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56, labels at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:9-14). Its value reaches the list read as referenceNumber and is the only filter the read accepts (src/server/app/engine/journey.js:92-119). A user with a long list who knows the commodity or the consignee but not the reference has to read the whole list.",
     "prototype": "DR1's filter panel opens with a \"Search by\" group holding three inputs: \"Keyword or notification number\", \"Commodity code or name\" and \"Consignee/Importer\" (app/views/dashboard.html:87-131). Each is a free-text box, and the panel's own cards show why the second is useful — DR1 lists the commodity on every row as a code such as 010410 or 05111000.",
-    "difference": "Add two text inputs to the filter form, named commodity and consignee, and carry both through the list read alongside the existing reference search. The list endpoint has to accept them, so the backend query lands first. While the fieldset is being rebuilt, the existing box's label becomes \"Keyword or notification number\" — DR1's wording — rather than \"Keyword or reference\".",
-    "falsifiedBy": "Finding any control on the frontend dashboard that narrows the list by commodity or by consignee."
+    "difference": "Add two text inputs to the filter form, named commodity and consignee, and carry both through the list read alongside the existing reference search. The list endpoint has to accept them, so the backend query lands first. Relabelling the existing keyword box to DR1's wording is separate frontend-only work and is carried as dashboard--keyword-filter-label so that it is not stranded behind this finding's backend dependency.",
+    "falsifiedBy": "Finding any control on the frontend dashboard that narrows the list by commodity or by consignee.",
+    "verification": "Read both rendered DOMs (dr1-dashboard.html:305-345 renders three text inputs named keyword, commodity and consignee, labelled \"Keyword or notification number\", \"Commodity code or name\" and \"Consignee/Importer\"; fe-dashboard-populated.html:123-135 renders one input named referenceNumber and a Search button) and the fe-dashboard-populated and dr1-dashboard-filters-open screenshots; opened dashboard/template.njk:38-56, dashboard/copy/copy.en.js:9-14 and app/views/dashboard.html:87-131. Ran the falsifier by grepping both frontend dashboard captures for a commodity or consignee control — the only matches are the read-only Commodity and Consignee rows inside each card, not filters, so it does not fire. Checked the backend band rather than accepting it: the real list read builds its query string as page, sort and referenceNumber only (services/persistence/records/real/lifecycle/read.js:30-34), so neither field can reach the backend today. Band needs-backend upheld. One change carved out — see correction.",
+    "correction": "The claim stands and the band is right. The scope was overstated by one change and that change has been moved out rather than left in place. The difference slot ended \"While the fieldset is being rebuilt, the existing box's label becomes 'Keyword or notification number' — DR1's wording — rather than 'Keyword or reference'.\" That is a copy change to a field that already exists and already works, with no backend dependency at all, and burying it inside a needs-backend finding would have held an unblocked one-line fix behind a contract change. It is now dashboard--keyword-filter-label, banded frontend-work, and the sentence here points at it. The two-input claim itself is untouched: DR1 groups all three boxes in one \"Search by\" section, so adding commodity and consignee together is one change."
   },
   "evidence": {
     "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
     "prototype": "app/views/dashboard.html:87-131"
-  }
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--keyword-filter-label",
+      "relation": "travels-with",
+      "why": "carved out of this finding during verification — the same fieldset, but the relabel is unblocked frontend work and must not wait on this one's backend query"
+    }
+  ]
 }

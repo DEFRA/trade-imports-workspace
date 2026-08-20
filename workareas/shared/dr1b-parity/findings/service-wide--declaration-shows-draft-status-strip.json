@@ -1,0 +1,28 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend still shows the blue Draft tag and the notification reference above the heading on the declaration page; DR1 clears that strip away for the declaration.",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-declaration", "dr1-declaration"],
+  "controls": [{ "kind": "label", "text": "Draft" }],
+  "finding": {
+    "frontend": "The declaration page opens with the same status strip every other journey page carries — a blue \"Draft\" tag beside the notification reference — sitting between the back link and the \"Declaration\" heading. It arrives because the declaration's render passes the journey into the shared page base (`src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:38-41`), which builds the strip for any page that has one (`src/server/app/shared/kit.js:119`), and the shared layout prints it (`src/server/app/shared/layout.njk:64-69`).",
+    "prototype": "DR1 carries the same strip — the same blue Draft tag and the same reference — on 34 of its 42 screens, but not on the declaration. The declaration view simply does not include the partial the other journey views include, so the page runs from the back link straight to the heading. The submitted page drops it too, and there the reference moves into the confirmation panel instead.",
+    "difference": "Stop rendering the status strip on the declaration page, so the page starts at its heading as DR1's does. The strip is not built in the shared layout unconditionally — it is built from what the page passes in — so this is a change to what the declaration's render supplies, not a change to the layout, and no other page is touched. The strip stays everywhere else, which is where DR1 keeps it too.",
+    "falsifiedBy": "Finding a Draft tag or a notification reference above the heading on DR1's declaration screen.",
+    "verification": "Written by the verifier, who raised this. Read both declaration DOMs, opened both full-page shots, and read the declaration controller, kit.js:103-125, layout.njk:64-69 and declaration.html:13-27. fe-declaration.html renders `app-journey-strip` at line 108 holding a `govuk-tag--blue` \"Draft\" and the reference, directly above the `<h1>`; dr1-declaration.html contains no `app-notification-status` at all and its visible text runs \"Back\" then \"Declaration\". Ran the falsifier — no tag, no reference above the heading on the DR1 screen — it does not fire. Checked that this is a decision of the DR1 view rather than an artefact of the capture: `partials/notification-status.html` is included by origin-of-the-import.html at line 29 and by the other journey views, and declaration.html does not include it, so DR1 omits it on purpose. Scoped to the declaration alone rather than written as a rule about the strip: fe-origin also lacks the strip where dr1-origin-of-the-import has it, but the frontend builds the strip generically in kit.js, so that absence is more likely a state of the capture than a design difference, and I could not settle it without running the application."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:64-69",
+    "prototype": "app/views/declaration.html:13-27"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--section-caption-missing",
+      "relation": "travels-with",
+      "why": "Both are about what the frontend puts in the slot between the back link and the heading — this one clears the strip off the declaration, the other fills that slot with DR1's section caption on the journey pages."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "slice": "hub",
+  "title": "The frontend prints a hint sentence under every hub task; DR1 hints only the Roles and addresses row, and names a different set of parties there.",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Roles and addresses", "Contact address"],
+  "finding": {
+    "frontend": "Every one of the eleven rows on the hub carries a grey sentence under its title — \"Country of origin, region of origin code, your internal reference\" under the origin row, \"Who transports the animals to their destination\" under Transporter, and so on for the other nine, including the dead Check and submit row. The sentences are held beside the titles in src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79 and rendered unconditionally as the task list's hint slot. The effect is that the hub is roughly twice as tall as DR1's and the row titles no longer scan as a list. The one row DR1 also hints reads differently: the frontend says \"The consignor, consignee, importer and the places of origin and destination\", naming five parties including a place of origin.",
+    "prototype": "DR1's hub prints the title alone on nine of its ten rows. The single exception is Roles and addresses, whose hint reads \"Consignor or Exporter, Consignee, Importer and Place of Destination\" — four parties, no place of origin — and it is the only row in the view model carrying a hint key at all (app/routes.js:5820-5829). The rendered task list gives that row its own modifier class and every other row nothing.",
+    "difference": "Drop the hint sentence from the ten rows DR1 leaves unhinted, and change the Roles and addresses hint to DR1's four-party wording. The work is one copy file, the same one the row renames land in. Whether the frontend's extra hints are wanted is not the question here — DR1 is the signed-off definition of the page and it does not have them — but the Roles and addresses hint is the substantive half, because it tells the user which parties the task covers and the two lists do not agree.",
+    "falsifiedBy": "A frontend hub in which only the Roles and addresses row carries a hint, and that hint names Consignor or Exporter, Consignee, Importer and Place of Destination.",
+    "verification": "Written by the verifier as a missing finding (rubric 5), after the labels finding declared the hints out of scope. Opened the fe-hub and dr1-notification-hub DOMs and both screenshots and read hub/copy/copy.en.js:26-79, hub/controller.js:104-122 and routes.js:5820-5829. Counted from the markup rather than the page model: the fe-hub DOM contains eleven `govuk-task-list__hint` divs, one per row, while the DR1 DOM contains exactly one `app-notification-hub-tasklist__hint`, on Roles and addresses, and the view applies `--with-hint` to that item alone. Both screenshots show the same thing. The two hint texts differ in substance and not only in wording — the frontend's names a place of origin that DR1's does not list. Kept separate from hub--task-row-labels-differ because it is a different edit to the same file (deleting ten strings and rewording one, against renaming six titles) and because the party list is a content question a reviewer will want to answer on its own. CORRECT as written."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79",
+    "prototype": "app/routes.js:5820-5829"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-row-labels-differ",
+      "relation": "travels-with",
+      "why": "the titles and the hints sit side by side in the same copy entries"
+    }
+  ]
+}

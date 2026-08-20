@@ -1,0 +1,28 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend repeats the date of declaration under the confirmation panel after a notification is submitted; DR1's submitted page does not show a date at all.",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-confirmation", "dr1-notification-submitted"],
+  "controls": [{ "kind": "label", "text": "Date of declaration:" }],
+  "finding": {
+    "frontend": "The first thing under the green \"Import notification submitted\" panel is a line reading \"Date of declaration:\" followed by today's date, before the page reaches \"Transporting the consignment\" (`src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:11`). The same line already appeared on the declaration page the user has just come from, immediately above the button they pressed, so the confirmation repeats a fact from the previous screen at the point where the user is looking for what to do next.",
+    "prototype": "DR1's submitted page shows the panel and then goes straight to what is still outstanding and how to transport the consignment. It prints the declaration date on the declaration page — `app/views/declaration.html:86-88` — and nowhere after it. The reference number is the only thing DR1 carries forward onto the submitted page, and it carries it inside the panel.",
+    "difference": "Remove the date line from the confirmation template. One line in the template and one now-unused key in the confirmation copy, in English and Welsh. The declaration page keeps its own date, which is where both sides agree it belongs. Nothing else on the page moves and nothing depends on this.",
+    "falsifiedBy": "Finding a declaration date printed anywhere on DR1's submitted page.",
+    "verification": "Written by the verifier, who raised this. Stripped both captured DOMs to visible text and read them line by line against each other, opened both full-page shots, and read confirmation/template.njk:1-13 and notification-submitted.html:15-60. The frontend's visible text runs \"GBN-XX-00-REFERENCE\" then \"Date of declaration: 20 August 2026\" then \"Transporting the consignment\"; DR1's runs \"GBN-XX-00-REFERENCE\" then \"Before the consignment is imported\". Ran the falsifier: `grep -n 'declarationDate\\|Date of declaration'` against notification-submitted.html returns nothing, and the string is absent from the captured DOM, so it does not fire. Raised because the two existing findings on this pair cover what DR1 has and the frontend lacks, and this is the one thing on the page running the other way; the neighbouring copy difference on the same screen — the frontend's \"view or amend … and resubmit it\" against DR1's \"view or change\" — was deliberately not raised, because amend does not exist in DR1 and the contract makes that an onlyFrontend observation rather than a defect."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:11",
+    "prototype": "app/views/notification-submitted.html:20-40"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--submitted-outstanding-tasks-section-missing",
+      "relation": "travels-with",
+      "why": "Both change what sits between the panel and \"Transporting the consignment\" on the same page — one adds DR1's outstanding-tasks section, the other removes the line the frontend puts there instead."
+    }
+  ]
+}

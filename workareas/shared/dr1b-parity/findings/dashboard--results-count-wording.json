@@ -1,0 +1,21 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 tells the user which slice of the list they are looking at — \"Show 1-4 of 4 results\" — where the frontend says only \"Showing 1 Result\".",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [{ "kind": "label", "text": "Showing 1 Result" }],
+  "finding": {
+    "frontend": "Above the list the frontend prints one of four phrasings depending on how many notifications there are: \"No Results\", \"Showing 1 Result\", \"Showing 1 of 4 Results\" or \"Showing 1 to 10 of 23 Results\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:40-46, rendered at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:61). The single-result case drops the total, so a user who has filtered down to one is not told how many they started with, and Result and Results are capitalised mid-sentence.",
+    "prototype": "DR1 prints the same information in one shape whatever the count — \"Show 1-4 of 4 results\", or \"Show 0 of 0 results\" when there are none (app/views/dashboard.html:236). The range and the total are always both present, and results is lower case.",
+    "difference": "Replace the four phrasings with DR1's two: a range-and-total line, and a zero line. The count is already worked out and already rendered in that position, so this is the wording and the shape of the sentence, not the arithmetic.",
+    "falsifiedBy": "Finding the frontend dashboard printing a results line that carries both the range and the total when there is exactly one notification.",
+    "verification": "Written during the verification pass, not by the slice's author, from the same sweep of the results toolbar that produced dashboard--sort-options. Read both rendered DOMs (fe-dashboard-populated.html:141 renders \"Showing 1 Result\"; dr1-dashboard.html:665 renders \"Show 1-4 of 4 results\") and both screenshots, where the two lines sit in the same position above the list. Opened dashboard/copy/copy.en.js:40-46, dashboard/template.njk:61 and app/views/dashboard.html:236, and read the prototype's builder at app/routes.js:6700-6714 to confirm DR1 has only the two shapes rather than a per-count set the capture happens not to show. The named control is the literal string the frontend renders on the screen listed, so it crops. Band frontend-work: it is a copy leaf and a template line."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:40-46",
+    "prototype": "app/views/dashboard.html:236"
+  }
+}

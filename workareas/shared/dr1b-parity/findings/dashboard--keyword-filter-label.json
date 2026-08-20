@@ -1,0 +1,35 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 labels the dashboard's keyword filter \"Keyword or notification number\"; the frontend labels it \"Keyword or reference\".",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "fe-dashboard-empty",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Keyword or reference" },
+    { "kind": "label", "text": "Keyword or notification number" }
+  ],
+  "finding": {
+    "frontend": "The one box in the frontend's filter panel is labelled \"Keyword or reference\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:11, rendered at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:45-53). What it searches is the notification reference, so \"reference\" is doing the work of naming the thing the user types, but it is not the name the service uses for it anywhere else: the row above calls the same value the notification's reference and DR1 calls it a notification number.",
+    "prototype": "DR1 labels the first box in its \"Search by\" group \"Keyword or notification number\" (app/views/dashboard.html:97).",
+    "difference": "Change the label text to \"Keyword or notification number\". The field, its name and the search it performs are already right; only the wording changes, and nothing blocks it. Carved out of dashboard--filter-by-commodity-and-consignee during verification, where it had been folded into a needs-backend finding that would have held it up.",
+    "falsifiedBy": "Finding the frontend's keyword filter labelled \"Keyword or notification number\".",
+    "verification": "Written during the verification pass, not by the slice's author — this finding was carved out of dashboard--filter-by-commodity-and-consignee, whose difference slot carried the relabel as a rider on a backend-blocked change. Read both rendered DOMs (fe-dashboard-populated.html:126-129 and fe-dashboard-empty.html:127 render the label \"Keyword or reference\" against an input named referenceNumber; dr1-dashboard.html:306-311 renders \"Keyword or notification number\" against an input named keyword) and the fe-dashboard-populated and dr1-dashboard-filters-open screenshots; opened dashboard/copy/copy.en.js:11, dashboard/template.njk:45-53 and app/views/dashboard.html:97. Both named controls resolve to real label text on the screens listed, so both crop. Band frontend-work: the copy leaf is the only thing that changes."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:11",
+    "prototype": "app/views/dashboard.html:97"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--filter-by-commodity-and-consignee",
+      "relation": "travels-with",
+      "why": "the same fieldset — DR1 groups this box with the commodity and consignee ones — but this half needs no backend change"
+    }
+  ]
+}

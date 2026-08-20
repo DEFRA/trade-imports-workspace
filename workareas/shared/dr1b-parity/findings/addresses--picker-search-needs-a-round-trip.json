@@ -1,0 +1,38 @@
+{
+  "slice": "addresses",
+  "title": "DR1 narrows the address list as the user types; the frontend leaves the list alone until Search is pressed and the page reloads.",
+  "domain": "addresses",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignor-or-exporter",
+    "fe-address-picker-consignee",
+    "fe-address-picker-importer",
+    "fe-address-picker-place-of-destination",
+    "dr1-consignment-address-select"
+  ],
+  "controls": [
+    { "kind": "field", "name": "q" },
+    { "kind": "field", "name": "search" }
+  ],
+  "finding": {
+    "frontend": "The Search box does nothing until the trader presses the Search button beside it, which submits the whole picker form and reloads the page with a new set of rows. Typing narrows nothing, and the caption above the table still reads \"Showing 5 of 13 addresses\" until the round trip completes. The picker is built this way on purpose — the partial that renders it says \"no client JS anywhere\" and its search button is a form submit told apart from Save and continue only by its action value (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:8-12, :86-91). A trader who mistypes a farm name gets a page load, an empty table and the \"no matches\" line rather than a list that shrinks and grows under their hands.",
+    "prototype": "DR1 filters the table on every keystroke. Every matching address for the role is already on the page, each row carrying the text it is matched against, and the count above the table is a live figure that is rewritten as rows are hidden — \"Showing 9 out of 9 results\" becomes \"Showing 2 out of 9 results\" while the trader is still typing (app/views/consignment-address-select.html:70-96). The magnifying-glass button beside the box re-runs the same filter and returns focus to the box; there is no submit and no reload, and nothing but the browser's own scroll position moves.",
+    "difference": "Make the picker's search narrow the list as the trader types, and update the result count with it, without a page load. The frontend already computes the same match — its search runs over name and every address line — so the change is a progressive enhancement over the markup that is there rather than a new matching rule, with the existing Search button kept as the no-JavaScript path. This does not ask for DR1's pagination behaviour. DR1 renders every matching address at once and has no pager, but its address book holds nine records against the frontend's thirteen, so the capture cannot show what DR1 would do with a book big enough to need one; the frontend's pager should stay, and live filtering should narrow the current page rather than replace paging.",
+    "falsifiedBy": "Typing into the Search box on any frontend party page and watching \"Showing 5 of 13 addresses\" change, or rows disappear, before the page reloads.",
+    "verification": "Written by the verifier, not carried from the author, who considered this difference and declined it as Prototype Kit behaviour rather than a stated requirement. That reason does not hold: the filtering is service code the design team wrote — app/assets/javascripts/consignment-address-search.js, bound to a data-module attribute on DR1's own markup — and not anything the Prototype Kit provides, so the contract's exemption for kit-caused differences does not reach it. Read all five frontend picker DOMs and the DR1 picker DOM, the fe-address-picker-place-of-origin screenshot, the frontend picker macro whole and the prototype's search module whole; ran the falsifier by searching the frontend captures for any client-side handler on the picker, and there is none — the partial states as much in its own comment. The pagination half of the same observation is deliberately left out and the reason is in `difference`."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:77-91",
+    "prototype": "app/views/consignment-address-select.html:70-96"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--picker-list-not-filtered-by-role",
+      "relation": "travels-with",
+      "why": "both change what the picker's result list and its count show, and both land in the same table and caption"
+    }
+  ]
+}

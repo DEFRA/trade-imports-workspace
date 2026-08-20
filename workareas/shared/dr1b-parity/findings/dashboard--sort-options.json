@@ -1,0 +1,21 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 offers three ways to sort the dashboard — newest first, oldest first, arrival date — with nothing chosen to begin with; the frontend offers four combined date-and-direction options and starts already sorted by arrival, newest first.",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [{ "kind": "field", "name": "sort" }],
+  "finding": {
+    "frontend": "The frontend's sort control is labelled \"Sort by\" and offers four options — \"Arrival (newest to oldest)\", \"Arrival (oldest to newest)\", \"Date created (newest to oldest)\" and \"Date created (oldest to newest)\" — with the first of them already selected on arrival at the page (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36, rendered at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:70-77). There is no unsorted starting state and no option that names a date without also naming a direction.",
+    "prototype": "DR1's control is labelled \"Sort by:\" and offers \"Select one\", \"Newest first\", \"Oldest first\" and \"Arrival date\", with \"Select one\" chosen (app/views/dashboard.html:240-250). Two of its three real options say only which end of the list comes first and leave the date they sort on unstated, and the third names arrival without a direction.",
+    "difference": "Bring the option set into line with DR1: a \"Select one\" placeholder as the starting state, then \"Newest first\", \"Oldest first\" and \"Arrival date\". Two things have to be settled before the wording can be applied, and they are the reason this is worth writing down rather than treating as a copy tweak — which date DR1's \"Newest first\" and \"Oldest first\" order on, and which direction its \"Arrival date\" runs in. Neither is stated anywhere in DR1, so a designer answers them and the frontend then maps the four values it already supports onto the three DR1 asks for. This finding is about the options offered and how they read. Whether the list re-sorts on choosing or on pressing a button is deliberately left out: DR1's select sits in a form with no submit control of its own, and that is as likely to be the Prototype Kit as a design decision.",
+    "falsifiedBy": "Finding a \"Newest first\" or \"Oldest first\" option, or an unselected placeholder, in the frontend dashboard's sort control.",
+    "verification": "Written during the verification pass, not by the slice's author. The slice's ten findings covered the create button, the at-a-glance panel, the list heading, all three filter groups, the statuses and the list's scope, and left the results toolbar untouched — this is the gap that sweep turned up. Read both rendered DOMs (fe-dashboard-populated.html:143-156 renders the label \"Sort by\", the four combined options and \"Arrival (newest to oldest)\" carrying selected, plus an \"Update sort\" button; dr1-dashboard.html:670-697 renders \"Sort by:\" and the four options with \"Select one\" carrying selected) and both screenshots, where the two controls sit in the same place and read differently. Opened dashboard/copy/copy.en.js:27-36, dashboard/template.njk:70-77 and app/views/dashboard.html:240-250, and checked the prototype's option source at app/routes.js:6716-6730, which confirms the non-testing branch is the seeded set the DOM shows rather than the testing branch's arrival-newest and arrival-oldest pair. The control is named as the field sort, which exists on both sides, so it crops. Band frontend-work: the list read already accepts a sort parameter (src/server/app/services/persistence/records/real/lifecycle/read.js:33-34), so nothing waits on the backend."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36",
+    "prototype": "app/views/dashboard.html:240-250"
+  }
+}

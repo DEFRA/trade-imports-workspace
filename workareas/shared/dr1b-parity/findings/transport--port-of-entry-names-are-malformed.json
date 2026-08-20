@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "The frontend's port list shows a misspelt \"Teestort\", a shouted \"TILBURY\", a \"Portsmouth  Port\" with a doubled space and \"Port of Sheerness\" twice under the same code; DR1 shows each of those places once and spelt correctly.",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": [{ "kind": "field", "name": "portOfEntry" }],
+  "finding": {
+    "frontend": "Four of the 78 port names a user reads are malformed (src/server/app/services/_capture/fixtures/ports-of-entry.json:256-304). \"Teesport\" is spelt \"Teestort\". \"Tilbury\" is rendered \"TILBURY\" in capitals while two neighbouring entries read \"Tilbury Port\" and \"Tilbury 2 Ro-Ro Terminal\". \"Portsmouth  Port\" carries two spaces between the words. And Sheerness appears twice, both labelled \"Port of Sheerness\", under the codes \"GBSHS\" and \"GB SHS\" — the same code with and without its space, so the user is asked to choose between two options that are indistinguishable on screen.",
+    "prototype": "DR1's port list carries \"Teesport - GBTEE\", \"Tilbury - GBTIL\" and \"Sheerness - GBSHS\", each spelt in sentence case and each appearing once (app/views/arrival-details.html:67).",
+    "difference": "Correct the four labels in the port reference data: spell Teesport, put Tilbury in sentence case, remove the doubled space in Portsmouth Port, and collapse the two Sheerness rows onto the single correct code. This is a data fix rather than a page change. It is worth doing whichever way the wider question about the port list is settled, though if that question replaces the dataset outright it goes with it.",
+    "falsifiedBy": "Finding \"Teestort\", \"TILBURY\" or a second \"Port of Sheerness\" in DR1's port list, which would make these shared defects rather than frontend ones — DR1's list contains none of the three."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/_capture/fixtures/ports-of-entry.json:254-306",
+    "prototype": "app/views/arrival-details.html:67"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--port-of-entry-list-membership",
+      "relation": "travels-with",
+      "why": "both change the same port dataset"
+    }
+  ]
+}

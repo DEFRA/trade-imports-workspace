@@ -1,0 +1,21 @@
+{
+  "slice": "transport",
+  "title": "The two sides offer different countries as places a consignment can travel through: DR1 lists 41, including French Guiana, Réunion, Mayotte and the Channel Islands but not Norway or Switzerland; the frontend lists 31, the EU 27 plus Iceland, Liechtenstein, Norway and Switzerland.",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": ["fe-transit-countries", "dr1-transit-countries"],
+  "controls": [{ "kind": "field", "name": "transitedCountries" }],
+  "finding": {
+    "frontend": "The checkboxes are drawn from the frontend's origin-country list (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:22-27). Thirty-one entries: the twenty-seven EU member states plus Iceland, Liechtenstein, Norway and Switzerland. No overseas territory or Crown Dependency appears, and no country outside the EU and EFTA does either. Three labels differ from DR1's for the same place — \"Czechia\", \"Ireland\" and \"Netherlands (the)\".",
+    "prototype": "The search is fed a forty-one entry list (app/views/transit-countries.html:75). It holds the twenty-seven EU member states, eleven EU outermost regions and overseas entities — Azores, Canary Islands, Ceuta, French Guiana, Guadeloupe, Madeira, Martinique, Mayotte, Melilla, Réunion, Saint Martin — and three Crown Dependencies, Guernsey, Isle of Man and Jersey. Iceland, Liechtenstein, Norway and Switzerland are absent. The United Kingdom is absent too, matching the page's own line \"This does not include the United Kingdom\".",
+    "difference": "Settle which list is right before changing either side, because taking DR1 literally would both add and remove countries and each direction looks wrong on its face. DR1's own copy defines these as \"countries between the country of origin and the destination country\" — a consignment does not travel through Réunion, Mayotte, Martinique or French Guiana on its way to Great Britain, so DR1's data contradicts DR1's sentence; and dropping Switzerland and Norway would stop a user recording the most ordinary road route into GB from southern Europe. What settles it is the authoritative list of countries a consignment may be recorded as transiting — the same list the backend validates the submitted notification against — and a decision on whether one shared country list can serve both \"where is this party's address\" and \"where does the consignment pass through\", which is what put the territories in DR1's transit list in the first place. On the frontend the two questions already share one list too, so the change is not local to this page.",
+    "falsifiedBy": "Finding Norway, Switzerland, Iceland or Liechtenstein in DR1's transit-country data, or finding any of the eleven overseas territories in the frontend's — the two datasets are captured in full in the rendered DOM for each screen and neither overlaps the other on those entries."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:22-27",
+    "prototype": "app/views/transit-countries.html:75"
+  },
+  "relatedTo": []
+}

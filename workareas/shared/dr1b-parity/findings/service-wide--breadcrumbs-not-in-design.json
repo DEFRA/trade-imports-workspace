@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend shows a breadcrumb trail above the back link on 34 screens and an empty one on the dashboard; DR1 uses no breadcrumbs anywhere.",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-declaration", "fe-dashboard-populated", "fe-confirmation", "dr1-declaration"],
+  "controls": [{ "kind": "label", "text": "Your notifications" }],
+  "finding": {
+    "frontend": "37 of the 40 captured screens render a breadcrumb trail — \"Your notifications\" then the page name — from `src/server/app/shared/layout.njk:42-48`. On 34 of them it sits directly above a \"Back\" link, so the page offers a user two competing ways back at the same time. The three task-list screens are the only ones that suppress it. On both dashboard captures the trail renders as an empty navigation landmark: a navigation region labelled \"Breadcrumb\" containing a list with no items in it at all, which a screen reader announces as a navigation region a user can enter and find nothing in.",
+    "prototype": "No DR1 screen shows breadcrumbs, and no view in the prototype references the component. Every DR1 page that needs a way back offers the back link alone, directly under the phase banner — `app/views/declaration.html:21-24`.",
+    "difference": "Remove the breadcrumb trail from the shared layout and keep the back link, which is what DR1 shows on every page and what the GOV.UK Design System asks for: its breadcrumbs guidance says not to use breadcrumbs and a back link on the same page. Doing this removes the frontend's only standing route back to the notification list, so it should land with the service-navigation menu, whose Dashboard item is DR1's route back. If the trail is kept instead, the empty one on the dashboard has to go regardless — an empty navigation landmark is a defect on its own terms and needs no design decision.",
+    "falsifiedBy": "Finding breadcrumbs on any DR1 screen, or any reference to the breadcrumbs component in the prototype's views."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:42-48",
+    "prototype": "app/views/declaration.html:13-25"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--service-navigation-menu-missing",
+      "relation": "travels-with",
+      "why": "The menu's Dashboard item is what replaces the breadcrumb as the route back to the notification list."
+    }
+  ]
+}

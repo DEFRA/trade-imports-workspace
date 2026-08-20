@@ -1,0 +1,32 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 puts a Dashboard, Address book, Manage account and Log out menu in the service navigation on every page; the frontend's service navigation carries only the service name.",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-declaration", "fe-confirmation", "dr1-declaration", "dr1-notification-submitted"],
+  "controls": [{ "kind": "label", "text": "Address book" }],
+  "finding": {
+    "frontend": "On all 40 captured screens the service navigation strip holds the words \"Import notification service\" and nothing else — `src/server/app/shared/layout.njk:27-32` passes the component a service name and a service URL but no navigation items. Underneath it a separate right-aligned strip shows the signed-in user's email address and a \"Sign out\" link (`src/server/common/components/service-header/template.njk`). There is no link to an address book and no link to account settings anywhere in the chrome, and the only standing route back to the list of notifications is the breadcrumb.",
+    "prototype": "All 42 DR1 screens carry a four-item menu in the service navigation: Dashboard, Address book, Manage account, Log out, with the item you are on marked as current. It is declared in the service's own layout, `app/views/layouts/main.html:99-125`, so it is a decision of this design rather than something the Prototype Kit supplies. Dashboard points at the notification list and Address book at `/address-book`; Manage account and Log out are left as `#` placeholders in the prototype.",
+    "difference": "Pass a navigation array to the service-navigation component in the shared layout and mark the active item. Dashboard and Log out have frontend destinations already — the notification list at `/` and the sign-out route the existing strip uses — so those two can be wired straight away. Address book and Manage account have no page in this frontend today, so they either wait for those destinations or ship as the same placeholders DR1 uses; that is a call for whoever owns the roadmap, not a blocker on the menu itself. Once Log out is in the menu, the separate user-and-sign-out strip is doing only one job, showing who is signed in, and should be reviewed against DR1, which shows no signed-in identity at all.",
+    "falsifiedBy": "Finding a navigation link other than the service name inside the service-navigation region on any captured frontend screen."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:27-32",
+    "prototype": "app/views/layouts/main.html:99-125"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--phase-banner-missing",
+      "relation": "travels-with",
+      "why": "Same shared layout, same pass of work over the page furniture."
+    },
+    {
+      "id": "service-wide--breadcrumbs-not-in-design",
+      "relation": "travels-with",
+      "why": "The breadcrumb is the frontend's only standing route back to the notification list, so removing it and adding the Dashboard menu item have to be decided together."
+    }
+  ]
+}

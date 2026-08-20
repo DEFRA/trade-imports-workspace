@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 shows an Alpha phase banner with a feedback link on every page; the frontend shows no phase banner anywhere in the service.",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-declaration", "fe-confirmation", "dr1-declaration", "dr1-notification-submitted"],
+  "controls": [{ "kind": "label", "text": "give your feedback by email" }],
+  "finding": {
+    "frontend": "None of the 40 captured frontend screens carries a phase banner, and there is no phase-banner markup anywhere in the frontend source. A user is never told the service is in alpha and is never offered a way to say what went wrong. The slot the banner would occupy is the shared layout's `beforeContent` block, `src/server/app/shared/layout.njk:41-53`, which today renders the breadcrumbs and the back link and nothing else.",
+    "prototype": "Every one of the 42 captured DR1 screens opens with a phase banner sitting directly under the service navigation and above the back link: an `Alpha` tag, then the sentence \"This is a new service. Help us improve it and give your feedback by email.\", with \"give your feedback by email\" as a link. Each root view declares it in its own `beforeContent` block; `app/views/declaration.html:14-19` is one of thirty that do.",
+    "difference": "Render the phase banner once in the shared layout so every page picks it up, with the Alpha tag and DR1's sentence. One thing has to be settled before it ships: DR1 leaves the feedback link as `href=\"#\"`, so the service team has to supply the real destination — a mailbox or a feedback form. Nothing else blocks it, and it does not depend on any other finding.",
+    "falsifiedBy": "Finding a phase banner on any of the 40 captured frontend screens, or any call to the phase-banner component in the frontend source."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:41-53",
+    "prototype": "app/views/declaration.html:14-19"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--service-navigation-menu-missing",
+      "relation": "travels-with",
+      "why": "Both are missing pieces of the same page furniture and both land in the same shared layout, so one pass over layout.njk can do them together."
+    }
+  ]
+}

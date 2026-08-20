@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "The frontend tells the user to \"Select up to 12 countries\" and rejects a thirteenth; DR1 puts no limit on how many countries a consignment travels through.",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transit-countries", "dr1-transit-countries"],
+  "controls": [{ "kind": "field", "name": "transitedCountries" }],
+  "finding": {
+    "frontend": "The hint under \"Select all countries the consignment will travel through\" reads \"Select up to 12 countries\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:47-50), and it is enforced: the page holds a cap of twelve and rejects a thirteenth with \"Select up to 12 countries\" (transit-countries/transit-countries.controller.js:18 and :33-36). The list the user is choosing from is thirty-one countries long, so more than twelve is reachable.",
+    "prototype": "DR1 states no ceiling anywhere on the page — its hint is \"Enter each country that the consignment will travel through\" — and its handling of the answer normalises and stores whatever was added without counting it (app/routes.js:1910-1946).",
+    "difference": "Remove the cap and the hint that announces it. If a limit is genuinely wanted, it needs to be stated in DR1 first, because the number twelve appears nowhere in the signed-off design. This is one of two rules the frontend puts on this field that DR1 does not; the other is that it may not be empty.",
+    "falsifiedBy": "Finding a stated or enforced maximum number of transit countries in DR1 — its transit-country handling stores the normalised list without any length check."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:18-36",
+    "prototype": "app/views/transit-countries.html:56-70"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transit-countries-must-not-be-empty",
+      "relation": "travels-with",
+      "why": "the other rule the frontend puts on this field and DR1 does not"
+    }
+  ]
+}

@@ -99,7 +99,14 @@ describe('readAuthored', () => {
 describe('perSlice', () => {
   const slices = [
     { id: 'hub', screens: ['fe-one', 'fe-two'], chrome: false },
-    { id: 'review', screens: ['fe-three', 'fe-four'], chrome: true }
+    { id: 'review', screens: ['fe-three', 'fe-four'], chrome: false }
+  ]
+
+  // The chrome slice owns few screens and a scope covering all of them, so it
+  // is deliberately the thinnest row in this fixture.
+  const withChrome = [
+    ...slices,
+    { id: 'service-wide', screens: ['fe-five', 'fe-six'], chrome: true }
   ]
 
   test('flags the slice that came in far under the middle of the pack', () => {
@@ -150,9 +157,57 @@ describe('perSlice', () => {
   })
 
   test('a slice that owns screens and wrote nothing is thin even with no median', () => {
-    const rows = perSlice({ slices, findings: [], fraction: THIN_FRACTION })
+    const rows = perSlice({
+      slices: [{ id: 'hub', screens: ['fe-one', 'fe-two'], chrome: false }],
+      findings: [],
+      fraction: THIN_FRACTION
+    })
 
     expect(rows.every((row) => row.thin)).toBe(true)
+  })
+
+  test('the chrome slice is never flagged, because its denominator is a lie', () => {
+    const findings = [
+      ...Array.from({ length: 10 }, (_, i) => ({
+        file: `hub-${i}.json`,
+        raw: { slice: 'hub' }
+      })),
+      ...Array.from({ length: 8 }, (_, i) => ({
+        file: `review-${i}.json`,
+        raw: { slice: 'review' }
+      })),
+      { file: 'chrome-0.json', raw: { slice: 'service-wide' } }
+    ]
+
+    const rows = perSlice({
+      slices: withChrome,
+      findings,
+      fraction: THIN_FRACTION
+    })
+    const chrome = rows.find((row) => row.slice === 'service-wide')
+
+    expect([chrome.perScreen, chrome.thin]).toEqual([0.5, false])
+  })
+
+  test('the chrome slice does not drag the middle of the pack down', () => {
+    const findings = [
+      ...Array.from({ length: 4 }, (_, i) => ({
+        file: `hub-${i}.json`,
+        raw: { slice: 'hub' }
+      })),
+      ...Array.from({ length: 4 }, (_, i) => ({
+        file: `review-${i}.json`,
+        raw: { slice: 'review' }
+      }))
+    ]
+
+    const rows = perSlice({
+      slices: withChrome,
+      findings,
+      fraction: THIN_FRACTION
+    })
+
+    expect(rows[0].expected).toBe(2)
   })
 })
 
@@ -264,18 +319,33 @@ describe('renderYield', () => {
   })
 
   test('says what a thin slice might mean rather than only that it is thin', () => {
+    writeSlices([
+      { id: 'hub', screens: ['fe-one', 'fe-two'] },
+      { id: 'review', chrome: true, screens: ['fe-three'] },
+      { id: 'documents', screens: ['fe-four'] }
+    ])
     for (let i = 0; i < 12; i += 1) {
       writeFinding(`hub--${i}.json`, verified())
     }
     writeFinding(
-      'review--a.json',
-      verified({ slice: 'review', screens: ['fe-three'] })
+      'documents--a.json',
+      verified({ slice: 'documents', screens: ['fe-four'] })
     )
 
     const text = renderYield(runYield({ profile: profile() }))
 
     expect(text).toContain('THIN')
     expect(text).toContain('ran out of context and truncated')
+  })
+
+  test('names the chrome slice as not comparable rather than flagging it', () => {
+    writeFinding('hub--a.json', verified())
+
+    const text = renderYield(runYield({ profile: profile() }))
+
+    expect(text).toContain(
+      'owns the chrome, so its per-screen figure is not comparable'
+    )
   })
 
   test('explains why an unverified finding must not reach an ingest', () => {

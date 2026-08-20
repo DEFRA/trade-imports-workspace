@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "DR1's declaration makes the user accountable for destruction and disposal costs only when the authorities instruct it; the frontend's version of the same list drops that condition and the word \"any\" from all four items.",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-declaration", "dr1-declaration"],
+  "controls": [{ "kind": "label", "text": "I confirm that I am accountable for:" }],
+  "finding": {
+    "frontend": "The four bullets under \"I confirm that I am accountable for:\" read \"payments for border control checks\", \"re-dispatch of the consignment\", \"quarantine or isolation of the animals\" and \"the costs of destruction and disposal\" (`src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:8-13`). The last one is unconditional: the user agrees to the costs of destruction and disposal with no statement of who decides that destruction happens.",
+    "prototype": "DR1's four read \"any payment for the official controls at the border\", \"any arrangements to re-dispatch the consignment\", \"any costs needed for quarantine or isolation of consignments\" and \"any costs needed for destruction and disposal of consignments, when instructed by the authorities\" (`app/views/declaration.html:57-60`). Two differences carry weight rather than being tidying: DR1 opens each item with \"any\", which scopes the commitment, and it makes the fourth conditional on an instruction from the authorities, which narrows what the user is agreeing to.",
+    "difference": "Replace the four strings in the declaration copy with DR1's. No template change is needed — the list already renders from an array — and the Welsh strings need the same treatment. Legal text: take DR1's wording unchanged, in particular the \"when instructed by the authorities\" qualifier, because dropping it widens the user's liability rather than shortening a sentence.",
+    "falsifiedBy": "Finding the phrase \"when instructed by the authorities\" in the frontend's declaration bullets."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:8-13",
+    "prototype": "app/views/declaration.html:57-60"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--declaration-responsibility-scope-missing",
+      "relation": "travels-with",
+      "why": "Both are clauses of the same declaration and both need the same legal sign-off before the copy changes."
+    }
+  ]
+}

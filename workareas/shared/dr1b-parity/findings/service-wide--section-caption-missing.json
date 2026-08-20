@@ -1,0 +1,21 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 names the part of the notification above the heading on nearly every journey page; the frontend shows a caption on only the five address picker pages.",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "fe-documents-empty", "dr1-origin-of-the-import", "dr1-upload-documents"],
+  "controls": [{ "kind": "label", "text": "About the consignment" }],
+  "finding": {
+    "frontend": "Only five of the 40 captured screens show anything above the page heading: the address pickers, which print \"Consignment addresses\" in a `govuk-caption-l` from `src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7`. That is the only caption in the whole frontend. On every other journey page the slot above the heading holds either nothing or the journey strip — a blue \"Draft\" tag beside the notification reference, `src/server/app/shared/layout.njk:64-69` — so a user part-way through a notification is never told on the page itself which section of the task list they are working in.",
+    "prototype": "37 of DR1's 42 screens print a caption immediately above the heading naming the part of the notification. Read from the rendered DOM, the captions are \"About the consignment\" (origin of the import, what are you importing, reason for import and its four revealed states, consignment details, animal identification), \"Consignment parties\" (roles and addresses, consignment address select, CPH number, permanent address), \"Transport and arrival\" (transporter), \"Movement\" (transit countries), \"Documents\" (upload documents, on all seven of its states), \"Commodity details\" (additional animal details) and \"Add a new transporter\" (the three add-a-transporter pages). `app/views/origin-of-the-import.html:39-40` shows the pattern: a caption paragraph then the heading. The five DR1 screens without one are the declaration, the submitted page, the two review states and the contact address page.",
+    "difference": "Add a caption above the heading on each journey page naming the section it belongs to, taking the wording from DR1 page by page. Two of DR1's captions do not agree with DR1's own task-list section headings — it captions the additional animal details page \"Commodity details\" where its task list says \"2. Description of the goods\", and the transit countries page \"Movement\" where its task list says \"3. Transport and arrival\" — and those two need a designer's word before they are copied across, because the frontend's own task list happens to use \"Commodity details\" and \"Movement\" as its section names. The other captions can be copied as they stand. This is independent of any work on what the task-list sections are called.",
+    "falsifiedBy": "Finding a caption above the heading on a frontend journey page other than the five address pickers."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:64-69",
+    "prototype": "app/views/origin-of-the-import.html:39-40"
+  },
+  "relatedTo": []
+}

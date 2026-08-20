@@ -1,0 +1,30 @@
+{
+  "slice": "transport",
+  "title": "DR1 puts an \"Enter contact details\" heading above the private transporter's email and phone and asks for the email first; the frontend runs the two fields straight on from the address with no heading and asks for the telephone number first.",
+  "domain": "transport",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private"],
+  "controls": [
+    { "kind": "label", "text": "Enter contact details" },
+    { "kind": "field", "name": "emailAddress" }
+  ],
+  "finding": {
+    "frontend": "The form runs nine fields in one unbroken column — name, four address lines, postal code, country, then Telephone number and Email address — with nothing marking where the address stops and the contact details start (src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-90). The two contact fields are also in the opposite order to DR1's.",
+    "prototype": "After the country field DR1 opens a new block with the heading \"Enter contact details\", and under it asks for the email address and then the phone number (app/views/partials/transporter-add-private-fields.html:84-109).",
+    "difference": "Add an \"Enter contact details\" heading between the country field and the contact fields, and swap the two so email is asked before phone. Layout and copy only; no field is added or removed and no validation changes. Do it with the missing phone hint, which is in the same block.",
+    "falsifiedBy": "Finding a heading between the country select and the telephone input on fe-transporter-private — the captured DOM goes from one govuk-form-group to the next with no heading element in between."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-90",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:84-109"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-phone-hint-missing",
+      "relation": "travels-with",
+      "why": "same block of the same form"
+    }
+  ]
+}

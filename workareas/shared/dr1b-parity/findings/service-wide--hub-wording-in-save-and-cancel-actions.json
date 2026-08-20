@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend's save and cancel actions call the task list the \"hub\"; DR1 calls it the \"overview\", which is also what the frontend's own task-list page is called.",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents-empty", "fe-origin", "dr1-upload-documents"],
+  "controls": ["Save and return to hub", "Cancel and return to hub"],
+  "finding": {
+    "frontend": "24 captured screens end with the same three actions: a primary \"Save and continue\", a secondary \"Save and return to hub\", and a link reading \"Cancel and return to hub\". The word \"hub\" appears nowhere else a user can see it. The page those two actions lead to is headed \"Overview\", and its browser title is \"Overview | Import notification service\", so the buttons name the destination with a word the destination does not use. The strings come from `src/server/app/shared/copy.en.js:42-44` and are rendered for every page by `src/server/app/shared/save-actions.njk:3-13`.",
+    "prototype": "26 DR1 screens end with the equivalent pair worded \"Save and return to overview\" and \"Cancel and return to overview\" — `app/views/upload-documents.html:251` is one — matching the heading of the page they return to.",
+    "difference": "Change two strings in the shared copy so they say \"overview\" instead of \"hub\". One edit reaches all 24 screens, because they all render from the same partial. The Welsh copy carries the same two keys (`src/server/app/shared/copy.cy.js:35-39`, currently \"Cadw a dychwelyd i'r hyb\" and \"Canslo a dychwelyd i'r hyb\") and needs the matching change. Nothing else moves: the routes, the button behaviour and the page they lead to all stay as they are.",
+    "falsifiedBy": "Finding the word \"hub\" used as a user-facing name for the task list anywhere in DR1."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/copy.en.js:42-44",
+    "prototype": "app/views/upload-documents.html:251"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--secondary-save-actions-placement",
+      "relation": "travels-with",
+      "why": "Same two actions. This finding is about what they are called; the other is about which pages show them."
+    }
+  ]
+}

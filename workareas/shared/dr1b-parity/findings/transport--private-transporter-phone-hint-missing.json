@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "DR1 tells the user to include the country code when a private transporter's phone number is international; the frontend's telephone field says nothing.",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private"],
+  "controls": [{ "kind": "field", "name": "telephoneNumber" }],
+  "finding": {
+    "frontend": "The field is labelled \"Telephone number\" and has no hint at all (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:110 and private-transporter-details/private-transporter-details.njk:73-81). Nothing tells the user what to do with a number outside the UK, and this page routinely takes one — the country field beside it offers thirty-one countries other than the United Kingdom.",
+    "prototype": "The field is labelled \"Phone number\" and hinted \"For international numbers include the country code\" (app/views/partials/transporter-add-private-fields.html:96-105).",
+    "difference": "Add the hint \"For international numbers include the country code\" under the field, and rename the label from \"Telephone number\" to \"Phone number\" to match. Copy only — the field, its validation and its position do not change.",
+    "falsifiedBy": "Finding a hint under the telephone field on fe-transporter-private — the captured DOM has the label and the input with no aria-describedby and no govuk-hint between them."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-81",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:96-105"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-contact-details-not-grouped",
+      "relation": "travels-with",
+      "why": "same block of the same form"
+    }
+  ]
+}

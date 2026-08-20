@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "The two sides offer different places as the port of entry: DR1 searches 213 UK airports and seaports including Belfast, Larne and Warrenpoint; the frontend searches 78 Great Britain ports and airports and no Northern Ireland location at all.",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": [{ "kind": "field", "name": "portOfEntry" }],
+  "finding": {
+    "frontend": "The port field is an autocomplete over a 78-entry list held as captured reference data (src/server/app/services/_capture/fixtures/ports-of-entry.json). Every entry is in Great Britain and every one reads as a place a consignment is inspected — Felixstowe Port, Port of Dover (Eastern), Heathrow Airport, Grimsby and Immingham Port — labelled \"Name (CODE)\" with a spaced UN/LOCODE.",
+    "prototype": "The port field searches a 213-entry list (app/views/arrival-details.html:67) that is two datasets joined: twenty-eight UK airports labelled with IATA codes — \"London Heathrow - LHR\" — followed by the UK seaport gazetteer labelled with UN/LOCODEs — \"Aberdeen - GBABD\". It includes Northern Ireland — Belfast, Belfast International, Belfast City, Kilkeel, Larne, Londonderry, Warrenpoint — and small harbours such as Plockton, Kettletoft on Sanday and Pierowall on Westray.",
+    "difference": "Settle which list is right before changing the frontend, because adopting DR1's would let a user name a place the consignment cannot lawfully enter at. DR1's own page asks where the transporter \"will enter with the consignment\", and a live-animal consignment must arrive at a border control post; its list is a general UK ports-and-airports gazetteer, not a border-control-post list, and it offers Northern Ireland arrivals that cannot be a Great Britain point of entry for this notification. The frontend's 78 read as the border-control-post set and come from real reference data rather than a hardcoded page list. What settles it: the authoritative list of points of entry a live-animal consignment may be notified against, and whether Northern Ireland arrivals are in scope for this service at all. If DR1's breadth is intended, the frontend's reference data is the thing that changes, not the page.",
+    "falsifiedBy": "Finding any Northern Ireland location, or any harbour with no border control post, in the frontend's port list — its 78 entries are captured in full in the rendered select on fe-arrival-details and contain none."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/_capture/fixtures/ports-of-entry.json",
+    "prototype": "app/views/arrival-details.html:67"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--port-of-entry-names-are-malformed",
+      "relation": "travels-with",
+      "why": "both change the same port dataset"
+    }
+  ]
+}

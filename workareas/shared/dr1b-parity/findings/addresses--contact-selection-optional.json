@@ -1,0 +1,24 @@
+{
+  "slice": "addresses",
+  "title": "DR1 refuses to move on from the contact page until an address is chosen; the frontend accepts Save and continue with nothing selected.",
+  "domain": "contact",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-contact", "dr1-contact-address-for-consignment"],
+  "controls": [
+    { "kind": "field", "name": "contactAddress" },
+    { "kind": "field", "name": "contactAddressId" }
+  ],
+  "finding": {
+    "frontend": "Pressing Save and continue with no radio chosen is allowed through. The page only rejects a value that is not one of the addresses offered, and the controller says so in as many words: the contact is mandatory as an obligation, but an empty submit returns the trader to the hub with the task simply incomplete (src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:29-39). The trader is not told they have skipped anything at the moment they skip it; they find out later at the hub.",
+    "prototype": "DR1 validates the choice on submit and, when nothing is selected, re-renders the page with the error \"Select a contact address\" in the summary and against the radios (app/routes.js:1138-1155). There is no way past the page without answering it.",
+    "difference": "Make an empty submit on the contact page an error carrying the message the frontend already has for the case, rather than a silent pass. The message exists — contactRequired, \"Select a contact address\" — and is only reached today when a value outside the list is posted. Check the surrounding pattern first: if leaving a task part-done and returning to the hub is a deliberate rule across this journey then this is a decision about the whole journey rather than about one page, and DR1 disagrees with it only here because it is the only page in the corpus where the two behaviours can be told apart.",
+    "falsifiedBy": "Submitting the frontend contact page with no radio selected and getting \"There is a problem\" rather than a redirect."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:29-39",
+    "prototype": "app/routes.js:1138-1155"
+  },
+  "relatedTo": []
+}

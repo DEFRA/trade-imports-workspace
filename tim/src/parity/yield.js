@@ -91,15 +91,23 @@ export const perSlice = ({ slices, findings, fraction }) => {
   // Only slices that own screens set the expectation. A slice given no screens
   // has no denominator, so including it would drag the middle of the pack
   // toward zero and stop the check firing on the run it exists for.
-  const middle = median(
-    rows.filter((row) => row.perScreen !== null).map((row) => row.perScreen)
-  )
+  //
+  // The chrome slice is left out of the expectation and never flagged, because
+  // its denominator is a lie. It owns a handful of screens and its SCOPE is the
+  // furniture on every screen in the corpus, so its findings-per-screen is
+  // whatever its screen list happens to be — on the run this was written for,
+  // 0.25 against a middle of 1.29, which flagged the one slice that had done
+  // the most cross-cutting work. Counting it also dragged the middle down and
+  // made every other slice harder to flag.
+  const measured = rows.filter((row) => row.perScreen !== null && !row.chrome)
+  const middle = median(measured.map((row) => row.perScreen))
   const floor = middle * fraction
 
   return rows.map((row) => ({
     ...row,
-    thin:
-      row.perScreen !== null && middle > 0
+    thin: row.chrome
+      ? false
+      : row.perScreen !== null && middle > 0
         ? row.perScreen < floor
         : row.screens > 0 && row.findings === 0,
     expected: middle,
@@ -213,6 +221,12 @@ export const renderYield = (result) => {
     `${result.total} findings across ${result.slices.length} slices.`,
     'slice                 screens  findings  per screen  verified  corrected'
   ]
+  const chrome = result.slices.find((row) => row.chrome)
+  if (chrome) {
+    lines.push(
+      `* ${chrome.slice} owns the chrome, so its per-screen figure is not comparable and it is never flagged: its scope is the furniture on every screen, not the ${chrome.screens} it holds.`
+    )
+  }
   for (const row of result.slices) {
     lines.push(
       [

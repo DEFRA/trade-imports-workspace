@@ -139,6 +139,10 @@ content enumerated inside the requirements slot.
 
 - **Never write `backlog.json`.** You write one JSON file per finding under
   `findings/`. A deterministic tool assembles them.
+- **Never write `finding.verification`.** That slot belongs to the agent that
+  verifies your slice, and it is the only thing that distinguishes a verifier
+  who found nothing from one who looked at nothing. Filling it in yourself
+  destroys the signal and lets the finding through a gate it has not passed.
 - **Never rename a finding file** once written. The increment id is bound to it.
 - **Never invent a crop.** A control that resolves nowhere is named and left
   uncropped, and the finding says which state would show it.

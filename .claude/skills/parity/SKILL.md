@@ -1,6 +1,6 @@
 ---
 name: parity
-description: 'Build, check and adjudicate a findings report for a comparison corpus. Two corpora today: `dr21` (run EUDPA-328, 97 findings against Design release 2.1, a design still in flux) and `dr1` (run EUDPA-328-DR1, the same live-animals frontend against the signed-off Design release 1). Five modes: REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE re-shoots a side''s evidence by running that side''s own Playwright specs, then checks the result against a static enumeration of its screens; AUTHOR derives the findings themselves from the captured evidence — triage the previous corpus, slice the service so every screen is covered exactly once, fan out one authoring agent per slice, verify each slice with a different agent than wrote it, re-capture the states the findings were guessing at, then ingest (triggers: "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application", "author the parity findings", "write the findings for EUDPA-X", "run the authoring pass", "compare the two sides"). NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
+description: 'Build, check and adjudicate a findings report for a comparison corpus. Two corpora today: `dr21` (run EUDPA-328, 97 findings against Design release 2.1, a design still in flux) and `dr1` (run EUDPA-328-DR1, the same live-animals frontend against the signed-off Design release 1). Six modes. COMPARE is the front door and runs all the others end to end for somebody who knows none of the vocabulary: it interviews for a new corpus, scaffolds it, fans out one agent per side to enumerate the screens and one per slice to write the capture specs, captures and closes the coverage gap, pairs the screens, proves the slicing, invokes AUTHOR, sweeps for cross-slice duplicates and builds the report — resumable at every phase through a ledger, because each one is an agent pass that cannot be re-derived cheaply. REPORT regenerates the page from the backlog and serves it at full resolution; WALK presents the gated findings for a batch of rulings and applies them; MIGRATE moves a finding''s prose into the six structured slots and rewrites it into plain English, under ten invariants; CAPTURE re-shoots a side''s evidence by running that side''s own Playwright specs, then checks the result against a static enumeration of its screens; AUTHOR derives the findings themselves from the captured evidence — triage the previous corpus, slice the service so every screen is covered exactly once, fan out one authoring agent per slice, verify each slice with a different agent than wrote it, re-capture the states the findings were guessing at, then ingest (triggers: "compare these two things and give me a report", "generate me a report on the differences between X and Y", "compare the frontend against DR3", "set up a new comparison", "resume the comparison", "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-X", "migrate parity EUDPA-X", "recapture the parity corpus", "map the application", "author the parity findings", "write the findings for EUDPA-X", "run the authoring pass", "compare the two sides"). It produces findings, not rulings: when it finishes nobody has read any of them. NOT for running the build loop over the accepted findings — that is journey-builder, which consumes the same backlog''s status/gate/dependsOn. NOT for reviewing a PR (use review).'
 ---
 
 Render a backlog of findings as a decision surface, and help rule on it.
@@ -81,12 +81,217 @@ is how a typo shows up.
 
 ## Modes
 
-Emit `MODE: REPORT|WALK|MIGRATE|CAPTURE|AUTHOR` on the first line of your reply,
-then follow that section.
+Emit `MODE: COMPARE|REPORT|WALK|MIGRATE|CAPTURE|AUTHOR` on the first line of
+your reply, then follow that section.
 
-They are written in order of how often they are reached, not in pipeline order.
-A comparison runs CAPTURE, then AUTHOR, then REPORT, then MIGRATE, and WALK only
-where the corpus is a negotiation.
+**COMPARE is the front door and runs all of the others.** Everything after it is
+written in order of how often it is reached, not in pipeline order: a comparison
+runs CAPTURE, then AUTHOR, then REPORT, then MIGRATE, and WALK only where the
+corpus is a negotiation. Reach for a single mode when you know which one you
+want. Reach for COMPARE when somebody has asked for a comparison and does not.
+
+### COMPARE — run the whole thing, from nothing
+
+Triggers: "compare these two things and give me a report", "generate me a report
+on the differences between X and Y", "compare the frontend against DR3", or two
+applications named with no vocabulary at all.
+
+**This mode is not a deterministic tool and must not become one.** The control
+flow is fixed and every phase inside it is an agent exercising judgement. Where
+a phase below names a persona in `references/`, that persona is the work; the
+commands around it only check what it produced.
+
+**Say what it does not do, before you start.** It produces findings, not
+rulings. When it finishes, **no person has read a single one of them.** The
+output is a work list somebody still has to open. All 133 findings the `dr1` run
+produced were `status: "todo"` at the end of it, and six were `disputed` — the
+pipeline's own statement that it could not settle them.
+
+#### Where to pick up
+
+```
+~/git/defra/trade-imports-workspace/tools/parity/start-comparison.sh [<run-id>]
+```
+
+With no run id it lists the comparisons that exist and the interviews that are
+half finished. With one it prints where that run stands and its `resume_at`.
+
+**A run is resumable and must be resumed.** Every phase after the first is an
+agent pass costing real money and real wall-clock, so a run that stopped after
+the captures picks up at the pairing rather than photographing everything again.
+The ledger is what makes that possible:
+
+```
+~/git/defra/trade-imports-workspace/tools/parity/phase.sh <run> status
+~/git/defra/trade-imports-workspace/tools/parity/phase.sh <run> done <phase> --note "…"
+~/git/defra/trade-imports-workspace/tools/parity/phase.sh <run> gate <phase>
+```
+
+`--note` is required on `done`. **Record a phase done only when it is done** —
+the ledger is what a later session believes, and a phase marked done that is not
+is the one failure this whole design cannot recover from.
+
+`gate` refuses a phase whose prerequisites have not run, and two of those
+orderings are not style: an authoring agent spawned before the slicing is proven
+writes findings nobody owns, and an ingest run before the verification freezes
+the prose permanently over whatever was there.
+
+#### Phase 0 — bootstrap the corpus, if it does not exist
+
+Load [CORPUS_INTERVIEWER](references/CORPUS_INTERVIEWER.md) into this session
+and follow it. It is parent-loaded, not a subagent: you are talking to a person.
+
+Interview, record, scaffold — skill-creator's shape. Ask only what cannot be
+discovered; the scaffold derives every path. Answers go in one at a time through
+`setup-add-answer.sh`, so an interrupted interview resumes from what was
+answered.
+
+```
+~/git/defra/trade-imports-workspace/tools/parity/scaffold-corpus.sh --run-id <run> --dry-run
+~/git/defra/trade-imports-workspace/tools/parity/scaffold-corpus.sh --run-id <run>
+```
+
+It writes the corpus entry, the workarea with its `specs/<side>/` directories,
+and a `FINDING-CONTRACT.md` seeded from a template — and it refuses two things
+on purpose. A side on 3000, 3001, 3007, 3100 or 3200, because the workspace
+stack owns those and a capture there photographs the container instead of the
+run you started. And a corpus with no answer to whether the requirements side is
+signed off, because that answer picks the band taxonomy.
+
+**Then finish the contract, and do not spawn anything until it is finished.**
+Six sections come out marked and wrong: the band table, the domain list, the two
+evidence path roots, the requirements side's view-path rule, what is not a
+finding, and the volatile values this comparison must never compare.
+[`dr1`'s](../../../workareas/shared/dr1-parity/FINDING-CONTRACT.md) is the
+worked example. The contract is what stops ten agents producing ten dialects of
+one backlog, and it only works if it is whole before the first agent starts.
+
+#### Phase 0.5 — hold the applications still
+
+```
+tim parity heads <run> --write
+```
+
+Records where every checkout stood as the run began. Run it again without
+`--write` before the ingest and before the report. `dr1`'s captures and its
+citations agree because nobody happened to commit to either side for eight
+hours; nothing made that true.
+
+#### Phase 1 — enumerate each side's screens
+
+One agent per side, following
+[SCREEN_ENUMERATOR](references/SCREEN_ENUMERATOR.md). Each writes its side's
+entry in the corpus's `enumerate.cjs`: which screens the application **has**,
+read statically from its own source, never from a browser.
+
+This is judgement. One application here was readable from a route table plus its
+view directory and the other from a journey definition, and nothing generic
+would have found either. **The agent states in the module's own comments which
+facts about that application make it readable, and cites the line that makes
+each true** — those are the assumptions that go stale.
+
+#### Phase 2 — write the capture specs
+
+One agent per slice of the journey, following
+[SPEC_AUTHOR](references/SPEC_AUTHOR.md). Plain Playwright that drives the slice
+and calls the recorder on every screen it reaches.
+
+**Do not try to generate these deterministically.** A crawler that inferred what
+to type from hint text produced five defects on its first live run, every one a
+judgement failure wearing a code bug's clothes. It was deleted — 11,541 lines.
+Agents reading the views and writing the navigation is the design, not a
+shortcut.
+
+#### Phase 3 — capture, then close the gap
+
+```
+tim parity capture <run> --side <side>
+tim parity coverage <run> --strict
+```
+
+Loop: any screen the enumerator names and the capture missed goes back to phase
+2 as a brief for another spec. Stop when coverage is clean, or when a screen is
+a **stated absence** — genuinely unreachable, said so, and left uncaptured.
+
+**Captures cannot run in parallel.** One server, one session, `workers: 1`. Fan
+out the writing; serialise the running.
+
+#### Phase 4 — pair the screens
+
+One agent, following [SCREEN_PAIRER](references/SCREEN_PAIRER.md), reading both
+manifests, both sets of page models and the rendered DOM, and writing
+`pairs.cjs`.
+
+**The one-sided lists matter as much as the pairs.** A screen one side has and
+the other does not is the largest kind of gap there is. A wrong pairing is the
+most expensive mistake available: it renders two unrelated pages under one
+heading and invites a confident finding about an artefact. Many-to-one is
+legitimate and must be stated.
+
+#### Phase 5 — triage, slice, and prove the slicing
+
+The carryover triage first, if there is a previous corpus — see AUTHOR step 1.
+It is the cheapest work in the pipeline: on `dr1` it struck 37 of the previous 97
+findings before an authoring agent was spawned.
+
+Then write `<workarea>/slices.json` and **prove it before spawning anything**:
+
+```
+tim parity slices <run> --strict
+```
+
+Every captured screen owned by exactly one slice, and exactly one slice carrying
+`"chrome": true`. On `dr1` nothing checked this and a finding was disowned by
+two slices and written by a third.
+
+#### Phase 6 — author, verify, sweep
+
+Invoke AUTHOR. **Do not reimplement it.** Then, before the ingest:
+
+```
+tim parity yield <run> --strict
+tim parity duplicates <run>
+```
+
+`yield` weighs each slice's output against the screens it owns and names every
+finding no verifier recorded looking at. A slice that ran out of context and
+truncated looks exactly like a slice with little to report, and this is the only
+thing that tells them apart — **ask any slice well under the others what it
+covered.**
+
+`duplicates` is read by one agent following
+[DUPLICATE_SWEEPER](references/DUPLICATE_SWEEPER.md), which is the only agent in
+the pipeline that sees more than one slice.
+
+#### Phase 7 — ingest and build the report
+
+```
+tim parity heads <run>          # read it before you freeze anything
+tim parity ingest <run>
+tim parity anchors <run> --side <side> --write
+tim parity capture <run> --side <side>
+tim parity citations <run> --write
+tim parity evidence <run> --write
+tim parity meta <run> --write
+tim parity report <run>
+tim parity check <run>
+tim parity check-evidence <run>
+```
+
+The ordering is not arbitrary — see AUTHOR step 6 and CAPTURE for why capture
+appears twice.
+
+**Ingest freezes every finding's `detail` permanently.** On a corpus the
+scaffold built, it also refuses any finding no verifier recorded looking at.
+
+#### End by saying what you could not settle
+
+A question only a designer can answer, a requirements source that contradicts
+itself, a citation pointing at an identifier that is nowhere the finding points.
+Those belong in a short list at the end, not buried in 133 findings.
+
+Then say the thing at the top of this section again, plainly: **it produced
+findings, not rulings, and nobody has read them.**
 
 ### REPORT — regenerate the page
 
@@ -639,37 +844,61 @@ An unresolvable slug is a named error, not a silent drop.
   an identifier that is nowhere the finding points. Those belong in the handover
   as a short list, not buried in 133 findings.
 
-#### What this method does not check
+#### What checks this method, and what still does not
 
-Every item below held on `dr1` and none of them was made to hold. They are the
-places the next run will fail first.
+Every item here held on `dr1` with nothing making it hold. Six were listed; six
+now have something behind them, and the honest report is that **five are closed
+mechanically and one is only narrowed.** They are still the places the next run
+fails first, so read what each check actually promises.
 
-- **Nothing bounds a slice's yield from below.** Ten slices over 133 findings is
-  about thirteen each, which fitted. A slice that ran out of context and
-  truncated would look exactly like a small slice, and nothing would say which.
-  Compare each slice's count against its screen count before accepting the
-  batch, and ask about any slice well under the others.
-- **Nothing detects a cross-slice duplicate.** The verifier is paired per slice,
-  so it never sees two slices at once. One duplicate was struck on `dr1` and
-  that number is not evidence the briefing worked — it is evidence that whatever
-  leaked was small enough for one agent to notice.
-- **Nothing distinguishes a verifier that found nothing from one that looked at
-  nothing.** A correction is recorded when it fires; the non-firing case leaves
-  no trace. Require each verifier to state per finding what it opened and what
-  it ran, so a silent pass is visible as a silent pass.
-- **Nothing pins the applications for the duration of the run.** `dr1`'s
-  captures and citations agree because nobody committed to either application
-  while the run was open. A commit mid-run moves the pins away from the
-  pictures, and `check-evidence` only reports it afterwards.
-- **Nothing stops a capture photographing the wrong application.** `tim` uses
-  whatever is already listening on a side's `app.baseURL` rather than starting a
-  second copy, so a corpus sharing a port with the workspace stack photographs
-  the container and says nothing about having done so. `dr1` moved the frontend
-  to 3005 for that reason. A new corpus picks a new port and the trap is one
-  config line away.
-- **Nothing enforces the ingest gate.** The rule above — verify before the first
-  ingest — is held by reading order alone. One command run early freezes the
-  corpus over unverified prose, permanently.
+**Closed.**
+
+- **A slice's yield is bounded from below.** `tim parity yield <run>` weighs each
+  slice's findings against the screens it owns and flags anything well under the
+  middle of the pack. It cannot know a truncated slice from a quiet one — a
+  declaration page with one finding is not a failure — so it asks rather than
+  rules. Ask any flagged slice what it covered.
+- **A verifier that looked at nothing is visible.** Every finding carries
+  `finding.verification`, one line saying what the verifier opened and what it
+  ran. `yield` names every finding without one.
+- **The ingest gate is enforced.** A corpus declaring `requireVerification` — as
+  every scaffolded corpus does — refuses a first ingest of any finding with no
+  verification record. That is the same mechanism as the item above, which is
+  why one flag closes both: `detail` freezes at first ingest, so the record has
+  to exist before it, and reading order is no longer what holds it.
+- **The slicing is proven before anything is spawned.** `tim parity slices <run>
+  --strict` refuses unless every captured screen is owned by exactly one slice
+  and exactly one slice owns the chrome. On `dr1` a finding was disowned by two
+  slices and written by a third, caught by the verification pass — which is not
+  what the verification pass is for.
+- **The applications are held still.** `tim parity heads <run> --write` records
+  where every checkout stood as the run began; running it again says what moved.
+  It cannot stop a commit. It makes one visible while the run is still open,
+  rather than afterwards when the only question left is which findings to
+  re-verify.
+
+**Narrowed, not closed.**
+
+- **A cross-slice duplicate is still a judgement.** `tim parity duplicates
+  <run>` reads the whole corpus at once, which no per-slice verifier can, and
+  prints candidate pairs. **It measures two sentences.** Two agents describing
+  the same change in entirely different words share no screen, no control and no
+  vocabulary, and nothing mechanical will pair them. On `dr1` it found five
+  candidates across 133 findings and every one was two genuinely different
+  findings that happened to name the same screen and control — cheap to read,
+  and a clean list is not proof. See
+  [DUPLICATE_SWEEPER](references/DUPLICATE_SWEEPER.md) for the hand search past
+  the list.
+
+**And one that moved rather than closed.**
+
+- **Nothing stops a capture photographing the wrong application** once a corpus
+  exists. `tim` uses whatever is already listening on a side's `app.baseURL`
+  rather than starting a second copy, so a corpus sharing a port with the
+  workspace stack photographs the container and says nothing about having done
+  so. `scaffold-corpus.sh` now refuses 3000, 3001, 3007, 3100 and 3200 at setup,
+  which is where the trap is cheap. It does not refuse a port the stack takes
+  later, and it cannot tell you what is listening at capture time.
 
 ## The invariants, and why each one is there
 

@@ -82,13 +82,30 @@ observation that would settle it.
 
 ## Record what you did, including when nothing fired
 
-Per finding, one line saying what you opened and what you ran, then either
+**Write `finding.verification` on every finding you read, including the ones you
+change nothing about.** One line: what you opened, what you ran, then either
 `CORRECT` or the numbered rubric points that failed with the evidence quoted.
 
+```json
+"finding": {
+  "verification": "Read both rendered DOMs and the two screenshots; ran the falsifier against dr1-upload-documents. CORRECT."
+}
+```
+
 This matters more than it looks. A correction leaves a trace when it fires; the
-non-firing case leaves none, so **nothing in this pipeline distinguishes a
-verifier that found nothing from a verifier that looked at nothing.** Your line
-is that distinction. Write it even for the findings that survive untouched.
+non-firing case leaves none, so without your line **nothing in this pipeline
+distinguishes a verifier that found nothing from a verifier that looked at
+nothing.** Your line is that distinction.
+
+**It is now a gate, not a convention.** On a corpus declaring
+`requireVerification` — every corpus the scaffold builds — `tim parity ingest`
+refuses a first ingest of any finding with no verification record, and names it.
+`tim parity yield <run>` lists them all before you get that far, which is the
+cheaper place to find out.
+
+Do not write one for a finding you did not actually open. The line exists to be
+true; a run of identical records is worth less than none, because it removes the
+one signal that would have said the pass did not happen.
 
 ## What you do not do
 

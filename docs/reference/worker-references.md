@@ -27,6 +27,13 @@ artifacts that downstream `tools/` scripts consume.
 | `parity` | `references/COPY_EDITOR.md` | Per-domain plain-English rewrite of finding prose, under word budgets and the quote/number conservation invariants |
 | `parity` | `references/CLAIM_VERIFIER.md` | Per-domain adversarial read of that rewrite — never the domain it wrote |
 | `parity` | `references/EVIDENCE_CURATOR.md` | Per-domain choice of frame kind and anchors, including the hand-authored insertion anchors on one-sided findings |
+| `parity` | `references/FINDING_AUTHOR.md` | Per-slice authoring of the findings themselves from both sides' captured evidence (one per slice, parallel) |
+| `parity` | `references/FINDING_VERIFIER.md` | Per-slice adversarial read asking only whether each finding is correct — never the slice it wrote. Writes `finding.verification`, which the ingest gate requires |
+| `parity` | `references/CORPUS_INTERVIEWER.md` | Parent-loaded COMPARE-mode interview for a new corpus (→ `setup.json` → `scaffold-corpus.sh`) |
+| `parity` | `references/SCREEN_ENUMERATOR.md` | Per-side static enumeration of an application's screens, written into the corpus's `enumerate.cjs` (one per side, parallel) |
+| `parity` | `references/SPEC_AUTHOR.md` | Per-slice Playwright capture specs. Fan out the writing; the running is serialised, one server one session |
+| `parity` | `references/SCREEN_PAIRER.md` | One-shot — which screen answers which, plus the two one-sided lists, into `pairs.cjs` |
+| `parity` | `references/DUPLICATE_SWEEPER.md` | One-shot — the only pass that sees more than one slice, adjudicating cross-slice duplicate candidates |
 
 Cursor reads `.claude/skills/` natively (per
 <https://cursor.com/docs/context/skills>). It has no parallel subagent

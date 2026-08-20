@@ -1,0 +1,30 @@
+{
+  "slice": "transport",
+  "title": "DR1 lets the user search the transporter directory by name, address or approval number; the frontend's page is headed \"Search for an approved commercial transporter\" but has no search box.",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-commercial", "dr1-transporter"],
+  "controls": [
+    { "kind": "label", "text": "Search" },
+    { "kind": "field", "name": "commercialTransporter" }
+  ],
+  "finding": {
+    "frontend": "The page is titled and headed \"Search for an approved commercial transporter\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:89-91) but the whole form is a single radio group and nothing else: the rendered page offers two radio options and the Save buttons, with no text input of any kind (transporters-select/transporters-select.njk:11-23). A user who reads the heading and looks for somewhere to type has nowhere to type. Because the list is a fixed pair of records (src/server/app/services/commercial-transporters/records.js:6-27) scrolling is currently short, but the page has no way to narrow a longer list.",
+    "prototype": "The transporter list sits under a \"Select a transporter\" heading with a labelled search field above it — label \"Search\", hint \"Name, address or approval number\", a text input and a search button (app/views/transporter.html:75-95). Typing filters the rows in place.",
+    "difference": "Add a search field above the transporter list, labelled \"Search\" with the hint \"Name, address or approval number\", filtering the list on those three values. Nothing blocks it: the filter can run over the records the page already holds. It travels with the finding about the list's missing columns, since both change the same list.",
+    "falsifiedBy": "Finding a text input inside the form on fe-transporter-commercial in the captured DOM — capture/html/frontend/fe-transporter-commercial.html contains only radio inputs and the hidden crumb field."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23",
+    "prototype": "app/views/transporter.html:75-95"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-list-omits-type-status-and-details",
+      "relation": "travels-with",
+      "why": "both rebuild the same transporter list"
+    }
+  ]
+}

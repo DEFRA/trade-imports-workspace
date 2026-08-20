@@ -1,0 +1,21 @@
+{
+  "slice": "hub",
+  "title": "DR1 shows the identification task on the hub only once the chosen species need identifiers; the frontend shows \"Animal identification details\" on every notification, including one with no commodity chosen at all.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub-no-commodity", "fe-hub", "dr1-notification-hub"],
+  "controls": ["Animal identification details"],
+  "finding": {
+    "frontend": "\"Animal identification details\" is a permanent row in the second section, present even on the hub for a notification where nothing has been imported yet — the fe-hub-no-commodity capture shows it, blocked, above a page with no commodities on it. The row is declared without the conditional flag its neighbours use (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:39-43), and only a conditional row is dropped when nothing it covers applies (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93 and :108-110). The transit-countries row in the same task list is conditional and is correctly absent from all three captures.",
+    "prototype": "DR1 adds \"Identification details\" to the task list only when at least one selected species has identifier fields (app/routes.js:5776-5780, testing the rule at app/routes.js:1489-1493). The captured DR1 hub, with no species chosen, has no identification row: its second section holds Commodity details and Additional details and nothing else.",
+    "difference": "Mark the identification row conditional so it disappears when no commodity line needs identifiers, the way the transit-countries row already does. Without it a user importing a species with no identifier requirement is shown a task that can never be completed, and a user who has chosen nothing yet is shown a task about animals they have not named.",
+    "falsifiedBy": "A frontend hub for a notification with no commodity lines that does not list an animal identification row."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:39-43",
+    "prototype": "app/routes.js:5776-5780"
+  },
+  "relatedTo": []
+}

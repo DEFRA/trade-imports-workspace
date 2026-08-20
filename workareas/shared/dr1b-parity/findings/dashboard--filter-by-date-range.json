@@ -1,0 +1,24 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 lets you filter the dashboard by date — today, tomorrow, the next seven days, or a start and end date picked from a calendar; the frontend has no date filter.",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "dr1-dashboard-filters-open",
+    "dr1-dashboard-filters-date-picker-open"
+  ],
+  "controls": ["dateRange", "startDate", "endDate"],
+  "finding": {
+    "frontend": "The frontend filter panel offers a keyword box and a Search button (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56). Date appears only in the sort control, where a user can order the list by arrival or by date created (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36), but never narrow it to a period. Somebody with consignments arriving all month cannot ask which ones arrive this week.",
+    "prototype": "DR1's third filter section, \"By date\", holds a set of three radios — Today, Tomorrow, Next seven days — then a \"Select date range\" block hinting \"For example, 27/3/2026\" with a Start date and an End date, each an MoJ date-picker input with a calendar button (app/views/dashboard.html:163-221). Pressing the calendar opens a month dialog with year and month navigation and Select and Close buttons, which is the whole of the dr1-dashboard-filters-date-picker-open screen. Nothing on the frontend corresponds because the frontend has no date field for a picker to hang off.",
+    "difference": "Add a date section to the filter form: three preset radios and a start and end date pair. Whether the dates filter on arrival date or on date created has to be settled — DR1 shows \"Arrival date at destination\" on every card and nothing else date-like, which points at arrival. The list endpoint has to accept a date range. The calendar itself is an MoJ Frontend component the frontend does not currently load, so either that dependency is added or the two dates are asked with the GOV.UK date input; a plain text box with a hint is not what DR1 shows.",
+    "falsifiedBy": "Finding any control on the frontend dashboard that narrows the list to a date or a period."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
+    "prototype": "app/views/dashboard.html:163-221"
+  }
+}

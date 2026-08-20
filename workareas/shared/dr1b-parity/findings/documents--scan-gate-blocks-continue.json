@@ -1,0 +1,26 @@
+{
+  "slice": "documents",
+  "title": "The frontend refuses to let a trader continue while any document is still being scanned, and offers a manual refresh link; DR1 lets them continue and finishes the check by itself.",
+  "domain": "documents",
+  "type": "obligation-change",
+  "band": "disputed",
+  "confidence": "medium",
+  "screens": [
+    "fe-documents-populated",
+    "dr1-upload-documents-populated-scanning"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Refresh virus scan status" },
+    { "kind": "label", "text": "Continue" }
+  ],
+  "finding": {
+    "frontend": "Pressing Continue while any document's scan is unsettled re-renders the page with the summary error \"You cannot continue until all documents have been scanned or removed\" (src/server/app/sets/live-animals/journeys/linear/features/documents/scan/summary-errors.js:21-24, fired from src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:272-277); a document whose scan came back rejected is named instead, file by file. While a scan is pending the page also offers a \"Refresh virus scan status\" link for traders without JavaScript, and a hidden timeout line reading \"Still checking some documents. Refresh again in a moment.\" (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:82-87). Neither captured frontend state is mid-scan, so this is read from source.",
+    "prototype": "DR1's continue path has no scan check at all: it validates the add form when a document type has been chosen, saves, and moves on regardless of what any row's tag says (app/routes.js:10174-10193). dr1-upload-documents-populated-scanning shows a document tagged \"Scanning for virus\" with Save and continue live beside it and no error, and dr1-upload-documents-limit-error shows fifteen rows all mid-scan on a page whose only complaint is the file count. There is no refresh control anywhere; the tag settles on its own.",
+    "difference": "What is not in doubt is the difference: a frontend trader is held on the page until every scan settles, a DR1 trader is not. What cannot be settled from the evidence is whether DR1 is stating a requirement or simply not modelling one. Its virus check is a fiction — a browser-side timer posts to a stub endpoint after a fixed delay and flips the row to passed, and no path in the prototype can ever produce a failed check (app/routes.js:9026 and 10124-10132) — so a design that never has a failure to catch would not need a gate whether or not the real service does. Settle it with a designer: if a real submission must not carry an unscanned or infected attachment, the frontend's gate is right and DR1 is silent rather than contrary, and this finding should be struck. If a trader is meant to be able to continue and be told later, the gate and the refresh link both come out.",
+    "falsifiedBy": "Finding any statement in DR1 — on the page, in the hub, or on the check-answers page — that a notification may be submitted while a document is still being scanned, or that it may not."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/scan/summary-errors.js:21-24",
+    "prototype": "app/routes.js:10174-10193"
+  }
+}

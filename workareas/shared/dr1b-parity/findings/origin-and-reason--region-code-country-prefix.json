@@ -1,0 +1,32 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 fills in the selected country's code as a fixed prefix and asks only for the part after it; the frontend asks the user to type the whole region of origin code into a field capped at five characters.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["regionOfOriginCode", "regionOfOriginCodeSuffix"],
+  "finding": {
+    "frontend": "Answering Yes reveals one text input labelled \"Region of origin code\", hinted \"For example, FR-75\", five characters wide and with no prefix shown. The user types the country part and the region part together, and the whole string is capped at five characters by src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:37 and :71-75, whose error reads \"Region of origin code must be 5 characters or less\". The example in the hint, FR-75, is itself exactly five characters, so any code with a longer region part cannot be entered.",
+    "prototype": "Answering Yes reveals a field labelled \"Enter the region of origin code\" hinted \"Enter up to 5 characters.\", with the selected country's code shown as a read-only prefix attached to the left of the input. The user types only the part after it and the prototype joins the two with a hyphen on submit. The prefix is looked up from the chosen country, so Ceuta (Spain) gives XC and Melilla (Spain) gives XL rather than the parent country's ES.",
+    "difference": "Split the field: show the selected country's code as a prefix and collect only the suffix, capping the suffix at five characters rather than the whole code. The stored value should still be the joined code, so nothing downstream needs to change shape. The prefix depends on knowing a code per country including the territories, which is where this meets the country-list finding — Ceuta and Melilla have their own prefixes, not their parent's. If the country control becomes a search box the prefix has to update as the search selection changes, not only on page load.",
+    "falsifiedBy": "Finding a country prefix rendered beside the frontend's region-of-origin code input — the captured DOM at fe-origin shows a bare govuk-input with no govuk-input__prefix and no wrapper."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:24-34",
+    "prototype": "app/views/partials/region-of-origin-code-input.html:14-30"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--country-list-omits-territories",
+      "relation": "travels-with",
+      "why": "the prefix is looked up per country, and the territories DR1 adds carry their own codes"
+    },
+    {
+      "id": "origin-and-reason--region-code-not-required",
+      "relation": "travels-with",
+      "why": "both change the same revealed field, so they are cheapest done in one pass"
+    }
+  ]
+}

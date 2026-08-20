@@ -1,0 +1,24 @@
+{
+  "slice": "documents",
+  "title": "DR1 tells the trader that JPG files are allowed and that ZIP files are not; the frontend's file requirements say neither.",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "fe-documents-populated",
+    "dr1-upload-documents"
+  ],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The file requirements hint has two bullets: a size and \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\". JPG is missing from that sentence even though the field accepts it — the list is built by de-duplicating the allowed types on MIME type, and .jpg shares image/jpeg with .jpeg, so it is dropped from the label while staying in the input's accept attribute and in the server-side check (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:3-38). Nothing says ZIP is refused; a trader who picks one learns it only after submitting, from \"The selected file must be a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\".",
+    "prototype": "DR1's list has four bullets, two of which the frontend has no counterpart for: \"PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX\" names JPG explicitly, and \"ZIP files are not allowed for security reasons\" states the prohibition and the reason before the trader chooses a file (app/views/upload-documents.html:165-170).",
+    "difference": "Name JPG in the allowed-types sentence and add DR1's ZIP line to the file requirements list. The types sentence is generated rather than written, so the de-duplication that hides .jpg has to go — build the label from the extensions, not from the MIME types, or the two files that share image/jpeg will keep collapsing to one. The ZIP line is static copy for both languages. Neither changes what the field accepts.",
+    "falsifiedBy": "Finding JPG or ZIP named anywhere in the frontend's file requirements before a file is submitted."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:3-38",
+    "prototype": "app/views/upload-documents.html:165-170"
+  }
+}

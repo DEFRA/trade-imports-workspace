@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "DR1 always shows a Documents section on the review page with an Uploaded documents card, even when nothing has been uploaded; the frontend drops the whole section when the document list is empty.",
+  "domain": "review",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification", "dr1-review-notification-incomplete"],
+  "controls": [{ "kind": "label", "text": "Uploaded documents" }],
+  "finding": {
+    "frontend": "The captured review page has no Documents section and no documents card at all: it runs \"3. Addresses\" straight into \"Now submit your notification\". That is not because the frontend cannot summarise documents — it can — but because the section is conditional on there being at least one. src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js returns null when the collection is empty, src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js:9-18 turns that null into no section, and src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:20 drops it from the list. So a user who has uploaded nothing gets no reminder on the review page that documents exist as a thing they could have attached, and no Change link to go and attach one.",
+    "prototype": "DR1 renders \"4. Documents\", the subsection heading \"Upload documents\" and the \"Uploaded documents\" card unconditionally — app/views/review-notification.html:157-165. In both captured DR1 states the card is present with an empty body and a working Change link to the upload page, so the section is visibly there and visibly empty. DR1 does not treat missing documents as an error — the incomplete state's error summary lists five other cards and not this one — so the section is a standing prompt rather than a blocker.",
+    "difference": "Make the documents section unconditional: return the card with an empty body rather than null, and keep the Change link so the user can reach the upload page from the review page. The card's own row content is unaffected. Do this as part of the six-section layout so the section lands with its DR1 number and subsection heading rather than as a fourth section tacked on the end.",
+    "falsifiedBy": "Finding a \"Documents\" heading or an \"Uploaded documents\" card on the frontend review page for a notification with no documents attached."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js:9-18",
+    "prototype": "app/views/review-notification.html:157-165"
+  },
+  "relatedTo": [
+    {
+      "id": "review--section-structure",
+      "relation": "travels-with",
+      "why": "the section's number and subsection heading come from the six-section layout"
+    }
+  ]
+}

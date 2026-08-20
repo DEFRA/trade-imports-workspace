@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "DR1 shows \"Not applicable\" against a question the notification never had to answer; the frontend shows \"Not provided\", which reads as an omission.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": [{ "kind": "label", "text": "Not provided" }],
+  "finding": {
+    "frontend": "Every blank value on the review page renders as \"Not provided\" — three times on the captured page, against Region of origin code, Internal reference number and Number of packages. It is one string, src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3, applied by src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:15-17 to any value the answer model treats as blank, whatever the reason it is blank. \"Not provided\" reads as a reproach: it tells the user something was expected of them and they did not do it, even where the question never applied.",
+    "prototype": "DR1 renders the same rows as \"Not applicable\" — app/routes.js:4065-4070 — which says the opposite: the question had no bearing on this notification and no action is owed. DR1 keeps a separate treatment, an empty value marked \"Missing\", for a value the service actually still needs, and uses it only inside a card the error summary has already flagged. So the two cases a user can be in are told apart by the words on the page.",
+    "difference": "Replace the single \"Not provided\" string with \"Not applicable\" for a question that did not apply, in both the English and Welsh copy. Keep it distinct from the missing-value treatment that the incomplete review state introduces, so the page never uses one form of words for both a question that was never asked and one that still needs an answer.",
+    "falsifiedBy": "Finding \"Not applicable\" rendered against any blank row on the frontend review page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3",
+    "prototype": "app/routes.js:4065-4070"
+  },
+  "relatedTo": [
+    {
+      "id": "review--incomplete-state",
+      "relation": "travels-with",
+      "why": "the incomplete state introduces the missing-value treatment this placeholder has to be distinguished from"
+    }
+  ]
+}

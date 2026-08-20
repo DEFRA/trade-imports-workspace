@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "DR1 gives each review card a single Change link in its title; the frontend puts a Change link on every row, and two identically-labelled ones on the species card.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification"],
+  "controls": [{ "kind": "label", "text": "Change" }],
+  "finding": {
+    "frontend": "Almost every summary row carries its own Change link in a third column — twenty-two of them on the captured page. They are built by src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21, which attaches a change action to each row, and each one targets the page that collects that single answer. Several rows in the same card resolve to the same page, so the card for arrival details offers four separate links to the same port-of-entry page. On the species card the pattern breaks visibly: the card title carries two links side by side, both showing the word \"Change\" and distinguished only by visually hidden text (\"commodity 1\" and \"animal identifiers for commodity 1\"), so a sighted user meets \"Change  Change\" with nothing to choose between them.",
+    "prototype": "DR1 puts exactly one Change link in each card's title bar and none on any row — app/views/partials/review-summary-card.html:22-28. One card, one place to go back to. The link is dropped altogether when the card is read-only, because the same macro renders it only when the card carries a change target.",
+    "difference": "Move the change action from the row to the card: drop the per-row actions in summary-row.js, give each card a single change target aimed at the page that section starts on, and render it in the card title. The species card then has one link rather than two, which removes the duplicate visible label. This depends on the six-section layout — which card a Change link belongs to is decided by that regrouping — so do it in the same pass or immediately after.",
+    "falsifiedBy": "Finding the frontend review page rendering a card whose rows carry no Change links, or a card title bar with exactly one Change link."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21",
+    "prototype": "app/views/partials/review-summary-card.html:22-28"
+  },
+  "relatedTo": [
+    {
+      "id": "review--section-structure",
+      "relation": "travels-with",
+      "why": "which page a card's single Change link targets is settled by the DR1 card grouping"
+    }
+  ]
+}

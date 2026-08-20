@@ -1,0 +1,27 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 stops a user who says the consignment has a region of origin code but leaves the code blank; the frontend lets them continue with nothing entered.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["regionOfOriginCode", "regionOfOriginCodeSuffix"],
+  "finding": {
+    "frontend": "The origin page's only rule about the region code is a maximum length. src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-86 composes a required rule for the country, an allowed-values rule for the Yes/No answer and maxText rules for the code and the internal reference, and there is no rule tying the code to the Yes answer. The feature's copy file carries errors for a missing country and for an over-long code but none for a missing code, at src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js:21-28. Choosing Yes and pressing Save and continue with the revealed field empty therefore saves and moves on.",
+    "prototype": "Choosing Yes and leaving the code blank is rejected: DR1 raises \"Enter the region of origin code\" against the revealed field and lists it in the \"There is a problem\" summary, linked to the input. It is the only rule DR1 enforces on this page.",
+    "difference": "Add a rule that requires the region of origin code when the region-of-origin question is answered Yes, with the message \"Enter the region of origin code\", and leave it out of scope when the answer is No. One validator and one copy string. Sequence it with the prefix change to the same field so the required rule lands on whichever control ends up collecting the code.",
+    "falsifiedBy": "Submitting the frontend's origin page with the region question answered Yes and the code empty and being stopped — no error state for this page was captured on either side, so the claim rests on the composed rule list in the origin controller, which has no required rule for regionOfOriginCode."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-86",
+    "prototype": "app/routes.js:246-263"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--region-code-country-prefix",
+      "relation": "travels-with",
+      "why": "both change the same revealed field, so they are cheapest done in one pass"
+    }
+  ]
+}

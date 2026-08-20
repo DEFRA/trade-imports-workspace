@@ -1,0 +1,39 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 asks the reason for import and everything that reason reveals on one page; the frontend sends the user through up to three further pages to answer the same follow-up questions.",
+  "domain": "origin",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-import-reason",
+    "fe-import-purpose",
+    "fe-destination-country",
+    "fe-port-of-exit",
+    "fe-exit-date",
+    "dr1-reason-for-import",
+    "dr1-reason-for-import-internal-market-revealed",
+    "dr1-reason-for-import-transhipment-revealed",
+    "dr1-reason-for-import-transit-revealed",
+    "dr1-reason-for-import-temporary-admission-horses-revealed",
+    "dr1-reason-for-import-error"
+  ],
+  "controls": ["reasonForImport"],
+  "finding": {
+    "frontend": "The user picks one of five reasons on its own page and presses Save and continue, and the follow-up questions arrive as separate pages afterwards, one field per page. Internal market leads to a Purpose in the internal market page; Transhipment or onward travel leads to a Destination country page; Transit leads to a Port of exit page and then a Destination country page; Temporary admission horses leads to an Exit date page and then a Port of exit page; Re-entry leads straight on. Each is a distinct route with its own heading, its own Save and continue and its own error page, and each is a distinct row in the hub task list. The five pages are declared as five entries in one flow section in src/server/app/sets/live-animals/journeys/linear/flow/flow.js:48-58, and which of them a user meets is decided by the four gates in src/server/app/sets/live-animals/obligations/sections/import-reason.js:43-116.",
+    "prototype": "DR1 asks all of it on /reason-for-import. The five reasons are radios, and four of them carry a govuk-radios conditional reveal that opens in place under the chosen option: Internal market reveals the eleven purpose radios, Transhipment or onward travel reveals Destination country, Transit reveals Port of exit and then Destination country, and Temporary admission horses reveals Exit date and then Port of exit. Re-entry reveals nothing. One Save and continue submits the reason and whatever it revealed together, and a missing answer inside a reveal is reported on the same page against the revealed field, as dr1-reason-for-import-error shows with the summary link \"Select a purpose in the internal market\" pointing at the internal-market radios inside the open reveal.",
+    "difference": "Fold the four follow-up pages back into the reason page as conditional reveals, so a user answers the reason and its consequences in one submit. The four gates already encode exactly the right conditions and do not change — this is a change of where the questions are rendered and validated, not of when they apply. The work is: render the purpose radios, destination country, port of exit and exit date as conditional HTML on the reason page in the order DR1 shows them (transit: port of exit above destination country; temporary admission: exit date above port of exit); validate reason and the revealed field in one pass and return errors against the revealed control; collapse the five hub task rows into one; and adopt DR1's page heading, which is a separate finding because it can be done on its own. Purge-on-flip already drops answers that go out of scope when the reason changes, so no state work is implied. Do this before the smaller findings that edit those pages' controls, or expect to move that work twice.",
+    "falsifiedBy": "Finding that the frontend renders any of purposeInInternalMarket, destinationCountry, portOfExit or exitDate inside the import-reason page rather than at its own URL — the captured DOM for fe-import-reason contains only the reasonForImport radios and no conditional container."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:48-58",
+    "prototype": "app/views/reason-for-import.html:47-62"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--main-reason-page-heading",
+      "relation": "travels-with",
+      "why": "merging the pages brings DR1's page heading with it, but the heading can also be fixed on its own"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 requires every identifier its commodity defines before an animal counts as identified; the frontend accepts any one of them",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "fe-animal-identification-saved", "dr1-animal-identification-details"],
+  "controls": ["animalIdentifierPassport-0"],
+  "finding": {
+    "frontend": "Every identifier obligation is declared optional in src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:113-198, and the animal record above them requires only that one of the six is filled — `requires.anyOfIds` at :88-102, error code `obligation.unitRecord.identifiersRequired`. The save path matches: src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:22-23 counts a card as holding data when a single box is non-empty, and :124-135 raises the \"at least one identifier\" error only when the whole card is blank. So a cow entered with an ear tag and nothing else is a complete animal, and the passport and tattoo boxes can be left empty for good.",
+    "prototype": "DR1 treats an animal as identified only when every field its commodity defines carries a value — `isAnimalIdentifierEntryComplete` in app/routes.js:1526-1532 tests `fields.every(...)`. A cattle animal saved with an ear tag but no passport does not advance the counter and does not appear in the saved list: the panel's active animal stays on the same index (:1585-1603) and the saved rows are filtered to complete entries only (:1622-1625). The user is pushed back to the same box until both are filled.",
+    "difference": "Change the animal record's requirement from any-one-of to all-applicable: the six identifier obligations become mandatory where their commodity gate applies, and the `anyOfIds` requirement in identifiers.js:88-102 is replaced by per-field required errors. That means a required-field message per empty identifier rather than one \"at least one identifier\" message, so the error copy in the commodities copy file needs a per-field entry, and the empty-form guard in forms.js:124-135 is superseded. Check first whether the free-text fallback pair — Identification details and Animal description — should both become mandatory under the same rule, since DR1 has no commodity that pairs two free-text identifiers.",
+    "falsifiedBy": "Saving a DR1 cattle animal with an ear tag and an empty passport and seeing it appear in the saved-animals list with the counter advancing to the next animal."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-102",
+    "prototype": "app/routes.js:1526-1532"
+  }
+}

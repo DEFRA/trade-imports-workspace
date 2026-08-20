@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "DR1 shows each transporter's type, approval status and a link to its full details; the frontend shows only a name, an address and an approval number.",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-commercial", "dr1-transporter"],
+  "controls": [{ "kind": "field", "name": "commercialTransporter" }],
+  "finding": {
+    "frontend": "Each transporter is one radio whose label is the name and whose hint is the address and approval number run together — \"43 East Hague Extension, …, Switzerland — approval number ES-T2-45001294\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:92-93). There is no type, no approval status and no way to see anything more about a transporter before choosing it. A user picking between two similar names has only the address to go on.",
+    "prototype": "The transporters are a table with a header row and six columns — Name, Address, Approval number, Type, Status and a per-row link (app/views/transporter.html:113-153). Type reads \"Commercial\" or \"Private\". Status is a coloured tag, \"Approved\" or \"New\". The last column is a \"View details\" link to that transporter's own page.",
+    "difference": "Render the transporter list as a table with the DR1 columns rather than as radio hints: add Type, add the approval-status tag, and add a per-row link to the transporter's details. The status tag needs a source of truth for whether a transporter is approved or newly added, which the frontend's fixed record list does not carry today (src/server/app/services/commercial-transporters/records.js:6-27), so that field has to be added to whatever supplies the list. Do it with the search field, which changes the same list.",
+    "falsifiedBy": "Finding a status, type or details link anywhere on fe-transporter-commercial — the captured DOM for that screen has one fieldset containing two radios and their hints, and no table element at all."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23",
+    "prototype": "app/views/transporter.html:113-153"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-directory-has-no-search",
+      "relation": "travels-with",
+      "why": "both rebuild the same transporter list"
+    }
+  ]
+}

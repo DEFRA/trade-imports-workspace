@@ -1,0 +1,20 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 lets you search the dashboard by commodity and by consignee or importer as well as by keyword; the frontend offers a keyword box alone.",
+  "domain": "dashboard",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard-filters-open"],
+  "controls": ["commodity", "consignee"],
+  "finding": {
+    "frontend": "The frontend's filter panel holds one text input labelled \"Keyword or reference\" and a Search button, and nothing else (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56, labels at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:9-14). Its value reaches the list read as referenceNumber and is the only filter the read accepts (src/server/app/engine/journey.js:92-119). A user with a long list who knows the commodity or the consignee but not the reference has to read the whole list.",
+    "prototype": "DR1's filter panel opens with a \"Search by\" group holding three inputs: \"Keyword or notification number\", \"Commodity code or name\" and \"Consignee/Importer\" (app/views/dashboard.html:87-131). Each is a free-text box, and the panel's own cards show why the second is useful — DR1 lists the commodity on every row as a code such as 010410 or 05111000.",
+    "difference": "Add two text inputs to the filter form, named commodity and consignee, and carry both through the list read alongside the existing reference search. The list endpoint has to accept them, so the backend query lands first. While the fieldset is being rebuilt, the existing box's label becomes \"Keyword or notification number\" — DR1's wording — rather than \"Keyword or reference\".",
+    "falsifiedBy": "Finding any control on the frontend dashboard that narrows the list by commodity or by consignee."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
+    "prototype": "app/views/dashboard.html:87-131"
+  }
+}

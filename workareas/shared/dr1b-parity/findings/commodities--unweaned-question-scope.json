@@ -1,0 +1,25 @@
+{
+  "slice": "commodities",
+  "title": "DR1 asks whether the consignment contains unweaned animals only when it holds cattle or pigs; the frontend also asks it for a horse-only consignment.",
+  "domain": "commodities",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-additional-details",
+    "dr1-additional-animal-details"
+  ],
+  "controls": [
+    { "kind": "field", "name": "containsUnweanedAnimals" }
+  ],
+  "finding": {
+    "frontend": "The unweaned question is rendered when the notification's scope holds containsUnweanedAnimals (src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:26-39), and the obligation puts it in scope when any commodity line's commodity is on an allow-list (src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:46-55). That allow-list is Cow and Horse, the only two of the frontend's five commodities on it. So a user importing horses alone is asked whether the consignment contains unweaned animals, and must answer before continuing.",
+    "prototype": "DR1 renders the question only when at least one selected commodity carries unweaned options, and only cattle and pig carry them — horse does not (app/data/commodities.js:11-60). DR1 additionally suppresses the question outright when every selected commodity is 01061900, which covers cat, dog and ferret. So on DR1 a horse-only consignment reaches this page, is asked what the animals are certified for, and is not asked the unweaned question at all.",
+    "difference": "Narrow the unweaned obligation so horses no longer trigger it, leaving cattle as the only frontend commodity that does; pigs would join it if the wider catalogue lands (commodities--commodity-catalogue). Before making the change, settle the contradiction: the frontend's obligation names its source as the V4 data fields and lists equines, cattle, pigs, sheep and goats, while DR1 records unweaned options against cattle and pig alone. One of the two is out of date and the designer has to say which.",
+    "falsifiedBy": "Opening DR1's additional-details page with only a horse species selected and finding the unweaned question rendered. Neither side was captured in that state — both captures are cattle consignments, where both sides ask the question — so this rests on the two rule definitions rather than on the pictures."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:46-55",
+    "prototype": "app/data/commodities.js:11-60"
+  }
+}

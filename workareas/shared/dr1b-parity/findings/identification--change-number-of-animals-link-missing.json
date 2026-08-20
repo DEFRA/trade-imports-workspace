@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 puts a \"Change number of animals\" link on every species panel; the frontend gives no way back to the count from the identification page",
+  "domain": "identification",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "fe-animal-identification-at-maximum", "dr1-animal-identification-details"],
+  "controls": [{ "kind": "label", "text": "Change number of animals" }],
+  "finding": {
+    "frontend": "Each card is headed with the commodity, its code and the species — \"Cow (0102) — Bos taurus\" — and then the counter \"Enter details for Bos taurus 1 of 1\". Nothing on the card links back to where that number was set. The card markup in src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:9-11 has a heading and no link. This bites hardest on fe-animal-identification-at-maximum, where the counter has been reached and the page says \"You have entered details for all 2 Bos taurus animals. Remove a record if you need to replace it.\" — a user who needs a third animal is told to remove one rather than to raise the count.",
+    "prototype": "DR1 gives every species panel a header bar carrying the species name on the left and a \"Change number of animals\" link on the right, going to /consignment-details where the count is set. It is in app/views/animal-identification-details.html:95-98 and it is visible on the Syncerus spp. panel in the dr1-animal-identification-details capture. DR1 shows it in the completed state too, because the header bar sits outside the panel body that the completeness test switches.",
+    "difference": "Add a per-card link to the consignment-details page, rendered in the card header beside the title in _identification-card.njk:9-11, present in both the entry state and the at-maximum state. The href is the same consignment-details route the journey already exposes. Once it is there, revisit the at-maximum sentence in the commodities copy file: it currently offers only removal as the way out, and with the link present raising the count becomes the other answer.",
+    "falsifiedBy": "Finding a link back to the number-of-animals question rendered on any frontend identification screen."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:9-11",
+    "prototype": "app/views/animal-identification-details.html:95-98"
+  }
+}

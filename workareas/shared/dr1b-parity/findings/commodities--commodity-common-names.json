@@ -1,0 +1,26 @@
+{
+  "slice": "commodities",
+  "title": "DR1 names commodities and species the way a user would — Cattle, and \"Domestic cattle (Bos taurus)\" — while the frontend says Cow and gives the Latin name alone.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-commodity-search",
+    "fe-consignment-details",
+    "dr1-what-are-you-importing-results"
+  ],
+  "controls": [
+    { "kind": "field", "name": "species" }
+  ],
+  "finding": {
+    "frontend": "Every species option is labelled with its scientific name and nothing else — Bison bison, Bos spp., Bos taurus, Bubalus bubalis, Equus caballus, Felis catus, Canis lupus familiaris, Salmo salar. The 0102 commodity is called Cow, in the checkbox legend \"Cow (0102)\" and again in the Common name column of the Selected commodities table on the consignment-details page. The labels come straight from the catalogue module, which stores only a scientific-name text per species (src/server/app/sets/live-animals/services/commodities/stub.js:18-25).",
+    "prototype": "DR1 stores a common name alongside the scientific name and shows both in the search results, as \"Domestic cattle (Bos taurus)\", \"African buffalo (Syncerus spp.)\", \"Water buffalo (Bubalus bubalis)\" and \"Yak (Poephagus spp.)\". Where a species has no common name recorded, the scientific name stands alone. DR1 calls the 0102 commodity Cattle, in the search result header \"Cattle (0102)\" and in the Common name column of its own selected-commodities summary (app/data/commodities.js:11-24).",
+    "difference": "Record a common name against every species in the frontend catalogue and render the option label as \"Common name (Scientific name)\", falling back to the scientific name alone where no common name exists. Rename the 0102 commodity from Cow to Cattle, which changes the checkbox legend on the commodity page and the Common name cell on the consignment-details page. Note that DR1 uses the scientific name alone for the per-species subheadings on its own commodity-details page, so this change belongs to the option labels and the summary table, not to those subheadings.",
+    "falsifiedBy": "Finding a common name rendered anywhere in the frontend's species labels, or DR1 rendering a bare scientific name for a species that has a common name recorded against it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:18-25",
+    "prototype": "app/data/commodities.js:11-24"
+  }
+}

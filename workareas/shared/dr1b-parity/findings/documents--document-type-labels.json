@@ -1,0 +1,31 @@
+{
+  "slice": "documents",
+  "title": "The frontend names the intra-trade health certificate \"ITAHC\" and carries a fourteenth document type, \"Health certificate\", that DR1 does not offer.",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-documents-populated",
+    "dr1-upload-documents",
+    "dr1-upload-documents-populated"
+  ],
+  "controls": ["documentType"],
+  "finding": {
+    "frontend": "Fourteen document types are defined, and the label the trader reads in the Document type column of the added-documents table is taken straight from that list (src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js:46-53). Two of the fourteen do not match DR1. ITAHC is labelled with the bare acronym, 'ITAHC', and there is an extra type, HEALTH_CERTIFICATE, labelled 'Health certificate' (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:26-42); the enum behind both is fourteen codes long (src/server/app/services/document-types/stub.js:1-16). The captured row happens to be a veterinary health certificate, whose label matches DR1 exactly, so the divergence is not visible in this corpus's pictures.",
+    "prototype": "DR1's list is thirteen types and spells the certificate out in full — \"Intra Trade Animal Health Certificate (ITAHC)\" — both in the select and in the Document type column of the saved table (app/views/upload-documents.html:116-129, fed by designReleaseDocumentTypeOptions at app/routes.js:9019-9022). It has no \"Health certificate\" type; that option exists in the prototype only in a testing variant of the list that DR1's journey never selects.",
+    "difference": "Relabel ITAHC as \"Intra Trade Animal Health Certificate (ITAHC)\" and drop HEALTH_CERTIFICATE from the offered types, in both the English and Welsh copy files. The label change is visible today, wherever a derived ITAHC record is listed; dropping the extra type only becomes visible once the Document type select exists, so the two land together. Removing a code from the enum needs a check that no saved record already carries HEALTH_CERTIFICATE — nothing can produce one but a file named for it, and the derivation makes that possible today.",
+    "falsifiedBy": "Finding the frontend rendering \"Intra Trade Animal Health Certificate (ITAHC)\" in the Document type column for a record whose derived type is ITAHC."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:26-42",
+    "prototype": "app/views/upload-documents.html:116-129"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--document-type-not-asked",
+      "relation": "travels-with",
+      "why": "the corrected list is what the new select must offer"
+    }
+  ]
+}

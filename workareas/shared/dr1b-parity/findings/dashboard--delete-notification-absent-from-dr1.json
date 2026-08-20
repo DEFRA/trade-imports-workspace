@@ -1,0 +1,30 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend lets a notification be deleted from the dashboard — a submitted one as readily as a draft — and DR1 defines no delete anywhere.",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": ["fe-delete-notification", "fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [
+    { "kind": "label", "text": "Delete" },
+    { "kind": "label", "text": "Yes, delete notification" }
+  ],
+  "finding": {
+    "frontend": "Every row on the frontend dashboard carries a Delete link (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-68). It opens a page of its own headed \"Delete this notification?\" whose only body text is \"This cannot be undone.\", offering a red \"Yes, delete notification\" button and a \"No, return to dashboard\" button (src/server/app/sets/live-animals/journeys/linear/features/delete-notification/copy/copy.en.js:1-6). The action is not limited to drafts: src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:19-22 admits draft, submitted and amending notifications alike, so a notification the authority has already received can be removed from the user's dashboard with one confirmation and no explanation of what that means. Underneath, the record is soft-deleted rather than destroyed, which the page's \"This cannot be undone.\" does not tell the user.",
+    "prototype": "DR1's dashboard row offers two actions and neither is delete: \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262). No DR1 root view, route or link mentions deleting a notification, and the only delete-notification page in the prototype checkout sits under the design-release-2 and design-release-2.1 subtrees, which are later releases and not on trial here. DR1 is not squeamish about deletion in general: its address book gives a saved address a red Delete button on its own view page (app/views/address-book-view.html:43-46). It simply never applies the idea to a notification.",
+    "difference": "This is a capability the implementation has and the signed-off design does not describe, so there is nothing to bring the frontend into line with and nothing here for a developer to pick up yet. It needs a designer's ruling, and the ruling has to answer three things rather than one: whether a user may delete a notification at all; if so, whether that includes one already submitted to the authority or drafts only; and what the confirmation should say, because \"This cannot be undone.\" is both the whole of the current explanation and not quite true of a soft delete. Until that is answered the finding cannot be settled either way. Nothing in the evidence can settle it — DR1's silence is equally consistent with delete being out of scope and with it having been overlooked.",
+    "falsifiedBy": "Finding a delete action, a delete confirmation, or any mention of removing a notification in a DR1 root view or route (app/views/*.html, not the design-release-2 or design-release-2.1 subtrees)."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:19-22",
+    "prototype": "app/views/dashboard.html:258-262"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--amend-journey-absent-from-dr1",
+      "relation": "travels-with",
+      "why": "the same designer's ruling covers both — what a user may do to a notification the authority has already received"
+    }
+  ]
+}

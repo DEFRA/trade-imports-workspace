@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 lists each saved animal by species name with a labelled column per identifier; the frontend labels the row \"Animal 1\" and runs the identifiers into one cell",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification-saved", "fe-animal-identification-at-maximum", "dr1-animal-identification-details"],
+  "controls": [{ "kind": "label", "text": "Animal 1" }],
+  "finding": {
+    "frontend": "Saved animals appear as a summary list, one row each, keyed \"Animal 1\", \"Animal 2\" and so on, with every identifier the user supplied joined into a single value cell — \"Ear tag: UK123456789012\" on fe-animal-identification-saved and both rows of fe-animal-identification-at-maximum. Identifiers left blank are omitted from the string rather than shown as empty, and a record with none reads \"No identifier provided\". The list has no header row, so nothing on the page names the columns. The markup is at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:12-24 and the joined string is built in the same feature's identifier/summary.js:9-19.",
+    "prototype": "DR1 renders the saved animals as a table with a header row — \"Animal\" followed by one heading per identifier the commodity defines, so a cattle line reads Animal / Ear tag / Passport. Each body row is keyed with the species name and the animal's number, \"Syncerus spp. 1\", and gives each identifier its own cell. It is in app/views/partials/animal-identification-saved-animals.html:1-28, with the rows built at app/routes.js:1788-1800. DR1's capture was taken before any animal was saved, so this table is unphotographed on the DR1 side.",
+    "difference": "Rebuild the saved-animal list in _identification-card.njk:12-24 as a table headed by the identifier labels for that commodity, one column per identifier, and key each row with the species name and index instead of \"Animal N\". The identifier labels are already available from the scoped field list the entry form uses, and identifier/summary.js:9-19 stops being the source of the display value — it would still be needed for the check-answers cards, which read the same joined string. The Remove action stays on the row.",
+    "falsifiedBy": "Saving two DR1 cattle animals and seeing a single joined value cell per row rather than an Ear tag column and a Passport column."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:12-24",
+    "prototype": "app/views/partials/animal-identification-saved-animals.html:1-28"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 opens the dashboard with an \"At a glance\" panel counting alerts, errors and messages; the frontend dashboard has no such panel.",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "fe-dashboard-empty", "dr1-dashboard"],
+  "controls": [{ "kind": "label", "text": "At a glance" }],
+  "finding": {
+    "frontend": "The frontend dashboard runs heading, introductory paragraph, start button, then straight into the \"Your notifications\" list, with nothing in between (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-36). Neither captured state — empty or populated — shows any count of outstanding items, and the page has no route to anything called alerts, errors or messages.",
+    "prototype": "DR1 places a section headed \"At a glance\" between the create button and the notification list (app/views/dashboard.html:40-77). It holds three cards side by side — Alerts, Errors and Messages — each with an icon, a large numeric count, and a link reading \"View alerts\", \"View errors\" or \"View messages\". All three counts read 0 in the capture, so the panel is present and populated even when there is nothing to report.",
+    "difference": "Add a three-card summary section to the dashboard between the start button and the notification list. The counts cannot be invented: nothing in the frontend's journey record carries alerts, errors or messages, and the list read (src/server/app/engine/journey.js:92-119) returns notification rows only. A per-user count of each of the three has to come from the backend before the panel can say anything true, and each of the three View links needs a destination that does not exist yet. Rendering three permanent zeroes would be worse than leaving the panel out.",
+    "falsifiedBy": "Finding any count of outstanding alerts, errors or messages rendered anywhere on the frontend dashboard."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-36",
+    "prototype": "app/views/dashboard.html:40-77"
+  }
+}

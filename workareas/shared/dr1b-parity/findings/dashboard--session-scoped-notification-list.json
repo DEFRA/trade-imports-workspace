@@ -1,0 +1,32 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend dashboard lists only the notifications started in the current browser session; DR1 lists the user's notifications however long ago they were made.",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-empty", "fe-dashboard-populated", "dr1-dashboard"],
+  "controls": [
+    {
+      "kind": "label",
+      "text": "You have not started any notifications in this session."
+    }
+  ],
+  "finding": {
+    "frontend": "The frontend's empty dashboard says so itself: \"You have not started any notifications in this session.\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:56, rendered at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:157-159). The list is built from the journey ids held in the session cookie and nothing else — src/server/app/engine/journey.js:92-119 reads those ids and passes them to the list query as a filter, and src/server/app/services/persistence/session/real.js:6-24 shows they live in the request's session store. A user who signs out, comes back tomorrow, or opens the service on a second device meets an empty dashboard, whatever they have created or submitted before.",
+    "prototype": "DR1 heads the list \"My notifications\" and shows four notifications belonging to the user, three of them submitted days earlier with an arrival date in the future and a status the authority has since set (app/views/dashboard.html:80-294). Two of the four read \"Submitted action required\", a state that can only be reached after the user has gone away and come back. DR1's status filter offers Approved, Rejected and Complete on the same terms, so the list is required to survive the session that created it.",
+    "difference": "The dashboard has to list the notifications belonging to the signed-in user or their organisation, not the ones this browser session happens to remember. That means the list read stops filtering on session-held journey ids and asks the backend for the caller's notifications instead, which needs the list endpoint to support an owner-scoped query and the records to carry an owner. Do this before the status work and the filter work: filtering a session's handful of drafts by status or arrival date has little to filter.",
+    "falsifiedBy": "Creating a notification, clearing the session cookie or opening the service in a second browser as the same user, and still finding that notification listed on the frontend dashboard."
+  },
+  "evidence": {
+    "frontend": "src/server/app/engine/journey.js:92-119",
+    "prototype": "app/views/dashboard.html:80-294"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--post-submission-statuses",
+      "relation": "travels-with",
+      "why": "this one comes first: the statuses DR1 shows change after the session that created the notification has ended, so they cannot be seen at all while the list is session-scoped"
+    }
+  ]
+}

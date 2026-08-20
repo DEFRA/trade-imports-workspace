@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "The frontend offers \"Save and add another\" even when the line holds a single animal; DR1 hides that button and renames it \"Save and finish\" for the last animal",
+  "domain": "identification",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "fe-animal-identification-horse", "fe-animal-identification-fish", "dr1-animal-identification-details"],
+  "controls": [{ "kind": "label", "text": "Save and add another" }],
+  "finding": {
+    "frontend": "The in-card action button always reads \"Save and add another\" and is always rendered while the card is below its cap — src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:71-76 emits it unconditionally in the not-at-maximum branch. All three species captures show it against a line of one animal: fe-animal-identification and fe-animal-identification-horse and fe-animal-identification-fish each read \"Enter details for … 1 of 1\" and still offer to add another, which the cardinality rule will then refuse.",
+    "prototype": "DR1 decides the in-card button per species panel in app/routes.js:1712-1721. When the line holds one animal the button is suppressed entirely and the user saves with the page-level Save and continue. When more than one animal remains the button reads \"Save and add another\", and on the last remaining animal it reads \"Save and finish\". The dr1-animal-identification-details capture is a two-animal line on its first animal, so it shows \"Save and add another\"; the one-animal and last-animal states were not photographed.",
+    "difference": "Drive the in-card button from the line's cap and the number of records already saved, in the card view model at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js:84-118: no button when the cap is one, \"Save and add another\" while more than one animal remains, \"Save and finish\" on the last. That needs two new strings in the commodities copy file and a submit value for the finish case, which the page-level finish action already handles. This is the button inside the species card, not the page-level Save and continue / Save and return pattern.",
+    "falsifiedBy": "Rendering DR1's identification page for a species whose consignment-details count is 1 and seeing a save button inside the panel."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:71-76",
+    "prototype": "app/routes.js:1712-1721"
+  }
+}

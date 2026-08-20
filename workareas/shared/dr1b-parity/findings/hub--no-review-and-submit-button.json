@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "DR1's hub ends with a \"Review and submit\" button a user can press at any point; the frontend replaces it with a \"Check and submit\" task row that stays shut until every other task is finished.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Check and submit", "Review and submit"],
+  "finding": {
+    "frontend": "The hub's last section is \"6. Check and submit\", holding a single row titled \"Check and submit\" with the hint \"Check your answers before you submit the notification\". It has no link and reads \"Cannot start yet\", and it stays that way until every task row is Completed, not applicable or optional (src/server/app/flow/section-status.js:11-15, consulted through the review section's gate in src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-84 and rendered at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:72-90). The only button on the page is \"Return to dashboard\" (src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:37-41), so there is no way to look over the notification before it is complete.",
+    "prototype": "DR1's hub has no review task row at all. Below the task list sit two buttons, a primary \"Review and submit\" linking to /review-notification and a secondary \"Return to dashboard\" (app/views/notification-hub.html:81-92). The link is fixed, so it works from the first visit, and DR1 has a designed state for arriving there early: an incomplete review that names what is still outstanding and lists what must be done before the import.",
+    "difference": "Replace the blocked \"Check and submit\" row with a \"Review and submit\" button that is always available, and let the review page itself say what is missing rather than the hub refusing to open it. This depends on the review page tolerating an incomplete notification, which the review slice covers; the hub change is the section, the row and the button.",
+    "falsifiedBy": "A frontend hub with unfinished tasks that still offers a working route to the check-your-answers page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:72-90",
+    "prototype": "app/views/notification-hub.html:81-92"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--tasks-blocked-until-origin-and-commodity-answered",
+      "relation": "travels-with",
+      "why": "both are the hub withholding a route the DR1 hub always offers"
+    }
+  ]
+}

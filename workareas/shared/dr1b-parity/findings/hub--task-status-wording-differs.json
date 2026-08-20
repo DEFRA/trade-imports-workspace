@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "DR1 labels a hub task either \"To do\" or \"Complete\"; the frontend calls the same two states \"Not yet started\" and \"Completed\" and adds a third, \"In progress\".",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Not yet started", "Completed", "In progress"],
+  "finding": {
+    "frontend": "The hub tags an untouched task \"Not yet started\" in blue, a finished one \"Completed\" in green and a part-finished one \"In progress\" in light blue; the captured hub shows all three at once against the first three rows. The wording is set in src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17 and mapped to the five internal states in src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:51-63.",
+    "prototype": "DR1 has two statuses and no more: \"To do\" in blue and \"Complete\" in green, chosen per row by a single completeness test (app/routes.js:5735-5736). A task that has been started but not finished still reads \"To do\".",
+    "difference": "Rename the tags to \"To do\" and \"Complete\", and decide what to do with the in-progress state DR1 does not define — either fold it into \"To do\" to match DR1, or keep it and record that the frontend deliberately says more than DR1 does. The \"Optional\" and \"Cannot start yet\" statuses the frontend also renders are separate findings.",
+    "falsifiedBy": "A frontend hub whose unfinished rows read \"To do\" and whose finished rows read \"Complete\"."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17",
+    "prototype": "app/routes.js:5735-5736"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--documents-marked-optional",
+      "relation": "travels-with",
+      "why": "the Optional tag is the fourth status the frontend renders and DR1 does not"
+    }
+  ]
+}

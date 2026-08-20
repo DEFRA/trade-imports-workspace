@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "A user importing horses for temporary entry is never offered the port of exit or exit date from the hub — the Exit details row reads \"Cannot start yet\" and never changes, while DR1 asks both questions on the reason page itself.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub-exit-details-blocked", "dr1-notification-hub"],
+  "controls": ["Exit details"],
+  "finding": {
+    "frontend": "The hub shows an \"Exit details\" row under \"1. About the consignment\" with the hint \"Where the consignment travels on to and when it leaves Great Britain\", no link, and the status \"Cannot start yet\" — while every other row on the same page, including Additional commodity details and Uploaded documents, is a working link. That combination pins the state down. A row is offered only if the first page behind it passes, and the Exit details row's first page is Destination country (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:34-38, src/server/app/flow/navigation.js:25). Pages later in the flow than Destination country are open, so the block is not a missing earlier answer; it is that the destination-country question is out of scope. The row is nonetheless shown rather than hidden, which only happens when at least one of its three questions is in scope (controller.js:93). The single reason for import that puts the port of exit and the exit date in scope while leaving the destination country out is \"For horses authorised for temporary entry\" (src/server/app/sets/live-animals/obligations/sections/import-reason.js:64-111). Because the row's status is overwritten with \"Cannot start yet\" regardless of progress (controller.js:95), it would still read that way after the questions were answered, and because the opening run steps straight from the reason page to animal identification (src/server/app/sets/live-animals/journeys/linear/flow/run.js:22-38) a first-time user is never asked them at all. The one route left is to reopen \"Main reason for importing\" from the hub and press \"Save and continue\", which walks on to the port of exit; nothing on the hub says so, and until those two answers exist the Check and submit row is blocked too, so from the hub alone the notification cannot be finished.",
+    "prototype": "DR1 has no exit-details task. The port of exit and the exit date are conditional reveals on the reason-for-import page (app/views/reason-for-import.html), so choosing temporary admission of horses shows both questions immediately, on the page where the choice was made, and the hub's \"Main reason for import\" row covers them.",
+    "difference": "Make the row's availability follow the questions that are actually in scope rather than the first page listed against it — the row should open on Port of exit when Destination country does not apply — and stop overwriting a blocked row's status, so a completed exit-details row reads Completed. The wider structural difference, that DR1 asks all four reason-dependent questions inline on one page while the frontend splits them across four, is a separate change owned by the origin-and-reason slice; this finding is only about the hub row being shut.",
+    "falsifiedBy": "A frontend hub capture for a notification whose reason for import is horses authorised for temporary entry in which the Exit details row is a link, or in which it reads Completed after the port of exit and exit date have been given."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93-124",
+    "prototype": "app/routes.js:5748-5768"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--tasks-blocked-until-origin-and-commodity-answered",
+      "relation": "travels-with",
+      "why": "the same row gate, applied to a case where it never releases"
+    }
+  ]
+}

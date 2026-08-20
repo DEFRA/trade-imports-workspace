@@ -1,0 +1,27 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 lets you filter the dashboard to one notification status; the frontend has no status filter.",
+  "domain": "dashboard",
+  "type": "add-field",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-dashboard-populated", "dr1-dashboard-filters-open"],
+  "controls": ["status"],
+  "finding": {
+    "frontend": "The frontend filter panel has one keyword box and a Search button (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56). Status appears on every row as a tag but there is no way to filter on it, so finding the drafts among a page of submitted notifications means reading each card.",
+    "prototype": "DR1 gives status its own collapsible section in the filter panel, holding a select labelled \"Status\" with eight options: \"Select one\" and then Draft, Submitted, In progress, Approved, Action required, Rejected and Complete (app/views/dashboard.html:133-161).",
+    "difference": "Add a status select to the filter form and pass the chosen value through the list read. Two things have to land first: the list endpoint must accept a status filter, and the frontend must have statuses worth filtering by — today it knows only Draft, Submitted, Amending and Deleted, so five of DR1's seven options would return nothing.",
+    "falsifiedBy": "Finding a status control in the frontend dashboard's filter panel."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
+    "prototype": "app/views/dashboard.html:133-161"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--post-submission-statuses",
+      "relation": "travels-with",
+      "why": "that one comes first: five of DR1's seven filter options name statuses the frontend cannot yet hold, so the filter is only useful once the statuses exist"
+    }
+  ]
+}

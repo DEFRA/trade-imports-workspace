@@ -1,0 +1,37 @@
+{
+  "slice": "transport",
+  "title": "DR1 lets the user add a commercial transporter that is not already in the directory; on the frontend a commercial transporter can only be picked from a fixed list, so an unlisted one cannot be used at all.",
+  "domain": "transport",
+  "type": "add-page",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transporter-commercial",
+    "dr1-transporter",
+    "dr1-transporter-add",
+    "dr1-transporter-add-commercial"
+  ],
+  "controls": [{ "kind": "label", "text": "Add a transporter" }],
+  "finding": {
+    "frontend": "Choosing \"Commercial\" leads to a list of approved commercial transporters and nothing else. There is no \"Add\" control on that page and no route to one — the transport feature holds exactly three pages: the type question, the commercial pick-list and the private-transporter form (src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:11-25). The list itself is a fixed pair of records held in the frontend (src/server/app/services/commercial-transporters/records.js:6-27). A user whose commercial transporter is not in the list is stuck: the only way onward is to declare the transporter private, which is a different answer to a different question.",
+    "prototype": "The transporter directory carries an \"Add a transporter\" secondary button below the list (app/views/transporter.html:160-165). It leads to \"Choose a transporter type\", warning \"Before you add this transporter, please ensure you have already searched for it first\" and offering Private transporter or Commercial, where Commercial is hinted \"This can only be a commercial transporter from Northern Ireland\". Choosing Commercial gives an \"Add commercial transporter\" page holding: an \"Important — Help with transporter authorisation\" panel repeating the DAERA/APHA authorisation rules; Transporter authorisation number; Name or organisation name; Address line 1; Address line 2 (optional); Town or city; County (optional); Postcode or Zip code; Country, which is locked to Northern Ireland and cannot be changed; then under an \"Enter contact details\" heading, Email address and Phone number. The added transporter joins the directory with the \"New\" status the list shows.",
+    "difference": "Build the add-a-transporter branch: an \"Add a transporter\" button on the commercial list, the type question as a branch of that button rather than as the section's entry, and an \"Add commercial transporter\" page carrying the fields above with the country fixed to Northern Ireland. The private form the frontend already has answers DR1's private branch. This depends on the transporter list becoming something a user can add to rather than a fixed list in the frontend, which is the same dependency as the \"New\" status tag. It also depends on the finding about where the type question sits, because DR1's add journey starts from the directory.",
+    "falsifiedBy": "Finding a route in the frontend that reaches a form for entering a commercial transporter by hand — the transport feature declares only port-of-entry, transit-countries, transporters, transporters/select and transporters/private."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/page.js:11-25",
+    "prototype": "app/views/transporter-add-commercial.html"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-type-asked-before-the-directory",
+      "relation": "depends-on",
+      "why": "DR1's add journey hangs off the directory, so the type question has to move first"
+    },
+    {
+      "id": "transport--transporter-list-omits-type-status-and-details",
+      "relation": "travels-with",
+      "why": "the \"New\" status tag only means something once a transporter can be added"
+    }
+  ]
+}

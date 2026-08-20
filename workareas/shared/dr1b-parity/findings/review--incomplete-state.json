@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "DR1 lets a user open the review page before the notification is finished and names every gap there — an error summary, a red message on each incomplete card and a marked-empty row for each missing answer; the frontend has no such state.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "dr1-review-notification-incomplete"],
+  "controls": [{ "kind": "label", "text": "There is a problem" }],
+  "finding": {
+    "frontend": "The frontend has one review page and it has no incomplete presentation at all. The route is ungated — src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:94 hands the GET straight to the renderer with no readiness check — so a user who types the URL does reach it while the notification is unfinished. What they meet is the ordinary summary: every unanswered question reads \"Not provided\" in the same grey as a real answer, there is no error summary, no card is flagged, nothing distinguishes an answer the user chose to leave blank from one the service still needs, and the page ends with a live Continue button that says nothing about what is missing. The frontend does not offer that page from anywhere in the interface: the hub's \"Check and submit\" row is rendered as unlinked plain text reading \"Cannot start yet\" until the readiness gate passes (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:65 and :81-82, gated by src/server/app/sets/live-animals/journeys/linear/flow/flow.js:82-85), and no answer page leads forward into review — every section returns to the hub. So the state exists but is unreachable by any route a user would find, and useless when reached.",
+    "prototype": "DR1 treats the review page as the place gaps are reported. Opening it on an unfinished notification shows a \"There is a problem\" error summary above the heading listing one link per incomplete card — in the captured state \"Complete additional details\", \"Complete arrival details\", \"Complete transport details\", \"Complete roles and addresses\" and \"Complete contact address for this consignment\", each anchored to its card (app/views/review-notification.html:32-37). Each named card then carries a red left-hand bar, a red error message repeating the same sentence, and every one of its rows shows the label with a visibly empty value marked up as missing for screen readers (app/views/partials/review-summary-row.html:15-24). Complete cards are untouched. The Continue button stays, and posting it re-renders the same page with the same errors rather than moving on. The prototype has no equivalent of \"Cannot start yet\" — the string appears nowhere in it — and its hub offers an always-enabled \"Review and submit\" button.",
+    "difference": "Build the incomplete state on the review page: compute which cards are short of a required answer, render a govuk error summary listing one entry per incomplete card anchored to that card, put a govuk error message inside each affected card, and render each missing row with an empty value carrying a visually hidden \"Missing\" rather than the \"Not provided\" placeholder. Then open the route — remove the readiness gate from the review section so the page can be reached while incomplete — and keep the existing submission guard, which already refuses an unready notification (src/server/app/engine/write/submit.js:9-15), so opening the page cannot let an unfinished notification through. Whoever owns the hub has to change the \"Check and submit\" row at the same time, because leaving it as \"Cannot start yet\" would leave the new state unreachable; agree that with them before landing. This depends on the six-section layout only for which card an error attaches to, so it can be built after that lands.",
+    "falsifiedBy": "Opening the frontend review page for a notification with unanswered required questions and finding an error summary, a flagged card, or any row rendered as missing rather than \"Not provided\"."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:82-85",
+    "prototype": "app/views/review-notification.html:32-37"
+  },
+  "relatedTo": [
+    {
+      "id": "review--unanswered-value-text",
+      "relation": "travels-with",
+      "why": "both decide what a row shows when it has no answer, and the two placeholders have to be told apart"
+    }
+  ]
+}

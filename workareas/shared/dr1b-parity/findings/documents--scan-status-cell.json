@@ -1,0 +1,27 @@
+{
+  "slice": "documents",
+  "title": "The frontend tags a scanned document \"Safe\" and a pending one \"Checking\"; DR1 tags them \"Check completed\" and \"Scanning for virus\", and says out loud which document each tag belongs to.",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-populated",
+    "dr1-upload-documents-populated",
+    "dr1-upload-documents-populated-scanning"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Safe" },
+    { "kind": "label", "text": "Check completed" }
+  ],
+  "finding": {
+    "frontend": "The Status column holds a bare tag and nothing else. The captured row shows a green \"Safe\"; the other three states the page can render are \"Checking\" (blue), \"Virus found\" (red) and \"Unknown\" (grey), all four carried in the copy file and also handed to the client bundle so it can rewrite the cell as a scan settles (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57, and the cell built at src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js:39-44). Because the tag is the only content of the cell, a screen reader reaching it hears \"Safe\" with nothing to say what is safe.",
+    "prototype": "DR1 uses two tags — green \"Check completed\" once the check has passed and blue \"Scanning for virus\" until then (app/views/upload-documents.html:213-224). Both captured: dr1-upload-documents-populated shows the completed tag, dr1-upload-documents-populated-scanning the same row mid-scan. Each cell also opens with a visually hidden sentence naming the record, \"Virus check status for ITAHC-2026-0001\", so the tag is never heard on its own.",
+    "difference": "Rename the two settled tags to \"Check completed\" and \"Scanning for virus\" in the English and Welsh copy, in the server-rendered cell and in the JSON the client bundle uses to rewrite it — they must change together or a page will flip wording as a scan finishes. Add the hidden \"Virus check status for <document reference>\" sentence ahead of the tag in the same cell. DR1 has no counterpart for the frontend's \"Virus found\" and \"Unknown\" tags because its virus check is simulated and can only pass, so those two keep their current wording and are not part of this change.",
+    "falsifiedBy": "Finding the frontend rendering \"Check completed\" or \"Scanning for virus\" in the Status column of the added-documents table."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57",
+    "prototype": "app/views/upload-documents.html:213-224"
+  }
+}

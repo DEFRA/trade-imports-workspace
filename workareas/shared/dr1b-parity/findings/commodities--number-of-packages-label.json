@@ -1,0 +1,25 @@
+{
+  "slice": "commodities",
+  "title": "DR1 labels the package count \"Number of packages (when required)\"; the frontend labels it \"(optional)\", which tells the user the opposite thing.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-consignment-details",
+    "dr1-consignment-details"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Number of packages (optional)" }
+  ],
+  "finding": {
+    "frontend": "The second input in each species block is labelled \"Number of packages (optional)\" with the hint \"Such as crates, bags or boxes\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:32-33). \"(optional)\" is the GOV.UK convention for a field the user may always leave blank, so a user importing a commodity that does need a package count is told they need not give one.",
+    "prototype": "The same input is labelled \"Number of packages (when required)\", with the same hint. DR1 stores the label against each commodity that has a package count at all (app/data/commodities.js:21-23) and the page renders whatever that commodity carries (app/views/consignment-details.html:116-131). The label says the field is conditional on the consignment, not discretionary.",
+    "difference": "Change the packages label from \"Number of packages (optional)\" to \"Number of packages (when required)\". Which commodities show the field at all already matches DR1 — both sides show it for cattle, horses, cats and dogs and withhold it for fish — so this is the label alone, not the rule behind it.",
+    "falsifiedBy": "Finding a frontend commodity where the packages field is genuinely always optional and DR1 shows it as \"when required\" for the same commodity, which would make the two labels describe different rules rather than the same rule worded two ways."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:32-33",
+    "prototype": "app/data/commodities.js:21-23"
+  }
+}

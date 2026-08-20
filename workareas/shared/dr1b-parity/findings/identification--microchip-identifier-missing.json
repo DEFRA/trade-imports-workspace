@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 asks for a microchip number when identifying horses, cats and dogs; the frontend never asks for one",
+  "domain": "identification",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification-horse", "dr1-animal-identification-details"],
+  "controls": [{ "kind": "label", "text": "Microchip" }],
+  "finding": {
+    "frontend": "Identifying a horse offers two boxes, Passport number and Horse name, and nothing else — that is the whole entry form on fe-animal-identification-horse. Cats and dogs get Passport number and Tattoo. No screen in the service asks for a microchip number, and no field exists for one: the identifier set is fixed at six obligations in src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:113-198 — passport, tattoo, ear tag, horse name, identification details, description — with the labels in src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-79. The only occurrence of the word microchip in the whole application is a test fixture typing \"Microchip 900123\" into the free-text identification-details box.",
+    "prototype": "DR1 defines a microchip as an identifier on two commodity codes in app/data/commodity-identifiers.js:3-20 — 0101 (Horse), where the set is Microchip, Passport, Horse name, and 01061900 (Cat, Dog, Ferret, Other live mammals), where the set is Microchip, Passport, Tattoo. It is the first field in both sets, so on the identification page a horse, cat or dog line opens with a Microchip box above the others.",
+    "difference": "Add a microchip identifier to the six-obligation identifier set: a new obligation in identifiers.js allow-listed to Horse, Cat and Dog, its label and hint in the commodities copy file, and its inclusion in the free-text fallback's inverse gate so a microchip commodity stops falling through to Identification details. DR1 places it first in the horse and cat/dog sets, so the field order changes too. Nothing blocks this in the frontend, but the value has to reach the notification payload, so check the identifier mapping in src/server/app/services/persistence/records/notification-mapper/ carries a sixth identifier before the field is added.",
+    "falsifiedBy": "Finding a microchip input rendered on any frontend identification screen, or any commodity whose scoped field list in src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:27-30 resolves to a microchip field."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:113-198",
+    "prototype": "app/data/commodity-identifiers.js:3-20"
+  }
+}

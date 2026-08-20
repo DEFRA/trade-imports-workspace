@@ -1,0 +1,36 @@
+{
+  "slice": "transport",
+  "title": "DR1 has the user add transit countries one at a time by searching, and lists what they added with a Remove link beside each; the frontend offers a flat list of 31 checkboxes, so the order the consignment passes through is never recorded.",
+  "domain": "transport",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transit-countries",
+    "dr1-transit-countries",
+    "dr1-transit-countries-selected"
+  ],
+  "controls": [{ "kind": "field", "name": "transitedCountries" }],
+  "finding": {
+    "frontend": "Under the label \"Select all countries the consignment will travel through\" the page renders every country as a checkbox in one alphabetical column, thirty-one of them from Austria to Switzerland, and the user scrolls and ticks (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:22-27). What is stored is a set, deduplicated and unordered (:61-65). There is no search, nothing shows back which countries have been chosen apart from the ticks themselves, and there is nothing to remove — a user un-ticks. Nothing anywhere records that the consignment passes through France before Belgium.",
+    "prototype": "The page asks \"Enter a country\", hinted \"Enter each country that the consignment will travel through\", over a single search box placeholdered \"Search for a country\" (app/views/transit-countries.html:56-115). Each country the user picks is appended to a list below headed \"Country\", one row each, with a \"Remove\" link on the right. The list keeps the order they were added in, and the review page prints them in that order.",
+    "difference": "Replace the checkbox list with a country search that appends to a growing, removable list, and store the answer as an ordered sequence rather than a set. This changes what the answer means as well as how it is collected, so the stored shape and anything that reads it — the hub, the review page, the submitted payload — has to accept an ordered list. It travels with the two findings about the rules the frontend puts on this field, since all three change the same control.",
+    "falsifiedBy": "Finding a search input or a remove control on fe-transit-countries — the captured DOM for that screen is one checkbox group and the Save buttons."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:16-23",
+    "prototype": "app/views/transit-countries.html:56-140"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transit-countries-must-not-be-empty",
+      "relation": "travels-with",
+      "why": "same control, same page"
+    },
+    {
+      "id": "transport--transit-countries-capped-at-twelve",
+      "relation": "travels-with",
+      "why": "same control, same page"
+    }
+  ]
+}

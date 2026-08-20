@@ -1,0 +1,27 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 heads the reason page \"Main reason for import\" and keeps the question itself off screen; the frontend uses the long question as the page heading instead.",
+  "domain": "origin",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-import-reason", "dr1-reason-for-import"],
+  "controls": [],
+  "finding": {
+    "frontend": "The largest text on the page is the question \"What is the main reason for importing the animals?\", rendered as the radios' legend with isPageHeading set in src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:11-22, drawing on the single string at src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:3. There is no shorter heading above it.",
+    "prototype": "The page heading is the short noun phrase \"Main reason for import\". The question \"What is the main reason for importing the animals?\" is still the radios' legend but is marked govuk-visually-hidden, so screen-reader users hear it and sighted users see only the heading and the five options.",
+    "difference": "Add a page heading of \"Main reason for import\" and drop isPageHeading from the radios' legend, marking that legend visually hidden so the question is still announced. This is one template and one copy string. It is worth doing on its own even if the page-shape change is scheduled later, because it is the heading a user sees today either way.",
+    "falsifiedBy": "Finding \"Main reason for import\" rendered anywhere in the frontend's import-reason page — the captured DOM's only heading is the question, and the string does not appear in the feature's copy file."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:11-22",
+    "prototype": "app/views/reason-for-import.html:42-54"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--reason-branch-split-across-pages",
+      "relation": "travels-with",
+      "why": "the merged one-page reason screen takes this heading, so doing the flow change later would redo this edit"
+    }
+  ]
+}

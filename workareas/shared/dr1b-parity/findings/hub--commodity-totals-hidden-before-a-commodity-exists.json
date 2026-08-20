@@ -1,0 +1,21 @@
+{
+  "slice": "hub",
+  "title": "DR1's hub always shows the animal and package totals, reading zero when nothing has been added; the frontend hides the whole \"Your commodities\" panel until a commodity exists.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub-no-commodity", "fe-hub", "dr1-notification-hub"],
+  "controls": ["Your commodities"],
+  "finding": {
+    "frontend": "On a notification with no commodity chosen the hub goes straight from the \"Overview\" heading to \"1. About the consignment\" — there is no \"Your commodities\" heading and no counter cards anywhere in the rendered page. The panel is behind a condition (src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:8-26) fed by a builder that returns nothing when the commodity collection is empty (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-146). Once a commodity line exists the panel appears, showing 0 animals and 0 packages until the quantities are filled in.",
+    "prototype": "DR1's hub renders the \"Your commodities\" heading and both cards on every visit, and prints \"0\" when there is nothing to count (app/routes.js:5745-5746). The captured hub, with nothing answered at all, shows 0 Animals and 0 Packages/boxes above the task list.",
+    "difference": "Render the totals panel unconditionally, showing zero for both counts when there are no commodity lines. That is the condition in template.njk:8 and the null return in controller.js:142-146; the sum helpers already produce 0 for an empty list. The user-facing point is that the hub keeps the same shape from the first visit rather than growing a section part way through.",
+    "falsifiedBy": "A frontend hub rendered with no commodity lines that still shows the \"Your commodities\" heading and the two counter cards."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-146",
+    "prototype": "app/routes.js:5745-5746"
+  },
+  "relatedTo": []
+}

@@ -1,0 +1,39 @@
+{
+  "slice": "addresses",
+  "title": "DR1 lets a user add a missing address without leaving the notification; on the frontend an address that is not already in the book cannot be used at all.",
+  "domain": "addresses",
+  "type": "add-page",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignor-or-exporter",
+    "fe-address-picker-consignee",
+    "fe-address-picker-importer",
+    "fe-address-picker-place-of-destination",
+    "fe-contact",
+    "dr1-consignment-address-select",
+    "dr1-contact-address-for-consignment"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Add a new address" },
+    { "kind": "label", "text": "add a new branch address" }
+  ],
+  "finding": {
+    "frontend": "Each party page offers a search box, a results table and Save and continue, and nothing else (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:69-111). The contact page offers radios and the save buttons. If the address the trader needs is not in the book there is no route onward from any of these pages: the address-book service reads and never writes, and creating records belongs to a different service (src/server/app/services/address-book/index.js:17-19). The trader has to abandon the notification, find the other service, add the address and come back.",
+    "prototype": "Every party page carries a secondary button, Add a new address, below the results table (app/views/consignment-address-select.html:161-165). It opens an add-an-address form carrying the role it was launched from, and on save it returns to the same party page with a success banner and the new address in the list, ready to select. The contact page states the same route in a sentence above its radios: \"If the correct address is not shown, add a new branch address, then return to this page.\"",
+    "difference": "Add an address-entry page reachable from all five party pages and from the contact page, which writes to the address book and returns the user to the page they came from with the new address selectable. The address book already accepts writes — its API exposes create, update and delete on the organisation's addresses — so what is missing is the frontend journey and the write path through the address-book client, which today only lists and gets. Decide with the same pass whether the new address is saved to the organisation's book, as DR1 does, or held only on this notification, because the two produce different behaviour on the trader's next notification.",
+    "falsifiedBy": "Finding any link or button on a frontend party page or the contact page that leads to a form for entering a new address."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:69-111",
+    "prototype": "app/views/consignment-address-select.html:161-165"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--picker-list-not-filtered-by-role",
+      "relation": "travels-with",
+      "why": "DR1's add form asks what the address is for, which is the role field the filtering finding needs"
+    }
+  ]
+}

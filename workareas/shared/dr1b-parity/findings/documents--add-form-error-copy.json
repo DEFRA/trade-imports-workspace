@@ -1,0 +1,29 @@
+{
+  "slice": "documents",
+  "title": "Three of the frontend's add-a-document error messages are worded differently from the messages DR1 states, including telling the trader to \"Select a file to upload\" where DR1 says \"Upload a document\".",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents-error",
+    "dr1-upload-documents-continue-error"
+  ],
+  "controls": [
+    "accompanyingDocumentDateOfIssue",
+    "file",
+    "dateOfIssue",
+    "attachment"
+  ],
+  "finding": {
+    "frontend": "The four messages the add form can produce are held in one block (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:63-81). One matches DR1 word for word — \"Enter a document reference\". Three do not: the missing date reads \"Enter the date of issue\", the missing file reads \"Select a file to upload\", and an unparseable date reads \"Enter a real date of issue\". No captured frontend state shows any of them; they are read from the copy file, and the validators that fire them are in the same feature (src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:21-41).",
+    "prototype": "DR1's blank-form state, captured at dr1-upload-documents-error, shows the same three fields failing with \"Enter a document reference\", \"Enter a date of issue\" and \"Upload a document\", each linked from the summary to its field; the invalid-date message is \"Enter a real date\" (app/routes.js:9101-9155). The wording is identical whether the trader presses \"Save and add another\" or \"Save and continue\" — dr1-upload-documents-continue-error shows the same three strings.",
+    "difference": "Align the three strings in the English and Welsh copy files: \"Enter a date of issue\", \"Upload a document\", \"Enter a real date\". Nothing else moves — the same validators fire in the same order against the same fields. One of the three is worth a designer's eye rather than a blind copy: the frontend's \"Enter a real date of issue\" names the field and DR1's \"Enter a real date\" does not, which is the only case here where the frontend's wording is the more specific of the two.",
+    "falsifiedBy": "Submitting the frontend's add-a-document form blank and reading \"Upload a document\" and \"Enter a date of issue\" in the error summary."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:63-81",
+    "prototype": "app/routes.js:9101-9155"
+  }
+}

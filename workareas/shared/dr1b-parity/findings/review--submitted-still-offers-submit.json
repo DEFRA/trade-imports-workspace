@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "Viewing an already-submitted notification, the frontend still shows \"Now submit your notification\" and a Continue button; DR1's read-only review drops the submit form.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-check-answers-submitted", "dr1-review-notification"],
+  "controls": [{ "kind": "label", "text": "Now submit your notification" }],
+  "finding": {
+    "frontend": "The read-only view of a Submitted notification is the same page with the Change links stripped: the tag turns green, \"Copy as new\" and \"Delete\" appear at the top, and every row loses its Change action. The submit block does not go with them. Below the last card the page still reads \"Now submit your notification\" / \"Continue to the declaration to submit your notification.\" over a green Continue button, on a notification that was submitted already. The template renders that block unconditionally — src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114 sits outside every read-only test, while the read-only flag reaches the template and is used to suppress the Change actions. The button is not inert: it posts, and where the notification is still complete it moves the user forward towards the declaration again.",
+    "prototype": "DR1 does define a read-only review, contrary to what the pairing note assumed: a notification the user submits in the prototype is stored in the session and the dashboard links it to /review-notification?submitted=<id>, which renders the same view with a read-only flag (app/routes.js:10024-10037). That flag does two things — it clears every card's change target, and it suppresses the submit form, because the form is wrapped in a not-read-only test in app/views/review-notification.html:181-187. So a submitted notification in DR1 ends after the last card, with nothing to press. Only DR1's eight seeded demonstration rows on the dashboard have a dead \"View\" link; a notification the user actually submitted gets a working one. This corpus captured no picture of that state, so the DR1 half of this finding is read from source rather than observed; the state that would settle it is /review-notification?submitted=<id> in the prototype, reached by completing the journey, confirming the declaration and following \"View\" on the dashboard row that appears.",
+    "difference": "Wrap the \"Now submit your notification\" heading, its sentence and the Continue form in the same read-only test that already hides the Change actions, so the block disappears for a Submitted notification and the page ends after the last card. One template change. It is worth checking every other status the frontend renders this page in — Amending in particular — so the block is suppressed exactly where there is nothing left to submit.",
+    "falsifiedBy": "Opening the frontend review page for a Submitted notification and finding no Continue button below the last card."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114",
+    "prototype": "app/views/review-notification.html:181-187"
+  },
+  "relatedTo": [
+    {
+      "id": "review--submit-call-to-action-copy",
+      "relation": "travels-with",
+      "why": "both change the same block at the foot of the page"
+    }
+  ]
+}

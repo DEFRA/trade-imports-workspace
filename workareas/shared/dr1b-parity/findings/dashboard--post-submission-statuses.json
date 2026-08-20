@@ -1,0 +1,24 @@
+{
+  "slice": "dashboard",
+  "title": "DR1 tracks a notification through seven statuses including \"Submitted action required\", \"Approved\" and \"Rejected\"; the frontend has only Draft, Submitted, Amending and Deleted.",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [{ "kind": "label", "text": "Submitted action required" }],
+  "finding": {
+    "frontend": "A frontend notification row shows one of four tags: Draft (blue), Submitted (green), Amending (yellow) or Deleted (grey) — src/server/app/shared/kit.js:34-51 and src/server/app/shared/copy.en.js:47-52. The captured row is tagged Draft. Nothing the authority does to a notification after it is received can change the tag: once submitted it reads \"Submitted\" for ever, and the user has no way to learn from the dashboard that something is wrong with it.",
+    "prototype": "DR1's dashboard tags two of its four notifications \"Submitted action required\" in orange and two \"Submitted\" in green (app/views/dashboard.html:265-292). Its status filter names the full vocabulary: Draft, Submitted, In progress, Approved, Action required, Rejected, Complete. So a DR1 notification moves through a lifecycle owned by the authority, and the dashboard is where the user finds out about it — an orange \"Submitted action required\" tag is the service telling the user to come back and do something.",
+    "difference": "The notification record needs a status that the authority can set after submission, and the dashboard needs to render it. That is a backend change first: the status today is a frontend-side lifecycle (draft, submitted, amending, deleted) with no channel for a decision coming back. Once the status arrives, map each of the seven to a tag colour and add the matching filter option. Whether \"Action required\" and \"Submitted action required\" are one status or two is worth settling before building — DR1 uses the first in its filter and the second on its cards.",
+    "falsifiedBy": "Finding a frontend notification row rendered with any status other than Draft, Submitted, Amending or Deleted."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/kit.js:34-51",
+    "prototype": "app/views/dashboard.html:265-292"
+  }
+}

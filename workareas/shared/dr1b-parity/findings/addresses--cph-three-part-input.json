@@ -1,0 +1,32 @@
+{
+  "slice": "addresses",
+  "title": "DR1 asks for the CPH number as county, parish and holding number in three boxes; the frontend asks for it as one free-text field.",
+  "domain": "addresses",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-cph-number", "dr1-cph-number", "dr1-roles-and-addresses-complete"],
+  "controls": [
+    { "kind": "field", "name": "countyParishHoldingCph" },
+    { "kind": "field", "name": "cphNumber-county" },
+    { "kind": "field", "name": "cphNumber-parish" },
+    { "kind": "field", "name": "cphNumber-holding" }
+  ],
+  "finding": {
+    "frontend": "One text box ten characters wide, hinted \"For example, 123456789 or 123/456/789.\" (src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23). Whatever the trader types has its slashes stripped and must then be exactly nine digits (src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:34-42), so the number is stored as nine bare digits and the parts of it are never separated. Nothing on screen says which digits are the county, which the parish and which the holding.",
+    "prototype": "Three boxes side by side under one \"CPH number\" legend, hinted \"For example 12/345/6789\" (app/views/partials/cph-number-input.html:14-49). The boxes take two, three and four digits and are labelled County, Parish and Holding number for a screen reader; the labels are hidden from sight, so what a user meets is three boxes sized to the part each takes. Typing enough digits moves the cursor to the next box on its own, non-digits are discarded as they are typed, and the answer is kept and shown in the slashed form — the completed consignment addresses page shows \"12/345/6789\".",
+    "difference": "Replace the single field with three numeric inputs of two, three and four digits under one legend and one example hint, and carry the parts through validation so an error can name the box that is wrong rather than the whole number. Decide at the same time what is stored: DR1 keeps the slashed form and shows it back that way, the frontend today keeps nine bare digits, and the stored form is what the consignment addresses page and the check-answers summary display.",
+    "falsifiedBy": "Finding more than one CPH input on the frontend CPH page, or a County or Parish label anywhere in its rendered markup."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23",
+    "prototype": "app/views/partials/cph-number-input.html:14-49"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--cph-guidance-details",
+      "relation": "travels-with",
+      "why": "both change the CPH page and would be built in one visit to it"
+    }
+  ]
+}

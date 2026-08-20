@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "DR1 lets a rail or road consignment be saved with no transit countries at all; the frontend refuses the page until at least one country is chosen.",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-transit-countries", "dr1-transit-countries"],
+  "controls": [{ "kind": "field", "name": "transitedCountries" }],
+  "finding": {
+    "frontend": "The transited-countries obligation is gated on the means of transport being rail or road, and where it applies its status is mandatory (src/server/app/sets/live-animals/obligations/sections/transport.js:93-104). Submitting the page with nothing ticked is rejected with \"Select at least one country the consignment will travel through\" (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:36-38). A consignment that crosses no third country — a lorry from the Republic of Ireland, say — has no honest answer to give, and the hub cannot be completed without one.",
+    "prototype": "DR1 puts the page in the journey under the same condition, when the means of transport is Railway or Road Vehicle, and then treats the answer as optional: any saved list, empty included, counts as complete, so the page can be saved with nothing added (app/routes.js:1902-1935). The captured empty state shows Save and continue live with no country in the list.",
+    "difference": "Drop the at-least-one rule so the page can be saved empty, and make the hub treat an empty list as a complete answer rather than an outstanding one. The gate itself — rail or road only — already matches DR1 and does not change. This should land with the change to the control, since both alter the same field. Neither side's captured screen shows the submitted-empty state, so the claim rests on the frontend's validator and DR1's completeness function; photographing both sides after pressing Save and continue with nothing chosen would put it beyond argument.",
+    "falsifiedBy": "Submitting fe-transit-countries with no country ticked and being taken onward — the controller returns 400 with the \"Select at least one country\" error whenever the selection is empty."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js:29-40",
+    "prototype": "app/routes.js:1932-1935"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transit-countries-capped-at-twelve",
+      "relation": "travels-with",
+      "why": "the other rule the frontend puts on this field and DR1 does not"
+    }
+  ]
+}

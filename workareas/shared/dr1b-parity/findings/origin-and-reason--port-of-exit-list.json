@@ -1,0 +1,29 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 offers ten animal-approved border control posts as the port of exit; the frontend offers the whole 78-entry list of GB ports and airports, most of which cannot handle live animals.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-port-of-exit",
+    "dr1-reason-for-import-transit-revealed",
+    "dr1-reason-for-import-temporary-admission-horses-revealed"
+  ],
+  "controls": [
+    "portOfExit",
+    "transitExitBorderControlPost",
+    "temporaryAdmissionPortOfExit"
+  ],
+  "finding": {
+    "frontend": "The Port of exit select lists 78 entries from Aberdeen Airport (GB DYC) to Tilbury Port (GB TILL) — every general GB port and airport, including places with no animal facilities such as Cambridge Airport and Nottingham Port. The options come from the ports-of-entry list, which the page reuses wholesale: src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js:22-30 maps ports.list(), and src/server/app/services/ports/index.js:11 fills that from the reference-data service's /ports-of-entry endpoint. The hint says so out loud — \"Choose where the consignment will leave Great Britain. Exit and entry share the same port list.\" — at src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:5. The same 78-entry select is offered for transit and for temporary admission horses alike, and validation accepts any code in it: :32-38.",
+    "prototype": "The Port of exit select offers ten options and each names the site and its animal BCP code: Edinburgh Airport (animals) - GBEDI4, Gatwick Airport (animals) - GBLGW4, Glasgow Airport (animals) - GBGLA002, Heathrow Airport - HARC (animals) - GBLHR4A, Heathrow Airport – Airpets Limited (animals) – GBLHR022, Heathrow Airport – Animal Aircare Ltd (animals) - GBLHR067, Holyhead POE - GBHLY, Manchester Airport (animals) - GBMNC4, Prestwick Airport (animals) - GBPIK4 and Stansted Airport (animals) - GBSTN4A. The same ten are offered under Transit and under Temporary admission horses. There is no hint on the field.",
+    "difference": "The exit port must be chosen from the animal-approved border control posts, not from the ports-of-entry list. Reference data has no such list today — the frontend's only source is /ports-of-entry — so a list of exit BCPs has to exist there first, keyed on the animal BCP codes DR1 shows, and the port-of-exit page then reads that instead of ports.list(). The hint sentence \"Exit and entry share the same port list\" goes with it, since it will no longer be true. Until reference data carries the list this cannot be finished in the frontend alone. Note also that DR1 labels each option with its BCP code, which the frontend's \"(GB XXX)\" suffix does not carry.",
+    "falsifiedBy": "Finding a second, animal-restricted port list behind the frontend's port-of-exit page — the controller calls ports.list() with no filter, that list is the /ports-of-entry response, and \"border control post\" appears nowhere in src/server/app outside the declaration copy."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js:22-38",
+    "prototype": "app/data/exit-border-control-posts.js:3-14"
+  },
+  "relatedTo": []
+}

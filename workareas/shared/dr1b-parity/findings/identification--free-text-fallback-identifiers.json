@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 skips the identification step entirely for a commodity it names no identifiers for; the frontend always asks two free-text questions instead",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification-fish", "dr1-animal-identification-details"],
+  "controls": ["animalIdentifierIdentificationDetails-0"],
+  "finding": {
+    "frontend": "A commodity that matches none of the four typed identifiers falls through to a pair of free-text boxes — \"Identification details\", hinted \"Any other way this animal is identified, if it has no passport, tattoo or ear tag\", and \"Animal description\". fe-animal-identification-fish shows exactly that for Fish (0301) — Salmo salar. The pair is declared as an inverse gate in src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:174-198: they apply whenever the commodity is in none of the passport, tattoo, ear-tag or horse-name allow lists. Because the gate is a complement it can never be empty, so every commodity gets an identification card and the page can never be skipped.",
+    "prototype": "DR1 attaches identifiers per commodity code and lets the list be empty — poultry, rabbit, camel, ostrich, parrot, reptile, bees and ornamental fish all carry `identifiers: []` in app/data/commodities.js. An empty list removes the species panel (app/routes.js:1573-1577 returns no panel state when there are no fields) and, if no selected species has any, removes the whole identification step from the journey (:1489-1493 and :1264-1266). DR1 has no free-text catch-all identifier anywhere. DR1 also has no 0301 commodity: its nearest entry is Ornamental fish at code 030111, with an empty identifier list.",
+    "difference": "Decide whether the free-text pair should exist at all. Under DR1 the answer is no: identifiers are per-commodity and an unlisted commodity is simply not asked. Removing them means the inverse-gate obligations in identifiers.js:174-198 go, the animal-record requirement narrows to the four typed identifiers, and the identification page needs a gate of its own so it disappears when no line on the notification has an identifier — today no such gate exists because the fallback guarantees one. This depends on the commodity catalogue: Fish is one of five commodities the frontend offers and DR1 does not, which is the commodities slice's business, and the identifier set DR1 would want for it has to come from a designer before this is scheduled.",
+    "falsifiedBy": "Finding a free-text identifier field, or any catch-all identifier not tied to a commodity code, in DR1's app/data/commodity-identifiers.js or on any DR1 identification panel."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:174-198",
+    "prototype": "app/routes.js:1489-1493"
+  }
+}

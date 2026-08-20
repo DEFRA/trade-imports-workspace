@@ -1,0 +1,27 @@
+{
+  "slice": "transport",
+  "title": "DR1 picks the transporter from one directory holding commercial and private transporters together and asks commercial-or-private only when adding a new one; the frontend asks commercial-or-private first and then shows a commercial-only list or a blank private form.",
+  "domain": "transport",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-type", "dr1-transporter", "dr1-transporter-add"],
+  "controls": [{ "kind": "field", "name": "transporterType" }],
+  "finding": {
+    "frontend": "The transporter section opens with \"What type of transporter will move the animals?\" and two radios — Commercial, hinted \"A business approved to transport animals — you will choose one from a list\", and Private, hinted \"You or another individual moving the animals — you will give their address\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:78-87). The answer routes the user to one of two dead-ended pages: a commercial-only pick list, or an empty private-transporter form (obligations/sections/transport.js:33-62 makes the two mutually exclusive). A private transporter the user has used before must be typed in again, and a commercial one can never be typed in at all.",
+    "prototype": "The section opens on the directory itself — \"Transporter details\", then \"Select a transporter\" over one table that mixes Commercial and Private rows and marks which is which in a Type column (app/views/transporter.html:113-153). The user picks a row. The type question exists only behind the \"Add a transporter\" button, where its heading is \"Choose a transporter type\" under the caption \"Add a new transporter\", it is preceded by the warning \"Before you add this transporter, please ensure you have already searched for it first\", it lists Private transporter before Commercial, and its Commercial option carries an entirely different meaning: \"This can only be a commercial transporter from Northern Ireland\".",
+    "difference": "Move the transporter section's entry from the type question to the directory, and make the directory hold private transporters as well as commercial ones. The type question becomes a step inside the add journey, reworded to DR1's heading and hints and with Private listed first. Everything a user does today stays reachable — choosing from the commercial list becomes choosing a Commercial row, and entering a private transporter becomes adding one — but both now start from the list. Do this before the add-a-commercial-transporter finding, which hangs off the same button.",
+    "falsifiedBy": "Finding a private transporter listed anywhere on fe-transporter-commercial, or a route that reaches the frontend's transporter list without first answering the type question — the transporters-select page is reached only from the type page and its list is the fixed commercial record set."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk:23-48",
+    "prototype": "app/views/transporter-add.html:30-52"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--no-way-to-add-a-commercial-transporter",
+      "relation": "blocks",
+      "why": "the add journey hangs off the directory this finding introduces"
+    }
+  ]
+}

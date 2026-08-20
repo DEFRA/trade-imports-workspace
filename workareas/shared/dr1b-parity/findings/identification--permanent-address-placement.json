@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 asks for each animal's permanent address on its own page among the consignment parties; the frontend asks it inside the identification entry form, one animal at a time",
+  "domain": "identification",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-permanent-address-animals"],
+  "controls": [{ "kind": "label", "text": "Where will their permanent address be?" }],
+  "finding": {
+    "frontend": "The frontend does ask the question. It renders a \"Permanent address\" heading, the sentence \"A permanent address is required for this animal.\" and a full address form inside the identification card, below the identifier boxes and above the save button — src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43-69, gated on the card's showAddress flag. The gate is the permanentAddress obligation in src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:200-208, allow-listed to Cat and Dog in src/server/app/sets/live-animals/services/commodities/stub.js:115. So the user meets the question once per animal, interleaved with that animal's identifiers, and answers it as many times as there are animals on the line. No frontend capture shows it: the corpus photographed cow, horse and fish, none of which is on the allow list.",
+    "prototype": "DR1 gives it a page of its own, /permanent-address/select, headed \"Permanent address\" under the \"Consignment parties\" caption, reached from the roles-and-addresses list as a section beside consignor, consignee, importer and place of destination — app/data/consignment-address-sections.js:79-96 declares it, and :113-130 attaches it to commodity code 01061900. The page asks about every animal at once: one bordered card per animal, headed \"Canis familiaris 1\", \"Canis familiaris 2\", each card repeating that animal's already-entered identifiers in an inset so the user can tell them apart (app/views/permanent-address-animals.html:66-97), and one set of page-level Save and continue / Save and return buttons at the foot. The dr1-permanent-address-animals capture shows two dog cards on one page.",
+    "difference": "Move the question out of the identification card and onto a page of its own in the addresses part of the journey, listing every animal on every permanent-address commodity line at once. That means: a new page and route; a section row alongside the other consignment-party addresses; removing the showAddress branch from _identification-card.njk:43-69 and the address fields from the identification card view model; and re-pointing the stored answer, which today hangs off the animal record as `permanentAddress` inside animalIdentifiers. The per-animal granularity does not change — DR1 asks per animal too — only where and how many at a time. Because the new page needs the animals to exist first, it has to sit after identification in the flow even though it belongs with the addresses; check the ordering against the hub task rows before building.",
+    "falsifiedBy": "Rendering the frontend identification page for a Cat or Dog line and finding no Permanent address block inside the card, or finding a standalone frontend permanent-address route."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43-69",
+    "prototype": "app/views/permanent-address-animals.html"
+  }
+}

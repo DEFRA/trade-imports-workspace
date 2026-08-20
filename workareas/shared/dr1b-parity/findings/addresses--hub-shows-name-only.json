@@ -1,0 +1,35 @@
+{
+  "slice": "addresses",
+  "title": "DR1 shows the whole chosen address against each role on the consignment addresses page; the frontend shows only the organisation's name.",
+  "domain": "addresses",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-addresses-hub",
+    "dr1-roles-and-addresses-complete",
+    "dr1-roles-and-addresses-partial",
+    "dr1-roles-and-addresses"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Not added yet" },
+    { "kind": "label", "text": "Change" }
+  ],
+  "finding": {
+    "frontend": "Each role is a summary-list row whose value is the chosen party's name and nothing else — the row is built from `parties[party.id]?.name` (src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:48-53). A trader who has picked one of two similarly named farms cannot tell from this page which one is in the notification; they have to open the picker again to see the street, town, postcode or country. Before anything is chosen the row reads Not added yet.",
+    "prototype": "Each role is a headed section, and a filled one shows the address in an inset block: the name on its own line and then every address line, ending with the postcode and country, with a Change link underneath (app/views/roles-and-addresses.html:60-70). The CPH row shows the number itself the same way. The complete-state capture shows all six roles rendered this way, so the page doubles as a check of the addresses without opening anything.",
+    "difference": "Render the chosen address in full against each filled role rather than the name alone, with the Change action below it. The address lines are already resolved for this page by src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.js, and src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.js already formats a record into lines, so this is a template change on the hub and not a new lookup. Widening the row also relieves the present layout, where the role name and its hint are squeezed into a narrow summary-list key column and wrap over five or six lines.",
+    "falsifiedBy": "Finding a frontend capture of the consignment addresses page with a role filled in that shows any address line, postcode or country beside the name."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:32-53",
+    "prototype": "app/views/roles-and-addresses.html:59-82"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--hub-same-as-shortcuts",
+      "relation": "travels-with",
+      "why": "both rework the same row template on the consignment addresses page"
+    }
+  ]
+}

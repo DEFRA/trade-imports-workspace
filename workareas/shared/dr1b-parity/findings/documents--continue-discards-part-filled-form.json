@@ -1,0 +1,31 @@
+{
+  "slice": "documents",
+  "title": "DR1 saves — or refuses to leave — a part-filled add-a-document form when the trader presses Save and continue; the frontend throws the answers away without a word.",
+  "domain": "documents",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-documents-empty",
+    "fe-documents-populated",
+    "dr1-upload-documents-continue-error"
+  ],
+  "controls": [{ "kind": "label", "text": "Save and continue" }],
+  "finding": {
+    "frontend": "Continue never looks at the add-a-document form. The post handler branches on the action: 'add' validates and saves, a remove action removes, and everything else falls through to a check on whether any already-saved document is still being scanned and then a redirect to the next page (src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279). A trader who types a reference, picks a date, chooses a file and then presses Continue instead of \"Save and add another\" loses all three silently — no error, no saved record, and no warning that the page they are leaving is now empty. No captured frontend state shows this; it is read from the handler.",
+    "prototype": "DR1 treats Save and continue as a save. Uploads stay optional, but once a document type has been chosen the whole add form is validated before the trader can leave, and if it passes the document is added on the way out (app/routes.js:10174-10193, whose own comment states the rule as \"uploads are optional, but once a document type is chosen all document fields must be completed before continuing\"). dr1-upload-documents-continue-error captures the refusal: three errors — \"Enter a document reference\", \"Enter a date of issue\", \"Upload a document\" — on a form where only the document type had been filled in and no document had been saved.",
+    "difference": "On Continue, look at the add-a-document form before redirecting. If any of its fields carries an answer, run the same validation the Add action runs and either save the document or re-render with the errors; if every field is empty, continue as now. DR1 uses the document type as the trigger for this, and the frontend has no such field today, so the trigger has to be \"any field answered\" until the type select lands. The same rule applies to the two exit actions beside Continue, which take the trader off the page just as finally.",
+    "falsifiedBy": "Filling the frontend's add-a-document form, pressing Continue, and finding either the document saved or an error shown."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279",
+    "prototype": "app/routes.js:10174-10193"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--document-type-not-asked",
+      "relation": "travels-with",
+      "why": "DR1 triggers this validation off the document type the frontend does not yet ask for"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 asks for the country of origin with a type-ahead search box under its own \"Country of origin\" subheading; the frontend uses a plain dropdown the user must scroll.",
+  "domain": "origin",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["countryOfOrigin"],
+  "finding": {
+    "frontend": "Country of origin is a govuk-select rendered from src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22, labelled with a govuk-label--s label and opening on the placeholder \"Select a country\" followed by a disabled divider row. There is nothing to type into: the user opens the list and scrolls it.",
+    "prototype": "Country of origin sits under its own h2 subheading and is a search field — a text input placeheld \"Search for a country\" with a search button, which filters the country list as the user types and writes the chosen value into a hidden countryOfOrigin input. Only the destination-country question, which is a different control, uses a plain select in DR1.",
+    "difference": "Replace the origin country select with the same search-and-filter control, and promote its label to a subheading above the field. The prototype's version knows about parent countries — a territory is listed as \"Azores (Portugal)\" and carries Portugal as a parent — so the control should be built against a list of that shape rather than a flat one; that list is a separate finding and can land first or last. The frontend already ships a search-and-filter control of this kind for commodities, so the pattern exists in the codebase.",
+    "falsifiedBy": "Finding a text input or filter behaviour on the frontend's country-of-origin field — the captured DOM at fe-origin has a bare <select id=\"countryOfOrigin\"> with 33 option elements and no input."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22",
+    "prototype": "app/views/origin-of-the-import.html:46-80"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--country-list-omits-territories",
+      "relation": "travels-with",
+      "why": "the search control filters the country list, and DR1's list has the parent-country shape the filter displays"
+    }
+  ]
+}

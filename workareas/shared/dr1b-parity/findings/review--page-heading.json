@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "DR1 calls the final summary page \"Review your notification\"; the frontend calls it \"Check your answers\".",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "fe-check-answers-submitted", "dr1-review-notification"],
+  "controls": [],
+  "finding": {
+    "frontend": "The page's own heading reads \"Check your answers\", and the same string is reused for the breadcrumb and the browser tab. It comes from one copy key, src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2, which the controller passes as both pageTitle and heading in src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:39-40. The wording does not change once the notification is submitted: the read-only view of a Submitted notification is still headed \"Check your answers\", which reads oddly when there are no answers left to check.",
+    "prototype": "DR1 heads the page \"Review your notification\" — app/views/review-notification.html:38 — and keeps that heading in the read-only view of an already-submitted notification, where \"review\" still describes what the user is doing and \"check your answers\" no longer does. The hub's call to action is worded to match: a \"Review and submit\" button.",
+    "difference": "Change the one copy key to \"Review your notification\" in English and provide the Welsh equivalent in the paired copy.cy.js. The heading is used for the breadcrumb and the page title too, so all three move together; check whoever owns the hub is using the matching call-to-action wording before landing this, so the two do not disagree.",
+    "falsifiedBy": "Finding the review page rendered with a heading other than \"Check your answers\" in any notification state."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2",
+    "prototype": "app/views/review-notification.html:38"
+  },
+  "relatedTo": [
+    {
+      "id": "review--section-structure",
+      "relation": "travels-with",
+      "why": "both are copy on the same page and land in the same template pass"
+    }
+  ]
+}

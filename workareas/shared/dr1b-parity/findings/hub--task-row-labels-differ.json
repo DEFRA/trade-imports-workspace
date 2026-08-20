@@ -1,0 +1,33 @@
+{
+  "slice": "hub",
+  "title": "Five hub tasks are named differently from DR1 — \"Main reason for importing\" for \"Main reason for import\", \"Transporter\" for \"Transport details\", \"Uploaded documents\" for \"Upload documents\", \"Contact address\" for \"Contact address for this consignment\" and \"Additional commodity details\" for \"Additional details\".",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": [
+    "Main reason for importing",
+    "Transporter",
+    "Uploaded documents",
+    "Contact address",
+    "Additional commodity details"
+  ],
+  "finding": {
+    "frontend": "The hub row titles are set in src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-75. Two of them change what the task sounds like rather than just its wording: \"Uploaded documents\" describes a state where DR1 asks for an action, and \"Transporter\" names a party where DR1 names the details of the move. Each row also carries a hint sentence.",
+    "prototype": "DR1's row titles are \"Main reason for import\", \"Commodity details\", \"Identification details\", \"Additional details\", \"Arrival details\", \"Transit countries\", \"Transport details\", \"Upload documents\", \"Roles and addresses\" and \"Contact address for this consignment\" (app/routes.js:5748-5836). Only the roles-and-addresses row carries a hint, listing the four parties it covers.",
+    "difference": "Rename the five rows to DR1's wording. \"Where is this consignment coming from?\", \"What are you importing?\", \"Arrival details\", \"Transit countries\" and \"Roles and addresses\" already match and should be left alone. The hints the frontend adds to every row are extra content rather than a contradiction of DR1 and are not part of this change.",
+    "falsifiedBy": "A frontend hub whose rows read \"Main reason for import\", \"Transport details\", \"Upload documents\" and \"Contact address for this consignment\"."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-75",
+    "prototype": "app/routes.js:5748-5836"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-list-sections-regrouped",
+      "relation": "travels-with",
+      "why": "the same pass over the hub's copy"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "slice": "commodities",
+  "title": "DR1 lets the user import any of twenty-one commodities; the frontend offers five, so sheep, pigs, poultry, rabbits, bees, reptiles and the rest cannot be notified at all.",
+  "domain": "commodities",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-commodity-search",
+    "dr1-what-are-you-importing-results"
+  ],
+  "controls": [
+    { "kind": "field", "name": "species" }
+  ],
+  "finding": {
+    "frontend": "The commodity page offers five commodities and eight species in total: Cow (0102) with Bison bison, Bos spp., Bos taurus and Bubalus bubalis; Horse (0101) with Equus caballus; Cat (01061900) with Felis catus; Dog (01061900) with Canis lupus familiaris; Fish (0301) with Salmo salar. The list is not filtered or paged, so that is the whole catalogue a user can reach. It is a hard-coded module — src/server/app/sets/live-animals/services/commodities/stub.js:1-26 — and its own comment says the non-cow commodities carry \"one representative species each\". A user importing sheep, pigs, goats, poultry, rabbits, camels, parrots, reptiles, bees or ferrets has no option to choose.",
+    "prototype": "DR1 carries twenty-one commodities — Bees, Camel, Cat, Cattle, Chicken, Dog, Duck, Ferret, Goat, Goose, Guinea fowl, Horse, Ornamental fish, Ostrich, Other live mammals, Parrot, Pig, Rabbit, Reptile, Sheep and Turkey — with their species beneath them (app/data/commodities.js:9-291). Cattle alone carries eleven species against the frontend's four, Horse three against one, Ornamental fish three against one, and \"Other live mammals\" more than a hundred. Each commodity also carries the per-commodity rules that hang off it: which identifiers it needs, whether it asks for a package count, and whether it asks the unweaned question.",
+    "difference": "Widen the commodity catalogue to DR1's twenty-one commodities and their species. The catalogue is a local data module on both sides, so this is a data change rather than an integration, but three things travel with each new commodity and must land with it: its commodity code, the identifier set the animal-identification page asks for, and whether it asks for a package count. Two frontend rules are keyed by commodity name and will need entries for every new commodity — the package-count and identifier allow-lists in the same stub module. Confirm before starting that the notification payload mapping accepts the new commodity codes; if it does not, this becomes backend work first.",
+    "falsifiedBy": "Finding a sixth commodity group on the frontend's commodity page in any state, or a route by which a user selects a commodity the page does not list."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:1-26",
+    "prototype": "app/data/commodities.js:9-291"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--commodity-search",
+      "relation": "travels-with",
+      "why": "the search control is what makes a catalogue this size usable; a twenty-one commodity static checkbox list would be worse than the five"
+    }
+  ]
+}

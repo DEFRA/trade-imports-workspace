@@ -1,0 +1,31 @@
+{
+  "slice": "documents",
+  "title": "DR1 accepts document files up to 50MB; the frontend refuses anything over 10 MB.",
+  "domain": "documents",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "fe-documents-populated",
+    "dr1-upload-documents"
+  ],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The file question's hint reads \"Your file must be:\" over the bullet \"smaller than 10 MB\", and the same 10 MB is enforced twice — in the browser, from the data-max-file-size attribute on the form, and on the server, where an oversize upload is answered with \"The selected file must be smaller than 10 MB\" (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-52). The constant is deliberate rather than arbitrary: the comment above it records that 10 MB decimal was chosen to sit clear of the CDP nginx ingress cap of 10 MiB.",
+    "prototype": "DR1's file requirements list opens with \"files that are smaller than 50MB\" (app/views/upload-documents.html:165-170) — five times the frontend's ceiling, and the first thing the trader reads about their file.",
+    "difference": "Raise the accepted file size to 50MB, in the hint, in the client-side check and in the server-side limit, and restate the oversize error to match. This cannot land in the frontend alone: the current 10 MB exists to stay under the platform's 10 MiB ingress limit, so the ingress cap and the upload service's own limit have to be raised first or a 50MB file will be rejected by the platform before the application sees it. Confirm the real ceiling with the platform before changing the copy, because a hint promising 50MB over an ingress that refuses it is worse than the honest 10 MB.",
+    "falsifiedBy": "Uploading a file between 10 MB and 50MB through the frontend and having it accepted."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-52",
+    "prototype": "app/views/upload-documents.html:165-170"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--file-types-guidance",
+      "relation": "travels-with",
+      "why": "both rewrite the same four-line file requirements list"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "slice": "identification",
+  "title": "DR1 warns that a false permanent address is fraud and explains what a permanent address is; the frontend says only that one is required",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-permanent-address-animals"],
+  "controls": [{ "kind": "label", "text": "Providing a false address is an act of fraud" }],
+  "finding": {
+    "frontend": "The whole of the frontend's explanation is one sentence — \"A permanent address is required for this animal.\" — under a \"Permanent address\" heading, from the commodities copy file at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:90-93 and rendered at _identification-card.njk:44-45 in the animal-identification feature. Nothing tells the user what counts as a permanent address, why it is being asked for, or what happens if they give a false one.",
+    "prototype": "DR1 carries three pieces of content the frontend has none of, in app/views/permanent-address-animals.html:38-49 and :64. A GOV.UK warning, \"Providing a false address is an act of fraud\". A definition — \"A permanent address is where an animal:\" followed by the bullets \"will permanently reside\" and \"can be checked by the Animal and Plant Health Agency (APHA)\". And the question itself as a heading above the animal cards, \"Where will their permanent address be?\". The same definition is repeated as the hint on the permanent-address row in the addresses list (app/data/consignment-address-sections.js:82-86).",
+    "difference": "Replace the single required sentence with DR1's warning component, the definition and its two bullets, and the question heading, adding them to the commodities copy file at copy.en.js:90-93 and its Welsh counterpart. Where these sit depends on whether the question moves to a page of its own; on today's inline block they would repeat once per animal card, which is the reason to land the placement change first.",
+    "falsifiedBy": "Rendering the frontend identification page for a Cat or Dog line and finding a warning about fraud or a definition of a permanent address anywhere on it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:90-93",
+    "prototype": "app/views/permanent-address-animals.html:38-49"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--permanent-address-placement",
+      "relation": "travels-with",
+      "why": "the guidance is page-level content in DR1, so on the frontend's inline block it would repeat once per animal card — land the placement change first"
+    }
+  ]
+}

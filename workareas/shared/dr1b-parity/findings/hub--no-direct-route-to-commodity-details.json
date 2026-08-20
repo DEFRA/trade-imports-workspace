@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "DR1's hub has a \"Commodity details\" task that opens the per-commodity details page directly; the frontend has no such row, so the only way back to those questions is through the commodity search page.",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-hub", "dr1-notification-hub"],
+  "controls": ["Commodity details", "What are you importing?"],
+  "finding": {
+    "frontend": "The hub has one row for the whole of the commodity leg, \"What are you importing?\", which opens the commodity search page. The details page is folded into the same row rather than given one of its own (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33), and a row always opens on the first of its pages that is available (src/server/app/flow/navigation.js:20-23). A user who wants to correct a quantity or a package count therefore lands on the search page and has to press on through it to reach the details. The details page is reachable — pressing Save and continue on the search page leads to it — but not from the hub in one step, and the single row's status covers both pages at once, so it reads \"In progress\" without saying which half is unfinished.",
+    "prototype": "DR1 gives the two a row each: \"What are you importing?\" in section 1 opens the search, and \"Commodity details\" in section 2 opens /consignment-details directly, with its own to-do or complete status (app/routes.js:5769-5775).",
+    "difference": "Split the commodity row in two — leave the search under \"What are you importing?\" and add a \"Commodity details\" row that opens the details page directly, with its own status. The row belongs in the goods section alongside identification and additional details, which is where DR1 puts it.",
+    "falsifiedBy": "A frontend hub carrying a row that links straight to the consignment-details page without passing through the commodity search."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33",
+    "prototype": "app/routes.js:5769-5775"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-list-sections-regrouped",
+      "relation": "travels-with",
+      "why": "the new row lands in the regrouped goods section"
+    }
+  ]
+}

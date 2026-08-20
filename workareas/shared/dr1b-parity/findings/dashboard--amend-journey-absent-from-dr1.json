@@ -1,0 +1,34 @@
+{
+  "slice": "dashboard",
+  "title": "The frontend has an amend journey for a submitted notification, with its own \"Cancel this amendment?\" page; DR1 tells the user a submitted notification can be changed from the dashboard but gives them no control that does it.",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": [
+    "fe-cancel-amend",
+    "fe-dashboard-populated",
+    "dr1-dashboard-after-submission"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Amend" },
+    { "kind": "label", "text": "Cancel amendment" }
+  ],
+  "finding": {
+    "frontend": "A submitted notification's dashboard row carries View, Amend, Copy as new and Delete (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:29-42). Pressing Amend reopens the notification for editing and moves it to an Amending state, tagged yellow. While amending, the row gains a \"Cancel amendment\" action, and that opens a page headed \"Cancel this amendment?\" which explains \"Your changes since you started amending will be discarded and the submitted version restored.\" and offers \"Yes, cancel amendment\" or \"No, return to notification\" (src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/copy/copy.en.js:1-6). So the frontend defines a whole editing mode with an entry, a distinct status and an escape hatch.",
+    "prototype": "DR1's submission confirmation page has a section headed \"How to view or amend this notification\" that tells the user \"You can view or change this notification from your dashboard.\" But the dashboard it sends them to offers each row only \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262). There is no amend control, no amending state — the status vocabulary runs Draft, Submitted, In progress, Approved, Action required, Rejected, Complete with no editing state among them — and no cancellation. The one thing DR1 does define is where View goes: on a notification just submitted it opens the review page read-only rather than the dead \"#\" the seeded rows use.",
+    "difference": "DR1 contradicts itself here, which is why this cannot be resolved from the evidence: it promises in prose that a submitted notification can be changed from the dashboard and then provides no way to do it. A designer has to settle whether amending is in scope, and if it is, DR1 needs four things the frontend has already guessed at — the control that starts an amendment, what the notification's status reads while it is being amended, what the authority sees in the meantime, and what abandoning an amendment does to the version already submitted. Until then the frontend's amend journey cannot be called either right or wrong. If amending turns out to be out of scope, the sentence on the submission page is the thing that changes, not the dashboard.",
+    "falsifiedBy": "Finding a control on a DR1 root view that reopens an already-submitted notification for editing. The per-section Change links on app/views/review-notification.html:62 do not count: DR1's GET /review-notification renders a submitted notification with readOnly true (app/routes.js:10024-10037), so those links are the draft journey's, not a route back into a submission."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:29-65",
+    "prototype": "app/views/notification-submitted.html:50-58"
+  },
+  "relatedTo": [
+    {
+      "id": "dashboard--delete-notification-absent-from-dr1",
+      "relation": "travels-with",
+      "why": "the same designer's ruling covers both — what a user may do to a notification the authority has already received"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "slice": "documents",
+  "title": "DR1 offers a drop zone that names the chosen file back to the trader; the frontend offers the browser's own file button and nothing else.",
+  "domain": "documents",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-empty",
+    "dr1-upload-documents",
+    "dr1-upload-documents-file-chosen"
+  ],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The file question renders govukFileUpload with no options beyond a label, a hint and an accept list (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58), so what the trader meets is whatever the browser draws for a bare file input — in the capture, a \"Choose File\" button and the words \"No file chosen\" in the browser's own styling, which varies by browser and is not announced when it changes. There is no drop target and no application-owned statement of which file is currently attached.",
+    "prototype": "DR1 draws a dashed drop target holding a status line, a \"Choose file\" button and the words \"or drop file\" (app/views/upload-documents.html:171-181). The status line reads \"No file chosen\" until a file is picked and then shows its name — dr1-upload-documents-file-chosen captures it reading \"itahc-certificate.pdf\" — and it is an aria-live region, so the change is announced rather than only drawn. When the attachment is in error the target itself is outlined in red alongside the message.",
+    "difference": "Pass javascript: true to the existing govukFileUpload call. The service is already on govuk-frontend 6.3.0, whose file upload component provides exactly this behaviour and exactly these strings — its defaults are \"Choose file\" and \"or drop file\" (node_modules/govuk-frontend/dist/govuk/components/file-upload/file-upload.mjs:227-228) — so DR1 is asking for the component's enhanced mode, not for anything bespoke. Check that the component's JavaScript is included in the documents bundle, since the page ships its own entry point, and that the no-JavaScript fallback still renders the plain input.",
+    "falsifiedBy": "Finding the frontend's file field rendering a drop target, or announcing the chosen file's name through a live region, in any state."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58",
+    "prototype": "app/views/upload-documents.html:171-181"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--attachment-label",
+      "relation": "travels-with",
+      "why": "both change the same file question"
+    }
+  ]
+}

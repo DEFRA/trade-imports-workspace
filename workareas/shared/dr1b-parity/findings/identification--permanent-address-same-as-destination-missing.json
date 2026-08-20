@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "DR1 lets the user reuse the place of destination as an animal's permanent address; the frontend makes them type a full address for every animal",
+  "domain": "identification",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-animal-identification", "dr1-permanent-address-animals"],
+  "controls": [{ "kind": "label", "text": "Same as the place of destination (POD)" }],
+  "finding": {
+    "frontend": "The frontend's permanent-address block offers no choice at all — it goes straight from the heading and the sentence \"A permanent address is required for this animal.\" into nine empty address boxes, built by src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:117-163 and rendered by _identification-card.njk:43-69 in the same feature. There is no option to reuse an address already on the notification and no address-book picker, although the service has pickers for the consignee and the other party roles. A user importing four dogs to one destination types the same address four times. No frontend capture shows this: the block is gated to Cat and Dog and the corpus captured cow, horse and fish.",
+    "prototype": "DR1 asks each animal \"Select an address\" and offers two radios. The first is \"Same as the place of destination (POD)\", hinted with the actual destination address the user already gave — the dr1-permanent-address-animals capture reads \"Riverside Holding Facility, East Farm Road, Leeds, LS25 3EB, United Kingdom\". The second is \"Enter a new address\", hinted \"This is where they will stay after spending 48 hours at the place of destination.\", and it reveals the address form conditionally. The address form is only ever shown after the user has said they need one: app/views/permanent-address-animals.html:82-94.",
+    "difference": "Put a two-option radio ahead of the address form: reuse the place of destination, or enter a new address, with the new-address fields as a conditional reveal on the second. The destination address is already on the notification, so the hint text can be rendered from it; where no destination has been given yet DR1 blocks the reuse option with \"Add a place of destination before you can continue\" (app/routes.js:2682-2692), and the frontend needs the same guard. Storing the choice matters as much as showing it — DR1 keeps the choice and copies the destination address into the permanent-address answer rather than storing a pointer, so decide whether the frontend copies or references before building.",
+    "falsifiedBy": "Rendering the frontend identification page for a Cat or Dog line and finding a radio, checkbox or link offering the place of destination as the permanent address."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:117-163",
+    "prototype": "app/views/permanent-address-animals.html:82-94"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "slice": "identification",
+  "title": "The frontend asks for a tattoo when identifying cattle; DR1 asks cattle for an ear tag and a passport only",
+  "domain": "identification",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "fe-animal-identification-saved", "dr1-animal-identification-details"],
+  "controls": ["animalIdentifierTattoo-0"],
+  "finding": {
+    "frontend": "Identifying a cow presents three boxes in this order — Passport number, Tattoo, Ear tag number — on fe-animal-identification and again on fe-animal-identification-saved. The tattoo box carries the hint \"For example, AB1234\". Cow is on the tattoo allow list in src/server/app/sets/live-animals/services/commodities/stub.js:109 alongside Cat and Dog.",
+    "prototype": "DR1's cattle line asks for two identifiers, Ear tag then Passport, and no tattoo — that is the whole entry form in the dr1-animal-identification-details capture, and the set is declared for commodity code 0102 in app/data/commodity-identifiers.js:9-12. DR1 reserves the tattoo for code 01061900, the cat, dog and ferret group.",
+    "difference": "Drop Cow from the tattoo allow list in stub.js:109 so the tattoo obligation no longer applies to cattle lines, leaving Cat and Dog. The field order for cattle also has to change: DR1 puts the ear tag first and the passport second, where the frontend puts the passport first. Because the tattoo obligation is optional and the unit record only needs one identifier, no stored answer becomes invalid, but any cattle unit that already carries a tattoo value will be purged by the obligation evaluator when the gate narrows — confirm that is acceptable before landing it.",
+    "falsifiedBy": "Finding a tattoo field on DR1's cattle identification panel, or a tattoo entry against commodity code 0102 in app/data/commodity-identifiers.js."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/services/commodities/stub.js:107-113",
+    "prototype": "app/data/commodity-identifiers.js:9-12"
+  }
+}

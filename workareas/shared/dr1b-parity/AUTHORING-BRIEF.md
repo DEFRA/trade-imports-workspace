@@ -58,8 +58,21 @@ Both sides are already photographed and the pictures are what you read.
 - Prototype, 42 screens:
   `workareas/shared/dr1b-parity/evidence/prototype@491b3926/manifest.json`
 
-Each manifest row names that screen's files. Per screen, on both sides, you have
-three things **from one page visit, so all three describe the same render**:
+Each manifest row names that screen's files:
+
+- `file` — the full-page screenshot, relative to the manifest's own directory.
+- `model.file` — the page model, an absolute path under
+  `workareas/shared/dr1b-parity/capture/model/<side>/`.
+- `html.file` — the rendered DOM, under
+  `workareas/shared/dr1b-parity/capture/html/<side>/`.
+
+**There are no element crops on this run and the manifests carry none.** Crops
+are derived from the controls findings name, so they cannot exist before the
+findings do. Every screen is a full-page shot for now; the crops arrive after
+the first ingest.
+
+Per screen, on both sides, you have three things **from one page visit, so all
+three describe the same render**:
 
 | File | What it is good for |
 |---|---|

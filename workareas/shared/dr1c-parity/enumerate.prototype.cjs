@@ -116,10 +116,21 @@
 // The same shape appears elsewhere and is likewise not a screen:
 //   - region of origin code — partials/region-of-origin-code-input.html,
 //     revealed on origin-of-the-import.html:102
-//   - county / parish / holding — partials/cph-number-input.html, revealed on
-//     cph-number.html:53
 //   - manual address fields — partials/address-book-manual-address-fields.html,
 //     revealed on address-book-lookup.html:137
+//
+// One entry that used to sit in this list was WRONG, and is corrected here
+// rather than deleted, because the wrong version is the kind of claim a finding
+// gets argued from:
+//
+//   - county / parish / holding is NOT a reveal. cph-number.html:53 is a bare
+//     `{% include "partials/cph-number-input.html" %}`, and that partial is a
+//     single govukDateInput (cph-number-input.html:4) carrying three ALWAYS
+//     VISIBLE inputs — County, Parish and Holding number
+//     (cph-number-input.html:20, :32, :44). Nothing conditions them and the only
+//     JavaScript on them moves focus between the boxes. So there is no
+//     `cph-number-revealed` state to shoot, and a finding may not say DR1 hides
+//     those fields behind anything.
 //
 // The dr1b capture filed these as `<screen>-<state>` ids
 // (dr1-reason-for-import-transit-revealed and friends). An enumerator lists

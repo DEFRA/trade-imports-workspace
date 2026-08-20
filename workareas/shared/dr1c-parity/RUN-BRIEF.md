@@ -167,25 +167,62 @@ reuse.
   the buttons and swallows the mousedown.** Clicking Continue while the panel is
   open reaches nothing — no error, no navigation, no POST. Dismiss the panel,
   then assert the hidden field is non-empty.
+
+  **This is a DR1-side fact. Check which page you are on before applying it.**
+  Two spec authors established that the frontend's commodity page is not this
+  shape at all: `fe-commodity-search` has no search box, no results panel and no
+  hidden input — it renders the whole reference list up front as one checkbox
+  fieldset per commodity. That difference against DR1's
+  `/what-are-you-importing` is itself likely a finding, so do not paper over it.
 - **A live row-filter search box hides the row you just picked.** A form-filler
   that types into every input on the page will make its own target disappear.
+  The frontend's five address pickers *are* this shape — a search input, a
+  Search button and a results table — even though its commodity page is not.
 - **On a hub, an answered row still renders a link.** "Change" sits in the same
   container as "Add" with one extra class. A loop driving off "any link" reopens
   the first section forever. Two agents wrote that bug independently.
 - **`selectedSpecies` and `transitCountries` are seeded with the literal
   `"[]"`**, so "assert not empty" passes before anything is chosen. Assert
   against `/^(\[\])?$/`.
+
+  **Also DR1-side only.** `selectedSpecies` appears nowhere in the frontend —
+  checked, and it exists only in the prototype's `app/routes.js`, its dashboard
+  fixtures and the four releases' `what-are-you-importing.html`. The frontend's
+  equivalent is a checkbox value of the shape `${commodity}|${speciesValue}`
+  (`commodities/search/view-model/commodity-groups.js:9`).
 - **The arrival date has a moving window derived from `new Date()`.** Derive the
   value; never type a literal. Never compare the value itself between sides —
-  compare the field.
+  compare the field. Both sides derive it from the clock: the frontend at
+  `features/transport/port-of-entry/arrival-window.js` (7 days back, 6 months
+  on, anchored to the start of the day in `Europe/London`), DR1 at
+  `app/routes.js:3927-3937`.
+- **The MoJ date picker does not close on Escape**, on either side — the
+  `SPEC_AUTHOR` persona says it does and it is wrong. On DR1 the dialog still
+  carries `moj-datepicker__dialog--open` fifteen seconds after an Escape. Use
+  the control the component itself offers, and assert it closed. Type into the
+  input rather than driving the calendar.
+- **The open calendar is a volatile value**, and it appears on more pages than
+  is obvious. Its grid draws the current month with today highlighted, and
+  `data-min-date` / `data-max-date` move daily on both sides. If the open state
+  is worth a picture, mask what moves — or state in a comment why the drift is
+  the thing being compared and must not be masked. Do not let it into the corpus
+  unexplained: a drift panel that fires every time teaches its reader to skip it.
 - **A view file's absence does not mean a question's absence.** Several DR1
   questions are conditional radio reveals with no view of their own: exit date,
   port of exit, exit border control post, transit/transhipment destination
   country and internal-market purpose are all reveals on `/reason-for-import`.
-  Region-of-origin code reveals on `origin-of-the-import.html:102`; county,
-  parish and holding reveal on `cph-number.html:53`; manual address fields reveal
-  on `address-book-lookup.html:137`. **Before writing "DR1 does not ask for X",
-  grep `app/views/partials/` for the field name.**
+  Region-of-origin code reveals on `origin-of-the-import.html:102`; manual
+  address fields reveal on `address-book-lookup.html:137`. **Before writing "DR1
+  does not ask for X", grep `app/views/partials/` for the field name.**
+
+  **The converse trap is real too, and this run has already met it.** An earlier
+  version of this brief — and the enumeration's own header comment — said
+  county, parish and holding reveal on `cph-number.html:53`. **They do not.**
+  That line is a bare `{% include "partials/cph-number-input.html" %}`, and the
+  partial is one `govukDateInput` with three always-visible inputs
+  (`cph-number-input.html:4, :20, :32, :44`). Both documents have been
+  corrected. So: check the partial, do not trust a description of it — including
+  one in this file.
 - **A dead hub row is evidence about the hub, not about the journey.** Follow the
   forward path before claiming a page cannot be reached.
 - **The declaration is a checkbox, not a radio.**
@@ -209,9 +246,32 @@ reported complete coverage against a list short by five.
 The frontend has **no** address-book screen at all — its 31 are the notification
 journey — and that UI is being built in a different service.
 
-**This run photographs them and settles the question with pictures.** Deciding
-they are out of scope is a legitimate answer. Inheriting an exclusion whose
-stated reason is wrong is not.
+**What this run has established from the frontend's source so far** (a spec
+author found it; the parent verified it verbatim):
+
+- There is no add-an-address route, link or affordance anywhere in the frontend
+  journey. `party-picker/_address-picker.njk` is the whole picker form — a
+  search input, a Search button, a results table, pagination and "Save and
+  continue" — and `addresses/copy/copy.en.js` has no add-an-address key. The
+  empty state's only copy is "No addresses match your search.", a dead end.
+- `src/server/app/services/address-book/index.js:17-19` says so as a design
+  statement: *"This service reads and never writes. The notification journey
+  selects from the organisation's book; adding, changing and removing the
+  records in it belongs to the INS frontend, which is the only writer."* The
+  module exposes `search`, `all` and `party` and nothing that creates or edits.
+
+So the frontend's answer to "my address is not listed" is that the user leaves
+this service. DR1's answer is a link into `/address-book/add/lookup`.
+
+**That is evidence, not a decision.** It says where the *code* believes the
+writer lives; it does not say whether DR1 intended those five screens to belong
+to this service. **This run photographs them and hands a person the pictures.**
+Deciding they are out of scope is a legitimate answer. Inheriting an exclusion
+whose stated reason is wrong is not.
+
+Note also that an absence cannot be photographed. The frontend side of this has
+no picture to show, so a finding about it has to say that in words and cite the
+source above.
 
 ## 9. What you never do
 

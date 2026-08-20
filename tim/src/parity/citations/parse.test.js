@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import {
   parseLineSpec,
-  sentences,
   alternatesSides,
   labelledParagraphs,
   tokenise,
@@ -24,28 +23,6 @@ describe('parseLineSpec', () => {
       { start: 85, end: 85 },
       { start: 98, end: 98 }
     ])
-  })
-})
-
-describe('sentences', () => {
-  test('splits on a full stop followed by a capital', () => {
-    expect(sentences('One thing. Two things.').map((s) => s.text)).toEqual([
-      'One thing.',
-      'Two things.'
-    ])
-  })
-
-  test('splits on a paragraph break', () => {
-    expect(sentences('One.\n\nTwo.').map((s) => s.text)).toEqual([
-      'One.',
-      'Two.'
-    ])
-  })
-
-  test('does not split a version number or a lower-case continuation', () => {
-    expect(
-      sentences('accessible-autocomplete@3.0.1 is a dependency now.')
-    ).toHaveLength(1)
   })
 })
 

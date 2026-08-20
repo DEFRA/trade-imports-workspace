@@ -83,6 +83,44 @@ describe('renderProse', () => {
   test('renders nothing for empty prose rather than an empty p', () => {
     expect(renderProse({ text: '   ', citations, idPrefix: 'x' })).toBe('')
   })
+
+  test('breaks the line between two sentences of one paragraph', () => {
+    const html = renderProse({
+      text: 'The box is one field. The hint says nothing.',
+      citations,
+      idPrefix: 'inc-001'
+    })
+    expect(html).toBe('<p>The box is one field.<br>The hint says nothing.</p>')
+  })
+
+  test('does not break inside a sentence that names a dotted file path', () => {
+    const html = renderProse({
+      text: 'It lives in app/views/design-release-2.1/upload-documents.html and page-model.js reads it.',
+      citations,
+      idPrefix: 'inc-001'
+    })
+    expect(html).not.toContain('<br>')
+  })
+
+  test('keeps a citation marker at a sentence end on the link before the break', () => {
+    const html = renderProse({
+      text: 'The layout renders it (app/routes.js:8778) [[c1]]. The hub does not.',
+      citations,
+      idPrefix: 'inc-001'
+    })
+    expect(html).toContain(
+      '<a class="cite" href="#inc-001-src-c1" title="layout.njk:41-53"><sup>1</sup></a>.<br>The hub does not.'
+    )
+  })
+
+  test('leaves a quoted string that ends mid-sentence on one line', () => {
+    const html = renderProse({
+      text: 'The hint reads "This information can be found on the ITAHC." under the field.',
+      citations,
+      idPrefix: 'inc-001'
+    })
+    expect(html).not.toContain('<br>')
+  })
 })
 
 describe('markersIn', () => {

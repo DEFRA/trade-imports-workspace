@@ -8,6 +8,8 @@
 // copy.en.js a reference meant would produce confidently wrong links, which is
 // worse than the inert <code> the current page renders.
 
+import { sentences } from '../sentences.js'
+
 const PATH_CHARS = '[A-Za-z0-9_@.\\-/]'
 const LINE_SPEC = '\\d+(?:-\\d+)?(?:\\s*,\\s*\\d+(?:-\\d+)?)*'
 
@@ -37,32 +39,6 @@ export const parseLineSpec = (spec) =>
       const [start, end] = part.split('-').map((n) => Number(n))
       return { start, end: Number.isFinite(end) ? end : start }
     })
-
-// Sentence boundaries in this prose are conservative: a full stop followed by
-// whitespace and a capital, or a paragraph break. A boundary that is too eager
-// would orphan a continuation from its antecedent.
-const SENTENCE_BREAK = /(?<=[.!?])\s+(?=[A-Z"'`(])|\n\n+/g
-
-/**
- * Split text into sentences, keeping each sentence's offset in the original so
- * a token's position can be mapped back to the sentence containing it.
- *
- * @param {string} text
- * @returns {Array<{text: string, start: number, end: number}>}
- */
-export const sentences = (text) => {
-  const out = []
-  let cursor = 0
-  SENTENCE_BREAK.lastIndex = 0
-  let match
-  while ((match = SENTENCE_BREAK.exec(text)) !== null) {
-    const end = match.index
-    out.push({ text: text.slice(cursor, end), start: cursor, end })
-    cursor = match.index + match[0].length
-  }
-  out.push({ text: text.slice(cursor), start: cursor, end: text.length })
-  return out
-}
 
 const sentenceAt = (list, offset) =>
   list.find((s) => offset >= s.start && offset <= s.end) ??

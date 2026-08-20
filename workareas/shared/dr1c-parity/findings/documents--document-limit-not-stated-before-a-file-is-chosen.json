@@ -1,0 +1,34 @@
+{
+  "slice": "documents",
+  "title": "Frontend never tells a trader how many documents a notification may hold until they hit the limit; Design release 1 states it in the file requirements above the upload control",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "fe-documents-populated", "dr1-upload-documents"],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "Nothing on the documents page says how many documents a notification may hold. The captured DOM of fe-documents and fe-documents-populated states exactly two requirements above the upload control — that a file must be \"smaller than 10 MB\" and that it must be \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\" (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48) — and no count appears anywhere on either page. A trader learns the limit only by reaching it, at which point the error summary tells them (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73), after they have already chosen a file and tried to upload it. The Add affordance is not hidden at the cap either, so there is no silent signal in place of the missing sentence.",
+    "prototype": "Design release 1 states the count as one of the four requirements in the hint above the upload control, alongside the size and the file types: \"up to a maximum of 15 files\" (app/views/upload-documents.html:168). A trader is told before they choose anything.",
+    "difference": "Add the document count as a bullet in the file-requirements hint at src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48, so the page states the limit before a trader picks a file rather than after. The copy belongs beside the existing size and file-type bullets in src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js. This is copy on a page Frontend already has and it needs nothing else to land first, so the band is frontend-work. It is independent of the cap's value: the sentence can be written against whatever the obligation currently allows, and if documents--max-documents-cap lands first the sentence says fifteen instead of ten. Write it to read from the same obligation value the error message reads rather than hard-coding a number, so the two can never disagree.",
+    "falsifiedBy": "Finding any statement of a document count limit in the file-requirements hint of the captured DOM of fe-documents or fe-documents-populated. That hint has exactly two bullets and neither mentions a count.",
+    "verification": "No independent verifier: this finding was split out of documents--max-documents-cap by the corpus editor during a pre-ingest edit pass, and it carries no verification by a second agent. What it does carry is the verification the parent finding already had, which covered this half directly and was written by an agent other than that finding's author. That verifier ran this finding's falsifier itself: it opened capture/html/frontend/fe-documents.html and fe-documents-populated.html and found the hint has two bullets, \"smaller than 10 MB\" and \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\", with no count on either page. It then checked the behavioural half rather than stopping at the markup, grepping MAX_DOCUMENTS across the whole documents feature and finding it reaches the template through nothing at all — its only non-test uses are form/errors.js:54, the error message, and controller.js:96, a guard that fires on submit and returns before the upload is attempted. That is what establishes the claim this finding turns on: the Add affordance is not hidden at the cap, whatever the obligation file's header comment at obligations/sections/documents.js:12-14 says, so a trader really does learn the limit only by reaching it. The editor added nothing to those facts and checked the Design release 1 side again at app/views/upload-documents.html:168, which states \"up to a maximum of 15 files\" as claimed.",
+    "correction": "Not a correction of a claim — a record of provenance, because this file did not exist when the slice was verified. It was created by the corpus editor in a pre-ingest edit pass by splitting documents--max-documents-cap, whose own difference slot opened with the words \"Two changes\": raise the cap from ten to fifteen, and state the limit in the hint up front. Those are separable — stating the current limit needs no cap change, and raising the cap needs no page copy — so under the contract's rule that a sentence containing \"and also\" is two findings they are now two files. The parent keeps the cap; this one takes the copy. Both are banded frontend-work: the cap value is a frontend obligation constant with no counterpart on the wire, and this is copy on a page that already exists."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48",
+    "prototype": "app/views/upload-documents.html:168"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--max-documents-cap",
+      "relation": "travels-with",
+      "why": "This finding was split from that one. That one changes the limit's value, this one puts the limit on the page; if both land, the sentence this one adds states the number that one sets."
+    },
+    {
+      "id": "documents--file-size-limit",
+      "relation": "travels-with",
+      "why": "Both add or change a bullet in the same file-requirements hint, so they are one edit to one template if scheduled together."
+    }
+  ]
+}

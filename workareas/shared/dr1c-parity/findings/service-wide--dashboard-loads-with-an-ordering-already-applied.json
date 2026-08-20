@@ -1,0 +1,39 @@
+{
+  "slice": "service-wide",
+  "title": "Frontend's dashboard always has an ordering applied and no way to have none; Design release 1's sort control loads unselected, so the list starts in whatever order the service returns it",
+  "domain": "dashboard",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "fe-dashboard-sorted",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": ["sort"],
+  "finding": {
+    "frontend": "There is no unsorted state anywhere in the dashboard. Every option in the select names an ordering, and one of them is always in force: the controller parses the sort query parameter and falls back to a default when it is absent or unrecognised (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53, through parseNotificationSort at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60), and the picture of fe-dashboard-populated shows \"Arrival (newest to oldest)\" already selected on a page the trader has not touched. The default is carried all the way to the notification list read, which defaults the parameter again and interpolates it unconditionally into the request (src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34). So a trader cannot see the list in the order the service returns it, and the page never has to answer the question of what to show when nothing has been chosen.",
+    "prototype": "Design release 1's select loads on \"Select one\", an unselected placeholder ahead of its three orderings (app/data/dashboard-notifications.js:147-152), and the captured DOM of dr1-dashboard shows it selected. So the design's starting state is a list with no ordering named. The design does not say what that order should be, and it cannot be read off the prototype: getDashboardViewModel reads the sort parameter, hands it to buildDashboardSortItems so the right option shows as selected and to the pagination hrefs, and never orders the notification list by it (app/routes.js:7138-7255), so the prototype's list is in fixture order whatever the select says.",
+    "difference": "Give the dashboard a state in which no ordering has been chosen, and decide what the list query does in it. Two things have to happen in Frontend. The sort control needs an unselected entry that is not an ordering, which means the default at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65 stops being applied when the trader has chosen nothing rather than being applied silently. Then the notification list read has to be able to ask for a page without an ordering: src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults sort to arrivalDate,desc and :34 puts it in the query string on every call, so the parameter has to become optional there and the stub at src/server/app/services/persistence/records/stub/lifecycle/read.js:18 has to match. The band is frontend-work because both edits are Frontend's and the frontend can build and run this against its own stub today — but confirm with the notifications API's owners what order it returns when no sort parameter is sent before this ships, because that order is what a trader will actually see and neither this design nor the prototype specifies it. Adding the \"Select one\" label to the options list is part of the copy change raised as service-wide--dashboard-sort-orderings-differ; this finding is what the label has to mean.",
+    "falsifiedBy": "Finding a request from Frontend's dashboard for a page of notifications that carries no sort parameter, or an option in Frontend's sort select that is not an ordering. src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34 default the parameter and always send it, and the four options at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 are all orderings.",
+    "verification": "No independent verifier: this finding was split out of service-wide--dashboard-sort-orderings-differ by the corpus editor during a pre-ingest edit pass, and no second agent has verified it as a finding in its own right. The observations it rests on were all made by that finding's verifier, who was a different agent from its author. That verifier extracted every option from dr1-dashboard.html and got Select one (selected), Newest first, Oldest first, Arrival date; read the frontend's select on fe-dashboard-populated.png and found \"Arrival (newest to oldest)\" pre-selected with no unsorted entry; and traced the prototype's options past the view to buildDashboardSortItems at app/routes.js:6716-6729 and its data at app/data/dashboard-notifications.js:147-152. That verifier also established, on its own initiative and against the author's claim, that Design release 1 never orders its list at all — see the correction below — which is the fact that makes this a real open question rather than a mechanical port. The editor added one thing the verifier had not looked at, because this finding turns on it and the parent finding did not: the path the chosen ordering takes out of Frontend. src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53 parses it, src/server/app/engine/journey.js:92-119 passes it through listKnownJourneys to records.list, and src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults it to arrivalDate,desc and :34 interpolates it into the request URL unconditionally. That is what settles the band: the edit is Frontend's, in Frontend's own files, and runs against Frontend's stub.",
+    "correction": "Not a correction of a claim — a record of provenance, because this file did not exist when the slice was verified. It was split from service-wide--dashboard-sort-orderings-differ, which was typed copy-change but whose difference slot ended \"Decide what 'no ordering chosen' means for the list query, since the frontend always sends a sort parameter today and has no unsorted state.\" An unsorted default is not copy: it changes what the page asks the service for. The parent keeps the option labels and stays copy-change; this file takes the behaviour and is typed obligation-change, because what changes is that an ordering stops being obligatory on every read. Carried across from the parent's own correction, because it bears directly on this finding and would otherwise be lost with it: Design release 1's list is in fixture order whatever its select says. getDashboardViewModel at app/routes.js:7138-7255 uses the sort parameter only to mark the selected option and to build pagination hrefs, and the only two .sort( calls in the whole of app/routes.js are on address names and on a label list. So the prototype cannot be used to answer what \"no ordering chosen\" should show — that is a question for the notifications API's owners, and this finding states it rather than settling it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/persistence/records/real/lifecycle/read.js:26",
+    "prototype": "app/data/dashboard-notifications.js:147-152"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--dashboard-sort-orderings-differ",
+      "relation": "travels-with",
+      "why": "This finding was split from that one. That one adds the \"Select one\" label to the sort options; this one is what choosing nothing has to mean for the list the page then shows."
+    },
+    {
+      "id": "service-wide--dashboard-sort-needs-an-update-button",
+      "relation": "travels-with",
+      "why": "Same control. That one is how a chosen ordering gets applied, this one is what happens before one is chosen."
+    }
+  ]
+}

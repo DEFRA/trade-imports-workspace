@@ -281,12 +281,20 @@ would not resolve anyway.
 >   file of their own: exit date, port of exit, exit border control post,
 >   transit/transhipment destination country and internal-market purpose are all
 >   reveals on `/reason-for-import`; region-of-origin code reveals on
->   `app/views/origin-of-the-import.html:102`; county, parish and holding reveal
->   on `app/views/cph-number.html:53`; manual address fields reveal on
+>   `app/views/origin-of-the-import.html:102`; manual address fields reveal on
 >   `app/views/address-book-lookup.html:137`. **Before writing "DR1 does not ask
 >   for X", grep `app/views/partials/` and the containing page for the field
 >   name.** Three agents on a previous run wrote that finding and all three were
 >   wrong.
+> - **And the converse: do not trust a description of a reveal either — including
+>   one in this file.** An earlier version of this list said county, parish and
+>   holding reveal on `app/views/cph-number.html:53`. **They do not.** That line
+>   is a bare `{% include "partials/cph-number-input.html" %}`, and the partial is
+>   a single `govukDateInput` carrying three always-visible inputs — County,
+>   Parish and Holding number (`app/views/partials/cph-number-input.html:4`,
+>   `:20`, `:32`, `:44`). The same wrong claim was in the run brief and in the
+>   prototype enumerator's header comment; all three are now corrected. Open the
+>   partial.
 
 **`carriedFrom`** — the `inc-NNN` id in the previous run this finding derives
 from, or omit. Check `carryover.json` before writing anything: carrying a

@@ -1,0 +1,28 @@
+{
+  "slice": "transport",
+  "title": "DR1 labels the private transporter's postcode field \"Postcode or Zip code\"; the frontend labels the same field \"Postal or zip code\".",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private"],
+  "controls": [{ "kind": "field", "name": "postalOrZipCode" }],
+  "finding": {
+    "frontend": "Between \"County (optional)\" and \"Country\" the field is labelled \"Postal or zip code\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:108, rendered by private-transporter-details/private-transporter-details.njk:57-64). The same words carry through to the error message the field raises, \"Enter a postal or zip code\", and to its length error, \"Postal or zip code must be 12 characters or less\" (copy.en.js:118 and :127-128).",
+    "prototype": "DR1 labels the same field, in the same position between County (optional) and Country, \"Postcode or Zip code\" (app/views/partials/transporter-add-private-fields.html:60-69). Its commercial add form uses the same words, so both DR1 transporter forms agree.",
+    "difference": "Rename the label to \"Postcode or Zip code\", and reword the two error messages that repeat it so the user is not told to enter something the label does not name. Copy only — the field, its width, its autocomplete attribute and its validation do not change. Travels with the other two copy and layout changes to the same form.",
+    "falsifiedBy": "Finding \"Postcode\" rather than \"Postal\" in the rendered label on fe-transporter-private — the captured DOM has <label class=\"govuk-label\" for=\"postalOrZipCode\">Postal or zip code</label>.",
+    "verification": "Written by the verifier, who both found and checked it, because the slice had no finding for it. Read both rendered DOMs at the label, both full-page screenshots, and both sources. The frontend's captured DOM has label for=\"postalOrZipCode\" reading \"Postal or zip code\"; DR1's has label for=\"transporter-private-postcode\" reading \"Postcode or Zip code\". Ran the falsifier: the frontend's label contains no \"Postcode\", so it does not fire. Checked that this is not a chrome or address-book difference the service-wide or addresses slice owns: the string is declared per feature, appearing only in the transport and commodities feature copy files, so no other slice can be raising the same row for this form. Checked rubric 6: DR1 does not share the frontend's wording — its commercial add form says \"Postcode or Zip code\" too. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:108",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:60-69"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-contact-details-not-grouped",
+      "relation": "travels-with",
+      "why": "same form, and both are copy or layout only"
+    }
+  ]
+}

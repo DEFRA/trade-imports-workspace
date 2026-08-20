@@ -244,6 +244,22 @@ describe('misfiled', () => {
     })
   })
 
+  test('the chrome slice cannot stray, because its subject is every screen', () => {
+    const result = misfiled({
+      findings: [
+        {
+          file: 'chrome.json',
+          raw: { slice: 'service-wide', screens: ['fe-one', 'fe-three'] }
+        }
+      ],
+      sliceIds: new Set(['hub', 'review', 'service-wide']),
+      owner,
+      chrome: 'service-wide'
+    })
+
+    expect(result.strayed).toEqual([])
+  })
+
   test('a finding spanning two slices is ordinary while one of them is its own', () => {
     const result = misfiled({
       findings: [

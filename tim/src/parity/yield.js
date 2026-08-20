@@ -128,9 +128,10 @@ export const perSlice = ({ slices, findings, fraction }) => {
  * @param {object[]} args.findings
  * @param {Set<string>} args.sliceIds
  * @param {Map<string, string[]>} args.owner
+ * @param {string} [args.chrome] - The slice that owns the chrome, if any
  * @returns {{homeless: object[], strayed: object[]}}
  */
-export const misfiled = ({ findings, sliceIds, owner }) => {
+export const misfiled = ({ findings, sliceIds, owner, chrome }) => {
   const homeless = []
   const strayed = []
 
@@ -140,6 +141,13 @@ export const misfiled = ({ findings, sliceIds, owner }) => {
       homeless.push({ file, slice: slice ?? null })
       continue
     }
+    // The chrome slice cannot stray. Its subject is the furniture on every
+    // screen in the corpus, so a chrome finding names whichever screens show
+    // the difference best — which are almost never the handful it was given.
+    // Flagging that reported the one slice doing its job as the one working
+    // outside its brief.
+    if (slice === chrome) continue
+
     const screens = Array.isArray(raw?.screens) ? raw.screens : []
     const owners = screens.flatMap((screen) => owner.get(screen) ?? [])
     // Only when NO screen it names is its own. A finding spanning two slices'
@@ -179,7 +187,8 @@ export const runYield = ({ profile, file, fraction = THIN_FRACTION }) => {
   const { homeless, strayed } = misfiled({
     findings,
     sliceIds: new Set(slices.map((slice) => slice.id)),
-    owner
+    owner,
+    chrome: slices.find((slice) => slice.chrome)?.id
   })
 
   const unverified = rows.flatMap((row) => row.unverified)

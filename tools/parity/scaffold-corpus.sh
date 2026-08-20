@@ -225,14 +225,31 @@ for side in $SIDE_IDS; do
     mkdir -p "$WS/$WORKAREA/specs/$side"
 done
 
-# The specs are CommonJS, and Playwright resolves module type from the nearest
-# package.json. Without this one the specs inherit whatever the next package.json
-# up the tree says, which is nothing to do with them.
+# Capture specs are ES modules. Node decides that from the nearest package.json
+# and workareas/ has none, so without this file a spec's import statement is a
+# syntax error rather than an import — and every spec opens with one, plus a
+# top-level `await import(...)` for the recorder, which cannot be CommonJS at
+# all.
+#
+# Not to be confused with enumerate.cjs and pairs.cjs, which ARE CommonJS. They
+# carry the .cjs extension for exactly that reason and are unaffected by this.
+#
+# Deliberately not a package: no name, no version, no dependencies. A spec
+# imports one thing, the recorder, by the absolute path tim puts in the capture
+# context — so there is nothing here to install and nothing to resolve.
 cat > "$WS/$WORKAREA/specs/package.json" <<'EOF'
 {
-  "name": "parity-capture-specs",
-  "private": true,
-  "type": "commonjs"
+  "_comment": [
+    "Capture specs are ES modules. Node decides that from the nearest",
+    "package.json, and workareas/ has none, so without this file a spec's",
+    "import statement is a syntax error rather than an import.",
+    "",
+    "It is deliberately not a package: no name, no version, no dependencies.",
+    "A spec imports exactly one thing, the recorder, and it imports it by the",
+    "absolute path tim puts in the capture context — so there is nothing here",
+    "to install and nothing to resolve."
+  ],
+  "type": "module"
 }
 EOF
 

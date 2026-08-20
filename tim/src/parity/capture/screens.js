@@ -96,6 +96,35 @@ export const isUsableBox = (box) =>
   box.width >= MIN_CROP && box.height >= MIN_CROP
 
 /**
+ * How much of the page a crop may cover before it stops being a crop.
+ *
+ * The named limits and the growth ratio stop the loop climbing into a
+ * container the page has a class for. Neither catches a page short enough that
+ * a legitimate ancestor already fills it — and on a real corpus that produced
+ * two crops that were whole-page shots wearing a control's name, which is the
+ * one thing this stage exists to prevent.
+ *
+ * Measured on height rather than area, because the failure is always vertical:
+ * the crop is the full column width by construction, so a tall box is the page.
+ */
+export const MAX_CROP_PAGE_FRACTION = 0.8
+
+/**
+ * Whether a clip has grown into a whole-page shot.
+ *
+ * No exemption for a short page. Where a control genuinely fills the document,
+ * the whole page IS the right picture — so falling back to it costs the reader
+ * nothing and gains an honest label instead of a crop that claims to be of one
+ * control.
+ *
+ * @param {{height: number}} box
+ * @param {{height: number}} page - Full document size
+ * @returns {boolean}
+ */
+export const isWholePageBox = (box, page) =>
+  page.height > 0 && box.height >= page.height * MAX_CROP_PAGE_FRACTION
+
+/**
  * The file one element crop lands in.
  *
  * Both facts live in the name — `<screen>__<anchor>.png` — because that is what
@@ -411,6 +440,14 @@ export const captureAnchor = async (page, screen, anchor, context) => {
       role,
       matched: count,
       why: 'The resolved element has no visible box.'
+    }
+  }
+  if (isWholePageBox(box, measured.page)) {
+    return {
+      anchor: anchor.key,
+      role,
+      matched: count,
+      why: `The crop grew to ${Math.round((box.height / measured.page.height) * 100)}% of the page, so it is a whole-page shot with a control's name on it. Showing the page instead.`
     }
   }
 

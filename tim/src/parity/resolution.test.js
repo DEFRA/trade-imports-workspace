@@ -207,10 +207,26 @@ describe('resolveOnPage on a repeated name', () => {
     )
     .join('')
 
-  test('counts places rather than elements, and crops the first', () => {
+  // This used to crop the first of the three, on the argument that instances
+  // of one role with one name are interchangeable. Against a real corpus they
+  // are not: a name landing in 27 places on one page cropped a link the
+  // finding was not about, and the crops "reliably caught the wrong things".
+  test('refuses a name that lands in several places rather than cropping one', () => {
     const found = resolve(threeRows, 'Optional')
 
-    expect(found).toMatchObject({ role: 'status', places: 3, refused: false })
+    expect(found).toEqual({ role: 'status', places: 3, refused: true })
+  })
+
+  test('carries the count out, so the refusal can say why it refused', () => {
+    expect(resolve(threeRows, 'Optional').places).toBe(3)
+  })
+
+  test('crops a name that lands in exactly one place', () => {
+    const oneRow =
+      '<li class="govuk-task-list__item"><a href="/a">Task a</a><strong class="govuk-tag">Optional</strong></li>'
+    const found = resolve(oneRow, 'Optional')
+
+    expect(found).toMatchObject({ role: 'status', places: 1, refused: false })
     expect(cropContainerOf(found.node).attrs.class).toContain(
       'govuk-task-list__item'
     )
@@ -223,6 +239,15 @@ describe('resolveOnPage on a repeated name', () => {
     )
 
     expect(found.places).toBe(1)
+  })
+
+  test('a radio group still crops, which is what refusing must not break', () => {
+    const found = resolve(
+      '<div class="govuk-form-group"><fieldset><legend>Reason</legend><input type="radio" name="reason" value="a"><input type="radio" name="reason" value="b"><input type="radio" name="reason" value="c"></fieldset></div>',
+      'reason'
+    )
+
+    expect(found.refused).toBe(false)
   })
 
   test('the last rung refuses rather than guessing', () => {

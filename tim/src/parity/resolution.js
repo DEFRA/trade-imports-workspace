@@ -308,13 +308,26 @@ const distinctPlaces = (nodes) => new Set(nodes.map(cropContainerOf)).size
  * anything, so a string that could be read several ways is read the most
  * specific way the page supports.
  *
- * Ambiguity inside the winning rung is handled by the rung. On rungs 1 to 6
- * the matches are instances of one role with one name — the seventh "Not yet
- * started" tag says nothing the first does not — so the first in document
- * order is cropped and the count is carried out so the report can say the crop
- * is one of several. On the last rung the role carries no evidence that the
- * matches are the same sort of thing, so more than one is a guess and it
- * refuses.
+ * **An ambiguous match is refused on every rung.** Where a name lands in more
+ * than one place on the page, nothing here knows which one the finding meant,
+ * and the crop that results is arbitrary.
+ *
+ * This used to refuse only on the last rung, on the argument that instances of
+ * one role with one name are interchangeable — the seventh "Not yet started"
+ * tag says nothing the first does not. That argument does not survive contact
+ * with a real page: "Change" landed in 27 distinct places on one check-answers
+ * screen and the finding was about one of them. Sam's report after reading a
+ * corpus of them was that the crops "reliably caught the wrong things".
+ *
+ * A crop that is right by luck is not worth a crop that is wrong by luck, so
+ * the ambiguous case now falls back to the whole page **and says why**. The
+ * author's remedy is to name a control that resolves to one place; the count
+ * is carried out either way so `anchors` can print what it refused and the
+ * reader can see the difference between "no crop" and "no crop, because the
+ * name means six things".
+ *
+ * A repeated `name` attribute is not ambiguity: {@link distinctPlaces} counts
+ * crop containers, so a radio group's five inputs are one place and still crop.
  *
  * @param {object} args
  * @param {object} args.doc - From {@link parseDocument}
@@ -337,7 +350,7 @@ export const resolveOnPage = ({ doc, anchor }) => {
 
     if (found.length === 0) continue
     const places = distinctPlaces(found)
-    if (role === 'text' && places > 1) return { role, places, refused: true }
+    if (places > 1) return { role, places, refused: true }
     return { role, node: found[0], places, refused: false }
   }
   return null

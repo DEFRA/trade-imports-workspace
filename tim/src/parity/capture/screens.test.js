@@ -28,6 +28,7 @@ import {
   clampCropBox,
   cropFileName,
   isUsableBox,
+  isWholePageBox,
   loadAnchors,
   mergeManifestRows,
   resolveAnchor,
@@ -119,6 +120,24 @@ describe('isUsableBox', () => {
 
   test('accepts a box big enough to read', () => {
     expect(isUsableBox({ width: 200, height: 80 })).toBe(true)
+  })
+})
+
+describe('isWholePageBox', () => {
+  test('refuses a crop that has grown into the page', () => {
+    expect(isWholePageBox({ height: 1800 }, { height: 2000 })).toBe(true)
+  })
+
+  test('accepts a crop that shows a part of the page', () => {
+    expect(isWholePageBox({ height: 400 }, { height: 2000 })).toBe(false)
+  })
+
+  test('refuses on a short page too, where the whole page is the right picture anyway', () => {
+    expect(isWholePageBox({ height: 300 }, { height: 320 })).toBe(true)
+  })
+
+  test('says nothing about a page that measured nothing', () => {
+    expect(isWholePageBox({ height: 0 }, { height: 0 })).toBe(false)
   })
 })
 

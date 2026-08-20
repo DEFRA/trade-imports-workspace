@@ -470,7 +470,11 @@ describe('runAnchors on an ambiguous name', () => {
     '</ul>'
   ].join('')
 
-  test('crops the first of several places and says how many there were', () => {
+  // This used to crop the first of the three and carry the count out so the
+  // report could say the crop was one of several. Against a real corpus that
+  // produced crops of the wrong thing, so an ambiguous name now writes no
+  // anchor at all and the card falls back to the whole page.
+  test('writes no anchor for a name that lands in several places', () => {
     writeBacklog([increment({ controls: ['Not yet started'] })])
     bothSides(sixTags, sixTags)
 
@@ -484,10 +488,10 @@ describe('runAnchors on an ambiguous name', () => {
         screen: 'fe-documents',
         role: 'status',
         places: 3,
-        cropped: true
+        cropped: false
       }
     ])
-    expect(anchorsOn(result, 'frontend', 'fe-documents')).toHaveLength(1)
+    expect(anchorsOn(result, 'frontend', 'fe-documents') ?? []).toHaveLength(0)
   })
 
   test('a radio group is one place, not eight', () => {

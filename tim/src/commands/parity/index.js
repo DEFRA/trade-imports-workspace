@@ -687,7 +687,7 @@ export const register = (program, { timVersion }) => {
     .description(
       'Where each application stood when the run began, and what has moved under it since'
     )
-    .option('--write', 'Record the current heads as this run\'s starting point')
+    .option('--write', "Record the current heads as this run's starting point")
     .option('--force', 'Re-record over a run already in progress')
     .option('--strict', 'Exit non-zero when an application has moved')
     .action(

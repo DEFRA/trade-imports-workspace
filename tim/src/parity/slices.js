@@ -17,8 +17,7 @@ export const SLICES_FILE = 'slices.json'
  * @param {object} profile - A loaded corpus profile
  * @returns {string}
  */
-export const slicesPath = (profile) =>
-  join(profile.paths.workarea, SLICES_FILE)
+export const slicesPath = (profile) => join(profile.paths.workarea, SLICES_FILE)
 
 /**
  * Read the slicing and check it is the shape the rest of this file assumes.
@@ -293,7 +292,7 @@ export const renderSlices = (result) => {
 
   for (const entry of result.duplicated) {
     lines.push(
-      `  in two slices  ${entry.screen.padEnd(44)} ${entry.slices.join(', ')}`
+      `  in ${entry.slices.length} slices    ${entry.screen.padEnd(44)} ${entry.slices.join(', ')}`
     )
   }
   for (const screen of result.uncovered) {

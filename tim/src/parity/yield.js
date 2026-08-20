@@ -2,7 +2,12 @@ import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { readJsonFile } from './io.js'
 import { findingsDir, verificationOf } from './ingest.js'
-import { readSlices, slicesPath, ownership, manifestScreensBySide } from './slices.js'
+import {
+  readSlices,
+  slicesPath,
+  ownership,
+  manifestScreensBySide
+} from './slices.js'
 
 /**
  * How far under the middle of the pack a slice may sit before it is worth
@@ -31,7 +36,9 @@ export const readAuthored = (dir) => {
   if (!existsSync(dir)) return { findings: [], unreadable: [], found: false }
   const findings = []
   const unreadable = []
-  for (const file of readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
+  for (const file of readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .sort()) {
     try {
       findings.push({ file, raw: readJsonFile(join(dir, file)) })
     } catch (error) {

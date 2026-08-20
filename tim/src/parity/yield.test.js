@@ -34,7 +34,10 @@ const writeManifest = (name, screens) => {
   const dir = join(root, name)
   mkdirSync(dir, { recursive: true })
   const path = join(dir, 'manifest.json')
-  writeFileSync(path, JSON.stringify({ rows: screens.map((screen) => ({ screen })) }))
+  writeFileSync(
+    path,
+    JSON.stringify({ rows: screens.map((screen) => ({ screen })) })
+  )
   return path
 }
 
@@ -53,7 +56,10 @@ const writePairs = () => {
 const profile = () => ({
   runId: 'EUDPA-999',
   sides: [
-    { id: 'frontend', manifest: writeManifest('fe', ['fe-one', 'fe-two', 'fe-three', 'fe-four']) }
+    {
+      id: 'frontend',
+      manifest: writeManifest('fe', ['fe-one', 'fe-two', 'fe-three', 'fe-four'])
+    }
   ],
   paths: { workarea, pairingModule: writePairs() }
 })
@@ -131,7 +137,10 @@ describe('perSlice', () => {
     const findings = [
       { file: 'seen.json', raw: verified() },
       { file: 'unseen.json', raw: { slice: 'hub' } },
-      { file: 'blank.json', raw: { slice: 'hub', finding: { verification: '   ' } } }
+      {
+        file: 'blank.json',
+        raw: { slice: 'hub', finding: { verification: '   ' } }
+      }
     ]
 
     const [hub] = perSlice({ slices, findings, fraction: THIN_FRACTION })
@@ -217,8 +226,14 @@ describe('runYield', () => {
   test('calls it ready when every finding carries a record and sits in a real slice', () => {
     writeFinding('hub--a.json', verified())
     writeFinding('hub--b.json', verified())
-    writeFinding('review--c.json', verified({ slice: 'review', screens: ['fe-three'] }))
-    writeFinding('review--d.json', verified({ slice: 'review', screens: ['fe-four'] }))
+    writeFinding(
+      'review--c.json',
+      verified({ slice: 'review', screens: ['fe-three'] })
+    )
+    writeFinding(
+      'review--d.json',
+      verified({ slice: 'review', screens: ['fe-four'] })
+    )
 
     const result = runYield({ profile: profile() })
 
@@ -252,7 +267,10 @@ describe('renderYield', () => {
     for (let i = 0; i < 12; i += 1) {
       writeFinding(`hub--${i}.json`, verified())
     }
-    writeFinding('review--a.json', verified({ slice: 'review', screens: ['fe-three'] }))
+    writeFinding(
+      'review--a.json',
+      verified({ slice: 'review', screens: ['fe-three'] })
+    )
 
     const text = renderYield(runYield({ profile: profile() }))
 

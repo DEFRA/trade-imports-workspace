@@ -11,12 +11,63 @@ import { findingsDir } from './ingest.js'
  * nothing.
  */
 export const STOPWORDS = new Set([
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'both', 'but', 'by',
-  'can', 'cannot', 'do', 'does', 'each', 'for', 'from', 'has', 'have', 'in',
-  'into', 'is', 'it', 'its', 'no', 'not', 'of', 'on', 'one', 'only', 'or',
-  'per', 'so', 'than', 'that', 'the', 'their', 'them', 'then', 'there',
-  'these', 'they', 'this', 'to', 'two', 'under', 'up', 'was', 'were', 'what',
-  'when', 'where', 'which', 'while', 'with', 'would'
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'been',
+  'both',
+  'but',
+  'by',
+  'can',
+  'cannot',
+  'do',
+  'does',
+  'each',
+  'for',
+  'from',
+  'has',
+  'have',
+  'in',
+  'into',
+  'is',
+  'it',
+  'its',
+  'no',
+  'not',
+  'of',
+  'on',
+  'one',
+  'only',
+  'or',
+  'per',
+  'so',
+  'than',
+  'that',
+  'the',
+  'their',
+  'them',
+  'then',
+  'there',
+  'these',
+  'they',
+  'this',
+  'to',
+  'two',
+  'under',
+  'up',
+  'was',
+  'were',
+  'what',
+  'when',
+  'where',
+  'which',
+  'while',
+  'with',
+  'would'
 ])
 
 /**
@@ -46,8 +97,14 @@ export const contentTokens = (title, noise) =>
 export const noiseFor = (profile) => {
   const words = new Set(STOPWORDS)
   for (const side of profile.sides ?? []) {
-    for (const label of [side.id, side.label, ...(side.paragraphLabels ?? [])]) {
-      for (const word of String(label ?? '').toLowerCase().split(/[^a-z0-9]+/)) {
+    for (const label of [
+      side.id,
+      side.label,
+      ...(side.paragraphLabels ?? [])
+    ]) {
+      for (const word of String(label ?? '')
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)) {
         if (word) words.add(word)
       }
     }
@@ -193,8 +250,7 @@ export const runDuplicates = ({ profile, all = false }) => {
   }
 
   candidates.sort(
-    (a, b) =>
-      Number(b.crossSlice) - Number(a.crossSlice) || b.score - a.score
+    (a, b) => Number(b.crossSlice) - Number(a.crossSlice) || b.score - a.score
   )
 
   return {

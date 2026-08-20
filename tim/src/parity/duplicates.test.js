@@ -60,7 +60,10 @@ describe('noiseFor', () => {
 describe('contentTokens', () => {
   test('keeps the words that say what a finding is about', () => {
     expect([
-      ...contentTokens('DR1 asks for a document type; the frontend infers it', noise())
+      ...contentTokens(
+        'DR1 asks for a document type; the frontend infers it',
+        noise()
+      )
     ]).toEqual(['asks', 'document', 'type', 'infers'])
   })
 
@@ -71,7 +74,10 @@ describe('contentTokens', () => {
 
 describe('titleSimilarity', () => {
   test('two titles about the same thing score high', () => {
-    const a = contentTokens('The phase banner is missing from every page', noise())
+    const a = contentTokens(
+      'The phase banner is missing from every page',
+      noise()
+    )
     const b = contentTokens('Phase banner missing from every page', noise())
 
     expect(titleSimilarity(a, b)).toBeGreaterThan(0.6)

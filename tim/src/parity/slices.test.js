@@ -173,9 +173,7 @@ describe('ownership', () => {
       captured
     })
 
-    expect(result.unknown).toEqual([
-      { screen: 'fe-typo', slices: ['hub'] }
-    ])
+    expect(result.unknown).toEqual([{ screen: 'fe-typo', slices: ['hub'] }])
   })
 
   test('a sound slicing reports nothing in any of the three lists', () => {
@@ -187,11 +185,11 @@ describe('ownership', () => {
       captured
     })
 
-    expect([
-      result.duplicated,
-      result.uncovered,
-      result.unknown
-    ]).toEqual([[], [], []])
+    expect([result.duplicated, result.uncovered, result.unknown]).toEqual([
+      [],
+      [],
+      []
+    ])
   })
 })
 
@@ -333,6 +331,21 @@ describe('renderSlices', () => {
     expect(text).toContain('every slice writes the same finding')
   })
 
+  test('counts the claimants rather than assuming there are two', () => {
+    writeSlices([
+      { id: 'a', chrome: true, screens: ['fe-one', 'fe-two', 'p-one'] },
+      { id: 'b', screens: ['fe-two', 'p-two'] },
+      { id: 'c', screens: ['fe-two'] }
+    ])
+
+    const text = renderSlices(
+      runSlices({ profile: profileWith({ slicesFile: false }) })
+    )
+
+    expect(text).toContain('in 3 slices')
+    expect(text).toContain('a, b, c')
+  })
+
   test('prints a duplicated screen with both claimants', () => {
     writeSlices([
       { id: 'a', chrome: true, screens: ['fe-one', 'fe-two', 'p-one'] },
@@ -343,7 +356,7 @@ describe('renderSlices', () => {
       runSlices({ profile: profileWith({ slicesFile: false }) })
     )
 
-    expect(text).toContain('in two slices')
+    expect(text).toContain('in 2 slices')
     expect(text).toContain('a, b')
     expect(text).toContain('The slicing is not sound')
   })

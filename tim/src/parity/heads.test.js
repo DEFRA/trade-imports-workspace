@@ -172,9 +172,9 @@ describe('runHeads', () => {
     })
     await runHeads({ profile, write: true })
 
-    expect((await runHeads({ profile, write: true, force: true })).written).toBe(
-      true
-    )
+    expect(
+      (await runHeads({ profile, write: true, force: true })).written
+    ).toBe(true)
   })
 
   test('catches a commit made to an application while the run was open', async () => {

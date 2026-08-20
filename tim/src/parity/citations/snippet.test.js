@@ -1,8 +1,9 @@
 import { describe, test, expect } from 'vitest'
-import { sliceSnippet, checkAnchors } from './snippet.js'
+import { sliceSnippet, citedText, rangesOf } from './snippet.js'
 import { permalink } from './github-url.js'
 
 const lines = Array.from({ length: 60 }, (_, i) => `line ${i + 1}`)
+const longFile = Array.from({ length: 400 }, (_, i) => `line ${i + 1}`)
 
 describe('sliceSnippet', () => {
   test('renders a short range inline with two context lines either side', () => {
@@ -25,10 +26,51 @@ describe('sliceSnippet', () => {
     )
   })
 
-  test('stores no snippet at all beyond twenty lines', () => {
+  test('still shows a forty-line range in full', () => {
     const snippet = sliceSnippet({ lines, range: { start: 1, end: 40 } })
-    expect(snippet.state).toBe('too-long')
-    expect(snippet.lines).toEqual([])
+
+    expect(snippet.state).toBe('collapsed')
+    expect(snippet.truncated).toBe(false)
+    expect(snippet.lines.filter((line) => line.focus)).toHaveLength(40)
+  })
+
+  test('shortens a range far past the limit and says how much it dropped', () => {
+    const snippet = sliceSnippet({
+      lines: longFile,
+      range: { start: 10, end: 300 }
+    })
+
+    expect(snippet.truncated).toBe(true)
+    expect(snippet.span).toBe(291)
+    expect(snippet.lines.map((line) => line.text)).toContain(
+      '… 250 lines not shown …'
+    )
+  })
+
+  test('shows every range a citation names, not only the first', () => {
+    const snippet = sliceSnippet({
+      lines,
+      ranges: [
+        { start: 10, end: 11 },
+        { start: 40, end: 41 }
+      ]
+    })
+
+    expect(
+      snippet.lines.filter((line) => line.focus).map((line) => line.n)
+    ).toEqual([10, 11, 40, 41])
+  })
+
+  test('marks the lines between two ranges as a gap', () => {
+    const snippet = sliceSnippet({
+      lines,
+      ranges: [
+        { start: 10, end: 11 },
+        { start: 40, end: 41 }
+      ]
+    })
+
+    expect(snippet.lines.filter((line) => line.gap)).toHaveLength(1)
   })
 
   test('does not run off the start or the end of the file', () => {
@@ -41,31 +83,39 @@ describe('sliceSnippet', () => {
   })
 })
 
-describe('checkAnchors', () => {
-  const snippet = sliceSnippet({
-    lines: ['const MAX_FILE_SIZE_MB = 20', 'export { MAX_FILE_SIZE_MB }'],
-    range: { start: 1, end: 2 }
-  })
-
-  test('passes when every anchor appears in the snippet', () => {
+describe('rangesOf', () => {
+  test('reads every range a multi-range citation carries', () => {
     expect(
-      checkAnchors({ anchors: ['MAX_FILE_SIZE_MB'], lines: snippet.lines })
-    ).toEqual({ ok: true, missing: [] })
-  })
-
-  test('names the anchors that are absent', () => {
-    expect(
-      checkAnchors({
-        anchors: ['MAX_FILE_SIZE_MB', 'integerInRange'],
-        lines: snippet.lines
+      rangesOf({
+        lines: null,
+        ranges: [
+          { start: 27, end: 27 },
+          { start: 54, end: 54 },
+          { start: 68, end: 68 }
+        ]
       })
-    ).toEqual({ ok: false, missing: ['integerInRange'] })
+    ).toHaveLength(3)
   })
 
-  test('passes trivially when the prose named no anchors', () => {
-    expect(checkAnchors({ anchors: undefined, lines: snippet.lines }).ok).toBe(
-      true
-    )
+  test('falls back to the single range', () => {
+    expect(rangesOf({ lines: { start: 4, end: 6 } })).toEqual([
+      { start: 4, end: 6 }
+    ])
+  })
+
+  test('reads nothing from a citation with no lines', () => {
+    expect(rangesOf({})).toEqual([])
+  })
+})
+
+describe('citedText', () => {
+  test('joins every cited range and leaves the context out', () => {
+    expect(
+      citedText(lines, [
+        { start: 2, end: 3 },
+        { start: 10, end: 10 }
+      ])
+    ).toBe('line 2\nline 3\nline 10')
   })
 })
 

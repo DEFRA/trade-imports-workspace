@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { readJsonFile, writeJsonAtomic } from './io.js'
 import { parseBacklog } from './schema.js'
+import { parseLineSpec } from './citations/parse.js'
 import { TimError } from '../errors.js'
 
 export const SLOTS = [
@@ -170,11 +171,29 @@ export const setDecisionRequired = ({ profile, id, decisionRequired }) => {
 }
 
 /**
- * Resolve one queued citation by hand.
+ * Resolve one queued citation by hand, or correct one that is already resolved.
  *
  * The setter exists so a human resolution is recorded the same way a machine
  * one is — with a repo, a path and a resolution of "human" — rather than by
  * hand-editing JSON, where nothing would record that a person decided it.
+ *
+ * WHY THIS NOW AMENDS A RESOLVED CITATION
+ *
+ * It used to refuse outright, on the rule that "a citation is frozen from the
+ * moment it stops being queued". That rule was written to stop a regeneration
+ * silently replacing a person's judgement with the parser's original failure,
+ * and that job now belongs to the carry-forward in citations/carry-forward.js,
+ * which reattaches every `human` resolution after `tim parity citations
+ * --write` has rebuilt the list. What the refusal did instead was leave no
+ * supported way at all to correct a line range somebody had just proved wrong
+ * by opening the file — six such corrections in the DR1 corpus could not be
+ * applied.
+ *
+ * So the guard is narrowed rather than removed. Correcting a resolved citation
+ * takes an explicit `why`: a person has to say what they read. The previous
+ * repo, path and ranges are kept on the citation in `amendedFrom`, so the file
+ * still shows what it used to claim and who changed it. A regeneration still
+ * cannot touch any of it.
  *
  * @param {object} args
  * @returns {object}
@@ -188,17 +207,23 @@ export const setCitation = ({ profile, id, ref, repo, path, lines, why }) => {
   if (!citation) {
     throw new TimError('NOT_FOUND', `${id} has no citation ${ref}.`)
   }
-  if (citation.resolution !== 'unresolved') {
+  const amending = citation.resolution !== 'unresolved'
+  if (amending && !why) {
     throw new TimError(
       'USAGE',
-      `${id}/${ref} is already resolved (${citation.resolution}). A citation is frozen from the moment it stops being queued.`
+      `${id}/${ref} is already resolved (${citation.resolution}). Correcting it needs --why, saying what you read in the file.`
     )
   }
 
-  // Lines may be corrected here and only here. A queued citation's range came
-  // from a token nobody had yet agreed pointed at anything, and re-pinning a
-  // side routinely moves the line the analyst meant by a few dozen.
-  const range = lines ? parseRange(lines, id, ref) : null
+  const ranges = lines ? parseRanges(lines, id, ref) : null
+  const audit = {
+    repo: citation.repo ?? null,
+    path: citation.path ?? null,
+    lines: citation.lines ?? null,
+    ranges: citation.ranges ?? null,
+    resolution: citation.resolution,
+    why: citation.why ?? null
+  }
 
   const result = writeIncrement(profile, backlog, id, (entry) => ({
     ...entry,
@@ -208,25 +233,42 @@ export const setCitation = ({ profile, id, ref, repo, path, lines, why }) => {
             ...c,
             repo,
             path,
-            ...(range ? { lines: range, ranges: [range] } : {}),
+            ...(ranges
+              ? { lines: ranges.length === 1 ? ranges[0] : null, ranges }
+              : {}),
             resolution: 'human',
             needsHuman: false,
             why: why ?? `Resolved by hand: ${c.why ?? 'was ambiguous'}`,
-            candidates: undefined
+            candidates: undefined,
+            ...(amending
+              ? { amendedFrom: [...(c.amendedFrom ?? []), audit] }
+              : {})
           }
         : c
     )
   }))
-  return { id, ref, repo, path, lines: range, ...result }
+  return {
+    id,
+    ref,
+    repo,
+    path,
+    lines: ranges?.length === 1 ? ranges[0] : null,
+    ranges,
+    amended: amending,
+    ...result
+  }
 }
 
-const parseRange = (spec, id, ref) => {
-  const [start, end] = String(spec).split('-').map(Number)
-  if (!Number.isFinite(start)) {
+const parseRanges = (spec, id, ref) => {
+  const ranges = parseLineSpec(String(spec))
+  if (
+    ranges.length === 0 ||
+    ranges.some((range) => !Number.isFinite(range.start))
+  ) {
     throw new TimError(
       'USAGE',
-      `${id}/${ref}: "${spec}" is not a line or a line range, like 41 or 41-53.`
+      `${id}/${ref}: "${spec}" is not a line, a line range or a list of them, like 41, 41-53 or 27,54,68.`
     )
   }
-  return { start, end: Number.isFinite(end) ? end : start }
+  return ranges
 }

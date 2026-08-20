@@ -383,18 +383,21 @@ export const checkNumbers = (increments) => {
   }
 }
 
-/** I7. the anchor check, read off evidence.json. */
+/** I7. the anchor check, read off evidence.json. A miss here is an identifier
+ * no citation of the finding holds, that the source does not build at runtime,
+ * and that no captured page shows — see citations/anchor-check.js for the six
+ * classes and why only two of them are faults. */
 export const checkAnchorsInvariant = (evidence) => {
   const misses = evidence?.anchorMisses ?? []
   return {
     id: 'I7',
     state: misses.length ? 'warn' : 'pass',
     detail: misses.length
-      ? `${misses.length} citations whose snippet does not contain the identifier the prose attributes to it: ${misses
+      ? `${misses.length} citations naming an identifier that is nowhere this finding points: ${misses
           .slice(0, 6)
           .map((m) => `${m.increment}/${m.ref}`)
           .join(', ')}`
-      : 'every anchor appears in its resolved snippet'
+      : 'every anchor resolves to something this finding cites, builds or shows'
   }
 }
 

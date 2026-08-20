@@ -366,12 +366,14 @@ export const register = (program, { timVersion }) => {
             ...Object.entries(result.byState).map(
               ([state, n]) => `  ${state.padEnd(20)} ${n}`
             ),
+            `${result.truncated} snippets shortened to keep the card readable.`,
             result.outOfRange.length
-              ? `${result.outOfRange.length} citations whose identifier is in the file but outside the cited lines — the range drifted.`
+              ? `${result.outOfRange.length} citations whose identifier is in the file but outside the cited lines — the range drifted: ${result.outOfRange.map((m) => `${m.increment}/${m.ref}`).join(', ')}`
               : 'Every cited range contains what the prose says it does.',
             result.anchorMisses.length
               ? `${result.anchorMisses.length} citations whose identifier is absent from the whole file at the pin — the premise moved: ${result.anchorMisses.map((m) => `${m.increment}/${m.ref}`).join(', ')}`
               : 'No citation has lost its identifier.',
+            `${result.explained.length} citations name a string the prose took from somewhere the citation does not own — a sibling citation, a runtime interpolation or the rendered page. These are expected, not warnings.`,
             result.written
               ? `Written to ${result.path}`
               : 'Dry run — pass --write to apply.'
@@ -726,11 +728,19 @@ export const register = (program, { timVersion }) => {
 
   parity
     .command('set-citation <runId> <incrementId> <ref>')
-    .description('Resolve one queued citation by hand')
+    .description(
+      'Resolve one queued citation by hand, or correct one that is already resolved'
+    )
     .requiredOption('--repo <key>', 'Repo key from corpora.json')
     .requiredOption('--path <path>', 'Repo-relative path')
-    .option('--lines <spec>', 'Correct the line or range, like 41 or 41-53')
-    .option('--why <text>', 'Why this is the right file')
+    .option(
+      '--lines <spec>',
+      'Correct the line, range or list of them, like 41, 41-53 or 27,54,68'
+    )
+    .option(
+      '--why <text>',
+      'Why this is the right file. Needed to correct a citation that is already resolved'
+    )
     .action(
       makeParityAction({
         run: ({ profile, args }, opts) =>
@@ -744,7 +754,17 @@ export const register = (program, { timVersion }) => {
             why: opts.why
           }),
         renderText: (r) =>
-          `${r.id}/${r.ref} -> ${r.repo}:${r.path}${r.lines ? `:${r.lines.start}${r.lines.end !== r.lines.start ? `-${r.lines.end}` : ''}` : ''}`,
+          `${r.amended ? 'Corrected' : 'Resolved'} ${r.id}/${r.ref} -> ${r.repo}:${r.path}${
+            r.ranges?.length
+              ? `:${r.ranges
+                  .map((range) =>
+                    range.end !== range.start
+                      ? `${range.start}-${range.end}`
+                      : `${range.start}`
+                  )
+                  .join(',')}`
+              : ''
+          }`,
         timVersion
       })
     )

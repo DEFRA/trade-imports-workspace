@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import {
   citeIncrement,
   captureRoot,
+  isCheckableAnchor,
   repoByParagraph,
   runCitations
 } from './run.js'
@@ -204,6 +205,70 @@ describe('citeIncrement', () => {
       'govukPhaseBanner',
       'This is a new service'
     ])
+  })
+
+  test('pairs each quote with its own closing quote', () => {
+    const { citations } = citeIncrement({
+      increment: base({
+        detail:
+          'copy.en.js:52-57 shows "Checking" while the scan is pending, "Virus found" when it fails.'
+      }),
+      profile,
+      indexes
+    })
+
+    expect(citations[0].anchors).toEqual(['Checking', 'Virus found'])
+  })
+
+  test('takes no anchor from a sentence that prescribes a change', () => {
+    const { citations } = citeIncrement({
+      increment: base({
+        detail:
+          'Change the caption string to "Consignment parties" in copy.en.js:42 and translate the Welsh pair.'
+      }),
+      profile,
+      indexes
+    })
+
+    expect(citations[0].anchors).toEqual([])
+  })
+
+  test('takes no anchor from a sentence that denies a presence', () => {
+    const { citations } = citeIncrement({
+      increment: base({
+        detail:
+          'Nothing in layout.njk:17 identifies the page as a "GOV.UK service" in the tab.'
+      }),
+      profile,
+      indexes
+    })
+
+    expect(citations[0].anchors).toEqual([])
+  })
+
+  test('still takes an anchor from a description opening with a word that can also be an instruction', () => {
+    const { citations } = citeIncrement({
+      increment: base({
+        detail:
+          'Move is the first action at copy.en.js:12, beside "Save and continue".'
+      }),
+      profile,
+      indexes
+    })
+
+    expect(citations[0].anchors).toEqual(['Save and continue'])
+  })
+
+  test('refuses an anchor that has swallowed a path and a line number', () => {
+    expect(
+      isCheckableAnchor(
+        ' to the answer and redirects to the select page (app/routes.js:10789-10801), and the view that asks '
+      )
+    ).toBe(false)
+  })
+
+  test('refuses an anchor that has swallowed a citation marker', () => {
+    expect(isCheckableAnchor('the copy at [[c2]] says the same')).toBe(false)
   })
 
   test('keeps every range of a comma-joined citation', () => {

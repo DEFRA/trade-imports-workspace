@@ -243,15 +243,35 @@ export const citeIncrement = ({ increment, profile, indexes, lineCount }) => {
 // the file. A backticked fragment the analyst used to describe a shape
 // (`packagingFields: []`, `{% if %}`) is a description, not a string.
 const BACKTICKED = /`([^`]+)`/g
-const QUOTED = /["“]([^"”]{5,})["”]/g
+
+// An opening quote follows a space, a bracket, an equals sign or a backtick; a
+// closing one is followed by a space, punctuation, a closing angle bracket or a
+// backtick. Without the pairing rule the engine took the closing quote of one
+// string and the opening quote of the next — `"Safe" when it completes,
+// "Virus found"` yielded the anchor ` when it completes, ` and swallowed both
+// real strings on the way past. The equals sign and the backtick are in the set
+// so that an attribute the prose quotes — `class="app-airport-search"` — still
+// opens one.
+const QUOTED = /(?<=^|[\s([=`—–-])["“]([^"”]{5,}?)["”](?=$|[\s.,;:)\]>?!`—–])/g
 
 const LITERAL_IDENTIFIER = /^[A-Za-z_$][\w$.-]*(\(\))?$/
 
-export const isCheckableAnchor = (value) =>
-  LITERAL_IDENTIFIER.test(value) ||
-  (value.includes(' ') && !/[`{}<>[\]]/.test(value))
+// A citation marker or a path:line token inside an anchor means the extractor
+// has spanned a reference rather than a quoted string. No file contains either,
+// so an anchor holding one can only ever report a miss.
+const MARKER = /\[\[c\d+\]\]/
+const PATH_LINE = /[A-Za-z0-9_\-/]+\.[A-Za-z0-9]{1,6}:\d/
+
+export const isCheckableAnchor = (value) => {
+  if (MARKER.test(value) || PATH_LINE.test(value)) return false
+  return (
+    LITERAL_IDENTIFIER.test(value) ||
+    (value.trim() === value && value.includes(' ') && !/[`{}<>[\]]/.test(value))
+  )
+}
 
 const anchorsNear = (token) => {
+  if (token.claim === false) return []
   const anchors = new Set()
   const window = token.window ?? token.sentence ?? ''
   for (const match of window.matchAll(BACKTICKED)) anchors.add(match[1])

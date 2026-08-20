@@ -2,7 +2,8 @@ import { existsSync } from 'node:fs'
 import { readJsonFile, writeJsonAtomic } from '../io.js'
 import { parseBacklog } from '../schema.js'
 import { permalink, existsAtCommit, blobId } from './github-url.js'
-import { readAtCommit, sliceSnippet, checkAnchors } from './snippet.js'
+import { readAtCommit, sliceSnippet, citedText, rangesOf } from './snippet.js'
+import { classifyAnchors, capturedPageReader } from './anchor-check.js'
 import { tokeniseIncrement } from './parse.js'
 
 /**
@@ -59,7 +60,37 @@ const sourceText = (increment, field) => {
   return null
 }
 
-const rangeOf = (citation) => citation.lines ?? citation.ranges?.[0] ?? null
+/**
+ * The file a citation points at and the text of the lines it cites.
+ *
+ * Read once per citation and shared across the increment, because the anchor
+ * check now asks the finding's other citations whether they hold a string this
+ * one does not, and re-shelling out to git for each of those pairs would turn a
+ * two-minute command into a twenty-minute one.
+ *
+ * @param {object} args
+ * @returns {{ranges: object[], fileLines: string[]|null, cited: string|null,
+ *   file: string|null}}
+ */
+export const readSource = ({ citation, profile, meta, cache = new Map() }) => {
+  const ranges = rangesOf(citation)
+  const repo = profile.repos?.[citation.repo]
+  const sha = meta.pins?.[citation.repo]?.sha
+  if (!repo || !sha || !citation.path) {
+    return { ranges, fileLines: null, cited: null, file: null }
+  }
+  const key = `${citation.repo}:${sha}:${citation.path}`
+  if (!cache.has(key)) {
+    cache.set(key, readAtCommit(repo.absolutePath, sha, citation.path))
+  }
+  const fileLines = cache.get(key)
+  return {
+    ranges,
+    fileLines,
+    cited: fileLines && ranges.length ? citedText(fileLines, ranges) : null,
+    file: fileLines ? fileLines.join('\n') : null
+  }
+}
 
 /**
  * Resolve one citation to a URL, a blob id and a snippet.
@@ -68,9 +99,19 @@ const rangeOf = (citation) => citation.lines ?? citation.ranges?.[0] ?? null
  * @param {object} args.citation
  * @param {object} args.profile
  * @param {object} args.meta
+ * @param {Map<string, object>} [args.sources] - readSource by ref, for the
+ *   whole increment, so the anchor check can look at the finding's other
+ *   citations
+ * @param {string[]} [args.pages] - Captured page HTML for this finding
  * @returns {object}
  */
-export const resolveCitation = ({ citation, profile, meta }) => {
+export const resolveCitation = ({
+  citation,
+  profile,
+  meta,
+  sources,
+  pages = []
+}) => {
   if (citation.kind === 'capture') {
     return {
       ref: citation.ref,
@@ -103,50 +144,50 @@ export const resolveCitation = ({ citation, profile, meta }) => {
         repo,
         sha: pin.sha,
         path: citation.path,
-        lines: rangeOf(citation)
+        lines: rangesOf(citation)[0] ?? null
       }),
       why: `${citation.path} does not exist at ${pin.short}. The citation is stale, or the file moved.`
     }
   }
 
-  const range = rangeOf(citation)
-  const fileLines = readAtCommit(repo.absolutePath, pin.sha, citation.path)
+  const source =
+    sources?.get(citation.ref) ?? readSource({ citation, profile, meta })
+  const { ranges, fileLines } = source
   const snippet =
-    range && fileLines ? sliceSnippet({ lines: fileLines, range }) : null
+    ranges.length && fileLines
+      ? sliceSnippet({ lines: fileLines, ranges })
+      : null
 
-  // Two different answers, and conflating them wastes the check. An anchor
-  // present in the file but outside the cited lines is a range that drifted —
-  // widen it. An anchor absent from the whole file is the finding's premise
-  // having moved, which is a finding about the finding.
-  const inSnippet = snippet
-    ? checkAnchors({ anchors: citation.anchors, lines: snippet.lines })
-    : null
-  const inFile = fileLines
-    ? checkAnchors({
-        anchors: inSnippet?.missing ?? citation.anchors,
-        lines: fileLines.map((text, i) => ({ n: i + 1, text }))
+  const anchors = fileLines
+    ? classifyAnchors({
+        anchors: citation.anchors,
+        own: source,
+        siblings: [...(sources?.entries() ?? [])]
+          .filter(([ref]) => ref !== citation.ref)
+          .map(([ref, entry]) => ({ ref, ...entry })),
+        pages
       })
     : null
-  const anchors = inSnippet
-    ? {
-        ok: inSnippet.ok,
-        missing: inSnippet.missing,
-        missingFromFile: inFile?.missing ?? [],
-        outOfRange: (inSnippet.missing ?? []).filter(
-          (anchor) => !(inFile?.missing ?? []).includes(anchor)
-        )
-      }
-    : null
+
+  // GitHub's fragment holds one range, so `url` stays the first of them and the
+  // rest are offered beside it. A citation written `fields.js:27,54,68` is
+  // three places in one file and a link to the first is a link to a third of
+  // what the prose said.
+  const urls = ranges.map((range) => ({
+    lines: range,
+    url: permalink({ repo, sha: pin.sha, path: citation.path, lines: range })
+  }))
 
   return {
     ref: citation.ref,
-    state: snippet?.state === 'too-long' ? 'too-long' : 'resolved',
-    url: permalink({ repo, sha: pin.sha, path: citation.path, lines: range }),
+    state: 'resolved',
+    url: urls[0]?.url ?? permalink({ repo, sha: pin.sha, path: citation.path }),
+    urls,
     blob: blobId(repo.absolutePath, pin.sha, citation.path),
     sha: pin.sha,
     pushed: pin.pushed,
     fileLines: fileLines?.length ?? null,
-    snippet: snippet?.state === 'too-long' ? null : snippet,
+    snippet,
     anchorCheck: anchors
   }
 }
@@ -173,18 +214,40 @@ export const runEvidence = ({ profile, write }) => {
   const byState = {}
   const anchorMisses = []
   const outOfRange = []
+  const explained = []
   const increments = {}
+  const fileCache = new Map()
+  const readPages = capturedPageReader(profile.sides ?? [])
   let total = 0
   let resolved = 0
+  let truncated = 0
 
   for (const increment of backlog.increments) {
     const citations = increment.citations ?? []
     if (citations.length === 0) continue
+    const sources = new Map(
+      citations.map((citation) => [
+        citation.ref,
+        readSource({ citation, profile, meta, cache: fileCache })
+      ])
+    )
+    const pages = readPages(increment.screens)
     const entries = citations.map((citation) => {
-      const result = resolveCitation({ citation, profile, meta })
+      const result = resolveCitation({
+        citation,
+        profile,
+        meta,
+        sources,
+        pages
+      })
       total += 1
       byState[result.state] = (byState[result.state] ?? 0) + 1
       if (result.state === 'resolved') resolved += 1
+      if (result.snippet?.truncated) truncated += 1
+      // Two independent facts about one citation. An `else if` here hid the
+      // out-of-range anchor on any citation that also had an absent one, which
+      // is why this list and check-evidence's — which never had the else —
+      // disagreed by three.
       if (result.anchorCheck?.missingFromFile?.length) {
         anchorMisses.push({
           increment: increment.id,
@@ -193,12 +256,28 @@ export const runEvidence = ({ profile, write }) => {
           path: citation.path,
           kind: 'absent-from-file'
         })
-      } else if (result.anchorCheck?.outOfRange?.length) {
+      }
+      if (result.anchorCheck?.outOfRange?.length) {
         outOfRange.push({
           increment: increment.id,
           ref: citation.ref,
           anchors: result.anchorCheck.outOfRange,
           path: citation.path
+        })
+      }
+      const check = result.anchorCheck
+      if (
+        check?.inSibling.length ||
+        check?.interpolated.length ||
+        check?.rendered.length
+      ) {
+        explained.push({
+          increment: increment.id,
+          ref: citation.ref,
+          path: citation.path,
+          inSibling: check.inSibling,
+          interpolated: check.interpolated,
+          rendered: check.rendered
         })
       }
       return result
@@ -224,7 +303,8 @@ export const runEvidence = ({ profile, write }) => {
         .map((citation) => ({ increment: id, ...citation }))
     ),
     anchorMisses,
-    outOfRange
+    outOfRange,
+    explained
   }
 
   if (write) writeJsonAtomic(profile.paths.evidence, payload)
@@ -232,9 +312,11 @@ export const runEvidence = ({ profile, write }) => {
   return {
     total,
     resolved,
+    truncated,
     byState,
     anchorMisses,
     outOfRange,
+    explained,
     written: Boolean(write),
     path: profile.paths.evidence
   }

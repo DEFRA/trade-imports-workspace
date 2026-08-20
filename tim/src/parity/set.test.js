@@ -273,10 +273,31 @@ describe('setCitation', () => {
         path: 'a/stub.js',
         lines: 'somewhere'
       })
-    ).toThrow(/not a line or a line range/)
+    ).toThrow(/not a line, a line range or a list of them/)
   })
 
-  test('refuses to touch a citation that is already resolved', () => {
+  test('reads a comma list as several ranges', () => {
+    setCitation({
+      profile,
+      id: 'inc-001',
+      ref: 'c1',
+      repo: 'frontend',
+      path: 'a/stub.js',
+      lines: '27,54,68-70'
+    })
+
+    const [citation] = readJsonFile(profile.paths.backlog).increments[0]
+      .citations
+
+    expect(citation.ranges).toEqual([
+      { start: 27, end: 27 },
+      { start: 54, end: 54 },
+      { start: 68, end: 70 }
+    ])
+    expect(citation.lines).toBeNull()
+  })
+
+  const resolvedCitation = () =>
     write([
       increment({
         citations: [
@@ -286,12 +307,18 @@ describe('setCitation', () => {
             side: 'frontend',
             repo: 'frontend',
             path: 'a/stub.js',
-            asWritten: 'stub.js:1',
+            asWritten: 'stub.js:17-53',
+            lines: { start: 17, end: 53 },
+            ranges: [{ start: 17, end: 53 }],
             resolution: 'explicit'
           }
         ]
       })
     ])
+
+  test('refuses to correct a resolved citation without a reason', () => {
+    resolvedCitation()
+
     expect(() =>
       setCitation({
         profile,
@@ -300,6 +327,54 @@ describe('setCitation', () => {
         repo: 'frontend',
         path: 'b/stub.js'
       })
-    ).toThrow(/frozen from the moment it stops being queued/)
+    ).toThrow(/Correcting it needs --why/)
+  })
+
+  test('corrects a resolved citation when a reason is given', () => {
+    resolvedCitation()
+
+    setCitation({
+      profile,
+      id: 'inc-001',
+      ref: 'c1',
+      repo: 'frontend',
+      path: 'a/stub.js',
+      lines: '7-53',
+      why: 'The legend is at line 9, outside the cited block.'
+    })
+
+    const [citation] = readJsonFile(profile.paths.backlog).increments[0]
+      .citations
+
+    expect(citation.lines).toEqual({ start: 7, end: 53 })
+    expect(citation.resolution).toBe('human')
+  })
+
+  test('keeps what a corrected citation used to claim', () => {
+    resolvedCitation()
+
+    setCitation({
+      profile,
+      id: 'inc-001',
+      ref: 'c1',
+      repo: 'frontend',
+      path: 'a/stub.js',
+      lines: '7-53',
+      why: 'The legend is at line 9, outside the cited block.'
+    })
+
+    const [citation] = readJsonFile(profile.paths.backlog).increments[0]
+      .citations
+
+    expect(citation.amendedFrom).toEqual([
+      {
+        repo: 'frontend',
+        path: 'a/stub.js',
+        lines: { start: 17, end: 53 },
+        ranges: [{ start: 17, end: 53 }],
+        resolution: 'explicit',
+        why: null
+      }
+    ])
   })
 })

@@ -68,6 +68,37 @@ const sentenceAt = (list, offset) =>
   list.find((s) => offset >= s.start && offset <= s.end) ??
   list[list.length - 1]
 
+// A sentence that tells somebody what to change, or that says a thing is
+// absent, makes no claim about what the cited lines hold today. "Change the
+// caption string to "Consignment parties" in copy.en.js:42" names the value the
+// finding proposes, and "Nothing identifies the page as a GOV.UK service"
+// names a string precisely because it is not there. Deriving an anchor from
+// either asserts the opposite of what the prose says.
+const IMPERATIVE =
+  /^(add|align|bring|build|carry|change|check|correct|cut|delete|drop|extend|fold|give|group|hide|invert|keep|leave|lift|list|make|merge|mirror|move|narrow|populate|put|raise|reduce|remove|rename|render|reorder|replace|restore|restrict|retire|reverse|rework|rewrite|scope|settle|split|stop|store|swap|take|tighten|treat|turn|use|widen|wrap)\b/i
+
+// "Save is a link" and "Show all is rendered at :44" are noun phrases, not
+// instructions. A finite verb straight after the first word says so.
+const COPULA_NEXT =
+  /^\w+\s+(is|are|was|were|has|have|had|will|would|should|can|could|may|might|must|does|do|did)\b/i
+
+const DENIAL = /^(nothing|none|neither|no\s)/i
+
+const FALSIFIED = /^falsified by\b/i
+
+/**
+ * Does this sentence prescribe a change or deny a presence, rather than
+ * describe what the code holds?
+ *
+ * @param {string} sentence
+ * @returns {boolean}
+ */
+export const prescribesOrDenies = (sentence) => {
+  const text = String(sentence ?? '').trim()
+  if (FALSIFIED.test(text) || DENIAL.test(text)) return true
+  return IMPERATIVE.test(text) && !COPULA_NEXT.test(text)
+}
+
 const COMPARISON = / vs\.? | against /
 
 /**
@@ -187,7 +218,16 @@ export const tokenise = ({ text, field, sideHint = null, sideLabels = [] }) => {
   // beside it rather than borrow the order of a JSON object.
   const breaks = [...text.matchAll(/\n{2,}/g)].map((m) => m.index)
   const paragraphOf = (offset) => breaks.filter((b) => b < offset).length
-  for (const token of ordered) token.paragraph = paragraphOf(token.offset)
+  for (const token of ordered) {
+    token.paragraph = paragraphOf(token.offset)
+    // Whether the sentence around this citation describes the code or proposes
+    // a change to it. Only the first kind can supply an anchor. The judgement
+    // is per sentence rather than per paragraph on purpose: a correction
+    // paragraph routinely carries one descriptive sentence — "The validation
+    // message "Select a consignor from the list" (copy.en.js:23) already uses
+    // the shorter term" — and that sentence is a claim worth checking.
+    token.claim = !prescribesOrDenies(sentenceAt(list, token.offset).text)
+  }
 
   // The clause a citation sits in: from the end of the previous citation to
   // the start of the next, clipped to the sentence. This is the window the

@@ -164,27 +164,33 @@ export const citationHealth = (evidence) => {
         ...citation
       }))
   )
+  const named = (key) =>
+    rows
+      .filter((row) => row.anchorCheck?.[key]?.length)
+      .map((row) => ({
+        at: `${row.id}/${row.ref}`,
+        anchors: row.anchorCheck[key]
+      }))
+
   return {
     total: rows.length,
+    resolved: rows.filter((row) => row.state === 'resolved').length,
     queued: rows.filter((row) => row.state === 'unresolved').length,
     notPushed: rows
       .filter((row) => row.pushed === false)
       .map((row) => `${row.id}/${row.ref}`),
     // The identifier is in the file but outside the cited lines: widen it.
-    outOfRange: rows
-      .filter((row) => row.anchorCheck?.outOfRange?.length)
-      .map((row) => ({
-        at: `${row.id}/${row.ref}`,
-        anchors: row.anchorCheck.outOfRange
-      })),
+    outOfRange: named('outOfRange'),
     // The identifier is not in the file at all: the claim's premise has moved
     // and the finding needs re-verifying, not the line range nudging.
-    missingFromFile: rows
-      .filter((row) => row.anchorCheck?.missingFromFile?.length)
-      .map((row) => ({
-        at: `${row.id}/${row.ref}`,
-        anchors: row.anchorCheck.missingFromFile
-      }))
+    missingFromFile: named('missingFromFile'),
+    // Neither. The string belongs to a sibling citation of the same finding, or
+    // the source interpolates it, or the finding quoted the rendered page. All
+    // three are correct citations and none is a warning; they are counted so a
+    // reader can see the check looked at them and had an answer.
+    inSibling: named('inSibling'),
+    interpolated: named('interpolated'),
+    rendered: named('rendered')
   }
 }
 
@@ -335,10 +341,14 @@ export const runCheckEvidence = ({ profile }) => {
       ? citationHealth(evidence)
       : {
           total: 0,
+          resolved: 0,
           queued: 0,
           notPushed: [],
           outOfRange: [],
-          missingFromFile: []
+          missingFromFile: [],
+          inSibling: [],
+          interpolated: [],
+          rendered: []
         },
     sealed: Object.keys(seals).length,
     models: modelVintage({ profile, meta }),
@@ -439,7 +449,11 @@ export const renderCheckEvidence = (result) => {
   )
 
   lines.push('', 'citations')
-  lines.push(bullet(`${result.citations.total} resolved to a permalink.`))
+  lines.push(
+    bullet(
+      `${result.citations.resolved} of ${result.citations.total} resolved to a permalink.`
+    )
+  )
   if (result.citations.queued) {
     lines.push(bullet(`${result.citations.queued} still queued for a human.`))
   }
@@ -458,6 +472,11 @@ export const renderCheckEvidence = (result) => {
   lines.push(
     bullet(
       `${result.citations.missingFromFile.length} name an identifier that is not in the file at all — re-verify the finding, do not nudge the lines.`
+    )
+  )
+  lines.push(
+    bullet(
+      `${result.citations.inSibling.length} name a string another citation of the same finding holds, ${result.citations.interpolated.length} a string the source builds at runtime, and ${result.citations.rendered.length} a string quoted off the rendered page. None of the three is a fault.`
     )
   )
 

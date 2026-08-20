@@ -1,0 +1,31 @@
+{
+  "slice": "origin-and-reason",
+  "title": "DR1 gives every question on the origin page the same medium subheading, so the page reads as three equally weighted questions; on the frontend two are small bold labels and the third is plain body text.",
+  "domain": "origin",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": [
+    { "kind": "label", "text": "Does the consignment have a region of origin code?" },
+    { "kind": "label", "text": "Your internal reference for this consignment (optional)" }
+  ],
+  "finding": {
+    "frontend": "The origin page asks three questions at three different weights. \"Country of origin\" is a govuk-label--s, \"Does the consignment have a region of origin code?\" is a govuk-fieldset__legend--s, and \"Your internal reference for this consignment (optional)\" has no size class at all, so it renders at body weight and reads as a caption rather than a question. In the full-page shot the third question is visibly lighter than the two above it. The classes are set in src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22 for the country, :36-44 for the region fieldset and :46-54 for the internal reference.",
+    "prototype": "All three questions carry the same medium heading treatment and render at one size, larger than any of the frontend's three. \"Country of origin\" is an h2, \"Does the consignment have a region of origin code?\" is a legend--m and \"Your internal reference for this consignment (optional)\" is a govuk-label--m, and all three also carry DR1's own app-eu-heading-m class. The wording of all three is identical to the frontend's, so nothing about the questions themselves differs — only their weight. DR1 uses this treatment on pages that ask several unrelated questions; it does not appear on single-question pages such as CPH number or consignment details.",
+    "difference": "Raise the three question labels on the origin page to a single consistent size: govuk-label--m on the internal reference, govuk-fieldset__legend--m on the region-of-origin fieldset, and the country label to match, so the page presents three questions of equal standing rather than a hierarchy the content does not have. One template, three class attributes, no copy and no logic. The country label is also touched by the country-search finding, which replaces that control and promotes its label to a subheading as part of the same edit — do this one first if the search work is not scheduled, or let the search work absorb the country third if it is. Note for the slice that owns arrival details: DR1 applies the same treatment there and the frontend may well differ in the same way, but that page was not examined here.",
+    "falsifiedBy": "Finding the frontend's internal-reference label rendered at a heading size — the captured DOM at fe-origin has <label class=\"govuk-label\" for=\"internalReferenceNumber\"> with no size modifier, against DR1's <label class=\"govuk-label govuk-label--m app-eu-heading-m\" for=\"internal-reference\">.",
+    "verification": "Written by the verifier, as an addition rather than a check of an existing finding. Found by reading both origin DOMs against each other and then confirming it in the two full-page screenshots, where DR1 shows three questions at one weight and the frontend shows bold, bold, then body text. Confirmed the wording of all three questions is character-for-character identical on both sides, so this is weight alone. Checked it is not the service-wide slice's to raise: grep for app-eu-heading-m across the captured prototype pages returns 3 on origin and 4 on arrival details but 0 on consignment details and 0 on CPH number, so it is a per-page treatment for multi-question pages, not chrome. Checked rubric 4 against origin-and-reason--country-of-origin-search, which mentions promoting the country label only as a clause of replacing that control; this finding covers the other two questions and says so in the difference slot rather than restating the country third."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-56",
+    "prototype": "app/views/origin-of-the-import.html:46-48"
+  },
+  "relatedTo": [
+    {
+      "id": "origin-and-reason--country-of-origin-search",
+      "relation": "travels-with",
+      "why": "that finding promotes the country label to a subheading as part of replacing the control, which is the third of the three questions this one raises"
+    }
+  ]
+}

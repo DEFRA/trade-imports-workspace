@@ -216,9 +216,10 @@ if [[ "$DRY" == "true" ]]; then
     exit 0
 fi
 
-jq --arg c "$CORPUS" --argjson e "$ENTRY" '.corpora[$c] = $e' "$CORPORA" > "$CORPORA.tmp"
-mv "$CORPORA.tmp" "$CORPORA"
-
+# The workarea first, the corpus entry last. A corpus entry is what every path
+# in a comparison resolves through, so one pointing at a workarea that was never
+# finished is worse than no entry at all: every later command reports a missing
+# file rather than a setup that stopped half way.
 mkdir -p "$WS/$WORKAREA/findings" "$WS/$WORKAREA/evidence"
 for side in $SIDE_IDS; do
     mkdir -p "$WS/$WORKAREA/specs/$side"
@@ -287,12 +288,23 @@ render_template() {
 contract="$WS/$WORKAREA/FINDING-CONTRACT.md"
 render_template > "$contract.tmp"
 
-# The two multi-line substitutions, done with awk so a newline in the value
-# cannot break a sed expression.
-awk -v table="$band_table" -v body="$disposition_body" '
-    { gsub(/\{\{BAND_TABLE\}\}/, table); gsub(/\{\{DISPOSITION_BODY\}\}/, body); print }
-' "$contract.tmp" > "$contract"
-rm -f "$contract.tmp"
+# The two multi-line values are read in from files rather than passed as
+# strings. A newline in a sed expression or an awk -v assignment is an error,
+# and the band table is one line per band by construction.
+table_file="$contract.table"
+body_file="$contract.body"
+printf '%s\n' "$band_table" > "$table_file"
+printf '%s\n' "$disposition_body" > "$body_file"
+
+sed \
+    -e "/{{BAND_TABLE}}/r $table_file" -e "/{{BAND_TABLE}}/d" \
+    -e "/{{DISPOSITION_BODY}}/r $body_file" -e "/{{DISPOSITION_BODY}}/d" \
+    "$contract.tmp" > "$contract"
+
+rm -f "$contract.tmp" "$table_file" "$body_file"
+
+jq --arg c "$CORPUS" --argjson e "$ENTRY" '.corpora[$c] = $e' "$CORPORA" > "$CORPORA.tmp"
+mv "$CORPORA.tmp" "$CORPORA"
 
 jq --arg now "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '.scaffolded_at = $now' "$SETUP" > "$SETUP.tmp"
 mv "$SETUP.tmp" "$SETUP"

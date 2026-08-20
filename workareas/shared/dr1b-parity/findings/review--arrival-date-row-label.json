@@ -1,0 +1,28 @@
+{
+  "slice": "review",
+  "title": "DR1's review page calls the arrival date row \"Arrival date at destination\" while DR1's own question page calls the same answer \"Arrival date at port of entry\", which is what the frontend shows.",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "disputed",
+  "confidence": "medium",
+  "screens": ["fe-check-answers", "dr1-review-notification", "dr1-arrival-details"],
+  "controls": [{ "kind": "label", "text": "Arrival date at port of entry" }],
+  "finding": {
+    "frontend": "The Arrival details card labels the date row \"Arrival date at port of entry\" — src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70 — which is word for word the label on the frontend's own question page, where the field is introduced as \"Arrival date at port of entry\" beside \"Port of entry\" and \"Means of transport to the port of entry\". Whatever else is wrong with this card, the user meets the same words in both places.",
+    "prototype": "DR1 disagrees with itself about this one answer. Its question page labels the field \"Arrival date at port of entry\" — the same words the frontend uses, and the same words as the two fields either side of it on that page. Its review page then reports the answer back as \"Arrival date at destination\" (app/routes.js:4676-4679), a different place: the port of entry is where the consignment arrives in Great Britain, the destination is where it ends up, and the card that carries the row is headed Arrival details and sits under \"3. Transport and arrival\" beside the port of entry itself. Both labels are DR1's, both are signed off, and they name different things.",
+    "difference": "Nothing should change in the frontend until DR1 is asked which label it means. If the review page is right, the frontend's row becomes \"Arrival date at destination\" and DR1's own question page is the thing out of step; if the question page is right, DR1's review label is a slip and the frontend is already correct. What would settle it: a decision from whoever owns DR1 on whether the date being asked for is the arrival at the port of entry or the arrival at the final destination, since the two are the same field in the session data (sessionData.arrivalDateAtPort) and cannot both be described.",
+    "falsifiedBy": "Finding DR1's arrival-details question page labelling the field \"Arrival date at destination\", which would remove the contradiction and make this a plain copy difference the frontend has to follow.",
+    "verification": "Written by the verifier, not carried from an author, after checking rubric point 7 across the whole review page. Compared every review row label on both sides, then checked each mismatch against its own side's question page. This is the only one where DR1 contradicts itself: the captured dr1-arrival-details page model carries \"label\": \"Arrival date at port of entry\" while the captured dr1-review-notification DOM renders \"Arrival date at destination\" against the same answer, and routes.js:4671-4683 builds that row from sessionData.arrivalDateAtPort — the field name itself agrees with the question page and not with the review page. All three legs are true and the conclusion that the frontend is wrong does not follow, which is what the disputed band is for. Every other review-row label difference was traced to a real difference on a question page and left to the slice that owns it, except the means-of-transport one, which is raised separately because both question pages already agree."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70",
+    "prototype": "app/routes.js:4671-4683"
+  },
+  "relatedTo": [
+    {
+      "id": "review--means-of-transport-row-label",
+      "relation": "travels-with",
+      "why": "the two rows sit next to each other in the Arrival details card and land in the same copy pass"
+    }
+  ]
+}

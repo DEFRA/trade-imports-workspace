@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "The frontend's review page reports back whether a region of origin code was required as a row of its own; DR1's review page shows only the code itself.",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "fe-check-answers-submitted", "dr1-review-notification"],
+  "controls": [{ "kind": "label", "text": "Region of origin code required" }],
+  "finding": {
+    "frontend": "The Import details card opens with four rows: Country of origin, \"Region of origin code required\" reading \"No\", \"Region of origin code\" reading \"Not provided\", and Internal reference number. The second row is unconditional — src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js:20-26 adds it to every notification, with its label at copy/copy.en.js:57 — so a user always sees the answer to the yes-or-no question that decided whether they were asked for a code, immediately above the code row it decided. On a notification with no code the card spends two of its four rows saying, twice over, that there is no code.",
+    "prototype": "DR1 asks the same question — \"Does the consignment have a region of origin code?\" on the origin page — and keeps the answer off the review page. Its Import details card has three rows and only three: Country of origin, Region of origin code, Internal reference number (app/routes.js:4577-4590). The code row is present whether or not a code applies, reading \"Not applicable\" when it does not, so the yes-or-no answer is already visible in the row it governs and DR1 does not repeat it.",
+    "difference": "Drop the \"Region of origin code required\" row from the Import details card and keep the code row unconditional, so it reads for itself when no code applies. The answer itself is untouched — the question stays, the routing stays, only the summary row goes. Retire the now-unused copy key in the English and Welsh files. This travels with the placeholder change, because the code row is one of the rows whose blank value the frontend currently calls \"Not provided\".",
+    "falsifiedBy": "Finding a \"Region of origin code required\" row on DR1's review page, or finding the frontend's Import details card rendering three rows rather than four.",
+    "verification": "Written by the verifier, not carried from an author. Ran the falsifier both ways: fe-check-answers.html:131-174 and fe-check-answers-submitted.html:135-176 both render four rows with \"Region of origin code required / No\" as the second, and dr1-review-notification.html:274-321 renders three rows with no such key, so it does not fire on either side. Checked the brief's trap about a question having no view file of its own by searching both page models for the field before concluding anything: both sides ask it — regionOfOriginCodeRequirement on fe-origin and regionOfOriginRequired on dr1-origin-of-the-import, under the identical legend \"Does the consignment have a region of origin code?\" — so the difference is not that DR1 skips the question, only that it keeps the answer off the summary. Confirmed DR1 never builds such a row: every use of regionOfOriginRequired in routes.js is validation or routing."
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js:20-26",
+    "prototype": "app/routes.js:4577-4590"
+  },
+  "relatedTo": [
+    {
+      "id": "review--unanswered-value-text",
+      "relation": "travels-with",
+      "why": "once the required row goes, the code row alone has to carry the meaning, and its blank value is the placeholder that finding changes"
+    }
+  ]
+}

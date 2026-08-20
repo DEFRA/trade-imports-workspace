@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "DR1 shows back on the review page every answer that follows from the main reason for import; the frontend asks for the exit date, the port of exit and the destination country and then never shows any of them again.",
+  "domain": "review",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-check-answers", "fe-exit-date", "fe-port-of-exit", "fe-destination-country", "dr1-review-notification"],
+  "controls": [{ "kind": "label", "text": "Reason for import" }],
+  "finding": {
+    "frontend": "The card that carries the reason for import holds exactly four rows and no more: Certified for, Includes unweaned animals, Reason for import and Purpose in the market — src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-55. Purpose in the market is the only follow-up answer that appears, and only when the reason is internal market. The frontend does ask three other reason-dependent questions, each on a page of its own in the consignment section (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:47-56): \"Exit date\", \"Port of exit\" and \"Destination country\", answered into exitDate, portOfExit and destinationCountry. None of the three has a row anywhere in the review view model — searching the whole check-answers feature for those three answer names returns nothing outside the test file. So a user who tells the service their consignment is in transit, or is a horse admitted temporarily, answers where and when it leaves and then reaches the last page before the declaration with no way to check either answer, and no Change link to correct one.",
+    "prototype": "DR1's \"Main reason for import\" card grows to match the reason the user gave — app/routes.js:4634-4668. Internal market adds Purpose in the market; transhipment or onward travel adds Destination country; transit adds Exit border control post and Destination country; temporary admission of horses adds Exit date and Port of exit. Every answer the reason caused the service to ask for is shown back in the card that asked for it, under that card's single Change link. The captured DR1 state is an internal-market notification, so only Purpose in the market is visible in the picture; the other four rows are read from the view model.",
+    "difference": "Add the reason-dependent rows to the review page: Destination country for transhipment or onward travel, Destination country for transit, and Exit date and Port of exit for temporary admission of horses, each gated on the reason the same way the pages that collect them are gated, each with its own label in the English and Welsh copy and a Change link to the page that owns it. Exit border control post is a fifth DR1 row with no frontend question behind it — that gap belongs to whoever owns the import-reason pages, not here; add the row when the question lands. Land this after the six-section layout, so the rows go into DR1's \"Main reason for import\" card rather than into the frontend's current combined card.",
+    "falsifiedBy": "Finding a row labelled Exit date, Port of exit or Destination country on the frontend review page for a notification whose reason for import is transit or temporary admission of horses.",
+    "verification": "Written by the verifier, not carried from an author. Found by walking DR1's review view model row by row against the frontend's and noticing that DR1's import-reason card is conditional and the frontend's is not. Ran the falsifier as a search rather than a page visit, because neither side's capture is a transit notification: grep for \"exitDate|portOfExit|destinationCountry|exitBorderControlPost\" over the whole check-answers feature returns only test fixtures and the unrelated transitedCountries row, so no such row can render. Confirmed the frontend does ask all three — fe-exit-date, fe-port-of-exit and fe-destination-country are captured screens with h1s \"Exit date\", \"Port of exit\" and \"Destination country\", and their evaluation files bind exitDate, portOfExit and destinationCountry. Confidence medium: both sides' captures are internal-market notifications, so the conditional rows are proven from source on both sides and observed on neither. This was one of the differences the authoring pass left to another slice; the question pages exist on both sides and agree, so the difference is the review page's alone."
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-55",
+    "prototype": "app/routes.js:4634-4668"
+  },
+  "relatedTo": [
+    {
+      "id": "review--section-structure",
+      "relation": "travels-with",
+      "why": "the new rows belong in DR1's Main reason for import card, which the six-section layout creates"
+    }
+  ]
+}

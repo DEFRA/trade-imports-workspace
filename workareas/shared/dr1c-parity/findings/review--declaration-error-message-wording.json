@@ -1,0 +1,34 @@
+{
+  "slice": "review",
+  "title": "Submitting the declaration without ticking the box shows \"Confirm that the information is true and correct before submitting\" where Design release 1 shows \"Confirm that you have reviewed and comply with this declaration\"",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-declaration-error",
+    "dr1-declaration-error"
+  ],
+  "controls": [
+    "declaration",
+    "declarationConfirmed"
+  ],
+  "finding": {
+    "frontend": "The error summary link and the inline message under the checkbox both read \"Confirm that the information is true and correct before submitting\" (src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:23-26). The sentence points at the accuracy of the answers rather than at the declaration the box actually confirms.",
+    "prototype": "Design release 1 shows \"Confirm that you have reviewed and comply with this declaration\" in both places (app/routes.js:5656), naming the act the checkbox asks for. Everything else about the error state matches: the same \"There is a problem\" summary, the same anchor to the checkbox, the same inline message under the same control.",
+    "difference": "Change the declaration validation message to \"Confirm that you have reviewed and comply with this declaration\". It is one string in src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:23-26 and it feeds both the summary link and the inline message.",
+    "falsifiedBy": "Finding the words \"reviewed and comply with this declaration\" in the error summary of fe-declaration-error. The captured DOM's summary link and its inline message both read \"Confirm that the information is true and correct before submitting\".",
+    "verification": "Ran the falsifier on both captured DOMs: fe-declaration-error.html yields only \"Confirm that the information is true and correct before submitting\", dr1-declaration-error.html only \"Confirm that you have reviewed and comply with this declaration\". app/routes.js:5656 is exactly the string, inside validateDeclaration, and it feeds both the errorList entry and the inline errors object; declaration/copy/copy.en.js:23-26 is the frontend's single equivalent. Checked the finding's \"everything else matches\" claim rather than accepting it, because that is the half nobody verifies: both pages carry a govuk-error-summary titled \"There is a problem\", both carry a govuk-error-message inline under the checkbox, and both summary links anchor to their own checkbox — #declaration on the frontend, #declaration-confirmed on the requirements side, which is an id difference and not a behaviour one. Opened evidence/frontend@76a864ba/page/fe-declaration-error.png to confirm the inline message sits above the checkbox inside the red bar. The two named controls are the two sides' field names and each resolves on its own screen. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:23-26",
+    "prototype": "app/routes.js:5656"
+  },
+  "relatedTo": [
+    {
+      "id": "review--declaration-wording",
+      "relation": "travels-with",
+      "why": "Both are copy on the same page and land in the same copy file."
+    }
+  ]
+}

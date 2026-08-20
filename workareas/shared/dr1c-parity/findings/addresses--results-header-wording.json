@@ -1,0 +1,34 @@
+{
+  "slice": "addresses",
+  "title": "Frontend gives the list of addresses no heading and captions it \"Showing 5 of 13 addresses\"; Design release 1 heads it \"Select an address\" and counts \"Showing 9 out of 9 results\"",
+  "domain": "addresses",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-contact",
+    "dr1-consignment-address-select",
+    "dr1-contact-address-for-consignment"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "On a party picker the results table has no heading above it — the table's own caption carries the count, \"Showing 5 of 13 addresses\", and the trader goes straight from the Search button to a table (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:51-53, wording at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:51). On the contact-address page there is no heading and no count at all: the radios sit directly under the page heading and its hint. So neither page tells the trader in words that the thing below is a list to choose one item from.",
+    "prototype": "Design release 1 heads the list \"Select an address\" on both surfaces — as an h2 above the results with the count beneath it on a party picker (app/views/consignment-address-select.html:94-96), and as an h2 above the radios on the contact-address page (app/views/contact-address-for-consignment.html:62). The count reads \"Showing 9 out of 9 results\", naming both the number shown and the number there are, and it updates as the trader filters.",
+    "difference": "Head the list of addresses \"Select an address\" on the five party pickers and on the contact-address page, and reword the count as \"Showing {shown} out of {total} results\". The count wording is one function in the addresses copy (src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:51) plus its Welsh counterpart; the heading is a new line in each of the two templates. On the picker, sequence this after the pagination change raised as addresses--picker-pages-results-and-searches-on-the-server, because the numbers the count reports change with it. `controls` is deliberately empty: the finding is about a heading and a caption, neither of which is a control the crop can resolve, and the whole-page shot is what shows both.",
+    "falsifiedBy": "Finding the string \"Select an address\" anywhere in the frontend's captured screens. It appears in none of the 31 pages or 36 states; the nearest is the visually hidden \"Select\" column header and the hidden \"Select Astra Rosales\" radio labels.",
+    "verification": "Ran the falsifier: grep -rl 'Select an address' across all 67 files in capture/html/frontend returns nothing. Confirmed what is there instead — the picker's table caption is the count itself (govukTable caption at src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:52-53) with no heading above it, and fe-contact.html goes straight from the h1 in the fieldset legend to the hint to the first radio. On the requirements side I counted the lines by hand: app/views/consignment-address-select.html:94 is the h2 \"Select an address\" with the count at :95-96, and app/views/contact-address-for-consignment.html:62 is the h2 on the contact page — both root views. Read the rendered count in dr1-consignment-address-select.html (\"Showing 9 out of 9 results\") against the rendered caption in fe-address-picker-place-of-origin.html (\"Showing 5 of 13 addresses\"), and confirmed the frontend wording is one function at addresses/copy/copy.en.js:51. Opened evidence/frontend@76a864ba/page/fe-address-picker-place-of-origin.png and evidence/prototype@491b3926/page/dr1-consignment-address-select.png. CORRECT.",
+    "correction": "The claim stands, but the difference slot over-reaches by one page. The count reword belongs to the five party pickers only: Design release 1's contact-address page carries the heading with no count beneath it at all — grep for \"Showing\" in capture/html/prototype/dr1-contact-address-for-consignment.html returns zero — and Frontend's contact page has none either, so nothing has to change there beyond adding the heading. Read \"reword the count\" as applying to the pickers. Note also that Design release 1 puts \"Select an address\" on the page twice on a picker: once as the visible h2 and once as a visually hidden legend on the fieldset wrapping the results table (app/views/consignment-address-select.html:102). Only the visible one is this finding; a reader looking at the requirements-side card should not read the duplicate as two headings."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:51-62",
+    "prototype": "app/views/consignment-address-select.html:94-96"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--picker-pages-results-and-searches-on-the-server",
+      "relation": "travels-with",
+      "why": "The count sentence reports pagination on one side and a live filter on the other, so the wording only settles once the list behaviour does."
+    }
+  ]
+}

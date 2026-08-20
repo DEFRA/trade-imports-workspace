@@ -1,0 +1,30 @@
+{
+  "slice": "service-wide",
+  "title": "Each dashboard notification card lists eight facts over three rows; Design release 1's card shows four over two",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "fe-dashboard-sorted",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Consignee" },
+    { "kind": "label", "text": "Arrival at destination" }
+  ],
+  "finding": {
+    "frontend": "A notification card carries its reference as a heading and then eight labelled facts in three rows of three: Commodity, Origin, Arrival at destination; Consignee, Consignor, Status; Date created, Date submitted (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:113-154, values built at src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:10-22). On a draft, five of the eight are blank — the picture of fe-dashboard-populated shows Commodity, Arrival at destination, Consignee, Consignor and Date submitted all empty — so the card is mostly labels with nothing beside them.",
+    "prototype": "Design release 1's card carries the reference and four facts in two rows of two: Commodity and Status on the first row, Origin and \"Arrival date at destination\" on the second (app/views/dashboard.html:265-292). Consignee, consignor and the created and submitted dates are not shown. Status sits on the top row beside the commodity rather than buried in the middle of the card, so the tag is the second thing a trader reads.",
+    "difference": "Cut the card down to the four facts the design shows, in the design's order and layout: Commodity and Status on the first row, Origin and Arrival date at destination on the second. Rename the arrival label from \"Arrival at destination\" to \"Arrival date at destination\". Drop the Consignee, Consignor, Date created and Date submitted pairs from src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:113-154 and the matching keys from the row view model at src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:10-22 and from the copy at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:15-26. Which links the card offers is a separate question and is not changed here.",
+    "falsifiedBy": "Finding a Consignee, Consignor, Date created or Date submitted pair on a notification card in the captured DOM of dr1-dashboard.",
+    "verification": "Ran the falsifier and it survives a near miss: dr1-dashboard.html does contain the string \"Consignee\", but the single occurrence is the filter field label \"Consignee/Importer\" in the search panel, not a card pair — extracting every app-dashboard-notification-card__key from the file gives Commodity, Status, Origin and \"Arrival date at destination\" and nothing else, four keys in two __row elements per card. Read src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:113-154 (three dl rows: commodity/origin/arrival, consignee/consignor/status, created/submitted) and the row view model at view-model/row/index.js:10-22. Opened evidence/frontend@76a864ba/page/fe-dashboard-populated.png — Commodity, Arrival at destination, Consignee, Consignor and Date submitted are all empty labels, exactly the five the finding names — and evidence/prototype@491b3926/page/dr1-dashboard.png. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:113-154",
+    "prototype": "app/views/dashboard.html:265-292"
+  },
+  "relatedTo": []
+}

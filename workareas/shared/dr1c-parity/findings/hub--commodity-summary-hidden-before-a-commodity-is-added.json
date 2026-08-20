@@ -1,0 +1,27 @@
+{
+  "slice": "hub",
+  "title": "The hub hides the animal and package totals until a commodity has been added, where Design release 1 shows them from the start reading zero",
+  "domain": "hub",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Your commodities"],
+  "finding": {
+    "frontend": "On a notification with no commodities the hub goes straight from the \"Overview\" heading to the first task section. There is no \"Your commodities\" heading and no summary of what the notification contains — the words appear in no captured frontend screen in this corpus. The frontend does build the same two summary panels, headed \"Your commodities\" with the labels \"Animals\" and \"Packages/boxes\" and the same captions (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:3-9, rendered at src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:8-26), but the whole block is behind a truthiness test and the view model returns null while the commodity collection is empty (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-151), so a user only ever meets it once they have added a commodity line.",
+    "prototype": "Design release 1 shows \"Your commodities\" directly under the page heading on every visit to the hub, with two grey panels reading \"0 Animals — Total number of animals in this consignment\" and \"0 Packages/boxes — Total number of packages in this consignment\" before anything has been entered, and the same panels reading the real totals once commodities exist (app/views/notification-hub.html:26-50). The summary is the first thing on the page and it is never absent.",
+    "difference": "Render the commodity summary on every visit to the hub, showing zero for both totals when the notification holds no commodity lines, instead of suppressing the block. The change is the null return at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-151 and the guard around the block at src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:8. One layout consequence travels with it and is worth stating rather than raising twice: both sides lay the two panels out as a pair of half-width columns, but Design release 1 gives the hub the full grid width (app/views/notification-hub.html:21) while the frontend confines it to a two-thirds column, so the panels arrive narrower than the design draws them.",
+    "falsifiedBy": "Finding the string \"Your commodities\" in the captured DOM of any frontend screen in this corpus. It appears in the two prototype hub captures and in no frontend capture.",
+    "verification": "Read all four rendered DOMs and both hub screenshots. Ran the falsifier as written: grep -rl for \"Your commodities\" across capture/html returns the two prototype hub files and nothing under capture/html/frontend, so the absence is corpus-wide and not just on fe-hub. Read the frontend's suppressed block in place — hub/template.njk:8 opens {% if commodityTotals %} and :26 closes it, and hub/controller.js:142-151 is buildCommodityTotals returning null when collectionView finds no commodityLines — and read the Design release 1 panels at app/views/notification-hub.html:26-50, whose captured output reads 0 / Animals and 0 / Packages/boxes with the two captions the finding quotes. Confirmed the finding is not about a volatile value: it is the presence of the block, not the numbers in it. Rubric 2 (overstatement) fired on one sentence of the difference slot — see correction.",
+    "correction": "The claim stands; one supporting sentence was wrong and has been fixed. The difference slot said Design release 1 \"lays the hub out across the full grid width so the two panels sit side by side, while the frontend's hub is confined to a two-thirds column\", which reads as though the frontend would stack them. It would not: hub/template.njk:10-25 already puts the two panels in a govuk-grid-row as two govuk-grid-column-one-half columns, so they sit side by side there too. What is true is the container — app/views/notification-hub.html:21 is govuk-grid-column-full and the frontend's hub is govuk-grid-column-two-thirds, as both rendered DOMs show — so the consequence is narrower panels, not a different arrangement. The sentence now says that."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-151",
+    "prototype": "app/views/notification-hub.html:26-50"
+  }
+}

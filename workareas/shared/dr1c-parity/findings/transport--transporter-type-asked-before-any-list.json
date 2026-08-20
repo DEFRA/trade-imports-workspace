@@ -1,0 +1,45 @@
+{
+  "slice": "transport",
+  "title": "Frontend asks which type of transporter is moving the animals before showing any list; Design release 1 shows one searchable list of all approved transporters, commercial and private together, and asks the type only when a user adds a new one",
+  "domain": "transport",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transporter-type",
+    "fe-transporter-commercial",
+    "fe-transporter-private",
+    "dr1-transporter",
+    "dr1-transporter-add"
+  ],
+  "controls": ["transporterType"],
+  "finding": {
+    "frontend": "The transporter section opens on a page that begins with the DAERA and APHA authorisation guidance and only then asks the question. Below that guidance sits the heading \"What type of transporter will move the animals?\", hinted \"We will ask for the transporter's details next.\", with two radios, Commercial (\"A business approved to transport animals — you will choose one from a list\") and Private (\"You or another individual moving the animals — you will give their address\"). The answer forks the journey: Commercial goes to a list of approved commercial transporters to pick one from, Private goes to a blank name-and-address form. The two branches never meet, so a user whose transporter is already known to the service but is a private one has no list to pick it from and types the whole address again. The order and the fork are declared as three consecutive pages in one section at src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67-76, and the copy at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:60-61.",
+    "prototype": "The transporter section opens on one page headed \"Transporter details\", introduced \"This is the person or company responsible for transporting the consignment.\", carrying the same DAERA and APHA guidance apart from the wording and destination of its guidance link, then \"Select a transporter\" over a searchable table of every transporter the trader can use. The table mixes both kinds: Yusen Logistics (Romania) SRL, Roadtrain Ltd, Danish Meat Export ApS and Portuguese Livestock Lda are typed Commercial, and Aberdeen Livestock Ltd, Romanian Agri Exports SRL, Slovak Farm Export and Finnish Livestock Oy are typed Private. A user picks a row and continues. Only a user who cannot find their transporter presses \"Add a transporter\", and only then is the type question asked, on a separate page headed \"Choose a transporter type\" warned \"Before you add this transporter, please ensure you have already searched for it first.\" (app/views/transporter-add.html:32-36). The linear journey holds one transporter step, /transporter (app/routes.js:1274); both add pages sit off it.",
+    "difference": "Restructure the transporter section so the list comes first and the type question comes second. The frontend needs one transporter page that lists every transporter available to the trader, commercial and private, with the DAERA and APHA guidance and the \"This is the person or company responsible for transporting the consignment\" introduction on it, and a route off that page for adding one that is not listed. The type chooser then moves onto that add route, where it is headed \"Choose a transporter type\", warned \"Before you add this transporter, please ensure you have already searched for it first.\", and its options become Private transporter first and Commercial second — the reverse of the frontend's order — with the frontend's two explanatory radio hints dropped and replaced by a single hint on Commercial reading \"This can only be a commercial transporter from Northern Ireland.\" The private form's heading follows it, from \"Private transporter details\" to \"Add private transporter\" under the caption \"Add a new transporter\". This is the parent of three other transport findings and should land before them: the list needs a search box, the list needs Type and Status per row, and the add route needs a commercial form. Nothing outside the frontend has to change first — the list is a local fixture at src/server/app/services/commercial-transporters/records.js:7-29 and it can be widened to carry private transporters there.",
+    "falsifiedBy": "Finding a route in the frontend that reaches a combined transporter list before the type question is asked, or finding that Design release 1's /transporter table filters to one type once a transporter type has been chosen.",
+    "verification": "Read all five captured DOMs and the fe-transporter-type, dr1-transporter and dr1-transporter-add screenshots. Ran the falsifier both ways. On the frontend, src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67-76 is exactly the transport section and lists five pages in order, of which the last three are the type question, the commercial list and the private form; the branch is enforced by the obligation model, where commercialTransporter and privateTransporter each apply only on the matching answer (src/server/app/sets/live-animals/obligations/sections/transport.js:35-62), so there is no combined list to reach and no route that skips the type question. On the Design release 1 side, capture/html/prototype/dr1-transporter.html carries all eight rows with no type filter applied and the linear step list at app/routes.js:1274-1281 holds one /transporter step with both add pages hanging off it, so the table does not narrow to one type. Checked the row typing named in the prototype slot against the captured table cells: Yusen Logistics (Romania) SRL, Roadtrain Ltd, Danish Meat Export ApS and Portuguese Livestock Lda read Commercial, and Aberdeen Livestock Ltd, Romanian Agri Exports SRL, Slovak Farm Export and Finnish Livestock Oy read Private, as claimed. Checked the add page's copy at capture/html/prototype/dr1-transporter-add.html: the caption, the heading, the warning sentence, the reversed radio order and the single Commercial hint are all as quoted. Also checked, because it is the obvious place for the sides to disagree without either page showing it, whether transit countries is gated differently — it is not; both sides gate it on rail or road transport.",
+    "correction": "The finding stands and the flow claim is right. One sentence in the frontend slot was factually the wrong way round and has been fixed: it placed the two radios above the DAERA and APHA authorisation guidance. The captured DOM and the screenshot of fe-transporter-type both show the guidance first — four paragraphs, three bullets and the guidance link — with the heading, hint and radios below it. A second phrase was overstated and has been narrowed: the prototype slot said Design release 1 carries the same DAERA and APHA guidance, and the two blocks in fact differ in the wording and the destination of the guidance link, which is now raised on its own as transport--transporter-guidance-link-differs."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67-76",
+    "prototype": "app/views/transporter.html:73-97"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--no-way-to-add-a-commercial-transporter",
+      "relation": "travels-with",
+      "why": "The add route this finding introduces is where the missing commercial form hangs."
+    },
+    {
+      "id": "transport--transporter-list-has-no-search-box",
+      "relation": "travels-with",
+      "why": "Both change the same list page."
+    },
+    {
+      "id": "transport--transporter-list-omits-type-and-status",
+      "relation": "travels-with",
+      "why": "The Type column only means anything once the list carries both kinds of transporter."
+    }
+  ]
+}

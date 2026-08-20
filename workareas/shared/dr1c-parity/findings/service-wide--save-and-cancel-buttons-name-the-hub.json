@@ -1,0 +1,32 @@
+{
+  "slice": "service-wide",
+  "title": "The save and cancel controls at the foot of every journey page send the user back to \"the hub\"; Design release 1 calls the same page the overview",
+  "domain": "service-wide",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-consignment-details",
+    "dr1-consignment-details"
+  ],
+  "controls": ["Save and return to hub", "Cancel and return to hub"],
+  "finding": {
+    "frontend": "Every journey page ends with the same three controls, built by one shared macro (src/server/app/shared/save-actions.njk:3-13): a primary \"Save and continue\" button, a secondary \"Save and return to hub\" button and a \"Cancel and return to hub\" link. The wording comes from src/server/app/shared/copy.en.js:42-45. Both strings appear on 41 of the 67 captured frontend screens. The page they name is headed \"Overview\", so the word \"hub\" appears nowhere the user can see it except on these two controls — it is the internal name for the task list.",
+    "prototype": "Design release 1 uses the same three-control pattern with the same primary label, and names the destination after what it is headed: \"Save and return to overview\" and \"Cancel and return to overview\" (app/views/consignment-details.html:145). Both strings appear on 29 of the 60 captured screens.",
+    "difference": "Rename saveAndReturnToHub to \"Save and return to overview\" and cancelAndReturnToHub to \"Cancel and return to overview\" in src/server/app/shared/copy.en.js:42-45. Both keys are read only by src/server/app/shared/save-actions.njk:3-13, so one edit changes every page. Nothing else about the pattern moves — the three controls, their order and \"Save and continue\" already agree. The key names themselves can stay as they are; only the strings are user-visible.",
+    "falsifiedBy": "Finding the word \"hub\" in a button or link label in the captured DOM of any Design release 1 screen, or \"overview\" in one on the frontend side.",
+    "verification": "Ran the falsifier both ways. \"hub\" appears in 33 prototype files but never inside an element's text — extracting every >…hub…< run across the 60 files returns nothing, so all 33 are hrefs and form values such as /notification-hub and value=\"hub\". \"Overview\" appears on the frontend only as fe-hub.html's <title> and its h1 at line 106, never as a button or link label. Counted the strings: \"Save and return to hub\" and \"Cancel and return to hub\" are each on 41 of the 67 frontend files, \"Save and return to overview\" and \"Cancel and return to overview\" on 29 of the 60 prototype files. Read src/server/app/shared/save-actions.njk:3-13 and src/server/app/shared/copy.en.js:42-45, and app/views/consignment-details.html:138-152, where line 145 is the \"Save and return to overview\" button and the cancel link follows it. Opened evidence/frontend@76a864ba/page/fe-origin.png for the rendered three-control group.",
+    "correction": "The copy claim is correct and the slot is unchanged, but the prototype slot's opening — \"Design release 1 uses the same three-control pattern\" — is true only of the 29 screens that carry it. Comparing the two sets against pairs.cjs, five frontend page groups render the secondary button and the cancel link where the Design release 1 page they pair with shows a single primary button and no cancel: origin, cph-number, contact address, transporter type against dr1-transporter-add, and private transporter. That is a difference in whether the pattern appears at all rather than in what it says, so it is recorded as its own finding, service-wide--save-and-cancel-shown-where-the-design-shows-one-button, and this one is left to the wording alone."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/copy.en.js:42-45",
+    "prototype": "app/views/consignment-details.html:145"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--save-and-cancel-shown-where-the-design-shows-one-button",
+      "relation": "travels-with",
+      "why": "Both change the same three controls at the foot of a journey page — one what they say, the other which pages they appear on."
+    }
+  ]
+}

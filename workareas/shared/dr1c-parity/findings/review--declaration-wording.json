@@ -1,0 +1,31 @@
+{
+  "slice": "review",
+  "title": "The declaration states three bare headings where Design release 1 states each one and then explains what it commits the trader to",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-declaration",
+    "dr1-declaration"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "The page is three headings, a four-item list and two closing sentences, with no supporting text under any heading (src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:3-18). The first heading, \"I am the contact for the authorities and located in the UK.\", stands alone. The second is a single long heading, \"I confirm I am responsible for this consignment until it has cleared border control checks or reached the place of destination.\" The accountability list reads \"payments for border control checks\", \"re-dispatch of the consignment\", \"quarantine or isolation of the animals\", \"the costs of destruction and disposal\". So a trader ticking the box is agreeing to four compressed phrases with no statement of when the responsibility starts or which regulation it sits under.",
+    "prototype": "Design release 1 gives each statement a heading and a body (app/views/declaration.html:40-64). \"I am the contact for the authorities and located in the UK.\" is followed by \"I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.\" \"I confirm I am responsible for this consignment.\" is followed by \"I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:\" and two bullets, \"cleared official checks at the border\" and \"reached the Place of Destination as stated on the health certificate or notification\". The accountability list reads \"any payment for the official controls at the border\", \"any arrangements to re-dispatch the consignment\", \"any costs needed for quarantine or isolation of consignments\", \"any costs needed for destruction and disposal of consignments, when instructed by the authorities\". The two closing sentences are the same on both sides, and so is the checkbox label.",
+    "difference": "Replace the declaration body copy with Design release 1's wording: add the Regulation (EU) 2017/625 sentence under the first heading; shorten the second heading to \"I confirm I am responsible for this consignment.\" and add the sentence and two bullets beneath it; and reword the four accountability items. This is a copy change in src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js plus the small template change needed to render a paragraph and a nested list under the first two headings. `controls` is deliberately empty: the finding is the body of the declaration, which is prose rather than any one control, and the checkbox beneath it is word-for-word identical on both sides.",
+    "falsifiedBy": "Finding the sentence \"I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.\" anywhere on fe-declaration. The captured DOM does not contain it, and the only text between the h1 and the checkbox is three h2 elements, one four-item list and two paragraphs.",
+    "verification": "Ran the falsifier and opened both pictures side by side. evidence/frontend@76a864ba/page/fe-declaration.png shows three bold headings with nothing under the first two, then the four short bullets, then the two closing sentences — matching declaration/template.njk:10-24 and copy/copy.en.js:3-18 exactly. evidence/prototype@491b3926/page/dr1-declaration.png shows the Regulation (EU) 2017/625 sentence under the first heading, the shortened second heading with its sentence and two bullets, and the four longer accountability items, matching app/views/declaration.html:40-64, which the citation hits line for line. Checked the finding's two claims of sameness rather than taking them: the closing sentences are word-for-word identical, and so is the checkbox label — copy/copy.en.js:19-20 and app/views/declaration.html:79 are the same string. Also checked the volatile value on this page: both sides print today's declaration date, and the finding rightly does not compare it. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:3-18",
+    "prototype": "app/views/declaration.html:40-64"
+  },
+  "relatedTo": [
+    {
+      "id": "review--declaration-error-message-wording",
+      "relation": "travels-with",
+      "why": "Both are copy on the same page and land in the same copy file."
+    }
+  ]
+}

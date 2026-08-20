@@ -1,0 +1,31 @@
+{
+  "slice": "import-reason",
+  "title": "Frontend lets a user pick any port of entry as the port of exit; Design release 1 offers only the border control posts approved for animals leaving Great Britain.",
+  "domain": "import-reason",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-port-of-exit",
+    "fe-port-of-exit-error",
+    "dr1-reason-for-import-transit-revealed",
+    "dr1-reason-for-import-temporary-admission-revealed"
+  ],
+  "controls": [
+    "portOfExit",
+    "transitExitBorderControlPost",
+    "temporaryAdmissionPortOfExit"
+  ],
+  "finding": {
+    "frontend": "The port-of-exit select is the port-of-entry list. Its captured DOM offers about eighty entries running from \"Aberdeen Airport (GB DYC)\" to the far end of the alphabet, including inland and cargo terminals such as \"Nottingham Port (GB NTG)\" and \"HES Humber Bulk Terminal (GB HMR)\", and the page says so out loud: the field's hint reads \"Choose where the consignment will leave Great Britain. Exit and entry share the same port list.\" (src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:5). This is a design decision rather than fixture contents. The controller builds the options by mapping the single shared ports service (src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js:22-29) and validates the answer against that same list (:32-38); the service holds one list and primes it from the reference-data service's ports-of-entry endpoint (src/server/app/services/ports/client.js:4-6). There is no exit list and no filter over the entry list. The frontend's own obligation records where the decision came from: \"Port selected from the port of entry list (Exit and Entry share the same list)\" at src/server/app/sets/live-animals/obligations/sections/import-reason.js:81-83.",
+    "prototype": "The port of exit is a short, purpose-built list of ten border control posts approved to handle animals: Edinburgh, Gatwick, Glasgow, three Heathrow posts, Holyhead, Manchester, Prestwick and Stansted, each carrying its BCP code. Design release 1 keeps it in its own file, separate from the arrival ports, and names it for what it is (app/data/exit-border-control-posts.js:1-14). Both reveals that ask for a port of exit use it — the transit reveal, where the field is named transitExitBorderControlPost, and the temporary-admission reveal, where it is named temporaryAdmissionPortOfExit — and both are fed by the same builder at app/routes.js:8763-8776. The user is offered no other option.",
+    "difference": "The port of exit has to become its own list of animal exit border control posts rather than a second use of the arrival ports. Frontend cannot do this alone: the ports service exposes one list and the reference-data service exposes only ports-of-entry, so a new endpoint and a new reference list are needed in trade-imports-reference-data, and the ports service needs a second accessor beside list(). Once that exists the frontend change is small — a different source for portItems and for the validation set in the same controller, and the hint sentence \"Exit and entry share the same port list.\" comes out. Note for whoever schedules this: Frontend is not doing this by accident. It is following a different requirements source, the V4 field spec quoted in its own obligation, which says exit and entry share a list. Design release 1 is the signed-off design and says otherwise, so the two documents disagree and this ticket is where that gets settled.",
+    "falsifiedBy": "A second port list in the frontend, or an exit filter over the one it has. src/server/app/services/ports/index.js exposes exactly one list, primed from one endpoint, and the port-of-exit select maps over it unfiltered; finding an exit-specific source would prove this wrong.",
+    "verification": "Read capture/html/frontend/fe-port-of-exit.html and fe-port-of-exit-error.html, capture/html/prototype/dr1-reason-for-import-transit-revealed.html and -temporary-admission-revealed.html, and opened the fe-port-of-exit and dr1-reason-for-import-temporary-admission-revealed screenshots. Ran the falsifier: services/ports/index.js holds one module-level array primed only by fetchPortsOfEntry (client.js:5 calls GET /ports-of-entry), exposes list() and label() and nothing else, and port-of-exit/controller.js:22-29 maps list() with no filter while :32-38 validates against the same codes — no exit-specific source exists. Counted the two lists in the captured DOM: 80 <option> elements on fe-port-of-exit (78 ports plus the placeholder and a disabled separator), against 10 posts plus \"Select one\" in both Design release 1 reveals, matching app/data/exit-border-control-posts.js line for line. Checked rubric 6 — Design release 1 does not share a list with itself: its arrival ports are a separate and much longer file, app/data/uk-airports.js. Checked rubric 3 (a stub's contents): the difference survives swapping fixtures for real data, because Frontend has only one list to swap. CORRECT.",
+    "correction": "The claim stands as written. Two notes that change nothing in the slots. The builder citation app/routes.js:8763-8776 lands exactly on buildExitBorderControlPostItems and both its callers are the two reveals named, at :8962 and :8975. Controls have been widened from \"portOfExit\" alone to include the two names Design release 1 gives the same field, transitExitBorderControlPost and temporaryAdmissionPortOfExit, because \"portOfExit\" matches nothing on the requirements side and the cards for those two screens would otherwise fall back to a whole-page shot."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js:22-38",
+    "prototype": "app/data/exit-border-control-posts.js:1-14"
+  }
+}

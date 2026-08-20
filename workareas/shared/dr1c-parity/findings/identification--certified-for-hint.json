@@ -1,0 +1,22 @@
+{
+  "slice": "identification",
+  "title": "Frontend tells a trader the certification purpose is on \"the health certificate\"; Design release 1 names the document, the ITAHC",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-additional-details", "dr1-additional-animal-details"],
+  "controls": [{ "kind": "label", "text": "What are the animals certified for?" }],
+  "finding": {
+    "frontend": "The hint under \"What are the animals certified for?\" reads \"You'll find this on the health certificate.\" (src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:5). A trader importing live animals is holding several certificates, and \"the health certificate\" does not say which one to look at.",
+    "prototype": "Design release 1's hint on the same question reads \"This information can be found on the ITAHC.\" (app/views/additional-animal-details.html:52-55). The Intra Trade Animal Health Certificate is the specific document the sixteen certification purposes are copied off, and naming it removes the guess. Everything else on this page matches: the same sixteen options in the same order from Further keeping to Other, and the same unweaned-animals question with the same hint.",
+    "difference": "Change the hint to \"This information can be found on the ITAHC.\" in src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:5, with the Welsh sibling to match. It is one string in one copy file and nothing has to land first. Two other differences on this page are raised separately and neither blocks this one: the page heading (identification--page-headings-name-the-animal) and the size of the two question labels (identification--certification-questions-set-small).",
+    "falsifiedBy": "The string \"ITAHC\" appearing anywhere in Frontend's rendered additional details page. The captured DOM of fe-additional-details has the hint \"You'll find this on the health certificate.\" and does not contain the four letters.",
+    "verification": "Read both rendered DOMs (capture/html/frontend/fe-additional-details.html:127-128 and capture/html/prototype/dr1-additional-animal-details.html:275-276) and opened both 2x page shots side by side. Ran the falsifier: grep for ITAHC over fe-additional-details.html returns nothing. Checked the sixteen option labels against each other in DOM order and they match exactly, Further keeping through Other, and the unweaned question and its hint match word for word. Checked the cited Design release 1 line is a root view and lands on the hint. CORRECT.",
+    "correction": "The hint claim stands and the falsifier does not fire. One overstatement corrected: the difference slot said this was \"the only difference in content between the two versions of this page\", and it is not. Reading the two page shots side by side, the heading also differs (Frontend \"Additional animal details\", Design release 1 \"Additional details\" at app/views/additional-animal-details.html:38), and both question labels are set two sizes apart (Frontend govuk-fieldset__legend--s at src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:18 and :32, Design release 1 govuk-fieldset__legend--m at app/views/additional-animal-details.html:50 and :72). The sentence has been replaced with pointers to the two findings that now carry those, both written during verification. The sixteen options and the unweaned question do match, as claimed."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:5",
+    "prototype": "app/views/additional-animal-details.html:52-55"
+  }
+}

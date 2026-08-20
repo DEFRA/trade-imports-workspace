@@ -1,0 +1,21 @@
+{
+  "slice": "transport",
+  "title": "Frontend shows the four means of transport as radios, all visible at once; Design release 1 hides them inside a \"Select one\" dropdown",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": ["meansOfTransport"],
+  "finding": {
+    "frontend": "\"Means of transport to the port of entry\" is a fieldset legend over four radios — Airplane, Railway, Road Vehicle, Vessel — all four visible on the page without interacting with anything, and none of them preselected (src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:29-39).",
+    "prototype": "The same question is a label over a dropdown. The closed control shows \"Select one\" and the four options — the same four, in the same order, with the same words — appear only when it is opened (app/views/arrival-details.html:110-119).",
+    "difference": "Change the means-of-transport control from a radio group to a select whose first, selected option reads \"Select one\". The option set, the wording of the options, their order and the label above them are already identical, so the control is the only thing that changes. This is the one finding in the transport slice where the frontend is closer to the GOV.UK Design System's advice than Design release 1 is — the Design System steers a four-option question towards radios — so a reviewer meeting this row should expect it to look backwards and should still read it as written: Design release 1 shows a dropdown here and the frontend does not.",
+    "falsifiedBy": "Finding radios rather than a select for meansOfTransport in the captured rendered DOM of dr1-arrival-details.",
+    "verification": "Read both captured DOMs and both screenshots. capture/html/prototype/dr1-arrival-details.html renders <select id=\"means-of-transport\" name=\"meansOfTransport\"> whose first option is <option value=\"\" selected>Select one</option> followed by Airplane, Railway, Road Vehicle, Vessel; capture/html/frontend/fe-arrival-details.html renders four govuk-radios__item inputs named meansOfTransport with the same four labels in the same order and none checked. Ran the falsifier: no radio input for meansOfTransport exists anywhere in the Design release 1 DOM. Checked the type against the corpus's own convention — origin--country-of-origin-picker uses obligation-change for the same shape of change, a control swapped for a different control, so the type is consistent and left alone. One caveat worth recording rather than correcting: naming meansOfTransport as the control matches four radios on the frontend page, so that card will fall back to the whole-page shot with the reason printed; there is no single-element name to use instead, and the whole question is what the finding is about. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:29-39",
+    "prototype": "app/views/arrival-details.html:110-119"
+  }
+}

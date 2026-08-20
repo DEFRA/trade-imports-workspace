@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "The dashboard shows no \"At a glance\" summary; Design release 1 opens it with counts of alerts, errors and messages waiting for the trader",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard",
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [{ "kind": "label", "text": "At a glance" }],
+  "finding": {
+    "frontend": "The dashboard goes straight from the start button to \"Your notifications\" and the list (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-56). There is nothing above the list summarising what needs the trader's attention, and no alerts, errors or messages anywhere in the service — the words appear in none of the 67 captured frontend screens. A trader with a notification the authorities have rejected learns it only by reading the status tag on that notification's card.",
+    "prototype": "Between the start button and the notification list Design release 1 shows a section headed \"At a glance\" holding three cards side by side: Alerts, Errors and Messages (app/views/dashboard.html:39-77). Each card shows an icon, a count, and a link — \"View alerts\", \"View errors\", \"View messages\" — that takes the trader to the detail. The counts come from the view model's alertCounts and read 0 in the capture. The links are placeholders in the prototype, so the design states that the three lists exist and are reachable but not what they contain.",
+    "difference": "Add a summary section to the dashboard above the notification list, headed \"At a glance\", with a card per category showing the count and a link through to it. Three things have to exist before it is more than decoration: a source of alert, error and message counts for the signed-in organisation, which no service in this workspace exposes today and which the notification contract does not carry; a decision on what an alert, an error and a message are, since Design release 1 shows the categories and not their contents; and the three destination pages the links point at, which Design release 1 leaves as placeholders. The section itself can be built and shown with zero counts before any of that lands, so the visual work does not have to wait, but the section is not worth shipping until the counts are real.",
+    "falsifiedBy": "Finding the words \"At a glance\", \"Alerts\", \"Errors\" or \"Messages\" rendered on any captured frontend dashboard screen.",
+    "verification": "Ran the falsifier: \"At a glance\" matches 0 of the 67 frontend files, and >Alerts< / >Errors< / >Messages< match 0 as well. Read app/views/dashboard.html:40-77 — section app-dashboard-alerts, h2 \"At a glance\", three cards, and confirmed the counts come from alertCounts, which app/routes.js:7207-7211 hard-codes to zero for every release. Read src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-56 — h1, intro paragraph, start-button form, then straight into the \"Your notifications\" h2 and the filter aside, with nothing between. Opened evidence/prototype@491b3926/page/dr1-dashboard.png (three cards reading 0 with View alerts / View errors / View messages beneath) and evidence/frontend@76a864ba/page/fe-dashboard-populated.png (start button then the list heading). CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27-56",
+    "prototype": "app/views/dashboard.html:39-77"
+  },
+  "relatedTo": []
+}

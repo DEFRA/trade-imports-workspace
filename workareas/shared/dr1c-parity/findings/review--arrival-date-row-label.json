@@ -1,0 +1,34 @@
+{
+  "slice": "review",
+  "title": "The review page calls the arrival date \"Arrival date at port of entry\" where Design release 1 calls it \"Arrival date at destination\" — but Design release 1's own question page calls it \"at port of entry\", so the two releases of that label disagree inside Design release 1",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "dr1-review-notification"
+  ],
+  "controls": [
+    "Arrival date at port of entry",
+    "Arrival date at destination"
+  ],
+  "finding": {
+    "frontend": "The Arrival details card on Check your answers labels the row \"Arrival date at port of entry\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70), the same words the question page uses when it asks for the answer (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:5). Question and summary agree.",
+    "prototype": "Design release 1 labels the same value two different ways on two of its own screens. Its arrival-details question asks for \"Arrival date at port of entry\" (app/views/partials/arrival-date-picker.html:9), storing the answer as `arrivalDateAtPort`; its review page then prints that same stored value under the key \"Arrival date at destination\" (app/routes.js:4676-4679), and its dashboard cards use \"Arrival date at destination\" too. A port of entry and a place of destination are two different places in this service — the notification collects an address for each — so the two labels do not describe the same thing, and only one of them can be right.",
+    "difference": "Nothing should change until somebody says which label Design release 1 means. This is banded disputed because Design release 1 contradicts itself between two of its own screens rather than because the frontend might be wrong. The observation that settles it is a ruling on whether the date being collected is the arrival at the port of entry or the arrival at the place of destination. If it is the port of entry, Design release 1's review and dashboard labels are the mistake and the frontend is already right. If it is the destination, then both sides' question pages are mislabelled as well as the frontend's review row, and the change is much wider than this one string.",
+    "falsifiedBy": "Finding that Design release 1's review row and its arrival-details question read from different stored values. They do not: app/views/partials/arrival-date-picker.html:6 names the field `arrivalDateAtPort`, and app/routes.js:4676-4679 prints `sessionData.arrivalDateAtPort` under the key \"Arrival date at destination\".",
+    "verification": "Ran the falsifier at the source and then in the captured DOM, which is where this one is decided. app/views/partials/arrival-date-picker.html:6 names the field arrivalDateAtPort and :9 labels it \"Arrival date at port of entry\"; app/routes.js:4676-4677 prints that same sessionData.arrivalDateAtPort under the key \"Arrival date at destination\" — one value, two labels. Confirmed all three legs in this run's own captures rather than from source alone: capture/html/prototype/dr1-arrival-details.html carries \"Arrival date at port of entry\" once, dr1-review-notification.html carries \"Arrival date at destination\" once, and dr1-dashboard.html carries \"Arrival date at destination\" four times. On the frontend side check-answers/copy/copy.en.js:70 and transport/copy/copy.en.js:5 are the same words, and fe-check-answers.html renders \"Arrival date at port of entry\". Checked this is not the volatile arrival-date value the contract forbids comparing — the finding compares the row's label, never the date in it. The disputed band is the right one under the contract's second limb: the requirements source contradicts itself between two of its own screens, and the finding names the ruling that would settle it. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70",
+    "prototype": "app/routes.js:4676-4679"
+  },
+  "relatedTo": [
+    {
+      "id": "review--means-of-transport-row-label",
+      "relation": "travels-with",
+      "why": "The two row labels sit next to each other in the same Arrival details card on the same page."
+    }
+  ]
+}

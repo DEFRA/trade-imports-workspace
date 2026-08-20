@@ -1,0 +1,37 @@
+{
+  "slice": "transport",
+  "title": "Frontend's transporter authorisation guidance sends the user to a different GOV.UK page from the one Design release 1 sends them to, and words two of its lines differently",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-type", "dr1-transporter"],
+  "controls": [
+    {
+      "kind": "label",
+      "text": "Find out how to transport animals in connection with an economic activity (opens in new tab)"
+    },
+    {
+      "kind": "label",
+      "text": "Find out how to transport animals in connection with an economic activity (opens in a new tab)"
+    }
+  ],
+  "finding": {
+    "frontend": "The transporter authorisation guidance opens the transporter type page: the lead sentence about DAERA and APHA, three bullets, a guidance link, and two closing sentences. The link reads \"Find out how to transport animals in connection with an economic activity (opens in new tab)\" and goes to https://www.gov.uk/guidance/transporting-animals-in-great-britain, which is the general page on transporting animals in Great Britain. The last sentence reads \"Documents issued in any EU Member State are not valid for use in GB.\" The whole block is one copy object at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:62-77, rendered at src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk:8-18.",
+    "prototype": "Design release 1 shows the same guidance, in the same order, at the top of its transporter page (app/views/transporter.html:48-62). The lead sentence and all three bullets match the frontend word for word. Two lines do not. The link reads \"…(opens in a new tab)\" and goes to the animal-welfare-in-transport guidance, anchored at its section on transporting animals in connection with an economic activity — a different page, and one that lands the user on the specific section rather than at the top of a general one. The last sentence reads \"Documents issued in any EU member state are not valid for use in GB.\", in sentence case.",
+    "difference": "Bring the transporter authorisation guidance block into line with Design release 1: point the guidance link at https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity, change its text to end \"(opens in a new tab)\", and lower-case \"member state\" in the closing sentence. All three strings sit in the one guidance object at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:62-77, so this is a single edit to a single block rather than three scattered ones. Take the href from Design release 1 without the Google Analytics linker parameters its prototype copy carries — those are an artefact of how the URL was pasted, not part of the requirement. Where the block ends up on the page is settled by the flow change raised beside this one, which moves the guidance onto the transporter list; this finding is only about what it says.",
+    "falsifiedBy": "Finding the frontend's guidance link pointing at the animal-welfare-in-transport page, or Design release 1's pointing at transporting-animals-in-great-britain, in the two captured rendered DOMs.",
+    "verification": "Written and checked by the verifier, not by the slice's author, so a reader knows both were the same pass. Found it while checking the flow-change finding's claim that Design release 1 carries \"the same DAERA and APHA guidance\" — it very nearly does, and the two places it does not had not been recorded anywhere in the slice. Compared the two blocks line by line in capture/html/frontend/fe-transporter-type.html and capture/html/prototype/dr1-transporter.html: lead sentence identical, three bullets identical, \"Documents issued by DAERA are valid for use in GB.\" identical; the link href, the link's closing parenthesis and the case of \"member state\" differ. Ran the falsifier both ways — neither href appears on the other side. Read both sources at the cited lines: copy.en.js:70-73 holds the frontend's link text and href, :76 the closing sentence, and app/views/transporter.html:58 and :61 hold Design release 1's. Confirmed both on the two screenshots. Checked that this is not one of the corpus's declared non-findings: it is not a placeholder href — both sides point at a real GOV.UK page — and it is not Prototype Kit harness chrome, because the block is designed content the two teams each wrote. Each of the two named labels is unique to one of the two screens, so each side crops its own link."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:62-77",
+    "prototype": "app/views/transporter.html:48-62"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-type-asked-before-any-list",
+      "relation": "travels-with",
+      "why": "That finding moves this guidance block onto the transporter list; this one settles what it says once it is there."
+    }
+  ]
+}

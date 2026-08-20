@@ -1,0 +1,34 @@
+{
+  "slice": "commodities",
+  "title": "Frontend asks what is being imported by printing the whole commodity reference list as tick boxes; Design release 1 asks the user to search for a commodity and shows nothing until they do.",
+  "domain": "commodities",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-commodity-search",
+    "fe-commodity-search-selected",
+    "dr1-what-are-you-importing",
+    "dr1-what-are-you-importing-results"
+  ],
+  "controls": ["commoditySearch", "species"],
+  "finding": {
+    "frontend": "The page has no search box. Under the heading \"What are you importing?\" it prints every commodity the reference service knows about, one tick-box group per commodity, legend \"Cow (0102)\", \"Horse (0101)\", \"Cat (01061900)\", \"Dog (01061900)\", \"Fish (0301)\", with a tick box per species inside each. The template loops the whole list and renders a govukCheckboxes group for each entry with no filtering step of any kind (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:19-30), and the view model builds one group per commodity with no query argument (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:3-15). The controller takes no query parameter and has no search action: it renders the list on GET and validates the ticked boxes on POST (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:36-52). The captured page fits on one screen only because the stub holds five commodities and eight species between them.",
+    "prototype": "The page shows one control, a search box labelled \"Search for a commodity\" with the hint \"You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).\" Nothing is listed until the user has typed at least three characters: results then appear in a panel directly under the box, grouped under a commodity header such as \"Cattle (0102)\" with a tick box per matching species, and the matched characters are shown in bold. Chosen species collect into a panel below the results, headed with a running count — \"2 selected\" — that lists each one and offers \"Clear all\". The search matches on the species Latin name, the species common name, the commodity name and the commodity code (app/views/what-are-you-importing.html:47-117).",
+    "difference": "Replace the printed tick-box list on the commodity page with a search: a labelled search box over the reference list, a results panel that appears once at least three characters are entered and groups matching species under their commodity heading with a tick box each, and a running list of what has been chosen so far, headed with the count, with a way to clear it. The list the frontend prints today is bounded only by what the reference service returns — the requirements side's own fixture already carries twenty-one commodities and over a hundred species under \"Other live mammals\" alone — so the printed list stops being usable as soon as the stub is replaced. Nothing has to land first: the reference data the search would filter is the same list the page already fetches. Keep the existing \"Select a commodity\" error, which both sides already use for an empty submission.",
+    "falsifiedBy": "A search input, a filter field or a type-ahead anywhere on fe-commodity-search. The captured DOM for that page contains no input other than the CSRF hidden field and the eight species tick boxes, and the controller reads no query parameter, so finding one would prove this wrong.",
+    "verification": "Read both rendered DOMs (capture/html/frontend/fe-commodity-search.html, fe-commodity-search-error.html, capture/html/prototype/dr1-what-are-you-importing.html and dr1-what-are-you-importing-results.html) and opened both 2x page shots. Ran the falsifier: every type= attribute in fe-commodity-search.html is 8 checkbox, 1 hidden, 2 submit and 1 script module — no search or text input — and src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:36-52 reads no query parameter. Checked the requirements side's search behaviour in app/assets/javascripts/commodity-search.js and the empty-submission message in app/routes.js:778-795. CORRECT on the substance; two details of the requirements side corrected.",
+    "correction": "The finding stands and its falsifier does not fire, but the prototype slot described the chosen-species panel wrongly in two ways and has been fixed. (1) It said the panel is headed \"Selected commodities\". It is not: the heading is written by script as a count, `${count} selected` (app/assets/javascripts/commodity-search.js:459), and it is empty until something is chosen. \"Selected commodities\" is the heading of a different thing — the summary table on the commodity-details page (app/views/consignment-details.html:50) — and carrying that name onto this page would have had the frontend build the wrong component. (2) It said the panel sits above the search box. It sits below it: the DOM order inside app-commodity-search-wrapper is search box, then results list, then the selected panel, and nothing in app/assets/sass/application.scss reorders them — the class app-commodity-search__selected appears in no stylesheet at all. Also understated: results do not appear as soon as the user types, they appear at three characters (MIN_SEARCH_LENGTH, app/assets/javascripts/commodity-search.js:5, applied at :79 and :594), and the difference slot now says so. Left alone: the controls list names \"species\", which resolves to eight checkboxes on fe-commodity-search and so will have its crop refused. That is the right outcome here — the finding is about the shape of the whole page, and the whole-page shot is the picture a reader needs."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:19-30",
+    "prototype": "app/views/what-are-you-importing.html:47-117"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--species-labelled-by-latin-name-only",
+      "relation": "travels-with",
+      "why": "The search matches and labels species by common name, so the label change and the search change touch the same rows."
+    }
+  ]
+}

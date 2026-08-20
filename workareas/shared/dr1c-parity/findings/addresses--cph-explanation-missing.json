@@ -1,0 +1,22 @@
+{
+  "slice": "addresses",
+  "title": "Frontend gives no explanation of what a CPH number is or where to find one; Design release 1 offers a \"What is a CPH number?\" expander above the field",
+  "domain": "addresses",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-cph-number", "dr1-cph-number-details-open", "dr1-cph-number"],
+  "controls": ["What is a CPH number?"],
+  "finding": {
+    "frontend": "The County Parish Holding page is a heading, one input, its example hint and the buttons — nothing more (src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:5-26). The captured DOM contains no details element and no explanatory paragraph. A trader who does not know what a CPH number is, or does not know they have one, is given the format and nothing else.",
+    "prototype": "Design release 1 puts a closed expander above the field, summarised \"What is a CPH number?\", holding two sentences: that a county parish holding number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled; and that it can be found on documents from the Animal and Plant Health Agency (APHA) or by checking holding details on GOV.UK, the last phrase being a link (app/views/cph-number.html:45-51). dr1-cph-number-details-open photographs it open.",
+    "difference": "Add the same expander above the CPH input, with those two sentences and a link out to the GOV.UK holding-details guidance. This is a content addition to one page with no data or flow consequence; the GOV.UK destination is a `#` placeholder in the prototype and a real URL will have to be agreed with content design before it ships.",
+    "falsifiedBy": "Finding a details element, inset or paragraph on the frontend CPH page that explains what a CPH number is. The captured DOM of fe-cph-number holds no `govuk-details` and no body copy other than the hint.",
+    "verification": "Ran the falsifier: grep for govuk-details in capture/html/frontend/fe-cph-number.html returns zero, and reading the whole of main tag-stripped gives heading, hint, one input, three buttons and nothing else — no details element, no paragraph, no inset. Checked the requirements citation is a root view and lands on the content the sentence describes: app/views/cph-number.html:45-51 is the govukDetails call, summaryText \"What is a CPH number?\" at :46, holding exactly the two paragraphs quoted, with \"checking your holding details on GOV.UK\" as an anchor whose href is \"#\". Opened evidence/prototype@491b3926/page/dr1-cph-number.png, where the expander sits closed between the h1 and the field, and evidence/prototype@491b3926/page/dr1-cph-number-details-open.png, where both sentences are on the page. CORRECT.",
+    "correction": "The claim stands, and the caveat about the placeholder link is right: the destination is literally href=\"#\" in the root view, so a real URL has to be agreed rather than lifted. Under the contract's placeholder-href rule that does not weaken the finding — it is the existence of the link that is designed, not where it points. One scoping note: this is a different change from addresses--cph-wording, which moves the page heading and the field label; a reader picking up both should do the wording first, because the expander's own sentences use the lower-case \"county parish holding (CPH) number\" that the wording change adopts."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:5-26",
+    "prototype": "app/views/cph-number.html:45-51"
+  }
+}

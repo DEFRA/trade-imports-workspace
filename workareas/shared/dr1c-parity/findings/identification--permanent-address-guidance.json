@@ -1,0 +1,22 @@
+{
+  "slice": "identification",
+  "title": "Frontend gives one sentence about the animals' permanent address; Design release 1 warns that a false address is fraud and explains what a permanent address is",
+  "domain": "addresses",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-permanent-address-animals"],
+  "controls": [],
+  "finding": {
+    "frontend": "The whole of the frontend's guidance on this question is the single sentence \"A permanent address is required for this animal.\", set under a small \"Permanent address\" heading in the middle of the identification card (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:90-92). It says the address is needed. It does not say what a permanent address is, who will use it, or what happens if the trader invents one.",
+    "prototype": "Design release 1 puts three things above the question. A warning, in the GOV.UK warning-text component with its exclamation icon: \"Providing a false address is an act of fraud\". Then a definition, as a lead-in and two bullets: \"A permanent address is where an animal:\" — \"will permanently reside\" and \"can be checked by the Animal and Plant Health Agency (APHA)\". Then the question itself as a heading, \"Where will their permanent address be?\" (app/views/permanent-address-animals.html:37-64). The second bullet is the reason the address matters, and it is the part the frontend never tells anybody.",
+    "difference": "Replace the single sentence with Design release 1's three blocks: a govukWarningText carrying \"Providing a false address is an act of fraud\", the two-bullet definition naming APHA, and the question \"Where will their permanent address be?\". The copy lives in src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:90-92 with a Welsh sibling to match. No new data and no new field.",
+    "falsifiedBy": "Any mention of fraud, of permanent residence, or of the Animal and Plant Health Agency in the frontend's rendered identification page. The captured DOM of fe-animal-identification contains none of the three words \"fraud\", \"reside\" or \"APHA\".",
+    "verification": "Ran the falsifier: a case-insensitive grep for fraud, reside or APHA over capture/html/frontend/fe-animal-identification.html returns nothing, and the only guidance in the block is the one sentence at :232. Read the Design release 1 DOM at capture/html/prototype/dr1-permanent-address-animals.html:249-269 and confirmed the warning-text component with its exclamation icon, the lead-in and the two bullets, then the h2 question at :278. Opened the Design release 1 page shot and confirmed all four blocks render as described and in that order. Checked app/views/permanent-address-animals.html:37-64 is a root view and that the range does contain the warning at :37-40, the guidance at :42-48 and the question at :63. CORRECT.",
+    "correction": "The claim stands and the falsifier does not fire. One thing the finding leaves out, recorded here rather than added to the slot because it belongs with a different increment: Design release 1 also hints its \"Enter a new address\" option with \"This is where they will stay after spending 48 hours at the place of destination.\" (app/views/permanent-address-animals.html:82-94 via the radio items built at app/routes.js:2496-2500), which is a further sentence of guidance Frontend does not carry. It sits on the radio rather than above the question, so it travels with identification--permanent-address-same-as-destination-choice, which is the finding that introduces that radio."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:90-92",
+    "prototype": "app/views/permanent-address-animals.html:37-64"
+  }
+}

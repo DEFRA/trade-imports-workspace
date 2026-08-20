@@ -1,0 +1,35 @@
+{
+  "slice": "review",
+  "title": "Deleting a notification and cancelling an amendment are frontend journeys Design release 1 does not describe at all",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": [
+    "fe-delete-notification",
+    "fe-cancel-amend"
+  ],
+  "controls": [
+    "Yes, delete notification",
+    "Yes, cancel amendment"
+  ],
+  "finding": {
+    "frontend": "Two confirmation pages exist that have no counterpart. \"Delete this notification?\" warns \"This cannot be undone.\" and offers \"Yes, delete notification\" against \"No, return to dashboard\"; it is reached from the Delete action on a dashboard card and from the Delete button on a submitted notification's review page. \"Cancel this amendment?\" warns \"Your changes since you started amending will be discarded and the submitted version restored.\" and offers \"Yes, cancel amendment\" against \"No, return to notification\"; it is reachable only from a notification the trader has put into the amending state, which the frontend's dashboard offers on a submitted notification and Design release 1's does not.",
+    "prototype": "Design release 1 has neither page and neither journey. Both routes exist on the prototype's single router, but neither reaches this release: the delete page redirects to the dashboard unless a Design release 2 session flag is set (app/routes.js:5607-5613), the cancel-amendment handler does the same, and neither has a root view — there is no delete-notification.html and no cancel-amend.html at the root of app/views, only copies under design-release-2/ and design-release-2.1/, which are other releases' documents. Design release 1's dashboard cards offer \"Copy as new\" and \"View\" and no delete or amend action at all, so neither journey has a way in.",
+    "difference": "This is recorded once as a one-sided observation and needs no work: Design release 1 says nothing about deleting a notification or amending a submitted one, so it cannot be said to disagree with the frontend having them. It is banded disputed because the one thing this comparison cannot settle is whether the silence is deliberate — whether these two journeys were designed elsewhere and are correct, or were built ahead of the design. The observation that would settle it is a signed-off Design release 1 artefact, outside the prototype's root views, that either specifies or rules out deleting a notification and amending a submitted one. Until somebody produces that, no change should be made on either side. The frontend states are recorded in this corpus so a person can look at them: fe-delete-notification, fe-cancel-amend, and fe-dashboard-deleted for what the dashboard shows afterwards.",
+    "falsifiedBy": "Finding delete-notification.html or cancel-amend.html at the root of app/views in the prototype, or a delete or amend action on a card in the captured dr1-dashboard. `ls app/views/*.html` lists neither file, and the captured dashboard's cards carry only \"Copy as new\" and \"View\".",
+    "verification": "Ran both halves of the falsifier. ls of app/views matching delete, cancel or amend returns nothing at the root; grep of capture/html/prototype/dr1-dashboard.html returns \"Copy as new\" four times and \"View\" seven times, with no Delete and no Amend. Read the two gates: app/routes.js:5607-5613 is renderDeleteNotificationPage redirecting to the dashboard unless the session is Design release 2, and app/routes.js:9652-9654 is the cancel-amend handler doing the same — and the amend entry point at :9618-9620 is gated identically, so neither journey has a way in on the root mount. Checked the frontend half against its own captures rather than the prose: fe-delete-notification.html carries \"Delete this notification?\", \"This cannot be undone\", \"Yes, delete notification\" and \"No, return to dashboard\"; fe-cancel-amend.html carries \"Cancel this amendment?\", the discard sentence word for word, \"Yes, cancel amendment\" and \"No, return to notification\". The one claim not visible in a capture — that the frontend's dashboard offers Amend on a submitted notification — is in dashboard/copy/copy.en.js:51 and wired at dashboard/controller.js:110-132; the captured dashboards happen to hold drafts only. The band is a judgement call rather than an error — see correction. Otherwise CORRECT.",
+    "correction": "The finding stands on every fact. Recording one judgement so a later reader does not have to re-derive it: the contract calls a frontend-only feature a one-sided observation rather than a defect and says to record it once in the owning slice, but it does not say which band carries a no-work observation. Of the three declared bands, frontend-work and needs-backend both assert work that this finding explicitly says is not needed, and disputed is the only one left. It is used here in the contract's first sense — the comparison cannot be made, because the requirements side is silent — and not in the forbidden sense of \"we do not want this\"; the finding names the artefact that would settle it, as a disputed finding must. HOW CHECKED: read the contract's band table and its one-sided-feature rule against the finding's difference slot."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:37-59",
+    "prototype": "app/routes.js:5607-5613"
+  },
+  "relatedTo": [
+    {
+      "id": "review--submitted-notification-still-offers-to-submit",
+      "relation": "travels-with",
+      "why": "The Delete button that opens one of these two pages sits at the top of the same read-only review page."
+    }
+  ]
+}

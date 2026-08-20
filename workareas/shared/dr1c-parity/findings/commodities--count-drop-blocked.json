@@ -1,0 +1,23 @@
+{
+  "slice": "commodities",
+  "title": "Frontend refuses to let a user lower the number of animals below the identification records already entered for that species; Design release 1 accepts the lower number and shows only that many records.",
+  "domain": "commodities",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-consignment-details-count-drop-error", "dr1-consignment-details"],
+  "controls": ["numberOfAnimalsQuantity-0"],
+  "finding": {
+    "frontend": "A user who has entered identification details for two Bos taurus and then comes back and changes the count to 1 is held on the page. The error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link sends the user to the identification card for that line rather than to the box they just typed in. Nothing is saved until they either put the number back up or go and delete records by hand (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33).",
+    "prototype": "The same change is accepted. The count is checked only for presence and for being a whole number of at least one (app/routes.js:817-848); there is no comparison against what has already been entered, and no message of that kind exists anywhere in Design release 1. The identification page then draws exactly as many animal slots as the new count asks for, so the surplus record simply stops being shown and stops counting towards completeness.",
+    "difference": "Stop refusing the submission. Follow Design release 1: accept the lower count and let the identification page show that many records. What the frontend does with the surplus record has to be decided as part of the work — Design release 1 leaves it in the session and stops rendering it, so it neither warns nor deletes — and whichever way that goes, the user is no longer stopped at the consignment-details page. Removing the rule takes the message out of the commodities copy file with it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39) and the Welsh file beside it. Nothing has to land first.",
+    "falsifiedBy": "Design release 1 refusing a reduced count, or warning about surplus identification records. Its consignment-details handler runs four validators — animals, packages, net weight and package type — and none of them reads the saved identifiers; a fifth check, or any message naming identifier records, would prove this wrong.",
+    "verification": "Read the captured refusal (capture/html/frontend/fe-consignment-details-count-drop-error.html), where the summary link at :124 and the field message at :193-194 both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\" and the summary href points at .../commodities/identification#identification-card-0 rather than at the box — exactly as claimed. Opened the 2x shot of that screen. Read the rule at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:12-34. Ran the falsifier twice: the requirements-side handler at app/routes.js:9402-9414 assembles exactly the four validators named, none of which reads savedIdentifiers, and grepping \"identifier record\" across the whole of app/ on that side returns nothing. CORRECT.",
+    "correction": "The claim stands and the falsifier does not fire. One citation was three lines out and has been fixed: the countDrop message lives at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39, while :41-42 is the closing brace of the consignmentDetails block and the opening of the identification block — a range that would have sent whoever removes the rule to the wrong copy. The frontend-side range in the evidence path (count-drop.js:13-33) is right about the content; the exported function actually spans :12-34."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33",
+    "prototype": "app/routes.js:9402-9414"
+  },
+  "relatedTo": []
+}

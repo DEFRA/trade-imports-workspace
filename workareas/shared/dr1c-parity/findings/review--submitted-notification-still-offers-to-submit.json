@@ -1,0 +1,34 @@
+{
+  "slice": "review",
+  "title": "The read-only view of an already-submitted notification still ends with \"Now submit your notification\" and a Continue button; Design release 1 renders no form once a notification is submitted",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers-submitted",
+    "dr1-review-notification"
+  ],
+  "controls": [
+    "Now submit your notification"
+  ],
+  "finding": {
+    "frontend": "When a notification has been submitted, the review page is redrawn read-only: the status tag turns green and reads \"Submitted\", every Change link is removed, and \"Copy as new\" and \"Delete\" buttons appear at the top. But the foot of the page is unchanged. It still carries the heading \"Now submit your notification\", the sentence \"Continue to the declaration to submit your notification.\" and a green Continue button (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114, which is outside every read-only branch on the page). So a page that has just told the trader the notification is submitted, and that has removed every other way of changing it, invites them to submit it again.",
+    "prototype": "Design release 1 wraps the whole form in a read-only test and renders nothing at the foot of the page for a submitted notification (app/views/review-notification.html:180-186). The read-only review ends with the last card. This half is read from the view rather than from a picture: Design release 1 captured no submitted review, so the prototype screen in this pair is its draft review. The state that would show it is a Design release 1 review page reached with a `submitted` query parameter, which is the only way that side renders read-only (app/routes.js:10026-10037).",
+    "difference": "Suppress the submit block — heading, sentence and Continue button — when the review is read-only. The template already receives a `readOnly` flag and uses it for the Change links and the Copy and Delete buttons, so this is one condition around the closing block in src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114.",
+    "falsifiedBy": "Finding no Continue button on fe-check-answers-submitted. The captured DOM carries the heading \"Now submit your notification\" and a submitting form with a Continue button, on a page whose status strip reads \"Submitted\".",
+    "verification": "Ran the falsifier and then looked, because this is the kind of claim a whole-page shot can flatter. capture/html/frontend/fe-check-answers-submitted.html carries \"Submitted\", \"Copy as new\", \"Delete\", \"Now submit your notification\" and a Continue button; evidence/frontend@76a864ba/page/fe-check-answers-submitted.png shows all of it on one page, with every row's Change link gone. Read the template the finding names and the range is exact: check-answers/template.njk:108-114 is the heading, the sentence and the posting form, and it sits after the last {% endfor %} outside every readOnly branch on the page. On the requirements side app/views/review-notification.html:180-186 guards the whole form with {% if not readOnly %}, and app/routes.js:10024-10037 is the only path that sets readOnly, reached with a `submitted` query parameter — so the finding's honesty about having no picture for that half is warranted. One citation range was widened by a line — see correction. Otherwise CORRECT.",
+    "correction": "CLAIMED: the read-only test at app/views/review-notification.html:181-186. TRUE: the test itself is at :180 — {% if not readOnly %} — and :181-186 is the form it guards, so the cited range showed the form without the condition the sentence is about. HOW CHECKED: read app/views/review-notification.html:140-190. Widened to :180-186; the substance is unaffected."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114",
+    "prototype": "app/views/review-notification.html:181-186"
+  },
+  "relatedTo": [
+    {
+      "id": "review--incomplete-notification-not-flagged-on-check-answers",
+      "relation": "travels-with",
+      "why": "Both change when the submit block at the foot of the review page is shown and what it does."
+    }
+  ]
+}

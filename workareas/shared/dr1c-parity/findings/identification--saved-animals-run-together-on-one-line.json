@@ -1,0 +1,33 @@
+{
+  "slice": "identification",
+  "title": "Frontend reads a saved animal back as one run-together line labelled \"Animal 1\"; Design release 1 reads it back in a table with a column per identifier and the species in the row label",
+  "domain": "identification",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-animal-identification-saved",
+    "fe-animal-identification-at-maximum",
+    "dr1-animal-identification-details-saved"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "Once an animal is saved it becomes one row of a summary list above the entry form: a key reading \"Animal 1\" and a value reading \"Ear tag: UK123456789012\" — every filled identifier joined into a single sentence with its own label repeated inside it, or the words \"No identifier provided\" if none were (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js:9-18, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:12-24). There is no header row, so nothing tells a trader which identifiers this commodity expects; a cattle animal saved on an ear tag alone and one saved on both reads as two lines of different lengths and nothing marks which is which. The row is labelled by position rather than by animal — \"Animal 1\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:87) — so on a page holding four commodity lines the same three words head the first row of every one of them.",
+    "prototype": "Design release 1 reads the same information back as a table underneath the entry form: a header row of \"Animal\" and then one column per identifier the commodity declares — for cattle, \"Ear tag\" and \"Passport\" — then a row per saved animal whose key is the species and its number, \"Bos taurus 1\", with each identifier in its own cell and a Remove at the end (app/views/partials/animal-identification-saved-animals.html:1-28). Because the columns come from the commodity's own identifier list, a trader can see at a glance which identifiers are expected and which cells are still empty, and the row label says which animal of which species it is.",
+    "difference": "Replace the summary list of saved animals with a table: a header row naming each identifier the commodity declares, one row per saved animal keyed by species and number, one cell per identifier, and the existing Remove in the last cell. The identifier labels are already in the copy file the header row needs (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:48-55) and the card view model already knows which identifiers apply to the line, so this is a template and view-model change with no new data. Land it after identification--identifier-labels, which fixes the labels the header row would use, and note that whichever way identification--identifier-completeness is settled changes what an empty cell means rather than whether the table is right.",
+    "falsifiedBy": "A header row, or one cell per identifier, in Frontend's list of saved animals. The captured DOM of fe-animal-identification-saved renders the saved animal as a govuk-summary-list with a single dt reading \"Animal 1\" and a single dd reading \"Ear tag: UK123456789012\", and fe-animal-identification-at-maximum renders two such rows with no header above them.",
+    "verification": "Written and checked during verification of this slice, by a different agent than authored the slice's other findings. Ran the falsifier against both saved-state DOMs: capture/html/frontend/fe-animal-identification-saved.html:134-135 and capture/html/frontend/fe-animal-identification-at-maximum.html:134-142 hold summary-list rows with no header row and one concatenated value each, and capture/html/prototype/dr1-animal-identification-details-saved.html:365-390 holds a header row of Animal, Ear tag and Passport above a \"Bos taurus 1\" row with the two values in separate cells. Opened both saved-state page shots and confirmed the difference is visible rather than only structural, including that Design release 1 puts its table below the entry form and Frontend puts its list above. Read the frontend summary builder and the Design release 1 partial whole, and checked the partial is included from a root view at app/views/animal-identification-details.html:101-103 and :130-132.",
+    "correction": "Added by the verifier. The slice's findings on this screen covered its heading, its missing commodity summary, its field labels, a missing identifier and the completeness rule, and none of them covered how an entered animal is read back — which is the half of the screen a trader sees after the first save. Raised as one finding rather than split between the row label and the table shape, because it is one template change."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:12-24",
+    "prototype": "app/views/partials/animal-identification-saved-animals.html:1-28"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--identifier-labels",
+      "relation": "travels-with",
+      "why": "The table's column headings are the identifier labels, so the labels want fixing in the same pass."
+    }
+  ]
+}

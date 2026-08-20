@@ -1,0 +1,38 @@
+{
+  "slice": "hub",
+  "title": "Halfway through a new notification the frontend sends the user back to the hub and makes them start each remaining section from it, where Design release 1 carries straight on and runs the whole notification through in one sequence",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-additional-details",
+    "fe-hub",
+    "dr1-additional-animal-details",
+    "dr1-notification-hub"
+  ],
+  "controls": ["Save and continue"],
+  "finding": {
+    "frontend": "A new notification is walked through seven questions and then dropped on the hub. The sequence is origin, what are you importing, consignment details, main reason for importing, purpose in the internal market, animal identification and additional animal details (src/server/app/sets/live-animals/journeys/linear/flow/run.js:22-39); pressing \"Save and continue\" on the last of them does not go to the arrival details, it goes to the hub, because the sequence has run out and the fall-through returns the hub path (src/server/app/sets/live-animals/journeys/linear/flow/run.js:41-53). From there the pattern repeats for the rest of the notification: every later section is entered from a task row and ends by returning to the hub, because the within-section next target also falls through to the hub when a section has no further page (src/server/app/flow/navigation.js:27-37). The four sections still to answer at that point — documents, addresses, transport and the consignment contact (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:59-80) — are therefore four separate departures from the task list and four returns to it.",
+    "prototype": "Design release 1 has one sequence and runs it end to end. Its steps are origin, what are you importing, reason for import, consignment details, animal identification where it applies, additional details, arrival details, transit countries where they apply, transporter, upload documents, roles and addresses, contact address, review and declaration (app/routes.js:1256-1285), and saving a page moves to the next step in that list (app/routes.js:1287-1305). Pressing \"Save and continue\" on the additional animal details takes the user to the arrival details (app/routes.js:9533). The hub is somewhere a user chooses to go — by pressing the secondary \"Save and return to overview\", or by opening the notification from the dashboard — not somewhere the journey puts them, so a user who follows the primary button reaches the declaration without seeing it.",
+    "difference": "Carry the sequence on past the additional animal details instead of ending it there, so \"Save and continue\" moves to the next question in the notification and the user reaches the review page in one pass. That means the opening run at src/server/app/sets/live-animals/journeys/linear/flow/run.js:22-39 stops being an opening run and becomes the whole journey, in Design release 1's order — arrival details, transit countries where they apply, transporter, upload documents, roles and addresses, contact address, then review — and the fall-through to the hub at :41-53 and at src/server/app/flow/navigation.js:36 applies only at the end of the journey rather than at the end of every section. The hub stays reachable throughout: both sides already put a secondary \"Save and return to overview\" button on each page, so nothing has to be added to get back to it. This is not the same change as unlocking the hub's rows (hub--task-rows-locked-until-earlier-work-is-done): that one decides what a user can start from the task list, this one decides whether they are sent to the task list at all.",
+    "falsifiedBy": "Saving the frontend's additional-animal-details page and landing on a journey page rather than on the hub. This run's own frontend capture asserts the opposite — after the additional-details page is saved it asserts the URL is the bare journey path, which is the hub — so finding a redirect to /arrival-details or any other page there would prove this wrong.",
+    "verification": "Written and checked by the verifier, not by the slice's author, so a reader should know it had no independent second pair of eyes. Read the rendered DOMs of fe-additional-details.html, fe-hub.html, dr1-additional-animal-details.html and dr1-notification-hub.html and opened the two hub screenshots. Confirmed both sides carry the same three-control pattern at the foot of the page, so the difference is where the primary button goes and not which buttons exist: fe-additional-details.html:259-265 renders \"Save and continue\", \"Save and return to hub\" and \"Cancel and return to hub\", and dr1-additional-animal-details.html:598-608 renders \"Save and continue\" and \"Save and return to overview\". Read both sides' routing at the cited lines — run.js:22-53 ends the frontend sequence at additionalDetails and returns hubPath, navigation.js:27-37 returns hubPath at the end of a section, and app/routes.js:1256-1305 and :9533 carry Design release 1 on to /arrival-details. Ran the falsifier against this run's frontend capture, which asserts the post-save URL is the bare journey path with the comment that the opening run ends at the hub. Banded medium rather than high because the redirect is not something a screenshot can show. Checked it is not already raised elsewhere: no other finding in this corpus mentions the run or the return to the hub, and service-wide--save-and-cancel-buttons-name-the-hub covers only the wording of the secondary controls. The slice this belongs to is arguable — the hub is the screen the finding is about, but the change lands in the journey's page order — so the parent may want to move it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/run.js:41-53",
+    "prototype": "app/routes.js:1256-1285"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-rows-locked-until-earlier-work-is-done",
+      "relation": "travels-with",
+      "why": "Both decide how much of the notification a user meets through the task list; unlocking the rows matters most if the journey keeps sending them there."
+    },
+    {
+      "id": "hub--no-review-and-submit-button",
+      "relation": "travels-with",
+      "why": "Design release 1's sequence ends at the review page, which is the same page its hub button opens; the frontend has no route to it from either direction."
+    }
+  ]
+}

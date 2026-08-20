@@ -1,0 +1,33 @@
+{
+  "slice": "service-wide",
+  "title": "Frontend shows no phase banner; Design release 1 carries an Alpha banner with a feedback link on every page",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard",
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [{ "kind": "label", "text": "give your feedback by email" }],
+  "finding": {
+    "frontend": "No page in the service carries a phase banner. The shared layout builds the GOV.UK header, the service navigation, the signed-in bar and the breadcrumbs, and goes straight into the page content with nothing between (src/server/app/shared/layout.njk:19-53). There is no govukPhaseBanner import and no phase-banner markup anywhere in src/server, and none of the 67 captured frontend screens renders one. So a user is never told the service is in Alpha and is never offered a way to give feedback.",
+    "prototype": "Every one of the 60 captured Design release 1 screens opens with a phase banner directly under the service navigation: a grey \"Alpha\" tag followed by \"This is a new service. Help us improve it and give your feedback by email.\", with \"give your feedback by email\" as a link (app/views/dashboard.html:15-20). Each view declares it in its own beforeContent block rather than in the layout, so the banner is repeated per view but is present on all of them.",
+    "difference": "Render a govukPhaseBanner in the shared layout's beforeContent block, above the breadcrumbs and back link, so it appears on every page including the dashboard: tag text \"Alpha\", body \"This is a new service. Help us improve it and give your feedback by email.\" with the last five words as a link. The banner text belongs in src/server/app/shared/copy.en.js beside the existing layout copy at :10-21. Design release 1 points the feedback link at a placeholder, so this service needs a real destination — a feedback form or a mailto address — decided before the work lands; the banner itself does not depend on it.",
+    "falsifiedBy": "Finding phase-banner markup in the captured DOM of any frontend screen, or a Design release 1 root view whose beforeContent block omits the banner.",
+    "verification": "Ran the falsifier both ways over the captured DOM: govuk-phase-banner matches 0 of the 67 frontend files and 60 of the 60 prototype files. Grepped the frontend source for PhaseBanner and phase-banner across src/ — no hit anywhere. Read app/views/dashboard.html:15-20 (the govukPhaseBanner call, Alpha tag and the feedback link) and src/server/app/shared/layout.njk:19-53 (govukHeader, service navigation, containerStart, beforeContent — nothing between the navigation and the breadcrumbs). Opened evidence/frontend@76a864ba/page/fe-dashboard-populated.png and evidence/prototype@491b3926/page/dr1-dashboard.png: the Alpha strip sits under the navigation on Design release 1 and there is nothing in that position on Frontend. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:19-53",
+    "prototype": "app/views/dashboard.html:15-20"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--service-navigation-has-no-items",
+      "relation": "travels-with",
+      "why": "Both are chrome that sits between the GOV.UK header and the page content, and both land in the same shared layout."
+    }
+  ]
+}

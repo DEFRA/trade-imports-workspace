@@ -1,0 +1,29 @@
+{
+  "slice": "transport",
+  "title": "Frontend's transporter page is headed \"Search for an approved commercial transporter\" but offers nothing to search with; Design release 1 gives a search box that filters the list as the user types",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-commercial", "dr1-transporter", "dr1-transporter-results"],
+  "controls": ["search"],
+  "finding": {
+    "frontend": "The page heading is the sentence \"Search for an approved commercial transporter\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:90) and the page contains no search field, no search button and no filter of any kind. Between the heading and the buttons there is a one-line hint, \"Selecting a transporter copies their name, address and approval number into this notification.\", and then a radio group listing every transporter (src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23). A user is told to search and given nothing to search with. Today that is merely odd, because the list is two rows long; it stops working entirely at any realistic list length.",
+    "prototype": "Above the table sits a field labelled \"Search\", hinted \"Name, address or approval number\", with a magnifier button beside it (app/views/transporter.html:75-96). Typing in it filters the table in place: in the searched capture every row is hidden except the one that matches, so the user sees only their transporter and the columns stay as they are.",
+    "difference": "Add a search field above the transporter list, labelled \"Search\", hinted \"Name, address or approval number\", with a search button, and filter the rows on name, address and approval number. Either the heading changes to match a list-only page or the page gains the search its heading already promises, and Design release 1 settles that: the search is what has to be built. This travels with the flow change that puts the list first, because the searchable list is the section's entry point there rather than one branch of it.",
+    "falsifiedBy": "Finding a search input, a filter control or a paginated query on the frontend's transporter page in the captured rendered DOM of fe-transporter-commercial.",
+    "verification": "Read all three captured DOMs and the fe-transporter-commercial and dr1-transporter screenshots. Ran the falsifier against capture/html/frontend/fe-transporter-commercial.html: no input of type search, no input named search, no filter control, no pagination — the page is the h1, one hint, two radios and the button group, and the screenshot shows the same. capture/html/prototype/dr1-transporter.html carries <label for=\"transporter-search\">Search</label>, the hint \"Name, address or approval number\", the input name=\"search\" and a magnifier button, and the citation app/views/transporter.html:75-96 lands on exactly that block. Ran the filtering claim against capture/html/prototype/dr1-transporter-results.html: seven of the eight rows carry hidden=\"\" and only the Aberdeen Livestock Ltd row is left visible, with the column headers unchanged — so the table filters in place as claimed. name=\"search\" is unique on the Design release 1 page, so that side crops; the frontend card falls back to the whole page, which is correct for an absence.",
+    "correction": "The claim stands. One sentence was overstated and has been narrowed: it said that between the heading and the buttons there is only a radio group. The captured DOM shows a hint as well — \"Selecting a transporter copies their name, address and approval number into this notification.\" — sitting between the heading and the radios, so the sentence now names it. Nothing else changes: the point of the finding is that no search control exists, and none does."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23",
+    "prototype": "app/views/transporter.html:75-96"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-type-asked-before-any-list",
+      "relation": "travels-with",
+      "why": "Both change the same transporter list page."
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "slice": "transport",
+  "title": "Frontend runs the private transporter's phone and email straight on after the address; Design release 1 sets them apart under a heading, \"Enter contact details\", and asks for the email first",
+  "domain": "transport",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private"],
+  "controls": ["emailAddress", "transporterPrivateEmail"],
+  "finding": {
+    "frontend": "The form is nine fields in one unbroken run: name, two address lines, town or city, county, postal or zip code, country, telephone number, email address. Nothing marks where the address stops and the contact details start, and the two contact fields come in the order telephone then email (src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-90).",
+    "prototype": "The same nine questions are split in two. The address block ends at the country field, and a sub-heading, \"Enter contact details\", introduces the last two: Email address, then Phone number (app/views/partials/transporter-add-private-fields.html:85-103). Design release 1 does the same on its commercial transporter form, so the split is how it presents a transporter's contact details generally.",
+    "difference": "Break the private transporter form after the country field with a second-level heading reading \"Enter contact details\", and swap the order of the two fields under it so that email address comes before the phone number. The fields themselves and their validation are unchanged. Two of the nine labels also differ and are raised separately: the phone one and the postcode one.",
+    "falsifiedBy": "Finding a heading between the country field and the contact fields on fe-transporter-private in the captured rendered DOM.",
+    "verification": "Read both captured DOMs and both screenshots. capture/html/frontend/fe-transporter-private.html runs nine govuk-form-group blocks with no heading between any of them, ending country, telephoneNumber, emailAddress in that order; capture/html/prototype/dr1-transporter-add-private.html closes the address block at the country select and then renders <h2 class=\"app-transporter-add-private-fields__section-heading\">Enter contact details</h2> followed by Email address and then Phone number. Ran the falsifier: no h2 and no heading of any level sits inside the frontend's form. Confirmed the same split on Design release 1's commercial form. The prototype citation app/views/partials/transporter-add-private-fields.html:85-103 lands on the heading and the two inputs it introduces. Both named controls are unique on their own pages, so both crop.",
+    "correction": "The claim stands and the slots describing the two sides are accurate. One clause in the difference slot was wrong and has been fixed: it said the nine labels match apart from the phone one. Comparing the two captured DOMs label by label, a second label also differs — the frontend says \"Postal or zip code\" where Design release 1 says \"Postcode or Zip code\" — so the clause now names both, and the postcode label is raised on its own as transport--private-transporter-postcode-label. The other seven labels do match word for word."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-90",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:85-103"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-phone-has-no-guidance",
+      "relation": "travels-with",
+      "why": "Both change the contact block at the foot of the same form."
+    }
+  ]
+}

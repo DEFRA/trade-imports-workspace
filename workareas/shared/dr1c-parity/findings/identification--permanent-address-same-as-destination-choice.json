@@ -1,0 +1,25 @@
+{
+  "slice": "identification",
+  "title": "Frontend makes a trader type the animals' permanent address in full; Design release 1 lets them reuse the place of destination address instead",
+  "domain": "addresses",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-permanent-address-animals", "dr1-permanent-address-animals-new-address-revealed"],
+  "controls": [
+    { "kind": "label", "text": "Same as the place of destination (POD)" },
+    "nameOrOrganisationName-2"
+  ],
+  "finding": {
+    "frontend": "On the animal identification page, any animal whose commodity requires a permanent address gets a bare \"Permanent address\" heading followed by nine empty fields, all of them visible at once. There is no choice to make and nothing to reuse: the trader retypes the name, address, postcode, country, telephone and email for every such animal, even when the animals are going to live at the place of destination they have already given elsewhere in the notification. The block is rendered whenever the commodity requires an address, with nothing gating the fields inside it, at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43-69, and the nine fields it loops over are fixed at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:126-163.",
+    "prototype": "Design release 1 asks \"Where will their permanent address be?\" and offers each animal a two-option radio, \"Select an address\": \"Same as the place of destination (POD)\", or \"Enter a new address\", which opens the address fields as a conditional reveal and is hinted \"This is where they will stay after spending 48 hours at the place of destination.\" Picking the first answers the question in one click, and once a place of destination has been given it is printed as a hint under that option so the trader can see the address they are agreeing to. The two options are built at app/routes.js:2479-2500.",
+    "difference": "Add a two-option radio above the permanent address fields on the animal identification card — reuse the place of destination address, or enter a new one — and hide the address fields behind the second option. The frontend already collects a place of destination as one of its five consignment parties (src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:51-55), so the address to copy is in the notification already and nothing outside the frontend has to change. Show the chosen destination address as the hint on the first option, as Design release 1 does, so the trader is not agreeing to an address they cannot see.",
+    "falsifiedBy": "A radio, checkbox or \"same as\" link anywhere in the frontend's permanent address block that copies an address the trader has already given. The captured DOM of fe-animal-identification contains no input of type radio or checkbox at all.",
+    "verification": "Ran the falsifier: grep for radio and for checkbox over capture/html/frontend/fe-animal-identification.html returns zero lines for each, so the page carries neither. Read both Design release 1 permanent-address DOMs and opened both page shots plus the frontend one. Read the identification card template whole and the radio builder at app/routes.js:2479-2511. Two claims did not survive as written and are corrected below; the finding itself stands.",
+    "correction": "The finding stands — Design release 1 offers the reuse and Frontend does not — but two statements in it were wrong and both are fixed. (1) The frontend slot said the address block is \"rendered unconditionally\". It is not: src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43 wraps it in an if on card.showAddress, which is why the block appears on the dog card and on no other card in the capture. The sentence now says the fields are ungated inside the block, which is the true version and the one the finding needs. (2) The prototype slot said the \"Same as the place of destination (POD)\" option is hinted with the destination address. That hint is conditional: app/routes.js:2488-2492 attaches it only when the session already holds a place-of-destination address, and neither captured state has one, so the hint appears in neither picture — the option renders bare in both. The slot now says so. What is unconditional, and what the finding had left out, is the hint on the second option, \"This is where they will stay after spending 48 hours at the place of destination.\" (app/routes.js:2496-2500), which Frontend does not carry anywhere; it has been added to the slot because it is copy this increment introduces."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:43-69",
+    "prototype": "app/views/permanent-address-animals.html:82-94"
+  }
+}

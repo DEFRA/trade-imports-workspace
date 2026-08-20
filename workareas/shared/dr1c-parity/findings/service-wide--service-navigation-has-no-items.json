@@ -1,0 +1,33 @@
+{
+  "slice": "service-wide",
+  "title": "Frontend's service navigation carries no items; Design release 1 offers Dashboard, Address book, Manage account and Log out on every page",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard",
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [{ "kind": "label", "text": "Manage account" }],
+  "finding": {
+    "frontend": "The service navigation bar holds the service name and nothing else — src/server/app/shared/layout.njk:27-32 calls govukServiceNavigation with serviceName and serviceUrl and passes no navigation array, so the bar renders as a single link reading \"Import notification service\". Below it a separate right-aligned strip shows the signed-in user's email address and a \"Sign out\" link (src/server/common/components/service-header/template.njk:9-29). \"Manage account\" and \"Address book\" appear nowhere in the service: neither string occurs in any of the 67 captured frontend screens. So from any page there is no way to reach the dashboard, the address book or an account page other than by using the browser or the service-name link.",
+    "prototype": "Every Design release 1 page carries a four-item service navigation to the right of the service name: Dashboard, Address book, Manage account and Log out (app/views/layouts/main.html:104-127). The item matching the current page is marked active and rendered with aria-current, so on the dashboard \"Dashboard\" is underlined. There is no separate signed-in strip and the user's identity is not shown; sign-out lives in the navigation as \"Log out\".",
+    "difference": "Pass a navigation array to govukServiceNavigation in src/server/app/shared/layout.njk:27-32 with the four items, and set the active item per page so the current section is marked. Move sign-out out of the bespoke strip at src/server/common/components/service-header/template.njk:9-29 and into the navigation as \"Log out\", which leaves that strip carrying the user's email alone — decide whether it stays at all, since Design release 1 shows no signed-in identity. Two of the four items need a destination this service does not yet have: \"Address book\" points at the address-book UI being built in trade-imports-ins-frontend, and \"Manage account\" has no owner named anywhere. Add the items with real hrefs where they exist and agreed placeholders where they do not — Design release 1 itself points both at a placeholder. Whether the address book belongs to this service is a separate question, recorded under address-book--saved-address-book-pages-absent.",
+    "falsifiedBy": "Finding a navigation item — any of Dashboard, Address book, Manage account or Log out — in the govuk-service-navigation list of any captured frontend screen.",
+    "verification": "Ran the falsifier: \"Manage account\" and \"Address book\" match 0 of the 67 captured frontend files. Read the rendered service-navigation markup on both sides — fe-dashboard.html has govuk-service-navigation__service-name and its link and no __list at all, dr1-dashboard.html has a __list with four __item entries, the first carrying __item--active and aria-current=\"true\" around a __active-fallback reading Dashboard, then hrefs /address-book, # and #. Read app/views/layouts/main.html:60-127 to confirm 104-127 is the non-DR2 branch (the isDesignRelease2Version branch above it carries five items including Templates), and src/server/app/shared/layout.njk:27-32 to confirm no navigation array is passed. Read src/server/common/components/service-header/template.njk:9-29 — user icon, displayName, separator, \"Sign out\"; \"Sign out\" is the only such string on fe-dashboard.html. Opened both dashboard screenshots. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:27-32",
+    "prototype": "app/views/layouts/main.html:104-127"
+  },
+  "relatedTo": [
+    {
+      "id": "address-book--saved-address-book-pages-absent",
+      "relation": "travels-with",
+      "why": "The Address book navigation item is the way into those pages, so where they live settles where the item points."
+    }
+  ]
+}

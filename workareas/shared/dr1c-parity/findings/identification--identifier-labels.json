@@ -1,0 +1,27 @@
+{
+  "slice": "identification",
+  "title": "Frontend labels the animal identifier fields \"Passport number\" and \"Ear tag number\"; Design release 1 labels them \"Passport\" and \"Ear tag\"",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [
+    "animalIdentifierPassport-0",
+    "animalIdentifierEarTag-0",
+    "identifiers[cattle-bos-taurus][passport]",
+    "identifiers[cattle-bos-taurus][ear-tag]"
+  ],
+  "finding": {
+    "frontend": "Two of the identifier fields carry a longer label than the signed-off design uses: \"Passport number\" and \"Ear tag number\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-72). Frontend's own summary of a saved animal already uses the short forms — the label list it renders identifiers under is \"Passport\", \"Tattoo\", \"Ear tag\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:48-55) — so a trader is shown one name while entering a value and a different name after saving it. \"Tattoo\" and \"Horse name\" match the design as they are. Each field also carries a worked example as a hint, \"For example, UK123456789\" and \"For example, UK123456789012\", which Design release 1 states nowhere.",
+    "prototype": "Design release 1 labels its identifiers with the bare name of the thing: Ear tag, Passport, Tattoo, Microchip, Horse name. The labels are declared once per commodity code and used both on the entry form and as the column headings of the saved-animals table (app/data/commodity-identifiers.js:3-31), which is why the label a trader types under and the label they read back are the same word.",
+    "difference": "Change the two labels to \"Passport\" and \"Ear tag\" in src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-72, with the Welsh siblings to match. Doing so also makes Frontend's entry labels agree with the summary labels it already uses at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:48-55, which are correct today. The example hints are Frontend's own addition and Design release 1 neither states nor contradicts them; this finding does not ask for their removal.",
+    "falsifiedBy": "The labels \"Passport\" and \"Ear tag\" appearing on the entry fields of Frontend's identification page. The captured DOM of fe-animal-identification labels animalIdentifierPassport-0 \"Passport number\" and animalIdentifierEarTag-0 \"Ear tag number\".",
+    "verification": "Ran the falsifier against both rendered DOMs. capture/html/frontend/fe-animal-identification.html:137, :147 and :157 label the three cattle fields \"Passport number\", \"Tattoo\" and \"Ear tag number\"; capture/html/prototype/dr1-animal-identification-details.html:326 and :344 label the two cattle fields \"Ear tag\" and \"Passport\". Opened both page shots to check the labels as rendered rather than as markup. Checked the frontend summary labels at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:48-55 do read Passport, Tattoo, Ear tag, and that the entry labels at :58-72 read Passport number, Tattoo, Ear tag number, Horse name. Read app/data/commodity-identifiers.js whole. CORRECT.",
+    "correction": "The claim stands in both directions and the falsifier does not fire. Two records. (1) The controls list named only the two frontend inputs, so the Design release 1 half of the card would have fallen back to the whole-page shot on a finding whose whole point is a side-by-side label comparison. The two Design release 1 field names have been added, so both sides crop. (2) The prototype slot says Design release 1's labels are used as the saved-animals column headings, and that is right — app/routes.js:1808-1811 builds the table head from the same field labels. Worth flagging for whoever makes the change but deliberately not asked for here: Design release 1 renders its identifier labels at regular weight and Frontend renders them bold (govuk-label--s at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:35), so the two pages differ in emphasis as well as wording. That is the opposite direction to the emphasis difference on the additional details page and is left out of this copy finding."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-72",
+    "prototype": "app/data/commodity-identifiers.js:3-31"
+  }
+}

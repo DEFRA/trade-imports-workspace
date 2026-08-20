@@ -1,0 +1,33 @@
+{
+  "slice": "hub",
+  "title": "Every hub task row carries a sentence of hint text, where Design release 1 shows a hint on one row only and words that one differently",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Roles and addresses"],
+  "finding": {
+    "frontend": "Every one of the eleven task rows on the hub has a hint underneath it — \"Country of origin, region of origin code, your internal reference\" under the origin row, \"Who transports the animals to their destination\" under the transporter row, and so on for all eleven (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79). The hints roughly double the height of the page: the frontend's hub runs to eleven rows of two or three lines each. The hint on the roles-and-addresses row reads \"The consignor, consignee, importer and the places of origin and destination\".",
+    "prototype": "Design release 1 shows a hint on exactly one row. Nine of the ten rows it lists on a fresh notification are a bare link with a status tag beside it, and only \"Roles and addresses\" carries a sentence underneath: \"Consignor or Exporter, Consignee, Importer and Place of Destination\" (app/routes.js:5826). Its hub is correspondingly compact — a screen of one-line rows.",
+    "difference": "Remove the hint from ten of the eleven hub rows and reword the one that stays. The row that keeps a hint is roles-and-addresses, and its text becomes \"Consignor or Exporter, Consignee, Importer and Place of Destination\" — note that the design's list names four parties and the frontend's names five, adding the place of origin, so this is a change of content and not only of phrasing. The edit is the hint keys at src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79 and the hint slot the hub builds at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:119.",
+    "falsifiedBy": "Finding a second element with class app-notification-hub-tasklist__hint in the captured DOM of dr1-notification-hub. There is one, on the roles-and-addresses row; fe-hub has eleven elements with class govuk-task-list__hint.",
+    "verification": "Read both rendered DOMs and both screenshots. Ran the falsifier as a count: grep -c app-notification-hub-tasklist__hint on dr1-notification-hub.html returns 1 and grep -c govuk-task-list__hint on fe-hub.html returns 11, so the two counts in the prose are exact. Read the surviving hint in place — dr1-notification-hub.html renders it inside the roles-and-addresses item as \"Consignor or Exporter, Consignee, Importer and Place of Destination\", matching app/routes.js:5826 verbatim, and the view only emits a hint at all when the item carries one (app/views/notification-hub.html:65-67). Checked the four-versus-five party claim by reading both strings: Design release 1 names consignor or exporter, consignee, importer and place of destination; hub/copy/copy.en.js:65 names consignor, consignee, importer, place of origin and place of destination. Verified against the rendered DOM rather than the page model, which the run brief records as having dropped fieldset hints elsewhere in this corpus. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79",
+    "prototype": "app/routes.js:5820-5826"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--row-labels",
+      "relation": "travels-with",
+      "why": "Both are edits to the same rows in the same hub copy file."
+    }
+  ]
+}

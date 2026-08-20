@@ -1,0 +1,22 @@
+{
+  "slice": "import-reason",
+  "title": "Four of the eleven internal-market purpose hints read differently on Frontend than in Design release 1, including \"it's\" where it should be \"its\" and \"e.g.\" where Design release 1 writes \"for example\".",
+  "domain": "import-reason",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-import-purpose", "dr1-reason-for-import-internal-market-revealed"],
+  "controls": ["purposeInInternalMarket", "internalMarketPurpose"],
+  "finding": {
+    "frontend": "The eleven purpose options and their order match Design release 1 exactly, but four of the hints beneath them do not. The first one reads \"Any movement of an animal that has as it's aim, the sale of or the transfer of ownership of the animal ... with no sale involved (e.g. a gift)\" — a wrong possessive, a comma splitting \"aim\" from what follows, \"e.g.\" instead of words, and no closing full stop. Three more end without a full stop: \"... or produce offspring\", \"Animals to participate in competitive or training events\" and \"... any other animal product or by-product\". All four come from src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js:6, :10, :13 and :19. The other seven hints match word for word.",
+    "prototype": "Design release 1 writes the same four hints in plain, correct English and closes every one of them with a full stop: \"Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal ... with no sale involved (for example a gift).\", \"... or produce offspring.\", \"Animals to participate in competitive or training events.\" and \"... any other animal product or by-product.\" (app/data/internal-market-purposes.js:7, :17, :27, :42).",
+    "difference": "Replace those four hint strings in the frontend's import-purpose copy with Design release 1's wording: fix \"it's\" to \"its\", drop the comma after \"aim\", spell \"e.g.\" out as \"for example\", and add the missing full stop to all four. One file, four strings, nothing has to land first. Do the Welsh file in the same pass if the same drift is in it.",
+    "falsifiedBy": "Finding \"its aim\" or a closing full stop on the sale/gift hint in fe-import-purpose's captured DOM. It renders \"has as it's aim, the sale of\" and ends \"(e.g. a gift)\" with no stop.",
+    "verification": "Read capture/html/frontend/fe-import-purpose.html:118-230 and capture/html/prototype/dr1-reason-for-import-internal-market-revealed.html, and opened the dr1-reason-for-import-internal-market-revealed screenshot. Ran the falsifier against the rendered frontend DOM: the first hint reads \"has as it's aim, the sale of\" and ends \"(e.g. a gift)\" with no stop, and \"its aim\" appears nowhere. Compared all eleven labels and all eleven hints between the two DOMs one by one: the eleven labels and their order are identical, seven hints match character for character, and exactly the four named differ. Checked each citation at its line — copy.en.js:6, :10, :13 and :19 and internal-market-purposes.js:7, :17, :27 and :42 hold precisely the strings quoted, and the Design release 1 file is app/data, not a release subfolder. CORRECT, unchanged.",
+    "correction": "The claim stands as written and no slot changed. One addition: \"internalMarketPurpose\" was added to controls beside \"purposeInInternalMarket\", because that is the field's name on the Design release 1 side and the crop for dr1-reason-for-import-internal-market-revealed would otherwise fall back to a whole-page shot of a very tall page."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js:5-19",
+    "prototype": "app/data/internal-market-purposes.js:7"
+  }
+}

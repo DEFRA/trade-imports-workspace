@@ -1,0 +1,21 @@
+{
+  "slice": "import-reason",
+  "title": "Frontend heads the reason page with the question \"What is the main reason for importing the animals?\" and names it \"Reason for import\"; Design release 1 heads it \"Main reason for import\" and keeps the question as a hidden legend.",
+  "domain": "import-reason",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-import-reason", "dr1-reason-for-import"],
+  "controls": [],
+  "finding": {
+    "frontend": "The page's largest text is the question itself: the radio fieldset's legend is promoted to the page heading, so a user meets \"What is the main reason for importing the animals?\" set at the large heading size (src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:11-19, taking its text from copy.legend at src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:3). The page is named separately, and differently, as \"Reason for import\" — that is the copy.title at :2, and it is what the breadcrumb and the browser tab both show.",
+    "prototype": "The page is headed with its name, \"Main reason for import\", and the question is present for screen-reader users only, as a visually hidden fieldset legend above the radios (app/views/reason-for-import.html:42 for the heading, :51-54 for the hidden legend). The same name is used for the page throughout: pageName is set to \"Main reason for import\" at :3.",
+    "difference": "Rename the page to \"Main reason for import\" and use that one name in all three places Frontend currently uses two — the page heading, the page title and the breadcrumb. Keep the question \"What is the main reason for importing the animals?\" as the fieldset legend but stop promoting it to the page heading, so it stays available to a screen reader without being the largest thing on the page. This is one string in one copy file plus the isPageHeading flag in one template; nothing has to land first.",
+    "falsifiedBy": "Finding \"Main reason for import\" anywhere in fe-import-reason's captured DOM. It contains \"Reason for import\" in the breadcrumb and the title and \"What is the main reason for importing the animals?\" as the h1, and the phrase \"Main reason for import\" nowhere.",
+    "verification": "Read capture/html/frontend/fe-import-reason.html and capture/html/prototype/dr1-reason-for-import.html and opened both screenshots. Ran the falsifier: grep for \"Main reason for import\" in fe-import-reason.html returns nothing, while the frontend DOM carries \"Reason for import\" in <title> (:3) and in the breadcrumb (:98) and \"What is the main reason for importing the animals?\" inside an h1.govuk-fieldset__heading. Checked the four citations at their lines — import-reason/template.njk:11-19 is the govukRadios call with isPageHeading: true at :16 and text: copy.legend at :15; copy.en.js:2-3 holds the two strings. The Design release 1 citations are root views, not release subfolders: reason-for-import.html:42 is the h1 \"Main reason for import\", :51-54 is the legend with classes \"govuk-visually-hidden\", and :3 sets pageName. CORRECT, unchanged. The empty controls array is right — \"Main reason for import\" is a page heading, not a control, and naming it would fall back to the whole-page shot anyway."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:2-3",
+    "prototype": "app/views/reason-for-import.html:42"
+  }
+}

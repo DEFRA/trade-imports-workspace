@@ -1,0 +1,33 @@
+{
+  "slice": "review",
+  "title": "Check your answers puts a Change link on every row, so a finished notification offers twenty-four of them; Design release 1 puts one Change link in each card's heading and none on the rows",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "dr1-review-notification",
+    "dr1-review-notification-incomplete"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "Every row of every card carries its own Change link on the right-hand side. A finished notification shows twenty-four of them — twenty-two on rows, plus two in the heading of the Species card, which is the only card on the page with card-level actions. An unfinished notification shows eighteen, all on rows. Each link goes to the page that collects that one answer, with a `change=1` flag so the trader is returned to the review afterwards (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21, building the action at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:12-25). So the page repeats the same destination link once per row: five rows in the Arrival details card all lead to the arrival details page, five in Roles and addresses all lead to the roles and addresses page.",
+    "prototype": "Design release 1 puts one Change link in each card's heading bar, level with the card title, and no link on any row (app/views/partials/review-summary-card.html:23-28 renders the single title link from the card's own changeHref, and app/views/partials/review-summary-row.html:14-24 renders a row as a key and a value with no action at all). Both the finished and the unfinished review page carry exactly eleven Change links, one per card, each going to the page that collects that card's answers.",
+    "difference": "Move the Change link from the row to the card. Give each card in the check-answers view-model one action, pointing at the page that collects that card's answers, and stop attaching a change action to individual rows — that is `summary-row.js` dropping its call to `changeAction`, and each card builder gaining the card-level action the Species card already has. The visually hidden text moves with it, from naming the row to naming the card. Nothing has to land first, and the destinations do not change: every row in a card already resolves to the same page, so no route is lost. `controls` is deliberately empty for two reasons: the finding is the arrangement of the whole page rather than any one field, and \"Change\" lands twenty-four times on the frontend page, so naming it would get the crop refused and fall back to the whole-page shot anyway.",
+    "falsifiedBy": "Finding a Change link on a row of any card in the captured dr1-review-notification, or a card whose rows carry no Change link in the captured fe-check-answers. Design release 1's row macro has no action branch at all, and the frontend's row builder attaches one to every row it makes.",
+    "verification": "Written and verified by the verifier, not by the slice's author, so a reader should weigh it accordingly — but the counts are mechanical and both sides were read in the captured DOM before the claim was made. capture/html/frontend/fe-check-answers.html holds 24 occurrences of \">Change<\", of which 22 sit in a govuk-summary-list__actions container and 2 in the single govuk-summary-card__actions list; fe-check-answers-incomplete.html holds 18, all on rows. capture/html/prototype/dr1-review-notification.html and dr1-review-notification-incomplete.html each hold exactly 11 app-review-card__title-link anchors and no row-level action. Confirmed by eye in evidence/frontend@76a864ba/page/fe-check-answers.png, where a Change sits at the right of every row, against evidence/prototype@491b3926/page/dr1-review-notification.png, where one Change sits in each grey card heading. Read the four source files named above. Checked this is not a difference whose substance is the code: the number of links a trader meets on the page, and where they sit, is what changes. Checked it is not already carried by review--check-answers-section-structure, which is about section headings and card grouping and says nothing about the change links."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21",
+    "prototype": "app/views/partials/review-summary-card.html:23-28"
+  },
+  "relatedTo": [
+    {
+      "id": "review--check-answers-section-structure",
+      "relation": "travels-with",
+      "why": "Both are changes to how the review page's cards are drawn, and moving the change links is the same pass over the card builders as regrouping them into six sections."
+    }
+  ]
+}

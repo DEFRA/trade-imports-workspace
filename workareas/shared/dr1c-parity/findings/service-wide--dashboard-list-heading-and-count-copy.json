@@ -1,0 +1,37 @@
+{
+  "slice": "service-wide",
+  "title": "The dashboard heads its list \"Your notifications\" and counts \"Showing 1 Result\"; Design release 1 heads it \"My notifications\" and counts \"Show 1-4 of 4 results\"",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "fe-dashboard-search-no-results",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [
+    { "kind": "label", "text": "Your notifications" },
+    { "kind": "label", "text": "My notifications" }
+  ],
+  "finding": {
+    "frontend": "The notification list is headed \"Your notifications\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:8) and the count above it reads \"Showing 1 Result\", \"Showing 1 to 4 of 4 Results\" or \"No Results\" depending on how many there are, with Result capitalised mid-sentence (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:37-47). The same words are used for the breadcrumb back to this page, so \"Your notifications\" is the service's name for the dashboard.",
+    "prototype": "Design release 1 heads the list \"My notifications\" and always states a range: \"Show 1-4 of 4 results\", in sentence case (app/views/dashboard.html:80 and app/views/dashboard.html:236). It uses the first person where the frontend uses the second, and it gives the range even when everything fits on one page.",
+    "difference": "Rename the heading to \"My notifications\" and rewrite the count strings to the design's shape — \"Show {start}-{end} of {total} results\", lower-case, hyphenated range, stated even for a single page — in src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:8 and :37-47. There are five strings, not four: the four in the pagination block, and src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:13, which the controller swaps in for the empty case whenever the trader has searched, so an unmatched search reads \"No notifications found\" where an empty list reads \"No Results\". The count builder at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js already knows the start, end and total, so no new data is needed. The no-results string is a separate case: Design release 1 never photographed an empty list, so choose wording that follows the same voice rather than copying anything.",
+    "falsifiedBy": "Finding \"Your notifications\" as the list heading, or a capitalised \"Results\" in the count, on the captured dr1-dashboard screen.",
+    "verification": "Ran the falsifier: neither \"Your notifications\" nor \"Results\" occurs anywhere in dr1-dashboard.html. Read the rendered counts out of the frontend captures rather than trusting the copy file — fe-dashboard-populated shows \"Showing 1 Result\", fe-dashboard-empty \"No Results\" and fe-dashboard-search-no-results \"No notifications found\". Read src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:8, :13 and :37-47, and app/views/dashboard.html:80 (the \"My notifications\" h2) and :236 (resultsText), tracing resultsText to buildDashboardResultsText at app/routes.js:6712, which returns `Show ${start}-${end} of ${total} results`. Opened both dashboard screenshots.",
+    "correction": "The finding stands and the two named strings are exact. The frontend slot lists three count shapes and the difference slot said \"the four count strings\"; there is a fifth the finding did not name. When the trader has typed a search that matches nothing, the controller substitutes copy.search.noResults for the empty-list string (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:77-83), so the same slot reads \"No notifications found\" after a search and \"No Results\" on a genuinely empty dashboard — visible on fe-dashboard-search-no-results and fe-dashboard-empty respectively. The difference slot now says five and names it, so the rewrite does not leave one string in the old voice."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:37-47",
+    "prototype": "app/views/dashboard.html:80"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--breadcrumbs-shown-alongside-back-link",
+      "relation": "travels-with",
+      "why": "\"Your notifications\" is also the frontend's breadcrumb label for this page, so renaming it and removing the breadcrumbs touch the same words."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "slice": "documents",
+  "title": "The frontend caps a notification at 10 documents and never says so until a trader hits the limit; Design release 1 allows 15 and states the limit up front",
+  "domain": "documents",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "fe-documents-populated", "dr1-upload-documents"],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "A notification may hold at most ten documents. The cap is an obligation on the documents group (src/server/app/sets/live-animals/obligations/sections/documents.js:24-27) and the page reads it from there (src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/max-documents.js:3). Nothing on the page says so. The captured DOM of fe-documents and fe-documents-populated states only two requirements — a size and a list of file types — and the number ten appears nowhere on either page. A trader learns the limit only by reaching it, at which point the error summary says \"You can add a maximum of 10 documents\" (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73), after they have already chosen and tried to upload an eleventh file.",
+    "prototype": "The limit is 15 and it is one of the four requirements stated in the hint above the upload control: \"up to a maximum of 15 files\" (app/views/upload-documents.html:168). The same number backs the validation, which refuses a sixteenth with \"You can upload a maximum of 15 files\" (app/routes.js:9106-9109).",
+    "difference": "Two changes, both in the frontend and neither dependent on anything else. Raise the cap from 10 to 15 at src/server/app/sets/live-animals/obligations/sections/documents.js:25 — the page, the Add affordance and the error message all read that one value — and add \"up to a maximum of 15 files\" as a third bullet in the file-requirements hint at src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48 so a trader is told the limit before they choose a file rather than after. Update the file's own header comment, which describes the group as 0..10, and the error copy at src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73 already interpolates the number so it needs no edit.",
+    "falsifiedBy": "Finding the number 15, or any statement of a document count limit, in the file-requirements hint of the captured DOM of fe-documents. That hint has exactly two bullets and neither mentions a count.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents.html and fe-documents-populated.html: the hint has two bullets, \"smaller than 10 MB\" and \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\", and no count appears on either page. Checked the behavioural half rather than only the markup — grepped MAX_DOCUMENTS across the whole documents feature, and it reaches the template through nothing at all: its only non-test uses are form/errors.js:54 (the message) and controller.js:96 (the guard, which fires on submit and returns before the upload is attempted). The Add affordance is therefore not hidden at the cap, whatever the obligation file's header comment at obligations/sections/documents.js:12-14 says, so \"a trader learns the limit only by reaching it\" holds. Read obligations/sections/documents.js:24-27 (maxEntries 10) and app/routes.js:9025 (MAX_UPLOADED_DOCUMENTS = 15) with its check at :9105-9109. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/documents.js:24-27",
+    "prototype": "app/views/upload-documents.html:168"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--file-size-limit",
+      "relation": "travels-with",
+      "why": "Both are limits stated in the same file-requirements hint and both change the same bullet list."
+    }
+  ]
+}

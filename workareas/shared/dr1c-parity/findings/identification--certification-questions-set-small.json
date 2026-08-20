@@ -1,0 +1,31 @@
+{
+  "slice": "identification",
+  "title": "Frontend sets both questions on the additional details page one size smaller than Design release 1 does, so they do not read as questions",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-additional-details", "dr1-additional-animal-details"],
+  "controls": [
+    { "kind": "label", "text": "What are the animals certified for?" }
+  ],
+  "finding": {
+    "frontend": "The additional details page asks two questions — \"What are the animals certified for?\" and \"Does the consignment contain any unweaned animals?\" — and sets both fieldset legends at the small size, govuk-fieldset__legend--s (src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:18 and :32). At 19px they are barely larger than the hints and option labels beneath them, so the sixteen radios and the two radios run together as one list rather than reading as two separate questions.",
+    "prototype": "Design release 1 sets the same two legends at the medium size, govuk-fieldset__legend--m with the shared heading class app-eu-heading-m (app/views/additional-animal-details.html:50 and :72). The two questions stand out from their options, and the page reads as a heading followed by two questions rather than as one long form.",
+    "difference": "Raise both fieldset legends on the additional details page from the small size to the medium size. Two classes in one template, src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:18 and :32, and nothing has to land first. It is independent of the hint change on the same page and of the page rename, and all three are worth doing in the same pass.",
+    "falsifiedBy": "A medium legend or heading class on either question in fe-additional-details's captured DOM. Both legends render as govuk-fieldset__legend govuk-fieldset__legend--s, and the page carries no --m class anywhere.",
+    "verification": "Written and checked during verification of this slice, by a different agent than authored the slice's other findings. Ran the falsifier: the two legends in capture/html/frontend/fe-additional-details.html:124 and :234 are govuk-fieldset__legend--s and the file carries no --m class. capture/html/prototype/dr1-additional-animal-details.html:268 and :541 are govuk-fieldset__legend--m app-eu-heading-m. Opened both 2x page shots side by side and confirmed the difference is visible and not only in the markup: Design release 1's two questions are set noticeably larger than their options and Frontend's are not. Checked the cited requirements lines are in a root view.",
+    "correction": "Added by the verifier. This is the same class of difference the origin slice already raises for its own page in origin--question-label-emphasis, and it is present on the additional details page as well with no finding covering it, so it would have been dropped silently. Deliberately not extended to the identification page in the same finding: there the difference runs the other way — Frontend sets its identifier labels bold at govuk-label--s (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:35) where Design release 1 leaves them at regular weight — and that is a separate judgement, recorded in the correction on identification--identifier-labels rather than raised."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:18",
+    "prototype": "app/views/additional-animal-details.html:50"
+  },
+  "relatedTo": [
+    {
+      "id": "origin--question-label-emphasis",
+      "relation": "travels-with",
+      "why": "Same difference, different page; whoever raises one template's legend sizes should raise the other's in the same pass."
+    }
+  ]
+}

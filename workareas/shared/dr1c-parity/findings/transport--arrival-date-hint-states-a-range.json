@@ -1,0 +1,21 @@
+{
+  "slice": "transport",
+  "title": "Frontend's arrival date hint spells out the earliest and latest date the user may enter; Design release 1's hint gives a worked example of the date format instead",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": ["arrivalDateAtPort"],
+  "finding": {
+    "frontend": "Under \"Arrival date at port of entry\" the hint reads \"The expected date of arrival at the port of entry. Enter a date between {earliest} and {latest}.\" — the second sentence names both ends of the accepted window, computed from today (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:6-7, filled in at src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js:97-101). It shows the user the boundaries but never shows them what a date should look like.",
+    "prototype": "Under the same label the hint reads \"The expected date of arrival at the port of entry. For example, 27/3/2026\" (app/views/partials/arrival-date-picker.html:13). The second sentence is a worked example of the format, not a range, and it does not move.",
+    "difference": "Replace the second sentence of the arrival date hint with a worked example of the date format. The dates inside the two sentences are not what differs — both services derive the same seven-days-back, six-months-forward window from the clock, and both drive the date picker's bounds from it, so the window itself is unchanged. What differs is what the sentence is for: Design release 1 tells the user how to write a date, the frontend tells them which dates are allowed. Whether the range should still be stated anywhere is a copy decision that follows from adopting Design release 1's wording; the date picker already refuses out-of-range days and the frontend already has an out-of-range error message for the typed case (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:34-35).",
+    "falsifiedBy": "Finding a worked date example in the frontend's arrival date hint, or a stated earliest-and-latest range in Design release 1's.",
+    "verification": "Read both captured DOMs and both screenshots. capture/html/frontend/fe-arrival-details.html renders the hint \"The expected date of arrival at the port of entry. Enter a date between 13/8/2026 and 20/2/2027.\" on #arrivalDateAtPort-hint; capture/html/prototype/dr1-arrival-details.html renders \"The expected date of arrival at the port of entry. For example, 27/3/2026\" on #arrival-date-at-port-hint. Ran the falsifier both ways: no worked example anywhere in the frontend hint, no earliest-and-latest range anywhere in Design release 1's. Checked rubric 3 — the finding compares the shape of the sentence, not the dates in it, which is what the contract's volatile-values rule requires, and the frontend's picker bounds (data-min-date 13/8/2026, data-max-date 20/2/2027) match the hint's dates, so the window itself is not in dispute. Both named controls crop: name=\"arrivalDateAtPort\" is unique on each side. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:6-7",
+    "prototype": "app/views/partials/arrival-date-picker.html:13"
+  }
+}

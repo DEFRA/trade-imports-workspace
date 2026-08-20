@@ -1,0 +1,29 @@
+{
+  "slice": "origin",
+  "title": "Frontend lets a user answer Yes to the region of origin question and continue with the code box left empty; Design release 1 holds them on the page until they enter it.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-origin-region-code-revealed", "fe-origin-error", "dr1-origin-of-the-import-region-revealed"],
+  "controls": ["regionOfOriginCode", "regionOfOriginCodeSuffix"],
+  "finding": {
+    "frontend": "The revealed code box is checked for length and nothing else. The origin page's rule set requires a country, accepts either answer to the region question, and applies a maximum-length rule to the code and two rules to the internal reference — there is no presence rule for the code at all (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-82). So a user can select Yes, leave the box empty, press Save and continue, and reach the next page having recorded no region of origin code. The page is perfectly able to show an error — fe-origin-error is the same page holding a user back for a missing country — so this is a missing rule rather than a missing mechanism.",
+    "prototype": "Submitting the origin page with Yes selected and the code box empty re-renders the page with \"Enter the region of origin code\" in the error summary, linked to the code field. It is the only rule Design release 1 states for this page (app/routes.js:254-260).",
+    "difference": "Add a presence rule to the region of origin code that fires only when the region question is answered Yes, with the message \"Enter the region of origin code\", and add that message to the origin feature's copy alongside the length message already there (src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js:21-26). Nothing has to land first. Design release 1's origin page was not photographed in its error state, so the observation that would settle the wording and the anchor is that page submitted with Yes chosen and the code box empty. The obligation behind the field is already right and must not be touched: it is marked mandatory whenever the requirement is Yes (src/server/app/sets/live-animals/obligations/sections/origin.js:27-36), which is why the notification cannot be submitted with the box empty. All that is missing is the page-level rule that tells the user so at the point of the mistake.",
+    "falsifiedBy": "Submitting fe-origin with Yes selected and the code box empty and being held on the page with an error. Frontend's origin validator composes exactly one required rule (for the country), one either-or rule for the radio and two maximum-length rules, so the code's presence is never checked; a page that refused that submission would prove this wrong.",
+    "verification": "Could not submit the form from here, so ran the falsifier through the code that decides the submission: read fields() at src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-86 and post() at :123-154, and confirmed the composed rule set is requiredOneOf(countryOfOrigin), oneOf(regionOfOriginCodeRequirement), maxText(regionOfOriginCode, 5), maxText and pattern on internalReferenceNumber, with no presence rule for the code, so validate() returns no errors and the handler commits and redirects. Read app/routes.js:246-263 for the Design release 1 rule, read both rendered DOMs and opened fe-origin-error.png. Then followed the journey past the page, which is where this needed correcting. CORRECT, with the journey consequence recorded below.",
+    "correction": "The claim stands as written but it was understated about the journey, and the understatement matters to whoever does the work. What the finding says is true of the page: the user answers Yes, leaves the box empty, presses Save and continue and moves on. What it does not say is that the journey does stop them later. regionOfOriginCode is already marked mandatory whenever the requirement is Yes (src/server/app/sets/live-animals/obligations/sections/origin.js:27-36, an equalsGate on regionCodeRequirement), so the origin task row can never reach Fulfilled while the box is empty (src/server/app/bridge/status/index.js:68-76 returns IN_PROGRESS), readyForCheckYourAnswers stays false (src/server/app/flow/section-status.js:11-15), the review section gate refuses (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:83) and the submit itself refuses (src/server/app/engine/write/submit.js:9). So the user cannot complete their notification either way — they are simply never told why, and never at the point of the mistake. The work is therefore only the page rule, not a new obligation, and a sentence saying so has been added to the difference. Two smaller points. The cited rule range controller.js:63-82 stops four lines short of the composed set, which ends at :86; evidence has been widened. And oneOf allows an empty value (src/server/app/lib/validate/validators.js:114-121), so Frontend does not require the radio to be answered at all — but Design release 1 does not require it either (app/routes.js:246-263 states no rule for it), so that is not a difference and is not a finding."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-86",
+    "prototype": "app/routes.js:254-260"
+  },
+  "relatedTo": [
+    {
+      "id": "origin--region-code-country-prefix",
+      "relation": "travels-with",
+      "why": "Both change the same revealed code field and the same validator; the presence rule should be written against whichever value the field ends up collecting."
+    }
+  ]
+}

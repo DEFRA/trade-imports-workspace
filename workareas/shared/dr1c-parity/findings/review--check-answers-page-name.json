@@ -1,0 +1,33 @@
+{
+  "slice": "review",
+  "title": "The review page is called \"Check your answers\"; Design release 1 calls it \"Review your notification\"",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "fe-check-answers-submitted",
+    "dr1-review-notification"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "The page is headed \"Check your answers\" and carries the same words in its browser title and in its breadcrumb trail, on all three captured states of the page. The one string does all three jobs (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2, used as both `pageTitle` and `heading` at src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:40-41). The wording asks the trader to check a form; the page is in fact a summary of a whole notification, including sections nobody typed answers into.",
+    "prototype": "Design release 1 heads the page \"Review your notification\" and sets the same words as its page name for the browser title (app/views/review-notification.html:3 and :36). The wording matches what the hub calls the step and what the page does.",
+    "difference": "Rename the page to \"Review your notification\". It is one string in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2 and it carries into the heading, the browser title and the breadcrumb. `controls` is deliberately empty: a page name is not a control and naming it as a label would only crop the heading it already quotes.",
+    "falsifiedBy": "Finding the words \"Review your notification\" as the h1 of any captured frontend review state. All three — fe-check-answers, fe-check-answers-incomplete and fe-check-answers-submitted — carry \"Check your answers\".",
+    "verification": "Ran the falsifier: grep over capture/html/frontend/fe-check-answers.html returns \"Check your answers\" three times and \"Review your notification\" none, and the three occurrences are the <title>, the breadcrumb and the h1 — the one string doing all three jobs, as claimed. The two other captured states show the same breadcrumb and h1 in their screenshots. Read the source both sides name: copy/copy.en.js:2 is the single string, controller.js:40-41 sets it as both pageTitle and heading, and on the requirements side app/views/review-notification.html:3 sets pageName and :36 is the h1, both reading \"Review your notification\". Checked that this is not the Prototype Kit title suffix the contract excludes: the difference is the page name itself, which the contract states is designed and comparable. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2",
+    "prototype": "app/views/review-notification.html:3"
+  },
+  "relatedTo": [
+    {
+      "id": "review--check-answers-section-structure",
+      "relation": "travels-with",
+      "why": "Both rewrite the headings on the same page and would be done in one editorial pass."
+    }
+  ]
+}

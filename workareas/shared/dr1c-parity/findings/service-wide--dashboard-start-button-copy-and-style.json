@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "The dashboard's button to begin a notification reads \"Start a new notification\" and is a GOV.UK start button; Design release 1 uses a standard button reading \"Create a new notification\"",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard",
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": ["Start a new notification", "Create a new notification"],
+  "finding": {
+    "frontend": "The dashboard shows a green start button reading \"Start a new notification\" with the chevron icon, rendered with isStartButton (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:30-33, text from src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:7). It is the tallest thing on the page and is the pattern GOV.UK reserves for the entry point to a whole service.",
+    "prototype": "Design release 1 shows a standard button reading \"Create a new notification\" directly under the heading (app/views/dashboard.html:32-36). It carries no start-button icon and no extra height, so it reads as one action among several on a signed-in landing page rather than as the front door to the service.",
+    "difference": "Change the label to \"Create a new notification\" in src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:7 and drop isStartButton from the call at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:30-33 so it renders as a standard button. The form around it stays: the frontend creates the notification with a POST and Design release 1 uses a link, which is an implementation difference and not part of this change.",
+    "falsifiedBy": "Finding a govuk-button--start class or the words \"Start a new notification\" on the captured dr1-dashboard screen.",
+    "verification": "Ran the falsifier: govuk-button--start and \"Start a new notification\" both match 0 times in dr1-dashboard.html, and govuk-button--start matches once in fe-dashboard.html. Read src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:30-33 (form wrapping govukButton with isStartButton: true) and copy/copy.en.js:7, against app/views/dashboard.html:32-36 (a plain govukButton with text \"Create a new notification\" and href \"/create-notification\", no start modifier). Opened both dashboard screenshots — the tall green chevron button on Frontend, a standard-height button under the heading on Design release 1. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:7",
+    "prototype": "app/views/dashboard.html:32-36"
+  },
+  "relatedTo": []
+}

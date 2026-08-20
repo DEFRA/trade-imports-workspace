@@ -1,0 +1,38 @@
+{
+  "slice": "hub",
+  "title": "The hub offers no \"Review and submit\" button; the frontend makes reviewing a notification a task row that stays locked until every other task is done",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Review and submit", "Check and submit"],
+  "finding": {
+    "frontend": "The only button under the frontend's task list is the secondary \"Return to dashboard\". Reviewing the notification is instead the last task row, \"Check and submit\", sitting under its own heading \"6. Check and submit\" with the hint \"Check your answers before you submit the notification\". On both captured hub states that row is plain text with the status \"Cannot start yet\" and no link, because the review section is gated on every answer being in place (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:82-83, applied at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:79-90). So a user who wants to see what they have entered so far has no route to it from the hub.",
+    "prototype": "Design release 1 ends the hub with two buttons side by side: a primary \"Review and submit\" going to the review page, and the secondary \"Return to dashboard\" (app/views/notification-hub.html:81-92). The button is present and usable on a notification with nothing answered at all, so a user can open the review page at any point to see the state of the notification. There is no review task row and no sixth section for one.",
+    "difference": "Replace the \"Check and submit\" task row with a primary \"Review and submit\" button placed before the existing \"Return to dashboard\" button, and remove the section that held the row. The button is always available, so the review page must render an incomplete notification — which it already does: the frontend has a check-your-answers screen for an unfinished notification (fe-check-answers-incomplete), so the page exists and only the route to it is missing. The gate at src/server/app/sets/live-animals/journeys/linear/flow/flow.js:82-83 is what currently stops that route being offered.",
+    "falsifiedBy": "Finding an element on fe-hub whose text is \"Review and submit\", or a link on the \"Check and submit\" row of either captured frontend hub state. The captured DOM has neither: the row is a bare div with the status \"Cannot start yet\", and the only button on the page is \"Return to dashboard\".",
+    "verification": "Read all four rendered DOMs and all four screenshots. Ran the falsifier: grep -rn for \"Review and submit\" over the whole of capture/html/frontend returns no hits at all, on the hub or anywhere else; fe-hub.html's only element with role=\"button\" is the secondary \"Return to dashboard\"; and the check-and-submit item is a bare div with no anchor. Design release 1's two buttons are at app/views/notification-hub.html:81-92 as cited, the primary going to /review-notification. Re-read the frontend citations at their lines: hub/controller.js:72-91 is buildReviewItem, whose :81-83 returns the cannot-start item when the section gate fails, and the gate is flow.js:82-83, section id review with gate scope.readyForCheckYourAnswers. Followed the forward path before accepting the claim, as the run brief requires: the review page itself has no route gate, only the hub row is gated — this run's own frontend capture reached fe-check-answers-incomplete by a direct GET on /notification-view from a half-answered journey — so \"only the route to it is missing\" is exactly right and the hedge \"no route to it from the hub\" is the correct scope for the claim. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:72-91",
+    "prototype": "app/views/notification-hub.html:81-92"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-rows-locked-until-earlier-work-is-done",
+      "relation": "travels-with",
+      "why": "The review row is the most tightly locked row on the page; the two changes free the same journey."
+    },
+    {
+      "id": "hub--task-list-sections",
+      "relation": "travels-with",
+      "why": "Removing the review row leaves the sixth section empty, so the section change and this one land together."
+    }
+  ]
+}

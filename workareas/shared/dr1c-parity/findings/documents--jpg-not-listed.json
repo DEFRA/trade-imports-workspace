@@ -1,0 +1,28 @@
+{
+  "slice": "documents",
+  "title": "The frontend accepts a .jpg file but leaves JPG out of the list of accepted file types it shows the trader; Design release 1 lists it",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "dr1-upload-documents"],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The second bullet of the file-requirements hint reads \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\" — seven types, with JPG absent. A .jpg file is nevertheless accepted: it is in the allow-list and in the input's accept attribute, which the captured DOM shows as \".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\". JPG disappears from the sentence because the hint is built from the accepted MIME types rather than the extensions, and .jpeg and .jpg share image/jpeg, so the second of the pair is dropped (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:28-36). A trader whose phone or scanner produced a .jpg reads a list their file is not on and may convert or rename it for no reason. The same truncated list is repeated back in the error message when a file is refused.",
+    "prototype": "The hint lists eight types and names both spellings: \"PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX\" (app/views/upload-documents.html:167).",
+    "difference": "List every accepted extension in the hint, including JPG, so the sentence matches what the input actually accepts. Build the label from the extension list rather than from the de-duplicated MIME types at src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:28-36; the same value feeds the file-type error message, so both are fixed by one change. Copy only — no change to what is accepted.",
+    "falsifiedBy": "Finding \"JPG\" in the file-requirements hint of the captured DOM of fe-documents. The hint reads \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\" while the accept attribute on the same page includes .jpg.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents.html: zero occurrences of the string JPG, while the file input's accept attribute on the same page reads \".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\" — so the page accepts a type it does not list, exactly as claimed. Traced the mechanism at upload-config.js:10-11 (jpeg and jpg both mapped to image/jpeg) and :28-32, where the label list is built from the MIME values and de-duplicated, dropping the second of the pair; the same value feeds FILE_TYPE_MESSAGE at :38, so the truncated list is repeated in the error. Read app/views/upload-documents.html:167 on the DR1 side and both screenshots. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:28-36",
+    "prototype": "app/views/upload-documents.html:167"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--zip-not-stated",
+      "relation": "travels-with",
+      "why": "Both change bullets in the same file-requirements hint on the same control."
+    }
+  ]
+}

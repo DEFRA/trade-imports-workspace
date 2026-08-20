@@ -1,0 +1,33 @@
+{
+  "slice": "hub",
+  "title": "Six hub task rows are labelled differently from Design release 1, including \"Transporter\" for what the design calls \"Transport details\"",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Transporter", "Transport details"],
+  "finding": {
+    "frontend": "The hub labels its task rows from src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79. Six of them read differently from the design: \"Main reason for importing\", \"Additional commodity details\", \"Animal identification details\", \"Transporter\", \"Contact address\" and \"Uploaded documents\". Four rows already agree word for word — \"Where is this consignment coming from?\", \"What are you importing?\", \"Arrival details\" and \"Roles and addresses\" — as does the conditional \"Transit countries\".",
+    "prototype": "Design release 1 calls the same six tasks \"Main reason for import\", \"Additional details\", \"Identification details\", \"Transport details\", \"Contact address for this consignment\" and \"Upload documents\" (app/routes.js:5749-5841). Two of the six are shorter than the frontend's and two are longer, so this is not one systematic rule being applied differently; each label has to be taken on its own.",
+    "difference": "Rename the six rows in src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79 to the design's wording: importReason to \"Main reason for import\", additionalDetails to \"Additional details\", animalIdentification to \"Identification details\", transporter to \"Transport details\", contact to \"Contact address for this consignment\", documents to \"Upload documents\". Nothing else moves — which rows exist and which section they sit in are hub--consignment-details-has-no-task-row and hub--task-list-sections. Note that the frontend's \"Uploaded documents\" describes what is already there and the design's \"Upload documents\" describes the action, which is a real change of meaning rather than a tidy-up.",
+    "falsifiedBy": "Finding \"Transport details\" as a row label in the captured DOM of fe-hub, or \"Transporter\" as a row label in dr1-notification-hub. Each string appears on exactly one side.",
+    "verification": "Read both rendered DOMs and both screenshots, and read hub/copy/copy.en.js:26-79 and app/routes.js:5749-5841 line by line against each other. Ran the falsifier: \"Transport details\" appears nowhere in fe-hub.html and \"Transporter\" appears nowhere in dr1-notification-hub.html. Checked all thirteen frontend row keys, not only the eleven the hub shows, so the count in the prose is accountable: six differ as stated; four agree word for word; transitCountries agrees and is conditional on both sides (frontend task-rows.js:47, Design release 1 routes.js under \"3. Transport and arrival\"); the remaining two are handled elsewhere and are deliberately not counted here — exitDetails, whose row Design release 1 has no equivalent for, is deleted by import-reason--exit-questions-split-onto-separate-pages, and review becomes a button under hub--no-review-and-submit-button. Both named controls crop cleanly: \"Transporter\" occurs once in fe-hub.html and \"Transport details\" once in dr1-notification-hub.html. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:26-79",
+    "prototype": "app/routes.js:5749-5841"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-list-sections",
+      "relation": "travels-with",
+      "why": "Same copy file, same screen; the sections move and the rows inside them are renamed."
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "slice": "origin",
+  "title": "Frontend collects the country of origin from a dropdown list; Design release 1 asks the user to search for it.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": [{ "kind": "label", "text": "Country of origin" }, "countryOfOrigin"],
+  "finding": {
+    "frontend": "The origin page offers a standard GOV.UK select about a third of the content width, whose first option reads \"Select a country\" and whose second is a disabled row of dashes acting as a separator. The user opens the list and scrolls it to find the country; there is no way to type. The control is declared at src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22 and its options are assembled at src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61.",
+    "prototype": "The origin page offers a full-width search box with a magnifying-glass button and the placeholder \"Search for a country\". Typing filters a results list that opens underneath it, and picking a result leaves the country's name in the box and records the choice behind it — the captured picture of the revealed state shows \"France\" sitting in the search box. The control is declared at app/views/origin-of-the-import.html:55-97.",
+    "difference": "Replace the country select on the origin page with a search-and-pick control: a full-width search input labelled as now, a results list that filters as the user types, and the chosen country left visible in the box. The countries themselves do not change — both sides read a list and this finding is about how the user reaches an entry in it, not about which entries there are. The country the user picks also has to be readable by the region-of-origin code field, which is the separate finding origin--region-code-country-prefix; build the picker so that choosing a country can drive that prefix. Nothing has to land before this: the country list is already in Frontend's countries service.",
+    "falsifiedBy": "A search control on Frontend's origin page. The captured DOM of fe-origin holds exactly one country control, a <select name=\"countryOfOrigin\">, and no input of type search anywhere in the form; finding one would prove this wrong.",
+    "verification": "Read both rendered DOMs (capture/html/frontend/fe-origin.html, capture/html/prototype/dr1-origin-of-the-import.html and the region-revealed prototype capture) and opened both page shots at 2x. Ran the falsifier: grep for type=\"search\" in fe-origin.html returns 0 matches, and the only country control there is <select class=\"govuk-select\" id=\"countryOfOrigin\">. Read the cited template.njk:15-22 and origin-of-the-import.html:45-98. CORRECT.",
+    "correction": "The claim stands. Three points of record. (1) The sentence about \"France\" sitting in the search box is settled by the picture, not by the DOM: in capture/html/prototype/dr1-origin-of-the-import-region-revealed.html the search input still serialises as value=\"\" and it is the hidden <input name=\"countryOfOrigin\"> beside it that carries value=\"France\", because the picker writes the visible box through the DOM property rather than the attribute. The screenshot evidence/prototype@491b3926/page/dr1-origin-of-the-import-region-revealed.png shows \"France\" in the box, so the claim is true and the screenshot is the evidence for it. (2) On Design release 1 the control named countryOfOrigin is a hidden input, which can never crop; the label entry is the one that will resolve on that side, so the controls list has been reordered to put it first. Nothing else changed. (3) The author's statement that the country list itself is not the finding was tested and holds: Design release 1's picker data carries a parent country per territory, but every territory label already ends in its parent's name (\"Azores (Portugal)\", \"French Guiana (France)\"), so parent matching finds nothing a plain label search would miss (app/assets/javascripts/country-search.js:35-41) and it only tiers the sort order. The differing country lists are fixture data on both sides."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22",
+    "prototype": "app/views/origin-of-the-import.html:55-97"
+  },
+  "relatedTo": [
+    {
+      "id": "origin--region-code-country-prefix",
+      "relation": "travels-with",
+      "why": "Design release 1 derives the region-of-origin code prefix from the country chosen in this control, so the two changes share the same answer."
+    }
+  ]
+}

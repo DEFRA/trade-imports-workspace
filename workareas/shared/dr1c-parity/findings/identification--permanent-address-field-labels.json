@@ -1,0 +1,27 @@
+{
+  "slice": "identification",
+  "title": "Frontend labels the permanent address postcode and phone fields differently from Design release 1 and omits the country-code hint on the phone number",
+  "domain": "addresses",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-permanent-address-animals-new-address-revealed"],
+  "controls": [
+    "postalOrZipCode-2",
+    "telephoneNumber-2",
+    "permanentAddressDetails[dog-canis-familiaris:0][postcode]",
+    "permanentAddressDetails[dog-canis-familiaris:0][phone]"
+  ],
+  "finding": {
+    "frontend": "Two of the permanent address fields are labelled differently from the signed-off design and one loses its help. The frontend labels them \"Postal or zip code\" and \"Telephone number\", and gives the telephone field no hint at all (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:96-107). The six labels the two sides share — name or organisation name, address line 1, address line 2 (optional), town or city, county (optional) and email address — match word for word.",
+    "prototype": "Design release 1 labels the same two fields \"Postcode or Zip code\" and \"Phone number\", and hints the phone field \"For international numbers include the country code\" (app/views/partials/permanent-address-new-address-fields.html:62-96, rendered in dr1-permanent-address-animals-new-address-revealed).",
+    "difference": "Change the two labels to \"Postcode or Zip code\" and \"Phone number\" and add the hint \"For international numbers include the country code\" to the phone field. All three strings live in one copy object at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:96-107, with a Welsh sibling to match. The hint is the part that changes what a trader types rather than only what they read, so it is the piece worth landing first.",
+    "falsifiedBy": "The strings \"Postcode or Zip code\" or \"Phone number\" appearing as labels in the frontend's rendered permanent address block. The captured DOM of fe-animal-identification labels those two inputs \"Postal or zip code\" and \"Telephone number\", and telephoneNumber-2 carries no aria-describedby.",
+    "verification": "Ran the falsifier by reading both rendered DOMs label by label. capture/html/frontend/fe-animal-identification.html:271 and :319 read \"Postal or zip code\" and \"Telephone number\", and the telephoneNumber-2 input at :321 carries no aria-describedby, so there is no hint. capture/html/prototype/dr1-permanent-address-animals-new-address-revealed.html gives \"Postcode or Zip code\" and \"Phone number\" with the hint \"For international numbers include the country code\" wired through aria-describedby. Checked the six shared labels one by one against the two DOMs and they do match word for word, including the two \"(optional)\" suffixes. Opened both page shots. CORRECT.",
+    "correction": "The claim stands in full and the falsifier does not fire. Three records. (1) The requirements citation pointed at app/views/permanent-address-animals.html:82-94, which is the govukRadios call rather than the address fields; the fields and the hint are in the partial the conditional reveal renders, and the prose and the evidence path now point at app/views/partials/permanent-address-new-address-fields.html:62-96, where the two labels and the hint actually sit. (2) The controls named only the two frontend inputs, so the requirements half of the card would have cropped nothing on a label comparison; the two Design release 1 field names have been added. (3) A difference the finding does not raise and does not need to: the two sides order the last two fields differently — Frontend runs postcode, country, telephone, email while Design release 1 runs postcode, email, phone. That is a consequence of removing the country field, which identification--permanent-address-country-field already carries."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:96-107",
+    "prototype": "app/views/partials/permanent-address-new-address-fields.html:62-96"
+  }
+}

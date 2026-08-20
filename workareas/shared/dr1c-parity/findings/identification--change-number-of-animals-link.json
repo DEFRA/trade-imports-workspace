@@ -1,0 +1,22 @@
+{
+  "slice": "identification",
+  "title": "A trader who has miscounted the animals has no way out of Frontend's identification page; Design release 1 offers a Change number of animals link on every species panel",
+  "domain": "identification",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "dr1-animal-identification-details"],
+  "controls": [{ "kind": "label", "text": "Change number of animals" }],
+  "finding": {
+    "frontend": "Each card is headed with the commodity and species and then a counter — \"Enter details for Bos taurus 1 of 2\" — and that counter is the only thing on the card that mentions the number the trader is being held to. There is no link beside it and no link anywhere on the page back to consignment details (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:9-29). A trader who realises at animal three that they entered two has to leave through \"Save and return to hub\" or the breadcrumb, find the consignment details row on the hub, and come back. It matters more here than it looks, because Frontend enforces the count in both directions: entering fewer than the line says leaves the section in progress, and reducing the number afterwards is refused outright with \"You have N identifier records for X but entered M animals\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39).",
+    "prototype": "Design release 1 puts a \"Change number of animals\" link in the header bar of every species panel, to the right of the species name, pointing at the consignment details page (app/views/animal-identification-details.html:96-98). The correction is one click from the counter that prompted it.",
+    "difference": "Add a link to the consignment details page in each identification card's heading area, labelled \"Change number of animals\". The href is the same consignment-details route the hub already links to, so this is a template change in src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk with the target passed through the card view model at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js. Worth pairing with Frontend's count-drop refusal: the error tells a trader the number is wrong and currently gives them nowhere to go.",
+    "falsifiedBy": "Any link on Frontend's identification page whose target is the consignment details page. Outside the GOV.UK header and footer, the captured DOM of fe-animal-identification holds four links: a breadcrumb to the dashboard at \"/\", a sign-out link, a back link to the notification hub, and \"Cancel and return to hub\" to the same hub. None of them reaches consignment details.",
+    "verification": "Ran the falsifier by listing every href in capture/html/frontend/fe-animal-identification.html: the whole page carries \"/\" twice, \"/auth/sign-out\", \"/notifications/GBN-XX-00-REFERENCE\" twice, the asset and GOV.UK links, and nothing else — no consignment-details target of any kind. Opened both page shots; the Design release 1 shot shows \"Change number of animals\" in the grey panel header opposite \"Bos taurus\", and the frontend shot shows a bare h2 and counter with no link. Checked app/views/animal-identification-details.html:96-98 is a root view and lands on that link, and checked the count-drop error text at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39. CORRECT.",
+    "correction": "The claim stands. One miscount fixed in the falsifier: it said \"exactly three links\" outside the header and footer, and there are four — the sign-out link at capture/html/frontend/fe-animal-identification.html:88 sits below the closing header tag. It reaches the sign-out route, not consignment details, so the conclusion is unaffected. Also worth recording for whoever picks this up: Design release 1 renders the link once per species panel rather than once per page, so a notification with four commodity lines gets four of them."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:9-29",
+    "prototype": "app/views/animal-identification-details.html:96-98"
+  }
+}

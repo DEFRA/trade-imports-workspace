@@ -1,0 +1,34 @@
+{
+  "slice": "review",
+  "title": "After submitting, the frontend never tells the trader what is still outstanding; Design release 1 heads the submitted page with \"Before the consignment is imported\" and lists the documents and identifiers still owed",
+  "domain": "review",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-confirmation",
+    "dr1-notification-submitted"
+  ],
+  "controls": [
+    "Before the consignment is imported"
+  ],
+  "finding": {
+    "frontend": "The confirmation page goes straight from the green panel to \"Transporting the consignment\" (src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:4-13). There is no section about work still to do. This matters because the frontend does accept a submission with no documents at all: the documents group carries neither a minimum entry count nor a required-one-of rule (src/server/app/sets/live-animals/obligations/sections/documents.js:19-27), so an untouched documents collection rolls up as optional and the readiness check passes without it. A trader can therefore submit a notification with no health certificate attached, reach a page headed \"Import notification submitted\", and be told nothing about the certificate.",
+    "prototype": "Design release 1 puts a section between the panel and the transport guidance whenever anything is still outstanding: \"Before the consignment is imported\", the line \"You still need to:\", and a bulleted list (app/views/notification-submitted.html:27-36). The two items it can carry are \"upload the health certificate and any other required documents\", shown whenever no document has been uploaded, and \"complete the animal identifier information in the notification\", shown when identifiers were allowed through the submit gate but are not yet complete (app/routes.js:5674-5692). The section disappears entirely when nothing is outstanding.",
+    "difference": "Add the same section to the confirmation page: a heading \"Before the consignment is imported\", the line \"You still need to:\", and one bullet per outstanding item, rendered only when there is at least one. The documents bullet can be built today and nothing has to land first: documents are optional for submission, so the frontend can reach this page with an empty collection, and it already knows that at submit time. The identifier bullet cannot fire today and should not be built until the identifier question is settled — the frontend's submit gate requires one animal-identifier record per animal (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-102 sets recordCountEquals against numberOfAnimals) and readiness requires every task row to be fulfilled (src/server/app/flow/section-status.js:11-15), so a notification with animals still to identify never reaches the confirmation page at all. Design release 1 does let one through, which is why it has that bullet. Whether a partly identified animal counts as outstanding is the open question in identification--identifier-completeness; build the identifier bullet with whatever answer that finding gets.",
+    "falsifiedBy": "Finding any list of outstanding work on fe-confirmation. The captured DOM's only headings after the panel are \"Transporting the consignment\", \"How to view or amend this notification\" and \"Getting help\", and the notification behind that capture had no documents uploaded.",
+    "verification": "Ran the falsifier and opened both pictures. evidence/frontend@76a864ba/page/fe-confirmation.png goes green panel, declaration date, \"Transporting the consignment\" — no outstanding-work section anywhere; evidence/prototype@491b3926/page/dr1-notification-submitted.png carries \"Before the consignment is imported\", \"You still need to:\" and both bullets between the panel and the transport guidance. Both citations are exact: app/views/notification-submitted.html:27-36 is the {% if isIncompleteSubmission %} block, app/routes.js:5674-5692 is getConditionalSubmissionItems with the two items and their conditions. Read the obligations the finding rests on: sets/live-animals/obligations/sections/documents.js:19-27 carries only maxEntries, so an empty documents collection is not a bar to submitting. The claim stands as a claim about the page, but its prescription was overstated on the identifier half — see correction, and the difference slot has been narrowed.",
+    "correction": "CLAIMED: that the frontend \"already knows both facts at submit time — whether the documents collection is empty, and whether every animal identifier record is complete — so the list can be built from the same evaluation the readiness check uses\", with nothing to land first. TRUE for documents, NOT TRUE for identifiers. The frontend's unit-record obligation carries requires.recordCountEquals against numberOfAnimals (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-102), animalIdentification is one of the task rows (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45), and readyForCheckYourAnswers demands every row be FULFILLED, NA or OPTIONAL (src/server/app/flow/section-status.js:11-15) — so the frontend cannot reach its confirmation page with animals still unidentified, and a bullet asking the trader to go and identify them could never render. Design release 1 gates differently, letting a submission through on a minimum and following up afterwards (app/routes.js:5683-5689). HOW CHECKED: read the three frontend files above and getConditionalSubmissionItems on the other side. The observable core of the finding — Design release 1 states outstanding work on its submitted page and the frontend states none — is untouched; only the difference slot's ordering claim has been corrected."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:4-13",
+    "prototype": "app/views/notification-submitted.html:27-36"
+  },
+  "relatedTo": [
+    {
+      "id": "review--documents-section-hidden-when-nothing-uploaded",
+      "relation": "travels-with",
+      "why": "Both are consequences of documents being optional and the service staying silent about it; the review page and the submitted page should say the same thing."
+    }
+  ]
+}

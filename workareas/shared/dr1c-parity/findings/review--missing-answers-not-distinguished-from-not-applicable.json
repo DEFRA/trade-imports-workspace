@@ -1,0 +1,37 @@
+{
+  "slice": "review",
+  "title": "Check your answers prints \"Not provided\" both for a question that does not apply and for an answer that is still needed; Design release 1 says \"Not applicable\" for the first and marks the second as missing",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "dr1-review-notification",
+    "dr1-review-notification-incomplete"
+  ],
+  "controls": [
+    "Internal reference number",
+    "Port of entry"
+  ],
+  "finding": {
+    "frontend": "One string stands in for every empty value. On the complete notification, \"Region of origin code\" and \"Internal reference number\" both read \"Not provided\" — and both are questions that genuinely do not apply, because the trader answered No to the region-code question and the internal reference is optional. On the unfinished notification, \"Port of entry\" also reads \"Not provided\" — and that one is required before the notification can be submitted. The two states are typeset identically, so a trader reading the page cannot tell which rows are finished business and which are work still to do. The single string comes from `notProvided` in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3, applied to every blank value at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:11-13.",
+    "prototype": "Design release 1 has two different treatments. A value that does not apply is written out as \"Not applicable\" (app/routes.js:4065-4071) — that is what its review page shows against \"Region of origin code\" and \"Internal reference number\". A value that is required and absent is not given text at all: the row is drawn in the missing style with only a visually hidden \"Missing\" for a screen reader (app/views/partials/review-summary-row.html:15-21), inside a card that is itself marked with an error. So on Design release 1 the eye can separate \"nothing needed here\" from \"something still owed here\" without reading a word.",
+    "difference": "Split the one placeholder into two, and follow Design release 1 in deciding per card rather than per row. In a card that is complete, print \"Not applicable\" for every empty value. In a card that is unfinished — the same cards that would carry the inline error from review--incomplete-notification-not-flagged-on-check-answers — print no placeholder text at all: draw every empty row in a missing style with only a visually hidden \"Missing\", whether that particular row was required or optional. The frontend already knows which cards are unfinished, because the same task-row statuses drive the hub, so this is a rendering change in the check-answers view-model with nothing to land first.",
+    "falsifiedBy": "Finding two different empty-value strings on fe-check-answers and fe-check-answers-incomplete. The captured DOM of both carries exactly one, \"Not provided\", and it appears against the optional internal reference on the complete page and against the mandatory port of entry on the incomplete one.",
+    "verification": "Ran the falsifier: \"Not provided\" is the only empty-value string in either captured frontend DOM (16 occurrences on fe-check-answers-incomplete), and rows/value-text.js:12-14 and :22-23 apply it to every blank value from copy.en.js:3. Read both captured DR1 DOMs and both screenshots. The claim stands but the mechanism was mis-described, so the difference slot has been rewritten — see correction.",
+    "correction": "CLAIMED: that Design release 1 chooses between \"Not applicable\" and the missing marker per field, on whether that field is required — the difference slot asked the frontend to print \"Not applicable\" for an optional unanswered row and the missing style for a required one. TRUE: Design release 1 chooses per card. formatReviewValueOrNa (app/routes.js:4065-4071) returns \"Not applicable\" for every empty value regardless of status; the missing style is applied afterwards by applyMissingFieldDisplayToErrorCard (app/routes.js:4096-4098), which returns the card untouched unless card.hasError, and then mapReviewRowsForErrorCard (app/routes.js:4083-4093) blanks every empty row in that card. HOW CHECKED: read those four functions, then confirmed the outcome in evidence/prototype@491b3926/page/dr1-review-notification-incomplete.png — inside the errored \"Roles and addresses\" card the optional \"County parish holding (CPH) number\" row is blank, not \"Not applicable\", while in the complete \"Import details\" card above it \"Region of origin code\" and \"Internal reference number\" both read \"Not applicable\". The finding's prototype slot was already right (it says \"inside a card that is itself marked with an error\"); only the difference slot has been corrected."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:7-19",
+    "prototype": "app/views/partials/review-summary-row.html:15-21"
+  },
+  "relatedTo": [
+    {
+      "id": "review--incomplete-notification-not-flagged-on-check-answers",
+      "relation": "travels-with",
+      "why": "The missing marker only reads as a marker once the card around it carries an error, so the two changes land on the same page together."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slice": "hub",
+  "title": "The hub tags an unstarted task \"Not yet started\" and a finished one \"Completed\", where Design release 1 says \"To do\" and \"Complete\"",
+  "domain": "hub",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Not yet started", "Completed"],
+  "finding": {
+    "frontend": "The status beside an unstarted but startable task reads \"Not yet started\" in a blue tag, and beside a finished one it reads \"Completed\" in a green tag. The hub carries three further status words the design does not use: \"Cannot start yet\" for a locked row, \"In progress\" and \"Optional\". All five are set at src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17 and mapped to tags at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:51-68.",
+    "prototype": "Design release 1 uses two status words and no others: \"To do\" in a blue tag and \"Complete\" in a green tag (app/routes.js:5736-5737). Every row on a fresh notification reads \"To do\"; a finished row reads \"Complete\". The colours match the frontend's; only the words differ.",
+    "difference": "Change the hub's status words to \"To do\" and \"Complete\" at src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17, keeping the blue and green tags as they are. \"Cannot start yet\" disappears with the row locking (hub--task-rows-locked-until-earlier-work-is-done). \"In progress\" and \"Optional\" have no counterpart in Design release 1 at all, so decide against the design where they should be shown; neither appears on either captured hub state, so this finding does not claim what a user meets when they fire.",
+    "falsifiedBy": "Finding \"To do\" or \"Complete\" as the status text on any row of either captured frontend hub state. fe-hub renders \"Not yet started\" once and \"Cannot start yet\" ten times; fe-hub-part-answered renders \"Completed\" once.",
+    "verification": "Read all four rendered DOMs and all four screenshots. Ran the falsifier: neither \"To do\" nor \"Complete\" appears in fe-hub.html or fe-hub-part-answered.html; fe-hub carries one blue tag reading \"Not yet started\" and ten status cells carrying govuk-task-list__status--cannot-start-yet, and fe-hub-part-answered carries one green tag reading \"Completed\". Checked the colour claim, which is the part most likely to be assumed rather than read: frontend NOT_STARTED maps to govuk-tag--blue and FULFILLED to govuk-tag--green (hub/controller.js:51-62), Design release 1's statusTodo is govuk-tag--blue and statusComplete govuk-tag--green (app/routes.js:5736-5737), and the rendered tags on both sides carry those classes — so the words are the only difference, as claimed. Checked the \"In progress\" and \"Optional\" caveat: neither string appears in either captured frontend hub DOM, which is what the prose already says. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:11-17",
+    "prototype": "app/routes.js:5736-5737"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-rows-locked-until-earlier-work-is-done",
+      "relation": "travels-with",
+      "why": "\"Cannot start yet\" is only shown because rows are locked, so unlocking the rows retires that status word."
+    }
+  ]
+}

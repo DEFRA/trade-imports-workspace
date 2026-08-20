@@ -1,0 +1,37 @@
+{
+  "slice": "review",
+  "title": "Check your answers gives no sign that a notification is incomplete; Design release 1 heads the review page with \"There is a problem\", names each unfinished section and refuses to go on",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers-incomplete",
+    "dr1-review-notification-incomplete"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "A trader who reaches Check your answers before the notification is finished sees a page that looks finished. Every unanswered row reads \"Not provided\" in ordinary black text, no card is marked, there is no error summary, and the page still ends with the heading \"Now submit your notification\", the sentence \"Continue to the declaration to submit your notification.\" and a green Continue button (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114). Nothing on the page says what is outstanding or where to go to finish it. Pressing Continue is not refused either: the POST handler redirects straight on to the declaration (src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:96-99), the declaration renders, and only after the trader ticks the box and presses Continue again does the submit fail its readiness check and bounce back to Check your answers with no message at all (src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:86-88, src/server/app/engine/write/submit.js:9-15). The trader ends up back where they started having been told nothing.",
+    "prototype": "Design release 1's review page opens with a red-bordered \"There is a problem\" summary carrying one link per unfinished card — \"Complete arrival details\", \"Complete transport details\", \"Complete roles and addresses\", \"Complete contact address for this consignment\" — each anchored to the card it names (app/views/review-notification.html:29-36). Every unfinished card is drawn with a red left bar and repeats its own message in red inside the card, and each of its rows is blank rather than filled with a placeholder. Continue does not move on: the POST re-renders the same page with the same summary until the notification is complete.",
+    "difference": "Give Check your answers the incomplete state Design release 1 shows. On render, work out which cards are unfinished and put an error summary above the heading listing one \"Complete <card name>\" link per unfinished card, anchored to that card; mark each unfinished card with its own inline error message; and make the POST re-render the page rather than continue to the declaration when the notification is not ready. The readiness signal already exists — `scope.readyForCheckYourAnswers` — and the per-card breakdown can come from the same task-row statuses the hub uses (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js). Nothing has to land first. `controls` is deliberately empty: the finding is the state of the whole page, not one field, and a crop of any single row would hide the error summary that is the substance of it.",
+    "falsifiedBy": "Finding an error summary, an error message or any card-level marking on fe-check-answers-incomplete. The captured DOM has no `govuk-error-summary` and no `govuk-error-message` anywhere on that page, and the only difference from the complete capture is the word \"Not provided\" standing where answers would be.",
+    "verification": "Ran the falsifier: grep for govuk-error-summary|govuk-error-message in capture/html/frontend/fe-check-answers-incomplete.html returns 0, and \"Now submit your notification\" plus \"Continue to the declaration to submit your notification\" are both present; \"Not provided\" appears 16 times. Opened evidence/frontend@76a864ba/page/fe-check-answers-incomplete.png and evidence/prototype@491b3926/page/dr1-review-notification-incomplete.png — the DR1 shot shows the red summary with the four \"Complete …\" links and red-barred cards, the frontend shot shows an unmarked page ending in a green Continue. Because rubric point 1 (markup dressed as behaviour) is the trap here, I followed the journey rather than the template: src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:96-99 redirects on POST with no readiness test, src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:58-89 commits and calls submitJourney, and src/server/app/engine/write/submit.js:9-14 returns ok:false on !scope.readyForCheckYourAnswers, whereupon :86-88 redirects back to the CYA slug carrying no message — so the trader is blocked, silently and late, exactly as the finding says. On the requirements side app/routes.js:10068-10074 re-renders the same page when !hasNotificationComplete. One citation was corrected — see correction. Otherwise CORRECT.",
+    "correction": "CLAIMED: the check-answers POST handler at src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:93-96, the readiness bounce at src/server/app/engine/write/submit.js:11-17. TRUE: the first range lands on the GET handler and blank lines — the POST handler is at :96-99; the second starts one line inside the ok:false object — the readiness test and its return are at :9-15. HOW CHECKED: grep -n for 'const post' and 'nextInSection' in the controller, and for 'readyForCheckYourAnswers' and 'ok: false' in submit.js. The substance of the claim is unaffected and both ranges have been corrected in place."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114",
+    "prototype": "app/views/review-notification.html:29-36"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--no-review-and-submit-button",
+      "relation": "travels-with",
+      "why": "That finding opens the route to the review page from an unfinished notification; this one makes the page usable once a trader arrives there."
+    },
+    {
+      "id": "review--missing-answers-not-distinguished-from-not-applicable",
+      "relation": "travels-with",
+      "why": "Both change how an unanswered row is drawn on the same page, and the placeholder text is what currently stands in for the missing marker."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "On the first page of a new notification the frontend shows neither its status nor its reference; Design release 1 shows both from that page onwards",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-origin",
+    "fe-origin-region-code-revealed",
+    "dr1-origin-of-the-import",
+    "dr1-origin-of-the-import-region-revealed"
+  ],
+  "controls": [{ "kind": "label", "text": "Draft" }],
+  "finding": {
+    "frontend": "Every journey page opens with a status strip — a coloured tag and the notification's reference in bold (src/server/app/shared/layout.njk:65-70) — and 56 of the 67 captured screens show one. The origin page is the exception. Its controller only passes the journey to the strip once an answer has been committed (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-89 and :107, using hasCommittedNotificationAnswers from src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:37), so on the first page of a brand-new notification the strip is absent and the user is not told either that the notification is a draft or what its reference is. All three captured origin screens show the gap, and the reference does exist by then: it is the journey id already in the page's own URL and in its breadcrumb links.",
+    "prototype": "Design release 1 prints the strip on the origin page from the first visit — a blue \"Draft\" tag and the notification reference beside it, rendered by the shared partial at app/views/partials/notification-status.html:18-24 and included by the page before its caption. The design carries it on 45 of its 60 captured screens and drops it only outside a notification in progress: the dashboard, the eight address-book screens, the declaration in both its states, the submitted page and the two transporter-add screens.",
+    "difference": "Show the status strip on the origin page for a new notification as well as a resumed one, by passing the journey to kit.base unconditionally at src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:107 instead of through journeyIfStarted at :88-89. Nothing else has to change: the strip's tag and reference already come from src/server/app/shared/kit.js:53-58, which needs only the journey, and the journey exists on that request because the same controller uses its id for the back link and the breadcrumbs. The separate decision the same helper drives — where the origin page's Back link points before an answer is saved — is not touched by this.",
+    "falsifiedBy": "Finding an app-journey-strip element in the captured DOM of fe-origin, or finding no notification-status element in dr1-origin-of-the-import.",
+    "verification": "Written and checked by the verifier, so a reader knows both were the same pass. Ran the falsifier: app-journey-strip matches 0 times in fe-origin.html and notification-status matches in dr1-origin-of-the-import.html, where the reference span is present. Counted both sides — the frontend renders the strip on 56 of 67 files, missing on the seven dashboards, fe-confirmation and all three origin states; the prototype renders it on 45 of 60, missing on the two dashboards, the eight address-book screens, the declaration in both states, the submitted page and the two transporter-add screens. Read src/server/app/shared/layout.njk:65-70, kit.js:53-58 and :112-122, origin/controller.js:88-95 and :103-116, and app/views/partials/notification-status.html, whose non-DR2 branch at :18-24 is the one the root mount renders. Opened evidence/frontend@76a864ba/page/fe-origin.png, which goes from the Back link straight to the h1, and evidence/prototype@491b3926/page/dr1-origin-of-the-import.png, which shows \"Draft\" and the reference between the Back link and the caption. The claim is deliberately narrow: this is about a new notification's first page, not about the strip in general, because the frontend does show it on the origin page once an answer has been saved."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:88-89",
+    "prototype": "app/views/partials/notification-status.html:18-24"
+  },
+  "relatedTo": []
+}

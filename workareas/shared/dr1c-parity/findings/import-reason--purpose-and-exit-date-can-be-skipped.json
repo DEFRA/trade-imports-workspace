@@ -1,0 +1,43 @@
+{
+  "slice": "import-reason",
+  "title": "Frontend lets a user leave the internal-market purpose and the exit date blank and carry on; Design release 1 keeps them on the page with an error until they are answered.",
+  "domain": "import-reason",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-import-purpose",
+    "fe-exit-date",
+    "dr1-reason-for-import-internal-market-revealed",
+    "dr1-reason-for-import-temporary-admission-revealed"
+  ],
+  "controls": [
+    "purposeInInternalMarket",
+    "exitDate",
+    "internalMarketPurpose",
+    "temporaryAdmissionExitDate"
+  ],
+  "finding": {
+    "frontend": "A user who chooses Internal market, reaches the purpose page, selects nothing and presses Save and continue is taken to the next page. The same happens on the exit-date page: leave the box empty, press Save and continue, and the journey moves on. Neither page has an error message to show, and neither copy file carries one for a blank answer — the purpose page validates with oneOf, which treats an empty string as a valid choice (src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js:25-30, and the validator itself at src/server/app/lib/validate/validators.js:114-121), and the exit-date page validates with dateText, which allows an empty string through before it ever tries to read a date (src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js:21 and src/server/app/lib/validate/validators.js:209-234). The two remaining exit questions do stop the user: destination country and port of exit both use requiredOneOf and both produce an error, which the captured screens fe-destination-country-error and fe-port-of-exit-error show. The notification is not submittable in this state — purposeInInternalMarket and exitDate are mandatory once in scope (src/server/app/sets/live-animals/obligations/sections/import-reason.js:43-56 and :103-116), and the review section is gated on every task row being fulfilled, not applicable or optional (src/server/app/flow/section-status.js:11-15, applied at src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85, the gate itself at :83). So this is not a hole a user can submit through: it is a user who is let past the question and told nothing, and who finds out only when the check-answers step will not open.",
+    "prototype": "Choosing a reason and leaving its revealed question blank returns the user to the same page with an error summary and an error against the field. Design release 1 says which message goes with which gap: \"Select a purpose in the internal market\" under Internal market, \"Enter an exit date\" for an empty exit date and \"Enter a real date\" for one it cannot read, \"Select a destination country\" and \"Select a port of exit\" (app/routes.js:1387-1441). The main reason itself is deliberately not enforced — the design states in its own words that \"a main reason is optional to proceed, but once selected any further information required for that reason must be completed\" (app/routes.js:1381-1385) — so the two sides already agree about the reason radio and disagree only about what hangs off it.",
+    "difference": "Make purposeInInternalMarket and exitDate required at the point they are asked, so a blank answer returns the page with an error summary rather than advancing. On the purpose page swap oneOf for requiredOneOf and add the message \"Select a purpose in the internal market\" to src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js, which today has no errors block at all; on the exit-date page add a required check ahead of the date parse with the message \"Enter an exit date\". Do not make the reason radio required — Design release 1 lets a user leave it blank and Frontend already matches that. Nothing has to land first; the obligation model already marks both fields mandatory, so this only moves the moment the user is told. If import-reason--exit-questions-split-onto-separate-pages lands first, the same two checks belong on the reveals instead of on two pages that will no longer exist.",
+    "falsifiedBy": "An error rendered on fe-import-purpose or fe-exit-date after an empty submit. Both validators allow an empty string explicitly — src/server/app/lib/validate/validators.js:118 for oneOf and :217 for the date — so finding either page returning a govuk-error-summary with nothing filled in would prove this wrong.",
+    "verification": "Written and checked by the verifier, not by the slice's author, so a reader knows this one had no independent second pass. Read capture/html/frontend/fe-import-purpose.html and fe-exit-date.html and the two captured error screens fe-destination-country-error.html and fe-port-of-exit-error.html; opened the fe-exit-date and dr1-reason-for-import-temporary-admission-revealed screenshots. Read the four frontend controllers in the slice and traced each field's validator into src/server/app/lib/validate/validators.js: oneOf is Joi.string().allow('').valid('', ...values) and dateText delegates to dateTextInRange, which is Joi.string().trim().allow('') before the custom date parse, so an empty payload passes both; requiredOneOf, used by destination country and port of exit, is .required() and does not. Followed the journey before claiming anything about it, as the rubric requires: the obligation model marks both fields mandatory in scope and readyForCheckYourAnswers demands every task row be FULFILLED, NA or OPTIONAL, so the claim is \"walked past without being told\", not \"submitted incomplete\". Confidence is medium rather than high because neither side's error state for these two fields is in the corpus — Design release 1 has no captured error screen for reason-for-import at all — so both halves rest on source read at the cited lines rather than on a photograph."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js:25-30",
+    "prototype": "app/routes.js:1387-1394"
+  },
+  "relatedTo": [
+    {
+      "id": "import-reason--exit-questions-split-onto-separate-pages",
+      "relation": "travels-with",
+      "why": "The two questions that can be skipped are two of the four that move onto the reason page, so the checks land wherever the questions end up."
+    },
+    {
+      "id": "import-reason--exit-question-error-wording",
+      "relation": "travels-with",
+      "why": "Both findings change the same copy file's error strings and should be done in one pass."
+    }
+  ]
+}

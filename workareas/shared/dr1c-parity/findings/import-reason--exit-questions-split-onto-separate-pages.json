@@ -1,0 +1,41 @@
+{
+  "slice": "import-reason",
+  "title": "Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen; Frontend hides them until the next page and asks each one on a page of its own.",
+  "domain": "import-reason",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-import-reason",
+    "fe-import-reason-transit-selected",
+    "fe-import-purpose",
+    "fe-destination-country",
+    "fe-port-of-exit",
+    "fe-exit-date",
+    "dr1-reason-for-import",
+    "dr1-reason-for-import-internal-market-revealed",
+    "dr1-reason-for-import-transhipment-revealed",
+    "dr1-reason-for-import-transit-revealed",
+    "dr1-reason-for-import-temporary-admission-revealed"
+  ],
+  "controls": ["reasonForImport", "importReason"],
+  "finding": {
+    "frontend": "Choosing an import reason reveals nothing. The captured screenshot of fe-import-reason-transit-selected shows Transit selected and the next thing on the page is the Save and continue button — no port of exit, no destination country. The follow-up questions are separate pages reached only after the user submits, in the fixed order purpose, destination country, port of exit, exit date (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:49-57), and the hub carries them as a second, conditional task row of their own (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:34-39). So Internal market costs a user two page loads, Transhipment or onward travel two, Transit three and Temporary admission horses three, where Design release 1 costs one. Two further differences travel with the split and disappear with it. First, each of the split-out pages says its own name three times — breadcrumb, page heading and field label — so fe-destination-country reads \"Destination country / Destination country / Destination country\" down the left of the page, from src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk:8 and :16; fe-port-of-exit and fe-exit-date are the same shape. Second, each carries hint text that Design release 1's reveal does not: \"The country the consignment travels on to after Great Britain.\" (src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:5) and the leading sentence of \"The date the animals are expected to leave Great Britain. For example, 27/3/2026\" (src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:5) — text a field only needs once it has been stranded on a page with no surrounding question. Both reasons that ask two questions ask them in the opposite order to Design release 1's: Transit asks destination country and then port of exit, and Temporary admission horses asks port of exit and then exit date, because the four pages sit in one fixed sequence and every reason walks the same sequence.",
+    "prototype": "The reason page answers itself. Each importReason radio that has follow-up questions opens them inline underneath it as a conditional reveal, so the user reads the reason, chooses it, answers what it needs and presses Save and continue once (app/views/reason-for-import.html:47-62). Internal market opens the \"Purpose in the internal market\" question with its eleven radios; Transhipment or onward travel opens a Destination country select; Transit opens Port of exit and then Destination country; Temporary admission horses opens Exit date and then Port of exit; Re-entry opens nothing. No reveal carries a page heading, and only two of them carry any text beyond a field label: the internal-market reveal heads its radios with a medium fieldset legend reading \"Purpose in the internal market\", and the exit date carries the worked example \"For example, 27/3/2026\". The other three fields are a bare label over a select, because the radio's own hint above them already supplies the context.",
+    "difference": "Move the four questions onto the reason page as conditional reveals under the radio that requires them, and delete the four pages, the conditional exit-details task row and the four page-name headings that go with them. Nothing has to land first: the two sides already agree exactly on when each question applies, so no obligation changes. src/server/app/sets/live-animals/obligations/sections/import-reason.js gates purposeInInternalMarket on internalMarket (:43-56), destinationCountry on transit or transhipmentOrOnwardTravel (:66-79), portOfExit on transit or temporaryAdmissionHorses (:86-99) and exitDate on temporaryAdmissionHorses (:103-116), and Design release 1 reveals exactly the same four sets. Take each reveal's internal order from Design release 1 — port of exit then destination country under Transit, and exit date then port of exit under Temporary admission horses. Once the questions sit under their radio, drop the destination-country hint and the leading sentence of the exit-date hint, keeping the worked example \"For example, 27/3/2026\" that Design release 1 also shows.",
+    "falsifiedBy": "A conditional reveal opening under any importReason radio on the frontend. The captured DOM of fe-import-reason has no govuk-radios__conditional element at all and no aria-controls on any of the five radios; finding one would prove this wrong.",
+    "verification": "Read both rendered DOMs (capture/html/frontend/fe-import-reason.html, fe-import-reason-transit-selected.html, fe-import-purpose.html, fe-destination-country.html, fe-port-of-exit.html, fe-exit-date.html and capture/html/prototype/dr1-reason-for-import.html plus its four revealed states) and opened the fe-import-reason-transit-selected, dr1-reason-for-import-transit-revealed and dr1-reason-for-import-temporary-admission-revealed screenshots. Ran the falsifier: grep for govuk-radios__conditional returns 0 hits on fe-import-reason and 4 on dr1-reason-for-import, and no frontend radio carries aria-controls. Re-read flow.js:49-57, task-rows.js:34-39 and every cited obligation line range; all resolve to what the sentence says. Rubric 2 (overstatement) and rubric 5 (missing finding) fired — see correction.",
+    "correction": "Two things were claimed more broadly than the evidence supports and both slots have been fixed. (1) The prototype slot said \"The four reveals carry no page heading and no field hint of their own.\" The exit-date reveal does carry a hint — dr1-reason-for-import-temporary-admission-revealed.html:1067-1077 renders the label \"Exit date\" over the hint \"For example, 27/3/2026\", and the screenshot shows it — and the internal-market reveal carries a medium fieldset legend, \"Purpose in the internal market\" (:306-310). The rest of the claim holds: no reveal has a page heading and the three select fields carry a label only. This matters to the work, because the difference in the exit-date hint is the leading sentence alone, which the frontend slot already said correctly. (2) The order claim named Transit only. Temporary admission horses is reversed too: Design release 1 asks exit date and then port of exit (labels at :1067 and :1146), while the frontend's fixed page sequence gives port of exit before exit date (flow.js:54-55). Both slots now say so. Nothing else in the finding changed. \"importReason\" was added to controls so the crop resolves on the Design release 1 side as well, where the radio group is named importReason rather than reasonForImport."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:49-57",
+    "prototype": "app/views/reason-for-import.html:47-62"
+  },
+  "relatedTo": [
+    {
+      "id": "import-reason--purpose-and-exit-date-can-be-skipped",
+      "relation": "travels-with",
+      "why": "The two questions that can be skipped are two of the four this finding moves onto the reason page, and Design release 1 enforces them there."
+    }
+  ]
+}

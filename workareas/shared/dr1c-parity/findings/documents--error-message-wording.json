@@ -1,0 +1,29 @@
+{
+  "slice": "documents",
+  "title": "The upload form's validation messages are worded differently from Design release 1's for the date of issue, the missing file and an unreal date",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents-error", "dr1-upload-documents-errors"],
+  "controls": ["accompanyingDocumentDateOfIssue", "file"],
+  "finding": {
+    "frontend": "Submitting the form empty raises three messages, shown in the error summary and again against each field: \"Enter a document reference\", \"Enter the date of issue\" and \"Select a file to upload\". A date that is not a real date raises \"Enter a real date of issue\". The wording is at src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:66-71.",
+    "prototype": "The same three empty-form messages read \"Enter a document reference\", \"Enter a date of issue\" and \"Upload a document\", and an unparseable date raises \"Enter a real date\" (app/routes.js:9124-9147). Only the reference message matches the frontend's word for word; the other three differ.",
+    "difference": "Bring three messages into line at src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:66-71: dateRequired becomes \"Enter a date of issue\", fileRequired becomes \"Upload a document\", and dateInvalid becomes \"Enter a real date\". Each is used in both the error summary and the field message, so one edit each fixes both places. Copy only, with no dependency. Note that the file message changes shape as well as wording — Design release 1 tells the trader what to do (\"Upload a document\") rather than what to select — so check any test asserting the old string.",
+    "falsifiedBy": "Finding the strings \"Enter a date of issue\", \"Upload a document\" or \"Enter a real date\" in the captured DOM of fe-documents-error. Its error summary lists \"Enter a document reference\", \"Enter the date of issue\" and \"Select a file to upload\".",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents-error.html: none of the three DR1 strings appears; the summary lists \"Enter a document reference\", \"Enter the date of issue\" and \"Select a file to upload\", each repeated as a field message. Read the DR1 side at capture/html/prototype/dr1-upload-documents-errors.html, whose summary reads \"Enter a document reference\", \"Select a document type\", \"Enter a date of issue\" and \"Upload a document\". Confirmed both sources at the cited lines — copy.en.js:66-71 and app/routes.js:9116-9152, where the unparseable-date branch raises \"Enter a real date\". Opened both screenshots. CORRECT.",
+    "correction": "The claim stands as written; one citation is a shade short. The prose cites app/routes.js:9124-9147 for all four DR1 messages, and that range covers the document-type and date-of-issue branches but stops just before the attachment branch, where \"Upload a document\" is actually raised at :9146-9152. The line numbers were not nudged, because the finding they support is right and the range is the correct starting point for anyone reading the validator."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:66-71",
+    "prototype": "app/routes.js:9124-9147"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--document-type-not-asked",
+      "relation": "travels-with",
+      "why": "The document-type field brings a fourth message, \"Select a document type\", into the same copy file."
+    }
+  ]
+}

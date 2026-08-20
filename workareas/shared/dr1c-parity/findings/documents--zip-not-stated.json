@@ -1,0 +1,29 @@
+{
+  "slice": "documents",
+  "title": "Design release 1 tells a trader that ZIP files are not allowed and why; the frontend refuses them silently and gives a message that never mentions ZIP",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "dr1-upload-documents"],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The file-requirements hint says nothing about archives. It has two bullets — a size and a list of accepted types — and the word ZIP appears nowhere on the page. A ZIP file is in fact refused, because the accepted types are an allow-list of eight extensions (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:3-18) applied both as the file input's accept attribute and as a server-side check, but the trader who tries one is told only \"The selected file must be a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\". Somebody who has zipped several certificates together to save uploads is left to infer the rule and is given no reason for it.",
+    "prototype": "The fourth bullet of the file-requirements hint reads \"ZIP files are not allowed for security reasons\" (app/views/upload-documents.html:169), stated before the trader chooses a file and giving the reason as well as the rule.",
+    "difference": "Add \"ZIP files are not allowed for security reasons\" as a bullet in the file-requirements hint, in src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js beside the existing file hint keys at :11-16 and rendered from src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48. Copy only — the behaviour is already correct, since the allow-list already excludes ZIP.",
+    "falsifiedBy": "Finding the string \"ZIP\" anywhere in the captured DOM of fe-documents. It does not appear, in the hint, the accept attribute or the error copy.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents.html and fe-documents-populated.html, case-insensitively: zero occurrences of zip on either page. Read upload-config.js:3-18 and confirmed the allow-list is eight extensions with no archive type, and the rendered accept attribute is \".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\", so a ZIP is genuinely refused. Read app/views/upload-documents.html:169 on the DR1 side — root view, fourth bullet, \"ZIP files are not allowed for security reasons\" — and saw it on the dr1-upload-documents screenshot. CORRECT.",
+    "correction": "The claim stands. Recorded because it is the obvious merge candidate and the answer is no: this and documents--jpg-not-listed both edit the same hint list, but they are two different changes — this one adds a new copy string that has no source today, and the other changes how an existing string is derived (from de-duplicated MIME types to the extension list at upload-config.js:28-36). Merging them would hide the second mechanism inside a copy ticket."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48",
+    "prototype": "app/views/upload-documents.html:169"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--jpg-not-listed",
+      "relation": "travels-with",
+      "why": "Both change bullets in the same file-requirements hint on the same control."
+    }
+  ]
+}

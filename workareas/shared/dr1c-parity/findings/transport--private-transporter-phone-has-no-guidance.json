@@ -1,0 +1,28 @@
+{
+  "slice": "transport",
+  "title": "Frontend asks a private transporter's \"Telephone number\" with no guidance; Design release 1 asks for a \"Phone number\" and tells the user to include the country code for international numbers",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private"],
+  "controls": ["telephoneNumber", "transporterPrivatePhone"],
+  "finding": {
+    "frontend": "The field is labelled \"Telephone number\" and carries no hint at all (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:110, rendered at src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-81). Nothing on the page tells the user what to do about a transporter based outside the UK, which is the common case here — the country field on the same form offers thirty-one countries besides the United Kingdom — and the validator accepts up to twenty characters with no format guidance either (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:130).",
+    "prototype": "The field is labelled \"Phone number\" and hinted \"For international numbers include the country code\" (app/views/partials/transporter-add-private-fields.html:100-103). Design release 1 uses the same label and the same hint on its commercial transporter form, so it is a consistent rule rather than a one-off.",
+    "difference": "Change the label on the private transporter's phone field from \"Telephone number\" to \"Phone number\" and add the hint \"For international numbers include the country code\" beneath it. The validation error text that names the field has to follow the label, so \"Enter a telephone number\" and \"Telephone number must be 20 characters or less\" become the phone-number wording as well.",
+    "falsifiedBy": "Finding a hint about international dialling codes anywhere on the frontend's private transporter form in the captured rendered DOM of fe-transporter-private.",
+    "verification": "Read both captured DOMs and both screenshots. capture/html/frontend/fe-transporter-private.html labels the field \"Telephone number\" and its input carries no aria-describedby and no sibling govuk-hint; capture/html/prototype/dr1-transporter-add-private.html labels it \"Phone number\" and hints it \"For international numbers include the country code\" through #transporter-private-phone-hint. Ran the falsifier: the string \"country code\" appears nowhere in the frontend page. Checked the two source citations at the cited lines: copy.en.js:110 is telephoneNumber: 'Telephone number' and copy.en.js:130 is telephoneMaxLength: 'Telephone number must be 20 characters or less', both as quoted. Confirmed the claim that Design release 1 uses the same label and hint on its commercial form — capture/html/prototype/dr1-transporter-add-commercial.html carries the identical pair — so it is a rule rather than a one-off. Both named controls are unique on their own pages, so both crop. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:73-81",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:100-103"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-contact-details-not-grouped",
+      "relation": "travels-with",
+      "why": "Both change the contact block at the foot of the same form."
+    }
+  ]
+}

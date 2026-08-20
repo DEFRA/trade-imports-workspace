@@ -1,0 +1,22 @@
+{
+  "slice": "documents",
+  "title": "Design release 1 lets a trader drop a document onto the page and shows which file is chosen; the frontend offers only the browser's own file button",
+  "domain": "documents",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "dr1-upload-documents"],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The file control is a bare input rendered by the standard file-upload component with no JavaScript enhancement (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58). What the trader sees on fe-documents is whatever the browser draws for a file input — on the capture, a small grey \"Choose File\" button with \"No file chosen\" beside it, in the browser's own type rather than the service's. There is no drop target, so a file cannot be dragged onto the page, and the chosen filename is shown only in the browser's own text beside the button.",
+    "prototype": "The control is a dashed-outline drop zone occupying the width of the card. Inside it a status line, in a highlighted band and marked aria-live=\"polite\", reads \"No file chosen\" until a file is picked and then reads the file's name; below that a styled \"Choose file\" button sits beside the words \"or drop file\" (app/views/upload-documents.html:172-179). A trader can drag a document from their desktop onto the zone, and either way the page itself tells them which file they are about to upload.",
+    "difference": "Turn on the JavaScript-enhanced file upload for this control. The frontend is on govuk-frontend 6.3, whose file upload component provides exactly this behaviour — a drop zone, a \"Choose file\" button, the words \"or drop file\" and a live region naming the chosen file — when the component is asked for it and its JavaScript is initialised. That is a change to the govukFileUpload call at src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58 plus initialising the component in the page's client bundle at src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js. Design release 1 hand-built the same thing in the prototype's own markup, so the requirement is the behaviour, not the bespoke classes; the design-system component satisfies it and should be used instead of rebuilding one.",
+    "falsifiedBy": "Finding a drop target, or any element carrying the text \"or drop file\", in the captured DOM of fe-documents. Its file control is a single input.govuk-file-upload with no surrounding wrapper and no live region.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents.html: zero occurrences of \"or drop file\", and the control is one bare input.govuk-file-upload#file with no wrapper, no button, no status element and no aria-live region. Opened fe-documents.png and dr1-upload-documents.png side by side — the frontend shows the browser's own \"Choose File / No file chosen\" pair in the browser's font, DR1 shows a dashed-outline zone with a highlighted \"No file chosen\" band above a \"Choose file\" button and the words \"or drop file\". Checked the difference slot's claim about the design system rather than taking it on trust: govuk-frontend 6.3 is the pinned dependency (package.json:82) and the component in this repo's own node_modules ships the exact behaviour — file-upload.mjs defaults carry chooseFilesButton \"Choose file\", dropInstruction \"or drop file\" and noFileChosen \"No file chosen\", it creates an aria-live=\"polite\" status element and binds drop, dragenter and dragleave; the macro gates all of it on the javascript option (macro-options.json:129). The client bundle entry the slot names, documents/client/index.js, exists. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58",
+    "prototype": "app/views/upload-documents.html:172-179"
+  },
+  "relatedTo": []
+}

@@ -1,0 +1,39 @@
+{
+  "slice": "hub",
+  "title": "The frontend locks all but one hub task behind the answers before it, while Design release 1 lets a user start any task on the notification in any order",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["What are you importing?"],
+  "finding": {
+    "frontend": "On a brand new notification the hub lists eleven tasks and exactly one of them can be opened. \"Where is this consignment coming from?\" is a link tagged \"Not yet started\"; the other ten rows are plain text with the grey status \"Cannot start yet\" and carry no link at all, so the hub offers no way into them. Answering the origin questions unlocks precisely one more row — on fe-hub-part-answered \"What are you importing?\" has become a link and every row below it still reads \"Cannot start yet\", including \"Arrival details\", \"Upload documents\" and \"Contact address\", none of which depends on the origin answers. The hub decides this per row: src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:120-122 renders an open row or a blocked one according to whether the first page in the row passes its gate, and the gate is that page's prerequisites at src/server/app/flow/gates.js:23-32.",
+    "prototype": "Every task on the hub is a link from the moment the notification is created, and every one carries the same status, \"To do\". A user can open \"Upload documents\", \"Roles and addresses\" or \"Contact address for this consignment\" before saying anything about the consignment, and can come back to \"Main reason for import\" afterwards. Design release 1 renders each row as an unconditional link (app/views/notification-hub.html:60-73) and offers no locked state and no \"cannot start\" wording anywhere on the page.",
+    "difference": "Drop the row gating on the hub so every task row renders as a link with a real status from the moment the notification exists, and retire the \"Cannot start yet\" status the hub uses for a blocked row. The gate to remove is the one the hub itself consults: rowGatePasses tests the row's first page against the per-page prerequisites at src/server/app/flow/gates.js:23-32 (src/server/app/flow/navigation.js:25), and the hub renders an open or a blocked row on that answer. The change does not stop at the hub, but the work is smaller than it looks in one respect and larger in another. Smaller, because nothing has to be unblocked at the route: no request handler consults those prerequisites, the only pre-handler guard being the deep-link entry guard at src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:45-57, so the pages already admit a direct visit. Larger, because that is exactly why they have never had to cope: each page behind an unlocked row has to render and save sensibly when the pages that currently precede it have not been answered. Where a page genuinely cannot be answered until something else is known — the animal identifiers need a commodity — Design release 1's answer is to leave the row out of the list until it applies, not to show it locked; that is its own finding, hub--identification-row-shown-before-it-applies.",
+    "falsifiedBy": "Finding a second link on the frontend's hub for an unanswered notification. The captured DOM of fe-hub carries exactly one element with class govuk-task-list__link and ten rows carrying govuk-task-list__status--cannot-start-yet.",
+    "verification": "Read all four rendered DOMs whole and opened all four screenshots. Ran the falsifier as counts: grep -c govuk-task-list__link on fe-hub.html returns 1 and grep -c cannot-start-yet returns 10, so eleven rows with one link is exact. Checked the part of the claim that is easiest to get wrong — that answering origin unlocks only one more row: fe-hub-part-answered.html has the origin row green and \"Completed\", \"What are you importing?\" now an anchor tagged \"Not yet started\", and every one of the remaining nine rows still a bare div reading \"Cannot start yet\", Arrival details, Uploaded documents and Contact address among them. On the Design release 1 side app/views/notification-hub.html:60-73 renders every item as an unconditional anchor, and the captured base hub has ten anchors and ten \"To do\" tags with no locked wording anywhere. Followed the journey rather than stopping at the markup, as the rubric requires — see correction. Rubric 2 fired on two sentences; the finding itself is confirmed.",
+    "correction": "The finding stands and was not weakened. Two sentences were stated more strongly than the code supports and both have been narrowed. (1) The frontend slot said the locked rows mean \"a user cannot open them\". True of the hub, and that is what a user meets, but not true of the service: the frontend has one pre-handler guard, the deep-link entry guard at src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:45-57, which only bounces a journey that this session never started and that holds no answers, and nothing else consults the page prerequisites on a request. This run's own frontend review capture depends on that — it reaches fe-check-answers-incomplete by a direct GET on /notification-view from a half-answered journey. The slot now says the hub offers no way into them, which is the claim the evidence carries. (2) The difference slot said the per-page prerequisites \"have to allow direct entry as well\", which reads as though they currently block it. They do not: pageGatePasses is read by the hub's row gate (src/server/app/flow/navigation.js:25), the opening-run targets (src/server/app/sets/live-animals/journeys/linear/flow/run.js:13-14) and the within-section next target (src/server/app/flow/navigation.js:27-37), and by no route handler. The slot now says what actually has to change: the hub's row gate goes, and the pages have to render and save sensibly when their predecessors are unanswered — which is a real cost, just not the one that was named."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:103-123",
+    "prototype": "app/views/notification-hub.html:60-73"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--status-tag-wording",
+      "relation": "travels-with",
+      "why": "The \"Cannot start yet\" status only exists because rows are locked; removing the lock removes that status word too."
+    },
+    {
+      "id": "hub--no-review-and-submit-button",
+      "relation": "travels-with",
+      "why": "Review is the row most affected by the lock — it is unreachable from the hub until every other section is complete."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "slice": "documents",
+  "title": "Design release 1 puts the add-a-document form and the list of documents added inside one bordered \"File upload\" panel; the frontend runs both straight down the page with nothing separating them from the page's own buttons",
+  "domain": "documents",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "fe-documents-populated", "dr1-upload-documents", "dr1-upload-documents-populated"],
+  "controls": [{ "kind": "label", "text": "File upload" }],
+  "finding": {
+    "frontend": "There is no sub-heading and no grouping anywhere on the page. The three fields, the \"Save and add another\" button, the table of documents already added and the page's own \"Continue\" and \"Save and return to hub\" buttons all sit in one flat column with only white space between them (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-92). On fe-documents-populated the effect is that \"Save and add another\" and \"Continue\" are two grey-and-green button rows a few centimetres apart with a table between them, and nothing on the page says which one applies to the file the trader has just chosen.",
+    "prototype": "Everything to do with adding a document sits inside a bordered panel headed \"File upload\" — a grey title bar carrying that heading, then the four fields, then \"Save and add another\", then the table of documents already added, all within the border (app/views/upload-documents.html:92-96 opens the panel and its heading). The page's own \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\" sit outside and below it, so the boundary between adding one document and finishing with the page is drawn on the screen.",
+    "difference": "Group the add-a-document form and the saved-documents table inside one panel headed \"File upload\", with the page-level save actions outside it, in src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk. The heading is new user-facing copy and belongs in src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js. Design release 1 draws the panel with prototype-only classes; build it from what the design system already offers rather than reproducing those class names, and keep the reading order — fields, add button, table — exactly as it is.",
+    "falsifiedBy": "Finding the words \"File upload\", or any element that visually encloses both the form fields and the saved-documents table, in the captured DOM of fe-documents-populated. The only headings on that page are the h1 and the date picker's own dialog title.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents-populated.html: zero occurrences of \"File upload\", and no element wraps the fields and the table together — they are consecutive children of the one form, with the page's own button group following them. Read the DR1 side at capture/html/prototype/dr1-upload-documents-populated.html, where section.app-upload-documents-card opens with h2#file-upload-heading \"File upload\" and closes after the saved table, and the Save and continue / Save and return to overview / Cancel group sits outside it — the source is app/views/upload-documents.html:92-96 for the panel and :239-262 for the actions. Opened both screenshots and the grouping is unmistakable: DR1 draws a grey title bar and a full border, the frontend draws nothing. CORRECT.",
+    "correction": "The claim stands; the falsifier's parenthetical is one item short. fe-documents-populated carries three h2 elements, not two: the date picker's dialog title, and the footer's visually hidden \"Support links\". Both are chrome, neither is a sub-heading of the page content, and the finding is unaffected."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-92",
+    "prototype": "app/views/upload-documents.html:92-96"
+  },
+  "relatedTo": []
+}

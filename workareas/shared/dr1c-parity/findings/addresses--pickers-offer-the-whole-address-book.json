@@ -1,0 +1,41 @@
+{
+  "slice": "addresses",
+  "title": "Frontend offers the trader's entire address book on all six address pickers; Design release 1 offers only the addresses saved for that role, and only branch addresses for the contact",
+  "domain": "addresses",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignee",
+    "fe-contact",
+    "dr1-consignment-address-select",
+    "dr1-consignment-address-select-consignee",
+    "dr1-contact-address-for-consignment"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "All five party pickers and the contact-address page draw from one undifferentiated list. Every captured picker reports \"Showing 5 of 13 addresses\" and every one of them offers the same thirteen records in the same order, whether the trader is choosing a place of origin abroad or a consignee in Great Britain — the place-of-origin picker and the consignee picker both lead with Astra Rosales in Switzerland, Tech Imports Ltd in London and Origin Farm in Ireland. The contact-address page lists the same book again, all thirteen as radios (src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js:69-75, which calls `addressBook.all`). This is deliberate: the address-book service states that addresses have no type, because the same record may be a consignor on one notification and a consignee on the next, and so no function it exposes takes a role (src/server/app/services/address-book/index.js:12-15). The consequence for the trader is that every picker asks them to find the right kind of address in a list that is mostly the wrong kind, with nothing on the page marking which is which.",
+    "prototype": "Design release 1 types every saved address and filters each picker to its type. Place of origin offers nine foreign farms, consignor nine, consignee six Great Britain importers, importer six, place of destination three — different lists, from the same book, with the section's own type deciding what appears (app/routes.js:3457-3466 and app/routes.js:3520-3543). The types are the trader's own: saving an address begins by asking \"What is the new address for?\" over Place of Origin, Consignor, Consignee, Importer, Place of Destination, Transporter and, after a divider, Branch Address (app/data/address-book-address-types.js:1-38). The contact address is the Branch Address type, held as its own list of the organisation's branches (app/data/contact-addresses.js:1-21), which is why Design release 1's contact page says \"add a new branch address\" rather than \"add an address\".",
+    "difference": "Give a saved address one or more roles and filter each picker by the role it is asking for, including the contact page, which asks only for a branch address. The frontend cannot do this alone: its address-book service reads a book that carries no type at all and exposes no role-aware call (src/server/app/services/address-book/index.js:12-19), so the address-book API — the Standard Address Block records in trade-imports-address-book — has to carry the type first, and whichever service writes those records has to collect it. Decide it together with the address-book scope question raised as address-book--saved-address-book-pages-absent, because the type is collected on the add form that question is about. Until the type exists, no useful half of this can ship: filtering on a guess, such as matching the country against the direction of travel, would hide addresses the trader legitimately wants. `controls` is deliberately empty: what differs is which rows are in the table, so the whole table on each of two pickers is the shot, and the only named control on those rows, `party`, occurs once per row and would be refused a crop.",
+    "falsifiedBy": "Finding two frontend pickers whose captured lists differ. All five report \"Showing 5 of 13 addresses\" and the first five rows of fe-address-picker-place-of-origin, fe-address-picker-consignee, fe-address-picker-consignor-or-exporter, fe-address-picker-importer and fe-address-picker-place-of-destination are identical.",
+    "verification": "Ran the falsifier across all captured pickers: grep for the caption in capture/html/frontend returns \"Showing 5 of 13 addresses\" on all eight picker files, and the row labels on the place-of-origin, consignor and place-of-destination pickers are the same five in the same order — Astra Rosales, Tech Imports Ltd, Origin Farm, British Livestock Ltd, Import Co UK. Read the count out of each requirements-side picker's data-results-total and got 9, 9, 6, 6 and 3 for place of origin, consignor, consignee, importer and place of destination, exactly the figures the finding quotes. Followed the filtering to its source rather than inferring it from the counts: getConsignmentAddressesForSection at app/routes.js:3520-3543 filters through addressMatchesConsignmentSection at :3457-3466, which reads the address's own types. Confirmed the contact list is its own three-branch fixture at app/data/contact-addresses.js:1-21 (Aberdeen, Bristol, Cardiff) against the thirteen radios rendered in fe-contact.html, and that the Branch Address type carries the same sentence at app/data/address-book-address-types.js:36-38. Applied the contract's own fixture test rather than taking needs-backend on trust: the real address-book client maps the wire record field by field at src/server/app/services/address-book/client.js:49-65 and it carries no type, role or category, and listAddresses takes only page and query (:70-75), so swapping the stub for real data leaves the difference exactly where it is. Opened the picker and contact shots on both sides. Rubric 4 fired across the slice boundary — see correction. CORRECT.",
+    "correction": "The claim stands, and the case for needs-backend is stronger than the finding puts it. Frontend's own party table already carries a role per party — role: 'placeOfOrigin', 'consignor', 'consignee', 'importer', 'destination' at src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:20-57 — and the picker deliberately does not use it: src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:35 carries the comment \"One book for every role — addresses have no type (D3)\". So the missing half really is the type on the record rather than the role on the page, which is what puts this behind the address-book contract. FOR THE CROSS-SLICE SWEEP, and this is the substantive point: address-book--picker-lists-every-saved-address-regardless-of-role is the same change as this one. Same claim, same band, same root cause, overlapping screens. It is one increment and should be one finding. This is the fuller statement of the two — it covers all five pickers plus the contact-address page and the Branch Address type, where the other covers two pickers and stops at the party list — and it sits in the domain the contract gives the party pickers to (addresses: \"the party list, the five party pickers, the CPH number, the permanent address of the animals, and the contact address for the consignment\"), whereas address-book is defined as the saved book \"as a thing in its own right — list, add, lookup, view and edit\". On that reading this one survives and the other is struck. I have not struck it: it is another slice's file and the sweep is the parent's, not a verifier's."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/address-book/index.js:12-19",
+    "prototype": "app/data/address-book-address-types.js:1-38"
+  },
+  "relatedTo": [
+    {
+      "id": "address-book--saved-address-book-pages-absent",
+      "relation": "travels-with",
+      "why": "The type this finding needs is collected on the add form that finding is about, so both turn on the same scope decision."
+    },
+    {
+      "id": "address-book--picker-lists-every-saved-address-regardless-of-role",
+      "relation": "same-change-as",
+      "why": "The two findings describe one increment — typing saved addresses and filtering each picker by the role it asks for. Raised in two slices independently. This one is the fuller statement and sits in the domain that owns the party pickers; the cross-slice sweep should keep one."
+    }
+  ]
+}

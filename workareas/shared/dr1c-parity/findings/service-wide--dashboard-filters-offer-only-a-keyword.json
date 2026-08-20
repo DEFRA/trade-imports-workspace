@@ -1,0 +1,34 @@
+{
+  "slice": "service-wide",
+  "title": "The dashboard can only be filtered by keyword; Design release 1 also filters by commodity, consignee, status and a date range",
+  "domain": "dashboard",
+  "type": "add-section",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-search-no-results",
+    "fe-dashboard-populated",
+    "dr1-dashboard-filters-open",
+    "dr1-dashboard"
+  ],
+  "controls": [{ "kind": "label", "text": "Filter notifications" }],
+  "finding": {
+    "frontend": "The filter panel beside the notification list holds one field, \"Keyword or reference\", and a \"Search\" button (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56). Submitting it sets a referenceNumber query parameter, which is the only filter the dashboard controller reads (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:54-59). A trader with a long list cannot narrow it to one commodity, one consignee, one status or one week.",
+    "prototype": "Design release 1's panel is labelled \"Filter notifications\" and holds three collapsible sections (app/views/dashboard.html:83-228). \"Search by\" holds three text fields: \"Keyword or notification number\", \"Commodity code or name\" and \"Consignee/Importer\". \"Status\" holds a select offering Draft, Submitted, In progress, Approved, Action required, Rejected and Complete. \"By date\" holds a radio group of Today, Tomorrow and Next seven days, then a \"Select date range\" pair of date pickers labelled \"Start date\" and \"End date\" under the hint \"For example, 27/3/2026\". The three sections are closed when the page loads and none carries a submit button of its own.",
+    "difference": "Build the panel as three collapsible sections and add the filters the design lists: commodity, consignee, status and a date range with the three shortcut radios. The design does not say which date the range filters on — the section is headed \"By date\", its visually hidden legend reads \"Choose a date range\" and the fields are \"Start date\" and \"End date\" — so that has to be settled before the filter can be applied; the shortcuts Today, Tomorrow and Next seven days point at a future date, which on a notification is the arrival date, but the design does not state it. Rename the existing field to \"Keyword or notification number\" as the design has it. Each new filter needs the list endpoint to accept and apply it — the persistence layer's list query today takes page, sort and referenceNumber only (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:54-59) — so the query contract has to grow before any of these can do anything. Take the status list from the notification statuses this service actually has rather than copying the design's seven, which are a fixture; the frontend today renders Draft, Submitted, Amending and Deleted (src/server/app/shared/copy.en.js:47-51), so which set is right is a question for the same conversation. Whether the panel keeps a submit button is recorded separately under service-wide--dashboard-sort-needs-an-update-button.",
+    "falsifiedBy": "Finding a commodity, consignee, status or date field in the captured DOM of any frontend dashboard screen.",
+    "verification": "Ran the falsifier: the only input in the frontend dashboard's filter aside is referenceNumber, labelled \"Keyword or reference\", with a \"Search\" button — no commodity, consignee, status or date field on any of the seven dashboard captures. Read app/views/dashboard.html:83-228 in full and confirmed every field the prototype slot lists, including the status select's items at :151-160 (Select one, Draft, Submitted, In progress, Approved, Action required, Rejected, Complete) and the By date block at :165-226. Extracted the rendered <option> list from dr1-dashboard.html and it matches. Read src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56 and controller.js:53-59, where the list query is built from page, sort and referenceNumber only. Opened evidence/prototype@491b3926/page/dr1-dashboard-filters-open.png with all three sections expanded and evidence/frontend@76a864ba/page/fe-dashboard-populated.png.",
+    "correction": "The finding stands; two things are sharpened. The title and the difference slot called the range an \"arrival date\" range, which the design does not say — it labels the section \"By date\" and its hidden legend \"Choose a date range\" — so both now say \"a date range\" and the difference records that which date it filters on is undecided. And the prototype slot's \"none carries a submit button of its own\" understates the position: dr1-dashboard.html contains exactly one <form>, the results toolbar carrying the sort select, and the filter panel's inputs sit outside it, so nothing in that panel can be submitted by any means at all. That is context for the disputed sibling finding about the Update sort button, not a change to this one."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-56",
+    "prototype": "app/views/dashboard.html:83-228"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--dashboard-sort-orderings-differ",
+      "relation": "travels-with",
+      "why": "Both change the same toolbar and both need the list query to accept new parameters."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "slice": "transport",
+  "title": "Frontend crams the four things that identify a means of transport into one semicolon-separated sentence; Design release 1 sets them out as a bulleted list",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-arrival-details", "dr1-arrival-details"],
+  "controls": ["transportIdentification"],
+  "finding": {
+    "frontend": "The hint under \"Transport identification\" is one sentence three lines long: \"To identify the means of transport, enter (one of the following): flight number; train number; road vehicle registration number; vessel name (for ferries, also the road vehicle registration number)\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:26, rendered as a plain hint at src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:41-48). The four alternatives are separated only by semicolons, and the last one carries its own parenthesis, so a reader has to parse punctuation to see that there are four choices and to see where the fourth one ends.",
+    "prototype": "The same hint is a lead-in sentence, \"To identify the means of transport, enter (one of the following):\", followed by a bulleted list of four items — flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number) (app/views/arrival-details.html:128). Each alternative sits on its own line and the number of choices is visible without reading.",
+    "difference": "Split the transport identification hint into a lead-in sentence and a four-item bulleted list, keeping the wording of the items exactly as it is. The frontend's hint is currently a single string in copy, so the copy entry has to become a lead sentence plus a list of items and the template has to render the list rather than pass a bare string to the hint's text.",
+    "falsifiedBy": "Finding a bulleted list inside the frontend's transport identification hint in the captured rendered DOM of fe-arrival-details.",
+    "verification": "Read both captured DOMs and both screenshots. capture/html/frontend/fe-arrival-details.html renders #transportIdentification-hint as one text node with semicolons and no list markup; capture/html/prototype/dr1-arrival-details.html renders #transport-identification-hint as a <p> lead-in plus a <ul class=\"govuk-list govuk-list--bullet\"> of exactly the four items the finding names, in that order. Ran the falsifier: no <ul> and no <li> inside the frontend's hint. The wording of the four alternatives is identical between the sides, so the change really is list-versus-run-on and nothing else. name=\"transportIdentification\" is unique on both pages, so the crop resolves. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:26",
+    "prototype": "app/views/arrival-details.html:128"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "slice": "transport",
+  "title": "Frontend lists each transporter as a radio with one run-on line of address and approval number; Design release 1 lists them in a table that also shows each transporter's type and approval status",
+  "domain": "transport",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-commercial", "dr1-transporter"],
+  "controls": ["commercialTransporter", "transporterId"],
+  "finding": {
+    "frontend": "Each transporter is one radio. Its label is the transporter's name and its hint is a single sentence built by joining the address lines with commas and appending the approval number after an em dash — \"43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland — approval number ES-T2-45001294\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:92-93, built at src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js:55-65). Name, address and approval number are the only three facts shown, they are not aligned into columns, and nothing tells the user whether a transporter is approved. The underlying records carry nothing else to show: each holds an id, a name, an approval number and an address, and no type and no status (src/server/app/services/commercial-transporters/records.js:7-29).",
+    "prototype": "Each transporter is a table row under headed columns — Name, Address, Approval number, Type and Status — with the selection radio in a leading column and a \"View details\" link in a trailing one (app/views/transporter.html:117-152). Type reads Commercial or Private. Status is a coloured tag: a green \"Approved\" on six of the eight rows and a pink \"New\" on Romanian Agri Exports SRL and Finnish Livestock Oy, which tells a user at a glance that a transporter has been added but not yet approved.",
+    "difference": "Render the transporter list as a table with a radio per row and columns for Name, Address, Approval number, Type and Status, and show the approval status as a tag. The type and the status are facts about a transporter that the frontend does not currently hold, so the local list at src/server/app/services/commercial-transporters/records.js:7-29 has to gain both fields; that is a change inside the frontend's own fixture, not a new service. Type only carries meaning once the list holds both commercial and private transporters, so schedule this after the flow change that combines them. Design release 1's \"View details\" link opens the transporter as an address-book record; whether the frontend has anywhere for that link to go is the address-book slice's question, not this one, so build the columns and leave the link out until that is settled.",
+    "falsifiedBy": "Finding an approval status or a transporter type rendered anywhere on fe-transporter-commercial in the captured rendered DOM.",
+    "verification": "Read both captured DOMs and both screenshots. Ran the falsifier against capture/html/frontend/fe-transporter-commercial.html: no govuk-tag anywhere in the main content, and no word \"Commercial\", \"Private\", \"Approved\" or \"New\" attached to either transporter — each is a radio whose label is the name and whose hint is the joined address plus \"— approval number …\", exactly as quoted. Counted the Design release 1 table in capture/html/prototype/dr1-transporter.html: eight rows under headers Name, Address, Approval number, Type and Status, with a leading radio column and a trailing View details link; six carry govuk-tag--green \"Approved\" and two carry \"New\" on Romanian Agri Exports SRL and Finnish Livestock Oy. Checked the tag colour rather than taking it on trust — app/assets/sass/application.scss:4227-4230 gives the New tag background #efdfed, which is the pink tag, so the description is right. Read src/server/app/services/commercial-transporters/records.js:7-29 at the cited lines: two records, each holding id, name, approvalNumber and address and nothing else, so the claim that the fixture carries no type and no status holds. Both named controls match several radios on their own pages, so both cards fall back to the whole page; that is right here, because the finding is about the shape of the whole list. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/services/commercial-transporters/records.js:7-29",
+    "prototype": "app/views/transporter.html:117-152"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transporter-type-asked-before-any-list",
+      "relation": "travels-with",
+      "why": "The Type column only distinguishes anything once the list carries both kinds of transporter."
+    }
+  ]
+}

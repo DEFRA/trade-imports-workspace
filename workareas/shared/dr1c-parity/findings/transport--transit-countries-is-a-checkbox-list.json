@@ -1,0 +1,26 @@
+{
+  "slice": "transport",
+  "title": "Frontend asks for the transit countries as one long checkbox list of every eligible country; Design release 1 has the user search for a country at a time and builds a table of the chosen ones, each with a Remove link",
+  "domain": "transport",
+  "type": "add-collection",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-transit-countries",
+    "fe-transit-countries-selected",
+    "dr1-transit-countries",
+    "dr1-transit-countries-selected"
+  ],
+  "controls": ["transitedCountries", { "kind": "label", "text": "Enter a country" }],
+  "finding": {
+    "frontend": "Below the same heading and the same two explanatory sentences, the page is a single checkbox fieldset legended \"Select all countries the consignment will travel through\", hinted \"Select up to 12 countries\", with one small checkbox per country running down the page (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:16-23). There is no way to search it, and once countries are ticked the only record of the choice is the ticks themselves, scattered down the list in alphabetical position — the page never gathers them together and there is nothing to remove a country with other than finding its box again.",
+    "prototype": "Below the identical heading and identical two sentences, the page asks one country at a time. A field labelled \"Enter a country\", hinted \"Enter each country that the consignment will travel through\", holds a search box placeholdered \"Search for a country\" with a magnifier button; picking a match adds that country and clears the box. The chosen countries then appear beneath, under a \"Country\" header, one per row, each with its own \"Remove\" link — in the captured state, France and Germany with a Remove beside each (app/views/transit-countries.html:58-136). Everything the user has chosen is visible in one short list they can act on.",
+    "difference": "Replace the transit-countries checkbox fieldset with a search-and-add control and a summary of what has been chosen. The user needs a search field labelled \"Enter a country\", hinted \"Enter each country that the consignment will travel through\", that matches against the country list and adds the picked country; and, under it, a list of the chosen countries headed \"Country\" with a Remove link on each row. The upper limit does not change — both services cap the selection at twelve — but the way it is communicated does, because Design release 1 has no room for a standing \"Select up to 12 countries\" hint and announces the limit only when the user reaches it. Design release 1 also announces each addition to assistive technology as it happens, so the new control needs a live region rather than only a visible row.",
+    "falsifiedBy": "Finding a search field, or a list of the chosen countries with a per-row remove control, in the captured rendered DOM of fe-transit-countries-selected.",
+    "verification": "Read all four captured DOMs and the frontend and Design release 1 selected-state screenshots. Ran the falsifier against capture/html/frontend/fe-transit-countries-selected.html: zero inputs of type=\"search\", zero occurrences of \"Remove\", and the only record of the choice is checked=\"\" on transitedCountries-10 (FR) and transitedCountries-11 (DE), sitting in alphabetical position among 32 boxes — the screenshot shows the same. capture/html/prototype/dr1-transit-countries-selected.html carries the search input placeholdered \"Search for a country\", the \"Country\" header row and two summary rows, France and Germany, each with its own Remove link. Checked the two claims in the difference slot that are not visible on either page: both services cap the selection at twelve — the frontend's hint says so and the prototype's app/assets/javascripts/transit-country-search.js:6 sets MAX_COUNTRIES = 12 — and Design release 1 announces the cap only on reaching it, through the aria-live region, at transit-country-search.js:210, :316 and :341. Also checked that neither side asks this question unconditionally: both gate it on rail or road transport, so no obligation difference is hiding under the control difference. The citation app/views/transit-countries.html:58-136 lands on exactly the block described. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:16-23",
+    "prototype": "app/views/transit-countries.html:58-136"
+  }
+}

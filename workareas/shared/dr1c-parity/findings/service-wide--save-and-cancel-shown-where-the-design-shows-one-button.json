@@ -1,0 +1,39 @@
+{
+  "slice": "service-wide",
+  "title": "Five journey pages end with a save-and-return button and a cancel link that Design release 1 does not show there, where the design ends the page with one button",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-origin",
+    "fe-cph-number",
+    "fe-contact",
+    "fe-transporter-type",
+    "fe-transporter-private",
+    "dr1-origin-of-the-import",
+    "dr1-cph-number",
+    "dr1-contact-address-for-consignment",
+    "dr1-transporter-add",
+    "dr1-transporter-add-private"
+  ],
+  "controls": ["Save and return to hub", "Cancel and return to hub"],
+  "finding": {
+    "frontend": "Every journey page that renders the shared save-actions macro gets all three of its controls, because the macro takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13): a primary \"Save and continue\", a secondary \"Save and return to hub\" and a \"Cancel and return to hub\" link. The two return controls appear together on 41 of the 67 captured frontend screens, and on every screen where either appears the other does too. So a user meets the same three-way choice at the foot of the origin page, the CPH number page, the contact-address page, the transporter-type page and the private-transporter page.",
+    "prototype": "Design release 1 shows the three-control pattern on 29 of its 60 captured screens and ends the other journey pages with a single button. On five pages that pair with frontend pages carrying the full set it shows one control and no way to leave: origin-of-the-import, cph-number and transporter-add-private end with \"Save and continue\" alone — the origin page's whole form-actions block is one button at app/views/origin-of-the-import.html:167-175 — and contact-address-for-consignment and transporter-add end with a button reading just \"Continue\". The private-transporter page is the one exception with a second control, and it is a third destination rather than the overview — a \"Cancel and return to dashboard\" link.",
+    "difference": "Stop rendering the secondary button and the cancel link on the five pages the design ends with one button, and leave the pattern intact on the pages that keep it. The macro at src/server/app/shared/save-actions.njk:3-13 renders all three unconditionally, so it needs a way to ask for the primary alone — a flag on the macro, read by the five feature templates — rather than five copies of a shortened button group. Two of the five also differ in the primary label, \"Continue\" against \"Save and continue\", and one carries a cancel link to the dashboard rather than the overview; those are copy on individual pages and belong with whoever picks up this change, not with the shared macro. Design release 1 states no rule for which pages carry the full pattern, so the design's own list is the specification: the five named here lose it and the rest keep it.",
+    "falsifiedBy": "Finding \"Save and return to overview\" or \"Cancel and return to overview\" in the captured DOM of dr1-origin-of-the-import, dr1-cph-number, dr1-contact-address-for-consignment, dr1-transporter-add or dr1-transporter-add-private.",
+    "verification": "Written and checked by the verifier, so a reader knows both were the same pass. Ran the falsifier: neither string occurs in any of those five prototype files. Listed both sides exhaustively — \"Save and return to hub\" is in 41 of the 67 frontend files and \"Cancel and return to hub\" in the same 41; \"Save and return to overview\" and \"Cancel and return to overview\" are each in 29 of the 60 prototype files — then walked every entry in pairs.cjs to find the pairs where the two sets disagree, which are the five named. Extracted the button text on each: fe-origin, fe-cph-number, fe-contact, fe-transporter-type and fe-transporter-private each carry all three, dr1-origin-of-the-import, dr1-cph-number and dr1-transporter-add-private carry \"Save and continue\", the last also carrying \"Cancel and return to dashboard\", and dr1-contact-address-for-consignment and dr1-transporter-add carry a submit button whose text is \"Continue\". Read src/server/app/shared/save-actions.njk:3-13 to confirm the macro has no way to suppress a control. Opened evidence/frontend@76a864ba/page/fe-origin.png and evidence/prototype@491b3926/page/dr1-origin-of-the-import.png, which show the difference plainly: three controls against one."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/save-actions.njk:3-13",
+    "prototype": "app/views/origin-of-the-import.html:167-175"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--save-and-cancel-buttons-name-the-hub",
+      "relation": "travels-with",
+      "why": "Both change the same three controls at the foot of a journey page — one what they say, the other which pages they appear on."
+    }
+  ]
+}

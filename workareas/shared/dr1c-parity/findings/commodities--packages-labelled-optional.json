@@ -1,0 +1,26 @@
+{
+  "slice": "commodities",
+  "title": "Frontend labels the package count \"Number of packages (optional)\"; Design release 1 labels it \"Number of packages (when required)\".",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [
+    { "kind": "label", "text": "Number of packages (optional)" },
+    { "kind": "label", "text": "Number of packages (when required)" }
+  ],
+  "finding": {
+    "frontend": "Each commodity line that asks for packages labels the field \"Number of packages (optional)\", with the hint \"Such as crates, bags or boxes\" beneath it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:32-35, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:24-34). \"(optional)\" is the GOV.UK convention for a field a user may always skip, so it tells the user the count never matters.",
+    "prototype": "The same field, in the same position, is labelled \"Number of packages (when required)\" with the same hint (app/views/consignment-details.html:116-129, from the per-commodity field definition at app/data/commodities.js:21-23). \"(when required)\" says the opposite thing about the same box: that there are circumstances in which the count has to be given.",
+    "difference": "Change the package-count label from \"Number of packages (optional)\" to \"Number of packages (when required)\" in the commodities copy file, and the same in the Welsh file beside it. Note what the label change does not settle: neither side validates the box for live animals today, so the wording is the only place a user is told anything about when the count matters. If \"when required\" turns out to mean a rule rather than a hint, that rule is a separate change and Design release 1 does not state it. Nothing has to land first.",
+    "falsifiedBy": "Design release 1 rendering \"(optional)\" for the package count on any live-animal commodity. Every non-germinal commodity that asks for packages defines the same single field with the same label string in app/data/commodities.js, so a differing label would prove this wrong.",
+    "verification": "Read both rendered DOMs — capture/html/frontend/fe-consignment-details.html renders \"Number of packages (optional)\" three times, once per commodity that asks for it, and capture/html/prototype/dr1-consignment-details.html renders \"Number of packages (when required)\" — and opened both 2x page shots, which show the two labels in the same position under the same hint. Ran the falsifier: app/data/commodities.js defines nine packagingFields entries and all nine carry the identical label and hint strings, with no \"(optional)\" anywhere in the file. Checked the finding's own caveat about validation by reading app/routes.js:900-932. CORRECT.",
+    "correction": "The claim stands and the falsifier does not fire. The caveat in the difference slot — that neither side validates the box for live animals — was checked rather than taken on trust and is right, for a reason worth recording: the requirements side does have a package-count validator, but it returns early for anything that is not a germinal product (app/routes.js:907-909), so it never runs for a live animal. The label is therefore the only place a user is told anything about when the count matters, exactly as the finding says. Naming both labels in the controls list is the right call here — one crops on each side."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:32-35",
+    "prototype": "app/data/commodities.js:21-23"
+  },
+  "relatedTo": []
+}

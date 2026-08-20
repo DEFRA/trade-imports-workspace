@@ -1,0 +1,33 @@
+{
+  "slice": "service-wide",
+  "title": "The dashboard's browser tab reads \"Import notification service | Import notification service\"; Design release 1 names the page \"Dashboard\"",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard",
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "The layout builds every page title as the page name, a pipe, then the service name (src/server/app/shared/layout.njk:17). The dashboard's page name is the service name — copy.title is \"Import notification service\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2), passed as pageTitle at src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:70 — so all seven captured dashboard screens have a title reading \"Import notification service | Import notification service\". A trader with several tabs open cannot tell the dashboard from any other page of the service, and a screen reader announces the service name twice.",
+    "prototype": "Design release 1 names the page \"Dashboard\" and shows the same word as the caption above the heading, while the heading itself stays \"Import notification service\" (app/views/dashboard.html:12). The tab reads \"Dashboard - Import notification service - GOV.UK\". Every other Design release 1 page names itself after what it asks, and none repeats the service name.",
+    "difference": "Give the dashboard a page name of its own — \"Dashboard\" — and keep the h1 as the service name, which is what the design does. That means separating the title passed as pageTitle at src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:70 from the heading rendered at src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:27, and adding a second key beside copy.title in src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2. The separator and the absence of a \"GOV.UK\" suffix are not in question; only the page name is.",
+    "falsifiedBy": "Finding a dashboard title that is not \"Import notification service | Import notification service\" in the captured DOM of any of the seven frontend dashboard screens.",
+    "verification": "Ran the falsifier: extracted <title> from all seven captured frontend dashboard files (fe-dashboard, -populated, -empty, -sorted, -deleted, -new-draft, -search-no-results) and every one reads \"Import notification service | Import notification service\". dr1-dashboard.html reads \"Dashboard - Import notification service - GOV.UK\". Read src/server/app/shared/layout.njk:17 (pageTitle, pipe, serviceName), the dashboard copy at copy/copy.en.js:2 and the controller at controller.js:70 where copy.title is passed as pageTitle, and app/views/dashboard.html:12 ({% set pageName = \"Dashboard\" %}). The empty controls array is right here: a <title> has no element to crop. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2",
+    "prototype": "app/views/dashboard.html:12"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--section-caption-missing-above-heading",
+      "relation": "travels-with",
+      "why": "Design release 1 uses the same word, \"Dashboard\", as the page name and as the caption above the heading."
+    }
+  ]
+}

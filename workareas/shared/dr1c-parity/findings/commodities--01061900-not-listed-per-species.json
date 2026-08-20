@@ -1,0 +1,29 @@
+{
+  "slice": "commodities",
+  "title": "For commodity code 01061900 Design release 1 lists each chosen species as its own removable row in Selected commodities; Frontend gives the commodity one row and one Remove that drops every species under it.",
+  "domain": "commodities",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [{ "kind": "label", "text": "Selected commodities" }],
+  "finding": {
+    "frontend": "The Selected commodities table carries one row per commodity, whatever was chosen inside it. The captured page shows \"01061900 / Dog / Remove\" as a single row, and the table is built by collapsing the commodity lines to their distinct commodity names (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js:24-33, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk:4-19). Pressing Remove drops every line of that commodity at once (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:26-40). A user who has chosen two species under one 01061900 commodity has no way to drop one of them from this page — the only route back is to reopen the commodity page and untick it there.",
+    "prototype": "Every commodity gets one row except those on commodity code 01061900, which get one row per chosen species, each named by that species' own common name and each carrying its own Remove (app/routes.js:626-645, against app/routes.js:672-682 for every other commodity). Removing one takes that species out and leaves the rest of the commodity in place. Design release 1's captured page shows cattle, which is not 01061900, so the picture shows the ordinary commodity-level row and this rule has to be read from where it is stated.",
+    "difference": "On the consignment-details page, list each chosen species of a 01061900 commodity as its own row in Selected commodities, named by the species, with a Remove that takes out that species only and leaves the rest of the commodity. Everything else keeps the commodity-level row it has now. The frontend's stub already carries two commodities on that code — Cat and Dog (src/server/app/sets/live-animals/services/commodities/stub.js:3-10) — and the difference already shows today even with one species each, because a per-species row is named by the species rather than by the commodity: on Design release 1 the dog row reads \"Domestic dog\", on Frontend it reads \"Dog\". A second species under either would then add a second row where Frontend still shows one. Removal already works line by line underneath: the store holds one line per species and only the page collapses them, so this is a change to the table and to what Remove submits rather than to the store. Nothing has to land first.",
+    "falsifiedBy": "Design release 1 rendering a single commodity-level row for a 01061900 commodity with two species chosen — for instance ferret and dog together. The selected-rows builder branches on the code before it branches on anything else, so a single row there would prove this wrong.",
+    "verification": "Read both rendered DOMs and both 2x page shots. The implementation-side capture shows four single rows — 0102 Cow, 0101 Horse, 01061900 Dog, 0301 Fish — each with one Remove submitting remove:N. Traced the collapse to src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js:24-33, where the group list is the distinct set of commodity names, and confirmed at remove/post-remove.js:33-35 that a removal filters out every line of that name. Ran the falsifier on the requirements side: getSelectedCommodityRows branches on isOtherLiveMammalsCommodityCode before the germinal check and before the default (app/routes.js:626-646 against :672-682), that helper is a bare test of code === '01061900' (app/routes.js:460-462), and the per-species branch sets removeBy: 'species', which the view turns into name=\"removeSpecies\" (app/views/consignment-details.html:66-72) with its own handler at app/routes.js:9390-9400. CORRECT, and understated.",
+    "correction": "The claim stands and the falsifier does not fire, but the difference slot understated when it bites and has been amended. What was claimed: that the rule is reachable \"as soon as either of them offers more than one species\". What is true: it already bites with one species, because the per-species branch names the row from the species rather than from the commodity — getSpeciesCommonName falls back to the commodity name only where the species has none (app/routes.js:456-458), and both 01061900 species in the requirements side's own data have one, so its dog row reads \"Domestic dog\" and its cat row \"Domestic cat\" where Frontend renders \"Dog\" and \"Cat\". A second species under either commodity then adds a second row, which is the part the original sentence described. Confidence left at medium: the requirements side's own capture shows cattle, so the 01061900 rendering is read from source rather than seen. Two further checks that did not fire: the citation is a root view, and the requirements side's per-species Remove is a real route out of the page, not dead markup."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js:24-33",
+    "prototype": "app/routes.js:626-645"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--species-labelled-by-latin-name-only",
+      "relation": "travels-with",
+      "why": "The per-species rows are named by the species common name, which the frontend does not carry."
+    }
+  ]
+}

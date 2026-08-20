@@ -1,0 +1,29 @@
+{
+  "slice": "documents",
+  "title": "A trader who fills in the document form and presses Continue loses it on the frontend without being told; Design release 1 saves that document, or stops them and says what is missing",
+  "domain": "documents",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-documents", "dr1-upload-documents"],
+  "controls": [{ "kind": "label", "text": "Continue" }],
+  "finding": {
+    "frontend": "The page offers two ways to submit the document form and only one of them keeps anything. \"Save and add another\" posts action=add and saves the document. \"Continue\" posts action=continue from inside the same form, so the reference, the date of issue and the chosen file all travel to the server in that request — and the server never looks at them. The post handler branches on the action and reads the payload only for add and remove; every other action loads the page state fresh, checks whether any already-saved document is still being scanned, and redirects to the next page (src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279). Nothing is saved, no error is shown, and the next screen gives no sign that anything was dropped. A trader who fills the three fields, chooses their health certificate and presses the primary green button — the one the whole rest of the journey has taught them to press — arrives at the next page having attached nothing. \"Save and return to hub\" behaves the same way.",
+    "prototype": "\"Save and continue\" completes the document. Design release 1 treats a part-filled form as an intention to attach: if the trader has chosen a document type, it validates the whole form, and either adds the document to the notification and moves on, or stays on the page and shows the same four messages the add path would have shown, so the trader is told what is missing rather than losing the file (app/routes.js:10173-10193). Uploading remains optional — an untouched form continues without complaint. \"Save and return to overview\" is the one action that deliberately discards a part-filled form.",
+    "difference": "Make Continue finish the document rather than throw it away. On a Continue post, look at the add-a-document fields: if the trader has entered anything at all, run the same validation the Add path runs and either save the document and move on, or re-render the page with the field errors. The branch is in the post dispatcher at src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279, which today falls through to the redirect for every action that is not add or remove; the saving path it needs already exists as postAdd at :92-129 and needs no new validation, no new copy and no service change. Two decisions belong to whoever picks this up. First, what counts as \"the trader meant to attach something\": Design release 1 keys it on the document type being chosen, and the frontend has no document type until documents--document-type-not-asked lands, so until then key it on any of the three fields being non-empty. Second, whether \"Save and return to hub\" should behave the same way — Design release 1 says no, and matching it exactly means only Continue changes.",
+    "falsifiedBy": "Finding that a Continue post reaches the frontend's document-saving path. Follow action=continue through the post dispatcher at src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279: if it reaches postAdd, or reads payload.file, payload.accompanyingDocumentReference or payload.accompanyingDocumentDateOfIssue anywhere before redirecting, this finding is wrong.",
+    "verification": "Written and checked by the verifier, not by the slice's author, so a reader knows this one had no second pair of eyes on it. Found by asking what happens on each of the page's four submit buttons rather than only reading the markup, after the rest of the slice turned out to be about copy and fields. Traced both sides in source: the frontend's post dispatcher branches to postAdd only on action==='add' and to postRemove only on a remove action, and the fall-through for continue and for a hub exit calls loadPage, the settling check and kit.nextTarget without touching the payload's three document fields; Design release 1's POST /upload-documents at app/routes.js:10134-10199 has an explicit action==='continue' branch that soft-validates and calls addUploadedDocument, and a separate isJourneySoftSaveAction branch (app/routes.js:1315-1317, hub and review) that resets the form and redirects. Confirmed in the rendered DOM of fe-documents that all four buttons are submits inside the single multipart form, so the file really is posted and really is discarded. Not observable in a still, and the difference slot says so.",
+    "correction": "Added by the verifier; the authoring pass did not raise it. It is the only difference in this slice that costs a trader work already done, and it is invisible in a screenshot, which is the likeliest reason it was missed."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279",
+    "prototype": "app/routes.js:10173-10193"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--document-type-not-asked",
+      "relation": "travels-with",
+      "why": "Design release 1 decides whether a part-filled form is worth saving by asking whether a document type has been chosen, so the condition this change needs is cleanest once the document-type field exists."
+    }
+  ]
+}

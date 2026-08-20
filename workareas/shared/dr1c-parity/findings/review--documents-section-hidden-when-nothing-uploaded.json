@@ -1,0 +1,35 @@
+{
+  "slice": "review",
+  "title": "Check your answers drops the whole Documents section when nothing has been uploaded, so a trader with no documents has no route to the upload page from the review; Design release 1 always shows the section with a Change link",
+  "domain": "review",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "dr1-review-notification",
+    "dr1-review-notification-incomplete"
+  ],
+  "controls": [
+    "Uploaded documents"
+  ],
+  "finding": {
+    "frontend": "The captured Check your answers page ends at \"3. Addresses\" and has no Documents heading, no Uploaded documents card and no link to the upload page. That is not an accident of the capture: the documents card returns nothing when the collection is empty (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:35-37) and the section that would hold it is then dropped from the page altogether (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js:9-12, and src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:16-21 appends it only when it exists). Documents are optional for submission, so this is the ordinary case rather than an edge one: a trader who has uploaded nothing sees no mention of documents on the page they are told to check before submitting, and has to go back to the task list to find the upload page.",
+    "prototype": "Design release 1 gives documents a permanent numbered section of its own, \"4. Documents\", with the subsection heading \"Upload documents\" and an \"Uploaded documents\" card carrying a Change link to /upload-documents (app/views/review-notification.html:160-165). The section is not conditional. With nothing uploaded the card still stands, empty, under its heading and with its Change link — so the review page always states that documents are part of the notification and always offers the route to add them.",
+    "difference": "Render the Documents section unconditionally on Check your answers, with the Uploaded documents card and its Change link present even when the collection is empty. That means removing the two early returns that suppress it and giving the empty card a state to render. The change is contained to the check-answers view-model and template; the upload page it links to already exists.",
+    "falsifiedBy": "Finding a Documents heading or an Uploaded documents card on fe-check-answers or fe-check-answers-incomplete. Neither captured DOM contains the word \"Documents\" anywhere in the main content, and neither carries a link to the documents page.",
+    "verification": "Ran the falsifier against both captured frontend DOMs and both screenshots: fe-check-answers.png and fe-check-answers-incomplete.png each end at \"3. Addresses\" and there is no Documents heading or card. Read the two early returns the finding names and both are exactly where it says — view-model/cards/documents.js:35-37 returns null when the collection is empty, view-model/sections/documents.js:10-12 returns null when the card is null, and view-model/index.js:14-19 appends the section only when it exists. On the requirements side read app/views/review-notification.html:159-164: the \"4. Documents\" section, the \"Upload documents\" subheading and the uploadedDocumentsCard sit outside any conditional, and evidence/prototype@491b3926/page/dr1-review-notification.png shows that card standing empty with its Change link on a notification with nothing uploaded. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:35-37",
+    "prototype": "app/views/review-notification.html:160-165"
+  },
+  "relatedTo": [
+    {
+      "id": "review--check-answers-section-structure",
+      "relation": "travels-with",
+      "why": "The Documents section's number and position are part of the same section restructure, so the two land in one pass over the page."
+    }
+  ]
+}

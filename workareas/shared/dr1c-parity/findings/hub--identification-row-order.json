@@ -1,0 +1,33 @@
+{
+  "slice": "hub",
+  "title": "The hub lists the animal identification task after the additional details task, where Design release 1 asks for identification first",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub-partly-complete",
+    "dr1-notification-hub"
+  ],
+  "controls": ["Animal identification details", "Additional details"],
+  "finding": {
+    "frontend": "The second section of the hub lists \"Additional commodity details\" first and \"Animal identification details\" second, in that order on both captured hub states. The order comes from the group definition at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:38-41.",
+    "prototype": "Design release 1 lists the identification task before the additional-details task: its \"2. Description of the goods\" section runs \"Commodity details\", then \"Identification details\", then \"Additional details\" (app/routes.js:5770-5788), which is what dr1-notification-hub-partly-complete shows with all three rows present. A user is pointed at identifying the animals before being asked what they are certified for.",
+    "difference": "Swap the two rows in the second hub section so identification comes before additional details, at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:38-41. Taken together with hub--consignment-details-has-no-task-row the section ends up in Design release 1's order: commodity details, identification details, additional details. Nothing else follows from the swap — the pages themselves are already reachable in either order once the rows are unlocked.",
+    "falsifiedBy": "Finding \"Animal identification details\" above \"Additional commodity details\" in the captured DOM of fe-hub, or \"Additional details\" above \"Identification details\" in dr1-notification-hub-partly-complete. Both captures put them the other way round.",
+    "verification": "Read all four rendered DOMs and opened the fe-hub and dr1-notification-hub-partly-complete screenshots. Ran the falsifier by document order rather than by eye: in fe-hub.html \"Additional commodity details\" is the first item of the second task list and \"Animal identification details\" the second, and the same order holds in fe-hub-part-answered.html; in dr1-notification-hub-partly-complete.html the three links under \"2. Description of the goods\" appear in the order Commodity details, Identification details, Additional details, so identification is above additional details on that side. Re-read hub/controller.js:38-41, which is the commodity-details group with rows ['additionalDetails', 'animalIdentification'] in that order, and app/routes.js:5770-5788, which is section 2's items array in the order the DOM shows. Checked that this is not the same increment as hub--consignment-details-has-no-task-row: that one adds a row, this one swaps two, and either can land without the other. Both named controls resolve to one place each on the side they belong to. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:38-41",
+    "prototype": "app/routes.js:5770-5788"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--consignment-details-has-no-task-row",
+      "relation": "travels-with",
+      "why": "Both rebuild the same hub section; doing one without the other leaves the section in a third order that matches neither side."
+    }
+  ]
+}

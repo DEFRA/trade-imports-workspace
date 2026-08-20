@@ -1,0 +1,34 @@
+{
+  "slice": "hub",
+  "title": "Design release 1 gives the consignment details their own hub task with their own status; the frontend folds them into the \"What are you importing?\" row",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Commodity details"],
+  "finding": {
+    "frontend": "There is no task row for the consignment details on the frontend's hub. The words \"Commodity details\" do appear on fe-hub, but as the heading of the second section — \"2. Commodity details\" — over two rows about additional details and animal identification, not as a task of their own. The consignment-details page hangs off the \"What are you importing?\" row instead: that row covers the commodity search and the consignment-details page together (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33) and carries one status for both, so a user reading the hub cannot tell whether the numbers, packages and net weight have been entered — only whether the row as a whole is finished.",
+    "prototype": "Design release 1 lists \"Commodity details\" as the first task under \"2. Description of the goods\", linking to /consignment-details and carrying its own \"To do\" or \"Complete\" tag independently of \"What are you importing?\" (app/routes.js:5772-5776). On dr1-notification-hub-partly-complete a user can see at a glance that both the commodity selection and the commodity details are complete while the identification details are still to do.",
+    "difference": "Split the consignment-details page out of the frontend's commodities task row into a task row of its own, labelled \"Commodity details\", placed first in the section Design release 1 calls \"2. Description of the goods\". That means a new entry in src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33 with the consignment-details page and the parts of the commodity-lines collection that page collects, and the commodities row keeping only the selection. The row's status then has to be derived from the consignment-details answers alone, so which obligations belong to which of the two rows has to be settled as part of the work.",
+    "falsifiedBy": "Finding a task-list link on fe-hub whose text is \"Commodity details\". The only occurrence of that string in the captured DOM of fe-hub is the section heading \"2. Commodity details\", which is an h2 and not a row.",
+    "verification": "Read all four rendered DOMs and both partly-answered screenshots. Ran the falsifier: \"Commodity details\" occurs exactly once in fe-hub.html, at line 155, as <h2 class=\"govuk-heading-m\">2. Commodity details</h2>, and fe-hub.html holds one govuk-task-list__link in total, on the origin row — so there is no such task-list link. On dr1-notification-hub.html the string is an anchor to /consignment-details inside section 2 with its own tag. Re-read the frontend citation: task-rows.js:29-33 is the commodities row carrying both commoditiesPage and consignmentDetailsPage with one parts entry over the commodityLines collection, so the single-status claim follows from the row definition and not from an assumption. Also checked that this is not a fixture difference — the missing thing is a row, not the data in one. CORRECT.",
+    "correction": "Nothing in the finding changed. One note for whoever renders the cards: the named control \"Commodity details\" crops on the frontend side to the section heading rather than to a row, because that heading is the only place the string occurs there. That is the point the finding makes and the prose says so, but a reader who sees only the crop could mistake the heading for the row it is arguing is absent."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33",
+    "prototype": "app/routes.js:5772-5776"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-list-sections",
+      "relation": "travels-with",
+      "why": "The new row lands in the section that finding renames and regroups."
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "slice": "service-wide",
+  "title": "The dashboard sorts by arrival or creation date in four fixed directions; Design release 1 offers newest, oldest and arrival date with no ordering applied until the trader picks one",
+  "domain": "dashboard",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-sorted",
+    "fe-dashboard-populated",
+    "dr1-dashboard",
+    "dr1-dashboard-filters-open"
+  ],
+  "controls": ["sort"],
+  "finding": {
+    "frontend": "The list is headed by a \"Sort by\" select offering four orderings: \"Arrival (newest to oldest)\", \"Arrival (oldest to newest)\", \"Date created (newest to oldest)\" and \"Date created (oldest to newest)\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36, assembled at src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/sort-options.js:8-18). Arrival newest-first is selected when the page loads and there is no unsorted option, so the trader cannot see the list in whatever order the service returns it.",
+    "prototype": "Design release 1's select is labelled \"Sort by:\" and offers \"Select one\", \"Newest first\", \"Oldest first\" and \"Arrival date\", in that order and taken from app/data/dashboard-notifications.js:147-152, rendered at app/views/dashboard.html:238-250. \"Select one\" is what the page loads with, so the design's starting state is an unsorted list and no ordering is named until the trader chooses one. The design names what the trader wants — the newest notifications, the oldest, or the next to arrive — rather than naming a field and a direction.",
+    "difference": "Replace the four options in src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 with the design's three plus an unselected \"Select one\", and relabel the control \"Sort by:\". \"Newest first\" and \"Oldest first\" map onto the existing createdAt directions and \"Arrival date\" onto arrivalDate, so src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/sort-options.js:8-18 and the sort parser it feeds change with them. Decide what \"no ordering chosen\" means for the list query, since the frontend always sends a sort parameter today and has no unsorted state.",
+    "falsifiedBy": "Finding \"Newest first\" or \"Select one\" among the sort options in the captured DOM of any frontend dashboard screen, or \"Arrival (newest to oldest)\" in dr1-dashboard.",
+    "verification": "Ran the falsifier: extracting every <option> from dr1-dashboard.html gives Select one (selected), Newest first, Oldest first, Arrival date for the sort control — no \"Arrival (newest to oldest)\" anywhere — and the frontend's select on fe-dashboard-populated.png shows \"Arrival (newest to oldest)\" pre-selected with no unsorted entry. Read src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 and view-model/sort-options.js:8-18, and traced the prototype's options past the view to buildDashboardSortItems at app/routes.js:6716-6729, whose non-testing branch reads dashboardData.sortItems at app/data/dashboard-notifications.js:147-152. Opened both dashboard screenshots.",
+    "correction": "The option labels, the frontend's four orderings and the pre-selected state are all as claimed and the copy change stands. One clause was a claim about behaviour that the design does not support: the prototype slot said \"so no ordering is applied until the trader chooses one\", which implies choosing one applies an ordering. It does not. getDashboardViewModel (app/routes.js:7138-7255) reads the sort query parameter, hands it to buildDashboardSortItems so the right option shows as selected and to the pagination hrefs, and never orders the notification list by it — the only two .sort( calls in the whole of app/routes.js are on address names and on a label list. So Design release 1's list is in fixture order whatever the select says. The slot now says the design's starting state is an unsorted list, which is what can actually be observed, and the difference slot's instruction to decide what \"no ordering chosen\" means for the list query is unchanged and is still the right question. The citation was also improved: app/views/dashboard.html:238-250 is the govukSelect call and the option strings are not in it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36",
+    "prototype": "app/views/dashboard.html:238-250"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--dashboard-sort-needs-an-update-button",
+      "relation": "travels-with",
+      "why": "Same control; one is what the options say and the other is how the choice is applied."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "slice": "origin",
+  "title": "Frontend sets the origin page's three question labels smaller than Design release 1 does, and renders the internal-reference one at body weight so it does not read as a question.",
+  "domain": "origin",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin", "dr1-origin-of-the-import"],
+  "controls": ["internalReferenceNumber", "internalReference"],
+  "finding": {
+    "frontend": "The origin page asks three questions and gives them three different weights. \"Country of origin\" and \"Does the consignment have a region of origin code?\" are set at the small label size, and \"Your internal reference for this consignment (optional)\" carries no size at all, so it renders in ordinary body text the same size as the hint below it and reads as a sentence rather than a question. All three are set in src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:18, :38 and :46-51.",
+    "prototype": "All three questions are set at the medium heading size and in bold, so the page reads as three questions with their hints and controls beneath them: \"Country of origin\" as a heading at app/views/origin-of-the-import.html:46, the region-of-origin legend at :126 and the internal-reference label at :155.",
+    "difference": "Raise all three question labels on the origin page to the medium size: the country control's label, the region-of-origin fieldset legend, and the internal reference input's label. One template, three classes. Nothing has to land first, and it is independent of the country picker and region code changes on the same page — do it in the same pass if those are being made.",
+    "falsifiedBy": "A medium size class on any of the three labels in fe-origin's captured DOM. It renders govuk-label--s on the country select, govuk-fieldset__legend--s on the region fieldset and a bare govuk-label on the internal reference input; finding a --m on any of them would prove this wrong.",
+    "verification": "Read both rendered DOMs and opened both 2x page shots side by side. Ran the falsifier: grep for govuk-label--m, govuk-fieldset__legend--m and govuk-heading-m across capture/html/frontend/fe-origin.html returns nothing, and the three labels are govuk-label--s, govuk-fieldset__legend--s and a bare govuk-label as claimed. Checked the three cited Design release 1 lines land on what the sentence says and resolved what app-eu-heading-m actually renders. CORRECT.",
+    "correction": "The claim stands and the falsifier does not fire. Three points of record. (1) \"Medium heading size and in bold\" was checked rather than assumed: Design release 1's shared class app-eu-heading-m is 24px at weight 700 (app/assets/sass/application.scss:201-208), the same as govuk-label--m, so the difference against Frontend's 19px bold and 19px regular is real and the prescribed fix is the right one. (2) Design release 1 marks up the country question as an <h2> rather than a label (app/views/origin-of-the-import.html:46) while the other two are a legend and a label; the Frontend change is still three classes on one template, but whoever does it should not expect to find a matching heading element. (3) The controls list names only the internal reference field, so the cards will crop the third of the three labels and a reader wanting the comparison has to open the two page shots. That is a defensible choice — the internal reference is where the difference is starkest, being the one label Frontend renders at body weight — and it has been left alone. Separately, the region of origin code label revealed under Yes is bold on Design release 1 and plain on Frontend, the same class of difference on the same page; it is picked up by origin--region-code-country-prefix, which relabels that field, and is deliberately not duplicated here."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-51",
+    "prototype": "app/views/origin-of-the-import.html:46"
+  }
+}

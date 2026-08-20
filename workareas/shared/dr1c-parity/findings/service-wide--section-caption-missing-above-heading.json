@@ -1,0 +1,34 @@
+{
+  "slice": "service-wide",
+  "title": "Frontend shows no section caption above the page heading, so a user cannot tell which part of the notification they are in; Design release 1 captions almost every page",
+  "domain": "service-wide",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-origin",
+    "fe-dashboard",
+    "dr1-origin-of-the-import",
+    "dr1-dashboard"
+  ],
+  "controls": [{ "kind": "label", "text": "About the consignment" }],
+  "finding": {
+    "frontend": "Journey pages open straight into the h1 with nothing above it — the origin page renders {{ copy.title }} as a bare heading (src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:10), and so does every other journey template. Only the five party pickers caption their heading, with \"Consignment addresses\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7, text from src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42). Nine of the 67 captured frontend screens carry a caption and all nine are party pickers. The dashboard carries none.",
+    "prototype": "45 of Design release 1's 60 captured screens print a caption above the heading naming the part of the notification the page belongs to. Seven captions are used across the journey — \"About the consignment\", \"Consignment parties\", \"Transport and arrival\", \"Movement\", \"Documents\", \"Commodity details\" and \"Add a new transporter\" — and the first six match the hub's own section names, so a user working through a section always knows which one they are in. The origin page reads \"About the consignment\" above \"Origin of the import\" (app/views/origin-of-the-import.html:38-40). The dashboard is captioned \"Dashboard\" above the service name (app/views/dashboard.html:28-30), and the address-book add page \"Add a new address\". Fifteen captured screens go uncaptioned: the overview and the review page in both their states, the submitted page, the declaration in both its states, the contact address for the consignment, and seven of the eight address-book screens.",
+    "difference": "Add a caption above the h1 on every journey page the design captions, taking its text from the hub section the page belongs to, and add \"Dashboard\" above the dashboard heading. The section name is already known to the flow — the hub builds the same grouping at src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-59 — so this is a layout change plus one string per section rather than a per-page decision. Where the frontend already captions a page it uses the wrong words: the five party pickers say \"Consignment addresses\" where the design says \"Consignment parties\", so src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42 changes with the rest. Leave uncaptioned the pages the design leaves uncaptioned: the overview, the confirmation, the check-answers page, the declaration and the contact address for the consignment.",
+    "falsifiedBy": "Finding a caption element above the h1 on any captured frontend journey screen that is not one of the five party pickers.",
+    "verification": "Ran the falsifier: govuk-caption matches exactly 9 of the 67 captured frontend files and all nine are address pickers (fe-address-picker-*), so no other frontend journey screen carries one; on fe-address-picker-consignee the span reads \"Consignment addresses\". On the prototype side the caption uses that side's own classes, so I extracted every class=\"…caption…\" run with its text across the 60 files: 45 files carry a page-level caption and 15 do not. Read src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:10 (a bare h1 with nothing above it), party-picker/party-picker.njk:7 and addresses/copy/copy.en.js:42, and app/views/origin-of-the-import.html:38-40 and app/views/dashboard.html:28-30. Opened evidence/frontend@76a864ba/page/fe-origin.png and evidence/prototype@491b3926/page/dr1-origin-of-the-import.png side by side.",
+    "correction": "The finding is right and its counts are right; the prototype slot's account of the exceptions was wrong and has been rewritten. It claimed six journey captions and that \"only the overview, the submitted page and the review page go uncaptioned\". There are seven caption strings — the transporter-add pages carry \"Add a new transporter\", which is not a hub section name — and fifteen captured screens go uncaptioned, not four. The two that matter for the work are the declaration (dr1-declaration and dr1-declaration-error carry no caption class at all) and dr1-contact-address-for-consignment, whose h1 \"Contact address for consignment\" stands alone even though its sibling dr1-cph-number is captioned \"Consignment parties\". The difference slot said \"add a caption above the h1 on every journey page\", which would have put captions on two pages the signed-off design leaves bare; it now names the exceptions."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:10",
+    "prototype": "app/views/origin-of-the-import.html:38-40"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--task-list-sections",
+      "relation": "travels-with",
+      "why": "The captions are the hub's section names, so the two have to agree on what the sections are called."
+    }
+  ]
+}

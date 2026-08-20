@@ -1,0 +1,31 @@
+{
+  "slice": "commodities",
+  "title": "On the commodity-details page Frontend sets the commodity heading, the species name and the quantity labels smaller and lighter than Design release 1, so the page loses the reading order the design gives it.",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details", "dr1-consignment-details"],
+  "controls": [
+    "numberOfAnimalsQuantity-0",
+    { "kind": "field", "name": "numberOfAnimals[cattle-bos-taurus]" }
+  ],
+  "finding": {
+    "frontend": "Below the page heading the type steps down twice and then flattens. The commodity heading \"Cow (0102)\" is a medium heading, the species name \"Bos taurus\" below it is a small heading, and the two field labels — \"Number of animals\" and \"Number of packages (optional)\" — carry no size or weight at all, so they render in ordinary body text at the same size and weight as the hints under them (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:7, :9, :14 and :26). With four commodities on the captured page, the labels and the hints form an unbroken run of same-weight text and only the two headings break it up.",
+    "prototype": "The same block is set three sizes larger throughout. The commodity heading \"Cattle (0102)\" is 36px bold — the size of the page heading itself — the species name \"Bos taurus\" below it is 24px bold, and every field label on the page is 19px bold against a 19px light hint, so each question stands away from its own guidance (app/assets/sass/application.scss:1070-1112, the app-consignment-details-page block, whose .govuk-label rule at :1107-1112 sets weight 700). The captured page shows all three levels.",
+    "difference": "Raise the three levels on the commodity-details page to match: the per-commodity heading, the species name beneath it, and the labels on the quantity inputs. One template carries all of them. Nothing has to land first, and it is independent of the other commodity-details changes — the page rename, the package label and the animal-count rule — though it is cheapest done in the same pass. Note that Design release 1 sets the per-commodity heading at the same size as the page heading, which is a deliberate step and not a slip: the commodity blocks are the substance of the page and the heading above them is only its name.",
+    "falsifiedBy": "A bold or sized label on the quantity inputs in fe-consignment-details' captured DOM. Every one of them is a bare govuk-label with no modifier class, and the frontend adds no stylesheet rule of its own for them, so finding a weight there would prove this wrong.",
+    "verification": "Written and checked by the verifier, not by the author of the other commodities findings, so a reader knows it did not go through the usual two pairs of eyes. Found by reading capture/html/frontend/fe-consignment-details.html and capture/html/prototype/dr1-consignment-details.html against each other and then opening both 2x page shots, where the difference is plain: the requirements side's \"Number of animals\" and \"Number of packages (when required)\" are bold and Frontend's are not. Both sides emit the same govuk-label class, so the render was traced to its cause rather than guessed — the requirements side scopes .govuk-label to font-weight 700 inside .app-consignment-details-page (app/assets/sass/application.scss:1107-1112), and sets its commodity heading to 36px/700 (:1070-1078) and its species name to 24px/700 (:1094-1101), while Frontend uses govuk-heading-m, govuk-heading-s and a bare govuk-label. Checked that the block that applies is the plain one and not the .app-consignment-details-page--dr21 override at :1186, which the captured Design release 1 page does not carry. Checked this is not already raised elsewhere: origin--question-label-emphasis is the same class of difference on a different page and service-wide--section-caption-missing-above-heading is about the caption, not the body of the page. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:7-26",
+    "prototype": "app/assets/sass/application.scss:1070-1112"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--page-headed-consignment-details",
+      "relation": "travels-with",
+      "why": "Both change the same page's headings and land in one pass."
+    }
+  ]
+}

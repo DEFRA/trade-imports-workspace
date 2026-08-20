@@ -1,0 +1,34 @@
+{
+  "slice": "origin",
+  "title": "Design release 1 fills in the country's code as a fixed prefix and asks only for the rest of the region of origin code; Frontend makes the user type the whole code inside five characters.",
+  "domain": "origin",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-origin-region-code-revealed", "dr1-origin-of-the-import-region-revealed"],
+  "controls": ["regionOfOriginCode", "regionOfOriginCodeSuffix"],
+  "finding": {
+    "frontend": "Answering Yes reveals one plain text box, five characters wide, labelled \"Region of origin code\" and hinted \"For example, FR-75\". The user types the whole code including the country part, and the whole value is capped at five characters (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:71-75). For a consignment from France that leaves two characters for the region once \"FR-\" has been typed, so any region whose code runs longer than two characters cannot be entered at all. The field is declared at src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:24-34.",
+    "prototype": "Answering Yes reveals a field labelled \"Enter the region of origin code\", hinted \"Enter up to 5 characters.\", made of two parts: a grey, unfocusable prefix box already showing the two-letter code of the country chosen higher up the page — \"FR\" in the captured picture — and a text box beside it. The user types only the part after the prefix and has all five characters for it; the service joins the two into the full code. The field is declared at app/views/partials/region-of-origin-code-input.html:14-29 and revealed from app/views/origin-of-the-import.html:102.",
+    "difference": "On the origin page, derive the prefix from the country the user has already chosen, render it as a govuk-input prefix beside the code box, and collect and validate only the part after it, up to five characters. Relabel the field \"Enter the region of origin code\" and replace the worked example with \"Enter up to 5 characters.\". Frontend already holds the two-letter code as the value of every country option (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61), so no new reference data is needed for the countries it lists; Design release 1's own prefix map departs from the plain country code only for Ceuta and Melilla, neither of which is in Frontend's list. Moving the five-character cap from the whole code to the part after the prefix is the substance of the change, and it is what makes longer regional codes enterable. Design release 1 also upper-cases what the user typed and joins the two parts with a hyphen, so typing \"75\" with France chosen records \"FR-75\" (app/routes.js:9239, :9246-9251); Frontend only trims the box, so build the same normalisation in.",
+    "falsifiedBy": "A prefix rendered beside Frontend's region of origin code box. The captured DOM of fe-origin-region-code-revealed holds a bare <input class=\"govuk-input govuk-input--width-5\"> with no govuk-input__prefix wrapper and no maxlength; finding either would prove this wrong.",
+    "verification": "Read both revealed-state rendered DOMs and opened both 2x page shots. Ran the falsifier: fe-origin-region-code-revealed.html:199 is <input class=\"govuk-input govuk-input--width-5\" id=\"regionOfOriginCode\" name=\"regionOfOriginCode\" type=\"text\"> with no govuk-input__prefix and no maxlength, while dr1-origin-of-the-import-region-revealed.html:329-330 is a govuk-input__wrapper holding <div class=\"govuk-input__prefix\" aria-hidden=\"true\">FR</div> and <input name=\"regionOfOriginCodeSuffix\" maxlength=\"5\">. Read the cited partial and controller.js:63-86. CORRECT.",
+    "correction": "The claim stands and the falsifier does not fire. Four points of record. (1) The five-character cap on Frontend is a validation rule, not a maxlength attribute: maxText('regionOfOriginCode', 5) at src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:71-75, and govuk-input--width-5 in the markup is a width, not a limit. The finding says this correctly; a reader should not expect to find a maxlength in the Frontend DOM. (2) The cited prototype range app/views/partials/region-of-origin-code-input.html:14-29 covers the prefix and the input but not the label and hint the same sentence quotes, which are at :2-3 and :5-6. The finding is right; only the range was short, so evidence.prototype has been widened to the whole partial and the in-prose citation left as the author wrote it. (3) Design release 1 upper-cases the typed suffix and joins prefix and suffix with a hyphen (app/routes.js:9239, :9246-9251), so the recorded value is \"FR-75\" when the user typed \"75\"; Frontend only trims (controller.js:125-127). That was missing from the work and has been added to the difference. (4) The Frontend evidence screen fe-origin-region-code-revealed is served from the error render of the same page — its title is \"Error: Origin of the import\" and it carries a \"Select the country where the animal originates from\" summary left over from how the state was reached. That summary is unrelated to this finding; read the revealed field, not the page banner."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:24-34",
+    "prototype": "app/views/partials/region-of-origin-code-input.html:1-31"
+  },
+  "relatedTo": [
+    {
+      "id": "origin--country-of-origin-picker",
+      "relation": "travels-with",
+      "why": "The prefix is derived from the country of origin, so this change depends on the country control being able to report the chosen country."
+    },
+    {
+      "id": "origin--region-code-not-required",
+      "relation": "travels-with",
+      "why": "Both change the same revealed code field; doing them in one pass avoids touching the origin validator twice."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "slice": "documents",
+  "title": "The frontend labels a document's virus-check status \"Checking\" and \"Safe\"; Design release 1 labels the same two states \"Scanning for virus\" and \"Check completed\"",
+  "domain": "documents",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents-populated",
+    "fe-documents-scanning",
+    "dr1-upload-documents-populated",
+    "dr1-upload-documents-scanning"
+  ],
+  "controls": [{ "kind": "label", "text": "Status" }],
+  "finding": {
+    "frontend": "The Status column of the saved-documents table shows a tag per document. While the scan runs it is a blue tag reading \"Checking\" and once the scan clears it is a green tag reading \"Safe\" — both captured, on fe-documents-scanning, whose two rows show one of each. The words come from src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57 and are applied at src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:7-24. The tag carries no other text, so a screen-reader user hears \"Safe\" with nothing saying what is safe or what was checked.",
+    "prototype": "The same column, the same two colours, different words: a blue tag reading \"Scanning for virus\" while the check runs and a green tag reading \"Check completed\" once it has (app/routes.js:9082-9083). Each tag is preceded by visually hidden text naming the document it belongs to — \"Virus check status for ITAHC-000123\" — so the status is unambiguous when read out.",
+    "difference": "Change the two scan-status tag labels to Design release 1's wording — PENDING becomes \"Scanning for virus\" and COMPLETE becomes \"Check completed\" — at src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57. The same words are also embedded in the page's client-side polling payload, which is generated from the same copy at src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:26-29, so the live-updating tag changes with it and needs no separate edit. While in the same cell, add the visually hidden \"Virus check status for {reference}\" prefix Design release 1 puts before each tag. The frontend's two further states, \"Virus found\" and \"Unknown\", have no counterpart in Design release 1 and are left alone.",
+    "falsifiedBy": "Finding the words \"Scanning for virus\" or \"Check completed\" in the captured DOM of fe-documents-scanning. Its two tags read \"Safe\" and \"Checking\", and the same two words appear again in the page's data-scan-copy payload.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents-scanning.html: zero occurrences of either DR1 phrase. The two status cells read exactly as claimed — data-scan-status=\"COMPLETE\" with a govuk-tag--green \"Safe\", data-scan-status=\"PENDING\" with a govuk-tag--blue \"Checking\" — and the data-scan-copy payload on the same page carries the same four labels, so the polling path changes with the copy file as the difference slot says. Neither cell carries any visually hidden text. Read the DR1 side at capture/html/prototype/dr1-upload-documents-scanning.html and -populated.html: both show a govuk-visually-hidden \"Virus check status for ITAHC-000123\" immediately before the tag, blue \"Scanning for virus\" in one and green \"Check completed\" in the other. Confirmed the source at app/routes.js:9082-9083 exactly at the cited lines. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:7-24",
+    "prototype": "app/routes.js:9082-9083"
+  },
+  "relatedTo": []
+}

@@ -1,0 +1,29 @@
+{
+  "slice": "documents",
+  "title": "The frontend rejects any document over 10 MB; Design release 1 allows files up to 50MB",
+  "domain": "documents",
+  "type": "obligation-change",
+  "band": "needs-backend",
+  "confidence": "high",
+  "screens": ["fe-documents", "dr1-upload-documents"],
+  "controls": ["file", "attachment"],
+  "finding": {
+    "frontend": "The upload control's hint reads \"Your file must be:\" over two bullets, the first of which is \"smaller than 10 MB\". The limit is enforced twice — in the browser, from a data-max-file-size attribute of 10000000 on the form element, and on the server, where a file over the limit is refused with \"The selected file must be smaller than 10 MB\" (src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:34-36). Ten decimal megabytes is a deliberate choice made against the platform rather than against the design: the code says so, at src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-46, where the comment records that the value stays clear of the 10 MiB nginx ingress cap on the hosting platform. So a trader with a 20 MB scanned health certificate cannot attach it and is given no alternative on the page.",
+    "prototype": "The same hint list opens with \"files that are smaller than 50MB\" (app/views/upload-documents.html:166). Design release 1 states 50MB as the ceiling a trader may upload to.",
+    "difference": "Raise the accepted file size from 10 MB to 50MB and change the hint bullet and the oversize error message to match. The value and its label live in one place, src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-46, and the browser-side check reads the same number from the form's data-max-file-size attribute, so the frontend edit is small. It is banded needs-backend because the frontend cannot make the change alone: the code records that 10 MB was chosen to stay under the platform's 10 MiB ingress limit, so the request-body cap on the hosting platform's ingress and on whatever receives the upload has to be raised to at least 50MB first, otherwise a large file will be rejected by the infrastructure before the service sees it and the trader will get a platform error page instead of a validation message. Confirm the ceiling with the document-upload service before changing the number.",
+    "falsifiedBy": "Finding a data-max-file-size attribute other than 10000000 on the form in the captured DOM of fe-documents, or a hint bullet on that page that names a limit other than 10 MB.",
+    "verification": "Ran the falsifier against capture/html/frontend/fe-documents.html: the form carries data-max-file-size=\"10000000\" and data-oversize-error=\"The selected file must be smaller than 10 MB\", and the first hint bullet reads \"smaller than 10 MB\". Read upload-config.js:40-46 at the cited lines and the comment records the CDP nginx 10 MiB ingress reason verbatim. Read app/views/upload-documents.html:166 on the DR1 side — root view, first bullet, \"files that are smaller than 50MB\". Opened both screenshots and read the bullet lists off them. CORRECT.",
+    "correction": "The claim stands as written. One note on the band, recorded so the next reader does not have to re-reason it: the dependency here is the hosting platform's request-body ingress cap and whatever the document-upload service accepts, not a notification-contract field or a missing API, so \"needs-backend\" is the nearest of the three bands this corpus declares rather than a literal statement that a backend service must change. The difference slot already says which limit has to move first, which is the part that matters for scheduling."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-46",
+    "prototype": "app/views/upload-documents.html:166"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--max-documents-cap",
+      "relation": "travels-with",
+      "why": "Both are limits stated in the same file-requirements hint and both change the same bullet list."
+    }
+  ]
+}

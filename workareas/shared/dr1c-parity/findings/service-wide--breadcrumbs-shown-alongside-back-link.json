@@ -1,0 +1,28 @@
+{
+  "slice": "service-wide",
+  "title": "Frontend shows a breadcrumb trail as well as a Back link on every journey page, and an empty breadcrumb bar on the dashboard; Design release 1 shows a Back link only",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-origin",
+    "fe-dashboard",
+    "dr1-origin-of-the-import",
+    "dr1-dashboard"
+  ],
+  "controls": [{ "kind": "label", "text": "Your notifications" }],
+  "finding": {
+    "frontend": "The shared layout renders breadcrumbs and then a Back link, one under the other (src/server/app/shared/layout.njk:41-53). 57 of the 67 captured frontend screens show both. On the origin page the trail reads \"Your notifications\" then \"Origin of the import\", and a \"Back\" link sits directly beneath it. The confirmation page shows the trail with no Back link. The trail is always two levels and never names the notification it belongs to (src/server/app/shared/paths.js:12-15). The overview is the only journey page that opts out, by passing breadcrumbs: false. On the seven dashboard captures the component renders with no items at all — an empty govuk-breadcrumbs nav — because the global view context seeds breadcrumbs as an empty array (src/config/nunjucks/context/context.js:36) and the dashboard controller passes nothing to replace it.",
+    "prototype": "No Design release 1 page shows breadcrumbs; not one of the 60 captured screens contains the component. 54 of them show a single Back link above the heading and nothing else, which is the whole of the design's backward navigation — each page's beforeContent block renders the phase banner and then a govukBackLink, as the origin page does at app/views/origin-of-the-import.html:21-24.",
+    "difference": "Delete the breadcrumbs block from src/server/app/shared/layout.njk:41-53 and keep the Back link, so every page shows one backward-navigation control rather than two. That removes the empty bar from the dashboard at the same time, and makes src/server/app/shared/paths.js:12-15, the breadcrumbs copy key at src/server/app/shared/copy.en.js:14-16, the breadcrumbs branch of src/server/app/shared/kit.js:116 and the seed at src/config/nunjucks/context/context.js:36 dead. The Back link stays as it is; where it points is not in question here.",
+    "falsifiedBy": "Finding a govuk-breadcrumbs element in the captured DOM of any Design release 1 screen.",
+    "verification": "Ran the falsifier: govuk-breadcrumbs matches 0 of the 60 captured prototype files. Counted the frontend side and every number in the finding holds — the component is present in 65 of 67 files (absent only on fe-hub and fe-hub-part-answered), carries list items in 58, and 57 of those also carry a govuk-back-link, the odd one out being fe-confirmation; the 7 dashboard files render <nav class=\"govuk-breadcrumbs\"> around an empty govuk-breadcrumbs__list. On fe-origin the list reads \"Your notifications\" (href /) then \"Origin of the import\" with aria-current=\"page\". 54 of the 60 prototype files carry a back link. Read src/server/app/shared/layout.njk:41-53, paths.js:12-15, kit.js:116 and src/config/nunjucks/context/context.js:36 (breadcrumbs: []); confirmed the hub's opt-out is explicit at features/hub/controller.js:168. Read app/views/origin-of-the-import.html:21-24. Opened evidence/frontend@76a864ba/page/fe-origin.png (trail, then Back beneath it) and evidence/prototype@491b3926/page/dr1-origin-of-the-import.png (Back alone).",
+    "correction": "The finding stands and every count in it checks out; two things are recorded rather than changed. First, the title's phrase \"an empty breadcrumb bar\" overstates what a user meets: the dashboard's empty govuk-breadcrumbs nav paints nothing — no rule, no background — so what it costs is vertical space above the h1, not a visible bar. The DOM claim in the frontend slot is exact; only the title reads as though something were drawn. Second, the named control \"Your notifications\" crops the intended element on fe-origin, where the string occurs once and it is the breadcrumb link, but on fe-dashboard the string also occurs exactly once and it is the list heading — so that card will crop a heading two-thirds down the page rather than the empty bar at the top. There is no better name available, because an empty breadcrumbs component has no text to name; a reader of the fe-dashboard card should look at the whole-page shot instead."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/layout.njk:41-53",
+    "prototype": "app/views/origin-of-the-import.html:21-24"
+  },
+  "relatedTo": []
+}

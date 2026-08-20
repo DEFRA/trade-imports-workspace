@@ -1,0 +1,27 @@
+{
+  "slice": "addresses",
+  "title": "Frontend makes a trader pick the importer and place of destination from scratch; Design release 1 offers a one-click \"Same as consignee\" and \"Same as place of origin\"",
+  "domain": "addresses",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-addresses-hub",
+    "fe-addresses-hub-complete",
+    "dr1-roles-and-addresses-same-as-consignee",
+    "dr1-roles-and-addresses-same-as-place-of-origin"
+  ],
+  "controls": [{ "kind": "label", "text": "Same as place of origin" }],
+  "finding": {
+    "frontend": "Every unanswered row on the Consignment addresses page offers one action, \"Add\", which opens that party's picker. There is no way to reuse an address already chosen for another party: the row's action list holds a single link built from the party's slug (src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:37-45), and no captured frontend screen or state contains the string \"Same as\". The page even carries the hint that invites the shortcut — the Importer row reads \"This is usually the same as the consignee. You can select a different person if needed.\" — and then offers no way to say \"the same\". A trader whose importer, consignee and place of destination are one company searches the book and picks the same row three times.",
+    "prototype": "Design release 1 puts a second action beside \"Add\" on exactly the rows where a copy makes sense, and only once there is something to copy. When a consignee has been chosen, the Importer and Place of destination rows each gain a \"Same as consignee\" control; when a place of origin has been chosen, the Consignor row gains \"Same as place of origin\" (app/views/roles-and-addresses.html:83-101, availability decided at app/routes.js:2118-2133). Pressing it fills that row in place, from the same page, with no picker in between; the row then shows the copied address and a \"Change\" link like any other.",
+    "difference": "Add a copy-from-another-party action to the Consignment addresses page: \"Same as place of origin\" on the Consignor row, \"Same as consignee\" on the Importer and Place of destination rows, each shown only when the source party has been answered and the target has not. It submits the hub's own form rather than navigating, so the trader stays on the page. The frontend's hub is already a POST form with a hidden crumb (src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:11-15) and the parties table already carries the ids the copy needs (src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js:20-57), so nothing has to land first. Note that place of origin is stored inline while consignor, consignee, importer and destination are stored as references (`inline: true` at :26), so copying the place of origin onto the consignor must copy the record, not the reference. `controls` names \"Same as place of origin\" rather than \"Same as consignee\" because the second occurs twice on its capture and would be refused a crop; the two controls are the same change.",
+    "falsifiedBy": "Finding any control on a frontend addresses page that fills one party from another. The captured DOM of fe-addresses-hub and fe-addresses-hub-empty offers only \"Add\" per unanswered row, and fe-addresses-hub-complete only \"Change\".",
+    "verification": "Ran the falsifier: grep -rl 'Same as' across every file in capture/html/frontend returns nothing at all. On the requirements side, read both captured states tag-stripped end to end — dr1-roles-and-addresses-same-as-consignee carries \"Same as consignee\" on the Importer row and again on the Place of destination row and nowhere else, and dr1-roles-and-addresses-same-as-place-of-origin carries \"Same as place of origin\" once, on the Consignor row, with \"Add a consignor\" beside it. Followed the behaviour rather than trusting the markup, per rubric 1: the control is a submit button carrying name=\"action\" value=\"same-as-place-of-origin:<sectionId>\" (app/views/roles-and-addresses.html:82-101), and the POST handler at app/routes.js:10925-10937 copies the address into the section and redirects straight back to /roles-and-addresses, so the trader does stay on the page. Confirmed availability is gated on the source party being answered at app/routes.js:2118-2133, and read the frontend citations at src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:37-45 and parties.js:20-57 (inline: true at :26) — both say what the finding says. Opened evidence/prototype@491b3926/page/dr1-roles-and-addresses.png and the frontend hub shot. CORRECT.",
+    "correction": "The claim stands. One implementation detail the difference slot glosses, which I checked at source: Frontend's summary list is rendered outside the form, not inside it — the govukSummaryList call is at src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:11 and the form opens at :13 — so a copy button in a row cannot post that form as things stand and the rows have to move inside it (or the buttons carry a form attribute). That does not change \"nothing has to land first\"; it is a line of work inside this change rather than before it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:37-45",
+    "prototype": "app/views/roles-and-addresses.html:83-101"
+  }
+}

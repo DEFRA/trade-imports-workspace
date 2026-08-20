@@ -1,0 +1,28 @@
+{
+  "slice": "transport",
+  "title": "Frontend labels the private transporter's postcode field \"Postal or zip code\"; Design release 1 labels it \"Postcode or Zip code\"",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-transporter-private", "dr1-transporter-add-private"],
+  "controls": ["postalOrZipCode", "transporterPrivatePostcode"],
+  "finding": {
+    "frontend": "The sixth field on the private transporter form is labelled \"Postal or zip code\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:108, rendered at src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:56-63). The two validation messages that name the field follow the same wording — \"Enter a postal or zip code\" and \"Postal or zip code must be 12 characters or less\" (:118, :127-128).",
+    "prototype": "Design release 1 labels the same field \"Postcode or Zip code\" (app/views/partials/transporter-add-private-fields.html:60-68). It uses that wording for a postcode field throughout, including on the permanent address of the animals and on its commercial transporter form.",
+    "difference": "Change the label on the private transporter's postcode field from \"Postal or zip code\" to \"Postcode or Zip code\", and follow it with the two error messages that quote the field name. The field, its width, its position on the form and its validation rule are unchanged. The identical change is raised against the permanent address block in the identification slice, and the two share nothing in code — the strings live in separate per-feature copy files — so they are two edits, not one.",
+    "falsifiedBy": "Finding the string \"Postcode or Zip code\" as a label in the captured rendered DOM of fe-transporter-private, or \"Postal or zip code\" in that of dr1-transporter-add-private.",
+    "verification": "Written and checked by the verifier, not by the slice's author, so a reader knows both were the same pass. Found it by comparing the two forms label by label rather than field by field: capture/html/frontend/fe-transporter-private.html labels its nine fields Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postal or zip code, Country, Telephone number, Email address; capture/html/prototype/dr1-transporter-add-private.html labels the same nine Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country, Email address, Phone number. Seven match word for word; the phone one was already raised as transport--private-transporter-phone-has-no-guidance and this one had not been. Ran the falsifier both ways and neither string appears on the other side. Confirmed against both screenshots. Read the cited copy at copy.en.js:108, :118 and :127-128 and the prototype partial at :60-68 — all four strings are as quoted. Both named controls are unique on their own pages, so both crop."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:108",
+    "prototype": "app/views/partials/transporter-add-private-fields.html:60-68"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--private-transporter-phone-has-no-guidance",
+      "relation": "travels-with",
+      "why": "Both are label changes on the same nine-field form and land in the same copy file."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "slice": "import-reason",
+  "title": "Frontend's error messages for the exit questions say \"the\" where Design release 1 says \"a\", and name the field again in the exit-date message.",
+  "domain": "import-reason",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-destination-country-error",
+    "fe-port-of-exit-error",
+    "dr1-reason-for-import-transit-revealed",
+    "dr1-reason-for-import-temporary-admission-revealed"
+  ],
+  "controls": [
+    "destinationCountry",
+    "portOfExit",
+    "transitDestinationCountry",
+    "transitExitBorderControlPost"
+  ],
+  "finding": {
+    "frontend": "Submitting the destination-country page empty puts \"Select the destination country\" in the error summary and against the select, and the port-of-exit page puts \"Select the port of exit\" — both are in the captured error screens, in the summary list and repeated as the field's error message. The exit-date page's only message is \"Enter a real exit date\", which repeats the field name that is already the page heading and the label. The three strings live in src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:9, src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:9 and src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:8.",
+    "prototype": "Design release 1 writes the same three messages with the indefinite article and without repeating the field name: \"Select a destination country\", \"Select a port of exit\" and, when the box holds something it cannot read as a date, \"Enter a real date\" (app/routes.js:1398, :1407, :1426).",
+    "difference": "Change three strings to Design release 1's wording — \"Select a destination country\", \"Select a port of exit\" and \"Enter a real date\" — in the three copy files named above, and in the Welsh files beside them. Nothing has to land first. Sequence this with import-reason--purpose-and-exit-date-can-be-skipped, which adds two more messages to the same files, and with import-reason--exit-questions-split-onto-separate-pages, which decides which page these messages eventually appear on; the wording is the same either way.",
+    "falsifiedBy": "\"Select a destination country\" or \"Select a port of exit\" appearing in Frontend's captured error DOM. fe-destination-country-error renders \"Select the destination country\" and fe-port-of-exit-error renders \"Select the port of exit\", each twice — once in the error summary link and once in the field's error message.",
+    "verification": "Written and checked by the verifier, not by the slice's author, so a reader knows this one had no independent second pass. Read capture/html/frontend/fe-destination-country-error.html:116-146 and fe-port-of-exit-error.html:116-146 and ran the falsifier against both: each renders the definite article in the summary link and in the govuk-error-message, and neither contains the Design release 1 wording. Read the three frontend copy files at the cited lines and grepped the whole of app/routes.js for each message string, which returns the Design release 1 wording only inside validateImportReasonProceed. Checked that Design release 1's messages are the root mount's — validateImportReasonProceed is defined once on the single shared router and no release subfolder overrides it. Confidence is medium because Design release 1 has no captured error state for reason-for-import, so its half rests on source at the cited lines; the frontend half is observed in the two captured error screens. Checked the exit-date message against the volatile-values list: the wording is stable and the worked-example date inside the field's hint is a separate matter, already handled by import-reason--exit-questions-split-onto-separate-pages."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:8-10",
+    "prototype": "app/routes.js:1398"
+  },
+  "relatedTo": [
+    {
+      "id": "import-reason--purpose-and-exit-date-can-be-skipped",
+      "relation": "travels-with",
+      "why": "That finding adds two new error messages to the same copy files these three live in."
+    }
+  ]
+}

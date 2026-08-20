@@ -1,0 +1,38 @@
+{
+  "slice": "hub",
+  "title": "The hub divides a notification into different sections from Design release 1, and names five of its six section headings differently",
+  "domain": "hub",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "The hub's task list runs under six numbered headings: \"1. About the consignment\", \"2. Commodity details\", \"3. Movement\", \"4. Addresses\", \"5. Documents\", \"6. Check and submit\". Addresses and the consignment contact share one section; documents come fifth; and the last section exists only to hold the check-and-submit row. The headings and the rows under them are fixed in the hub's own view model at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49, with the wording at src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:18-25.",
+    "prototype": "Design release 1 runs the same work under six different headings in a different order: \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Consignment parties\", \"6. Contact address\". Only the first heading matches the frontend word for word. Documents move up to fourth; the consignment parties and the contact address are two sections rather than one; and there is no section for checking and submitting, because Design release 1 puts that on a button under the list. The whole list also sits under a heading of its own, \"Notification tasklist\", which the frontend does not show. Design release 1 states the sections at app/routes.js:5749-5841.",
+    "difference": "Rename and regroup the hub's six sections to match Design release 1: keep \"1. About the consignment\"; rename \"2. Commodity details\" to \"2. Description of the goods\"; rename \"3. Movement\" to \"3. Transport and arrival\"; promote documents to \"4. Documents\"; split the current \"4. Addresses\" into \"5. Consignment parties\" holding the roles-and-addresses row and \"6. Contact address\" holding the contact row; and delete the \"6. Check and submit\" section, whose row is replaced by a button (see hub--no-review-and-submit-button). Add the \"Notification tasklist\" heading above the sections. The group list at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49 and the copy at src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:18-25 are the two places the change lands. Which rows sit in which section is settled by this finding; what the rows are called is hub--row-labels. This finding names no control on purpose: it is about the shape of the whole task list, so the full-page shot of each side is the evidence, and cropping to any one heading would hide the regrouping that is the point.",
+    "falsifiedBy": "Finding \"Description of the goods\", \"Transport and arrival\", \"Consignment parties\" or \"Notification tasklist\" anywhere in the captured DOM of fe-hub. None of the four appears.",
+    "verification": "Read both rendered DOMs whole (capture/html/frontend/fe-hub.html and capture/html/prototype/dr1-notification-hub.html) and opened both screenshots. Ran the falsifier: grep -E for the four strings over fe-hub.html returns nothing. Counted the headings on each side — fe-hub carries six h2 headings reading exactly \"1. About the consignment\", \"2. Commodity details\", \"3. Movement\", \"4. Addresses\", \"5. Documents\", \"6. Check and submit\"; dr1-notification-hub carries an h2 \"Notification tasklist\" over six h3 headings reading \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Consignment parties\", \"6. Contact address\". Re-read both citations at the cited lines: hub/controller.js:33-49 is the GROUPS array in that order, hub/copy/copy.en.js:18-25 is the six heading strings, and app/routes.js:5749 is the opening of the sections array whose six titles run to :5841. Empty controls[] is the right call here and is stated in the prose. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49",
+    "prototype": "app/routes.js:5749-5841"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--row-labels",
+      "relation": "travels-with",
+      "why": "Both are edits to the same hub copy file; this one moves and renames the sections, that one renames the rows inside them."
+    },
+    {
+      "id": "hub--no-review-and-submit-button",
+      "relation": "travels-with",
+      "why": "Deleting the sixth section only makes sense once the review row has become a button."
+    }
+  ]
+}

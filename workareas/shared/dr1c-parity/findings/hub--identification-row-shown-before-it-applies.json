@@ -1,0 +1,34 @@
+{
+  "slice": "hub",
+  "title": "The hub lists an animal identification task on a notification with no commodities, where Design release 1 adds that task only once a commodity needs identifiers",
+  "domain": "hub",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-hub",
+    "fe-hub-part-answered",
+    "dr1-notification-hub",
+    "dr1-notification-hub-partly-complete"
+  ],
+  "controls": ["Animal identification details", "Identification details"],
+  "finding": {
+    "frontend": "\"Animal identification details\" is on the hub from the moment the notification is created, before any commodity has been chosen and therefore before it is known whether any animal needs an identifier at all. It shows on both captured hub states, locked with the status \"Cannot start yet\". The frontend does know how to leave a row out — its exit-details and transit-countries rows are marked conditional and are absent from both captures (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-47, with the hiding at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93-118) — but the identification row is not marked that way (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45), so it always appears.",
+    "prototype": "Design release 1's hub has no identification task on a notification with nothing chosen: its \"2. Description of the goods\" section holds two rows, \"Commodity details\" and \"Additional details\". \"Identification details\" is inserted between them only when the commodities chosen require animal identifiers (app/routes.js:5778-5782), which is what dr1-notification-hub-partly-complete shows. So the task appears when it becomes relevant and is invisible until then.",
+    "difference": "Make the identification row conditional on the notification actually needing animal identifiers, so it is absent from the hub rather than present and locked while no commodity has been chosen. The hub already knows how to drop a row — src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93 hides a row that is marked conditional once its status is not-applicable — but marking the identification entry conditional at src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45 is not on its own enough, and the work has to allow for that. The row's status is rolled up over the commodityLines collection (:44), and commodityLines is a structural group that is in scope from the moment the notification exists (src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:18-32), so the roll-up never reaches not-applicable and the row would still be drawn. Either the row needs its own applicability test — do any chosen commodities require identifiers, which is the question Design release 1 asks at app/routes.js:5778 — or the identification obligations need a scope condition that makes the roll-up not-applicable with no commodity lines. This is a different change from unlocking the rows (hub--task-rows-locked-until-earlier-work-is-done): unlocking makes a shown row usable, this decides whether the row is shown at all.",
+    "falsifiedBy": "Finding a row labelled \"Identification details\" in the captured DOM of dr1-notification-hub, or no row labelled \"Animal identification details\" in fe-hub. The prototype's base hub has ten rows and none of them is identification; the frontend's has eleven and one of them is.",
+    "verification": "Read all four rendered DOMs and both base-state screenshots. Ran the falsifier by counting rows in each captured DOM: dr1-notification-hub.html holds ten task items, three under section 1, two under section 2 (Commodity details, Additional details), two under 3, and one each under 4, 5 and 6, and none is an identification row; fe-hub.html holds eleven, and \"Animal identification details\" is the second item of its second list, with the status cell reading \"Cannot start yet\". dr1-notification-hub-partly-complete.html then shows \"Identification details\" inserted between Commodity details and Additional details, which is the spread at app/routes.js:5778-5782 firing. Read all the cited frontend lines. Rubric 1 (a claim about the fix that the code does not support) fired on the difference slot — see correction. The finding's substance is unaffected and stands at high confidence.",
+    "correction": "The two observation slots are correct as written and were left alone. The difference slot claimed \"The machinery already exists: add the conditional flag ... and the hub will drop the row when its status is not applicable.\" That is wrong, and it would have sent a developer to a one-line change that does nothing. The hiding test is isHiddenRow at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93, which needs both row.conditional and a status of NA. A row's status is statusOf over its parts, and statusOf returns NA only when no part is in scope, comparing on the part's collection name (src/server/app/bridge/status/index.js:87-91 with src/server/app/bridge/status/classification/index.js:12). The identification row's part is the commodityLines collection filtered to animalIdentifiers (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45), so the key it tests is commodityLines — and commodityLines carries no applyTo and is declared always in scope (src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:18-32), which src/server/app/bridge/scope.js:96-120 projects into the scope set unconditionally. So the status is never NA and the flag alone would leave the row on the page. This is also why the exit-details and transit-countries comparison does not carry over: those rows roll up over scalar obligations that genuinely leave scope when the import reason is unanswered. The difference slot now states the real shape of the work."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45",
+    "prototype": "app/routes.js:5778-5782"
+  },
+  "relatedTo": [
+    {
+      "id": "hub--row-labels",
+      "relation": "travels-with",
+      "why": "The same row is renamed from \"Animal identification details\" to \"Identification details\"."
+    }
+  ]
+}

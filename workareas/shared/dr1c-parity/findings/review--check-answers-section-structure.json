@@ -1,0 +1,44 @@
+{
+  "slice": "review",
+  "title": "Check your answers groups the notification into three numbered sections; Design release 1 uses six that mirror the task list, with a heading above every card",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "dr1-review-notification",
+    "dr1-review-notification-incomplete"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "The page has three numbered sections — \"1. About the consignment\", \"2. Movement\", \"3. Addresses\" — plus a \"4. Documents\" that only appears when a document has been uploaded (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:35-40). Section 1 carries three subheadings, \"Consignment details\", \"Commodity details\" and \"Species\"; sections 2 and 3 carry none at all, so their cards sit directly under the numbered heading. The grouping does not follow the task list either: commodity and animal details sit under \"About the consignment\" rather than in a section about the goods, roles and the contact address share one \"Addresses\" section, and the countries a consignment travels through is a row inside the Arrival details card rather than a heading of its own.",
+    "prototype": "Design release 1 has six numbered sections — \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Consignment parties\", \"6. Contact address\" — and a subsection heading above every single card (app/views/review-notification.html:41-179). Three of those subheadings are phrased as the questions the trader answered: \"Where is this consignment coming from?\", \"What are you importing?\", \"Main reason for import\". Transit countries gets its own subheading and card when it applies (app/views/review-notification.html:150-153), the reason for import gets its own card rather than sitting among animal details, and the contact address is lifted out of the parties section into a numbered section of its own.",
+    "difference": "Restructure the page into Design release 1's six sections in its order, and give every card a subsection heading. That means splitting the current \"1. About the consignment\" into \"1. About the consignment\" and \"2. Description of the goods\"; renaming \"2. Movement\" to \"3. Transport and arrival\" and lifting transit countries out of the Arrival details card into its own headed card; keeping Documents at 4; splitting \"3. Addresses\" into \"5. Consignment parties\" and \"6. Contact address\"; and moving the reason for import out of the Additional animal details card into its own card under \"Main reason for import\". The work is in the four section builders under src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/ and the copy file beside them; the template already renders a heading per group. `controls` is deliberately empty: the finding is the arrangement of the whole page and a crop of any one heading would not show it.",
+    "falsifiedBy": "Finding a fourth numbered section or a subsection heading in section 2 or 3 of fe-check-answers. The captured DOM has exactly three h2 section headings before \"Now submit your notification\", and the only h3 group headings on the page are the three inside section 1.",
+    "verification": "Ran the falsifier by opening evidence/frontend@76a864ba/page/fe-check-answers.png: three numbered sections, \"1. About the consignment\" carrying \"Consignment details\", \"Commodity details\" and \"Species\", and sections 2 and 3 carrying no subheading at all, their cards sitting straight under the number. Opened evidence/prototype@491b3926/page/dr1-review-notification.png and counted six numbered sections in the order claimed, each card under its own h3 — including three phrased as questions. Read the frontend's section list in view-model/index.js:14-19 and its heading strings in copy/copy.en.js:35-40, and the requirements side's structure in app/views/review-notification.html:40-178. Also checked the one claim that is not visible in either picture: transit countries really is a row inside the frontend's Arrival details card, at view-model/cards/movement/arrival-details.js:36-48, and a headed card of its own on the requirements side. One citation range was corrected — see correction. Otherwise CORRECT.",
+    "correction": "CLAIMED: the transit-countries subheading and card at app/views/review-notification.html:152-155. TRUE: :150-153, which is the whole `{% if movement.transitCountriesCard %}` block; :155 is the \"Transport details\" heading of the next card. HOW CHECKED: read app/views/review-notification.html:140-190 and counted. The range has been corrected in place and the substance is unaffected."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:6-22",
+    "prototype": "app/views/review-notification.html:41-179"
+  },
+  "relatedTo": [
+    {
+      "id": "review--check-answers-page-name",
+      "relation": "travels-with",
+      "why": "Both rewrite the headings on the same page and would be done in one editorial pass."
+    },
+    {
+      "id": "review--documents-section-hidden-when-nothing-uploaded",
+      "relation": "travels-with",
+      "why": "The Documents section's number and position are settled by this restructure."
+    },
+    {
+      "id": "hub--task-list-sections",
+      "relation": "travels-with",
+      "why": "Design release 1's six review sections are its six hub sections, so the review page and the task list should be renamed to the same set of names."
+    }
+  ]
+}

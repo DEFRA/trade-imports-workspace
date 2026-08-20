@@ -1,0 +1,33 @@
+{
+  "slice": "commodities",
+  "title": "Frontend lets a user leave every \"Number of animals\" box empty and move on to the next page, and only refuses the notification later at the review gate; Design release 1 holds them on the page until each one is filled in.",
+  "domain": "commodities",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-consignment-details",
+    "fe-consignment-details-error",
+    "dr1-consignment-details"
+  ],
+  "controls": ["numberOfAnimalsQuantity-0"],
+  "finding": {
+    "frontend": "The count is checked for shape but never for presence. Each line gets one rule, an integer-in-range check with a minimum of one (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-33), and that rule's schema explicitly allows the empty string, which short-circuits before the digits test runs (src/server/app/lib/validate/validators.js:123-143). So typing letters is refused — fe-consignment-details-error is that refusal — but pressing \"Save and continue\" with all four boxes blank is accepted and the user moves on to the next page. The frontend's own behaviour test records this: submitting a blank count re-renders no view and stores an empty string (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js:150-168). The notification is not lost, only postponed: the count is a mandatory obligation (src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:60-65), the stored empty string reads as unanswered (src/server/app/model/obligations/is-blank-value.js:6), so the commodities task never completes, the review section stays gated (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:83) and submission is refused (src/server/app/engine/write/submit.js:9-15). The user is stopped, just not at the point of the mistake and never with a reason.",
+    "prototype": "Submitting the page with a count missing re-renders it with \"Enter the number of animals\" in the error summary, linked to that species' box, and repeats the message for every species left blank. Only once every count is present is the user moved on (app/routes.js:817-848).",
+    "difference": "Add a presence rule to the animal count on the consignment-details page, one per commodity line, with the message \"Enter the number of animals\", and add that message to the commodities copy file alongside the whole-number message already there (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:35-40) and to the Welsh file beside it. The page already renders an error summary and per-field errors, so this is a missing rule rather than a missing mechanism. Nothing has to land first. Design release 1's consignment-details page was not photographed in its error state, so the observation that would confirm the anchor and the summary order is that page submitted with a count left blank.",
+    "falsifiedBy": "Submitting fe-consignment-details with every \"Number of animals\" box empty and being held on the page with an error. The line's only rule allows an empty string by construction, and the controller test asserts that a blank submission renders no view, so a refusal would prove this wrong.",
+    "verification": "Read both rendered DOMs, the error-state capture (capture/html/frontend/fe-consignment-details-error.html) and both 2x page shots. Ran the falsifier down the source: src/server/app/lib/validate/validators.js:123-143 puts .allow('') ahead of the custom digits check, so Joi short-circuits on a blank and the rule never fires, and the behaviour test at consignment-details.controller.test.js:150-168 asserts exactly that. Read the requirements side's validator at app/routes.js:817-848. Then followed the journey rather than stopping at the page — rubric point 1 — through the obligation, the blank-value rule, the task-row roll-up and the submit guard. CORRECT on the page; the claim about the journey was too strong and has been narrowed.",
+    "correction": "The finding stands but was overstated, and the title and the frontend slot have been narrowed. What was claimed: that a user can leave every count empty and \"carry on through the journey\". What is true: they can carry on to the next page, and no further. numberOfAnimals is a mandatory obligation (src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:60-65); the empty string the page stores is blank by src/server/app/model/obligations/is-blank-value.js:6, so the commodities task row never reaches fulfilled; readyForCheckYourAnswers requires every task row to be fulfilled, not applicable or optional (src/server/app/flow/section-status.js:11-15); the review section is gated on it (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:83) and submitJourney refuses without it (src/server/app/engine/write/submit.js:9-15). So the defect is real and worth fixing — the user is told nothing at the point of the mistake and meets a locked review section later with no explanation — but it is not a route to an incomplete submission. The author's own note that the obligation model already marks the field mandatory was right; the title had not caught up with it. Two smaller points: the copy citation was a line out, the errors block runs from copy.en.js:35 and the whole-number message is at :36, and the note that the requirements side treats the count as mandatory for completeness too was confirmed at app/routes.js:1201-1214."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-33",
+    "prototype": "app/routes.js:817-848"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--whole-number-error-wording",
+      "relation": "travels-with",
+      "why": "Both change the same validator on the same field; the presence message and the whole-number message should be written together."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "slice": "review",
+  "title": "The confirmation page offers only \"Return to your dashboard\"; Design release 1 also offers \"Create a new notification\"",
+  "domain": "review",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-confirmation",
+    "dr1-notification-submitted"
+  ],
+  "controls": [
+    "Create a new notification"
+  ],
+  "finding": {
+    "frontend": "Under \"How to view or amend this notification\" the confirmation page carries one link, \"Return to your dashboard\" (src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:23-27, wording at src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js:19-23). A trader who has just submitted one consignment and has another to notify has to go back to the dashboard and find the start button there.",
+    "prototype": "Design release 1 offers two links in the same block: \"Return to your dashboard\" and, below it, \"Create a new notification\" pointing straight at the start of the journey (app/views/notification-submitted.html:49-59).",
+    "difference": "Add a \"Create a new notification\" link below \"Return to your dashboard\" on the confirmation page, pointing at the same route the dashboard's start action uses. This is a template and copy change in the confirmation feature; the route already exists.",
+    "falsifiedBy": "Finding a second link in the \"How to view or amend this notification\" block on fe-confirmation. The captured DOM has exactly one anchor there, to the dashboard.",
+    "verification": "Ran the falsifier by looking, not just grepping: evidence/frontend@76a864ba/page/fe-confirmation.png shows \"Return to your dashboard\" alone under that heading, and evidence/prototype@491b3926/page/dr1-notification-submitted.png shows \"Return to your dashboard\" with \"Create a new notification\" below it. The citation is exact — app/views/notification-submitted.html:50-59 is the whole section, with the two anchors at :54 and :57, the second pointing at /create-notification. Checked the one thing that could have made this a false positive, that Create a new notification might be a placeholder href the contract excludes: it is not, it points at the start of the journey, and the contract's placeholder exclusion covers # hrefs only. Also checked the neighbouring sentence, which differs too — the frontend says \"You can view or amend this notification from your dashboard and resubmit it\" where Design release 1 says \"You can view or change this notification from your dashboard\" — and deliberately did not raise it: the extra words describe the frontend's amend-and-resubmit journey, which Design release 1 does not have, so it falls under the one-sided-feature rule already recorded in review--deleting-and-cancelling-an-amendment-are-one-sided. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:23-27",
+    "prototype": "app/views/notification-submitted.html:49-59"
+  },
+  "relatedTo": []
+}

@@ -1,0 +1,36 @@
+{
+  "slice": "documents",
+  "title": "Design release 1 asks the user to pick a document type for every document they upload; the frontend never asks and guesses the type from the file's name",
+  "domain": "documents",
+  "type": "add-field",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-documents",
+    "fe-documents-populated",
+    "fe-documents-error",
+    "dr1-upload-documents",
+    "dr1-upload-documents-populated",
+    "dr1-upload-documents-errors"
+  ],
+  "controls": ["documentType"],
+  "finding": {
+    "frontend": "The Upload documents page asks for three things and nothing else: Document reference, Date of issue and a file. The captured DOM of fe-documents carries exactly three named inputs on the add-a-document form — accompanyingDocumentReference, accompanyingDocumentDateOfIssue and file — and no select of any kind. A document type is nonetheless recorded and shown: the saved-documents table has a Document type column and on fe-documents-populated that column reads \"Veterinary health certificate\" for a document whose type the user was never asked for. The value is guessed from the uploaded file's name. The filename has its extension stripped, its separators flattened to spaces, and the result is matched word-for-word against the document-type list, longest candidate winning, falling back to 'OTHER' when nothing matches (src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js:19-23); the controller stamps the guess onto the record at src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:109-111. So a trader who uploads scan001.pdf gets \"Other\" and one whose file happens to be called veterinary-health-certificate.pdf gets a type they never chose. Nothing shows the guess before it is saved and nothing lets a user correct it afterwards — the two actions offered on a saved row are View file and Remove, and neither changes the type; the only way out of a wrong guess is to remove the document and upload it again under a different filename. The field is mandatory in the frontend's own obligation model (src/server/app/sets/live-animals/obligations/sections/documents.js:30-35), so the service depends on a value it never collects.",
+    "prototype": "Document type is the second question on the page, sitting between Document reference and Date of issue. It is a select labelled \"Document type\" that opens on \"Select one\" and offers Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log and Other (app/views/upload-documents.html:115-129). It is required: on dr1-upload-documents-errors, leaving it unset produces \"Select a document type\" in the error summary linked to #document-type and again as an error message above the select.",
+    "difference": "Add a Document type select to the upload form, between Document reference and Date of issue, and make it required with the message \"Select a document type\". The list already exists in the frontend: src/server/app/services/document-types/index.js:3 exposes the enum and the user-facing labels for every member are already written at src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:26-41. Save the chosen value as accompanyingDocumentType, which is already a mandatory field in the model and already persisted, and delete the filename derivation at src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js along with its only caller at src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:111. Nothing has to land before this: no contract change, no new reference service, no persistence change.",
+    "falsifiedBy": "Finding a control named accompanyingDocumentType, or any select labelled \"Document type\", in the captured DOM of fe-documents, fe-documents-populated or fe-documents-error. All three carry the string \"Document type\" only as a column header in the saved-documents table.",
+    "verification": "Ran the falsifier against all three frontend captures: no select element and no accompanyingDocumentType control on any of them; the three named inputs are accompanyingDocumentReference, accompanyingDocumentDateOfIssue and file. Read the DR1 rendered DOM of dr1-upload-documents (capture/html/prototype), which carries select#document-type opening on \"Select one\" with the thirteen options in the order the finding lists, and dr1-upload-documents-errors, whose summary carries \"Select a document type\" linked to #document-type. Opened both screenshots. Checked derive-document-type.js:19-23, controller.js:111 and obligations/sections/documents.js:30-35 at the cited lines — all correct. CORRECT on substance; one enumeration corrected, see correction.",
+    "correction": "CLAIMED: \"the only action offered on a saved row is Remove\". TRUE: the actions cell of fe-documents-populated carries a \"View file\" link and a \"Remove\" button (view-model/rows.js renders both, and copy.en.js:43-46 holds both labels); checked in the rendered DOM and confirmed in the screenshot, where both sit in the last column. The point of the sentence survives — neither action changes the derived type — so the slot was narrowed rather than dropped. Two further notes that change nothing and are recorded so they are not re-derived: the frontend's document-type list comes from a stub (services/document-types/index.js:1 re-exports DOCUMENT_TYPE_OPTIONS from stub.js), so the finding is correctly about the missing control and not about the list's contents, which the contract excludes; and the frontend's labels at copy.en.js:26-41 are not identical to DR1's — it labels ITAHC as \"ITAHC\" where DR1 says \"Intra Trade Animal Health Certificate (ITAHC)\", and it carries an extra HEALTH_CERTIFICATE member DR1 does not offer. The difference slot's \"the user-facing labels for every member are already written\" is therefore true of the mechanism but not of the wording, and whoever builds the select should take DR1's option text."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js:19-23",
+    "prototype": "app/views/upload-documents.html:115-129"
+  },
+  "relatedTo": [
+    {
+      "id": "documents--error-message-wording",
+      "relation": "travels-with",
+      "why": "The document-type error message \"Select a document type\" is added by the same edit to the documents copy file that the other error wording changes land in."
+    }
+  ]
+}

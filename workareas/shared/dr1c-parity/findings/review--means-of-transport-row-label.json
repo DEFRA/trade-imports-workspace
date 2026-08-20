@@ -1,0 +1,34 @@
+{
+  "slice": "review",
+  "title": "The review page shortens \"Means of transport to the port of entry\" to \"Means of transport\", so the summary no longer says which leg of the journey it describes",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "dr1-review-notification"
+  ],
+  "controls": [
+    "Means of transport",
+    "Means of transport to the port of entry"
+  ],
+  "finding": {
+    "frontend": "The Arrival details card on Check your answers labels the row \"Means of transport\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71). The question that collected the answer is labelled in full — \"Means of transport to the port of entry\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:16) — so the summary drops the part of the label that says which leg of the journey the answer is about, on the one page where a trader is checking answers out of the context of the question that asked for them.",
+    "prototype": "Design release 1 uses the same words on the review page as on the question: its Arrival details card labels the row \"Means of transport to the port of entry\" (app/routes.js:4680-4683).",
+    "difference": "Change the review row label to \"Means of transport to the port of entry\". It is one string, `rows.meansOfTransport` in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71, and it is used only by the Arrival details card.",
+    "falsifiedBy": "Finding the words \"to the port of entry\" after \"Means of transport\" in the Arrival details card of fe-check-answers. The captured DOM's row key is exactly \"Means of transport\".",
+    "verification": "Ran the falsifier: grep for \"Means of transport\" plus any trailing words in capture/html/frontend/fe-check-answers.html returns exactly \"Means of transport\", and the same grep against capture/html/prototype/dr1-review-notification.html returns \"Means of transport to the port of entry\". Both are visible in the two page screenshots. Read the three strings: check-answers/copy/copy.en.js:71 is the short review label, transport/copy/copy.en.js:16 is the full fieldset legend on the question page, and app/routes.js:4680-4681 is the requirements side's review row key. Confirmed the review label is used only by the Arrival details card by grepping rows.meansOfTransport across the check-answers view-model. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71",
+    "prototype": "app/routes.js:4680-4683"
+  },
+  "relatedTo": [
+    {
+      "id": "review--arrival-date-row-label",
+      "relation": "travels-with",
+      "why": "The two row labels sit next to each other in the same Arrival details card on the same page."
+    }
+  ]
+}

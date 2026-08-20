@@ -1,0 +1,29 @@
+{
+  "slice": "commodities",
+  "title": "When a count is not a whole number Frontend says \"Number of animals must be a whole number, like 25\"; Design release 1 says \"Enter a whole number greater than 0\".",
+  "domain": "commodities",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-consignment-details-error", "dr1-consignment-details"],
+  "controls": ["numberOfAnimalsQuantity-0"],
+  "finding": {
+    "frontend": "The captured error state shows the summary carrying \"Number of animals must be a whole number, like 25\", linked to the first line's count box. The message is used for both failure modes the rule has — a value that is not digits, and a value below one — because the same string is passed for both (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:20-23, with the string at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:36). A user who types 0 is told to enter a whole number, which 0 already is.",
+    "prototype": "The same two failure modes produce \"Enter a whole number greater than 0\", which names both conditions and starts with the verb (app/routes.js:839-846). The package count and the net weight on the same page use the same construction, so it is the page's pattern rather than a one-off.",
+    "difference": "Change the animal-count message from \"Number of animals must be a whole number, like 25\" to \"Enter a whole number greater than 0\" in the commodities copy file and in the Welsh file beside it. Design release 1 captured no error state for this page, so the wording is taken from where the requirement is stated rather than from a picture; the string itself is fixed and does not depend on the values on screen. Nothing has to land first.",
+    "falsifiedBy": "Design release 1 producing \"must be a whole number\" wording, or naming the field in the message, for a non-numeric count. The consignment-details validator builds one string for that case and never names the field.",
+    "verification": "Read the captured error state (capture/html/frontend/fe-consignment-details-error.html), which carries \"Number of animals must be a whole number, like 25\" in both the summary and the field, and opened the 2x shot of fe-consignment-details-error. Read the implementation-side rule at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-33, which passes one message for both failure modes, and the requirements-side validator at app/routes.js:817-848. Ran the falsifier: the requirements side produces \"Enter a whole number greater than 0\" for both a non-digit value and a value below one, and names no field. CORRECT.",
+    "correction": "The claim stands and the falsifier does not fire; three points of record. (1) The copy citation was two lines out — animalsWholeNumber is at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:36, the errors block opens at :35 — and the prose and the evidence path now say so. (2) The supporting sentence \"the package count and the net weight on the same page use the same construction\" is right about the shape but was checked and needs a caveat: the requirements side's net-weight message is \"Enter a number greater than 0\", not \"whole number\" (app/routes.js:958-964), and both the package and net-weight validators return early for anything that is not a germinal product (app/routes.js:907-909, :941-943), so neither string is ever shown for a live animal. The pattern claim is a claim about how the requirements side writes messages, not about strings a live-animals user meets; the wording change the finding asks for is unaffected. (3) The falsifier's last sentence said the same string is used for animals, packages and net weight; it is used for animals and packages, and net weight has its own. Corrected in place."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:35-40",
+    "prototype": "app/routes.js:839-846"
+  },
+  "relatedTo": [
+    {
+      "id": "commodities--number-of-animals-not-required",
+      "relation": "travels-with",
+      "why": "Same field, same validator; the missing presence message and this wording change land in one edit."
+    }
+  ]
+}

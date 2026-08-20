@@ -1,0 +1,169 @@
+{
+  "_comment": [
+    "How the service is cut up for the authoring fan-out, one agent per slice.",
+    "",
+    "Slices are named after parts of the service rather than after screens,",
+    "because a finding usually spans two screens and an agent that owns a PART",
+    "can see both. Every one of the 82 captured screens appears in exactly one",
+    "slice; `tim parity slices EUDPA-328-DR1B --strict` refuses otherwise, and",
+    "it is run before a single agent is spawned.",
+    "",
+    "`service-wide` carries chrome: true. The phase banner, the service",
+    "navigation, the caption above the heading, the back link, the footer, the",
+    "page title and the button pattern appear on every screen, so ten agents",
+    "left to themselves write the same finding ten times. One slice owns them",
+    "and every other slice is told in as many words not to raise a chrome",
+    "finding. A gap is one missing row in a work list; a duplicate is two",
+    "increments, two ids, two sets of citations and somebody three months later",
+    "working out whether they are the same change.",
+    "",
+    "The screen counts are deliberately uneven — 4 to 15 — because the service",
+    "is uneven. `tim parity yield` measures findings PER SCREEN for that reason,",
+    "so a small slice is not mistaken for a slice that truncated."
+  ],
+  "slices": [
+    {
+      "id": "service-wide",
+      "chrome": true,
+      "note": "Owns the chrome on every screen in the service, plus the two shell pages at the end of the journey where the chrome is most of what there is to compare.",
+      "screens": [
+        "fe-declaration",
+        "fe-confirmation",
+        "dr1-declaration",
+        "dr1-notification-submitted"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "note": "The front door: the list, its filters, and the actions a card offers. Includes the two frontend journeys DR1 may have no counterpart for, so that whether they are in scope is asked once by the agent that can see the dashboard card.",
+      "screens": [
+        "fe-dashboard-empty",
+        "fe-dashboard-populated",
+        "fe-delete-notification",
+        "fe-cancel-amend",
+        "dr1-dashboard",
+        "dr1-dashboard-after-submission",
+        "dr1-dashboard-filters-open",
+        "dr1-dashboard-filters-date-picker-open"
+      ]
+    },
+    {
+      "id": "hub",
+      "note": "The task list a user returns to between sections: which rows exist, what each says, and which are reachable.",
+      "screens": [
+        "fe-hub",
+        "fe-hub-exit-details-blocked",
+        "fe-hub-no-commodity",
+        "dr1-notification-hub"
+      ]
+    },
+    {
+      "id": "origin-and-reason",
+      "note": "Where the consignment comes from and why it is being imported, plus the pages the chosen reason opens. The prototype's four revealed states belong here because they ARE those questions on that side.",
+      "screens": [
+        "fe-origin",
+        "fe-import-reason",
+        "fe-import-purpose",
+        "fe-destination-country",
+        "fe-port-of-exit",
+        "fe-exit-date",
+        "dr1-origin-of-the-import",
+        "dr1-reason-for-import",
+        "dr1-reason-for-import-error",
+        "dr1-reason-for-import-internal-market-revealed",
+        "dr1-reason-for-import-temporary-admission-horses-revealed",
+        "dr1-reason-for-import-transhipment-revealed",
+        "dr1-reason-for-import-transit-revealed"
+      ]
+    },
+    {
+      "id": "commodities",
+      "note": "What is being imported: the search, the per-line details, and the extra questions a species opens.",
+      "screens": [
+        "fe-commodity-search",
+        "fe-consignment-details",
+        "fe-additional-details",
+        "dr1-what-are-you-importing",
+        "dr1-what-are-you-importing-results",
+        "dr1-consignment-details",
+        "dr1-additional-animal-details"
+      ]
+    },
+    {
+      "id": "identification",
+      "note": "Identifying individual animals. Five frontend states against one prototype screen, so the shape of the difference is likely to be structural rather than copy.",
+      "screens": [
+        "fe-animal-identification",
+        "fe-animal-identification-at-maximum",
+        "fe-animal-identification-fish",
+        "fe-animal-identification-horse",
+        "fe-animal-identification-saved",
+        "dr1-animal-identification-details"
+      ]
+    },
+    {
+      "id": "addresses",
+      "note": "Every party and place on the consignment, the picker that supplies them, the CPH number and the contact. The largest slice, because one prototype view serves several roles the frontend splits into separate pages.",
+      "screens": [
+        "fe-addresses-hub",
+        "fe-address-picker-place-of-origin",
+        "fe-address-picker-consignor-or-exporter",
+        "fe-address-picker-consignee",
+        "fe-address-picker-importer",
+        "fe-address-picker-place-of-destination",
+        "fe-cph-number",
+        "fe-contact",
+        "dr1-roles-and-addresses",
+        "dr1-roles-and-addresses-partial",
+        "dr1-roles-and-addresses-complete",
+        "dr1-consignment-address-select",
+        "dr1-cph-number",
+        "dr1-contact-address-for-consignment",
+        "dr1-permanent-address-animals"
+      ]
+    },
+    {
+      "id": "transport",
+      "note": "Who moves the animals and how: transporter type and details, the countries passed through, and arrival.",
+      "screens": [
+        "fe-transporter-type",
+        "fe-transporter-commercial",
+        "fe-transporter-private",
+        "fe-transit-countries",
+        "fe-arrival-details",
+        "dr1-transporter",
+        "dr1-transporter-add",
+        "dr1-transporter-add-commercial",
+        "dr1-transporter-add-private",
+        "dr1-transit-countries",
+        "dr1-transit-countries-selected",
+        "dr1-arrival-details"
+      ]
+    },
+    {
+      "id": "documents",
+      "note": "Uploading accompanying documents. The prototype contributes six states of one page — errors, scanning, populated, a limit — and the states are where most of the requirement is stated.",
+      "screens": [
+        "fe-documents-empty",
+        "fe-documents-populated",
+        "dr1-upload-documents",
+        "dr1-upload-documents-file-chosen",
+        "dr1-upload-documents-populated",
+        "dr1-upload-documents-populated-scanning",
+        "dr1-upload-documents-error",
+        "dr1-upload-documents-continue-error",
+        "dr1-upload-documents-limit-error"
+      ]
+    },
+    {
+      "id": "review",
+      "note": "The last gate before the declaration: what is shown back, and what happens when it is opened early.",
+      "screens": [
+        "fe-check-answers",
+        "fe-check-answers-submitted",
+        "dr1-review-notification",
+        "dr1-review-notification-incomplete"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "slice": "service-wide",
+  "title": "DR1 gives its tables, summary cards and task list the full width of the page; the frontend squeezes the same content into a two-thirds column on every screen but the notification list.",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-hub",
+    "fe-documents-populated",
+    "fe-address-picker-place-of-origin",
+    "dr1-review-notification",
+    "dr1-notification-hub",
+    "dr1-upload-documents-populated",
+    "dr1-consignment-address-select"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "Every page in the journey renders its content in a two-thirds column, so nothing a user meets is ever wider than about 630 pixels of a 960-pixel container. The width is decided once, for the whole service, by the shared page base (`src/server/app/shared/kit.js:113-124`), which hard-codes the narrow surface and gives no page a way to ask for anything else; the shared layout then prints it (`src/server/app/shared/layout.njk:57`). The frontend already knows the wide surface exists — `kit.js:20-23` names both, `form` and `display` — and exactly one page uses it: the notification list, which passes `display` from its own controller (`src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:70`). Everything else inherits the narrow one, whatever it holds. The effect is worst where the content is tabular: the check-your-answers summary cards, the task list, the document table, the address picker and the animal identification cards all render at the width of a paragraph, so values wrap onto three and four lines and the page grows correspondingly long.",
+    "prototype": "DR1 decides width per page and per element rather than once for the service. Its prose and its form fields are held to about 630 pixels wherever they appear, the same as the frontend, but anything tabular is given the whole 960-pixel container. Fifteen of the 42 DR1 screens render content wider than the frontend can: the two review states (`app/views/review-notification.html:28`), the notification hub, all seven upload-documents states, the transporter directory, the commodity details table, the animal identification cards, the address select list and the permanent address cards. On several of those the same page does both — the upload-documents intro wraps at 630 and the File upload card beneath it runs the full 960.",
+    "difference": "Let a page choose its content surface, and choose the wide one where DR1 does. The mechanism is already built and already proven on one page, so the work is to stop the shared base hard-coding `SURFACES.form` — take the surface as an option defaulting to `form` — and then pass `display` from the controllers of the pages DR1 renders wide: check your answers, the task list, documents, the address pickers, animal identification, commodity details and the transporter list. Nothing else changes: no copy, no fields, no routes, and the narrow surface stays the default so any page not named keeps the width it has today. Worth doing as one change rather than page by page, because the reason it is wrong everywhere is that it is decided in one place.",
+    "falsifiedBy": "Finding a frontend journey page whose content renders wider than the two-thirds column, or finding that DR1's wide pages are wide only because of the Prototype Kit's own layout rather than their own markup.",
+    "verification": "Written by the verifier, at the coordinator's request, after checking both claims rather than inheriting them. Measured rendered width from the full-page screenshots on both sides, and read the grid markup in every captured DOM, `layouts/journey.html`, `layouts/main.html`, the prototype's `application.scss` and the frontend's `kit.js` and `layout.njk`. It stands, and it is broad rather than per-page: on the frontend, `govuk-grid-column-two-thirds` is the content column in all 40 captures and only the two dashboard captures add a full-width row; on DR1, 30 of 42 captures carry `govuk-grid-column-full`. But the class count overstates it, and this is where the claim had to be narrowed. The grid class is not what a user meets: dr1-reason-for-import is `govuk-grid-column-full` in the markup and renders its radios and hints at about 620 pixels, because `application.scss` caps the page's inner elements at 630 — and dr1-cph-number and dr1-transit-countries do the same. Measuring the pictures instead, the screens where DR1 genuinely renders wider than the frontend can are fifteen: dr1-review-notification and its incomplete state (~948 pixels of summary card against fe-check-answers' ~636), dr1-notification-hub (~930 of task list against fe-hub's ~635), the seven upload-documents states (~966 of card), dr1-transporter (~965 of table), dr1-animal-identification-details, dr1-consignment-details, dr1-consignment-address-select and dr1-permanent-address-animals (all ~930-960). Tested the Prototype Kit exclusion rather than accepting the argument offered for it: the kit's `govuk-branded.njk` supplies the width container and the header and footer and never sets an inner column, `layouts/journey.html` hard-codes two-thirds, and every wide DR1 page writes its own — `review-notification.html:28` is `<div class=\"govuk-grid-column-full app-review-notification-page\">`. So the kit is not the cause. The exclusion's second limb fails too: the real service demonstrably can do this, because `SURFACES.display` exists and the dashboard already uses it. Ran the falsifier both ways and it does not fire."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/kit.js:113-124",
+    "prototype": "app/views/review-notification.html:28"
+  },
+  "relatedTo": []
+}

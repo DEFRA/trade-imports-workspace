@@ -40,11 +40,12 @@ const { test, expect, recorder } = await import(
 //   description              any commodity in NONE of the four above
 //   permanent address      Cat, Dog
 //
-// So Cow, Horse and Fish are between them every shape the card has: three typed
-// identifiers, a typed identifier beside the horse-name field, and the free-text
-// fallback that only a commodity off all four lists can reach. Cat and Dog add
-// a fourth shape — the per-animal permanent address — but no screen id in this
-// corpus names it, so it is not photographed here.
+// So Cow, Horse, Fish and Cat are between them every shape the card has: three
+// typed identifiers, a typed identifier beside the horse-name field, the
+// free-text fallback that only a commodity off all four lists can reach, and
+// the per-animal permanent address that only Cat and Dog trigger. Dog is left
+// out because it sits on exactly the same three lists as Cat and would
+// photograph the same card twice.
 //
 // The commodity page posts `<commodity>|<species value>` on one checkbox per
 // species, and the value is what is selected on below. The visible text is the
@@ -57,12 +58,14 @@ const HORSE_LINE = {
   card: 'Horse (0101) — Equus caballus'
 }
 const FISH_LINE = { value: 'Fish|801204', card: 'Fish (0301) — Salmo salar' }
+const CAT_LINE = { value: 'Cat|923501', card: 'Cat (01061900) — Felis catus' }
 
 // The counter and the card's closing sentence both name the species rather than
 // the commodity, so they are spelt out separately from the card title.
 const COW_SPECIES = 'Bos taurus'
 const HORSE_SPECIES = 'Equus caballus'
 const FISH_SPECIES = 'Salmo salar'
+const CAT_SPECIES = 'Felis catus'
 
 // Chosen by ISO code, not by name. In stub mode the country list is a fixture
 // and otherwise it is refetched from reference data, so the code is the stable
@@ -225,6 +228,14 @@ const answerCommodityLine = async (page, line, animals) => {
 // answer for both.
 const identifierField = (page, obligation, line = 0) =>
   page.locator(`#${obligation}-${line}`)
+
+// The permanent-address controls are named on the same `<field>-<line index>`
+// convention, and this is deliberately a second helper rather than a reuse of
+// the one above: they are a different block, gated on a different obligation,
+// and a reader following a locator back should land on the sentence that says
+// which. The nine names are the address block's own field order.
+const addressField = (page, field, line = 0) =>
+  page.locator(`#${field}-${line}`)
 
 // Start a notification carrying one commodity line and stop on the
 // identification page, photographing nothing on the way.
@@ -596,8 +607,8 @@ test('records the identification card for a Fish line', async ({ page }) => {
   const card = await openIdentificationFor(page, FISH_LINE, ONE_ANIMAL)
 
   // Fish is on none of the four typed-identifier lists, and the two free-text
-  // fields are gated on exactly that — their obligations apply when the
-  // commodity is in the union of none of them. So this card is the fallback in
+  // fields are gated on exactly that — each applies when the line's commodity
+  // is outside the union of those four lists. So this card is the fallback in
   // its only form, and the state a finding about identification details or an
   // animal description has nowhere else to resolve against.
   await expect(
@@ -626,6 +637,96 @@ test('records the identification card for a Fish line', async ({ page }) => {
   ).toHaveText(`Enter details for ${FISH_SPECIES} 1 of 1`)
 
   await record.record(page, 'animal-identification-fish')
+})
+
+test('records the identification card for a Cat line, which asks for a permanent address', async ({
+  page
+}) => {
+  const card = await openIdentificationFor(page, CAT_LINE, ONE_ANIMAL)
+
+  // Cat and Dog are the only commodities on the permanent-address list, and the
+  // two sit on identical lists — passport, tattoo and permanent address — so
+  // one of them photographs both. The block is the fourth and last shape the
+  // card takes, and the one the other four states cannot show: a Cow, Horse or
+  // Fish line never triggers it, so anything said about its placement, its
+  // guidance or its labels rests on source alone until this picture exists.
+  //
+  // It is also the only MANDATORY obligation inside the card. The five typed
+  // and free-text identifiers are each optional on their own — the unit record
+  // requires any one of the six — whereas a permanent address is required
+  // outright for these two commodities.
+  await expect(
+    identifierField(page, 'animalIdentifierPassport'),
+    'a Cat line should ask for a passport number'
+  ).toBeVisible()
+  await expect(
+    identifierField(page, 'animalIdentifierTattoo'),
+    'and for a tattoo'
+  ).toBeVisible()
+  await expect(
+    identifierField(page, 'animalIdentifierEarTag'),
+    'the ear tag is a Cow field and should not be on a Cat card'
+  ).toHaveCount(0)
+  await expect(
+    identifierField(page, 'horseName'),
+    'and the horse name is a Horse field'
+  ).toHaveCount(0)
+  await expect(
+    identifierField(page, 'animalIdentifierIdentificationDetails'),
+    'a commodity with typed identifiers should not fall back to free text'
+  ).toHaveCount(0)
+
+  // The assertion that makes the name on this picture honest. Without it, a run
+  // in which the gate silently stopped firing would photograph an ordinary
+  // two-identifier card under a name promising an address form, and no reader
+  // downstream could tell. The heading and its sentence are the block's own,
+  // rendered by the card rather than by any shared partial.
+  await expect(
+    card.getByRole('heading', { level: 3, name: 'Permanent address' }),
+    'a Cat line should render the permanent-address block'
+  ).toBeVisible()
+  await expect(
+    card.getByText('A permanent address is required for this animal.'),
+    'and say that the address is required rather than offered'
+  ).toBeVisible()
+
+  // All nine controls, in the block's own field order, present and empty. The
+  // count matters as much as the presence: a block rendering two of its nine
+  // fields would pass a "the address form is there" check and be the wrong
+  // picture for three of the four questions asked about it.
+  for (const field of [
+    'nameOrOrganisationName',
+    'addressLine1',
+    'addressLine2',
+    'townOrCity',
+    'county',
+    'postalOrZipCode',
+    'country',
+    'telephoneNumber',
+    'emailAddress'
+  ]) {
+    await expect(
+      addressField(page, field),
+      `the permanent address should ask for ${field}, empty`
+    ).toHaveValue('')
+  }
+
+  // Named rather than matched by level, because this is the one card shape with
+  // two third-level headings — the counter and the address block's own — so an
+  // unnamed locator resolves to both and asserts nothing about either.
+  await expect(
+    card.getByRole('heading', {
+      level: 3,
+      name: `Enter details for ${CAT_SPECIES} 1 of 1`
+    }),
+    'the counter should name the animal the open form is for'
+  ).toBeVisible()
+  await expect(
+    card.locator('.govuk-summary-list__row'),
+    'and nothing should have been entered yet'
+  ).toHaveCount(0)
+
+  await record.record(page, 'animal-identification-permanent-address')
 })
 
 test('records the identification card with one animal saved, and at its maximum', async ({

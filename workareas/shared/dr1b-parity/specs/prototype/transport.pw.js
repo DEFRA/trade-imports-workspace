@@ -211,8 +211,10 @@ const toArrivalDetails = async (page) => {
 
 // validateArrivalDetails only insists on means of transport, but a
 // half-answered page is not what a real notification looks like and the screens
-// after it read back what was entered. Fill the lot.
-const fillArrivalDetails = async (page) => {
+// after it read back what was entered. Fill the lot, then assert the landing:
+// Railway is what puts transit countries next, and an Airplane or a Vessel would
+// take the walk straight to /transporter with nothing to say it had happened.
+const continueToTransitCountries = async (page) => {
   const date = page.locator('#arrival-date-at-port')
   await date.fill(ARRIVAL_DATE)
   // The MOJ picker builds its dialog hidden and opens it only from its own
@@ -236,11 +238,6 @@ const fillArrivalDetails = async (page) => {
   await page.locator('input[name="transportDocumentReference"]').fill('CMR-000123')
 
   await continueOn(page)
-}
-
-const toTransitCountries = async (page) => {
-  await toArrivalDetails(page)
-  await fillArrivalDetails(page)
 
   await expect(
     page,
@@ -270,14 +267,7 @@ test('records arrival-details empty, then transit-countries empty and with a cou
   const arrival = await record.record(page, 'arrival-details')
   expect(arrival.title, 'the screen should have a title to file it under').toBeTruthy()
 
-  await fillArrivalDetails(page)
-  await expect(
-    page,
-    `${MEANS_OF_TRANSPORT} should put transit-countries next, not skip to transporter`
-  ).toHaveURL(/\/transit-countries$/)
-  await expect(page.locator('main h1')).toHaveText(
-    /which countries will the consignment travel through/i
-  )
+  await continueToTransitCountries(page)
 
   const empty = await record.record(page, 'transit-countries')
   expect(empty.title, 'the screen should have a title to file it under').toBeTruthy()
@@ -314,7 +304,8 @@ test('records arrival-details empty, then transit-countries empty and with a cou
 })
 
 test('records transporter and the three add-a-transporter pages', async ({ page }) => {
-  await toTransitCountries(page)
+  await toArrivalDetails(page)
+  await continueToTransitCountries(page)
 
   // Transit countries are optional — an empty list saves and moves on.
   await continueOn(page)

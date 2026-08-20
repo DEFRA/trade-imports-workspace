@@ -198,13 +198,26 @@ export default defineConfig({
     navigationTimeout: 30_000,
     // Everything below is about two runs at the same commit producing the same
     // bytes, which is what makes a changed hash mean the application changed.
-    viewport: ${JSON.stringify(viewport)},
-    deviceScaleFactor: ${deviceScaleFactor},
     reducedMotion: 'reduce',
     video: 'off',
     trace: 'retain-on-failure'
   },
-  projects: [{ name: ${JSON.stringify(side)}, use: { ...devices['Desktop Chrome'] } }],
+  // The device descriptor is spread FIRST and the two settings that decide what
+  // a picture is worth are applied over it. Playwright merges a project's use
+  // OVER the top-level use, so a bare '...devices' here silently wins — and
+  // 'Desktop Chrome' carries deviceScaleFactor: 1 and a 720-high viewport. For
+  // three corpora it did exactly that: every screenshot was shot at 1x while
+  // .corpus-meta.json, the report masthead and check-evidence all said 2x.
+  projects: [
+    {
+      name: ${JSON.stringify(side)},
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: ${JSON.stringify(viewport)},
+        deviceScaleFactor: ${deviceScaleFactor}
+      }
+    }
+  ],
   metadata: { captureContext: ${JSON.stringify(contextPath)} }
 })
 `

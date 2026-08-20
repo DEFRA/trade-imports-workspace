@@ -234,6 +234,32 @@ describe('playwrightConfigSource', () => {
     expect(config()).toContain("reducedMotion: 'reduce'")
   })
 
+  // Presence is not enough, and asserting presence alone is how this shipped
+  // wrong for three corpora. Playwright merges a project's `use` OVER the
+  // top-level one, so a device descriptor spread after these settings silently
+  // replaces them — and 'Desktop Chrome' carries deviceScaleFactor: 1 and a
+  // 720-high viewport. Every screenshot was 1x while everything downstream
+  // reported 2x.
+  test('sets the scale AFTER the device descriptor, so the descriptor cannot win', () => {
+    const source = config()
+    const projects = source.slice(source.indexOf('projects:'))
+
+    expect(projects).toContain("...devices['Desktop Chrome']")
+    expect(projects.indexOf("...devices['Desktop Chrome']")).toBeLessThan(
+      projects.indexOf('deviceScaleFactor')
+    )
+    expect(projects.indexOf("...devices['Desktop Chrome']")).toBeLessThan(
+      projects.indexOf('viewport')
+    )
+  })
+
+  test('the project carries the scale at all, not only the top-level use', () => {
+    const source = config({ deviceScaleFactor: 3 })
+    const projects = source.slice(source.indexOf('projects:'))
+
+    expect(projects).toContain('deviceScaleFactor: 3')
+  })
+
   test('leaves serving the application to tim, which can say what it started', () => {
     expect(config()).not.toContain('webServer')
   })

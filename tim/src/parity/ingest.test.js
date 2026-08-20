@@ -565,3 +565,77 @@ describe('runIngest', () => {
     expect(() => ingest()).toThrow(/findings/)
   })
 })
+
+describe('the verify-before-ingest gate', () => {
+  const verified = (overrides = {}) =>
+    finding({
+      finding: {
+        ...finding().finding,
+        verification: 'Read both DOMs, ran the falsifier. CORRECT.'
+      },
+      ...overrides
+    })
+
+  test('a corpus that does not ask for one ingests exactly as it did', () => {
+    writeFinding('documents--type.json')
+
+    expect(ingest().total).toBe(1)
+  })
+
+  test('refuses a first ingest of a finding no verifier recorded looking at', () => {
+    profile.requireVerification = true
+    writeFinding('documents--type.json')
+
+    expect(() => ingest()).toThrow(
+      /found nothing and a verifier that looked at nothing leave the same trace/
+    )
+  })
+
+  test('names every unverified file rather than only the first', () => {
+    profile.requireVerification = true
+    writeFinding('documents--type.json')
+    writeFinding('documents--size.json')
+
+    expect(() => ingest()).toThrow(
+      /documents--size\.json, documents--type\.json/
+    )
+  })
+
+  test('lets a verified finding through', () => {
+    profile.requireVerification = true
+    writeFinding('documents--type.json', verified())
+
+    expect(ingest().total).toBe(1)
+  })
+
+  test('carries the verification record onto the increment', () => {
+    profile.requireVerification = true
+    writeFinding('documents--type.json', verified())
+
+    ingest()
+
+    expect(backlog().increments[0].finding.verification).toBe(
+      'Read both DOMs, ran the falsifier. CORRECT.'
+    )
+  })
+
+  test('does not re-gate a finding already in the backlog', () => {
+    profile.requireVerification = true
+    writeFinding('documents--type.json', verified())
+    ingest()
+
+    writeFinding('documents--type.json', finding())
+
+    expect(ingest().total).toBe(1)
+  })
+
+  test('a whitespace-only record does not count as having looked', () => {
+    profile.requireVerification = true
+    writeFinding(
+      'documents--type.json',
+      finding({ finding: { ...finding().finding, verification: '   ' } })
+    )
+
+    expect(() => ingest()).toThrow(/carry no verification record/)
+  })
+})

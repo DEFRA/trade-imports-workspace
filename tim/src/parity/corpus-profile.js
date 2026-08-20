@@ -198,6 +198,10 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
     sides,
     repos,
     bands: raw.bands ?? DEFAULT_BANDS,
+    // Whether an ingest refuses a finding no verifier has recorded looking at.
+    // Off unless a corpus asks for it: the two corpora that predate the flag
+    // were ingested without one, and re-ingesting them has to stay a no-op.
+    requireVerification: raw.requireVerification === true,
     sideIds: sides.map((side) => side.id),
     sideById: Object.fromEntries(sides.map((side) => [side.id, side])),
     paths: {

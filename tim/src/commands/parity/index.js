@@ -13,6 +13,10 @@ import { runSplitSentinels } from '../../parity/split-sentinels.js'
 import { runManifest } from '../../parity/manifest.js'
 import { runCapture } from '../../parity/capture/run.js'
 import { runCoverage } from '../../parity/coverage.js'
+import { runSlices, renderSlices } from '../../parity/slices.js'
+import { runYield, renderYield } from '../../parity/yield.js'
+import { runDuplicates, renderDuplicates } from '../../parity/duplicates.js'
+import { runHeads, renderHeads } from '../../parity/heads.js'
 import { runIngest } from '../../parity/ingest.js'
 import { runAnchors } from '../../parity/anchors.js'
 import {
@@ -610,6 +614,96 @@ export const register = (program, { timVersion }) => {
                 : [`${side.side}: ${side.why}`]
             )
             .join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('slices <runId>')
+    .description(
+      'Prove the slicing before spawning anything: every captured screen owned by exactly one slice, and exactly one slice owning the chrome'
+    )
+    .option('--file <path>', 'A slicing somewhere other than the workarea')
+    .option('--strict', 'Exit non-zero unless the slicing is sound')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => {
+          const result = runSlices({ profile, file: opts.file })
+          return {
+            ...result,
+            exitNonZero: Boolean(opts.strict) && !result.sound
+          }
+        },
+        renderText: renderSlices,
+        timVersion
+      })
+    )
+
+  parity
+    .command('yield <runId>')
+    .description(
+      'Did every slice deliver, and did a verifier record looking at every finding? Run it before the ingest, which freezes the prose permanently'
+    )
+    .option('--file <path>', 'A slicing somewhere other than the workarea')
+    .option(
+      '--fraction <number>',
+      'How far under the median findings-per-screen a slice may sit before it is flagged'
+    )
+    .option('--strict', 'Exit non-zero unless the corpus is ready to ingest')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => {
+          const result = runYield({
+            profile,
+            file: opts.file,
+            fraction: opts.fraction ? Number(opts.fraction) : undefined
+          })
+          return {
+            ...result,
+            exitNonZero: Boolean(opts.strict) && !result.readyToIngest
+          }
+        },
+        renderText: renderYield,
+        timVersion
+      })
+    )
+
+  parity
+    .command('duplicates <runId>')
+    .description(
+      'Candidate duplicate findings across the whole corpus at once, which no per-slice verifier can see. Finds candidates; strikes nothing'
+    )
+    .option('--all', 'Include pairs from within one slice as well')
+    .action(
+      makeParityAction({
+        run: ({ profile }, opts) => runDuplicates({ profile, all: opts.all }),
+        renderText: renderDuplicates,
+        timVersion
+      })
+    )
+
+  parity
+    .command('heads <runId>')
+    .description(
+      'Where each application stood when the run began, and what has moved under it since'
+    )
+    .option('--write', 'Record the current heads as this run\'s starting point')
+    .option('--force', 'Re-record over a run already in progress')
+    .option('--strict', 'Exit non-zero when an application has moved')
+    .action(
+      makeParityAction({
+        run: async ({ profile }, opts) => {
+          const result = await runHeads({
+            profile,
+            write: opts.write,
+            force: opts.force
+          })
+          return {
+            ...result,
+            exitNonZero: Boolean(opts.strict) && !result.steady
+          }
+        },
+        renderText: renderHeads,
         timVersion
       })
     )

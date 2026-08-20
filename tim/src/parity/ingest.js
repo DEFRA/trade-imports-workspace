@@ -67,6 +67,23 @@ const optionalText = (value, field, file) => {
   return value.trim()
 }
 
+/**
+ * What a verifier wrote against one finding, wherever it wrote it.
+ *
+ * The record of having looked lives under `finding.verification`, and older
+ * files put it at the top level, so both are read. Exported because the check
+ * that runs before an ingest and the ingest itself have to agree exactly on
+ * what counts as verified — two readings of that would let a finding pass one
+ * and fail the other.
+ *
+ * @param {object} raw - A finding file as parsed
+ * @returns {string|null}
+ */
+export const verificationOf = (raw) => {
+  const value = raw?.finding?.verification ?? raw?.verification
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+}
+
 const requireFrom = (value, field, allowed, file) => {
   if (!allowed.includes(value)) {
     fail(
@@ -177,6 +194,11 @@ export const validateFinding = ({ raw, file, bands, screens }) => {
     fail(file, '"relatedTo" must be a list.')
   }
 
+  // Type-checked here, where every other field is, and then read back through
+  // the one function that decides what counts as verified — so the gate below
+  // and the check that runs before it can never disagree about a finding.
+  optionalText(finding.verification ?? raw.verification, 'verification', file)
+
   return {
     file,
     slice,
@@ -198,11 +220,7 @@ export const validateFinding = ({ raw, file, bands, screens }) => {
       'correction',
       file
     ),
-    verification: optionalText(
-      finding.verification ?? raw.verification,
-      'verification',
-      file
-    ),
+    verification: verificationOf(raw) ?? undefined,
     relatedTo: raw.relatedTo,
     carriedFrom: optionalText(raw.carriedFrom, 'carriedFrom', file)
   }
@@ -561,6 +579,24 @@ export const runIngest = ({
       'USAGE',
       `detail is frozen at first ingest and these findings would change it: ${frozen.join(', ')}. It is the oracle a later language pass is measured against, so edit the prose with "tim parity set-slot" instead, which leaves detail alone.`
     )
+  }
+
+  // The verify-before-ingest gate. Until a corpus asks for it this rule was
+  // held by reading order alone, and one command run early froze a corpus over
+  // unverified prose permanently. A corpus that does not declare
+  // requireVerification is untouched: the corpora that predate the flag ingested
+  // without one and re-ingesting them must stay a no-op.
+  if (profile.requireVerification) {
+    const unverified = findings
+      .filter((finding) => !byId.has(ids.get(finding.file)) || replace)
+      .filter((finding) => !finding.verification)
+      .map((finding) => finding.file)
+    if (unverified.length) {
+      throw new TimError(
+        'USAGE',
+        `${unverified.length} findings carry no verification record and this corpus requires one before a first ingest: ${unverified.join(', ')}. A verifier that found nothing and a verifier that looked at nothing leave the same trace, so the record is what tells them apart — and ingest freezes detail permanently, so it has to exist first. Run "tim parity yield ${profile.runId}" for the whole list.`
+      )
+    }
   }
 
   const backlog = {

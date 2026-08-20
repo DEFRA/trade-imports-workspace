@@ -1,8 +1,7 @@
-# Codex brief — INCREMENT IMPLEMENTOR (plant-products / CHED-PP)
+# Codex brief — INCREMENT IMPLEMENTOR
 
-You are the **implementor** for one increment of the plant-products/CHED-PP build. The increment id is
-given in the prompt that pointed you at this file. You make the change and nothing else — you do not
-review it, and you do not commit it.
+You are the **implementor** for one increment of a backlog-driven build. You make the change and nothing
+else — you do not review it, and you do not commit it.
 
 ## Your shell is normal
 
@@ -14,25 +13,28 @@ discipline, house rules — applies in full.
 
 ## Constants
 
+Every `<placeholder>` in this brief — `<workspace>`, `<workarea>`, `<backlog>`, `<logs>`, `<skills>`,
+`<branch>`, `<INCREMENT_ID>` — is bound to a real value in the prompt that pointed you here. Use those
+bindings; never guess one.
+
 | Thing | Path |
 |---|---|
 | Workspace root | `/Users/samfarrington/git/defra/trade-imports-animals` |
-| Plan of record | `<workspace>/workareas/shared/plant-products-ched-pp/backlog.json` |
-| Workarea | `<workspace>/workareas/shared/plant-products-ched-pp` |
-| Logs | `<workarea>/logs/` |
-| Skills | `<workspace>/.claude/skills` |
+| Plan of record | `<backlog>` |
+| Workarea | `<workarea>` |
+| Logs | `<logs>` |
+| Skills | `<skills>` |
 | frontend repo | `<workspace>/repos/trade-imports-animals-frontend` |
 | backend repo | `<workspace>/repos/trade-imports-animals-backend` |
 | tests repo | `<workspace>/repos/trade-imports-animals-tests` |
 
-All three repos are on branch `spike/trace-to-requirements` (the tests repo may still be on
-`spike/EUDPA-288-model-retrofit` — only the increment that cuts the new branch should change that).
+The repos this programme touches are on branch `<branch>` (a repo the programme has not yet cut onto it
+may still be elsewhere — only the increment that cuts the branch should change that).
 
 ## Step 1 — read the increment in full
 
 ```bash
-jq '.increments[] | select(.id=="<INCREMENT_ID>")' \
-  /Users/samfarrington/git/defra/trade-imports-animals/workareas/shared/plant-products-ched-pp/backlog.json
+jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog>
 ```
 
 That object is your complete specification: `filesToTouch` (paths + action + what), `obligations`,
@@ -41,20 +43,20 @@ order), `notes`, `openQuestions`. It is self-contained **by design** — if you 
 information that is not in it, that is a defect worth reporting in your `notes`, not a licence to
 improvise.
 
-Supporting context, read only what your increment actually cites:
-`<workarea>/frontend-plan/SIBLING-SET-PLAN.md` (cited by heading — read the cited sections, not the whole
-file), `<workarea>/backend-schema/SCHEMA-DESIGN.md`, `<workarea>/recon/recipe-cheatsheet.md`.
+Supporting context: read only what the increment's `recipe` field actually cites, resolving
+workarea-relative paths against `<workarea>`. Where it cites a document by heading, read the cited
+sections, not the whole file.
 
 ## Step 2 — build it, routed on the increment's `repo` field
 
 **frontend** — the workspace `frontend-change` skill is your script. Read
-`<workspace>/.claude/skills/frontend-change/SKILL.md` in full and follow it verbatim. It routes you to the
-repo's own recipe under `src/server/app/sets/<set>/docs/add-a-*.md` (or the obligation / journey-flow
-maintenance guard rails) — read that recipe and follow it, varying as little as possible. Do **not**
-improvise around a recipe. This increment may target `sets/plant-products/` rather than live-animals; the
-recipes are set-relative, so substitute the set folder and otherwise follow them exactly. Where the
-increment cites a gap (no recipe covers this — G-A..G-K), the increment's own `filesToTouch` **is** the
-script and the named live-animals exemplar is the shape to imitate.
+`<skills>/frontend-change/SKILL.md` in full and follow it verbatim. It routes you to the repo's own recipe
+under `src/server/app/sets/<set>/docs/add-a-*.md` (or the obligation / journey-flow maintenance guard
+rails) — read that recipe and follow it, varying as little as possible. Do **not** improvise around a
+recipe. The recipes are set-relative, so where your increment targets a set other than the one a recipe was
+written against, substitute the set folder and otherwise follow it exactly. Where the increment cites a gap
+that no recipe covers, the increment's own `filesToTouch` **is** the script and any exemplar it names is
+the shape to imitate.
 
 **backend** — follow the increment plus the workspace Java best practices under
 `<workspace>/docs/best-practices/java/`. Mirror the existing `uk.gov.defra.trade.imports.animals` package
@@ -83,7 +85,7 @@ raw role/label locators, no page objects where the repo does not already use the
   `format:check && lint && test`, so a formatting miss blocks the commit even when your ladder was green.
   Watch for it after edits that change a line's length — shortening `it.fails(` to `it(`, for example,
   lets Prettier collapse a call that was previously wrapped.
-- Run test suites **to a file** under `<workarea>/logs/` and read that file once. Do not re-run a suite
+- Run test suites **to a file** under `<logs>` and read that file once. Do not re-run a suite
   just to see its output again. For Playwright failures read `test-results/*/error-context.md`, not the
   tail of the run.
 - **Stage** your work (`git -C <repo> add`) but **do not commit**. Landing happens after review.

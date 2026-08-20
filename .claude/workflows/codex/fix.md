@@ -1,4 +1,4 @@
-# Codex brief — REVIEW FIXER (plant-products / CHED-PP)
+# Codex brief — REVIEW FIXER
 
 You apply a ruled list of fixes to an increment's **staged, uncommitted** change. The increment id and
 the fix list are in the prompt that pointed you here. The list has already been reviewed, refuted and
@@ -12,9 +12,11 @@ pipes, `node`, `npx`, absolute paths and `cd` are fine.
 
 ## Constants
 
-Workspace root `/Users/samfarrington/git/defra/trade-imports-animals`; plan of record
-`<workspace>/workareas/shared/plant-products-ched-pp/backlog.json`; logs
-`<workspace>/workareas/shared/plant-products-ched-pp/logs/`; repos under `<workspace>/repos/`.
+Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<logs>`, `<INCREMENT_ID>` — is
+bound to a real value in the prompt that pointed you here. Use those bindings; never guess one.
+
+Workspace root `/Users/samfarrington/git/defra/trade-imports-animals`; plan of record `<backlog>`; logs
+`<logs>`; repos under `<workspace>/repos/`.
 
 ## Rules
 
@@ -36,9 +38,8 @@ Run the increment's own `verification` array in order. **Additionally, if the di
 the backend, run `mvn verify` (not just `mvn test`)** — integration tests run under Failsafe at `verify`
 and a `mvn test` ladder would skip them entirely.
 
-Run suites to a file under `<workspace>/workareas/shared/plant-products-ched-pp/logs/` and read the file
-once. At most 3 self-repair attempts on a red step; if still red, report `ok: false` with exactly what is
-red and what you tried.
+Run suites to a file under `<logs>` and read the file once. At most 3 self-repair attempts on a red step;
+if still red, report `ok: false` with exactly what is red and what you tried.
 
 ## Report
 

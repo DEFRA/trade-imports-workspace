@@ -1,177 +1,116 @@
-# Handover — make the whole comparison one command
+# The comparison is one command. What that does and does not mean
 
-Everything below the line is the prompt. Copy it whole.
+Supersedes the previous handover, which briefed this work. **That work is done.**
+The pipeline has a front door, the four hand-written steps have personas, and
+five of the six failure modes are closed mechanically.
 
----
+Nothing here has been run end to end on a new comparison. Read "What is
+unproven" before you trust it.
 
-You are automating a comparison pipeline so that a person can say **"generate me
-a report on the differences between these two things"** and get one, without
-knowing any of the steps.
+## What a person does now
 
-The pipeline exists and works. It has just been run end to end and produced 133
-verified findings against a signed-off design. What is missing is the front half
-and the stitching: four of the seven steps are still hand-written, and there is
-no single entry point.
+```
+tim parity report EUDPA-328-DR1 --open      # the comparison that already exists
+```
 
-## Read these first, in this order
+For a new one, say what you want — "compare the frontend against DR3 and give me
+a report" — and the parity skill's **COMPARE** mode takes it from there: a short
+interview, then every phase in order, resumable at each one.
 
-1. `.claude/skills/parity/SKILL.md` — the skill you are extending. Five modes
-   today: REPORT, WALK, MIGRATE, CAPTURE, AUTHOR. Read AUTHOR closely; it is the
-   most recent and the closest model for what you are writing.
-2. `.claude/skills/parity/references/` — the six worker personas. Your new
-   workers must match their voice and shape.
-3. `.claude/skills/skill-creator/SKILL.md` — **the pattern to copy for the
-   bootstrap.** It dispatches on a trigger phrase, interviews the user one
-   question at a time, records each answer atomically into a JSON state file,
-   then a scaffold script materialises the files. That is exactly the shape the
-   corpus setup needs.
-4. `workareas/shared/dr1-parity/HANDOVER.md` and `ARCHITECTURE.md` — what the
-   pipeline is and why it is shaped that way.
-5. `workareas/shared/dr1-parity/FINDING-CONTRACT.md` — the per-corpus authoring
-   contract. Note it deliberately lives in the workarea, not the skill.
-6. `tools/parity/corpora.json` — the data a comparison is made of.
+`.claude/skills/parity/SKILL.md` → COMPARE is the whole description. The rest of
+this file is what a person needs that the skill does not say.
 
-## Where the pipeline stands
+## Where the seven steps stand
 
-| step | today |
-|---|---|
-| Set up the corpus | hand-written |
-| Enumerate each side's screens | hand-written `enumerate.cjs` |
-| Write the capture specs | hand-written Playwright |
-| Shoot the evidence | automated — `tim parity capture` |
-| Check nothing was missed | automated — `tim parity coverage` |
-| Pair the screens | hand-written `pairs.cjs` |
-| Author and verify the findings | automated — AUTHOR mode |
-| Build the report | automated — `ingest` → `anchors` → `citations` → `evidence` → `meta` → `report` → `check` |
+| step | was | now |
+|---|---|---|
+| Set up the corpus | hand-written | `start-comparison.sh` → interview → `scaffold-corpus.sh` |
+| Enumerate each side's screens | hand-written | one agent per side, `SCREEN_ENUMERATOR` |
+| Write the capture specs | hand-written | one agent per slice, `SPEC_AUTHOR` |
+| Shoot the evidence | `tim parity capture` | unchanged |
+| Check nothing was missed | `tim parity coverage` | unchanged |
+| Pair the screens | hand-written | one agent, `SCREEN_PAIRER` |
+| Author and verify the findings | AUTHOR mode | unchanged, plus three checks around it |
+| Build the report | `ingest` → … → `check` | unchanged |
 
-## What to build
+`tools/parity/phase.sh` is the ledger across all of it. Every phase after the
+first is an agent pass that cannot be re-derived cheaply, so which ones have
+happened is written down rather than inferred from what is on disk — half a
+slice's findings on disk look exactly like a finished slice.
 
-### A single entry mode
+## The six failure modes, honestly
 
-Add a mode to the parity skill — name it yourself — that a person reaches by
-saying something like "compare the frontend against DR3 and give me a report",
-or naming two applications with no vocabulary at all. It runs every phase below,
-in order, and it must be resumable: a run that stops after the captures picks up
-at the pairing rather than starting again.
+The AUTHOR mode listed six things that held on the DR1 run with nothing making
+them hold. **Five are closed. One is narrowed. Do not read the count as six.**
 
-**It is not a deterministic tool and must not try to be.** Every phase below
-except the ones already automated is an agent exercising judgement. The control
-flow is fixed; the work inside each step is not.
+**Closed.**
 
-### Phase 0 — bootstrap the corpus, if it does not exist
+1. **A slice's yield is bounded from below.** `tim parity yield` weighs each
+   slice's findings against the screens it owns and flags anything well under
+   the middle of the pack. It asks rather than rules — a declaration page with
+   one finding is not a failure.
+2. **The slicing is proven before anything is spawned.** `tim parity slices
+   --strict`: every captured screen owned by exactly one slice, exactly one
+   slice owning the chrome.
+3. **A verifier that looked at nothing is visible.** Every finding carries
+   `finding.verification`, one line saying what was opened and what was run.
+4. **Verify-before-ingest is enforced.** A corpus declaring
+   `requireVerification` — every scaffolded corpus — refuses a first ingest of
+   any finding with no verification record. Same mechanism as 3, which is why
+   one flag closes both.
+5. **The applications are held still.** `tim parity heads --write` records where
+   every checkout stood; running it again says what moved. It cannot stop a
+   commit. It makes one visible while the run is still open.
 
-Follow skill-creator's shape: interview, record, scaffold.
+**Narrowed, not closed.**
 
-Ask only what cannot be discovered. At minimum you need, per side: where the
-checkout is, how to start it, what port, any environment it needs, which repo
-its citations resolve against, and which side is the **requirements** side —
-the one the other is judged against. Also the run id and the ticket.
+6. **A cross-slice duplicate is still a judgement.** `tim parity duplicates`
+   reads the whole corpus at once, which no per-slice verifier can, and prints
+   candidates. **It measures two sentences.** Two agents describing the same
+   change in entirely different words share no screen, no control and no
+   vocabulary, and nothing mechanical will pair them. Run against DR1's real 133
+   findings it produced five candidates, and reading them, every one was two
+   genuinely different findings that happened to name the same screen and
+   control. Cheap to read; a clean list is not proof. `DUPLICATE_SWEEPER`
+   carries the hand search past the list.
 
-Write answers atomically to a JSON state file under `workareas/parity-setup/<run>/`
-as you go, so an interrupted interview resumes. Then scaffold:
+**And the port trap moved rather than closed.** `scaffold-corpus.sh` refuses
+3000, 3001, 3007, 3100 and 3200 at setup, which is where it is cheap. It does
+not refuse a port the stack takes later, and nothing checks what is actually
+listening at capture time.
 
-- the corpus entry in `tools/parity/corpora.json`
-- the workarea with its `specs/<side>/` directories
-- a `FINDING-CONTRACT.md` seeded from `dr1`'s, with the per-corpus sections
-  marked for editing — the band table, the domain list, the evidence path
-  roots, the exclusions, and the volatile values that must never be compared
+## What is unproven
 
-Ports are a known trap. The workspace stack owns 3000, 3001, 3007, 3100 and
-3200; a capture on a port the stack owns photographs the container instead of
-the run you started and says nothing about having done so.
+Say this out loud before betting a run on it.
 
-### Phase 1 — enumerate each side's screens
+- **No new comparison has been run end to end.** Every piece is tested and the
+  scaffold was proved on a throwaway corpus that was then removed, but nobody
+  has taken a real third release from an interview to a rendered report.
+- **`tim parity slices` and `yield` have never seen a real slicing.** DR1 has no
+  `slices.json` — it predates the check. `slices` was proved against DR1's real
+  manifests and real `pairs.cjs` using a slicing derived from the findings' own
+  `slice` fields, which is not a real slicing and correctly failed. The
+  arithmetic cross-checks: 82 screens, 40 frontend and 42 prototype, 2
+  `onlyFrontend` and 4 `onlyPrototype` — the handover's numbers exactly.
+- **The `requireVerification` gate has never gated a real run.** Zero of DR1's
+  133 findings carry a verification record, which is the failure mode it exists
+  for. Neither existing corpus sets the flag, so both re-ingest unchanged.
+- **`THIN_FRACTION` is a guess.** Two-fifths of the median findings-per-screen,
+  chosen so a normal spread does not trip and half a run going missing does. It
+  has never fired on real data. Expect to move it, and move it in
+  `tim/src/parity/yield.js` with the reasoning, not by passing `--fraction`
+  every time.
 
-One agent per side. It reads that application's source and writes the corpus's
-`enumerate.cjs`, which lists the screens the application *has*, statically,
-without running it.
+## If you are picking this up
 
-This is judgement. On the two applications compared so far, one was readable
-from a route table plus its view directory, and the other from a journey
-definition — nothing generic would have found either. The agent must state in
-the module's own comments which facts about that application make it readable,
-and cite the line that makes each true, because those are the assumptions that
-go stale.
+```
+tools/parity/start-comparison.sh                  # what exists, what is half built
+tools/parity/phase.sh <run> status                # where one run stands
+```
 
-### Phase 2 — write the capture specs
-
-One agent per slice of the journey. Each writes plain Playwright that drives its
-slice and calls `captureScreen()` on every screen it reaches.
-
-**Do not try to generate these deterministically.** A previous attempt built a
-crawler that inferred what to type from hint text; it produced five defects on
-its first live run, every one a judgement failure wearing a code bug's clothes.
-It was deleted. Agents reading the views and writing the navigation is the
-design, not a shortcut.
-
-These are requirements-gathering captures, not tests. Nothing asserts an
-application is correct. But **every step must assert the journey landed where it
-should**, because a mislabelled picture is worse than a missing one and every
-ruling downstream rests on the picture being of what it claims.
-
-Nothing under `tim/` may import an application's own test helpers. A harness
-built on an unmaintained suite breaks the first time somebody refactors a suite
-nobody runs.
-
-### Phase 3 — capture, then close the gap
-
-`tim parity capture` per side, then `tim parity coverage`. Coverage enumerates
-statically and diffs against what was actually shot.
-
-Loop: any screen the enumerator names and the capture missed goes back to phase
-2 as a brief for another spec. Stop when coverage is clean, or when a screen is
-a **stated absence** — genuinely unreachable, said so, and left uncaptured.
-Captures cannot run in parallel: one server, one session. Fan out the writing,
-serialise the running.
-
-### Phase 4 — pair the screens
-
-One agent reads both manifests, both sets of page models and the rendered DOM,
-and writes `pairs.cjs`. It exports `pairs`, `onlyFrontend` and `onlyPrototype`
-— read `workareas/shared/dr1-parity/pairs.cjs` for the shape and the standard.
-
-**The one-sided lists matter as much as the pairs.** A screen one side has and
-the other does not is the largest kind of gap there is. A wrong pairing is the
-most expensive mistake available: it renders two unrelated pages under one
-heading and invites a confident finding about an artefact.
-
-Many-to-one is legitimate and must be stated. On the run just completed, one
-side rendered a single address-picker view for five roles that the other split
-across five pages.
-
-### Phase 5 — author the findings
-
-Invoke the existing AUTHOR mode. Do not reimplement it.
-
-### Phase 6 — build the report
-
-`ingest` → `anchors --write` → recapture for the crops → `citations --write` →
-`evidence --write` → `meta --write` → `report` → `check` → `check-evidence`.
-Read AUTHOR and REPORT for the ordering constraints; they are not arbitrary.
-
-## The failure modes this must close
-
-The AUTHOR mode records six things that held on the last run with nothing making
-them hold. Your automation is the place to fix them, and it is the reason this
-job is worth doing:
-
-1. **Nothing bounds a slice's yield from below.** An agent that ran out of
-   context and truncated looks exactly like a slice with little to report. Fix
-   this first — it is the one that silently loses findings.
-2. **The slicing was never checked before spawning.** Every screen must be
-   proven to appear in exactly one slice *before* any agent starts. Last time a
-   finding was disowned by two slices and written by a third, which means the
-   verification pass caught a slicing failure — not what it is for.
-3. **Nothing detects a cross-slice duplicate.** Verifiers are paired per slice
-   and never see two at once.
-4. **Nothing distinguishes a verifier that found nothing from one that looked at
-   nothing.** A correction leaves a trace; not looking leaves none.
-5. **Nothing enforces verify-before-ingest.** `ingest` composes `detail` from
-   the prose slots and freezes it permanently. One command run early freezes the
-   corpus over unverified prose.
-6. **Neither application was pinned while the run was open.** The captures and
-   the citations agree because nobody happened to commit to either side for
-   eight hours.
+Then read `.claude/skills/parity/SKILL.md` → COMPARE, and the persona for the
+phase you are on. The personas are the work; the commands only check what they
+produced.
 
 ## Rules that are not yours to relax
 
@@ -182,33 +121,17 @@ job is worth doing:
   a person was last shown; resealing is their statement, not a build step.
 - **A whole-page shot may not stand in for a finding about one control.**
 - **Backlogs are canonical JSON.** Write through the setters, never by hand.
-- **A fix belongs in the tool, not in a workaround.** If you are copying a file
-  or hardcoding a path into a workarea, stop and fix the tool.
-- **Never mark a capture complete that is not.**
+- **A fix belongs in the tool, not in a workaround.**
+- **Never mark a capture complete that is not**, and **never record a phase done
+  that is not.** The ledger is what a later session believes, and a phase marked
+  done that is not is the one failure this design cannot recover from.
+- **Captures cannot run in parallel.** One server, one session. Fan out the
+  writing; serialise the running.
 
-## How to work
+## The thing to say at the end of every run
 
-- Orchestrate, do not implement. Fan out one agent per slice and pair each with
-  a **different** agent whose brief is to find what is wrong. On the last run
-  that second pass falsified about a dozen claims that were invisible to the
-  agents that made them, including one whose own falsifier had never been run.
-- **Brief agents to check their brief.** Three separate agents disproved
-  premises they were handed, twice catching errors in the instructions rather
-  than in the code.
-- **Make agents open the pictures.** Four element crops were confidently wrong
-  on the last run — a white square, two whole-page shots, a sliver reading "Co"
-  — and only looking found them.
-- One Bash command per call. No `&&`, no `;`, no `cd`. Write `~/git/defra/…`,
-  never `/Users/…`.
-- `npm install` is blocked by a guard hook.
-- Work on `main`, commit directly, push. No PRs.
+It produces **findings, not rulings**. When it finishes, **no human has read any
+of them.** All 133 of DR1's were `status: "todo"` at the end, and six were
+`disputed` — the pipeline's own statement that it could not settle them.
 
-## What done looks like
-
-A person who knows none of the above says "compare these two things and give me
-a report", answers a short interview, and gets a rendered report with every
-screen captured, every finding verified by an agent that did not write it, and
-every warning on the page meaning something.
-
-Then tell them plainly what the pipeline does **not** do: it produces findings,
-not rulings, and when it finishes no human has read any of them.
+The output is a work list somebody still has to open.

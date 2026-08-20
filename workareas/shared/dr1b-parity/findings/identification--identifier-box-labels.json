@@ -1,0 +1,28 @@
+{
+  "slice": "identification",
+  "title": "DR1 labels the identifier boxes \"Passport\" and \"Ear tag\"; the frontend calls them \"Passport number\" and \"Ear tag number\" and hangs worked examples under them that DR1 has none of",
+  "domain": "identification",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-animal-identification", "fe-animal-identification-horse", "dr1-animal-identification-details"],
+  "controls": [{ "kind": "label", "text": "Passport number" }],
+  "finding": {
+    "frontend": "The frontend labels the identifier boxes Passport number, Tattoo, Ear tag number and Horse name, and hangs a worked example under three of them — \"For example, UK123456789\" on the passport, \"For example, AB1234\" on the tattoo and \"For example, UK123456789012\" on the ear tag. fe-animal-identification shows all three cattle boxes with their hints; fe-animal-identification-horse shows Passport number and Horse name. The labels and hints are in the commodities copy file at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-72. The service already holds the shorter wording as a second list — Passport, Tattoo, Ear tag, Horse name at :48-55 — which it uses when it prints a saved animal's summary row, so the same identifier is called two different things in two places on the same page.",
+    "prototype": "DR1 calls the same boxes Passport, Tattoo, Ear tag and Horse name, and gives none of them a hint. The dr1-animal-identification-details capture shows a cattle panel reading Ear tag then Passport with a bare input under each label and nothing else. The labels are the identifier definitions themselves in app/data/commodity-identifiers.js:3-20, and DR1 cannot show a hint on these boxes at all — the input that renders them (app/views/animal-identification-details.html:111-120) passes no hint argument, so even the two germinal-product codes whose data carries hint text render without one.",
+    "difference": "Rename the two identifier labels that differ, in the commodities copy file at copy.en.js:58-72 and its Welsh counterpart: \"Passport number\" becomes \"Passport\" and \"Ear tag number\" becomes \"Ear tag\". Tattoo and Horse name already match. Nothing else has to move — the saved-row labels at :48-55 already carry the shorter wording, so this ends the split rather than creating one, and the maximum-length error messages beside them read \"Passport must be…\" and \"Ear tag must be…\" already. The three worked examples are a second question and a designer's call rather than a copy fix: DR1 shows no example format on any identifier box, but dropping a format hint from a field whose format a user is unlikely to know is not obviously an improvement, so it is named here to be decided rather than rediscovered.",
+    "falsifiedBy": "Finding the label \"Passport number\" or \"Ear tag number\", or an example hint under any identifier box, on a DR1 identification panel.",
+    "verification": "Raised by the verifier; no finding on this slice covered it. Both sides are photographed, so this rests on the pictures rather than on source. Opened fe-animal-identification (Passport number, Tattoo, Ear tag number, each with the hint quoted) and fe-animal-identification-horse (Passport number, Horse name) against dr1-animal-identification-details (Ear tag, Passport, no hints), and read the rendered DOM of all three to confirm the hint elements exist on the frontend side — animalIdentifierPassport-0-hint, animalIdentifierTattoo-0-hint, animalIdentifierEarTag-0-hint — and that DR1's panel has no hint element under any identifier input. Read copy.en.js:48-72, app/data/commodity-identifiers.js whole and app/views/animal-identification-details.html:108-121. Ran the falsifier: DR1's identifier labels are the label strings in commodity-identifiers.js, which are Microchip, Passport, Tattoo, Ear tag, Horse name, Donor ID, Collection date and Identification number, none of them suffixed with \"number\", and the govukInput call that renders them takes label, id, name, value, classes and errorMessage and no hint. Checked this is not the same change as identification--cattle-tattoo-not-in-dr1, which is about which boxes a cattle line gets and in what order, not what they are called. CORRECT."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:58-72",
+    "prototype": "app/data/commodity-identifiers.js:3-20"
+  },
+  "relatedTo": [
+    {
+      "id": "identification--cattle-tattoo-not-in-dr1",
+      "relation": "travels-with",
+      "why": "both edit the identifier boxes on the same card — one which boxes appear and in what order, the other what they are called"
+    }
+  ]
+}

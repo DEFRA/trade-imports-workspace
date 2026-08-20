@@ -1,0 +1,28 @@
+{
+  "slice": "review",
+  "title": "The frontend's review page shortens the means-of-transport row to \"Means of transport\"; DR1's review page repeats the question's own wording, \"Means of transport to the port of entry\".",
+  "domain": "review",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": ["fe-check-answers", "fe-arrival-details", "dr1-review-notification"],
+  "controls": [{ "kind": "label", "text": "Means of transport" }],
+  "finding": {
+    "frontend": "The Arrival details card labels the row \"Means of transport\" against the value \"Road Vehicle\" — src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71. The question that collects the answer does not use those words: the frontend's own arrival-details page puts the radios under the legend \"Means of transport to the port of entry\". So the summary drops the part of the label that says which leg of the journey the answer is about, and the user checking their answers sees a shorter question than the one they were asked. The service asks about more than one leg — a port of exit and an exit date are elsewhere in the journey — so the shortened label is ambiguous rather than merely terse.",
+    "prototype": "DR1 repeats the question's wording exactly. Its review row is \"Means of transport to the port of entry\" (app/routes.js:4680-4683), and its arrival-details page asks under the same legend. This is the one place on the review page where both services' question pages already use identical words and only the summary row differs.",
+    "difference": "Change the one copy key to \"Means of transport to the port of entry\" in the English file and supply the Welsh equivalent in the paired copy.cy.js. Nothing else moves: the row, its value and its Change target stay where they are. Land it with the other Arrival details copy so the card is touched once.",
+    "falsifiedBy": "Finding the frontend's review page rendering a row labelled \"Means of transport to the port of entry\", or its arrival-details question page asking simply for \"Means of transport\".",
+    "verification": "Written by the verifier, not carried from an author. Ran the falsifier both ways over the captured evidence: fe-check-answers.html:345-355 renders the key \"Means of transport\", and the fe-arrival-details page model carries \"legend\": \"Means of transport to the port of entry\", so neither half fires. Checked this is a review-page difference and not one following from a question page elsewhere — which is why the authoring pass could reasonably have deferred it — by comparing the two question pages directly: the dr1-arrival-details model carries the identical legend, so the two services agree about the question and differ only about the summary. The remaining row-label differences on this page were each traced to a real difference on the page that asks the question — \"Number of packages (optional)\" against DR1's \"(when required)\", and the CPH number, which DR1 collects as three separate parts — and are left to the slices that own those pages."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71",
+    "prototype": "app/routes.js:4680-4683"
+  },
+  "relatedTo": [
+    {
+      "id": "review--arrival-date-row-label",
+      "relation": "travels-with",
+      "why": "the two rows sit next to each other in the Arrival details card and land in the same copy pass"
+    }
+  ]
+}

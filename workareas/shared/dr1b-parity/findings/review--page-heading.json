@@ -14,6 +14,7 @@
     "falsifiedBy": "Finding the review page rendered with a heading other than \"Check your answers\" in any notification state.",
     "verification": "Read both frontend DOMs and both screenshots and the DR1 review DOM; ran the falsifier — fe-check-answers.html and fe-check-answers-submitted.html both carry <title>Check your answers</title>, the breadcrumb \"Check your answers\" and <h1>Check your answers</h1>, so it does not fire in either state. Checked copy.en.js:2 and controller.js:40-41, and on the DR1 side that the h1 is a literal in the template rather than a variable, so read-only cannot change it. CORRECT.",
     "correction": "The claim stands. Two small mis-citations, slots left alone: the controller passes copy.title as pageTitle and heading at controller.js:40-41, not :39-40; and the DR1 heading is app/views/review-notification.html:39 (the template also sets pageName at :3), not :38, which is a blank line. Confirmed independently that DR1 keeps the heading in read-only — the h1 is hard-coded in the template and renderReviewNotificationPage (routes.js:5568-5580) sets pageName \"Review your notification\" on the read-only path too."
+  },
   "evidence": {
     "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2",
     "prototype": "app/views/review-notification.html:38"

@@ -73,10 +73,37 @@ A `grep -rl` for a screen id across `workareas/shared` printed two
 them, and states it had already reached its own conclusions on that screen from
 the rendered DOM and the obligation source before running the grep.
 
-**Treat any agreement between the two runs on the frontend's blocked exit-details
-row as possibly contaminated.** The finding may still be right — it is argued
-from the DOM in its own text — but it is the one place where "both runs found
-this independently" cannot be said.
+**Largely repaired by the verification pass.** A different agent, with no
+exposure to those file names, re-derived the finding from the obligation source
+alone: `rowGatePasses` consults only the row's first page; the requirements
+side gates its three exit questions to different reason values; and
+`temporaryAdmissionHorses` is **the only value that puts two of the three in
+scope while leaving the first out**. That identification follows from the
+obligation file without the row needing to suggest it, and the verifier says so
+in its own verification line.
+
+So the substance now rests on a derivation made independently of the leak. What
+still cannot be claimed is that the two runs *chose to write about this screen*
+independently — the subject may have been suggested by seeing the file names.
+Weigh agreement on the finding's substance normally; do not treat the two runs
+both having a finding here as evidence of anything.
+
+### 4. The orchestrator routed cross-slice claims between running agents
+
+**Affected: several slices. Not contamination from `dr1`, but worth recording.**
+
+Where one agent found something another needed — a page-model defect, a
+consequence a neighbouring slice had deferred — the orchestrator passed it on
+mid-run. That is within-run routing, not leakage from the previous corpus, and
+the alternative was letting known errors stand.
+
+It was not free of error. One routed claim — that a permanent-address rule
+"sweeps in Other live mammals" — was **wrong**, and the receiving agent traced
+it and disproved it rather than believing it. Agents were briefed to check their
+briefs, and on this occasion the brief was the orchestrator's.
+
+Treat routed claims as claims, not as established fact. Each one is attributed
+in the finding or the verification line that acted on it.
 
 ## What this means for the comparison
 

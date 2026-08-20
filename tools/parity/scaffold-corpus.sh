@@ -45,7 +45,7 @@ aj() { jq -c "$1" "$SETUP"; }
 CORPUS=$(a '.answers.corpus // ""')
 DESCRIPTION=$(a '.answers.description // ""')
 WORKAREA=$(a '.answers.workarea // ""')
-SIGNED_OFF=$(a '.answers.signedOff // "null"')
+SIGNED_OFF=$(a '.answers.signedOff')
 
 for pair in "corpus:$CORPUS" "description:$DESCRIPTION" "workarea:$WORKAREA"; do
     if [[ -z "${pair#*:}" ]]; then
@@ -104,8 +104,9 @@ RUN_DIR="workareas/journey-builder/$RUN_ID"
 REQ_LABEL=$(jq -r --arg s "$REQUIREMENTS" '.answers.sides[$s].label // $s' "$SETUP")
 IMPL_LABEL=$(jq -r --arg s "$IMPLEMENTATION" '.answers.sides[$s].label // $s' "$SETUP")
 
-if [[ "$(aj '.answers.bands // "null"')" != "null" ]]; then
-    BANDS=$(aj '.answers.bands')
+CUSTOM_BANDS=$(aj '.answers.bands')
+if [[ "$CUSTOM_BANDS" != "null" ]]; then
+    BANDS="$CUSTOM_BANDS"
 elif [[ "$SIGNED_OFF" == "true" ]]; then
     BANDS=$(jq -nc --arg impl "$IMPLEMENTATION" --arg req "$REQ_LABEL" --arg il "$IMPL_LABEL" '[
         {id: ($impl + "-work"), label: ($il + " work"),

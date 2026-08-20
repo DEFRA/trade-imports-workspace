@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "required": ["findings", "summary"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "line", "severity", "category", "what", "why", "fix", "confidence"],
+        "properties": {
+          "file": { "type": "string", "description": "Repo-relative path" },
+          "line": {
+            "type": ["number", "null"],
+            "description": "1-indexed line, or null if the finding is about the file as a whole"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["blocker", "major", "minor", "nit"]
+          },
+          "category": {
+            "type": "string",
+            "description": "e.g. correctness, scope, test-quality, security, style, consistency"
+          },
+          "what": { "type": "string", "description": "The defect, one sentence" },
+          "why": {
+            "type": "string",
+            "description": "Concrete failure scenario, or the named house rule broken. Not 'this is unconventional'."
+          },
+          "fix": { "type": "string", "description": "The specific change to make" },
+          "confidence": {
+            "type": "string",
+            "enum": ["certain", "probable", "speculative"],
+            "description": "How sure you are AFTER trying to refute your own finding"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Two or three sentences on the overall quality of the change"
+    }
+  },
+  "additionalProperties": false
+}

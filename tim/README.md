@@ -178,6 +178,14 @@ tim parity set-decision EUDPA-328 inc-055 --question "…" --source authored
 tim parity set-citation EUDPA-328 inc-096 c9 --repo prototype --path app/routes.js
 ```
 
+`set-citation` stamps `resolution: "human"`, and `citations --write` carries
+those resolutions forward over each rebuild — matched on the field and the token
+as the prose wrote it, since the ref is positional and the path is the very
+thing the parser could not find. A resolution whose prose has since gone is kept
+and flagged rather than dropped, and the run names it. The command prints what
+the backlog holds beside what the parser derives on its own, so the two never
+get mistaken for each other.
+
 Every subcommand takes a positional run id — there is no default, because a
 report that silently rendered the wrong corpus would be worse than one that
 refused.

@@ -119,6 +119,43 @@ const renderNormalise = (result) => {
   return lines.join('\n')
 }
 
+const resolutionBreakdown = (byResolution) =>
+  Object.entries(byResolution)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([kind, n]) => `  ${kind.padEnd(20)} ${n}`)
+
+// Two breakdowns, never one. The parser rebuilds citations[] from the prose
+// every run, so on its own it reports every hand-resolved citation as
+// unresolved — true of the parser, and false of the file it manages. Printing
+// both says which is which.
+const handResolutions = (n) =>
+  n === 1 ? '1 hand resolution' : `${n} hand resolutions`
+
+const renderCitations = (result) => {
+  const named = (entry) =>
+    `${entry.increment}/${entry.ref} "${entry.asWritten}" in ${entry.field ?? 'this finding'}`
+  const lost = result.orphaned.length
+  return [
+    `${result.total} citations across ${result.increments} increments.`,
+    result.written
+      ? 'What the backlog now holds:'
+      : 'What the backlog would hold:',
+    ...resolutionBreakdown(result.byResolution),
+    'What the parser derives from the prose alone:',
+    ...resolutionBreakdown(result.derived.byResolution),
+    result.carried.length
+      ? `Carried forward ${handResolutions(result.carried.length)} the backlog already held.`
+      : 'The backlog holds no hand resolutions to carry forward.',
+    lost
+      ? `${handResolutions(lost)} no longer ${lost === 1 ? 'occurs' : 'occur'} in the prose. Kept as an orphaned record rather than dropped, and attached to no marker: ${result.orphaned.map(named).join('; ')}`
+      : 'Every hand resolution still occurs in the prose it was made against.',
+    `${result.unresolved.length} queued for a human.`,
+    result.written
+      ? `Written to ${result.path}`
+      : 'Dry run — pass --write to apply.'
+  ].join('\n')
+}
+
 const countLine = (label, counts) =>
   `${label.padEnd(10)} ${Object.entries(counts)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -309,17 +346,7 @@ export const register = (program, { timVersion }) => {
       makeParityAction({
         run: ({ profile }, opts) =>
           runCitations({ profile, write: opts.write }),
-        renderText: (result) =>
-          [
-            `${result.total} citations across ${result.increments} increments.`,
-            ...Object.entries(result.byResolution).map(
-              ([kind, n]) => `  ${kind.padEnd(20)} ${n}`
-            ),
-            `${result.unresolved.length} queued for a human.`,
-            result.written
-              ? `Written to ${result.path}`
-              : 'Dry run — pass --write to apply.'
-          ].join('\n'),
+        renderText: renderCitations,
         timVersion
       })
     )

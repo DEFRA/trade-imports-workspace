@@ -57,7 +57,15 @@ export const citationSchema = passthrough({
     'unresolved'
   ]),
   why: z.string().optional(),
-  needsHuman: z.boolean().optional()
+  needsHuman: z.boolean().optional(),
+  // A resolution a person made against prose that no longer contains the
+  // citation. Kept rather than dropped, because destroying a judgement quietly
+  // is the failure the carry-forward exists to prevent; flagged rather than
+  // left looking live, because no marker points at it any more. See
+  // citations/carry-forward.js.
+  orphaned: z.boolean().optional(),
+  orphanedBecause: z.string().optional(),
+  wasRef: z.string().optional()
 })
 
 export const decisionRequiredSchema = passthrough({

@@ -8,6 +8,7 @@ import {
   resolveToken,
   makeLineCounter
 } from './resolve.js'
+import { carryHumanResolutions } from './carry-forward.js'
 
 /**
  * A citation that points into a captured page model or a delta file is a real
@@ -301,24 +302,51 @@ export const runCitations = ({ profile, write }) => {
   const lineCount = makeLineCounter(profile, meta)
 
   const unresolved = []
+  const carried = []
+  const orphaned = []
   const byResolution = {}
+  const derivedByResolution = {}
   let total = 0
   let withCitations = 0
 
+  const count = (tally, resolution) => {
+    tally[resolution] = (tally[resolution] ?? 0) + 1
+  }
+
   const increments = backlog.increments.map((increment) => {
     const result = citeIncrement({ increment, profile, indexes, lineCount })
-    total += result.citations.length
-    if (result.citations.length) withCitations += 1
     for (const citation of result.citations) {
-      byResolution[citation.resolution] =
-        (byResolution[citation.resolution] ?? 0) + 1
+      count(derivedByResolution, citation.resolution)
     }
-    unresolved.push(...result.unresolved)
+
+    // The carry-forward runs whether or not --write does, so a dry run answers
+    // the question a dry run is asked: what would the backlog hold afterwards.
+    const held = carryHumanResolutions({
+      stored: increment.citations ?? [],
+      derived: result.citations
+    })
+    const carriedRefs = new Set(held.carried.map((entry) => entry.ref))
+
+    total += held.citations.length
+    if (held.citations.length) withCitations += 1
+    for (const citation of held.citations) {
+      count(byResolution, citation.resolution)
+    }
+    carried.push(
+      ...held.carried.map((entry) => ({ increment: increment.id, ...entry }))
+    )
+    orphaned.push(
+      ...held.orphaned.map((entry) => ({ increment: increment.id, ...entry }))
+    )
+    unresolved.push(
+      ...result.unresolved.filter((entry) => !carriedRefs.has(entry.ref))
+    )
+
     // citations[] is judgement and belongs in the backlog. The marked-up prose
     // is a pure function of detail plus citations, so it goes to evidence.json
     // — baking it here would double the file and show every prose diff twice.
-    return result.citations.length
-      ? { ...increment, citations: result.citations }
+    return held.citations.length
+      ? { ...increment, citations: held.citations }
       : increment
   })
 
@@ -329,7 +357,16 @@ export const runCitations = ({ profile, write }) => {
   return {
     total,
     increments: withCitations,
+    // What the backlog holds once a person's resolutions are back on top of the
+    // parser's work. `derived` is what the parser found on its own. Both are
+    // reported, because one number alone reads as a claim the other contradicts:
+    // a run that printed only the derivation says "25 unresolved" over a file
+    // holding 25 resolutions, and a run that printed only the result hides that
+    // the parser still cannot see what those 25 point at.
     byResolution,
+    derived: { byResolution: derivedByResolution },
+    carried,
+    orphaned,
     unresolved,
     written: Boolean(write),
     path: profile.paths.backlog

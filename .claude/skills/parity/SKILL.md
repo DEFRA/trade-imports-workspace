@@ -121,6 +121,16 @@ tim parity citations EUDPA-328 --write
 tim parity evidence EUDPA-328 --write
 ```
 
+`citations` rebuilds `citations[]` from the prose, and carries every resolution
+a person made with `set-citation` back over the top of it. It prints two
+breakdowns for that reason: what the backlog holds, and what the parser derives
+on its own — the parser still reports a hand-resolved citation as unresolved,
+because it still cannot see what the citation points at. Read the first.
+
+A hand resolution the prose no longer contains is kept, flagged `orphaned`, and
+named in the output rather than dropped. Restore the prose or strike the
+citation deliberately; do not ignore the line.
+
 Before a regeneration anyone will rule from, run the evidence check. It is the
 only command that reads pins, captures, coverage and citations together — each
 of them alone can read green over a stale one of the others:

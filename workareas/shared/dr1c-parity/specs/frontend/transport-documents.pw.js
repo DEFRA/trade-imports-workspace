@@ -105,19 +105,19 @@ const maskJourneyReference = (page) =>
 // 12/12/2025"), which is design copy and must not be rewritten.
 const maskArrivalWindow = (page) =>
   page.evaluate((placeholder) => {
-    const hint = document.getElementById('arrivalDateAtPort-hint')
-    if (hint) {
+    const picker = document
+      .getElementById('arrivalDateAtPort')
+      ?.closest('.moj-datepicker')
+    if (!picker) {
+      return
+    }
+    picker.setAttribute('data-min-date', placeholder)
+    picker.setAttribute('data-max-date', placeholder)
+    for (const hint of picker.querySelectorAll('.govuk-hint')) {
       hint.textContent = hint.textContent.replace(
         /\d{1,2}\/\d{1,2}\/\d{4}/g,
         placeholder
       )
-    }
-    const picker = document
-      .getElementById('arrivalDateAtPort')
-      ?.closest('.moj-datepicker')
-    if (picker) {
-      picker.setAttribute('data-min-date', placeholder)
-      picker.setAttribute('data-max-date', placeholder)
     }
   }, ARRIVAL_WINDOW_PLACEHOLDER)
 
@@ -250,13 +250,31 @@ test('the transport and documents slice, on a commercial transporter', async ({
   )
   await shoot(page, 'arrival-details')
 
-  // The date picker's calendar is the one conditional surface this page has —
-  // port-of-entry.njk declares no govukRadios conditional reveal at all, so
-  // there is no other reveal here to open. The calendar draws the current
-  // month, so this shot moves as the months turn; that is inherent to the
-  // widget and cannot be masked without hiding the thing being compared. The
-  // page's own date hint already prints the derived window for the same reason.
-  const datePickerToggle = page.locator('.moj-js-datepicker-toggle')
+  // THE ONE KNOWINGLY VOLATILE PICTURE IN THIS SLICE — opened deliberately.
+  //
+  // The calendar is the only conditional surface this page has: port-of-entry
+  // .njk declares no govukRadios conditional reveal at all, so there is nothing
+  // else here to open. DR1 carries the equivalent state, so the comparison
+  // needs a picture of it.
+  //
+  // Open, the grid is clock-derived through and through: the month drawn, the
+  // cell marked as today, and which cells sit outside the arrival window and
+  // come back disabled. This shot will therefore move whenever a capture
+  // crosses a day or a month boundary. It is NOT masked, because the month, the
+  // today marker and the disabled range are the whole of what a designer would
+  // compare here — masking them would leave a picture of an empty box. The
+  // cheaper half of the problem is fixed instead: the window dates the page
+  // prints in words are masked on every shot (see `maskArrivalWindow`), so this
+  // is the only picture in the slice that moves.
+  //
+  // A note for whoever writes the findings: the grid is built at page load and
+  // sits in the DOM whether the dialog is open or shut — 44 day buttons carrying
+  // a `data-testid` of their real date — so it is in the rendered HTML of every
+  // page with a date picker, including the documents page. Closed it draws no
+  // pixels, so it moves no picture. It is also what makes "a button inside the
+  // date picker" resolve to 49 elements; the toggle is addressed by its
+  // accessible name instead.
+  const datePickerToggle = page.getByRole('button', { name: 'Choose date' })
   await expect(datePickerToggle).toBeVisible()
   await datePickerToggle.click()
   const openDialog = page.locator('.moj-datepicker__dialog--open')

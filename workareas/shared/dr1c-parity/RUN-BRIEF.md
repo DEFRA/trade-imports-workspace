@@ -196,11 +196,23 @@ reuse.
   `features/transport/port-of-entry/arrival-window.js` (7 days back, 6 months
   on, anchored to the start of the day in `Europe/London`), DR1 at
   `app/routes.js:3927-3937`.
-- **The MoJ date picker does not close on Escape**, on either side — the
-  `SPEC_AUTHOR` persona says it does and it is wrong. On DR1 the dialog still
-  carries `moj-datepicker__dialog--open` fifteen seconds after an Escape. Use
-  the control the component itself offers, and assert it closed. Type into the
-  input rather than driving the calendar.
+- **Dismiss the MoJ date picker with its own Close button**, not with Escape.
+  The `SPEC_AUTHOR` persona says Escape, and that is wrong here. The component
+  listens for Escape **only on the dialog element**
+  (`date-picker.mjs:82`), so the key must be pressed while focus is inside the
+  dialog — and on DR1's arrival page that cannot happen after a pointer-opened
+  dialog, because the prototype ships `app/assets/javascripts/arrival-date-picker-focus.js`,
+  which blurs any button inside the picker whenever the last interaction was a
+  pointer. Focus lands on `<body>`, Escape reaches nothing, and the dialog still
+  carries `moj-datepicker__dialog--open` fifteen seconds later.
+
+  `.moj-js-datepicker-cancel` — the "Close" button inside the dialog
+  (`date-picker.mjs:198`, wired to `closeDialog()` at `:527`) — works
+  unconditionally and changes nothing on screen. Opening the picker by keyboard
+  would also make Escape work, but it leaves a visible focus ring on a day
+  button, and suppressing that ring for pointer users is the entire purpose of
+  the page's own script — so the keyboard path photographs a calendar in a state
+  a mouse user never sees. Type into the input rather than driving the calendar.
 - **The open calendar is a volatile value**, and it appears on more pages than
   is obvious. Its grid draws the current month with today highlighted, and
   `data-min-date` / `data-max-date` move daily on both sides. If the open state

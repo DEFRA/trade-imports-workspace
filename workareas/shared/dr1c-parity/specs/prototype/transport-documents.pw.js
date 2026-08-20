@@ -153,9 +153,26 @@ test('the transport and documents slice', async ({ page }) => {
   await maskArrivalDateWindow(page)
   await record.record(page, 'arrival-details-datepicker-open')
 
-  // Dismiss with Escape, and type into the input rather than driving the
-  // calendar.
-  await page.keyboard.press('Escape')
+  // Dismiss with the dialog's own Close button, NOT with Escape.
+  //
+  // Escape does not close this picker on this page, and the reason is specific
+  // rather than a quirk worth retrying. The component only listens for Escape on
+  // the dialog element itself (date-picker.mjs: `this.$dialog.addEventListener(
+  // 'keydown', ...)`), so the key has to be pressed while focus is inside the
+  // dialog. Opening it with a pointer makes that impossible here: the prototype's
+  // own app/assets/javascripts/arrival-date-picker-focus.js watches focusin and
+  // blurs any button inside `.app-arrival-details-page__date .moj-datepicker`
+  // whenever the last interaction was a pointer rather than a key
+  // (shouldSuppressMouseFocus). The component focuses the current day button on
+  // open; that script immediately blurs it; focus lands on <body>, outside the
+  // dialog; and a subsequent Escape reaches nothing. A capture run confirmed it:
+  // the dialog still carried moj-datepicker__dialog--open fifteen seconds later.
+  //
+  // The dialog offers its own control instead — a secondary "Close" button,
+  // .moj-js-datepicker-cancel (date-picker.mjs:198), wired straight to
+  // closeDialog(). A click fires that handler regardless of where focus is, so it
+  // is immune to the blur above.
+  await page.locator('.app-arrival-details-page__date .moj-js-datepicker-cancel').click()
   await expect(page.locator('.app-arrival-details-page__date .moj-datepicker__dialog')).toBeHidden()
 
   // Port of entry is a search widget: what it posts is the hidden
@@ -174,8 +191,10 @@ test('the transport and documents slice', async ({ page }) => {
   await expect(portResults).toBeHidden()
   await expect(page.locator('input.app-airport-search__value')).not.toHaveValue('')
 
+  // Typing into the input does not reopen the calendar — the component binds no
+  // input handler that opens it — so there is nothing to dismiss again here.
   await page.locator('#arrival-date-at-port').fill(arrivalDateWithinWindow())
-  await page.keyboard.press('Escape')
+  await expect(page.locator('.app-arrival-details-page__date .moj-datepicker__dialog')).toBeHidden()
 
   // Road Vehicle is one of the two means of transport that make DR1 ask for
   // transit countries (TRANSIT_MEANS_OF_TRANSPORT, routes.js:49). Selected by
@@ -353,9 +372,21 @@ test('the transport and documents slice', async ({ page }) => {
 
   // Empty, under the page's own name. On first arrival there are no uploaded
   // documents and the saved-documents table is not rendered at all
-  // (upload-documents.html:187), so this picture IS the empty state; a separate
-  // "upload-documents-empty" would be the same pixels under a second name.
+  // (upload-documents.html:187), so this picture IS the empty state.
   await record.record(page, 'upload-documents')
+
+  // STATE — the same render again, under an explicit name.
+  //
+  // Pixel for pixel identical to the picture above: nothing has changed between
+  // the two calls. The id exists so that "the empty state" is findable by name,
+  // rather than only by a reader knowing that this page's default shot happens to
+  // be empty — which matters because the populated, scanning and error states
+  // below are all named, and an unnamed fourth would read as an omission.
+  //
+  // The bare "upload-documents" shot above is still the load-bearing one:
+  // coverage attributes <screen>-<state> to <screen> by prefix, so without it the
+  // screen would read as missing however many states were recorded.
+  await record.record(page, 'upload-documents-empty')
 
   // STATE — the whole card in error.
   //
@@ -393,8 +424,15 @@ test('the transport and documents slice', async ({ page }) => {
   // validated only as a real d/m/yyyy date (routes.js:9132-9144), so a literal
   // cannot expire — and it is printed in the saved-documents table, so deriving
   // it from today would put a moving value into two pictures.
+  //
+  // Typed into the input, never picked from the calendar. This page's picker is
+  // never opened, so unlike the arrival date there is no dialog to dismiss —
+  // asserted rather than assumed, because an open calendar would overlay the
+  // buttons below it.
   await page.locator('#date-of-issue').fill('27/3/2026')
-  await page.keyboard.press('Escape')
+  await expect(
+    page.locator('.app-upload-documents-card__date-picker .moj-datepicker__dialog')
+  ).toBeHidden()
 
   // The form has no enctype, so the file itself is never posted; what the server
   // reads is the hidden attachmentFileName the browser fills in from the chosen

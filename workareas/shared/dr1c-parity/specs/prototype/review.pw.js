@@ -105,6 +105,16 @@
 //      partials/review-summary-row.html:15-26). So DR1 states what is missing
 //      per CARD, not per field: the field-level signal is an empty cell.
 //
+// A NOTE ON THE ORDER THE REVIEW PAGE IS SHOT IN
+//
+// Everywhere else the rule is "shoot the page under its own name first, empty,
+// then its states". The review page has no empty: it is a check-answers page,
+// and what it shows is whatever the journey put in it. So `review-notification`
+// is the COMPLETE render — the screen the design defines — and the incomplete
+// one is the named state, even though the incomplete one is reached first and
+// therefore photographed first. The declaration below follows the usual rule:
+// empty and unticked under its own name, then the validation error as a state.
+//
 // ---------------------------------------------------------------------------
 // VOLATILE VALUES ON THESE THREE PAGES — THE BIGGEST RISK IN THIS SLICE
 // ---------------------------------------------------------------------------
@@ -337,10 +347,22 @@ test('the review slice', async ({ page }) => {
     page.getByRole('heading', { level: 1, name: 'Review your notification' })
   ).toBeVisible()
 
-  await page.getByRole('button', { name: 'Continue', exact: true }).click()
+  // DR1 re-renders in place rather than redirecting (routes.js:10071-10072), and
+  // the render is byte-identical to the GET above — so NOTHING on the resulting
+  // page can prove the POST landed, and an assertion made too early would pass
+  // against the pre-click document and the picture could be of it. The POST
+  // response is waited for explicitly for that reason.
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        new URL(response.url()).pathname === '/review-notification'
+    ),
+    page.getByRole('button', { name: 'Continue', exact: true }).click()
+  ])
 
-  // DR1 re-renders in place rather than redirecting (routes.js:10071-10072), so
-  // the URL is unchanged and the error summary is the proof the POST refused.
+  await page.waitForLoadState('domcontentloaded')
+
   await expect(page).toHaveURL(rootPath('/review-notification'))
   await expect(
     page.getByRole('heading', { level: 1, name: 'Review your notification' })

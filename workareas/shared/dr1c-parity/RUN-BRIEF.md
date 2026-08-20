@@ -132,10 +132,15 @@ Two honest sources of rendered markup, in order of preference:
    hardest to argue with.** If you are a finding author or a verifier, this is
    where you live. Prefer it to reading a template and imagining the output.
 
-   **But check the date before you trust it.** See section 1: an earlier
-   scrapped attempt left 182 files in exactly this location, taken by copied
-   specs. If the parent has not told you the captures for this run are done,
-   there are no captures, and anything you find there is residue.
+   **THE CAPTURES FOR THIS RUN ARE DONE, AND THIS EVIDENCE IS YOURS TO USE.**
+   Coverage is clean and strict on both sides: 31 of 31 frontend pages plus 36
+   states, 28 of 28 prototype pages plus 32 states, all at 2x, all from specs
+   this run wrote from source. Pictures are under
+   `evidence/frontend@76a864ba/page/` and `evidence/prototype@491b3926/page/`.
+
+   The residue described in section 1 was moved out of the workspace before any
+   of it was taken, so nothing under `capture/` is now anything but this run's
+   own work.
 
 2. **The templates**, where no capture exists yet — which is the position spec
    authors are in, and it is the intended one. Read the view, read the macro it

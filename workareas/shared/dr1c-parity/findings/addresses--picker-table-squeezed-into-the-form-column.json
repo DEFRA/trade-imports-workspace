@@ -1,0 +1,33 @@
+{
+  "slice": "addresses",
+  "title": "Frontend squeezes the address picker's five-column results table into the narrow form column, so every row wraps onto three lines; Design release 1 gives the picker the full page width",
+  "domain": "addresses",
+  "type": "add-section",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "fe-address-picker-consignee",
+    "dr1-consignment-address-select",
+    "dr1-consignment-address-select-consignee"
+  ],
+  "controls": [],
+  "finding": {
+    "frontend": "All five party pickers render inside the same two-thirds column every other journey page uses, and the results table does not fit it. In the captured place-of-origin picker the table's five columns — the radio, Name, Address, Country and the View details link — are packed into the left two-thirds of the page, and every row wraps: \"Astra Rosales\" breaks over two lines, \"43 East Hague Extension, Bern, 30055\" over three, \"United Kingdom\" over two, and \"View details\" over two, on all five rows. Roughly a third of the page beside the table is empty. The width is not a decision the picker takes: the shared layout reads it from `contentColumnClass` (src/server/app/shared/layout.njk:56-57), and `kit.base` hardcodes that to the form surface, `govuk-grid-column-two-thirds` (src/server/app/shared/kit.js:20-23 and :122). The picker's controller builds its view context from `kit.base` and passes nothing that would change it (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:43-47).",
+    "prototype": "Design release 1 gives the picker the whole width of the page — its view opens on `govuk-grid-column-full` (app/views/consignment-address-select.html:27) — and it is a decision taken for this page rather than a house style, because the two other addresses pages the same release serves stay in the two-thirds column: roles-and-addresses and contact-address-for-consignment both render there. The result is that every row of the captured picker reads on one line: name, then the address lines stacked one per line because the design breaks them deliberately rather than because they wrap, then the country, then \"View details\" against the right-hand edge.",
+    "difference": "Render the five party pickers on the full-width surface. Frontend already has one and already uses it elsewhere: `SURFACES.display` is `govuk-grid-column-full` (src/server/app/shared/kit.js:20-23), and the dashboard picks it up by spreading `contentColumnClass: surfaceClass('display')` after `kit.base` (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:71). The picker needs the same one line at src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:43. Nothing has to land first. Sequence it after addresses--picker-pages-results-and-searches-on-the-server, which changes how many rows the table holds and therefore how much of the width the change buys. Two notes for whoever picks this up. Design release 1 also declares full width on its CPH page (app/views/cph-number.html:27), but that page holds one short field and nothing on it overflows the form column, so the work here is the pickers and not every page the design widens. And although the frontend's column width is set in shared code, this is not a service-wide finding: the design does not widen every page — it widens this one — so what has to change is which surface the picker asks for, not the default. `controls` is deliberately empty: what differs is the width of the page itself, so the whole-page shot is the only picture that shows it and a crop of any one control would hide the point.",
+    "falsifiedBy": "Finding Frontend's address picker rendered on anything other than `govuk-grid-column-two-thirds`, or Design release 1's picker rendered on anything other than `govuk-grid-column-full`.",
+    "verification": "Written and checked by the coverage auditor — I both wrote this finding and checked it, so it did not get an independent verifier and a reader should weigh it accordingly. Ran the falsifier on the captured DOM of both sides: capture/html/frontend/fe-address-picker-place-of-origin.html and fe-address-picker-consignee.html each contain exactly one govuk-grid-column class and it is govuk-grid-column-two-thirds, while capture/html/prototype/dr1-consignment-address-select.html and dr1-consignment-address-select-consignee.html each contain exactly one and it is govuk-grid-column-full. Checked the claim that the design's choice is per page rather than a house style by running the same extraction over the other two addresses screens on the requirements side: dr1-roles-and-addresses.html and dr1-contact-address-for-consignment.html are both govuk-grid-column-two-thirds. Opened both screenshots at 2x rather than inferring the wrapping from the markup — evidence/frontend@76a864ba/page/fe-address-picker-place-of-origin.png shows the table ending about two-thirds across with the name, address, country and View details cells each broken over two or three lines on every row, and evidence/prototype@491b3926/page/dr1-consignment-address-select.png shows the same five columns spanning the page with one line per cell. Read every cited line at source: src/server/app/shared/layout.njk:57 is the default-two-thirds column class, src/server/app/shared/kit.js:20-23 is the SURFACES table and :122 is where kit.base sets the form surface, src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:43-47 is the kit.base spread with no override, and src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:71 is the only place in src/server that overrides it. Confirmed app/views/consignment-address-select.html:27 and app/views/cph-number.html:27 are root views with no release subfolder in the path. Checked this against the run's exclusions before writing it: it is not one of the volatile values, not a fixture difference (the wrapping is there whatever names the book holds), and not one of the chrome items the service-wide slice owns, none of which is the page grid."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:43-47",
+    "prototype": "app/views/consignment-address-select.html:27"
+  },
+  "relatedTo": [
+    {
+      "id": "addresses--picker-pages-results-and-searches-on-the-server",
+      "relation": "travels-with",
+      "why": "Both change what the picker's results table looks like — one how many rows it holds, the other how much room each row gets."
+    }
+  ]
+}

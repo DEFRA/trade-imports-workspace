@@ -723,7 +723,7 @@ module.exports = {
     {
       screen: 'dr1-address-book-lookup',
       band: 'address-book',
-      note: 'The add-an-address form, headed "Add address details", with an address search over a hidden addressBookLookupAddressId and eleven manual fields behind a reveal (app/views/address-book-lookup.html:137). No frontend counterpart. This is where Design release 1\'s party-picker "add an address" link ends up.'
+      note: 'The add-an-address form, headed "Add address details", with an address search over a hidden addressBookLookupAddressId and nine manual fields behind a reveal (app/views/address-book-lookup.html:137). No frontend counterpart. This is where Design release 1\'s party-picker "add an address" link ends up.'
     },
     {
       screen: 'dr1-address-book-lookup-results',
@@ -733,7 +733,7 @@ module.exports = {
     {
       screen: 'dr1-address-book-lookup-manual',
       band: 'address-book',
-      note: 'The same add form with the manual-entry reveal open, showing all eleven fields — name, two address lines, town or city, county, postcode, country, email and phone. A state of dr1-address-book-lookup. No frontend counterpart.'
+      note: 'The same add form with the manual-entry reveal open, showing all nine fields — name, two address lines, town or city, county, postcode, country, email and phone. A state of dr1-address-book-lookup. No frontend counterpart.'
     },
     {
       screen: 'dr1-address-book-add-from-party-picker',

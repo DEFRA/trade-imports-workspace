@@ -1,0 +1,49 @@
+{
+  "slice": "review",
+  "title": "Frontend will not accept a notification until every animal has been identified; Design release 1 accepts one with no identifiers at all and asks for them after submission",
+  "domain": "review",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "dr1-review-notification",
+    "dr1-notification-submitted"
+  ],
+  "controls": [
+    {
+      "kind": "label",
+      "text": "Identification details"
+    }
+  ],
+  "finding": {
+    "frontend": "A trader cannot submit until every animal on every commodity line has an identifier record. The animal-identifier group carries a count rule as well as a content rule: each unit record must hold at least one of the six identifiers, and the number of unit records on a commodity line must equal the number of animals declared for that line (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:98-101, `recordCountEquals` against `numberOfAnimals`). That group is the whole of the `animalIdentification` task row (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45), and readiness demands every task row be fulfilled, not applicable or optional (src/server/app/flow/section-status.js:11-15). Readiness is the gate on both the review section (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85) and the submit itself, which returns `ok: false` and goes nowhere without it (src/server/app/engine/write/submit.js:9-15). So a trader who declares twenty animals must fill in twenty identifier cards before the service will take the notification. Documents are the one thing Frontend does let through: the documents group carries no minimum, so an empty collection is not a bar.",
+    "prototype": "Design release 1 asks for none of it. Its submit gate ends with the line \"Documents remain optional. Animal identifiers are optional unless multiple species are selected, in which case at least one identifier is required per species\" (app/routes.js:4562-4566). The minimum returns true outright for a single-species consignment however many identifier fields that commodity carries, and for a multi-species one it asks for a single complete entry per species, never one per animal (app/routes.js:1511-1523). The captured review page is the proof: a notification of five Bison bison with no identifier saved shows an empty \"Bison Bison\" card under \"Identification details\", no error summary, and a live Continue button. Design release 1 then chases what is missing rather than refusing it — the submitted page carries \"You still need to:\" with \"complete the animal identifier information in the notification\" as a bullet.",
+    "difference": "Move the animal-identifier requirement out of the submit gate and into the follow-up. Concretely: keep the per-record rule that a saved animal must carry at least one identifier, but stop the `animalIdentification` task row blocking readiness — drop `recordCountEquals` from the unit-record obligation's `requires` (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:98-101) so an under-identified line no longer holds the row out of FULFILLED, and let the row roll up as optional the way documents already do. The count itself is still worth showing on the hub and on Check your answers as progress; it just must not stop a submission. Then say what is outstanding after submission, which is the work in review--no-outstanding-tasks-after-submitting; that finding parks its identifier bullet because the frontend cannot currently reach the confirmation page with animals unidentified, and this change is what unparks it. Nothing has to land first: the obligation, the task row and the readiness roll-up are all frontend files, and the animals backend's submit transition rejects a notification only on its status, never on its content, so no contract or API change is needed to accept a partly identified one.",
+    "falsifiedBy": "An animal-identifier entry in Design release 1's review-page error summary on a single-species notification with no identifiers saved. The captured dr1-review-notification-incomplete lists exactly four problems — \"Complete arrival details\", \"Complete transport details\", \"Complete roles and addresses\", \"Complete contact address for this consignment\" — and no identifier among them, on a notification that had saved none.",
+    "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found that nobody had raised it: the difference is named in slices.json as the review slice's central one, and it survived in the 115 only as supporting context inside review--no-outstanding-tasks-after-submitting, where it is used as the reason that finding's identifier bullet cannot be built. It was written, and checked, by the same agent, and it has had no independent verifier. What was checked: ran the falsifier over capture/html/prototype/dr1-review-notification-incomplete.html — four error-summary links, none about identifiers — and over capture/html/prototype/dr1-review-notification.html, which has no govuk-error-summary at all. Opened evidence/prototype@491b3926/page/dr1-review-notification.png and read it: \"Number of animals 5\", an \"Identification details\" heading over a \"Bison Bison\" card with no rows, and a green Continue at the foot. Confirmed the submitted page's bullets in capture/html/prototype/dr1-notification-submitted.html. Traced both gates in source rather than inferring them: on the requirements side app/routes.js:4529-4569 is the ten-predicate run and app/routes.js:10068-10074 is the POST that re-renders on failure; on the implementation side the four frontend citations were each opened and the ranges are exact. Checked the band by reading the animals backend's submitNotification, which throws only when the status is not DRAFT or AMEND and never inspects content — so this is frontend-work, not needs-backend. Checked against identification--identifier-completeness, which asks a different question (one identifier versus all identifiers within one animal) and is cross-linked below rather than duplicated.",
+    "correction": "None. No claim in this finding was overturned in the writing of it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-101",
+    "prototype": "app/routes.js:4562-4566"
+  },
+  "relatedTo": [
+    {
+      "id": "review--no-outstanding-tasks-after-submitting",
+      "relation": "travels-with",
+      "why": "That finding adds the outstanding-work section to the confirmation page but parks its identifier bullet because the frontend cannot reach that page with animals unidentified; this finding is what makes the bullet reachable, so the two are one change in two halves."
+    },
+    {
+      "id": "identification--identifier-completeness",
+      "relation": "travels-with",
+      "why": "Both are about how much identification the service demands, but they ask different questions: that one is how many of an animal's identifiers must be filled in before the animal counts as entered, this one is how many animals must be entered before the notification can be submitted. Whatever answer that dispute gets applies to the per-record rule this finding deliberately keeps."
+    },
+    {
+      "id": "review--incomplete-notification-not-flagged-on-check-answers",
+      "relation": "travels-with",
+      "why": "That finding is about how the gate is presented when it fires; this one is about what the gate contains. Changing the contents without adding the presentation would leave a trader still blocked silently by the remaining rows."
+    }
+  ]
+}

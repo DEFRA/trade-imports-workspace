@@ -1,0 +1,39 @@
+{
+  "slice": "transport",
+  "title": "Opening the arrival date calendar drops it on top of the next two questions; Design release 1 opens it in the flow of the page so nothing is covered",
+  "domain": "transport",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-arrival-details-date-picker",
+    "dr1-arrival-details-datepicker-open"
+  ],
+  "controls": [
+    "arrivalDateAtPort"
+  ],
+  "finding": {
+    "frontend": "The calendar floats. It is positioned over the page and the rest of the form stays where it was, so the open dialog lands across \"Port of entry\" and \"Means of transport to the port of entry\": in the captured screenshot the port hint is sliced in half by the calendar's edge, the port field is hidden behind it, and only the tail of one \"Vessel\" radio shows below. A trader who opens the calendar to check a date can no longer see the two questions they were about to answer, and has to close it to get them back. The frontend takes the Ministry of Justice date picker exactly as the package ships it — `src/client/stylesheets/application.scss:2` imports the component's own stylesheet and adds nothing, and the page calls the macro unadorned at `src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:16` — and that component's default is an overlay.",
+    "prototype": "Design release 1 opens the same calendar in the flow of the page. It sits directly under the date field and pushes \"Port of entry\", \"Means of transport to the port of entry\" and everything after them down the page, so nothing is ever covered and the whole form stays readable with the calendar open. This is deliberate and Design release 1 says so about itself in a comment on the rule that does it — \"MOJ date picker — in-flow calendar (pushes content down, no overlay)\" — before pinning the dialog to `position: static` with a fixed maximum width (app/assets/sass/application.scss:18-31, applied to the arrival page's date field at :1663-1665). A small script clears the inline offsets the component writes each time the dialog opens, so the layout holds.",
+    "difference": "Take the arrival date picker's dialog out of overlay positioning on the port-of-entry page: give it static position, full width up to a fixed maximum, and a small top margin, so opening it pushes the following questions down instead of covering them. The frontend has no stylesheet of its own for this component yet — `src/client/stylesheets/application.scss:2` imports the Ministry of Justice partial and stops — so this is a new rule in the frontend's own styles rather than a change to an existing one. Note that the component writes an inline `top` when it opens (the captured dialog carries `style=\"top: 43px;\"`), so the rule has to beat that inline value or the offset has to be cleared when the dialog opens, which is what Design release 1 does. The crop for this finding is the date field itself; the evidence for the covering is in the two whole-page screenshots, which is where the difference is visible.",
+    "falsifiedBy": "A frontend screenshot of the open calendar in which \"Port of entry\" and its field are fully visible below the calendar rather than behind it. evidence/frontend@76a864ba/page/fe-arrival-details-date-picker.png shows the port hint cut through mid-sentence by the calendar's right edge and the port field entirely obscured.",
+    "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found that no finding in the run named either of these two screens, even though both sides captured the open calendar. It was written, and checked, by the same agent, and it has had no independent verifier. What was checked: opened both pictures and compared them directly — on the frontend the dialog sits over the port question, on Design release 1 \"Port of entry\" appears in full below the closed bottom edge of the calendar. Confirmed the mechanism in both DOMs rather than inferring it from the pictures: the frontend's dialog carries an inline `style=\"top: 43px;\"`, Design release 1's carries `style=\"\"` and a `data-layout-patch-applied` attribute, which app/assets/javascripts/arrival-date-picker-focus.js:30-56 sets when it clears the offsets. Read the frontend's whole stylesheet entry point and confirmed it imports the Ministry of Justice date-picker partial and overrides nothing. Checked that the rest of the component is identical on both sides before writing this, so that the finding is not a general complaint about the picker: the toggle carries the same visually-hidden \"Choose date\", the dialog has the same role, the same aria-modal, the same live-region month-and-year heading rendering \"August 2026\", the same four navigation buttons and the same \"Select\" and \"Close\" pair, so heading, controls and closing behaviour all agree and only the positioning differs. One difference was considered and deliberately not raised: Design release 1 also suppresses the focus ring on calendar buttons for pointer users (app/assets/sass/application.scss:85-112 and the same script), which is why its selected day is plain blue where the frontend's carries a yellow focus ring. Recommending the frontend suppress a focus ring would be wrong, so it is recorded here rather than filed as work. The volatile-values rule was honoured throughout: nothing in this finding compares a date, a month or the picker's bounds, and Design release 1's bounds are masked in the capture anyway.",
+    "correction": "None. No claim in this finding was overturned in the writing of it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:16",
+    "prototype": "app/assets/sass/application.scss:18-31"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--arrival-date-hint-states-a-range",
+      "relation": "travels-with",
+      "why": "The same field. That finding changes the hint above it, this one changes what happens when the calendar beside it opens."
+    },
+    {
+      "id": "transport--date-picker-toggle-is-unstyled",
+      "relation": "travels-with",
+      "why": "Both are the frontend taking the Ministry of Justice date picker as the package ships it where Design release 1 styles it, and both land in the same new stylesheet rule."
+    }
+  ]
+}

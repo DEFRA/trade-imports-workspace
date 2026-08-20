@@ -1,0 +1,48 @@
+{
+  "slice": "service-wide",
+  "title": "A dashboard card's links change with the notification's status and a draft can only be resumed, never viewed; Design release 1 gives every card the same two links, Copy as new and View",
+  "domain": "dashboard",
+  "type": "flow-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-dashboard-populated",
+    "fe-dashboard-new-draft",
+    "fe-dashboard-deleted",
+    "dr1-dashboard"
+  ],
+  "controls": [
+    {
+      "kind": "label",
+      "text": "Resume"
+    },
+    {
+      "kind": "label",
+      "text": "View"
+    }
+  ],
+  "finding": {
+    "frontend": "Each card's link row is built from the notification's status, so a trader meets a different set on different cards (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67). A draft gets Resume, Copy as new and Delete; a submitted notification gets View, Amend, Copy as new and Delete; one being amended gets Resume, Copy as new, Cancel amendment and Delete. The captured draft cards show exactly three links — Resume, Copy as new, Delete. There is no way to look at a draft without re-entering it: Resume goes to the task list (`hubPath`) and View exists only once the notification has been submitted, when it opens Check your answers.",
+    "prototype": "Design release 1 gives every card the same two links whatever its status, side by side after the reference and separated by a divider: \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262, which carries no status condition of any kind). The captured dashboard shows four cards — two \"Submitted\", two \"Submitted action required\" — and all four carry that identical pair. Design release 1 offers no Resume, no Delete, no Amend and no Cancel amendment on a card, and its View is the way into a draft as much as into a submitted one: for a draft the link is built as `/review-notification?reference=…` and for a submitted one as `/review-notification?submitted=…`, so both open the review page and a trader continues a draft by following the Change links from there.",
+    "difference": "Make the card's link row fixed rather than status-driven, and offer View on every card. In src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67 the three status branches collapse to one list; \"View\" replaces \"Resume\" as the label on a draft and points at Check your answers, the same target it already uses on a submitted notification, which makes the read-only view reachable for a draft for the first time. The order the design shows is Copy as new then View, which is the reverse of the frontend's current copy-then-open order for a draft. Two things are deliberately outside this finding. Delete, Amend and Cancel amendment are the frontend-only journeys already recorded in review--deleting-and-cancelling-an-amendment-are-one-sided, where they are banded disputed pending an artefact that either specifies or rules them out; do not strip those links on the strength of this finding. And whether the frontend should keep a separate route back into a half-finished draft's task list is a question about the hub, not about the card — Design release 1 does not offer one, and if the answer is that it should be kept then it is a third link beside these two, not a replacement for View.",
+    "falsifiedBy": "A status condition around the action block in Design release 1's dashboard card, or a card in the captured dr1-dashboard carrying anything other than Copy as new and View. Extracting every `app-dashboard-notification-card__action` from capture/html/prototype/dr1-dashboard.html gives eight links across four cards, alternating \"Copy as new\" and \"View\" and nothing else.",
+    "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found nobody had raised it: service-wide--dashboard-card-carries-extra-facts says in as many words \"Which links the card offers is a separate question and is not changed here\", and no other finding asks it. It was written, and checked, by the same agent, and it has had no independent verifier. What was checked: ran the falsifier over the captured prototype DOM — four `app-dashboard-notification-card__reference` elements and eight `app-dashboard-notification-card__action` links, in four Copy-as-new/View pairs — and read app/views/dashboard.html:253-294 to confirm the action block sits outside every conditional in the loop. Read the four card statuses from their govuk-tag elements: two \"Submitted action required\", two \"Submitted\". Read the frontend's captured DOM for both draft dashboards: three `govuk-summary-card__action` items each, reading Resume, Copy as new, Delete. Opened evidence/prototype@491b3926/page/dr1-dashboard.png and evidence/frontend@76a864ba/page/fe-dashboard-populated.png and read the link rows off both pictures rather than inferring them from the markup. Traced both View targets rather than trusting the rendered href, which is a fixture placeholder on the captured cards: app/routes.js:6617-6619 builds a draft's as /review-notification?reference= and app/routes.js:6644-6646 a submitted one's as /review-notification?submitted=, so View is a real route on both, and the `#` in the capture is the Prototype Kit's static dashboard fixture, which the contract rules out as a finding. Checked the two neighbouring findings for overlap: service-wide--dashboard-card-carries-extra-facts changes the fact pairs and disclaims the links, and review--deleting-and-cancelling-an-amendment-are-one-sided covers the delete and amend journeys but not the card's link row or its labels, so the difference slot leaves those links alone and says why.",
+    "correction": "None. No claim in this finding was overturned in the writing of it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67",
+    "prototype": "app/views/dashboard.html:258-262"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--dashboard-card-carries-extra-facts",
+      "relation": "travels-with",
+      "why": "The same card. That finding changes the fact pairs in its body and explicitly leaves the link row alone; this one changes the link row and leaves the facts alone, so together they are one rework of the card."
+    },
+    {
+      "id": "review--deleting-and-cancelling-an-amendment-are-one-sided",
+      "relation": "travels-with",
+      "why": "Delete, Amend and Cancel amendment are three of the links this finding describes, and whether they should exist at all is that finding's open question rather than this one's."
+    }
+  ]
+}

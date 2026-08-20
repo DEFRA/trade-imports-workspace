@@ -1,0 +1,35 @@
+{
+  "slice": "transport",
+  "title": "Frontend refuses to leave the transit countries page until at least one country is chosen; Design release 1 treats the list as optional and lets a road or rail consignment through with none",
+  "domain": "transport",
+  "type": "obligation-change",
+  "band": "frontend-work",
+  "confidence": "medium",
+  "screens": [
+    "fe-transit-countries",
+    "fe-transit-countries-error",
+    "dr1-transit-countries"
+  ],
+  "controls": [
+    "transitedCountries"
+  ],
+  "finding": {
+    "frontend": "The question is compulsory once it applies. `transitedCountries` is in scope and mandatory whenever the means of transport is rail or a road vehicle (src/server/app/sets/live-animals/obligations/sections/transport.js:92-105), so a trader who presses Save and continue without ticking a box gets the page back with \"There is a problem\" and the message \"Select at least one country the consignment will travel through\", both in the error summary and above the checkbox list (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:55). The notification cannot be submitted until a country is chosen, because the transit-countries task row has to be fulfilled like every other in-scope row.",
+    "prototype": "Design release 1 asks the same question of the same traders and accepts no answer to it. Its transit-countries handler runs no validation of any kind: it clears any errors, saves whatever was posted — including an empty list — and moves on (app/routes.js:10533-10537). Its completeness check for the section is a function that returns a literal true with the comment \"Transit countries are optional — any saved list (including empty) is acceptable\" (app/routes.js:1932-1935), and the section is absent from the ten predicates that gate submission. So a road or rail consignment reaches the declaration with no transit country recorded, and nothing anywhere tells the trader one was expected.",
+    "difference": "Make the transit-countries answer optional. In src/server/app/sets/live-animals/obligations/sections/transport.js:92-105 the in-scope branch keeps `inScope: true` and its reason but drops `status: 'mandatory'`, so the question is still asked of rail and road consignments and still purged for the others, but an empty selection no longer holds the task row out of fulfilled and no longer blocks submission. The \"Select at least one country the consignment will travel through\" message then has nothing to fire on and goes with it, along with the error state of the page. Nothing has to land first — the obligation and its copy are both frontend files, and the notification contract already carries an empty list. Note that this is a change to whether the question must be answered, not to how it is asked: replacing the checkbox list with a search-and-add control is transport--transit-countries-is-a-checkbox-list, and that work should carry this rule rather than the current one.",
+    "falsifiedBy": "A validation error on Design release 1's transit-countries page after pressing Save and continue with no country chosen. Design release 1's captured page could only be photographed in its unanswered and answered states, so this is the one observation that would settle it, and the handler at app/routes.js:10533-10537 has no branch that could produce one.",
+    "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found that fe-transit-countries-error was named by no finding in the run, while every other form's validation wording had one. It was written, and checked, by the same agent, and it has had no independent verifier. The confidence is medium deliberately: the frontend half is observed and the Design release 1 half is read from source, because no error state of that page exists to photograph and none can be produced. What was checked: read capture/html/frontend/fe-transit-countries-error.html, which carries \"There is a problem\", one error-summary link reading \"Select at least one country the consignment will travel through\" anchored to #transitedCountries, and the same sentence again as the field's govuk-error-message. Read Design release 1's whole POST handler line by line rather than grepping for the word error — its only branches are the four redirect guards and the soft-save split, and both remaining paths clear errorList and errors and redirect. Read hasTransitCountriesComplete in full and confirmed it is a bare `return true`, and confirmed the section is not among the predicates in hasReviewNotificationComplete. Checked the neighbouring finding for overlap: transport--transit-countries-is-a-checkbox-list compares the control and says in its own verification that both sides gate the question on rail or road transport and that no obligation difference hides under the control difference — which is right about scope and does not reach requiredness within scope, so this is the gap rather than a duplicate. The second half of the lead that produced this finding was disproved and nothing was written for it: fe-transporter-private-error was also named by no finding, but its six messages agree with Design release 1's validator word for word except the two the corpus already raises — \"Enter a postal or zip code\" against \"Enter a postcode or Zip code\", already prescribed inside transport--private-transporter-postcode-label, and \"Enter a telephone number\" against \"Enter a phone number\", already prescribed inside transport--private-transporter-phone-has-no-guidance — and the frontend's name, address line 1, town or city, country and email messages match app/routes.js:3052-3088 exactly, so there was nothing left to raise.",
+    "correction": "None. No claim in this finding was overturned in the writing of it."
+  },
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/obligations/sections/transport.js:92-105",
+    "prototype": "app/routes.js:1932-1935"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--transit-countries-is-a-checkbox-list",
+      "relation": "travels-with",
+      "why": "The same page. That finding replaces the control, this one changes whether it has to be answered, and the replacement control should be built against the optional rule rather than the mandatory one."
+    }
+  ]
+}

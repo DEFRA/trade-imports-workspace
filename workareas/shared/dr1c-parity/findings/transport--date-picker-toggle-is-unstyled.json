@@ -1,0 +1,36 @@
+{
+  "slice": "transport",
+  "title": "The button that opens the arrival date calendar is a grey box with a dark icon; Design release 1 draws it as a blue button with a white icon",
+  "domain": "transport",
+  "type": "copy-change",
+  "band": "frontend-work",
+  "confidence": "high",
+  "screens": [
+    "fe-arrival-details",
+    "fe-arrival-details-date-picker",
+    "dr1-arrival-details",
+    "dr1-arrival-details-datepicker-open"
+  ],
+  "controls": [
+    "arrivalDateAtPort"
+  ],
+  "finding": {
+    "frontend": "The calendar toggle sits at the right-hand end of the arrival date field as a pale grey square with a dark grey calendar icon in it, which is the Ministry of Justice component's own default: the frontend imports that component's stylesheet and adds nothing (src/client/stylesheets/application.scss:2). Beside a field with a black border it reads as an inactive part of the input rather than as something to press.",
+    "prototype": "Design release 1 paints the same toggle as a blue button — GOV.UK blue with a darker blue bottom edge and a white calendar icon — so it reads as the button it is, and darkens on hover (app/assets/sass/application.scss:33-67). The rule is part of the same date-field treatment the arrival page applies to its date control at app/assets/sass/application.scss:1663-1665.",
+    "difference": "Style the date picker's toggle on the port-of-entry page as a blue button with a white icon: GOV.UK blue background, the darker blue inset bottom edge a GOV.UK button carries, white icon colour, no border, and the darker blue on hover. This is the same new stylesheet rule as transport--open-calendar-covers-the-questions-below-it, so the two should be done together rather than twice. Nothing else about the control changes — the button keeps its visually-hidden \"Choose date\" label and the same icon shape, both of which already agree.",
+    "falsifiedBy": "A blue toggle button on the frontend's arrival date field. evidence/frontend@76a864ba/page/fe-arrival-details.png and fe-arrival-details-date-picker.png both show a grey square with a dark icon; evidence/prototype@491b3926/page/dr1-arrival-details-datepicker-open.png shows a blue one with a white icon.",
+    "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found that no finding in the run named either open-calendar screen, and comparing the two pickers turned this up alongside the positioning difference. It was written, and checked, by the same agent, and it has had no independent verifier. What was checked: opened all four screenshots and read the toggle off each. Confirmed the markup is identical on both sides so that the difference is genuinely the styling and not a different control — both render `button.moj-datepicker__toggle.moj-js-datepicker-toggle` with `aria-haspopup=\"dialog\"`, a visually-hidden \"Choose date\" and the same inline calendar SVG. Read the frontend's stylesheet entry point, which imports the Ministry of Justice partial and declares no override for the toggle anywhere, and read Design release 1's override in full at app/assets/sass/application.scss:33-67, which sets background, box-shadow, colour, border and the hover and focus states explicitly. Checked this is designed rather than harness before filing it: the rule lives in the prototype's own app stylesheet, not in the Prototype Kit's node_modules, and the contract only rules out the Kit's own chrome. Nothing here compares a volatile value.",
+    "correction": "None. No claim in this finding was overturned in the writing of it."
+  },
+  "evidence": {
+    "frontend": "src/client/stylesheets/application.scss:2",
+    "prototype": "app/assets/sass/application.scss:33-60"
+  },
+  "relatedTo": [
+    {
+      "id": "transport--open-calendar-covers-the-questions-below-it",
+      "relation": "travels-with",
+      "why": "Both are the frontend using the Ministry of Justice date picker exactly as the package ships it where Design release 1 styles it, and both land in the same new stylesheet rule for the arrival date field."
+    }
+  ]
+}

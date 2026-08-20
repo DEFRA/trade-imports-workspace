@@ -1,0 +1,27 @@
+{
+  "slice": "service-wide",
+  "title": "The frontend lets a user save and leave from every journey page; DR1 offers that on most of its pages but not on the origin, CPH number or private transporter pages, and DR1 does not say which is right.",
+  "domain": "service-wide",
+  "type": "flow-change",
+  "band": "disputed",
+  "confidence": "high",
+  "screens": ["fe-origin", "fe-cph-number", "dr1-origin-of-the-import", "dr1-cph-number"],
+  "controls": ["Save and return to hub"],
+  "finding": {
+    "frontend": "Every journey page that offers a save action offers the same three, from one shared partial (`src/server/app/shared/save-actions.njk:3-13`): a primary \"Save and continue\", a secondary \"Save and return to hub\" and a \"Cancel and return to hub\" link. That is 24 of the 40 captured screens. The only screens that do not are the five address pickers, which offer \"Save and continue\" on its own.",
+    "prototype": "DR1 offers the equivalent pair on 26 screens but not on all of them. Its origin of the import page ends with \"Save and continue\" and nothing else (`app/views/origin-of-the-import.html:167-175`), and so do the CPH number page, the address select page and the two add-a-transporter pages; the contact address page ends with a bare \"Continue\". So on three pairs that match screen for screen — origin, CPH number, and the private transporter form — the frontend gives the user a way to save and leave and DR1 does not.",
+    "difference": "There is nothing to build until somebody says which side is right, which is why this is banded disputed rather than as work. DR1 is not consistent with itself here: 26 of its pages carry the pair and five do not, and nothing in the evidence separates the two groups — they are not one section, not one journey branch, and not one kind of question. The frontend's behaviour is a superset of DR1's rather than a contradiction of it, so removing the actions from three pages would make the service worse if DR1's omission is drift rather than intent. What settles it: a designer saying whether every journey page should let a user save and return to the task list, or whether those specific pages are deliberately continue-only. If the answer is \"every page\", DR1 needs updating and the frontend is already correct; if it is \"only some\", the rule that picks them needs writing down before anything is removed.",
+    "falsifiedBy": "Finding a \"Save and return to overview\" action on DR1's origin of the import, CPH number or add-a-private-transporter pages."
+  },
+  "evidence": {
+    "frontend": "src/server/app/shared/save-actions.njk:3-13",
+    "prototype": "app/views/origin-of-the-import.html:167-175"
+  },
+  "relatedTo": [
+    {
+      "id": "service-wide--hub-wording-in-save-and-cancel-actions",
+      "relation": "travels-with",
+      "why": "Same two actions. That finding is about what they are called and is settled; this one is about which pages show them and is not."
+    }
+  ]
+}

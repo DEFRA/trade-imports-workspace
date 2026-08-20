@@ -228,7 +228,7 @@ const pairs = [
   {
     frontend: 'fe-consignment-details',
     prototype: 'dr1-consignment-details',
-    note: 'the headings disagree — "Consignment details" against "Commodity details" — but the question is the same one: number of animals and number of packages, per species. DR1 also renders a "Selected commodities" summary table above the form that the frontend does not'
+    note: 'the headings disagree — "Consignment details" against "Commodity details" — but the question is the same one: number of animals and number of packages, per species. CORRECTED by the commodities author: this note previously said DR1 renders a "Selected commodities" summary table the frontend does not. The frontend renders it too — same heading, same two columns, a Remove per row and an "Add another commodity" link. Only the commodity name inside it differs'
   },
   {
     frontend: 'fe-animal-identification',
@@ -253,7 +253,7 @@ const pairs = [
   {
     frontend: 'fe-animal-identification-at-maximum',
     prototype: 'dr1-animal-identification-details',
-    note: 'a state: the frontend once details exist for every animal in the line, at which point the entry form is withdrawn entirely and only the saved records remain. DR1 defines no cap behaviour on this page, so nothing on the DR1 side corresponds and this pair reads for the absence'
+    note: 'a state: the frontend once details exist for every animal in the line, at which point the entry form is withdrawn entirely and only the saved records remain. CORRECTED by the identification author: this note previously said DR1 defines no cap behaviour. DR1 has the same behaviour — getSpeciesIdentificationState sets isComplete once no animal is left incomplete, and the view then drops the entry form and shows only the saved table. Read this pair for parity, not for an absence'
   },
   {
     frontend: 'fe-animal-identification',
@@ -272,7 +272,7 @@ const pairs = [
   {
     frontend: 'fe-arrival-details',
     prototype: 'dr1-arrival-details',
-    note: 'same five fields in the same order. The controls differ: the frontend picks the port of entry from a 78-entry select and the means of transport from radios, DR1 uses an autocomplete search for the port and a select for the means of transport'
+    note: 'same five fields in the same order. CORRECTED by the transport author: this note previously said the frontend picks the port of entry from a plain select where DR1 uses an autocomplete. The frontend field IS an accessible-autocomplete over that select — a portOfEntry combobox in the rendered DOM — so both sides are search-as-you-type and the port control is not a difference. The means of transport does differ: DR1 a select, the frontend radios'
   },
   {
     frontend: 'fe-transporter-type',
@@ -321,7 +321,7 @@ const pairs = [
   {
     frontend: 'fe-documents-empty',
     prototype: 'dr1-upload-documents-continue-error',
-    note: 'DR1 after pressing "Save and continue" with a part-filled add form and no documents saved — three errors rather than four. The frontend has the same rule as its cannotContinue error. Distinguished from dr1-upload-documents-error by the error list, not by the page: the two renders are otherwise identical'
+    note: 'DR1 after pressing "Save and continue" with a part-filled add form and no documents saved — three errors rather than four. CORRECTED by the documents author: this note previously said the frontend has the same rule as its cannotContinue error. The two are unrelated — cannotContinue fires on unsettled virus scans, not on a part-filled add form, and the frontend has no add-form validation on Continue at all. This is a state the frontend does not have. Distinguished from dr1-upload-documents-error by the error list, not by the page: the two renders are otherwise identical'
   },
   {
     frontend: 'fe-documents-populated',
@@ -404,7 +404,7 @@ const pairs = [
   {
     frontend: 'fe-check-answers-submitted',
     prototype: 'dr1-review-notification',
-    note: 'the frontend renders the same summary read-only once the notification is submitted — every Change action is gone and a copy-as-new form appears. DR1 defines no post-submission view of this page: its dashboard "View" links are href="#". Read this pair for the summary content; the read-only behaviour has no DR1 rule to compare against'
+    note: 'the frontend renders the same summary read-only once the notification is submitted — every Change action is gone and a copy-as-new form appears. CORRECTED by the dashboard and review authors, independently: this note previously said DR1 defines no post-submission view because its dashboard "View" links are href="#". That is true only of DR1\'s eight seeded demonstration rows. A notification the user actually submits is stored and linked to /review-notification?submitted=<id>, which renders the same view with readOnly: true — stripping every card\'s change target and suppressing the submit form. So DR1 does specify read-only behaviour, and the frontend retaining its submit call to action in that state is a difference with a rule behind it. No DR1 capture of the state exists; it is read from source'
   },
   {
     frontend: 'fe-check-answers',

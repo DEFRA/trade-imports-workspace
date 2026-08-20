@@ -7,8 +7,8 @@ The workspace repo is now `DEFRA/trade-imports-workspace` and lives at
 Seven commands, in order:
 
 ```bash
-# 1. Unlink the old tim. It is symlinked INTO the old checkout, so deleting that
-#    later leaves a broken `tim` on your PATH with no obvious cause.
+# 1. Remove the old tim. Your global install resolves into the old checkout, so
+#    deleting that at step 7 would leave a broken `tim` on your PATH.
 npm uninstall -g tim
 
 # 2. Clone the new workspace to the canonical path.
@@ -22,14 +22,15 @@ cd ~/git/defra/trade-imports-workspace/tim && npm i -g .
 
 # 5. Clone anything missing — including trade-imports-ins-backend, which the old
 #    roster never listed, so you probably do not have it.
-cd ~/git/defra/trade-imports-workspace && make setup
+tim workspace setup
 
 # 6. Check it. Every repo should be listed and on the branch you left it on.
 tim workspace status
 
-# 7. Bin the old one, and clear the orphaned containers. The compose project
-#    renamed from `trade-imports-animals` to `trade-imports`, so the old stack
-#    is invisible to the new one and will sit there consuming ports.
+# 7. Bin the old one, and clear the orphaned containers. This is the one step
+#    with no tim equivalent: the compose project renamed to `trade-imports`, so
+#    `tim docker down` cannot see the old stack. It has to be named explicitly,
+#    or it sits there holding ports.
 docker compose -p trade-imports-animals down --remove-orphans
 rm -rf ~/git/defra/trade-imports-animals-workspace
 ```

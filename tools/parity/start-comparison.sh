@@ -62,8 +62,15 @@ else
     corpus=$([[ -f "$setup" ]] && jq -r '.answers.corpus // ""' "$setup" || echo "")
 fi
 
-# The ledger is the record of which agent passes have run. Where there is none
-# and no corpus either, this is a comparison nobody has started.
+# A corpus entry in corpora.json IS the evidence that setup happened — every
+# path in a comparison resolves through it, so nothing downstream could have run
+# without it. Recording that rather than asking the ledger keeps a corpus built
+# before the ledger existed, or by hand, from being told to set itself up again.
+if [[ "$exists" == "true" ]]; then
+    "$PHASE" "$RUN_ID" done setup --note "corpora.json declares $corpus" > /dev/null
+fi
+
+# The ledger is the record of which agent passes have run.
 resume_at=$("$PHASE" "$RUN_ID" status | sed -n 's/^Next: \([a-z]*\) .*/\1/p')
 [[ -z "$resume_at" ]] && resume_at="done"
 if [[ "$exists" == "false" ]]; then

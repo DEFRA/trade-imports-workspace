@@ -76,18 +76,32 @@ const byGateThenType = (a, b) => {
 const short = (sha) => (sha ? sha.slice(0, 12) : 'nothing')
 
 /**
+ * What each kind of drift means, in the reader's terms.
+ *
+ * The three that are not a reframe all print two hashes, because the frame
+ * description is identical on both sides of the arrow and would read as though
+ * nothing had happened. They differ in what the capture was able to say about
+ * the page behind the picture, and that changes what the reader should look
+ * for: a page that moved, a page that did not move and still draws
+ * differently, or a capture too old to tell the two apart.
+ */
+const DRIFT_WORDING = {
+  'content-changed': 'the page changed',
+  'pixels-changed': 'same page, new pixels',
+  'image-changed': 'same frame, new pixels'
+}
+
+/**
  * What moved, said in the terms that actually differ.
  *
- * A re-capture of the same frame prints the two hashes, because the frame
- * description is identical on both sides of the arrow and would read as though
- * nothing had happened. A reframe prints the frames, because the hashes are
- * two unrelated files and comparing them says nothing.
+ * A reframe prints the frames, because the hashes are two unrelated files and
+ * comparing them says nothing.
  */
 const driftRow = (entry, titleOf) => {
   const what =
     entry.kind === 'frame-changed'
       ? `${esc(entry.was)} → ${esc(entry.now)}`
-      : `same frame, new pixels — ${esc(short(entry.wasSha))} → ${esc(short(entry.nowSha))}`
+      : `${DRIFT_WORDING[entry.kind] ?? 'changed'} — ${esc(short(entry.wasSha))} → ${esc(short(entry.nowSha))}`
   return `<li><a href="#${esc(entry.id)}"><code>${esc(entry.id)}</code></a> ${esc(titleOf(entry.id) ?? '')}
     <span class="drift__what">${esc(entry.side)}: ${what}</span></li>`
 }
@@ -368,7 +382,14 @@ ${head}
     <span>pins: ${Object.entries(meta?.pins ?? {})
       .map(([key, pin]) => `${esc(key)} <code>${esc(pin.short)}</code>`)
       .join(' · ')}</span>
-    <span>join: ${joinReport.matched} of ${joinReport.increments} increments matched a finding by title; an ordinal join would have matched ${joinReport.ordinalAgreement}.</span>
+    ${
+      // A corpus whose findings were authored directly has no upstream file to
+      // join to, and "0 of 133 matched" reads as a fault rather than as a
+      // corpus that never had one.
+      joinReport
+        ? `<span>join: ${joinReport.matched} of ${joinReport.increments} increments matched a finding by title; an ordinal join would have matched ${joinReport.ordinalAgreement}.</span>`
+        : ''
+    }
     <span>generated ${esc(stamp.generatedAt)}</span>
     ${
       inlining

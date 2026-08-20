@@ -9,6 +9,7 @@ import {
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { captureContext, recorder } from './spec.js'
+import { MASK_VOLATILE_IN_PAGE } from './screens.js'
 
 let root
 
@@ -91,10 +92,12 @@ describe('captureContext', () => {
 // selectors have their own tests; what matters here is that the recorder puts
 // the corpus prefix on, keeps its own rows, and merges rather than overwrites.
 const fakePage = () => ({
-  evaluate: async (fn) =>
-    typeof fn === 'function'
+  evaluate: async (fn) => {
+    if (fn === MASK_VOLATILE_IN_PAGE) return { substitutions: 0, values: [] }
+    return typeof fn === 'function'
       ? { url: '/origin-of-the-import', allFields: [], headings: [] }
-      : undefined,
+      : undefined
+  },
   screenshot: async ({ path }) => {
     mkdirSync(join(path, '..'), { recursive: true })
     writeFileSync(path, 'png')

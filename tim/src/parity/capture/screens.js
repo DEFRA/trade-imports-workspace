@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
-import { capturePageModel, maskVolatile } from './page-model.js'
+import { capturePageModel, maskVolatile, VOLATILE_RULES } from './page-model.js'
 import {
   ANCHOR_KINDS,
   CROP_ANCESTORS,
@@ -112,6 +112,120 @@ const hashOf = (path) => {
   return {
     bytes: bytes.length,
     sha256: createHash('sha256').update(bytes).digest('hex')
+  }
+}
+
+/**
+ * Replace every value that changes run to run, in the live page, before the
+ * picture is taken.
+ *
+ * The model and the rendered DOM have been masked since they were introduced,
+ * so a generated reference number does not churn their hashes. The pixels were
+ * not, and the reference is printed in the Draft tag on nearly every page of
+ * the frontend — so two captures of an application nobody had touched produced
+ * different bytes for almost every screen, and the drift panel reported all of
+ * them. A panel that fires on every capture teaches its reader to skip it,
+ * which costs more than having no panel at all.
+ *
+ * Masking the page instead of forgiving the difference afterwards is what keeps
+ * the pixel comparison worth making: after this, two shots of the same page
+ * differ only when the page's own rendering differs, so a CSS regression or a
+ * swapped component still moves the hash.
+ *
+ * The picture then shows `GBN-XX-00-REFERENCE` where the application printed a
+ * reference. That is the same stand-in the model and the DOM already carry, and
+ * it reads as a stand-in rather than as a value — which is the point. Nobody
+ * should compare a generated reference against a prototype's fixed one and
+ * write it up as a difference.
+ *
+ * This runs in the browser. It has no imports and no closure over anything in
+ * this file, because Playwright serialises it and evaluates it in the page.
+ *
+ * @param {Array<{source: string, flags: string, replacement: string}>} rules
+ * @returns {{substitutions: number, values: string[]}} The values it stood in for
+ */
+export const MASK_VOLATILE_IN_PAGE = (rules) => {
+  const patterns = rules.map((rule) => ({
+    match: new RegExp(rule.source, rule.flags),
+    replacement: rule.replacement
+  }))
+  // Attributes a person reads off the page, so the pixels depend on them.
+  const attributes = ['value', 'placeholder', 'alt', 'title']
+  const TEXT_NODE = 3
+  const ELEMENT_NODE = 1
+  const found = []
+
+  const standardise = (value) => {
+    let out = value
+    for (const { match, replacement } of patterns) {
+      const hits = out.match(match)
+      if (!hits) continue
+      found.push(...hits)
+      out = out.replace(match, replacement)
+    }
+    return out
+  }
+
+  let substitutions = 0
+
+  const maskAttributes = (element) => {
+    for (const name of attributes) {
+      const was = element.getAttribute(name)
+      if (was === null) continue
+      const now = standardise(was)
+      if (now === was) continue
+      element.setAttribute(name, now)
+      substitutions += 1
+    }
+    // A value the page's own script typed into a field is a property, not an
+    // attribute, and it is the one on the screen.
+    if (typeof element.value === 'string') {
+      const now = standardise(element.value)
+      if (now !== element.value) {
+        element.value = now
+        substitutions += 1
+      }
+    }
+  }
+
+  const visit = (node) => {
+    if (node.nodeType === TEXT_NODE) {
+      const now = standardise(node.nodeValue)
+      if (now !== node.nodeValue) {
+        node.nodeValue = now
+        substitutions += 1
+      }
+      return
+    }
+    if (node.nodeType !== ELEMENT_NODE) return
+    maskAttributes(node)
+    for (const child of [...node.childNodes]) visit(child)
+  }
+
+  visit(document.documentElement)
+  return { substitutions, values: [...new Set(found)].sort() }
+}
+
+/**
+ * Mask the live page, and fingerprint what was masked.
+ *
+ * The fingerprint is a hash of the values that were standardised, not of the
+ * page. It is what lets a later render tell "this page shows a different
+ * generated reference" from "this page renders differently", and a page that
+ * carries no volatile values fingerprints the same on every run — so on those
+ * pages a pixel change is never explained away.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<{substitutions: number, sha256: string}>}
+ */
+export const maskVolatileOnPage = async (page) => {
+  const { substitutions, values } = await page.evaluate(
+    MASK_VOLATILE_IN_PAGE,
+    VOLATILE_RULES
+  )
+  return {
+    substitutions,
+    sha256: createHash('sha256').update(values.join('\n')).digest('hex')
   }
 }
 
@@ -381,12 +495,15 @@ export const captureRenderedHtml = async (page, screen, dir) => {
 /**
  * Capture one screen, full page, at the settings the report needs.
  *
- * Motion is stopped and the caret is hidden, so two runs against the same
- * commit produce the same bytes. That is what makes a changed hash mean the
+ * Motion is stopped and the caret is hidden, and every value that changes run
+ * to run is standardised in the page first, so two runs against the same commit
+ * produce the same bytes. That is what makes a changed hash mean the
  * application changed rather than the clock ticking.
  *
- * The page model and the rendered page are read in the same visit as the
- * screenshot, so the picture, the model and the DOM are all of the same render.
+ * The masking happens once, before the picture, and the page model and the
+ * rendered page are read in the same visit — so the picture, the crops, the
+ * model and the DOM are all of one standardised render and agree with each
+ * other about what the page said.
  *
  * @param {import('@playwright/test').Page} page
  * @param {string} screen - Screen id, matching the corpus (for example fe-hub)
@@ -399,6 +516,7 @@ export const captureScreen = async (page, screen, context) => {
   const path = join(dir, `${screen}.png`)
 
   await page.evaluate(() => window.scrollTo(0, 0))
+  const volatile = await maskVolatileOnPage(page)
   await page.screenshot({
     path,
     fullPage: true,
@@ -411,9 +529,13 @@ export const captureScreen = async (page, screen, context) => {
     screen,
     file: `page/${screen}.png`,
     ...hashOf(path),
-    url: new URL(page.url()).pathname,
+    // Masked like everything else on the row. The reference is in the path of
+    // every notification page, so an unmasked url churns the manifest on every
+    // run and buries the row that genuinely moved.
+    url: maskVolatile(new URL(page.url()).pathname),
     title: await page.title(),
     deviceScaleFactor: context.deviceScaleFactor,
+    volatile,
     crops: await captureAnchors(
       page,
       screen,

@@ -42,6 +42,41 @@ export const placeAsset = (from, toDir) => {
   return name
 }
 
+/**
+ * What each side's capture recorded about the pages it photographed, by screen.
+ *
+ * Read from the manifest that sits in the capture directory rather than by
+ * hashing the model and DOM files where they live now, because those files are
+ * overwritten by the next capture while the pictures are not: a manifest row is
+ * of the same visit as the picture beside it, and a seal has to compare like
+ * with like or it invents drift of its own.
+ *
+ * A capture that predates these fields yields nothing here, and every seal it
+ * feeds is compared on its bytes alone — which is what it has always been.
+ *
+ * @param {object[]} sides - Sides from the corpus profile
+ * @returns {Record<string, Record<string, {content: string|null, volatile: string|null}>>}
+ */
+export const capturedPages = (sides) =>
+  Object.fromEntries(
+    sides.map((side) => {
+      if (!side.manifest || !existsSync(side.manifest)) return [side.id, {}]
+      const rows = readJsonFile(side.manifest).rows ?? []
+      return [
+        side.id,
+        Object.fromEntries(
+          rows.map((row) => [
+            row.screen,
+            {
+              content: row.html?.sha256 ?? null,
+              volatile: row.volatile?.sha256 ?? null
+            }
+          ])
+        )
+      ]
+    })
+  )
+
 const proseOf = (item) =>
   [
     item.sections.frontend?.text,
@@ -67,6 +102,7 @@ const proseOf = (item) =>
  * @param {Map} args.pairIndex - From indexPairs
  * @param {string} args.assetDir
  * @param {Record<string, Record<string, object[]>>} args.anchors - By side, by screen
+ * @param {object} [args.captured] - From capturedPages, for the seal to compare
  * @param {boolean} [args.inline] - The artifact target places no files
  */
 export const attachAssets = ({
@@ -75,6 +111,7 @@ export const attachAssets = ({
   pairIndex,
   assetDir,
   anchors,
+  captured = {},
   inline
 }) => {
   for (const item of items) {
@@ -130,6 +167,9 @@ export const attachAssets = ({
             // Hashed unconditionally, because the seal store compares every
             // picture on every rebuild, not only hand-curated ones.
             asset.sha256 = sha256File(asset.path)
+            const recorded = captured[side.id]?.[asset.screen]
+            asset.contentSha = recorded?.content ?? null
+            asset.volatileSha = recorded?.volatile ?? null
             const curated = frame?.curatedAgainst?.[side.id]
             if (curated) asset.drifted = curated !== asset.sha256
           }
@@ -160,6 +200,52 @@ export const markDrift = ({ items, drift }) => {
 }
 
 /**
+ * What the run has to say on stdout beyond having written the page.
+ *
+ * A warning is only worth printing where the reader could act on it. The
+ * unmatched-findings warning is the example that made this its own function:
+ * it fired on every render of a corpus whose findings were authored directly,
+ * where there is no upstream file to match against and never will be, so it
+ * said something true about a thing that is not a problem.
+ *
+ * @param {object} args
+ * @param {boolean} args.upstream - Whether the corpus declares an upstream file
+ * @param {object} args.joinReport - From loadCorpus
+ * @param {object[]} args.gap - Sides whose cited screens have no picture
+ * @param {object[]} args.drift - Entries from diffSeals
+ * @param {boolean} [args.reseal]
+ * @returns {string[]}
+ */
+export const reportWarnings = ({
+  upstream,
+  joinReport,
+  gap,
+  drift,
+  reseal
+}) => {
+  const warnings = []
+  if (upstream && joinReport.unmatchedIncrements.length) {
+    warnings.push(
+      `${joinReport.unmatchedIncrements.length} increments matched no upstream finding, so their audit record is missing.`
+    )
+  }
+  if (gap.length) {
+    warnings.push(
+      `image gaps: ${gap.map((row) => `${row.side} ${row.want - row.have} screens with no picture`).join('; ')}`
+    )
+  }
+  if (drift.length) {
+    const findings = new Set(drift.map((entry) => entry.id)).size
+    warnings.push(
+      reseal
+        ? `accepted ${drift.length} moved pictures across ${findings} findings as the new seal.`
+        : `${drift.length} pictures moved since they were last shown, across ${findings} findings. They carry a ribbon and are listed at the top of the page. Accept them with --reseal.`
+    )
+  }
+  return warnings
+}
+
+/**
  * Build the report.
  *
  * @param {object} args
@@ -179,6 +265,7 @@ export const runReport = ({
 }) => {
   const corpus = loadCorpus({ profile })
   const { counts } = runCounts({ profile })
+  const upstream = Boolean(profile.paths.upstreamFindings)
 
   const pairIndex = indexPairs(loadPairs(profile.paths.pairingModule))
   const outDir = profile.paths.reportDir
@@ -210,6 +297,7 @@ export const runReport = ({
     pairIndex,
     assetDir,
     anchors,
+    captured: capturedPages(profile.sides),
     inline: artifact
   })
 
@@ -246,7 +334,7 @@ export const runReport = ({
     findings: corpus.findings,
     withdrawn: corpus.withdrawn,
     candidates: corpus.candidates,
-    joinReport: corpus.joinReport,
+    joinReport: upstream ? corpus.joinReport : null,
     sides: profile.sides,
     runId: profile.runId,
     drift,
@@ -276,26 +364,14 @@ export const runReport = ({
     writeFileSync(join(outDir, ASSET_JS), CONTROLS_SCRIPT, 'utf8')
   }
 
-  const warnings = []
-  if (corpus.joinReport.unmatchedIncrements.length) {
-    warnings.push(
-      `${corpus.joinReport.unmatchedIncrements.length} increments matched no upstream finding, so their audit record is missing.`
-    )
-  }
   const gap = coverage.filter((c) => c.have < c.want)
-  if (gap.length) {
-    warnings.push(
-      `image gaps: ${gap.map((c) => `${c.side} ${c.want - c.have} screens with no picture`).join('; ')}`
-    )
-  }
-  if (found.length) {
-    const findings = new Set(found.map((entry) => entry.id)).size
-    warnings.push(
-      reseal
-        ? `accepted ${found.length} moved pictures across ${findings} findings as the new seal.`
-        : `${found.length} pictures moved since they were last shown, across ${findings} findings. They carry a ribbon and are listed at the top of the page. Accept them with --reseal.`
-    )
-  }
+  const warnings = reportWarnings({
+    upstream,
+    joinReport: corpus.joinReport,
+    gap,
+    drift: found,
+    reseal
+  })
 
   if (open) {
     execFile('open', [path], () => {})

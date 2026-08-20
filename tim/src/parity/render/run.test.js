@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { attachAssets } from './run.js'
+import { attachAssets, capturedPages, reportWarnings } from './run.js'
 import { shot } from './card.js'
 
 let root
@@ -135,5 +135,111 @@ describe('attachAssets', () => {
     )
     expect(html).toContain('shot__figure--insertion')
     expect(html).toContain('Where it would go')
+  })
+})
+
+describe('capturedPages', () => {
+  const manifestAt = (side, rows) => {
+    writeFileSync(
+      side.manifest,
+      JSON.stringify({ side: side.id, rows }, null, 2)
+    )
+  }
+
+  test('reads the page hash and the fingerprint the capture recorded', () => {
+    const side = { ...sides[0], manifest: join(root, 'manifest.json') }
+    manifestAt(side, [
+      {
+        screen: 'fe-documents',
+        sha256: 'picture',
+        html: { sha256: 'page-1' },
+        volatile: { substitutions: 3, sha256: 'ref-1' }
+      }
+    ])
+
+    expect(capturedPages([side])).toEqual({
+      frontend: { 'fe-documents': { content: 'page-1', volatile: 'ref-1' } }
+    })
+  })
+
+  test('a capture that recorded neither yields nulls, not a guess', () => {
+    const side = { ...sides[0], manifest: join(root, 'manifest.json') }
+    manifestAt(side, [{ screen: 'fe-documents', sha256: 'picture' }])
+
+    expect(capturedPages([side]).frontend['fe-documents']).toEqual({
+      content: null,
+      volatile: null
+    })
+  })
+
+  test('a side with no manifest on disk contributes nothing', () => {
+    const side = { ...sides[0], manifest: join(root, 'absent.json') }
+    expect(capturedPages([side])).toEqual({ frontend: {} })
+  })
+})
+
+describe('attachAssets and the seal', () => {
+  test('the picture carries what its own capture recorded about the page', () => {
+    writeCrop(sides[0], 'fe-documents__field-quantity.png')
+    const items = [item()]
+
+    attachAssets({
+      items,
+      sides,
+      pairIndex: new Map(),
+      assetDir,
+      anchors: { frontend: { 'fe-documents': [insertionAnchor()] } },
+      captured: {
+        frontend: { 'fe-documents': { content: 'page-1', volatile: 'ref-1' } }
+      },
+      inline: false
+    })
+
+    expect(items[0].assets[0].frontend).toMatchObject({
+      contentSha: 'page-1',
+      volatileSha: 'ref-1'
+    })
+  })
+})
+
+describe('reportWarnings', () => {
+  const joinReport = { unmatchedIncrements: ['inc-001', 'inc-002'] }
+
+  test('a corpus with no upstream file is not asked to match one', () => {
+    expect(
+      reportWarnings({
+        upstream: false,
+        joinReport,
+        gap: [],
+        drift: []
+      })
+    ).toEqual([])
+  })
+
+  test('a corpus that declares an upstream still says when the join failed', () => {
+    expect(
+      reportWarnings({
+        upstream: true,
+        joinReport,
+        gap: [],
+        drift: []
+      })
+    ).toEqual([
+      '2 increments matched no upstream finding, so their audit record is missing.'
+    ])
+  })
+
+  test('moved pictures are counted by picture and by finding', () => {
+    const [warning] = reportWarnings({
+      upstream: false,
+      joinReport,
+      gap: [],
+      drift: [
+        { id: 'inc-001', kind: 'content-changed' },
+        { id: 'inc-001', kind: 'pixels-changed' }
+      ]
+    })
+    expect(warning).toContain('2 pictures moved')
+    expect(warning).toContain('across 1 findings')
   })
 })

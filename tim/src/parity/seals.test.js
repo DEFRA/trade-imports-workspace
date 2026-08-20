@@ -20,6 +20,16 @@ const page = (sha, screen = 'fe-arrival-details') => ({
   sha256: sha
 })
 
+/** A page shot from a capture that also recorded the page behind it. */
+const captured = ({ sha, content, volatile: fingerprint }) => ({
+  ...page(sha),
+  contentSha: content,
+  volatileSha: fingerprint
+})
+
+const sealsOf = (asset) =>
+  sealsFrom([item('inc-001', [{ frontend: asset }])], SIDES)
+
 const item = (id, rows) => ({ id, title: `Finding ${id}`, assets: rows })
 
 describe('sealOf', () => {
@@ -28,8 +38,16 @@ describe('sealOf', () => {
       state: 'crop',
       screen: 'fe-arrival-details',
       anchor: 'field-portofentry',
-      sha256: 'aaa'
+      sha256: 'aaa',
+      content: null,
+      volatile: null
     })
+  })
+
+  test('carries what the capture recorded about the page it photographed', () => {
+    expect(
+      sealOf(captured({ sha: 'aaa', content: 'page-1', volatile: 'ref-1' }))
+    ).toMatchObject({ sha256: 'aaa', content: 'page-1', volatile: 'ref-1' })
   })
 
   test('a page shot has no anchor', () => {
@@ -118,6 +136,49 @@ describe('diffSeals', () => {
       SIDES
     )
     expect(diffSeals({ sealed, current })[0].kind).toBe('frame-changed')
+  })
+
+  test('a new reference number in the picture is not the page moving', () => {
+    // The frontend mints a notification reference on every run and prints it
+    // in the Draft tag on nearly every page. Before this, every capture moved
+    // every picture, and a panel that fires every time is a panel nobody reads.
+    const sealed = sealsOf(
+      captured({ sha: 'aaa', content: 'page-1', volatile: 'ref-1' })
+    )
+    const now = sealsOf(
+      captured({ sha: 'bbb', content: 'page-1', volatile: 'ref-2' })
+    )
+    expect(diffSeals({ sealed, current: now })).toEqual([])
+  })
+
+  test('a page that genuinely changed is drift, and says the page changed', () => {
+    const sealed = sealsOf(
+      captured({ sha: 'aaa', content: 'page-1', volatile: 'ref-1' })
+    )
+    const now = sealsOf(
+      captured({ sha: 'bbb', content: 'page-2', volatile: 'ref-2' })
+    )
+    const drift = diffSeals({ sealed, current: now })
+    expect(drift).toHaveLength(1)
+    expect(drift[0]).toMatchObject({ kind: 'content-changed', nowSha: 'bbb' })
+  })
+
+  test('the same page drawn differently is drift, so a styling regression still shows', () => {
+    const sealed = sealsOf(
+      captured({ sha: 'aaa', content: 'page-1', volatile: 'ref-1' })
+    )
+    const now = sealsOf(
+      captured({ sha: 'bbb', content: 'page-1', volatile: 'ref-1' })
+    )
+    expect(diffSeals({ sealed, current: now })[0].kind).toBe('pixels-changed')
+  })
+
+  test('a seal from a capture that recorded no page hash is compared on its bytes, as it always was', () => {
+    const sealed = sealsOf(page('aaa'))
+    const now = sealsOf(
+      captured({ sha: 'bbb', content: 'page-1', volatile: 'ref-1' })
+    )
+    expect(diffSeals({ sealed, current: now })[0].kind).toBe('image-changed')
   })
 
   test('a picture that has gone is drift, not silence', () => {
@@ -221,5 +282,72 @@ describe('markDrift', () => {
         drift: [{ id: 'inc-001', side: 'frontend', row: 9, kind: 'gone' }]
       })
     ).not.toThrow()
+  })
+})
+
+describe('writeSeals and a store written before the page hash existed', () => {
+  let dir
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'seals-legacy-'))
+  })
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  test('the same picture gains what the capture recorded, without being accepted', () => {
+    const path = join(dir, 'seals.json')
+    const sealed = sealsOf(page('aaa'))
+    const current = sealsOf(
+      captured({ sha: 'aaa', content: 'page-1', volatile: 'ref-1' })
+    )
+
+    writeSeals({ path, sealed, current })
+
+    expect(readSeals(path)['inc-001'].frontend[0]).toMatchObject({
+      sha256: 'aaa',
+      content: 'page-1',
+      volatile: 'ref-1'
+    })
+  })
+
+  test('a picture that moved keeps the seal it drifted from, unannotated', () => {
+    const path = join(dir, 'seals.json')
+    const sealed = sealsOf(page('aaa'))
+    const current = sealsOf(
+      captured({ sha: 'bbb', content: 'page-1', volatile: 'ref-1' })
+    )
+
+    writeSeals({ path, sealed, current })
+
+    // Annotating this one would be accepting it: the reader saw 'aaa'.
+    expect(readSeals(path)['inc-001'].frontend[0]).toMatchObject({
+      sha256: 'aaa',
+      content: null
+    })
+  })
+})
+
+describe('writeSeals against a capture that records neither fact', () => {
+  let dir
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'seals-untouched-'))
+  })
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  test('leaves the store exactly as it found it', () => {
+    const path = join(dir, 'seals.json')
+    const sealed = sealsOf(page('aaa'))
+
+    writeSeals({ path, sealed, current: sealsOf(page('aaa')) })
+
+    expect(readSeals(path)['inc-001'].frontend[0]).toEqual(
+      sealed['inc-001'].frontend[0]
+    )
   })
 })

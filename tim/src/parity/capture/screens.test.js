@@ -1,16 +1,27 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  afterEach
+} from 'vitest'
+import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
   rmSync,
   writeFileSync
 } from 'node:fs'
+import { chromium } from 'playwright'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 import {
   CROP_PADDING,
+  MASK_VOLATILE_IN_PAGE,
   buildManifest,
   captureRenderedHtml,
   captureScreen,
@@ -125,10 +136,13 @@ const HTML = '<html lang="en"><body><h1>Origin of the import</h1></body></html>'
  * whatever landed on disk.
  */
 const browserPage = (html = HTML) => ({
-  evaluate: async () => ({
-    allFields: [],
-    headings: [{ level: 'h1', text: 'Origin of the import' }]
-  }),
+  evaluate: async (fn) => {
+    if (fn === MASK_VOLATILE_IN_PAGE) return { substitutions: 0, values: [] }
+    return {
+      allFields: [],
+      headings: [{ level: 'h1', text: 'Origin of the import' }]
+    }
+  },
   screenshot: async ({ path }) => writeFileSync(path, 'not really a png'),
   content: async () => html,
   url: () => 'http://localhost:3005/origin',
@@ -495,3 +509,111 @@ describe('resolveAnchor', () => {
     ).toBeNull()
   })
 })
+
+// The stand-in page above cannot answer the question these functions exist to
+// settle, which is what lands in the PNG. A real browser can, and Playwright is
+// already a dependency: a machine with no chromium installed skips the block
+// rather than failing on an install it was never asked to do.
+const chromiumInstalled = (() => {
+  try {
+    return existsSync(chromium.executablePath())
+  } catch {
+    return false
+  }
+})()
+
+const draftPage = (reference) =>
+  `<html lang="en"><body style="font: 16px sans-serif">
+    <strong>Draft ${reference}</strong>
+    <h1>Arrival details</h1>
+    <input name="portOfEntry" value="${reference}">
+  </body></html>`
+
+const BROWSER_TIMEOUT_MS = 60000
+
+describe.skipIf(!chromiumInstalled)(
+  'a real page, masked before the shot',
+  () => {
+    let browser
+
+    beforeAll(async () => {
+      browser = await chromium.launch()
+    }, BROWSER_TIMEOUT_MS)
+
+    afterAll(async () => {
+      await browser?.close()
+    })
+
+    const shoot = async (html, screen) => {
+      const tab = await browser.newPage()
+      await tab.setContent(html)
+      const row = await captureScreen(tab, screen, {
+        captureDir: join(dir, 'evidence'),
+        modelDir: join(dir, 'model'),
+        htmlDir: join(dir, 'html'),
+        deviceScaleFactor: 1
+      })
+      await tab.close()
+      return row
+    }
+
+    test(
+      'two runs differing only in the generated reference photograph the same',
+      async () => {
+        const first = await shoot(draftPage('GBN-AG-26-R8KR77'), 'first')
+        const second = await shoot(draftPage('GBN-AG-26-9BPDPX'), 'second')
+
+        // This is the whole point. Before the page was masked, these two bytes
+        // differed and every capture reported every page as moved.
+        expect(second.sha256).toBe(first.sha256)
+        expect(second.html.sha256).toBe(first.html.sha256)
+      },
+      BROWSER_TIMEOUT_MS
+    )
+
+    test(
+      'the row fingerprints the values it stood in for, so the difference is still visible',
+      async () => {
+        const first = await shoot(draftPage('GBN-AG-26-R8KR77'), 'first')
+        const second = await shoot(draftPage('GBN-AG-26-9BPDPX'), 'second')
+
+        expect(first.volatile.substitutions).toBeGreaterThan(0)
+        expect(second.volatile.sha256).not.toBe(first.volatile.sha256)
+      },
+      BROWSER_TIMEOUT_MS
+    )
+
+    test(
+      'a page that genuinely reads differently still photographs differently',
+      async () => {
+        const first = await shoot(draftPage('GBN-AG-26-R8KR77'), 'first')
+        const changed = await shoot(
+          draftPage('GBN-AG-26-R8KR77').replace(
+            'Arrival details',
+            'Arrival and exit details'
+          ),
+          'changed'
+        )
+
+        expect(changed.sha256).not.toBe(first.sha256)
+        expect(changed.html.sha256).not.toBe(first.html.sha256)
+      },
+      BROWSER_TIMEOUT_MS
+    )
+
+    test(
+      'a page carrying no generated value fingerprints the same every run',
+      async () => {
+        const html = '<html lang="en"><body><h1>Sign in</h1></body></html>'
+        const first = await shoot(html, 'first')
+        const second = await shoot(html, 'second')
+
+        // Nothing to explain a pixel difference away with, which is what keeps a
+        // styling regression on such a page reportable.
+        expect(second.volatile.sha256).toBe(first.volatile.sha256)
+        expect(second.volatile.substitutions).toBe(0)
+      },
+      BROWSER_TIMEOUT_MS
+    )
+  }
+)

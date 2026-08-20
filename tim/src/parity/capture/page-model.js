@@ -374,14 +374,29 @@ export const EXTRACTOR = () => {
  * the anchors and insertion points derived from those deltas churn with them —
  * so a real change would arrive buried in noise nobody reads.
  *
- * This is the page-model equivalent of masking a volatile region before a
- * screenshot, and it is done on the serialised text so it reaches every href,
- * value and heading at once.
+ * Written as plain data rather than as literals because the same rules have to
+ * be applied inside the browser, before the screenshot, and Playwright can only
+ * serialise an argument it can turn into JSON. One list, applied to the model,
+ * the rendered DOM and the pixels alike: a second list would drift, and the day
+ * it drifts is the day the pictures start churning again and nobody knows why.
  */
-const VOLATILE = [
-  [/GBN-[A-Z]{2}-\d{2}-[A-Z0-9]{6,}/g, 'GBN-XX-00-REFERENCE'],
-  [/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'UUID']
+export const VOLATILE_RULES = [
+  {
+    source: 'GBN-[A-Z]{2}-\\d{2}-[A-Z0-9]{6,}',
+    flags: 'g',
+    replacement: 'GBN-XX-00-REFERENCE'
+  },
+  {
+    source: '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
+    flags: 'gi',
+    replacement: 'UUID'
+  }
 ]
+
+const VOLATILE = VOLATILE_RULES.map((rule) => [
+  new RegExp(rule.source, rule.flags),
+  rule.replacement
+])
 
 /**
  * Replace every value that changes run to run with a fixed stand-in.

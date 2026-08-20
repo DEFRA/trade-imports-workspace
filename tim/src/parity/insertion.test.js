@@ -155,7 +155,7 @@ describe('insertionCaption', () => {
   test('a page with nothing to point at says that, rather than going quiet', () => {
     expect(
       insertionCaption({ point: { relation: 'page' }, missingLabel: 'A' })
-    ).toContain('no field on this page to place it against')
+    ).toContain('nothing on this page to place it against')
   })
 })
 

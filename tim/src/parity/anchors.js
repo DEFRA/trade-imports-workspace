@@ -1,18 +1,20 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { readJsonFile, writeJsonAtomic } from './io.js'
 import { parseBacklog } from './schema.js'
 import { resolveCapturePaths } from './capture/run.js'
+import { insertionPoint, mergeAnchors, summarise } from './insertion.js'
+import { parseDocument } from './dom.js'
 import {
-  insertionPoint,
-  isVisibleControl,
-  mergeAnchors,
-  summarise
-} from './insertion.js'
+  ANCHOR_KINDS,
+  RESOLUTION_ORDER,
+  landmarkFor,
+  landmarksIn,
+  resolveOnPage
+} from './resolution.js'
 import { TimError } from '../errors.js'
 
-/** The anchor kinds the capture stage knows how to resolve to a locator. */
-export const ANCHOR_KINDS = ['field', 'label']
+export { ANCHOR_KINDS }
 
 const slug = (text) =>
   String(text)
@@ -41,9 +43,13 @@ export const anchorKey = (anchor) =>
  * Turn one named control into an anchor descriptor.
  *
  * An author writes a bare string: the `name` attribute of the control, or the
- * label a user reads. A name attribute has no spaces in it and a visible label
+ * words a user reads. A name attribute has no spaces in it and visible text
  * almost always does, which is enough to tell them apart — and an author who
  * needs to be sure writes the object form instead.
+ *
+ * The guess is not load-bearing. A one-word string like "Draft" is read as a
+ * field name here, and the ladder tries the name attribute first and the tag
+ * text straight after, so it resolves either way.
  *
  * @param {string|{kind: string, name?: string, text?: string}} control
  * @param {string} increment - Which increment named it, for the error message
@@ -90,6 +96,9 @@ export const toAnchor = (control, increment) => {
   return { ...anchor, key: anchorKey(anchor) }
 }
 
+/** The name a finding wrote, whichever kind it was read as. */
+const namedIn = (anchor) => anchor.name ?? anchor.text
+
 /**
  * Which of an increment's screens are on this side.
  *
@@ -104,72 +113,82 @@ const screensOn = (increment, prefix) =>
   (increment.screens ?? []).filter((screen) => screen.startsWith(prefix))
 
 /**
- * Read a side's page models, each one once.
+ * Read a side's captured pages, each one parsed once.
  *
- * A screen with no model on disk is not the same thing as a screen whose model
- * holds no such control: the first is uncaptured and the second is the absence
- * a finding is about. A missing file returns null so the two stay apart.
+ * The rendered DOM rather than the page model, because the model is a fixed
+ * vocabulary and a fixed vocabulary decides in advance what a page can be said
+ * to have. A finding about a status tag or a phase banner names something a
+ * model has no slot for, and it is still on the page.
+ *
+ * A screen with no capture on disk is not the same thing as a screen whose
+ * page holds no such control: the first is uncaptured and the second is the
+ * absence a finding is about. A missing file returns null so the two stay
+ * apart.
  *
  * @returns {(side: object, screen: string) => object|null}
  */
-export const pageModelReader = () => {
-  const models = new Map()
-  return (side, screen) => {
-    if (!side.modelDir) return null
-    const path = join(side.modelDir, `${screen}.json`)
-    if (!models.has(path)) {
-      models.set(path, existsSync(path) ? readJsonFile(path) : null)
+export const pageDocReader = () => {
+  const docs = new Map()
+  const marks = new Map()
+  const read = (side, screen) => {
+    if (!side.htmlDir) return null
+    const path = join(side.htmlDir, `${screen}.html`)
+    if (!docs.has(path)) {
+      docs.set(
+        path,
+        existsSync(path) ? parseDocument(readFileSync(path, 'utf8')) : null
+      )
     }
-    return models.get(path)
+    return docs.get(path)
   }
-}
-
-const labelsOf = (field) =>
-  [
-    field.label,
-    field.legend,
-    ...(field.options ?? []).map((option) => option.label)
-  ].filter(Boolean)
-
-/**
- * Whether one field in a page model is what an anchor points at.
- *
- * Mirrors `resolveAnchor` in capture/screens.js — a field anchor matches its
- * own name and the compound names built from it, a label anchor matches any
- * label containing those words. Looser than the locator and this calls a
- * control present that the crop stage cannot find; tighter and it calls a
- * control missing that is on the page.
- *
- * @param {{kind: string, name?: string, text?: string}} anchor
- * @param {object} field - A page model's field
- * @returns {boolean}
- */
-export const anchorMatches = (anchor, field) => {
-  if (anchor.kind === 'field') {
-    const name = field.name ?? ''
-    return (
-      name === anchor.name ||
-      name.startsWith(`${anchor.name}-`) ||
-      name.startsWith(`${anchor.name}[`)
-    )
+  read.landmarks = (side, screen) => {
+    const path = `${side.id}/${screen}`
+    if (!marks.has(path)) {
+      const doc = read(side, screen)
+      marks.set(path, doc === null ? [] : landmarksIn(doc))
+    }
+    return marks.get(path)
   }
-  const wanted = anchor.text.toLowerCase()
-  return labelsOf(field).some((label) => label.toLowerCase().includes(wanted))
+  return read
 }
 
 /**
- * The field an anchor resolves to on one page, or nothing.
+ * The place on one captured page a named control resolves to, or nothing.
  *
  * @param {object} anchor
- * @param {object|null} model - A captured page model
- * @returns {object|undefined}
+ * @param {object|null} doc - A parsed captured page
+ * @returns {object|null} See resolveOnPage in resolution.js
  */
-export const fieldFor = (anchor, model) =>
-  (model?.allFields ?? [])
-    .filter(isVisibleControl)
-    .find((field) => anchorMatches(anchor, field))
+export const resolveHere = (anchor, doc) =>
+  doc === null || doc === undefined ? null : resolveOnPage({ doc, anchor })
 
-const labelOf = (field) => field.label ?? field.legend ?? field.name
+/**
+ * Another of this finding's own screens, on this side, that has the control.
+ *
+ * A finding routinely names several controls across several pages: the country
+ * list one, the destination one and the transit one. Each control is on one of
+ * those pages and not the others, and a page that does not have it is not a
+ * page the finding is making a claim about. Reporting that as "this control
+ * resolves nowhere" would be false — it resolves, one screen along, and the
+ * crop is taken there.
+ *
+ * @param {object} args
+ * @returns {string|null} The screen it is on
+ */
+const resolvedOnAnotherScreen = ({
+  anchor,
+  increment,
+  side,
+  screen,
+  readDoc
+}) => {
+  for (const other of screensOn(increment, side.screenPrefix)) {
+    if (other === screen) continue
+    const found = resolveHere(anchor, readDoc(side, other))
+    if (found !== null && found.refused === false) return other
+  }
+  return null
+}
 
 /**
  * The side that does have the control, and the page it is on.
@@ -179,15 +198,21 @@ const labelOf = (field) => field.label ?? field.legend ?? field.name
  * written from it would place the absence against the wrong page.
  *
  * @param {object} args
- * @returns {{side: string, screen: string, model: object, field: object}|null}
+ * @returns {{side: string, screen: string, landmark: object}|null}
  */
-const resolvedElsewhere = ({ anchor, increment, sides, side, readModel }) => {
+const resolvedElsewhere = ({ anchor, increment, sides, side, readDoc }) => {
   for (const other of sides) {
     if (other.id === side.id || !other.screenPrefix) continue
     for (const screen of screensOn(increment, other.screenPrefix)) {
-      const model = readModel(other, screen)
-      const field = fieldFor(anchor, model)
-      if (field) return { side: other.id, screen, model, field }
+      const doc = readDoc(other, screen)
+      const found = resolveHere(anchor, doc)
+      if (found === null || found.refused) continue
+      return {
+        side: other.id,
+        screen,
+        landmark: landmarkFor({ doc, found }),
+        landmarks: readDoc.landmarks(other, screen)
+      }
     }
   }
   return null
@@ -196,7 +221,7 @@ const resolvedElsewhere = ({ anchor, increment, sides, side, readModel }) => {
 /**
  * Build one side's anchors from the controls the findings name.
  *
- * Each named control either resolves against this screen's page model or it
+ * Each named control either resolves against this screen's captured page or it
  * does not, and both facts are evidence. Where it resolves, the crop is of the
  * control itself. Where it does not but the other side has it, this side gets
  * an insertion anchor: a crop of a control that is there, captioned with what
@@ -207,22 +232,26 @@ const resolvedElsewhere = ({ anchor, increment, sides, side, readModel }) => {
  * @param {object[]} args.increments
  * @param {object} args.side - This side's profile
  * @param {object[]} [args.sides] - Every side, for the control's other home
- * @param {Function} [args.readModel] - From {@link pageModelReader}
+ * @param {Function} [args.readDoc] - From {@link pageDocReader}
  * @returns {object}
  */
 export const anchorsForSide = ({
   increments,
   side,
   sides = [side],
-  readModel = pageModelReader()
+  readDoc = pageDocReader()
 }) => {
   const ordinary = new Map()
   const insertions = new Map()
   const withoutControls = []
   const unresolved = []
+  const ambiguous = []
+  const onOtherScreens = []
   const withoutPlacement = []
   const uncaptured = new Set()
   const seenUnresolved = new Set()
+  const seenAmbiguous = new Set()
+  const seenOtherScreen = new Set()
 
   const noteOrdinary = ({ screen, anchor, increment }) => {
     const byKey = ordinary.get(screen) ?? new Map()
@@ -235,7 +264,7 @@ export const anchorsForSide = ({
     byKey.set(anchor.key, { anchor, namedBy: [increment] })
   }
 
-  const noteInsertion = ({ screen, point, field, increment }) => {
+  const noteInsertion = ({ screen, point, missing, increment }) => {
     const byKey = insertions.get(screen) ?? new Map()
     insertions.set(screen, byKey)
     const held = byKey.get(point.anchor.key) ?? {
@@ -246,8 +275,8 @@ export const anchorsForSide = ({
     byKey.set(point.anchor.key, held)
     if (!held.namedBy.includes(increment)) held.namedBy.push(increment)
     held.insertions.push({
-      missing: field.name ?? labelOf(field),
-      missingLabel: labelOf(field),
+      missing: missing.anchor.name ?? missing.label,
+      missingLabel: missing.label,
       point
     })
   }
@@ -259,8 +288,36 @@ export const anchorsForSide = ({
     unresolved.push({
       increment,
       anchor: anchor.key,
-      named: anchor.name ?? anchor.text,
+      named: namedIn(anchor),
       screen
+    })
+  }
+
+  const noteOtherScreen = ({ anchor, increment, screen, cropped }) => {
+    const seen = `${increment}:${anchor.key}:${screen}`
+    if (seenOtherScreen.has(seen)) return
+    seenOtherScreen.add(seen)
+    onOtherScreens.push({
+      increment,
+      anchor: anchor.key,
+      named: namedIn(anchor),
+      screen,
+      cropped
+    })
+  }
+
+  const noteAmbiguous = ({ anchor, increment, screen, found }) => {
+    const seen = `${increment}:${anchor.key}:${screen}`
+    if (seenAmbiguous.has(seen)) return
+    seenAmbiguous.add(seen)
+    ambiguous.push({
+      increment,
+      anchor: anchor.key,
+      named: namedIn(anchor),
+      screen,
+      role: found.role,
+      places: found.places,
+      cropped: found.refused === false
     })
   }
 
@@ -278,36 +335,74 @@ export const anchorsForSide = ({
     }
 
     for (const screen of mine) {
-      const model = readModel(side, screen)
-      if (!model) uncaptured.add(screen)
+      const doc = readDoc(side, screen)
+      if (doc === null) uncaptured.add(screen)
       for (const control of controls) {
         const anchor = toAnchor(control, increment.id)
-        // Nothing was captured for this screen, so there is no page model to
-        // ask. The anchor stands and the crop stage answers it.
-        if (!model || fieldFor(anchor, model)) {
+
+        // Nothing was captured for this screen, so there is no page to ask.
+        // The anchor stands and the crop stage answers it.
+        if (doc === null) {
           noteOrdinary({ screen, anchor, increment: increment.id })
           continue
         }
-        const found = resolvedElsewhere({
+
+        const found = resolveHere(anchor, doc)
+        if (found !== null && found.refused === false) {
+          noteOrdinary({
+            screen,
+            anchor: { ...anchor, role: found.role },
+            increment: increment.id
+          })
+          if (found.places > 1) {
+            noteAmbiguous({ anchor, increment: increment.id, screen, found })
+          }
+          continue
+        }
+        if (found !== null) {
+          // It is on the page several times over and nothing about the match
+          // says which one the finding meant. Named rather than guessed at.
+          noteAmbiguous({ anchor, increment: increment.id, screen, found })
+          continue
+        }
+
+        const onAnotherScreen = resolvedOnAnotherScreen({
+          anchor,
+          increment,
+          side,
+          screen,
+          readDoc
+        })
+        if (onAnotherScreen !== null) {
+          noteOtherScreen({
+            anchor,
+            increment: increment.id,
+            screen,
+            cropped: onAnotherScreen
+          })
+          continue
+        }
+
+        const elsewhere = resolvedElsewhere({
           anchor,
           increment,
           sides,
           side,
-          readModel
+          readDoc
         })
-        if (!found) {
+        if (elsewhere === null) {
           noteUnresolved({ anchor, increment: increment.id, screen })
           continue
         }
         const point = insertionPoint({
-          missing: found.field,
-          sourceModel: found.model,
-          targetModel: model
+          missing: elsewhere.landmark,
+          sourceLandmarks: elsewhere.landmarks,
+          targetLandmarks: readDoc.landmarks(side, screen)
         })
         if (!point.anchor) {
           withoutPlacement.push({
             increment: increment.id,
-            named: labelOf(found.field),
+            named: elsewhere.landmark.label,
             screen,
             why: point.why
           })
@@ -316,7 +411,7 @@ export const anchorsForSide = ({
         noteInsertion({
           screen,
           point,
-          field: found.field,
+          missing: elsewhere.landmark,
           increment: increment.id
         })
       }
@@ -359,6 +454,8 @@ export const anchorsForSide = ({
     anchors,
     insertions: insertionCount,
     unresolved,
+    ambiguous,
+    onOtherScreens,
     withoutControls,
     withoutPlacement,
     uncaptured: [...uncaptured].sort()
@@ -389,7 +486,7 @@ export const runAnchors = ({ profile, side, write = false }) => {
   }
   const backlog = parseBacklog(readJsonFile(profile.paths.backlog))
   const wanted = side ? [profile.sideById[side]] : profile.sides
-  const readModel = pageModelReader()
+  const readDoc = pageDocReader()
 
   const sides = wanted.map((sideProfile) => {
     if (!sideProfile.screenPrefix) {
@@ -402,7 +499,7 @@ export const runAnchors = ({ profile, side, write = false }) => {
       increments: backlog.increments,
       side: sideProfile,
       sides: profile.sides,
-      readModel
+      readDoc
     })
     const { anchorsPath } = resolveCapturePaths({
       profile,
@@ -412,7 +509,8 @@ export const runAnchors = ({ profile, side, write = false }) => {
     const file = {
       side: sideProfile.id,
       builtFrom:
-        'the controls[] each finding names, and for a control this side does not have, where it would go — tim parity anchors',
+        'the controls[] each finding names, resolved against the captured DOM in the order field, label, action, heading, row, status, text — tim parity anchors',
+      resolutionOrder: RESOLUTION_ORDER.map((rung) => rung.role),
       screens: built.screens
     }
     const result = write ? writeJsonAtomic(anchorsPath, file) : null
@@ -423,6 +521,8 @@ export const runAnchors = ({ profile, side, write = false }) => {
       anchors: built.anchors,
       insertions: built.insertions,
       unresolved: built.unresolved,
+      ambiguous: built.ambiguous,
+      onOtherScreens: built.onOtherScreens,
       withoutControls: built.withoutControls,
       withoutPlacement: built.withoutPlacement,
       uncaptured: built.uncaptured,

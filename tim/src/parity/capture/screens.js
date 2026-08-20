@@ -2,31 +2,57 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { capturePageModel, maskVolatile } from './page-model.js'
+import {
+  ANCHOR_KINDS,
+  CROP_ANCESTORS,
+  RESOLUTION_ORDER,
+  excludingHidden,
+  selectorFor,
+  textPattern
+} from '../resolution.js'
 
-/**
- * Ancestors worth cropping to, nearest first.
- *
- * A crop of the bare input is not evidence — the label, the hint and the error
- * are the finding. Walking up to the form group gets all of it, and the wider
- * containers catch a control that sits outside one.
- */
-export const CROP_ANCESTORS = [
-  '.govuk-form-group',
-  'fieldset',
-  '.govuk-radios',
-  '.govuk-checkboxes',
-  '.govuk-summary-list__row',
-  '.govuk-task-list__item',
-  '.govuk-details',
-  '.govuk-inset-text',
-  '.govuk-notification-banner',
-  '.govuk-error-summary'
-]
+export { CROP_ANCESTORS }
 
 export const CROP_PADDING = 24
 
 /** A crop smaller than this in either direction shows nothing worth showing. */
 export const MIN_CROP = 8
+
+/**
+ * A crop narrower or shorter than this frames the element and nothing else.
+ *
+ * A status tag on its own is 60 pixels of coloured box; cropped that tight it
+ * could be anywhere on any page. Where the nearest crop ancestor is still that
+ * small, the crop grows outwards until it shows enough of its surroundings to
+ * place it.
+ */
+export const MIN_CONTEXT_WIDTH = 240
+export const MIN_CONTEXT_HEIGHT = 20
+
+/** Containers a crop must never grow into — beyond these it is the page. */
+export const CROP_LIMITS = [
+  'main',
+  'form',
+  'body',
+  'html',
+  '.govuk-width-container',
+  '.govuk-grid-row',
+  '.govuk-main-wrapper',
+  '[class*="govuk-grid-column"]'
+]
+
+/**
+ * How much taller than the element a crop may grow before it stops being
+ * context and starts being the page.
+ *
+ * The named limits above catch the containers govuk-frontend gives a class to.
+ * This catches the ones it does not: a bare `<div>` holding the whole column
+ * passes every selector test and is still a whole-page shot. A crop six times
+ * the height of a button is generous, and 320 pixels keeps a small element
+ * from being framed too tightly to place.
+ */
+export const CROP_GROWTH_RATIO = 6
+export const CROP_GROWTH_FLOOR = 320
 
 /**
  * Turn a viewport-relative bounding box into a padded clip in document
@@ -90,6 +116,68 @@ const hashOf = (path) => {
 }
 
 /**
+ * The locators one rung of the ladder tries, in order.
+ *
+ * Two for the text rungs, because an exact match is a better answer than a
+ * prefix and both are legitimate: a link reads "Change" and its full text is
+ * "Change exit details", a task row's text carries its own hint. Exact first
+ * means the tighter reading always wins where the page supports it.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} role
+ * @param {{name?: string, text?: string}} anchor
+ * @returns {object[]} Playwright locators
+ */
+export const locatorsForRole = (page, role, anchor) => {
+  const named = anchor.name ?? anchor.text ?? ''
+  if (role === 'field') {
+    return [
+      page.locator(
+        excludingHidden(
+          `[name="${named}"], [name^="${named}-"], [name^="${named}["]`
+        )
+      )
+    ]
+  }
+  if (role === 'label') return [page.getByLabel(named, { exact: false })]
+  // The text engine keeps the smallest element that says the string, which is
+  // what the last rung means by "an element whose own text is exactly this".
+  if (role === 'text') {
+    return [page.getByText(textPattern(named, { exact: true }))]
+  }
+  const selector = excludingHidden(selectorFor(role))
+  return [
+    page
+      .locator(selector)
+      .filter({ hasText: textPattern(named, { exact: true }) }),
+    page.locator(selector).filter({ hasText: textPattern(named) })
+  ]
+}
+
+/**
+ * Which rungs to try for one anchor, most specific first.
+ *
+ * The rung `tim parity anchors` already settled against the captured DOM comes
+ * first, so the two stages agree about what a name means. The rest of the
+ * ladder follows it rather than being skipped: markup moves between a capture
+ * and a recapture, and a crop found one rung down is worth more than none.
+ *
+ * A name attribute is a thing only a field anchor asks about, so a label
+ * anchor never tries that rung — matching "Continue" against a name attribute
+ * would be matching prose against an identifier.
+ *
+ * @param {{kind: string, role?: string}} anchor
+ * @returns {string[]}
+ */
+export const rungsFor = (anchor) => {
+  const ladder = RESOLUTION_ORDER.map((rung) => rung.role).filter(
+    (role) => role !== 'field' || anchor.kind === 'field'
+  )
+  if (!anchor.role || !ladder.includes(anchor.role)) return ladder
+  return [anchor.role, ...ladder.filter((role) => role !== anchor.role)]
+}
+
+/**
  * Resolve one anchor descriptor to a locator, or refuse.
  *
  * A raw CSS string re-run against markup that has moved matches the wrong node
@@ -97,17 +185,23 @@ const hashOf = (path) => {
  * report renders that as an evidence-broken card, which is information.
  *
  * @param {import('@playwright/test').Page} page
- * @param {{kind: string, name?: string, text?: string}} anchor
- * @returns {object|null} A Playwright locator, or null for an unknown kind
+ * @param {{kind: string, role?: string, name?: string, text?: string}} anchor
+ * @returns {Promise<{locator: object, role: string, matched: number}|null>}
  */
-export const resolveAnchor = (page, anchor) => {
-  if (anchor.kind === 'field') {
-    return page.locator(
-      `[name="${anchor.name}"], [name^="${anchor.name}-"], [name^="${anchor.name}["]`
-    )
-  }
-  if (anchor.kind === 'label') {
-    return page.getByLabel(anchor.text, { exact: false })
+export const resolveAnchor = async (page, anchor) => {
+  if (!ANCHOR_KINDS.includes(anchor.kind)) return null
+  for (const role of rungsFor(anchor)) {
+    for (const locator of locatorsForRole(page, role, anchor)) {
+      // A control the page holds but does not show — a collapsed filter panel,
+      // a reveal that is shut — is in the DOM and has no box. Cropping it
+      // produces a rectangle of blank page, which is worse than no crop
+      // because it looks like a picture of something.
+      const shown = locator.filter({ visible: true })
+      const visible = await shown.count()
+      if (visible > 0) return { locator: shown, role, matched: visible }
+      const matched = await locator.count()
+      if (matched > 0) return { locator, role, matched, hidden: true }
+    }
   }
   return null
 }
@@ -126,39 +220,82 @@ export const resolveAnchor = (page, anchor) => {
  * @returns {Promise<object>} The crop's manifest row, or a row saying why not
  */
 export const captureAnchor = async (page, screen, anchor, context) => {
-  const locator = resolveAnchor(page, anchor)
-  if (!locator) {
-    return { anchor: anchor.key, why: `Unknown anchor kind "${anchor.kind}".` }
-  }
-  const count = await locator.count()
-  if (count === 0) {
-    return { anchor: anchor.key, why: 'No element matched this anchor.' }
-  }
-
-  const measured = await locator.first().evaluate((element, ancestors) => {
-    const container =
-      ancestors.map((selector) => element.closest(selector)).find(Boolean) ??
-      element
-    const rect = container.getBoundingClientRect()
-    return {
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height
-      },
-      scroll: { x: window.scrollX, y: window.scrollY },
-      page: {
-        width: document.documentElement.scrollWidth,
-        height: document.documentElement.scrollHeight
-      }
-    }
-  }, CROP_ANCESTORS)
-
-  const box = clampCropBox({ ...measured, padding: CROP_PADDING })
-  if (!isUsableBox(box)) {
+  const resolved = await resolveAnchor(page, anchor)
+  if (resolved === null) {
     return {
       anchor: anchor.key,
+      why: ANCHOR_KINDS.includes(anchor.kind)
+        ? 'No element matched this anchor.'
+        : `Unknown anchor kind "${anchor.kind}".`
+    }
+  }
+  const { locator, role, matched: count, hidden } = resolved
+  if (hidden) {
+    return {
+      anchor: anchor.key,
+      role,
+      matched: count,
+      why: 'This page holds the control but does not show it in this state, so there is nothing to crop.'
+    }
+  }
+
+  const measured = await locator.first().evaluate(
+    (element, { ancestors, limits, minWidth, minHeight, ratio, floor }) => {
+      const own = element.getBoundingClientRect()
+      if (own.width === 0 || own.height === 0) return null
+      const tallest = Math.max(own.height * ratio, floor)
+      let container =
+        ancestors.map((selector) => element.closest(selector)).find(Boolean) ??
+        element
+      // A crop tight to a status tag is a coloured box with no page around it,
+      // so it grows outwards until it shows enough to place. It never climbs
+      // into one of the page's own containers: a crop of the width container
+      // is a whole-page shot with a control's name on it, which is the one
+      // thing this stage exists to stop. Where the next step up would be a
+      // limit, the small crop stands.
+      while (true) {
+        const box = container.getBoundingClientRect()
+        if (box.width >= minWidth && box.height >= minHeight) break
+        const parent = container.parentElement
+        if (parent === null) break
+        if (limits.some((selector) => parent.matches(selector))) break
+        if (parent.getBoundingClientRect().height > tallest) break
+        container = parent
+      }
+      const rect = container.getBoundingClientRect()
+      return {
+        rect: {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height
+        },
+        scroll: { x: window.scrollX, y: window.scrollY },
+        page: {
+          width: document.documentElement.scrollWidth,
+          height: document.documentElement.scrollHeight
+        }
+      }
+    },
+    {
+      ancestors: CROP_ANCESTORS,
+      limits: CROP_LIMITS,
+      minWidth: MIN_CONTEXT_WIDTH,
+      minHeight: MIN_CONTEXT_HEIGHT,
+      ratio: CROP_GROWTH_RATIO,
+      floor: CROP_GROWTH_FLOOR
+    }
+  )
+
+  const box =
+    measured === null
+      ? null
+      : clampCropBox({ ...measured, padding: CROP_PADDING })
+  if (box === null || !isUsableBox(box)) {
+    return {
+      anchor: anchor.key,
+      role,
+      matched: count,
       why: 'The resolved element has no visible box.'
     }
   }
@@ -178,6 +315,10 @@ export const captureAnchor = async (page, screen, anchor, context) => {
   return {
     anchor: anchor.key,
     kind: anchor.kind,
+    // The rung that answered. A crop of a heading under a finding about a
+    // button is wrong in a way the picture alone will not show, so the rung is
+    // recorded next to the file rather than inferred from it later.
+    role,
     file: `crop/${file}`,
     ...hashOf(join(dir, file)),
     matched: count,

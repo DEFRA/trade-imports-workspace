@@ -150,6 +150,29 @@ const renderIngest = (result) =>
       : 'Nothing written. Drop --dry-run to apply.'
   ].join('\n')
 
+// A control that matches several places on its page is a fact about the page,
+// not a failure, and it changes what the crop is worth: one of six identical
+// tags, or the first of fifteen Change links. Named here so a reader knows
+// which crops are an instance rather than the instance.
+const ambiguousLine = (entries) => {
+  if (entries.length === 0) return null
+  const refused = entries.filter((entry) => entry.cropped === false)
+  const say = (entry) =>
+    `${entry.increment} ${entry.named} on ${entry.screen} (${entry.role}, ${entry.places} places)`
+  return [
+    `  ${entries.length} controls match more than one place on their page.`,
+    `    ${entries.length - refused.length} cropped at the first: ${entries
+      .filter((entry) => entry.cropped)
+      .map(say)
+      .join(', ')}`,
+    refused.length
+      ? `    ${refused.length} refused, because nothing about the match says which one was meant: ${refused.map(say).join(', ')}`
+      : null
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
 // The four numbers together are the honest coverage statement for element
 // evidence: what is cropped from the control itself, what is shown as an
 // absence, what resolved nowhere, and what named no control at all.
@@ -159,13 +182,25 @@ const renderAnchors = (result) =>
       [
         `${side.side}: ${side.anchors} anchors and ${side.insertions} insertion points across ${side.screens} screens.`,
         side.unresolved.length
-          ? `  ${side.unresolved.length} controls resolve on no side, so nothing is cropped for them: ${side.unresolved
+          ? `  ${side.unresolved.length} controls resolve to no one place on any side, so nothing is cropped for them: ${side.unresolved
               .map((entry) => `${entry.increment} ${entry.named}`)
               .join(', ')}`
-          : '  Every control a finding names resolves on a side.',
+          : '  Every control a finding names resolves to one place on a side.',
         side.withoutControls.length
           ? `  ${side.withoutControls.length} findings name no control, so they fall back to a whole-page shot: ${side.withoutControls.join(', ')}`
           : '  Every finding on this side names a control.',
+        ambiguousLine(side.ambiguous ?? []),
+        // Not a gap. A finding that names three controls across three pages
+        // has each of them on one of those pages, and the crop is taken where
+        // the control is rather than counted as missing where it is not.
+        side.onOtherScreens?.length
+          ? `  ${side.onOtherScreens.length} controls sit on another screen this finding names, and are cropped there: ${side.onOtherScreens
+              .map(
+                (entry) =>
+                  `${entry.increment} ${entry.named} (${entry.screen} → ${entry.cropped})`
+              )
+              .join(', ')}`
+          : null,
         side.withoutPlacement.length
           ? `  ${side.withoutPlacement.length} absences have no field on their page to point at: ${side.withoutPlacement
               .map((entry) => `${entry.increment} ${entry.named}`)

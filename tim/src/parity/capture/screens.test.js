@@ -19,8 +19,11 @@ import {
   isUsableBox,
   loadAnchors,
   mergeManifestRows,
+  resolveAnchor,
+  rungsFor,
   writeManifest
 } from './screens.js'
+import { excludingHidden, selectorFor, textPattern } from '../resolution.js'
 
 let dir
 
@@ -331,5 +334,164 @@ describe('loadAnchors', () => {
     expect(loadAnchors(path)['fe-hub']).toEqual([
       { key: 'reference', kind: 'field' }
     ])
+  })
+})
+
+/**
+ * A page that answers a fixed set of asks.
+ *
+ * Keyed by what the locator was built from, so a test states which rung of the
+ * ladder the page can answer and the ladder decides which one it reaches.
+ */
+const stubPage = (matches, hiddenKeys = []) => {
+  const locator = (selector, hasText, visibleOnly = false) => {
+    const key = hasText ? `${selector} :: ${hasText}` : selector
+    return {
+      selector,
+      hasText,
+      count: async () =>
+        visibleOnly && hiddenKeys.includes(key) ? 0 : (matches[key] ?? 0),
+      filter: ({ hasText: pattern, visible }) =>
+        locator(
+          selector,
+          pattern === undefined ? hasText : String(pattern),
+          visible === true || visibleOnly
+        )
+    }
+  }
+  return {
+    locator: (selector) => locator(selector),
+    getByLabel: (text) => locator(`label=${text}`),
+    getByText: (pattern) => locator(`text=${String(pattern)}`)
+  }
+}
+
+describe('rungsFor', () => {
+  test('a label anchor never asks about a name attribute', () => {
+    expect(rungsFor({ kind: 'label', text: 'Continue' })).toEqual([
+      'label',
+      'action',
+      'heading',
+      'row',
+      'status',
+      'text'
+    ])
+  })
+
+  test('the rung the anchors stage settled on is tried first', () => {
+    expect(rungsFor({ kind: 'label', text: 'Draft', role: 'status' })[0]).toBe(
+      'status'
+    )
+  })
+
+  test('the rest of the ladder still follows, so markup that moved is found', () => {
+    expect(rungsFor({ kind: 'label', text: 'Draft', role: 'status' })).toEqual([
+      'status',
+      'label',
+      'action',
+      'heading',
+      'row',
+      'text'
+    ])
+  })
+})
+
+describe('resolveAnchor', () => {
+  test('resolves a field by its name attribute', async () => {
+    const page = stubPage({
+      [excludingHidden(
+        '[name="portOfExit"], [name^="portOfExit-"], [name^="portOfExit["]'
+      )]: 1
+    })
+
+    const resolved = await resolveAnchor(page, {
+      kind: 'field',
+      name: 'portOfExit'
+    })
+
+    expect(resolved).toMatchObject({ role: 'field', matched: 1 })
+  })
+
+  test('falls to the button when no field and no label answers', async () => {
+    const actions = excludingHidden(selectorFor('action'))
+    const page = stubPage({
+      [`${actions} :: ${textPattern('Continue', { exact: true })}`]: 2
+    })
+
+    const resolved = await resolveAnchor(page, {
+      kind: 'label',
+      text: 'Continue'
+    })
+
+    expect(resolved).toMatchObject({ role: 'action', matched: 2 })
+  })
+
+  test('an exact match is preferred to a prefix on the same rung', async () => {
+    const actions = excludingHidden(selectorFor('action'))
+    const page = stubPage({
+      [`${actions} :: ${textPattern('Change', { exact: true })}`]: 1,
+      [`${actions} :: ${textPattern('Change')}`]: 9
+    })
+
+    const resolved = await resolveAnchor(page, {
+      kind: 'label',
+      text: 'Change'
+    })
+
+    expect(resolved.matched).toBe(1)
+  })
+
+  test('the recorded rung is honoured over an earlier one', async () => {
+    const page = stubPage({
+      'label=Draft': 3,
+      [`${excludingHidden(selectorFor('status'))} :: ${textPattern('Draft', { exact: true })}`]: 1
+    })
+
+    const resolved = await resolveAnchor(page, {
+      kind: 'label',
+      text: 'Draft',
+      role: 'status'
+    })
+
+    expect(resolved).toMatchObject({ role: 'status', matched: 1 })
+  })
+
+  test('says nothing rather than guessing when the page has none of it', async () => {
+    expect(
+      await resolveAnchor(stubPage({}), { kind: 'label', text: 'Nowhere' })
+    ).toBeNull()
+  })
+
+  test('says a control is hidden rather than cropping blank page', async () => {
+    const selector = excludingHidden(
+      '[name="consignee"], [name^="consignee-"], [name^="consignee["]'
+    )
+    const page = stubPage({ [selector]: 1 }, [selector])
+
+    const resolved = await resolveAnchor(page, {
+      kind: 'field',
+      name: 'consignee'
+    })
+
+    expect(resolved).toMatchObject({ role: 'field', matched: 1, hidden: true })
+  })
+
+  test('prefers the instance the page actually shows', async () => {
+    const actions = excludingHidden(selectorFor('action'))
+    const exact = `${actions} :: ${textPattern('Remove', { exact: true })}`
+    const page = stubPage({ [exact]: 4 })
+
+    const resolved = await resolveAnchor(page, {
+      kind: 'label',
+      text: 'Remove'
+    })
+
+    expect(resolved.hidden).toBeUndefined()
+  })
+
+  test('refuses a kind it was never taught', async () => {
+    expect(
+      await resolveAnchor(stubPage({}), { kind: 'xpath', text: '//div' })
+    ).toBeNull()
   })
 })

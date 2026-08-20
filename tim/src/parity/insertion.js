@@ -31,6 +31,33 @@ const anchorKey = (anchor) =>
         .replace(/^-|-$/g, '')}`
 
 /**
+ * One page model's fields as the ordered landmarks this module works in.
+ *
+ * A page model is a fixed vocabulary, so it can only ever offer fields. The
+ * captured DOM offers headings, buttons, rows and tags as well, and those
+ * arrive already in this shape from `landmarksIn` in resolution.js. Both go
+ * through the same algorithm below.
+ *
+ * @param {object|null} model
+ * @returns {Array<{key: string, anchor: object, label: string}>}
+ */
+export const landmarksFromModel = (model) =>
+  (model?.allFields ?? []).filter(visible).map((field) => ({
+    key: key(field),
+    anchor: anchorFor(field),
+    label: field.label ?? field.name ?? ''
+  }))
+
+const asLandmark = (entry) =>
+  entry !== null && entry !== undefined && entry.key !== undefined
+    ? entry
+    : {
+        key: key(entry ?? {}),
+        anchor: anchorFor(entry ?? {}),
+        label: entry?.label ?? entry?.name ?? ''
+      }
+
+/**
  * Where on the empty side a one-sided control would sit.
  *
  * "The prototype has X and we do not" is only half a finding. The other half
@@ -38,64 +65,77 @@ const anchorKey = (anchor) =>
  * missing control plus a crop of the place it belongs is what makes the claim
  * legible.
  *
- * The answer is derived from the two page models, and its confidence is part
- * of the answer. A landmark that appears on both sides pins the position
- * exactly. Where the page shares no landmark at all, the honest answer is
- * weaker and says so, rather than inventing a position.
+ * The answer is derived from the two pages, and its confidence is part of the
+ * answer. A landmark that appears on both sides pins the position exactly.
+ * Where the page shares no landmark at all, the honest answer is weaker and
+ * says so, rather than inventing a position.
+ *
+ * Give it either two page models or two landmark lists. The lists are what the
+ * captured DOM produces and they carry more than fields, so an absent heading
+ * or button can be placed as precisely as an absent input.
  *
  * @param {object} args
- * @param {object} args.missing - The field delta, from the side that has it
- * @param {object} args.sourceModel - Page model of the side that has it
- * @param {object} args.targetModel - Page model of the side that does not
+ * @param {object} args.missing - The thing that is absent, from the side that has it
+ * @param {object} [args.sourceModel] - Page model of the side that has it
+ * @param {object} [args.targetModel] - Page model of the side that does not
+ * @param {object[]} [args.sourceLandmarks] - In place of sourceModel
+ * @param {object[]} [args.targetLandmarks] - In place of targetModel
  * @returns {object|null}
  */
-export const insertionPoint = ({ missing, sourceModel, targetModel }) => {
-  const source = (sourceModel?.allFields ?? []).filter(visible)
-  const target = (targetModel?.allFields ?? []).filter(visible)
+export const insertionPoint = ({
+  missing,
+  sourceModel,
+  targetModel,
+  sourceLandmarks,
+  targetLandmarks
+}) => {
+  const source = sourceLandmarks ?? landmarksFromModel(sourceModel)
+  const target = targetLandmarks ?? landmarksFromModel(targetModel)
   if (target.length === 0) {
     return {
       relation: 'page',
       anchor: null,
-      why: 'The page on this side has no fields at all, so there is nowhere on it to point.'
+      why: 'The page on this side has nothing on it to point at, so there is nowhere to place what is missing.'
     }
   }
 
-  const shared = new Set(target.map(key))
-  const at = source.findIndex((field) => key(field) === key(missing))
+  const wanted = asLandmark(missing)
+  const shared = new Set(target.map((entry) => entry.key))
+  const at = source.findIndex((entry) => entry.key === wanted.key)
 
   if (at >= 0) {
-    for (let i = at - 1; i >= 0; i -= 1) {
-      if (shared.has(key(source[i]))) {
-        return landmark({ target, field: source[i], relation: 'after' })
+    for (let index = at - 1; index >= 0; index -= 1) {
+      if (shared.has(source[index].key)) {
+        return landmark({ target, entry: source[index], relation: 'after' })
       }
     }
-    for (let i = at + 1; i < source.length; i += 1) {
-      if (shared.has(key(source[i]))) {
-        return landmark({ target, field: source[i], relation: 'before' })
+    for (let index = at + 1; index < source.length; index += 1) {
+      if (shared.has(source[index].key)) {
+        return landmark({ target, entry: source[index], relation: 'before' })
       }
     }
   }
 
   // Nothing on this page appears on both sides, so the position cannot be
-  // derived. Pointing at where the page's fields begin is still worth more
-  // than a whole-page shot, as long as the caption does not pretend it is the
-  // insertion point.
-  const first = target[0]
+  // derived. Pointing at where the page's own content begins is still worth
+  // more than a whole-page shot, as long as the caption does not pretend it is
+  // the insertion point.
+  const [first] = target
   return {
     relation: 'at',
-    anchor: { ...anchorFor(first), key: anchorKey(anchorFor(first)) },
-    named: first.label ?? first.name,
-    why: "No field on this page appears on both sides, so this crop shows where the page's own fields begin rather than where the missing one would go."
+    anchor: { ...first.anchor, key: anchorKey(first.anchor) },
+    named: first.label,
+    why: "Nothing on this page appears on both sides, so this crop shows where the page's own content begins rather than where the missing one would go."
   }
 }
 
-const landmark = ({ target, field, relation }) => {
-  const match = target.find((candidate) => key(candidate) === key(field))
-  const anchor = anchorFor(match ?? field)
+const landmark = ({ target, entry, relation }) => {
+  const match = target.find((candidate) => candidate.key === entry.key)
+  const anchor = (match ?? entry).anchor
   return {
     relation,
     anchor: { ...anchor, key: anchorKey(anchor) },
-    named: match?.label ?? match?.name ?? field.name,
+    named: (match ?? entry).label,
     why: null
   }
 }
@@ -132,7 +172,7 @@ export const listOf = (names) => {
 export const insertionCaption = ({ point, missingLabel }) => {
   const missing = listOf([missingLabel].flat())
   if (!point || point.relation === 'page') {
-    return `This side has no ${missing}, and no field on this page to place it against.`
+    return `This side has no ${missing}, and nothing on this page to place it against.`
   }
   if (point.relation === 'at') {
     return `This side has no ${missing}. ${point.why}`

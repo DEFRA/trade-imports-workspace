@@ -15,7 +15,7 @@ pipes, `node`, `npx`, absolute paths and `cd` are fine.
 Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<logs>`, `<INCREMENT_ID>` — is
 bound to a real value in the prompt that pointed you here. Use those bindings; never guess one.
 
-Workspace root `/Users/samfarrington/git/defra/trade-imports-animals`; plan of record `<backlog>`; logs
+Workspace root `<workspace>`; plan of record `<backlog>`; logs
 `<logs>`; repos under `<workspace>/repos/`.
 
 ## Rules

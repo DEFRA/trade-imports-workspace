@@ -9,7 +9,7 @@ L0 gives you these. Everything below resolves against them.
 
 ```
 <workspace-tilde>  the workspace root, tilde form — use in Bash. Canonically
-                   ~/git/defra/trade-imports-animals-workspace (CLAUDE.md rule 1)
+                   ~/git/defra/trade-imports-workspace (CLAUDE.md rule 1)
 <workspace-abs>    the workspace root, absolute — use for Read/Write/Edit. L0 resolved
                    it on THIS machine; never substitute a home directory of your own
 <workarea-rel>     path under workareas/, e.g. shared/<programme>
@@ -90,7 +90,7 @@ Stop and return when any of these is true:
 | Reason | Meaning |
 |---|---|
 | `budget-spent` | You built `<budget>` increments. The only "full" ending |
-| `no-buildable` | Nothing is buildable any more — dependencies unmet, or only unplanned stubs left |
+| `no-buildable` | Nothing is buildable any more — everything left is withheld, or waiting on a dependency that has not landed |
 | `premise-invalidated` | What just landed removed the next increment's basis, and it needs re-planning rather than a patch |
 | `gate` | The increment carried a designed halt gate. The loop lands it, then stops |
 | `increment-failed` | Baseline red, implement failed, or a red ladder rolled back |
@@ -156,24 +156,31 @@ programme facts live; this file holds only method.
 Not once per batch. Once per increment, immediately after the previous one lands:
 
 ```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess != null) | .id] | .[0] // "NONE"' <backlog>
+jq -r '["done","deferred","dropped","blocked","rejected"] as $off | [.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status as $s | ($off | index($s)) | not) | select([.dependsOn[] | IN($done[])] | all) | .id] | .[0] // "NONE"' <backlog>
 ```
 
 `NONE` means stop and return with `no-buildable`.
 
-**⚠ THAT QUERY LIES BY OMISSION.** The `sizeGuess != null` filter silently drops **unplanned stubs** —
-increments that are a title and nothing else. Run its companion each time so you know what it withheld:
+**Buildability is status and dependencies. Nothing else.** The withheld five are `done`, `deferred`,
+`dropped`, `blocked` and `rejected`. `deferred` and `blocked` mean *not yet*; `dropped` and `rejected`
+mean *settled, never build this*. A status the list does not name counts as buildable, so an unknown
+status fails loudly rather than silently vanishing from the count.
 
-```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | .increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess == null) | "WITHHELD, UNPLANNED: \(.id)"' <backlog>
-```
+**A thin increment is still buildable, and you build it.** There is no field that says whether an
+increment has been planned, and you must not invent one or infer one. The backlog's job is to say what
+is wrong, what it cites as evidence and whether anyone has ruled on it; **working out what to change is
+the implementor's job.** If the increment gives you a finding and a citation and nothing more, that is
+the input the implementor is designed to take. Do not withhold it, do not return `no-buildable` because
+it looks underspecified, and do not write a plan into the backlog first to make it look ready.
 
-**Never build an unplanned stub.** Building one means inventing the plan on the spot, and an invented
-plan is the most expensive thing that can enter this loop. Record any it withheld in your batch report
-and on your `owed-to-human` line — they need planning, which is not your job.
+What you *do* still owe it is Step 1: check the claims it does make against the system before spending a
+build on them. Thin is fine; **wrong is not**.
 
 Also check the programme's do-not-build list in `PROGRAMME-NOTES.md`. If the derived id is on it, skip
-it and take the next one; if that empties the set, return `no-buildable`.
+it and take the next one; if that empties the set, return `no-buildable`. A programme whose notes
+carry a long do-not-build list has a backlog whose statuses are lying — say so on your
+`owed-to-human` line, because the right home for "never build this" is a `dropped` or `rejected`
+status, where the query itself enforces it.
 
 **Array order is not build order.** Taking `.[0]` gives you the first buildable increment in array
 order, which is the right default, but the programme's notes may impose a different sequence. Where
@@ -188,17 +195,24 @@ jq '.increments[] | select(.id=="<id>")' <backlog>
 ```
 
 **On a long build, most defects worth catching come from the plan, not the code — and the suites stay
-green throughout, so nothing red will tell you.** Check the plan against the system before you spend a
-build on it. Four failure modes, all of them observed on real increments:
+green throughout, so nothing red will tell you.** Check its claims against the system before you spend a
+build on them. Four failure modes, all of them observed on real increments:
 
-1. **A `create` path that already exists, or an `edit` path that does not.** `ls` every path in
-   `filesToTouch`. This is the most common and the cheapest to catch.
+**Check only what the increment actually asserts.** Backlogs differ in shape: one carries
+`filesToTouch` and `acceptanceCriteria`, another carries a `finding` and `citations` and leaves the
+files to the implementor. A field that is absent is not a defect and not a gap to fill in — skip the
+check that needs it and run the ones that apply. **Never write a missing field into the increment to
+give yourself something to check.**
+
+1. **A `create` path that already exists, or an `edit` path that does not.** Where the increment names
+   paths — `filesToTouch` or equivalent — `ls` every one. This is the most common and the cheapest to
+   catch.
 2. **A cited line number that is exact while its value is wrong.** A citation ages badly: the line is
    still there, what is on it has moved on. **Read the line. Never trust the citation.**
-3. **An acceptance criterion asserting behaviour the application does not have.** A criterion written
-   from a plan is not evidence about the system. If an AC demands a redirect, a cookie or an empty
-   state, go and find it in the source before the implementor wastes a pass discovering it does not
-   exist.
+3. **An asserted behaviour the application does not have.** An acceptance criterion, or a `finding`
+   describing what the code does today, is a claim written from a plan — not evidence about the system.
+   If it demands a redirect, a cookie or an empty state, go and find it in the source before the
+   implementor wastes a pass discovering it does not exist.
 4. **A claim you wrote yourself an hour ago is still a claim to check.** Your own notes from earlier in
    this batch carry no more authority than anyone else's.
 
@@ -218,8 +232,10 @@ Where a check fails you have two moves:
 Deciding between them is your call and you make it without asking. **Do not hand a plan you know is
 wrong to the loop**, and do not rewrite an increment into a different piece of work to avoid stopping.
 
-Rule the increment's `openQuestions` explicitly, **with evidence rather than preference**, and write
-your ruling into the increment's `notes` so the implementor inherits it.
+Where the increment carries `openQuestions`, rule each one explicitly, **with evidence rather than
+preference**, and write your ruling into the increment's `notes` so the implementor inherits it. An
+increment with no such field has none to rule — that is not a gap, and you do not go looking for
+questions to add.
 
 ## STEP 2 — VERIFY YOUR BASELINES YOURSELF
 

@@ -8,7 +8,7 @@
 ## PARAMETERS — fill these in before pasting
 
 ```
-<workspace-tilde>  ~/git/defra/trade-imports-animals-workspace   (canonical — see below)
+<workspace-tilde>  ~/git/defra/trade-imports-workspace   (canonical — see below)
 <workspace-abs>    RESOLVE IT, do not type one. See FIRST ACTION step 0
 <workarea-rel>     shared/<programme>
 <workarea>         <workspace-tilde>/workareas/<workarea-rel>
@@ -119,33 +119,39 @@ jq -r '.increments | length' <backlog>
 jq -r '[.increments[] | select(.status=="done")] | length' <backlog>
 ```
 ```bash
-jq -r '[.increments[] | select(.status=="deferred")] | length' <backlog>
+jq -r '["deferred","dropped","blocked","rejected"] as $w | [.increments[] | select(.status as $s | ($w | index($s)))] | length' <backlog>
 ```
 ```bash
-jq -r '[.increments[] | select(.status!="done" and .status!="deferred")] | length' <backlog>
+jq -r '["done","deferred","dropped","blocked","rejected"] as $off | [.increments[] | select(.status as $s | ($off | index($s)) | not)] | length' <backlog>
 ```
+
+The third is **withheld**, not just `deferred` — it counts every status somebody has taken off the
+table, whether that is *not yet* (`deferred`, `blocked`) or *never* (`dropped`, `rejected`). Reporting
+only `deferred` would show a `0` on a backlog with settled rulings in it and read as though nothing had
+been withheld at all.
 
 **Is there buildable work** — a count, not a list. You need this only to decide whether to start a
 batch at all; **L1 picks the actual increments**:
 
 ```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess != null)] | length' <backlog>
+jq -r '["done","deferred","dropped","blocked","rejected"] as $off | [.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status as $s | ($off | index($s)) | not) | select([.dependsOn[] | IN($done[])] | all)] | length' <backlog>
 ```
 
-**⚠ THAT QUERY LIES BY OMISSION. RUN ITS COMPANION EVERY TIME.** The `sizeGuess != null` filter
-silently drops unplanned stubs — increments that exist as a title and nothing else. They are not
-buildable and must never be built, but if you do not count them separately you will read a zero above
-as "the backlog is finished" when it actually means "the backlog is blocked on planning":
+**Buildability is status and dependencies. Nothing else.** An increment is buildable when its status is
+not one of the withheld five and every id it depends on is `done`. The backlog says *what* is wrong and
+*whether it has been ruled on*; **working out what to change is the implementor's job, not the
+backlog's**. Do not add a filter for whether an increment looks planned enough — there is no such
+field and there must not be one. An increment that is thin is thin for the implementor to resolve, and
+a thin increment that should never be built is one somebody has given a withheld status.
 
-```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | .increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess == null) | "WITHHELD, UNPLANNED: \(.id)"' <backlog>
-```
+The withheld five are `done`, `deferred`, `dropped`, `blocked` and `rejected`. `deferred` and `blocked`
+mean *not yet* — they need a fresh ruling. `dropped` and `rejected` mean *settled, never build this* —
+they are decisions somebody has already made, and re-deriving one is reopening a closed argument.
+**A status this list does not name counts as buildable**, which is deliberate: an unknown status fails
+loudly by getting picked up rather than silently by vanishing from the count.
 
-The companion names ids because you must quote them to the user when you stop. That is the only place
-increment ids legitimately enter your context from the backlog, and only when the run is ending.
-
-If the count is `0` **and** the companion returns rows, the backlog is not finished. Stop and tell the
-user which ids need planning. Do not build them.
+A `0` here means there is no work to start. Before you report why, run the diagnostic under
+**Stopping** — it tells you whether that is a finished backlog or a stuck one.
 
 **The ledger tail:**
 
@@ -242,12 +248,12 @@ Glob tools.
 
 **0. Resolve the workspace path. Do not type a home directory.**
 
-The prompt gives `<workspace-tilde>` as `~/git/defra/trade-imports-animals-workspace` — the canonical
+The prompt gives `<workspace-tilde>` as `~/git/defra/trade-imports-workspace` — the canonical
 path CLAUDE.md rule 1 requires, reached by a symlink where the clone is elsewhere. Confirm it, and get
 the absolute form for the Read/Write/Edit tools:
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace rev-parse --show-toplevel
+git -C ~/git/defra/trade-imports-workspace rev-parse --show-toplevel
 ```
 
 What it prints is `<workspace-abs>`. Bind both and use them everywhere below.
@@ -372,7 +378,7 @@ git -C <workspace-tilde> pull --ff-only
 
 Not a fast-forward means someone else has been running this programme. **Stop and say so.**
 
-Then run the four counts, the buildable count and its companion. If the buildable count is `0`, go to
+Then run the four counts and the buildable count. If the buildable count is `0`, go to
 **Stopping**.
 
 You now know a batch is worth starting. You do **not** know, and must not work out, which increments it
@@ -386,7 +392,7 @@ temp file over the ledger destroys it.
 The entry records the **budget and the starting counts**, because the ids are not knowable yet:
 
 ```bash
-jq --argjson e '{"batch":<n>,"budget":<batch-size>,"startCounts":{"total":<total>,"done":<done>,"todo":<todo>,"deferred":<deferred>},"status":"in-flight","startedAt":"<iso8601>","endedAt":null,"report":"logs/batches/batch-<nnn>.md"}' '.batches += [$e]' <ledger> > <ledger>.tmp
+jq --argjson e '{"batch":<n>,"budget":<batch-size>,"startCounts":{"total":<total>,"done":<done>,"todo":<todo>,"withheld":<withheld>},"status":"in-flight","startedAt":"<iso8601>","endedAt":null,"report":"logs/batches/batch-<nnn>.md"}' '.batches += [$e]' <ledger> > <ledger>.tmp
 ```
 ```bash
 jq empty <ledger>.tmp
@@ -545,23 +551,32 @@ Your summary is one short paragraph and always carries the count:
 
 ```
 Batch 7 landed 3 of a budget of 5: pp-053, pp-054, pp-055. Returned early — pp-056's premise was
-invalidated by pp-055. 47 of 103 done (46%) — 51 todo, 5 deferred. Batch 8 is running.
+invalidated by pp-055. 47 of 103 done (46%) — 51 todo, 5 withheld. Batch 8 is running.
 ```
 
 Name the increments L1 reported and say the budget it had, so a short batch reads as a decision rather
 than a failure. You cannot name what batch 8 will build, and you should not try.
 
-**Report progress as N of TOTAL (P%) with the todo/deferred split on every landing.** An increment id
+**Report progress as N of TOTAL (P%) with the todo/withheld split on every landing.** An increment id
 on its own tells nobody the pace.
 
 ## STOPPING
 
 Stop, and say plainly which of these fired:
 
-- **Backlog exhausted.** The buildable count is `0` and the companion returns nothing. Report the final
-  count.
-- **Blocked on planning.** The buildable count is `0` but the companion lists withheld unplanned stubs.
-  Name them.
+- **Backlog exhausted.** The buildable count is `0` and the diagnostic below returns nothing. Report
+  the final counts, including how many are withheld and why.
+- **Blocked on dependencies.** The buildable count is `0` but increments remain that are neither `done`
+  nor withheld — every one of them is waiting on something that has not landed. That is either a
+  dependency on a withheld increment or a cycle the validation missed. Name the ids and what they wait
+  on; do not try to unpick it yourself.
+
+  ```bash
+  jq -r '["done","deferred","dropped","blocked","rejected"] as $off | [.increments[] | select(.status=="done") | .id] as $done | .increments[] | select(.status as $s | ($off | index($s)) | not) | select([.dependsOn[] | IN($done[])] | all | not) | "BLOCKED ON DEPENDENCIES: \(.id) needs \(.dependsOn | join(", "))"' <backlog>
+  ```
+
+  This is the only place increment ids legitimately enter your context from the backlog, and only when
+  the run is ending, because you have to quote them to the user.
 - **A designed gate.** L1 reports the loop halted at an increment's `gate`. Quote the gate text. Do not
   start the next batch.
 - **Two batches in a row failed with nothing landed.** Something systemic is wrong and more batches

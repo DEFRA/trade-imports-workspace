@@ -118,7 +118,14 @@ if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
 // what it returns. Nothing here may be a literal home directory: the run has to
 // work on whichever machine picks the programme up.
 // ---------------------------------------------------------------------------
-const WORKSPACE_CANDIDATES = ['~/git/defra/trade-imports-animals-workspace', '~/git/defra/trade-imports-animals']
+// The first is canonical (CLAUDE.md rule 1). The other two are the names this
+// workspace had before it was renamed, kept so a machine still carrying the old
+// clone or symlink resolves rather than throwing.
+const WORKSPACE_CANDIDATES = [
+  '~/git/defra/trade-imports-workspace',
+  '~/git/defra/trade-imports-animals-workspace',
+  '~/git/defra/trade-imports-animals'
+]
 
 const WORKSPACE_SCHEMA = {
   type: 'object',
@@ -473,10 +480,15 @@ const CI_SCHEMA = {
 const readIncrement = (id) => `
 THE INCREMENT — read it in full before anything else:
 Run this Bash command and read the output: \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`
-That object is your complete specification: filesToTouch (paths + action + what), obligations, flowChanges,
-schemaFields, copyKeys, specs, acceptanceCriteria, verification (the ladder, in order), notes, openQuestions.
-It is self-contained BY DESIGN — if you find yourself needing information that is not in it, that is a defect
-worth reporting in your summary, not a reason to improvise.
+That object is your brief. Backlogs differ in shape, so read what THIS one carries and work from that.
+It may spell the change out — filesToTouch (paths + action + what), obligations, flowChanges, schemaFields,
+copyKeys, specs, acceptanceCriteria, verification (the ladder, in order), notes, openQuestions. It may
+instead state a finding and cite the evidence for it, and leave the change to you. Both are supported inputs.
+A field that is absent is NOT a defect and NOT a reason to stop: THE BACKLOG SAYS WHAT IS WRONG, AND
+WORKING OUT WHAT TO CHANGE IS YOUR JOB. Derive it from the code and the cited evidence, and say in your
+summary what you derived and why.
+What IS worth reporting as a defect is a claim that does not hold — a path that is not there, a citation
+whose line has moved on, an asserted behaviour the application does not have. Thin is fine; wrong is not.
 Supporting context: read ONLY what the increment's "recipe" field cites, resolving workarea-relative paths
 against ${WORKAREA}. Read the cited sections, not the whole document.
 `

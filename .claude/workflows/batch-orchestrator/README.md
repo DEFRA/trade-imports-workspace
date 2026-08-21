@@ -122,6 +122,40 @@ landed, a designed gate, or a failed increment. **A batch that lands two of a bu
 success.** L0 is told this explicitly, so it does not read a short batch as a shortfall or ask for the
 difference to be made up.
 
+## Planning belongs to the implementor, not the backlog
+
+An increment is buildable when its **status** is not one of the withheld five and every id it
+**dependsOn** is `done`. That is the whole rule, in both L0 and L1, and nothing else may be added to it.
+
+| Status | Meaning |
+|---|---|
+| `done` | Landed |
+| `deferred`, `blocked` | Not yet — needs a fresh ruling before anyone builds it |
+| `dropped`, `rejected` | Settled. Never build this; re-deriving one reopens a closed argument |
+| anything else | Buildable |
+
+An unrecognised status counts as **buildable** on purpose. The alternative — treating unknown as
+withheld — fails silently, by making work vanish from the count and a stuck backlog look finished.
+
+There is deliberately **no field for whether an increment has been planned**. An earlier version gated
+on `sizeGuess != null` as a proxy for "somebody has thought about this", which meant every backlog had
+to be planned twice: once to find the work and again to make it buildable. It also failed in the worst
+available direction — a backlog whose increments simply did not carry that field reported zero
+buildable work, which reads identically to a finished backlog.
+
+So a **thin increment is buildable and gets built**. The backlog's job is to say what is wrong, what it
+cites as evidence, and whether anyone has ruled on it. Working out what to change is the implementor's
+job — that is what the implementor skill is for, and handing it a finding and a citation is a supported
+input, not an underspecified one.
+
+What L1 still owes a thin increment is Step 1: check the claims it *does* make against the system
+before spending a build on them, and check only the fields it actually carries. **Thin is fine; wrong
+is not.**
+
+The corollary is that "never build this" belongs in a **status**, where the derive query enforces it —
+not in a do-not-build list in `PROGRAMME-NOTES.md`, which is prose that L1 has to remember to honour.
+L1 still reads that list, and flags it as a smell when it finds a long one.
+
 The consequence for the ledger is that a batch's ids are knowable only as they land. The `in-flight`
 entry records the budget and the starting counts; `attempted`, `landed` and `notLanded` get filled in
 at the end.
@@ -238,7 +272,7 @@ empty` must accept the ledger at all times; L0 writes it with a
     {
       "batch": 3,
       "budget": 5,
-      "startCounts": { "total": 103, "done": 44, "todo": 54, "deferred": 5 },
+      "startCounts": { "total": 103, "done": 44, "todo": 54, "withheld": 5 },
       "attempted": ["pp-053", "pp-054"],
       "status": "partial",
       "endedEarly": "increment-failed",
@@ -311,7 +345,7 @@ a different machine picks it up. It does **not** support two engineers running t
 Before picking up a run:
 
 1. **Pull the workspace repo.** `backlog.json` and the ledger are the state; everything else is derived.
-2. **Have the canonical symlink.** `~/git/defra/trade-imports-animals-workspace` must resolve to your
+2. **Have the canonical symlink.** `~/git/defra/trade-imports-workspace` must resolve to your
    checkout — symlink it if your clone is elsewhere (CLAUDE.md rule 1). L0 resolves the absolute form
    with `git rev-parse --show-toplevel`; nothing in these prompts or in `increment-build-loop.js` holds a
    home directory.
@@ -337,7 +371,7 @@ not travel** — that work stays on the machine that made it.
 ## Starting a run
 
 1. Raise **Dynamic workflow size** in `/config`.
-2. Confirm `~/git/defra/trade-imports-animals-workspace` resolves, and pull it.
+2. Confirm `~/git/defra/trade-imports-workspace` resolves, and pull it.
 3. Confirm the programme has a `backlog.json` under `workareas/<workarea-rel>/` and that every repo is
    clean. Repos do not need to be on any particular branch — each increment cuts its own off `<branch>`.
 4. Open a fresh session. Paste [`L0-TOP-ORCHESTRATOR.md`](L0-TOP-ORCHESTRATOR.md) with its PARAMETERS
@@ -403,7 +437,7 @@ What it does **not** do, and must not be relied on for:
 One programme among several. Nothing in the method is specific to it.
 
 ```
-<workspace-tilde>  ~/git/defra/trade-imports-animals-workspace
+<workspace-tilde>  ~/git/defra/trade-imports-workspace
 <workspace-abs>    whatever `git -C <workspace-tilde> rev-parse --show-toplevel` prints on YOUR machine
 <workarea-rel>     shared/plant-products-ched-pp
 <workarea>         <workspace-tilde>/workareas/shared/plant-products-ched-pp

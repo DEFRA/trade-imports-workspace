@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "orchestrator-ledger.schema.json",
+  "title": "Batch orchestrator ledger",
+  "description": "Batch history for one programme's build run. Lives at <workarea>/orchestrator-ledger.json. Written only by L0. Records what each batch actually built; backlog.json remains the plan of record for increment truth. A batch is a budget, not a plan — L0 hands L1 a count and L1 re-derives the next increment after every landing, so the ids are known only as they land.",
+  "type": "object",
+  "required": ["ledgerVersion", "programme", "batches"],
+  "additionalProperties": false,
+  "properties": {
+    "ledgerVersion": {
+      "const": 1
+    },
+    "programme": {
+      "type": "object",
+      "description": "The parameters a fresh L0 needs to resume without asking anyone.",
+      "required": ["workarea", "branch", "scope", "batchSize"],
+      "additionalProperties": false,
+      "properties": {
+        "workarea": {
+          "type": "string",
+          "description": "Path under workareas/ holding backlog.json, e.g. shared/plant-products-ched-pp"
+        },
+        "branch": {
+          "type": "string",
+          "description": "The branch every repo in the programme is cut onto"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Conventional-commit scope for landing commits"
+        },
+        "executor": {
+          "type": "string",
+          "enum": ["claude", "codex"],
+          "description": "The executor increment-build-loop runs with"
+        },
+        "batchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The default per-batch budget — the MOST increments an L1 may build before returning. Not a target. Default 5"
+        }
+      }
+    },
+    "batches": {
+      "type": "array",
+      "description": "Append-only, oldest first. Batch numbers are contiguous from 1.",
+      "items": {
+        "type": "object",
+        "required": ["batch", "budget", "status", "startedAt"],
+        "additionalProperties": false,
+        "properties": {
+          "batch": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "budget": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The count L0 handed L1 — the most increments it was allowed to build. Known before the batch starts, unlike the ids"
+          },
+          "startCounts": {
+            "type": "object",
+            "description": "Backlog counts as L0 measured them when opening the batch. Lets a later reader compute a batch's progress without re-querying, and survives a dead L1",
+            "additionalProperties": false,
+            "properties": {
+              "total": { "type": "integer" },
+              "done": { "type": "integer" },
+              "todo": { "type": "integer" },
+              "deferred": { "type": "integer" }
+            }
+          },
+          "attempted": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The ids L1 actually started, in the order it derived them. Absent while in flight. Kept alongside landed/notLanded because those two do not cover an increment L1 died partway through — reconciling an abandoned batch needs the list of ids to check against git. An id may legitimately appear here in more than one batch: a failed increment is retried by a later batch"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in-flight",
+              "landed",
+              "partial",
+              "failed",
+              "halted-at-gate",
+              "abandoned"
+            ],
+            "description": "in-flight = L1 spawned, not yet reported. landed = every increment L1 attempted landed. partial = some landed, then it stopped. failed = none landed. halted-at-gate = the loop stopped at a designed gate. abandoned = L1 died and L0 reconciled from git plus backlog.json. A batch that lands fewer increments than its budget is NOT partial — partial is about failure, not about spending the budget"
+          },
+          "endedEarly": {
+            "type": "string",
+            "enum": [
+              "budget-spent",
+              "no-buildable",
+              "premise-invalidated",
+              "gate",
+              "increment-failed"
+            ],
+            "description": "Why L1 stopped. budget-spent means it used its full allowance; every other value means it returned early on purpose, which is a normal and desirable outcome"
+          },
+          "driver": {
+            "type": "string",
+            "enum": ["workflow", "codex-direct"],
+            "description": "How L1 drove L2 — the increment-build-loop Workflow, or the documented Codex fallback"
+          },
+          "scriptPath": {
+            "type": "string",
+            "description": "The script the Workflow ran, normally the batch's fresh run copy at workareas/<workarea>/build-loop.run.js. Recorded alongside driver so a batch can be traced to the script that produced it. Absent when driver is codex-direct"
+          },
+          "landed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "commit"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string" },
+                "commit": {
+                  "type": "string",
+                  "description": "Short SHA, verified by L0 against git log — not copied from L1's report unchecked"
+                },
+                "repo": {
+                  "type": "string",
+                  "description": "The increment's repo field: frontend, backend or tests"
+                }
+              }
+            }
+          },
+          "notLanded": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "outcome"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string" },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "baseline-red",
+                    "implement-failed",
+                    "ladder-red",
+                    "land-failed",
+                    "not-reached",
+                    "unplanned-stub",
+                    "no-longer-buildable",
+                    "premise-invalidated"
+                  ]
+                },
+                "detail": { "type": "string" },
+                "stash": {
+                  "type": "string",
+                  "description": "The stash ref the rollback produced, so the work is recoverable"
+                }
+              }
+            }
+          },
+          "report": {
+            "type": "string",
+            "description": "Workarea-relative path to L1's full batch report, e.g. logs/batches/batch-003.md. L0 records the path and does not read the file"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "null while in flight"
+          }
+        }
+      }
+    }
+  }
+}

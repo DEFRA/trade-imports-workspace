@@ -12,7 +12,8 @@ union is worth building rather than either backlog on its own.
 
 | | |
 |---|---|
-| **Backlog** | `workareas/journey-builder/EUDPA-328-DR1U/backlog.json` |
+| **Backlog** | `workareas/shared/dr1-parity-union/backlog.json` |
+| **Workarea** | `shared/dr1-parity-union` (the `<workarea-rel>` the orchestrator wants) |
 | **Run id** | `EUDPA-328-DR1U` |
 | **Epic** | EUDPA-328 — *Catch up frontend with prototype* |
 | **Target** | `live-animals-frontend` (`repos/trade-imports-animals-frontend`, scope `src/server/app/sets/live-animals`) |
@@ -117,7 +118,9 @@ rather than 41. That is noted on `inc-006` itself.
 
 | Path | What it is |
 |---|---|
-| `workareas/journey-builder/EUDPA-328-DR1U/backlog.json` | The backlog. The deliverable. |
+| `workareas/shared/dr1-parity-union/backlog.json` | The backlog. The deliverable. |
+| `workareas/shared/dr1-parity-union/PROGRAMME-NOTES.md` | Standing rulings, deferrals, banding disagreements. L1 reads it every batch |
+| `workareas/shared/dr1-parity-union/orchestrator-ledger.json` | Batch history. L0 creates it on first run and is its only writer |
 | `workareas/shared/dr1u-notes.md` | Assembly notes — every judge overturn applied, every pair that could not be collapsed, the banding disagreements |
 | `workareas/shared/dr1a-vs-dr1c-result.json` | The raw reconciliation: 11 subject areas × (match + adversarial judge) |
 | `workareas/shared/dr1a-vs-dr1c-workflow.js` | The workflow that produced it, re-runnable |
@@ -129,69 +132,98 @@ The two source backlogs stay frozen and are the citation ground truth:
 
 ## Starting the build loop
 
-The orchestrator is `.claude/workflows/increment-build-loop.js`. One invocation
-builds one increment — or a serial list — through a full ticket-to-merge
-lifecycle: raise the ticket, cut the branch, implement, style review + code
-review, adversarially verify the findings, judge, fix, run the verification
-ladder, commit, PR, watch CI, merge, close the ticket.
+The build runs on three tiers, so a programme of 154 increments never fills one
+session's context. All of it is documented in
+[`.claude/workflows/batch-orchestrator/README.md`](../../../.claude/workflows/batch-orchestrator/README.md).
 
-Paste this to Claude Code, standing in `~/git/defra/trade-imports-workspace`:
+| Tier | What it is | Owns |
+|---|---|---|
+| **L0** | Your session, running `L0-TOP-ORCHESTRATOR.md` | Budgets, the ledger, cheap verification, spawning L1 |
+| **L1** | A fresh subagent per batch | Choosing each increment, plan checks, driving L2, verifying landings, the backlog |
+| **L2** | `increment-build-loop.js` | One increment: ticket → branch → implement → review → judge → fix → ladder → commit → PR → CI → merge → close |
 
----
+You only ever start L0. It spawns the rest.
 
-> Run the increment build loop over the amalgamated Design release 1 parity
-> backlog at `workareas/journey-builder/EUDPA-328-DR1U/backlog.json`. Read
-> `workareas/shared/dr1u-handover/README.md` first.
->
-> Launch `.claude/workflows/increment-build-loop.js` **by `scriptPath`, not by
-> name** — a named launch runs a stale snapshot. Edit the script's `FALLBACK`
-> block to this config rather than relying on `args`, which the runtime does
-> not plumb reliably:
->
-> ```js
-> const FALLBACK = {
->   workarea: 'journey-builder/EUDPA-328-DR1U',
->   branch: 'main',
->   scope: 'parity-dr1',
->   executor: 'claude',
->   lifecycle: 'full',
->   jiraProject: 'EUDPA',
->   epic: 'EUDPA-328',
->   jiraInProgressStatus: 'In Progress',
->   jiraDoneStatus: 'Done',
->   ciFixAttempts: 3,
->   ciWatchMinutes: 30,
->   increments: ['inc-003']
-> }
-> ```
->
-> Start with `inc-003`, the phase banner, and stop after it so we can look at
-> the first increment before committing to a run. Do not renumber any increment
-> id. Do not touch the two frozen source backlogs, `EUDPA-328-DR1` and
-> `EUDPA-328-DR1C`.
+### Before the first session
 
----
+1. **Raise the workflow size limit.** `/config` → *Dynamic workflow size*. The
+   default guideline is "under 15 agents"; one increment is 22–46. Nothing in
+   the stack can raise this for itself, and a batch is throttled without it.
+2. **Pull the workspace repo.** `backlog.json` and the ledger are the state;
+   everything else is derived.
+3. **Confirm the board's status names** — they are configuration, not
+   constants, and a wrong one stops every increment at the ticket stage:
+   `tools/jira/transition-ticket.sh EUDPA-328 --list`. The values below were
+   correct on 2026-08-21.
+4. **Have your own credentials and your own stack.** `JIRA_USER`, `JIRA_TOKEN`,
+   `JIRA_BASE_URL`, a `gh` login with push and merge rights, and a running
+   Docker stack for the E2E rung. None of it carries over from another machine.
 
-Then check what the loop will pop and how far it has to go:
+### The prompt
 
-```bash
-tools/journey-builder/backlog-counts.sh EUDPA-328-DR1U
-tools/journey-builder/next-increment.sh EUDPA-328-DR1U
+Open a **fresh session** in `~/git/defra/trade-imports-workspace` and paste
+[`.claude/workflows/batch-orchestrator/L0-TOP-ORCHESTRATOR.md`](../../../.claude/workflows/batch-orchestrator/L0-TOP-ORCHESTRATOR.md)
+with its PARAMETERS block filled in as below. Nothing else needs reading first —
+that prompt is self-contained, and it tells L0 everything about how to drive the
+tiers beneath it.
+
+```
+<workspace-tilde>  ~/git/defra/trade-imports-workspace
+<workspace-abs>    RESOLVE IT, do not type one. See FIRST ACTION step 0
+<workarea-rel>     shared/dr1-parity-union
+<workarea>         <workspace-tilde>/workareas/shared/dr1-parity-union
+<backlog>          <workarea>/backlog.json
+<ledger>           <workarea>/orchestrator-ledger.json
+<branch>           main
+<scope>            parity-dr1
+<executor>         claude
+<lifecycle>        full
+<jira-project>     EUDPA
+<epic>             EUDPA-328
+<in-progress>      In Progress
+<done-status>      Done
+<batch-size>       5
 ```
 
-### Before the first run
+`<workspace-tilde>` above is **not** what the pasted prompt suggests. Its
+PARAMETERS block still says `~/git/defra/trade-imports-animals-workspace`, from
+before the repo moved to `DEFRA/trade-imports-workspace` on 2026-08-18. On a
+machine that has the old symlink either works; on a fresh clone only the path
+above does. Use it.
 
-- **Confirm the board's status names.** `jiraInProgressStatus` and
-  `jiraDoneStatus` are board configuration, not constants, and the workflow
-  fails late if they are wrong:
-  `tools/jira/transition-ticket.sh EUDPA-328 --list`.
-- **`lifecycle: 'local'` skips Jira, the push and the PR entirely** and builds
-  on the current branch. Use it to try an increment without raising a ticket;
-  `epic` is then not required.
-- **The verification ladder runs in the target repo** — `test:live-animals`,
-  `format:check`, `lint`, then `test:fit:features`. The frontend pins its npm
-  version through `packageManager`, so an ambient npm will reject the lockfile.
-- **`inc-161` is ruled but not built.** Its ruling names the exact mechanism and
-  the seven templates that pass `showReturnControls: false`. It changes no
-  string — `inc-006` and the primary-button rename own the wording, and order
-  does not matter between them.
+L0 creates the ledger on its first action if there is not one. There is no
+handover document to write and no session state to carry — the backlog and the
+ledger are sufficient, provided they have been pushed.
+
+### Resuming, on any machine
+
+Identical. Pull, open a fresh session, paste the same filled-in prompt. L0 reads
+the ledger tail and picks up. If the previous run stopped at a gate, decide the
+gate first and mark the increment in `backlog.json` before pasting.
+
+Handover is **sequential**. Two L0 sessions on the same programme corrupt the
+ledger — there is one writer and no locking.
+
+### Suggested first move
+
+Give the first batch a budget of **1**, not 5, and look at what lands before
+committing to a run. The first increment in journey order is `inc-003`, the
+phase banner — self-contained chrome, four screens, no dependencies. It is a
+good canary for the ladder, the PR path and the board's status names all at
+once.
+
+```bash
+tools/journey-builder/next-increment.sh --backlog workareas/shared/dr1-parity-union/backlog.json
+```
+
+### What to expect
+
+- **A short batch is a success.** L1 returns early whenever reality diverges —
+  nothing buildable, a premise invalidated by what just landed, a designed gate.
+  A batch that lands two of a budget of five has done its job.
+- **`ci-red` and `main-red` stop the run for a human.** A red PR is never merged
+  and never closed; nothing auto-reverts.
+- **Read `PROGRAMME-NOTES.md` before ruling on anything.** It carries the five
+  standing rulings, the two deferrals, the seven banding disagreements and
+  `inc-161`'s design decision. L1 reads it every batch; a human picking up a
+  gate should too.

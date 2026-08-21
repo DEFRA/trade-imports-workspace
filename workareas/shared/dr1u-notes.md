@@ -1,6 +1,6 @@
 # DR1U — amalgamating the two DR1 parity runs
 
-`~/git/defra/trade-imports-workspace/workareas/journey-builder/EUDPA-328-DR1U/backlog.json`
+`~/git/defra/trade-imports-workspace/workareas/shared/dr1-parity-union/backlog.json`
 
 Union of run A (`EUDPA-328-DR1`, corpus `dr1`, 133 findings) and run C
 (`EUDPA-328-DR1C`, corpus `dr1c`, 125 findings as authored), assembled from the

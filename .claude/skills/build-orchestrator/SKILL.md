@@ -78,15 +78,34 @@ chosen in advance. A list committed five deep throws away everything the first
 increment teaches.
 
 ```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status=="todo") | select([(.dependsOn // [])[] | IN($done[])] | all) | .id] | .[0] // "NONE"' workareas/<workarea>/backlog.json
+jq -r '["done","deferred","dropped","blocked","rejected"] as $withheld | [.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status | IN($withheld[]) | not) | select([(.dependsOn // [])[] | IN($done[])] | all) | .id] | .[0] // "NONE"' workareas/<workarea>/backlog.json
 ```
 
 `NONE` → stop with `no-buildable`.
 
-**`todo` is an allowlist, and that is deliberate.** A backlog may also hold
-`dropped` (a settled human rejection) and `blocked` (a deferred decision).
-Neither is buildable, and neither becomes buildable because a dependency landed.
-Never widen this to "everything that is not done".
+**Buildability is status and dependencies. Nothing else.** The five withheld
+statuses are named explicitly and everything else counts as buildable, so an
+unknown status fails **loudly** — it gets picked up and you see it — rather than
+silently vanishing from the count. That direction matters: a query that reports
+zero buildable work reads exactly like a finished backlog, which is the
+expensive way to be wrong.
+
+`dropped` is a settled human rejection and `blocked` is a deferred decision.
+Neither becomes buildable because a dependency landed. "Never build this" lives
+in the status, not in prose — if a programme's do-not-build list in
+`PROGRAMME-NOTES.md` is long, that is a smell worth raising, because those
+increments should carry a withheld status instead.
+
+**Do not gate on how planned an increment looks.** A backlog says what is wrong,
+what it cites as evidence and whether anyone has ruled on it. Working out what
+to change is the implementor skill's job. So:
+
+- Do not infer or require a planning field.
+- Do not return `no-buildable` because an increment reads thin.
+- Do not write a plan into the backlog to make one look ready.
+
+A thin increment is buildable and gets built. **Thin is fine; wrong is not** —
+what a thin increment still owes you is a claim that holds up.
 
 Then check `PROGRAMME-NOTES.md` for a do-not-build list and for an imposed
 order. Array order is the right default, not a rule.
@@ -259,5 +278,6 @@ to you as `not-landed`.
 - **Never edit the tracked loop.** Only ever the run copy.
 - **One increment per Workflow invocation.** The loop accepts a longer list; do
   not give it one.
-- **Never widen the derive query past `status=="todo"`.**
+- **Never narrow the derive query to a planning field.** Status and
+  dependencies decide buildability; a thin increment is still buildable.
 - **Do not renumber increment ids.** They are bound to rulings and citations.

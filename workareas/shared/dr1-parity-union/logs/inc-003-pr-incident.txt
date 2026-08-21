@@ -1,0 +1,65 @@
+inc-003 / EUDPA-334 — PR STAGE HALTED, NEEDS A HUMAN
+repo: frontend (DEFRA/trade-imports-animals-frontend)
+date: 2026-08-21
+
+WHAT HAPPENED
+The mandated step-1 command
+
+  git -C <frontend> push -u origin feat/EUDPA-334-frontend-shows-no-phase-banner-design-re
+
+pushed the increment's commits DIRECTLY ONTO origin/main. It was not rejected;
+it succeeded. Git reported:
+
+  To https://github.com/DEFRA/trade-imports-animals-frontend.git
+     76a864ba..90f123d5  feat/EUDPA-334-frontend-shows-no-phase-banner-design-re -> main
+  branch '...' set up to track 'origin/main' by rebasing.
+
+ROOT CAUSE
+Two settings combined:
+  - the frontend repo has `push.default = tracking` (deprecated alias for `upstream`)
+  - the local branch feat/EUDPA-334-... had its upstream set to origin/main
+With `push.default=tracking`, `git push origin <src>` resolves the DESTINATION from
+the source branch's upstream, not from its name. Upstream was main, so the branch
+was written to refs/heads/main.
+
+STATE NOW
+  origin/main            = 90f123d5  (was 76a864ba before this push)
+  origin/feat/EUDPA-334… = DOES NOT EXIST
+  PRs for the branch     = none (gh pr list --state all returned [])
+
+The two increment commits now on main, previously unmerged:
+  90f123d5 feat(parity-dr1): Frontend shows no phase banner; Design release 1 carries
+           an Alpha banner with a feedback link on every page
+  85c63e57 feat(parity-dr1): inc-003 add alpha phase banner to layout
+
+So the change bypassed pull request and bypassed CI. Nothing was reviewed on GitHub
+and no required checks ran against it before it reached main.
+
+WHY NO PR WAS RAISED
+Raising one now would be theatre: main already contains 90f123d5, so a PR from the
+branch to main has an empty diff and would show green having tested nothing. That
+hides the bypass instead of surfacing it. Per the stage's own rule — a lifecycle
+that is out of step is reported, not papered over — this stage stopped here.
+
+NOT DONE, DELIBERATELY (all of these need a human decision)
+  - No force-push. Rolling main back to 76a864ba rewrites shared history on the
+    default branch; that is never an agent's call.
+  - No PR created (see above).
+  - No git config changed. push.default=tracking and the branch's origin/main
+    upstream are both still as found, so a naive retry of the same push command
+    WILL repeat this. Fix the config before any retry.
+  - backlog.json prs[] left empty — there are no PRs to record. inc-003 status
+    left at "todo"; it has NOT been through the lifecycle even though its code
+    is on main.
+
+WHAT A HUMAN NEEDS TO DECIDE
+  1. Keep the commits on main and run CI on main retrospectively, or revert them
+     (git revert, not force-push) and redo the increment through a proper PR.
+  2. Either way, repoint the local branch: `git branch --unset-upstream` on
+     feat/EUDPA-334-…, and/or set `push.default=simple` in the frontend repo, so
+     the branch pushes to a branch of its own name.
+  3. Note the open question already on inc-003: the phase banner's feedback link
+     shipped as mailto:APHAServiceDesk@apha.gov.uk, an address this codebase
+     presents as the TECHNICAL SUPPORT desk, chosen by the implementing agent and
+     never confirmed by the service team. It is now live on main on roughly 30
+     pages without review. This raises the urgency of confirming it.

@@ -3,6 +3,8 @@
   "increments": [
     {
       "id": "inc-003",
+      "ticket": "EUDPA-334",
+      "branch": "feat/EUDPA-334-frontend-shows-no-phase-banner-design-re",
       "type": "general",
       "milestone": null,
       "domain": "service-wide",
@@ -23,7 +25,7 @@
       "gate": null,
       "dependsOn": [],
       "status": "todo",
-      "commit": null,
+      "commit": "90f123d5",
       "failure_reason": null,
       "finding": {
         "frontend": "No page in the service carries a phase banner. The shared layout builds the GOV.UK header, the service navigation, the signed-in bar and the breadcrumbs, and goes straight into the page content with nothing between (src/server/app/shared/layout.njk:19-53). There is no govukPhaseBanner import and no phase-banner markup anywhere in src/server, and none of the 67 captured frontend screens renders one. So a user is never told the service is in Alpha and is never offered a way to give feedback.",
@@ -122,6 +124,9 @@
       "corpus": "dr1c",
       "slice": "service-wide",
       "source": "service-wide--phase-banner-missing.json",
+      "openQuestions": [
+        "Where should the phase banner's feedback link point? The increment's own difference states Design release 1 uses a placeholder href and that this service 'needs a real destination — a feedback form or a mailto address — decided before the work lands'. That decision was made by the implementing agent, not the service team: backlog notes record the RULING href=\"mailto:APHAServiceDesk@apha.gov.uk\", ending 'Flagged to a human for confirmation', and gate was null so nothing held the increment. The address is currently shipped as landed in src/server/app/shared/layout.njk:43. The concern is that this codebase presents that mailbox as the TECHNICAL SUPPORT desk, not a feedback channel: src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:32-36 renders copy.help.technicalHelp = 'Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:' (confirmation/copy/copy.en.js:28-29) with 'Telephone: 0330 041 6999' and 'Monday to Friday, 8:30am to 5pm'. The phase banner asks a different question — alpha usability feedback — and the shared layout renders on roughly 30 pages, so an unconfirmed destination ships service-wide. ACTION FOR THE SERVICE TEAM: confirm APHAServiceDesk@apha.gov.uk as the alpha-feedback destination and record that decision here, or supply the agreed feedback form URL / team mailbox and change layout.njk:43 (and any test that pins the href) to match. Deferred rather than fixed in this increment because code cannot settle it — no alternative destination exists in the repo to substitute, and inventing a /feedback route would expand the increment's blast radius."
+      ],
       "controls": [
         {
           "kind": "label",

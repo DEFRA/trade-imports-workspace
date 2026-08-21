@@ -126,8 +126,8 @@
           },
           "driver": {
             "type": "string",
-            "enum": ["workflow", "codex-direct"],
-            "description": "How L1 drove L2 — the increment-build-loop Workflow, or the documented Codex fallback"
+            "enum": ["workflow", "codex-direct", "none"],
+            "description": "How L1 drove L2 — the increment-build-loop Workflow, or the documented Codex fallback. none means neither was available on the machine and nothing was executed; the increment is untouched rather than half-built"
           },
           "scriptPath": {
             "type": "string",
@@ -177,6 +177,7 @@
                     "ladder-red",
                     "land-failed",
                     "not-reached",
+                    "no-driver",
                     "no-longer-buildable",
                     "premise-invalidated",
                     "ticket-failed",
@@ -186,7 +187,7 @@
                     "main-red",
                     "done-failed"
                   ],
-                  "description": "ci-red = the PR never went green within its fix budget; it is still open and the ticket is still at jiraInProgressStatus. main-red = the base branch went red after a merge, or a second PR went red after the first merged; the run halted for a human. done-failed = merged and green, but the ticket would not transition to jiraDoneStatus — usually because that status is not what this board calls it, which detail names alongside the transitions the board does offer"
+                  "description": "ci-red = the PR never went green within its fix budget; it is still open and the ticket is still at jiraInProgressStatus. main-red = the base branch went red after a merge, or a second PR went red after the first merged; the run halted for a human. done-failed = merged and green, but the ticket would not transition to jiraDoneStatus — usually because that status is not what this board calls it, which detail names alongside the transitions the board does offer. no-driver = L1 had neither the Workflow tool nor the codex CLI, so L2 never ran; nothing was implemented, no ticket was raised and no branch was cut, so the increment is untouched and a later batch retries it unchanged once a driver exists"
                 },
                 "detail": { "type": "string" },
                 "ticket": {

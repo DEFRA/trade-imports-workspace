@@ -3,7 +3,7 @@
   "increments": [
     {
       "id": "inc-003",
-      "type": "add-section",
+      "type": "general",
       "milestone": null,
       "domain": "service-wide",
       "title": "Frontend shows no phase banner; Design release 1 carries an Alpha banner with a feedback link on every page",
@@ -135,7 +135,9 @@
         "note": "No phase banner anywhere in the frontend; DR1 carries an Alpha banner with a feedback link on all its screens. Same ask, same placement in beforeContent, same copy home, and both independently flag that the feedback link's real destination has to be decided because DR1's href is a placeholder. A adds one useful argument C does not: the banner is authored per-view in DR1 rather than injected by the Prototype Kit, so it is a deliberate design decision and not kit furniture.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "repo": "frontend",
+      "notes": "L1 batch 1, Step 1 plan check (frontend HEAD 76a864ba == the programme pin, so no citation drift).\n\nCORRECTION 1 — type was \"add-section\", now \"general\". \"add-section\" is one of frontend-change's four recipe triggers and would have sent the implementor to the set recipe for a feature group + flow section + task row. This change lives entirely in src/server/app/shared/ (layout.njk, copy.en.js, copy.cy.js), outside sets/live-animals: there is no feature group, no flow section and no task row here. The increment's own difference names those three shared files and no set files. Route it as a general change, layer = shared chrome.\n\nCORRECTION 2 — added repo: \"frontend\". No increment in this backlog carried a repo field, and the build loop's baseline guard and implementor both route on it. Evidence for the value: PROGRAMME-NOTES target is repos/trade-imports-animals-frontend, band is frontend-work, and evidence.frontend cites src/server/app/shared/layout.njk which exists in that tree at the pin. Citation c2's repo \"prototype\" is the comparison side, not a repo to edit.\n\nRULING — the feedback link's destination. The increment says DR1's href is a placeholder and a real destination must be decided before the work lands. Ruled: href=\"mailto:APHAServiceDesk@apha.gov.uk\". Evidence: that is the general service-desk address this codebase already ships to users, at src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:34, and it is the only general-purpose contact address in src/. importsriskmanagement@apha.gov.uk (same file, :30) is the imports-risk mailbox and is topic-specific, so not it. Do not invent a /feedback route or a survey URL — there is no such route in the app. Flagged to a human for confirmation.\n\nVERIFIED BEFORE BUILD: layout.njk:19-53 is exactly govukHeader through the end of beforeContent, and beforeContent holds breadcrumbs then backLink with nothing above them, so \"above the breadcrumbs and back link\" is reachable. grep for phase-banner/PhaseBanner across src/ returns nothing. copy.en.js:10-21 is the layout copy block; copy.cy.js has the matching Welsh layout block (machine-draft, header warning at :1 — keep the pair structurally identical, copy.test.js/copy-leaves.js enforce it).\n\nNOT AVAILABLE: the GB-notification-service prototype is not cloned in this workspace (repos/ holds no prototype). Do not go looking for app/views/dashboard.html. The exact banner copy is quoted in finding.prototype and finding.verification; use that.\n\nBLAST RADIUS: the shared layout renders on every page of the service, so expect layout.test.js and the test:fit:features Playwright project to be the suites that move. Ladder: test:live-animals, format:check, lint, test:fit:features.\n\nRELATED: inc-007 travels with this one (same shared layout, same beforeContent region). It is NOT part of this increment — do not pull it in."
     },
     {
       "id": "inc-004",

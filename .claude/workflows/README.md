@@ -1,8 +1,14 @@
 # Workspace workflows
 
-Deterministic multi-agent orchestration scripts. Run one with the `Workflow` tool:
-`Workflow({ name: "increment-build-loop" })`, or point at the file directly with
-`Workflow({ scriptPath: ".claude/workflows/increment-build-loop.js" })`.
+Deterministic multi-agent orchestration scripts. Point the `Workflow` tool at the file:
+`Workflow({ scriptPath: ".claude/workflows/increment-build-loop.js" })`. Launching by
+`name` runs a stale snapshot rather than what is on disk.
+
+**To run a backlog rather than a single increment, use the `build-orchestrator` skill.**
+It derives each increment, patches a run copy of the loop, invokes it, checks the landing
+and repeats — from the main session, because **a subagent cannot invoke `Workflow`**. That
+is why the former two-tier `batch-orchestrator/` prompts were removed: their middle tier
+could never start the thing it existed to drive.
 
 ## `increment-build-loop.js`
 

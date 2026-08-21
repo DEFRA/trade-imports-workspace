@@ -119,8 +119,7 @@ rather than 41. That is noted on `inc-006` itself.
 | Path | What it is |
 |---|---|
 | `workareas/shared/dr1-parity-union/backlog.json` | The backlog. The deliverable. |
-| `workareas/shared/dr1-parity-union/PROGRAMME-NOTES.md` | Standing rulings, deferrals, banding disagreements. L1 reads it every batch |
-| `workareas/shared/dr1-parity-union/orchestrator-ledger.json` | Batch history. L0 creates it on first run and is its only writer |
+| `workareas/shared/dr1-parity-union/PROGRAMME-NOTES.md` | Standing rulings, deferrals, banding disagreements. Read before the first increment |
 | `workareas/shared/dr1u-notes.md` | Assembly notes — every judge overturn applied, every pair that could not be collapsed, the banding disagreements |
 | `workareas/shared/dr1a-vs-dr1c-result.json` | The raw reconciliation: 11 subject areas × (match + adversarial judge) |
 | `workareas/shared/dr1a-vs-dr1c-workflow.js` | The workflow that produced it, re-runnable |
@@ -130,100 +129,73 @@ The two source backlogs stay frozen and are the citation ground truth:
 `workareas/journey-builder/EUDPA-328-DR1/backlog.json` and
 `.../EUDPA-328-DR1C/backlog.json`.
 
-## Starting the build loop
+## Starting the build
 
-The build runs on three tiers, so a programme of 154 increments never fills one
-session's context. All of it is documented in
-[`.claude/workflows/batch-orchestrator/README.md`](../../../.claude/workflows/batch-orchestrator/README.md).
-
-| Tier | What it is | Owns |
-|---|---|---|
-| **L0** | Your session, running `L0-TOP-ORCHESTRATOR.md` | Budgets, the ledger, cheap verification, spawning L1 |
-| **L1** | A fresh subagent per batch | Choosing each increment, plan checks, driving L2, verifying landings, the backlog |
-| **L2** | `increment-build-loop.js` | One increment: ticket → branch → implement → review → judge → fix → ladder → commit → PR → CI → merge → close |
-
-You only ever start L0. It spawns the rest.
+The `build-orchestrator` skill drives it, from the session you are in. It
+derives the next buildable increment, runs `increment-build-loop.js` over that
+one increment, checks it landed, and goes again until the count is reached or
+something stops it — then prints a copy-paste handover prompt.
 
 ### Before the first session
 
-1. **Raise the workflow size limit.** `/config` → *Dynamic workflow size*. The
-   default guideline is "under 15 agents"; one increment is 22–46. Nothing in
-   the stack can raise this for itself, and a batch is throttled without it.
-2. **Pull the workspace repo.** `backlog.json` and the ledger are the state;
-   everything else is derived.
-3. **Confirm the board's status names** — they are configuration, not
-   constants, and a wrong one stops every increment at the ticket stage:
-   `tools/jira/transition-ticket.sh EUDPA-328 --list`. The values below were
-   correct on 2026-08-21.
+1. **Raise the workflow size limit.** `/config` → *Dynamic workflow size*. One
+   increment is 22–46 agents against a default guideline of 15; the run is
+   throttled without it, and nothing in the stack can set it for itself.
+2. **Pull the workspace repo.** `backlog.json` is the state.
+3. **Confirm the board's status names** — configuration, not constants, and a
+   wrong one stops every increment at the ticket stage:
+   `tools/jira/transition-ticket.sh EUDPA-328 --list`. `In Progress` / `Done`
+   were correct on 2026-08-21.
 4. **Have your own credentials and your own stack.** `JIRA_USER`, `JIRA_TOKEN`,
    `JIRA_BASE_URL`, a `gh` login with push and merge rights, and a running
-   Docker stack for the E2E rung. None of it carries over from another machine.
+   Docker stack for the E2E rung. None of it carries over.
 
 ### The prompt
 
-Open a **fresh session** in `~/git/defra/trade-imports-workspace` and paste
-[`.claude/workflows/batch-orchestrator/L0-TOP-ORCHESTRATOR.md`](../../../.claude/workflows/batch-orchestrator/L0-TOP-ORCHESTRATOR.md)
-with its PARAMETERS block filled in as below. Nothing else needs reading first —
-that prompt is self-contained, and it tells L0 everything about how to drive the
-tiers beneath it.
+Open a fresh session in `~/git/defra/trade-imports-workspace` and paste:
 
 ```
-<workspace-tilde>  ~/git/defra/trade-imports-workspace
-<workspace-abs>    RESOLVE IT, do not type one. See FIRST ACTION step 0
-<workarea-rel>     shared/dr1-parity-union
-<workarea>         <workspace-tilde>/workareas/shared/dr1-parity-union
-<backlog>          <workarea>/backlog.json
-<ledger>           <workarea>/orchestrator-ledger.json
-<branch>           main
-<scope>            parity-dr1
-<executor>         claude
-<lifecycle>        full
-<jira-project>     EUDPA
-<epic>             EUDPA-328
-<in-progress>      In Progress
-<done-status>      Done
-<batch-size>       5
+Orchestrate the DR1 parity build with the build-orchestrator skill.
+
+workarea     shared/dr1-parity-union
+branch       main
+scope        parity-dr1
+executor     claude
+lifecycle    full
+jiraProject  EUDPA
+epic         EUDPA-328
+inProgress   In Progress
+doneStatus   Done
+stopAfter    1
+
+Read workareas/shared/dr1-parity-union/PROGRAMME-NOTES.md before the first
+increment.
 ```
 
-`<workspace-tilde>` above is **not** what the pasted prompt suggests. Its
-PARAMETERS block still says `~/git/defra/trade-imports-animals-workspace`, from
-before the repo moved to `DEFRA/trade-imports-workspace` on 2026-08-18. On a
-machine that has the old symlink either works; on a fresh clone only the path
-above does. Use it.
+`stopAfter 1` on the first run is deliberate: look at what lands before
+committing to a longer one. The first increment in journey order is `inc-003`,
+the phase banner — self-contained chrome, four screens, no dependencies, and a
+good canary for the ladder, the PR path and the board's status names at once.
+Raise `stopAfter` once it has gone through cleanly.
 
-L0 creates the ledger on its first action if there is not one. There is no
-handover document to write and no session state to carry — the backlog and the
-ledger are sufficient, provided they have been pushed.
+### Resuming
 
-### Resuming, on any machine
+The skill prints a filled-in handover prompt every time it stops. Paste that
+into a fresh session on any machine, after a `git pull`. There is no ledger and
+no session state to carry — `backlog.json` and git hold everything.
 
-Identical. Pull, open a fresh session, paste the same filled-in prompt. L0 reads
-the ledger tail and picks up. If the previous run stopped at a gate, decide the
-gate first and mark the increment in `backlog.json` before pasting.
-
-Handover is **sequential**. Two L0 sessions on the same programme corrupt the
-ledger — there is one writer and no locking.
-
-### Suggested first move
-
-Give the first batch a budget of **1**, not 5, and look at what lands before
-committing to a run. The first increment in journey order is `inc-003`, the
-phase banner — self-contained chrome, four screens, no dependencies. It is a
-good canary for the ladder, the PR path and the board's status names all at
-once.
-
-```bash
-tools/journey-builder/next-increment.sh --backlog workareas/shared/dr1-parity-union/backlog.json
-```
+Handover is **sequential**. Two sessions on one programme will fight over the
+backlog.
 
 ### What to expect
 
-- **A short batch is a success.** L1 returns early whenever reality diverges —
-  nothing buildable, a premise invalidated by what just landed, a designed gate.
-  A batch that lands two of a budget of five has done its job.
-- **`ci-red` and `main-red` stop the run for a human.** A red PR is never merged
-  and never closed; nothing auto-reverts.
+- **A short run is not a failure.** The skill stops when reality diverges —
+  nothing buildable, a designed gate, an increment that did not land.
+- **`ci-red` and `main-red` stop for a human.** A red PR is never merged and
+  never closed; nothing auto-reverts.
+- **`executor` switches between increments**, never mid-increment. Start on
+  `claude`; move to `codex` if the increments get wide — it is `18 + n` agents
+  against `15 + 3n`.
 - **Read `PROGRAMME-NOTES.md` before ruling on anything.** It carries the five
   standing rulings, the two deferrals, the seven banding disagreements and
-  `inc-161`'s design decision. L1 reads it every batch; a human picking up a
-  gate should too.
+  `inc-161`'s design decision.

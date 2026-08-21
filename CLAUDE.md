@@ -43,6 +43,8 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 
 | `parity` | "compare these two things and give me a report", "compare X against Y", "set up a new comparison", "resume the comparison", "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-", "migrate parity EUDPA-", "recapture the parity corpus" | Build, check and adjudicate a findings report for a comparison corpus. COMPARE runs the whole pipeline from an interview to a rendered report, resumable at every phase. Renders a findings backlog as a decision surface with the code and the pictures in reach; migrates finding prose into structured slots under ten invariants. Hands `status`/`gate`/`dependsOn` to `journey-builder`. |
 
+| `build-orchestrator` | "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build" | Drive an increment backlog through `increment-build-loop.js`, one increment per invocation, from the main session. Derives the next buildable increment, runs the loop, checks it landed, repeats until a set count or a stop condition — then prints a copy-paste handover prompt. Switches executor between Claude and Codex between increments. |
+
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 
 ## Repo map

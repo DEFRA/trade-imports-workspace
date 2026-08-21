@@ -1,8 +1,8 @@
 # Programme notes — DR1 parity union
 
-Read by L1 at the start of every batch. L0 never reads this. Method lives in
-`.claude/workflows/batch-orchestrator/`; this file holds facts about *this*
-programme only.
+Read this before the first increment of a run, and again if the run is long.
+Method lives in the `build-orchestrator` skill; this file holds facts about
+*this* programme only.
 
 ## What the backlog is
 

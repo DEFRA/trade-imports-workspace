@@ -8,17 +8,34 @@
 ## PARAMETERS — fill these in before pasting
 
 ```
-<workspace-tilde>  ~/git/defra/trade-imports-animals
-<workspace-abs>    /Users/samfarrington/git/defra/trade-imports-animals
+<workspace-tilde>  ~/git/defra/trade-imports-animals-workspace   (canonical — see below)
+<workspace-abs>    RESOLVE IT, do not type one. See FIRST ACTION step 0
 <workarea-rel>     shared/<programme>
 <workarea>         <workspace-tilde>/workareas/<workarea-rel>
 <backlog>          <workarea>/backlog.json
 <ledger>           <workarea>/orchestrator-ledger.json
-<branch>           the branch every repo in this programme is cut onto
+<branch>           the BASE branch. Every increment cuts its own branch off this one
+                   and merges back into it. Normally main
 <scope>            conventional-commit scope for landing commits
 <executor>         claude | codex
+<lifecycle>        full | local
+<jira-project>     Jira project key for raised tickets. full only
+<epic>             parent epic every raised ticket hangs off. full only
+<in-progress>      the board's working status. full only. On EUDPA: In Progress
+<done-status>      the board's finished status. full only. On EUDPA: Done
 <batch-size>       5
 ```
+
+**⚠ Confirm the two status names against the board before you paste this.** They are board configuration
+and every board words them differently:
+
+```bash
+<workspace-tilde>/tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
+```
+
+Use exactly what that prints. **Do not take a status name from a script's `--help` text** — that is
+generic placeholder wording, not this board's workflow. Getting one wrong stops every increment at the
+ticket stage.
 
 ---
 
@@ -48,6 +65,22 @@ So a batch that lands two of a budget of five is **a normal, successful batch**,
 not treat a short batch as a discrepancy, do not investigate it, and never ask L1 to make up the
 difference.
 
+## WHAT "LANDED" MEANS
+
+Under `<lifecycle> = full`, each increment runs a whole ticket-to-merge lifecycle inside L2: a Jira
+ticket raised and moved to `<in-progress>`, a ticket-named branch off fresh `<branch>`, the build, a PR, a
+CI wait, a merge on green, a watch of `<branch>`, then the ticket to `<done-status>`.
+
+**An increment is landed only when its PR is merged, `<branch>` is green afterwards and its ticket is
+`<done-status>`.** A local commit is not a landing. L1 verifies all three and reports the ticket key and
+PR URL with every landing; you record both in the ledger.
+
+Under `<lifecycle> = local` there is no Jira and no PR, and a local commit IS the landing.
+
+**Batches take substantially longer per increment than they used to**, because CI waits are real waiting.
+A slow batch is not a stall. It also makes the budget **a weaker lever still**: a batch is now bounded far
+more by how long CI takes than by the number you set.
+
 ## YOU MUST NEVER READ
 
 Not "prefer not to". Never. If you find yourself about to, stop — that is L1's job and L1 is already
@@ -55,8 +88,12 @@ dead by the time you would want it.
 
 - **`backlog.json` in full.** You may run the `jq` queries in this file against it and read only their
   output. Never `cat` it, never Read it, never `jq '.'` it.
-- **Any diff.** No `git diff`, no `git show` without `--stat`, no patch text.
+- **Any diff.** No `git diff`, no `git show` without `--stat`, no patch text. **No PR diff either** — no
+  `gh pr diff`, no `gh pr view` with a body or file list. The lifecycle does not change this rule.
 - **Any test log.** Nothing under `<workarea>/logs/`, no Playwright output, no `error-context.md`.
+- **Any CI log.** No `gh run view --log`, no `--log-failed`, no job output, no PR review threads. You may
+  read a check's **state** — pass, fail, pending — and nothing beneath it. Reading why CI failed is L1's
+  job, and L1 is already dead by the time you would want to.
 - **Any brief**, generic or per-increment.
 - **Any batch report body.** You record its path. You do not open it.
 - **Any increment object.** Not its `filesToTouch`, `acceptanceCriteria`, `notes` or `openQuestions`.
@@ -147,7 +184,10 @@ jq -r --slurpfile b <backlog> '[$b[0].increments[] | select(.status=="done") | .
 **Verifying a landing** — subjects and SHAs only, never the diff:
 
 ```bash
-git -C <workspace-tilde>/repos/<repo> log --oneline -n <batch-size>
+git -C <workspace-tilde>/repos/<repo> fetch origin
+```
+```bash
+git -C <workspace-tilde>/repos/<repo> log --oneline -n <batch-size> origin/<branch>
 ```
 ```bash
 git -C <workspace-tilde>/repos/<repo> status --short
@@ -159,14 +199,72 @@ git -C <workspace-tilde>/repos/<repo> status --short
 git -C <workspace-tilde>/repos/<repo> show --stat --oneline <sha>
 ```
 
+**Confirming a PR merged** — state only, never the diff. `<lifecycle> = full` only:
+
+```bash
+gh pr view <url> --json state,mergedAt,mergeCommit
+```
+
+**Confirming a ticket has finished** — `<lifecycle> = full` only. The pass is status exactly
+`<done-status>`; do not accept a status that merely looks final:
+
+```bash
+<workspace-tilde>/tools/jira/ticket.sh <KEY> summary
+```
+
 Repo paths: `frontend` = `repos/trade-imports-animals-frontend`, `backend` =
-`repos/trade-imports-animals-backend`, `tests` = `repos/trade-imports-animals-tests`.
+`repos/trade-imports-animals-backend`, `tests` = `repos/trade-imports-animals-tests`. An increment whose
+`repo` field is `both` lands **two** commits and **two** PRs, backend first.
+
+**Keeping the workarea shareable** — the plan of record must reach the next machine:
+
+```bash
+git -C <workspace-tilde> pull --ff-only
+```
+```bash
+git -C <workspace-tilde> add <workarea>/backlog.json <workarea>/orchestrator-ledger.json <workarea>/logs/batches
+```
+```bash
+git -C <workspace-tilde> commit -m "chore(<scope>): batch <n> — <what landed>"
+```
+```bash
+git -C <workspace-tilde> push
+```
+```bash
+git -C <workspace-tilde> status --short <workarea>
+```
 
 **Bash hygiene, everywhere:** tilde paths only — a literal `/Users/...` in Bash is denied. Absolute
 paths only for the Read/Write/Edit tools. Never bare `node`. Never run `sonar`. Never use the Grep or
 Glob tools.
 
 ## FIRST ACTION — before any batch
+
+**0. Resolve the workspace path. Do not type a home directory.**
+
+The prompt gives `<workspace-tilde>` as `~/git/defra/trade-imports-animals-workspace` — the canonical
+path CLAUDE.md rule 1 requires, reached by a symlink where the clone is elsewhere. Confirm it, and get
+the absolute form for the Read/Write/Edit tools:
+
+```bash
+git -C ~/git/defra/trade-imports-animals-workspace rev-parse --show-toplevel
+```
+
+What it prints is `<workspace-abs>`. Bind both and use them everywhere below.
+
+If that command fails, the canonical symlink is missing on this machine. Try
+`git -C ~/git/defra/trade-imports-animals rev-parse --show-toplevel` and use that instead, and put the
+missing symlink on your `owed-to-human` note. **If neither resolves, stop** — say the workspace could not
+be found and that rule 1 wants the canonical path symlinked. Never guess a home directory.
+
+**0b. Pull the workspace repo.** Someone may have handed this run over:
+
+```bash
+git -C <workspace-tilde> pull --ff-only
+```
+
+If that is not a fast-forward, **stop**. Two people have run this programme concurrently, which the
+design does not support — there is one ledger writer and no locking. Say exactly that; do not merge.
 
 **1. Make sure the ledger exists and is valid.**
 
@@ -180,11 +278,20 @@ If `<ledger>` does not exist, create it with the Write tool, filled from your PA
     "branch": "<branch>",
     "scope": "<scope>",
     "executor": "<executor>",
+    "lifecycle": "<lifecycle>",
+    "jiraProject": "<jira-project>",
+    "epic": "<epic>",
+    "jiraInProgressStatus": "<in-progress>",
+    "jiraDoneStatus": "<done-status>",
     "batchSize": <batch-size>
   },
   "batches": []
 }
 ```
+
+Omit `jiraProject`, `epic` and the two status names when `<lifecycle>` is `local`. Recording the statuses
+here is what lets a later session — or a colleague picking the run up — see which board wording this
+programme was built against, without going back to the board.
 
 Then run all four validation queries. Its shape is fixed by
 `.claude/workflows/batch-orchestrator/orchestrator-ledger.schema.json`.
@@ -235,6 +342,13 @@ ids it reached. Disk still knows.
    Do not commit it and do not delete it. Hand it to the user with the repo and file count. Rollback,
    if the user asks for one, is always `git stash push -u` — **never** `reset --hard`, **never**
    `clean -fd`.
+   Under `<lifecycle> = full`, a dead L1 may also have left a **ticket mid-workflow and a PR open**. Find
+   them from the backlog, one query, ids and URLs only:
+   ```bash
+   jq -r '.increments[] | select(.status!="done") | select(.ticket != null) | "\(.id) \(.ticket) \([.prs[]?.url] | join(" "))"' <backlog>
+   ```
+   Hand those to the user too. **Do not close a PR and do not move a ticket.** The next L1 re-derives the
+   increment, and the loop reuses the ticket, the branch and the PR rather than raising new ones.
 4. Close the entry as `abandoned`. Put the confirmed landings in `landed`, and the same ids in
    `attempted` — those are the only ones you can prove were started. Omit `endedEarly`: you do not know
    why it stopped. Note in your summary that `attempted` may undercount, because an increment L1 began
@@ -248,9 +362,17 @@ history only — when it contradicts the backlog, the ledger is wrong and you fi
 
 ## THE BATCH CYCLE
 
-### 1. Confirm there is work
+### 1. Pull, then confirm there is work
 
-Run the four counts, the buildable count and its companion. If the buildable count is `0`, go to
+**Pull the workspace repo first, every batch**, not only at the start of a session:
+
+```bash
+git -C <workspace-tilde> pull --ff-only
+```
+
+Not a fast-forward means someone else has been running this programme. **Stop and say so.**
+
+Then run the four counts, the buildable count and its companion. If the buildable count is `0`, go to
 **Stopping**.
 
 You now know a batch is worth starting. You do **not** know, and must not work out, which increments it
@@ -296,6 +418,11 @@ PARAMETER BINDINGS:
   <branch>          = <branch>
   <scope>           = <scope>
   <executor>        = <executor>
+  <lifecycle>       = <lifecycle>
+  <jira-project>    = <jira-project>
+  <epic>            = <epic>
+  <in-progress>     = <in-progress>
+  <done-status>     = <done-status>
   <batch-number>    = <n>
   <budget>          = <batch-size>
   <report-path>     = <workarea>/logs/batches/batch-<nnn>.md
@@ -324,9 +451,18 @@ For each id L1 says landed:
   jq -r --arg id "<id>" '.increments[] | select(.id==$id) | "\(.status) \(.commit // "no-commit")"' <backlog>
   ```
 
-A claimed landing that git or the backlog does not confirm goes into `notLanded` with outcome
-`land-failed` and L1's claim quoted in `detail`. **Never write a SHA into the ledger that you have not
-seen in `git show`.**
+Under `<lifecycle> = full`, also confirm the two things that make it a landing at all. Both are cheap —
+one state field each, no logs and no diffs:
+
+- **The PR merged.** `gh pr view <url> --json state,mergedAt,mergeCommit` — `state` must be `MERGED`. A
+  `both` increment has two PRs and both must be merged.
+- **The ticket has finished.** `<workspace-tilde>/tools/jira/ticket.sh <KEY> summary` — the status must be
+  exactly `<done-status>`. This board also carries `IN QA`, `Deskcheck` and `CLOSED`; none of them is the
+  pass, and you cannot tell from a name where it sits in the workflow.
+
+A claimed landing that git, the backlog, GitHub or Jira does not confirm goes into `notLanded` with
+outcome `land-failed` and L1's claim quoted in `detail`. **Never write a SHA, a PR URL or a ticket key
+into the ledger that you have not seen confirmed by its own source.**
 
 Also run `git -C <repo> status --short` for each repo the batch touched. It must be clean. A dirty tree
 after a batch means work escaped the loop — stop and tell the user.
@@ -336,7 +472,7 @@ after a batch means work escaped the loop — stop and tell the user.
 Same three-call pattern, patching the tail:
 
 ```bash
-jq --argjson r '{"status":"landed","endedEarly":"budget-spent","driver":"workflow","scriptPath":"<from L1 script line>","attempted":["<id>","<id>"],"endedAt":"<iso8601>","landed":[{"id":"<id>","commit":"<sha>","repo":"frontend"}],"notLanded":[]}' '.batches[-1] |= (. + $r)' <ledger> > <ledger>.tmp
+jq --argjson r '{"status":"landed","endedEarly":"budget-spent","driver":"workflow","scriptPath":"<from L1 script line>","attempted":["<id>","<id>"],"endedAt":"<iso8601>","landed":[{"id":"<id>","commit":"<sha>","repo":"frontend","ticket":"<KEY>","prs":["<url>"]}],"notLanded":[]}' '.batches[-1] |= (. + $r)' <ledger> > <ledger>.tmp
 ```
 ```bash
 jq empty <ledger>.tmp
@@ -348,6 +484,10 @@ mv <ledger>.tmp <ledger>
 `attempted` is the ids L1 reports it started, landed or not. Copy it across as given — it is what lets a
 future reconciliation know where to look.
 
+Under `<lifecycle> = full`, every `landed` entry carries the `ticket` key and the `prs` URLs from L1's
+`landed` line, both confirmed in step 4. An entry without them is not a landing. A `notLanded` entry
+carries whatever L1 gave you — a ticket left mid-workflow, a PR left open — so a human can find them.
+
 Status: `landed` if every id L1 attempted also landed, `partial` if some did, `failed` if none did,
 `halted-at-gate` if L1 reports a designed gate. **Status is about failure, never about the budget** — a
 batch that attempted two, landed two and returned early is `landed`, not `partial`.
@@ -355,10 +495,50 @@ batch that attempted two, landed two and returned early is `landed`, not `partia
 `endedEarly` is L1's `ended-early` line verbatim. Then run all four validation queries plus the
 reconciliation query.
 
-### 6. Spawn the next batch, then write prose
+### 6. Commit and push the plan of record
 
-**Never end a turn idle.** Order is fixed: verify → close the ledger → **spawn the next L1** → then
-write your summary. Landing a batch is not a stopping point. If you catch yourself writing a summary
+**The ledger and `backlog.json` are the whole handover.** Left uncommitted they exist on one laptop, and
+a colleague cloning the repo gets a backlog from whenever someone last committed by hand. Push them at
+every batch close, right after the ledger entry validates.
+
+```bash
+git -C <workspace-tilde> add <workarea>/backlog.json <workarea>/orchestrator-ledger.json <workarea>/logs/batches
+```
+```bash
+git -C <workspace-tilde> commit -m "chore(<scope>): batch <n> — landed <id> <id>"
+```
+```bash
+git -C <workspace-tilde> push
+```
+
+Add those paths explicitly, not the whole workarea — `build-loop.run.js` is a run artefact and must never
+be committed. Then check what you left behind:
+
+```bash
+git -C <workspace-tilde> status --short <workarea>
+```
+
+`build-loop.run.js` showing as untracked is expected until the `.gitignore` line L1 asks for lands.
+Anything else there is a surprise: say so.
+
+**If the push is rejected** because someone else pushed first:
+
+```bash
+git -C <workspace-tilde> pull --rebase
+```
+
+then push again. **If the rebase conflicts in `backlog.json` or the ledger, stop.** Two people have run
+this programme at the same time. The design does not support that — one ledger writer, no locking. Say
+exactly that, name the conflicting files, and **do not attempt a merge**: a hand-merged ledger is worse
+than a stopped run.
+
+If there is genuinely nothing to commit, say so in one line and move on. A batch that landed nothing
+still normally moves the backlog's `notes`.
+
+### 7. Spawn the next batch, then write prose
+
+**Never end a turn idle.** Order is fixed: verify → close the ledger → push it → **spawn the next L1** →
+then write your summary. Landing a batch is not a stopping point. If you catch yourself writing a summary
 with nothing in flight, stop writing and spawn.
 
 Your summary is one short paragraph and always carries the count:
@@ -386,7 +566,18 @@ Stop, and say plainly which of these fired:
   start the next batch.
 - **Two batches in a row failed with nothing landed.** Something systemic is wrong and more batches
   will not find it. Report both batch numbers and their report paths.
-- **A dirty tree you did not expect**, or a claimed landing git cannot confirm.
+- **`ci-red`.** A PR never went green within its fix budget. It is still open and its ticket is still at
+  `<in-progress>`. Quote the PR URL and the ticket key and stop. **Do not look at the CI logs** and do not
+  try to fix it — that needs context you deliberately do not have.
+- **A status name the board does not have.** L1 reports the loop could not transition a ticket, and names
+  both the status it was configured with and the transitions the board actually offers. Quote both lines
+  and stop: the fix is `<in-progress>` or `<done-status>` in the PARAMETERS block, not anything in the
+  code. Do not pick a replacement off the list yourself.
+- **`main-red`.** `<branch>` went red after a merge, or a second PR went red after the first merged.
+  Quote what L1 reported and stop. **Never revert** and never start the next batch on a red base branch.
+- **A dirty tree you did not expect**, or a claimed landing git, GitHub or Jira cannot confirm.
+- **The workspace repo will not fast-forward, or the workarea files conflict on a rebase.** Two people
+  have run this programme concurrently. Name the files and stop. Do not merge them by hand.
 - **L1's `blocked` line is not `none`.** Quote it verbatim. Do not try to unblock it yourself — that
   needs context you deliberately do not have.
 - **The user told you to hold.**
@@ -394,5 +585,6 @@ Stop, and say plainly which of these fired:
 **A short batch is not on this list.** L1 returning after two of five means it did its job. Open the
 next batch.
 
-In every case the ledger is already written, so the next session resumes from it. Do not summarise the
-build's content — you have not read it. Give the counts, the ledger path and the batch report paths.
+In every case the ledger is already written **and pushed**, so the next session — on this machine or
+anyone else's — resumes from it. Do not summarise the build's content; you have not read it. Give the
+counts, the ledger path and the batch report paths, and confirm the workarea state is pushed.

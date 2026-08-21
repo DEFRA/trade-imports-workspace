@@ -19,7 +19,7 @@ bindings; never guess one.
 
 | Thing | Path |
 |---|---|
-| Workspace root | `/Users/samfarrington/git/defra/trade-imports-animals` |
+| Workspace root | `<workspace>` |
 | Plan of record | `<backlog>` |
 | Workarea | `<workarea>` |
 | Logs | `<logs>` |
@@ -28,8 +28,11 @@ bindings; never guess one.
 | backend repo | `<workspace>/repos/trade-imports-animals-backend` |
 | tests repo | `<workspace>/repos/trade-imports-animals-tests` |
 
-The repos this programme touches are on branch `<branch>` (a repo the programme has not yet cut onto it
-may still be elsewhere — only the increment that cuts the branch should change that).
+Every repo this increment touches is already on branch `<branch>`, cut for this increment by an earlier
+stage. Do not switch branches and do not create one.
+
+An increment whose `repo` field is `both` means BOTH the backend and the frontend repo. Do the work in
+each, on that same branch name in both.
 
 ## Step 1 — read the increment in full
 

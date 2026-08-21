@@ -15,7 +15,7 @@ Compound commands, pipes, `node`, `npx`, absolute paths and `cd` are all fine he
 Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<skills>`, `<INCREMENT_ID>` — is
 bound to a real value in the prompt that pointed you here. Use those bindings; never guess one.
 
-Workspace root `/Users/samfarrington/git/defra/trade-imports-animals`; plan of record `<backlog>`; repos
+Workspace root `<workspace>`; plan of record `<backlog>`; repos
 under `<workspace>/repos/` (`trade-imports-animals-frontend`, `-backend`, `-tests`).
 
 ## Step 1 — load the standard

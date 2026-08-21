@@ -1,10 +1,12 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time: implement → style review + code review → adversarially verify findings → judge → fix → verification ladder → commit or roll back',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → implement → style review + code review → adversarially verify findings → judge → fix → verification ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
     'Running any increment backlog under workareas/. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Point FALLBACK at the workarea and set its increments, or pass args.',
   phases: [
+    { title: 'Ticket' },
+    { title: 'Branch' },
     { title: 'Baseline' },
     { title: 'Implement' },
     { title: 'Review' },
@@ -13,58 +15,187 @@ export const meta = {
     { title: 'Fix' },
     { title: 'Ladder' },
     { title: 'Land' },
+    { title: 'Pull request' },
+    { title: 'CI' },
+    { title: 'Merge' },
+    { title: 'Done' },
   ],
 }
 
 // ---------------------------------------------------------------------------
 // Configuration. `args` plumbing is unreliable in this runtime, so FALLBACK is
 // the real switch: edit it, or pass the same shape as args.
-//   workarea   path under workareas/, holding backlog.json
-//   branch     the branch every repo in the programme is cut onto
-//   scope      conventional-commit scope; defaults to the workarea's basename
-//   executor   'claude' (every stage a subagent) or 'codex' (implement, review
-//              and fix delegated to Codex CLI via the briefs in codex/)
+//   workarea        path under workareas/, holding backlog.json
+//   branch          the BASE branch. Every increment cuts its own branch off
+//                   this one and merges back into it
+//   scope           conventional-commit scope; defaults to the workarea's basename
+//   executor        'claude' (every stage a subagent) or 'codex' (implement,
+//                   review and fix delegated to Codex CLI via the briefs in codex/)
+//   lifecycle       'full'  ticket → branch → build → PR → CI → merge → ticket done
+//                   'local' build and commit on the current branch. No Jira, no
+//                           push, no PR. For programmes that do not want a PR per
+//                           increment
+//   jiraProject     Jira project key raised tickets land in
+//   epic            parent epic every raised ticket hangs off. Required when
+//                   lifecycle is 'full'
+//   jiraInProgressStatus  the board's working status, set when the build starts
+//   jiraDoneStatus        the board's finished status, set after the merge
+//   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
+//                   run stops
+//   ciWatchMinutes  how long one CI watch may block before it counts as RED
+//
+// Status names are BOARD CONFIGURATION, not constants — every board words them
+// differently and a workflow change renames them. They live here so a programme
+// never has to edit a stage. Confirm them against the board itself with
+// `tools/jira/transition-ticket.sh <ANY-KEY> --list`; the script's own --help
+// text is generic placeholder wording and is not board truth.
 // ---------------------------------------------------------------------------
 const FALLBACK = {
   workarea: 'shared/plant-products-ched-pp',
-  branch: 'spike/trace-to-requirements',
+  branch: 'main',
   scope: 'plant-products',
   executor: 'claude',
+  lifecycle: 'full',
+  jiraProject: 'EUDPA',
+  epic: '',
+  jiraInProgressStatus: 'In Progress',
+  jiraDoneStatus: 'Done',
+  ciFixAttempts: 3,
+  ciWatchMinutes: 30,
   increments: ['pp-053']
 }
 const CFG = typeof args === 'object' && args && args.increments ? args : FALLBACK
 
-const ABS = '/Users/samfarrington/git/defra/trade-imports-animals'
-const TILDE = '~/git/defra/trade-imports-animals'
 const WORKAREA_REL = String(CFG.workarea ?? '').replace(/^\/+|\/+$/g, '')
-const WORKAREA = `${ABS}/workareas/${WORKAREA_REL}`
-const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA_REL}`
-const BACKLOG = `${WORKAREA}/backlog.json`
-const BACKLOG_TILDE = `${WORKAREA_TILDE}/backlog.json`
 const SCOPE = CFG.scope ?? WORKAREA_REL.split('/').pop()
-const BRANCH = CFG.branch
+const BASE_BRANCH = CFG.branch
 const EXECUTOR = CFG.executor ?? 'claude'
-const SKILLS = ABS + '/.claude/skills'
-const BRIEFS = ABS + '/.claude/workflows/codex'
-const BRIEFS_TILDE = TILDE + '/.claude/workflows/codex'
+const LIFECYCLE = CFG.lifecycle ?? 'full'
+const JIRA_PROJECT = CFG.jiraProject ?? 'EUDPA'
+const EPIC = CFG.epic ?? ''
+const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus ?? 'In Progress'
+const STATUS_DONE = CFG.jiraDoneStatus ?? 'Done'
+const CI_FIX_ATTEMPTS = CFG.ciFixAttempts ?? 3
+const CI_WATCH_MINUTES = CFG.ciWatchMinutes ?? 30
+
+// One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
+// longer wait is that many consecutive watches, and running out of them is RED.
+const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 
 if (!WORKAREA_REL) {
   throw new Error(
     'increment-build-loop: config.workarea is required — a path relative to workareas/, e.g. "shared/plant-products-ched-pp"'
   )
 }
-if (!BRANCH) {
-  throw new Error(`increment-build-loop: config.branch is required — the branch the "${WORKAREA_REL}" programme builds on`)
+if (!BASE_BRANCH) {
+  throw new Error(
+    `increment-build-loop: config.branch is required — the BASE branch increments of the "${WORKAREA_REL}" programme cut off and merge back into, normally "main"`
+  )
 }
 if (EXECUTOR !== 'claude' && EXECUTOR !== 'codex') {
   throw new Error(`increment-build-loop: unknown executor "${EXECUTOR}" — expected "claude" or "codex"`)
 }
+if (LIFECYCLE !== 'full' && LIFECYCLE !== 'local') {
+  throw new Error(`increment-build-loop: unknown lifecycle "${LIFECYCLE}" — expected "full" or "local"`)
+}
+if (LIFECYCLE === 'full' && !/^[A-Z]+-\d+$/.test(EPIC)) {
+  throw new Error(
+    `increment-build-loop: config.epic is required when lifecycle is "full" — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
+  )
+}
+if (LIFECYCLE === 'full' && (!STATUS_IN_PROGRESS.trim() || !STATUS_DONE.trim())) {
+  throw new Error(
+    `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
+  )
+}
+if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
+  throw new Error(`increment-build-loop: config.ciFixAttempts must be a non-negative integer — got "${CI_FIX_ATTEMPTS}"`)
+}
+
+// ---------------------------------------------------------------------------
+// Workspace root. A workflow script has no filesystem and no environment, so it
+// cannot see $HOME — an agent resolves the root and everything else hangs off
+// what it returns. Nothing here may be a literal home directory: the run has to
+// work on whichever machine picks the programme up.
+// ---------------------------------------------------------------------------
+const WORKSPACE_CANDIDATES = ['~/git/defra/trade-imports-animals-workspace', '~/git/defra/trade-imports-animals']
+
+const WORKSPACE_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'abs', 'tilde', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    abs: { type: 'string', description: 'Absolute path of the workspace checkout, starting with /' },
+    tilde: { type: 'string', description: 'The SAME root written with a leading ~/ — this one goes in Bash commands' },
+    canonical: { type: 'boolean', description: 'true if the canonical -workspace path resolved' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const workspace = await agent(
+  `Resolve THIS machine's workspace root and report it. That is your whole job.
+Try each of these in order, ONE Bash call each, and stop at the first that exits zero:
+${WORKSPACE_CANDIDATES.map((c, i) => `${i + 1}. \`git -C ${c} rev-parse --show-toplevel\``).join('\n')}
+Report \`abs\` as exactly what that command printed, and \`tilde\` as the candidate path you used —
+tilde MUST still begin with \`~/\`, because a literal /Users/... path in a Bash command is DENIED.
+Set canonical:true only if candidate 1 worked; if it did not, say so in your summary, because CLAUDE.md
+rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
+If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
+No Grep/Glob tools. One command per Bash call.`,
+  { label: 'workspace', phase: 'Baseline', schema: WORKSPACE_SCHEMA }
+)
+
+if (!workspace || !workspace.ok || !workspace.abs?.startsWith('/') || !workspace.tilde?.startsWith('~/')) {
+  throw new Error(
+    `increment-build-loop: could not resolve the workspace root. CLAUDE.md rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace checkout — symlink it if your clone is elsewhere. ${workspace ? workspace.summary : 'the resolver agent failed'}`
+  )
+}
+
+const ABS = workspace.abs.replace(/\/+$/, '')
+const TILDE = workspace.tilde.replace(/\/+$/, '')
+if (!workspace.canonical) {
+  log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
+}
+
+const WORKAREA = `${ABS}/workareas/${WORKAREA_REL}`
+const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA_REL}`
+const BACKLOG = `${WORKAREA}/backlog.json`
+const BACKLOG_TILDE = `${WORKAREA_TILDE}/backlog.json`
+const SKILLS = ABS + '/.claude/skills'
+const BRIEFS = ABS + '/.claude/workflows/codex'
+const BRIEFS_TILDE = TILDE + '/.claude/workflows/codex'
+const JIRA = TILDE + '/tools/jira'
 
 const REPO_PATH = {
   frontend: 'repos/trade-imports-animals-frontend',
   backend: 'repos/trade-imports-animals-backend',
   tests: 'repos/trade-imports-animals-tests'
 }
+
+const GH_REPO = {
+  frontend: 'DEFRA/trade-imports-animals-frontend',
+  backend: 'DEFRA/trade-imports-animals-backend',
+  tests: 'DEFRA/trade-imports-animals-tests'
+}
+
+const repoTable = Object.entries(REPO_PATH)
+  .map(([k, v]) => `${k}=${v}`)
+  .join(', ')
+const ghTable = Object.entries(GH_REPO)
+  .map(([k, v]) => `${k}=${v}`)
+  .join(', ')
+
+const REPO_RULE = `REPO PATHS: ${repoTable}. An increment whose "repo" field is \`both\` means BOTH the backend and the
+frontend repo — do the work in each, on the SAME branch name (CLAUDE.md rule 2, cross-repo branch parity).`
+
+const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN FRONTEND. The backend is the
+provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that calls an endpoint
+which is not there yet. BOTH PRs must be GREEN BEFORE EITHER ONE MERGES.`
+
+// A `blocked` line means the stage hit something no fixer can fix. It stops the
+// run without spending fix attempts on it.
+const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
 const GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
@@ -76,8 +207,53 @@ GUARD RAILS (mandatory, every step):
 - Tests go TO A FILE under \`${WORKAREA_TILDE}/logs/\` and you read that file ONCE. Never grep streaming output, never re-run a suite to see it again.
 - For Playwright failures read \`test-results/*/error-context.md\`, do not grep the tail of the run.
 - Rollback is ALWAYS \`git stash push -u\` — NEVER \`reset --hard\` or \`clean -fd\`.
+- NEVER sleep-poll. Foreground \`sleep\` is denied. Wait on CI by BLOCKING on \`gh pr checks --watch\` or
+  \`gh run watch --exit-status\`, with the Bash tool's \`timeout\` parameter set to 600000 (its ceiling).
+  A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
+- Never \`git push --force\`. Never merge a PR that is not green.
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
+
+// Preserving a failed attempt. A stash is machine-local: on another machine the
+// ref means nothing and the work is gone. Under the full lifecycle the increment
+// already owns a branch, so the work is committed and PUSHED there and travels.
+// A stash stays the mechanism for genuinely local mess, and the only rollback verb.
+const preserveWork = (id, branch, reason, evidence) =>
+  LIFECYCLE === 'full'
+    ? `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
+${GUARDRAILS}
+${REPO_RULE}
+EVIDENCE: ${evidence}
+TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
+1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
+2. For EACH repo, stage what the increment produced — but NOTHING under logs/, no coverage output, no
+   test-results/, no Playwright artefacts.
+3. Commit it on \`${branch}\`, marked as failing: subject \`wip(${SCOPE}): <increment title> — ${reason}\`,
+   body naming exactly what went red, and the usual trailer.
+4. \`git -C ${TILDE}/<repoPath> push -u origin ${branch}\` — never \`--force\`. That is what lets another
+   engineer fetch the attempt and see what was tried.
+5. Do NOT open a pull request. This work does not pass its ladder and must not look reviewable.
+6. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
+7. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG}: what went red, the branch name and
+   the wip commit SHA. Do NOT write a \`commit\` field — the increment is not built, and writing one would make
+   the next attempt skip the build. Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
+The next attempt branches from here and builds on top; the squash merge collapses the wip commit.
+NEVER \`reset --hard\`, NEVER \`clean -fd\`.
+Report the branch name and the wip SHA.
+Return the structured output only.`
+    : `Attempt at increment ${id} failed: ${reason}. Roll it back NON-DESTRUCTIVELY and preserve the evidence.
+${GUARDRAILS}
+${REPO_RULE}
+EVIDENCE: ${evidence}
+TASK:
+1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
+2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for EACH of them — NEVER \`reset --hard\`,
+   NEVER \`clean -fd\`. The stash is recoverable and that is the point.
+3. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
+4. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG} recording what went red and the
+   stash ref, so the next attempt starts informed. Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
+Report the stash refs so the work can be recovered. Note that a stash is machine-local — it does not travel.
+Return the structured output only.`
 
 const incrementSchema = {
   type: 'object',
@@ -185,6 +361,115 @@ const LAND_SCHEMA = {
   additionalProperties: false
 }
 
+const TICKET_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'key', 'repos', 'branch', 'resumeAt', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    key: { type: 'string', description: 'The Jira key, e.g. EUDPA-12345' },
+    created: { type: 'boolean', description: 'true ONLY if this run raised it. false when you reused a persisted key' },
+    status: { type: 'string', description: "The ticket's status when this stage finished, verbatim as the board words it" },
+    repos: {
+      type: 'array',
+      description: 'Every repo this increment touches, in merge order. A "both" increment is ["backend","frontend"]',
+      items: { type: 'string', enum: ['frontend', 'backend', 'tests'] }
+    },
+    branch: { type: 'string', description: 'The branch name this increment builds on, e.g. feat/EUDPA-12345-add-a-set-recipe' },
+    resumeAt: {
+      type: 'string',
+      enum: ['build', 'pr', 'ci', 'done'],
+      description: 'Where the lifecycle picks up, from what is already persisted on the increment'
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const BRANCH_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'branch', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    branch: { type: 'string' },
+    repos: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'head'],
+        properties: {
+          repo: { type: 'string' },
+          head: { type: 'string', description: 'The short SHA the branch points at' },
+          cut: { type: 'boolean', description: 'true if this run created the branch in that repo' }
+        },
+        additionalProperties: false
+      }
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const PR_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'prs', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    prs: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'url'],
+        properties: {
+          repo: { type: 'string' },
+          url: { type: 'string' },
+          number: { type: 'number' },
+          raised: { type: 'boolean', description: 'true if this run opened it, false if you reused an open one' }
+        },
+        additionalProperties: false
+      }
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const CI_SCHEMA = {
+  type: 'object',
+  required: ['green', 'summary'],
+  properties: {
+    green: { type: 'boolean', description: 'Everything you were asked to watch actually resolved green. An unresolved watch is NOT green' },
+    prs: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'url', 'state'],
+        properties: {
+          repo: { type: 'string' },
+          url: { type: 'string' },
+          state: { type: 'string', description: 'green | red | unresolved | merged' }
+        },
+        additionalProperties: false
+      }
+    },
+    merged: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'sha'],
+        properties: {
+          repo: { type: 'string' },
+          sha: { type: 'string', description: 'The merge commit on the base branch' }
+        },
+        additionalProperties: false
+      }
+    },
+    failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
+    blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
 const readIncrement = (id) => `
 THE INCREMENT — read it in full before anything else:
 Run this Bash command and read the output: \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`
@@ -229,7 +514,7 @@ const codexPaths = (id, stage) => ({
   runLog: `${WORKAREA_TILDE}/logs/${id}-${stage}.log`
 })
 
-const codexRun = (id, stage, phaseName, instructions) => {
+const codexRun = (id, stage, phaseName, instructions, workingBranch) => {
   const { brief, schemaFile } = CODEX[stage]
   const { promptFile, promptFileTilde, lastMessageTilde, runLog } = codexPaths(id, stage)
 
@@ -249,7 +534,7 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <backlog>      = ${BACKLOG}
   <logs>         = ${WORKAREA}/logs
   <skills>       = ${SKILLS}
-  <branch>       = ${BRANCH}
+  <branch>       = ${workingBranch ?? BASE_BRANCH}
   <INCREMENT_ID> = ${id}
 
 ${instructions}
@@ -289,8 +574,8 @@ Return the structured output only.`,
 // Returns null when the stage could not produce a result — a dead shell agent, a
 // codex run that never wrote one, or a dead relay. Callers must treat null as a
 // failure to review/implement/fix, never as an empty-but-valid result.
-const codexStage = async (id, stage, phaseName, schema, instructions) => {
-  const run = await codexRun(id, stage, phaseName, instructions)
+const codexStage = async (id, stage, phaseName, schema, instructions, workingBranch) => {
+  const run = await codexRun(id, stage, phaseName, instructions, workingBranch)
   if (!run || !run.ok) {
     log(`${id}: codex ${stage} DID NOT RUN — ${run ? run.summary : 'the codex shell agent died'}`)
     return null
@@ -321,11 +606,178 @@ if (!preflight || !preflight.ok) {
   )
 }
 
-log(`${WORKAREA_REL}: ${CFG.increments.length} increment(s) on ${BRANCH}, executor ${EXECUTOR}`)
+log(
+  `${WORKAREA_REL}: ${CFG.increments.length} increment(s) off ${BASE_BRANCH}, executor ${EXECUTOR}, lifecycle ${LIFECYCLE}`
+)
 
 const results = []
 
 for (const id of CFG.increments) {
+  // -----------------------------------------------------------------------
+  // Ticket — reuse or raise, put it in the working status, and work out where
+  // to resume. Runs first so a retry never re-does work the last attempt landed.
+  // -----------------------------------------------------------------------
+  let ticket = null
+  let workBranch = BASE_BRANCH
+  let repos = null
+  let resumeAt = 'build'
+
+  if (LIFECYCLE === 'full') {
+    phase('Ticket')
+
+    ticket = await agent(
+      `You are the TICKET STAGE for increment ${id}. You give the increment a Jira ticket and work out where in
+the lifecycle this run picks up. YOU RAISE AT MOST ONE TICKET, AND ONLY IF THE INCREMENT HAS NONE.
+${GUARDRAILS}
+${REPO_RULE}
+
+STEP 1 — READ WHAT IS ALREADY PERSISTED. One Bash call:
+\`jq -r '.increments[] | select(.id=="${id}") | {ticket, branch, commit, prs, repo, kind, title}' ${BACKLOG_TILDE}\`
+Everything below turns on that output. Read it before you do anything else.
+
+STEP 2 — THE TICKET.
+- If \`ticket\` is a key (not null, not absent): REUSE IT. Do NOT create anything. Confirm it exists with
+  \`${JIRA}/ticket.sh <KEY> summary\` and note its status VERBATIM — do not tidy or normalise the wording.
+  Set created:false.
+- Only if \`ticket\` is null or absent, raise one:
+  a. Write the description with the Write tool to ${WORKAREA}/logs/${id}-ticket.txt. **Jira uses WIKI MARKUP,
+     NOT MARKDOWN** — markdown renders as visible garbage. Use exactly this shape, substituting real values:
+---8<---
+h2. Increment
+
+{{${id}}} from the {{${WORKAREA_REL}}} backlog.
+
+h2. Acceptance criteria
+
+* <first acceptance criterion>
+* <second acceptance criterion>
+
+h2. Source
+
+Backlog: {{workareas/${WORKAREA_REL}/backlog.json}}
+---8<---
+     Wiki-markup rules you MUST apply to every acceptance criterion you copy across:
+     - Escape every \`[\` as \`\\[\` and every \`]\` as \`\\]\` — bare brackets become links.
+     - Escape every \`{\` as \`\\{\` — a bare brace opens a macro.
+     - Strip any leading \`*\` or \`-\` from the criterion text, or it nests the bullet.
+     - Put file paths, code identifiers and commands in \`{{monospace}}\`, never in backticks.
+     - Never write \`#\`, \`##\`, \`**bold**\` or a markdown table. Headings are \`h2.\`, bold is \`*bold*\`.
+  b. Raise it. ONE command, and run it ONCE:
+     \`JIRA_PROJECT_KEY=${JIRA_PROJECT} ${JIRA}/create-ticket.sh -t Task -p ${EPIC} -D ${WORKAREA_TILDE}/logs/${id}-ticket.txt "${id} — <the increment title, trimmed to fit>" > ${WORKAREA_TILDE}/logs/${id}-ticket.log 2>&1\`
+  c. Read that log. Its first line is the new key. If the command failed, report ok:false with the log's
+     contents and STOP — do not retry, a retry is how a board gets two tickets for one increment.
+  d. **IMMEDIATELY** persist it: Edit ${BACKLOG} to set this increment's \`ticket\` field to the key, before you
+     do anything else at all. Re-check with \`jq empty ${BACKLOG_TILDE}\`. This write is what makes a retry safe.
+
+STEP 3 — THE WORKING STATUS. This board's working status is \`${STATUS_IN_PROGRESS}\` and its finished
+status is \`${STATUS_DONE}\`. Both names are CONFIGURATION and are given to you here. Use them literally.
+- Status is exactly \`${STATUS_IN_PROGRESS}\` → leave it alone.
+- Status is exactly \`${STATUS_DONE}\` → leave it alone, and SAY SO in your summary. A finished ticket whose
+  increment is not done in the backlog is a mismatch a human needs to see.
+- Any other status → \`${JIRA}/transition-ticket.sh <KEY> "${STATUS_IN_PROGRESS}"\`.
+⚠ Do NOT reason about whether a status comes "before" or "after" the working one. You cannot see this
+board's workflow order, and boards carry statuses whose names say nothing about direction. Compare against
+the two configured names by EXACT STRING and nothing else.
+If the transition reports the status is not available, run \`${JIRA}/transition-ticket.sh <KEY> --list\` and
+report ok:false with BOTH the status you were asked for — \`${STATUS_IN_PROGRESS}\` — AND the full list of
+transitions the board actually offers, so the config fix is obvious from your report alone.
+Do NOT guess a nearby status and do NOT pick one off the list yourself.
+
+STEP 4 — THE BRANCH NAME.
+- If \`branch\` is already persisted on the increment, REUSE IT VERBATIM. Do not recompute it.
+- Otherwise build it as \`<type>/<KEY>-<slug>\` and persist it to the increment's \`branch\` field
+  (Edit ${BACKLOG}, then \`jq empty ${BACKLOG_TILDE}\`):
+  - \`<type>\` from the increment's \`kind\`: bug/fix → \`fix\`; chore/docs/refactor/test/test-coverage/
+    test-infrastructure/fixture → \`chore\`; everything else → \`feat\`.
+  - \`<slug>\` from the title: lower case, every run of non-alphanumeric characters becomes one \`-\`, trim
+    leading and trailing \`-\`, truncate to 40 characters and trim any trailing \`-\` again.
+  This matches CLAUDE.md rule 2 (\`<type>/${JIRA_PROJECT}-XXXX[-slug]\`).
+
+STEP 5 — WHERE TO RESUME, from what STEP 1 showed you. Take the FIRST that matches:
+- \`prs\` is non-empty and every entry is marked merged → resumeAt "done".
+- \`prs\` is non-empty → resumeAt "ci".
+- \`commit\` is set and \`prs\` is empty or absent → resumeAt "pr".
+- anything else, including a brand new ticket → resumeAt "build".
+Re-entering an increment must never rebuild work that is already committed on its branch.
+⚠ resumeAt comes from the BACKLOG FIELDS ABOVE and from nothing else. **Never derive it from the ticket's
+status.** A board status is moved by people for reasons this loop cannot see, and a ticket parked at
+Deskcheck or IN QA says nothing about how far the build got.
+
+STEP 6 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
+tests → \["tests"\]; both → \["backend","frontend"\] IN THAT ORDER.
+
+Report ok:true only if the ticket exists, its status is one you left alone or successfully set, and the
+branch name is persisted. Report \`status\` as the ticket's status when you finished, verbatim.
+Return the structured output only.`,
+      { label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA }
+    )
+
+    if (!ticket || !ticket.ok || !ticket.key) {
+      log(`${id}: TICKET STAGE FAILED — ${ticket ? ticket.summary : 'agent failed'}`)
+      results.push({ id, outcome: 'ticket-failed', detail: ticket?.summary ?? 'agent failed' })
+      break
+    }
+
+    workBranch = ticket.branch
+    repos = ticket.repos
+    resumeAt = ticket.resumeAt ?? 'build'
+    log(`${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on ${workBranch}, resuming at ${resumeAt}`)
+
+    // ---------------------------------------------------------------------
+    // Branch — off FRESH base, in every repo the increment touches. Refuses on
+    // a dirty tree, because switching branches over uncommitted work loses it.
+    // ---------------------------------------------------------------------
+    phase('Branch')
+
+    const branched = await agent(
+      `You are the BRANCH STAGE for increment ${id} (${ticket.key}). Put every repo this increment touches on
+\`${workBranch}\`, cut from a FRESHLY FETCHED \`${BASE_BRANCH}\`.
+${GUARDRAILS}
+${REPO_RULE}
+REPOS, in order: ${repos.join(', ')}. Do all of the following for EACH of them.
+
+1. \`git -C ${TILDE}/<repoPath> status --short\` — it MUST be empty. A dirty tree means uncommitted work from a
+   previous attempt: stop, report ok:false naming the repo and the files, and change nothing. NEVER stash,
+   reset or clean here — this stage does not own that work.
+2. \`git -C ${TILDE}/<repoPath> fetch origin\`
+3. Does the branch exist locally? \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet refs/heads/${workBranch}\`
+   - It does → \`git -C ${TILDE}/<repoPath> checkout ${workBranch}\`, then
+     \`git -C ${TILDE}/<repoPath> pull --ff-only\` to pick up anything already pushed. If the pull is not a
+     fast-forward, report ok:false — a diverged branch needs a human. If it fails because the upstream branch is
+     GONE, this increment has already merged and the remote branch was deleted: say so and pass.
+   - It does not → does it exist on the remote?
+     \`git -C ${TILDE}/<repoPath> ls-remote --heads origin ${workBranch}\`
+     - Remote has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --track origin/${workBranch}\`
+     - Nobody has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} origin/${BASE_BRANCH}\`
+   NEVER a bare \`checkout -b ${workBranch}\` — that branches off whatever the repo happened to be on.
+4. Confirm where you landed: \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\` and
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`. The second must print \`${workBranch}\`.
+
+The branch name is IDENTICAL in every repo. That is CLAUDE.md rule 2 and it is load-bearing: the workspace
+stack probes each repo for a branch-tagged image, so a mismatched name breaks the linked-branch pickup.
+Report ok:true only when every repo is on ${workBranch} with a clean tree.
+Return the structured output only.`,
+      { label: `${id} branch`, phase: 'Branch', schema: BRANCH_SCHEMA }
+    )
+
+    if (!branched || !branched.ok) {
+      log(`${id}: BRANCH STAGE FAILED — ${branched ? branched.summary : 'agent failed'}`)
+      results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branched?.summary ?? 'agent failed' })
+      break
+    }
+  }
+
+  let rawFindings = []
+  let confirmed = []
+  let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
+  let land = null
+
+  build: {
+    if (resumeAt !== 'build') {
+      log(`${id}: already built on ${workBranch} — skipping to ${resumeAt}`)
+      break build
+    }
+
   // -----------------------------------------------------------------------
   // Baseline — never build on a red tree.
   // -----------------------------------------------------------------------
@@ -336,17 +788,18 @@ for (const id of CFG.increments) {
 failure later in this increment is unambiguously ours.
 ${GUARDRAILS}
 ${readIncrement(id)}
+${REPO_RULE}
 TASK:
-1. Determine the increment's repo from its "repo" field and confirm that repo is clean:
-   \`git -C ${TILDE}/<repoPath> status --short\` (repo paths: frontend=${REPO_PATH.frontend}, backend=${REPO_PATH.backend}, tests=${REPO_PATH.tests}).
-   If it is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
-2. Confirm the repo is on branch \`${BRANCH}\`. A repo the programme has not yet cut onto that branch may not
-   have it; if your increment is the one that creates it, that is expected — say so and pass.
-3. Run the FASTEST meaningful suite for that repo, to a log, and read it once:
-   frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${WORKAREA_TILDE}/logs/${id}-baseline.log 2>&1\`
-   backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${WORKAREA_TILDE}/logs/${id}-baseline.log 2>&1\`
+1. Determine the increment's repo(s) from its "repo" field and confirm each one is clean:
+   \`git -C ${TILDE}/<repoPath> status --short\`.
+   If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
+2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
+   in your summary. Do not assert a particular branch and do not switch branches — an earlier stage owns that.
+3. Run the FASTEST meaningful suite for each repo, to a log, and read it once:
+   frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${WORKAREA_TILDE}/logs/${id}-baseline-frontend.log 2>&1\`
+   backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${WORKAREA_TILDE}/logs/${id}-baseline-backend.log 2>&1\`
    tests:    read package.json and run its unit/lint script if one exists; if the suite needs a running stack, SKIP it and say so.
-4. Report ok:true only if the tree is clean and the suite is green.
+4. Report ok:true only if every repo's tree is clean and every suite is green.
 Return the structured output only.`,
     { label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema }
   )
@@ -363,12 +816,13 @@ Return the structured output only.`,
   phase('Implement')
 
   const impl = EXECUTOR === 'codex'
-    ? await codexStage(id, 'implement', 'Implement', incrementSchema, `You are implementing increment ${id}.`)
+    ? await codexStage(id, 'implement', 'Implement', incrementSchema, `You are implementing increment ${id}.`, workBranch)
     : await agent(
     `You are the IMPLEMENTOR for increment ${id}. You make the change and nothing else — you do not review it,
 and you do not commit it.
 ${GUARDRAILS}
 ${readIncrement(id)}
+${REPO_RULE}
 
 HOW TO BUILD IT — route on the increment's "repo" field:
 - **frontend** → the workspace frontend-change skill is your script. READ ${SKILLS}/frontend-change/SKILL.md IN
@@ -403,18 +857,19 @@ or the judge should know, including anything the increment got wrong).`,
   )
 
   if (!impl || !impl.ok) {
-    log(`${id}: IMPLEMENT FAILED — rolling back. ${impl ? impl.summary : 'agent failed'}`)
-    await agent(
-      `Roll back the failed increment ${id} NON-DESTRUCTIVELY.
-${GUARDRAILS}
-Run exactly: \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for the increment's repo (look up its
-"repo" field with jq against ${BACKLOG_TILDE}). NEVER \`reset --hard\`, NEVER \`clean -fd\` — the stash
-is recoverable and that is the point. Confirm with \`git -C ... status --short\` that the tree is clean, and report
-the stash ref so a human can recover the work.
-Return the structured output only.`,
-      { label: `${id} rollback`, phase: 'Implement', schema: incrementSchema }
+    log(`${id}: IMPLEMENT FAILED — preserving the attempt. ${impl ? impl.summary : 'agent failed'}`)
+    const kept = await agent(
+      preserveWork(id, workBranch, 'the implementor could not finish it', impl?.summary ?? 'the implementor agent died'),
+      { label: `${id} preserve`, phase: 'Implement', schema: incrementSchema }
     )
-    results.push({ id, outcome: 'implement-failed', detail: impl?.summary ?? 'agent failed' })
+    results.push({
+      id,
+      ticket: ticket?.key,
+      branch: LIFECYCLE === 'full' ? workBranch : undefined,
+      outcome: 'implement-failed',
+      detail: impl?.summary ?? 'agent failed',
+      preserved: kept?.summary
+    })
     continue
   }
 
@@ -493,16 +948,15 @@ Return the structured output only.`,
     )
 
   const reviewResults = EXECUTOR === 'codex'
-    ? [codexResult(await codexStage(id, 'review', 'Review', FINDINGS_SCHEMA, `Review the staged, uncommitted change for increment ${id}.`), 'review', id)]
+    ? [codexResult(await codexStage(id, 'review', 'Review', FINDINGS_SCHEMA, `Review the staged, uncommitted change for increment ${id}.`, workBranch), 'review', id)]
     : await parallel([...styleReviews, ...codeReviews, consistencyReview])
-  const rawFindings = reviewResults.filter(Boolean).flatMap((r) => r.findings ?? [])
+  rawFindings = reviewResults.filter(Boolean).flatMap((r) => r.findings ?? [])
   log(`${id}: ${rawFindings.length} raw findings — verifying adversarially`)
 
   // -----------------------------------------------------------------------
   // Verify findings — refute before acting, so churn is never driven by a
   // plausible-but-wrong review comment.
   // -----------------------------------------------------------------------
-  let confirmed = []
   if (rawFindings.length > 0) {
     phase('Verify findings')
     // Grouped BY FILE: every finding still gets refuted independently, but the
@@ -562,8 +1016,6 @@ Return one verdict per finding, using the SAME numbers as above. Return the stru
   // -----------------------------------------------------------------------
   // Judge — replaces the skills' interactive WALKER. Makes the calls itself.
   // -----------------------------------------------------------------------
-  let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
-
   if (confirmed.length > 0) {
     phase('Judge')
     judgement =
@@ -614,7 +1066,8 @@ Return the structured output only.`,
           'fix',
           'Fix',
           incrementSchema,
-          `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${judgement.fixNow.map((f, i) => `${i + 1}. ${f}`).join('\n')}`
+          `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${judgement.fixNow.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
+          workBranch
         ),
         'fix',
         id
@@ -670,55 +1123,322 @@ Return the structured output only.`,
   phase('Land')
 
   if (!ladder || !ladder.green) {
-    log(`${id}: LADDER RED — rolling back`)
+    log(`${id}: LADDER RED — preserving the attempt`)
     const rb = await agent(
-      `Increment ${id} failed its verification ladder. Roll it back NON-DESTRUCTIVELY and preserve the evidence.
-${GUARDRAILS}
-FAILURES: ${ladder ? (ladder.failures ?? []).join(' | ') : 'verifier agent failed'}
-TASK:
-1. Look up the increment's repo: \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
-2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` — NEVER reset --hard, NEVER clean -fd.
-3. Confirm the tree is clean with \`git -C ... status --short\`.
-4. Append a short "ATTEMPT FAILED" note to that increment's notes field in ${BACKLOG} recording what
-   went red and the stash ref, so the next attempt starts informed. Keep the JSON valid
-   (\`jq empty ${BACKLOG_TILDE}\`).
-Report the stash ref in your summary so the work can be recovered.
-Return the structured output only.`,
-      { label: `${id} rollback`, phase: 'Land', schema: LAND_SCHEMA }
+      preserveWork(
+        id,
+        workBranch,
+        'red verification ladder',
+        ladder ? (ladder.failures ?? []).join(' | ') : 'verifier agent failed'
+      ),
+      { label: `${id} preserve`, phase: 'Land', schema: incrementSchema }
     )
-    results.push({ id, outcome: 'ladder-red', detail: ladder?.summary ?? 'verifier failed', rollback: rb?.summary })
-    log(`${id}: rolled back — stopping the run so the failure is not built on top of`)
+    results.push({
+      id,
+      ticket: ticket?.key,
+      branch: LIFECYCLE === 'full' ? workBranch : undefined,
+      outcome: 'ladder-red',
+      detail: ladder?.summary ?? 'verifier failed',
+      preserved: rb?.summary
+    })
+    log(`${id}: attempt preserved — stopping the run so the failure is not built on top of`)
     break
   }
 
-  const land = await agent(
-    `Increment ${id} is implemented, reviewed, judged and verified green. LAND IT.
+  land = await agent(
+    `Increment ${id} is implemented, reviewed, judged and verified green. COMMIT IT.
 ${GUARDRAILS}
+${REPO_RULE}
 TASK:
 1. Look up its repo: \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`, and its
    title for the commit subject.
 2. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 3. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
-   naming the increment id, and the trailer:
-   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-4. Do NOT push — pushing is the human's call.
-5. Update ${BACKLOG}: set this increment's "status" to "done" and add a "commit" field with the short
-   SHA. Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
-Report the commit SHA.
+   naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and the trailer:
+   Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+   A \`both\` increment gets ONE commit per repo, each with the same subject.
+4. Do NOT push. A later stage owns that.
+5. Update ${BACKLOG}: add a "commit" field with the short SHA${LIFECYCLE === 'local' ? ' and set this increment\'s "status" to "done"' : '. Leave "status" alone — this increment is not done until its PR is merged'}.
+   Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
+Report the commit SHA. For a \`both\` increment report both, backend first, space separated.
 Return the structured output only.`,
     { label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA }
   )
+  } // build
 
-  results.push({
-    id,
-    outcome: land && land.landed ? 'landed' : 'land-failed',
-    commit: land?.commit,
-    findings: { raw: rawFindings.length, confirmed: confirmed.length, fixed: judgement.fixNow.length },
-    judgement: judgement.decisions.map((d) => `${d.call}: ${d.what}`)
-  })
+  const findings = { raw: rawFindings.length, confirmed: confirmed.length, fixed: judgement.fixNow.length }
+  const judgementCalls = judgement.decisions.map((d) => `${d.call}: ${d.what}`)
 
-  log(`${id}: LANDED ${land?.commit ?? ''} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+  if (LIFECYCLE === 'local') {
+    results.push({
+      id,
+      outcome: land && land.landed ? 'landed' : 'land-failed',
+      commit: land?.commit,
+      findings,
+      judgement: judgementCalls
+    })
+    log(`${id}: LANDED ${land?.commit ?? ''} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+  } else {
+    if (resumeAt === 'build' && (!land || !land.landed)) {
+      log(`${id}: COMMIT FAILED — ${land ? land.summary : 'agent failed'}`)
+      results.push({ id, ticket: ticket.key, outcome: 'land-failed', detail: land?.summary ?? 'agent failed', findings })
+      break
+    }
+
+    const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
+
+    // ---------------------------------------------------------------------
+    // Pull request — push the branch and raise one PR per repo. Idempotent:
+    // an existing open PR for this head is reused, never duplicated.
+    // ---------------------------------------------------------------------
+    let prs = []
+
+    if (resumeAt !== 'done') {
+      phase('Pull request')
+
+      const pr = await agent(
+        `You are the PULL REQUEST STAGE for increment ${id} (${ticket.key}) on branch \`${workBranch}\`.
+YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS BRANCH.
+${GUARDRAILS}
+${MERGE_ORDER_RULE}
+REPOS, in order: ${repos.join(', ')}. GitHub repos: ${ghTable}. Repo paths: ${repoTable}.
+
+For EACH repo, in that order:
+1. \`git -C ${TILDE}/<repoPath> push -u origin ${workBranch}\` — never \`--force\`. If the push is rejected as
+   non-fast-forward, report ok:false naming the repo; a diverged branch needs a human.
+2. LOOK FOR AN EXISTING PR FIRST. One command:
+   \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state,title\`
+   - It returns an OPEN pr → REUSE IT. Do not create anything. raised:false.
+   - It returns only a MERGED or CLOSED pr → report ok:false. A merged branch being re-pushed means the
+     lifecycle is out of step and a new PR would hide that.
+   - It returns nothing → create one:
+     a. Write the body with the Write tool to ${WORKAREA}/logs/${id}-pr-<repo>.md. It says what changed, names
+        the increment id and the ticket, and for a \`both\` increment names the sibling repo and states the merge
+        order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
+     b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
+     raised:true.
+3. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array holds
+   \`{"repo":"<repo>","url":"<url>","number":<n>}\` for every PR that now exists — appending, never replacing an
+   entry that is already there. Re-check with \`jq empty ${BACKLOG_TILDE}\`. Do this after EACH repo, not once at
+   the end: a run that dies between two PRs must not lose the first.
+
+Report every PR in prs\[\], in the same order. Report ok:true only when every repo has exactly one open PR.
+Return the structured output only.`,
+        { label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA }
+      )
+
+      if (!pr || !pr.ok || (pr.prs ?? []).length === 0) {
+        log(`${id}: PR STAGE FAILED — ${pr ? pr.summary : 'agent failed'}`)
+        results.push({ id, ticket: ticket.key, outcome: 'pr-failed', detail: pr?.summary ?? 'agent failed', findings })
+        break
+      }
+
+      prs = pr.prs
+      log(`${id}: ${prs.length} PR(s) — ${prs.map((p) => p.url).join(' ')}`)
+
+      // -------------------------------------------------------------------
+      // CI — block on the checks, fix red a bounded number of times, and stop
+      // rather than merge anything that is not green.
+      // -------------------------------------------------------------------
+      phase('CI')
+
+      const watch = () =>
+        agent(
+          `You are the CI WATCHER for increment ${id} (${ticket.key}). WAIT for the checks on every PR below to
+resolve, and report what they did. You change no code and you merge nothing.
+${GUARDRAILS}
+THE PULL REQUESTS:
+${prList(prs)}
+
+For EACH pr, in the order listed:
+1. BLOCK on it. One Bash call, with the tool's \`timeout\` parameter set to 600000:
+   \`gh pr checks <url> --watch --fail-fast --interval 30 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
+2. Read that log ONCE.
+   - The command exited zero and the log shows every check passing → that PR is green.
+   - It exited non-zero → that PR is RED. Put one line per failing check in failures\[\], naming the check and
+     what it actually said.
+   - The Bash call hit its timeout → the run has NOT resolved. Repeat step 1. You may do this at most
+     ${CI_WATCH_WINDOWS} times per PR in total. Still unresolved after that → state "unresolved", and it counts
+     as RED, never as green.
+   - \`gh\` reports that the PR has NO checks configured → state "unresolved", green:false, and put
+     "no checks configured on <repo>" in blocked. Merging on an absence of evidence is not merging on green.
+3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+   \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
+   job is Playwright, say so — its real evidence is \`test-results/*/error-context.md\`, not the run output.
+
+\`blocked\` is ONLY for something a code fix cannot address — no checks configured, \`gh\` refused, the PR is
+gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
+green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
+Return the structured output only.`,
+          { label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA }
+        )
+
+      let ci = await watch()
+
+      let ciAttempt = 0
+      while ((!ci || !ci.green) && !hardStop(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
+        ciAttempt += 1
+        log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
+
+        await agent(
+          `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
+CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you do not close anything.
+${GUARDRAILS}
+${readIncrement(id)}
+THE PULL REQUESTS:
+${prList(prs)}
+WHAT THE WATCHER SAW:
+${ci ? (ci.failures ?? []).map((f, i) => `${i + 1}. ${f}`).join('\n') || ci.summary : 'the watcher agent died — go and read the checks yourself'}
+
+TASK:
+1. READ THE ACTUAL FAILURE, not a summary of it. \`gh pr checks <url> --repo <ghRepo>\` names the failing run;
+   \`gh run view <run-id> --repo <ghRepo> --log-failed > ${WORKAREA_TILDE}/logs/${id}-ci-fail-${ciAttempt}.log 2>&1\`
+   gives you the log. Read that file ONCE.
+   **For a Playwright failure the evidence is \`test-results/*/error-context.md\` in the repo, NOT the tail of the
+   run log.** Go and read those files.
+2. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+   known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
+3. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
+   read once.
+4. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
+   \`git -C ${TILDE}/<repoPath> push origin ${workBranch}\` — never \`--force\`.
+5. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+   ok:false saying exactly that. An honest refusal is worth more than a speculative push.
+Return the structured output only.`,
+          { label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: incrementSchema }
+        )
+
+        ci = await watch()
+      }
+
+      if (!ci || !ci.green) {
+        // Exhausted. The PR stays open and the ticket stays in the working
+        // status — a red PR is never merged and never closed, because a human
+        // has to see it.
+        const detail = ci ? [ci.blocked, ...(ci.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'ci watcher agent died'
+        log(`${id}: CI STILL RED after ${ciAttempt} fix attempt(s) — stopping. PRs left open: ${prs.map((p) => p.url).join(' ')}`)
+        results.push({
+          id,
+          ticket: ticket.key,
+          outcome: 'ci-red',
+          prs: prs.map((p) => p.url),
+          ciFixAttempts: ciAttempt,
+          detail: detail || 'ci did not go green',
+          findings
+        })
+        break
+      }
+
+      // -------------------------------------------------------------------
+      // Merge — provider first, and watch the base branch after each one.
+      // -------------------------------------------------------------------
+      phase('Merge')
+
+      const merge = await agent(
+        `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green. Merge them and
+prove \`${BASE_BRANCH}\` survived it.
+${GUARDRAILS}
+${MERGE_ORDER_RULE}
+THE PULL REQUESTS, in merge order:
+${prList(prs)}
+
+For EACH pr, in that order:
+1. If this is not the first pr, RE-CHECK IT FIRST — merging the previous one moved \`${BASE_BRANCH}\` underneath
+   it. \`gh pr checks <url> --watch --fail-fast --interval 30\`, Bash \`timeout\` 600000, at most
+   ${CI_WATCH_WINDOWS} times. **If it is now RED, STOP.** Report green:false, name it in blocked as
+   "<repo> PR went red after <previous repo> merged", and leave BOTH the merged commit and this open PR exactly
+   as they are. Do NOT revert the merge, do NOT close the PR, do NOT force anything through. A revert is a
+   human's call.
+2. Confirm it is mergeable and green:
+   \`gh pr view <url> --repo <ghRepo> --json mergeable,mergeStateStatus,statusCheckRollup\`
+   Anything other than a clean, green, mergeable PR stops you. NEVER merge a red PR, under any circumstance.
+3. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
+4. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
+5. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
+   \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,name,status,conclusion --limit 20\`
+   then, for each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
+   \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
+   At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
+   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, put "the base branch went red after merging
+   <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
+   base branch being red is a human decision, not a repair job.
+6. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
+   its merge \`"sha"\`. \`jq empty ${BACKLOG_TILDE}\` after. Do this after EACH merge.
+
+green:true ONLY if every pr merged AND ${BASE_BRANCH} went green afterwards for every one of them.
+Return the structured output only.`,
+        { label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA }
+      )
+
+      if (!merge || !merge.green) {
+        const detail = merge ? [merge.blocked, ...(merge.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'merge agent died'
+        log(`${id}: MERGE/BASE-BRANCH STOP — ${detail}`)
+        results.push({
+          id,
+          ticket: ticket.key,
+          outcome: 'main-red',
+          prs: prs.map((p) => p.url),
+          merged: merge?.merged ?? [],
+          detail: detail || 'the merge stage did not reach green',
+          findings
+        })
+        break
+      }
+
+      log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
+    }
+
+    // ---------------------------------------------------------------------
+    // Done — the ticket moves only once the merge is real and the base branch
+    // has proved it. This is also what marks the increment done in the backlog.
+    // ---------------------------------------------------------------------
+    phase('Done')
+
+    const done = await agent(
+      `Increment ${id} is merged into \`${BASE_BRANCH}\` and the base branch is green. Close out ${ticket.key}.
+${GUARDRAILS}
+TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIGURATION, given to you here.
+1. \`${JIRA}/transition-ticket.sh ${ticket.key} "${STATUS_DONE}"\`.
+   If it reports that status is not available, run \`${JIRA}/transition-ticket.sh ${ticket.key} --list\` and
+   report ok:false with BOTH the status you were asked for — \`${STATUS_DONE}\` — AND the full list of
+   transitions the board actually offers, so the config fix is obvious from your report alone.
+   Do NOT guess a nearby status, do NOT pick one off the list yourself, and do NOT edit the ticket some
+   other way.
+2. Confirm it landed: \`${JIRA}/ticket.sh ${ticket.key} summary\` must now show status \`${STATUS_DONE}\`.
+3. Update ${BACKLOG}: set this increment's "status" to "done". Leave \`ticket\`, \`branch\`, \`commit\` and
+   \`prs\` in place — they are the record of how it got there. Keep the JSON valid
+   (\`jq empty ${BACKLOG_TILDE}\`).
+Return the structured output only.`,
+      { label: `${id} done`, phase: 'Done', schema: incrementSchema }
+    )
+
+    if (!done || !done.ok) {
+      log(`${id}: TICKET NOT MOVED TO "${STATUS_DONE}" — ${done ? done.summary : 'agent failed'}. The merge stands.`)
+      results.push({
+        id,
+        ticket: ticket.key,
+        outcome: 'done-failed',
+        prs: prs.map((p) => p.url),
+        detail: done?.summary ?? 'agent failed',
+        findings
+      })
+      break
+    }
+
+    results.push({
+      id,
+      ticket: ticket.key,
+      branch: workBranch,
+      outcome: 'landed',
+      commit: land?.commit,
+      prs: prs.map((p) => p.url),
+      findings,
+      judgement: judgementCalls
+    })
+
+    log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+  }
 
   // A HALT-FOR-REVIEW gate is a DESIGNED human checkpoint, not a review finding.
   // The judge absorbs routine triage; it does not absorb these.
@@ -728,12 +1448,12 @@ Return the structured output only.`,
 If it prints \`null\`, return ok:true with summary "no gate". Otherwise return ok:false and put the gate's full text
 in summary — the run will stop so a human can review before dependent increments proceed.
 Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
-    { label: `${id} gate check`, phase: 'Land', schema: incrementSchema }
+    { label: `${id} gate check`, phase: LIFECYCLE === 'full' ? 'Done' : 'Land', schema: incrementSchema }
   )
 
   if (gate && !gate.ok) {
     log(`${id}: HALT-FOR-REVIEW GATE — stopping the run. ${gate.summary}`)
-    results.push({ id, outcome: 'halted-at-gate', detail: gate.summary })
+    results.push({ id, ticket: ticket?.key, outcome: 'halted-at-gate', detail: gate.summary })
     break
   }
 }

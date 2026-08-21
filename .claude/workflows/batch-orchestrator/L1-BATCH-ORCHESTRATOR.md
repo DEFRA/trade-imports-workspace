@@ -8,15 +8,23 @@
 L0 gives you these. Everything below resolves against them.
 
 ```
-<workspace-tilde>  the workspace root, tilde form — use in Bash
-<workspace-abs>    the workspace root, absolute — use for Read/Write/Edit
+<workspace-tilde>  the workspace root, tilde form — use in Bash. Canonically
+                   ~/git/defra/trade-imports-animals-workspace (CLAUDE.md rule 1)
+<workspace-abs>    the workspace root, absolute — use for Read/Write/Edit. L0 resolved
+                   it on THIS machine; never substitute a home directory of your own
 <workarea-rel>     path under workareas/, e.g. shared/<programme>
 <workarea>         <workspace-tilde>/workareas/<workarea-rel> — use in Bash
 <workarea-abs>     <workspace-abs>/workareas/<workarea-rel> — use for Read/Write/Edit
 <backlog>          <workarea>/backlog.json
-<branch>           the branch every repo in this programme is cut onto
+<branch>           the BASE branch. Every increment cuts its own branch off this one
+                   and merges back into it. Normally main
 <scope>            conventional-commit scope for landing commits
 <executor>         claude | codex
+<lifecycle>        full | local
+<jira-project>     Jira project key for raised tickets. full only
+<epic>             parent epic every raised ticket hangs off. full only
+<in-progress>      the board's working status, e.g. In Progress. full only
+<done-status>      the board's finished status, e.g. Done. full only
 <batch-number>     this batch's number
 <budget>           the MOST increments you may build before returning. Not a target
 <report-path>      where your full batch report goes
@@ -26,7 +34,29 @@ L0 gives you these. Everything below resolves against them.
 must not be told in advance. You derive each one from `backlog.json` after the previous one lands.
 
 Repo paths: `frontend` = `repos/trade-imports-animals-frontend`, `backend` =
-`repos/trade-imports-animals-backend`, `tests` = `repos/trade-imports-animals-tests`.
+`repos/trade-imports-animals-backend`, `tests` = `repos/trade-imports-animals-tests`. An increment whose
+`repo` field is `both` touches the backend and the frontend, on the same branch name in each.
+
+## WHAT "LANDED" MEANS
+
+Under `<lifecycle> = full`, the loop runs a whole ticket-to-merge lifecycle per increment: it raises a
+Jira ticket, moves it to `<in-progress>`, cuts a ticket-named branch off fresh `<branch>`, builds,
+commits, pushes, raises a PR, waits on CI, merges on green, watches `<branch>`, then moves the ticket to
+`<done-status>`.
+
+**An increment is landed only when its PR is merged, `<branch>` is green afterwards and its ticket is
+`<done-status>`.** A local commit is not a landing. Verify all three (Step 4).
+
+**`<in-progress>` and `<done-status>` are board configuration, bound by L0.** Use them literally and
+compare by exact string. Never substitute a status name of your own, and never infer from a name where a
+status sits in the workflow — this board carries `Ready for Dev`, `Deskcheck`, `IN QA` and `CLOSED`, and
+none of them tells you a direction.
+
+Under `<lifecycle> = local` the loop commits locally and stops there — no Jira, no push, no PR. A local
+commit IS the landing, and the ticket and PR checks below do not apply.
+
+**Batches take substantially longer per increment than they used to**, because CI waits are real waiting.
+Expect that, do not treat a slow batch as a stall, and do not shorten a wait to keep the batch moving.
 
 ## YOUR JOB
 
@@ -64,6 +94,8 @@ Stop and return when any of these is true:
 | `premise-invalidated` | What just landed removed the next increment's basis, and it needs re-planning rather than a patch |
 | `gate` | The increment carried a designed halt gate. The loop lands it, then stops |
 | `increment-failed` | Baseline red, implement failed, or a red ladder rolled back |
+| `ci-red` | The PR never went green within its fix budget. It is still open; the ticket is still at `<in-progress>` |
+| `main-red` | `<branch>` went red after a merge, or a second PR went red after the first merged |
 
 ## GUARD RAILS
 
@@ -80,9 +112,14 @@ Stop and return when any of these is true:
 - For Playwright failures read `test-results/*/error-context.md`, not the tail of the run.
 - **Rollback is always `git stash push -u`.** Never `reset --hard`. Never `clean -fd`. The stash is
   recoverable and that is the whole point.
+- **A stash does not travel.** Under `full`, a failed increment's work is committed as `wip(...)` on its
+  own branch and **pushed**, so another engineer can fetch it. The stash stays the verb for genuinely
+  local mess. Check the branch really is on the remote before you report the increment as preserved.
 - **`jq` cannot edit in place.** Write to a temp file, `jq empty` the temp file, then `mv` it over the
   target. Three calls.
-- **`sleep` is blocked.** Wait with a backgrounded `until` loop.
+- **`sleep` is blocked.** Wait with a backgrounded `until` loop. To wait on CI, block on
+  `gh pr checks --watch` or `gh run watch --exit-status` with the Bash tool's `timeout` set to 600000.
+  A watch that hits that timeout has not gone green — never read an unresolved watch as a pass.
 - **Headless.** Never ask a question. Decide, record the decision in the batch report, keep going.
 
 ## STEP 0 — validate the backlog, then derive the next increment
@@ -238,6 +275,13 @@ const FALLBACK = {
   branch: '<branch>',
   scope: '<scope>',
   executor: '<executor>',
+  lifecycle: '<lifecycle>',
+  jiraProject: '<jira-project>',
+  epic: '<epic>',
+  jiraInProgressStatus: '<in-progress>',
+  jiraDoneStatus: '<done-status>',
+  ciFixAttempts: 3,
+  ciWatchMinutes: 30,
   increments: ['<the one id you derived>']
 }
 ```
@@ -256,6 +300,11 @@ Workflow({
     branch: "<branch>",
     scope: "<scope>",
     executor: "<executor>",
+    lifecycle: "<lifecycle>",
+    jiraProject: "<jira-project>",
+    epic: "<epic>",
+    jiraInProgressStatus: "<in-progress>",
+    jiraDoneStatus: "<done-status>",
     increments: ["<the one id you derived>"]
   }
 })
@@ -340,6 +389,43 @@ The loop reports. Codex reports. **Verify both yourself.** Per increment:
 - The tree is clean: `git -C <repo> status --short`.
 - Everything the increment's `filesToTouch` listed is in the commit, and nothing is in the commit that
   was not listed: `git -C <repo> show --stat <sha>`.
+
+**Under `<lifecycle> = full`, a local commit proves nothing on its own. Also confirm all three of these,
+and treat any one of them failing as `land-failed`:**
+
+- **The PR merged.** Take the URLs the backlog persisted, then ask GitHub, not the loop:
+  ```bash
+  jq -r --arg id "<id>" '.increments[] | select(.id==$id) | .prs[]? | "\(.repo) \(.url)"' <backlog>
+  ```
+  ```bash
+  gh pr view <url> --json state,mergedAt,mergeCommit
+  ```
+  `state` must be `MERGED`. A cross-repo increment has **two** PRs and **both** must be merged.
+- **The merge is on `<branch>`.** `git -C <repo> fetch origin`, then
+  `git -C <repo> log --oneline -n 5 origin/<branch>` — the merge commit is there.
+- **The ticket has finished.**
+  ```bash
+  jq -r --arg id "<id>" '.increments[] | select(.id==$id) | .ticket // "NO TICKET"' <backlog>
+  ```
+  ```bash
+  <workspace-tilde>/tools/jira/ticket.sh <KEY> summary
+  ```
+  Status exactly `<done-status>` is the pass. **Anything else is a fail, including a status that reads as
+  final.** `CLOSED` is not `<done-status>`, and neither is `IN QA`. Record the status you actually saw.
+
+**Never quote a PR state or a ticket status forward from the loop's report.** Ask GitHub and Jira.
+
+**A red PR is left open, never merged and never closed.** If the loop returns `ci-red`, record the PR
+URL and what was still failing, stop the batch and return. Do not merge it yourself, do not close it, and
+do not raise a second PR for the same branch.
+
+**`<branch>` going red after a merge is a stop condition, not a repair job.** Report it, leave the ticket
+where it is, stop the batch. **Do not revert** — a revert is a human's call.
+
+**A transition the board will not accept is a CONFIG fault, not a ticket fault.** The loop reports both
+the status it was given and the transitions the board offers. Put both on your `blocked` line verbatim so
+L0 can hand a human the exact correction. **Do not move the ticket yourself**, do not pick a status off
+the list, and do not edit the loop — `<in-progress>` and `<done-status>` are parameters.
 
 **Verify a failure claim before acting on it.** A subagent reporting a 500, a red suite or a broken
 container may be reporting its own environment. Reproduce it yourself. Where you cannot reproduce it,
@@ -436,10 +522,11 @@ budget: <budget>
 driver: workflow | codex-direct
 script: workareas/<workarea-rel>/build-loop.run.js | n/a
 attempted: <id> <id> <id>
-landed: <id>=<sha> <id>=<sha>
-not-landed: <id>=<outcome>
-ended-early: budget-spent | no-buildable | premise-invalidated | gate | increment-failed
-stashes: <ref> (only if something was rolled back)
+landed: <id>=<sha>,<TICKET>,<pr-url> <id>=<sha>,<TICKET>,<pr-url>
+not-landed: <id>=<outcome>,<TICKET>,<pr-url>
+ended-early: budget-spent | no-buildable | premise-invalidated | gate | increment-failed | ci-red | main-red
+preserved: none | <id>=<branch>@<wip-sha> (full) | <id>=<stash-ref> (local)
+open-prs: none | <url> (a red PR left open for a human)
 backlog: <done> of <total> done, <todo> todo, <deferred> deferred
 trees-clean: frontend=yes backend=yes tests=yes
 gate: none | <increment id>: <one line of the gate text>
@@ -447,6 +534,10 @@ blocked: none | <one line>
 owed-to-human: none | <one line>
 report: <report-path>
 ```
+
+On `landed`, the ticket key and PR URL are **required** under the full lifecycle — L0 writes them into
+the ledger and cannot get them any other way. A cross-repo increment lists both PR URLs, backend first.
+Under `local`, give the SHA alone. Omit the ticket and PR fields from `not-landed` where none exists yet.
 
 `attempted` is every id you started, landed or not, in the order you derived them. L0 needs it to
 reconcile if a later batch dies.
@@ -460,7 +551,10 @@ correct — a gate is a human checkpoint by design, not a review finding.
 
 ## LANDING RULES
 
-- The loop commits; **it never pushes.** Pushing is the user's call.
+- **Under `full`, the loop owns the whole lifecycle** — ticket, branch, commit, push, PR, CI, merge,
+  ticket to `<done-status>`. You verify each step; you never perform one. Do not raise a ticket, cut a
+  branch, open a PR, transition a ticket or merge anything yourself.
+- **Under `local`, the loop commits and never pushes.** Pushing is the user's call.
 - Commit subject is `<type>(<scope>): <increment title>`. The body is where a future reader learns
   **why** — record deviations, what was deliberately not fixed, and **what you did not verify
   yourself**. Trailer:
@@ -471,8 +565,17 @@ correct — a gate is a human checkpoint by design, not a review finding.
   commit.
 - **Test failures on this branch are yours.** "Pre-existing" and "separate issue" are not available. Red
   on your branch means you fix it now, whatever its provenance.
-- A red ladder rolls back with `git stash push -u`, records the failure and the stash ref in the
-  increment's `notes`, and **stops the batch** — return with `increment-failed`. Do not build the next
-  increment on top of a failure, and do not derive a different one to fill the budget.
+- A red ladder **stops the batch** — return with `increment-failed`. Do not build the next increment on
+  top of a failure, and do not derive a different one to fill the budget.
+  Under `full`, the loop commits the failed attempt as `wip(...)` on the increment's own branch, pushes
+  it, and records the branch and wip SHA in the increment's `notes`. Confirm the push landed —
+  `git -C <repo> ls-remote --heads origin <branch>` — and put the branch name on your `preserved` line.
+  It must **not** write a `commit` field: the increment is not built, and a `commit` would make the next
+  attempt skip the build. Under `local` it stashes instead, and the stash ref goes in `notes`.
+- A red PR that exhausts its fix budget also **stops the batch** — return with `ci-red`, the PR URL on
+  your `open-prs` line and what was still failing in the report. The PR stays open and the ticket stays
+  at `<in-progress>` so a human can pick it up.
+- `<branch>` going red after a merge **stops the batch** — return with `main-red`. Report it and leave
+  the ticket at whatever status it had reached. **Never auto-revert.**
 - **Never end a turn idle** while the batch is running. Order per increment: verify → review → commit →
   update the backlog → revalidate → start the next increment → then write anything.

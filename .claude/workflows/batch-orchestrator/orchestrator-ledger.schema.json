@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "orchestrator-ledger.schema.json",
   "title": "Batch orchestrator ledger",
-  "description": "Batch history for one programme's build run. Lives at <workarea>/orchestrator-ledger.json. Written only by L0. Records what each batch actually built; backlog.json remains the plan of record for increment truth. A batch is a budget, not a plan — L0 hands L1 a count and L1 re-derives the next increment after every landing, so the ids are known only as they land.",
+  "description": "Batch history for one programme's build run. Lives at <workarea>/orchestrator-ledger.json. Written only by L0. Records what each batch actually built; backlog.json remains the plan of record for increment truth. A batch is a budget, not a plan — L0 hands L1 a count and L1 re-derives the next increment after every landing, so the ids are known only as they land. Under the full lifecycle an increment is landed only once its PR is merged, the base branch is green and its ticket has reached jiraDoneStatus.",
   "type": "object",
   "required": ["ledgerVersion", "programme", "batches"],
   "additionalProperties": false,
@@ -22,7 +22,7 @@
         },
         "branch": {
           "type": "string",
-          "description": "The branch every repo in the programme is cut onto"
+          "description": "The BASE branch. Every increment cuts its own ticket-named branch off this one and merges back into it. Normally main"
         },
         "scope": {
           "type": "string",
@@ -32,6 +32,27 @@
           "type": "string",
           "enum": ["claude", "codex"],
           "description": "The executor increment-build-loop runs with"
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": ["full", "local"],
+          "description": "full = ticket, branch, PR, CI, merge, ticket Done per increment. local = commit on the current branch only, no Jira and no PR. Default full"
+        },
+        "jiraProject": {
+          "type": "string",
+          "description": "Jira project key raised tickets land in, e.g. EUDPA. Absent when lifecycle is local"
+        },
+        "epic": {
+          "type": "string",
+          "description": "The parent epic every raised ticket hangs off. Required when lifecycle is full"
+        },
+        "jiraInProgressStatus": {
+          "type": "string",
+          "description": "The board's working status, set when an increment's build starts, e.g. In Progress. Board configuration, not a constant — confirm it with tools/jira/transition-ticket.sh <KEY> --list, never from a script's --help text. Recorded here so a later session can see which board wording this programme was built against"
+        },
+        "jiraDoneStatus": {
+          "type": "string",
+          "description": "The board's finished status, set after the merge, e.g. Done. Same caveat as jiraInProgressStatus: confirm it against the board. A ticket at any other status, however final it reads, is not a landing"
         },
         "batchSize": {
           "type": "integer",
@@ -115,11 +136,20 @@
                 "id": { "type": "string" },
                 "commit": {
                   "type": "string",
-                  "description": "Short SHA, verified by L0 against git log — not copied from L1's report unchecked"
+                  "description": "Short SHA on the base branch, verified by L0 against git log — not copied from L1's report unchecked. Under the full lifecycle this is the merge commit"
                 },
                 "repo": {
                   "type": "string",
-                  "description": "The increment's repo field: frontend, backend or tests"
+                  "description": "The increment's repo field: frontend, backend, tests, or both"
+                },
+                "ticket": {
+                  "type": "string",
+                  "description": "The Jira key the increment was built under, e.g. EUDPA-12345. Its status is jiraDoneStatus by the time an increment reaches landed. Absent when lifecycle is local"
+                },
+                "prs": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "The merged pull request URLs, one per repo the increment touched — two for a cross-repo increment, backend first. Absent when lifecycle is local"
                 }
               }
             }
@@ -142,13 +172,37 @@
                     "not-reached",
                     "unplanned-stub",
                     "no-longer-buildable",
-                    "premise-invalidated"
-                  ]
+                    "premise-invalidated",
+                    "ticket-failed",
+                    "branch-failed",
+                    "pr-failed",
+                    "ci-red",
+                    "main-red",
+                    "done-failed"
+                  ],
+                  "description": "ci-red = the PR never went green within its fix budget; it is still open and the ticket is still at jiraInProgressStatus. main-red = the base branch went red after a merge, or a second PR went red after the first merged; the run halted for a human. done-failed = merged and green, but the ticket would not transition to jiraDoneStatus — usually because that status is not what this board calls it, which detail names alongside the transitions the board does offer"
                 },
                 "detail": { "type": "string" },
+                "ticket": {
+                  "type": "string",
+                  "description": "The Jira key, where one was raised before the increment failed. Its status says where the lifecycle stopped"
+                },
+                "prs": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Pull request URLs left OPEN by a failure. A red PR is never merged and never closed — a human reads it"
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "The increment's branch, PUSHED with the failed attempt committed as wip. This is how a failed attempt reaches another machine — prefer it to stash, which is machine-local. Full lifecycle only"
+                },
+                "wip": {
+                  "type": "string",
+                  "description": "Short SHA of the wip commit holding the failed attempt on that branch"
+                },
                 "stash": {
                   "type": "string",
-                  "description": "The stash ref the rollback produced, so the work is recoverable"
+                  "description": "The stash ref the rollback produced, so the work is recoverable on THIS machine. Local lifecycle only — a stash ref does not travel"
                 }
               }
             }

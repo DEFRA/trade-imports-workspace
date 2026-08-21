@@ -114,6 +114,28 @@ The artifact is the exception and carries its stylesheet and script inline,
 because it exists to be sent to someone and a second and third file that had
 to travel with it would defeat the point.
 
+The backlog can be put into the order the report reads in:
+
+```bash
+tim parity reorder EUDPA-328-DR1C            # the backlog into the order the report reads
+tim parity reorder EUDPA-328-DR1C --check    # what would move, and a non-zero exit if any would
+```
+
+The report groups the findings by page and orders those pages by the journey
+the frontend defines, so it reads down the service rather than by band.
+`backlog.json` is what the `journey-builder` build loop pops increments from,
+and it is in authoring order, so the build order does not follow the journey
+until `reorder` rewrites it into the order the report presents. Re-run it
+whenever the flow changes; a hand-sorted file goes stale the moment it does.
+
+`--check` writes nothing, says how many increments would move and exits
+non-zero while the backlog is out of order. The only thing that changes is the
+order of the `increments` array — the file is round-tripped first and the run
+refuses rather than reformat it. A corpus that declares no journey has no order
+to follow, and the command refuses rather than guess at one; so does a corpus
+whose journey it cannot read, which usually means the repo the journey names is
+not checked out.
+
 The evidence — the pictures, and the commits they are of — has its own
 commands. Element crops are declared as data rather than written into a spec:
 

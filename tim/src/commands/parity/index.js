@@ -7,6 +7,7 @@ import { runCounts } from '../../parity/counts.js'
 import { runCitations } from '../../parity/citations/run.js'
 import { runEvidence } from '../../parity/citations/evidence.js'
 import { runReport } from '../../parity/render/run.js'
+import { runReorder } from '../../parity/reorder.js'
 import { runCheck } from '../../parity/check.js'
 import { buildCorpusMeta } from '../../parity/meta.js'
 import { runSplitSentinels } from '../../parity/split-sentinels.js'
@@ -257,6 +258,44 @@ const renderAnchors = (result) =>
     )
     .join('\n')
 
+// The report groups the findings by page and orders those pages by the
+// journey. The backlog is what the build loop pops increments from, so until
+// it holds the same order the two disagree about what comes next.
+const outsideTheReport = (ids) =>
+  ids.length === 1
+    ? `1 increment the report does not show sits at the end: ${ids[0]}.`
+    : `${ids.length} increments the report does not show sit at the end: ${ids.join(', ')}.`
+
+const reorderHeadline = (result) => {
+  if (result.inOrder) {
+    return 'The backlog is in the order the report presents it.'
+  }
+  return result.checked
+    ? 'The backlog is not in the order the report presents it.'
+    : 'The backlog is now in the order the report presents it.'
+}
+
+const reorderNextStep = (result) => {
+  if (!result.checked) return `Written to ${result.path}`
+  if (result.inOrder) return 'Nothing to change.'
+  return `Put it in order: tim parity reorder ${result.runId}`
+}
+
+const renderReorder = (result) => {
+  const move = result.checked ? 'would move' : 'moved'
+  const stay = result.checked
+    ? 'stay where they are'
+    : 'stayed where they were'
+
+  return [
+    reorderHeadline(result),
+    `${result.moved} of ${result.total} increments ${move}, and ${result.stayed} ${stay}.`,
+    ...(result.notShown.length ? [outsideTheReport(result.notShown)] : []),
+    reorderNextStep(result),
+    ...result.warnings.map((warning) => `warning: ${warning}`)
+  ].join('\n')
+}
+
 export const register = (program, { timVersion }) => {
   const parity = program
     .command('parity')
@@ -410,6 +449,26 @@ export const register = (program, { timVersion }) => {
             `${result.items.increments} findings, ${result.items.candidates} deferred candidates, ${result.items.withdrawn} withdrawn.`,
             ...result.warnings.map((w) => `warning: ${w}`)
           ].join('\n'),
+        timVersion
+      })
+    )
+
+  parity
+    .command('reorder <runId>')
+    .description(
+      "Put the backlog's increments in the order the report presents them, page by page down the journey"
+    )
+    .option(
+      '--check',
+      'Report what would move and exit non-zero while the backlog is out of order, without writing'
+    )
+    .action(
+      makeParityAction({
+        run: async ({ profile, runId }, opts) => ({
+          ...(await runReorder({ profile, check: Boolean(opts.check) })),
+          runId
+        }),
+        renderText: renderReorder,
         timVersion
       })
     )

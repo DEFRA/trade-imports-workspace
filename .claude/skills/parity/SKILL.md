@@ -348,6 +348,36 @@ A moved pin or a missing capture is blocking, and `--strict` makes it a
 non-zero exit. A citation whose anchor has drifted is not: it is a finding to
 re-verify, which is the expected yield of pinning to HEAD.
 
+#### Put the backlog in the same order as the report
+
+The report groups the findings by page and orders those pages by the journey
+the frontend defines. `backlog.json` is what the `journey-builder` build loop
+pops increments from, so while it stays in authoring order the two disagree
+about what comes next. This rewrites the backlog into the order the report
+presents it:
+
+```
+tim parity reorder EUDPA-328-DR1C
+tim parity reorder EUDPA-328-DR1C --check
+```
+
+`--check` writes nothing, names how many increments would move, and exits
+non-zero while the backlog is out of order. Run it in a pre-build check.
+
+The order is read off the report's own grouping, never rebuilt: journey section
+order, then page order within the section, then the card order the page uses —
+gated work first, ruled work at the foot of its page. Anything the report does
+not show in a page group sits below all of it, in the order it already had:
+withdrawn findings are the case that occurs today.
+
+The only thing that changes is the order of the `increments` array. The file is
+round-tripped and refused if it does not come back byte for byte, so a
+formatting difference stops the run rather than landing silently on the corpus.
+
+A corpus that declares no journey — `dr21` compares two designs, not a service
+— has no order to follow, and the command exits 2 saying so. Re-run it whenever
+the journey flow changes; a hand-sorted backlog goes stale the moment it does.
+
 ### WALK — present the gated findings and apply a batch of rulings
 
 Triggers: "rule the parity decisions", "walk parity EUDPA-X".

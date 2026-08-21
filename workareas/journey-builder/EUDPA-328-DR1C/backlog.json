@@ -720,120 +720,6 @@
       ]
     },
     {
-      "id": "inc-094",
-      "type": "flow-change",
-      "milestone": null,
-      "domain": "dashboard",
-      "title": "A dashboard card's links change with the notification's status and a draft can only be resumed, never viewed; Design release 1 gives every card the same two links, Copy as new and View",
-      "detail": "Each card's link row is built from the notification's status, so a trader meets a different set on different cards (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67). A draft gets Resume, Copy as new and Delete; a submitted notification gets View, Amend, Copy as new and Delete; one being amended gets Resume, Copy as new, Cancel amendment and Delete. The captured draft cards show exactly three links — Resume, Copy as new, Delete. There is no way to look at a draft without re-entering it: Resume goes to the task list (`hubPath`) and View exists only once the notification has been submitted, when it opens Check your answers.\n\nDesign release 1 gives every card the same two links whatever its status, side by side after the reference and separated by a divider: \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262, which carries no status condition of any kind). The captured dashboard shows four cards — two \"Submitted\", two \"Submitted action required\" — and all four carry that identical pair. Design release 1 offers no Resume, no Delete, no Amend and no Cancel amendment on a card, and its View is the way into a draft as much as into a submitted one: for a draft the link is built as `/review-notification?reference=…` and for a submitted one as `/review-notification?submitted=…`, so both open the review page and a trader continues a draft by following the Change links from there.\n\nMake the card's link row fixed rather than status-driven, and offer View on every card. In src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67 the three status branches collapse to one list; \"View\" replaces \"Resume\" as the label on a draft and points at Check your answers, the same target it already uses on a submitted notification, which makes the read-only view reachable for a draft for the first time. The order the design shows is Copy as new then View, which is the reverse of the frontend's current copy-then-open order for a draft. Two things are deliberately outside this finding. Delete, Amend and Cancel amendment are the frontend-only journeys already recorded in review--deleting-and-cancelling-an-amendment-are-one-sided, where they are banded disputed pending an artefact that either specifies or rules them out; do not strip those links on the strength of this finding. And whether the frontend should keep a separate route back into a half-finished draft's task list is a question about the hub, not about the card — Design release 1 does not offer one, and if the answer is that it should be kept then it is a third link beside these two, not a replacement for View.\n\nFALSIFIED BY: A status condition around the action block in Design release 1's dashboard card, or a card in the captured dr1-dashboard carrying anything other than Copy as new and View. Extracting every `app-dashboard-notification-card__action` from capture/html/prototype/dr1-dashboard.html gives eight links across four cards, alternating \"Copy as new\" and \"View\" and nothing else.",
-      "screens": [
-        "fe-dashboard-populated",
-        "fe-dashboard-new-draft",
-        "fe-dashboard-deleted",
-        "dr1-dashboard"
-      ],
-      "evidence": {
-        "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67",
-        "prototype": "app/views/dashboard.html:258-262"
-      },
-      "confidence": "high",
-      "band": "frontend-work",
-      "gate": null,
-      "dependsOn": [],
-      "status": "todo",
-      "commit": null,
-      "failure_reason": null,
-      "finding": {
-        "frontend": "Each card's link row is built from the notification's status, so a trader meets a different set on different cards (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67). A draft gets Resume, Copy as new and Delete; a submitted notification gets View, Amend, Copy as new and Delete; one being amended gets Resume, Copy as new, Cancel amendment and Delete. The captured draft cards show exactly three links — Resume, Copy as new, Delete. There is no way to look at a draft without re-entering it: Resume goes to the task list (`hubPath`) and View exists only once the notification has been submitted, when it opens Check your answers.",
-        "prototype": "Design release 1 gives every card the same two links whatever its status, side by side after the reference and separated by a divider: \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262, which carries no status condition of any kind). The captured dashboard shows four cards — two \"Submitted\", two \"Submitted action required\" — and all four carry that identical pair. Design release 1 offers no Resume, no Delete, no Amend and no Cancel amendment on a card, and its View is the way into a draft as much as into a submitted one: for a draft the link is built as `/review-notification?reference=…` and for a submitted one as `/review-notification?submitted=…`, so both open the review page and a trader continues a draft by following the Change links from there.",
-        "difference": "Make the card's link row fixed rather than status-driven, and offer View on every card. In src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67 the three status branches collapse to one list; \"View\" replaces \"Resume\" as the label on a draft and points at Check your answers, the same target it already uses on a submitted notification, which makes the read-only view reachable for a draft for the first time. The order the design shows is Copy as new then View, which is the reverse of the frontend's current copy-then-open order for a draft. Two things are deliberately outside this finding. Delete, Amend and Cancel amendment are the frontend-only journeys already recorded in review--deleting-and-cancelling-an-amendment-are-one-sided, where they are banded disputed pending an artefact that either specifies or rules them out; do not strip those links on the strength of this finding. And whether the frontend should keep a separate route back into a half-finished draft's task list is a question about the hub, not about the card — Design release 1 does not offer one, and if the answer is that it should be kept then it is a third link beside these two, not a replacement for View.",
-        "correction": "None. No claim in this finding was overturned in the writing of it.",
-        "falsifiedBy": "A status condition around the action block in Design release 1's dashboard card, or a card in the captured dr1-dashboard carrying anything other than Copy as new and View. Extracting every `app-dashboard-notification-card__action` from capture/html/prototype/dr1-dashboard.html gives eight links across four cards, alternating \"Copy as new\" and \"View\" and nothing else.",
-        "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found nobody had raised it: service-wide--dashboard-card-carries-extra-facts says in as many words \"Which links the card offers is a separate question and is not changed here\", and no other finding asks it. It was written, and checked, by the same agent, and it has had no independent verifier. What was checked: ran the falsifier over the captured prototype DOM — four `app-dashboard-notification-card__reference` elements and eight `app-dashboard-notification-card__action` links, in four Copy-as-new/View pairs — and read app/views/dashboard.html:253-294 to confirm the action block sits outside every conditional in the loop. Read the four card statuses from their govuk-tag elements: two \"Submitted action required\", two \"Submitted\". Read the frontend's captured DOM for both draft dashboards: three `govuk-summary-card__action` items each, reading Resume, Copy as new, Delete. Opened evidence/prototype@491b3926/page/dr1-dashboard.png and evidence/frontend@76a864ba/page/fe-dashboard-populated.png and read the link rows off both pictures rather than inferring them from the markup. Traced both View targets rather than trusting the rendered href, which is a fixture placeholder on the captured cards: app/routes.js:6617-6619 builds a draft's as /review-notification?reference= and app/routes.js:6644-6646 a submitted one's as /review-notification?submitted=, so View is a real route on both, and the `#` in the capture is the Prototype Kit's static dashboard fixture, which the contract rules out as a finding. Checked the two neighbouring findings for overlap: service-wide--dashboard-card-carries-extra-facts changes the fact pairs and disclaims the links, and review--deleting-and-cancelling-an-amendment-are-one-sided covers the delete and amend journeys but not the card's link row or its labels, so the difference slot leaves those links alone and says why.",
-        "relatedTo": [
-          {
-            "id": "inc-095",
-            "relation": "travels-with",
-            "why": "The same card. That finding changes the fact pairs in its body and explicitly leaves the link row alone; this one changes the link row and leaves the facts alone, so together they are one rework of the card."
-          },
-          {
-            "id": "inc-082",
-            "relation": "travels-with",
-            "why": "Delete, Amend and Cancel amendment are three of the links this finding describes, and whether they should exist at all is that finding's open question rather than this one's."
-          }
-        ]
-      },
-      "citations": [
-        {
-          "ref": "c1",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js",
-          "lines": {
-            "start": 18,
-            "end": 67
-          },
-          "ranges": [
-            {
-              "start": 18,
-              "end": 67
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67",
-          "anchors": [
-            "Resume"
-          ],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.frontend"
-          ]
-        },
-        {
-          "ref": "c2",
-          "kind": "code",
-          "side": null,
-          "repo": "prototype",
-          "path": "app/views/dashboard.html",
-          "lines": {
-            "start": 258,
-            "end": 262
-          },
-          "ranges": [
-            {
-              "start": 258,
-              "end": 262
-            }
-          ],
-          "asWritten": "app/views/dashboard.html:258-262",
-          "anchors": [
-            "Copy as new"
-          ],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.prototype"
-          ]
-        }
-      ],
-      "corpus": "dr1c",
-      "slice": "service-wide",
-      "source": "service-wide--dashboard-card-actions-change-with-status.json",
-      "controls": [
-        {
-          "kind": "label",
-          "text": "Resume"
-        },
-        {
-          "kind": "label",
-          "text": "View"
-        }
-      ]
-    },
-    {
       "id": "inc-092",
       "type": "flow-change",
       "milestone": null,
@@ -1665,289 +1551,6 @@
       ]
     },
     {
-      "id": "inc-098",
-      "type": "obligation-change",
-      "milestone": null,
-      "domain": "dashboard",
-      "title": "Frontend's dashboard always has an ordering applied and no way to have none; Design release 1's sort control loads unselected, so the list starts in whatever order the service returns it",
-      "detail": "There is no unsorted state anywhere in the dashboard. Every option in the select names an ordering, and one of them is always in force: the controller parses the sort query parameter and falls back to a default when it is absent or unrecognised (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53, through parseNotificationSort at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60), and the picture of fe-dashboard-populated shows \"Arrival (newest to oldest)\" already selected on a page the trader has not touched. The default is carried all the way to the notification list read, which defaults the parameter again and interpolates it unconditionally into the request (src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34). So a trader cannot see the list in the order the service returns it, and the page never has to answer the question of what to show when nothing has been chosen.\n\nDesign release 1's select loads on \"Select one\", an unselected placeholder ahead of its three orderings (app/data/dashboard-notifications.js:147-152), and the captured DOM of dr1-dashboard shows it selected. So the design's starting state is a list with no ordering named. The design does not say what that order should be, and it cannot be read off the prototype: getDashboardViewModel reads the sort parameter, hands it to buildDashboardSortItems so the right option shows as selected and to the pagination hrefs, and never orders the notification list by it (app/routes.js:7138-7255), so the prototype's list is in fixture order whatever the select says.\n\nGive the dashboard a state in which no ordering has been chosen, and decide what the list query does in it. Two things have to happen in Frontend. The sort control needs an unselected entry that is not an ordering, which means the default at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65 stops being applied when the trader has chosen nothing rather than being applied silently. Then the notification list read has to be able to ask for a page without an ordering: src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults sort to arrivalDate,desc and :34 puts it in the query string on every call, so the parameter has to become optional there and the stub at src/server/app/services/persistence/records/stub/lifecycle/read.js:18 has to match. The band is frontend-work because both edits are Frontend's and the frontend can build and run this against its own stub today — but confirm with the notifications API's owners what order it returns when no sort parameter is sent before this ships, because that order is what a trader will actually see and neither this design nor the prototype specifies it. Adding the \"Select one\" label to the options list is part of the copy change raised as service-wide--dashboard-sort-orderings-differ; this finding is what the label has to mean.\n\nFALSIFIED BY: Finding a request from Frontend's dashboard for a page of notifications that carries no sort parameter, or an option in Frontend's sort select that is not an ordering. src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34 default the parameter and always send it, and the four options at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 are all orderings.",
-      "screens": [
-        "fe-dashboard-populated",
-        "fe-dashboard-sorted",
-        "dr1-dashboard",
-        "dr1-dashboard-filters-open"
-      ],
-      "evidence": {
-        "frontend": "src/server/app/services/persistence/records/real/lifecycle/read.js:26",
-        "prototype": "app/data/dashboard-notifications.js:147-152"
-      },
-      "confidence": "high",
-      "band": "frontend-work",
-      "gate": null,
-      "dependsOn": [],
-      "status": "blocked",
-      "commit": null,
-      "failure_reason": null,
-      "finding": {
-        "frontend": "There is no unsorted state anywhere in the dashboard. Every option in the select names an ordering, and one of them is always in force: the controller parses the sort query parameter and falls back to a default when it is absent or unrecognised (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53, through parseNotificationSort at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60), and the picture of fe-dashboard-populated shows \"Arrival (newest to oldest)\" already selected on a page the trader has not touched. The default is carried all the way to the notification list read, which defaults the parameter again and interpolates it unconditionally into the request (src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34). So a trader cannot see the list in the order the service returns it, and the page never has to answer the question of what to show when nothing has been chosen.",
-        "prototype": "Design release 1's select loads on \"Select one\", an unselected placeholder ahead of its three orderings (app/data/dashboard-notifications.js:147-152), and the captured DOM of dr1-dashboard shows it selected. So the design's starting state is a list with no ordering named. The design does not say what that order should be, and it cannot be read off the prototype: getDashboardViewModel reads the sort parameter, hands it to buildDashboardSortItems so the right option shows as selected and to the pagination hrefs, and never orders the notification list by it (app/routes.js:7138-7255), so the prototype's list is in fixture order whatever the select says.",
-        "difference": "Give the dashboard a state in which no ordering has been chosen, and decide what the list query does in it. Two things have to happen in Frontend. The sort control needs an unselected entry that is not an ordering, which means the default at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65 stops being applied when the trader has chosen nothing rather than being applied silently. Then the notification list read has to be able to ask for a page without an ordering: src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults sort to arrivalDate,desc and :34 puts it in the query string on every call, so the parameter has to become optional there and the stub at src/server/app/services/persistence/records/stub/lifecycle/read.js:18 has to match. The band is frontend-work because both edits are Frontend's and the frontend can build and run this against its own stub today — but confirm with the notifications API's owners what order it returns when no sort parameter is sent before this ships, because that order is what a trader will actually see and neither this design nor the prototype specifies it. Adding the \"Select one\" label to the options list is part of the copy change raised as service-wide--dashboard-sort-orderings-differ; this finding is what the label has to mean.",
-        "correction": "Not a correction of a claim — a record of provenance, because this file did not exist when the slice was verified. It was split from service-wide--dashboard-sort-orderings-differ, which was typed copy-change but whose difference slot ended \"Decide what 'no ordering chosen' means for the list query, since the frontend always sends a sort parameter today and has no unsorted state.\" An unsorted default is not copy: it changes what the page asks the service for. The parent keeps the option labels and stays copy-change; this file takes the behaviour and is typed obligation-change, because what changes is that an ordering stops being obligatory on every read. Carried across from the parent's own correction, because it bears directly on this finding and would otherwise be lost with it: Design release 1's list is in fixture order whatever its select says. getDashboardViewModel at app/routes.js:7138-7255 uses the sort parameter only to mark the selected option and to build pagination hrefs, and the only two .sort( calls in the whole of app/routes.js are on address names and on a label list. So the prototype cannot be used to answer what \"no ordering chosen\" should show — that is a question for the notifications API's owners, and this finding states it rather than settling it.",
-        "falsifiedBy": "Finding a request from Frontend's dashboard for a page of notifications that carries no sort parameter, or an option in Frontend's sort select that is not an ordering. src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34 default the parameter and always send it, and the four options at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 are all orderings.",
-        "verification": "No independent verifier: this finding was split out of service-wide--dashboard-sort-orderings-differ by the corpus editor during a pre-ingest edit pass, and no second agent has verified it as a finding in its own right. The observations it rests on were all made by that finding's verifier, who was a different agent from its author. That verifier extracted every option from dr1-dashboard.html and got Select one (selected), Newest first, Oldest first, Arrival date; read the frontend's select on fe-dashboard-populated.png and found \"Arrival (newest to oldest)\" pre-selected with no unsorted entry; and traced the prototype's options past the view to buildDashboardSortItems at app/routes.js:6716-6729 and its data at app/data/dashboard-notifications.js:147-152. That verifier also established, on its own initiative and against the author's claim, that Design release 1 never orders its list at all — see the correction below — which is the fact that makes this a real open question rather than a mechanical port. The editor added one thing the verifier had not looked at, because this finding turns on it and the parent finding did not: the path the chosen ordering takes out of Frontend. src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53 parses it, src/server/app/engine/journey.js:92-119 passes it through listKnownJourneys to records.list, and src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults it to arrivalDate,desc and :34 interpolates it into the request URL unconditionally. That is what settles the band: the edit is Frontend's, in Frontend's own files, and runs against Frontend's stub.",
-        "relatedTo": [
-          {
-            "id": "inc-101",
-            "relation": "travels-with",
-            "why": "This finding was split from that one. That one adds the \"Select one\" label to the sort options; this one is what choosing nothing has to mean for the list the page then shows."
-          },
-          {
-            "id": "inc-100",
-            "relation": "travels-with",
-            "why": "Same control. That one is how a chosen ordering gets applied, this one is what happens before one is chosen."
-          }
-        ]
-      },
-      "citations": [
-        {
-          "ref": "c1",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
-          "lines": {
-            "start": 53,
-            "end": 53
-          },
-          "ranges": [
-            {
-              "start": 53,
-              "end": 53
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c2",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js",
-          "lines": null,
-          "ranges": [
-            {
-              "start": 5,
-              "end": 8
-            },
-            {
-              "start": 58,
-              "end": 61
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60",
-          "anchors": [
-            "Arrival (newest to oldest)"
-          ],
-          "resolution": "human",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ],
-          "why": "The sentence names the fallback default and the ordering the trader sees on an untouched page, Arrival (newest to oldest). 58-60 held only parseNotificationSort, so neither the default nor its label was in range. 5-8 carries DEFAULT_NOTIFICATION_SORT = 'arrivalDate,desc' at :5 and the matching option label Arrival (newest to oldest) at :8; 58-61 carries parseNotificationSort returning that default for an absent or unrecognised query value.",
-          "needsHuman": false
-        },
-        {
-          "ref": "c3",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/services/persistence/records/real/lifecycle/read.js",
-          "lines": {
-            "start": 26,
-            "end": 26
-          },
-          "ranges": [
-            {
-              "start": 26,
-              "end": 26
-            }
-          ],
-          "asWritten": "src/server/app/services/persistence/records/real/lifecycle/read.js:26",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.frontend"
-          ]
-        },
-        {
-          "ref": "c4",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/services/persistence/records/real/lifecycle/read.js",
-          "lines": {
-            "start": 34,
-            "end": 34
-          },
-          "ranges": [
-            {
-              "start": 34,
-              "end": 34
-            }
-          ],
-          "asWritten": ":34",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c5",
-          "kind": "code",
-          "side": null,
-          "repo": "prototype",
-          "path": "app/data/dashboard-notifications.js",
-          "lines": {
-            "start": 147,
-            "end": 152
-          },
-          "ranges": [
-            {
-              "start": 147,
-              "end": 152
-            }
-          ],
-          "asWritten": "app/data/dashboard-notifications.js:147-152",
-          "anchors": [
-            "Select one"
-          ],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.prototype"
-          ]
-        },
-        {
-          "ref": "c6",
-          "kind": "code",
-          "side": null,
-          "repo": "prototype",
-          "path": "app/routes.js",
-          "lines": {
-            "start": 7138,
-            "end": 7255
-          },
-          "ranges": [
-            {
-              "start": 7138,
-              "end": 7255
-            }
-          ],
-          "asWritten": "app/routes.js:7138-7255",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c7",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js",
-          "lines": {
-            "start": 58,
-            "end": 65
-          },
-          "ranges": [
-            {
-              "start": 58,
-              "end": 65
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c8",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/services/persistence/records/stub/lifecycle/read.js",
-          "lines": {
-            "start": 18,
-            "end": 18
-          },
-          "ranges": [
-            {
-              "start": 18,
-              "end": 18
-            }
-          ],
-          "asWritten": "src/server/app/services/persistence/records/stub/lifecycle/read.js:18",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c9",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js",
-          "lines": {
-            "start": 27,
-            "end": 36
-          },
-          "ranges": [
-            {
-              "start": 27,
-              "end": 36
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        }
-      ],
-      "corpus": "dr1c",
-      "slice": "service-wide",
-      "source": "service-wide--dashboard-loads-with-an-ordering-already-applied.json",
-      "controls": [
-        "sort"
-      ],
-      "decision": {
-        "ruling": "defer",
-        "note": "Deferred by Sam, 2026-08-21: the dashboard is temporary, so no sort work for now. This finding was split out of the sort-orderings one before ingest because it is a behaviour change rather than copy — the frontend always sends a sort parameter and has no unsorted state, so somebody would have had to decide what no ordering means for the list query. Deferred with the rest of the sort work.",
-        "ruledAt": "2026-08-21T05:57:17Z"
-      }
-    },
-    {
       "id": "inc-100",
       "type": "flow-change",
       "milestone": null,
@@ -1971,6 +1574,11 @@
       "status": "blocked",
       "commit": null,
       "failure_reason": null,
+      "decision": {
+        "ruling": "defer",
+        "note": "Deferred by Sam, 2026-08-21: the dashboard is temporary, so no sort work for now. This was the run's disputed finding about whether Design release 1's sort applies on change or needs an Update button — its select sits in a GET form with no submit control and no script to submit it, so the pipeline refused to state it as fact. The deferral settles it without anyone having to answer that question.",
+        "ruledAt": "2026-08-21T05:57:13Z"
+      },
       "finding": {
         "frontend": "A secondary button labelled \"Update sort\" sits immediately to the right of the sort select and submits the form that carries it (src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:63-82). Changing the select alone re-orders nothing; the trader has to change it and then press the button. The same pattern applies to the filter panel, whose \"Search\" button is the only way to apply the keyword.",
         "prototype": "Design release 1's toolbar holds the results count and the sort select and nothing else (app/views/dashboard.html:231-251). There is no button beside the select and none anywhere in the filter panel, so on the face of the design a choice takes effect on its own.",
@@ -2069,12 +1677,7 @@
       "source": "service-wide--dashboard-sort-needs-an-update-button.json",
       "controls": [
         "Update sort"
-      ],
-      "decision": {
-        "ruling": "defer",
-        "note": "Deferred by Sam, 2026-08-21: the dashboard is temporary, so no sort work for now. This was the run's disputed finding about whether Design release 1's sort applies on change or needs an Update button — its select sits in a GET form with no submit control and no script to submit it, so the pipeline refused to state it as fact. The deferral settles it without anyone having to answer that question.",
-        "ruledAt": "2026-08-21T05:57:13Z"
-      }
+      ]
     },
     {
       "id": "inc-101",
@@ -2100,6 +1703,11 @@
       "status": "blocked",
       "commit": null,
       "failure_reason": null,
+      "decision": {
+        "ruling": "defer",
+        "note": "Deferred by Sam, 2026-08-21: the dashboard is temporary, so no sort work for now. This finding is the sort option labels — Design release 1 offers a different set of orderings from the frontend's four.",
+        "ruledAt": "2026-08-21T05:57:08Z"
+      },
       "finding": {
         "frontend": "The list is headed by a \"Sort by\" select offering four orderings: \"Arrival (newest to oldest)\", \"Arrival (oldest to newest)\", \"Date created (newest to oldest)\" and \"Date created (oldest to newest)\" (src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36, assembled at src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/sort-options.js:8-18). Arrival newest-first is selected when the page loads and there is no unsorted option, so the trader cannot see the list in whatever order the service returns it.",
         "prototype": "Design release 1's select is labelled \"Sort by:\" and offers \"Select one\", \"Newest first\", \"Oldest first\" and \"Arrival date\", in that order and taken from app/data/dashboard-notifications.js:147-152, rendered at app/views/dashboard.html:238-250. \"Select one\" is what the page loads with, so the design's starting state is an unsorted list and no ordering is named until the trader chooses one. The design names what the trader wants — the newest notifications, the oldest, or the next to arrive — rather than naming a field and a direction.",
@@ -2241,12 +1849,7 @@
       "source": "service-wide--dashboard-sort-orderings-differ.json",
       "controls": [
         "sort"
-      ],
-      "decision": {
-        "ruling": "defer",
-        "note": "Deferred by Sam, 2026-08-21: the dashboard is temporary, so no sort work for now. This finding is the sort option labels — Design release 1 offers a different set of orderings from the frontend's four.",
-        "ruledAt": "2026-08-21T05:57:08Z"
-      }
+      ]
     },
     {
       "id": "inc-074",
@@ -2789,117 +2392,6 @@
       ]
     },
     {
-      "id": "inc-106",
-      "type": "flow-change",
-      "milestone": null,
-      "domain": "service-wide",
-      "title": "Five journey pages end with a save-and-return button and a cancel link that Design release 1 does not show there, where the design ends the page with one button",
-      "detail": "Every journey page that renders the shared save-actions macro gets all three of its controls, because the macro takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13): a primary \"Save and continue\", a secondary \"Save and return to hub\" and a \"Cancel and return to hub\" link. The two return controls appear together on 41 of the 67 captured frontend screens, and on every screen where either appears the other does too. So a user meets the same three-way choice at the foot of the origin page, the CPH number page, the contact-address page, the transporter-type page and the private-transporter page.\n\nDesign release 1 shows the three-control pattern on 29 of its 60 captured screens and ends the other journey pages with a single button. On five pages that pair with frontend pages carrying the full set it shows one control and no way to leave: origin-of-the-import, cph-number and transporter-add-private end with \"Save and continue\" alone — the origin page's whole form-actions block is one button at app/views/origin-of-the-import.html:167-175 — and contact-address-for-consignment and transporter-add end with a button reading just \"Continue\". The private-transporter page is the one exception with a second control, and it is a third destination rather than the overview — a \"Cancel and return to dashboard\" link.\n\nStop rendering the secondary button and the cancel link on the five pages the design ends with one button, and leave the pattern intact on the pages that keep it. The macro at src/server/app/shared/save-actions.njk:3-13 renders all three unconditionally, so it needs a way to ask for the primary alone — a flag on the macro, read by the five feature templates — rather than five copies of a shortened button group. Two of the five also differ in the primary label, \"Continue\" against \"Save and continue\", and one carries a cancel link to the dashboard rather than the overview; those are copy on individual pages and belong with whoever picks up this change, not with the shared macro. Design release 1 states no rule for which pages carry the full pattern, so the design's own list is the specification: the five named here lose it and the rest keep it.\n\nFALSIFIED BY: Finding \"Save and return to overview\" or \"Cancel and return to overview\" in the captured DOM of dr1-origin-of-the-import, dr1-cph-number, dr1-contact-address-for-consignment, dr1-transporter-add or dr1-transporter-add-private.",
-      "screens": [
-        "fe-origin",
-        "fe-cph-number",
-        "fe-contact",
-        "fe-transporter-type",
-        "fe-transporter-private",
-        "dr1-origin-of-the-import",
-        "dr1-cph-number",
-        "dr1-contact-address-for-consignment",
-        "dr1-transporter-add",
-        "dr1-transporter-add-private"
-      ],
-      "evidence": {
-        "frontend": "src/server/app/shared/save-actions.njk:3-13",
-        "prototype": "app/views/origin-of-the-import.html:167-175"
-      },
-      "confidence": "high",
-      "band": "frontend-work",
-      "gate": null,
-      "dependsOn": [],
-      "status": "todo",
-      "commit": null,
-      "failure_reason": null,
-      "finding": {
-        "frontend": "Every journey page that renders the shared save-actions macro gets all three of its controls, because the macro takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13): a primary \"Save and continue\", a secondary \"Save and return to hub\" and a \"Cancel and return to hub\" link. The two return controls appear together on 41 of the 67 captured frontend screens, and on every screen where either appears the other does too. So a user meets the same three-way choice at the foot of the origin page, the CPH number page, the contact-address page, the transporter-type page and the private-transporter page.",
-        "prototype": "Design release 1 shows the three-control pattern on 29 of its 60 captured screens and ends the other journey pages with a single button. On five pages that pair with frontend pages carrying the full set it shows one control and no way to leave: origin-of-the-import, cph-number and transporter-add-private end with \"Save and continue\" alone — the origin page's whole form-actions block is one button at app/views/origin-of-the-import.html:167-175 — and contact-address-for-consignment and transporter-add end with a button reading just \"Continue\". The private-transporter page is the one exception with a second control, and it is a third destination rather than the overview — a \"Cancel and return to dashboard\" link.",
-        "difference": "Stop rendering the secondary button and the cancel link on the five pages the design ends with one button, and leave the pattern intact on the pages that keep it. The macro at src/server/app/shared/save-actions.njk:3-13 renders all three unconditionally, so it needs a way to ask for the primary alone — a flag on the macro, read by the five feature templates — rather than five copies of a shortened button group. Two of the five also differ in the primary label, \"Continue\" against \"Save and continue\", and one carries a cancel link to the dashboard rather than the overview; those are copy on individual pages and belong with whoever picks up this change, not with the shared macro. Design release 1 states no rule for which pages carry the full pattern, so the design's own list is the specification: the five named here lose it and the rest keep it.",
-        "falsifiedBy": "Finding \"Save and return to overview\" or \"Cancel and return to overview\" in the captured DOM of dr1-origin-of-the-import, dr1-cph-number, dr1-contact-address-for-consignment, dr1-transporter-add or dr1-transporter-add-private.",
-        "verification": "Written and checked by the verifier, so a reader knows both were the same pass. Ran the falsifier: neither string occurs in any of those five prototype files. Listed both sides exhaustively — \"Save and return to hub\" is in 41 of the 67 frontend files and \"Cancel and return to hub\" in the same 41; \"Save and return to overview\" and \"Cancel and return to overview\" are each in 29 of the 60 prototype files — then walked every entry in pairs.cjs to find the pairs where the two sets disagree, which are the five named. Extracted the button text on each: fe-origin, fe-cph-number, fe-contact, fe-transporter-type and fe-transporter-private each carry all three, dr1-origin-of-the-import, dr1-cph-number and dr1-transporter-add-private carry \"Save and continue\", the last also carrying \"Cancel and return to dashboard\", and dr1-contact-address-for-consignment and dr1-transporter-add carry a submit button whose text is \"Continue\". Read src/server/app/shared/save-actions.njk:3-13 to confirm the macro has no way to suppress a control. Opened evidence/frontend@76a864ba/page/fe-origin.png and evidence/prototype@491b3926/page/dr1-origin-of-the-import.png, which show the difference plainly: three controls against one.",
-        "relatedTo": [
-          {
-            "id": "inc-105",
-            "relation": "travels-with",
-            "why": "Both change the same three controls at the foot of a journey page — one what they say, the other which pages they appear on."
-          }
-        ]
-      },
-      "citations": [
-        {
-          "ref": "c1",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/shared/save-actions.njk",
-          "lines": {
-            "start": 3,
-            "end": 13
-          },
-          "ranges": [
-            {
-              "start": 3,
-              "end": 13
-            }
-          ],
-          "asWritten": "src/server/app/shared/save-actions.njk:3-13",
-          "anchors": [
-            "Save and continue",
-            "Save and return to hub",
-            "Cancel and return to hub"
-          ],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.frontend"
-          ]
-        },
-        {
-          "ref": "c2",
-          "kind": "code",
-          "side": null,
-          "repo": "prototype",
-          "path": "app/views/origin-of-the-import.html",
-          "lines": {
-            "start": 167,
-            "end": 175
-          },
-          "ranges": [
-            {
-              "start": 167,
-              "end": 175
-            }
-          ],
-          "asWritten": "app/views/origin-of-the-import.html:167-175",
-          "anchors": [
-            "Save and continue",
-            "Continue"
-          ],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.prototype"
-          ]
-        }
-      ],
-      "corpus": "dr1c",
-      "slice": "service-wide",
-      "source": "service-wide--save-and-cancel-shown-where-the-design-shows-one-button.json",
-      "controls": [
-        "Save and return to hub",
-        "Cancel and return to hub"
-      ]
-    },
-    {
       "id": "inc-109",
       "type": "flow-change",
       "milestone": null,
@@ -3307,6 +2799,851 @@
         "internalReferenceNumber",
         "internalReference"
       ]
+    },
+    {
+      "id": "inc-126",
+      "type": "flow-change",
+      "milestone": null,
+      "domain": "service-wide",
+      "title": "What a user is offered at the foot of a journey page follows no single rule on either side: the frontend gives some pages three controls and others one, and Design release 1 gives its own sibling pages three, two or one",
+      "detail": "A trader filling in a notification meets one of six different endings to a page, and cannot predict which. On 41 of the 67 captured frontend screens the page ends with three controls — a primary button, a secondary \"Save and return to hub\" button and a \"Cancel and return to hub\" link. On the other 26 the page offers no way to save what has been entered and leave. The two return controls always travel together: on every screen where either appears the other does too, because one shared macro builds all three unconditionally and takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13).\n\nWhat decides which pages get them is not anything a user can see. Nineteen feature templates call that macro, and they are exactly the nineteen answer pages of the linear flow other than the dashboard (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:31-86). Anything routed outside that flow ends the page its own way. So the split falls inside a single section of the service: the CPH number page and the five party pickers are both reached from rows on the consignment addresses page, and the CPH page offers all three controls while Place of origin offers only \"Save and continue\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:109, its label duplicated in a copy key of its own at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62). A trader who wants to stop halfway can do it on one and not on the other.\n\nThe primary beside them is not one button either but three labels out of four copy keys: \"Save and continue\" from the shared key on 30 screens (src/server/app/shared/copy.en.js:42-45), \"Save and finish\" on the four animal-identification states (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25), and \"Continue\" on the seven documents and consignment-addresses states (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:92 and src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:16).\n\nThe 26 screens with no return control break down as nine party-picker states ending with a lone \"Save and continue\"; five check-your-answers and declaration states ending with a lone \"Continue\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:112 and src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk:42); the delete-notification and cancel-amendment confirmations, which pair a primary with a secondary link back; and ten overview, dashboard and confirmation states, which carry page-specific controls rather than the journey pattern and sit outside this finding. Giving a party picker the return controls is not a template edit alone: its post always redirects to the consignment addresses page and never reads the exit value the secondary button submits (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:92, against the shared helpers at src/server/app/shared/kit.js:77-89).\n\nDesign release 1 offers no rule to copy, because it does not follow one itself. Across its 60 captured screens the three-control ending appears on 29; the primary reads \"Save and continue\" on 45 screens and \"Continue\" on 7; and the cancel control has three destinations rather than one — \"Cancel and return to overview\" as a link on the 29, \"Cancel and return to dashboard\" as a secondary button on three, and \"Cancel and return to address book\" as a secondary button on three. Unlike the frontend, the two return controls do not travel together here: six screens offer a way to cancel and no way to save and return.\n\nThe inconsistency lands inside the design's own structures, so no reading of it produces a rule. Of the twelve pages the overview links to (app/routes.js:5749-5841), ten end with all three controls, but origin-of-the-import ends with a single \"Save and continue\" — inside the very same form-actions wrapper the three-control pages use, with the second button and the cancel paragraph simply absent (app/views/origin-of-the-import.html:167-175) — and contact-address-for-consignment ends with a bare \"Continue\" (app/views/contact-address-for-consignment.html:86). Below the consignment-parties row its three sibling sub-pages disagree with each other: permanent-address-animals carries all three (app/views/permanent-address-animals.html:104-120), cph-number carries one \"Save and continue\" (app/views/cph-number.html:55-58) and consignment-address-select carries one (app/views/consignment-address-select.html:167-170). In transport the type chooser ends with a bare \"Continue\" (app/views/transporter-add.html:86) while the two forms below it end with \"Save and continue\" beside a secondary \"Cancel and return to dashboard\" (app/views/transporter-add-private.html:46-51), a destination that appears nowhere else in the notification journey.\n\nThere is no shared partial behind any of this. Eleven root views hand-write the block, nine of them repeating the same wrapper classes verbatim and two writing their own — app/views/consignment-details.html:136-154 against app/views/permanent-address-animals.html:104-120 — and the only journey-form-actions partials in the codebase belong to later releases, which no root view includes, so DR1 never had one place to state the rule in.\n\nThe design's own routing says the single-button pages are omissions rather than decisions. Fifteen post handlers accept the hub action that the secondary button submits, covering nineteen of the design's post routes (app/routes.js:1315-1317), and the handler behind origin-of-the-import is one of them: send it that action and it saves and redirects to the overview (app/routes.js:9265-9268). The page renders no button that would send it.\n\nOne arrangement difference runs through all 29: Design release 1 puts the two buttons on a row and the cancel link in a paragraph beneath them, where the frontend puts all three on one line.\n\nMake the ending of a journey page the same everywhere, on one rule, and apply it from one place. This replaces the earlier reading of the same evidence, which proposed stripping the return controls from the five frontend pages Design release 1 happens to end with one button; that would have copied the design's own inconsistency into the frontend rather than removing it, and it was dropped for that reason. Nothing here changes what any control says.\n\nDeciding the rule needs a service owner, and that is why this is banded disputed: Design release 1 is signed off but does not state one, and neither of the two candidate rules can be read off it. The two are:\n\n(a) Every page that collects an answer ends with the same three controls. Under this the frontend is nineteen-twentieths of the way there and the work is to bring the five party pickers into line: call the shared macro from src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:109 instead of a bare button, and route the exit value through kit.exitTarget in src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:92 so the secondary button has somewhere to go. The per-picker copy key at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62 becomes dead and goes.\n\n(b) Only the pages the overview links to end with the three controls, and a page reached from another page ends with the primary alone. Under this the party pickers stay as they are and seven pages lose their return controls — the second-and-later pages of the task rows at src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-59, namely consignment details, import purpose, port of exit, exit date, transporter selection, private transporter details and CPH number.\n\nThe mechanism is the same either way and belongs in the shared macro, not in copies of a shortened button group. Give src/server/app/shared/save-actions.njk:3-13 a fourth parameter, showReturnControls, defaulting to true, and wrap the secondary button and the cancel link in it. Under (a) no template passes it and the party pickers adopt the macro; under (b) the seven templates named above pass false — src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:25, src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:31, src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk:24, src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk:23, src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk:15, src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:25 and src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:92 — and the party pickers adopt the macro passing false, so that every ending in the service comes out of one file. Whichever rule is chosen, the review section and the two confirmation pages keep the endings they have: check your answers and the declaration read \"Continue\" alone on both sides already, and delete and cancel-amendment are confirm-or-go-back pages that Design release 1 does not have.\n\nWhat would settle the choice is a ruling on one sentence: may a trader stop and save from every page that asks a question, or only from the pages the overview sends them to. Design release 1 answers it both ways on adjacent pages of the same section, so the answer has to come from the service owner rather than from the design.\n\nTwo boundaries with neighbouring findings, both of which change what these controls say and neither of which changes where they appear. service-wide--primary-button-says-continue-not-save-and-continue owns the text of the primary button. service-wide--save-and-cancel-buttons-name-the-hub owns the text of the two return controls. This finding changes no string at all; it changes which pages render the controls, and it is the only one of the three that needs a decision before it can start. Order does not matter between them: the renames touch copy keys and this touches the macro's parameters and its callers. One knock-on worth flagging to whoever picks up the renames: if rule (b) is chosen, the two return controls end up on seven fewer pages than they are on today — twelve fewer captured screens, because four of those seven pages were photographed in more than one state — so the rename lands on 29 frontend screens rather than 41.\n\nFALSIFIED BY: Finding a shared partial or macro in Design release 1's root views that renders the end-of-page controls — one file every root journey view includes — which would mean the design does state a single rule and the work is to follow it rather than to choose one.",
+      "screens": [
+        "fe-origin",
+        "fe-cph-number",
+        "fe-contact",
+        "fe-transporter-type",
+        "fe-transporter-private",
+        "fe-address-picker-place-of-origin",
+        "fe-consignment-details",
+        "dr1-origin-of-the-import",
+        "dr1-cph-number",
+        "dr1-contact-address-for-consignment",
+        "dr1-transporter-add",
+        "dr1-transporter-add-private",
+        "dr1-consignment-address-select",
+        "dr1-permanent-address-animals"
+      ],
+      "evidence": {
+        "frontend": "src/server/app/shared/save-actions.njk:3-13",
+        "prototype": "app/views/origin-of-the-import.html:167-175"
+      },
+      "confidence": "high",
+      "band": "frontend-work",
+      "gate": null,
+      "dependsOn": [],
+      "status": "todo",
+      "commit": null,
+      "failure_reason": null,
+      "finding": {
+        "frontend": "A trader filling in a notification meets one of six different endings to a page, and cannot predict which. On 41 of the 67 captured frontend screens the page ends with three controls — a primary button, a secondary \"Save and return to hub\" button and a \"Cancel and return to hub\" link. On the other 26 the page offers no way to save what has been entered and leave. The two return controls always travel together: on every screen where either appears the other does too, because one shared macro builds all three unconditionally and takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13).\n\nWhat decides which pages get them is not anything a user can see. Nineteen feature templates call that macro, and they are exactly the nineteen answer pages of the linear flow other than the dashboard (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:31-86). Anything routed outside that flow ends the page its own way. So the split falls inside a single section of the service: the CPH number page and the five party pickers are both reached from rows on the consignment addresses page, and the CPH page offers all three controls while Place of origin offers only \"Save and continue\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:109, its label duplicated in a copy key of its own at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62). A trader who wants to stop halfway can do it on one and not on the other.\n\nThe primary beside them is not one button either but three labels out of four copy keys: \"Save and continue\" from the shared key on 30 screens (src/server/app/shared/copy.en.js:42-45), \"Save and finish\" on the four animal-identification states (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25), and \"Continue\" on the seven documents and consignment-addresses states (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:92 and src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:16).\n\nThe 26 screens with no return control break down as nine party-picker states ending with a lone \"Save and continue\"; five check-your-answers and declaration states ending with a lone \"Continue\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:112 and src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk:42); the delete-notification and cancel-amendment confirmations, which pair a primary with a secondary link back; and ten overview, dashboard and confirmation states, which carry page-specific controls rather than the journey pattern and sit outside this finding. Giving a party picker the return controls is not a template edit alone: its post always redirects to the consignment addresses page and never reads the exit value the secondary button submits (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:92, against the shared helpers at src/server/app/shared/kit.js:77-89).",
+        "prototype": "Design release 1 offers no rule to copy, because it does not follow one itself. Across its 60 captured screens the three-control ending appears on 29; the primary reads \"Save and continue\" on 45 screens and \"Continue\" on 7; and the cancel control has three destinations rather than one — \"Cancel and return to overview\" as a link on the 29, \"Cancel and return to dashboard\" as a secondary button on three, and \"Cancel and return to address book\" as a secondary button on three. Unlike the frontend, the two return controls do not travel together here: six screens offer a way to cancel and no way to save and return.\n\nThe inconsistency lands inside the design's own structures, so no reading of it produces a rule. Of the twelve pages the overview links to (app/routes.js:5749-5841), ten end with all three controls, but origin-of-the-import ends with a single \"Save and continue\" — inside the very same form-actions wrapper the three-control pages use, with the second button and the cancel paragraph simply absent (app/views/origin-of-the-import.html:167-175) — and contact-address-for-consignment ends with a bare \"Continue\" (app/views/contact-address-for-consignment.html:86). Below the consignment-parties row its three sibling sub-pages disagree with each other: permanent-address-animals carries all three (app/views/permanent-address-animals.html:104-120), cph-number carries one \"Save and continue\" (app/views/cph-number.html:55-58) and consignment-address-select carries one (app/views/consignment-address-select.html:167-170). In transport the type chooser ends with a bare \"Continue\" (app/views/transporter-add.html:86) while the two forms below it end with \"Save and continue\" beside a secondary \"Cancel and return to dashboard\" (app/views/transporter-add-private.html:46-51), a destination that appears nowhere else in the notification journey.\n\nThere is no shared partial behind any of this. Eleven root views hand-write the block, nine of them repeating the same wrapper classes verbatim and two writing their own — app/views/consignment-details.html:136-154 against app/views/permanent-address-animals.html:104-120 — and the only journey-form-actions partials in the codebase belong to later releases, which no root view includes, so DR1 never had one place to state the rule in.\n\nThe design's own routing says the single-button pages are omissions rather than decisions. Fifteen post handlers accept the hub action that the secondary button submits, covering nineteen of the design's post routes (app/routes.js:1315-1317), and the handler behind origin-of-the-import is one of them: send it that action and it saves and redirects to the overview (app/routes.js:9265-9268). The page renders no button that would send it.\n\nOne arrangement difference runs through all 29: Design release 1 puts the two buttons on a row and the cancel link in a paragraph beneath them, where the frontend puts all three on one line.",
+        "difference": "Make the ending of a journey page the same everywhere, on one rule, and apply it from one place. This replaces the earlier reading of the same evidence, which proposed stripping the return controls from the five frontend pages Design release 1 happens to end with one button; that would have copied the design's own inconsistency into the frontend rather than removing it, and it was dropped for that reason. Nothing here changes what any control says.\n\nDeciding the rule needs a service owner, and that is why this is banded disputed: Design release 1 is signed off but does not state one, and neither of the two candidate rules can be read off it. The two are:\n\n(a) Every page that collects an answer ends with the same three controls. Under this the frontend is nineteen-twentieths of the way there and the work is to bring the five party pickers into line: call the shared macro from src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:109 instead of a bare button, and route the exit value through kit.exitTarget in src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:92 so the secondary button has somewhere to go. The per-picker copy key at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62 becomes dead and goes.\n\n(b) Only the pages the overview links to end with the three controls, and a page reached from another page ends with the primary alone. Under this the party pickers stay as they are and seven pages lose their return controls — the second-and-later pages of the task rows at src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-59, namely consignment details, import purpose, port of exit, exit date, transporter selection, private transporter details and CPH number.\n\nThe mechanism is the same either way and belongs in the shared macro, not in copies of a shortened button group. Give src/server/app/shared/save-actions.njk:3-13 a fourth parameter, showReturnControls, defaulting to true, and wrap the secondary button and the cancel link in it. Under (a) no template passes it and the party pickers adopt the macro; under (b) the seven templates named above pass false — src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:25, src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:31, src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk:24, src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk:23, src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk:15, src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:25 and src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:92 — and the party pickers adopt the macro passing false, so that every ending in the service comes out of one file. Whichever rule is chosen, the review section and the two confirmation pages keep the endings they have: check your answers and the declaration read \"Continue\" alone on both sides already, and delete and cancel-amendment are confirm-or-go-back pages that Design release 1 does not have.\n\nWhat would settle the choice is a ruling on one sentence: may a trader stop and save from every page that asks a question, or only from the pages the overview sends them to. Design release 1 answers it both ways on adjacent pages of the same section, so the answer has to come from the service owner rather than from the design.\n\nTwo boundaries with neighbouring findings, both of which change what these controls say and neither of which changes where they appear. service-wide--primary-button-says-continue-not-save-and-continue owns the text of the primary button. service-wide--save-and-cancel-buttons-name-the-hub owns the text of the two return controls. This finding changes no string at all; it changes which pages render the controls, and it is the only one of the three that needs a decision before it can start. Order does not matter between them: the renames touch copy keys and this touches the macro's parameters and its callers. One knock-on worth flagging to whoever picks up the renames: if rule (b) is chosen, the two return controls end up on seven fewer pages than they are on today — twelve fewer captured screens, because four of those seven pages were photographed in more than one state — so the rename lands on 29 frontend screens rather than 41.",
+        "falsifiedBy": "Finding a shared partial or macro in Design release 1's root views that renders the end-of-page controls — one file every root journey view includes — which would mean the design does state a single rule and the work is to follow it rather than to choose one.",
+        "verification": "Verified by a different agent than wrote it, against the two pinned checkouts (git rev-parse confirms the frontend at 76a864ba93ac7c60d358c902bd68396731daacf3 and the prototype at 491b39263e4f3b613bc398851b701425b74438ee) and against all 67 frontend and 60 Design release 1 files under capture/html/. The central claim survives. Six numbers or sentences were wrong and are corrected in the slots; each is named below.\n\nCounts re-derived here rather than taken from the author. \"Save and return to hub\" and \"Cancel and return to hub\" each match 41 of the 67 frontend captures, and sorting the two file lists and diffing them returns nothing, so the two controls never appear apart — that is the whole of the travel-together claim, checked rather than asserted. The 26 remainder, listed with grep -L, are the nine party-picker states, three check-answers states, two declaration states, fe-delete-notification, fe-cancel-amend, seven dashboard states, two hub states and fe-confirmation: the author's 9 / 5 / 2 / 10 breakdown exactly. On the requirements side \"Save and return to overview\" and \"Cancel and return to overview\" each match 29 of the 60 captures and the same files; \"Cancel and return to dashboard\" matches three and \"Cancel and return to address book\" three, and diffing every file carrying \"Save and return to\" against every file carrying \"Cancel and return to\" leaves exactly those six, so three destinations and six cancel-without-save both hold. Primary labels on that side: 45 files carry \"Save and continue\" and seven carry a bare \"Continue\" (declaration and its error state, review-notification and its incomplete state, transporter-add, contact-address-for-consignment, address-book-add).\n\nThe strongest claim — the 19-to-19 correspondence — is exact. Grepping src/server for saveActions returns 19 invocation sites in 19 feature templates. Listing the pages of src/server/app/sets/live-animals/journeys/linear/flow/flow.js:31-86 by hand gives 23: dashboardPage, the three review pages (notificationViewPage, declarationPage, confirmationPage) and 19 others. I matched those 19 one-for-one onto the 19 templates with nothing left over on either side. The party-picker template is the twentieth answer-collecting template and it is the one that does not call the macro, which is what \"nineteen-twentieths\" means and it is fair.\n\nThe decisive claim survives at source, and I attacked it three ways. app/routes.js:1315-1317 is isJourneySoftSaveAction, true for 'hub' and for 'review'. Grep returns 16 call sites besides the definition; reading the enclosing handler for each gives 15 post handlers, because reason-for-import tests it twice (:10216 and :10268), and one of the 15 is handleConsignmentAddressSelectPost at :3838, registered on all five selectable consignment-address sections at :10914-10919, so 19 post routes accept it. The author wrote \"sixteen post handlers\"; the slot now reads fifteen handlers over nineteen routes. The origin half is sound: router.post('/origin-of-the-import') writes countryOfOrigin, regionOfOriginRequired and internalReference into the session at :9242-9244 before reaching :9265-9268, so action=hub does save and then redirect to /notification-hub, skipping validation to do it. app/views/origin-of-the-import.html renders exactly one govukButton, at :169-173, inside the same app-origin-form-actions wrapper the three-control pages use; grepping that whole file for 'action' returns only the macro import, the form's own action attribute and that one button. Nothing on the page can send it.\n\nThe partial claim, which the whole finding rests on, holds. find over app/ for *form-actions* returns only app/views/partials/design-release-2/journey-form-actions.html and app/views/partials/design-release-2.1/journey-form-actions.html; grepping every view outside those two release subfolders for journey-form-actions returns nothing at all, so no root view includes either; and neither app/views/layouts/main.html nor app/views/layouts/journey.html contains a govukButton, a form-actions wrapper or a cancel link. app/views/ holds exactly 30 root .html files and exactly 11 contain \"Save and return to overview\", so 11 of 30 is right. But \"each with its own wrapper markup\" was wrong: nine of the eleven repeat app-origin-form-actions, app-origin-actions and app-origin-form-actions__cancel verbatim, and only permanent-address-animals and transporter write their own names — the pair the author chose as the example happens to be one of the two that differ. Corrected; it does not weaken the finding, because eleven hand-written copies remain eleven places to edit.\n\nRead app/routes.js:5749-5841 line by line: twelve overview items across six sections, counting both conditional ones. Intersected against the eleven three-control views: ten match, and the two that do not are origin-of-the-import and contact-address-for-consignment, as claimed. permanent-address-animals is the eleventh three-control view and the overview does not link to it, which the finding implies and does not overstate. The three consignment-parties siblings check out at source — app/views/permanent-address-animals.html:104-122 all three, app/views/cph-number.html:55-58 one, app/views/consignment-address-select.html:166-169 one — with one qualification left in the record rather than in the prose: a secondary \"Add a new address\" govukButton sits immediately above that last primary at :160-164, so \"carries one\" there means one control in the save-and-return sense, not one button on the page.\n\nBoth corrections to the dropped inc-106 hold. dr1-transporter-add-private.html:581 and dr1-transporter-add-commercial.html:490 each render \"Cancel and return to dashboard\" as a submit button carrying name=action and value=cancel with govuk-button--secondary — a button, not the link inc-106 called it — and inc-106's prose names only the private page, so it did miss the commercial one. Source agrees at app/views/transporter-add-private.html:44-56.\n\nThe \"four primaries\" claim was wrong and is corrected to three. Within the 41 the labels are \"Save and continue\" on 30 (39 frontend files carry the string, nine of them party pickers outside the 41), \"Save and finish\" on the four animal-identification states, and \"Continue\" on the four documents and three addresses-hub states: 30 + 4 + 7 = 41. Four copy keys produce those three labels, because two separate per-feature keys are both set to \"Continue\" — .../features/addresses/copy/copy.en.js:8 and .../features/documents/copy/copy.en.js:51 — which is the likeliest source of the author's four. The slot now reads three labels out of four copy keys.\n\nThe stated knock-on was wrong and is corrected. Rule (b)'s seven pages I re-derived by listing every row of task-rows.js:27-59 and taking the second and later pages: consignmentDetails, importPurpose, portOfExit, exitDate, transportersSelect, privateTransporterDetails, cphNumber — the author's list exactly. But those seven pages are twelve captured screens. I read the url of each from capture/model/frontend/: three consignment-details states, two port-of-exit, two cph-number, two transporter-private, and one each of import-purpose, exit-date and transporter-commercial — the last of which resolves to /transporters/select, so it is transportersSelect and fe-transporter-type is the transporter row's first page and keeps its controls under (b). 41 minus 12 is 29, not 34, and the difference slot now says 29 with the page-versus-screen distinction spelled out. This matters to whoever picks up inc-105, which is why the finding flags it.\n\nOne user-facing sentence was untrue. \"On the other 26 there is no way out of the page except forward\" is contradicted by the captures: every one of those pages renders breadcrumbs and a back link (capture/html/frontend/fe-address-picker-place-of-origin.html:93-102 shows both), and the paragraph four sentences later already said delete-notification and cancel-amend end with a secondary \"No, return to...\" control. What is absent is a way to save and leave, so the slot now says that. I checked the party pickers' and check-answers' endings in the captured DOM directly: fe-address-picker-place-of-origin ends with a lone \"Save and continue\" at :361-363 (its only other button is the mid-page \"Search\"), fe-check-answers at :520-522 and fe-declaration at :153-155 with a lone \"Continue\".\n\nCitations. Every frontend path in the file is full and repo-relative from src/; every prototype path is a root view under app/views/, and grepping the file for design-release-2, design-release-2.1 and testing returns zero, so the highest-yield trap in this corpus is not sprung. Two frontend citations were a line out, pointing at the closing form tag rather than the button, and are fixed to check-answers/template.njk:112 and declaration/template.njk:42. Confirmed at source, line by line: save-actions.njk:3-13 (three controls, one button-group, no parameter that could drop one), shared/copy.en.js:42-45, kit.js:77-89 (hubExitTarget at :77, exitTarget at :85), _address-picker.njk:109, addresses/copy/copy.en.js:62, party-picker.controller.js:92 (redirects to the addresses page; grepping that file for 'exit' returns nothing, so it genuinely cannot honour the secondary button), flow.js:31-86, task-rows.js:27-59, and all seven rule-(b) template lines. Four prototype ranges stop a line or two short of the block they name (consignment-details runs :136-155, permanent-address-animals :104-122, transporter-add-private :44-56, consignment-address-select's primary opens at :166); each opens inside the right block and resolves, so they are left as written.\n\nBand. disputed is declared for dr1c in tools/parity/corpora.json:850-855 and is used in the sense the contract admits: Design release 1 contradicts itself between its own screens — three siblings under consignment parties disagreeing with each other, and origin-of-the-import disagreeing with the ten other pages the overview links to — not \"we do not want this\". finding.difference names the one sentence that settles it, and nothing in the file hedges, asks permission or questions whether the design is authoritative.\n\nBoundaries. Read inc-104 and inc-105 in workareas/journey-builder/EUDPA-328-DR1C/backlog.json: inc-104 owns the primary button's text, inc-105 owns the two return-control strings, and this finding proposes no string change anywhere — I searched its prose for a rename and found none. Both relatedTo ids resolve to files in findings/. No claim here rests on a volatile value; every label checked is a literal in source on both sides.\n\nVerdict: corrected.",
+        "relatedTo": [
+          {
+            "id": "inc-104",
+            "relation": "travels-with",
+            "why": "Both are about the same block at the foot of a journey page: that finding is what the primary button says, this one is whether the two return controls beside it are there at all."
+          },
+          {
+            "id": "inc-105",
+            "relation": "travels-with",
+            "why": "That finding renames the save and cancel controls; this one decides which pages render them, so the rename's blast radius depends on which rule is chosen here."
+          }
+        ]
+      },
+      "corpus": "dr1c",
+      "slice": "service-wide",
+      "source": "service-wide--button-group-follows-no-single-rule.json",
+      "controls": [
+        "Save and return to hub",
+        "Cancel and return to hub"
+      ],
+      "citations": [
+        {
+          "ref": "c1",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/shared/save-actions.njk",
+          "lines": {
+            "start": 3,
+            "end": 13
+          },
+          "ranges": [
+            {
+              "start": 3,
+              "end": 13
+            }
+          ],
+          "asWritten": "src/server/app/shared/save-actions.njk:3-13",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.frontend"
+          ]
+        },
+        {
+          "ref": "c2",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+          "lines": {
+            "start": 31,
+            "end": 86
+          },
+          "ranges": [
+            {
+              "start": 31,
+              "end": 86
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:31-86",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c3",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk",
+          "lines": {
+            "start": 109,
+            "end": 109
+          },
+          "ranges": [
+            {
+              "start": 109,
+              "end": 109
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:109",
+          "anchors": [
+            "Save and continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c4",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js",
+          "lines": {
+            "start": 62,
+            "end": 62
+          },
+          "ranges": [
+            {
+              "start": 62,
+              "end": 62
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c5",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/shared/copy.en.js",
+          "lines": {
+            "start": 42,
+            "end": 45
+          },
+          "ranges": [
+            {
+              "start": 42,
+              "end": 45
+            }
+          ],
+          "asWritten": "src/server/app/shared/copy.en.js:42-45",
+          "anchors": [
+            "Save and continue",
+            "Save and finish"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c6",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk",
+          "lines": {
+            "start": 25,
+            "end": 25
+          },
+          "ranges": [
+            {
+              "start": 25,
+              "end": 25
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25",
+          "anchors": [
+            "Save and finish",
+            "Continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c7",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk",
+          "lines": {
+            "start": 92,
+            "end": 92
+          },
+          "ranges": [
+            {
+              "start": 92,
+              "end": 92
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:92",
+          "anchors": [
+            "Continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c8",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
+          "lines": {
+            "start": 16,
+            "end": 16
+          },
+          "ranges": [
+            {
+              "start": 16,
+              "end": 16
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:16",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c9",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+          "lines": {
+            "start": 112,
+            "end": 112
+          },
+          "ranges": [
+            {
+              "start": 112,
+              "end": 112
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:112",
+          "anchors": [
+            "Save and continue",
+            "Continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c10",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk",
+          "lines": {
+            "start": 42,
+            "end": 42
+          },
+          "ranges": [
+            {
+              "start": 42,
+              "end": 42
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk:42",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c11",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js",
+          "lines": {
+            "start": 92,
+            "end": 92
+          },
+          "ranges": [
+            {
+              "start": 92,
+              "end": 92
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:92",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c12",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/shared/kit.js",
+          "lines": {
+            "start": 77,
+            "end": 89
+          },
+          "ranges": [
+            {
+              "start": 77,
+              "end": 89
+            }
+          ],
+          "asWritten": "src/server/app/shared/kit.js:77-89",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c13",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/routes.js",
+          "lines": {
+            "start": 5749,
+            "end": 5841
+          },
+          "ranges": [
+            {
+              "start": 5749,
+              "end": 5841
+            }
+          ],
+          "asWritten": "app/routes.js:5749-5841",
+          "anchors": [
+            "Save and continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c14",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/origin-of-the-import.html",
+          "lines": {
+            "start": 167,
+            "end": 175
+          },
+          "ranges": [
+            {
+              "start": 167,
+              "end": 175
+            }
+          ],
+          "asWritten": "app/views/origin-of-the-import.html:167-175",
+          "anchors": [
+            "Save and continue",
+            "Continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.prototype"
+          ]
+        },
+        {
+          "ref": "c15",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/contact-address-for-consignment.html",
+          "lines": {
+            "start": 86,
+            "end": 86
+          },
+          "ranges": [
+            {
+              "start": 86,
+              "end": 86
+            }
+          ],
+          "asWritten": "app/views/contact-address-for-consignment.html:86",
+          "anchors": [
+            "Continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c16",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/permanent-address-animals.html",
+          "lines": {
+            "start": 104,
+            "end": 120
+          },
+          "ranges": [
+            {
+              "start": 104,
+              "end": 120
+            }
+          ],
+          "asWritten": "app/views/permanent-address-animals.html:104-120",
+          "anchors": [
+            "Save and continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c17",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/cph-number.html",
+          "lines": {
+            "start": 55,
+            "end": 58
+          },
+          "ranges": [
+            {
+              "start": 55,
+              "end": 58
+            }
+          ],
+          "asWritten": "app/views/cph-number.html:55-58",
+          "anchors": [
+            "Save and continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c18",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/consignment-address-select.html",
+          "lines": {
+            "start": 167,
+            "end": 170
+          },
+          "ranges": [
+            {
+              "start": 167,
+              "end": 170
+            }
+          ],
+          "asWritten": "app/views/consignment-address-select.html:167-170",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c19",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/transporter-add.html",
+          "lines": {
+            "start": 86,
+            "end": 86
+          },
+          "ranges": [
+            {
+              "start": 86,
+              "end": 86
+            }
+          ],
+          "asWritten": "app/views/transporter-add.html:86",
+          "anchors": [
+            "Continue",
+            "Save and continue",
+            "Cancel and return to dashboard"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c20",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/transporter-add-private.html",
+          "lines": {
+            "start": 46,
+            "end": 51
+          },
+          "ranges": [
+            {
+              "start": 46,
+              "end": 51
+            }
+          ],
+          "asWritten": "app/views/transporter-add-private.html:46-51",
+          "anchors": [
+            "Save and continue",
+            "Cancel and return to dashboard"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c21",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/consignment-details.html",
+          "lines": {
+            "start": 136,
+            "end": 154
+          },
+          "ranges": [
+            {
+              "start": 136,
+              "end": 154
+            }
+          ],
+          "asWritten": "app/views/consignment-details.html:136-154",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c22",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/routes.js",
+          "lines": {
+            "start": 1315,
+            "end": 1317
+          },
+          "ranges": [
+            {
+              "start": 1315,
+              "end": 1317
+            }
+          ],
+          "asWritten": "app/routes.js:1315-1317",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c23",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/routes.js",
+          "lines": {
+            "start": 9265,
+            "end": 9268
+          },
+          "ranges": [
+            {
+              "start": 9265,
+              "end": 9268
+            }
+          ],
+          "asWritten": "app/routes.js:9265-9268",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c24",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+          "lines": {
+            "start": 27,
+            "end": 59
+          },
+          "ranges": [
+            {
+              "start": 27,
+              "end": 59
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-59",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c25",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk",
+          "lines": {
+            "start": 25,
+            "end": 25
+          },
+          "ranges": [
+            {
+              "start": 25,
+              "end": 25
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:25",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c26",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk",
+          "lines": {
+            "start": 31,
+            "end": 31
+          },
+          "ranges": [
+            {
+              "start": 31,
+              "end": 31
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:31",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c27",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk",
+          "lines": {
+            "start": 24,
+            "end": 24
+          },
+          "ranges": [
+            {
+              "start": 24,
+              "end": 24
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk:24",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c28",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk",
+          "lines": {
+            "start": 23,
+            "end": 23
+          },
+          "ranges": [
+            {
+              "start": 23,
+              "end": 23
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk:23",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c29",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk",
+          "lines": {
+            "start": 15,
+            "end": 15
+          },
+          "ranges": [
+            {
+              "start": 15,
+              "end": 15
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk:15",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c30",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk",
+          "lines": {
+            "start": 25,
+            "end": 25
+          },
+          "ranges": [
+            {
+              "start": 25,
+              "end": 25
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:25",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c31",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk",
+          "lines": {
+            "start": 92,
+            "end": 92
+          },
+          "ranges": [
+            {
+              "start": 92,
+              "end": 92
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk:92",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        }
+      ],
+      "decision": {
+        "ruling": "accept",
+        "note": "RULE (b) chosen by Sam, 2026-08-21. Only the pages the overview links to end with the three controls; a page reached from another page ends with the primary alone. Answering the finding's own decision sentence: a trader may stop and save only from the pages the overview sends them to, not from every page that asks a question. The party pickers stay as they are. Seven pages lose their return controls — the second-and-later pages of the task rows at flow/task-rows.js:27-59: consignment details, import purpose, port of exit, exit date, transporter selection, private transporter details and CPH number. Mechanism as specified: give src/server/app/shared/save-actions.njk:3-13 a fourth parameter showReturnControls defaulting to true, wrap the secondary button and the cancel link in it, and have the seven named templates plus the party pickers pass false, so every ending in the service comes out of one file. Review section and the two confirmation pages keep the endings they have. KNOCK-ON for service-wide--save-and-cancel-buttons-name-the-hub (inc-105): under this rule its rename lands on 29 frontend screens rather than 41.",
+        "ruledAt": "2026-08-21T13:39:23Z"
+      }
     },
     {
       "id": "inc-022",
@@ -4352,143 +4689,6 @@
       ]
     },
     {
-      "id": "inc-018",
-      "type": "flow-change",
-      "milestone": null,
-      "domain": "commodities",
-      "title": "Frontend refuses to let a user lower the number of animals below the identification records already entered for that species; Design release 1 accepts the lower number and shows only that many records.",
-      "detail": "A user who has entered identification details for two Bos taurus and then comes back and changes the count to 1 is held on the page. The error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link sends the user to the identification card for that line rather than to the box they just typed in. Nothing is saved until they either put the number back up or go and delete records by hand (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33).\n\nThe same change is accepted. The count is checked only for presence and for being a whole number of at least one (app/routes.js:817-848); there is no comparison against what has already been entered, and no message of that kind exists anywhere in Design release 1. The identification page then draws exactly as many animal slots as the new count asks for, so the surplus record simply stops being shown and stops counting towards completeness.\n\nStop refusing the submission. Follow Design release 1: accept the lower count and let the identification page show that many records. What the frontend does with the surplus record has to be decided as part of the work — Design release 1 leaves it in the session and stops rendering it, so it neither warns nor deletes — and whichever way that goes, the user is no longer stopped at the consignment-details page. Removing the rule takes the message out of the commodities copy file with it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39) and the Welsh file beside it. Nothing has to land first.\n\nFALSIFIED BY: Design release 1 refusing a reduced count, or warning about surplus identification records. Its consignment-details handler runs four validators — animals, packages, net weight and package type — and none of them reads the saved identifiers; a fifth check, or any message naming identifier records, would prove this wrong.",
-      "screens": [
-        "fe-consignment-details-count-drop-error",
-        "dr1-consignment-details"
-      ],
-      "evidence": {
-        "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33",
-        "prototype": "app/routes.js:9402-9414"
-      },
-      "confidence": "medium",
-      "band": "frontend-work",
-      "gate": null,
-      "dependsOn": [],
-      "status": "todo",
-      "commit": null,
-      "failure_reason": null,
-      "finding": {
-        "frontend": "A user who has entered identification details for two Bos taurus and then comes back and changes the count to 1 is held on the page. The error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link sends the user to the identification card for that line rather than to the box they just typed in. Nothing is saved until they either put the number back up or go and delete records by hand (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33).",
-        "prototype": "The same change is accepted. The count is checked only for presence and for being a whole number of at least one (app/routes.js:817-848); there is no comparison against what has already been entered, and no message of that kind exists anywhere in Design release 1. The identification page then draws exactly as many animal slots as the new count asks for, so the surplus record simply stops being shown and stops counting towards completeness.",
-        "difference": "Stop refusing the submission. Follow Design release 1: accept the lower count and let the identification page show that many records. What the frontend does with the surplus record has to be decided as part of the work — Design release 1 leaves it in the session and stops rendering it, so it neither warns nor deletes — and whichever way that goes, the user is no longer stopped at the consignment-details page. Removing the rule takes the message out of the commodities copy file with it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39) and the Welsh file beside it. Nothing has to land first.",
-        "correction": "The claim stands and the falsifier does not fire. One citation was three lines out and has been fixed: the countDrop message lives at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39, while :41-42 is the closing brace of the consignmentDetails block and the opening of the identification block — a range that would have sent whoever removes the rule to the wrong copy. The frontend-side range in the evidence path (count-drop.js:13-33) is right about the content; the exported function actually spans :12-34.",
-        "falsifiedBy": "Design release 1 refusing a reduced count, or warning about surplus identification records. Its consignment-details handler runs four validators — animals, packages, net weight and package type — and none of them reads the saved identifiers; a fifth check, or any message naming identifier records, would prove this wrong.",
-        "verification": "Read the captured refusal (capture/html/frontend/fe-consignment-details-count-drop-error.html), where the summary link at :124 and the field message at :193-194 both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\" and the summary href points at .../commodities/identification#identification-card-0 rather than at the box — exactly as claimed. Opened the 2x shot of that screen. Read the rule at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:12-34. Ran the falsifier twice: the requirements-side handler at app/routes.js:9402-9414 assembles exactly the four validators named, none of which reads savedIdentifiers, and grepping \"identifier record\" across the whole of app/ on that side returns nothing. CORRECT.",
-        "relatedTo": []
-      },
-      "citations": [
-        {
-          "ref": "c1",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js",
-          "lines": {
-            "start": 13,
-            "end": 33
-          },
-          "ranges": [
-            {
-              "start": 13,
-              "end": 33
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail",
-            "evidence.frontend"
-          ]
-        },
-        {
-          "ref": "c2",
-          "kind": "code",
-          "side": null,
-          "repo": "prototype",
-          "path": "app/routes.js",
-          "lines": {
-            "start": 817,
-            "end": 848
-          },
-          "ranges": [
-            {
-              "start": 817,
-              "end": 848
-            }
-          ],
-          "asWritten": "app/routes.js:817-848",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c3",
-          "kind": "code",
-          "side": null,
-          "repo": "frontend",
-          "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
-          "lines": {
-            "start": 38,
-            "end": 39
-          },
-          "ranges": [
-            {
-              "start": 38,
-              "end": 39
-            }
-          ],
-          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "detail",
-          "fields": [
-            "detail"
-          ]
-        },
-        {
-          "ref": "c4",
-          "kind": "code",
-          "side": "prototype",
-          "repo": "prototype",
-          "path": "app/routes.js",
-          "lines": {
-            "start": 9402,
-            "end": 9414
-          },
-          "ranges": [
-            {
-              "start": 9402,
-              "end": 9414
-            }
-          ],
-          "asWritten": "app/routes.js:9402-9414",
-          "anchors": [],
-          "resolution": "explicit",
-          "field": "evidence.prototype",
-          "fields": [
-            "evidence.prototype"
-          ]
-        }
-      ],
-      "corpus": "dr1c",
-      "slice": "commodities",
-      "source": "commodities--count-drop-blocked.json",
-      "controls": [
-        "numberOfAnimalsQuantity-0"
-      ]
-    },
-    {
       "id": "inc-021",
       "type": "flow-change",
       "milestone": null,
@@ -5278,6 +5478,12 @@
       "controls": [
         "Save and return to hub",
         "Cancel and return to hub"
+      ],
+      "notes": [
+        {
+          "note": "Blast radius fixed by the rule (b) ruling on inc-126, 2026-08-21: the two return controls will end up on seven fewer pages than today — twelve fewer captured screens, because four of those seven were photographed in more than one state — so this rename lands on 29 frontend screens rather than 41. Order does not matter between the two: this one touches copy keys, inc-126 touches the macro's parameters and its callers.",
+          "at": "2026-08-21T13:40:11Z"
+        }
       ]
     },
     {
@@ -20486,6 +20692,11 @@
       "status": "dropped",
       "commit": null,
       "failure_reason": null,
+      "decision": {
+        "ruling": "reject",
+        "note": "Descoped by Sam, 2026-08-21: a separate epic folds the address book in. This finding asked the one scope question the run could not settle — whether the trade-imports-ins-frontend address book is the book Design release 1 describes — and the answer is that it is, and it belongs to that epic rather than to this frontend. The eight DR1 address-book screens are struck from this backlog. The finding predicted this outcome and named what survives it: the route out of a party picker (inc-001, inc-002) and the seven address types, which bite inside the notification journey whichever service owns the book.",
+        "ruledAt": "2026-08-21T05:57:03Z"
+      },
       "finding": {
         "frontend": "Frontend has no address book as a page. Its service navigation carries no items, so nothing links to a saved-addresses page, and searching the rendered DOM of all 31 captured Frontend screens and 36 captured states for \"address book\" or \"add a new address\" returns nothing. A trader meets the organisation's book only inside the five consignment party pickers and the contact-address page, and there only as a read-only chooser: the pickers offer a Search input hinted \"Name, address or country\", a secondary Search button, a five-row results table with a radio per row and a \"View details\" expander, pagination, and \"Save and continue\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:69-113), and the contact-address page offers the whole book as one radio list. Nothing anywhere adds, changes or removes a record. Frontend's address-book service exposes only search, all and party, and states the split as a design decision: \"This service reads and never writes. The notification journey selects from the organisation's book; adding, changing and removing the records in it belongs to the INS frontend, which is the only writer\" (src/server/app/services/address-book/index.js:17-19). Frontend's records also carry no address type at all, deliberately, because the same record may be a consignor on one notification and a consignee on the next (src/server/app/services/address-book/index.js:12-15).",
         "prototype": "Design release 1 gives the trader an address book of their own, reached from a service-navigation item on every page, and eight captured screens describe it. dr1-address-book is the list: heading \"Address book\", intro \"Manage your addresses for use across import notifications.\", a primary \"Add a new address\" button, a \"Filter addresses\" panel holding a Search box placeholdered \"Search by name, address or country\" and a \"Type\" select offering Place of Origin, Consignor, Consignee, Importer, Place of Destination, Transporter and Branch Address, a result count (\"Showing 1-8 of 58\"), a Name / Type / Address / Country table with a \"View\" link per row, and pagination (app/views/address-book.html:34-45). dr1-address-book-add is the type chooser: \"What is the new address for?\", one addressType radio group over those same seven types and a Continue button. Each type carries a hint that defines it, and the hints are as much of the requirement as the labels are, so they are quoted here in full — Place of Origin, \"The address where the animals begin their journey to Great Britain\"; Consignor, \"This is the sender of the consignment.\"; Consignee, \"This is the receiver or buyer of the consignment being shipped or transported.\"; Importer, \"This is usually the same as the consignee. You can select a different person if needed.\"; Place of Destination, \"This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.\"; Transporter, \"This is the person or company responsible for transporting the consignment.\"; then a divider, and Branch Address, \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\" The labels, the hints and the divider are all defined together at app/data/address-book-address-types.js:1-38 and rendered as govuk-radios__hint at app/views/address-book-add.html:77-80. dr1-address-book-lookup is the add form: \"Add address details\", a \"Search for an address\" type-ahead writing a hidden addressBookLookupAddressId, an \"Enter address manually\" toggle, \"Save and continue\" and \"Cancel and return to address book\". dr1-address-book-lookup-results is that page with the type-ahead panel open over candidate addresses. dr1-address-book-lookup-manual is that page with the manual reveal open, showing nine fields under two headings: Address (Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country) and Contact details (Email address, Phone number, hinted \"For international numbers include the country code\"). dr1-address-book-add-from-party-picker is the same add form entered from a consignment party picker, with the type chooser skipped because the section implies the type and its answer carried in a hidden addressType. dr1-address-book-view is one saved address, headed with its own name, presented as a summary list of eight of those nine facts — County (optional) is not shown — with an \"Edit\" button and a red \"Delete\" button. dr1-address-book-edit is \"Edit address and contact details\": all nine fields, prefilled and already open, the search hidden, \"Save changes\" and \"Cancel\". So Design release 1's book is create, read, update and delete, and every saved address carries a type.",
@@ -20735,12 +20946,667 @@
       "corpus": "dr1c",
       "slice": "address-book",
       "source": "address-book--saved-address-book-pages-absent.json",
-      "controls": [],
+      "controls": []
+    },
+    {
+      "id": "inc-018",
+      "type": "flow-change",
+      "milestone": null,
+      "domain": "commodities",
+      "title": "Frontend refuses to let a user lower the number of animals below the identification records already entered for that species; Design release 1 accepts the lower number and shows only that many records.",
+      "detail": "A user who has entered identification details for two Bos taurus and then comes back and changes the count to 1 is held on the page. The error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link sends the user to the identification card for that line rather than to the box they just typed in. Nothing is saved until they either put the number back up or go and delete records by hand (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33).\n\nThe same change is accepted. The count is checked only for presence and for being a whole number of at least one (app/routes.js:817-848); there is no comparison against what has already been entered, and no message of that kind exists anywhere in Design release 1. The identification page then draws exactly as many animal slots as the new count asks for, so the surplus record simply stops being shown and stops counting towards completeness.\n\nStop refusing the submission. Follow Design release 1: accept the lower count and let the identification page show that many records. What the frontend does with the surplus record has to be decided as part of the work — Design release 1 leaves it in the session and stops rendering it, so it neither warns nor deletes — and whichever way that goes, the user is no longer stopped at the consignment-details page. Removing the rule takes the message out of the commodities copy file with it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39) and the Welsh file beside it. Nothing has to land first.\n\nFALSIFIED BY: Design release 1 refusing a reduced count, or warning about surplus identification records. Its consignment-details handler runs four validators — animals, packages, net weight and package type — and none of them reads the saved identifiers; a fifth check, or any message naming identifier records, would prove this wrong.",
+      "screens": [
+        "fe-consignment-details-count-drop-error",
+        "dr1-consignment-details"
+      ],
+      "evidence": {
+        "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33",
+        "prototype": "app/routes.js:9402-9414"
+      },
+      "confidence": "medium",
+      "band": "frontend-work",
+      "gate": null,
+      "dependsOn": [],
+      "status": "dropped",
+      "commit": null,
+      "failure_reason": null,
       "decision": {
         "ruling": "reject",
-        "note": "Descoped by Sam, 2026-08-21: a separate epic folds the address book in. This finding asked the one scope question the run could not settle — whether the trade-imports-ins-frontend address book is the book Design release 1 describes — and the answer is that it is, and it belongs to that epic rather than to this frontend. The eight DR1 address-book screens are struck from this backlog. The finding predicted this outcome and named what survives it: the route out of a party picker (inc-001, inc-002) and the seven address types, which bite inside the notification journey whichever service owns the book.",
-        "ruledAt": "2026-08-21T05:57:03Z"
-      }
+        "note": "The frontend implementation is right compared to the design. Design release 1 accepts the lower count and simply stops rendering the surplus identifier record, leaving data the trader entered orphaned in the session with neither a warning nor a deletion. The frontend holds the user on the consignment-details page until they either remove the records or restore the count, which is the correct behaviour. Keep the frontend as built; the count-drop rule and its copy stay. Ruled by Sam, 2026-08-21.",
+        "ruledAt": "2026-08-21T11:46:46Z"
+      },
+      "finding": {
+        "frontend": "A user who has entered identification details for two Bos taurus and then comes back and changes the count to 1 is held on the page. The error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link sends the user to the identification card for that line rather than to the box they just typed in. Nothing is saved until they either put the number back up or go and delete records by hand (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33).",
+        "prototype": "The same change is accepted. The count is checked only for presence and for being a whole number of at least one (app/routes.js:817-848); there is no comparison against what has already been entered, and no message of that kind exists anywhere in Design release 1. The identification page then draws exactly as many animal slots as the new count asks for, so the surplus record simply stops being shown and stops counting towards completeness.",
+        "difference": "Stop refusing the submission. Follow Design release 1: accept the lower count and let the identification page show that many records. What the frontend does with the surplus record has to be decided as part of the work — Design release 1 leaves it in the session and stops rendering it, so it neither warns nor deletes — and whichever way that goes, the user is no longer stopped at the consignment-details page. Removing the rule takes the message out of the commodities copy file with it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39) and the Welsh file beside it. Nothing has to land first.",
+        "correction": "The claim stands and the falsifier does not fire. One citation was three lines out and has been fixed: the countDrop message lives at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39, while :41-42 is the closing brace of the consignmentDetails block and the opening of the identification block — a range that would have sent whoever removes the rule to the wrong copy. The frontend-side range in the evidence path (count-drop.js:13-33) is right about the content; the exported function actually spans :12-34.",
+        "falsifiedBy": "Design release 1 refusing a reduced count, or warning about surplus identification records. Its consignment-details handler runs four validators — animals, packages, net weight and package type — and none of them reads the saved identifiers; a fifth check, or any message naming identifier records, would prove this wrong.",
+        "verification": "Read the captured refusal (capture/html/frontend/fe-consignment-details-count-drop-error.html), where the summary link at :124 and the field message at :193-194 both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\" and the summary href points at .../commodities/identification#identification-card-0 rather than at the box — exactly as claimed. Opened the 2x shot of that screen. Read the rule at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:12-34. Ran the falsifier twice: the requirements-side handler at app/routes.js:9402-9414 assembles exactly the four validators named, none of which reads savedIdentifiers, and grepping \"identifier record\" across the whole of app/ on that side returns nothing. CORRECT.",
+        "relatedTo": []
+      },
+      "citations": [
+        {
+          "ref": "c1",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js",
+          "lines": {
+            "start": 13,
+            "end": 33
+          },
+          "ranges": [
+            {
+              "start": 13,
+              "end": 33
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/validation/count-drop.js:13-33",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.frontend"
+          ]
+        },
+        {
+          "ref": "c2",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/routes.js",
+          "lines": {
+            "start": 817,
+            "end": 848
+          },
+          "ranges": [
+            {
+              "start": 817,
+              "end": 848
+            }
+          ],
+          "asWritten": "app/routes.js:817-848",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c3",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+          "lines": {
+            "start": 38,
+            "end": 39
+          },
+          "ranges": [
+            {
+              "start": 38,
+              "end": 39
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:38-39",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c4",
+          "kind": "code",
+          "side": "prototype",
+          "repo": "prototype",
+          "path": "app/routes.js",
+          "lines": {
+            "start": 9402,
+            "end": 9414
+          },
+          "ranges": [
+            {
+              "start": 9402,
+              "end": 9414
+            }
+          ],
+          "asWritten": "app/routes.js:9402-9414",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "evidence.prototype",
+          "fields": [
+            "evidence.prototype"
+          ]
+        }
+      ],
+      "corpus": "dr1c",
+      "slice": "commodities",
+      "source": "commodities--count-drop-blocked.json",
+      "controls": [
+        "numberOfAnimalsQuantity-0"
+      ]
+    },
+    {
+      "id": "inc-094",
+      "type": "flow-change",
+      "milestone": null,
+      "domain": "dashboard",
+      "title": "A dashboard card's links change with the notification's status and a draft can only be resumed, never viewed; Design release 1 gives every card the same two links, Copy as new and View",
+      "detail": "Each card's link row is built from the notification's status, so a trader meets a different set on different cards (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67). A draft gets Resume, Copy as new and Delete; a submitted notification gets View, Amend, Copy as new and Delete; one being amended gets Resume, Copy as new, Cancel amendment and Delete. The captured draft cards show exactly three links — Resume, Copy as new, Delete. There is no way to look at a draft without re-entering it: Resume goes to the task list (`hubPath`) and View exists only once the notification has been submitted, when it opens Check your answers.\n\nDesign release 1 gives every card the same two links whatever its status, side by side after the reference and separated by a divider: \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262, which carries no status condition of any kind). The captured dashboard shows four cards — two \"Submitted\", two \"Submitted action required\" — and all four carry that identical pair. Design release 1 offers no Resume, no Delete, no Amend and no Cancel amendment on a card, and its View is the way into a draft as much as into a submitted one: for a draft the link is built as `/review-notification?reference=…` and for a submitted one as `/review-notification?submitted=…`, so both open the review page and a trader continues a draft by following the Change links from there.\n\nMake the card's link row fixed rather than status-driven, and offer View on every card. In src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67 the three status branches collapse to one list; \"View\" replaces \"Resume\" as the label on a draft and points at Check your answers, the same target it already uses on a submitted notification, which makes the read-only view reachable for a draft for the first time. The order the design shows is Copy as new then View, which is the reverse of the frontend's current copy-then-open order for a draft. Two things are deliberately outside this finding. Delete, Amend and Cancel amendment are the frontend-only journeys already recorded in review--deleting-and-cancelling-an-amendment-are-one-sided, where they are banded disputed pending an artefact that either specifies or rules them out; do not strip those links on the strength of this finding. And whether the frontend should keep a separate route back into a half-finished draft's task list is a question about the hub, not about the card — Design release 1 does not offer one, and if the answer is that it should be kept then it is a third link beside these two, not a replacement for View.\n\nFALSIFIED BY: A status condition around the action block in Design release 1's dashboard card, or a card in the captured dr1-dashboard carrying anything other than Copy as new and View. Extracting every `app-dashboard-notification-card__action` from capture/html/prototype/dr1-dashboard.html gives eight links across four cards, alternating \"Copy as new\" and \"View\" and nothing else.",
+      "screens": [
+        "fe-dashboard-populated",
+        "fe-dashboard-new-draft",
+        "fe-dashboard-deleted",
+        "dr1-dashboard"
+      ],
+      "evidence": {
+        "frontend": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67",
+        "prototype": "app/views/dashboard.html:258-262"
+      },
+      "confidence": "high",
+      "band": "frontend-work",
+      "gate": null,
+      "dependsOn": [],
+      "status": "dropped",
+      "commit": null,
+      "failure_reason": null,
+      "decision": {
+        "ruling": "reject",
+        "note": "Keep the frontend's status-driven card links as built. A draft keeps Resume, Copy as new and Delete; a submitted notification keeps View, Amend, Copy as new and Delete. Design release 1's flat two-link row (Copy as new, View on every card regardless of status) is not to be adopted, and Resume is not to be replaced by View on a draft. Ruled by Sam, 2026-08-21.",
+        "ruledAt": "2026-08-21T12:07:09Z"
+      },
+      "finding": {
+        "frontend": "Each card's link row is built from the notification's status, so a trader meets a different set on different cards (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67). A draft gets Resume, Copy as new and Delete; a submitted notification gets View, Amend, Copy as new and Delete; one being amended gets Resume, Copy as new, Cancel amendment and Delete. The captured draft cards show exactly three links — Resume, Copy as new, Delete. There is no way to look at a draft without re-entering it: Resume goes to the task list (`hubPath`) and View exists only once the notification has been submitted, when it opens Check your answers.",
+        "prototype": "Design release 1 gives every card the same two links whatever its status, side by side after the reference and separated by a divider: \"Copy as new\" and \"View\" (app/views/dashboard.html:258-262, which carries no status condition of any kind). The captured dashboard shows four cards — two \"Submitted\", two \"Submitted action required\" — and all four carry that identical pair. Design release 1 offers no Resume, no Delete, no Amend and no Cancel amendment on a card, and its View is the way into a draft as much as into a submitted one: for a draft the link is built as `/review-notification?reference=…` and for a submitted one as `/review-notification?submitted=…`, so both open the review page and a trader continues a draft by following the Change links from there.",
+        "difference": "Make the card's link row fixed rather than status-driven, and offer View on every card. In src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67 the three status branches collapse to one list; \"View\" replaces \"Resume\" as the label on a draft and points at Check your answers, the same target it already uses on a submitted notification, which makes the read-only view reachable for a draft for the first time. The order the design shows is Copy as new then View, which is the reverse of the frontend's current copy-then-open order for a draft. Two things are deliberately outside this finding. Delete, Amend and Cancel amendment are the frontend-only journeys already recorded in review--deleting-and-cancelling-an-amendment-are-one-sided, where they are banded disputed pending an artefact that either specifies or rules them out; do not strip those links on the strength of this finding. And whether the frontend should keep a separate route back into a half-finished draft's task list is a question about the hub, not about the card — Design release 1 does not offer one, and if the answer is that it should be kept then it is a third link beside these two, not a replacement for View.",
+        "correction": "None. No claim in this finding was overturned in the writing of it.",
+        "falsifiedBy": "A status condition around the action block in Design release 1's dashboard card, or a card in the captured dr1-dashboard carrying anything other than Copy as new and View. Extracting every `app-dashboard-notification-card__action` from capture/html/prototype/dr1-dashboard.html gives eight links across four cards, alternating \"Copy as new\" and \"View\" and nothing else.",
+        "verification": "Written and checked by the gap closer. This finding exists because a corpus-wide sweep found nobody had raised it: service-wide--dashboard-card-carries-extra-facts says in as many words \"Which links the card offers is a separate question and is not changed here\", and no other finding asks it. It was written, and checked, by the same agent, and it has had no independent verifier. What was checked: ran the falsifier over the captured prototype DOM — four `app-dashboard-notification-card__reference` elements and eight `app-dashboard-notification-card__action` links, in four Copy-as-new/View pairs — and read app/views/dashboard.html:253-294 to confirm the action block sits outside every conditional in the loop. Read the four card statuses from their govuk-tag elements: two \"Submitted action required\", two \"Submitted\". Read the frontend's captured DOM for both draft dashboards: three `govuk-summary-card__action` items each, reading Resume, Copy as new, Delete. Opened evidence/prototype@491b3926/page/dr1-dashboard.png and evidence/frontend@76a864ba/page/fe-dashboard-populated.png and read the link rows off both pictures rather than inferring them from the markup. Traced both View targets rather than trusting the rendered href, which is a fixture placeholder on the captured cards: app/routes.js:6617-6619 builds a draft's as /review-notification?reference= and app/routes.js:6644-6646 a submitted one's as /review-notification?submitted=, so View is a real route on both, and the `#` in the capture is the Prototype Kit's static dashboard fixture, which the contract rules out as a finding. Checked the two neighbouring findings for overlap: service-wide--dashboard-card-carries-extra-facts changes the fact pairs and disclaims the links, and review--deleting-and-cancelling-an-amendment-are-one-sided covers the delete and amend journeys but not the card's link row or its labels, so the difference slot leaves those links alone and says why.",
+        "relatedTo": [
+          {
+            "id": "inc-095",
+            "relation": "travels-with",
+            "why": "The same card. That finding changes the fact pairs in its body and explicitly leaves the link row alone; this one changes the link row and leaves the facts alone, so together they are one rework of the card."
+          },
+          {
+            "id": "inc-082",
+            "relation": "travels-with",
+            "why": "Delete, Amend and Cancel amendment are three of the links this finding describes, and whether they should exist at all is that finding's open question rather than this one's."
+          }
+        ]
+      },
+      "citations": [
+        {
+          "ref": "c1",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js",
+          "lines": {
+            "start": 18,
+            "end": 67
+          },
+          "ranges": [
+            {
+              "start": 18,
+              "end": 67
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-67",
+          "anchors": [
+            "Resume"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.frontend"
+          ]
+        },
+        {
+          "ref": "c2",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/dashboard.html",
+          "lines": {
+            "start": 258,
+            "end": 262
+          },
+          "ranges": [
+            {
+              "start": 258,
+              "end": 262
+            }
+          ],
+          "asWritten": "app/views/dashboard.html:258-262",
+          "anchors": [
+            "Copy as new"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.prototype"
+          ]
+        }
+      ],
+      "corpus": "dr1c",
+      "slice": "service-wide",
+      "source": "service-wide--dashboard-card-actions-change-with-status.json",
+      "controls": [
+        {
+          "kind": "label",
+          "text": "Resume"
+        },
+        {
+          "kind": "label",
+          "text": "View"
+        }
+      ]
+    },
+    {
+      "id": "inc-098",
+      "type": "obligation-change",
+      "milestone": null,
+      "domain": "dashboard",
+      "title": "Frontend's dashboard always has an ordering applied and no way to have none; Design release 1's sort control loads unselected, so the list starts in whatever order the service returns it",
+      "detail": "There is no unsorted state anywhere in the dashboard. Every option in the select names an ordering, and one of them is always in force: the controller parses the sort query parameter and falls back to a default when it is absent or unrecognised (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53, through parseNotificationSort at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60), and the picture of fe-dashboard-populated shows \"Arrival (newest to oldest)\" already selected on a page the trader has not touched. The default is carried all the way to the notification list read, which defaults the parameter again and interpolates it unconditionally into the request (src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34). So a trader cannot see the list in the order the service returns it, and the page never has to answer the question of what to show when nothing has been chosen.\n\nDesign release 1's select loads on \"Select one\", an unselected placeholder ahead of its three orderings (app/data/dashboard-notifications.js:147-152), and the captured DOM of dr1-dashboard shows it selected. So the design's starting state is a list with no ordering named. The design does not say what that order should be, and it cannot be read off the prototype: getDashboardViewModel reads the sort parameter, hands it to buildDashboardSortItems so the right option shows as selected and to the pagination hrefs, and never orders the notification list by it (app/routes.js:7138-7255), so the prototype's list is in fixture order whatever the select says.\n\nGive the dashboard a state in which no ordering has been chosen, and decide what the list query does in it. Two things have to happen in Frontend. The sort control needs an unselected entry that is not an ordering, which means the default at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65 stops being applied when the trader has chosen nothing rather than being applied silently. Then the notification list read has to be able to ask for a page without an ordering: src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults sort to arrivalDate,desc and :34 puts it in the query string on every call, so the parameter has to become optional there and the stub at src/server/app/services/persistence/records/stub/lifecycle/read.js:18 has to match. The band is frontend-work because both edits are Frontend's and the frontend can build and run this against its own stub today — but confirm with the notifications API's owners what order it returns when no sort parameter is sent before this ships, because that order is what a trader will actually see and neither this design nor the prototype specifies it. Adding the \"Select one\" label to the options list is part of the copy change raised as service-wide--dashboard-sort-orderings-differ; this finding is what the label has to mean.\n\nFALSIFIED BY: Finding a request from Frontend's dashboard for a page of notifications that carries no sort parameter, or an option in Frontend's sort select that is not an ordering. src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34 default the parameter and always send it, and the four options at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 are all orderings.",
+      "screens": [
+        "fe-dashboard-populated",
+        "fe-dashboard-sorted",
+        "dr1-dashboard",
+        "dr1-dashboard-filters-open"
+      ],
+      "evidence": {
+        "frontend": "src/server/app/services/persistence/records/real/lifecycle/read.js:26",
+        "prototype": "app/data/dashboard-notifications.js:147-152"
+      },
+      "confidence": "high",
+      "band": "frontend-work",
+      "gate": null,
+      "dependsOn": [],
+      "status": "dropped",
+      "commit": null,
+      "failure_reason": null,
+      "decision": {
+        "ruling": "reject",
+        "note": "Rejected by Sam, 2026-08-21, upgrading the earlier deferral on the same day. Keep the frontend's always-sorted dashboard: it always sends a sort parameter and has no unsorted state, and Design release 1's unselected sort control is not to be adopted. Supersedes the deferral, whose reasoning still holds and is the ground for rejecting outright: the dashboard is temporary, so no sort work is wanted, and an unsorted state would additionally have required deciding what no ordering means for the list query. This finding was split out of the sort-orderings one before ingest because it is a behaviour change rather than copy.",
+        "ruledAt": "2026-08-21T12:08:06Z"
+      },
+      "finding": {
+        "frontend": "There is no unsorted state anywhere in the dashboard. Every option in the select names an ordering, and one of them is always in force: the controller parses the sort query parameter and falls back to a default when it is absent or unrecognised (src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53, through parseNotificationSort at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60), and the picture of fe-dashboard-populated shows \"Arrival (newest to oldest)\" already selected on a page the trader has not touched. The default is carried all the way to the notification list read, which defaults the parameter again and interpolates it unconditionally into the request (src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34). So a trader cannot see the list in the order the service returns it, and the page never has to answer the question of what to show when nothing has been chosen.",
+        "prototype": "Design release 1's select loads on \"Select one\", an unselected placeholder ahead of its three orderings (app/data/dashboard-notifications.js:147-152), and the captured DOM of dr1-dashboard shows it selected. So the design's starting state is a list with no ordering named. The design does not say what that order should be, and it cannot be read off the prototype: getDashboardViewModel reads the sort parameter, hands it to buildDashboardSortItems so the right option shows as selected and to the pagination hrefs, and never orders the notification list by it (app/routes.js:7138-7255), so the prototype's list is in fixture order whatever the select says.",
+        "difference": "Give the dashboard a state in which no ordering has been chosen, and decide what the list query does in it. Two things have to happen in Frontend. The sort control needs an unselected entry that is not an ordering, which means the default at src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65 stops being applied when the trader has chosen nothing rather than being applied silently. Then the notification list read has to be able to ask for a page without an ordering: src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults sort to arrivalDate,desc and :34 puts it in the query string on every call, so the parameter has to become optional there and the stub at src/server/app/services/persistence/records/stub/lifecycle/read.js:18 has to match. The band is frontend-work because both edits are Frontend's and the frontend can build and run this against its own stub today — but confirm with the notifications API's owners what order it returns when no sort parameter is sent before this ships, because that order is what a trader will actually see and neither this design nor the prototype specifies it. Adding the \"Select one\" label to the options list is part of the copy change raised as service-wide--dashboard-sort-orderings-differ; this finding is what the label has to mean.",
+        "correction": "Not a correction of a claim — a record of provenance, because this file did not exist when the slice was verified. It was split from service-wide--dashboard-sort-orderings-differ, which was typed copy-change but whose difference slot ended \"Decide what 'no ordering chosen' means for the list query, since the frontend always sends a sort parameter today and has no unsorted state.\" An unsorted default is not copy: it changes what the page asks the service for. The parent keeps the option labels and stays copy-change; this file takes the behaviour and is typed obligation-change, because what changes is that an ordering stops being obligatory on every read. Carried across from the parent's own correction, because it bears directly on this finding and would otherwise be lost with it: Design release 1's list is in fixture order whatever its select says. getDashboardViewModel at app/routes.js:7138-7255 uses the sort parameter only to mark the selected option and to build pagination hrefs, and the only two .sort( calls in the whole of app/routes.js are on address names and on a label list. So the prototype cannot be used to answer what \"no ordering chosen\" should show — that is a question for the notifications API's owners, and this finding states it rather than settling it.",
+        "falsifiedBy": "Finding a request from Frontend's dashboard for a page of notifications that carries no sort parameter, or an option in Frontend's sort select that is not an ordering. src/server/app/services/persistence/records/real/lifecycle/read.js:26 and :34 default the parameter and always send it, and the four options at src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36 are all orderings.",
+        "verification": "No independent verifier: this finding was split out of service-wide--dashboard-sort-orderings-differ by the corpus editor during a pre-ingest edit pass, and no second agent has verified it as a finding in its own right. The observations it rests on were all made by that finding's verifier, who was a different agent from its author. That verifier extracted every option from dr1-dashboard.html and got Select one (selected), Newest first, Oldest first, Arrival date; read the frontend's select on fe-dashboard-populated.png and found \"Arrival (newest to oldest)\" pre-selected with no unsorted entry; and traced the prototype's options past the view to buildDashboardSortItems at app/routes.js:6716-6729 and its data at app/data/dashboard-notifications.js:147-152. That verifier also established, on its own initiative and against the author's claim, that Design release 1 never orders its list at all — see the correction below — which is the fact that makes this a real open question rather than a mechanical port. The editor added one thing the verifier had not looked at, because this finding turns on it and the parent finding did not: the path the chosen ordering takes out of Frontend. src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53 parses it, src/server/app/engine/journey.js:92-119 passes it through listKnownJourneys to records.list, and src/server/app/services/persistence/records/real/lifecycle/read.js:26 defaults it to arrivalDate,desc and :34 interpolates it into the request URL unconditionally. That is what settles the band: the edit is Frontend's, in Frontend's own files, and runs against Frontend's stub.",
+        "relatedTo": [
+          {
+            "id": "inc-101",
+            "relation": "travels-with",
+            "why": "This finding was split from that one. That one adds the \"Select one\" label to the sort options; this one is what choosing nothing has to mean for the list the page then shows."
+          },
+          {
+            "id": "inc-100",
+            "relation": "travels-with",
+            "why": "Same control. That one is how a chosen ordering gets applied, this one is what happens before one is chosen."
+          }
+        ]
+      },
+      "citations": [
+        {
+          "ref": "c1",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
+          "lines": {
+            "start": 53,
+            "end": 53
+          },
+          "ranges": [
+            {
+              "start": 53,
+              "end": 53
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:53",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c2",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js",
+          "lines": null,
+          "ranges": [
+            {
+              "start": 5,
+              "end": 8
+            },
+            {
+              "start": 58,
+              "end": 61
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-60",
+          "anchors": [
+            "Arrival (newest to oldest)"
+          ],
+          "resolution": "human",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ],
+          "why": "The sentence names the fallback default and the ordering the trader sees on an untouched page, Arrival (newest to oldest). 58-60 held only parseNotificationSort, so neither the default nor its label was in range. 5-8 carries DEFAULT_NOTIFICATION_SORT = 'arrivalDate,desc' at :5 and the matching option label Arrival (newest to oldest) at :8; 58-61 carries parseNotificationSort returning that default for an absent or unrecognised query value.",
+          "needsHuman": false
+        },
+        {
+          "ref": "c3",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/services/persistence/records/real/lifecycle/read.js",
+          "lines": {
+            "start": 26,
+            "end": 26
+          },
+          "ranges": [
+            {
+              "start": 26,
+              "end": 26
+            }
+          ],
+          "asWritten": "src/server/app/services/persistence/records/real/lifecycle/read.js:26",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.frontend"
+          ]
+        },
+        {
+          "ref": "c4",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/services/persistence/records/real/lifecycle/read.js",
+          "lines": {
+            "start": 34,
+            "end": 34
+          },
+          "ranges": [
+            {
+              "start": 34,
+              "end": 34
+            }
+          ],
+          "asWritten": ":34",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c5",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/data/dashboard-notifications.js",
+          "lines": {
+            "start": 147,
+            "end": 152
+          },
+          "ranges": [
+            {
+              "start": 147,
+              "end": 152
+            }
+          ],
+          "asWritten": "app/data/dashboard-notifications.js:147-152",
+          "anchors": [
+            "Select one"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.prototype"
+          ]
+        },
+        {
+          "ref": "c6",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/routes.js",
+          "lines": {
+            "start": 7138,
+            "end": 7255
+          },
+          "ranges": [
+            {
+              "start": 7138,
+              "end": 7255
+            }
+          ],
+          "asWritten": "app/routes.js:7138-7255",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c7",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js",
+          "lines": {
+            "start": 58,
+            "end": 65
+          },
+          "ranges": [
+            {
+              "start": 58,
+              "end": 65
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:58-65",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c8",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/services/persistence/records/stub/lifecycle/read.js",
+          "lines": {
+            "start": 18,
+            "end": 18
+          },
+          "ranges": [
+            {
+              "start": 18,
+              "end": 18
+            }
+          ],
+          "asWritten": "src/server/app/services/persistence/records/stub/lifecycle/read.js:18",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        },
+        {
+          "ref": "c9",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js",
+          "lines": {
+            "start": 27,
+            "end": 36
+          },
+          "ranges": [
+            {
+              "start": 27,
+              "end": 36
+            }
+          ],
+          "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:27-36",
+          "anchors": [],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail"
+          ]
+        }
+      ],
+      "corpus": "dr1c",
+      "slice": "service-wide",
+      "source": "service-wide--dashboard-loads-with-an-ordering-already-applied.json",
+      "controls": [
+        "sort"
+      ]
+    },
+    {
+      "id": "inc-106",
+      "type": "flow-change",
+      "milestone": null,
+      "domain": "service-wide",
+      "title": "Five journey pages end with a save-and-return button and a cancel link that Design release 1 does not show there, where the design ends the page with one button",
+      "detail": "Every journey page that renders the shared save-actions macro gets all three of its controls, because the macro takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13): a primary \"Save and continue\", a secondary \"Save and return to hub\" and a \"Cancel and return to hub\" link. The two return controls appear together on 41 of the 67 captured frontend screens, and on every screen where either appears the other does too. So a user meets the same three-way choice at the foot of the origin page, the CPH number page, the contact-address page, the transporter-type page and the private-transporter page.\n\nDesign release 1 shows the three-control pattern on 29 of its 60 captured screens and ends the other journey pages with a single button. On five pages that pair with frontend pages carrying the full set it shows one control and no way to leave: origin-of-the-import, cph-number and transporter-add-private end with \"Save and continue\" alone — the origin page's whole form-actions block is one button at app/views/origin-of-the-import.html:167-175 — and contact-address-for-consignment and transporter-add end with a button reading just \"Continue\". The private-transporter page is the one exception with a second control, and it is a third destination rather than the overview — a \"Cancel and return to dashboard\" link.\n\nStop rendering the secondary button and the cancel link on the five pages the design ends with one button, and leave the pattern intact on the pages that keep it. The macro at src/server/app/shared/save-actions.njk:3-13 renders all three unconditionally, so it needs a way to ask for the primary alone — a flag on the macro, read by the five feature templates — rather than five copies of a shortened button group. Two of the five also differ in the primary label, \"Continue\" against \"Save and continue\", and one carries a cancel link to the dashboard rather than the overview; those are copy on individual pages and belong with whoever picks up this change, not with the shared macro. Design release 1 states no rule for which pages carry the full pattern, so the design's own list is the specification: the five named here lose it and the rest keep it.\n\nFALSIFIED BY: Finding \"Save and return to overview\" or \"Cancel and return to overview\" in the captured DOM of dr1-origin-of-the-import, dr1-cph-number, dr1-contact-address-for-consignment, dr1-transporter-add or dr1-transporter-add-private.",
+      "screens": [
+        "fe-origin",
+        "fe-cph-number",
+        "fe-contact",
+        "fe-transporter-type",
+        "fe-transporter-private",
+        "dr1-origin-of-the-import",
+        "dr1-cph-number",
+        "dr1-contact-address-for-consignment",
+        "dr1-transporter-add",
+        "dr1-transporter-add-private"
+      ],
+      "evidence": {
+        "frontend": "src/server/app/shared/save-actions.njk:3-13",
+        "prototype": "app/views/origin-of-the-import.html:167-175"
+      },
+      "confidence": "high",
+      "band": "frontend-work",
+      "gate": null,
+      "dependsOn": [],
+      "status": "dropped",
+      "commit": null,
+      "failure_reason": null,
+      "decision": {
+        "ruling": "reject",
+        "note": "Rejected by Sam, 2026-08-21. Do not port Design release 1's page-by-page button pattern. Both sides are internally inconsistent — the frontend renders all three controls on 41 of 67 captured screens because the shared macro takes no argument that would drop one, and Design release 1 shows the three-control pattern on 29 of its 60 captured screens with no stated rule for which pages carry it, ending others with a lone 'Save and continue' or a bare 'Continue'. Copying that page list would import the design's own inconsistency into the frontend. Superseded by a new finding that makes the buttons consistent everywhere as a first pass, after which any remaining per-page difference can be judged against a single rule.",
+        "ruledAt": "2026-08-21T12:10:59Z"
+      },
+      "finding": {
+        "frontend": "Every journey page that renders the shared save-actions macro gets all three of its controls, because the macro takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13): a primary \"Save and continue\", a secondary \"Save and return to hub\" and a \"Cancel and return to hub\" link. The two return controls appear together on 41 of the 67 captured frontend screens, and on every screen where either appears the other does too. So a user meets the same three-way choice at the foot of the origin page, the CPH number page, the contact-address page, the transporter-type page and the private-transporter page.",
+        "prototype": "Design release 1 shows the three-control pattern on 29 of its 60 captured screens and ends the other journey pages with a single button. On five pages that pair with frontend pages carrying the full set it shows one control and no way to leave: origin-of-the-import, cph-number and transporter-add-private end with \"Save and continue\" alone — the origin page's whole form-actions block is one button at app/views/origin-of-the-import.html:167-175 — and contact-address-for-consignment and transporter-add end with a button reading just \"Continue\". The private-transporter page is the one exception with a second control, and it is a third destination rather than the overview — a \"Cancel and return to dashboard\" link.",
+        "difference": "Stop rendering the secondary button and the cancel link on the five pages the design ends with one button, and leave the pattern intact on the pages that keep it. The macro at src/server/app/shared/save-actions.njk:3-13 renders all three unconditionally, so it needs a way to ask for the primary alone — a flag on the macro, read by the five feature templates — rather than five copies of a shortened button group. Two of the five also differ in the primary label, \"Continue\" against \"Save and continue\", and one carries a cancel link to the dashboard rather than the overview; those are copy on individual pages and belong with whoever picks up this change, not with the shared macro. Design release 1 states no rule for which pages carry the full pattern, so the design's own list is the specification: the five named here lose it and the rest keep it.",
+        "falsifiedBy": "Finding \"Save and return to overview\" or \"Cancel and return to overview\" in the captured DOM of dr1-origin-of-the-import, dr1-cph-number, dr1-contact-address-for-consignment, dr1-transporter-add or dr1-transporter-add-private.",
+        "verification": "Written and checked by the verifier, so a reader knows both were the same pass. Ran the falsifier: neither string occurs in any of those five prototype files. Listed both sides exhaustively — \"Save and return to hub\" is in 41 of the 67 frontend files and \"Cancel and return to hub\" in the same 41; \"Save and return to overview\" and \"Cancel and return to overview\" are each in 29 of the 60 prototype files — then walked every entry in pairs.cjs to find the pairs where the two sets disagree, which are the five named. Extracted the button text on each: fe-origin, fe-cph-number, fe-contact, fe-transporter-type and fe-transporter-private each carry all three, dr1-origin-of-the-import, dr1-cph-number and dr1-transporter-add-private carry \"Save and continue\", the last also carrying \"Cancel and return to dashboard\", and dr1-contact-address-for-consignment and dr1-transporter-add carry a submit button whose text is \"Continue\". Read src/server/app/shared/save-actions.njk:3-13 to confirm the macro has no way to suppress a control. Opened evidence/frontend@76a864ba/page/fe-origin.png and evidence/prototype@491b3926/page/dr1-origin-of-the-import.png, which show the difference plainly: three controls against one.",
+        "relatedTo": [
+          {
+            "id": "inc-105",
+            "relation": "travels-with",
+            "why": "Both change the same three controls at the foot of a journey page — one what they say, the other which pages they appear on."
+          }
+        ]
+      },
+      "citations": [
+        {
+          "ref": "c1",
+          "kind": "code",
+          "side": null,
+          "repo": "frontend",
+          "path": "src/server/app/shared/save-actions.njk",
+          "lines": {
+            "start": 3,
+            "end": 13
+          },
+          "ranges": [
+            {
+              "start": 3,
+              "end": 13
+            }
+          ],
+          "asWritten": "src/server/app/shared/save-actions.njk:3-13",
+          "anchors": [
+            "Save and continue",
+            "Save and return to hub",
+            "Cancel and return to hub"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.frontend"
+          ]
+        },
+        {
+          "ref": "c2",
+          "kind": "code",
+          "side": null,
+          "repo": "prototype",
+          "path": "app/views/origin-of-the-import.html",
+          "lines": {
+            "start": 167,
+            "end": 175
+          },
+          "ranges": [
+            {
+              "start": 167,
+              "end": 175
+            }
+          ],
+          "asWritten": "app/views/origin-of-the-import.html:167-175",
+          "anchors": [
+            "Save and continue",
+            "Continue"
+          ],
+          "resolution": "explicit",
+          "field": "detail",
+          "fields": [
+            "detail",
+            "evidence.prototype"
+          ]
+        }
+      ],
+      "corpus": "dr1c",
+      "slice": "service-wide",
+      "source": "service-wide--save-and-cancel-shown-where-the-design-shows-one-button.json",
+      "controls": [
+        "Save and return to hub",
+        "Cancel and return to hub"
+      ]
     }
   ]
 }

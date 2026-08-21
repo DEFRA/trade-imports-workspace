@@ -118,48 +118,59 @@ The evidence — the pictures, and the commits they are of — has its own
 commands. Element crops are declared as data rather than written into a spec:
 
 ```bash
-tim parity seed-anchors EUDPA-328 --write        # anchors.<side>.json from the compare deltas
-tim parity insertion-anchors EUDPA-328 --write   # where a one-sided control would go
+tim parity anchors EUDPA-328 [--side frontend] --write   # which control each finding is about
 tim parity manifest EUDPA-328 --side prototype --sha 491b3926 --write
 tim parity check-evidence EUDPA-328 [--strict]   # pin drift, captures, dead citations
 tim parity repoint EUDPA-328 --side frontend --to <sha> [--accept]
 ```
 
-The pictures themselves come from two more commands, and both drive a browser:
+`anchors` derives `anchors.<side>.json` from the backlog — from the `controls`
+array each finding names, resolved against that side's captured DOM. It replaced
+`seed-anchors`, which built the same file from a compare-delta format that no
+longer exists, and it also does what `insertion-anchors` did: where a control is
+on one side and not on the other, this side gets an insertion point, so an
+absence is shown against the place the control would go rather than by a
+whole-page shot. Without `--write` it reports and writes nothing, and either way
+it names every finding that named no control. Run it before the capture that is
+meant to carry the crops — a side captured before its anchors exist gets
+full-page shots only.
+
+The pictures themselves come from `capture`, which drives a browser, and
+`coverage`, which says whether it got everything:
 
 ```bash
-tim parity map EUDPA-328 --side frontend --write       # what screens are there, and how to reach them
-tim parity capture EUDPA-328 --side frontend           # walk the plan the map wrote, and record it
+tim parity capture EUDPA-328 --side frontend           # run this side's specs and record what it does
+tim parity coverage EUDPA-328 [--side frontend] [--strict]   # what the source says exists, against what was captured
 ```
 
 These are requirements-gathering tools, not tests. Playwright is here because
-Playwright drives browsers; nothing in either command asserts that an
-application is correct. They record what an application does today so it can be
-compared against a signed-off design, which is why they live in the workspace
-rather than in either application's repo. For the same reason neither imports an
+Playwright drives browsers; nothing in a capture asserts that an application is
+correct. They record what an application does today so it can be compared
+against a signed-off design, which is why they live in the workspace rather than
+in either application's repo. For the same reason no capture spec imports an
 application's own journey helpers: those suites are not maintained, so a harness
 built on them breaks the moment somebody refactors one.
 
-`map` crawls a side from the `app.baseURL` and `app.startPath` in its corpus
-entry, with no knowledge of the journey. It reads each rendered page, fills what
-the page tells it how to fill, takes one forward action and queues every choice
-it did not take. Values come off a five-rung ladder — seeded, enumerated, mined
-from a hint or an error message, typed, generic — and the rung is stored against
-every field, so a value carries its provenance. `--write` produces
-`map.<side>.json`, a `hints.<side>.json` stub with one empty entry per field
-nothing could fill, the `<side>.routes.json` route plan, and one page model per
-screen in the side's model directory. `--check` exits non-zero while anything is
-unexplored, blocked or unfilled; `--budget-steps`, `--budget-minutes`,
-`--headed` and `--data-state` cover the rest.
+`capture` runs the side's own hand-written Playwright specs, from `specs/<side>/`
+in the corpus workarea, and starts the application itself when nothing is already
+listening on the side's `app.baseURL`. On every screen a spec names it takes four
+things in one page visit — a full-page screenshot, one crop per declared anchor,
+a page model and the rendered HTML — so all four are of the same render, then
+writes `manifest.json` beside them. `--specs <path>` runs specs from somewhere
+other than the side's own directory, and `--headed` shows the browser. A screen a
+spec cannot reach is reported as a stated absence, not left as a broken image.
 
-`capture` walks that plan and, on each screen it reaches, takes a full-page
-screenshot, one crop per declared anchor and a page model in the same page
-visit, then writes `manifest.json` beside them. It refuses to start without a
-route plan and prints the path the map would have written. A screen it cannot
-reach is reported as a stated absence, not left as a broken image.
+There used to be a `map` command that crawled a side to find out what screens it
+had and how to reach them, and wrote a route plan for `capture` to replay. It is
+gone, and so are the frontier, the five-rung value ladder and `hints.<side>.json`
+that went with it. Agents write the navigation now, as plain specs. `coverage`
+answers what `map` was asked: it enumerates a side's screens statically from its
+own source, through the `enumeratorModule` its corpus entry names, and diffs that
+against what the capture recorded. `--strict` turns a missing screen into a
+non-zero exit.
 
-Both need Playwright installed in `tim` — `npm install`, then
-`npx playwright install chromium`. Without it they stop with `MISSING_DEP`.
+`capture` needs Playwright installed in `tim` — `npm install`, then
+`npx playwright install chromium`. Without it it stops with `MISSING_DEP`.
 
 `repoint` writes a preview of old beside new before anything is superseded, so
 a screen the new run did not reach is caught rather than silently lost.

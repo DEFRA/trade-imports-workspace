@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { readJsonFile } from './io.js'
 import { loadCorpus } from './load.js'
 import { loadPairs, indexPairs, screenPairsFor } from './assets/pairs.js'
-import { readSeals } from './seals.js'
 
 /**
  * Is the evidence file still about the commits the corpus is pinned to?
@@ -86,7 +85,12 @@ export const captureIntegrity = ({ profile, meta }) =>
   })
 
 /**
- * Screens a finding points at that no manifest has a row for.
+ * Screens a finding points at that no capture visited.
+ *
+ * A manifest row is the record of one page visit, which produced the
+ * screenshot, the crops, the page model and the rendered DOM together. No row
+ * means none of the four exists, so there is nothing on disk anyone can argue
+ * the finding from.
  *
  * @param {object} args
  * @param {object[]} args.items
@@ -119,7 +123,12 @@ export const missingRows = ({ items, pairIndex, sides, captured }) => {
 }
 
 /**
- * Anchors declared for a screen that matched nothing when it was shot.
+ * Crops the capture was told to take and could not.
+ *
+ * The anchor matched nothing on the page when the screen was shot, so the
+ * control the finding is about has no picture of its own. Either the anchor
+ * names the wrong thing or the page was captured in a state that does not hold
+ * it — both are faults in the capture, and both are silent until listed here.
  *
  * @param {object} args
  * @param {object} args.profile
@@ -203,8 +212,8 @@ const visibleFields = (model) =>
  * Screens with no control on one side and controls on the other.
  *
  * Every delta, anchor and insertion point is derived from the page models, so
- * a page captured in a state that renders nothing does not merely lose a
- * plate: it tells the differ that side has no fields there, and the report
+ * a page captured in a state that renders nothing does not merely lose its own
+ * evidence: it tells the differ that side has no fields there, and the report
  * then shows an absence that is an artefact of the journey rather than a
  * difference between the two codebases.
  *
@@ -259,10 +268,10 @@ export const emptyModels = ({ profile, pairIndex }) => {
 /**
  * Which commit each side's page models were read at.
  *
- * A page model has no provenance inside it. It is the fallback tier — the
- * plate a card shows where no screenshot exists — and a plate of unknown
- * vintage under a pending decision is the same failure as a swapped picture,
- * in text rather than in pixels.
+ * A page model has no provenance inside it. It is the evidence anyone reaches
+ * for to settle what a screen actually asked — every field, its kind and its
+ * label — so a model of unknown vintage under a pending decision means nobody
+ * can say which commit the finding was argued from.
  *
  * @param {object} args
  * @param {object} args.profile
@@ -286,7 +295,7 @@ export const modelVintage = ({ profile, meta }) =>
  * Everything the evidence pipeline can say about its own state.
  *
  * The point of gathering it in one command is that no single check is enough:
- * a green coverage number over a stale pin, or a clean citation list against a
+ * a full capture over a stale pin, or a clean citation list against a
  * capture nobody re-ran, both read as "the evidence is fine" when it is not.
  *
  * @param {object} args
@@ -323,8 +332,6 @@ export const runCheckEvidence = ({ profile }) => {
   const pairIndex = indexPairs(loadPairs(profile.paths.pairingModule))
   const items = [...corpus.findings, ...corpus.withdrawn]
 
-  const seals = readSeals(profile.paths.seals)
-
   return {
     corpus: profile.id,
     evidencePresent: Boolean(evidence),
@@ -350,7 +357,6 @@ export const runCheckEvidence = ({ profile }) => {
           interpolated: [],
           rendered: []
         },
-    sealed: Object.keys(seals).length,
     models: modelVintage({ profile, meta }),
     emptyModels: emptyModels({ profile, pairIndex }),
     regenerate: regenerationCommands({ profile, evidence, meta })
@@ -422,7 +428,7 @@ export const renderCheckEvidence = (result) => {
     )
   }
 
-  lines.push('', 'screens with no picture')
+  lines.push('', 'cited screens no capture visited')
   lines.push(
     result.missingRows.length === 0
       ? bullet('none — every cited screen has a manifest row.')
@@ -435,7 +441,7 @@ export const renderCheckEvidence = (result) => {
           .join('\n')
   )
 
-  lines.push('', 'anchors that matched nothing')
+  lines.push('', 'crops the capture could not take')
   lines.push(
     result.unresolvedAnchors.length === 0
       ? bullet('none.')
@@ -486,7 +492,7 @@ export const renderCheckEvidence = (result) => {
       bullet(
         model.sha
           ? `${model.side} @ ${model.sha}${model.matchesPin ? ', which is the pin' : ', which is not the pin — see the capture note in corpora.json'}: ${model.how}.`
-          : `${model.side}: no vintage recorded, so a plate built from these says nothing about which commit it is of.`
+          : `${model.side}: no vintage recorded, so anyone arguing a finding from these cannot say which commit they are of.`
       )
     )
   }
@@ -505,7 +511,6 @@ export const renderCheckEvidence = (result) => {
     }
   }
 
-  lines.push('', `${result.sealed} findings have a sealed picture.`)
   lines.push('', 'to regenerate')
   lines.push(...result.regenerate.map(bullet))
 

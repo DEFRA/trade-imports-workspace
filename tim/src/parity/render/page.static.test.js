@@ -23,16 +23,40 @@ const args = (target) => ({
   joinReport: { matched: 0, increments: 0, ordinalAgreement: 0 },
   sides: [{ id: 'frontend', label: 'Frontend', column: 'left' }],
   runId: 'EUDPA-328',
-  drift: [],
   target,
-  inlining: null,
   stamp: {
     timVersion: 'test',
     backlogSha: 'abc',
     backlogMtime: '2026-08-19T00:00:00.000Z',
-    generatedAt: '2026-08-19T00:00:00.000Z',
-    coverage: []
+    generatedAt: '2026-08-19T00:00:00.000Z'
   }
+})
+
+const finding = (id) => ({
+  kind: 'increment',
+  id,
+  anchor: id,
+  title: `Finding ${id}`,
+  domain: 'dashboard',
+  type: 'add-field',
+  band: 'frontend-only',
+  confidence: 'high',
+  milestone: 'M0',
+  status: 'todo',
+  gate: null,
+  screens: ['dashboard'],
+  detail: 'Something differs.',
+  sections: { frontend: null, prototype: null, difference: null, body: null },
+  decision: null,
+  decisionRequired: null,
+  relatedTo: [],
+  notes: [],
+  citations: [],
+  resolvedCitations: [],
+  assets: [],
+  dependsOn: [],
+  dependents: [],
+  visual: []
 })
 
 describe('the local build is a static app', () => {
@@ -52,7 +76,7 @@ describe('the local build is a static app', () => {
 describe('the page opens off the filesystem with no server', () => {
   // This is the whole reason there is no `tim parity serve`. A file:// page
   // may not fetch, and may not load an ES module — both are blocked as
-  // cross-origin. Everything else, including lazy-loaded images, works.
+  // cross-origin. Everything else works.
   test('the script never fetches', () => {
     expect(CONTROLS_SCRIPT).not.toMatch(/\bfetch\s*\(/)
     expect(CONTROLS_SCRIPT).not.toMatch(/XMLHttpRequest/)
@@ -75,5 +99,20 @@ describe('the artifact stays one file', () => {
     expect(html).not.toContain(`href="${ASSET_CSS}"`)
     expect(html).not.toContain(`src="${ASSET_JS}"`)
     expect(html).toContain(CONTROLS_SCRIPT)
+  })
+})
+
+describe('the report shows findings in words, never in pictures', () => {
+  const html = renderPage({
+    ...args('local'),
+    findings: [finding('inc-001'), finding('inc-002')]
+  })
+
+  test('renders no image markup at all', () => {
+    expect(html).not.toContain('<img')
+    expect(html).not.toContain('class="shot')
+    expect(html).not.toContain('class="frame')
+    expect(html).not.toContain('class="plate--')
+    expect(html).not.toContain('class="ribbon')
   })
 })

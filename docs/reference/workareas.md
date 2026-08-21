@@ -46,10 +46,6 @@ Eight files, each because it outlives the run that made it:
   harnesses crop, generated from the compare deltas. Data rather than code is
   what stops a spec edit ever being needed to add element evidence to a
   finding.
-- `shared/*/evidence/seals.json` — the picture the reader was last shown, per
-  side per finding. It cannot be recomputed: it records what a person has seen,
-  and it is the only thing standing between a re-capture and a ruling made
-  against an image nobody looked at.
 - `shared/*/compare/deltas/*.json` and the page models they are built from —
   every difference the report's findings, anchors and insertion points are
   derived from. Regenerable, but `git diff` after a re-capture is the record of

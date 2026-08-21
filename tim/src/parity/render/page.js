@@ -2,7 +2,6 @@ import { esc } from './prose.js'
 import { DEFAULT_BANDS } from '../corpus-profile.js'
 import { renderCard } from './card.js'
 import { THEME_CSS } from './theme.js'
-import { spriteStyles } from './artifact.js'
 
 /**
  * The static app's own files, beside the page. Named here and written by the
@@ -36,20 +35,6 @@ const pinCard = (
   <span class="pin__why">${esc(pin.why ?? '')}</span>
 </div>`
 
-const captureCard = (
-  side,
-  capture
-) => `<div class="pin${capture.matchesPin ? '' : ' pin--unpushed'}">
-  <span class="pin__repo">${esc(side)} pictures</span>
-  <span class="pin__sha">${esc(capture.sha ?? 'none')} · ${capture.screenshots} shots, ${capture.models} page models, ${capture.deviceScaleFactor}x</span>
-  <span class="pin__why">${
-    capture.matchesPin
-      ? 'Taken at the commit the citations point at.'
-      : 'Taken at a different commit from the one the citations point at, so a picture that contradicts its finding is a signal to re-verify the finding, not a fault in the capture.'
-  }</span>
-  ${capture.note ? `<span class="pin__why">${esc(capture.note)}</span>` : ''}
-</div>`
-
 const sectionOf = ({ title, blurb, items, sides, runId, bands, id }) => {
   if (items.length === 0) return ''
   return `<section class="section" id="${esc(id)}">
@@ -71,71 +56,6 @@ const byGateThenType = (a, b) => {
     Number(Boolean(b.gate && !b.decision)) -
     Number(Boolean(a.gate && !a.decision))
   return gate || rank(a) - rank(b) || a.title.localeCompare(b.title)
-}
-
-const short = (sha) => (sha ? sha.slice(0, 12) : 'nothing')
-
-/**
- * What each kind of drift means, in the reader's terms.
- *
- * The three that are not a reframe all print two hashes, because the frame
- * description is identical on both sides of the arrow and would read as though
- * nothing had happened. They differ in what the capture was able to say about
- * the page behind the picture, and that changes what the reader should look
- * for: a page that moved, a page that did not move and still draws
- * differently, or a capture too old to tell the two apart.
- */
-const DRIFT_WORDING = {
-  'content-changed': 'the page changed',
-  'pixels-changed': 'same page, new pixels',
-  'image-changed': 'same frame, new pixels'
-}
-
-/**
- * What moved, said in the terms that actually differ.
- *
- * A reframe prints the frames, because the hashes are two unrelated files and
- * comparing them says nothing.
- */
-const driftRow = (entry, titleOf) => {
-  const what =
-    entry.kind === 'frame-changed'
-      ? `${esc(entry.was)} → ${esc(entry.now)}`
-      : `${DRIFT_WORDING[entry.kind] ?? 'changed'} — ${esc(short(entry.wasSha))} → ${esc(short(entry.nowSha))}`
-  return `<li><a href="#${esc(entry.id)}"><code>${esc(entry.id)}</code></a> ${esc(titleOf(entry.id) ?? '')}
-    <span class="drift__what">${esc(entry.side)}: ${what}</span></li>`
-}
-
-/**
- * Every picture that moved since the reader last saw it.
- *
- * This is the most important thing on the page. A reader who rules on a
- * finding under a picture that was swapped without them has been misled by the
- * report itself, so the drift is named — which side, from what to what — above
- * anything they might be here to do.
- *
- * @param {object[]} drift - Entries from the seal store
- * @param {object[]} items - Report items, for their titles
- * @param {string} runId - Named so the panel can print the command that clears it
- * @returns {string}
- */
-const driftPanel = (drift, items, runId) => {
-  if (!drift?.length) return ''
-  const titles = new Map(items.map((item) => [item.id, item.title]))
-  const findings = new Set(drift.map((entry) => entry.id))
-  const reframed = drift.filter((entry) => entry.kind === 'frame-changed')
-  return `<div class="drift">
-  <strong>${drift.length} ${drift.length === 1 ? 'picture has' : 'pictures have'} changed since ${findings.size === 1 ? 'this finding was' : 'these findings were'} last shown.</strong>
-  <p>Nobody should be asked to rule under a picture that was swapped without them, so they are listed here before anything else. Each carries a ribbon on the image itself.${
-    reframed.length
-      ? ` ${reframed.length} of them ${reframed.length === 1 ? 'is' : 'are'} a different frame rather than a re-capture of the same one — a different control, or a page where there was a crop.`
-      : ''
-  }</p>
-  <ul class="drift__list">${drift
-    .map((entry) => driftRow(entry, (id) => titles.get(id)))
-    .join('')}</ul>
-  <p class="drift__accept">Once you have looked, <code>tim parity report ${esc(runId)} --reseal</code> accepts them and clears this panel.</p>
-</div>`
 }
 
 export const CONTROLS_SCRIPT = `
@@ -240,9 +160,7 @@ export const renderPage = ({
   joinReport,
   sides,
   runId,
-  drift,
   target,
-  inlining,
   stamp
 }) => {
   const domains = [...new Set(findings.map((item) => item.domain))].sort()
@@ -274,8 +192,7 @@ export const renderPage = ({
   // sent to someone — so it carries both inline.
   const standalone = target === 'artifact'
   const head = standalone
-    ? `<style>${THEME_CSS}</style>
-${spriteStyles(inlining?.sprites)}`
+    ? `<style>${THEME_CSS}</style>`
     : `<link rel="stylesheet" href="${ASSET_CSS}">`
 
   return `<title>${esc(runId)} findings — ${esc(corpus)}</title>
@@ -293,7 +210,7 @@ ${head}
     </p>
     ${
       target === 'artifact'
-        ? `<p class="masthead__note">This is the shareable copy. It carries every element crop inside the file and links the full-page screenshots, which live on the machine that built it — so the evidence it does not carry is named rather than quietly dropped. The ruling controls write to a backlog this copy cannot reach; rule from the local build.</p>`
+        ? `<p class="masthead__note">This is the shareable copy: one file you can send to somebody, with the stylesheet and the script inside it. The ruling controls write to a backlog this copy cannot reach; rule from the local build.</p>`
         : ''
     }
   </header>
@@ -316,12 +233,7 @@ ${head}
     ${Object.entries(meta?.pins ?? {})
       .map(([key, pin]) => pinCard(key, pin))
       .join('')}
-    ${Object.entries(meta?.captures ?? {})
-      .map(([side, capture]) => captureCard(side, capture))
-      .join('')}
   </div>
-
-  ${driftPanel(drift, [...findings, ...withdrawn], runId)}
 
   <div class="controls">
     <input type="search" id="q" placeholder="Search every finding…" aria-label="Search findings">
@@ -391,17 +303,6 @@ ${head}
         : ''
     }
     <span>generated ${esc(stamp.generatedAt)}</span>
-    ${
-      inlining
-        ? `<span>artifact copy: ${inlining.inlined} element crops carried inside this file as WebP (${(inlining.bytes / 1024 / 1024).toFixed(1)} MB), shown ${inlining.uses} times; ${inlining.linked} full-page screenshots left where they are and linked. Nothing was downsized to fit.</span>`
-        : ''
-    }
-    ${stamp.coverage
-      .map(
-        (c) =>
-          `<span>images: ${esc(c.side)} ${c.have}/${c.want} cited screens${c.byState.model ? `, ${c.byState.model} as page-model plates` : ''}</span>`
-      )
-      .join('')}
   </footer>
 </div>
 <script>const RUN_ID = ${JSON.stringify(runId)};</script>

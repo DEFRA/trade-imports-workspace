@@ -75,124 +75,6 @@ export const decisionBlock = ({ item, runId, citations }) => {
 </div>`
 }
 
-const plateRow = (row) => {
-  const meta = []
-  if (row.control) meta.push(row.control)
-  if (row.name) meta.push(row.name)
-  if (row.optionCount) meta.push(`${row.optionCount} options`)
-  if (row.status) meta.push(row.status)
-  const sample = row.options?.length
-    ? `<span class="plate__meta"> — ${esc(row.options.join(', '))}${row.optionCount > row.options.length ? ', …' : ''}</span>`
-    : ''
-  return `<li class="plate__row">
-  <span class="plate__kind">${esc(row.kind)}</span>
-  <span class="plate__text">${esc(row.text)}${meta.length ? ` <span class="plate__meta">(${esc(meta.join(' · '))})</span>` : ''}${sample}</span>
-</li>`
-}
-
-/**
- * One side of one picture row, at whatever state the evidence reached.
- *
- * @param {object} args
- * @param {object} args.asset
- * @param {object} args.side
- * @returns {string}
- */
-export const shot = ({ asset, side }) => {
-  const head = `<div class="shot__label"><span>${esc(side.label)}</span><span>${esc(asset.screen ?? '—')}</span></div>`
-
-  if (asset.state === 'crop' || asset.state === 'page') {
-    const caption =
-      asset.state === 'crop'
-        ? `Element crop · ${esc(asset.anchorKey ?? '')}`
-        : 'Full page'
-    // The tooltip only names the old frame on a reframe. On a re-capture the
-    // old frame is the same words as the new one, and a tooltip that repeats
-    // the caption reads as though nothing moved.
-    const reframed = asset.driftKind === 'frame-changed'
-    const drift = asset.drifted
-      ? `<span class="ribbon"${reframed && asset.driftedFrom ? ` title="was: ${esc(asset.driftedFrom)}"` : ''}>${
-          reframed
-            ? 'different frame since you last looked'
-            : 'changed since you last looked'
-        }</span>`
-      : ''
-    // An insertion crop is a picture of something that is present, standing in
-    // for something that is not. Outlined and captioned, because without both
-    // it reads as a crop of the wrong control.
-    const insertions = asset.insertions ?? []
-    const figureClass = insertions.length
-      ? 'shot__figure shot__figure--insertion'
-      : 'shot__figure'
-
-    const alt = `${esc(side.label)} — ${esc(asset.screen)}`
-    // In the artifact the picture is declared once and pointed at, so it is a
-    // labelled box rather than an img. Everywhere else it stays an img with an
-    // anchor, because a full-resolution original is one click away.
-    const picture = asset.spriteId
-      ? `<div class="sprite" role="img" aria-label="${alt}" style="background-image:var(--${esc(asset.spriteId)})${asset.aspect ? `;aspect-ratio:${esc(asset.aspect)}` : ''}"></div>`
-      : `<a href="${esc(asset.href)}"><img loading="lazy" src="${esc(asset.href)}" alt="${alt}"></a>`
-
-    return `<div class="shot">${head}
-  <figure class="${figureClass}" style="position:relative">${drift}
-    ${picture}
-    ${insertions
-      .map(
-        (insertion) =>
-          `<p class="shot__insertion">${esc(insertion.caption)}</p>`
-      )
-      .join('')}
-    <figcaption class="shot__caption">${insertions.length ? 'Where it would go' : caption}${asset.dsf ? ` · ${esc(asset.dsf)}x` : ''}</figcaption>
-  </figure>
-</div>`
-  }
-
-  // The artifact target carries element crops and not full pages. Saying so
-  // beats shipping a downsized page shot nobody can read, and beats leaving
-  // the column empty — which would claim there is nothing on this side.
-  if (asset.state === 'page-link') {
-    return `<div class="shot">${head}
-  <div class="plate plate--elsewhere">
-    <strong>Full page, not carried here</strong>
-    <span>This screen has a full-page screenshot. It is 1 to 3 MB and there are dozens of them, so this copy of the report links to it rather than shrinking it to something unreadable.</span>
-    <a href="${esc(asset.href)}"><code>${esc(asset.path)}</code></a>
-  </div>
-</div>`
-  }
-
-  if (asset.state === 'model') {
-    const from = asset.modelsFrom
-    return `<div class="shot">${head}
-  <div class="plate">
-    <ul class="plate__rows">${asset.plate.rows.map(plateRow).join('')}</ul>
-  </div>
-  <span class="shot__caption">Page model only — no screenshot exists for this screen yet. This is every heading, field and row the capture recorded, in document order.${
-    from
-      ? ` Read at <code>${esc(from.sha)}</code>, ${esc(from.how)}.${from.why ? ` ${esc(from.why)}` : ''}`
-      : ''
-  }</span>
-</div>`
-  }
-
-  return `<div class="shot">${head}
-  <div class="plate plate--absent">
-    <span>${esc(asset.why ?? 'No evidence captured for this side.')}</span>
-    ${asset.command ? `<code>${esc(asset.command)}</code>` : ''}
-  </div>
-</div>`
-}
-
-const frames = ({ item, sides }) => {
-  if (!item.assets?.length) return ''
-  const rows = item.assets
-    .map(
-      (row) =>
-        `<div class="frame">${sides.map((side) => shot({ asset: row[side.id], side })).join('')}</div>`
-    )
-    .join('')
-  return `<div class="frames">${rows}</div>`
-}
-
 const notesBlock = ({ item, citations }) => {
   if (!item.notes.length) return ''
   const body = item.notes
@@ -351,7 +233,6 @@ export const renderCard = ({ item, sides, runId, bands = [] }) => {
     ${unsplit}
     ${item.kind === 'candidate' ? '' : twoColumn}
     ${otherSources}
-    ${frames({ item, sides })}
     ${proseBlock({ label: 'What differs', section: s.difference, citations, idPrefix })}
     ${proseBlock({ label: 'Corrected by verification', section: s.correction, citations, idPrefix, modifier: 'correction' })}
     ${notesBlock({ item, citations })}

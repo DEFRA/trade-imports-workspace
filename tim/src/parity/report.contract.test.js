@@ -7,7 +7,6 @@ import { parseBacklog, parseDeferred, parseCorpusMeta } from './schema.js'
 import { loadCorpusProfile } from './corpus-profile.js'
 import { loadCorpus } from './load.js'
 import { runCounts } from './counts.js'
-import { readSeals } from './seals.js'
 import { parsePageModel } from './page-model-schema.js'
 import { loadPairs, indexPairs } from './assets/pairs.js'
 
@@ -182,29 +181,6 @@ describe.skipIf(!present)('the real EUDPA-328 corpus', () => {
     // keeps them comparable — a shared file would drift silently, a failing
     // schema does not.
     expect(failures).toEqual([])
-  })
-
-  test('every seal names a frame the report could actually show', () => {
-    const profile = loadCorpusProfile({ workspaceRoot, runId: 'EUDPA-328' })
-    if (!existsSync(profile.paths.seals)) return
-    const seals = readSeals(profile.paths.seals)
-    const malformed = Object.entries(seals).flatMap(([id, sides]) =>
-      Object.entries(sides).flatMap(([side, list]) =>
-        list
-          .filter(
-            (seal) =>
-              seal &&
-              (!seal.screen ||
-                !seal.sha256 ||
-                (seal.state !== 'crop' && seal.state !== 'page') ||
-                (seal.state === 'crop' && !seal.anchor))
-          )
-          .map((seal) => `${id}/${side}: ${JSON.stringify(seal)}`)
-      )
-    )
-    // A seal that cannot describe its own frame cannot report drift against
-    // it, and would go quiet exactly where the panel has to speak.
-    expect(malformed).toEqual([])
   })
 
   test('no citation claims to be resolved while asking for a human', () => {

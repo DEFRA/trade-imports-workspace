@@ -61,6 +61,85 @@ const VERDICTS = {
   identical: 'Byte-identical. Nothing to look at.'
 }
 
+/**
+ * The preview's own styles.
+ *
+ * The findings report shows no pictures, so the theme carries no rules for
+ * them. This page is nothing but pictures, side by side, so it brings the
+ * handful it needs with it.
+ */
+const REPOINT_CSS = `
+.page {
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.masthead__blurb { color: var(--ink-muted); max-width: 46rem; }
+
+.card__meta { margin: 0; font-size: .85rem; color: var(--ink-muted); }
+
+.card__shots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+  padding: 1.2rem 1.5rem 1.5rem;
+}
+
+@media (max-width: 1000px) { .card__shots { grid-template-columns: 1fr; } }
+
+.shot { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+
+.shot__figure {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface-sunk);
+  overflow: hidden;
+}
+
+.shot__figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 30rem;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.shot__caption {
+  font-size: .76rem;
+  color: var(--ink-muted);
+  padding: .4rem .6rem;
+  border-top: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.shot__missing {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 8px;
+  background: var(--surface-sunk);
+  padding: 1.2rem;
+  font-size: .85rem;
+  color: var(--ink-muted);
+}
+
+.drift {
+  background: var(--warn-ground);
+  border: 1px solid var(--warn);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+}
+
+.drift p { margin: .5rem 0 0; }
+`
+
 const columns = ({ row, fromRel, toRel }) => {
   const shot = (side, rel, entry) =>
     entry
@@ -75,9 +154,8 @@ const columns = ({ row, fromRel, toRel }) => {
  * The page a person confirms a repoint from.
  *
  * A repoint replaces every picture in a corpus at once. Doing that from a
- * command line means accepting a change nobody has seen, which is the same
- * failure the seal store exists to stop — so the swap gets looked at first,
- * old beside new, at full size.
+ * command line means accepting a change nobody has seen, so the swap gets
+ * looked at first, old beside new, at full size.
  *
  * @param {object} args
  * @returns {string}
@@ -96,6 +174,7 @@ export const renderRepoint = ({ side, from, to, rows, fromRel, toRel }) => {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Repoint ${esc(side)} — ${esc(from?.appSha?.slice(0, 8) ?? 'nothing')} to ${esc(to?.appSha?.slice(0, 8) ?? '')}</title>
 <style>${THEME_CSS}</style>
+<style>${REPOINT_CSS}</style>
 </head>
 <body>
 <div class="page">
@@ -133,7 +212,7 @@ export const renderRepoint = ({ side, from, to, rows, fromRel, toRel }) => {
     .join('\n')}
 
   <footer class="footer">
-    <span>Accept with <code>tim parity repoint &lt;runId&gt; --side ${esc(side)} --to ${esc(to?.appSha?.slice(0, 8) ?? '')} --accept</code>. It writes the new sha into corpora.json and nothing else: the seals still hold the old pictures, so the next report render lists every screen that moved in its drift panel.</span>
+    <span>Accept with <code>tim parity repoint &lt;runId&gt; --side ${esc(side)} --to ${esc(to?.appSha?.slice(0, 8) ?? '')} --accept</code>. It writes the new sha into corpora.json and nothing else.</span>
   </footer>
 </div>
 </body>
@@ -144,8 +223,7 @@ export const renderRepoint = ({ side, from, to, rows, fromRel, toRel }) => {
  * Build the repoint preview, and optionally accept it.
  *
  * The preview is always written. `--accept` additionally points the corpus at
- * the new capture, and does nothing else: see acceptRepoint for why the seals
- * are deliberately left alone.
+ * the new capture, and does nothing else.
  *
  * @param {object} args
  * @param {object} args.profile
@@ -212,15 +290,9 @@ export const runRepoint = ({ profile, side: sideId, to, accept }) => {
 /**
  * Point the corpus at the new capture.
  *
- * One write, and deliberately only one. The seals are left exactly as they
- * are: they still hold the superseded pictures, so the next report render
- * diffs the new capture against them and lists every screen that moved in the
- * drift panel. Clearing them here would make the repoint adopt itself, which
- * is the silent swap this whole path exists to prevent.
- *
- * The superseded pictures stay on disk too — superseding should be reversible
- * for as long as they are there — and no finding is touched, because a repoint
- * changes the evidence, never the claim.
+ * One write, and deliberately only one. The superseded pictures stay on disk —
+ * superseding should be reversible for as long as they are there — and no
+ * finding is touched, because a repoint changes the evidence, never the claim.
  *
  * @param {object} args
  * @returns {string[]} The files written

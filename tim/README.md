@@ -105,7 +105,7 @@ tim parity check EUDPA-328 --pass a      # the ten migration invariants
 tim parity counts EUDPA-328 --json       # every number the masthead prints
 ```
 
-`report/` is a static app — `index.html`, `app.css`, `app.js` and `assets/` —
+`report/` is a static app — `index.html`, `app.css` and `app.js` —
 that opens straight off the filesystem. There is no server: the page never
 fetches and its script is not a module, which are the only two things a
 `file://` page cannot do. Copy the folder anywhere and it still works.
@@ -115,8 +115,7 @@ because it exists to be sent to someone and a second and third file that had
 to travel with it would defeat the point.
 
 The evidence — the pictures, and the commits they are of — has its own
-commands. Element crops are declared as data rather than written into a spec,
-and a picture that moves under a pending ruling has to say so:
+commands. Element crops are declared as data rather than written into a spec:
 
 ```bash
 tim parity seed-anchors EUDPA-328 --write        # anchors.<side>.json from the compare deltas
@@ -124,7 +123,6 @@ tim parity insertion-anchors EUDPA-328 --write   # where a one-sided control wou
 tim parity manifest EUDPA-328 --side prototype --sha 491b3926 --write
 tim parity check-evidence EUDPA-328 [--strict]   # pin drift, captures, dead citations
 tim parity repoint EUDPA-328 --side frontend --to <sha> [--accept]
-tim parity report EUDPA-328 --reseal         # accept every picture that moved
 ```
 
 The pictures themselves come from two more commands, and both drive a browser:
@@ -163,11 +161,8 @@ reach is reported as a stated absence, not left as a broken image.
 Both need Playwright installed in `tim` — `npm install`, then
 `npx playwright install chromium`. Without it they stop with `MISSING_DEP`.
 
-`report` records what it showed you in `evidence/seals.json`. On the next
-build, any picture that has changed carries a ribbon and is listed above
-everything else, so nobody rules on a finding under an image that was swapped
-without them. `repoint` is the same idea for a whole side: it writes a preview
-of old beside new before anything is superseded.
+`repoint` writes a preview of old beside new before anything is superseded, so
+a screen the new run did not reach is caught rather than silently lost.
 
 Writers use the setters rather than editing JSON, so a fan-out worker cannot
 reformat the file or touch a second increment:

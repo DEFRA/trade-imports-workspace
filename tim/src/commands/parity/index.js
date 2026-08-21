@@ -392,16 +392,8 @@ export const register = (program, { timVersion }) => {
     .option('--open', 'Open the report when it is written')
     .option(
       '--target <name>',
-      'Emitter: local (full resolution) or artifact (crops only)',
+      'Where the report goes: local for a folder you open, artifact for one file you can send someone',
       'local'
-    )
-    .option(
-      '--require-images',
-      'Exit non-zero when any cited screen has no image on either side'
-    )
-    .option(
-      '--reseal',
-      'Accept every picture that moved since it was last shown, clearing the drift panel'
     )
     .action(
       makeParityAction({
@@ -409,24 +401,13 @@ export const register = (program, { timVersion }) => {
           runReport({
             profile,
             target: opts.target,
-            open: opts.open,
-            requireImages: opts.requireImages,
-            reseal: opts.reseal
+            open: opts.open
           }),
         renderText: (result) =>
           [
             `Wrote ${result.path} (${(result.bytes / 1024).toFixed(0)} KB).`,
             `Open it: file://${result.path}`,
             `${result.items.increments} findings, ${result.items.candidates} deferred candidates, ${result.items.withdrawn} withdrawn.`,
-            ...result.imageCoverage.map(
-              (c) => `images: ${c.side} ${c.have}/${c.want} cited screens`
-            ),
-            ...(result.inlining
-              ? [
-                  `carried inside the file: ${result.inlining.inlined} element crops as WebP, ${(result.inlining.bytes / 1024 / 1024).toFixed(1)} MB, shown ${result.inlining.uses} times.`,
-                  `left where they are and linked: ${result.inlining.linked} full-page screenshots.`
-                ]
-              : []),
             ...result.warnings.map((w) => `warning: ${w}`)
           ].join('\n'),
         timVersion
@@ -436,7 +417,7 @@ export const register = (program, { timVersion }) => {
   parity
     .command('check-evidence <runId>')
     .description(
-      'Report the state of the evidence: pin drift, capture integrity, screens with no picture, anchors that matched nothing, citations whose target has moved'
+      'Report the state of the evidence: pin drift, capture integrity, cited screens no capture visited, crops the capture could not take, citations whose target has moved'
     )
     .option(
       '--strict',

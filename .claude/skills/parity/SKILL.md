@@ -301,7 +301,7 @@ Triggers: "regenerate the parity report", "rebuild the findings report".
 tim parity report EUDPA-328 [--open]
 ```
 
-`report/` is a static app — `index.html`, `app.css`, `app.js`, `assets/` — and
+`report/` is a static app — `index.html`, `app.css`, `app.js` — and
 opens straight off the filesystem. **There is no server and there must not be
 one.** The page never fetches and its script is not a module, which are the
 only two things a `file://` page cannot do; a test holds both. Never introduce
@@ -310,17 +310,12 @@ first.
 
 `--target artifact` writes `report/artifact.html`, one self-contained file to
 send someone. It is a second emitter of the same generator, not a reduced tier:
-the element crops travel inside it as WebP and the full-page screenshots become
-a stated local reference, so what it does not carry is named rather than
-quietly dropped. Nothing is ever downsized to fit a channel. It does not write
-to the seal store — shipping a copy must not change what the local build says
-you have seen.
+it holds the same findings, the same prose and the same citations as the local
+build, with the stylesheet and the script inline so nothing has to travel
+alongside it. It writes nothing the local build reads, so sending a copy can
+never change what the folder on your disk says.
 
-`report` writes `workareas/journey-builder/<run>/report/`, hardlinking the
-screenshots into `assets/` rather than copying 20 MB of them. It
-prints image coverage per side; `--require-images` turns a gap into a non-zero
-exit so a release-grade regeneration can be gated while daily regeneration stays
-permissive.
+`report` writes `workareas/journey-builder/<run>/report/`.
 
 Run `tim parity check EUDPA-328` alongside it and read the warnings. Rebuild
 `evidence.json` first if the backlog's citations have changed:
@@ -341,8 +336,9 @@ named in the output rather than dropped. Restore the prose or strike the
 citation deliberately; do not ignore the line.
 
 Before a regeneration anyone will rule from, run the evidence check. It is the
-only command that reads pins, captures, coverage and citations together — each
-of them alone can read green over a stale one of the others:
+only command that reads pins, captures, the screens the findings cite, the
+crops the capture could not take and the citations together — each of them
+alone can read green over a stale one of the others:
 
 ```
 tim parity check-evidence EUDPA-328
@@ -351,11 +347,6 @@ tim parity check-evidence EUDPA-328
 A moved pin or a missing capture is blocking, and `--strict` makes it a
 non-zero exit. A citation whose anchor has drifted is not: it is a finding to
 re-verify, which is the expected yield of pinning to HEAD.
-
-**Never `--reseal` on someone's behalf.** The report records the pictures it
-last showed in `evidence/seals.json`; anything that has moved since carries a
-ribbon and is listed at the top of the page. `--reseal` says "I have looked at
-these and accept them", which is a person's statement, not a build step.
 
 ### WALK — present the gated findings and apply a batch of rulings
 
@@ -459,8 +450,8 @@ side's own source claims it has. Two more sit around them: `anchors` says which
 control each finding is about, and `ingest` assembles the backlog.
 
 Before either, read `.corpus-meta.json`: `pins` is where the citations resolve
-and `captures` is where the pixels came from, and the report says so on the page
-when they disagree. A re-capture is what makes them agree again.
+and `captures` is where the pixels came from. A re-capture is what makes them
+agree again.
 
 Capture ids are immutable. A capture at a new commit writes a new directory; it
 never overwrites the old one, because the old evidence is the record of what a
@@ -605,25 +596,6 @@ than `tim parity capture` — the older harnesses wrote no manifest of their own
 `repoint` is not optional politeness. Accepting a new capture supersedes every
 picture in the corpus at once, and the preview is where a lost screen — one the
 new run did not reach — is caught before it silently disappears.
-
-Which crop lands on which card is **named, not inferred**. The finding's
-`controls` array says which control it is about: a bare string without
-whitespace is read as a field's `name` attribute, a bare string with whitespace
-as a visible label, and an explicit `{ kind, name | text }` settles the cases
-where either reading is plausible. A curated frame in `visual[]` overrides it.
-Where a finding names no control, the card keeps the whole page — which is why
-`anchors` prints those findings rather than passing over them.
-
-**A reader cannot see an absence**, and this is the part of the old pipeline
-that has no replacement yet. For "the prototype has X and we do not", the side
-with nothing to show used to get an *insertion crop*: a picture of a control
-that is there, outlined, captioned with what is missing and where it would go.
-The renderer still draws one where `anchors.<side>.json` carries an
-`insertions[]` entry, and `tim/src/parity/insertion.js` still holds the
-derivation — but the `insertion-anchors` command that called it is deleted and
-nothing imports the module. So on a corpus captured today, one-sided findings
-show a whole page with nothing outlined. Say so when it matters to a finding;
-do not describe an insertion crop the reader will not be shown.
 
 ### AUTHOR — derive the findings from the evidence
 
@@ -773,8 +745,9 @@ see in their own work. The classes it catches:
 - **A missed finding.** The net was +14, so the pass adds as well as removes.
 
 It also catches findings that name a control which could never crop — a field
-called "Back", a whole page title used as a label — both of which would have
-fallen back to the whole-page shot the naming rule exists to prevent.
+called "Back", a whole page title used as a label — each of which names
+something other than the control the finding is actually about, and so points
+anyone checking it at the wrong part of the page.
 
 #### 5. Loop back for the states nobody photographed
 
@@ -935,8 +908,3 @@ Never run both against one run at the same time. Both write the whole file.
 - **Guess a citation.** 35 of the 819 citations are queued for a human with the
   reason printed. A confidently wrong permalink is worse than inert code.
 - **Rewrite `verification` or `detail`.**
-- **Show a picture from a different commit without saying so.** A frame records
-  the hash of the image it was curated against; a changed hash renders a
-  ribbon and lists the finding in a drift panel at the top of the page.
-- **Resize an image to fit a delivery channel.** The artifact export carries
-  element crops only, and says on the page which evidence it cannot carry.

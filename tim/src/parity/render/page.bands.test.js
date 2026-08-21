@@ -53,15 +53,12 @@ const args = (overrides = {}) => ({
   joinReport: { matched: 0, increments: 0, ordinalAgreement: 0 },
   sides,
   runId: 'EUDPA-328-DR1',
-  drift: [],
   target: 'local',
-  inlining: null,
   stamp: {
     timVersion: 'test',
     backlogSha: 'abc',
     backlogMtime: '2026-08-19T00:00:00.000Z',
-    generatedAt: '2026-08-19T00:00:00.000Z',
-    coverage: []
+    generatedAt: '2026-08-19T00:00:00.000Z'
   },
   ...overrides
 })

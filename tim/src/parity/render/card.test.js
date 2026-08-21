@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { renderCard, decisionBlock, shot } from './card.js'
+import { renderCard, decisionBlock } from './card.js'
 
 const sides = [
   { id: 'frontend', label: 'Frontend', repo: 'frontend' },
@@ -206,88 +206,5 @@ describe('decisionBlock', () => {
     expect(
       decisionBlock({ item: item({ gate: null }), runId: 'X', citations })
     ).toBe('')
-  })
-})
-
-describe('shot', () => {
-  const side = { id: 'prototype', label: 'Design release 2.1' }
-
-  test('renders an image when there is one', () => {
-    const html = shot({
-      asset: { state: 'page', screen: 'dr21-dashboard', href: 'assets/x.png' },
-      side
-    })
-    expect(html).toContain('<img')
-    expect(html).toContain('assets/x.png')
-  })
-
-  test('renders a page-model plate rather than a broken image', () => {
-    const html = shot({
-      asset: {
-        state: 'model',
-        screen: 'fe-dashboard',
-        plate: { rows: [{ kind: 'h1', text: 'Import notification service' }] }
-      },
-      side
-    })
-    expect(html).not.toContain('<img')
-    expect(html).toContain('Import notification service')
-    expect(html).toContain('Page model only')
-  })
-
-  test('names the capture command when there is nothing at all', () => {
-    const html = shot({
-      asset: {
-        state: 'absent',
-        screen: 'dr21-x',
-        why: 'nothing captured',
-        command: 'tools/parity/capture-screens.sh --side prototype'
-      },
-      side
-    })
-    expect(html).not.toContain('<img')
-    expect(html).toContain('capture-screens.sh')
-  })
-
-  test('keeps the slot and says why when the side has no screen', () => {
-    const html = shot({
-      asset: { state: 'absent', screen: null, why: 'no counterpart' },
-      side
-    })
-    expect(html).toContain('no counterpart')
-  })
-
-  test('flags an image that changed since the reader last saw it', () => {
-    const html = shot({
-      asset: {
-        state: 'page',
-        screen: 'x',
-        href: 'assets/x.png',
-        drifted: true,
-        driftKind: 'image-changed',
-        driftedFrom: 'full page of x'
-      },
-      side
-    })
-    expect(html).toContain('changed since you last looked')
-    // The old frame is the same words as the new one here, so saying it would
-    // read as though nothing had moved.
-    expect(html).not.toContain('was: full page of x')
-  })
-
-  test('says when the frame changed rather than the pixels', () => {
-    const html = shot({
-      asset: {
-        state: 'page',
-        screen: 'x',
-        href: 'assets/x.png',
-        drifted: true,
-        driftKind: 'frame-changed',
-        driftedFrom: 'crop of field-file on x'
-      },
-      side
-    })
-    expect(html).toContain('different frame since you last looked')
-    expect(html).toContain('was: crop of field-file on x')
   })
 })

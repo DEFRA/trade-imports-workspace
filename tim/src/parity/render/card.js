@@ -113,9 +113,18 @@ const relatedBlock = ({ item }) => {
  * @param {object[]} args.sides
  * @param {string} args.runId
  * @param {object[]} [args.bands] - The corpus's band taxonomy, for the chip label
+ * @param {string|null} [args.page] - Screen id of the page group holding it
+ * @param {string|null} [args.journeySection] - Id of the journey section holding it
  * @returns {string}
  */
-export const renderCard = ({ item, sides, runId, bands = [] }) => {
+export const renderCard = ({
+  item,
+  sides,
+  runId,
+  bands = [],
+  page = null,
+  journeySection = null
+}) => {
   const citations = new Map(
     item.resolvedCitations.map((entry) => [entry.ref, entry])
   )
@@ -211,6 +220,7 @@ export const renderCard = ({ item, sides, runId, bands = [] }) => {
     item.domain,
     item.type,
     item.band,
+    ...(item.screens ?? []),
     item.detail
   ]
     .filter(Boolean)
@@ -220,6 +230,7 @@ export const renderCard = ({ item, sides, runId, bands = [] }) => {
   return `<article class="card card--${esc(item.kind)}" id="${esc(item.anchor)}"
   data-kind="${esc(item.kind)}" data-band="${esc(item.band ?? '')}" data-type="${esc(item.type ?? '')}"
   data-domain="${esc(item.domain ?? '')}" data-gate="${esc(item.gate ?? '')}"
+  data-page="${esc(page ?? '')}" data-journey-section="${esc(journeySection ?? '')}"
   data-ruled="${item.decision ? 'yes' : 'no'}" data-search="${esc(searchText)}">
   <header class="card__head">
     <div class="card__idline">

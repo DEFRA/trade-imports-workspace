@@ -267,7 +267,10 @@ code.ref { color: var(--ink-muted); }
 
 /* --- sections ------------------------------------------------------- */
 
-.section { display: flex; flex-direction: column; gap: 1.5rem; }
+/* The sticky controls bar wraps to two rows on a narrow window, so a section
+   linked to by anchor needs a little more clearance than html's
+   scroll-padding-top gives on its own. */
+.section { display: flex; flex-direction: column; gap: 1.5rem; scroll-margin-top: 1.5rem; }
 
 .section__head { display: flex; flex-direction: column; gap: .3rem; }
 
@@ -288,6 +291,34 @@ code.ref { color: var(--ink-muted); }
 }
 
 .section__blurb { margin: 0; color: var(--ink-muted); max-width: 46rem; }
+
+/* Two levels of section, told apart by rhythm rather than by boxes. A journey
+   section is what you scan for, so it gets a rule, room above it and the
+   largest heading on the page after the masthead. A page group is what you
+   land on, so it gets a small upright label and sits close to its own cards:
+   card to card is 1.25rem, page group to page group is 2.5rem, journey
+   section to journey section is 3rem plus the rule and its padding. */
+
+.section--journey {
+  gap: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.section--journey > .section__head .section__title { font-size: 2.1rem; }
+
+.section--page { gap: 1.25rem; }
+
+.section--page > .section__head .section__title {
+  font-family: var(--body);
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.section--page > .section__head .section__count { font-size: .74rem; }
 
 /* --- card ----------------------------------------------------------- */
 

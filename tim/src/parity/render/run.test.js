@@ -61,7 +61,8 @@ describe('runReport', () => {
         evidence: join(root, 'evidence.json'),
         reportDir,
         deltasDir: join(root, 'deltas'),
-        upstreamFindings: null
+        upstreamFindings: null,
+        enumeratorModule: null
       }
     }
   })
@@ -71,14 +72,14 @@ describe('runReport', () => {
   })
 
   test('the report is a page and its two static files, with no pictures beside them', async () => {
-    runReport({ profile })
+    await runReport({ profile })
 
     const written = await readdir(profile.paths.reportDir)
     expect(written.sort()).toEqual(['app.css', 'app.js', 'index.html'])
   })
 
-  test('a report says what it wrote and how many findings it carried', () => {
-    const result = runReport({ profile })
+  test('a report says what it wrote and how many findings it carried', async () => {
+    const result = await runReport({ profile })
 
     expect(result).toEqual({
       path: join(profile.paths.reportDir, 'index.html'),
@@ -89,10 +90,34 @@ describe('runReport', () => {
   })
 
   test('the artifact target is one file and writes no stylesheet beside it', async () => {
-    const result = runReport({ profile, target: 'artifact' })
+    const result = await runReport({ profile, target: 'artifact' })
 
     expect(result.path).toBe(join(profile.paths.reportDir, 'artifact.html'))
     expect(await readdir(profile.paths.reportDir)).toEqual(['artifact.html'])
+  })
+
+  test('a corpus with no journey renders on its bands and says nothing about it', async () => {
+    const result = await runReport({ profile })
+
+    expect(result.warnings).toEqual([])
+  })
+
+  test('a journey the report cannot read still gets a page, and a warning', async () => {
+    const modulePath = join(root, 'enumerate.cjs')
+    await writeFile(
+      modulePath,
+      `module.exports = {
+  enumerators: { frontend: () => [] },
+  journey: { side: 'nobody', flowPath: 'src/flow.js', screenOfPage: {} }
+}`
+    )
+    profile.paths.enumeratorModule = modulePath
+
+    const result = await runReport({ profile })
+
+    expect(result.warnings).toEqual([
+      "The corpus declares a journey but the report can't read it, so the findings are grouped by band instead. Check that the repo the journey names is checked out and that its flow file is where the corpus says."
+    ])
   })
 })
 
@@ -107,5 +132,23 @@ describe('reportWarnings', () => {
     expect(reportWarnings({ upstream: true, joinReport })).toEqual([
       '2 increments matched no upstream finding, so their audit record is missing.'
     ])
+  })
+
+  test('a journey that could not be read says the report fell back to bands', () => {
+    expect(
+      reportWarnings({ upstream: false, joinReport, journeyUnread: true })
+    ).toEqual([
+      "The corpus declares a journey but the report can't read it, so the findings are grouped by band instead. Check that the repo the journey names is checked out and that its flow file is where the corpus says."
+    ])
+  })
+
+  test('what the grouping found to complain about is carried through', () => {
+    expect(
+      reportWarnings({
+        upstream: false,
+        joinReport,
+        journeyWarnings: ['The journey flow has a page called "cphNumber".']
+      })
+    ).toEqual(['The journey flow has a page called "cphNumber".'])
   })
 })

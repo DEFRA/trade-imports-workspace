@@ -57,6 +57,12 @@
 const frontend = require('./enumerate.frontend.cjs')
 const prototype = require('./enumerate.prototype.cjs')
 
+// The page-to-screen bridge the report groups findings by. This corpus reads
+// the same frontend checkout as dr1 and dr1b, so it shares their module rather
+// than restating a third copy of the same twenty-three names.
+const journey = require('../live-animals-journey.cjs')
+
 module.exports = {
-  enumerators: { frontend, prototype }
+  enumerators: { frontend, prototype },
+  journey
 }

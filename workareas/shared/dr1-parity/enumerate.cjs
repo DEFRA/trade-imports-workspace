@@ -29,6 +29,11 @@
 const fs = require('fs')
 const path = require('path')
 
+// The page-to-screen bridge the report groups findings by. Shared with the
+// later corpora rather than restated per corpus: they all read the same
+// frontend checkout, so a second copy would only be a second thing to update.
+const journey = require('../live-animals-journey.cjs')
+
 // Directories under app/views that hold something other than a screen.
 const NOT_A_VIEW = new Set([
   'layouts',
@@ -444,6 +449,7 @@ module.exports = {
     prototype: dr1Screens,
     frontend: frontendScreens
   },
+  journey,
   gatedRoutes,
   routesIn
 }

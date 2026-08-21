@@ -24,6 +24,18 @@ const TYPE_ORDER = [
 const figure = (n, label) =>
   `<div class="figure"><span class="figure__n">${esc(n)}</span><span class="figure__label">${esc(label)}</span></div>`
 
+const optionOf = ({ value, label }) =>
+  `<option value="${esc(value)}">${esc(label)}</option>`
+
+const uniqueByValue = (entries) => [
+  ...new Map(entries.map((entry) => [entry.value, entry])).values()
+]
+
+const optionsOf = (entries) => uniqueByValue(entries).map(optionOf).join('')
+
+const selectOf = ({ filter, label, all, entries }) =>
+  `<select data-filter="${esc(filter)}" aria-label="${esc(label)}"><option value="">${esc(all)}</option>${optionsOf(entries)}</select>`
+
 const pinCard = (
   key,
   pin
@@ -35,23 +47,78 @@ const pinCard = (
   <span class="pin__why">${esc(pin.why ?? '')}</span>
 </div>`
 
-const sectionOf = ({ title, blurb, items, sides, runId, bands, id }) => {
-  if (items.length === 0) return ''
-  return `<section class="section" id="${esc(id)}">
+/**
+ * One section. The only place a section and a card are produced, whether the
+ * page is grouped by band or by journey, and whether the section holds cards
+ * or holds other sections.
+ *
+ * @param {object} args
+ * @returns {string}
+ */
+const sectionOf = ({
+  id,
+  title,
+  blurb,
+  items = [],
+  sides,
+  runId,
+  bands,
+  page,
+  journeySection,
+  children,
+  count,
+  modifier = '',
+  heading = 'h2'
+}) => {
+  const body =
+    children ??
+    items
+      .map((item) =>
+        renderCard({ item, sides, runId, bands, page, journeySection })
+      )
+      .join('')
+  if (!body) return ''
+  return `<section class="section${modifier ? ` ${modifier}` : ''}" id="${esc(id)}">
   <div class="section__head">
-    <h2 class="section__title">${esc(title)} <span class="section__count">${items.length}</span></h2>
-    <p class="section__blurb">${esc(blurb)}</p>
+    <${heading} class="section__title">${esc(title)} <span class="section__count">${count ?? items.length}</span></${heading}>
+    ${blurb ? `<p class="section__blurb">${esc(blurb)}</p>` : ''}
   </div>
-  ${items.map((item) => renderCard({ item, sides, runId, bands })).join('')}
+  ${body}
 </section>`
 }
+
+const pageGroupOf = ({ group, page, sides, runId, bands }) =>
+  sectionOf({
+    id: page.id,
+    title: page.title,
+    items: page.items,
+    sides,
+    runId,
+    bands,
+    page: page.screen,
+    journeySection: group.id,
+    modifier: 'section--page',
+    heading: 'h3'
+  })
+
+const journeySectionOf = ({ group, sides, runId, bands }) =>
+  sectionOf({
+    id: group.id,
+    title: group.title,
+    blurb: group.blurb,
+    count: group.pages.reduce((total, page) => total + page.items.length, 0),
+    children: group.pages
+      .map((page) => pageGroupOf({ group, page, sides, runId, bands }))
+      .join(''),
+    modifier: 'section--journey'
+  })
 
 const rank = (item) => {
   const i = TYPE_ORDER.indexOf(item.type)
   return i === -1 ? TYPE_ORDER.length : i
 }
 
-const byGateThenType = (a, b) => {
+export const byGateThenType = (a, b) => {
   const gate =
     Number(Boolean(b.gate && !b.decision)) -
     Number(Boolean(a.gate && !a.decision))
@@ -147,6 +214,8 @@ document.addEventListener('click', (event) => {
  * corrections against a real 39.
  *
  * @param {object} args
+ * @param {object[]|null} [args.journey] - Ordered journey sections, each
+ *   holding its page groups and their findings. Null groups by band instead.
  * @returns {string}
  */
 export const renderPage = ({
@@ -158,6 +227,7 @@ export const renderPage = ({
   withdrawn,
   candidates,
   joinReport,
+  journey = null,
   sides,
   runId,
   target,
@@ -166,25 +236,61 @@ export const renderPage = ({
   const domains = [...new Set(findings.map((item) => item.domain))].sort()
   const types = [...new Set(findings.map((item) => item.type))].sort()
 
-  const bandSections = bands
-    .map((band) =>
-      sectionOf({
-        id: band.id,
-        title: band.label,
-        blurb: band.blurb,
-        items: findings
-          .filter((item) => item.band === band.id)
-          .sort(byGateThenType),
-        sides,
-        runId,
-        bands
-      })
-    )
+  // A band the corpus never declared is how a typo shows itself. Under journey
+  // grouping it has no section of its own to surface it, so the filter carries
+  // the signal instead.
+  const undeclaredBands = [...new Set(findings.map((item) => item.band))]
+    .filter((band) => band && !bands.some((declared) => declared.id === band))
+    .sort()
+
+  const bandEntries = [
+    ...bands.map((band) => ({ value: band.id, label: band.label })),
+    ...undeclaredBands.map((band) => ({ value: band, label: band }))
+  ]
+
+  // A group that renders no section offers no filter option either: choosing
+  // it could only ever empty the page.
+  const pagesWithFindings = (group) =>
+    group.pages.filter((page) => page.items.length > 0)
+
+  const journeyEntries = (journey ?? [])
+    .filter((group) => pagesWithFindings(group).length > 0)
+    .map((group) => ({ value: group.id, label: group.title }))
+
+  const pageEntries = (journey ?? []).flatMap((group) =>
+    pagesWithFindings(group)
+      .filter((page) => page.screen)
+      .map((page) => ({
+        value: page.screen,
+        label: page.title
+      }))
+  )
+
+  const bandSections = journey
+    ? ''
+    : bands
+        .map((band) =>
+          sectionOf({
+            id: band.id,
+            title: band.label,
+            blurb: band.blurb,
+            items: findings
+              .filter((item) => item.band === band.id)
+              .sort(byGateThenType),
+            sides,
+            runId,
+            bands
+          })
+        )
+        .join('')
+
+  const journeySections = (journey ?? [])
+    .map((group) => journeySectionOf({ group, sides, runId, bands }))
     .join('')
 
-  const unbanded = findings.filter(
-    (item) => !bands.some((band) => band.id === item.band)
-  )
+  const unbanded = journey
+    ? []
+    : findings.filter((item) => !bands.some((band) => band.id === item.band))
 
   // The local build is a static app: the stylesheet and the script sit beside
   // the page as their own files, so they are diffable, cacheable and readable
@@ -237,11 +343,32 @@ ${head}
 
   <div class="controls">
     <input type="search" id="q" placeholder="Search every finding…" aria-label="Search findings">
-    <select data-filter="band" aria-label="Band"><option value="">All bands</option>${bands
-      .map(
-        (band) => `<option value="${esc(band.id)}">${esc(band.label)}</option>`
-      )
-      .join('')}</select>
+    ${
+      journey
+        ? selectOf({
+            filter: 'journeySection',
+            label: 'Journey section',
+            all: 'All journey sections',
+            entries: journeyEntries
+          })
+        : ''
+    }
+    ${
+      journey
+        ? selectOf({
+            filter: 'page',
+            label: 'Page',
+            all: 'All pages',
+            entries: pageEntries
+          })
+        : ''
+    }
+    ${selectOf({
+      filter: 'band',
+      label: 'Band',
+      all: 'All bands',
+      entries: bandEntries
+    })}
     <select data-filter="domain" aria-label="Domain"><option value="">All domains</option>${domains
       .map((d) => `<option value="${esc(d)}">${esc(d)}</option>`)
       .join('')}</select>
@@ -252,6 +379,8 @@ ${head}
     <button type="button" id="copy-batch">copy batch</button>
     <span class="controls__count"><span id="batch-count">0</span> queued · <span id="count"></span></span>
   </div>
+
+  ${journeySections}
 
   ${bandSections}
 

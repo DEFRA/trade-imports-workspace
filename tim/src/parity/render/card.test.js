@@ -117,6 +117,27 @@ describe('renderCard', () => {
     expect(render()).toContain('data-search=')
   })
 
+  test('folds its screens into the search text, so a screen id finds it', () => {
+    expect(render()).toContain('fe-dashboard-empty dr21-dashboard')
+  })
+
+  test('carries the page and the journey section it was rendered under', () => {
+    const html = renderCard({
+      item: item(),
+      sides,
+      runId: 'EUDPA-328',
+      page: 'fe-dashboard',
+      journeySection: 'journey-start'
+    })
+    expect(html).toContain(
+      'data-page="fe-dashboard" data-journey-section="journey-start"'
+    )
+  })
+
+  test('leaves both empty when it sits in no page group', () => {
+    expect(render()).toContain('data-page="" data-journey-section=""')
+  })
+
   test('marks a withdrawn card as withdrawn without dropping its content', () => {
     const html = renderCard({
       item: item({ kind: 'withdrawn' }),

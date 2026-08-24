@@ -43,7 +43,19 @@ export const meta = {
 //   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
 //                   run stops
 //   ciWatchMinutes  how long one CI watch may block before it counts as RED
+//   requireApproval whether a PR needs an APPROVING REVIEW ON GITHUB before the
+//                   merge stage may merge it. Default true. Green CI is not
+//                   consent: it proves the code runs, not that anyone agreed to
+//                   it. With this on, a run stops with the PR open rather than
+//                   merging unapproved work, and resumes once someone approves.
+//                   GitHub forbids approving your own PR, so the approver is
+//                   always somebody other than whoever the run raised it as.
+//                   Set false only for a programme that genuinely wants
+//                   unattended merges
+//   approvalWaitMinutes  how long the merge stage may wait for that approval
+//                   before it stops and leaves the PR open. Default 20
 //
+
 // Status names are BOARD CONFIGURATION, not constants — every board words them
 // differently and a workflow change renames them. They live here so a programme
 // never has to edit a stage. Confirm them against the board itself with
@@ -77,10 +89,17 @@ const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus ?? 'In Progress'
 const STATUS_DONE = CFG.jiraDoneStatus ?? 'Done'
 const CI_FIX_ATTEMPTS = CFG.ciFixAttempts ?? 3
 const CI_WATCH_MINUTES = CFG.ciWatchMinutes ?? 30
+const REQUIRE_APPROVAL = CFG.requireApproval ?? true
+const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes ?? 20
 
 // One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
 // longer wait is that many consecutive watches, and running out of them is RED.
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
+
+// Approval polls are cheap, so the window is a count of two-minute checks.
+// Running out is NOT a failure — it means nobody has looked yet, and the PR is
+// left open for them to.
+const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 if (!WORKAREA_REL) {
   throw new Error(
@@ -472,6 +491,12 @@ const CI_SCHEMA = {
     },
     failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
+    stopReason: {
+      type: 'string',
+      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red'],
+      description:
+        'WHICH stop condition fired, as a fixed value the caller branches on. `blocked` is prose for a human; this is the machine answer and the two must agree. "none" when green. Set "awaiting-approval" ONLY when the PR is green and simply has no approving review yet — never for anything that is actually wrong, because the caller reports that one as a healthy pause rather than a failure'
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -1348,8 +1373,9 @@ Return the structured output only.`,
       phase('Merge')
 
       const merge = await agent(
-        `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green. Merge them and
-prove \`${BASE_BRANCH}\` survived it.
+        `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is
+necessary but NOT sufficient — each one also needs an approving review on GitHub before you may merge it` : ''}.
+Merge them and prove \`${BASE_BRANCH}\` survived it.
 ${GUARDRAILS}
 ${MERGE_ORDER_RULE}
 THE PULL REQUESTS, in merge order:
@@ -1358,24 +1384,46 @@ ${prList(prs)}
 For EACH pr, in that order:
 1. If this is not the first pr, RE-CHECK IT FIRST — merging the previous one moved \`${BASE_BRANCH}\` underneath
    it. \`gh pr checks <url> --watch --fail-fast --interval 30\`, Bash \`timeout\` 600000, at most
-   ${CI_WATCH_WINDOWS} times. **If it is now RED, STOP.** Report green:false, name it in blocked as
+   ${CI_WATCH_WINDOWS} times. **If it is now RED, STOP.** Report green:false, \`stopReason: "pr-red"\`, name it
+   in blocked as
    "<repo> PR went red after <previous repo> merged", and leave BOTH the merged commit and this open PR exactly
    as they are. Do NOT revert the merge, do NOT close the PR, do NOT force anything through. A revert is a
    human's call.
-2. Confirm it is mergeable and green:
+${REQUIRE_APPROVAL ? `2. **APPROVAL GATE — this PR needs an approving review on GitHub before you may merge it.**
+   Green CI is not consent. It proves the code runs; it does not prove a person agreed to it. This gate is
+   here because an earlier run of this loop put unreviewed commits onto a shared base branch.
+   \`gh pr view <url> --repo <ghRepo> --json reviewDecision,reviews\`
+   - \`APPROVED\` → the gate is satisfied, go on to the next step.
+   - \`CHANGES_REQUESTED\` → **STOP.** Report green:false, \`stopReason: "changes-requested"\`, and blocked
+     "<repo> PR has changes requested".
+     Leave the PR open. Do NOT merge it, do NOT dismiss the review, and do NOT push a fix — a reviewer asked
+     for something and answering them is a human's job, not this stage's.
+   - anything else, including empty (\`REVIEW_REQUIRED\`, or no reviews yet) → nobody has looked yet. WAIT:
+     re-run that same command up to ${APPROVAL_POLLS} times, sleeping 120 seconds between checks via
+     \`sleep 120\`, until it reports \`APPROVED\` or \`CHANGES_REQUESTED\`, then act as above.
+   - still nothing after ${APPROVAL_POLLS} checks → **STOP, and this is not a failure.** Report green:false,
+     \`stopReason: "awaiting-approval"\`, and blocked "<repo> PR is green and awaiting approval: <url>".
+     Leave the PR open and untouched. Somebody will approve it and the increment resumes from its \`prs\`
+     field on the next run.
+   NEVER merge a PR whose reviewDecision you have not just read and seen to be \`APPROVED\`. Do not approve it
+   yourself, do not ask anyone to, and do not work around the gate by any other route — GitHub refuses a
+   self-approval and defeating that refusal is never this stage's business.
+3. Confirm it is mergeable and green:` : `2. Confirm it is mergeable and green:`}
    \`gh pr view <url> --repo <ghRepo> --json mergeable,mergeStateStatus,statusCheckRollup\`
-   Anything other than a clean, green, mergeable PR stops you. NEVER merge a red PR, under any circumstance.
-3. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
-4. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
-5. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
+   Anything other than a clean, green, mergeable PR stops you, with \`stopReason: "not-mergeable"\`. NEVER
+   merge a red PR, under any circumstance.
+${REQUIRE_APPROVAL ? 4 : 3}. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
+${REQUIRE_APPROVAL ? 5 : 4}. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
+${REQUIRE_APPROVAL ? 6 : 5}. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
    \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,name,status,conclusion --limit 20\`
    then, for each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
    \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
    At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
-   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, put "the base branch went red after merging
+   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
+   base branch went red after merging
    <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
    base branch being red is a human decision, not a repair job.
-6. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
+${REQUIRE_APPROVAL ? 7 : 6}. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
    its merge \`"sha"\`. \`jq empty ${BACKLOG_TILDE}\` after. Do this after EACH merge.
 
 green:true ONLY if every pr merged AND ${BASE_BRANCH} went green afterwards for every one of them.
@@ -1385,11 +1433,29 @@ Return the structured output only.`,
 
       if (!merge || !merge.green) {
         const detail = merge ? [merge.blocked, ...(merge.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'merge agent died'
-        log(`${id}: MERGE/BASE-BRANCH STOP — ${detail}`)
+        // Waiting on a reviewer is not a broken increment, and must never be
+        // reported as one: `main-red` reads as "something is wrong with the
+        // build", and the fix for that is nothing like "go and ask a colleague".
+        //
+        // The stage says which condition fired in `stopReason`, a fixed enum
+        // value, rather than us reading it back out of its prose. Anything we
+        // do not recognise — including a stage that never set it — falls to
+        // `main-red`, because the two mistakes are not symmetrical: calling a
+        // healthy pause a failure wastes somebody's afternoon, while calling a
+        // red base branch a healthy pause hides it.
+        const stopReason = merge?.stopReason
+        const atGate = stopReason === 'awaiting-approval' || stopReason === 'changes-requested'
+        const outcome = atGate ? stopReason : 'main-red'
+        log(
+          atGate
+            ? `${id}: STOPPED AT THE APPROVAL GATE (${stopReason}) — ${detail}`
+            : `${id}: MERGE/BASE-BRANCH STOP${stopReason ? ` (${stopReason})` : ' (stopReason not set)'} — ${detail}`
+        )
         results.push({
           id,
           ticket: ticket.key,
-          outcome: 'main-red',
+          outcome,
+          stopReason: stopReason ?? 'not-set',
           prs: prs.map((p) => p.url),
           merged: merge?.merged ?? [],
           detail: detail || 'the merge stage did not reach green',

@@ -39,12 +39,29 @@ jiraProject   default EUDPA                        full only
 epic          parent epic every raised ticket hangs off   full only
 inProgress    the board's working status           full only
 doneStatus    the board's finished status          full only
+requireApproval      whether a PR needs an approving review on GitHub before
+              the loop merges it. Default true          full only
+approvalWaitMinutes  how long the merge stage waits for that approval before
+              stopping with the PR open. Default 20     full only
 ```
 
 `lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
 `local` builds and commits on the current branch: no Jira, no push, no PR, and
 **no handover** — a stash does not travel. Use `full` for anything a colleague
 may pick up.
+
+**`requireApproval` defaults to true, and leaving it there is the point.** Green
+CI proves the code runs; it does not prove anyone agreed to it. The default
+exists because a run of this loop once put unreviewed commits onto a shared
+`main`. Turning it off gives a programme unattended merges — ask for that
+explicitly, and do not infer it from a user who simply wants the run to go
+faster.
+
+Because GitHub refuses to let an author approve their own PR, the approver is
+always **somebody other than whoever the run is credentialed as**. A run under
+this default is therefore not unattended: it will stop and wait for a colleague.
+Say so when a user asks for a large `stopAfter`, rather than letting them find
+out at the first increment.
 
 **Confirm the two status names against the board before the first increment.**
 They are board configuration, not constants, and a wrong one stops every
@@ -142,11 +159,19 @@ const FALLBACK = {
   jiraDoneStatus: '<doneStatus>',
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
+  requireApproval: true,
+  approvalWaitMinutes: 20,
   increments: ['<the one id you derived>']
 }
 ```
 
 **One id. Never more.** Change nothing else in the copy.
+
+Write `requireApproval` in explicitly, even though `true` is the loop's default.
+The patched `FALLBACK` is what a person reads to see what governs a run, and a
+merge gate that only exists as an unstated default is one a later reader will
+not know to look for. Set it to `false` only where the user has asked for
+unattended merges in as many words.
 
 Then invoke it, passing `args` too — if they arrive they agree with `FALLBACK`,
 and if they do not the patched copy is already right:
@@ -198,9 +223,33 @@ Stop and print the handover prompt when any of these fire:
 | `not-landed` | Step 3 found a status other than `done` |
 | `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
+| `awaiting-approval` | The PR is green but nobody has approved it on GitHub inside `approvalWaitMinutes`. It stays open, untouched |
+| `changes-requested` | A reviewer asked for changes. The PR stays open and the run stops |
 
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
 failing.
+
+**`awaiting-approval` is not a failure and must never be reported as one.** The
+loop merges only a PR carrying an approving review — `requireApproval` defaults
+to true — so a run that ends here did everything right and is waiting on a
+person. Report the PR URL and say plainly that it needs a reviewer. Then stop:
+
+- **Never approve the PR** — not through `gh`, not by any other route. GitHub
+  refuses a self-approval from the author, and the account this runs as is the
+  author. A gate you can satisfy yourself is not a gate.
+- **Never merge past it** with `--admin`, by disabling the check, or by
+  reconfiguring the branch.
+- **Never re-run the increment to get a different answer.** The PR is already
+  green; a second one only adds noise for the reviewer.
+
+Resuming is free once somebody approves: `prs` stays populated, so STEP 5 puts
+the increment back at `"ci"`, which re-checks the PR and reaches the merge stage
+again — this time finding the approval.
+
+`changes-requested` is likewise a human's, not yours. A reviewer asked a
+question; answering it is the author's job. Do not push a fix, do not dismiss
+the review, and do not argue with it in the handover — name the PR and what was
+asked.
 
 A run that stops short of `stopAfter` is not a failure — it is the loop telling
 you reality diverged from the plan.

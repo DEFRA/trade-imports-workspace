@@ -1,0 +1,175 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/cph-scope.spec.ts >> CPH scope >> the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists
+- Location: tests/e2e/features/cph-scope.spec.ts:4:3
+
+# Error details
+
+```
+Error: locator.click: Error: strict mode violation: getByRole('link', { name: 'Back' }) resolved to 2 elements:
+    1) <a class="govuk-link" href="mailto:APHAServiceDesk@apha.gov.uk">give your feedback by email</a> aka getByRole('link', { name: 'give your feedback by email' })
+    2) <a class="govuk-back-link" href="/notifications/GBN-AG-26-14DDRB/addresses">Back</a> aka getByRole('link', { name: 'Back', exact: true })
+
+Call log:
+  - waiting for getByRole('link', { name: 'Back' })
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e3]:
+    - link "GOV.UK" [ref=e7] [cursor=pointer]:
+      - /url: https://www.gov.uk/
+      - img "GOV.UK" [ref=e8]
+    - region "Service information" [ref=e21]:
+      - link "Import notification service" [ref=e25] [cursor=pointer]:
+        - /url: /
+  - generic [ref=e26]:
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - img [ref=e31]
+        - generic [ref=e34]: test.user11@defra.gov.uk
+      - generic [ref=e35]: "|"
+      - link "Sign out" [ref=e36] [cursor=pointer]:
+        - /url: /auth/sign-out
+    - paragraph [ref=e38]:
+      - strong [ref=e39]: Alpha
+      - generic [ref=e40]:
+        - text: This is a new service. Help us improve it and
+        - link "give your feedback by email" [ref=e41] [cursor=pointer]:
+          - /url: mailto:APHAServiceDesk@apha.gov.uk
+        - text: .
+    - navigation "Breadcrumb" [ref=e42]:
+      - list [ref=e43]:
+        - listitem [ref=e44]:
+          - link "Your notifications" [ref=e45] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e46]: County Parish Holding (CPH)
+    - link "Back" [ref=e47] [cursor=pointer]:
+      - /url: /notifications/GBN-AG-26-14DDRB/addresses
+    - main [ref=e48]:
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - strong [ref=e52]: Draft
+          - text: GBN-AG-26-14DDRB
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - heading "County Parish Holding (CPH)" [level=1] [ref=e55]:
+              - generic [ref=e56]: County Parish Holding (CPH)
+            - generic [ref=e57]: For example, 123456789 or 123/456/789.
+            - textbox "County Parish Holding (CPH)" [ref=e58]: "123456789"
+          - generic [ref=e59]:
+            - button "Save and continue" [ref=e60] [cursor=pointer]
+            - button "Save and return to hub" [ref=e61] [cursor=pointer]
+            - link "Cancel and return to hub" [ref=e62] [cursor=pointer]:
+              - /url: /notifications/GBN-AG-26-14DDRB
+  - contentinfo [ref=e63]:
+    - generic [ref=e76]:
+      - generic [ref=e77]:
+        - heading "Support links" [level=2] [ref=e78]
+        - list [ref=e79]:
+          - listitem [ref=e80]:
+            - link "Privacy" [ref=e81] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/privacy-notice
+          - listitem [ref=e82]:
+            - link "Cookies" [ref=e83] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/cookies
+          - listitem [ref=e84]:
+            - link "Accessibility statement" [ref=e85] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/accessibility-statement
+        - img [ref=e86]
+        - generic [ref=e88]:
+          - text: All content is available under the
+          - link "Open Government Licence v3.0" [ref=e89] [cursor=pointer]:
+            - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+          - text: ", except where otherwise stated"
+      - link "© Crown copyright" [ref=e91] [cursor=pointer]:
+        - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '@fixtures';
+  2  | 
+  3  | test.describe('CPH scope', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+  4  |   test('the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists', async ({ journey, pages }) => {
+  5  |     const journeyId = await journey.startNotification();
+  6  | 
+  7  |     const page = pages.page;
+  8  |     const cphRow = page.locator('.govuk-summary-list__row', {
+  9  |       has: page.getByText('County Parish Holding number (CPH)', { exact: true }),
+  10 |     });
+  11 | 
+  12 |     // Add one commodity line for the given species, taking the fewest steps: the
+  13 |     // counts are submit-enforced, so the details page saves blank straight back
+  14 |     // to the hub.
+  15 |     const addCommodity = async (species: string): Promise<void> => {
+  16 |       await pages.overview.open(journeyId);
+  17 |       await pages.overview.task('What are you importing?').click();
+  18 |       await pages.commoditySelection.selectSpecies([species]);
+  19 |       await pages.commoditySelection.saveAndContinue.click();
+  20 |       await expect(pages.consignmentDetails.heading).toBeVisible();
+  21 |       await pages.consignmentDetails.saveAndContinue.click();
+  22 |       await expect(pages.overview.heading).toBeVisible();
+  23 |     };
+  24 | 
+  25 |     const openAddresses = async (): Promise<void> => {
+  26 |       await pages.overview.open(journeyId);
+  27 |       await pages.overview.task('Roles and addresses').click();
+  28 |       await expect(pages.addresses.heading).toBeVisible();
+  29 |     };
+  30 | 
+  31 |     // A non-triggering commodity (cats): CPH is out of scope, so the addresses
+  32 |     // hub shows no CPH row and Continue returns straight to the hub — no CPH
+  33 |     // page (the derived gate).
+  34 |     await addCommodity('Felis catus');
+  35 |     await openAddresses();
+  36 |     await expect(cphRow).toBeHidden();
+  37 |     await pages.addresses.continueButton.click();
+  38 |     await expect(pages.overview.heading).toBeVisible();
+  39 |     await expect(pages.cphNumber.heading).toBeHidden();
+  40 | 
+  41 |     // Adding a triggering commodity (cattle) brings CPH into scope across the
+  42 |     // commodity lines (frame:"anyItem") — the row appears in its empty state.
+  43 |     await addCommodity('Bos taurus');
+  44 |     await openAddresses();
+  45 |     await expect(cphRow).toBeVisible();
+  46 |     await expect(cphRow).toContainText('Not added yet');
+  47 | 
+  48 |     // Hub-row add flow: the Add link opens the CPH page and saving returns to
+  49 |     // the addresses hub (not the sequential exit), the row showing the stored
+  50 |     // slash-stripped value.
+  51 |     await cphRow.getByRole('link', { name: 'Add' }).click();
+  52 |     await expect(pages.cphNumber.heading).toBeVisible();
+  53 |     await pages.cphNumber.cphNumber.fill('12/345/6789');
+  54 |     await pages.cphNumber.saveAndContinue.click();
+  55 |     await expect(pages.addresses.heading).toBeVisible();
+  56 |     await expect(cphRow).toContainText('123456789');
+  57 | 
+  58 |     // Filled state: the row's action reads Change, the page shows the stored
+  59 |     // value, and the back link returns to the addresses hub.
+  60 |     await cphRow.getByRole('link', { name: 'Change' }).click();
+  61 |     await expect(pages.cphNumber.cphNumber).toHaveValue('123456789');
+> 62 |     await page.getByRole('link', { name: 'Back' }).click();
+     |                                                    ^ Error: locator.click: Error: strict mode violation: getByRole('link', { name: 'Back' }) resolved to 2 elements:
+  63 |     await expect(pages.addresses.heading).toBeVisible();
+  64 | 
+  65 |     // The sequential fallback stays: Continue from the addresses landing still
+  66 |     // walks to the CPH tail page.
+  67 |     await pages.addresses.continueButton.click();
+  68 |     await expect(pages.cphNumber.heading).toBeVisible();
+  69 |   });
+  70 | });
+  71 | 
+```

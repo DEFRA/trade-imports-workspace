@@ -3,3 +3,14 @@ coverage
 .vitest-cache
 .DS_Store
 *.log
+
+# `npm --prefix <workspace>/tim link` (the install command in ../CLAUDE.md)
+# treats tim/ as npm's global prefix, so it writes a bin/ shim and a
+# lib/node_modules/ tree in here. The shim is a symlink into lib/, which is
+# not tracked — so committing it leaves a dangling link in a fresh clone, and
+# GitHub Actions aborts staging any composite action from this repo with
+# "Could not find file '.../tim/bin/tim'". That silently unhooks every
+# workflow that consumes DEFRA/trade-imports-workspace@main. The real entry
+# point is the `bin` field in package.json; these are install residue.
+bin/
+lib/

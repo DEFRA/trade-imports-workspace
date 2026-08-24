@@ -24,9 +24,18 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "bc94a815",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/208",
+          "number": 208,
+          "merged": true,
+          "sha": "9a78f07a"
+        }
+      ],
       "finding": {
         "frontend": "No page in the service carries a phase banner. The shared layout builds the GOV.UK header, the service navigation, the signed-in bar and the breadcrumbs, and goes straight into the page content with nothing between (src/server/app/shared/layout.njk:19-53). There is no govukPhaseBanner import and no phase-banner markup anywhere in src/server, and none of the 67 captured frontend screens renders one. So a user is never told the service is in Alpha and is never offered a way to give feedback.",
         "prototype": "Every one of the 60 captured Design release 1 screens opens with a phase banner directly under the service navigation: a grey \"Alpha\" tag followed by \"This is a new service. Help us improve it and give your feedback by email.\", with \"give your feedback by email\" as a link (app/views/dashboard.html:15-20). Each view declares it in its own beforeContent block rather than in the layout, so the banner is repeated per view but is present on all of them — and because the Prototype Kit's own branded layout carries no phase banner, the banner and its wording are something the designers wrote on every page by hand rather than furniture they inherited, which makes it a deliberate decision of the design.",
@@ -125,7 +134,7 @@
       "slice": "service-wide",
       "source": "service-wide--phase-banner-missing.json",
       "openQuestions": [
-        "Where should the phase banner's feedback link point? The increment's own difference states Design release 1 uses a placeholder href and that this service 'needs a real destination — a feedback form or a mailto address — decided before the work lands'. That decision was made by the implementing agent, not the service team: backlog notes record the RULING href=\"mailto:APHAServiceDesk@apha.gov.uk\", ending 'Flagged to a human for confirmation', and gate was null so nothing held the increment. The address is currently shipped as landed in src/server/app/shared/layout.njk:43. The concern is that this codebase presents that mailbox as the TECHNICAL SUPPORT desk, not a feedback channel: src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:32-36 renders copy.help.technicalHelp = 'Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:' (confirmation/copy/copy.en.js:28-29) with 'Telephone: 0330 041 6999' and 'Monday to Friday, 8:30am to 5pm'. The phase banner asks a different question — alpha usability feedback — and the shared layout renders on roughly 30 pages, so an unconfirmed destination ships service-wide. ACTION FOR THE SERVICE TEAM: confirm APHAServiceDesk@apha.gov.uk as the alpha-feedback destination and record that decision here, or supply the agreed feedback form URL / team mailbox and change layout.njk:43 (and any test that pins the href) to match. Deferred rather than fixed in this increment because code cannot settle it — no alternative destination exists in the repo to substitute, and inventing a /feedback route would expand the increment's blast radius."
+        "Where should the phase banner's feedback link point? The increment's own difference states Design release 1 uses a placeholder href and that this service 'needs a real destination — a feedback form or a mailto address — decided before the work lands'. That decision was made by the implementing agent, not the service team: backlog notes record the RULING href=\"mailto:APHAServiceDesk@apha.gov.uk\", ending 'Flagged to a human for confirmation', and gate was null so nothing held the increment. The address is currently shipped as landed in src/server/app/shared/layout.njk:15, the feedbackUrl set above the blocks; the anchor that consumes it sits in the beforeContent block at layout.njk:47. The concern is that this codebase presents that mailbox as the TECHNICAL SUPPORT desk, not a feedback channel: src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:32-36 renders copy.help.technicalHelp = 'Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:' (confirmation/copy/copy.en.js:28-29) with 'Telephone: 0330 041 6999' and 'Monday to Friday, 8:30am to 5pm'. The phase banner asks a different question — alpha usability feedback — and the shared layout renders on roughly 30 pages, so an unconfirmed destination ships service-wide. ACTION FOR THE SERVICE TEAM: confirm APHAServiceDesk@apha.gov.uk as the alpha-feedback destination and record that decision here, or supply the agreed feedback form URL / team mailbox and change the feedbackUrl set at layout.njk:15 together with the two places that pin the href — the feedbackAnchor constant in the 'alpha phase banner' describe of src/server/app/shared/layout.test.js, and the FEEDBACK_MAILTO constant at src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:14. Deferred rather than fixed in this increment because code cannot settle it — no alternative destination exists in the repo to substitute, and inventing a /feedback route would expand the increment's blast radius."
       ],
       "controls": [
         {

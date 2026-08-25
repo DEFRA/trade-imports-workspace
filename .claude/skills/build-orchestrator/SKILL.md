@@ -225,9 +225,18 @@ Stop and print the handover prompt when any of these fire:
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | The PR is green but nobody has approved it on GitHub inside `approvalWaitMinutes`. It stays open, untouched |
 | `changes-requested` | A reviewer asked for changes. The PR stays open and the run stops |
+| `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
 
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
 failing.
+
+**`pr-left-open` means the increment is half-landed, and the half that landed
+does not auto-revert.** The merge stage sweeps every repo for an open PR on the
+branch before it reports green, precisely because the list of PRs it was handed
+is not proof of what the increment actually became — a CI fixer can raise one in
+a repo the increment did not start with. Report which repo and which URL. Do not
+merge the straggler yourself: it has not been through the watcher or the
+approval gate, and merging it to clear the warning is worse than the warning.
 
 **`awaiting-approval` is not a failure and must never be reported as one.** The
 loop merges only a PR carrying an approving review — `requireApproval` defaults

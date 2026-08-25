@@ -293,6 +293,38 @@ const incrementSchema = {
   additionalProperties: false
 }
 
+// The CI fixer's schema is the increment schema plus a channel for a PR it had
+// to open in a repo the increment did not start with — a frontend change whose
+// fix lands in the tests repo, typically. Without somewhere to report that, a
+// fixer that raises a second PR leaves it invisible to every later stage, and
+// the increment merges half of itself.
+const CI_FIX_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' },
+    changedFiles: { type: 'array', items: { type: 'string' } },
+    notes: { type: 'string' },
+    newPrs: {
+      type: 'array',
+      description:
+        'Every PR you opened in a repo that had none for this branch. Empty if you only pushed to branches that already had one.',
+      items: {
+        type: 'object',
+        required: ['repo', 'url'],
+        properties: {
+          repo: { type: 'string' },
+          url: { type: 'string' },
+          number: { type: 'number' }
+        },
+        additionalProperties: false
+      }
+    }
+  },
+  additionalProperties: false
+}
+
 const FINDINGS_SCHEMA = {
   type: 'object',
   required: ['findings'],
@@ -493,7 +525,7 @@ const CI_SCHEMA = {
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
-      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red'],
+      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'pr-left-open'],
       description:
         'WHICH stop condition fired, as a fixed value the caller branches on. `blocked` is prose for a human; this is the machine answer and the two must agree. "none" when green. Set "awaiting-approval" ONLY when the PR is green and simply has no approving review yet — never for anything that is actually wrong, because the caller reports that one as a healthy pause rather than a failure'
     },
@@ -1318,7 +1350,7 @@ Return the structured output only.`,
         ciAttempt += 1
         log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
 
-        await agent(
+        const fix = await agent(
           `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
 CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you do not close anything.
 ${GUARDRAILS}
@@ -1340,11 +1372,42 @@ TASK:
    read once.
 4. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
    \`git -C ${TILDE}/<repoPath> push origin ${workBranch}\` — never \`--force\`.
-5. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+5. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
+   REGISTER IT.** A frontend change whose fix lands in the tests repo is the ordinary case, not an exception.
+   An unregistered PR is invisible to the watcher and to the merge stage, so the increment merges one repo,
+   calls itself done, and silently leaves the other open — which has happened.
+   Use the SAME branch name \`${workBranch}\` (CLAUDE.md rule 2, cross-repo branch parity). Repo paths:
+   ${repoTable}. GitHub repos: ${ghTable}. For each such repo:
+   a. \`git -C ${TILDE}/<repoPath> push -u origin ${workBranch}\` — never \`--force\`.
+   b. Look for an existing PR first:
+      \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state\`
+      An OPEN one → reuse it, do not create a second. A MERGED or CLOSED one → report ok:false; the lifecycle
+      is out of step and a new PR would hide that.
+   c. Nothing there → write the body to ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md saying what broke, what you
+      changed and which increment and ticket it belongs to, then
+      \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <what you fixed>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
+   d. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array also holds
+      \`{"repo":"<repo>","url":"<url>","number":<n>}\` — appending, never replacing an entry already there.
+      \`jq empty ${BACKLOG_TILDE}\` after. Do this per repo, not once at the end.
+   e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
+      THIS run reads. Skipping either one is how a PR gets left behind.
+6. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
-          { label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: incrementSchema }
+          { label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA }
         )
+
+        // Fold in anything the fixer had to open elsewhere, deduped by url, so
+        // the next watch() blocks on it and the merge stage merges it. `prs` is
+        // a plain variable and the script has no filesystem access, so a PR the
+        // fixer wrote only to the backlog would otherwise stay invisible for
+        // the rest of the run.
+        for (const p of fix?.newPrs ?? []) {
+          if (p?.url && !prs.some((existing) => existing.url === p.url)) {
+            prs.push(p)
+            log(`${id}: CI fixer opened ${p.repo} ${p.url} — added to this increment's PRs`)
+          }
+        }
 
         ci = await watch()
       }
@@ -1426,7 +1489,19 @@ ${REQUIRE_APPROVAL ? 6 : 5}. WATCH \`${BASE_BRANCH}\` for that commit — a gree
 ${REQUIRE_APPROVAL ? 7 : 6}. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
    its merge \`"sha"\`. \`jq empty ${BACKLOG_TILDE}\` after. Do this after EACH merge.
 
-green:true ONLY if every pr merged AND ${BASE_BRANCH} went green afterwards for every one of them.
+FINAL SWEEP, after the last merge and before you report. **The list above is not proof that it is the whole
+increment.** A CI fixer may have opened a PR in another repo, and if anything went wrong when it registered
+that PR you would never see it here. So go and look, rather than trusting this list. For EACH of
+${Object.values(GH_REPO).join(', ')}:
+   \`gh pr list --repo <ghRepo> --head ${workBranch} --state open --json number,url,title\`
+Every one must come back empty. If ANY repo still has an open PR on \`${workBranch}\`:
+**STOP and report green:false**, \`stopReason: "pr-left-open"\`, with "<repo> still has an open PR on this
+branch: <url>" in blocked. Do NOT merge it yourself — it has not been through the watcher or the approval
+gate in this run, and merging an unvetted PR to clear a warning is worse than the warning. Leave everything
+as it is and name it, so a human can finish it.
+
+green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them, AND the final
+sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
         { label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA }
       )
@@ -1445,11 +1520,17 @@ Return the structured output only.`,
         // red base branch a healthy pause hides it.
         const stopReason = merge?.stopReason
         const atGate = stopReason === 'awaiting-approval' || stopReason === 'changes-requested'
-        const outcome = atGate ? stopReason : 'main-red'
+        // `pr-left-open` is its own outcome rather than `main-red`. The base
+        // branch is fine; what is wrong is that the increment is only partly
+        // merged, and the two need completely different things from a human.
+        const leftOpen = stopReason === 'pr-left-open'
+        const outcome = atGate || leftOpen ? stopReason : 'main-red'
         log(
           atGate
             ? `${id}: STOPPED AT THE APPROVAL GATE (${stopReason}) — ${detail}`
-            : `${id}: MERGE/BASE-BRANCH STOP${stopReason ? ` (${stopReason})` : ' (stopReason not set)'} — ${detail}`
+            : leftOpen
+              ? `${id}: PARTLY MERGED — a PR on ${workBranch} is still open: ${detail}`
+              : `${id}: MERGE/BASE-BRANCH STOP${stopReason ? ` (${stopReason})` : ' (stopReason not set)'} — ${detail}`
         )
         results.push({
           id,

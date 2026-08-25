@@ -155,6 +155,12 @@
     },
     {
       "id": "inc-004",
+      "ticket": "EUDPA-338",
+      "branch": "feat/EUDPA-338-dr1-names-the-section-of-the-notificatio",
+      "openQuestions": [
+        "Where should the section caption sit on the five pages whose h1 is produced inside the form — cph-number (label as heading), import-reason, import-purpose, transporters and transporters-select (legend as heading)? This increment emits the caption immediately before <form> on all five (e.g. src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk:9 with the h1 inside the govukRadios legend at template.njk:17-21), so the caption is outside the fieldset and outside the form group. Two consequences, both verified: (1) on an error render govuk-frontend applies .govuk-form-group--error{padding-left:15px;border-left:5px solid} (node_modules/govuk-frontend/dist/govuk/govuk-frontend.min.css) to the group containing the fieldset, so the h1 shifts 20px right and sits inside the red bar while the caption stays flush at the content edge — caption and heading visibly misalign; (2) because the caption is outside the fieldset, a screen reader announcing the legend as focus enters the radio group reads the question with no section name, so the context this increment adds is available to sighted users only. GOV.UK's own guidance is the opposite of what we shipped — dist/govuk/core/_typography.mixin.scss:62 reads '// Captions to be used inside headings' — and the fix would be to build the legend/label html (`{% set legendHtml %}{{ sectionCaption(caption) }}{{ copy.legend }}{% endset %}`) and pass it as `legend: { html: legendHtml, isPageHeading: true }`. DEFERRED rather than fixed in this increment because it is not a like-for-like markup swap: putting the caption inside the h1 changes the heading's accessible name from e.g. 'Reason for import' to 'About the consignment Reason for import', which breaks the getByRole('heading', { name: copy.legend }) locators used across the existing fit specs (import-reason.fit.spec.js:29,37, import-purpose, transporters, transporters-select, cph-number) and changes the rendered DOM order the increment's FALSIFIED BY clause is measured against. ACTION: decide with design/accessibility whether the caption goes inside the legend/label heading on these five pages (GDS-correct, needs the fit-spec locators reworked and the parity corpus re-captured) or stays as a sibling before the form (current shape, needs the error-state misalignment accepted or a spacing rule added). Whichever is chosen, the placement assertion added to section-caption.fit.spec.js for the legend-heading page must be updated to match."
+      ],
+      "repo": "frontend",
       "type": "add-field",
       "milestone": null,
       "domain": "service-wide",
@@ -173,7 +179,7 @@
       "gate": null,
       "dependsOn": [],
       "status": "todo",
-      "commit": null,
+      "commit": "958903f6",
       "failure_reason": null,
       "finding": {
         "frontend": "Almost every page opens straight into its h1 with nothing above it, so a user part-way through a long notification cannot tell from the page which part of the notification they are in. On the CPH page the heading \"County Parish Holding (CPH)\" is the first thing under the status strip — src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23 renders the label as the page heading with nothing before it. Only five of the 33 captured screens carry a caption at all: the five address pickers, which say \"Consignment addresses\" from their own template at src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7 rather than from anything shared. The remaining 28 have none.",
@@ -312,7 +318,14 @@
         "note": "No section caption above the h1 on almost every page. Both enumerate DR1's caption set and both say derive it from the hub's section grouping rather than hard-coding per page (C names task-rows.js:27-59, the better pointer). A is better on the exclusion list — it names exactly which pages must STAY bare (overview, check answers, contact, declaration, confirmation) and separates the two pages with no DR1 counterpart at all. Both cite the same evidence; A's screen counts are from a 33-screen corpus, C's from 67.",
         "better": "A",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/209",
+          "number": 209
+        }
+      ]
     },
     {
       "id": "inc-005",

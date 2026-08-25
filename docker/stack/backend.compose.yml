@@ -137,6 +137,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      floci-init:
+        condition: service_completed_successfully
       mongodb:
         condition: service_healthy
     env_file:
@@ -146,6 +148,8 @@ services:
       - SPRING_PROFILES_ACTIVE=local
       - MONGO_DATABASE=trade-imports-ins-backend
       - AWS_EMF_AGENT_ENDPOINT=http://host.docker.internal:4566
+      - APP_AWS_ENDPOINT_OVERRIDE=http://host.docker.internal:4566
+      - NOTIFICATION_SQS_QUEUE_URL=http://host.docker.internal:4566/000000000000/trade_imports_animals_eu_notifications_ins_backend.fifo
       - LOG_LEVEL=INFO
     healthcheck:
       interval: 5s

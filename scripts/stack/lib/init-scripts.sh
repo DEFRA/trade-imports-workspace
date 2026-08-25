@@ -98,6 +98,9 @@ stage_init_scripts() {
   # filename clash (the backend script is start-floci.sh).
   stage_source trade-imports-dynamics-gateway "$ref" servicebus/setup-notification-pipeline.sh "$STAGED_DIR/floci"
 
+  # Ins-backend-owned: floci notification pipeline (SNS FIFO → SQS FIFO, no DLQ yet).
+  stage_source trade-imports-ins-backend "$ref" floci/setup-ins-backend-pipeline.sh "$STAGED_DIR/floci"
+
   # Dynamics-gateway-owned: Azure Service Bus emulator entity config
   stage_source trade-imports-dynamics-gateway "$ref" servicebus/servicebus-config.json "$STAGED_DIR/servicebus"
 }

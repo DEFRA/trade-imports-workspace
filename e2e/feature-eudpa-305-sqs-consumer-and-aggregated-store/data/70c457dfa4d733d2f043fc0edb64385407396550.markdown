@@ -1,0 +1,189 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/admin/dlq-events.spec.ts >> DLQ operator actions >> replays all DLQ messages via the admin UI
+- Location: tests/e2e/features/admin/dlq-events.spec.ts:66:3
+
+# Error details
+
+```
+Error: expect(locator).toContainText(expected) failed
+
+Locator: getByRole('alert').filter({ has: getByRole('heading', { name: 'Success' }) })
+Expected substring: "Replay-all started"
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toContainText" with timeout 5000ms
+  - waiting for getByRole('alert').filter({ has: getByRole('heading', { name: 'Success' }) })
+
+```
+
+```yaml
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - link "GOV.UK":
+    - /url: https://www.gov.uk/
+    - img "GOV.UK"
+  - region "Service information":
+    - link "trade-imports-animals-admin":
+      - /url: /
+    - navigation "Menu":
+      - list:
+        - listitem:
+          - link "Home":
+            - /url: /
+        - listitem:
+          - link "About":
+            - /url: /about
+- text: test.user11@defra.gov.uk
+- link "Sign out":
+  - /url: /signout
+- navigation "Breadcrumb":
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: /
+    - listitem: DLQ process
+- main:
+  - heading "DLQ process" [level=1]
+  - text: trade-imports-animals-admin
+  - paragraph: Showing 1 of approximately 1 message(s) on the dead-letter queue.
+  - table:
+    - rowgroup:
+      - row "Id Message group Body":
+        - columnheader "Id"
+        - columnheader "Message group"
+        - columnheader "Body"
+    - rowgroup:
+      - row "867327a5-9077-417c-8484-073093b12904 Imports.Notification.GBN-AG.GBN-AG-26-001.867327a5-9077-417c-8484-073093b12904":
+        - cell "867327a5-9077-417c-8484-073093b12904"
+        - cell "Imports.Notification.GBN-AG.GBN-AG-26-001.867327a5-9077-417c-8484-073093b12904"
+        - cell:
+          - group: View JSON
+  - button "Replay all"
+  - button "Delete all"
+- contentinfo:
+  - heading "Support links" [level=2]
+  - list:
+    - listitem:
+      - link "Privacy":
+        - /url: https://www.gov.uk/help/privacy-notice
+    - listitem:
+      - link "Cookies":
+        - /url: https://www.gov.uk/help/cookies
+    - listitem:
+      - link "Accessibility statement":
+        - /url: https://www.gov.uk/help/accessibility-statement
+  - text: All content is available under the
+  - link "Open Government Licence v3.0":
+    - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+  - text: ", except where otherwise stated"
+  - link "© Crown copyright":
+    - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1  | import { randomUUID } from 'node:crypto';
+  2  | import { readFileSync } from 'node:fs';
+  3  | import { test, expect } from '@fixtures';
+  4  | import type { PageObjects } from '@page-objects';
+  5  | import { SqsClient } from '@adapters/queue/sqs-client';
+  6  | import { getDlqUrl } from '@config/service-base-urls';
+  7  | import { outboxEventPaths } from '@resources/outbox-events/paths';
+  8  | import { timeouts } from '@config/timeouts';
+  9  | 
+  10 | interface OutboxEventFixture {
+  11 |   eventId: string;
+  12 |   aggregateId: string;
+  13 |   metadata: Record<string, unknown>;
+  14 |   [key: string]: unknown;
+  15 | }
+  16 | 
+  17 | const dlqEventTemplate = JSON.parse(readFileSync(outboxEventPaths.notificationSubmitted, 'utf-8')) as OutboxEventFixture;
+  18 | 
+  19 | /**
+  20 |  * Seed one message directly onto the DLQ — the same shortcut the gateway's DlqServiceIT uses.
+  21 |  * eventId (shown by the admin UI as the message Id) and the FIFO group are unique per seed, so a
+  22 |  * run's assertions can't collide with, or be FIFO-blocked behind, a message left by another test.
+  23 |  * Returns the eventId.
+  24 |  */
+  25 | async function seedDlqMessage(sqs: SqsClient): Promise<string> {
+  26 |   const eventId = randomUUID();
+  27 |   const aggregateId = `${dlqEventTemplate.aggregateId}.${eventId}`;
+  28 |   const event = {
+  29 |     ...dlqEventTemplate,
+  30 |     eventId,
+  31 |     aggregateId,
+  32 |     metadata: { ...dlqEventTemplate.metadata, correlationId: eventId },
+  33 |   };
+  34 |   await sqs.sendMessage(getDlqUrl(), JSON.stringify(event), aggregateId, eventId);
+  35 |   return eventId;
+  36 | }
+  37 | 
+  38 | /**
+  39 |  * Confirm the seeded message is listed on the DLQ page. The list is fetched on page load, so if the
+  40 |  * just-seeded message hasn't propagated yet, reload and re-check rather than waiting on stale content.
+  41 |  */
+  42 | async function expectSeededRowListed(pages: PageObjects, eventId: string): Promise<void> {
+  43 |   await expect(async () => {
+  44 |     if (!(await pages.adminDlqEvents.rowById(eventId).isVisible())) {
+  45 |       await pages.page.reload();
+  46 |     }
+  47 |     await expect(pages.adminDlqEvents.rowById(eventId)).toBeVisible({ timeout: timeouts.short });
+  48 |   }).toPass({ timeout: timeouts.medium });
+  49 | }
+  50 | 
+  51 | test.describe('DLQ operator actions', { tag: '@compose' }, () => {
+  52 |   // Serial: both tests act on the whole DLQ (replay-all / delete-all), so they must not run
+  53 |   // concurrently against the one shared queue.
+  54 |   test.describe.configure({ mode: 'serial' });
+  55 | 
+  56 |   let sqs: SqsClient;
+  57 | 
+  58 |   test.beforeAll(() => {
+  59 |     sqs = new SqsClient();
+  60 |   });
+  61 | 
+  62 |   test.afterAll(() => {
+  63 |     sqs.destroy();
+  64 |   });
+  65 | 
+  66 |   test('replays all DLQ messages via the admin UI', async ({ adminNavigation, pages }) => {
+  67 |     const eventId = await seedDlqMessage(sqs);
+  68 | 
+  69 |     await adminNavigation.toDlqEvents();
+  70 |     await expectSeededRowListed(pages, eventId);
+  71 | 
+  72 |     await pages.adminDlqEvents.btnReplayAll.click();
+  73 | 
+  74 |     // The success banner renders only after the real gateway replay-all call (with the real admin
+  75 |     // secret) succeeded — the cross-service wiring this test exists to prove.
+> 76 |     await expect(pages.adminDlqEvents.bannerSuccess).toContainText('Replay-all started');
+     |                                                      ^ Error: expect(locator).toContainText(expected) failed
+  77 |   });
+  78 | 
+  79 |   test('deletes all DLQ messages via the admin UI', async ({ adminNavigation, pages }) => {
+  80 |     const eventId = await seedDlqMessage(sqs);
+  81 | 
+  82 |     await adminNavigation.toDlqEvents();
+  83 |     await expectSeededRowListed(pages, eventId);
+  84 | 
+  85 |     await pages.adminDlqEvents.btnDeleteAll.click();
+  86 |     await pages.adminDlqEvents.btnConfirmDeleteAll.click();
+  87 | 
+  88 |     // As above: the banner is proof the real gateway delete-all call succeeded.
+  89 |     await expect(pages.adminDlqEvents.bannerSuccess).toContainText('Delete-all started');
+  90 |   });
+  91 | });
+  92 | 
+```

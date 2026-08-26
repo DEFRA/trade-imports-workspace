@@ -40,6 +40,12 @@ export const meta = {
 //                   lifecycle is 'full'
 //   jiraInProgressStatus  the board's working status, set when the build starts
 //   jiraDoneStatus        the board's finished status, set after the merge
+//   jiraBoard       the numeric board id raised tickets are moved onto. Required
+//                   when lifecycle is 'full'. Board membership is NOT a field on
+//                   the issue and NOT implied by status: a freshly raised ticket
+//                   lands in the board's backlog and stays there, invisible to
+//                   the team, however many times it is transitioned. Moving it
+//                   is a separate agile call, and this is the id it needs
 //   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
 //                   run stops
 //   ciWatchMinutes  how long one CI watch may block before it counts as RED
@@ -61,6 +67,10 @@ export const meta = {
 // never has to edit a stage. Confirm them against the board itself with
 // `tools/jira/transition-ticket.sh <ANY-KEY> --list`; the script's own --help
 // text is generic placeholder wording and is not board truth.
+//
+// `jiraBoard` is the same kind of configuration. 13780 is the EUDPA board; a
+// programme on another board must say so, and the run throws at startup if the
+// id is missing rather than quietly leaving every ticket in the backlog.
 // ---------------------------------------------------------------------------
 const FALLBACK = {
   workarea: 'shared/plant-products-ched-pp',
@@ -72,6 +82,7 @@ const FALLBACK = {
   epic: '',
   jiraInProgressStatus: 'In Progress',
   jiraDoneStatus: 'Done',
+  jiraBoard: 13780,
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
   increments: ['pp-053']
@@ -87,6 +98,7 @@ const JIRA_PROJECT = CFG.jiraProject ?? 'EUDPA'
 const EPIC = CFG.epic ?? ''
 const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus ?? 'In Progress'
 const STATUS_DONE = CFG.jiraDoneStatus ?? 'Done'
+const JIRA_BOARD = CFG.jiraBoard ?? ''
 const CI_FIX_ATTEMPTS = CFG.ciFixAttempts ?? 3
 const CI_WATCH_MINUTES = CFG.ciWatchMinutes ?? 30
 const REQUIRE_APPROVAL = CFG.requireApproval ?? true
@@ -125,6 +137,11 @@ if (LIFECYCLE === 'full' && !/^[A-Z]+-\d+$/.test(EPIC)) {
 if (LIFECYCLE === 'full' && (!STATUS_IN_PROGRESS.trim() || !STATUS_DONE.trim())) {
   throw new Error(
     `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
+  )
+}
+if (LIFECYCLE === 'full' && !/^\d+$/.test(String(JIRA_BOARD))) {
+  throw new Error(
+    `increment-build-loop: config.jiraBoard is required when lifecycle is "full" — the numeric id of the board raised tickets are moved onto, e.g. 13780 for EUDPA. Without it every ticket is raised into the board's backlog and stays there, which no status change fixes. Got "${JIRA_BOARD}"`
   )
 }
 if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
@@ -421,12 +438,17 @@ const LAND_SCHEMA = {
 
 const TICKET_SCHEMA = {
   type: 'object',
-  required: ['ok', 'key', 'repos', 'branch', 'resumeAt', 'summary'],
+  required: ['ok', 'key', 'repos', 'branch', 'resumeAt', 'movedToBoard', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     key: { type: 'string', description: 'The Jira key, e.g. EUDPA-12345' },
     created: { type: 'boolean', description: 'true ONLY if this run raised it. false when you reused a persisted key' },
     status: { type: 'string', description: "The ticket's status when this stage finished, verbatim as the board words it" },
+    movedToBoard: {
+      type: 'boolean',
+      description:
+        'true ONLY if move-to-board.sh ran and exited 0 this time. Never infer it from the status, and never assume a reused ticket is already on the board — the call is idempotent, so run it and report what happened'
+    },
     repos: {
       type: 'array',
       description: 'Every repo this increment touches, in merge order. A "both" increment is ["backend","frontend"]',
@@ -752,7 +774,17 @@ report ok:false with BOTH the status you were asked for — \`${STATUS_IN_PROGRE
 transitions the board actually offers, so the config fix is obvious from your report alone.
 Do NOT guess a nearby status and do NOT pick one off the list yourself.
 
-STEP 4 — THE BRANCH NAME.
+STEP 4 — PUT IT ON THE BOARD. Run this for EVERY increment, whether you raised the ticket or reused it:
+\`${JIRA}/move-to-board.sh ${JIRA_BOARD} <KEY>\`
+A raised ticket lands in the board's BACKLOG, and STEP 3 does not get it out. Board membership is not a
+field on the issue and is not implied by status — two tickets identical in every field sit one on the board
+and one in the backlog. So a ticket left here is one the team cannot see, on a run that otherwise looks
+clean. The call is idempotent, so running it on a ticket already on the board is a harmless no-op; that is
+why it is unconditional rather than something you reason about.
+Set movedToBoard:true when the command exits 0. If it fails, report ok:false with the command's full output
+— do not carry on, and do not fall back to a status change, which cannot do this.
+
+STEP 5 — THE BRANCH NAME.
 - If \`branch\` is already persisted on the increment, REUSE IT VERBATIM. Do not recompute it.
 - Otherwise build it as \`<type>/<KEY>-<slug>\` and persist it to the increment's \`branch\` field
   (Edit ${BACKLOG}, then \`jq empty ${BACKLOG_TILDE}\`):
@@ -762,7 +794,7 @@ STEP 4 — THE BRANCH NAME.
     leading and trailing \`-\`, truncate to 40 characters and trim any trailing \`-\` again.
   This matches CLAUDE.md rule 2 (\`<type>/${JIRA_PROJECT}-XXXX[-slug]\`).
 
-STEP 5 — WHERE TO RESUME, from what STEP 1 showed you. Take the FIRST that matches:
+STEP 6 — WHERE TO RESUME, from what STEP 1 showed you. Take the FIRST that matches:
 - \`prs\` is non-empty and every entry is marked merged → resumeAt "done".
 - \`prs\` is non-empty → resumeAt "ci".
 - \`commit\` is set and \`prs\` is empty or absent → resumeAt "pr".
@@ -772,11 +804,12 @@ Re-entering an increment must never rebuild work that is already committed on it
 status.** A board status is moved by people for reasons this loop cannot see, and a ticket parked at
 Deskcheck or IN QA says nothing about how far the build got.
 
-STEP 6 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
+STEP 7 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
 tests → \["tests"\]; both → \["backend","frontend"\] IN THAT ORDER.
 
-Report ok:true only if the ticket exists, its status is one you left alone or successfully set, and the
-branch name is persisted. Report \`status\` as the ticket's status when you finished, verbatim.
+Report ok:true only if the ticket exists, its status is one you left alone or successfully set, STEP 4
+moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
+finished, verbatim.
 Return the structured output only.`,
       { label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA }
     )
@@ -787,10 +820,26 @@ Return the structured output only.`,
       break
     }
 
+    // A ticket in the backlog is one the team cannot see, and nothing later in
+    // the lifecycle notices. Checked here rather than trusted to the stage's own
+    // ok, because "I set the status" reads like success from inside that stage.
+    if (!ticket.movedToBoard) {
+      log(`${id}: TICKET STAGE FAILED — ${ticket.key} was not moved onto board ${JIRA_BOARD}`)
+      results.push({
+        id,
+        ticket: ticket.key,
+        outcome: 'ticket-failed',
+        detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
+      })
+      break
+    }
+
     workBranch = ticket.branch
     repos = ticket.repos
     resumeAt = ticket.resumeAt ?? 'build'
-    log(`${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on ${workBranch}, resuming at ${resumeAt}`)
+    log(
+      `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on board ${JIRA_BOARD}, branch ${workBranch}, resuming at ${resumeAt}`
+    )
 
     // ---------------------------------------------------------------------
     // Branch — off FRESH base, in every repo the increment touches. Refuses on

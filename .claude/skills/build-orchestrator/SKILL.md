@@ -39,6 +39,8 @@ jiraProject   default EUDPA                        full only
 epic          parent epic every raised ticket hangs off   full only
 inProgress    the board's working status           full only
 doneStatus    the board's finished status          full only
+board         numeric id of the board tickets are moved onto. 13780 is
+              EUDPA. Default 13780                 full only
 requireApproval      whether a PR needs an approving review on GitHub before
               the loop merges it. Default true          full only
 approvalWaitMinutes  how long the merge stage waits for that approval before
@@ -73,6 +75,15 @@ tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
 
 Do not take a status name from a script's `--help` text — that is generic
 placeholder wording, not this board's workflow.
+
+**A raised ticket lands in the board's backlog, and no status gets it out.**
+Board membership is not a field on the issue and is not implied by status — two
+tickets identical in every field sit one on the board and one in the backlog.
+So the ticket stage moves it with `tools/jira/move-to-board.sh <board> <KEY>`
+after it sets the working status, and reports `movedToBoard`. The loop treats a
+false there as `ticket-failed`, because a ticket the team cannot see on a run
+that otherwise looks clean is the failure worth catching loudly. The call is
+idempotent, so it runs on reused tickets too.
 
 ## Before the first increment
 
@@ -157,6 +168,7 @@ const FALLBACK = {
   epic: '<epic>',
   jiraInProgressStatus: '<inProgress>',
   jiraDoneStatus: '<doneStatus>',
+  jiraBoard: 13780, // the EUDPA board. Another programme's board is another id
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
   requireApproval: true,
@@ -284,6 +296,7 @@ jiraProject  <jiraProject>
 epic         <epic>
 inProgress   <inProgress>
 doneStatus   <doneStatus>
+board        <board>
 stopAfter    <a number, or all>
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).

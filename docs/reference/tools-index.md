@@ -19,6 +19,7 @@ Shared shell scripts called by skills via
 | `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
 | `tools/jira/update-ticket.sh` | EUDPA-X field=value | Update fields |
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status |
+| `tools/jira/move-to-board.sh` | board-id EUDPA-X [EUDPA-Y ...] | Move tickets out of a board's backlog onto the board (the API form of right-click → Move → Move to Board).<br>e.g. `tools/jira/move-to-board.sh 13780 EUDPA-342`<br>Boundary: board membership is not a field and is not implied by status, so `transition-ticket.sh` cannot do this and `ticket.sh` cannot read it back. Idempotent, so it is safe to re-run. Max 50 keys per call. |
 | `tools/jira/get-issues-for-board.sh` | board-id [list\|summary\|json] | Board issues |
 | `tools/jira/list-board-epics.sh` | board-id [list\|json] [--include-done] | List epics on a board |
 | `tools/jira/list-board-labels.sh` | board-id [list\|json] | Aggregate label frequencies from a board's backlog |

@@ -24,8 +24,19 @@ since and folded in here:
   set of monospaced identifiers before and after — the only one absent is a
   repeated `GBN-AG` token whose fact survives in the surrounding sentence.
 
+- **Round 5 (26 Aug)** — attached the happy-path diagram as an SVG and referenced it
+  from the top of the tech notes, and replaced two *Out of scope* items with links to
+  the follow-up tickets they called for: [EUDPA-346] (Welsh copy layer in INS) and
+  [EUDPA-347] (field-name alignment).
+
 This file mirrors the Jira description; the summary below is written as markdown
 rather than Jira wiki markup, so formatting differs but wording does not.
+
+**Known drift:** round 4 was an editorial pass over the Jira description that was
+not mirrored here, because it changed no facts. The prose below is therefore a
+little longer than Jira's in places. Every fact matches; the wording does not always.
+The verbatim wiki copy is `description.live-baseline.wiki` under
+`workareas/ticket-creation/EUDPA-333-delegate-address-creation/`.
 
 Verified byte-identical to Jira after each push.
 
@@ -308,23 +319,15 @@ is added here — and note the consequence for the four referenced parties: a Tr
 who picked the wrong address changes their selection by picking again, not by
 editing the record.
 
-**Welsh copy in INS.** The animals journey has a `copyFor` layer carrying English
-and Welsh for every field and error. The INS address book has no copy layer at all
-— `add/index.njk` and its siblings hardcode English, and the repo has no locale
-handling beyond `lang="en"` in `assets.html`. Sending a Trader to the INS form
-therefore takes them to an English-only page. Accepted here, but note where the
-gap ends up: once every journey's address form is the INS one, INS is the single
-thing standing between the service and Welsh Language Standards compliance, for
-every journey rather than just this one. Giving INS a copy layer needs its own
-ticket before any Welsh launch.
+**Welsh copy in INS** —
+[EUDPA-346](https://eaflood.atlassian.net/browse/EUDPA-346). INS has no copy layer, so
+this ticket knowingly sends a Trader to an English-only page mid-journey. Must land
+before any Welsh launch.
 
-**Field-name alignment.** The journey and the API use different names for the same
-fields (`postalOrZipCode` / `postcode`, `country` / `countryCode`,
-`telephoneNumber` / `phone`, `emailAddress` / `email`). EUDPA-294 chose
-deliberately to keep the journey's names and map at the boundary in
-`client.toRecord()`, on the grounds that only the `addressId` crosses to the
-backend. That decision stands for this ticket. Whether to standardise the journey
-on the API's names is a separate question and needs its own ticket.
+**Field-name alignment** —
+[EUDPA-347](https://eaflood.atlassian.net/browse/EUDPA-347). The journey and the API
+name the same fields differently. EUDPA-294 deliberately mapped at the boundary rather
+than standardising, and that stands here.
 
 **Not required by this ticket** — `transport/private-transporter-details/` and
 `commodities/animal-identification/address/fields.js` use `telephoneNumber` and

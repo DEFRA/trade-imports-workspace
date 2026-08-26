@@ -7,20 +7,26 @@ Working notes for [EUDPA-333](https://eaflood.atlassian.net/browse/EUDPA-333),
 |---|---|
 | [`ticket.md`](ticket.md) | The Jira description, mirrored as markdown. Jira is the source of truth. |
 | [`sequence.md`](sequence.md) | Three Mermaid diagrams — the happy path, cancel, and the guard — plus what checking them against the code turned up. |
-| [`happy-path.mmd`](happy-path.mmd) | Standalone source for the happy-path diagram. This is what the PNG on the ticket is rendered from. |
+| [`happy-path.mmd`](happy-path.mmd) | Standalone source for the happy-path diagram. This is what the image on the ticket is rendered from. |
+| [`happy-path.svg`](happy-path.svg) | The rendered diagram, matching the `document-upload-flow.md` + `.svg` pairing already used in this directory. |
 
 ## Regenerating the diagram on the ticket
 
-The ticket carries a **rendered PNG**, because Jira does not render Mermaid.
-That PNG goes stale silently whenever the design changes, so it is rendered from
+The ticket carries a **rendered image**, because Jira does not render Mermaid.
+That image goes stale silently whenever the design changes, so it is rendered from
 `happy-path.mmd` rather than drawn by hand — the source is diffable even though
 the image is not.
 
 After editing `happy-path.mmd`:
 
 ```bash
-mmdc -i happy-path.mmd -o eudpa-333-happy-path.png -b '#fcfcfa' -s 2
+mmdc -i happy-path.mmd -o happy-path.svg -b white
 ```
+
+SVG matches the convention set by `document-upload-flow.svg`, scales without
+blurring, and is a sixth the size of the equivalent PNG. If Jira ever stops
+rendering it inline, `-o happy-path.png -b '#fcfcfa' -s 2` produces a PNG that
+definitely does.
 
 `mmdc` is `@mermaid-js/mermaid-cli`. It drives headless Chrome; if it cannot find
 one, either run `npx puppeteer browsers install chrome-headless-shell` or point it
@@ -35,7 +41,7 @@ same filename adds a second attachment rather than replacing it, and Jira render
 whichever it resolves first:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/attach-file.sh EUDPA-333 eudpa-333-happy-path.png
+~/git/defra/trade-imports-workspace/tools/jira/attach-file.sh EUDPA-333 happy-path.svg
 ```
 
 Keep `happy-path.mmd` and the copy inside `sequence.md` in step. They are the same

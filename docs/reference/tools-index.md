@@ -17,7 +17,8 @@ Shared shell scripts called by skills via
 | `tools/jira/create-ticket.sh` | [-t Type][-p Parent][-P Priority][-l Label][-a] "Summary" | Create ticket.<br>e.g. `tools/jira/create-ticket.sh -t Task -p EUDPA-215 "Add boundary notes"`<br>Boundary: performs the live Jira creation (vs `ticket-creator/prepare-ticket-creation.sh`, which only pre-caches epics/capabilities beforehand). |
 | `tools/jira/add-subtask.sh` | EUDPA-X "Summary" ["Desc"] | Add subtask |
 | `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
-| `tools/jira/attach-file.sh` | EUDPA-X FILE | Attach a file to a ticket.<br>e.g. `tools/jira/attach-file.sh EUDPA-333 diagram.png`<br>Reference it inline from the description with wiki markup — `!diagram.png\|thumbnail!`.<br>Re-attaching the same filename ADDS a second attachment rather than replacing it, so delete the old one before re-attaching a regenerated file. |
+| `tools/jira/attach-file.sh` | EUDPA-X FILE | Attach a file to a ticket.<br>e.g. `tools/jira/attach-file.sh EUDPA-333 diagram.svg`<br>Reference it inline from the description with wiki markup — `!diagram.svg\|thumbnail!`.<br>Re-attaching the same filename ADDS a second attachment rather than replacing it, so pair it with `delete-attachment.sh` when refreshing a file. |
+| `tools/jira/delete-attachment.sh` | EUDPA-X FILENAME [--all] \| --id ID \| EUDPA-X --list | Delete an attachment, or list what a ticket has.<br>e.g. `tools/jira/delete-attachment.sh EUDPA-333 diagram.svg`<br>Refuses to act when several attachments share the filename, listing them instead — pick with `--id` or take all with `--all`.<br>Boundary: the delete half of the regenerate loop (vs `attach-file.sh`, which only adds). |
 | `tools/jira/update-ticket.sh` | EUDPA-X field=value | Update fields |
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status |
 | `tools/jira/get-issues-for-board.sh` | board-id [list\|summary\|json] | Board issues |

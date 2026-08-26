@@ -41,8 +41,15 @@ same filename adds a second attachment rather than replacing it, and Jira render
 whichever it resolves first:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/attach-file.sh EUDPA-333 happy-path.svg
+TOOLS=~/git/defra/trade-imports-workspace/tools/jira
+$TOOLS/delete-attachment.sh EUDPA-333 happy-path.svg
+$TOOLS/attach-file.sh EUDPA-333 happy-path.svg
 ```
+
+`delete-attachment.sh EUDPA-333 --list` shows what the ticket currently holds. If
+two copies of the same filename have already accumulated, the delete refuses and
+lists them rather than guessing — pick one with `--id`, or clear both with
+`--all` and re-attach.
 
 Keep `happy-path.mmd` and the copy inside `sequence.md` in step. They are the same
 diagram, and only this file is what the ticket's image is built from.

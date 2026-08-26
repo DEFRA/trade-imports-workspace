@@ -1,0 +1,29 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "87ccdb0f0864768bba9c56e64b8f0392a05caf58",
+  "pr": 80,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-26T10:40:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Test correctly tracks the aggregate/content composition rename with no correctness bugs, but the refactor left ~9 dead no-op .notification(...) builder calls and one 20-line hand-rolled NotificationView anonymous class that duplicates an existing production carrier.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1341,
+      "severity": "Major",
+      "category": "dead-code",
+      "issue": "Builder chains call .notification(Notification.builder().build()) then immediately overwrite it with a second .notification(...) call (e.g. lines 1341-1342 are byte-identical duplicates; also seen at ~254-256, 1052-1054, 1087-1089, 1122-1124, 1216-1218, 1325-1327, 1360-1362, 1501-1503, 1553-1555) — the first call is dead code left over from the NotificationBase -> Notification composition refactor",
+      "fix": "Remove the redundant no-op .notification(Notification.builder().build()) call wherever a second .notification(...) call follows it in the same builder chain"
+    },
+    {
+      "id": 2,
+      "line": 2461,
+      "severity": "Minor",
+      "category": "test-simplification",
+      "issue": "NotificationViewBuilder.build() was rewritten to a 20-line anonymous class implementing every NotificationView getter, duplicating the production NotificationView.Data carrier class (same package, public all-args constructor with the same field order) that exists exactly for this purpose",
+      "fix": "Replace the anonymous class with new NotificationView.Data(ref, 0L, s, c, o, cm, cor, cee, t)"
+    }
+  ],
+  "reconciled_at": "2026-08-26T10:41:35Z"
+}

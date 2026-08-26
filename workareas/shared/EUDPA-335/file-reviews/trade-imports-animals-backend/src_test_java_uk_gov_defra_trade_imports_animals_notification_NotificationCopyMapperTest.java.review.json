@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapperTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "87ccdb0f0864768bba9c56e64b8f0392a05caf58",
+  "pr": 80,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-26T10:40:22Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests correctly exercise the new NotificationAggregate/Notification composition but duplicate the two-level builder wiring everywhere instead of a helper, and never cover the fulfilments field whose source object changed in this PR.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "test-duplication",
+      "issue": "Every test (~24 of the file's ~27) now inlines NotificationAggregate.builder().notification(Notification.builder()...build()).build() to wrap its fixture, duplicating the same two-level builder boilerplate across the whole file instead of extracting it once.",
+      "fix": "Add a private helper, e.g. private static NotificationAggregate aggregateOf(Notification notification) { return NotificationAggregate.builder().notification(notification).build(); }, and call it from each test with just the inner Notification.builder() chain.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 22,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "NotificationCopyMapper.toCopyDto now reads fulfilments from notificationAggregate.getFulfilments() instead of the old flattened Notification.getFulfilments(), but no test in this file exercises that field — a mis-wire during the aggregate/content split would go undetected.",
+      "fix": "Add a RetainedFields test that sets NotificationAggregate.builder().fulfilments(...).notification(...).build() and asserts result.getFulfilments() equals the source list, mirroring the existing per-field retention tests.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-08-26T10:41:35Z"
+}

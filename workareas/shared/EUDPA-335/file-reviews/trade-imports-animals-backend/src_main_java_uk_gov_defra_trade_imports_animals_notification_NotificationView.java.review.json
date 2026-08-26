@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "87ccdb0f0864768bba9c56e64b8f0392a05caf58",
+  "pr": 80,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-26T10:40:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "SpEL wiring to the new Notification sub-object is correct and field-compatible, but forcing an open Spring Data projection silently reintroduces a full-aggregate load (including the opaque fulfilments payload) on the paginated dashboard read, contradicting the still-current no-fulfilments-load invariant documented on NotificationPageResponse.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 26,
+      "severity": "Major",
+      "category": "performance",
+      "issue": "Switching NotificationView from a closed record projection to an interface with @Value SpEL accessors forces Spring Data into an open projection, so findAllViewByStatusIn/findViewByReferenceNumberAndStatusIn now hydrate the full NotificationAggregate (including the opaque fulfilments payload) for every row instead of Mongo restricting the fields fetched — this silently breaks the still-current invariant documented on NotificationPageResponse ('the opaque fulfilments payload is never loaded from Mongo') and the field-restriction rationale this same file's own prior javadoc stated.",
+      "fix": "Either accept and update NotificationPageResponse's javadoc to stop claiming fulfilments is never loaded (and confirm the cost is acceptable for the paginated dashboard endpoint), or avoid the open projection — e.g. a DTO/record projection with a @Query fields restriction, or a repository-level aggregation pipeline that projects notification.origin/commodity/consignor/consignee/transport directly — so the closed-projection field restriction is preserved."
+    }
+  ],
+  "reconciled_at": "2026-08-26T10:41:35Z"
+}

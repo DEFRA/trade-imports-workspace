@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "87ccdb0f0864768bba9c56e64b8f0392a05caf58",
+  "pr": 80,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-26T10:40:58Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correctly implements the aggregate/content split (including a subtle toBuilder-aliasing fix in resolvedForOutbox), but wires the new MapStruct mapper as a static singleton instead of via constructor injection, and the new content deep-clone lacks a mutation-independence test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "dependency-injection",
+      "issue": "NotificationContentMapper is wired via a static Mappers.getMapper(...) field instead of constructor injection, unlike every other collaborator in this class (notificationCopyMapper, consignmentPartyResolver, etc.)",
+      "fix": "Add componentModel = \"spring\" to @Mapper on NotificationContentMapper and inject it as a final constructor field, matching the rest of NotificationService's collaborators",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 218,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "No test asserts mutation independence between notificationAggregate.getNotification() and the CONTENT_MAPPER.deepClone() snapshot stored in submittedNotificationBaseline, unlike the equivalent existing fulfilments deep-copy tests (amend_shouldSnapshotFulfilments..., deepCopyFulfilments_shouldProduceIndependentCopy_underNestedMutation)",
+      "fix": "Add a test mutating the live notification (or the restored one in cancelAmend) after the clone and asserting submittedNotificationBaseline (or notification) is unaffected, mirroring the fulfilments defensive-copy tests"
+    }
+  ],
+  "reconciled_at": "2026-08-26T10:41:35Z"
+}

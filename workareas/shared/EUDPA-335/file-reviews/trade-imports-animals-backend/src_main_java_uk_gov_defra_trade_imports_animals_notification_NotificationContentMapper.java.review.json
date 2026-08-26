@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapper.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "87ccdb0f0864768bba9c56e64b8f0392a05caf58",
+  "pr": 80,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-26T10:40:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The mapper's logic and null-handling are sound, but its one piece of custom behaviour (commodityComplement null-to-empty normalisation) has no direct or indirect test coverage anywhere in the repo.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "New mapper introduces custom logic (copyCommodity/commodityComplements null-to-empty-list normalisation, the whole reason a default method exists instead of pure @DeepClone) but has no unit test anywhere; NotificationServiceTest's amend/cancelAmend coverage of deepClone() only exercises the Origin field, never Commodity/CommodityComplement, so the normalisation this file exists to provide is unverified.",
+      "fix": "Add a NotificationContentMapperTest (repo convention per NotificationCopyMapperTest/GbnAgMapperTest) asserting deepClone() normalises a null commodityComplement to an empty list, preserves a populated one via a distinct object graph, and round-trips the other content fields."
+    }
+  ],
+  "reconciled_at": "2026-08-26T10:41:35Z"
+}

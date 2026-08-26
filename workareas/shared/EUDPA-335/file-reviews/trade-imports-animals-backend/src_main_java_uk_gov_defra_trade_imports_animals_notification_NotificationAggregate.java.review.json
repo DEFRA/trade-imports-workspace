@@ -1,0 +1,40 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "87ccdb0f0864768bba9c56e64b8f0392a05caf58",
+  "pr": 80,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-26T10:39:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New aggregate-root type is correctly composed per the ticket, but the new fail-fast requireNotification() guard has no test covering its null branch, plus a minor Lombok import inconsistency and missing class-level Javadoc.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 72,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "requireNotification() is new fail-fast logic (throws NPE when notification is absent) but no test in the suite exercises the null branch — only the happy path is covered indirectly via NotificationCopyMapperTest",
+      "fix": "Add a direct unit test (e.g. NotificationAggregateTest) asserting requireNotification() throws NullPointerException with the expected message when notification is null",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 20,
+      "severity": "Minor",
+      "category": "code-style",
+      "issue": "@lombok.AllArgsConstructor is fully-qualified inline while sibling Lombok annotations (@Builder, @Data, @NoArgsConstructor) are cleanly imported; sibling @Document entities (Audit.java, AccompanyingDocument.java) import AllArgsConstructor normally too — there's no name collision forcing the FQN here",
+      "fix": "Add \"import lombok.AllArgsConstructor;\" and use the plain @AllArgsConstructor annotation",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 3,
+      "line": 21,
+      "severity": "Minor",
+      "category": "documentation",
+      "issue": "NotificationAggregate has no class-level Javadoc even though every non-trivial field is documented; this is the new aggregate-root type this ticket introduces (aggregate metadata vs. the composed Notification content), so its responsibility and relationship to Notification isn't obvious from the name alone",
+      "fix": "Add a short class Javadoc summarising that this is the aggregate root (metadata + fulfilments) that has-a Notification for content, contrasting it with the composed Notification type",
+      "best_practice": "doc-comments/javadoc.md"
+    }
+  ],
+  "reconciled_at": "2026-08-26T10:41:35Z"
+}

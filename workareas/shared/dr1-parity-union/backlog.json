@@ -506,6 +506,9 @@
     },
     {
       "id": "inc-007",
+      "ticket": "EUDPA-342",
+      "branch": "feat/EUDPA-342-frontend-s-service-navigation-carries-no",
+      "repo": "frontend",
       "type": "add-section",
       "milestone": null,
       "domain": "service-wide",
@@ -526,7 +529,7 @@
       "gate": null,
       "dependsOn": [],
       "status": "todo",
-      "commit": null,
+      "commit": "513146be",
       "failure_reason": null,
       "finding": {
         "frontend": "The service navigation bar holds the service name and nothing else — src/server/app/shared/layout.njk:27-32 calls govukServiceNavigation with serviceName and serviceUrl and passes no navigation array, so the bar renders as a single link reading \"Import notification service\". Below it a separate right-aligned strip shows the signed-in user's email address and a \"Sign out\" link (src/server/common/components/service-header/template.njk:9-29). \"Manage account\" and \"Address book\" appear nowhere in the service: neither string occurs in any of the 67 captured frontend screens. So from any page there is no way to reach the dashboard, the address book or an account page other than by using the browser or the service-name link.",
@@ -648,7 +651,24 @@
         "note": "Service navigation bar is an empty shell; DR1 carries Dashboard, Address book, Manage account and Log out on every page. Both reach the same conclusion including the awkward part — the bespoke signed-in strip already offers Sign out, so adding Log out to the nav states the same action twice and the strip's future has to be decided. Both flag Address book and Manage account as having no destination yet. A adds that the DR2 branch adds a fifth item, evidence the list is a per-release decision; C adds the aria-current/active-item behaviour.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "openQuestions": [
+        "Who updates the trade-imports-animals-tests E2E suite for the removal of the signed-in identity strip, and on what branch? This increment deletes src/server/common/components/service-header/{template.njk,macro.njk,_service-header.scss} and drops the appServiceHeader call from src/server/app/shared/layout.njk, so the frontend no longer renders a 'Sign out' link or the signed-in email anywhere - grep for 'Sign out' over the frontend src now returns nothing, and the only sign-out affordance is the service-navigation item labelled 'Log out' (src/server/app/shared/copy.en.js:24). The tests repo still targets both: page-objects/base/base-page.ts:33 defines linkSignOut as getByRole('link', { name: 'Sign out' }) and base-page.ts:29 defines user(email) as getByText(email), and page-objects/notification/notification-dashboard-page.ts extends BasePage without overriding either. Three tests in tests/e2e/features/auth.spec.ts therefore break on the next E2E run: 'allows signing out after signing in' (clicks linkSignOut at :33), 'displays signed in user after signing in' (asserts user() visible at :40) and 'lands on the sign in page when reopening the notification dashboard after sign out' (clicks linkSignOut at :45). None is skipped - utils/playwright/shared-config.ts:27-40 puts features/auth.spec.ts in the e2e project with a testIgnore covering only admin and ins paths. This also leaves CLAUDE.md load-bearing rule 2 (cross-repo branch parity) unmet: trade-imports-animals-tests is on feature/EUDPA-293-review-address-validation with only package-lock.json modified and has no feat/EUDPA-342-frontend-s-service-navigation-carries-no branch, local or remote. DEFERRED rather than fixed here because the fix is not a mechanical rename: linkSignOut lives on the shared BasePage and tests/e2e/features/admin/admin-auth.spec.ts:33,40,45 uses the same getter against the admin app, which still renders its own 'Sign out' (repos/trade-imports-animals-admin/src/server/common/components/service-header/template.njk:21), so the new 'Log out' locator must be overridden on the notification page object rather than changed on the base, and the 'displays signed in user after signing in' test has to be deleted rather than repointed - a product statement that Design release 1 shows no signed-in identity, not a refactor. ACTION: cut feat/EUDPA-342-frontend-s-service-navigation-carries-no in trade-imports-animals-tests, override linkSignOut on notification-dashboard-page.ts as getByRole('link', { name: 'Log out', exact: true }), delete 'displays signed in user after signing in', leave the admin specs and the shared BasePage getters alone, and land it before the next full E2E run.",
+        "Who regenerates the origin-of-import visual baseline in trade-imports-animals-tests? tests/e2e/visual/origin-of-import.visual.spec.ts:12 takes toHaveScreenshot('origin-of-import.png', { fullPage: true, mask: [pages.originOfImport.user()] }) against the committed baselines origin-of-import.visual.spec.ts-snapshots/origin-of-import-e2e-darwin.png and -linux.png. Those baselines show the deleted identity strip as a full-width band between the service-navigation bar and the breadcrumbs, carrying the user icon, the masked identity text and 'Sign out'. This increment removes that band and, on the same authenticated page, adds four items into the govukServiceNavigation bar, so the baseline can no longer match and the visual test fails. The mask entry also degrades silently rather than erroring: pages.originOfImport.user() (base-page.ts:29, getByText(email)) now resolves to zero elements, and Playwright accepts an empty mask as a no-op, so it protects nothing. DEFERRED rather than fixed here because regenerating a screenshot baseline requires running the Playwright visual project against a live stack on both the darwin and linux platforms the snapshots are pinned for, which this frontend-only increment cannot do, and it belongs on the same tests-repo branch as the auth.spec.ts work above. ACTION: on feat/EUDPA-342-frontend-s-service-navigation-carries-no in trade-imports-animals-tests, regenerate both origin-of-import baselines and drop the now-empty mask: [pages.originOfImport.user()] argument from the toHaveScreenshot call.",
+        "Should the orphaned view-context fields be dropped now that no template reads them? Deleting src/server/common/components/service-header/template.njk removed the only template consumer of userSession.displayName (its line 20) and of authEnabled (its line 23). After this increment, grep over the frontend src shows the only remaining template reference to userSession is layout.njk:39 (userSession.isAuthenticated) and there is no template reference to authEnabled at all - src/server/server.js:28 and src/server/router.js:19 read config.get('auth.enabled') directly rather than the view context. So src/config/nunjucks/context/context.js:52 still computes authEnabled and context.js:59-60 still compute userSession.displayName and userSession.email for nothing, while the new src/server/app/shared/layout.test.js actively asserts the display name and the email must NOT appear ('Sam Example', 'sam@example.test'). A reader is left to assume the display name is on screen somewhere. Note that userSession.email had no template consumer before this change either, so only two of the three were orphaned by this increment. DEFERRED rather than fixed here because removing them is wider than this increment: authEnabled is a pre-existing context field with its own dedicated coverage at src/config/nunjucks/context/context.test.js:176-193 plus the two toEqual blocks at :52-56 and :133-137, and there is no way to tell from the code whether it is being kept deliberately for an upcoming consumer. ACTION: decide with the team whether authEnabled and userSession.displayName/email stay in the view context. If they go, drop them from context.js and from the three context.test.js sites named above; if they stay, record the named upcoming consumer here so the next reader is not left guessing."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/212",
+          "number": 212
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/124",
+          "number": 124
+        }
+      ]
     },
     {
       "id": "inc-017",

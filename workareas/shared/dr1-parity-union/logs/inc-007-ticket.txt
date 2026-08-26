@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-007}} from the {{shared/dr1-parity-union}} backlog.
+
+The service navigation bar holds the service name and nothing else — {{src/server/app/shared/layout.njk:27-32}} calls {{govukServiceNavigation}} with {{serviceName}} and {{serviceUrl}} and passes no navigation array, so the bar renders as a single link reading "Import notification service". Below it a separate right-aligned strip shows the signed-in user's email address and a "Sign out" link ({{src/server/common/components/service-header/template.njk:9-29}}). "Manage account" and "Address book" appear nowhere in the service: neither string occurs in any of the 67 captured frontend screens. So from any page there is no way to reach the dashboard, the address book or an account page other than by using the browser or the service-name link.
+
+Every Design release 1 page carries a four-item service navigation to the right of the service name: Dashboard, Address book, Manage account and Log out ({{app/views/layouts/main.html:104-127}}). The item matching the current page is marked active and rendered with {{aria-current}}, so on the dashboard "Dashboard" is underlined. There is no separate signed-in strip and the user's identity is not shown; sign-out lives in the navigation as "Log out". The bar is authored rather than inherited from the Prototype Kit — the layout builds the four items explicitly, and the design-release-2 branch above them carries a fifth, which is how you can tell the item list is a per-release decision rather than a default.
+
+h2. Acceptance criteria
+
+* {{src/server/app/shared/layout.njk:27-32}} passes a navigation array to {{govukServiceNavigation}} carrying four items: Dashboard, Address book, Manage account and Log out.
+* The item matching the current page is marked active, so the rendered markup carries {{govuk-service-navigation__item--active}} and {{aria-current}} on that item.
+* Dashboard points at the existing notifications list at {{/}}, and Log out at the existing {{/auth/sign-out}}.
+* Address book and Manage account have no destination in this service yet, so each takes an agreed placeholder href, as Design release 1 itself does. Whether the address book belongs to this service is a separate question, recorded under {{address-book--saved-address-book-pages-absent}}.
+* Sign-out moves out of the bespoke strip at {{src/server/common/components/service-header/template.njk:9-29}} and into the navigation as "Log out", so the action is not stated twice.
+* A decision is recorded on whether the signed-in strip stays at all once sign-out has left it, since Design release 1 shows no signed-in identity.
+* The four item labels live in {{src/server/app/shared/copy.en.js}} under {{layout}}, with a Welsh pair in {{copy.cy.js}}.
+
+h2. Falsified by
+
+Finding a navigation item — any of Dashboard, Address book, Manage account or Log out — in the {{govuk-service-navigation}} list of any captured frontend screen.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Screens: {{fe-dashboard}}, {{fe-dashboard-populated}}, {{dr1-dashboard}}, {{dr1-dashboard-filters-open}}

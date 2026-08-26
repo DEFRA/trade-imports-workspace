@@ -1,0 +1,518 @@
+diff --git a/src/client/javascripts/application.js b/src/client/javascripts/application.js
+index 36c1298e..2a47c89c 100644
+--- a/src/client/javascripts/application.js
++++ b/src/client/javascripts/application.js
+@@ -4,6 +4,7 @@ import {
+   Checkboxes,
+   ErrorSummary,
+   Radios,
++  ServiceNavigation,
+   SkipLink
+ } from 'govuk-frontend'
+ import { DatePicker } from '@ministryofjustice/frontend'
+@@ -13,6 +14,7 @@ createAll(Button)
+ createAll(Checkboxes)
+ createAll(ErrorSummary)
+ createAll(Radios)
++createAll(ServiceNavigation)
+ createAll(SkipLink)
+ createAll(DatePicker)
+ createAll(AccessibleAutocomplete)
+diff --git a/src/client/stylesheets/components/_index.scss b/src/client/stylesheets/components/_index.scss
+index bfee539e..67c39935 100644
+--- a/src/client/stylesheets/components/_index.scss
++++ b/src/client/stylesheets/components/_index.scss
+@@ -1,6 +1,5 @@
+ // import custom component styles
+ @use "../../../server/common/components/accessible-autocomplete/accessible-autocomplete";
+-@use "../../../server/common/components/service-header/service-header";
+ @use "commodity-total";
+ @use "notification-list";
+ @use "notifications-pagination";
+diff --git a/src/config/nunjucks/context/context.js b/src/config/nunjucks/context/context.js
+index ec8e2a79..db506fc9 100644
+--- a/src/config/nunjucks/context/context.js
++++ b/src/config/nunjucks/context/context.js
+@@ -13,6 +13,23 @@ const manifestPath = path.join(
+ 
+ let webpackManifest
+ 
++/**
++ * Which service-navigation item the current request sits under, so the layout
++ * can mark it active. Section-wide, not page-wide: every notification page is
++ * inside the dashboard's section of the service, which is why the answer for
++ * `/notifications/123/origin` is still `dashboard`.
++ *
++ * @param {string} [requestPath] - the request path.
++ * @returns {string|null} the id of the active navigation item, or null when the
++ * request is under none of them.
++ */
++export function activeNavigationItem(requestPath) {
++  const current = requestPath ?? ''
++  return current === '/' || current.startsWith('/notifications')
++    ? 'dashboard'
++    : null
++}
++
+ async function context(request) {
+   if (!webpackManifest) {
+     try {
+@@ -34,6 +51,7 @@ async function context(request) {
+     serviceUrl: '/',
+     authEnabled: config.get('auth.enabled'),
+     staleActionRejected: request.query?.staleAction === '1',
++    activeNavigationItem: activeNavigationItem(request.path),
+     breadcrumbs: [],
+     userSession: authData
+       ? {
+diff --git a/src/config/nunjucks/context/context.test.js b/src/config/nunjucks/context/context.test.js
+index e70902a3..472c5938 100644
+--- a/src/config/nunjucks/context/context.test.js
++++ b/src/config/nunjucks/context/context.test.js
+@@ -52,6 +52,7 @@ describe('context and cache', () => {
+           serviceUrl: '/',
+           authEnabled: true,
+           staleActionRejected: false,
++          activeNavigationItem: 'dashboard',
+           userSession: { isAuthenticated: false }
+         })
+       })
+@@ -132,6 +133,7 @@ describe('context and cache', () => {
+           serviceUrl: '/',
+           authEnabled: true,
+           staleActionRejected: false,
++          activeNavigationItem: 'dashboard',
+           userSession: { isAuthenticated: false }
+         })
+       })
+@@ -139,6 +141,32 @@ describe('context and cache', () => {
+   })
+ })
+ 
++describe('#activeNavigationItem', () => {
++  let activeNavigationItem
++
++  beforeAll(async () => {
++    ;({ activeNavigationItem } = await import('./context.js'))
++  })
++
++  test('Should mark the dashboard on the notifications list', () => {
++    expect(activeNavigationItem('/')).toBe('dashboard')
++  })
++
++  test('Should keep the dashboard marked inside a notification', () => {
++    expect(activeNavigationItem('/notifications/abc-123/origin')).toBe(
++      'dashboard'
++    )
++  })
++
++  test('Should mark nothing on a page outside the navigation', () => {
++    expect(activeNavigationItem('/auth/sign-out')).toBeNull()
++  })
++
++  test('Should mark nothing when there is no path', () => {
++    expect(activeNavigationItem(undefined)).toBeNull()
++  })
++})
++
+ describe('When auth.enabled is set to false', () => {
+   beforeEach(() => {
+     vi.resetModules()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js
+new file mode 100644
+index 00000000..64940d7e
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js
+@@ -0,0 +1,95 @@
++import AxeBuilder from '@axe-core/playwright'
++import { expect, test } from '@playwright/test'
++
++import {
++  signIn,
++  startNotification
++} from '../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../shared/copy.en.js'
++
++const { serviceNavigation } = sharedCopy.layout
++const ITEMS = [
++  serviceNavigation.dashboard,
++  serviceNavigation.addressBook,
++  serviceNavigation.manageAccount,
++  serviceNavigation.logOut
++]
++
++const navigation = (page) =>
++  page.getByRole('navigation', { name: serviceNavigation.menuButton })
++
++test.describe('service navigation', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('offers the four items on the dashboard', async ({ page }) => {
++    await page.goto('/')
++
++    await expect(navigation(page).getByRole('listitem')).toHaveText(ITEMS)
++  })
++
++  test('marks the dashboard as the current section', async ({ page }) => {
++    await page.goto('/')
++
++    await expect(
++      navigation(page).getByRole('link', { name: serviceNavigation.dashboard })
++    ).toHaveAttribute('aria-current', 'true')
++  })
++
++  test('keeps the dashboard marked on a page inside a notification', async ({
++    page
++  }) => {
++    await startNotification(page)
++
++    await expect(
++      navigation(page).getByRole('link', { name: serviceNavigation.dashboard })
++    ).toHaveAttribute('aria-current', 'true')
++  })
++
++  test('reaches the dashboard from inside a notification', async ({ page }) => {
++    await startNotification(page)
++
++    await navigation(page)
++      .getByRole('link', { name: serviceNavigation.dashboard })
++      .click()
++
++    await expect(page).toHaveURL('/')
++  })
++
++  // Clicking through would leave the service for the OIDC provider's sign-out
++  // endpoint, so this pins the destination rather than following it.
++  test('offers sign-out from the navigation', async ({ page }) => {
++    await page.goto('/')
++
++    await expect(
++      navigation(page).getByRole('link', { name: serviceNavigation.logOut })
++    ).toHaveAttribute('href', '/auth/sign-out')
++  })
++
++  test('shows the signed-in user nowhere, as Design release 1 does not', async ({
++    page
++  }) => {
++    await page.goto('/')
++
++    await expect(page.locator('.app-service-header')).toHaveCount(0)
++  })
++
++  test('has no serious or critical axe violations', async ({ page }) => {
++    await page.goto('/')
++
++    await expect(navigation(page).getByRole('listitem')).toHaveText(ITEMS)
++
++    const results = await new AxeBuilder({ page })
++      .withTags(['wcag2a', 'wcag2aa'])
++      .analyze()
++    const seriousOrCritical = results.violations.filter(({ impact }) =>
++      ['serious', 'critical'].includes(impact)
++    )
++
++    expect(
++      seriousOrCritical,
++      `Service navigation has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++    ).toEqual([])
++  })
++})
+diff --git a/src/server/app/shared/copy.cy.js b/src/server/app/shared/copy.cy.js
+index 12a6d5b9..3924598d 100644
+--- a/src/server/app/shared/copy.cy.js
++++ b/src/server/app/shared/copy.cy.js
+@@ -9,6 +9,13 @@ export const copy = {
+       bodyPrefix: "Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —",
+       feedbackLinkText: 'rhowch eich adborth drwy e-bost'
+     },
++    serviceNavigation: {
++      menuButton: 'Dewislen',
++      dashboard: 'Dangosfwrdd',
++      addressBook: 'Llyfr cyfeiriadau',
++      manageAccount: 'Rheoli cyfrif',
++      logOut: 'Allgofnodi'
++    },
+     breadcrumbs: {
+       serviceHome: 'Eich hysbysiadau'
+     },
+diff --git a/src/server/app/shared/copy.en.js b/src/server/app/shared/copy.en.js
+index a82da9ae..7547912c 100644
+--- a/src/server/app/shared/copy.en.js
++++ b/src/server/app/shared/copy.en.js
+@@ -16,6 +16,13 @@ export const copy = {
+       bodyPrefix: 'This is a new service. Help us improve it and',
+       feedbackLinkText: 'give your feedback by email'
+     },
++    serviceNavigation: {
++      menuButton: 'Menu',
++      dashboard: 'Dashboard',
++      addressBook: 'Address book',
++      manageAccount: 'Manage account',
++      logOut: 'Log out'
++    },
+     breadcrumbs: {
+       serviceHome: 'Your notifications'
+     },
+diff --git a/src/server/app/shared/layout.njk b/src/server/app/shared/layout.njk
+index 0037a168..6ba4afad 100644
+--- a/src/server/app/shared/layout.njk
++++ b/src/server/app/shared/layout.njk
+@@ -6,13 +6,18 @@
+ {% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+ {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+ {% from "govuk/components/tag/macro.njk" import govukTag %}
+-{% from "service-header/macro.njk" import appServiceHeader %}
+ 
+ {% set homeUrl = "/" %}
+ {# Destination for the alpha phase banner's feedback link. A destination, not
+    copy, so it lives here beside the footer's meta links rather than in
+    copy.en.js/copy.cy.js — it is identical in both locales. #}
+ {% set feedbackUrl = "mailto:APHAServiceDesk@apha.gov.uk" %}
++{% set signOutUrl = "/auth/sign-out" %}
++{# The address book and the account page have no home in this service yet, so
++   both point at a placeholder — as Design release 1 does for the account page.
++   Where the address book lives is settled separately. #}
++{% set addressBookUrl = "#" %}
++{% set manageAccountUrl = "#" %}
+ 
+ {% block head %}
+   <meta name="csrf-token" content="{{ crumb }}">
+@@ -30,19 +35,36 @@
+ {% endblock %}
+ 
+ {% block govukServiceNavigation %}
++  {% set navigationItems = [] %}
++  {% if userSession and userSession.isAuthenticated %}
++    {% set navigationItems = [
++      {
++        text: sharedCopy.layout.serviceNavigation.dashboard,
++        href: homeUrl,
++        active: activeNavigationItem == "dashboard"
++      },
++      {
++        text: sharedCopy.layout.serviceNavigation.addressBook,
++        href: addressBookUrl
++      },
++      {
++        text: sharedCopy.layout.serviceNavigation.manageAccount,
++        href: manageAccountUrl
++      },
++      {
++        text: sharedCopy.layout.serviceNavigation.logOut,
++        href: signOutUrl
++      }
++    ] %}
++  {% endif %}
+   {{ govukServiceNavigation({
+     serviceName: sharedCopy.layout.serviceName,
+-    serviceUrl: homeUrl
++    serviceUrl: homeUrl,
++    menuButtonText: sharedCopy.layout.serviceNavigation.menuButton,
++    navigation: navigationItems
+   }) }}
+ {% endblock %}
+ 
+-{% block containerStart %}
+-  {% if userSession and userSession.isAuthenticated %}
+-    {{ appServiceHeader({ userSession: userSession }) }}
+-  {% endif %}
+-  {{ super() }}
+-{% endblock %}
+-
+ {% block beforeContent %}
+   {% set phaseBannerHtml %}{{ sharedCopy.layout.phaseBanner.bodyPrefix }} <a class="govuk-link" href="{{ feedbackUrl }}">{{ sharedCopy.layout.phaseBanner.feedbackLinkText }}</a>.{% endset %}
+   {# Grey tag to match Design release 1; the GDS phase-banner example leaves the tag blue. #}
+diff --git a/src/server/app/shared/layout.test.js b/src/server/app/shared/layout.test.js
+index a6772463..072c2e6a 100644
+--- a/src/server/app/shared/layout.test.js
++++ b/src/server/app/shared/layout.test.js
+@@ -19,28 +19,68 @@ const renderLayout = (userSession, context = {}) =>
+     ...context
+   })
+ 
+-describe('promoted live-animals signed-in chrome', () => {
+-  it('Should show the authenticated user and the existing auth sign-out route', () => {
+-    const html = renderLayout({
+-      isAuthenticated: true,
+-      displayName: 'Sam Example',
+-      email: 'sam@example.test'
+-    })
+-
+-    expect(html).toContain('Sam Example')
++const NAVIGATION_LIST = 'govuk-service-navigation__list'
++const ACTIVE_ITEM = 'govuk-service-navigation__item--active'
++const { serviceNavigation } = sharedCopy.layout
++
++describe('service navigation', () => {
++  const signedIn = {
++    isAuthenticated: true,
++    displayName: 'Sam Example',
++    email: 'sam@example.test'
++  }
++
++  it('Should offer the four Design release 1 items on a signed-in page', () => {
++    const html = renderLayout(signedIn)
++
++    expect(html).toContain(NAVIGATION_LIST)
++    expect(html.match(/govuk-service-navigation__item[^-]/g)).toHaveLength(4)
++    for (const text of [
++      serviceNavigation.dashboard,
++      serviceNavigation.addressBook,
++      serviceNavigation.manageAccount,
++      serviceNavigation.logOut
++    ]) {
++      expect(html, `${text} should be a navigation item`).toContain(text)
++    }
+     expect(html).toContain('href="/auth/sign-out"')
+-    expect(html).toContain('Sign out')
+   })
+ 
+-  it('Should render cleanly without signed-in chrome when there is no user', () => {
++  it('Should mark the dashboard item active inside the notifications section', () => {
++    const html = renderLayout(signedIn, { activeNavigationItem: 'dashboard' })
++
++    expect(html).toContain(ACTIVE_ITEM)
++    expect(html).toContain('aria-current="true"')
++    expect(html).toContain(
++      '<strong class="govuk-service-navigation__active-fallback">Dashboard</strong>'
++    )
++  })
++
++  it('Should mark nothing active outside any navigation section', () => {
++    const html = renderLayout(signedIn, { activeNavigationItem: null })
++
++    expect(html).toContain(NAVIGATION_LIST)
++    expect(html).not.toContain(ACTIVE_ITEM)
++    expect(html).not.toContain('aria-current')
++  })
++
++  it('Should not show the signed-in user anywhere, as Design release 1 does not', () => {
++    const html = renderLayout(signedIn)
++
++    expect(html).not.toContain('Sam Example')
++    expect(html).not.toContain('sam@example.test')
++    expect(html).not.toContain('app-service-header')
++  })
++
++  it('Should carry the service name and no items when there is no user', () => {
+     const html = renderLayout({ isAuthenticated: false })
+ 
+-    expect(html).toContain('Import notification service')
++    expect(html).toContain(sharedCopy.layout.serviceName)
+     expect(html).not.toContain('Prototype')
+     expect(html).not.toContain('non-functional prototype')
+-    expect(html).not.toContain('app-service-header__user')
++    expect(html).not.toContain(NAVIGATION_LIST)
+     expect(html).not.toContain('href="/auth/sign-out"')
+-    expect(html).not.toContain('Sign out')
++    expect(html).not.toContain(serviceNavigation.logOut)
+   })
+ })
+ 
+diff --git a/src/server/common/components/service-header/_service-header.scss b/src/server/common/components/service-header/_service-header.scss
+deleted file mode 100644
+index 286327dd..00000000
+--- a/src/server/common/components/service-header/_service-header.scss
++++ /dev/null
+@@ -1,46 +0,0 @@
+-// Service Header Component
+-// CDP Portal pattern for displaying user information in header
+-
+-@use "govuk-frontend" as *;
+-
+-.app-service-header {
+-  background-color: govuk-colour("black", $variant: "tint-95");
+-  border-bottom: 1px solid govuk-colour("black", $variant: "tint-80");
+-  padding-top: govuk-spacing(2);
+-  padding-bottom: govuk-spacing(2);
+-
+-  &__content {
+-    display: flex;
+-    justify-content: flex-end;
+-    align-items: center;
+-    gap: govuk-spacing(2);
+-  }
+-
+-  &__user {
+-    display: inline-flex;
+-    align-items: center;
+-    gap: govuk-spacing(1);
+-    color: govuk-colour("black");
+-    @include govuk-font($size: 16);
+-  }
+-
+-  &__user-icon {
+-    width: 20px;
+-    height: 20px;
+-    flex-shrink: 0;
+-  }
+-
+-  &__user-name {
+-    font-weight: 400;
+-  }
+-
+-  &__separator {
+-    color: govuk-colour("black", $variant: "tint-25");
+-    user-select: none;
+-  }
+-
+-  &__link {
+-    white-space: nowrap;
+-    @include govuk-font($size: 16);
+-  }
+-}
+diff --git a/src/server/common/components/service-header/macro.njk b/src/server/common/components/service-header/macro.njk
+deleted file mode 100644
+index 51f538cb..00000000
+--- a/src/server/common/components/service-header/macro.njk
++++ /dev/null
+@@ -1,11 +0,0 @@
+-{#
+-  Service Header Macro
+-
+-  Usage:
+-  {% from "service-header/macro.njk" import appServiceHeader %}
+-  {{ appServiceHeader({ userSession: userSession }) }}
+-#}
+-{% macro appServiceHeader(params) %}
+-  {% set userSession = params.userSession %}
+-  {% include "./template.njk" %}
+-{% endmacro %}
+\ No newline at end of file
+diff --git a/src/server/common/components/service-header/template.njk b/src/server/common/components/service-header/template.njk
+deleted file mode 100644
+index be29406b..00000000
+--- a/src/server/common/components/service-header/template.njk
++++ /dev/null
+@@ -1,29 +0,0 @@
+-{#
+-  Service Header Component
+-
+-  Displays user information in the header (CDP Portal pattern)
+-  - User icon with displayName
+-  - Conditional "Manage account" link (based on user session)
+-  - Sign in/out link
+-#}
+-<div class="app-service-navigation">
+-  <div class="govuk-width-container">
+-    <div class="app-service-header__content govuk-!-text-align-right">
+-      {% if userSession and userSession.isAuthenticated %}
+-        <span class="app-service-header__user">
+-          <svg class="app-service-header__user-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+-            <path d="M10 10C12.2091 10 14 8.20914 14 6C14 3.79086 12.2091 2 10 2C7.79086 2 6 3.79086 6 6C6 8.20914 7.79086 10 10 10Z" fill="currentColor"/>
+-            <path d="M4 18C4 14.6863 6.68629 12 10 12C13.3137 12 16 14.6863 16 18H4Z" fill="currentColor"/>
+-          </svg>
+-          <span class="app-service-header__user-name">{{ userSession.displayName }}</span>
+-        </span>
+-        <span class="app-service-header__separator" aria-hidden="true">|</span>
+-        <a href="/auth/sign-out" class="govuk-link govuk-link--no-visited-state app-service-header__link">Sign out</a>
+-      {% else %}
+-        {% if authEnabled %}
+-          <a href="/auth/sign-in-oidc" class="govuk-link govuk-link--no-visited-state app-service-header__link">Sign in</a>
+-        {% endif %}
+-      {% endif %}
+-    </div>
+-  </div>
+-</div>

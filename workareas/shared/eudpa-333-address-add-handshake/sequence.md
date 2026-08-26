@@ -35,7 +35,7 @@ sequenceDiagram
     A-->>T: 200 picker page + "Add a new address" link (NEW)
 
     Note over T,I: Stage 2 — hand off to INS (NEW)
-    T->>I: GET /address-book/add?journey-type=gbn-ag<br/>&notification-id=GBN-AG-26-4F7K2P<br/>&obligation-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d
+    T->>I: GET /address-book/add?journey-type=gbn-ag<br/>&notification-id=GBN-AG-26-4F7K2P<br/>&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d
     Note over I: requireOrganisationId(request)<br/>403 if the session carries none
     Note over I: journey registry lookup "gbn-ag" (NEW)<br/>an unrecognised journey type is refused
     I->>RD: GET /countries
@@ -48,11 +48,11 @@ sequenceDiagram
     I->>BK: POST /organisation/{orgId}/addresses<br/>Trade-Imports-Organisation-Id: {orgId}
     BK-->>I: 201 Created + Location + { id, name, ... }
     Note over I: return URL built from the REGISTRY entry,<br/>the two ids substituted as opaque values (NEW)
-    I-->>T: 302 {animalsUrl}/notifications/{notification-id}<br/>/address-return?obligation-id={obligation-id}&addressId={id}
+    I-->>T: 302 {animalsUrl}/notifications/{notification-id}<br/>/address-return?fulfilment-id={fulfilment-id}&addressId={id}
 
     Note over T,AB: Stage 4 — return and commit (NEW)
-    T->>A: GET /notifications/{notification-id}/address-return<br/>?obligation-id=...&addressId={id}
-    Note over A: resolve obligation-id → party<br/>via the evaluation.js bindings, read backwards
+    T->>A: GET /notifications/{notification-id}/address-return<br/>?fulfilment-id=...&addressId={id}
+    Note over A: resolve fulfilment-id → party<br/>via the evaluation.js bindings, read backwards
     Note over A: the session org must still match
     A->>BK: GET /organisation/{orgId}/addresses/{id}
     BK-->>A: 200 OperatorResponse
@@ -153,7 +153,7 @@ in one paragraph, the second undercutting the first's claim that the bug class w
 "designed out rather than filtered".
 
 Resolved in favour of component parts, and pushed to the ticket: animals sends a
-journey type plus `notification-id` and `obligation-id`; INS looks the type up in
+journey type plus `notification-id` and `fulfilment-id`; INS looks the type up in
 its registry and builds the whole URL, substituting the two ids as opaque values.
 The journey type is `gbn-ag` — the notification-reference prefix denoting the live
 animals import from the EU, a domain term that outlives any service rename. It

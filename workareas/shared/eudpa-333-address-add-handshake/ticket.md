@@ -11,7 +11,8 @@ since and folded in here:
   from component parts, no relative path is sent or accepted. Renamed *journey
   key* to *journey type*, replaced the placeholder ids with real ones, and added
   notes on the single registry entry, the single return route, the obligation-id
-  reverse map and the `obligationId` misnomer.
+  reverse map and the `obligationId` misnomer. (That parameter was renamed to
+  `fulfilment-id` in round 6 — this entry records what round 2 actually did.)
 - **Round 3 (26 Aug)** — the journey type is `gbn-ag`, the notification-reference
   prefix denoting the live animals import from the EU, rather than a name taken
   from a service or repository. Added why, and that INS must not derive the
@@ -28,6 +29,12 @@ since and folded in here:
   from the top of the tech notes, and replaced two *Out of scope* items with links to
   the follow-up tickets they called for: [EUDPA-346] (Welsh copy layer in INS) and
   [EUDPA-347] (field-name alignment).
+- **Round 6 (26 Aug)** — the return parameter is `fulfilment-id`, not `obligation-id`.
+  A fulfilment id names the answer slot the Trader was filling. For a scalar answer,
+  which all six address entry points are, it *is* the obligation's id — so the value
+  in the example does not change. For an answer inside a collection it is a composite
+  of ids and indices, which an obligation id alone could not express. Also notes that
+  a composite fulfilment id contains a `/` and is still opaque to INS.
 
 This file mirrors the Jira description; the summary below is written as markdown
 rather than Jira wiki markup, so formatting differs but wording does not.
@@ -149,7 +156,7 @@ selected for the party they were completing.
 
 - All six entry points offer it — the five consignment parties and the consignment
   contact.
-- The handshake takes the journey type and the notification and obligation ids
+- The handshake takes the journey type and the notification and fulfilment ids
   identifying where in that journey the Trader was, and holds no
   live-animals-specific logic, so another journey can adopt it without changing
   the INS service.
@@ -166,21 +173,21 @@ INS does not take a return URL, or any part of one, from the request. Animals
 sends a journey type and the ids that identify the page the Trader came from:
 
 ```text
-/trade-imports-ins-frontend.{env}.cdp-int.defra.cloud/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&obligation-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d
+/trade-imports-ins-frontend.{env}.cdp-int.defra.cloud/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d
 ```
 
 Both ids are real shapes, not placeholders. `notification-id` is the
 notification's reference number — the same value the journey already carries as
 `journeyId` in its own routes, generated as `GBN-AG-{YY}-{XXXXXX}` with a
 Crockford base32 body (`ReferenceNumberGenerator` in the backend).
-`obligation-id` is the consignor obligation from `obligations/sections/parties.js`.
+`fulfilment-id` is the consignor obligation from `obligations/sections/parties.js`.
 Obligation ids are UUIDs, so the value is opaque to INS by construction — there is
 nothing in it for INS to parse, and nothing that leaks the journey's internals
 into the registry.
 
 INS looks the journey type up in its own registry of known journeys and builds the
 whole return URL itself — origin and route shape from the registry entry,
-`notification-id` and `obligation-id` substituted into it as opaque values.
+`notification-id` and `fulfilment-id` substituted into it as opaque values.
 Nothing path-like crosses the wire, so there is no open redirect to defend against
 and no sanitiser to write: the class of bug is designed out rather than filtered.
 An unrecognised journey type is refused.
@@ -189,7 +196,7 @@ An unrecognised journey type is refused.
 single URL template:
 
 ```text
-gbn-ag → {animalsUrl}/notifications/{notification-id}/address-return?obligation-id={obligation-id}
+gbn-ag → {animalsUrl}/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}
 ```
 
 INS substitutes two flat values and redirects. It never interprets either, and it
@@ -270,7 +277,7 @@ returned id, then commit through `answerFor`. Anything that writes a party answe
 by hand will diverge from the picker.
 
 **One return route, not six.** Animals gains a single `address-return` route that
-resolves the `obligation-id` to the party it belongs to, then does the work. The
+resolves the `fulfilment-id` to the party it belongs to, then does the work. The
 six entry points do not share a route shape — five parties sit at
 `consignors/select`, `destinations/select` and so on while the consignment contact
 sits at `consignment/contact/select`. One route absorbs that; six return handlers

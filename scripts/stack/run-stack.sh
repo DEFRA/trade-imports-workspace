@@ -29,7 +29,7 @@ source "$LIB_DIR/colour.sh"
 # shellcheck source=lib/compose.sh
 source "$LIB_DIR/compose.sh"
 
-valid_profiles=("${ALL_PROFILES[@]}")
+valid_profiles=("${ALL_PROFILES[@]}" "${OPT_IN_PROFILES[@]}")
 
 # shellcheck source=lib/flags.sh
 source "$LIB_DIR/flags.sh"
@@ -39,7 +39,7 @@ parse_run_stack_flags "$@"
 source "$LIB_DIR/init-scripts.sh"
 stage_init_scripts "$branch"
 
-[ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${valid_profiles[@]}")
+[ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${ALL_PROFILES[@]}")
 [ "$dev" -eq 1 ] && compose_files_add_dev
 
 # Sanitisation must match the per-repo publish-branch.yml workflows.

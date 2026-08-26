@@ -2,11 +2,12 @@
 # files can mount one stable path whether or not repos/ is cloned.
 #
 # Ownership (EUDPA-178/EUDPA-165): the backend repo owns the Floci provisioning
-# script, the tests repo owns the mongo seed fixtures, the dynamics-gateway
-# repo owns the Azure Service Bus emulator config, and the workspace owns the
-# mongo replica-set init. Locally the scripts come from repos/<repo>/;
-# in CI (where only the workspace repo is checked out) they are sparse-fetched
-# from GitHub — the requested branch first, the default branch as fallback.
+# script, the tests repo owns the mongo seed fixtures and the ZAP automation
+# plans (EUDPA-340), the dynamics-gateway repo owns the Azure Service Bus
+# emulator config, and the workspace owns the mongo replica-set init. Locally
+# the scripts come from repos/<repo>/; in CI (where only the workspace repo is
+# checked out) they are sparse-fetched from GitHub — the requested branch
+# first, the default branch as fallback.
 #
 # Requires: STACK_DIR, WORKSPACE_ROOT, print_error (lib/colour.sh)
 [ -n "${STACK_DIR:-}" ] || {
@@ -81,8 +82,15 @@ stage_source() {
 # /docker-entrypoint-initdb.d; numeric prefixes set execution order.
 stage_init_scripts() {
   local ref="${1:-}"
-  rm -rf "$STAGED_DIR"
-  mkdir -p "$STAGED_DIR/mongodb" "$STAGED_DIR/floci" "$STAGED_DIR/servicebus"
+  mkdir -p "$STAGED_DIR/mongodb" "$STAGED_DIR/floci" "$STAGED_DIR/servicebus" "$STAGED_DIR/zap"
+  # Clear each subdirectory's *contents*, never the directories themselves —
+  # the zap subdirectory is bind-mounted whole into a long-running container
+  # designed to be left up across multiple run-stack.sh/bounce-mongo.sh
+  # invocations (each of which calls this function again). Deleting and
+  # recreating the directory node, not just replacing what's inside it,
+  # orphans that mount (ENOENT inside the container) the same way deleting
+  # zap-report/ itself — rather than just its contents — would.
+  rm -rf "$STAGED_DIR"/mongodb/* "$STAGED_DIR"/floci/* "$STAGED_DIR"/servicebus/* "$STAGED_DIR"/zap/*
 
   # Workspace-owned: mongo replica-set init
   cp "$STACK_DIR/scripts/mongodb/10-database-setup.js" "$STAGED_DIR/mongodb/"
@@ -103,4 +111,9 @@ stage_init_scripts() {
 
   # Dynamics-gateway-owned: Azure Service Bus emulator entity config
   stage_source trade-imports-dynamics-gateway "$ref" servicebus/servicebus-config.json "$STAGED_DIR/servicebus"
+
+  # Tests-repo-owned: ZAP Automation Framework plans (security profile)
+  stage_source trade-imports-animals-tests "$ref" zap/automation-context.yaml "$STAGED_DIR/zap"
+  stage_source trade-imports-animals-tests "$ref" zap/automation-passive.yaml "$STAGED_DIR/zap"
+  stage_source trade-imports-animals-tests "$ref" zap/automation-active.yaml "$STAGED_DIR/zap"
 }

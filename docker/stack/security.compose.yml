@@ -1,0 +1,41 @@
+services:
+  zap:
+    profiles: [security]
+    image: zaproxy/zap-stable:2.17.0
+    # Host networking, not extra_hosts: the app stack's own OIDC redirects
+    # always target "localhost" baked into the running containers' config
+    # (see AGENTS.md's hostname rules), not something ZAP's request can
+    # rewrite. OrbStack's host networking makes this transparent.
+    network_mode: host
+    environment:
+      ZAP_TRADE_IMPORTS_ANIMALS_FRONTEND_URL: ${ZAP_TRADE_IMPORTS_ANIMALS_FRONTEND_URL:-http://localhost:3000}
+      ZAP_TRADE_IMPORTS_ANIMALS_ADMIN_URL: ${ZAP_TRADE_IMPORTS_ANIMALS_ADMIN_URL:-http://localhost:3001}
+      ZAP_TRADE_IMPORTS_INS_FRONTEND_URL: ${ZAP_TRADE_IMPORTS_INS_FRONTEND_URL:-http://localhost:3002}
+      ZAP_TRADE_IMPORTS_ANIMALS_BACKEND_URL: ${ZAP_TRADE_IMPORTS_ANIMALS_BACKEND_URL:-http://localhost:8085}
+    volumes:
+      # Staged from trade-imports-animals-tests by scripts/stack/lib/init-scripts.sh.
+      # A directory mount, not one per file: ZAP is designed to be left running
+      # across multiple run-stack.sh/bounce-mongo.sh invocations, each of which
+      # restages this directory's *contents*. A file-level bind mount breaks
+      # (ENOENT inside the container) when its host file is deleted and
+      # recreated under it; a directory-level mount survives that as long as
+      # the directory node itself isn't also replaced (see init-scripts.sh).
+      - ./.staged/zap:/zap/plan:ro
+      # Report/log are live output, not staged input — the tests repo's own
+      # npm scripts read them straight from its zap-report/ directory.
+      - ../../repos/trade-imports-animals-tests/zap-report:/zap/wrk/zap-report
+      - ../../repos/trade-imports-animals-tests/zap-report/zap.log:/home/zap/.ZAP/zap.log
+    # Matches backend.compose.yml's healthcheck timing convention for JVM
+    # services with add-ons to load. Pair with `up -d --wait` so "up" doesn't
+    # return until ZAP is actually accepting requests, not just started.
+    healthcheck:
+      test: ['CMD', 'curl', '--silent', '--output', '/dev/null', '--fail', 'http://localhost:${ZAP_PORT:-9095}/']
+      interval: 5s
+      retries: 10
+      start_period: 30s
+    command: >
+      zap.sh -daemon -host 0.0.0.0 -port ${ZAP_PORT:-9095}
+      -config api.key=${ZAP_API_KEY:-local-dev-key}
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config anticsrf.tokens.token.name=crumb

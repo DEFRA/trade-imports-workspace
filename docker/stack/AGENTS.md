@@ -36,6 +36,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend` | `backend` |
 | `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend` | `frontend` |
+| `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 
 ## Choosing between `-d`, `-e`, and `--profile`
@@ -66,12 +67,19 @@ backend 8085, reference-data 8086, stub 8087, gateway 8088, address-book 8089, i
 
 ## `--profile` semantics (strict)
 
-Repeatable. Valid: `database`, `infrastructure`, `servicebus`, `stubs`, `backend`, `frontend`.
-Defaults to all six (the `servicebus` profile brings up mssql + the ASB emulator
-that the dynamics-gateway connects to). Strict — if you pass only `--profile frontend`, compose
-won't auto-include `database` even though frontend depends_on redis (which
-in turn depends on `infrastructure` services). Spell out the dependency
+Repeatable. Valid: `database`, `infrastructure`, `servicebus`, `stubs`, `backend`, `frontend`,
+`security`. Defaults to all six except `security` (the `servicebus` profile brings up mssql
++ the ASB emulator that the dynamics-gateway connects to). Strict — if you pass only
+`--profile frontend`, compose won't auto-include `database` even though frontend depends_on
+redis (which in turn depends on `infrastructure` services). Spell out the dependency
 chain you need.
+
+`security` is opt-in only — deliberately excluded from the default six, unlike every
+other profile. Nothing in the default stack depends on ZAP, so a plain `run-stack.sh`
+never starts it; request it explicitly with `--profile security`. Bring-up is additive:
+`run-stack.sh` always calls `up` with an explicit, resolved service list and never runs
+`down`, so running `--profile security` against an already-running default stack starts
+only the `zap` container and leaves everything else untouched.
 
 Intended use: running a tier natively. Example — backend in IntelliJ, rest
 in docker:
@@ -107,6 +115,23 @@ messages — call `POST /dlq/notifications/replay-all` (guarded by the
 `Trade-Imports-Animals-Admin-Secret` header) to move them back onto the source
 queue once ASB is reachable again.
 
+## Running the local ZAP security profile
+
+```bash
+./scripts/stack/run-stack.sh                     # default stack first, as normal
+./scripts/stack/run-stack.sh --profile security   # additive: brings up just zap
+cd repos/trade-imports-animals-tests
+npm run test:docker-compose:security              # passive scan
+npm run test:docker-compose:security:active       # passive + active scan
+```
+
+See `repos/trade-imports-animals-tests/README.md#security-testing` for the
+full local workflow and `workareas/analysis/zap-playwright-docker-stack-migration.md`
+for the design behind this profile (why it's opt-in unlike `toxiproxy`, and
+why `network_mode: host` is required — the app frontends' OIDC redirect
+URLs are hardcoded to `localhost`, same constraint as the hostname rules
+below).
+
 ## Running E2E tests against this stack
 
 ```bash
@@ -137,18 +162,25 @@ stack invokes the repo-owned script rather than keeping its own copy:
 | Mongo notification seed scripts | tests repo | `seeds/mongodb/` |
 | Floci provisioning (`start-floci.sh`) | backend | `compose/start-floci.sh` |
 | ASB emulator entity config (`servicebus-config.json`) | dynamics-gateway | `servicebus/servicebus-config.json` |
+| ZAP Automation Framework plans (`automation-*.yaml`) | tests repo | `zap/automation-*.yaml` |
 
 The tests repo's `seeds/mongodb/` may currently stage nothing — tests now
 seed notification state at test level through the front door (the backend
 API) rather than the back door (writing directly into Mongo).
 
 `run-stack.sh` and `bounce-mongo.sh` call `stage_init_scripts`
-(`lib/init-scripts.sh`), which rebuilds `docker/stack/.staged/` — generated,
+(`lib/init-scripts.sh`), which refreshes `docker/stack/.staged/` — generated,
 gitignored, never edit it — from `repos/<repo>/` when present, sparse-fetching
 the paths from GitHub when not (CI checks out only the workspace repo; the
-fetch tries the `--branch` ref first, then the default branch). The compose
-files mount `./.staged/mongodb` (flat — the mongo image only executes
-top-level init files), `./.staged/floci`, and `./.staged/servicebus`.
+fetch tries the `--branch` ref first, then the default branch). It clears
+each subdirectory's *contents* on every call, not the subdirectories
+themselves — the `zap` one is bind-mounted whole into a long-running
+container designed to be left up across repeated calls, and deleting +
+recreating the directory node (rather than just what's inside it) would
+orphan that mount. The compose files mount `./.staged/mongodb` (flat — the
+mongo image only executes top-level init files), `./.staged/floci`,
+`./.staged/servicebus`, and `./.staged/zap` (this last one as a whole
+directory, for the same reason).
 
 ## `--dev` caveats
 
@@ -215,5 +247,5 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 - `scripts/mongodb/` — workspace-owned mongo replica-set init (`10-database-setup.js`).
 - `.staged/` — generated by `scripts/stack/lib/init-scripts.sh` on every
   stack start / mongo bounce; gitignored. Contains staged mongo seed fixtures,
-  Floci provisioning script (staged from the backend repo), and the
-  servicebus emulator config.
+  Floci provisioning script (staged from the backend repo), the servicebus
+  emulator config, and the ZAP automation plans (staged from the tests repo).

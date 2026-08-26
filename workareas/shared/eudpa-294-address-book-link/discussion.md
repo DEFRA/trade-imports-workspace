@@ -400,3 +400,11 @@ The missing signpost from the animals journey to the INS address book is
 manually. Closed — supersedes the "no link out to INS" item under Round 2 /
 Still open, and the sequencing note that said the cross-app link had to land
 before create-address was retired.
+
+**Reopened by EUDPA-333 (25 Aug).** The temporary measure has an end date: EUDPA-333
+adds the signpost and the return handshake. See
+[`../eudpa-333-address-add-handshake/`](../eudpa-333-address-add-handshake/) for the
+ticket snapshot and a sequence diagram of the loop. Note that the "rip out the org
+scoping" ruling above never landed — `organisationIdOf` still reads the session
+(`organisation-id.js:14-15`) — and EUDPA-333's tech notes are written against the
+code as it stands, not against that ruling.

@@ -1,0 +1,47 @@
+%%{init: {"theme":"base","themeVariables":{"background":"#fcfcfa","primaryColor":"#e2efeb","primaryTextColor":"#14191a","primaryBorderColor":"#1d6b5f","lineColor":"#4a5350","secondaryColor":"#fbede0","tertiaryColor":"#edefeb","actorBkg":"#e2efeb","actorBorder":"#1d6b5f","actorTextColor":"#14191a","actorLineColor":"#9aa5a1","signalColor":"#14191a","signalTextColor":"#14191a","noteBkgColor":"#fbede0","noteTextColor":"#3b2a16","noteBorderColor":"#c99a63","sequenceNumberColor":"#fcfcfa","fontFamily":"IBM Plex Sans, Helvetica, Arial, sans-serif","fontSize":"14px"}}}%%
+sequenceDiagram
+    autonumber
+    actor T as Trader (browser)
+    participant A as animals-frontend :3000
+    participant AB as animals-backend :8085
+    participant I as ins-frontend :3002
+    participant RD as reference-data (MDM) :8086
+    participant BK as address-book API :8089
+
+    Note over T,BK: Stage 1 — on a party picker (exists today)
+    T->>A: GET /notifications/{journeyId}/consignors/select
+    A->>AB: GET /notifications/{journeyId}
+    AB-->>A: notification + answers
+    Note over A: withoutUnresolvedPartyRefs → resolveParties<br/>up to 4 referenced parties, in parallel
+    A->>BK: GET /organisation/{orgId}/addresses/{addressId}<br/>Trade-Imports-Organisation-Id: {orgId}
+    BK-->>A: 200 OperatorResponse
+    A->>BK: GET /organisation/{orgId}/addresses?page=1&q=
+    BK-->>A: 200 page of 25, re-sliced to 5
+    A-->>T: 200 picker page + "Add a new address" link (NEW)
+
+    Note over T,I: Stage 2 — hand off to INS (NEW)
+    T->>I: GET /address-book/add?journey-type=gbn-ag<br/>&notification-id=GBN-AG-26-4F7K2P<br/>&obligation-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d
+    Note over I: requireOrganisationId(request)<br/>403 if the session carries none
+    Note over I: journey registry lookup "gbn-ag" (NEW)<br/>an unrecognised journey type is refused
+    I->>RD: GET /countries
+    RD-->>I: MDM country list
+    I-->>T: 200 add-address form (English only)
+
+    Note over T,BK: Stage 3 — save (the write exists today)
+    T->>I: POST /address-book/add (form + crumb)
+    Note over I: buildAddressSchema(mdmCountryCodes).validate()<br/>abortEarly: false
+    I->>BK: POST /organisation/{orgId}/addresses<br/>Trade-Imports-Organisation-Id: {orgId}
+    BK-->>I: 201 Created + Location + { id, name, ... }
+    Note over I: return URL built from the REGISTRY entry,<br/>the two ids substituted as opaque values (NEW)
+    I-->>T: 302 {animalsUrl}/notifications/{notification-id}<br/>/address-return?obligation-id={obligation-id}&addressId={id}
+
+    Note over T,AB: Stage 4 — return and commit (NEW)
+    T->>A: GET /notifications/{notification-id}/address-return<br/>?obligation-id=...&addressId={id}
+    Note over A: resolve obligation-id → party<br/>via the evaluation.js bindings, read backwards
+    Note over A: the session org must still match
+    A->>BK: GET /organisation/{orgId}/addresses/{id}
+    BK-->>A: 200 OperatorResponse
+    Note over A: answerFor(party, chosen)<br/>reference → { addressId }<br/>inline → { addressId, name, address }
+    A->>AB: PUT /notifications/{journeyId}
+    AB-->>A: 200
+    A-->>T: 302 back to the picker, the row now committed

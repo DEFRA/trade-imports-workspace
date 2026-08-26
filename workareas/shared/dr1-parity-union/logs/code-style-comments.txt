@@ -1,0 +1,55 @@
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-110-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-111-## 5. Small, composed functions over large blocks
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-112-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:113:Break logic into small named functions and compose them. Named functions act as inline documentation — a well-named helper removes the need for a comment.
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-114-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-115-```js
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-116-// bad — one large function doing everything
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-117-const buildEmailPayload = (order) => {
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-118-  const items = order.lines
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-119-    .filter((line) => line.quantity > 0)
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-120-    .map((line) => `${line.name} x${line.quantity}`)
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-121-  const total = order.lines.reduce((sum, line) => sum + line.price * line.quantity, 0)
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-122-  const greeting = order.customer.preferredName ?? order.customer.firstName
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-123-  return {
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-124-    to: order.customer.email,
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-125-    subject: `Order ${order.ref} confirmed`,
+--
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-384-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-385----
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-386-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:387:## 15. Self-documenting code — prefer no comments
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-388-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:389:Write code that explains itself through naming and structure. Comments drift out of sync with code; names do not.
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-390-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:391:When you feel the urge to write a comment, try renaming or extracting a function first:
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-392-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-393-```js
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:394:// bad — comment compensating for a poor name
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-395-// multiply by 1.2 to add VAT
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-396-const total = subtotal * 1.2
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-397-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:398:// bad — comment describing what the code does
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-399-// filter out inactive users and get their IDs
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-400-const result = users.filter((user) => user.active).map((user) => user.id)
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-401-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-402-// good — the code reads as its own explanation
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-403-const VAT_MULTIPLIER = 1.2
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-404-const totalWithVat = subtotal * VAT_MULTIPLIER
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-405-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-406-const activeUserIds = users.filter((user) => user.active).map((user) => user.id)
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-407-```
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-408-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md:409:Comments are appropriate for **why**, not **what** — when there is a non-obvious constraint, a known gotcha, or a deliberate workaround:
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-410-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-411-```js
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-412-// Hapi validates the full payload before route handlers run,
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-413-// so by the time we reach here the token is guaranteed present.
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-414-const { token } = request.payload
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-415-```
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-416-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-417----
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-418-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-419-## 16. Modern array and object methods
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-420-
+/Users/hamid.jemei/git/defra/trade-imports-workspace/docs/best-practices/node/code-style.md-421-Prefer built-in methods over manual implementations. They are more readable and signal intent clearly.

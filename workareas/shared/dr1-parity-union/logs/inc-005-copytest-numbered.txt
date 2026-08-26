@@ -1,0 +1,89 @@
+1:import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+2:
+3:import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+4:import { store } from '../../../../../../../engine/store.js'
+5:import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+6:import { configureSession } from '../../../../../../../engine/persistence/session.js'
+7:import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+8:import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+9:import { driveHandler } from '../../../../../../../engine/test-support.js'
+10:import { dispatchPages } from '../../index.js'
+11:
+12:import { copy as sectionsEn } from '../../../flow/section-captions/copy/copy.en.js'
+13:import { copy as sectionsCy } from '../../../flow/section-captions/copy/copy.cy.js'
+14:import * as addresses from '../controller.js'
+15:import { PARTIES } from '../parties.js'
+16:import { copy } from './copy.en.js'
+17:import { copy as copyCy } from './copy.cy.js'
+18:
+19:const leaves = (node, path = []) =>
+20:  typeof node === 'object' && node !== null
+21:    ? Object.entries(node).flatMap(([key, value]) =>
+22:        leaves(value, [...path, key])
+23:      )
+24:    : [{ path: path.join('.'), value: node }]
+25:
+26:describe('#copy', () => {
+27:  // Parameterised strings are copy FUNCTIONS: a leaf may be a function of
+28:  // sample arguments returning the finished sentence.
+29:  it('Should have a non-empty string (or string-returning function) at every leaf', () => {
+30:    for (const { path, value } of leaves(copy)) {
+31:      const text =
+32:        typeof value === 'function' ? value('sample', 'sample') : value
+33:      expect(typeof text, `${path} must resolve to a string`).toBe('string')
+34:      expect(text.trim().length, `${path} must not be empty`).toBeGreaterThan(0)
+35:    }
+36:  })
+37:
+38:  it('Should interpolate the results caption', () => {
+39:    expect(copy.picker.resultsCaption(5, 40)).toBe('Showing 5 of 40 addresses')
+40:  })
+41:
+42:  // The five pickers hang off the addresses hub, and Design release 1 gives
+43:  // the hub, the pickers and the CPH page one section name — "Consignment
+44:  // parties", after the people in the consignment rather than their
+45:  // addresses. A picker has no page identity for `sectionCaptionOf` to
+46:  // resolve, so it keeps its own copy of that string; this pins the two
+47:  // together so the section cannot end up named two things at once.
+48:  it.each([
+49:    ['en', copy, sectionsEn],
+50:    ['cy', copyCy, sectionsCy]
+51:  ])(
+52:    'Should caption the %s pickers with the section name their hub carries',
+53:    (_locale, feature, sections) => {
+54:      expect(feature.picker.caption).toBe(sections.sections.consignmentParties)
+55:    }
+56:  )
+57:
+58:  it('Should keep the hub heading the name of the addresses it collects', () => {
+59:    expect(copy.hub.title).toBe('Consignment addresses')
+60:  })
+61:
+62:  it('Should feed every party spoke its title, hint and error from the module', () => {
+63:    for (const party of PARTIES) {
+64:      expect(party.title).toBe(copy.parties[party.id].title)
+65:      expect(party.hint).toBe(copy.parties[party.id].hint)
+66:      expect(party.error).toBe(copy.parties[party.id].error)
+67:    }
+68:  })
+69:})
+70:
+71:describe('GET consignment addresses — copy reaches the view', () => {
+72:  beforeAll(() => {
+73:    configureRecords(recordsStub)
+74:    configureSession(sessionStub)
+75:    buildDispatch(dispatchPages)
+76:  })
+77:  beforeEach(() => store.clear())
+78:
+79:  it('Should supply the hub copy namespace and the shared chrome copy', async () => {
+80:    const get = addresses.routes.find((route) => route.method === 'GET').handler
+81:    const result = await driveHandler(get)
+82:    expect(result.view.context.copy).toBe(copy.hub)
+83:    expect(result.view.context.pageTitle).toBe(copy.hub.title)
+84:    expect(result.view.context.sharedCopy.saveActions.saveAndContinue).toBe(
+85:      'Save and continue'
+86:    )
+87:    expect(result.view.context.rows.at(0).value.text).toBe(copy.hub.notAddedYet)
+88:  })
+89:})

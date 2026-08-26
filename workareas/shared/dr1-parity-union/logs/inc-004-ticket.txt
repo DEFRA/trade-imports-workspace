@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-004}} from the {{shared/dr1-parity-union}} backlog.
+
+DR1 names the section of the notification above each page heading. The frontend gives 28 of its 33 captured pages no caption at all, so a user part-way through a long notification cannot tell from the page which part of the notification they are in.
+
+Only five frontend pages carry a caption today — the five address pickers, which say "Consignment addresses" from their own template at {{src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7}} rather than from anything shared. Those five are handled separately in inc-005: they are present but name the wrong section.
+
+h2. Acceptance criteria
+
+* The shared page-heading pattern takes an optional caption that renders as a short grey caption above the h1 on a journey page.
+* The caption is derived from the journey's section grouping the hub already builds at {{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:27-59}}, not hard-coded as a string in each feature template.
+* The 21 pages whose DR1 counterpart carries a caption show that DR1 section name. The section names in use are "About the consignment" (origin, reason for import, what are you importing, consignment details, identification details), "Commodity details" (additional details), "Consignment parties" (roles and addresses, the address picker, CPH, permanent address), "Movement" (transit countries), "Transport and arrival" (transporter, arrival details), "Documents" (upload documents), "Add a new transporter" (the three transporter-add pages) and "Dashboard" (the dashboard).
+* The CPH page reads "Consignment parties" above its heading, matching {{app/views/cph-number.html:31-34}}. It renders its heading with nothing before it today at {{src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23}}.
+* Seven pages stay bare. DR1 deliberately gives no caption to its overview, review, contact-address, declaration or confirmation pages, so the frontend's overview, check-your-answers, contact, declaration and confirmation keep none. Delete-notification and cancel-amend have no DR1 counterpart at all.
+* No question and no answer changes. This is a heading-pattern change only.
+
+h2. Notes
+
+The DR1 page model's {{caption}} field reads null on all 40 DR1 screens because DR1 writes its captions as a paragraph with an {{app-<page>__caption}} class rather than a {{govuk-caption-*}} class. The DR1 count has to be taken from the rendered DOM, not from the model. The frontend hub's two {{app-notification-hub-card__caption}} elements are card captions inside the task list, not page captions, and are out of scope.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

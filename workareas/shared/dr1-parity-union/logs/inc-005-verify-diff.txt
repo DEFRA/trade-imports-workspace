@@ -1,0 +1,89 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+index eec56684..7c7d376c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+@@ -40,7 +40,7 @@ export const copy = {
+     }
+   },
+   picker: {
+-    caption: 'Cyfeiriadau’r llwyth',
++    caption: 'Partïon y llwyth',
+     search: {
+       label: 'Chwilio',
+       hint: 'Enw, cyfeiriad neu wlad',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+index 3edbbaa9..64441a44 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+@@ -39,7 +39,7 @@ export const copy = {
+     }
+   },
+   picker: {
+-    caption: 'Consignment addresses',
++    caption: 'Consignment parties',
+     search: {
+       label: 'Search',
+       hint: 'Name, address or country',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js
+index d45a1d16..22d1b888 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.test.js
+@@ -9,9 +9,12 @@ import { session as sessionStub } from '../../../../../../../services/persistenc
+ import { driveHandler } from '../../../../../../../engine/test-support.js'
+ import { dispatchPages } from '../../index.js'
+ 
++import { copy as sectionsEn } from '../../../flow/section-captions/copy/copy.en.js'
++import { copy as sectionsCy } from '../../../flow/section-captions/copy/copy.cy.js'
+ import * as addresses from '../controller.js'
+ import { PARTIES } from '../parties.js'
+ import { copy } from './copy.en.js'
++import { copy as copyCy } from './copy.cy.js'
+ 
+ const leaves = (node, path = []) =>
+   typeof node === 'object' && node !== null
+@@ -36,6 +39,26 @@ describe('#copy', () => {
+     expect(copy.picker.resultsCaption(5, 40)).toBe('Showing 5 of 40 addresses')
+   })
+ 
++  // The five pickers hang off the addresses hub, and Design release 1 gives
++  // the hub, the pickers and the CPH page one section name — "Consignment
++  // parties", after the people in the consignment rather than their
++  // addresses. A picker has no page identity for `sectionCaptionOf` to
++  // resolve, so it keeps its own copy of that string; this pins the two
++  // together so the section cannot end up named two things at once.
++  it.each([
++    ['en', copy, sectionsEn],
++    ['cy', copyCy, sectionsCy]
++  ])(
++    'Should caption the %s pickers with the section name their hub carries',
++    (_locale, feature, sections) => {
++      expect(feature.picker.caption).toBe(sections.sections.consignmentParties)
++    }
++  )
++
++  it('Should keep the hub heading the name of the addresses it collects', () => {
++    expect(copy.hub.title).toBe('Consignment addresses')
++  })
++
+   it('Should feed every party spoke its title, hint and error from the module', () => {
+     for (const party of PARTIES) {
+       expect(party.title).toBe(copy.parties[party.id].title)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+index 41af24a7..d4943018 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+@@ -136,6 +136,14 @@ test.describe('party picker per role', () => {
+     }) => {
+       await openPartyPicker(page, party)
+ 
++      // The selector pins placement: the section name is the element directly
++      // above the role heading, not text floating elsewhere on the page.
++      await expect(
++        page.locator('span.govuk-caption-l + h1.govuk-heading-l')
++      ).toHaveText(party.title)
++      await expect(page.locator('span.govuk-caption-l')).toHaveText(
++        copy.picker.caption
++      )
+       await expect(page.getByText(party.hint)).toBeVisible()
+       await expect(
+         page.getByLabel(copy.picker.search.label)

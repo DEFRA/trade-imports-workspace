@@ -1,0 +1,159 @@
+{
+  "id": "inc-005",
+  "ticket": "EUDPA-339",
+  "branch": "feat/EUDPA-339-the-only-captioned-pages-in-the-frontend",
+  "repo": "frontend",
+  "type": "copy-change",
+  "milestone": null,
+  "domain": "service-wide",
+  "title": "The only captioned pages in the frontend name the section \"Consignment addresses\"; DR1 calls the same section \"Consignment parties\".",
+  "detail": "The five address pickers — place of origin, consignor or exporter, consignee, importer and place of destination — are the only pages in the service with a caption above the h1, and all five read \"Consignment addresses\". The string is set once at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42 and rendered at src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7, with a Welsh pair at copy.cy.js:43. The hub those five pages hang off has no caption, so the section name appears on the spokes and not on the page that names the section.\n\nDR1 calls this section \"Consignment parties\", and uses that caption on the address picker (app/views/consignment-address-select.html:40-42), on the roles-and-addresses hub, on the CPH page and on the permanent-address page — four different pages, one section name. The section is named after the people involved in the consignment rather than after their addresses, which is why the CPH page sits inside it.\n\nChange the caption string to \"Consignment parties\" in src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42 and translate the Welsh pair at copy.cy.js:43 to match. The heading of the hub page itself stays \"Consignment addresses\" — DR1 keeps that h1 too, so only the caption changes. Do this in the same pass that adds captions to the other 28 pages, because the same four pages that DR1 captions \"Consignment parties\" include the addresses hub and the CPH page, which have no caption today.\n\nFALSIFIED BY: Finding \"Consignment addresses\" used as a caption anywhere in DR1's root views, or finding \"Consignment parties\" already rendered above the h1 on a frontend address picker.",
+  "screens": [
+    "fe-address-picker-place-of-origin",
+    "dr1-consignment-address-select"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42",
+    "prototype": "app/views/consignment-address-select.html:40-42"
+  },
+  "confidence": "high",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "The five address pickers — place of origin, consignor or exporter, consignee, importer and place of destination — are the only pages in the service with a caption above the h1, and all five read \"Consignment addresses\". The string is set once at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42 and rendered at src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7, with a Welsh pair at copy.cy.js:43. The hub those five pages hang off has no caption, so the section name appears on the spokes and not on the page that names the section.",
+    "prototype": "DR1 calls this section \"Consignment parties\", and uses that caption on the address picker (app/views/consignment-address-select.html:40-42), on the roles-and-addresses hub, on the CPH page and on the permanent-address page — four different pages, one section name. The section is named after the people involved in the consignment rather than after their addresses, which is why the CPH page sits inside it.",
+    "difference": "Change the caption string to \"Consignment parties\" in src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42 and translate the Welsh pair at copy.cy.js:43 to match. The heading of the hub page itself stays \"Consignment addresses\" — DR1 keeps that h1 too, so only the caption changes. Do this in the same pass that adds captions to the other 28 pages, because the same four pages that DR1 captions \"Consignment parties\" include the addresses hub and the CPH page, which have no caption today.",
+    "correction": "Verified, no change. The DR1 string was read at the root view and not the DR2.1 override: app/views/consignment-address-select.html:41 carries \"Consignment parties\", inside the cited :40-42 block, and \"Consignment addresses\" appears as a caption in no DR1 root view. The four DR1 pages captioned \"Consignment parties\" are the address picker, the roles-and-addresses hub, the CPH page and the permanent-address page, exactly as claimed. Both frontend citations are exact — copy.en.js:42 and copy.cy.js:43 are the `picker.caption` leaves, rendered at party-picker.njk:7 — and the same string reaches all five pickers. It also holds that both sides head the addresses hub \"Consignment addresses\", so the h1 is untouched. On whether this is chrome or the addresses slice's business: it is the section-caption pattern, which is service-wide, and it is not duplicated by any addresses finding, so it belongs where it is — but the string it changes lives in the addresses feature copy, and whoever picks up the addresses slice should know this file touches it.",
+    "falsifiedBy": "Finding \"Consignment addresses\" used as a caption anywhere in DR1's root views, or finding \"Consignment parties\" already rendered above the h1 on a frontend address picker.",
+    "relatedTo": [
+      {
+        "id": "inc-004",
+        "relation": "travels-with",
+        "why": "the same caption pattern; this corrects the five pages that have one, that finding adds the 28 that do not"
+      }
+    ]
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js",
+      "lines": {
+        "start": 42,
+        "end": 42
+      },
+      "ranges": [
+        {
+          "start": 42,
+          "end": 42
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:42",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk",
+      "lines": {
+        "start": 7,
+        "end": 7
+      },
+      "ranges": [
+        {
+          "start": 7,
+          "end": 7
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk:7",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js",
+      "lines": {
+        "start": 43,
+        "end": 43
+      },
+      "ranges": [
+        {
+          "start": 43,
+          "end": 43
+        }
+      ],
+      "asWritten": "copy.cy.js:43",
+      "anchors": [],
+      "resolution": "basename-resolved",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c4",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/views/consignment-address-select.html",
+      "lines": {
+        "start": 40,
+        "end": 42
+      },
+      "ranges": [
+        {
+          "start": 40,
+          "end": 42
+        }
+      ],
+      "asWritten": "app/views/consignment-address-select.html:40-42",
+      "anchors": [
+        "Consignment parties"
+      ],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    }
+  ],
+  "corpus": "dr1",
+  "slice": "service-wide",
+  "source": "service-wide--picker-caption-wording.json",
+  "controls": [
+    {
+      "kind": "label",
+      "text": "Consignment addresses"
+    }
+  ],
+  "provenance": {
+    "sourceA": "inc-115",
+    "sourceC": "inc-107",
+    "origin": "both",
+    "note": "The five party pickers caption themselves \"Consignment addresses\"; DR1 calls that section \"Consignment parties\". C did NOT miss this — it is folded into inc-107's prose as one sentence with the same file and line. A gives it its own id, which is the better call for delivery: it is a one-string copy change with a Welsh pair, whereas the caption-slot work around it is a layout change. A also explains WHY the section is named after parties not addresses (it is why the CPH page sits inside it).",
+    "better": "A",
+    "judged": null
+  }
+}

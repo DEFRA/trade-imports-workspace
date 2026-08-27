@@ -23,8 +23,10 @@ services:
       - ./.staged/zap:/zap/plan:ro
       # Report/log are live output, not staged input — the tests repo's own
       # npm scripts read them straight from its zap-report/ directory.
+      # zap.log isn't mounted on its own: a missing host file gets created
+      # as a directory by Docker, not a file. Symlinked in via `command`
+      # instead, same fix as the plan-files mount above.
       - ../../repos/trade-imports-animals-tests/zap-report:/zap/wrk/zap-report
-      - ../../repos/trade-imports-animals-tests/zap-report/zap.log:/home/zap/.ZAP/zap.log
     # Matches backend.compose.yml's healthcheck timing convention for JVM
     # services with add-ons to load. Pair with `up -d --wait` so "up" doesn't
     # return until ZAP is actually accepting requests, not just started.
@@ -33,9 +35,14 @@ services:
       interval: 5s
       retries: 10
       start_period: 30s
-    command: >
-      zap.sh -daemon -host 0.0.0.0 -port ${ZAP_PORT:-9095}
-      -config api.key=${ZAP_API_KEY:-local-dev-key}
-      -config api.addrs.addr.name=.*
-      -config api.addrs.addr.regex=true
-      -config anticsrf.tokens.token.name=crumb
+    # Shell entrypoint so the symlink below can run before zap.sh.
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        mkdir -p /home/zap/.ZAP
+        ln -sfn /zap/wrk/zap-report/zap.log /home/zap/.ZAP/zap.log
+        exec zap.sh -daemon -host 0.0.0.0 -port ${ZAP_PORT:-9095} \
+          -config api.key=${ZAP_API_KEY:-local-dev-key} \
+          -config api.addrs.addr.name=.* \
+          -config api.addrs.addr.regex=true \
+          -config anticsrf.tokens.token.name=crumb

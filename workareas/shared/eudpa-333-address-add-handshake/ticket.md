@@ -29,6 +29,11 @@ since and folded in here:
   from the top of the tech notes, and replaced two *Out of scope* items with links to
   the follow-up tickets they called for: [EUDPA-346] (Welsh copy layer in INS) and
   [EUDPA-347] (field-name alignment).
+- **Round 7 (27 Aug)** — editorial only, using the ticket-creator skill's new
+  condensing rules. 133 lines → 129. Cut two of three restatements of "INS
+  substitutes opaque values and never interprets them", one restated sentence in the
+  description, and two pieces of hedging. AC untouched, verified by count and by
+  diffing the monospaced identifier set.
 - **Round 6 (26 Aug)** — the return parameter is `fulfilment-id`, not `obligation-id`.
   A fulfilment id names the answer slot the Trader was filling. For a scalar answer,
   which all six address entry points are, it *is* the obligation's id — so the value
@@ -39,11 +44,16 @@ since and folded in here:
 This file mirrors the Jira description; the summary below is written as markdown
 rather than Jira wiki markup, so formatting differs but wording does not.
 
-**Known drift:** round 4 was an editorial pass over the Jira description that was
-not mirrored here, because it changed no facts. The prose below is therefore a
-little longer than Jira's in places. Every fact matches; the wording does not always.
-The verbatim wiki copy is `description.live-baseline.wiki` under
+**Known drift:** rounds 4 and 7 were editorial passes over the Jira description that
+were not mirrored here, because they changed no facts. The prose below is therefore
+longer than Jira's in places. Every fact matches; the wording does not always. The
+verbatim wiki copy is `description.live-baseline.wiki` under
 `workareas/ticket-creation/EUDPA-333-delegate-address-creation/`.
+
+Two editorial rounds have now drifted, and each one costs a hand-reconciliation
+nobody has done. Worth deciding whether this markdown mirror earns its keep, or
+whether the tracked artefact should just be the wiki file — one copy, no conversion,
+no drift.
 
 Verified byte-identical to Jira after each push.
 

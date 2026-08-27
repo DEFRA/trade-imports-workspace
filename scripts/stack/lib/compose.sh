@@ -10,9 +10,16 @@ COMPOSE_FILES=(
   -f "$STACK_DIR/stubs.compose.yml"
   -f "$STACK_DIR/backend.compose.yml"
   -f "$STACK_DIR/frontend.compose.yml"
+  -f "$STACK_DIR/security.compose.yml"
 )
 
 ALL_PROFILES=(database infrastructure servicebus stubs backend frontend)
+
+# Opt-in only — deliberately excluded from ALL_PROFILES (and so from
+# run-stack.sh's no-flags default). Nothing in the default stack depends on
+# ZAP; it's a heavy scanner requested deliberately via `--profile security`,
+# never brought up by a plain `run-stack.sh`.
+OPT_IN_PROFILES=(security)
 
 # frontend.compose.yml pins `platform: linux/amd64` for the published
 # frontend/admin images. In --dev that pin is inherited by the local build, so

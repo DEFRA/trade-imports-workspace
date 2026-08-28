@@ -41,10 +41,11 @@ inProgress    the board's working status           full only
 doneStatus    the board's finished status          full only
 board         numeric id of the board tickets are moved onto. 13780 is
               EUDPA. Default 13780                 full only
-requireApproval      whether a PR needs an approving review on GitHub before
-              the loop merges it. Default true          full only
-approvalWaitMinutes  how long the merge stage waits for that approval before
-              stopping with the PR open. Default 20     full only
+requireApproval      whether EVERY PR of an increment needs an approving review
+              on GitHub before the loop merges ANY of them.
+              Default true                              full only
+approvalWaitMinutes  how long the merge stage waits for those approvals before
+              stopping with every PR open. Default 20   full only
 ```
 
 `lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
@@ -64,6 +65,12 @@ always **somebody other than whoever the run is credentialed as**. A run under
 this default is therefore not unattended: it will stop and wait for a colleague.
 Say so when a user asks for a large `stopAfter`, rather than letting them find
 out at the first increment.
+
+**The gate covers the whole increment, not one PR at a time.** The merge stage
+collects an approval for every PR before it merges any of them, so a reviewer who
+approves the frontend and leaves the tests repo waiting no longer gets half an
+increment on `main`. Tell a reviewer they owe the increment *all* of its PRs —
+approving one of two is the same as approving neither.
 
 **Confirm the two status names against the board before the first increment.**
 They are board configuration, not constants, and a wrong one stops every
@@ -235,8 +242,8 @@ Stop and print the handover prompt when any of these fire:
 | `not-landed` | Step 3 found a status other than `done` |
 | `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
-| `awaiting-approval` | The PR is green but nobody has approved it on GitHub inside `approvalWaitMinutes`. It stays open, untouched |
-| `changes-requested` | A reviewer asked for changes. The PR stays open and the run stops |
+| `awaiting-approval` | Every PR is green but at least one has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched |
+| `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
 | `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
 
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
@@ -251,21 +258,25 @@ merge the straggler yourself: it has not been through the watcher or the
 approval gate, and merging it to clear the warning is worse than the warning.
 
 **`awaiting-approval` is not a failure and must never be reported as one.** The
-loop merges only a PR carrying an approving review — `requireApproval` defaults
-to true — so a run that ends here did everything right and is waiting on a
-person. Report the PR URL and say plainly that it needs a reviewer. Then stop:
+loop merges only PRs carrying an approving review — `requireApproval` defaults
+to true — and it merges none of an increment until all of them have one, so a run
+that ends here did everything right, merged nothing, and is waiting on a person.
+Report **every** unapproved PR URL and say plainly that they need a reviewer.
+Then stop:
 
-- **Never approve the PR** — not through `gh`, not by any other route. GitHub
+- **Never approve a PR** — not through `gh`, not by any other route. GitHub
   refuses a self-approval from the author, and the account this runs as is the
   author. A gate you can satisfy yourself is not a gate.
 - **Never merge past it** with `--admin`, by disabling the check, or by
   reconfiguring the branch.
-- **Never re-run the increment to get a different answer.** The PR is already
-  green; a second one only adds noise for the reviewer.
+- **Never merge the approved ones and leave the rest.** That is precisely the
+  half-merged increment the whole-increment gate exists to stop.
+- **Never re-run the increment to get a different answer.** The PRs are already
+  green; a second set only adds noise for the reviewer.
 
 Resuming is free once somebody approves: `prs` stays populated, so STEP 5 puts
-the increment back at `"ci"`, which re-checks the PR and reaches the merge stage
-again — this time finding the approval.
+the increment back at `"ci"`, which re-checks the PRs and reaches the merge stage
+again — this time finding the approvals.
 
 `changes-requested` is likewise a human's, not yours. A reviewer asked a
 question; answering it is the author's job. Do not push a fix, do not dismiss

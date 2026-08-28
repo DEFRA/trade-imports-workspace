@@ -49,17 +49,22 @@ export const meta = {
 //   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
 //                   run stops
 //   ciWatchMinutes  how long one CI watch may block before it counts as RED
-//   requireApproval whether a PR needs an APPROVING REVIEW ON GITHUB before the
-//                   merge stage may merge it. Default true. Green CI is not
-//                   consent: it proves the code runs, not that anyone agreed to
-//                   it. With this on, a run stops with the PR open rather than
-//                   merging unapproved work, and resumes once someone approves.
+//   requireApproval whether EVERY PR of an increment needs an APPROVING REVIEW
+//                   ON GITHUB before the merge stage may merge ANY of them.
+//                   Default true. Green CI is not consent: it proves the code
+//                   runs, not that anyone agreed to it. The gate is collected
+//                   for the whole increment up front, not per PR as each one is
+//                   reached — a per-PR gate merged an approved frontend and then
+//                   stopped on its unapproved sibling in the tests repo, leaving
+//                   half an increment on the base branch and CDP red. With this
+//                   on, a run stops with every PR open rather than merging
+//                   unapproved work, and resumes once someone approves.
 //                   GitHub forbids approving your own PR, so the approver is
 //                   always somebody other than whoever the run raised it as.
 //                   Set false only for a programme that genuinely wants
 //                   unattended merges
-//   approvalWaitMinutes  how long the merge stage may wait for that approval
-//                   before it stops and leaves the PR open. Default 20
+//   approvalWaitMinutes  how long the merge stage may wait for those approvals
+//                   before it stops and leaves every PR open. Default 20
 //
 
 // Status names are BOARD CONFIGURATION, not constants — every board words them
@@ -232,9 +237,31 @@ const ghTable = Object.entries(GH_REPO)
 const REPO_RULE = `REPO PATHS: ${repoTable}. An increment whose "repo" field is \`both\` means BOTH the backend and the
 frontend repo — do the work in each, on the SAME branch name (CLAUDE.md rule 2, cross-repo branch parity).`
 
-const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN FRONTEND. The backend is the
-provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that calls an endpoint
-which is not there yet. BOTH PRs must be GREEN BEFORE EITHER ONE MERGES.`
+// Canonical merge order for a cross-repo increment. Lower merges first.
+//
+// backend before frontend: the backend is the provider and the frontend the
+// consumer, so the base branch is never left holding a frontend that calls an
+// endpoint which is not there yet.
+//
+// tests before frontend: CDP runs the tests repo's suite against the deployed
+// frontend, so a frontend that merges ahead of its own test fixes is exercised
+// by stale specs and CDP goes red. That has happened.
+//
+// `prs` is built by append — the PR stage raises in `repos` order and a CI
+// fixer pushes whatever it had to open on the end — so the array's own order is
+// an accident of when a PR appeared, not a merge plan. Sort it here rather than
+// asking the merge agent to reorder: order is a decision the script owns.
+const MERGE_RANK = { backend: 0, tests: 1, frontend: 2 }
+const sortForMerge = (list) =>
+  [...list].sort((a, b) => (MERGE_RANK[a.repo] ?? 99) - (MERGE_RANK[b.repo] ?? 99))
+
+const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN TESTS, THEN FRONTEND. The
+backend is the provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that
+calls an endpoint which is not there yet; and CDP runs the tests repo's suite against the deployed frontend, so a
+frontend merged ahead of its own test fixes is exercised by stale specs and CDP goes red.
+EVERY PR of the increment must be GREEN — AND, where the approval gate is on, APPROVED — BEFORE ANY ONE OF THEM
+MERGES. Half an increment on \`${BASE_BRANCH}\` is the failure this ordering exists to prevent, and nothing
+auto-reverts it.`
 
 // A `blocked` line means the stage hit something no fixer can fix. It stops the
 // run without spending fix attempts on it.
@@ -1480,20 +1507,61 @@ Return the structured output only.`,
       }
 
       // -------------------------------------------------------------------
-      // Merge — provider first, and watch the base branch after each one.
+      // Merge — approvals collected for the WHOLE increment first, then merge
+      // in canonical order, watching the base branch after each one.
       // -------------------------------------------------------------------
       phase('Merge')
 
+      // Merge order is the script's decision, not the order PRs happened to be
+      // appended in. See MERGE_RANK.
+      const mergeOrder = sortForMerge(prs)
+
       const merge = await agent(
         `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is
-necessary but NOT sufficient — each one also needs an approving review on GitHub before you may merge it` : ''}.
+necessary but NOT sufficient — every one of them also needs an approving review on GitHub, and you collect ALL of
+those BEFORE you merge ANYTHING` : ''}.
 Merge them and prove \`${BASE_BRANCH}\` survived it.
 ${GUARDRAILS}
 ${MERGE_ORDER_RULE}
 THE PULL REQUESTS, in merge order:
-${prList(prs)}
+${prList(mergeOrder)}
+${
+  REQUIRE_APPROVAL
+    ? `
+STEP A — THE APPROVAL SWEEP. Do this for EVERY pr above BEFORE you merge a single one.
+**This is a whole-increment gate, not a per-PR one.** It runs first because it used to run per-PR inside the merge
+loop, and that merged an approved frontend while its sibling tests PR was still waiting on a reviewer — half an
+increment on \`${BASE_BRANCH}\`, stale specs against a shipped UI, and CDP red. Nothing auto-reverted it.
+Green CI is not consent either: it proves the code runs, not that a person agreed to it.
 
-For EACH pr, in that order:
+For EACH pr above, read its decision — this changes nothing, so the order does not matter here:
+   \`gh pr view <url> --repo <ghRepo> --json reviewDecision,reviews\`
+   - \`APPROVED\` → that one is satisfied. Go on to the next pr.
+   - \`CHANGES_REQUESTED\` → **STOP IMMEDIATELY, before merging anything.** Report green:false,
+     \`stopReason: "changes-requested"\`, and blocked "<repo> PR has changes requested".
+     Leave every PR open. Do NOT merge the others, do NOT dismiss the review, and do NOT push a fix — a reviewer
+     asked for something and answering them is a human's job, not this stage's.
+   - anything else, including empty (\`REVIEW_REQUIRED\`, or no reviews yet) → nobody has looked at that one yet.
+
+If any pr is still unapproved after that pass, WAIT: re-read the unapproved ones with the same command, up to
+${APPROVAL_POLLS} times, sleeping 120 seconds between checks via \`sleep 120\`, until every pr reports
+\`APPROVED\` — or any one of them reports \`CHANGES_REQUESTED\`, which stops you as above.
+   - every pr \`APPROVED\` → the gate is satisfied for the whole increment. Go to STEP B.
+   - still short after ${APPROVAL_POLLS} checks → **STOP, and this is not a failure.** Report green:false,
+     \`stopReason: "awaiting-approval"\`, and blocked "<repo> PR is green and awaiting approval: <url>" naming
+     EVERY pr still unapproved. **Merge nothing** — not even the ones that are approved. Leave them all open and
+     untouched. Somebody will approve them and the increment resumes from its \`prs\` field on the next run,
+     re-entering here with the approvals already in place.
+
+NEVER merge a PR whose reviewDecision you have not just read and seen to be \`APPROVED\`, and never merge any PR
+of this increment while a sibling is unapproved. Do not approve one yourself, do not ask anyone to, and do not
+work around the gate by any other route — GitHub refuses a self-approval and defeating that refusal is never this
+stage's business.
+
+STEP B — THE MERGES. Only now, and only with every approval in hand. For EACH pr, in the merge order listed:`
+    : `
+For EACH pr, in that order:`
+}
 1. If this is not the first pr, RE-CHECK IT FIRST — merging the previous one moved \`${BASE_BRANCH}\` underneath
    it. \`gh pr checks <url> --watch --fail-fast --interval 30\`, Bash \`timeout\` 600000, at most
    ${CI_WATCH_WINDOWS} times. **If it is now RED, STOP.** Report green:false, \`stopReason: "pr-red"\`, name it
@@ -1501,32 +1569,19 @@ For EACH pr, in that order:
    "<repo> PR went red after <previous repo> merged", and leave BOTH the merged commit and this open PR exactly
    as they are. Do NOT revert the merge, do NOT close the PR, do NOT force anything through. A revert is a
    human's call.
-${REQUIRE_APPROVAL ? `2. **APPROVAL GATE — this PR needs an approving review on GitHub before you may merge it.**
-   Green CI is not consent. It proves the code runs; it does not prove a person agreed to it. This gate is
-   here because an earlier run of this loop put unreviewed commits onto a shared base branch.
-   \`gh pr view <url> --repo <ghRepo> --json reviewDecision,reviews\`
-   - \`APPROVED\` → the gate is satisfied, go on to the next step.
-   - \`CHANGES_REQUESTED\` → **STOP.** Report green:false, \`stopReason: "changes-requested"\`, and blocked
-     "<repo> PR has changes requested".
-     Leave the PR open. Do NOT merge it, do NOT dismiss the review, and do NOT push a fix — a reviewer asked
-     for something and answering them is a human's job, not this stage's.
-   - anything else, including empty (\`REVIEW_REQUIRED\`, or no reviews yet) → nobody has looked yet. WAIT:
-     re-run that same command up to ${APPROVAL_POLLS} times, sleeping 120 seconds between checks via
-     \`sleep 120\`, until it reports \`APPROVED\` or \`CHANGES_REQUESTED\`, then act as above.
-   - still nothing after ${APPROVAL_POLLS} checks → **STOP, and this is not a failure.** Report green:false,
-     \`stopReason: "awaiting-approval"\`, and blocked "<repo> PR is green and awaiting approval: <url>".
-     Leave the PR open and untouched. Somebody will approve it and the increment resumes from its \`prs\`
-     field on the next run.
-   NEVER merge a PR whose reviewDecision you have not just read and seen to be \`APPROVED\`. Do not approve it
-   yourself, do not ask anyone to, and do not work around the gate by any other route — GitHub refuses a
-   self-approval and defeating that refusal is never this stage's business.
-3. Confirm it is mergeable and green:` : `2. Confirm it is mergeable and green:`}
+2. Confirm it is mergeable and green:
    \`gh pr view <url> --repo <ghRepo> --json mergeable,mergeStateStatus,statusCheckRollup\`
    Anything other than a clean, green, mergeable PR stops you, with \`stopReason: "not-mergeable"\`. NEVER
-   merge a red PR, under any circumstance.
-${REQUIRE_APPROVAL ? 4 : 3}. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
-${REQUIRE_APPROVAL ? 5 : 4}. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
-${REQUIRE_APPROVAL ? 6 : 5}. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
+   merge a red PR, under any circumstance.${
+     REQUIRE_APPROVAL
+       ? `
+   Re-read its \`reviewDecision\` in the same call and confirm it is still \`APPROVED\` — a review can be
+   dismissed between STEP A and here. Anything else stops you with \`stopReason: "awaiting-approval"\`.`
+       : ''
+   }
+3. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
+4. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
+5. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
    \`gh run list --repo <ghRepo> --branch ${BASE_BRANCH} --commit <sha> --json databaseId,name,status,conclusion --limit 20\`
    then, for each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
    \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
@@ -1535,7 +1590,7 @@ ${REQUIRE_APPROVAL ? 6 : 5}. WATCH \`${BASE_BRANCH}\` for that commit — a gree
    base branch went red after merging
    <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
    base branch being red is a human decision, not a repair job.
-${REQUIRE_APPROVAL ? 7 : 6}. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
+6. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
    its merge \`"sha"\`. \`jq empty ${BACKLOG_TILDE}\` after. Do this after EACH merge.
 
 FINAL SWEEP, after the last merge and before you report. **The list above is not proof that it is the whole

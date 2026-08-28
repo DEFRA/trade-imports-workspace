@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-001}} from the {{shared/dr1-parity-union}} backlog.
+
+The frontend puts a two-step breadcrumb trail above the back link on almost every page — 30 of the 33 captured screens render a trail with items in it, and the two dashboard screens render the breadcrumb landmark with an empty list inside it, so a screen-reader user is announced a breadcrumb that contains nothing. DR1 has no breadcrumbs on any of its 40 captured screens: the route back up is the service navigation bar and the back link, and nothing else.
+
+h2. Acceptance criteria
+
+* The default breadcrumb trail is removed from the shared layout at {{src/server/app/shared/layout.njk}} lines 41 to 49, so no page renders breadcrumb markup.
+* The trail builder at {{src/server/app/shared/paths.js}} lines 12 to 15 is removed, including the hard-coded "Your notifications" literal it carries rather than reading from copy.
+* The {{breadcrumbs}} leaf at {{src/server/app/shared/copy.en.js}} lines 14 to 16 is removed, and so is its Welsh pair.
+* The global Nunjucks default that seeds {{breadcrumbs}} with an empty array at {{src/config/nunjucks/context/context.js}} line 36 is removed, so the two dashboard screens no longer render an empty breadcrumb landmark.
+* The breadcrumbs branch of the shared kit helper at {{src/server/app/shared/kit.js}} line 116 is removed with the rest.
+* The two callers that pass an explicit value go with it — {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js}} line 72 and {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js}} line 168.
+* The back link is left exactly as it is and remains the only in-page route backwards. No back link is added and none is removed, including on the confirmation page, which today carries the trail and no back link.
+* No captured screen renders a breadcrumb element, empty or otherwise, and the unit, component and lint checks pass.
+
+h2. Sequencing
+
+This must not land before the service navigation carries a Dashboard item ({{inc-007}}). Until it does, the breadcrumb is the only always-present link to the notification list, and removing it would leave a user mid-notification with nothing but the back link.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

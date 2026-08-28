@@ -1,0 +1,23 @@
+h2. Increment
+
+{{inc-003}} from the {{shared/dr1-parity-union}} backlog.
+
+No page in the service carries a phase banner. The shared layout builds the GOV.UK header, the service navigation, the signed-in bar and the breadcrumbs, then goes straight into the page content with nothing between ({{src/server/app/shared/layout.njk:19-53}}). There is no {{govukPhaseBanner}} import and no phase-banner markup anywhere in {{src/server}}, and none of the 67 captured frontend screens renders one. A user is never told the service is in Alpha and is never offered a way to give feedback.
+
+Every one of the 60 captured Design release 1 screens opens with a phase banner directly under the service navigation ({{app/views/dashboard.html:15-20}}): a grey "Alpha" tag followed by "This is a new service. Help us improve it and give your feedback by email.", with "give your feedback by email" as a link. Each view declares it in its own {{beforeContent}} block rather than in the layout, and the Prototype Kit's own branded layout carries no phase banner, so the banner and its wording are a deliberate decision of the design rather than inherited furniture.
+
+h2. Acceptance criteria
+
+* A {{govukPhaseBanner}} renders in the shared layout's {{beforeContent}} block in {{src/server/app/shared/layout.njk}}, above the breadcrumbs and the back link, so it appears on every page of the service including the dashboard.
+* The banner tag text is "Alpha" and the banner body is "This is a new service. Help us improve it and give your feedback by email.", with the last five words — "give your feedback by email" — rendered as a link.
+* The banner text lives in {{src/server/app/shared/copy.en.js}} beside the existing layout copy block, with a structurally identical Welsh pair in {{src/server/app/copy.cy.js}} — the two files stay in step, as {{copy.test.js}} and {{copy-leaves.js}} enforce.
+* The feedback link points at {{mailto:APHAServiceDesk@apha.gov.uk}} — the general service-desk address this codebase already ships to users. Design release 1's own href is a placeholder, so this destination is a workspace ruling and needs human confirmation.
+* The verification ladder passes: {{test:live-animals}}, {{format:check}}, {{lint}}, {{test:fit:features}}. Expect {{layout.test.js}} and the {{test:fit:features}} Playwright project to move, because the shared layout renders on every page.
+
+h2. Out of scope
+
+* {{inc-007}} travels with this increment — same shared layout, same {{beforeContent}} region — but is NOT part of it. Do not pull it in.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

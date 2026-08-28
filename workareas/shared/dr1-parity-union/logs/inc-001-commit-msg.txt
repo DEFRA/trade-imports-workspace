@@ -1,0 +1,32 @@
+test(EUDPA-353): refresh the origin-of-import baseline for the removed breadcrumb
+
+EUDPA-353 removes the breadcrumb trail from the live-animals frontend, so the
+origin page no longer opens "Your notifications > Origin of the import" above
+the back link. Everything below the phase banner shifts up by the trail's
+height and the page shrinks 50px, which the committed Linux baseline does not
+show:
+
+    Expected an image 1280px by 1332px, received 1280px by 1282px.
+    75741 pixels (ratio 0.05 of all image pixels) are different.
+
+Recaptured in the Linux container (mcr.microsoft.com/playwright:v1.61.1-jammy)
+against the stack running the frontend's branch image
+defradigital/trade-imports-animals-frontend:feat-eudpa-353-the-frontend-puts-a-breadcrumb-trail-abo,
+confirmed to carry no breadcrumb. The new baseline is 1280x1282 - the exact
+size CI reported receiving. The only difference from the old baseline is the
+two-item breadcrumb trail removed from between the phase banner and the back
+link, with everything below shifted up 50px. Service navigation, phase banner,
+back link, "About the consignment" caption, heading, country select, region
+radios, internal-reference input, both buttons, the cancel link and the footer
+are all unchanged.
+
+Verified by re-running the spec against the new baseline
+(--update-snapshots=none): 1 passed.
+
+The macOS baseline is left alone. It has been stale since EUDPA-334 added the
+phase banner and is not what CI compares against; refreshing it needs a
+separate headless macOS capture.
+
+Ticket: EUDPA-353
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>

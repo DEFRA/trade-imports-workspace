@@ -1,0 +1,208 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js
+index d7472d37..ad60cc52 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js
+@@ -9,6 +9,9 @@ import {
+   values
+ } from '../../../../../../../../../fit/live-animals-journey.js'
+ import { copy } from './copy/copy.en.js'
++import { copy as sharedCopy } from '../../../../../../shared/copy.en.js'
++
++const FEEDBACK_MAILTO = 'mailto:APHAServiceDesk@apha.gov.uk'
+ 
+ const CREATED_AT_ASCENDING_SORT = 'createdAt,asc'
+ const COPY_AS_NEW = 'Copy as new'
+@@ -366,6 +369,37 @@ test.describe('dashboard feature — pagination', () => {
+   })
+ })
+ 
++test.describe('shared chrome — alpha phase banner', () => {
++  const { tag, body, feedbackLinkText } = sharedCopy.layout.phaseBanner
++
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('dashboard tells the user the service is in alpha and offers feedback', async ({
++    page
++  }) => {
++    await page.goto('/')
++
++    await expect(page.getByText(tag, { exact: true })).toBeVisible()
++    await expect(page.getByText(body)).toBeVisible()
++    await expect(
++      page.getByRole('link', { name: feedbackLinkText })
++    ).toHaveAttribute('href', FEEDBACK_MAILTO)
++  })
++
++  test('the banner follows the layout onto an answering page', async ({
++    page
++  }) => {
++    await startNotification(page)
++
++    await expect(page.getByText(tag, { exact: true })).toBeVisible()
++    await expect(
++      page.getByRole('link', { name: feedbackLinkText })
++    ).toHaveAttribute('href', FEEDBACK_MAILTO)
++  })
++})
++
+ test.describe('dashboard feature — accessibility', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/shared/copy.cy.js b/src/server/app/shared/copy.cy.js
+index 9efd7bcf..e81c5baa 100644
+--- a/src/server/app/shared/copy.cy.js
++++ b/src/server/app/shared/copy.cy.js
+@@ -4,6 +4,11 @@ export const copy = {
+     serviceName: 'Gwasanaeth hysbysu mewnforio',
+     errorTitlePrefix: 'Gwall: ',
+     back: 'Yn ôl',
++    phaseBanner: {
++      tag: 'Alffa',
++      body: "Gwasanaeth newydd yw hwn. Helpwch ni i'w wella — rhowch eich adborth drwy e-bost.",
++      feedbackLinkText: 'rhowch eich adborth drwy e-bost'
++    },
+     breadcrumbs: {
+       serviceHome: 'Eich hysbysiadau'
+     },
+diff --git a/src/server/app/shared/copy.en.js b/src/server/app/shared/copy.en.js
+index e23f2895..bb0ad902 100644
+--- a/src/server/app/shared/copy.en.js
++++ b/src/server/app/shared/copy.en.js
+@@ -11,6 +11,13 @@ export const copy = {
+     serviceName: 'Import notification service',
+     errorTitlePrefix: 'Error: ',
+     back: 'Back',
++    // `feedbackLinkText` must appear verbatim inside `body` — the layout
++    // swaps that run of words for the feedback anchor.
++    phaseBanner: {
++      tag: 'Alpha',
++      body: 'This is a new service. Help us improve it and give your feedback by email.',
++      feedbackLinkText: 'give your feedback by email'
++    },
+     breadcrumbs: {
+       serviceHome: 'Your notifications'
+     },
+diff --git a/src/server/app/shared/copy.test.js b/src/server/app/shared/copy.test.js
+index 89084ff9..71b71388 100644
+--- a/src/server/app/shared/copy.test.js
++++ b/src/server/app/shared/copy.test.js
+@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
+ 
+ import { copyFor } from './copy.js'
+ import { copy as sharedEn } from './copy.en.js'
++import { copy as sharedCy } from './copy.cy.js'
+ 
+ const leaves = (node, path = []) =>
+   typeof node === 'object' && node !== null
+@@ -27,6 +28,23 @@ describe('#copyFor', () => {
+   })
+ })
+ 
++describe('phase-banner copy', () => {
++  it.each([
++    ['en', sharedEn],
++    ['cy', sharedCy]
++  ])(
++    'Should keep the %s feedback link text inside the banner body',
++    (locale, copy) => {
++      const { body, feedbackLinkText } = copy.layout.phaseBanner
++
++      expect(
++        body,
++        `${locale}: the layout swaps this run of words for the feedback link`
++      ).toContain(feedbackLinkText)
++    }
++  )
++})
++
+ describe('shared copy module', () => {
+   it('Should have a non-empty string at every leaf', () => {
+     for (const { path, value } of leaves(sharedEn)) {
+diff --git a/src/server/app/shared/layout.njk b/src/server/app/shared/layout.njk
+index 402ec0e5..62a5f211 100644
+--- a/src/server/app/shared/layout.njk
++++ b/src/server/app/shared/layout.njk
+@@ -3,11 +3,16 @@
+ {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+ {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+ {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
++{% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+ {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+ {% from "govuk/components/tag/macro.njk" import govukTag %}
+ {% from "service-header/macro.njk" import appServiceHeader %}
+ 
+ {% set homeUrl = "/" %}
++{# Destination for the alpha phase banner's feedback link. A destination, not
++   copy, so it lives here beside the footer's meta links rather than in
++   copy.en.js/copy.cy.js — it is identical in both locales. #}
++{% set feedbackUrl = "mailto:APHAServiceDesk@apha.gov.uk" %}
+ 
+ {% block head %}
+   <meta name="csrf-token" content="{{ crumb }}">
+@@ -39,6 +44,11 @@
+ {% endblock %}
+ 
+ {% block beforeContent %}
++  {% set feedbackLink %}<a class="govuk-link" href="{{ feedbackUrl }}">{{ sharedCopy.layout.phaseBanner.feedbackLinkText }}</a>{% endset %}
++  {{ govukPhaseBanner({
++    tag: { text: sharedCopy.layout.phaseBanner.tag },
++    html: sharedCopy.layout.phaseBanner.body | replace(sharedCopy.layout.phaseBanner.feedbackLinkText, feedbackLink)
++  }) }}
+   {% if breadcrumbs !== false %}
+     {{ govukBreadcrumbs({
+       items: breadcrumbs if breadcrumbs else [
+diff --git a/src/server/app/shared/layout.test.js b/src/server/app/shared/layout.test.js
+index e38e7eb1..b7032566 100644
+--- a/src/server/app/shared/layout.test.js
++++ b/src/server/app/shared/layout.test.js
+@@ -6,6 +6,9 @@ import { copy as sharedCopy } from './copy.en.js'
+ 
+ const environment = nunjucksConfig.options.compileOptions.environment
+ 
++const PHASE_BANNER = 'govuk-phase-banner'
++const BREADCRUMBS = 'govuk-breadcrumbs'
++
+ const renderLayout = (userSession, context = {}) =>
+   environment.render('shared/layout.njk', {
+     pageTitle: 'Create an import notification',
+@@ -41,6 +44,38 @@ describe('promoted live-animals signed-in chrome', () => {
+   })
+ })
+ 
++describe('alpha phase banner', () => {
++  const { tag, body, feedbackLinkText } = sharedCopy.layout.phaseBanner
++  const feedbackAnchor = `<a class="govuk-link" href="mailto:APHAServiceDesk@apha.gov.uk">${feedbackLinkText}</a>`
++
++  it('Should tag the service as alpha and offer the feedback link', () => {
++    const html = renderLayout({ isAuthenticated: true })
++
++    expect(html).toContain(PHASE_BANNER)
++    expect(html).toContain(tag)
++    expect(html).toContain(feedbackAnchor)
++    expect(html).toContain(body.replace(feedbackLinkText, feedbackAnchor))
++  })
++
++  it('Should render the banner on a signed-out page too', () => {
++    const html = renderLayout({ isAuthenticated: false })
++
++    expect(html).toContain(PHASE_BANNER)
++  })
++
++  it('Should place the banner above the breadcrumbs and the back link', () => {
++    const html = renderLayout(
++      { isAuthenticated: true },
++      { breadcrumbs: null, backLink: '/notifications' }
++    )
++
++    expect(html.indexOf(PHASE_BANNER)).toBeLessThan(html.indexOf(BREADCRUMBS))
++    expect(html.indexOf(BREADCRUMBS)).toBeLessThan(
++      html.indexOf('govuk-back-link')
++    )
++  })
++})
++
+ describe('content column width by surface', () => {
+   it('Should render a display surface at full container width', () => {
+     const html = renderLayout(

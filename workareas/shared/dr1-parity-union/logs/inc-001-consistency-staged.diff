@@ -1,0 +1,252 @@
+diff --git a/src/config/nunjucks/context/context.js b/src/config/nunjucks/context/context.js
+index 51ea4077..34fe5f01 100644
+--- a/src/config/nunjucks/context/context.js
++++ b/src/config/nunjucks/context/context.js
+@@ -50,7 +50,6 @@ async function context(request) {
+     authEnabled: config.get('auth.enabled'),
+     staleActionRejected: request.query?.staleAction === '1',
+     activeNavigationItem: activeNavigationItem(request.path),
+-    breadcrumbs: [],
+     userSession: authData
+       ? {
+           isAuthenticated: true,
+diff --git a/src/config/nunjucks/context/context.test.js b/src/config/nunjucks/context/context.test.js
+index 948c96b0..b2213c35 100644
+--- a/src/config/nunjucks/context/context.test.js
++++ b/src/config/nunjucks/context/context.test.js
+@@ -46,7 +46,6 @@ describe('context and cache', () => {
+       test('Should provide expected context', () => {
+         expect(contextResult).toEqual({
+           assetPath: '/public/assets',
+-          breadcrumbs: [],
+           getAssetPath: expect.any(Function),
+           serviceName: 'Animals',
+           serviceUrl: '/',
+@@ -133,7 +132,6 @@ describe('context and cache', () => {
+       test('Should provide expected context', () => {
+         expect(contextResult).toEqual({
+           assetPath: '/public/assets',
+-          breadcrumbs: [],
+           getAssetPath: expect.any(Function),
+           serviceName: 'Animals',
+           serviceUrl: '/',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js
+index 6644265b..57891e85 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js
+@@ -1,8 +1,4 @@
+-import {
+-  breadcrumbs,
+-  hubPath,
+-  pagePath
+-} from '../../../../../../shared/paths.js'
++import { hubPath, pagePath } from '../../../../../../shared/paths.js'
+ import { TEMPLATES } from '../../config.js'
+ import { nextInSection } from '../../../../../../flow/navigation.js'
+ import * as state from '../../../../../../engine/index.js'
+@@ -61,8 +57,7 @@ const renderCya = (
+       journey.status === state.AMEND
+         ? pagePath(journey.journeyId, 'cancel-amend')
+         : null,
+-    backLink: hubPath(journey.journeyId),
+-    breadcrumbs: breadcrumbs(journey.journeyId, copy.title)
++    backLink: hubPath(journey.journeyId)
+   })
+ 
+ export const renderNotificationView = async (
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index 382a864a..554c19dc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -164,8 +164,7 @@ const handler = async (request, h) => {
+     commodityTotals: buildCommodityTotals(answers, evaluation),
+     groups: buildGroups(answers, scope, evaluation, journeyId),
+     dashboardHref: dashboardPath(),
+-    backLink: dashboardPath(),
+-    breadcrumbs: false
++    backLink: dashboardPath()
+   })
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index e2d271ff..16ef813a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -91,7 +91,7 @@ describe('#hubHandler', () => {
+     expect(context.pageTitle).toBe('Overview')
+     expect(context.backLink).toBe('/')
+     expect(context.dashboardHref).toBe('/')
+-    expect(context.breadcrumbs).toBe(false)
++    expect(context.breadcrumbs).toBeUndefined()
+     expect(context.progressLine).toBeUndefined()
+   })
+ 
+diff --git a/src/server/app/shared/copy.cy.js b/src/server/app/shared/copy.cy.js
+index 3924598d..0528d7d4 100644
+--- a/src/server/app/shared/copy.cy.js
++++ b/src/server/app/shared/copy.cy.js
+@@ -16,9 +16,6 @@ export const copy = {
+       manageAccount: 'Rheoli cyfrif',
+       logOut: 'Allgofnodi'
+     },
+-    breadcrumbs: {
+-      serviceHome: 'Eich hysbysiadau'
+-    },
+     footer: {
+       privacy: 'Preifatrwydd',
+       cookies: 'Cwcis',
+diff --git a/src/server/app/shared/copy.en.js b/src/server/app/shared/copy.en.js
+index 7547912c..ac3bf850 100644
+--- a/src/server/app/shared/copy.en.js
++++ b/src/server/app/shared/copy.en.js
+@@ -1,6 +1,6 @@
+ /**
+  * Shared chrome copy — the only copy that legitimately lives outside a
+- * feature folder: the layout (service name, breadcrumbs,
++ * feature folder: the layout (service name, service navigation,
+  * back link, error title prefix), error-summary title, save-actions
+  * buttons and journey-strip tags. Every view reaches it as `sharedCopy`
+  * (via `kit.base`, or passed directly by the controllers that build
+@@ -23,9 +23,6 @@ export const copy = {
+       manageAccount: 'Manage account',
+       logOut: 'Log out'
+     },
+-    breadcrumbs: {
+-      serviceHome: 'Your notifications'
+-    },
+     footer: {
+       privacy: 'Privacy',
+       cookies: 'Cookies',
+diff --git a/src/server/app/shared/kit.js b/src/server/app/shared/kit.js
+index 27ca721a..e2c96b6d 100644
+--- a/src/server/app/shared/kit.js
++++ b/src/server/app/shared/kit.js
+@@ -1,9 +1,4 @@
+-import {
+-  breadcrumbs as buildBreadcrumbs,
+-  hubPath,
+-  pagePath,
+-  pageRoutePath
+-} from './paths.js'
++import { hubPath, pagePath, pageRoutePath } from './paths.js'
+ import { AMEND, DELETED, DRAFT, SUBMITTED } from '../engine/index.js'
+ import { nextInSection } from '../flow/navigation.js'
+ import {
+@@ -129,7 +124,6 @@ export const base = (
+     layout: journeyLayout(),
+     pageTitle: title,
+     caption: journeySectionCaption(page?.id),
+-    breadcrumbs: hasJourney ? buildBreadcrumbs(journeyId, title) : false,
+     backLink,
+     hubHref: hasJourney ? hubPath(journeyId) : undefined,
+     journeyStrip: journeyStrip(journey),
+diff --git a/src/server/app/shared/layout.njk b/src/server/app/shared/layout.njk
+index 6ba4afad..8ef93f5c 100644
+--- a/src/server/app/shared/layout.njk
++++ b/src/server/app/shared/layout.njk
+@@ -1,7 +1,6 @@
+ {% extends "govuk/template.njk" %}
+ 
+ {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+-{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+ {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+ {% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+ {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+@@ -72,14 +71,8 @@
+     tag: { text: sharedCopy.layout.phaseBanner.tag, classes: "govuk-tag--grey" },
+     html: phaseBannerHtml
+   }) }}
+-  {% if breadcrumbs !== false %}
+-    {{ govukBreadcrumbs({
+-      items: breadcrumbs if breadcrumbs else [
+-        { text: sharedCopy.layout.breadcrumbs.serviceHome, href: homeUrl },
+-        { text: pageTitle }
+-      ]
+-    }) }}
+-  {% endif %}
++  {# No breadcrumbs: Design release 1 gives a page one route backwards — the
++     back link — and one route up, the service navigation. #}
+   {% if backLink %}
+     {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}
+   {% endif %}
+diff --git a/src/server/app/shared/layout.test.js b/src/server/app/shared/layout.test.js
+index ca13c495..e5cfa51d 100644
+--- a/src/server/app/shared/layout.test.js
++++ b/src/server/app/shared/layout.test.js
+@@ -15,7 +15,6 @@ const renderLayout = (userSession, context = {}) =>
+     pageTitle: 'Create an import notification',
+     sharedCopy,
+     userSession,
+-    breadcrumbs: false,
+     getAssetPath: (asset) => `/assets/${asset}`,
+     ...context
+   })
+@@ -112,19 +111,39 @@ describe('alpha phase banner', () => {
+     expect(html).toContain(PHASE_BANNER)
+   })
+ 
+-  it('Should place the banner above the breadcrumbs and the back link', () => {
++  it('Should place the banner above the back link', () => {
+     const html = renderLayout(
+       { isAuthenticated: true },
+-      { breadcrumbs: null, backLink: '/notifications' }
++      { backLink: '/notifications' }
+     )
+ 
+-    expect(html.indexOf(PHASE_BANNER)).toBeLessThan(html.indexOf(BREADCRUMBS))
+-    expect(html.indexOf(BREADCRUMBS)).toBeLessThan(
++    expect(html.indexOf(PHASE_BANNER)).toBeLessThan(
+       html.indexOf('govuk-back-link')
+     )
+   })
+ })
+ 
++describe('breadcrumbs', () => {
++  it('Should render no breadcrumb trail, as Design release 1 has none', () => {
++    const html = renderLayout(
++      { isAuthenticated: true },
++      { backLink: '/notifications' }
++    )
++
++    expect(html).not.toContain(BREADCRUMBS)
++  })
++
++  it('Should ignore a breadcrumbs value a caller still passes', () => {
++    const html = renderLayout(
++      { isAuthenticated: true },
++      { breadcrumbs: [{ text: 'Your notifications', href: '/' }] }
++    )
++
++    expect(html).not.toContain(BREADCRUMBS)
++    expect(html).not.toContain('Your notifications')
++  })
++})
++
+ describe('content column width by surface', () => {
+   it('Should render a display surface at full container width', () => {
+     const html = renderLayout(
+diff --git a/src/server/app/shared/paths.js b/src/server/app/shared/paths.js
+index b34e4c06..5b2cf18b 100644
+--- a/src/server/app/shared/paths.js
++++ b/src/server/app/shared/paths.js
+@@ -13,8 +13,3 @@ export const inDashboardSection = (path) =>
+   path === dashboardPath() ||
+   path === createPath() ||
+   path.startsWith(`${createPath()}/`)
+-
+-export const breadcrumbs = (_journeyId, title) => [
+-  { text: 'Your notifications', href: dashboardPath() },
+-  { text: title }
+-]
+diff --git a/src/server/common/helpers/errors.test.js b/src/server/common/helpers/errors.test.js
+index 09044907..231743c6 100644
+--- a/src/server/common/helpers/errors.test.js
++++ b/src/server/common/helpers/errors.test.js
+@@ -95,7 +95,6 @@ describe('#catchAll', () => {
+       pageTitle,
+       heading,
+       message: pageTitle,
+-      breadcrumbs: false,
+       journeyStrip: null,
+       recoverableError: false
+     })

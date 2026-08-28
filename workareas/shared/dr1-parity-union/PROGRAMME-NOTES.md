@@ -28,9 +28,30 @@ finding you are building appears to overlap one of these, stop and put it on the
 | `inc-031` | **rejected** — keep the always-sorted dashboard; do not add an unsorted state |
 | `inc-013` | **rejected** — do not port DR1's page-by-page button list; superseded by `inc-161` |
 
-Two are **deferred**, not rejected — `inc-023` and `inc-024`, the remaining
-dashboard sort work. The dashboard is temporary. They are `blocked` and must not
-be built without a fresh ruling.
+## The dashboard and the address book are blocked as groups
+
+Ruled by Rhys, 2026-08-28. Both features are **temporary in the animals
+frontend and move to `trade-imports-ins-frontend`**, so parity work against
+them buys nothing that travels. Nineteen increments are `blocked` — deferred
+decisions, not rejections. None may be built without a fresh ruling.
+
+**Dashboard (17).** `inc-002`, `inc-014`, `inc-015`, `inc-016`, `inc-017`,
+`inc-018`, `inc-019`, `inc-020`, `inc-021`, `inc-022`, `inc-025`, `inc-026`,
+`inc-027`, `inc-028`, `inc-029`, plus `inc-023` and `inc-024`, the sort work
+blocked earlier on the same grounds.
+
+**Address-book scoping (2).** `inc-047` and `inc-048`. These are *not* the
+address-book screens — `inc-062` struck those. They are live defects on journey
+pages the animals frontend keeps: all six pickers offer the whole book
+regardless of the role being asked for, and the contact page offers overseas
+consignors where DR1 offers only the trader's own GB branch addresses. Both
+findings argue in their own text that they survive the `inc-062` descope, and
+that is right. They are blocked because neither is *buildable*: the fix needs an
+address-book record that carries a type, and that record shape travels with the
+address book to the INS epic. Revisit when the typed record lands.
+
+The journey pickers themselves stay buildable, as `inc-062`'s ruling said they
+would: `inc-046`, `inc-052`, `inc-053`, `inc-054`, `inc-055`, `inc-064`.
 
 ## `inc-161` carries its own design decision
 

@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/model/analysis/reachability/fidelity/witness-fulfilments.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:30:52Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The rename and the 'line1/unit1' -> 'line1.unit1' switch are correct and consistent with filterAndProject's new '.' delimiter and its only caller, with two Minor naming/magic-string nits.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 11,
+      "severity": "Minor",
+      "category": "magic-string",
+      "issue": "The new index delimiter is baked into the string literal 'line1.unit1' rather than derived from a named constant, so it is invisible to a grep for INDEX_DELIMITER; sibling model/ files (state-queries.js, evaluator/internal/group-instance-paths.js, helpers/projection/internals/filter-and-project.js) all declare a local 'const INDEX_DELIMITER = \".\"' with a 'Kept in sync with bridge/fulfilment-id.js#INDEX_DELIMITER' comment, and this witness path must match that delimiter or filterAndProject's prefix test fails and the fidelity check reports a misleading 'witness did not open the gate'.",
+      "fix": "Declare the same local 'const INDEX_DELIMITER = '.'' with the standard sync comment and build the path from it, e.g. fulfilmentIndexes.set(witness.projection, [['line1', 'unit1'].join(INDEX_DELIMITER)]).",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 9,
+      "severity": "Minor",
+      "category": "naming",
+      "issue": "The rename lands on bare 'fulfilmentIndexes' for a Map keyed by obligationId, but that same bare name means a flat array of index strings elsewhere (evaluator/implications/index.js, evaluator/purge/purge-storage.js) while the closure boundary this value is passed into names the map 'fulfilmentIndexesByObligationId' (helpers/projection/allow-listed.js, not-in-union-of.js, filter-and-project.js) — one name for two shapes, which is the confusion EUDPA-349's third AC exists to remove.",
+      "fix": "Rename the local (and the destructure in fidelity/confirm.js plus the header comment) to 'fulfilmentIndexesByObligationId' to match the applyTo parameter name it feeds.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/bridge/fulfilment-id.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:27:51Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Solid happy-path and round-trip coverage of the two new composite helpers, but the degenerate URL-boundary inputs are unasserted and two comments/test names misstate the invariants they claim to document.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 50,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "The parseCompositeFulfilmentId suite only exercises well-formed composites; the degenerate inputs a URL boundary actually receives are unasserted — a trailing delimiter '<uuid>:' parses to index '' and then does NOT round-trip (formatCompositeFulfilmentId(id, '') drops the ':'), and '' / undefined have no asserted contract (undefined throws TypeError at composite.indexOf).",
+      "fix": "Add cases for the trailing-delimiter composite ('<uuid>:'), the empty string, and a non-string input, asserting the intended contract (either normalise an empty index to null in parseCompositeFulfilmentId so the round-trip property holds, or assert the documented throw).",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 62,
+      "severity": "Minor",
+      "category": "comment-accuracy",
+      "issue": "The comment justifies the 'index can never contain :' invariant with the FIELD_UNSAFE regex, but FIELD_UNSAFE (fulfilment-registry.js:6) validates store field names (binding.field / group.field), not index segments; index segments are built from group.token in formatFulfilmentIndex and are guarded by TOKEN = /^[A-Za-z][A-Za-z-]*$/ instead.",
+      "fix": "Point the comment at the TOKEN regex in fulfilment-registry.js (the guard that actually constrains index segments), or drop the justification and keep the behavioural assertion."
+    },
+    {
+      "id": 3,
+      "line": 13,
+      "severity": "Minor",
+      "category": "test-naming",
+      "issue": "The test name claims both delimiters are 'RFC 3986 unreserved characters'; ':' is a reserved gen-delim under RFC 3986 section 2.2 (unreserved is ALPHA / DIGIT / '-' / '.' / '_' / '~'), so the stated rationale for the chosen delimiter is wrong in the one place a reader looks for it.",
+      "fix": "Reword to what is actually true and what the ticket relies on — e.g. 'distinct RFC 3986 path characters that survive URL encoding unescaped' — keeping the two toBe assertions unchanged."
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/bridge/read-fulfilment.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:28:23Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The delimiter swap to INDEX_DELIMITER is correct and behaviour-preserving, but the rename only reaches the function names — the parentId/id/ids locals and the line 87 comment still conflate fulfilment ids with fulfilment indexes, leaving AC 3 partly unmet in this file.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 89,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The rename stops at the function names: 'parentId' (lines 42, 89, 106), the 'id' locals (51, 64, 102) and the 'ids' set (98, 109, 113) all hold fulfilment *indexes* (e.g. 'line0'), not fulfilmentIds ('<obligationId>:line0'), so the file still carries the exact id-vs-index conflation AC 3 asks to remove; the retained comment on line 87 ('each exact composite-id prefix') now reads as the composite id defined in fulfilment-id.js, which is not what is being truncated.",
+      "fix": "Rename 'parentId' to 'parentIndex' (and the caller's argument in from-fulfilment.js), the 'id' locals to 'index'/'groupIndex', 'ids' to 'indexes', and reword the line 86-88 comment to say 'fulfilment index prefix' rather than 'composite-id prefix'.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

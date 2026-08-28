@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/bridge/fulfilments/fulfilments.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:28:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The delimiter and fulfilmentIndex renames are applied correctly and the assertions match the source, but one test title still documents the old slash shape and no case pins what happens to legacy slash-keyed stored indices.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 154,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Test title still advertises the old slash shape — 'two-segment composite (line<i>/unit<j>)' — while the body it names now asserts 'line0.unit0'/'line0.unit1', so the one test that documents the depth-2 index shape contradicts the delimiter this ticket introduces (AC: use '.' as the segment separator throughout; resolve the naming confusion).",
+      "fix": "Rename to 'Should translate a depth-2 nested array to a two-segment composite (line<i>.unit<j>)'."
+    },
+    {
+      "id": 2,
+      "line": 209,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "The separator change silently reinterprets already-stored fulfilment indices: a persisted 'line0/unit0' key now parses as ONE segment (hasIndexedSegments passes, trailing '0' is a digit), so projectAnswers throws the misleading 'within chain requires depth 2' instead of flagging a legacy key — and nothing in this file's validation describe block pins that behaviour, so the back-compat question the delimiter swap raises is untested.",
+      "fix": "Add a case to the 'page projection validation and ordering' block that feeds a legacy slash-keyed index (e.g. { [earTag.id]: { 'line0/unit0': 'x' } }) and asserts the agreed outcome — either a clear legacy-key rejection message or a documented migration — so the decision is recorded rather than implicit."
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

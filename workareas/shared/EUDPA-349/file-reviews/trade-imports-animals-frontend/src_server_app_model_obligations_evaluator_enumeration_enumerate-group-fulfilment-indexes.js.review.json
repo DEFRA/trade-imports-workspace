@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/model/obligations/evaluator/enumeration/enumerate-group-fulfilment-indexes.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:30:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Pure rename with behaviour unchanged and all call sites plus tests updated consistently, but the file's doc comment still describes the return value as fulfilmentIds when it now holds fulfilment indexes, leaving the exact naming confusion AC 3 targets.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The doc comment (lines 3-11) still uses the old vocabulary the ticket exists to retire — 'instance fulfilmentId', 'composite fulfilmentId' and 'Returns Map<group obligation id, Set<group fulfilmentId>>' — even though the function it documents was renamed to enumerateGroupFulfilmentIndexes; the Set values are fulfilment indexes (e.g. 'd1.c1', per evaluator.units.test.js:557), not fulfilmentIds (which under AC would be '<obligationId>:d1.c1'), so the comment is now factually wrong and contradicts AC 3.",
+      "fix": "Rewrite the comment in the ticket's vocabulary: 'A group's instance fulfilment index is the first N segments of any descendant leaf's composite fulfilment index' and 'Returns Map<group obligation id, Set<group fulfilment index>>'; rename the local 'ids' (line 26) to 'indexes' to match."
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

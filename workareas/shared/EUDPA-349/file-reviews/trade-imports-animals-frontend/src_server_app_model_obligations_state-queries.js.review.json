@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/model/obligations/state-queries.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:29:20Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The fulfilmentId to fulfilmentIndex rename is correct and every consumer of the renamed record and error fields is updated, but the new INDEX_DELIMITER is a hand-synced fourth copy of the same literal and one doc comment still documents the old '/' separator.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 12,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "INDEX_DELIMITER is re-declared here as a hand-synced copy of bridge/fulfilment-id.js:4 — the same literal now exists in four places (bridge/fulfilment-id.js, this file, model/obligations/evaluator/internal/group-instance-paths.js, model/obligations/helpers/projection/internals/filter-and-project.js) with only a comment holding them together and no test asserting they agree, so a future separator change silently breaks the parent/child prefix match at line 151.",
+      "fix": "Give the model layer sole ownership of the constant (e.g. a new src/server/app/model/obligations/index-delimiter.js exporting INDEX_DELIMITER) and have bridge/fulfilment-id.js import/re-export it — bridge -> model is permitted by the dep-cruiser rules, so one declaration satisfies both layers."
+    },
+    {
+      "id": 2,
+      "line": 187,
+      "severity": "Major",
+      "category": "stale-doc",
+      "issue": "The groupInvariantErrors doc comment still documents recordCountEquals as counting 'records under parentId/' — the slash separator this PR removed; the code at line 151 now matches on parentId + INDEX_DELIMITER ('.'). The sibling doc comment at line 26 was updated in this PR but this one was missed, leaving the file documenting the wrong delimiter in the very ticket that changes it (AC: index strings use '.' throughout the frontend).",
+      "fix": "Update the recordCountEquals bullet to say 'under the parent index prefix (parentId + INDEX_DELIMITER, e.g. line0.unit1)' or simply 'parentId.' so the comment matches the code."
+    },
+    {
+      "id": 3,
+      "line": 145,
+      "severity": "Minor",
+      "category": "naming",
+      "issue": "On a line this PR touched, the local is still called parentId while it now holds a fulfilment index (e.g. 'line0'), and it is then emitted as the renamed field 'fulfilmentIndex: parentId' at line 158 — exactly the id-vs-index confusion AC 3 asks the ticket to resolve.",
+      "fix": "Rename the local to parentIndex (or parentFulfilmentIndex) and update its three uses at lines 146, 151 and 158."
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

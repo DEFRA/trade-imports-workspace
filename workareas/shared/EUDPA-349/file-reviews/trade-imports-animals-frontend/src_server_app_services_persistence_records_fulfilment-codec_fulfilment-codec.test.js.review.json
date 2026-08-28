@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/services/persistence/records/fulfilment-codec/fulfilment-codec.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:30:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The delimiter swap itself is correct and the corpus still round-trips, but migrating the historic-data fixture in place leaves the persisted '/' format untested at the one boundary that reads real documents, and the codec keeps calling a fulfilment index a fulfilmentId against AC 3.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 237,
+      "severity": "Major",
+      "category": "back-compat-coverage",
+      "issue": "The 'preserve unknown UUID entries' case — the only fixture in the codec suite representing already-persisted historic data — was migrated in place from 'historic0/record3' to 'historic0.record3', so nothing now covers decoding documents written before the delimiter swap; a stored earTag key such as 'line0/unit0' is a single segment under INDEX_DELIMITER '.', so validateFulfilmentId throws 'requires depth 2' and marshal/document.js fails the whole notification load.",
+      "fix": "Add a case that decodes a legacy '/'-delimited persisted document and asserts the agreed behaviour (either a migration that rewrites '/' to '.' on read, or an explicit decision that no such documents exist), keeping the '.' case alongside it rather than replacing it."
+    },
+    {
+      "id": 2,
+      "line": 194,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "AC 3 asks that the code distinguish a fulfilment index ('line0.unit0') from a fulfilmentId ('<obligationId>:line0.unit0'), and the PR renames records[].fulfilmentId to records[].fulfilmentIndex across the bridge and evaluator, but the persisted codec was left out: the touched fixtures here still key records as fulfilmentId with index values, so the persistence boundary keeps the old ambiguous vocabulary the ticket set out to remove.",
+      "fix": "Rename the persisted record key to fulfilmentIndex in decode-records.js, records-entry.js and validate/fulfilment-id.js and update these fixtures to match (with a read-side fallback for documents already written with fulfilmentId), or record in the PR why the persisted field name is deliberately frozen while the in-memory one changed."
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

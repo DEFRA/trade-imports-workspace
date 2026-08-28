@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/model/obligations/evaluator/purge/purge-storage.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:30:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Behaviour-neutral rename is correct, but the fulfilmentId to fulfilmentIndex rename is only half-applied inside purgedDerivedLeaf, leaving AC 3's naming confusion in place and a self-contradicting comment.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "purgedDerivedLeaf renames the Set to fulfilmentIndexes but leaves the loop variable it is compared against still named fulfilmentId (lines 15-17), and the comment at line 4 still says 'whose fulfilmentId is in that set' — these keys are fulfilment indexes (applyTo's records array, mapped as fulfilmentIndex in evaluator/implications/index.js), so AC 3's naming confusion survives inside the very function the PR edited, with lines 3 and 4 now contradicting each other.",
+      "fix": "Rename the destructured loop key to fulfilmentIndex in lines 15-17 and reword the residual fulfilmentId mentions in the comments at line 4 and line 55 to fulfilment index.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

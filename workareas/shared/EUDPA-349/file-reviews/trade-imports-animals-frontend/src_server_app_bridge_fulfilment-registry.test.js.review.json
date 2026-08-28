@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/bridge/fulfilment-registry.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:27:35Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new test correctly guards the ':' addition to FIELD_UNSAFE and genuinely fails without the source change, but its title mislabels ':' as the fulfilment index delimiter, contradicting the ticket's naming AC.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 72,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Test title calls `:` 'the fulfilment index delimiter', but fulfilment-id.js defines `:` as FULFILMENT_ID_DELIMITER (obligation/index boundary) and `.` as INDEX_DELIMITER (the fulfilment index delimiter) - the title swaps the two names, re-introducing the exact confusion AC 3 exists to remove",
+      "fix": "Rename to 'Should reject a field containing the fulfilment id delimiter `:`' (matching FULFILMENT_ID_DELIMITER), and consider re-titling the sibling `.` test at line 63 to name the fulfilment index delimiter explicitly"
+    },
+    {
+      "id": 2,
+      "line": 78,
+      "severity": "Minor",
+      "category": "assertion-specificity",
+      "issue": "The assertion /invalid store field/ is identical to the sibling '.' test at line 69, so it does not prove the ':' field was the one rejected - the message's offending-field fragment is not asserted",
+      "fix": "Tighten to .toThrow(/invalid store field \"country:ofOrigin\"/) so the assertion pins which field the guard rejected",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

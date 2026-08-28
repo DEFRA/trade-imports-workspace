@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/bridge/fulfilment-registry.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:28:02Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The rename and the added ':' exclusion are correct and covered by a new test; the only finding is a Minor maintainability point about duplicating the exported delimiter constants and a comment that justifies the ban in fulfilment-id rather than store-field terms.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Minor",
+      "category": "maintainability",
+      "issue": "FIELD_UNSAFE hard-codes '.' and ':' as literals even though the sibling module ./fulfilment-id.js exports them as INDEX_DELIMITER and FULFILMENT_ID_DELIMITER, and the new comment justifies the ban in fulfilment-id terms although the regex only guards store field names (assertField -> 'invalid store field'), which never enter a fulfilment id (the index is built from group.token in formatFulfilmentIndex, and tokens are constrained separately by TOKEN)",
+      "fix": "Import { INDEX_DELIMITER, FULFILMENT_ID_DELIMITER } from './fulfilment-id.js' (same directory, no cycle - fulfilment-id.js has no imports) and build the character class from them, or at minimum add the repo's existing 'Kept in sync with bridge/fulfilment-id.js#INDEX_DELIMITER' note used by state-queries.js, group-instance-paths.js and filter-and-project.js; reword the comment to state the store-field reason ('.' is the store-path separator joined by groupedPathOf/pathOf, ':' is reserved so a field can never be mistaken for a composite fulfilment id)",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

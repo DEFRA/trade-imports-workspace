@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/model/obligations/helpers/projection/internals/filter-and-project.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:29:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The '/'-to-'.' delimiter switch and the fulfilmentIds-to-fulfilmentIndexes rename are correct and covered by path-prefix-depth.test.js, but the new local INDEX_DELIMITER copy leaves the delimiter defined in four places with nothing enforcing the sync.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "INDEX_DELIMITER is re-declared here as a local literal '.', the third hand-synced copy under model/ (also state-queries.js:12 and evaluator/internal/group-instance-paths.js:5) alongside the real source bridge/fulfilment-id.js:4, with only a 'Kept in sync' comment and no test enforcing it — a future delimiter change that misses one copy silently breaks pathMatchesPassingKey prefix matching, so gated fulfilments are dropped with no error",
+      "fix": "Move the constant to a single model-owned module (e.g. src/server/app/model/obligations/index-delimiter.js) and import it here; bridge/ is already permitted to depend on model/ (bridge-no-up only bans engine|flow|analysis and shared/kit.js, and bridge already imports model/obligations/*), so bridge/fulfilment-id.js can re-export it and all three model copies plus the sync comments disappear",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

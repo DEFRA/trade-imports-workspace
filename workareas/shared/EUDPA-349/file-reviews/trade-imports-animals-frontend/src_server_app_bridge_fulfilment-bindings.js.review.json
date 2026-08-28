@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/bridge/fulfilment-bindings.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:27:04Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename is behaviourally correct and covered by existing nested-index tests, but the touched line leaves 'fulfilmentId' naming on a value that is now a fulfilment index, which is the very confusion AC 3 targets.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 79,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The call was renamed to formatFulfilmentIndex but the local it feeds is still 'fulfilmentId' (line 79), and it flows into addGroupedValue's 'fulfilmentId' parameter (lines 61, 67) and becomes the record key — the value is a fulfilment index (e.g. 'line0.unit1'), not a fulfilmentId ('<obligationId>:line0.unit1'), which is exactly the ambiguity AC 3 asks to remove; sibling call sites (collection-complete.js:137) already use 'fulfilmentIndex'.",
+      "fix": "Rename the local at line 79 and the addGroupedValue parameter (lines 61, 67) to 'fulfilmentIndex' so the name matches what formatFulfilmentIndex returns.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

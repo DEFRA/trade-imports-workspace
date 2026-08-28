@@ -1,0 +1,46 @@
+{
+  "file": "src/server/app/bridge/fulfilment-id.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:28:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename and delimiter swap are coherent and well tested, but the '/' to '.' change alters a persisted record-key format with no legacy handling, the new composite parser has no input guard for the untrusted boundary it is built for, and segmentsOf still calls a fulfilment index a fulfilmentId on a line this PR rewrote.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "back-compat",
+      "issue": "Switching INDEX_DELIMITER from '/' to '.' changes the shape of a PERSISTED key, not just an in-memory one: fulfilment indices are the record-map keys encoded by services/persistence/records/fulfilment-codec/encode.js (recordsEntry(obligationId, stored)) and validated on read by unknown-stored.js. A draft saved before this deploy carries 'line0/unit1'; after it, hasIndexedSegments('line0/unit1') still returns true (no '.', last char is a digit) so the value is accepted but segmentsOf yields ONE segment instead of two, silently resolving a depth-2 fulfilment as depth-1 rather than failing loudly. No migration or legacy-delimiter handling exists anywhere in services/persistence.",
+      "fix": "Confirm no persisted notification drafts carry '/'-delimited record keys; if any can, add decode-time handling in the fulfilment-codec that either rewrites '/' to INDEX_DELIMITER or rejects legacy keys explicitly, so a stale key can never be misread as a shallower index."
+    },
+    {
+      "id": 2,
+      "line": 22,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "AC 3 (resolve the fulfilmentId / fulfilment index naming confusion) is only half applied in this file. The PR renamed formatFulfilmentId -> formatFulfilmentIndex, instanceFulfilmentId -> fulfilmentIndexInstance and indicesOf's parameter, but segmentsOf still names its parameter 'fulfilmentId' on the very line the PR rewrote, and it now splits on INDEX_DELIMITER. Under the vocabulary this PR establishes a fulfilmentId is '<obligationId>:<index>', so passing one to segmentsOf returns ['<uuid>:line0','unit1'] - the name now actively invites the wrong argument. Every caller (read-fulfilment.js:47, fulfilments/fulfilment-id-path.js:13) correctly passes a fulfilmentIndex. hasIndexedSegments (line 34) has the same stale parameter name and the same callers.",
+      "fix": "Rename the segmentsOf parameter to fulfilmentIndex to match indicesOf, and do the same for hasIndexedSegments and its unknown-stored.js caller variable, so no identifier in the module calls an index an id.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 12,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "parseCompositeFulfilmentId calls composite.indexOf with no type guard. The ticket positions the composite fulfilmentId as the value crossing untrusted boundaries (URL params, API path segments), so the first real caller will hand it request input: a missing or non-string param throws TypeError: Cannot read properties of undefined, surfacing as a 500 rather than a controlled 400/404. hasIndexedSegments on line 34 already sets the guarding precedent in this module (typeof === 'string' && length > 0), and the new function does not follow it. Neither is there any validation that the parsed obligationId is a UUID or that the index matches the token shape FIELD_UNSAFE/TOKEN enforce in fulfilment-registry.js, so a decoded pair is trusted purely on the presence of a ':'.",
+      "fix": "Guard the input the way hasIndexedSegments does - return null (or a documented empty result) for a non-string or empty composite - and either validate obligationId/index shape here or state in the module comment that the caller owns validation before lookup."
+    },
+    {
+      "id": 4,
+      "line": 7,
+      "severity": "Minor",
+      "category": "dead-code",
+      "issue": "formatCompositeFulfilmentId and parseCompositeFulfilmentId have no production caller anywhere in src - a grep across the repo finds only fulfilment-id.test.js. Nothing in the frontend yet emits or consumes a '<obligationId>:<index>' string, so the composite encoding is exercised only by its own unit tests and can drift out of step with the real boundary before EUDPA-333 arrives to use it.",
+      "fix": "Acceptable if deliberate groundwork for EUDPA-333 (the ticket names it as a blocker) - if so, say so in the module comment on line 1 so a later reader does not read the pair as dead code; otherwise wire it into the URL boundary in this PR."
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

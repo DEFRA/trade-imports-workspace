@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/model/obligations/evaluator/internal/group-instance-paths.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "fa4a0b779c33d102ce3da81abbfcc6fc2dc653b3",
+  "pr": 213,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-27T16:31:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The delimiter swap itself is correct and consistent with bridge/fulfilment-id.js, but it introduces a third unenforced copy of INDEX_DELIMITER in model/ and leaves the file's 'path' vocabulary half-renamed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "INDEX_DELIMITER is now a private copy that must silently agree with bridge/fulfilment-id.js#INDEX_DELIMITER, and the same copy-plus-comment appears in two other model files (obligations/state-queries.js:12, obligations/helpers/projection/internals/filter-and-project.js:5); nothing enforces the agreement, so a future delimiter change to the bridge constant leaves these three splitting on the wrong character and silently mis-parsing fulfilment indexes rather than failing",
+      "fix": "Hoist one model-local constant (e.g. src/server/app/model/obligations/index-delimiter.js) imported by all three model files - permitted by the dep-cruiser model-import-boundary rule, which only bans model -> bridge - and add a test importing both it and bridge's INDEX_DELIMITER asserting they are equal (test files are excluded from dep-cruiser)"
+    },
+    {
+      "id": 2,
+      "line": 6,
+      "severity": "Minor",
+      "category": "naming",
+      "issue": "The rename stopped at the constant: PATH_DELIMITER became INDEX_DELIMITER but joinPath/splitPath (lines 6-7) and instancePathPrefixesFromRecord still speak the old 'path' vocabulary for values that are now fulfilment indexes (line0.unit1), leaving the file half-migrated against AC 3 (consistent 'fulfilment index' naming)",
+      "fix": "Rename the file-local helpers to joinIndex/splitIndex (and instancePathPrefixesFromRecord -> indexPrefixesFromRecord) so the vocabulary matches the constant and the callers' fulfilmentIndex naming"
+    }
+  ],
+  "reconciled_at": "2026-08-27T17:08:03Z"
+}

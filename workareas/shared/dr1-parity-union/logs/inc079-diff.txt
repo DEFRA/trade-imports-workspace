@@ -1,0 +1,350 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+index 8d61a903..06b481be 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+@@ -34,26 +34,78 @@ const view = `${TEMPLATES}/features/origin/template`
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const REGION_CODE_MAX_LENGTH = 5
++const REGION_CODE_SUFFIX_MAX_LENGTH = 5
+ const INTERNAL_REFERENCE_MAX_LENGTH = 58
+ 
+-const FIELD_ORDER = [
++// The country part of the region of origin code is filled in for the user as a
++// fixed prefix, so the form asks only for the part after it. The answer stored
++// stays the whole code, joined here, and nothing downstream sees two fields.
++const REGION_CODE_SUFFIX_FIELD = 'regionOfOriginCodeSuffix'
++const REGION_CODE_SEPARATOR = '-'
++
++const FORM_FIELD_ORDER = [
+   'countryOfOrigin',
+   'regionOfOriginCodeRequirement',
+-  'regionOfOriginCode',
++  REGION_CODE_SUFFIX_FIELD,
++  'internalReferenceNumber'
++]
++
++const TRIMMED_FORM_FIELDS = [
++  REGION_CODE_SUFFIX_FIELD,
+   'internalReferenceNumber'
+ ]
+ 
+-const valuesFrom = (source, { trim = [] } = {}) =>
++const formValuesFrom = (source) =>
+   Object.fromEntries(
+-    FIELD_ORDER.map((field) => [
++    FORM_FIELD_ORDER.map((field) => [
+       field,
+-      trim.includes(field)
++      TRIMMED_FORM_FIELDS.includes(field)
+         ? (source[field] ?? '').trim()
+         : (source[field] ?? '')
+     ])
+   )
+ 
++const prefixFor = (countryOfOrigin) =>
++  (countryOfOrigin ?? '').trim().toUpperCase()
++
++// Splitting a whole code back into the part after the prefix. Used to redisplay
++// a stored answer, and to forgive a user who typed the prefix themselves.
++const suffixOf = (prefix, code) => {
++  const value = (code ?? '').trim().toUpperCase()
++  return prefix && value.startsWith(`${prefix}${REGION_CODE_SEPARATOR}`)
++    ? value.slice(prefix.length + REGION_CODE_SEPARATOR.length)
++    : value
++}
++
++const regionCodeFrom = (countryOfOrigin, suffix) => {
++  const prefix = prefixFor(countryOfOrigin)
++  const rest = suffixOf(prefix, suffix)
++  if (!rest) {
++    return ''
++  }
++  return prefix ? `${prefix}${REGION_CODE_SEPARATOR}${rest}` : rest
++}
++
++const answersFrom = (formValues) => ({
++  countryOfOrigin: formValues.countryOfOrigin,
++  regionOfOriginCodeRequirement: formValues.regionOfOriginCodeRequirement,
++  regionOfOriginCode: regionCodeFrom(
++    formValues.countryOfOrigin,
++    formValues[REGION_CODE_SUFFIX_FIELD]
++  ),
++  internalReferenceNumber: formValues.internalReferenceNumber
++})
++
++const formValuesFromAnswers = (answers) => ({
++  countryOfOrigin: answers.countryOfOrigin ?? '',
++  regionOfOriginCodeRequirement: answers.regionOfOriginCodeRequirement ?? '',
++  [REGION_CODE_SUFFIX_FIELD]: suffixOf(
++    prefixFor(answers.countryOfOrigin),
++    answers.regionOfOriginCode
++  ),
++  internalReferenceNumber: answers.internalReferenceNumber ?? ''
++})
++
+ const countryItems = () => [
+   { value: '', text: copy.country.placeholder },
+   { value: '', text: '──────────', disabled: true },
+@@ -69,8 +121,8 @@ const fields = () =>
+     ),
+     oneOf('regionOfOriginCodeRequirement', ['yes', 'no']),
+     maxText(
+-      'regionOfOriginCode',
+-      REGION_CODE_MAX_LENGTH,
++      REGION_CODE_SUFFIX_FIELD,
++      REGION_CODE_SUFFIX_MAX_LENGTH,
+       copy.errors.regionCodeMaxLength
+     ),
+     maxText(
+@@ -113,19 +165,18 @@ const render = (
+     values,
+     errors,
+     errorSummary: kit.errorSummary(errors),
+-    countryItems: countryItems()
++    countryItems: countryItems(),
++    regionCodePrefix: prefixFor(values.countryOfOrigin)
+   })
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, valuesFrom(answers), {}, answers)
++  return render(h, journey, formValuesFromAnswers(answers), {}, answers)
+ }
+ 
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+-  const values = valuesFrom(payload, {
+-    trim: ['regionOfOriginCode', 'internalReferenceNumber']
+-  })
++  const values = formValuesFrom(payload)
+   const { errors } = validate(fields(), payload)
+   if (errors) {
+     const { journey, answers } = await state.get(request, h)
+@@ -137,7 +188,7 @@ const post = async (request, h) => {
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+-      committed = await state.commit(request, h, values)
++      committed = await state.commit(request, h, answersFrom(values))
+     },
+     async () => {
+       const { journey, answers } = await state.get(request, h)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+index 1df749f2..4fb4a09d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+@@ -104,6 +104,95 @@ describe('POST /origin — valid internal reference', () => {
+   })
+ })
+ 
++describe('POST /origin — region of origin code prefix and suffix', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  const postSuffix = (regionOfOriginCodeSuffix) =>
++    driveHandler(post, {
++      payload: {
++        countryOfOrigin: 'FR',
++        regionOfOriginCodeRequirement: 'yes',
++        regionOfOriginCodeSuffix,
++        internalReferenceNumber: ''
++      }
++    })
++
++  it('Should store the country prefix joined to the typed part in upper case', async () => {
++    const result = await postSuffix('75')
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.regionOfOriginCode).toBe('FR-75')
++  })
++
++  it('Should accept a region part longer than two characters', async () => {
++    const result = await postSuffix('dub')
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.regionOfOriginCode).toBe('FR-DUB')
++  })
++
++  it('Should not double the prefix when the typed part already carries it', async () => {
++    const result = await postSuffix('fr-75')
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.regionOfOriginCode).toBe('FR-75')
++  })
++
++  it('Should store nothing when the typed part is blank', async () => {
++    const result = await postSuffix('   ')
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.regionOfOriginCode).toBe('')
++  })
++
++  it('Should reject a typed part over 5 characters and commit nothing', async () => {
++    const result = await postSuffix('ABCDEF')
++
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.regionOfOriginCodeSuffix).toBe(
++      'Region of origin code must be 5 characters or less'
++    )
++    expect(result.after).toEqual(result.before)
++  })
++})
++
++describe('GET /origin — region of origin code splits back into its two parts', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  const get = () =>
++    origin.routes.find((route) => route.method === 'GET').handler
++
++  it('Should render the country as the prefix and only the rest in the box', async () => {
++    const result = await driveHandler(get(), {
++      seed: {
++        countryOfOrigin: 'FR',
++        regionOfOriginCodeRequirement: 'yes',
++        regionOfOriginCode: 'FR-75'
++      }
++    })
++
++    expect(result.view.context.regionCodePrefix).toBe('FR')
++    expect(result.view.context.values.regionOfOriginCodeSuffix).toBe('75')
++  })
++
++  it('Should render no prefix before a country has been chosen', async () => {
++    const result = await driveHandler(get())
++
++    expect(result.view.context.regionCodePrefix).toBe('')
++    expect(result.view.context.values.regionOfOriginCodeSuffix).toBe('')
++  })
++})
++
+ describe('GET /origin — server-rendered select data (no-JS path)', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+index fb5c633c..1f4fc3ce 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+@@ -12,8 +12,8 @@ export const copy = {
+     no: 'Nac oes'
+   },
+   regionCode: {
+-    label: 'Cod rhanbarth tarddiad',
+-    hint: 'Er enghraifft, FR-75'
++    label: 'Rhowch god rhanbarth tarddiad',
++    hint: 'Rhowch hyd at 5 nod.'
+   },
+   internalReference: {
+     label: 'Eich cyfeirnod mewnol ar gyfer y llwyth hwn (dewisol)',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+index eaee98c6..0a22afc4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+@@ -11,8 +11,8 @@ export const copy = {
+     no: 'No'
+   },
+   regionCode: {
+-    label: 'Region of origin code',
+-    hint: 'For example, FR-75'
++    label: 'Enter the region of origin code',
++    hint: 'Enter up to 5 characters.'
+   },
+   internalReference: {
+     label: 'Your internal reference for this consignment (optional)',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+index 4fdcb607..1f863a09 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+@@ -88,7 +88,7 @@ test.describe('origin feature', () => {
+ 
+     await page.getByLabel(copy.country.label).selectOption(france.code)
+     await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
+-    await page.getByLabel(copy.regionCode.label, { exact: true }).fill('FR-75')
++    await page.getByLabel(copy.regionCode.label, { exact: true }).fill('75')
+     await page.getByLabel(copy.internalReference.label).fill('Imports456_GB')
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+ 
+@@ -101,12 +101,49 @@ test.describe('origin feature', () => {
+     ).toBeChecked()
+     await expect(
+       page.getByLabel(copy.regionCode.label, { exact: true })
+-    ).toHaveValue('FR-75')
++    ).toHaveValue('75')
+     await expect(page.getByLabel(copy.internalReference.label)).toHaveValue(
+       'Imports456_GB'
+     )
+   })
+ 
++  test('fills the chosen country in as a fixed prefix beside the region code box', async ({
++    page
++  }) => {
++    const originUrl = page.url()
++
++    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
++    await page.getByLabel(copy.regionCode.label, { exact: true }).fill('75')
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++    await page.goto(originUrl)
++
++    const prefix = page.locator('.govuk-input__prefix')
++    await expect(prefix).toHaveText(france.code)
++    await expect(prefix).toHaveAttribute('aria-hidden', 'true')
++
++    await expectNoSeriousOrCriticalAxeViolations(page, 'Origin with prefix')
++  })
++
++  test('accepts a region part longer than the whole code used to allow', async ({
++    page
++  }) => {
++    const originUrl = page.url()
++
++    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
++    await page.getByLabel(copy.regionCode.label, { exact: true }).fill('DUB')
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+\/commodities$/)
++
++    await page.goto(originUrl)
++    await expect(page.locator('.govuk-input__prefix')).toHaveText(france.code)
++    await expect(
++      page.getByLabel(copy.regionCode.label, { exact: true })
++    ).toHaveValue('DUB')
++  })
++
+   test('back link returns to the dashboard while the journey is unanswered', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk
+index ed35cfa1..94b917ce 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk
+@@ -26,13 +26,14 @@
+ 
+     {% set regionCodeHtml %}
+       {{ govukInput({
+-        id: "regionOfOriginCode",
+-        name: "regionOfOriginCode",
++        id: "regionOfOriginCodeSuffix",
++        name: "regionOfOriginCodeSuffix",
+         label: { text: copy.regionCode.label },
+         hint: { text: copy.regionCode.hint },
+         classes: "govuk-input--width-5",
+-        value: values.regionOfOriginCode,
+-        errorMessage: errors.regionOfOriginCode and { text: errors.regionOfOriginCode }
++        prefix: { text: regionCodePrefix },
++        value: values.regionOfOriginCodeSuffix,
++        errorMessage: errors.regionOfOriginCodeSuffix and { text: errors.regionOfOriginCodeSuffix }
+       }) }}
+     {% endset %}
+ 

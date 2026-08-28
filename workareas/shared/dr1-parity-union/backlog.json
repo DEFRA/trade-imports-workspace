@@ -3095,6 +3095,11 @@
     },
     {
       "id": "inc-079",
+      "ticket": "EUDPA-355",
+      "branch": "feat/EUDPA-355-design-release-1-fills-in-the-country-s",
+      "openQuestions": [
+        "Should the region of origin code prefix appear as soon as the user picks a country, before the page is submitted? This increment renders the prefix server-side only: src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:169 sets regionCodePrefix = prefixFor(values.countryOfOrigin), and the GET path at controller.js:172-175 feeds those values from the stored answers, so on a first visit — a user starting a notification, choosing France and checking Yes without submitting — regionCodePrefix is '' and govuk-frontend drops the prefix element entirely (its input template's hasPrefix guard). The user sees a bare five-character box, may type the whole code ('FR-DUB'), and is rejected by maxText('regionOfOriginCodeSuffix', 5) with 'Region of origin code must be 5 characters or less'. Nothing is stored wrong — the POST derives the prefix from the payload's country (controller.js:80-97) and the error re-render then shows the prefix — but the first pass does not yet deliver the design's point that the user cannot get the prefix wrong. Design release 1 writes the prefix from client-side JS the moment a country is chosen (workareas/shared/dr1c-parity/specs/prototype/consignment.pw.js:146-153 records that the ISO prefix is written by the country search, not by the radio, and asserts the prefix reads 'FR' with no form submission). DEFERRED rather than fixed in this increment because code alone cannot settle it: (1) it needs a new progressive-enhancement client component under src/client/javascripts/components/ registered in application.js, not a server change; (2) govukInput cannot render an empty prefix box, so someone has to decide what the prefix shows before a country is chosen — an empty grey box, a hidden element the script reveals, or hand-rolled markup outside the govuk macro, and hand-rolling departs from the govuk-frontend toolbox this repo holds to; (3) the no-JS behaviour has to be decided, and stays as shipped here; (4) this increment's own relatedTo already ties the prefix to inc-077 ('the prefix is derived from the country of origin, so this change depends on the country control being able to report the chosen country'), which may replace the plain select with the accessible autocomplete and so change what the component listens to. ACTION: decide with design whether the live prefix is required for Design release 1 parity, and if it is, build it with inc-077 so the country control and its prefix listener land together."
+      ],
       "type": "obligation-change",
       "milestone": null,
       "domain": "origin",
@@ -3113,7 +3118,7 @@
       "gate": null,
       "dependsOn": [],
       "status": "todo",
-      "commit": null,
+      "commit": "7f2c45ab",
       "failure_reason": null,
       "finding": {
         "frontend": "Answering Yes reveals one plain text box, five characters wide, labelled \"Region of origin code\" and hinted \"For example, FR-75\". The user types the whole code including the country part, and nothing checks that the country part they type matches the country they picked higher up the page. The whole value is capped at five characters (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:71-75). For a consignment from France that leaves two characters for the region once \"FR-\" has been typed, so any region whose code runs longer than two characters cannot be entered at all — IE-DUB, for one, needs six. The field is declared at src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:24-34.",
@@ -3351,7 +3356,14 @@
         "note": "Both: DR1 shows a country-derived read-only prefix and asks only for the suffix; the frontend asks for the whole code in a five-character box. C names the user harm A only gestures at — the five-character cap applies to the whole string, so once 'FR-' is typed only two characters remain and any region code longer than two characters cannot be entered at all. C also supplies the exact replacement label and hint and the uppercase-plus-hyphen normalisation DR1 applies. A is better on one point C dismisses: A ties the change to the country-list change because DR1's prefix table is keyed on DR1's country labels.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/216",
+          "number": 216
+        }
+      ]
     },
     {
       "id": "inc-077",

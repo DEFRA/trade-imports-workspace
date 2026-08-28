@@ -1,0 +1,18 @@
+h2. Increment
+
+{{inc-079}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 fills in the country's code as a fixed prefix and asks only for the rest of the region of origin code. The frontend makes the user type the whole code inside a five-character limit, so once "FR-" is typed only two characters remain and any longer region code — IE-DUB, for one — cannot be entered at all.
+
+h2. Acceptance criteria
+
+* On the origin page, derive the two-letter prefix from the country the user has already chosen and render it as a {{govuk-input}} prefix beside the region of origin code box.
+* Collect and validate only the part after the prefix, up to five characters, so a region code longer than two characters can be entered. Widening the box on its own is not the fix — the user must not be able to get the prefix wrong.
+* Relabel the field "Enter the region of origin code" and replace the worked example hint with "Enter up to 5 characters.".
+* Store the joined value, so nothing downstream has to learn about two fields: upper-case what the user typed and join the two parts with a hyphen, so typing "75" with France chosen records "FR-75".
+* Settle and record which route the prefix map takes before starting: rebuilt from the two-letter code already held as each country option's value in {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js}} (needs no new reference data), or lifted from Design release 1's own table, which is keyed on its country label strings and so ties this change to {{inc-081}}.
+* Frontend files in scope: {{src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk}} and {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "7049086a3330be846dcd54e6f2d93919cfbf0474",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:52:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "versionId computation is correct for the ticket's 7-event catalogue but silently emits versionId: 0 on never-submitted-draft NOTIFICATION_EDITED saves, an untested regression on an already-consumed, out-of-scope event type.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 112,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "computeVersionId() only excludes NOTIFICATION_CREATED/NOTIFICATION_DELETED from the count; NOTIFICATION_EDITED (fired on every DRAFT/AMEND page save via replace(), out of this ticket's event catalogue) falls into the submission-carry-forward branch, so a draft edited before its first submission now emits versionId: 0 -- a value the schema's own semantics ('V1 on first submission') never produce. No test in the new VersionId nested class covers NOTIFICATION_EDITED.",
+      "fix": "Add NOTIFICATION_EDITED to NO_VERSION_ID_EVENTS (or otherwise special-case it) so a never-submitted draft omits versionId instead of emitting 0, and add a VersionId test for a NOTIFICATION_EDITED save with submissionCount 0."
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:03Z"
+}

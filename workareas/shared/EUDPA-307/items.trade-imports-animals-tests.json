@@ -1,0 +1,43 @@
+{
+  "ticket": "EUDPA-307",
+  "repo": "trade-imports-animals-tests",
+  "items": [
+    {
+      "id": 1,
+      "line": 32,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "New NotificationCreated envelope test omits actor/_id/timestamp/correlationId assertions that the sibling NotificationSubmitted test (outbox-event-notification.spec.ts) makes for the same envelope, even though createNotification now passes actor through to writeWithOutbox (NotificationService.java createNotification -> OutboxEventType.NOTIFICATION_CREATED)",
+      "fix": "Assert doc.actor against the signed-in EXPECTED_ACTOR (as outbox-event-notification.spec.ts does), plus doc._id format, doc.timestamp instanceof Date, metadata.correlationId defined, and statusChanges[0].dateChanged, to cover the new actor-propagation behaviour this ticket introduces",
+      "file": "tests/e2e/features/admin/outbox-event-created.spec.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 29,
+      "severity": "Minor",
+      "category": "test-name-drift",
+      "issue": "Test name still says the audit record covers 'both outbox events', but this PR raised the fixture's expected event count to 3 (lines 14, 24, 35, 56) — the title no longer matches what the test asserts",
+      "fix": "Update the test name to 'writes a REPLAY_EVENTS audit record covering three outbox events' (or similar) to match numberOfEvents: 3",
+      "best_practice": "playwright/BEST_PRACTICES.md",
+      "file": "tests/e2e/features/admin/outbox-event-replay.spec.ts",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "file": "tests/e2e/features/admin/",
+      "line": "—",
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "No E2E spec added for NotificationAmendmentCancelled, NotificationDeleted, or NotificationSubmissionDeleted, despite the backend PR (trade-imports-animals-backend#83) having full integration-test coverage for all three and the ticket's AC explicitly requiring both distinctions ('Cancelling an amendment emits NotificationAmendmentCancelled...'; 'Deleting distinguishes NotificationDeleted...from NotificationSubmissionDeleted...'). This repo's own one-spec-per-event pattern (outbox-event-created.spec.ts, outbox-event-amendment.spec.ts) was followed for 2 of the 5 new event types but not these 3.",
+      "fix": "Add outbox-event-amendment-cancelled.spec.ts and outbox-event-deleted.spec.ts (or extend an existing admin spec file) covering the cancel-amend and both delete transitions, using outbox-event-created.spec.ts as the template, mirroring the backend's NotificationIT coverage.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

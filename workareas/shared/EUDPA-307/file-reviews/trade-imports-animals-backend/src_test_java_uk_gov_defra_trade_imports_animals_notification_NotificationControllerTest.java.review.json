@@ -1,0 +1,21 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "7049086a3330be846dcd54e6f2d93919cfbf0474",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:49:16Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Mock signatures are correctly updated for the new service parameters, but the new traceId/actor pass-through the controller now performs for copy, cancel-amend and soft-delete is left unverified, unlike the equivalent submit/amend tests.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 327,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "CopyNotification, CancelAmendNotification and SoftDeleteNotification tests were updated to compile against the new copyNotification/cancelAmendNotification/softDeleteNotification(ref, traceId, actor) signatures with blanket any(), any() matchers, but none asserts the new HEADER_TRACE_ID -> correlationId or ActorRequest body -> actor wiring the controller now performs for these three endpoints",
+      "fix": "Add a dedicated pass-through test per endpoint (mirroring submit_shouldPassTraceIdAsCorrelationId at line 384 and amend_shouldPassTraceIdAsCorrelationId at line 494, or an argThat actor assertion like line 306) verifying the traceId header and actor request body are forwarded correctly for copy, cancel-amend and soft-delete"
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:03Z"
+}

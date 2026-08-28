@@ -1,0 +1,29 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "7049086a3330be846dcd54e6f2d93919cfbf0474",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:51:52Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New coverage for the created/amendment-requested/cancelled/deleted/versionId events is thorough and correct, but the resubmit-from-AMEND path (the other headline mis-mapping this ticket fixes) has no IT assertion of its NotificationSubmissionAmended event type, and one carried-over test's name now contradicts its own body.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1127,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "submitFromAmend_shouldClearSubmittedBaseline exercises the AMEND -> SUBMITTED resubmit path but never asserts the emitted outbox event type; no IT test in this file verifies that a resubmission emits NotificationSubmissionAmended, which is the second of the two mis-mapped transitions this ticket exists to fix and every other corrected/added transition got a dedicated envelope assertion in this diff",
+      "fix": "Add assertions (or a new test) verifying the outbox event written on resubmit from AMEND has eventType NotificationSubmissionAmended and the matching schemaUrl, mirroring amend_shouldWriteOutboxEventWithCorrectEnvelope's pattern for the SUBMITTED -> AMEND transition"
+    },
+    {
+      "id": 2,
+      "line": 977,
+      "severity": "Minor",
+      "category": "test-naming",
+      "issue": "submit_shouldReturn400_andEmitNothing_whenAReferencedPartyCannotBeResolved no longer matches its own body: a NOTIFICATION_CREATED event is now emitted on notification creation, and the test's own comment says so ('NOTIFICATION_CREATED was written when the draft was created'), contradicting the method name's 'andEmitNothing'",
+      "fix": "Rename to something like submit_shouldReturn400_andEmitNoSubmittedEvent_whenAReferencedPartyCannotBeResolved so the method name matches what it now asserts"
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:03Z"
+}

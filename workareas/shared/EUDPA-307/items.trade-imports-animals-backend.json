@@ -1,0 +1,143 @@
+{
+  "ticket": "EUDPA-307",
+  "repo": "trade-imports-animals-backend",
+  "items": [
+    {
+      "id": 1,
+      "line": 93,
+      "severity": "Minor",
+      "category": "duplication",
+      "issue": "Actor actor = actorRequest != null ? actorRequest.toActor() : null; is now repeated identically 7 times across the class (copy, cancelAmend, submit, amend, softDelete, post, replace) — this PR adds 3 more copies of the same one-liner",
+      "fix": "Extract a private ActorRequest -> Actor resolveActor(ActorRequest actorRequest) helper and call it from every endpoint",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 307,
+      "severity": "Major",
+      "category": "doc-comment-misattached",
+      "issue": "The DRAFT_GRADE_EVENTS field (+ its line comment) was inserted between the /** ... */ Javadoc block and the resolvedForOutbox method it documents, so the Javadoc now attaches to the field instead of the method — resolvedForOutbox is left with no doc comment, and DRAFT_GRADE_EVENTS carries a description ('The notification as every outbox event should carry it...') that has nothing to do with it.",
+      "fix": "Move the DRAFT_GRADE_EVENTS constant (with its own // line comment) above the Javadoc block, or below the resolvedForOutbox method, so the Javadoc sits immediately before the declaration it describes with no other declaration in between.",
+      "best_practice": "doc-comments/javadoc.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 294,
+      "severity": "Minor",
+      "category": "duplication",
+      "issue": "writeWithOutbox now re-derives 'is this a submission event' with an inline eventType == NOTIFICATION_SUBMITTED || eventType == NOTIFICATION_SUBMISSION_AMENDED check to decide whether to mint submittedAt, duplicating OutboxService.SUBMISSION_EVENT_WIRE_VALUES which encodes the same set for versionId — a third event ever added to one set and not the other silently desyncs submittedAt from versionId.",
+      "fix": "Expose the submission-event set once (e.g. a static predicate/EnumSet on OutboxEventType) and have both writeWithOutbox and OutboxService.computeVersionId consult it, so there is one place that defines which events represent a submission.",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 19,
+      "severity": "Major",
+      "category": "performance",
+      "issue": "countByAggregateIdAndEventTypeIn is a new derived query filtering on two fields (aggregateId, eventType), but OutboxEvent has no compound index covering that pair — only a single-field index on aggregateId and a compound aggregateId+aggregateVersion index. It is called synchronously on every OutboxService.appendEvent (now every lifecycle transition, not just 2), so Mongo will scan and filter every existing event for the aggregate in memory on each write.",
+      "fix": "Add a compound index on {aggregateId: 1, eventType: 1} on OutboxEvent (e.g. via @CompoundIndex), matching this repo's stated indexing best practice of matching indexes to derived-query filter fields when the query is added.",
+      "best_practice": "java/spring-boot.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventRepository.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 112,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "computeVersionId() only excludes NOTIFICATION_CREATED/NOTIFICATION_DELETED from the count; NOTIFICATION_EDITED (fired on every DRAFT/AMEND page save via replace(), out of this ticket's event catalogue) falls into the submission-carry-forward branch, so a draft edited before its first submission now emits versionId: 0 -- a value the schema's own semantics ('V1 on first submission') never produce. No test in the new VersionId nested class covers NOTIFICATION_EDITED.",
+      "fix": "Add NOTIFICATION_EDITED to NO_VERSION_ID_EVENTS (or otherwise special-case it) so a never-submitted draft omits versionId instead of emitting 0, and add a VersionId test for a NOTIFICATION_EDITED save with submissionCount 0.",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 1127,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "submitFromAmend_shouldClearSubmittedBaseline exercises the AMEND -> SUBMITTED resubmit path but never asserts the emitted outbox event type; no IT test in this file verifies that a resubmission emits NotificationSubmissionAmended, which is the second of the two mis-mapped transitions this ticket exists to fix and every other corrected/added transition got a dedicated envelope assertion in this diff",
+      "fix": "Add assertions (or a new test) verifying the outbox event written on resubmit from AMEND has eventType NotificationSubmissionAmended and the matching schemaUrl, mirroring amend_shouldWriteOutboxEventWithCorrectEnvelope's pattern for the SUBMITTED -> AMEND transition",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "line": 977,
+      "severity": "Minor",
+      "category": "test-naming",
+      "issue": "submit_shouldReturn400_andEmitNothing_whenAReferencedPartyCannotBeResolved no longer matches its own body: a NOTIFICATION_CREATED event is now emitted on notification creation, and the test's own comment says so ('NOTIFICATION_CREATED was written when the draft was created'), contradicting the method name's 'andEmitNothing'",
+      "fix": "Rename to something like submit_shouldReturn400_andEmitNoSubmittedEvent_whenAReferencedPartyCannotBeResolved so the method name matches what it now asserts",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "line": 51,
+      "severity": "Minor",
+      "category": "duplication",
+      "issue": "The 3-line stream().filter(e -> e.getEventType().endsWith(\"NotificationSubmitted\")).findFirst().orElseThrow() lookup is duplicated verbatim at lines 51-53 and 81-83 within the same test method.",
+      "fix": "Extract a small private helper, e.g. findSubmittedEvent(), and call it from both places.",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "line": 327,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "CopyNotification, CancelAmendNotification and SoftDeleteNotification tests were updated to compile against the new copyNotification/cancelAmendNotification/softDeleteNotification(ref, traceId, actor) signatures with blanket any(), any() matchers, but none asserts the new HEADER_TRACE_ID -> correlationId or ActorRequest body -> actor wiring the controller now performs for these three endpoints",
+      "fix": "Add a dedicated pass-through test per endpoint (mirroring submit_shouldPassTraceIdAsCorrelationId at line 384 and amend_shouldPassTraceIdAsCorrelationId at line 494, or an argThat actor assertion like line 306) verifying the traceId header and actor request body are forwarded correctly for copy, cancel-amend and soft-delete",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 10,
+      "line": 1960,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "copyNotification_shouldEmitNotificationCreated_forNewNotification asserts only that a NOTIFICATION_CREATED event fired; its own comment claims 'the source produces no event' but verify(outboxService).appendEvent(any(), eq(NOTIFICATION_CREATED), any(), any()) does not constrain total invocations on the mock, so a regression that also emits a different event type for the source aggregate would pass silently",
+      "fix": "Add verify(outboxService, times(1)).appendEvent(any(), any(), any(), any()) (or verifyNoMoreInteractions(outboxService)) after the existing verify to actually prove no event was emitted for the source aggregate, matching the AC 'a copy ... produces no event on that aggregate'",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 11,
+      "line": 1960,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "copyNotification_shouldEmitNotificationCreated_forNewNotification asserts only that a NOTIFICATION_CREATED event fired; its own comment claims 'the source produces no event' but verify(outboxService).appendEvent(any(), eq(NOTIFICATION_CREATED), any(), any()) does not constrain total invocations on the mock, so a regression also emitting a different event for the source aggregate would pass silently",
+      "fix": "Add verify(outboxService, times(1)).appendEvent(any(), any(), any(), any()) (or verifyNoMoreInteractions(outboxService)) after the existing verify to actually prove no event was emitted for the source aggregate",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+      "disposition": "Auto-Resolved",
+      "status": "—",
+      "notes": "Exact duplicate of item #10 (same file reviewer logged it twice); no separate action needed."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "7049086a3330be846dcd54e6f2d93919cfbf0474",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:49:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Test coverage correctly follows the corrected event-type mapping and new transitions, but one new test's no-event-for-source claim isn't actually enforced by its assertion.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1960,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "copyNotification_shouldEmitNotificationCreated_forNewNotification asserts only that a NOTIFICATION_CREATED event fired; its own comment claims 'the source produces no event' but verify(outboxService).appendEvent(any(), eq(NOTIFICATION_CREATED), any(), any()) does not constrain total invocations on the mock, so a regression that also emits a different event type for the source aggregate would pass silently",
+      "fix": "Add verify(outboxService, times(1)).appendEvent(any(), any(), any(), any()) (or verifyNoMoreInteractions(outboxService)) after the existing verify to actually prove no event was emitted for the source aggregate, matching the AC 'a copy ... produces no event on that aggregate'",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 1960,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "copyNotification_shouldEmitNotificationCreated_forNewNotification asserts only that a NOTIFICATION_CREATED event fired; its own comment claims 'the source produces no event' but verify(outboxService).appendEvent(any(), eq(NOTIFICATION_CREATED), any(), any()) does not constrain total invocations on the mock, so a regression also emitting a different event for the source aggregate would pass silently",
+      "fix": "Add verify(outboxService, times(1)).appendEvent(any(), any(), any(), any()) (or verifyNoMoreInteractions(outboxService)) after the existing verify to actually prove no event was emitted for the source aggregate",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:03Z"
+}

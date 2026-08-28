@@ -1,0 +1,21 @@
+{
+  "file": "tests/e2e/features/admin/outbox-event-created.spec.ts",
+  "repo": "trade-imports-animals-tests",
+  "commit": "abe3087fb11e7a4a49b96e3b6aeba1f6d307bb6d",
+  "pr": 126,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:49:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correctly tests the new NotificationCreated event's status/identifier/versionId shape but skips the envelope-level actor and metadata assertions the sibling submitted-event test makes for the same new actor-propagation behaviour",
+  "todos": [
+    {
+      "id": 1,
+      "line": 32,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "New NotificationCreated envelope test omits actor/_id/timestamp/correlationId assertions that the sibling NotificationSubmitted test (outbox-event-notification.spec.ts) makes for the same envelope, even though createNotification now passes actor through to writeWithOutbox (NotificationService.java createNotification -> OutboxEventType.NOTIFICATION_CREATED)",
+      "fix": "Assert doc.actor against the signed-in EXPECTED_ACTOR (as outbox-event-notification.spec.ts does), plus doc._id format, doc.timestamp instanceof Date, metadata.correlationId defined, and statusChanges[0].dateChanged, to cover the new actor-propagation behaviour this ticket introduces"
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:07Z"
+}

@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "7049086a3330be846dcd54e6f2d93919cfbf0474",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:50:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Transition-to-event mapping correctly implements the ticket's corrected catalogue and matches its test coverage, but a misplaced field orphans the resolvedForOutbox Javadoc and the submission-event check duplicates logic that also lives in OutboxService.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 307,
+      "severity": "Major",
+      "category": "doc-comment-misattached",
+      "issue": "The DRAFT_GRADE_EVENTS field (+ its line comment) was inserted between the /** ... */ Javadoc block and the resolvedForOutbox method it documents, so the Javadoc now attaches to the field instead of the method — resolvedForOutbox is left with no doc comment, and DRAFT_GRADE_EVENTS carries a description ('The notification as every outbox event should carry it...') that has nothing to do with it.",
+      "fix": "Move the DRAFT_GRADE_EVENTS constant (with its own // line comment) above the Javadoc block, or below the resolvedForOutbox method, so the Javadoc sits immediately before the declaration it describes with no other declaration in between.",
+      "best_practice": "doc-comments/javadoc.md"
+    },
+    {
+      "id": 2,
+      "line": 294,
+      "severity": "Minor",
+      "category": "duplication",
+      "issue": "writeWithOutbox now re-derives 'is this a submission event' with an inline eventType == NOTIFICATION_SUBMITTED || eventType == NOTIFICATION_SUBMISSION_AMENDED check to decide whether to mint submittedAt, duplicating OutboxService.SUBMISSION_EVENT_WIRE_VALUES which encodes the same set for versionId — a third event ever added to one set and not the other silently desyncs submittedAt from versionId.",
+      "fix": "Expose the submission-event set once (e.g. a static predicate/EnumSet on OutboxEventType) and have both writeWithOutbox and OutboxService.computeVersionId consult it, so there is one place that defines which events represent a submission."
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:03Z"
+}

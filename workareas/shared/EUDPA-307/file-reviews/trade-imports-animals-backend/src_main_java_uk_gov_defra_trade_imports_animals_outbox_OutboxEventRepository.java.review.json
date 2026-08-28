@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventRepository.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "7049086a3330be846dcd54e6f2d93919cfbf0474",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-08-28T14:49:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New two-field derived query (aggregateId, eventType) runs on every outbox write with no supporting compound index, per this repo's own indexing best practice.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 19,
+      "severity": "Major",
+      "category": "performance",
+      "issue": "countByAggregateIdAndEventTypeIn is a new derived query filtering on two fields (aggregateId, eventType), but OutboxEvent has no compound index covering that pair — only a single-field index on aggregateId and a compound aggregateId+aggregateVersion index. It is called synchronously on every OutboxService.appendEvent (now every lifecycle transition, not just 2), so Mongo will scan and filter every existing event for the aggregate in memory on each write.",
+      "fix": "Add a compound index on {aggregateId: 1, eventType: 1} on OutboxEvent (e.g. via @CompoundIndex), matching this repo's stated indexing best practice of matching indexes to derived-query filter fields when the query is added.",
+      "best_practice": "java/spring-boot.md"
+    }
+  ],
+  "reconciled_at": "2026-08-28T14:55:03Z"
+}

@@ -46,13 +46,14 @@ Do **not** introduce additional `gh-pages-*` git branches (one per PR, etc.) —
 
 ## 3. Retention is enforced in the shared cleanup workflow — don't opt out
 
-`gh-pages` retention is handled by `DEFRA/trade-imports-workspace/.github/workflows/cleanup-e2e-reports.yml`. Three jobs route by input:
+`gh-pages` retention is handled by `DEFRA/trade-imports-workspace/.github/workflows/cleanup-e2e-reports.yml`. It is a **single** `prune-and-truncate` job driven by a keep-list — not the three input-routed jobs an earlier revision of this document described:
 
-| Job | Trigger | Effect |
-|---|---|---|
-| `cleanup-branch` | PR closed (`head-ref` populated) | Deletes `e2e/<tag>/` **and** `lighthouse/<tag>/` for that branch. |
-| `cleanup-stale` | Daily schedule (`head-ref == ''`, `mode == ''`) | Deletes any `e2e/*/` or `lighthouse/*/` whose last commit is older than 7 days. |
-| `truncate-history` | Manual `workflow_dispatch` with `mode: truncate` (iteration 1) | Orphan-resets `gh-pages` history while preserving HEAD files — reclaims pack-size growth that HEAD-only pruning leaves behind. Promoted to a weekly schedule once the canary has been observed. |
+| Step | Effect |
+|---|---|
+| Prune | Builds a keep-list of `main` plus every open PR whose `updated_at` is inside a 21-day window, then deletes any `e2e/*/` or `lighthouse/*/` not on it. A `head-ref` input (passed on `pull_request: closed`) force-removes that tag from the keep-list so a just-closed PR's preview goes immediately. |
+| Orphan-reset | Rewrites `gh-pages` to a single commit preserving HEAD files, reclaiming the pack growth that HEAD-only pruning leaves behind. Runs every time, not on a separate trigger. |
+
+`main` is unconditionally on the keep-list. That is why the post-merge report at `e2e/main/` (section 7) survives the nightly prune — do not remove it.
 
 Per-repo callers stay thin:
 
@@ -114,6 +115,42 @@ We use `peaceiris/actions-gh-pages@v4` in two places (`e2e-tests.yml`, `lighthou
 `peaceiris/actions-gh-pages` is Marketplace-listed, actively maintained, and has been the de-facto community standard for years, but it is single-maintainer. The exit ramp is built into the cleanup workflow's `truncate-history` job, which uses plain `git` commands (no `peaceiris` call). If the action is ever abandoned, we can swap the publish step for a hand-rolled `git push` using the same primitives the cleanup job already exercises.
 
 Do not introduce additional third-party publish actions. Keep `peaceiris/actions-gh-pages@v4` everywhere it's used so the upgrade story stays one decision.
+
+---
+
+## 7. Main gets its own post-merge workflow, and it must be distinctly named
+
+A `workflow_run`-triggered workflow runs from the **default branch**, so its `head_branch` and `head_sha` are main's — regardless of which PR branch it actually tested. Every PR E2E run therefore stamps its check runs onto main's HEAD commit:
+
+```bash
+gh api repos/DEFRA/trade-imports-animals-tests/commits/<main-sha>/check-runs \
+  --jq '[.check_runs[].name]'
+# several complete sets of "e2e / e2e (1, 3)" … from unrelated PRs
+```
+
+Three rules follow.
+
+**Give the post-merge workflow its own file and its own job ids.** Check-run names on a commit are `<job-id> / <child-job-id>` — the workflow name does not appear. A post-merge workflow that reuses the PR path's `e2e` job id adds a second, indistinguishable set of `e2e / e2e (N, 3)` runs to the very SHA it is supposed to give a verdict on. Prefix them (`main-e2e`, `main-e2e-pending`, `main-e2e-report`) so the post-merge shards read `main-e2e / e2e (N, 3)`.
+
+**Publish the verdict as a commit status, not a check run.** Commit statuses are a separate namespace the PR path never writes into, so the status's presence at a SHA is unambiguous, and "failed" is distinguishable from "never ran":
+
+| At a main SHA | Meaning |
+|---|---|
+| no `main-e2e` status | never ran |
+| `pending` | running, or the run was lost |
+| `failure` / `error` | ran and failed |
+| `success` | ran and passed |
+
+It is also exactly the signal a required-status-check rule consumes, so a reporting-only workflow installs the hook a future blocking gate would need without blocking anything.
+
+**Chain off `Publish`, never `push: branches: [main]`.** A direct push trigger races the repo's own publish and would exercise the *previous* `:latest` image, so the merged code would never run.
+
+Two traps worth naming, both of which fail silently:
+
+- `.github/actions/report-e2e-status` iterates `context.payload.workflow_run.pull_requests`, which is **empty** on a main push. Reusing it in a post-merge workflow reports nothing at all. Write the reporting inline.
+- A hyphenated job id breaks dot syntax — `needs.main-e2e.result` parses as subtraction. Use `needs['main-e2e'].result`. `actionlint` catches this; run it.
+
+Reference implementation: `repos/trade-imports-animals-tests/.github/workflows/main-e2e-tests.yml`. Keep it inline per repo until a second repo adopts it — workspace composite actions are consumed unpinned at `@main` by eight repos, so a bug there ships everywhere at once.
 
 ---
 

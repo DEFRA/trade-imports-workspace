@@ -1,7 +1,14 @@
 import { describe, test, expect } from 'vitest'
-import { mkdtempSync, mkdirSync, symlinkSync, rmSync } from 'node:fs'
+import {
+  mkdtempSync,
+  mkdirSync,
+  symlinkSync,
+  rmSync,
+  readFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   REPOS,
   NODE_REPOS,
@@ -16,31 +23,40 @@ import {
   repoUrl
 } from './repos.js'
 
+// Read the roster independently of repos.js so these assertions test the
+// stack classification rather than restating a hardcoded list that goes stale
+// the next time a repo joins the workspace.
+const manifest = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../../../repos.json', import.meta.url)),
+    'utf8'
+  )
+)
+
+const manifestNamesWithStack = (stack) =>
+  manifest.repos
+    .filter((repo) => repo.stack === stack)
+    .map((repo) => repo.name)
+    .sort()
+
 describe('repo constants', () => {
   test('REPOS_DIR is "repos"', () => {
     expect(REPOS_DIR).toBe('repos')
   })
 
-  test('NODE_REPOS lists the six Node.js repos', () => {
-    expect([...NODE_REPOS].sort()).toEqual([
-      'trade-imports-animals-admin',
-      'trade-imports-animals-frontend',
-      'trade-imports-animals-tests',
-      'trade-imports-defra-id-stub',
-      'trade-imports-ins-frontend',
-      'trade-imports-schemas'
-    ])
+  test('NODE_REPOS is every manifest entry with stack "node"', () => {
+    expect([...NODE_REPOS].sort()).toEqual(manifestNamesWithStack('node'))
   })
 
-  test('JAVA_REPOS lists the six Java repos', () => {
-    expect([...JAVA_REPOS].sort()).toEqual([
-      'trade-imports-address-book',
-      'trade-imports-animals-backend',
-      'trade-imports-dynamics-gateway',
-      'trade-imports-ins-backend',
-      'trade-imports-reference-data',
-      'trade-imports-stub'
-    ])
+  test('JAVA_REPOS is every manifest entry with stack "java"', () => {
+    expect([...JAVA_REPOS].sort()).toEqual(manifestNamesWithStack('java'))
+  })
+
+  test('every manifest entry is classified as node or java', () => {
+    const unclassified = manifest.repos.filter(
+      (repo) => !['node', 'java'].includes(repo.stack)
+    )
+    expect(unclassified).toEqual([])
   })
 
   test('REPOS is the union of NODE_REPOS and JAVA_REPOS', () => {

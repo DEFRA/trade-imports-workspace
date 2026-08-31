@@ -150,7 +150,11 @@ Two traps worth naming, both of which fail silently:
 - `.github/actions/report-e2e-status` iterates `context.payload.workflow_run.pull_requests`, which is **empty** on a main push. Reusing it in a post-merge workflow reports nothing at all. Write the reporting inline.
 - A hyphenated job id breaks dot syntax — `needs.main-e2e.result` parses as subtraction. Use `needs['main-e2e'].result`. `actionlint` catches this; run it.
 
+**Never make a `workflow_run`-produced check a required status check.** GitHub attributes such a run to the default branch, so its checks are not reliably associated with a PR's head commit. Requiring the PR-side `E2E Tests` check deadlocks merges — the PR waits for a check that never arrives at the SHA being merged. If a repo needs a gate, require a pull request first; require checks only once the E2E signal reports against the PR head.
+
 Reference implementation: `repos/trade-imports-animals-tests/.github/workflows/main-e2e-tests.yml`. Keep it inline per repo until a second repo adopts it — workspace composite actions are consumed unpinned at `@main` by eight repos, so a bug there ships everywhere at once.
+
+Why this reports rather than blocks, and why `main` is still directly pushable, is recorded in [`docs/adr/0002-post-merge-e2e-reports-and-main-stays-pushable.md`](../adr/0002-post-merge-e2e-reports-and-main-stays-pushable.md).
 
 ---
 

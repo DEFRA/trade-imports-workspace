@@ -21,13 +21,14 @@ describe('repo constants', () => {
     expect(REPOS_DIR).toBe('repos')
   })
 
-  test('NODE_REPOS lists the five Node.js repos', () => {
+  test('NODE_REPOS lists the six Node.js repos', () => {
     expect([...NODE_REPOS].sort()).toEqual([
       'trade-imports-animals-admin',
       'trade-imports-animals-frontend',
       'trade-imports-animals-tests',
       'trade-imports-defra-id-stub',
-      'trade-imports-ins-frontend'
+      'trade-imports-ins-frontend',
+      'trade-imports-schemas'
     ])
   })
 

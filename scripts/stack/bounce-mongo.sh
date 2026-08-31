@@ -96,9 +96,13 @@ PORT_RELEASE_TIMEOUT_SECONDS="${MONGO_PORT_RELEASE_TIMEOUT_SECONDS:-30}"
 # the acceptance criteria have to survive.
 UP_ATTEMPTS="${MONGO_UP_ATTEMPTS:-6}"
 
-# The realistic failure exits the container within seconds, so this is a
-# ceiling for a hung start rather than the normal path. Six attempts at this
-# timeout stay well inside e2e-tests.yml's 30-minute job budget.
+# A ceiling for a hung start, not the normal path: the race exits the container
+# within seconds, so six attempts realistically cost well under two minutes
+# (mongo reports healthy in about 8s on the CI runners). Be honest about the
+# pathological case though — six genuinely hung starts plus backoff is around
+# nine minutes, which is a third of e2e-tests.yml's 30-minute job budget. That
+# is the trade for a retry budget that survives a ten-reseed soak; lower this
+# before lowering UP_ATTEMPTS if the ceiling ever bites.
 UP_WAIT_TIMEOUT_SECONDS="${MONGO_UP_WAIT_TIMEOUT_SECONDS:-90}"
 RETRY_BACKOFF_SECONDS="${MONGO_RETRY_BACKOFF_SECONDS:-2}"
 PRIMARY_TIMEOUT_SECONDS="${MONGO_PRIMARY_TIMEOUT_SECONDS:-60}"

@@ -143,6 +143,32 @@ npm run test:docker-compose
 `database:reseed` (called inside `test:docker-compose`) delegates to
 `scripts/stack/bounce-mongo.sh`. Errors out if the stack isn't up.
 
+### The reseed used to lose a race on port 27017
+
+`bounce-mongo.sh` force-recreates a *running* container, and compose would
+sometimes start the replacement before the outgoing mongod had released the
+published host port — mongod exited 48 with `Address already in use`, about
+one reseed in five on macOS / Docker Desktop, never yet seen on CI. Because
+the reseed runs first, that failed the whole suite before a single test ran.
+
+The script now removes the container and its anonymous volumes, waits for
+27017 to go quiet, then retries the `up` up to three times, and finally
+asserts the init scripts really re-seeded `test.test`. A genuine port
+conflict is diagnosed and fails fast instead of being retried.
+
+Each retry prints `MONGO_BOUNCE_RETRY attempt=<n>`. That marker is the way to
+find out whether the race also happens on the CI runners:
+
+```bash
+gh run view <run-id> --log | grep MONGO_BOUNCE_RETRY
+```
+
+Soak it locally with:
+
+```bash
+for i in $(seq 1 10); do echo "=== reseed $i ==="; ./scripts/stack/bounce-mongo.sh || break; done
+```
+
 ## Lifecycle scripts live in `scripts/stack/`
 
 - `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in

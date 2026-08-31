@@ -1,0 +1,324 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/amend-resubmit.spec.ts >> Amend resubmission >> resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept
+- Location: tests/e2e/features/amend-resubmit.spec.ts:14:3
+
+# Error details
+
+```
+Test timeout of 90000ms exceeded.
+```
+
+```
+Error: locator.fill: Test timeout of 90000ms exceeded.
+Call log:
+  - waiting for getByLabel('Enter the region of origin code', { exact: true })
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e3]:
+    - link "GOV.UK" [ref=e7] [cursor=pointer]:
+      - /url: https://www.gov.uk/
+      - img "GOV.UK" [ref=e8]
+    - region "Service information" [ref=e21]:
+      - generic [ref=e23]:
+        - link "Import notification service" [ref=e25] [cursor=pointer]:
+          - /url: /
+        - navigation "Menu" [ref=e26]:
+          - list [ref=e27]:
+            - listitem [ref=e28]:
+              - link "Dashboard" [ref=e29] [cursor=pointer]:
+                - /url: /
+                - strong [ref=e30]: Dashboard
+            - listitem [ref=e31]:
+              - link "Address book" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e33]:
+              - link "Manage account" [ref=e34] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e35]:
+              - link "Log out" [ref=e36] [cursor=pointer]:
+                - /url: /auth/sign-out
+  - generic [ref=e37]:
+    - paragraph [ref=e39]:
+      - strong [ref=e40]: Alpha
+      - generic [ref=e41]:
+        - text: This is a new service. Help us improve it and
+        - link "give your feedback by email" [ref=e42] [cursor=pointer]:
+          - /url: mailto:APHAServiceDesk@apha.gov.uk
+        - text: .
+    - link "Back" [ref=e43] [cursor=pointer]:
+      - /url: /notifications/GBN-AG-26-8CPVRR
+    - main [ref=e44]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - strong [ref=e48]: Draft
+          - text: GBN-AG-26-8CPVRR
+        - generic [ref=e49]: About the consignment
+        - heading "Origin of the import" [level=1] [ref=e50]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - generic [ref=e53]: Country of origin
+            - combobox "Country of origin" [ref=e54]:
+              - option "Select a country"
+              - option "──────────" [disabled]
+              - option "Austria"
+              - option "Belgium"
+              - option "Bulgaria"
+              - option "Croatia"
+              - option "Cyprus"
+              - option "Czechia"
+              - option "Denmark"
+              - option "Estonia"
+              - option "Finland"
+              - option "France" [selected]
+              - option "Germany"
+              - option "Greece"
+              - option "Hungary"
+              - option "Iceland"
+              - option "Ireland"
+              - option "Italy"
+              - option "Latvia"
+              - option "Liechtenstein"
+              - option "Lithuania"
+              - option "Luxembourg"
+              - option "Malta"
+              - option "Netherlands (the)"
+              - option "Norway"
+              - option "Poland"
+              - option "Portugal"
+              - option "Romania"
+              - option "Slovakia"
+              - option "Slovenia"
+              - option "Spain"
+              - option "Sweden"
+              - option "Switzerland"
+          - group "Does the consignment have a region of origin code?" [ref=e56]:
+            - generic [ref=e57]: Does the consignment have a region of origin code?
+            - generic [ref=e58]: If a region of origin code is required it will be shown on your health certificate.
+            - generic [ref=e59]:
+              - generic [ref=e60]:
+                - radio "Yes" [checked] [active] [ref=e61] [cursor=pointer]
+                - generic [ref=e62] [cursor=pointer]: "Yes"
+              - generic [ref=e64]:
+                - generic [ref=e65]: Region of origin code
+                - generic [ref=e66]: For example, FR-75
+                - textbox "Region of origin code" [ref=e67]
+              - generic [ref=e68]:
+                - radio "No" [ref=e69] [cursor=pointer]
+                - generic [ref=e70] [cursor=pointer]: "No"
+          - generic [ref=e71]:
+            - generic [ref=e72]: Your internal reference for this consignment (optional)
+            - generic [ref=e73]: Enter any internal reference you want to use to identify this consignment, or leave blank.
+            - textbox "Your internal reference for this consignment (optional)" [ref=e74]
+          - generic [ref=e75]:
+            - button "Save and continue" [ref=e76] [cursor=pointer]
+            - button "Save and return to hub" [ref=e77] [cursor=pointer]
+            - link "Cancel and return to hub" [ref=e78] [cursor=pointer]:
+              - /url: /notifications/GBN-AG-26-8CPVRR
+  - contentinfo [ref=e79]:
+    - generic [ref=e92]:
+      - generic [ref=e93]:
+        - heading "Support links" [level=2] [ref=e94]
+        - list [ref=e95]:
+          - listitem [ref=e96]:
+            - link "Privacy" [ref=e97] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/privacy-notice
+          - listitem [ref=e98]:
+            - link "Cookies" [ref=e99] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/cookies
+          - listitem [ref=e100]:
+            - link "Accessibility statement" [ref=e101] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/accessibility-statement
+        - img [ref=e102]
+        - generic [ref=e104]:
+          - text: All content is available under the
+          - link "Open Government Licence v3.0" [ref=e105] [cursor=pointer]:
+            - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+          - text: ", except where otherwise stated"
+      - link "© Crown copyright" [ref=e107] [cursor=pointer]:
+        - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1   | import type { PageObjects } from '@page-objects';
+  2   | import type { JourneyOptions } from '@domain/constants/journey-options';
+  3   | import { getRelativeAppDateText } from '@utils/date-utils';
+  4   | 
+  5   | export type JourneyContext = {
+  6   |   journeyId?: string;
+  7   |   referenceNumber?: string;
+  8   |   declarationDate?: string;
+  9   | };
+  10  | 
+  11  | const COUNTRY = 'France';
+  12  | const PORT = 'Aberdeen Harbour (GB ABD)';
+  13  | // Inside the arrival-date window (1 week back to 6 months ahead) wherever the
+  14  | // wall clock happens to be, in the unpadded d/m/yyyy the app itself renders —
+  15  | // so a CYA assertion compares against the app's shape, not the typed string it
+  16  | // happens to echo back.
+  17  | export const ARRIVAL_DATE = getRelativeAppDateText({ monthOffset: 1 });
+  18  | 
+  19  | export class Journey {
+  20  |   constructor(
+  21  |     private readonly pages: PageObjects,
+  22  |     private readonly context: JourneyContext,
+  23  |   ) {}
+  24  | 
+  25  |   async toSignIn(open: (attemptSignIn: boolean) => Promise<void>): Promise<void> {
+  26  |     await open(false);
+  27  |   }
+  28  | 
+  29  |   async toNotificationDashboard(): Promise<void> {
+  30  |     await this.pages.notificationDashboard.open();
+  31  |     await this.pages.notificationDashboard.heading.waitFor();
+  32  |   }
+  33  | 
+  34  |   private async createNotificationAtOrigin(): Promise<string> {
+  35  |     await this.toNotificationDashboard();
+  36  |     await this.pages.notificationDashboard.btnCreateNewNotification.click();
+  37  |     await this.pages.originOfImport.heading.waitFor();
+  38  |     const journeyId = this.pages.originOfImport.journeyIdFromUrl();
+  39  |     this.context.journeyId = journeyId;
+  40  |     this.context.referenceNumber = journeyId;
+  41  |     return journeyId;
+  42  |   }
+  43  | 
+  44  |   // Origin is the journey entry: the entry guard holds a new notification there
+  45  |   // until it is answered, so reaching the overview means answering it.
+  46  |   async startNotification(): Promise<string> {
+  47  |     const journeyId = await this.createNotificationAtOrigin();
+  48  |     await this.fillOriginOfImport();
+  49  |     await this.saveOriginOfImport();
+  50  |     await this.pages.overview.open(journeyId);
+  51  |     await this.pages.overview.heading.waitFor();
+  52  |     return journeyId;
+  53  |   }
+  54  | 
+  55  |   // Origin unanswered, as a brand-new notification first shows it.
+  56  |   async toOriginOfImport(): Promise<void> {
+  57  |     await this.createNotificationAtOrigin();
+  58  |   }
+  59  | 
+  60  |   async fillOriginOfImport(options: JourneyOptions = {}): Promise<void> {
+  61  |     await this.pages.originOfImport.selectCountry(COUNTRY);
+  62  |     const requiresRegionCode = options.requiresRegionCode ?? 'No';
+  63  |     await this.pages.originOfImport.radioRequiresOriginCode(requiresRegionCode).check();
+  64  |     if (requiresRegionCode === 'Yes') {
+> 65  |       await this.pages.originOfImport.regionCode.fill('75');
+      |                                                  ^ Error: locator.fill: Test timeout of 90000ms exceeded.
+  66  |     }
+  67  |     if (options.internalReference) {
+  68  |       await this.pages.originOfImport.internalReference.fill(options.internalReference);
+  69  |     }
+  70  |   }
+  71  | 
+  72  |   async saveOriginOfImport(): Promise<void> {
+  73  |     await this.pages.originOfImport.saveAndContinue.click();
+  74  |   }
+  75  | 
+  76  |   async answerOrigin(options: JourneyOptions = {}): Promise<void> {
+  77  |     await this.pages.overview.task('Where is this consignment coming from?').click();
+  78  |     await this.fillOriginOfImport(options);
+  79  |     await this.saveOriginOfImport();
+  80  |     await this.pages.overview.heading.waitFor();
+  81  |   }
+  82  | 
+  83  |   async answerCommodity(): Promise<void> {
+  84  |     await this.pages.overview.task('What are you importing?').click();
+  85  |     await this.pages.commoditySelection.selectSpecies(['Bos taurus']);
+  86  |     await this.pages.commoditySelection.saveAndContinue.click();
+  87  |     await this.pages.consignmentDetails.heading.waitFor();
+  88  |     await this.pages.consignmentDetails.numberOfAnimals.fill('1');
+  89  |     await this.pages.consignmentDetails.numberOfPackages.fill('5');
+  90  |     await this.pages.consignmentDetails.saveAndContinue.click();
+  91  |     await this.pages.overview.heading.waitFor();
+  92  |   }
+  93  | 
+  94  |   async answerAnimalIdentification(): Promise<void> {
+  95  |     await this.pages.overview.task('Animal identification details').click();
+  96  |     await this.pages.animalIdentification.earTag.fill('UK123456789012');
+  97  |     await this.pages.animalIdentification.saveAndFinish.click();
+  98  |     await this.pages.overview.heading.waitFor();
+  99  |   }
+  100 | 
+  101 |   async answerReasonAndAdditionalDetails(): Promise<void> {
+  102 |     await this.pages.overview.task('Main reason for importing').click();
+  103 |     await this.pages.importReason.reason('Internal market').check();
+  104 |     await this.pages.importReason.saveAndContinue.click();
+  105 |     await this.pages.importPurpose.heading.waitFor();
+  106 |     await this.pages.importPurpose.purpose('Breeding').check();
+  107 |     await this.pages.importPurpose.saveAndContinue.click();
+  108 |     await this.pages.additionalDetails.heading.waitFor();
+  109 |     await this.pages.additionalDetails.certifiedFor('Slaughter').check();
+  110 |     await this.pages.additionalDetails.containsUnweanedAnimals('No').check();
+  111 |     await this.pages.additionalDetails.saveAndContinue.click();
+  112 |     await this.pages.overview.heading.waitFor();
+  113 |   }
+  114 | 
+  115 |   async unlockSections(): Promise<void> {
+  116 |     await this.answerCommodity();
+  117 |   }
+  118 | 
+  119 |   async toAccompanyingDocuments(): Promise<void> {
+  120 |     await this.startNotification();
+  121 |     await this.unlockSections();
+  122 |     await this.pages.overview.task('Uploaded documents').click();
+  123 |     await this.pages.accompanyingDocuments.heading.waitFor();
+  124 |   }
+  125 | 
+  126 |   async fillAddressesToCph(): Promise<void> {
+  127 |     await this.pages.overview.task('Roles and addresses').click();
+  128 |     const parties = [
+  129 |       ['Consignor or exporter', 'Astra Rosales', 'consignorSelection'],
+  130 |       ['Place of destination', 'Tech Imports Ltd', 'destinationSelection'],
+  131 |       ['Place of origin', 'Origin Farm', 'placeOfOriginSelection'],
+  132 |       ['Consignee', 'British Livestock Ltd', 'consigneeSelection'],
+  133 |       ['Importer', 'Import Co UK', 'importerSelection'],
+  134 |     ] as const;
+  135 |     for (const [role, name, picker] of parties) {
+  136 |       await this.pages.addresses.addParty(role).click();
+  137 |       await this.pages[picker].select(name);
+  138 |       await this.pages[picker].saveAndContinue.click();
+  139 |       await this.pages.addresses.heading.waitFor();
+  140 |     }
+  141 |     await this.pages.addresses.continueButton.click();
+  142 |     await this.pages.cphNumber.heading.waitFor();
+  143 |   }
+  144 | 
+  145 |   async answerAddresses(): Promise<void> {
+  146 |     await this.fillAddressesToCph();
+  147 |     await this.pages.cphNumber.cphNumber.fill('12/345/6789');
+  148 |     await this.pages.cphNumber.saveAndContinue.click();
+  149 |     await this.pages.overview.heading.waitFor();
+  150 |   }
+  151 | 
+  152 |   async fillArrivalDetails(means: string = 'Road Vehicle'): Promise<void> {
+  153 |     await this.pages.arrivalDetails.fillArrivalDate(ARRIVAL_DATE);
+  154 |     await this.pages.arrivalDetails.selectPort(PORT);
+  155 |     await this.pages.page.getByRole('radio', { name: means, exact: true }).check();
+  156 |     await this.pages.arrivalDetails.transportIdentification.fill('FR-892-LK');
+  157 |     await this.pages.arrivalDetails.transportDocumentReference.fill('CMR-2026-884721');
+  158 |   }
+  159 | 
+  160 |   // Re-navigate from the hub to the transporter-type page within an already
+  161 |   // unlocked journey. The page itself saves through unfilled; it is filled
+  162 |   // because a road vehicle keeps transited countries in scope, which is
+  163 |   // answered on the way.
+  164 |   async reachTransporterFromHub(): Promise<void> {
+  165 |     await this.pages.overview.task('Arrival details').click();
+```

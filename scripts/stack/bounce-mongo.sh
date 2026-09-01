@@ -29,6 +29,13 @@ UP_ATTEMPTS="${MONGO_UP_ATTEMPTS:-6}"
 UP_WAIT_TIMEOUT_SECONDS="${MONGO_UP_WAIT_TIMEOUT_SECONDS:-90}"
 RETRY_BACKOFF_SECONDS="${MONGO_RETRY_BACKOFF_SECONDS:-2}"
 PRIMARY_TIMEOUT_SECONDS="${MONGO_PRIMARY_TIMEOUT_SECONDS:-60}"
+DEPENDENT_WAIT_TIMEOUT_SECONDS="${MONGO_DEPENDENT_WAIT_TIMEOUT_SECONDS:-120}"
+
+DEPENDENT_PROFILE_ARGS=()
+for _profile in "${ALL_PROFILES[@]}"; do
+  DEPENDENT_PROFILE_ARGS+=(--profile "$_profile")
+done
+unset _profile
 
 # Logged by the entrypoint only when it ran the init scripts, i.e. only on a
 # fresh volume.
@@ -164,6 +171,44 @@ assert_seeded() {
   printf '%sSeed verified (test.test has %s document(s)).%s\n' "$COLOUR_GREEN" "$count" "$COLOUR_RESET"
 }
 
+# These build their Mongo collections and indexes once, at startup. Wiping the
+# volume underneath a running service deletes that state and nothing rebuilds
+# it, so the rest of the run has no unique indexes and creates collections
+# lazily inside transactions — the WriteConflict of EUDPA-356. Restart them.
+MONGO_DEPENDENT_SERVICES=(
+  trade-imports-animals-backend
+  trade-imports-ins-backend
+  trade-imports-address-book
+)
+
+running_mongo_dependents() {
+  local svc running
+  running="$(docker compose "${COMPOSE_FILES[@]}" "${DEPENDENT_PROFILE_ARGS[@]}" \
+    ps --services --status running 2>/dev/null || true)"
+  for svc in "${MONGO_DEPENDENT_SERVICES[@]}"; do
+    case "$running" in
+      *"$svc"*) printf '%s\n' "$svc" ;;
+    esac
+  done
+}
+
+restart_mongo_dependents() {
+  local services=()
+  while IFS= read -r svc; do
+    [ -n "$svc" ] && services+=("$svc")
+  done < <(running_mongo_dependents)
+
+  if [ ${#services[@]} -eq 0 ]; then
+    return 0
+  fi
+
+  printf '%sRebuilding startup Mongo state: %s%s\n' \
+    "$COLOUR_BOLD" "${services[*]}" "$COLOUR_RESET"
+  docker compose "${COMPOSE_FILES[@]}" "${DEPENDENT_PROFILE_ARGS[@]}" \
+    up --force-recreate --wait --wait-timeout "$DEPENDENT_WAIT_TIMEOUT_SECONDS" \
+    "${services[@]}"
+}
+
 main() {
   local branch="${1:-${STACK_BRANCH:-}}"
   stage_init_scripts "$branch"
@@ -176,6 +221,7 @@ main() {
   wait_for_primary
   assert_volume_was_wiped
   assert_seeded
+  restart_mongo_dependents
 }
 
 # Sourced by bounce-mongo.test.sh; only bounce when executed directly.

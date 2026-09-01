@@ -1,0 +1,19 @@
+h2. Increment
+
+{{inc-077}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 picks the country of origin by typing into a search box that offers matches as you type. The frontend makes the user open a dropdown and scroll a fixed alphabetical list, with no way to type.
+
+h2. Acceptance criteria
+
+* The country of origin control on the origin page is a full-width search input, labelled as it is today, in place of the current {{govukSelect}} at {{src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22}}.
+* Typing in the box filters a results list shown under it, and the number of matches is announced to screen readers through an aria-live region.
+* Choosing a result leaves the chosen country name visible in the search box and writes the country into the hidden value field named {{countryOfOrigin}}, so the submitted value is unchanged from today.
+* With JavaScript off the control still works: it falls back to a select or a server-rendered results page, never a bare text input.
+* The list searched is the one already supplied by the frontend's countries service, assembled in {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61}}. Growing that list to match Design release 1 is argued separately in {{inc-081}} and is out of scope here.
+* The chosen country is readable by the region of origin code field, so that field's prefix can be derived from it (see {{inc-079}}).
+* Unit tests cover filtering, choosing a result and the no-JavaScript fallback, and the end-to-end specs and visual baselines for the origin page are updated to match.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,28 @@
+h2. Increment
+
+{{inc-080}} from the {{shared/dr1-parity-union}} backlog.
+
+Frontend lets a user answer Yes to the region of origin question and continue with the code box left empty. Design release 1 holds them on the page until they enter it.
+
+The revealed code box is checked for length and nothing else. The origin page's rule set requires a country, accepts either answer to the region question, applies a maximum-length rule to the code and two rules to the internal reference — there is no presence rule for the code at all ({{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-86}}). So a user can select Yes, leave the box empty, press Save and continue, and reach the next page having recorded no region of origin code, with no message anywhere on the way.
+
+The user is still stopped later — {{regionOfOriginCode}} is already mandatory whenever the requirement is Yes ({{src/server/app/sets/live-animals/obligations/sections/origin.js:27-36}}), so the origin task row never reaches Fulfilled and the notification cannot be submitted. They are simply never told why, and never at the point of the mistake. This is a page-level validator change, not a model change.
+
+h2. Acceptance criteria
+
+* Submitting the origin page with Yes selected for the region of origin question and the code box empty holds the user on the page and does not commit or redirect.
+* That submission re-renders the page with an error summary and the message "Enter the region of origin code" both in the summary and against the code field, with the summary link moving focus into the box.
+* The new presence rule fires only when the region of origin question is answered Yes. The No branch is unchanged and asks nothing.
+* The message "Enter the region of origin code" is added to the origin feature's copy alongside the maximum-length message already there ({{src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js:21-26}}).
+* The obligation at {{src/server/app/sets/live-animals/obligations/sections/origin.js:27-36}} is not touched — it is already correct.
+* Existing origin page behaviour is unchanged: the country presence rule, the code maximum-length rule and the internal reference rules all still fire as before.
+
+h2. Notes
+
+Travels with {{inc-079}} — both change the same revealed code field and the same validator. The presence rule should be written against whichever value the field ends up collecting.
+
+Falsified by: submitting {{fe-origin}} with Yes selected and the code box empty and being held on the page with an error today.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

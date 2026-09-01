@@ -1,0 +1,135 @@
+{
+  "id": "inc-077",
+  "type": "add-field",
+  "milestone": null,
+  "domain": "origin",
+  "title": "DR1 picks the country of origin by typing into a search box that offers matches as you type; the frontend makes the user open a dropdown and scroll a fixed list.",
+  "detail": "Country of origin is a govukSelect about a third of the content width. The closed control reads 'Select a country' and opening it gives one long alphabetical list with a divider rule — a disabled row of dashes — under the placeholder. There is no way to type. The user scrolls (src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22), and the options themselves are assembled in the origin controller (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61).\n\nDR1 renders a full-width search input with the placeholder 'Search for a country' and a magnifying-glass button. Typing filters a results list that appears under the box, and choosing a result writes the country into a hidden field and leaves its name sitting visibly in the box — the captured revealed state shows 'France' in the search box; a live region announces the match count to screen readers. The list it searches carries regions as well as states, so 'Spain' surfaces Spain, Canary Islands, Ceuta and Melilla together (app/views/origin-of-the-import.html:53-98).\n\nReplace the select with the same search-and-choose control DR1 uses: a full-width search input labelled as now, a results list that filters as the user types, and the chosen country left visible in the box. Keep a no-JavaScript fallback: DR1's control degrades to a bare text input, which the real service cannot ship, so the fallback has to be a select or a server-rendered results page. The frontend also has to grow the underlying list to match DR1, and it is worth doing that first — a search box over 31 entries buys less than a search box over the 41 DR1 offers — though that sequencing is not agreed. The second run read the differing country lists as fixture data on both sides and scoped its version of this finding to the control alone, on the reasoning that both sides simply read a list and what is at stake here is how the user reaches an entry in it; the lists themselves are argued separately in inc-081. Either way, the country the user picks has to be readable by the region-of-origin code field, because DR1 derives that field's prefix from the chosen country (inc-079), so build the picker so that choosing a country can drive the prefix. Nothing has to land before the control change itself: the country list is already in the frontend's countries service.\n\nFALSIFIED BY: Finding that DR1's country of origin renders as a plain select for a DR1 session, with the search module mounted only under a design-release-2 flag.",
+  "screens": [
+    "fe-origin",
+    "dr1-origin-of-the-import"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22",
+    "prototype": "app/views/origin-of-the-import.html:53-98"
+  },
+  "confidence": "high",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "Country of origin is a govukSelect about a third of the content width. The closed control reads 'Select a country' and opening it gives one long alphabetical list with a divider rule — a disabled row of dashes — under the placeholder. There is no way to type. The user scrolls (src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22), and the options themselves are assembled in the origin controller (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61).",
+    "prototype": "DR1 renders a full-width search input with the placeholder 'Search for a country' and a magnifying-glass button. Typing filters a results list that appears under the box, and choosing a result writes the country into a hidden field and leaves its name sitting visibly in the box — the captured revealed state shows 'France' in the search box; a live region announces the match count to screen readers. The list it searches carries regions as well as states, so 'Spain' surfaces Spain, Canary Islands, Ceuta and Melilla together (app/views/origin-of-the-import.html:53-98).",
+    "difference": "Replace the select with the same search-and-choose control DR1 uses: a full-width search input labelled as now, a results list that filters as the user types, and the chosen country left visible in the box. Keep a no-JavaScript fallback: DR1's control degrades to a bare text input, which the real service cannot ship, so the fallback has to be a select or a server-rendered results page. The frontend also has to grow the underlying list to match DR1, and it is worth doing that first — a search box over 31 entries buys less than a search box over the 41 DR1 offers — though that sequencing is not agreed. The second run read the differing country lists as fixture data on both sides and scoped its version of this finding to the control alone, on the reasoning that both sides simply read a list and what is at stake here is how the user reaches an entry in it; the lists themselves are argued separately in inc-081. Either way, the country the user picks has to be readable by the region-of-origin code field, because DR1 derives that field's prefix from the chosen country (inc-079), so build the picker so that choosing a country can drive the prefix. Nothing has to land before the control change itself: the country list is already in the frontend's countries service.",
+    "correction": "Verified sound on both sides, from the pictures and the markup. evidence/frontend@76a864ba/page/fe-origin.png shows a closed govukSelect reading 'Select a country'; evidence/prototype@491b3926/page/dr1-origin-of-the-import.png shows a text input with the placeholder 'Search for a country' and a blue magnifying-glass button. The root DR1 view mounts the search module unconditionally — data-module='app-country-search' at app/views/origin-of-the-import.html:55, the country data and prefix data inlined as JSON at :57-58, the hidden value field at :94 and the aria-live status region at :97 — so the falsifier does not fire: there is no design-release branch on that control. The frontend's captured select carries the placeholder, a disabled divider rule and 31 options and no text entry of any kind. HOW CHECKED: read both screenshots; read both templates; read the captured DOM for both controls. The second run settled two further points of record. How the picked country is stored: in the captured revealed-state DOM the search input still serialises as value=\"\" and it is the hidden <input name=\"countryOfOrigin\"> beside it that carries value=\"France\", because the picker writes the visible box through the DOM property rather than the attribute, so the screenshot rather than the markup is the evidence that 'France' shows in the box. And whether the list contents belong in this finding at all: DR1's picker data carries a parent country per territory, but every territory label already ends in its parent's name ('Azores (Portugal)', 'French Guiana (France)'), so parent matching finds nothing a plain label search would miss (app/assets/javascripts/country-search.js:35-41) and only tiers the sort order.",
+    "falsifiedBy": "Finding that DR1's country of origin renders as a plain select for a DR1 session, with the search module mounted only under a design-release-2 flag.",
+    "verification": "Read both rendered DOMs (capture/html/frontend/fe-origin.html, capture/html/prototype/dr1-origin-of-the-import.html and the region-revealed prototype capture) and opened both page shots at 2x. Ran the falsifier: grep for type=\"search\" in fe-origin.html returns 0 matches, and the only country control there is <select class=\"govuk-select\" id=\"countryOfOrigin\">. Read the cited template.njk:15-22 and origin-of-the-import.html:45-98. CORRECT.",
+    "relatedTo": [
+      {
+        "id": "inc-081",
+        "relation": "travels-with",
+        "why": "the control and the list it searches are one piece of work"
+      },
+      {
+        "id": "inc-079",
+        "relation": "travels-with",
+        "why": "Design release 1 derives the region-of-origin code prefix from the country chosen in this control, so the two changes share the same answer."
+      }
+    ]
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk",
+      "lines": {
+        "start": 15,
+        "end": 22
+      },
+      "ranges": [
+        {
+          "start": 15,
+          "end": 22
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:15-22",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/views/origin-of-the-import.html",
+      "lines": {
+        "start": 53,
+        "end": 98
+      },
+      "ranges": [
+        {
+          "start": 53,
+          "end": 98
+        }
+      ],
+      "asWritten": "app/views/origin-of-the-import.html:53-98",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
+      "lines": {
+        "start": 57,
+        "end": 61
+      },
+      "ranges": [
+        {
+          "start": 57,
+          "end": 61
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:57-61",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    }
+  ],
+  "corpus": "dr1",
+  "slice": "origin-and-reason",
+  "source": "origin-and-reason--country-of-origin-is-a-dropdown-not-a-search.json",
+  "controls": [
+    "countryOfOrigin"
+  ],
+  "provenance": {
+    "sourceA": "inc-082",
+    "sourceC": "inc-072",
+    "origin": "both",
+    "note": "Both: country of origin is a scroll-only select in the frontend, a type-to-filter search box in DR1. A goes further — it describes the hidden value field, the aria-live match-count announcement, and flags that DR1's control degrades to a bare text input so the real service needs a no-JS fallback (select or server-rendered results page). C says nothing about JavaScript degradation, which is the one thing on this finding that could sink the ticket.",
+    "better": "A",
+    "judged": null
+  },
+  "ticket": "EUDPA-362",
+  "branch": "feat/EUDPA-362-dr1-picks-the-country-of-origin-by-typin"
+}

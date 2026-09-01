@@ -1,0 +1,28 @@
+test(EUDPA-362): drive the country of origin type-ahead
+
+The frontend swapped the country of origin govukSelect for the shared
+accessible-autocomplete type-ahead, so `select#countryOfOrigin` no longer
+exists once the page is enhanced: the enhancement moves that id onto the
+enhanced input and renames the select "countryOfOrigin-select". Every E2E
+journey that answers origin timed out in beforeEach on the old locator, which
+took the origin, transporter, transited-countries, admin and INS specs down
+with it.
+
+- Origin page object: `countryOfOrigin` resolves `#countryOfOrigin`, which is
+  the enhanced input with JavaScript and the select without it; `selectCountry`
+  asks the element what it is and either picks an option or types and chooses a
+  match. Adds `countrySelect` for the native select that still submits the code,
+  and `countryOption` for a match in the results list.
+- The country-of-origin spec now exercises the type-ahead — filtering as you
+  type, the chosen country left visible in the box, the code submitted and
+  persisted — and asserts the full option list on the fallback select, which is
+  32 entries now the scroll-only divider rule is gone. Renamed to match.
+- The error-state a11y scan asserts the empty starting value instead of picking
+  a blank option that a type-ahead does not offer.
+- Refreshed the Linux origin-of-import visual baseline for the new hint and
+  search box. The macOS baseline still needs a refresh on a Mac, as in EUDPA-353.
+
+Increment inc-077 of the DR1 parity backlog. EUDPA-362.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01DVyVqTcvozW3LC5d1zo6Zj

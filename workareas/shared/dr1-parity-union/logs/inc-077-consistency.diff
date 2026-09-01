@@ -1,0 +1,428 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index ccf22691..8659a8b3 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -111,8 +111,30 @@ const FIXTURE_REGION_CODE_SUFFIX = values.regionOfOriginCode.slice(
+   values.countryOfOrigin.length + REGION_CODE_SEPARATOR.length
+ )
+ 
++const COUNTRY_ENHANCEMENT_TIMEOUT_MS = 5000
++
++// Country of origin is a type-ahead (accessible-autocomplete) enhancing a
++// native <select>. The enhancement renames the select with a "-select" suffix,
++// so that rename is the signal it has run. A page served without JavaScript
++// never grows one, and the wait running out is that answer, not a failure.
++const countryTypeAheadReady = (page) =>
++  page
++    .locator('select#countryOfOrigin-select')
++    .waitFor({ state: 'attached', timeout: COUNTRY_ENHANCEMENT_TIMEOUT_MS })
++    .then(() => true)
++    .catch(() => false)
++
++// Drive the type-ahead the way a user does: type to filter, then pick the
++// match. Without JavaScript the field stays the select, chosen by its label.
+ export const chooseCountryOfOrigin = async (page, name = FIXTURE_COUNTRY) => {
+-  await page.getByLabel('Country of origin').selectOption({ label: name })
++  if (!(await countryTypeAheadReady(page))) {
++    await page.locator('select#countryOfOrigin').selectOption({ label: name })
++    return
++  }
++  const field = page.getByLabel('Country of origin', { exact: true })
++  await field.click()
++  await field.fill(name)
++  await page.getByRole('option', { name, exact: true }).click()
+ }
+ 
+ export const answerOriginEntry = async (page) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js
+index 3cfc1542..2fd300ee 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js
+@@ -55,7 +55,11 @@ test.describe('notification-actions feature', () => {
+     })
+     await expect(origin).toContainText(hubCopy.statuses.completed)
+     await origin.getByRole('link', { name: hubCopy.rows.origin.title }).click()
+-    await expect(page.getByLabel('Country of origin')).toHaveValue('FR')
++    // The country picker is a type-ahead over a native select: the visible box
++    // holds the country name, the hidden select still carries the code.
++    await expect(page.locator('select#countryOfOrigin-select')).toHaveValue(
++      'FR'
++    )
+   })
+ 
+   test('copy leaves both source and copied notifications on the dashboard', async ({
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+index 06b481be..01f971ad 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+@@ -106,9 +106,11 @@ const formValuesFromAnswers = (answers) => ({
+   internalReferenceNumber: answers.internalReferenceNumber ?? ''
+ })
+ 
++// The list feeds a type-ahead that enhances this select, so it carries only the
++// placeholder and the real countries — a scroll-only list needed a divider rule
++// under the placeholder, a searchable one does not.
+ const countryItems = () => [
+   { value: '', text: copy.country.placeholder },
+-  { value: '', text: '──────────', disabled: true },
+   ...countries.originCountries()
+ ]
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+index 207f89b2..14fa0826 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+@@ -201,13 +201,19 @@ describe('GET /origin — server-rendered select data (no-JS path)', () => {
+   })
+   beforeEach(() => store.clear())
+ 
+-  it('Should supply the placeholder, divider and full country list to the select', async () => {
++  it('Should supply the placeholder and full country list to the select', async () => {
+     const result = await driveHandler(get)
+     const items = result.view.context.countryItems
+     expect(items[0]).toEqual({ value: '', text: 'Select a country' })
+-    expect(items[1]).toEqual({ value: '', text: '──────────', disabled: true })
+     expect(items).toContainEqual({ value: 'FR', text: 'France' })
+   })
++
++  it('Should offer no unselectable filler rows for the type-ahead to search', async () => {
++    const result = await driveHandler(get)
++    const items = result.view.context.countryItems
++    expect(items.filter((item) => item.disabled)).toEqual([])
++    expect(items.filter((item) => item.value === '')).toHaveLength(1)
++  })
+ })
+ 
+ describe('POST /origin — country membership follows the primed list', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+index 1f4fc3ce..6fc4a7fb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+@@ -3,7 +3,9 @@ export const copy = {
+   title: 'Tarddiad y mewnforyn',
+   country: {
+     label: 'Gwlad tarddiad',
+-    placeholder: 'Dewiswch wlad'
++    hint: 'Dechreuwch deipio i chwilio am wlad.',
++    placeholder: 'Dewiswch wlad',
++    noResults: 'Dim gwledydd wedi’u darganfod'
+   },
+   regionRequirement: {
+     legend: 'A oes gan y llwyth god rhanbarth tarddiad?',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+index 0a22afc4..a269101d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+@@ -2,7 +2,9 @@ export const copy = {
+   title: 'Origin of the import',
+   country: {
+     label: 'Country of origin',
+-    placeholder: 'Select a country'
++    hint: 'Start typing to search for a country.',
++    placeholder: 'Select a country',
++    noResults: 'No countries found'
+   },
+   regionRequirement: {
+     legend: 'Does the consignment have a region of origin code?',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+index a91a7975..1afc7f78 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+@@ -11,9 +11,18 @@ import { signIn } from '../../../../../../../../../fit/sign-in.js'
+ const france = countriesOrigin.find(({ code }) => code === 'FR')
+ const ireland = countriesOrigin.find(({ code }) => code === 'IE')
+ 
++// accessible-autocomplete enhances the native <select>: the visible combobox
++// input keeps the original id and holds the country name, and the native select
++// is hidden and renamed with a "-select" suffix (it still submits the code).
++const countryInput = 'input#countryOfOrigin'
++const countryHidden = 'select#countryOfOrigin-select'
++
+ const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
+ const INTERNAL_REFERENCE_MAX_LENGTH = 58
+ 
++const countryField = (page) =>
++  page.getByLabel(copy.country.label, { exact: true })
++
+ const startAtOrigin = async (page) => {
+   await page.goto('/')
+   await page
+@@ -24,11 +33,19 @@ const startAtOrigin = async (page) => {
+   await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+ }
+ 
+-const fillOriginAnswers = async (
+-  page,
+-  { country = france.code, regionCode }
+-) => {
+-  await page.getByLabel(copy.country.label).selectOption(country)
++// Pick a country from the enhanced type-ahead, the way a user does: type part
++// of the name to filter, then pick the match. The combobox is addressed by its
++// own selector rather than by label, because the label points at the native
++// select until the client bundle has swapped the type-ahead in.
++const chooseCountry = async (page, { name }) => {
++  const field = page.locator(countryInput)
++  await field.click()
++  await field.fill(name)
++  await page.getByRole('option', { name, exact: true }).click()
++}
++
++const fillOriginAnswers = async (page, { country = france, regionCode }) => {
++  await chooseCountry(page, country)
+   await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
+   await page.getByLabel(copy.regionCode.label, { exact: true }).fill(regionCode)
+ }
+@@ -62,7 +79,11 @@ test.describe('origin feature', () => {
+   test('renders the captured MDM country options and feature copy', async ({
+     page
+   }) => {
+-    await expect(page.getByLabel(copy.country.label)).toBeVisible()
++    // The enhancement has run once the native select has been renamed, and the
++    // country label then names the search box rather than the select.
++    await expect(page.locator(countryHidden)).toBeAttached()
++    await expect(countryField(page)).toHaveAttribute('role', 'combobox')
++    await expect(page.getByText(copy.country.hint)).toBeVisible()
+     await expect(
+       page.getByRole('group', { name: copy.regionRequirement.legend })
+     ).toContainText(copy.regionRequirement.hint)
+@@ -76,14 +97,14 @@ test.describe('origin feature', () => {
+       page.getByLabel(copy.internalReference.label)
+     ).toHaveAccessibleDescription(copy.internalReference.hint)
+ 
+-    const select = page.locator('select#countryOfOrigin')
++    const select = page.locator(countryHidden)
+     await expect(select.locator('option').first()).toHaveText(
+       copy.country.placeholder
+     )
+     const renderedCountries = await select
+       .locator('option')
+       .evaluateAll((options) =>
+-        options.slice(2).map((option) => ({
++        options.slice(1).map((option) => ({
+           code: option.value,
+           name: option.textContent
+         }))
+@@ -103,7 +124,8 @@ test.describe('origin feature', () => {
+     await expect(page).toHaveURL(/\/notifications\/[^/]+\/commodities$/)
+ 
+     await page.goto(originUrl)
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue(france.code)
++    await expect(page.locator(countryHidden)).toHaveValue(france.code)
++    await expect(page.locator(countryInput)).toHaveValue(france.name)
+     await expect(
+       page.getByRole('radio', { name: copy.regionRequirement.yes })
+     ).toBeChecked()
+@@ -133,7 +155,7 @@ test.describe('origin feature', () => {
+ 
+   test('the prefix follows the country the user chose', async ({ page }) => {
+     const originUrl = page.url()
+-    await fillOriginAnswers(page, { country: ireland.code, regionCode: '75' })
++    await fillOriginAnswers(page, { country: ireland, regionCode: '75' })
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+     await page.goto(originUrl)
+ 
+@@ -166,7 +188,7 @@ test.describe('origin feature', () => {
+     const originUrl = page.url()
+     const hubUrl = originUrl.replace(/\/origin$/, '')
+ 
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await chooseCountry(page, france)
+     await page.getByRole('radio', { name: copy.regionRequirement.no }).check()
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+     await page.goto(originUrl)
+@@ -193,13 +215,98 @@ test.describe('origin feature', () => {
+   })
+ })
+ 
++test.describe('country of origin type-ahead', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await startAtOrigin(page)
++  })
++
++  test('offers the whole country list on focus, without typing', async ({
++    page
++  }) => {
++    await page.locator(countryInput).click()
++
++    await expect(
++      page.getByRole('option', { name: france.name, exact: true })
++    ).toBeVisible()
++    await expect(page.getByRole('option')).toHaveCount(countriesOrigin.length)
++  })
++
++  test('filters the list as the user types, case-insensitively', async ({
++    page
++  }) => {
++    const field = page.locator(countryInput)
++
++    await field.fill('fran')
++    await expect(
++      page.getByRole('option', { name: france.name, exact: true })
++    ).toBeVisible()
++    await expect(page.getByRole('option')).toHaveCount(1)
++
++    await field.fill('IRELAND')
++    await expect(
++      page.getByRole('option', { name: ireland.name, exact: true })
++    ).toBeVisible()
++  })
++
++  test('leaves the chosen country visible in the box and submits its code', async ({
++    page
++  }) => {
++    await chooseCountry(page, france)
++
++    await expect(page.locator(countryInput)).toHaveValue(france.name)
++    await expect(page.locator(countryHidden)).toHaveValue(france.code)
++  })
++
++  test('tells the user when nothing matches what they typed', async ({
++    page
++  }) => {
++    await page.locator(countryInput).fill('zzzzzz')
++
++    await expect(page.getByText(copy.country.noResults)).toBeVisible()
++  })
++
++  test('open results list has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await page.locator(countryInput).fill('fran')
++    await expect(
++      page.getByRole('option', { name: france.name, exact: true })
++    ).toBeVisible()
++
++    await expectNoSeriousOrCriticalAxeViolations(page, 'Origin results list')
++  })
++})
++
++test.describe('country of origin without JavaScript', () => {
++  test.use({ javaScriptEnabled: false })
++
++  test('native select submits and persists the country code', async ({
++    page
++  }) => {
++    await signIn(page)
++    await startAtOrigin(page)
++    const originUrl = page.url()
++
++    await countryField(page).selectOption(france.code)
++    await page.getByRole('radio', { name: copy.regionRequirement.no }).check()
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+\/commodities$/)
++    await page.goto(originUrl)
++    await expect(page.locator('select#countryOfOrigin')).toHaveValue(
++      france.code
++    )
++  })
++})
++
+ test.describe('origin country and region validation', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+     await startAtOrigin(page)
+   })
+ 
+-  test('country validation: when no country is selected, links to and focuses the empty select', async ({
++  test('country validation: when no country is chosen, links to and focuses the empty field', async ({
+     page
+   }) => {
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+@@ -209,8 +316,9 @@ test.describe('origin country and region validation', () => {
+       .getByRole('link', { name: copy.errors.countryRequired })
+     await expect(countryError).toBeVisible()
+     await countryError.click()
+-    await expect(page.getByLabel(copy.country.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue('')
++    await expect(page.locator(countryInput)).toBeFocused()
++    await expect(page.locator(countryInput)).toHaveValue('')
++    await expect(page.locator(countryHidden)).toHaveValue('')
+   })
+ 
+   test('validation error page has no serious or critical axe violations', async ({
+@@ -228,7 +336,7 @@ test.describe('origin country and region validation', () => {
+   test('region requirement validation: when the submitted option is invalid, links to and focuses the group', async ({
+     page
+   }) => {
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await chooseCountry(page, france)
+     await page
+       .locator('input[name="regionOfOriginCodeRequirement"]')
+       .first()
+@@ -246,7 +354,7 @@ test.describe('origin country and region validation', () => {
+     await expect(
+       page.locator('input[name="regionOfOriginCodeRequirement"]').first()
+     ).toBeFocused()
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue(france.code)
++    await expect(page.locator(countryHidden)).toHaveValue(france.code)
+     await expect(
+       page.locator('input[name="regionOfOriginCodeRequirement"]:checked')
+     ).toHaveCount(0)
+@@ -255,7 +363,7 @@ test.describe('origin country and region validation', () => {
+   test('region code validation: when over 5 characters, links to and focuses the preserved value', async ({
+     page
+   }) => {
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await chooseCountry(page, france)
+     await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
+     await page.getByLabel(copy.regionCode.label, { exact: true }).fill('ABCDEF')
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+@@ -271,7 +379,8 @@ test.describe('origin country and region validation', () => {
+     await expect(
+       page.getByLabel(copy.regionCode.label, { exact: true })
+     ).toHaveValue('ABCDEF')
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue(france.code)
++    await expect(page.locator(countryHidden)).toHaveValue(france.code)
++    await expect(page.locator(countryInput)).toHaveValue(france.name)
+     await expect(
+       page.getByRole('radio', { name: copy.regionRequirement.yes })
+     ).toBeChecked()
+@@ -288,7 +397,7 @@ test.describe('origin internal reference validation', () => {
+     page
+   }) => {
+     const invalidReference = 'A'.repeat(INTERNAL_REFERENCE_MAX_LENGTH + 1)
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await chooseCountry(page, france)
+     await page.getByLabel(copy.internalReference.label).fill(invalidReference)
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+ 
+@@ -306,7 +415,7 @@ test.describe('origin internal reference validation', () => {
+   test('internal reference validation: when characters are invalid, links to and focuses the preserved value', async ({
+     page
+   }) => {
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
++    await chooseCountry(page, france)
+     await page.getByLabel(copy.internalReference.label).fill('bad ref!')
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk
+index 94b917ce..f9fc9100 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk
+@@ -1,5 +1,5 @@
+ {% extends "shared/layout.njk" %}
+-{% from "govuk/components/select/macro.njk" import govukSelect %}
++{% from "accessible-autocomplete/macro.njk" import appAccessibleAutocomplete %}
+ {% from "govuk/components/radios/macro.njk" import govukRadios %}
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "shared/save-actions.njk" import saveActions %}
+@@ -15,13 +15,15 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+-    {{ govukSelect({
++    {{ appAccessibleAutocomplete({
+       id: "countryOfOrigin",
+       name: "countryOfOrigin",
+       label: { text: copy.country.label, classes: "govuk-label--s" },
++      hint: { text: copy.country.hint },
+       value: values.countryOfOrigin,
+       errorMessage: errors.countryOfOrigin and { text: errors.countryOfOrigin },
+-      items: countryItems
++      items: countryItems,
++      autocomplete: { showAllValues: true, noResults: copy.country.noResults }
+     }) }}
+ 
+     {% set regionCodeHtml %}

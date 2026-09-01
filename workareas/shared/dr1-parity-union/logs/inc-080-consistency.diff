@@ -1,0 +1,326 @@
+diff --git a/src/server/app/lib/validate/index.js b/src/server/app/lib/validate/index.js
+index ff87e3cd..7bbc1875 100644
+--- a/src/server/app/lib/validate/index.js
++++ b/src/server/app/lib/validate/index.js
+@@ -5,6 +5,7 @@ export {
+   requiredExactDigits,
+   optionalText,
+   maxText,
++  requiredMaxText,
+   pattern,
+   postcode,
+   vehicleReg,
+diff --git a/src/server/app/lib/validate/validate.test.js b/src/server/app/lib/validate/validate.test.js
+index 42eb0c4e..a9e95871 100644
+--- a/src/server/app/lib/validate/validate.test.js
++++ b/src/server/app/lib/validate/validate.test.js
+@@ -10,6 +10,7 @@ import {
+   oneOf,
+   postcode,
+   requiredExactDigits,
++  requiredMaxText,
+   requiredOneOf,
+   requiredText,
+   ukPhone,
+@@ -23,6 +24,9 @@ const FULL_NAME_REQUIRED_MESSAGE = 'Enter your full name'
+ const CPH_REQUIRED_MESSAGE = 'Enter a CPH number'
+ const CPH_LENGTH_MESSAGE = 'CPH number must be exactly 9 digits'
+ const COMMODITY_REQUIRED_MESSAGE = 'Select a commodity'
++const REGION_CODE_REQUIRED_MESSAGE = 'Enter the region of origin code'
++const REGION_CODE_MAX_LENGTH_MESSAGE =
++  'Region of origin code must be 5 characters or less'
+ 
+ describe('#requiredText — the sole save-blocking primitive', () => {
+   const schema = requiredText('fullName', FULL_NAME_REQUIRED_MESSAGE)
+@@ -200,6 +204,45 @@ describe('#maxText — length cap', () => {
+   })
+ })
+ 
++describe('#requiredMaxText — save-blocking text with a length cap', () => {
++  const schema = requiredMaxText('regionCode', 5, {
++    required: REGION_CODE_REQUIRED_MESSAGE,
++    maxLength: REGION_CODE_MAX_LENGTH_MESSAGE
++  })
++
++  it('Should accept text within the cap', () => {
++    expect(run(schema, { regionCode: 'FR-75' }).errors).toBeNull()
++  })
++
++  it('Should block blank, whitespace-only and missing values', () => {
++    expect(run(schema, { regionCode: '' }).errors).toEqual({
++      regionCode: REGION_CODE_REQUIRED_MESSAGE
++    })
++    expect(run(schema, { regionCode: '   ' }).errors).toEqual({
++      regionCode: REGION_CODE_REQUIRED_MESSAGE
++    })
++    expect(run(schema, {}).errors).toEqual({
++      regionCode: REGION_CODE_REQUIRED_MESSAGE
++    })
++  })
++
++  it('Should reject text over the cap with the length message', () => {
++    expect(run(schema, { regionCode: 'ABCDEF' }).errors).toEqual({
++      regionCode: REGION_CODE_MAX_LENGTH_MESSAGE
++    })
++  })
++
++  it('Should fall back to the shared length message when none is given', () => {
++    const withoutLengthMessage = requiredMaxText('regionCode', 5, {
++      required: REGION_CODE_REQUIRED_MESSAGE
++    })
++
++    expect(
++      run(withoutLengthMessage, { regionCode: 'ABCDEF' }).errors
++    ).toHaveProperty('regionCode')
++  })
++})
++
+ describe('#dateParts — day/month/year triple, anchored on the day box', () => {
+   const schema = dateParts('dateOfBirth')
+ 
+diff --git a/src/server/app/lib/validate/validators.js b/src/server/app/lib/validate/validators.js
+index 2f0c6de7..33441286 100644
+--- a/src/server/app/lib/validate/validators.js
++++ b/src/server/app/lib/validate/validators.js
+@@ -58,6 +58,31 @@ export const maxText = (name, max, message) =>
+       .messages({ 'string.max': message ?? defaults.maxLength(max) })
+   )
+ 
++/**
++ * Save-blocking text with a length cap. One primitive rather than
++ * `compose(requiredText, maxText)` because `maxText` allows the empty string,
++ * and composing schemas merges that allowance onto the required rule — blank
++ * would then pass. `requiredExactDigits` exists for the same reason.
++ * @param {string} name
++ * @param {number} max
++ * @param {object} messages
++ * @param {string} messages.required - Shown when the value is blank or absent.
++ * @param {string} [messages.maxLength] - Shown when the value is over the cap.
++ */
++export const requiredMaxText = (name, max, messages) =>
++  single(
++    name,
++    Joi.string()
++      .trim()
++      .required()
++      .max(max)
++      .messages({
++        'string.empty': messages.required,
++        'any.required': messages.required,
++        'string.max': messages.maxLength ?? defaults.maxLength(max)
++      })
++  )
++
+ export const pattern = (name, regex, message) =>
+   single(
+     name,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+index 01f971ad..57253e66 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+@@ -10,6 +10,7 @@ import {
+   maxText,
+   oneOf,
+   pattern,
++  requiredMaxText,
+   requiredOneOf,
+   validate
+ } from '../../../../../../lib/validate/index.js'
+@@ -42,6 +43,8 @@ const INTERNAL_REFERENCE_MAX_LENGTH = 58
+ // stays the whole code, joined here, and nothing downstream sees two fields.
+ const REGION_CODE_SUFFIX_FIELD = 'regionOfOriginCodeSuffix'
+ const REGION_CODE_SEPARATOR = '-'
++const REGION_CODE_REQUIRED_ANSWER = 'yes'
++const REGION_CODE_REQUIREMENT_ANSWERS = ['yes', 'no']
+ 
+ const FORM_FIELD_ORDER = [
+   'countryOfOrigin',
+@@ -114,19 +117,31 @@ const countryItems = () => [
+   ...countries.originCountries()
+ ]
+ 
+-const fields = () =>
++// The code is only asked for when the user says the consignment has one, so
++// the box is required under Yes and left alone under No. The obligation behind
++// the answer says the same thing, and would stop the notification later; the
++// rule here is what tells the user at the point of the mistake.
++const regionCodeSuffixRule = (requirement) =>
++  requirement === REGION_CODE_REQUIRED_ANSWER
++    ? requiredMaxText(REGION_CODE_SUFFIX_FIELD, REGION_CODE_SUFFIX_MAX_LENGTH, {
++        required: copy.errors.regionCodeRequired,
++        maxLength: copy.errors.regionCodeMaxLength
++      })
++    : maxText(
++        REGION_CODE_SUFFIX_FIELD,
++        REGION_CODE_SUFFIX_MAX_LENGTH,
++        copy.errors.regionCodeMaxLength
++      )
++
++const fields = (requirement) =>
+   compose(
+     requiredOneOf(
+       'countryOfOrigin',
+       countries.originCountries().map(({ value }) => value),
+       copy.errors.countryRequired
+     ),
+-    oneOf('regionOfOriginCodeRequirement', ['yes', 'no']),
+-    maxText(
+-      REGION_CODE_SUFFIX_FIELD,
+-      REGION_CODE_SUFFIX_MAX_LENGTH,
+-      copy.errors.regionCodeMaxLength
+-    ),
++    oneOf('regionOfOriginCodeRequirement', REGION_CODE_REQUIREMENT_ANSWERS),
++    regionCodeSuffixRule(requirement),
+     maxText(
+       'internalReferenceNumber',
+       INTERNAL_REFERENCE_MAX_LENGTH,
+@@ -179,7 +194,10 @@ const get = async (request, h) => {
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+   const values = formValuesFrom(payload)
+-  const { errors } = validate(fields(), payload)
++  const { errors } = validate(
++    fields(values.regionOfOriginCodeRequirement),
++    payload
++  )
+   if (errors) {
+     const { journey, answers } = await state.get(request, h)
+     return render(h, journey, values, errors, answers).code(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+index 14fa0826..c2417e0e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+@@ -29,6 +29,7 @@ const get = origin.routes.find((route) => route.method === 'GET').handler
+ 
+ const COUNTRY_REQUIRED_MESSAGE =
+   'Select the country where the animal originates from'
++const REGION_CODE_REQUIRED_MESSAGE = 'Enter the region of origin code'
+ 
+ describe('POST /origin — invalid payload', () => {
+   beforeAll(() => {
+@@ -144,9 +145,42 @@ describe('POST /origin — region of origin code prefix and suffix', () => {
+     expect(result.after.regionOfOriginCode).toBe('FR-75')
+   })
+ 
+-  it('Should store nothing when the typed part is blank', async () => {
++  it('Should hold the user on the page when the typed part is blank', async () => {
+     const result = await postSuffix('   ')
+ 
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.regionOfOriginCodeSuffix).toBe(
++      REGION_CODE_REQUIRED_MESSAGE
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should hold the user on the page when the box was never submitted', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        countryOfOrigin: 'FR',
++        regionOfOriginCodeRequirement: 'yes',
++        internalReferenceNumber: ''
++      }
++    })
++
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.regionOfOriginCodeSuffix).toBe(
++      REGION_CODE_REQUIRED_MESSAGE
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should let a blank box through when the answer is No', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        countryOfOrigin: 'FR',
++        regionOfOriginCodeRequirement: 'no',
++        regionOfOriginCodeSuffix: '',
++        internalReferenceNumber: ''
++      }
++    })
++
+     expect(result.view).toBeUndefined()
+     expect(result.after.regionOfOriginCode).toBe('')
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+index 6fc4a7fb..24d47270 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+@@ -23,6 +23,7 @@ export const copy = {
+   },
+   errors: {
+     countryRequired: "Dewiswch y wlad y mae'r anifail yn tarddu ohoni",
++    regionCodeRequired: 'Rhowch god rhanbarth tarddiad',
+     regionCodeMaxLength:
+       "Rhaid i'r cod rhanbarth tarddiad fod yn 5 nod neu lai",
+     internalReferenceMaxLength:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+index a269101d..9761a66b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+@@ -22,6 +22,7 @@ export const copy = {
+   },
+   errors: {
+     countryRequired: 'Select the country where the animal originates from',
++    regionCodeRequired: 'Enter the region of origin code',
+     regionCodeMaxLength: 'Region of origin code must be 5 characters or less',
+     internalReferenceMaxLength:
+       'Internal reference must be 58 characters or less',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+index 1afc7f78..421d2ee4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+@@ -360,6 +360,53 @@ test.describe('origin country and region validation', () => {
+     ).toHaveCount(0)
+   })
+ 
++  test('region code validation: when Yes is chosen and the box is empty, holds the user on the page', async ({
++    page
++  }) => {
++    const originUrl = page.url()
++    await chooseCountry(page, france)
++    await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++
++    await expect(page).toHaveURL(originUrl)
++    const regionCodeError = page
++      .getByRole('alert')
++      .getByRole('link', { name: copy.errors.regionCodeRequired })
++    await expect(regionCodeError).toBeVisible()
++    await regionCodeError.click()
++    await expect(
++      page.getByLabel(copy.regionCode.label, { exact: true })
++    ).toBeFocused()
++    await expect(
++      page.getByRole('radio', { name: copy.regionRequirement.yes })
++    ).toBeChecked()
++    await expect(page.locator(countryHidden)).toHaveValue(france.code)
++  })
++
++  test('region code validation: No leaves the empty box unasked for', async ({
++    page
++  }) => {
++    await chooseCountry(page, france)
++    await page.getByRole('radio', { name: copy.regionRequirement.no }).check()
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+\/commodities$/)
++  })
++
++  test('empty region code error page has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await chooseCountry(page, france)
++    await page.getByRole('radio', { name: copy.regionRequirement.yes }).check()
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++    await expect(page.getByRole('alert')).toBeVisible()
++
++    await expectNoSeriousOrCriticalAxeViolations(
++      page,
++      'Origin empty region code error'
++    )
++  })
++
+   test('region code validation: when over 5 characters, links to and focuses the preserved value', async ({
+     page
+   }) => {

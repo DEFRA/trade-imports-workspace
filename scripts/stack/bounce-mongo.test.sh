@@ -52,6 +52,19 @@ case "$subcommand" in
     exit 0
     ;;
   logs)
+    # STUB_LOGS_AFTER withholds the marker until the Nth call, standing in for
+    # the entrypoint's output not having reached `compose logs` yet.
+    if [ -n "${STUB_LOGS_AFTER:-}" ]; then
+      calls_file="${STUB_STATE_DIR}/logs-calls"
+      calls=0
+      [ -f "$calls_file" ] && calls="$(cat "$calls_file")"
+      calls=$((calls + 1))
+      printf '%s' "$calls" >"$calls_file"
+      if [ "$calls" -lt "$STUB_LOGS_AFTER" ]; then
+        printf 'Waiting for connections\n'
+        exit 0
+      fi
+    fi
     printf '%s\n' "${STUB_LOGS:-}"
     exit 0
     ;;
@@ -89,7 +102,7 @@ start_case() {
   STUB_STATE_DIR="$(mktemp -d "$STUB_DIR/case.XXXXXX")"
   export STUB_STATE_DIR
   unset STUB_UP_FAILURES STUB_LOGS STUB_COUNT STUB_COUNT_STATUS \
-    STUB_PRIMARY STUB_PRIMARY_STATUS STUB_PS_OUTPUT
+    STUB_PRIMARY STUB_PRIMARY_STATUS STUB_PS_OUTPUT STUB_LOGS_AFTER
   # Reset anything a previous case tuned, so no case inherits another's world.
   UP_ATTEMPTS="${DEFAULT_UP_ATTEMPTS:-6}"
 }
@@ -110,6 +123,7 @@ export MONGO_HOST_PORT=59117
 export MONGO_RETRY_BACKOFF_SECONDS=0
 export MONGO_PORT_RELEASE_TIMEOUT_SECONDS=2
 export MONGO_PRIMARY_TIMEOUT_SECONDS=2
+export MONGO_MARKER_TIMEOUT_SECONDS=3
 export NO_COLOR=1
 # shellcheck source=bounce-mongo.sh
 source "$SUBJECT"
@@ -197,6 +211,15 @@ case "$output" in
   *'was NOT wiped'*) ;;
   *) fail 'the stale-volume error does not name the problem' ;;
 esac
+
+start_case 'a marker that reaches the log late is waited for, not failed on'
+# The regression this guards: reading the log once failed a CI shard on a
+# database that had been wiped correctly, because the entrypoint's output had
+# not reached `compose logs` yet. Drop the poll and this case fails.
+export STUB_LOGS='MongoDB init process complete; ready for start up.'
+export STUB_LOGS_AFTER=3
+assert_volume_was_wiped >/dev/null 2>&1 ||
+  fail 'a marker that appeared a moment later was treated as a stale volume'
 
 # assert_seeded
 start_case 'a seeded database passes'

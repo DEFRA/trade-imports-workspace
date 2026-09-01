@@ -281,8 +281,42 @@ GUARD RAILS (mandatory, every step):
   \`gh run watch --exit-status\`, with the Bash tool's \`timeout\` parameter set to 600000 (its ceiling).
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - Never \`git push --force\`. Never merge a PR that is not green.
+- NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
+  does it by merging an approved PR. Every other push in every other stage goes to a work branch, always with the
+  fully-qualified refspec form given below. A push that updates \`${BASE_BRANCH}\` has bypassed CI, review and the
+  approval gate at once.
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
+
+// How every stage pushes, and why it looks paranoid.
+//
+// A stage once put a commit straight onto the tests repo's `main`. No PR, no CI,
+// no approval — and the merge stage was innocent: it had merged nothing at all.
+// Two things combined:
+//
+//   1. `git checkout -b <work> origin/main` sets the new branch's upstream to
+//      `origin/main`, because git's default `branch.autoSetupMerge` tracks a
+//      remote-tracking start point. The branch is now *named* for the increment
+//      and *pointed at* main.
+//   2. `repos/trade-imports-animals-tests` and `-backend` are configured
+//      `push.default=tracking`, so a push that has to resolve its own
+//      destination resolves it to that upstream — `main`.
+//
+// So the fix is at both ends: cut with `--no-track` so no work branch ever
+// carries the base branch as upstream, and push with an explicit fully-qualified
+// refspec so no push ever has a destination left to resolve. Either alone would
+// have stopped it; a stage that pushes is worth two locks.
+const PUSH_RULE = `HOW TO PUSH — the exact form, every time, no variations:
+\`git -C ${TILDE}/<repoPath> push -u origin refs/heads/<branch>:refs/heads/<branch>\`
+Never \`--force\`. Never a bare \`git push\`. Never \`push origin <branch>\` — that leaves git to work out the
+destination, and in a repo configured \`push.default=tracking\` (two of these three repos are) it resolves to the
+branch's upstream, which is how a commit once landed on \`${BASE_BRANCH}\` with no PR behind it. The fully
+qualified \`refs/heads/X:refs/heads/X\` can only ever update branch X.
+
+BEFORE ANY COMMIT OR PUSH, prove you are on the branch you think you are:
+\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`
+If that prints anything other than the work branch — \`${BASE_BRANCH}\` above all — STOP and report ok:false.
+Do not commit "just this once" and sort the branch out afterwards.`
 
 // Preserving a failed attempt. A stash is machine-local: on another machine the
 // ref means nothing and the work is gone. Under the full lifecycle the increment
@@ -293,6 +327,7 @@ const preserveWork = (id, branch, reason, evidence) =>
     ? `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${GUARDRAILS}
 ${REPO_RULE}
+${PUSH_RULE}
 EVIDENCE: ${evidence}
 TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
 1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
@@ -300,8 +335,8 @@ TASK — the work goes onto its own branch, not into a stash. A stash ref does n
    test-results/, no Playwright artefacts.
 3. Commit it on \`${branch}\`, marked as failing: subject \`wip(${SCOPE}): <increment title> — ${reason}\`,
    body naming exactly what went red, and the usual trailer.
-4. \`git -C ${TILDE}/<repoPath> push -u origin ${branch}\` — never \`--force\`. That is what lets another
-   engineer fetch the attempt and see what was tried.
+4. \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${branch}:refs/heads/${branch}\` — never \`--force\`.
+   That is what lets another engineer fetch the attempt and see what was tried.
 5. Do NOT open a pull request. This work does not pass its ladder and must not look reviewable.
 6. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
 7. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG}: what went red, the branch name and
@@ -833,6 +868,16 @@ Deskcheck or IN QA says nothing about how far the build got.
 
 STEP 7 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
 tests → \["tests"\]; both → \["backend","frontend"\] IN THAT ORDER.
+If the field is ABSENT, \`null\` or empty — whole backlogs are written without it — do NOT guess a single repo
+from the increment's title or band. Read its \`band\` and apply this:
+  \`frontend-work\` or anything else that changes the UI → \["frontend","tests"\]
+  \`needs-backend\` → \["backend","frontend","tests"\]
+  a band that is plainly tests-only → \["tests"\]
+**Include \`tests\` in every case that changes what a user sees.** A UI change breaks the E2E specs and their
+visual baselines essentially always, so the tests repo is part of the increment from the start, not a surprise.
+Naming it here is what gets it BRANCHED, and a repo that is never branched sits on \`${BASE_BRANCH}\` for the
+whole run — which is how an increment once committed straight onto the tests repo's main. Over-listing a repo
+costs nothing: a repo with no changes simply gets no commit and no PR.
 
 Report ok:true only if the ticket exists, its status is one you left alone or successfully set, STEP 4
 moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
@@ -893,10 +938,19 @@ REPOS, in order: ${repos.join(', ')}. Do all of the following for EACH of them.
    - It does not → does it exist on the remote?
      \`git -C ${TILDE}/<repoPath> ls-remote --heads origin ${workBranch}\`
      - Remote has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --track origin/${workBranch}\`
-     - Nobody has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} origin/${BASE_BRANCH}\`
+     - Nobody has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
+       \`--no-track\` is load-bearing and NOT optional. Without it the new branch takes \`origin/${BASE_BRANCH}\`
+       as its upstream, and a later push in a \`push.default=tracking\` repo follows that upstream onto
+       \`${BASE_BRANCH}\`. That is exactly how an increment once put a commit on the tests repo's main with no PR.
    NEVER a bare \`checkout -b ${workBranch}\` — that branches off whatever the repo happened to be on.
 4. Confirm where you landed: \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\` and
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`. The second must print \`${workBranch}\`.
+5. Confirm the branch does not point at the base branch for its upstream:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref --symbolic-full-name ${workBranch}@{upstream}\`
+   It must print \`origin/${workBranch}\`, or fail with "no upstream" — either is correct, and both are safe.
+   If it prints \`origin/${BASE_BRANCH}\` the branch was cut by an older run that lacked \`--no-track\`: repair it
+   with \`git -C ${TILDE}/<repoPath> branch --unset-upstream ${workBranch}\` and say so in your summary.
+   Do NOT leave it and rely on the push form to save you.
 
 The branch name is IDENTICAL in every repo. That is CLAUDE.md rule 2 and it is load-bearing: the workspace
 stack probes each repo for a branch-tagged image, so a mismatched name breaks the linked-branch pickup.
@@ -939,7 +993,11 @@ TASK:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
-   in your summary. Do not assert a particular branch and do not switch branches — an earlier stage owns that.
+   in your summary. Do not switch branches — an earlier stage owns that.
+   One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
+   checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
+   on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
+   catch a repo the branch stage did not cover.
 3. Run the FASTEST meaningful suite for each repo, to a log, and read it once:
    frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${WORKAREA_TILDE}/logs/${id}-baseline-frontend.log 2>&1\`
    backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${WORKAREA_TILDE}/logs/${id}-baseline-backend.log 2>&1\`
@@ -1297,14 +1355,19 @@ ${REPO_RULE}
 TASK:
 1. Look up its repo: \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`, and its
    title for the commit subject.
-2. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
+2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
+   \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
+   a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no PR,
+   no CI and no review behind it. That has happened here once already.
+3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
-3. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
+4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
    naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and the trailer:
    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
    A \`both\` increment gets ONE commit per repo, each with the same subject.
-4. Do NOT push. A later stage owns that.
-5. Update ${BACKLOG}: add a "commit" field with the short SHA${LIFECYCLE === 'local' ? ' and set this increment\'s "status" to "done"' : '. Leave "status" alone — this increment is not done until its PR is merged'}.
+5. Do NOT push. A later stage owns that.
+6. Update ${BACKLOG}: add a "commit" field with the short SHA${LIFECYCLE === 'local' ? ' and set this increment\'s "status" to "done"' : '. Leave "status" alone — this increment is not done until its PR is merged'}.
    Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
 Report the commit SHA. For a \`both\` increment report both, backend first, space separated.
 Return the structured output only.`,
@@ -1346,13 +1409,24 @@ Return the structured output only.`,
         `You are the PULL REQUEST STAGE for increment ${id} (${ticket.key}) on branch \`${workBranch}\`.
 YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS BRANCH.
 ${GUARDRAILS}
+${PUSH_RULE}
 ${MERGE_ORDER_RULE}
 REPOS, in order: ${repos.join(', ')}. GitHub repos: ${ghTable}. Repo paths: ${repoTable}.
 
 For EACH repo, in that order:
-1. \`git -C ${TILDE}/<repoPath> push -u origin ${workBranch}\` — never \`--force\`. If the push is rejected as
+1. Prove the repo is on the work branch before you push a thing:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` MUST print \`${workBranch}\`. If it prints
+   \`${BASE_BRANCH}\`, report ok:false naming the repo — the branch stage did not cover this repo and pushing
+   from here would put the increment's commits on the base branch.
+2. HAS THIS REPO ANYTHING TO SAY? \`git -C ${TILDE}/<repoPath> rev-list --count origin/${BASE_BRANCH}..HEAD\`
+   - \`0\` → the increment branched this repo but changed nothing in it. SKIP IT: no push, no PR, no backlog
+     entry. Say so in your summary and move to the next repo. This is normal and is not a failure — repos are
+     listed generously so they get branched, because a repo left on \`${BASE_BRANCH}\` is the dangerous one.
+   - anything else → carry on.
+3. \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
+   \`--force\`, and never the short \`push origin ${workBranch}\` form. If the push is rejected as
    non-fast-forward, report ok:false naming the repo; a diverged branch needs a human.
-2. LOOK FOR AN EXISTING PR FIRST. One command:
+4. LOOK FOR AN EXISTING PR FIRST. One command:
    \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state,title\`
    - It returns an OPEN pr → REUSE IT. Do not create anything. raised:false.
    - It returns only a MERGED or CLOSED pr → report ok:false. A merged branch being re-pushed means the
@@ -1363,12 +1437,14 @@ For EACH repo, in that order:
         order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
      b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
      raised:true.
-3. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array holds
+5. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array holds
    \`{"repo":"<repo>","url":"<url>","number":<n>}\` for every PR that now exists — appending, never replacing an
    entry that is already there. Re-check with \`jq empty ${BACKLOG_TILDE}\`. Do this after EACH repo, not once at
    the end: a run that dies between two PRs must not lose the first.
 
-Report every PR in prs\[\], in the same order. Report ok:true only when every repo has exactly one open PR.
+Report every PR in prs\[\], in the same order. Report ok:true only when every repo that had commits ahead of
+\`${BASE_BRANCH}\` has exactly one open PR, and every repo you skipped at step 2 genuinely had none. At least one
+PR must exist — a run where EVERY repo was empty means nothing was built, and that is ok:false.
 Return the structured output only.`,
         { label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA }
       )
@@ -1430,6 +1506,7 @@ Return the structured output only.`,
           `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
 CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you do not close anything.
 ${GUARDRAILS}
+${PUSH_RULE}
 ${readIncrement(id)}
 THE PULL REQUESTS:
 ${prList(prs)}
@@ -1446,15 +1523,34 @@ TASK:
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
 3. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
    read once.
-4. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
-   \`git -C ${TILDE}/<repoPath> push origin ${workBranch}\` — never \`--force\`.
-5. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
+4. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
+   The repo you are fixing may be one the BRANCH STAGE never touched: it only branched the repos the increment
+   declared, and a fix that lands somewhere else arrives here with that repo still sitting on \`${BASE_BRANCH}\`.
+   Committing there and pushing is how this loop once put an unreviewed commit on the tests repo's main.
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`
+   - It prints \`${workBranch}\` → good, carry on.
+   - It prints anything else → your changes are uncommitted in the working tree and travel with a checkout, so:
+     \`git -C ${TILDE}/<repoPath> fetch origin\`, then does the branch exist?
+     \`git -C ${TILDE}/<repoPath> ls-remote --heads origin ${workBranch}\`
+     - Remote has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --track origin/${workBranch}\`
+     - It does not → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
+       \`--no-track\` is mandatory — see HOW TO PUSH above for what it prevents.
+     Then re-run \`rev-parse --abbrev-ref HEAD\` and confirm it now prints \`${workBranch}\` before going on.
+5. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
+   \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
+   \`--force\`, and never the short \`push origin ${workBranch}\` form.
+6. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
    REGISTER IT.** A frontend change whose fix lands in the tests repo is the ordinary case, not an exception.
    An unregistered PR is invisible to the watcher and to the merge stage, so the increment merges one repo,
-   calls itself done, and silently leaves the other open — which has happened.
+   calls itself done, and silently leaves the other open — which has happened. Worse has happened: the same repo,
+   left on \`${BASE_BRANCH}\` because it was never branched, took the commit directly onto the base branch and
+   there was no PR to leave open. Step 4 is what stops that; do not skip it for a repo you are adding here.
    Use the SAME branch name \`${workBranch}\` (CLAUDE.md rule 2, cross-repo branch parity). Repo paths:
    ${repoTable}. GitHub repos: ${ghTable}. For each such repo:
-   a. \`git -C ${TILDE}/<repoPath> push -u origin ${workBranch}\` — never \`--force\`.
+   a. Confirm it is on \`${workBranch}\` — \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` — and if it
+      is not, put it there by step 4's method before anything else. Then
+      \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
+      \`--force\`, never the short form.
    b. Look for an existing PR first:
       \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state\`
       An OPEN one → reuse it, do not create a second. A MERGED or CLOSED one → report ok:false; the lifecycle
@@ -1467,7 +1563,7 @@ TASK:
       \`jq empty ${BACKLOG_TILDE}\` after. Do this per repo, not once at the end.
    e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
       THIS run reads. Skipping either one is how a PR gets left behind.
-6. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
           { label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA }

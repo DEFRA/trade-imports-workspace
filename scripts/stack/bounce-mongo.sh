@@ -29,6 +29,7 @@ UP_ATTEMPTS="${MONGO_UP_ATTEMPTS:-6}"
 UP_WAIT_TIMEOUT_SECONDS="${MONGO_UP_WAIT_TIMEOUT_SECONDS:-90}"
 RETRY_BACKOFF_SECONDS="${MONGO_RETRY_BACKOFF_SECONDS:-2}"
 PRIMARY_TIMEOUT_SECONDS="${MONGO_PRIMARY_TIMEOUT_SECONDS:-60}"
+MARKER_TIMEOUT_SECONDS="${MONGO_MARKER_TIMEOUT_SECONDS:-20}"
 
 # Logged by the entrypoint only when it ran the init scripts, i.e. only on a
 # fresh volume.
@@ -128,16 +129,23 @@ wait_for_primary() {
 
 # A stale volume still carries the previous run's seed, so counting documents
 # cannot prove a wipe. The entrypoint's marker can.
+#
+# Polled, not read once: the marker is written before the healthcheck passes but
+# does not always reach `compose logs` by then, and reading it too early failed a
+# CI shard on a database that had in fact been wiped correctly.
 assert_volume_was_wiped() {
-  local logs
-  if ! logs="$(mongo_compose logs --no-color mongodb 2>/dev/null)"; then
-    print_error "could not read the mongo container log to verify the reseed"
-    return 1
-  fi
-  case "$logs" in
-    *"$INITDB_COMPLETE_MARKER"*) return 0 ;;
-  esac
+  local waited=0 logs
+  while [ "$waited" -lt "$MARKER_TIMEOUT_SECONDS" ]; do
+    if logs="$(mongo_compose logs --no-color mongodb 2>/dev/null)"; then
+      case "$logs" in
+        *"$INITDB_COMPLETE_MARKER"*) return 0 ;;
+      esac
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
   print_error "mongo started but its entrypoint never ran the init scripts"
+  print_error "  (no '$INITDB_COMPLETE_MARKER' after ${MARKER_TIMEOUT_SECONDS}s)"
   print_error "  the data volume was NOT wiped — this container carries stale data"
   return 1
 }

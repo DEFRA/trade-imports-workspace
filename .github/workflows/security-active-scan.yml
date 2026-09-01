@@ -32,6 +32,18 @@ jobs:
       - name: Start stack
         run: ./scripts/stack/run-stack.sh --branch main
 
+      # Docker auto-creates a missing bind-mount source as root, and the
+      # zap service (security.compose.yml) writes as its image's non-root
+      # "zap" user - so without this, ZAP's own report/log writes and the
+      # "Remove the unwrapped log and JSON report" step below both hit
+      # Permission denied. 777 rather than a matched chown: the runner is
+      # a throwaway VM, and the zap user's uid isn't a value this workflow
+      # should have to track across image versions.
+      - name: Prepare ZAP report directory
+        run: |
+          mkdir -p ${{ github.workspace }}/zap-report
+          chmod 777 ${{ github.workspace }}/zap-report
+
       - name: Start ZAP (security profile)
         env:
           ZAP_REPORT_DIR: ${{ github.workspace }}/zap-report
@@ -69,7 +81,7 @@ jobs:
             defradigital/trade-imports-animals-tests:latest \
             run _zap_prime_context
 
-      - name: Run active security scan
+      - name: Run Playwright traffic-generation tests (@active)
         run: |
           docker run --rm \
             --network host \
@@ -85,7 +97,7 @@ jobs:
       # (this step's own exit code does that) but the gate should still run
       # against whatever ZAP saw, the same way e2e-tests.yml still publishes
       # its report on a failing run rather than skipping straight to teardown.
-      - name: Gate on ZAP findings
+      - name: ZAP run and gate
         if: always()
         run: |
           docker run --rm \

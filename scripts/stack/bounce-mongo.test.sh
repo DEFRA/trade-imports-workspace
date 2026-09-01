@@ -1,15 +1,7 @@
 #!/usr/bin/env bash
 #
-# Behavioural tests for bounce-mongo.sh, run against a stubbed `docker` on
-# PATH. No docker daemon, no stack, no mongo — so this is safe to run anywhere
-# and fast enough to run on every change.
-#
-# It covers the parts of the reseed that used to be unprovable: that a failing
-# `up` is actually retried, that the retry budget is honoured, that a stale
-# volume is detected, and that a mongosh failure produces a readable error
-# instead of aborting the script under `set -e`.
-#
-#   ./scripts/stack/bounce-mongo.test.sh
+# Tests for bounce-mongo.sh against a stubbed `docker` on PATH. No daemon, no
+# stack, no mongo. Run: ./scripts/stack/bounce-mongo.test.sh
 #
 set -uo pipefail
 
@@ -22,10 +14,8 @@ trap 'rm -rf "$STUB_DIR"' EXIT
 tests_run=0
 tests_failed=0
 
-# ---------------------------------------------------------------------------
 # The stub. Scenario is driven entirely by STUB_* environment variables so each
 # test can set up its own world without touching the filesystem.
-# ---------------------------------------------------------------------------
 cat >"$STUB_DIR/docker" <<'STUB'
 #!/usr/bin/env bash
 # Stubbed docker. Recognises the five shapes bounce-mongo.sh actually invokes.
@@ -87,9 +77,7 @@ chmod +x "$STUB_DIR/docker"
 PATH="$STUB_DIR:$PATH"
 export PATH
 
-# ---------------------------------------------------------------------------
 # Harness
-# ---------------------------------------------------------------------------
 fail() {
   tests_failed=$((tests_failed + 1))
   printf '  FAIL: %s\n' "$1" >&2
@@ -141,9 +129,7 @@ DEFAULT_UP_ATTEMPTS="$(
   printf '%s' "$UP_ATTEMPTS"
 )"
 
-# ---------------------------------------------------------------------------
 # start_mongodb_with_retries
-# ---------------------------------------------------------------------------
 start_case 'a clean start runs up exactly once and does not retry'
 output="$(start_mongodb_with_retries 2>&1)"
 status=$?
@@ -194,9 +180,7 @@ status=$?
 [ "$status" -eq 0 ] || fail "expected main to recover from the race, got $status"
 [ "$(up_attempt_count)" = '3' ] || fail "expected 3 ups from main, got $(up_attempt_count)"
 
-# ---------------------------------------------------------------------------
 # assert_volume_was_wiped
-# ---------------------------------------------------------------------------
 start_case 'a fresh volume is recognised by the entrypoint marker'
 export STUB_LOGS='MongoDB init process complete; ready for start up.'
 assert_volume_was_wiped >/dev/null 2>&1 || fail 'a genuinely wiped volume was rejected'
@@ -214,9 +198,7 @@ case "$output" in
   *) fail 'the stale-volume error does not name the problem' ;;
 esac
 
-# ---------------------------------------------------------------------------
 # assert_seeded
-# ---------------------------------------------------------------------------
 start_case 'a seeded database passes'
 export STUB_COUNT=3
 assert_seeded >/dev/null 2>&1 || fail 'a seeded database was rejected'
@@ -253,9 +235,7 @@ case "$output" in
   *) fail 'junk output was not reported' ;;
 esac
 
-# ---------------------------------------------------------------------------
 # wait_for_primary
-# ---------------------------------------------------------------------------
 start_case 'a writable primary is accepted'
 export STUB_PRIMARY=true
 wait_for_primary >/dev/null 2>&1 || fail 'a writable primary was rejected'
@@ -272,6 +252,5 @@ case "$output" in
   *) fail 'the election timeout does not explain itself' ;;
 esac
 
-# ---------------------------------------------------------------------------
 printf '\n%s case(s), %s failure(s)\n' "$tests_run" "$tests_failed"
 [ "$tests_failed" -eq 0 ]

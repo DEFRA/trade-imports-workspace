@@ -186,26 +186,10 @@ done
 
 [ ${#up_services[@]} -gt 0 ] || { print_error "error: would start no services"; exit 1; }
 
-# Mongo's entrypoint races itself on a fresh volume (EUDPA-358). The temporary
-# instance it runs over /docker-entrypoint-initdb.d keeps --replSet, because the
-# entrypoint only strips that when MONGO_INITDB_ROOT_USERNAME and _PASSWORD are
-# both set and we set neither. So 10-database-setup.js calls rs.initiate() and
-# the instance is PRIMARY when the entrypoint shuts it down. Standing down can
-# outlive `--shutdown` returning, and the exec'd real mongod then binds 27017 a
-# moment too early and exits 48, taking every depends_on service with it:
-#
-#   dependency failed to start: container trade-imports-mongodb-1 exited (48)
-#
-# It happens only on a fresh volume, which is every CI run — observed on
-# ubuntu-latest, so this is not a Docker Desktop quirk. Three E2E shards each
-# starting a fresh stack make it near even odds that a run fails for this and
-# nothing else.
-#
-# Retrying the up is the only fix; nothing outside the container can prevent
-# the race. Mongo comes up alone first so the stack up below finds it healthy
-# and never sees it. bounce-mongo.sh carries the same loop for the reseed path
-# — deliberate duplication, since neither script sources the other and the loop
-# is the load-bearing part of both.
+# Mongo's entrypoint races itself on a fresh volume and exits 48, taking every
+# depends_on service with it (EUDPA-358). Retrying is the only fix — see
+# bounce-mongo.sh, which carries the same loop for the reseed path. Mongo comes
+# up alone first so the stack up below finds it already healthy.
 MONGO_UP_ATTEMPTS="${MONGO_UP_ATTEMPTS:-6}"
 MONGO_RETRY_BACKOFF_SECONDS="${MONGO_RETRY_BACKOFF_SECONDS:-2}"
 
@@ -221,7 +205,6 @@ start_mongodb_first() {
       return 1
     fi
     print_error "mongo failed to start (attempt $attempt/$MONGO_UP_ATTEMPTS), retrying"
-    # Every retry must draw the race afresh, so wipe rather than reuse.
     docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
       rm --stop --force --volumes mongodb >/dev/null 2>&1 || true
     attempt=$((attempt + 1))

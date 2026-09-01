@@ -92,6 +92,7 @@ start_mongodb_with_retries() {
 
     if [ "$attempt" -ge "$UP_ATTEMPTS" ]; then
       print_error "mongo failed to start after $UP_ATTEMPTS attempts"
+      print_error "  the failed container is left in place on purpose, so read its logs"
       mongo_compose logs --no-color --tail 50 mongodb >&2 || true
       return 1
     fi

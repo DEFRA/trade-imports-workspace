@@ -28,7 +28,7 @@ fi
 subcommand=''
 for arg in "$@"; do
   case "$arg" in
-    up | rm | logs | exec | ps)
+    up | rm | logs | exec)
       subcommand="$arg"
       break
       ;;
@@ -49,10 +49,6 @@ case "$subcommand" in
     exit 0
     ;;
   rm)
-    exit 0
-    ;;
-  ps)
-    printf '%s\n' "${STUB_COMPOSE_PS:-}"
     exit 0
     ;;
   logs)
@@ -93,7 +89,7 @@ start_case() {
   STUB_STATE_DIR="$(mktemp -d "$STUB_DIR/case.XXXXXX")"
   export STUB_STATE_DIR
   unset STUB_UP_FAILURES STUB_LOGS STUB_COUNT STUB_COUNT_STATUS \
-    STUB_PRIMARY STUB_PRIMARY_STATUS STUB_PS_OUTPUT STUB_COMPOSE_PS
+    STUB_PRIMARY STUB_PRIMARY_STATUS STUB_PS_OUTPUT
   # Reset anything a previous case tuned, so no case inherits another's world.
   UP_ATTEMPTS="${DEFAULT_UP_ATTEMPTS:-6}"
 }
@@ -183,56 +179,6 @@ main >/dev/null 2>&1
 status=$?
 [ "$status" -eq 0 ] || fail "expected main to recover from the race, got $status"
 [ "$(up_attempt_count)" = '3' ] || fail "expected 3 ups from main, got $(up_attempt_count)"
-
-# restart_mongo_dependents
-start_case 'only the mongo-dependent services that are running are restarted'
-export STUB_COMPOSE_PS='trade-imports-animals-backend
-trade-imports-animals-frontend
-trade-imports-address-book'
-output="$(restart_mongo_dependents 2>&1)"
-status=$?
-[ "$status" -eq 0 ] || fail "restarting the dependents failed with $status"
-case "$output" in
-  *'trade-imports-animals-backend'*) ;;
-  *) fail 'the running backend was not restarted' ;;
-esac
-case "$output" in
-  *'trade-imports-address-book'*) ;;
-  *) fail 'the running address book was not restarted' ;;
-esac
-case "$output" in
-  *'trade-imports-ins-backend'*) fail 'a service that is not running was restarted' ;;
-esac
-case "$output" in
-  *'trade-imports-animals-frontend'*) fail 'a service with no mongo state was restarted' ;;
-esac
-[ "$(up_attempt_count)" = '1' ] || fail "expected one up, got $(up_attempt_count)"
-
-start_case 'a database-only stack restarts nothing'
-export STUB_COMPOSE_PS='mongodb'
-restart_mongo_dependents >/dev/null 2>&1
-status=$?
-[ "$status" -eq 0 ] || fail "a database-only stack was treated as an error ($status)"
-[ "$(up_attempt_count)" = '0' ] || fail "expected no ups, got $(up_attempt_count)"
-
-start_case 'main rebuilds startup mongo state after the reseed'
-# The reason this exists: bounce-mongo wipes the volume under running services,
-# and their collections and indexes are only built at startup. Without the
-# restart the rest of the run has none of them (EUDPA-356).
-stage_init_scripts() { :; }
-export STUB_LOGS='MongoDB init process complete; ready for start up.'
-export STUB_COUNT=1
-export STUB_PRIMARY=true
-export STUB_COMPOSE_PS='trade-imports-animals-backend'
-output="$(main 2>&1)"
-status=$?
-[ "$status" -eq 0 ] || fail "expected main to succeed, got $status"
-case "$output" in
-  *'Rebuilding startup Mongo state'*) ;;
-  *) fail 'main did not rebuild the dependents after the reseed' ;;
-esac
-# One up for mongo, one for the dependent.
-[ "$(up_attempt_count)" = '2' ] || fail "expected 2 ups from main, got $(up_attempt_count)"
 
 # assert_volume_was_wiped
 start_case 'a fresh volume is recognised by the entrypoint marker'

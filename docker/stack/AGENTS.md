@@ -126,11 +126,10 @@ npm run test:docker-compose:security:active       # passive + active scan
 ```
 
 See `repos/trade-imports-animals-tests/README.md#security-testing` for the
-full local workflow and `workareas/analysis/zap-playwright-docker-stack-migration.md`
-for the design behind this profile (why it's opt-in unlike `toxiproxy`, and
-why `network_mode: host` is required — the app frontends' OIDC redirect
-URLs are hardcoded to `localhost`, same constraint as the hostname rules
-below).
+full local workflow. It's opt-in unlike `toxiproxy` because it's a heavy
+scanner nobody wants brought up by a plain `run-stack.sh`, and it needs
+`network_mode: host` because the app frontends' OIDC redirect URLs are
+hardcoded to `localhost` — same constraint as the hostname rules below.
 
 ## Running E2E tests against this stack
 

@@ -1,0 +1,201 @@
+name: Security Active Scan
+
+on:
+  workflow_call:
+
+jobs:
+  # Single job, not e2e-tests.yml's shard/merge/deploy split: the
+  # report-publish and prune steps must run after the scan step, on the
+  # same runner, which a separate job would need extra wiring for.
+  # Sharding the scan itself is a bigger question than wiring, though:
+  # matrix shards are isolated runners with no shared networking, so each
+  # would need its own ZAP instance seeing only a fraction of the traffic
+  # — a scan-coverage risk (findings only surfacing once the full site
+  # tree is built in one session), not just a report-merging one. Worth
+  # investigating later, not assumed safe.
+  scan-and-publish:
+    runs-on: ubuntu-latest
+    # Provisional: active scans are heavier than the e2e suite's 30-minute
+    # budget. Revisit once a real run's duration is known.
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    concurrency:
+      group: pages-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: DEFRA/trade-imports-workspace
+
+      - name: Start stack
+        run: ./scripts/stack/run-stack.sh --branch main
+
+      - name: Start ZAP (security profile)
+        env:
+          ZAP_REPORT_DIR: ${{ github.workspace }}/zap-report
+        run: ./scripts/stack/run-stack.sh --branch main --profile security
+
+      - name: Assert stack
+        run: |
+          docker run --rm \
+            --network host \
+            --user root \
+            --entrypoint npm \
+            defradigital/trade-imports-animals-tests:latest \
+            run _assert_stack
+
+      - name: Reseed database
+        run: ./scripts/stack/bounce-mongo.sh
+
+      - name: Clean previous ZAP report
+        run: |
+          docker run --rm \
+            --network host \
+            --user root \
+            -v ${{ github.workspace }}/zap-report:/app/zap-report \
+            --entrypoint npm \
+            defradigital/trade-imports-animals-tests:latest \
+            run _zap_clean
+
+      - name: Prime ZAP context
+        run: |
+          docker run --rm \
+            --network host \
+            --user root \
+            -e PROFILE=security:active \
+            --entrypoint npm \
+            defradigital/trade-imports-animals-tests:latest \
+            run _zap_prime_context
+
+      - name: Run active security scan
+        run: |
+          docker run --rm \
+            --network host \
+            --user root \
+            -e PROFILE=security:active \
+            -v ${{ github.workspace }}/zap-report:/app/zap-report \
+            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
+            --entrypoint npm \
+            defradigital/trade-imports-animals-tests:latest \
+            run _test_docker_compose -- --grep '@active' --timeout=60000
+
+      # always(): a real Playwright failure here still fails the job overall
+      # (this step's own exit code does that) but the gate should still run
+      # against whatever ZAP saw, the same way e2e-tests.yml still publishes
+      # its report on a failing run rather than skipping straight to teardown.
+      - name: Gate on ZAP findings
+        if: always()
+        run: |
+          docker run --rm \
+            --network host \
+            --user root \
+            -e PROFILE=security:active \
+            -v ${{ github.workspace }}/zap-report:/app/zap-report \
+            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
+            --entrypoint npm \
+            defradigital/trade-imports-animals-tests:latest \
+            run _zap_run_and_gate
+
+      # security-scan.json and zap.log carry the same content as
+      # security-scan-json.html and zap-log.html (run-and-gate.ts wraps
+      # both automatically — see wrapAsHtml there), but staticrypt only
+      # wraps .html: the plain originals would pass through unencrypted,
+      # bypassing the password entirely. Nothing needs them once they're
+      # wrapped, so both are removed rather than published as unguarded
+      # copies.
+      - name: Remove the unwrapped log and JSON report
+        if: always()
+        run: rm -f zap-report/zap.log zap-report/security-scan.json
+
+      # The tests repo's Pages site is public with no access-restriction
+      # option, and a DAST report is more sensitive than the existing
+      # public e2e report. staticrypt encrypts each file client-side; the
+      # password unlocks it in the browser, so view-source/curl on the
+      # published page shows only ciphertext. playwright-report/ is the
+      # only artefact left unencrypted — a multi-file JS-bundle SPA, not a
+      # single file, so it doesn't fit staticrypt's single-file wrapping.
+      - name: Encrypt report with a password
+        if: always()
+        env:
+          STATICRYPT_PASSWORD: ${{ secrets.ZAP_REPORT_PASSWORD }}
+        run: |
+          npx --yes staticrypt \
+            zap-report/index.html zap-report/security-scan.html \
+            zap-report/security-scan-json.html zap-report/zap-log.html \
+            -d zap-report-encrypted --short --config false
+          mv zap-report-encrypted/index.html zap-report/index.html
+          mv zap-report-encrypted/security-scan.html zap-report/security-scan.html
+          mv zap-report-encrypted/security-scan-json.html zap-report/security-scan-json.html
+          mv zap-report-encrypted/zap-log.html zap-report/zap-log.html
+
+      - name: Resolve report date
+        id: date
+        if: always()
+        run: echo "today=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./zap-report
+          destination_dir: security-active/${{ steps.date.outputs.today }}
+          keep_files: true
+
+      - name: Write report link to job summary
+        if: always()
+        run: |
+          repo="${{ github.repository }}"
+          owner="${repo%%/*}"
+          name="${repo##*/}"
+          owner_lc="$(echo "$owner" | tr '[:upper:]' '[:lower:]')"
+          url="https://${owner_lc}.github.io/${name}/security-active/${{ steps.date.outputs.today }}/"
+          echo "🔒 [Security scan report]($url)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout gh-pages for pruning
+        if: always()
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+          path: gh-pages-checkout
+
+      # Age-based, not e2e-tests.yml's PR-keep-list pruning (cleanup-e2e-reports.yml):
+      # a nightly scan has no PR/branch dimension, just a date. Runs as a step
+      # here rather than a separate job so it deterministically checks out
+      # gh-pages after the deploy step above has pushed to it — otherwise its
+      # orphan-reset force-push could revert the report this same run just
+      # published.
+      - name: Prune security-active reports older than 7 days
+        if: always()
+        working-directory: gh-pages-checkout
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cutoff=$(date -u -d '7 days ago' +%Y-%m-%d)
+          changed=false
+          for dir in security-active/*/; do
+            [ -d "$dir" ] || continue
+            report_date=$(basename "$dir")
+            if [[ "$report_date" < "$cutoff" ]]; then
+              echo "Pruning $dir"
+              rm -rf "$dir"
+              changed=true
+            fi
+          done
+          if [ "$changed" = true ]; then
+            git checkout --orphan _orphan
+            git add -A
+            git commit -m "chore: prune security-active reports older than 7 days" --allow-empty
+            git branch -D gh-pages
+            git branch -m gh-pages
+            git push -f origin gh-pages
+          else
+            echo "No security-active reports to prune"
+          fi
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose -p trade-imports down

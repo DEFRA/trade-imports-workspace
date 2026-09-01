@@ -27,7 +27,12 @@ services:
       # zap.log isn't mounted on its own: a missing host file gets created
       # as a directory by Docker, not a file. Symlinked in via `command`
       # instead, same fix as the plan-files mount above.
-      - ../../repos/trade-imports-animals-tests/zap-report:/zap/wrk/zap-report
+      #
+      # Defaults to the tests repo's own zap-report/ dir, present locally
+      # where it's cloned under repos/. CI has no such checkout, so
+      # security-active-scan.yml sets ZAP_REPORT_DIR to an absolute path shared
+      # with the containerised gate step instead — local dev is unaffected.
+      - ${ZAP_REPORT_DIR:-../../repos/trade-imports-animals-tests/zap-report}:/zap/wrk/zap-report
     # Matches backend.compose.yml's healthcheck timing convention for JVM
     # services with add-ons to load. Pair with `up -d --wait` so "up" doesn't
     # return until ZAP is actually accepting requests, not just started.

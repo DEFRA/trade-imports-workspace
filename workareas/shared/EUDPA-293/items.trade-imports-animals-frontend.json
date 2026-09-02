@@ -1,0 +1,80 @@
+{
+  "ticket": "EUDPA-293",
+  "repo": "trade-imports-animals-frontend",
+  "items": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Minor",
+      "category": "code-style",
+      "issue": "assembled.answers is accessed three times (line 34, and the two new storedAnswers: assembled.answers assignments) instead of being destructured once",
+      "fix": "Destructure once at the top, e.g. const { answers: storedAnswers } = assembled, and reuse it in both return branches",
+      "best_practice": "node/code-style.md",
+      "file": "src/server/app/engine/read.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 176,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "New 'change context' describe block tests POST redirect only under change=1; the symmetric non-changing POST case (normal nextTarget flow, not redirecting to notification-view) introduced by the same exitTarget/changeContext branching is left unverified, unlike every GET case in this block which pairs a changing and non-changing assertion",
+      "fix": "Add a POST test with no change query asserting the redirect is NOT notification-view (e.g. the ordinary next-page target), mirroring the GET 'not changing' coverage",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 176,
+      "severity": "Minor",
+      "category": "test-structure",
+      "issue": "The POST redirect test is nested inside the 'GET addresses — change context' describe block, mixing verbs under a GET-labelled block",
+      "fix": "Nest the POST test under its own 'POST addresses — change context' (or similar) describe, per the repo convention of separating describes by HTTP verb",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 561,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "Test 'Should not flag an inline party the address book cannot empty' deletes placeOfOrigin's answer entirely, so it only exercises the never-answered path (already covered by the importer test) — placeOfOrigin never carries an addressId here, so the case it names (an inline party surviving an address-book deletion) is never actually run.",
+      "fix": "Seed placeOfOrigin with an addressId pointing at a deleted record (e.g. { addressId: 'gone' }) and assert the summary stays null, proving inline parties are immune to the deletion check per resolve-parties.js's resolveOne.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 557,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "No test asserts errorSummary is null for a party that IS an address-book reference and DOES still resolve (e.g. consignor: { addressId: 'astra-rosales' }) — every 'no error' assertion in this file uses parties with no addressId at all, so the outstandingParties() branch '!parties[party.id]' being false for a live reference (the AC3 'clears once replaced' case) is untested.",
+      "fix": "Add a case (near the 'address-book party references' describe, or extending it) that seeds a valid addressId and asserts view.context.errorSummary is null, closing the coverage gap for the resolved-reference path.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 126,
+      "severity": "Major",
+      "category": "consistency",
+      "issue": "post() blocks on outstandingPartyErrors unconditionally, but renderNotificationView explicitly zeroes partyErrors for a readOnly (SUBMITTED) journey — the POST path has no matching readOnly guard, and the template renders the submit form even when readOnly, so a submitted notification with a stale address reference would be wrongly refused, contradicting the ticket's 'submitted: nothing changes' rule",
+      "fix": "Destructure readOnly (or journey.status) in post() and skip the outstandingPartyErrors check when readOnly, mirroring the GET branch's 'readOnly ? {} : outstandingPartyErrors(...)'",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

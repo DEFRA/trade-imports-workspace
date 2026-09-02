@@ -1,0 +1,56 @@
+{
+  "ticket": "EUDPA-293",
+  "repo": "trade-imports-animals-backend",
+  "items": [
+    {
+      "id": 1,
+      "line": 99,
+      "severity": "Minor",
+      "category": "openapi-docs",
+      "issue": "The 400 @ApiResponse on submit() now documents a structured errors-by-role body (per GlobalExceptionHandler.handleUnresolvableConsignmentPartyException) but still uses content = @Content with no schema or example, so the shape is only discoverable via prose",
+      "fix": "Add content = @Content(mediaType = \"application/problem+json\", schema = @Schema(implementation = ProblemDetail.class), examples = @ExampleObject(...)) per the ProblemDetail documentation pattern",
+      "best_practice": "java/openapi-springdoc.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 2131,
+      "severity": "Minor",
+      "category": "doc-drift",
+      "issue": "The stub-matching doc comment (org+header matching) stayed on stubAddressBook after the diff moved that logic into the new stubAddressBookFor, so it now sits on a one-line delegator instead of the method it describes",
+      "fix": "Move the /** ... */ comment down onto stubAddressBookFor",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 156,
+      "severity": "Minor",
+      "category": "test-duplication",
+      "issue": "shouldReportASoftDeletedAddressAsUnresolvableOnSubmission inlines the same 11-arg soft-deleted AddressBookRecord construction already used verbatim in shouldTreatASoftDeletedAddressAsUnresolvable (line 171), rather than a shared helper",
+      "fix": "Add a deletedAddressRecord(addressId, name) helper alongside the existing addressRecord() one and use it in both tests",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/ConsignmentPartyResolverTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 156,
+      "severity": "Minor",
+      "category": "test-duplication",
+      "issue": "shouldReportASoftDeletedAddressAsUnresolvableOnSubmission repeats the 11-arg AddressBookRecord soft-deleted construction already duplicated at shouldTreatASoftDeletedAddressAsUnresolvable (line ~171), instead of extending the existing addressRecord() helper",
+      "fix": "add a deletedAddressRecord(addressId, name) helper alongside addressRecord() and use it in both soft-deleted tests",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/ConsignmentPartyResolverTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

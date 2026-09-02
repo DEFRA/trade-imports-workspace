@@ -6,6 +6,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      # The OIDC discovery document is fetched during boot, before server.start().
+      trade-imports-defra-id-stub:
+        condition: service_healthy
+        required: false
     env_file:
       - ./shared.env
     environment:
@@ -40,6 +44,9 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
+      trade-imports-defra-id-stub:
+        condition: service_healthy
+        required: false
       trade-imports-reference-data:
         condition: service_healthy
     env_file:
@@ -76,6 +83,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      trade-imports-defra-id-stub:
+        condition: service_healthy
+        required: false
       # Countries are primed at boot from reference-data; without this the
       # frontend can fetch before Spring is listening and exit(1).
       trade-imports-reference-data:

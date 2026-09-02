@@ -2,6 +2,16 @@ name: Security Active Scan
 
 on:
   workflow_call:
+  # A reusable workflow reachable only from a schedule cannot be run before it
+  # is merged. Dispatch makes it testable, and gives a failed nightly a rerun
+  # that does not wait for the next one.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Workspace branch to run the scan from — blank runs main'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   # Single job, not e2e-tests.yml's shard/merge/deploy split: the
@@ -28,9 +38,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: DEFRA/trade-imports-workspace
+          # A caller's event name surfaces here as its own (e2e-tests.yml
+          # carries the same note), so branch is the discriminator instead:
+          # it is set only by workflow_dispatch, and callers get main.
+          ref: ${{ inputs.branch || 'main' }}
 
       - name: Start stack
-        run: ./scripts/stack/run-stack.sh --branch main
+        run: ./scripts/stack/run-stack.sh --branch "${{ inputs.branch || 'main' }}"
 
       # Docker auto-creates a missing bind-mount source as root, and the
       # zap service (security.compose.yml) writes as its image's non-root
@@ -47,7 +61,7 @@ jobs:
       - name: Start ZAP (security profile)
         env:
           ZAP_REPORT_DIR: ${{ github.workspace }}/zap-report
-        run: ./scripts/stack/run-stack.sh --branch main --profile security
+        run: ./scripts/stack/run-stack.sh --branch "${{ inputs.branch || 'main' }}" --profile security
 
       - name: Assert stack
         run: |

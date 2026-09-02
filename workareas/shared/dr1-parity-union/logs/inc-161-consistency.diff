@@ -1,0 +1,353 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+index 7c7d376c..78dfee7b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+@@ -59,7 +59,6 @@ export const copy = {
+     },
+     selectRowPrefix: 'Dewis',
+     viewDetails: 'Gweld manylion',
+-    viewDetailsFor: 'ar gyfer',
+-    saveAndContinue: 'Cadw a pharhau'
++    viewDetailsFor: 'ar gyfer'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+index 64441a44..38e05ba8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+@@ -58,7 +58,6 @@ export const copy = {
+     },
+     selectRowPrefix: 'Select',
+     viewDetails: 'View details',
+-    viewDetailsFor: 'for',
+-    saveAndContinue: 'Save and continue'
++    viewDetailsFor: 'for'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+index d4943018..f22bc544 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+@@ -6,6 +6,7 @@ import {
+   unlockSections,
+   values
+ } from '../../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../../../shared/copy.en.js'
+ import { copy } from '../copy/copy.en.js'
+ import { PARTIES } from '../parties.js'
+ 
+@@ -68,7 +69,12 @@ const searchAddresses = async (page, query) => {
+ }
+ 
+ const saveAndContinue = (page) =>
+-  page.getByRole('button', { name: copy.picker.saveAndContinue }).click()
++  page
++    .getByRole('button', {
++      name: sharedCopy.saveActions.saveAndContinue,
++      exact: true
++    })
++    .click()
+ 
+ test.describe('addresses hub', () => {
+   test.beforeEach(async ({ page }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk b/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk
+index ebfcf1cc..445865e1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk
+@@ -4,6 +4,7 @@
+ {% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "govuk/components/pagination/macro.njk" import govukPagination %}
+ {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
++{% from "shared/save-actions.njk" import saveActions %}
+ 
+ {# Search + paginated results table with a radio per row (design 05-03..06).
+    The whole picker is one form: the search button and Save and continue are
+@@ -66,7 +67,7 @@
+   {% endif %}
+ {% endmacro %}
+ 
+-{% macro addressPicker(picker, crumb, copy) %}
++{% macro addressPicker(picker, crumb, copy, saveActionsCopy, hubHref) %}
+   <form method="post" novalidate>
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+@@ -107,6 +108,15 @@
+       <p class="govuk-body">{{ copy.noMatches }}</p>
+     {% endif %}
+ 
+-    {{ govukButton({ text: copy.saveAndContinue, name: "action", value: "save" }) }}
++    {# A picker is reached from the consignment addresses page, not from the
++       hub, so it ends with the primary alone — but the ending comes out of the
++       shared macro like every other page's. The primary keeps its own `action`
++       value so the form can tell it from the search submit above. #}
++    {{ saveActions(
++      hubHref,
++      { text: saveActionsCopy.saveAndContinue, name: "action", value: "save" },
++      saveActionsCopy,
++      false
++    ) }}
+   </form>
+ {% endmacro %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk b/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk
+index efc1b775..482feef6 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk
+@@ -8,5 +8,5 @@
+   <h1 class="govuk-heading-l">{{ heading }}</h1>
+   <p class="govuk-body">{{ description }}</p>
+ 
+-  {{ addressPicker(picker, crumb, pickerCopy) }}
++  {{ addressPicker(picker, crumb, pickerCopy, sharedCopy.saveActions, hubHref) }}
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+index 511145cf..6626b9a9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+@@ -32,6 +32,8 @@
+       {{ speciesQuantityGroup(group, copy) }}
+     {% endfor %}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Second page of the commodities row — reached from the commodity search
++       page, not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+index 83ad1659..da326fb6 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ 
+ import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../../shared/copy.en.js'
+ import { copy } from './copy/copy.en.js'
+ import { signIn } from '../../../../../../../../../fit/sign-in.js'
+ 
+@@ -39,6 +40,27 @@ test.describe('cph-number feature', () => {
+     )
+   })
+ 
++  test('ends with the primary alone, being reached from the addresses page', async ({
++    page
++  }) => {
++    await expect(
++      page.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
++    ).toBeVisible()
++    await expect(
++      page.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndReturnToHub
++      })
++    ).toBeHidden()
++    await expect(
++      page.getByRole('link', {
++        name: sharedCopy.saveActions.cancelAndReturnToHub
++      })
++    ).toBeHidden()
++  })
++
+   test('back link returns to the notification hub', async ({ page }) => {
+     const hubUrl = page.url().replace(/\/cph-number$/, '')
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+index 88a8700f..621f9406 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+@@ -25,6 +25,8 @@
+       errorMessage: errors.countyParishHoldingCph and { text: errors.countyParishHoldingCph }
+     }) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Second page of the addresses row — reached from the hub's addresses
++       page, not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
+index dfc6b580..06a609d0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
+@@ -15,6 +15,8 @@
+ 
+     {{ mojDatePicker(exitDate) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Third page of the exit-details row — reached from the port of exit page,
++       not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
+index 6a423a5f..6d4125ad 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
+@@ -24,6 +24,8 @@
+       items: purposeOptions
+     }) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Second page of the import-reason row — reached from the reason page,
++       not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk
+index eb56426f..e856cb78 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk
+@@ -23,6 +23,8 @@
+       items: portItems
+     }) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Second page of the exit-details row — reached from the destination
++       country page, not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
+index 1ba94114..eed0e8de 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
+@@ -92,6 +92,8 @@
+       errorMessage: errors.emailAddress and { text: errors.emailAddress }
+     }) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Third page of the transporter row — reached from the transporter type
++       page, not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk
+index d6750f26..d76f5c69 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk
+@@ -25,6 +25,8 @@
+       items: transporterOptions
+     }) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# Second page of the transporter row — reached from the transporter type
++       page, not from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/shared/save-actions.njk b/src/server/app/shared/save-actions.njk
+index 2138184a..41284603 100644
+--- a/src/server/app/shared/save-actions.njk
++++ b/src/server/app/shared/save-actions.njk
+@@ -1,14 +1,23 @@
+ {% from "govuk/components/button/macro.njk" import govukButton %}
+ 
+-{% macro saveActions(hubHref, primary, copy) %}
++{# The one place a journey page's ending is stated.
++
++   The rule: a page the hub links to directly ends with all three controls —
++   the primary, "Save and return to hub" and "Cancel and return to hub" — so a
++   trader can stop and leave from where the hub sent them. A page reached from
++   another page ends with the primary alone, and the trader leaves the way they
++   came in. Pass `showReturnControls = false` on those. #}
++{% macro saveActions(hubHref, primary, copy, showReturnControls = true) %}
+   <div class="govuk-button-group">
+     {{ govukButton(primary or { text: copy.saveAndContinue }) }}
+-    {{ govukButton({
+-      text: copy.saveAndReturnToHub,
+-      classes: "govuk-button--secondary",
+-      name: "exit",
+-      value: "hub"
+-    }) }}
+-    <a class="govuk-link" href="{{ hubHref }}">{{ copy.cancelAndReturnToHub }}</a>
++    {% if showReturnControls %}
++      {{ govukButton({
++        text: copy.saveAndReturnToHub,
++        classes: "govuk-button--secondary",
++        name: "exit",
++        value: "hub"
++      }) }}
++      <a class="govuk-link" href="{{ hubHref }}">{{ copy.cancelAndReturnToHub }}</a>
++    {% endif %}
+   </div>
+ {% endmacro %}
+diff --git a/src/server/app/shared/save-actions.test.js b/src/server/app/shared/save-actions.test.js
+new file mode 100644
+index 00000000..f31abc5b
+--- /dev/null
++++ b/src/server/app/shared/save-actions.test.js
+@@ -0,0 +1,72 @@
++import { describe, expect, it } from 'vitest'
++
++import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
++import { copy as sharedEn } from './copy.en.js'
++
++const environment = nunjucksConfig.options.compileOptions.environment
++
++const renderActions = (args) =>
++  environment.renderString(
++    `{% from "shared/save-actions.njk" import saveActions %}{{ saveActions(${args}) }}`,
++    { hubHref: '/notifications/journey-1/hub', copy: sharedEn.saveActions }
++  )
++
++const withReturnControls = 'hubHref, copy = copy'
++const withoutReturnControls = 'hubHref, copy = copy, showReturnControls = false'
++
++describe('#saveActions', () => {
++  it('Should end a page the hub links to with the primary and both return controls', () => {
++    const html = renderActions(withReturnControls)
++
++    expect(html).toContain(sharedEn.saveActions.saveAndContinue)
++    expect(html).toContain(sharedEn.saveActions.saveAndReturnToHub)
++    expect(html).toContain(sharedEn.saveActions.cancelAndReturnToHub)
++    expect(html).toContain('href="/notifications/journey-1/hub"')
++  })
++
++  it('Should submit the hub exit the controllers read from the secondary button', () => {
++    const html = renderActions(withReturnControls)
++
++    const secondary = html
++      .split('<button')
++      .find((fragment) =>
++        fragment.includes(sharedEn.saveActions.saveAndReturnToHub)
++      )
++
++    expect(secondary).toContain('name="exit"')
++    expect(secondary).toContain('value="hub"')
++  })
++
++  it('Should end a page reached from another page with the primary alone', () => {
++    const html = renderActions(withoutReturnControls)
++
++    expect(html).toContain(sharedEn.saveActions.saveAndContinue)
++    expect(html).not.toContain(sharedEn.saveActions.saveAndReturnToHub)
++    expect(html).not.toContain(sharedEn.saveActions.cancelAndReturnToHub)
++    expect(html).not.toContain('name="exit"')
++  })
++
++  it('Should keep the two return controls travelling together', () => {
++    for (const args of [withReturnControls, withoutReturnControls]) {
++      const html = renderActions(args)
++      expect(html.includes(sharedEn.saveActions.saveAndReturnToHub)).toBe(
++        html.includes(sharedEn.saveActions.cancelAndReturnToHub)
++      )
++    }
++  })
++
++  it('Should keep the button group so the primary sits with whatever follows it', () => {
++    expect(renderActions(withoutReturnControls)).toContain(
++      'class="govuk-button-group"'
++    )
++  })
++
++  it('Should let a page name its own primary in place of Save and continue', () => {
++    const html = renderActions(
++      'hubHref, { text: "Save and finish", name: "action", value: "finish" }, copy, false'
++    )
++
++    expect(html).toContain('Save and finish')
++    expect(html).not.toContain(sharedEn.saveActions.saveAndContinue)
++  })
++})

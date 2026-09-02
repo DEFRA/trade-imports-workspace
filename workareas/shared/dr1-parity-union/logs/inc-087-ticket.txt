@@ -1,0 +1,30 @@
+h2. Increment
+
+{{inc-087}} from the {{shared/dr1-parity-union}} backlog.
+
+The frontend commodity page has no search box. Under the heading "What are you importing?" it prints every commodity the reference service knows about, one tick-box group per commodity, with a tick box per species inside each. Nothing narrows the list, nothing summarises what has been picked, and the only way to review a selection is to scroll the fieldsets looking for ticks. Design release 1 instead asks the user to search for a commodity and shows nothing until they do.
+
+The printed list is bounded only by what the reference service returns. The requirements side's own fixture already carries twenty-one commodities and over a hundred species under "Other live mammals" alone, so the printed list stops being usable as soon as the stub is replaced.
+
+h2. Acceptance criteria
+
+* The commodity page shows a search box labelled "Search for a commodity", with the hint "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus)." The label carries the heading-size class rather than being a separate heading.
+* No commodities or species are listed until the user has entered at least three characters.
+* Once at least three characters are entered, matching results appear in a panel directly below the search box, grouped under a commodity heading such as "Cattle (0102)", with a tick box per matching species.
+* The search matches on the species Latin name, the species common name, the commodity name and the commodity code.
+* Chosen species collect into a panel below the results panel, headed with a running count in the form "2 selected", listing each chosen species and offering a "Clear all" action.
+* Selections survive leaving and re-entering the page.
+* The existing "Select a commodity" error is kept for an empty submission — both sides already use it.
+* The whole-catalogue tick-box list is removed from {{search.njk}} and its view model, so the page no longer renders one {{govukCheckboxes}} group per commodity.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Frontend evidence: {{src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk}} lines 19-30, {{src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js}} lines 3-15, {{src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js}} lines 36-52.
+
+Design release 1 evidence: {{app/views/what-are-you-importing.html}} lines 47-117 and 110-114, {{app/assets/javascripts/commodity-search.js}}.
+
+Screens: {{fe-commodity-search}}, {{fe-commodity-search-selected}}, {{dr1-what-are-you-importing}}, {{dr1-what-are-you-importing-results}}.
+
+Travels with {{inc-090}} (species common names) and {{inc-091}} (the real catalogue).

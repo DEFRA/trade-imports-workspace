@@ -4002,6 +4002,8 @@
     },
     {
       "id": "inc-078",
+      "ticket": "EUDPA-367",
+      "branch": "feat/EUDPA-367-frontend-sets-the-origin-page-s-three-qu",
       "type": "copy-change",
       "milestone": null,
       "domain": "origin",
@@ -4019,8 +4021,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "291e518e",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/225",
+          "number": 225,
+          "merged": true,
+          "sha": "6d5f2a6563ce6d63382cc27ea1a16c7b8fad933a"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/139",
+          "number": 139,
+          "merged": true,
+          "sha": "4ce4e1fca6d435119646993a916e6c0caa7fb370"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The origin page asks three questions and gives them three different weights. \"Country of origin\" and \"Does the consignment have a region of origin code?\" are set at the small label size, and \"Your internal reference for this consignment (optional)\" carries no size at all, so it renders in ordinary body text the same size as the hint below it and reads as a sentence rather than a question — on the page shot that question and its hint read as a single paragraph, told apart only by colour. All three are set in src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk:18, :38 and :46-51.",
@@ -4221,6 +4239,8 @@
     },
     {
       "id": "inc-161",
+      "ticket": "EUDPA-372",
+      "branch": "feat/EUDPA-372-what-a-user-is-offered-at-the-foot-of-a",
       "type": "flow-change",
       "milestone": null,
       "domain": "service-wide",
@@ -4250,8 +4270,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "ed59bd1d",
       "failure_reason": null,
       "finding": {
         "frontend": "A trader filling in a notification meets one of six different endings to a page, and cannot predict which. On 41 of the 67 captured frontend screens the page ends with three controls — a primary button, a secondary \"Save and return to hub\" button and a \"Cancel and return to hub\" link. On the other 26 the page offers no way to save what has been entered and leave. The two return controls always travel together: on every screen where either appears the other does too, because one shared macro builds all three unconditionally and takes no argument that would drop one (src/server/app/shared/save-actions.njk:3-13).\n\nWhat decides which pages get them is not anything a user can see. Nineteen feature templates call that macro, and they are exactly the nineteen answer pages of the linear flow other than the dashboard (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:31-86). Anything routed outside that flow ends the page its own way. So the split falls inside a single section of the service: the CPH number page and the five party pickers are both reached from rows on the consignment addresses page, and the CPH page offers all three controls while Place of origin offers only \"Save and continue\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk:109, its label duplicated in a copy key of its own at src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62). A trader who wants to stop halfway can do it on one and not on the other.\n\nThe primary beside them is not one button either but three labels out of four copy keys: \"Save and continue\" from the shared key on 30 screens (src/server/app/shared/copy.en.js:42-45), \"Save and finish\" on the four animal-identification states (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25), and \"Continue\" on the seven documents and consignment-addresses states (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:92 and src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:16).\n\nThe 26 screens with no return control break down as nine party-picker states ending with a lone \"Save and continue\"; five check-your-answers and declaration states ending with a lone \"Continue\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:112 and src/server/app/sets/live-animals/journeys/linear/features/declaration/template.njk:42); the delete-notification and cancel-amendment confirmations, which pair a primary with a secondary link back; and ten overview, dashboard and confirmation states, which carry page-specific controls rather than the journey pattern and sit outside this finding. Giving a party picker the return controls is not a template edit alone: its post always redirects to the consignment addresses page and never reads the exit value the secondary button submits (src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js:92, against the shared helpers at src/server/app/shared/kit.js:77-89).",
@@ -5070,10 +5090,21 @@
         "ruling": "accept",
         "note": "RULE (b) chosen by Sam, 2026-08-21, on run C inc-126. Only the pages the overview links to end with the three controls; a page reached from another page ends with the primary alone. The party pickers stay as they are; seven second-and-later task-row pages lose their return controls (consignment details, import purpose, port of exit, exit date, transporter selection, private transporter details, CPH number). Mechanism: a fourth parameter showReturnControls on src/server/app/shared/save-actions.njk:3-13, defaulting true, with the seven named templates and the party pickers passing false. KNOCK-ON: the hub-to-overview rename lands on 29 frontend screens rather than 41.",
         "ruledAt": "2026-08-21T13:39:59Z"
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/226",
+          "number": 226,
+          "merged": true,
+          "sha": "d873ecdff032032f0a1cb52301a945aed5c53c82"
+        }
+      ]
     },
     {
       "id": "inc-087",
+      "ticket": "EUDPA-373",
+      "branch": "feat/EUDPA-373-frontend-asks-what-is-being-imported-by",
       "type": "add-section",
       "milestone": null,
       "domain": "commodities",
@@ -5093,8 +5124,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "6891b3e9",
       "failure_reason": null,
       "finding": {
         "frontend": "The page has no search box. Under the heading \"What are you importing?\" it prints every commodity the reference service knows about, one tick-box group per commodity, legend \"Cow (0102)\", \"Horse (0101)\", \"Cat (01061900)\", \"Dog (01061900)\", \"Fish (0301)\", with a tick box per species inside each. The template loops the whole list and renders a govukCheckboxes group for each entry with no filtering step of any kind (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:19-30), and the view model builds one group per commodity with no query argument (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js:3-15). The controller takes no query parameter and has no search action: it renders the list on GET and validates the ticked boxes on POST (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js:36-52). Nothing narrows the list, nothing summarises what has been picked, and the only way to review a selection is to scroll the fieldsets looking for ticks. The captured page fits on one screen only because the stub holds five commodities and eight species between them.",
@@ -5256,7 +5287,26 @@
         "note": "Checkbox list of the whole catalogue vs DR1's search control. Same finding, and both describe the results panel and the selected-items panel with its count and Clear all. They split the extra detail: A has the persistence mechanism (selections seeded back as JSON) and ties the work to sourcing the real catalogue first; C has the three-character threshold, the bold match highlighting, and the instruction to keep the existing 'Select a commodity' error. A BA gets more from reading both than from either.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "openQuestions": [
+        "Which wording does the commodity search hint ship with, and is the divergence from the acceptance criteria accepted? The increment's AC bullet 1 (and the backlog finding.prototype slot) quote Design release 1's hint character for character: \"You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).\" What landed is src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:8-9 — \"You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.\" — three substantive term changes (common name -> commodity name, cattle -> Cow, Latin name -> species name) plus an added sentence. copy.cy.js:12-14 mirrors the implemented wording, so the two locales agree with each other and both diverge from the AC. The deviation is defensible on the data we hold: services/commodities/stub.js:1 names commodities Cow/Horse/Cat/Dog/Fish, and COMMODITY_SPECIES at stub.js:15-25 carries Latin text only, so a trader following the AC's hint and typing \"cattle\" gets \"No results found\" — the AC wording promises a search that cannot work until inc-090 (species common names) lands. The added \"Enter at least 3 characters.\" sentence is likewise a real, useful statement of MIN_SEARCH_LENGTH (search/matching.js:4) that Design release 1 conveys through live typing and a static server-rendered page cannot. DEFERRED rather than fixed in this increment because code cannot settle it: adopting the AC wording verbatim would make the hint factually wrong against the data the service exposes, and it is a copy decision for design/content, not a refactor. It is also not silent-safe — the parity capture compares this page's rendered copy against dr1-what-are-you-importing, so a re-capture will re-raise inc-087 as unclosed on the hint. Nothing pins the string to the AC either: fit/search.fit.spec.js:46 asserts only that copy.search.searchHint is visible. ACTION for design/content: either (a) confirm the implemented wording as a deliberate, data-driven correction and record that ruling here so the next capture pass does not re-open it, or (b) schedule the return to the AC wording as part of inc-090, when common names exist and \"cattle\" actually returns the Cow group — in which case the \"Enter at least 3 characters.\" sentence needs an explicit keep/drop decision too, since Design release 1 has no equivalent."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/228",
+          "number": 228,
+          "merged": true,
+          "sha": "868ecee718afaad39a6688c0647e0f15bda09a89"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/140",
+          "number": 140,
+          "merged": true,
+          "sha": "776b57b48c586aad04bfac86ce03411c83082ae1"
+        }
+      ]
     },
     {
       "id": "inc-085",
@@ -5277,8 +5327,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "bbc4ec04",
       "failure_reason": null,
       "finding": {
         "frontend": "Opening the \"Help with commodity codes\" details reveals a single sentence — \"Commodity codes are used to classify goods for import and export.\" — and nothing else. It is passed to the govukDetails macro as plain text, so it cannot carry a link (src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:31-34, with the string at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:9). A user who does not know their commodity code is told what one is and left with no way to find it.",
@@ -5409,10 +5459,23 @@
         "note": "'Help with commodity codes' — one sentence vs DR1's three paragraphs plus the Trade Tariff link. Word-for-word the same finding, same fix (the copy entry has to become HTML). C edges it only on evidence: its falsifier is discharged against the captured DOM ('the only link in main content is Cancel and return to hub'), where A asserts it.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-374",
+      "branch": "feat/EUDPA-374-frontend-s-help-with-commodity-codes-giv",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/229",
+          "number": 229,
+          "merged": true,
+          "sha": "9131d4eedbac41e6246045d5d03ea35c542a2b3f"
+        }
+      ]
     },
     {
       "id": "inc-086",
+      "ticket": "EUDPA-375",
+      "branch": "feat/EUDPA-375-frontend-s-inset-on-the-commodity-page-d",
       "type": "copy-change",
       "milestone": null,
       "domain": "commodities",
@@ -5430,8 +5493,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "dcc411c6",
       "failure_reason": null,
       "finding": {
         "frontend": "The inset under the heading reads, in full, \"Each health certificate requires a separate notification.\" That is the whole of it — one sentence, defined at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:6 and rendered as a govukInsetText at src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk:12-14. Nothing anywhere in the frontend's commodity feature tells a user what to do when a consignment needs no health certificate.",
@@ -5531,7 +5594,16 @@
         "note": "The inset on 'What are you importing?' drops DR1's second sentence — a consignment needing no health certificate must still be notified. Identical finding, identical citation, and both independently say take DR1's whole two-sentence wording rather than appending, because the first sentence is inverted too.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/230",
+          "number": 230,
+          "merged": true,
+          "sha": "d507694c129fa6e1f65db771d082887d417ab02e"
+        }
+      ]
     },
     {
       "id": "inc-090",

@@ -1,0 +1,142 @@
+diff --git a/src/server/app/copy-parity.test.js b/src/server/app/copy-parity.test.js
+index e18cccc8..526eeaf3 100644
+--- a/src/server/app/copy-parity.test.js
++++ b/src/server/app/copy-parity.test.js
+@@ -37,10 +37,12 @@ const featuresWithCopy = readdirSync(FEATURES_DIR, { withFileTypes: true })
+ // every addition must be justified here.
+ // - ITAHC is a certificate acronym; both locales display it verbatim.
+ // - transporters.guidance.linkHref is a gov.uk URL, identical in both locales.
++// - search.help.lookupHref is the Trade Tariff gov.uk URL, likewise.
+ const IDENTICAL_ALLOWLIST = new Set([
+   'documents:types.ITAHC',
+   'check-answers:documentTypes.ITAHC',
+-  'transport:transporters.guidance.linkHref'
++  'transport:transporters.guidance.linkHref',
++  'commodities:search.help.lookupHref'
+ ])
+ 
+ const kindOf = (value) => (typeof value === 'function' ? 'function' : 'string')
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 44dde58d..842b810d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -20,7 +20,13 @@ export const copy = {
+     },
+     help: {
+       summary: 'Help gyda chodau nwyddau',
+-      text: 'Defnyddir codau nwyddau i ddosbarthu nwyddau ar gyfer mewnforio ac allforio.'
++      reference:
++        'Mae codau nwyddau yn rhifau cyfeirio a gydnabyddir yn rhyngwladol.',
++      describes:
++        'Mae cod nwyddau yn disgrifio cynnyrch penodol wrth fewnforio neu allforio nwyddau.',
++      lookupPrefix: 'Gallwch chwilio am godau nwyddau gan ddefnyddio’r',
++      lookupLink: 'teclyn Tariff Masnach (yn agor mewn tab newydd)',
++      lookupHref: 'https://www.gov.uk/trade-tariff'
+     },
+     errors: {
+       selectCommodity: 'Dewiswch nwydd'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 01e6a6f7..01ce5bf9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -15,7 +15,13 @@ export const copy = {
+     },
+     help: {
+       summary: 'Help with commodity codes',
+-      text: 'Commodity codes are used to classify goods for import and export.'
++      reference:
++        'Commodity codes are internationally recognised reference numbers.',
++      describes:
++        'A commodity code describes a specific product when importing or exporting goods.',
++      lookupPrefix: 'You can look up commodity codes using the',
++      lookupLink: 'Trade Tariff tool (opens in a new tab)',
++      lookupHref: 'https://www.gov.uk/trade-tariff'
+     },
+     errors: {
+       selectCommodity: 'Select a commodity'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+index cba16661..2c2006b0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+@@ -11,6 +11,7 @@ import { dispatchPages } from '../../index.js'
+ 
+ import * as search from '../search/search.controller.js'
+ import { copy } from './copy.en.js'
++import { copy as copyCy } from './copy.cy.js'
+ 
+ const BOS_TAURUS = 'Bos taurus'
+ 
+@@ -33,6 +34,13 @@ describe('#copy', () => {
+     }
+   })
+ 
++  it('Should point the commodity-code lookup at the Trade Tariff tool', () => {
++    expect(copy.search.help.lookupHref).toBe('https://www.gov.uk/trade-tariff')
++    expect(copyCy.search.help.lookupHref).toBe(
++      'https://www.gov.uk/trade-tariff'
++    )
++  })
++
+   it('Should interpolate countDrop', () => {
+     expect(copy.consignmentDetails.errors.countDrop(3, BOS_TAURUS, 2)).toBe(
+       'You have 3 identifier records for Bos taurus but entered 2 animals. Remove identifier records or keep the higher count.'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
+index 3ecc0780..5c20a74f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
+@@ -51,6 +51,25 @@ test.describe('commodity search', () => {
+     ).toBeVisible()
+   })
+ 
++  test('explains commodity codes and links out to the Trade Tariff tool', async ({
++    page
++  }) => {
++    await page.getByText(copy.search.help.summary, { exact: true }).click()
++    await expect(page.getByText(copy.search.help.reference)).toBeVisible()
++    await expect(page.getByText(copy.search.help.describes)).toBeVisible()
++    await expect(page.getByText(copy.search.help.lookupPrefix)).toBeVisible()
++    const tradeTariff = page.getByRole('link', {
++      name: copy.search.help.lookupLink
++    })
++    await expect(tradeTariff).toBeVisible()
++    await expect(tradeTariff).toHaveAttribute(
++      'href',
++      copy.search.help.lookupHref
++    )
++    await expect(tradeTariff).toHaveAttribute('target', '_blank')
++    await expect(tradeTariff).toHaveAttribute('rel', 'noreferrer noopener')
++  })
++
+   test('lists nothing for a query shorter than three characters', async ({
+     page
+   }) => {
+@@ -163,6 +182,8 @@ test.describe('commodity search', () => {
+   test('has no serious or critical axe violations', async ({ page }) => {
+     await selectSpecies(page, [BOS_TAURUS])
+     await searchCommodities(page, '0106')
++    // Open the help details so its paragraphs and outbound link are scanned.
++    await page.getByText(copy.search.help.summary, { exact: true }).click()
+     const results = await new AxeBuilder({ page })
+       .withTags(['wcag2a', 'wcag2aa'])
+       .analyze()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk
+index 53408c1d..06d339c0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk
+@@ -81,9 +81,15 @@
+       </div>
+     {% endif %}
+ 
++    {% set helpHtml %}
++      <p class="govuk-body">{{ copy.help.reference }}</p>
++      <p class="govuk-body">{{ copy.help.describes }}</p>
++      <p class="govuk-body">{{ copy.help.lookupPrefix }} <a href="{{ copy.help.lookupHref }}" class="govuk-link" rel="noreferrer noopener" target="_blank">{{ copy.help.lookupLink }}</a>.</p>
++    {% endset %}
++
+     {{ govukDetails({
+       summaryText: copy.help.summary,
+-      text: copy.help.text
++      html: helpHtml
+     }) }}
+ 
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}

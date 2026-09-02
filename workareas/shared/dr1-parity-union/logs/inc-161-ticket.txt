@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-161}} from the {{shared/dr1-parity-union}} backlog.
+
+Today the foot of a journey page follows no single rule. On 41 of the 67 captured frontend screens the page ends with three controls: a primary button, a secondary "Save and return to hub" button and a "Cancel and return to hub" link. On the other 26 there is no way to save what has been entered and leave. What decides which pages get them is invisible to a trader, and sibling pages of the same section disagree.
+
+The ruling on this increment is *rule b*, chosen by Sam on 2026-08-21: only the pages the overview links to end with the three controls, and a page reached from another page ends with the primary alone. Nothing here changes what any control says.
+
+h2. Acceptance criteria
+
+* {{src/server/app/shared/save-actions.njk}} gains a fourth parameter, {{showReturnControls}}, defaulting to true, and the secondary "Save and return to hub" button and the "Cancel and return to hub" link are wrapped in it. The macro stays the one place any journey page ending is stated.
+* The seven second-and-later task-row pages pass {{showReturnControls}} as false, so they end with the primary alone: consignment details, import purpose, port of exit, exit date, transporter selection, private transporter details and CPH number. The templates are {{consignment-details.njk}}, {{import-purpose/template.njk}}, {{port-of-exit/template.njk}}, {{exit-date/template.njk}}, {{transporters-select.njk}}, {{private-transporter-details.njk}} and {{cph-number/template.njk}}.
+* The five party pickers keep the single-primary ending they have today, but get it from the shared macro passing false rather than from a hand-written button, so every page ending in the service comes out of one file. The bare button at {{_address-picker.njk:109}} goes.
+* The per-picker primary-button copy key at {{sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:62}} is dead once the picker adopts the macro, and is removed.
+* Every other page keeps the three controls it renders today, so the first page of each task row and the pages the overview links to are unchanged.
+* The review section and the two confirmation pages are untouched: check your answers and the declaration keep a lone "Continue", and delete notification and cancel amendment keep their confirm-or-go-back endings.
+* No control label changes anywhere. The primary keeps whichever of "Save and continue", "Save and finish" or "Continue" it renders today, and the two return controls keep their current text.
+* Unit and component tests cover the new parameter in both states, and the E2E specs and their visual baselines are updated for the twelve captured screens that lose the return controls.
+
+h2. Knock-on
+
+The sibling rename increments depend on this choice. Under *rule b* the two return controls end up on seven fewer pages, which is twelve fewer captured screens, so the hub-to-overview rename lands on 29 frontend screens rather than 41.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+Finding: {{service-wide--button-group-follows-no-single-rule.json}}

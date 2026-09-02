@@ -1,0 +1,953 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index f2855a71..44dde58d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -9,6 +9,15 @@ export const copy = {
+   search: {
+     title: 'Beth ydych chi’n ei fewnforio?',
+     inset: 'Mae angen hysbysiad ar wahân ar gyfer pob tystysgrif iechyd.',
++    searchLabel: 'Chwilio am nwydd',
++    searchHint:
++      'Gallwch chwilio yn ôl enw’r nwydd (er enghraifft, Cow), cod nwyddau (0102), neu enw’r rhywogaeth (Bos taurus). Rhowch o leiaf 3 nod.',
++    searchButton: 'Chwilio',
++    noResults: 'Ni chanfuwyd unrhyw ganlyniadau',
++    selected: {
++      heading: (count) => `${count} wedi’u dewis`,
++      clearAll: 'Clirio’r cyfan'
++    },
+     help: {
+       summary: 'Help gyda chodau nwyddau',
+       text: 'Defnyddir codau nwyddau i ddosbarthu nwyddau ar gyfer mewnforio ac allforio.'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 5f6847f2..01e6a6f7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -4,6 +4,15 @@ export const copy = {
+   search: {
+     title: 'What are you importing?',
+     inset: 'Each health certificate requires a separate notification.',
++    searchLabel: 'Search for a commodity',
++    searchHint:
++      'You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.',
++    searchButton: 'Search',
++    noResults: 'No results found',
++    selected: {
++      heading: (count) => `${count} selected`,
++      clearAll: 'Clear all'
++    },
+     help: {
+       summary: 'Help with commodity codes',
+       text: 'Commodity codes are used to classify goods for import and export.'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
+index f7f45f9e..69d73a3d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
+@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ import {
+   answerCountryOfOrigin,
++  expectSpeciesSelected,
+   journeyUrl,
+   selectSpecies,
+   signIn,
+@@ -149,7 +150,7 @@ test.describe('commodity consignment details — persistence and accessibility',
+     await page
+       .getByRole('link', { name: copy.consignmentDetails.addAnother })
+       .click()
+-    await expect(page.getByRole('checkbox', { name: BOS_TAURUS })).toBeChecked()
++    await expectSpeciesSelected(page, BOS_TAURUS)
+     await selectSpecies(page, ['Canis lupus familiaris'])
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+     await expect(page.locator(GOVUK_TABLE)).toContainText('Dog')
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
+index 5dd5ec1e..242457e0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
+@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ import {
+   answerCountryOfOrigin,
++  searchCommodities,
+   selectSpecies,
+   signIn,
+   startNotification
+@@ -11,17 +12,12 @@ import { copy } from '../copy/copy.en.js'
+ const BISON_BISON = 'Bison bison'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
++const COW_LEGEND = 'Cow (0102)'
++const SAVE_AND_CONTINUE = 'Save and continue'
++const BACK_LINK = '.govuk-back-link'
+ 
+ const canonicalSelectionOrder = [BISON_BISON, BOS_TAURUS, FELIS_CATUS]
+ 
+-const expectedGroups = [
+-  ['Cow (0102)', [BISON_BISON, 'Bos spp.', BOS_TAURUS, 'Bubalus bubalis']],
+-  ['Horse (0101)', ['Equus caballus']],
+-  ['Cat (01061900)', [FELIS_CATUS]],
+-  ['Dog (01061900)', ['Canis lupus familiaris']],
+-  ['Fish (0301)', ['Salmo salar']]
+-]
+-
+ const openSelection = async (page) => {
+   await startNotification(page)
+   await answerCountryOfOrigin(page)
+@@ -34,56 +30,94 @@ const openSelection = async (page) => {
+ const errorLink = (page, message) =>
+   page.locator('.govuk-error-summary').getByRole('link', { name: message })
+ 
+-test.describe('commodity selection', () => {
++const selectionPanel = (page) => page.locator('#commodity-selection')
++
++test.describe('commodity search', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+     await openSelection(page)
+   })
+ 
+-  test('renders all eight pairs in commodity groups with grounded copy', async ({
++  test('offers a search box and lists nothing until it is used', async ({
+     page
+   }) => {
+     await expect(page.getByText(copy.search.inset)).toBeVisible()
+-    for (const [legend, species] of expectedGroups) {
+-      const group = page.getByRole('group', { name: legend })
+-      await expect(group).toBeVisible()
+-      for (const name of species) {
+-        await expect(group.getByRole('checkbox', { name })).toBeVisible()
+-      }
+-    }
+-    await expect(page.getByRole('checkbox')).toHaveCount(8)
+-    await expect(page.getByRole('textbox')).toHaveCount(0)
+-    await expect(
+-      page.getByRole('button', { name: 'Search', exact: true })
+-    ).toHaveCount(0)
++    await expect(page.getByLabel(copy.search.searchLabel)).toBeVisible()
++    await expect(page.getByText(copy.search.searchHint)).toBeVisible()
++    await expect(page.getByRole('checkbox')).toHaveCount(0)
++    await expect(selectionPanel(page)).toHaveCount(0)
+     await expect(
+       page.getByText(copy.search.help.summary, { exact: true })
+     ).toBeVisible()
+   })
+ 
++  test('lists nothing for a query shorter than three characters', async ({
++    page
++  }) => {
++    await searchCommodities(page, 'Bo')
++    await expect(page.getByRole('checkbox')).toHaveCount(0)
++    await expect(page.getByText(copy.search.noResults)).toHaveCount(0)
++  })
++
++  test('groups the matching species under their commodity heading', async ({
++    page
++  }) => {
++    await searchCommodities(page, 'Bos')
++    const group = page.getByRole('group', { name: COW_LEGEND })
++    await expect(group).toBeVisible()
++    await expect(group.getByRole('checkbox')).toHaveCount(2)
++    await expect(
++      group.getByRole('checkbox', { name: BOS_TAURUS })
++    ).toBeVisible()
++    await expect(page.getByRole('checkbox')).toHaveCount(2)
++  })
++
++  test('says so when nothing matches', async ({ page }) => {
++    await searchCommodities(page, 'zzz')
++    await expect(page.getByText(copy.search.noResults)).toBeVisible()
++    await expect(page.getByRole('checkbox')).toHaveCount(0)
++  })
++
++  test('counts and lists what has been chosen, and clears it on request', async ({
++    page
++  }) => {
++    await selectSpecies(page, [BOS_TAURUS, FELIS_CATUS])
++    await searchCommodities(page, 'Salmo')
++
++    await expect(selectionPanel(page)).toContainText(
++      copy.search.selected.heading(2)
++    )
++    await expect(selectionPanel(page)).toContainText(BOS_TAURUS)
++    await expect(selectionPanel(page)).toContainText(FELIS_CATUS)
++
++    await page
++      .getByRole('button', { name: copy.search.selected.clearAll })
++      .click()
++    await expect(selectionPanel(page)).toHaveCount(0)
++  })
++
+   test('back link returns to the overview', async ({ page }) => {
+-    await page.locator('.govuk-back-link').click()
++    await page.locator(BACK_LINK).click()
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+   })
+ 
+-  test('validation: no commodity links to and focuses the first checkbox while keeping the checklist', async ({
++  test('validation: no commodity links to and focuses the search box', async ({
+     page
+   }) => {
+-    await page.getByRole('button', { name: 'Save and continue' }).click()
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+ 
+     const link = errorLink(page, copy.search.errors.selectCommodity)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.getByRole('checkbox').first()).toBeFocused()
+-    await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(0)
+-    await expect(page.getByRole('checkbox')).toHaveCount(8)
++    await expect(page.getByLabel(copy.search.searchLabel)).toBeFocused()
++    await expect(selectionPanel(page)).toHaveCount(0)
+   })
+ 
+-  test('saves multiple pairs in canonical order and persists checked state', async ({
++  test('saves pairs found under different queries, in canonical order', async ({
+     page
+   }) => {
+     await selectSpecies(page, [FELIS_CATUS, BOS_TAURUS, BISON_BISON])
+-    await page.getByRole('button', { name: 'Save and continue' }).click()
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+ 
+     await expect(
+       page.getByRole('heading', { name: copy.consignmentDetails.title })
+@@ -93,16 +127,31 @@ test.describe('commodity selection', () => {
+       .allTextContents()
+     expect(speciesHeadings).toEqual(canonicalSelectionOrder)
+ 
+-    await page.locator('.govuk-back-link').click()
++    await page.locator(BACK_LINK).click()
++    await expect(selectionPanel(page)).toContainText(
++      copy.search.selected.heading(3)
++    )
+     for (const name of canonicalSelectionOrder) {
+-      await expect(page.getByRole('checkbox', { name })).toBeChecked()
++      await expect(selectionPanel(page)).toContainText(name)
+     }
+-    await expect(
+-      page.getByRole('checkbox', { name: 'Canis lupus familiaris' })
+-    ).not.toBeChecked()
++    await expect(selectionPanel(page)).not.toContainText(
++      'Canis lupus familiaris'
++    )
++  })
++
++  test('ticks a result that is already on the notification', async ({
++    page
++  }) => {
++    await selectSpecies(page, [BOS_TAURUS])
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++    await page.locator(BACK_LINK).click()
++    await searchCommodities(page, 'Bos')
++    await expect(page.getByRole('checkbox', { name: BOS_TAURUS })).toBeChecked()
+   })
+ 
+   test('has no serious or critical axe violations', async ({ page }) => {
++    await selectSpecies(page, [BOS_TAURUS])
++    await searchCommodities(page, FELIS_CATUS)
+     const results = await new AxeBuilder({ page })
+       .withTags(['wcag2a', 'wcag2aa'])
+       .analyze()
+@@ -111,7 +160,7 @@ test.describe('commodity selection', () => {
+     )
+     expect(
+       violations,
+-      `Commodity selection has serious/critical accessibility violations.\n${JSON.stringify(results.violations, null, 2)}`
++      `Commodity search has serious/critical accessibility violations.\n${JSON.stringify(results.violations, null, 2)}`
+     ).toEqual([])
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js
+new file mode 100644
+index 00000000..5e7b4b30
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.js
+@@ -0,0 +1,52 @@
++/** Nothing is listed until the trader has typed at least this many
++ * characters — the reference list is far larger than the stub suggests, so an
++ * unfiltered page is not a usable page. */
++export const MIN_SEARCH_LENGTH = 3
++
++export const normaliseQuery = (value) => String(value ?? '').trim()
++
++export const isSearchable = (query) =>
++  normaliseQuery(query).length >= MIN_SEARCH_LENGTH
++
++const wordsOf = (text) =>
++  String(text ?? '')
++    .toLowerCase()
++    .split(/[^a-z0-9]+/)
++    .filter(Boolean)
++
++/**
++ * A query matches text when its words are a run of word-prefixes in that text.
++ * So 'tau' matches 'Bos taurus' on its second word, and 'bos tau' matches only
++ * where the two words run in that order.
++ *
++ * @param {string} text - the text being searched.
++ * @param {string} query - what the trader typed.
++ * @returns {boolean} whether the query matches.
++ */
++export const matchesWords = (text, query) => {
++  const queryWords = wordsOf(query)
++  const textWords = wordsOf(text)
++  if (queryWords.length === 0) {
++    return false
++  }
++  for (
++    let start = 0;
++    start <= textWords.length - queryWords.length;
++    start += 1
++  ) {
++    const run = queryWords.every((word, offset) =>
++      textWords[start + offset].startsWith(word)
++    )
++    if (run) {
++      return true
++    }
++  }
++  return false
++}
++
++/** Commodity codes are digit strings, so they match on prefix rather than on
++ * whole words — '010' narrows to the 0101/0102 range the way a trader expects. */
++export const matchesCode = (code, query) =>
++  String(code ?? '')
++    .toLowerCase()
++    .startsWith(normaliseQuery(query).toLowerCase())
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.test.js
+new file mode 100644
+index 00000000..19924e5b
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/matching.test.js
+@@ -0,0 +1,56 @@
++import { describe, expect, it } from 'vitest'
++
++import {
++  MIN_SEARCH_LENGTH,
++  isSearchable,
++  matchesCode,
++  matchesWords,
++  normaliseQuery
++} from './matching.js'
++
++const BOS_TAURUS = 'Bos taurus'
++
++describe('#normaliseQuery', () => {
++  it('Should trim what the trader typed and treat nothing as empty', () => {
++    expect(normaliseQuery('  Bos taurus ')).toBe(BOS_TAURUS)
++    expect(normaliseQuery(undefined)).toBe('')
++    expect(normaliseQuery(null)).toBe('')
++  })
++})
++
++describe('#isSearchable', () => {
++  it('Should hold results back until three characters are entered', () => {
++    expect(MIN_SEARCH_LENGTH).toBe(3)
++    expect(isSearchable('Bo')).toBe(false)
++    expect(isSearchable('  Bo  ')).toBe(false)
++    expect(isSearchable('Bos')).toBe(true)
++  })
++})
++
++describe('#matchesWords', () => {
++  it('Should match any word of the text on its opening characters', () => {
++    expect(matchesWords(BOS_TAURUS, 'tau')).toBe(true)
++    expect(matchesWords(BOS_TAURUS, 'bos')).toBe(true)
++    expect(matchesWords(BOS_TAURUS, 'aurus')).toBe(false)
++  })
++
++  it('Should ignore case and punctuation', () => {
++    expect(matchesWords('Bos spp.', 'SPP')).toBe(true)
++  })
++
++  it('Should match several words only where they run in order', () => {
++    expect(matchesWords('Canis lupus familiaris', 'lupus fam')).toBe(true)
++    expect(matchesWords('Canis lupus familiaris', 'fam lupus')).toBe(false)
++  })
++
++  it('Should match nothing on an empty query', () => {
++    expect(matchesWords(BOS_TAURUS, '   ')).toBe(false)
++  })
++})
++
++describe('#matchesCode', () => {
++  it('Should match a commodity code on its leading digits', () => {
++    expect(matchesCode('01061900', '0106')).toBe(true)
++    expect(matchesCode('01061900', '1900')).toBe(false)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js
+index 89518cdd..a29847c0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js
+@@ -8,11 +8,10 @@ import { commoditiesPage as page } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+ import { commitSelection } from './actions/commit-selection.js'
+-import {
+-  selectedKeysFromPayload,
+-  storedKeys
+-} from './selection/selected-keys.js'
++import { isSearchable, normaliseQuery } from './matching.js'
++import { mergedKeysFromPayload, storedKeys } from './selection/selected-keys.js'
+ import { commodityGroups } from './view-model/commodity-groups.js'
++import { selectedSummary } from './view-model/selected-summary.js'
+ 
+ export { lineKey } from './selection/line-key.js'
+ 
+@@ -21,34 +20,62 @@ const view = `${TEMPLATES}/features/commodities/search/search`
+ 
+ const copy = copyFor({ en, cy }).search
+ 
+-const render = (h, journey, { selected, errors = {} }) =>
+-  h.view(view, {
++const SEARCH_ACTION = 'search'
++const CLEAR_ACTION = 'clear'
++
++const render = (h, journey, { selected, query = '', errors = {} }) => {
++  const groups = commodityGroups(selected, query)
++  const onScreen = new Set(
++    groups.flatMap((group) => group.items.map((item) => item.value))
++  )
++  return h.view(view, {
+     ...kit.base(copy.title, {
+       backLink: hubPath(journey.journeyId),
+       journey,
+       page
+     }),
+     copy,
+-    commodityGroups: commodityGroups(selected),
++    query,
++    commodityGroups: groups,
++    noResults: isSearchable(query) && groups.length === 0,
++    carriedKeys: selected.filter((key) => !onScreen.has(key)),
++    selectedSummary: selectedSummary(selected),
+     errors,
+     errorSummary: kit.errorSummary(errors)
+   })
++}
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+   return render(h, journey, { selected: storedKeys(answers) })
+ }
+ 
++const rerender = async (request, h, { selected, query, errors }) => {
++  const { journey } = await state.get(request, h)
++  return render(h, journey, { selected, query, errors })
++}
++
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+-  const selected = selectedKeysFromPayload(payload)
++  const query = normaliseQuery(payload.commoditySearch)
++
++  if (payload.action === CLEAR_ACTION) {
++    return rerender(request, h, { selected: [], query })
++  }
++
++  const selected = mergedKeysFromPayload(payload)
++
++  if (payload.action === SEARCH_ACTION) {
++    return rerender(request, h, { selected, query })
++  }
+ 
+   if (selected.length === 0) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, {
++    const response = await rerender(request, h, {
+       selected,
+-      errors: { species: copy.errors.selectCommodity }
+-    }).code(HTTP_STATUS_BAD_REQUEST)
++      query,
++      errors: { commoditySearch: copy.errors.selectCommodity }
++    })
++    return response.code(HTTP_STATUS_BAD_REQUEST)
+   }
+ 
+   return commitSelection(request, h, selected)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js
+index 9dd4c52e..ccfd38fb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js
+@@ -17,10 +17,27 @@ import * as search from './search.controller.js'
+ const get = search.routes.find((route) => route.method === 'GET').handler
+ const post = postHandlerOf(search)
+ 
++const COW_BISON_KEY = 'Cow|716661'
+ const COW_BOS_TAURUS_KEY = 'Cow|1148346'
+ const CAT_FELIS_CATUS_KEY = 'Cat|923501'
+ 
+-describe('commodities grouped checklist', () => {
++const COW_LEGEND = 'Cow (0102)'
++const CAT_LEGEND = 'Cat (01061900)'
++const BOS_TAURUS = 'Bos taurus'
++
++const searchFor = (commoditySearch, payload = {}) =>
++  driveHandler(post, {
++    payload: { action: 'search', commoditySearch, ...payload }
++  })
++
++const groupsOf = (result) => result.view.context.commodityGroups
++
++const legendsOf = (result) => groupsOf(result).map((group) => group.legend)
++
++const textsOf = (result) =>
++  groupsOf(result).flatMap((group) => group.items.map((item) => item.text))
++
++describe('commodity search', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+     configureSession(sessionStub)
+@@ -28,78 +45,148 @@ describe('commodities grouped checklist', () => {
+   })
+   beforeEach(() => store.clear())
+ 
+-  it('Should render all eight pairs grouped by commodity in canonical order', async () => {
++  it('Should list nothing until the page is searched', async () => {
+     const result = await driveHandler(get)
+-    expect(result.view.context.commodityGroups).toEqual([
++    expect(groupsOf(result)).toEqual([])
++    expect(result.view.context.noResults).toBe(false)
++    expect(result.view.context.query).toBe('')
++  })
++
++  it('Should list nothing for a query shorter than three characters', async () => {
++    const result = await searchFor('Bo')
++    expect(groupsOf(result)).toEqual([])
++    expect(result.view.context.noResults).toBe(false)
++  })
++
++  it('Should group the species a species-name query reaches under their commodity', async () => {
++    const result = await searchFor('Bos')
++    expect(groupsOf(result)).toEqual([
+       {
+-        legend: 'Cow (0102)',
++        legend: COW_LEGEND,
+         items: [
+-          { value: 'Cow|716661', text: 'Bison bison', checked: false },
+           { value: 'Cow|1388624', text: 'Bos spp.', checked: false },
+-          { value: COW_BOS_TAURUS_KEY, text: 'Bos taurus', checked: false },
+-          { value: 'Cow|749313', text: 'Bubalus bubalis', checked: false }
+-        ]
+-      },
+-      {
+-        legend: 'Horse (0101)',
+-        items: [
+-          { value: 'Horse|822332', text: 'Equus caballus', checked: false }
++          { value: COW_BOS_TAURUS_KEY, text: BOS_TAURUS, checked: false }
+         ]
+-      },
+-      {
+-        legend: 'Cat (01061900)',
+-        items: [
+-          { value: CAT_FELIS_CATUS_KEY, text: 'Felis catus', checked: false }
+-        ]
+-      },
+-      {
+-        legend: 'Dog (01061900)',
+-        items: [
+-          {
+-            value: 'Dog|923502',
+-            text: 'Canis lupus familiaris',
+-            checked: false
+-          }
+-        ]
+-      },
+-      {
+-        legend: 'Fish (0301)',
+-        items: [{ value: 'Fish|801204', text: 'Salmo salar', checked: false }]
+       }
+     ])
+   })
+ 
+-  it('Should mark stored commodity and species pairs checked', async () => {
++  it('Should return every species of a commodity its name matches', async () => {
++    const result = await searchFor('Cow')
++    expect(legendsOf(result)).toEqual([COW_LEGEND])
++    expect(textsOf(result)).toEqual([
++      'Bison bison',
++      'Bos spp.',
++      BOS_TAURUS,
++      'Bubalus bubalis'
++    ])
++  })
++
++  it('Should match a commodity code on its leading digits', async () => {
++    const result = await searchFor('0106')
++    expect(legendsOf(result)).toEqual([CAT_LEGEND, 'Dog (01061900)'])
++  })
++
++  it('Should say so when a long-enough query matches nothing', async () => {
++    const result = await searchFor('zzz')
++    expect(groupsOf(result)).toEqual([])
++    expect(result.view.context.noResults).toBe(true)
++  })
++
++  it('Should tick a result the trader has already chosen', async () => {
++    const result = await searchFor('Bos', { selection: COW_BOS_TAURUS_KEY })
++    const items = groupsOf(result).flatMap((group) => group.items)
++    expect(
++      items.filter((item) => item.checked).map((item) => item.value)
++    ).toEqual([COW_BOS_TAURUS_KEY])
++  })
++
++  it('Should carry a choice made under an earlier query off screen', async () => {
++    const result = await searchFor('Felis', { selection: COW_BOS_TAURUS_KEY })
++    expect(legendsOf(result)).toEqual([CAT_LEGEND])
++    expect(result.view.context.carriedKeys).toEqual([COW_BOS_TAURUS_KEY])
++  })
++
++  it('Should keep a ticked result off the carried list while it is on screen', async () => {
++    const result = await searchFor('Bos', { species: COW_BOS_TAURUS_KEY })
++    expect(result.view.context.carriedKeys).toEqual([])
++  })
++
++  it('Should drop a result the trader unticked before searching again', async () => {
++    const ticked = await searchFor('Bos', { species: COW_BOS_TAURUS_KEY })
++    const unticked = await searchFor('Bos')
++    expect(ticked.view.context.selectedSummary.count).toBe(1)
++    expect(unticked.view.context.selectedSummary.count).toBe(0)
++  })
++})
++
++describe('commodity search — what has been chosen so far', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it('Should summarise the stored selection, counted and grouped', async () => {
+     const result = await driveHandler(get, {
+       seed: {
+         commodityLines: [
+           { commoditySelection: 'Cow', speciesSelection: '1148346' },
++          { commoditySelection: 'Cow', speciesSelection: '716661' },
+           { commoditySelection: 'Cat', speciesSelection: '923501' }
+         ]
+       }
+     })
+-    const items = result.view.context.commodityGroups.flatMap(
+-      (group) => group.items
+-    )
+-    expect(
+-      items.filter((item) => item.checked).map((item) => item.value)
+-    ).toEqual([COW_BOS_TAURUS_KEY, CAT_FELIS_CATUS_KEY])
++    expect(result.view.context.selectedSummary).toEqual({
++      count: 3,
++      heading: '3 selected',
++      groups: [
++        { legend: COW_LEGEND, items: ['Bison bison', BOS_TAURUS] },
++        { legend: CAT_LEGEND, items: ['Felis catus'] }
++      ]
++    })
++  })
++
++  it('Should empty the summary when the trader clears it, keeping the query', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        action: 'clear',
++        commoditySearch: 'Bos',
++        selection: [COW_BOS_TAURUS_KEY, CAT_FELIS_CATUS_KEY]
++      }
++    })
++    expect(result.view.context.selectedSummary.count).toBe(0)
++    expect(result.view.context.query).toBe('Bos')
++    expect(legendsOf(result)).toEqual([COW_LEGEND])
++    expect(result.after).toEqual(result.before)
+   })
++})
+ 
+-  it('Should require at least one checked pair and create nothing', async () => {
++describe('commodity search — saving the selection', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it('Should require at least one chosen pair and create nothing', async () => {
+     const result = await driveHandler(post, { payload: {} })
+     expect(result.response.statusCode).toBe(400)
+-    expect(result.view.context.errors.species).toBe('Select a commodity')
++    expect(result.view.context.errors.commoditySearch).toBe(
++      'Select a commodity'
++    )
+     expect(result.view.context.errorSummary.errorList).toEqual([
+-      { text: 'Select a commodity', href: '#species' }
++      { text: 'Select a commodity', href: '#commoditySearch' }
+     ])
+     expect(result.after).toEqual(result.before)
+   })
+ 
+-  it('Should create one line per checked pair in canonical order', async () => {
++  it('Should create one line per chosen pair in canonical order', async () => {
+     const result = await driveHandler(post, {
+       payload: {
+-        species: [CAT_FELIS_CATUS_KEY, 'Cow|716661', COW_BOS_TAURUS_KEY]
++        species: [CAT_FELIS_CATUS_KEY, COW_BISON_KEY, COW_BOS_TAURUS_KEY]
+       }
+     })
+     expect(result.after.commodityLines).toEqual([
+@@ -128,7 +215,22 @@ describe('commodities grouped checklist', () => {
+     expect(result.response.redirect).toContain('consignment-details')
+   })
+ 
+-  it("Should preserve a checked line's data and remove an unchecked line", async () => {
++  it('Should save what is carried alongside what is ticked on screen', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        commoditySearch: 'Felis',
++        selection: COW_BOS_TAURUS_KEY,
++        species: CAT_FELIS_CATUS_KEY
++      }
++    })
++    expect(
++      result.after.commodityLines.map(
++        (line) => `${line.commoditySelection}|${line.speciesSelection}`
++      )
++    ).toEqual([COW_BOS_TAURUS_KEY, CAT_FELIS_CATUS_KEY])
++  })
++
++  it("Should preserve a chosen line's data and remove one that is gone", async () => {
+     const kept = {
+       commoditySelection: 'Cow',
+       speciesSelection: '1148346',
+@@ -161,15 +263,11 @@ describe('commodities grouped checklist', () => {
+     ])
+   })
+ 
+-  it('Should ignore unknown pairs and deduplicate checked pairs', async () => {
++  it('Should ignore unknown pairs and deduplicate chosen pairs', async () => {
+     const result = await driveHandler(post, {
+       payload: {
+-        species: [
+-          COW_BOS_TAURUS_KEY,
+-          'Wolf|999',
+-          COW_BOS_TAURUS_KEY,
+-          'not-a-key'
+-        ]
++        selection: ['Wolf|999', COW_BOS_TAURUS_KEY],
++        species: [COW_BOS_TAURUS_KEY, 'not-a-key']
+       }
+     })
+     expect(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk
+index 6e6c5fd0..995794f9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk
+@@ -1,6 +1,8 @@
+ {% extends "shared/layout.njk" %}
++{% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+ {% from "govuk/components/details/macro.njk" import govukDetails %}
++{% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+@@ -19,18 +21,65 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+-    {% for group in commodityGroups %}
+-      {% set idPrefix = "species" if loop.first else "species-group-" + loop.index %}
+-      {{ govukCheckboxes({
+-        idPrefix: idPrefix,
+-        name: "species",
+-        classes: "govuk-checkboxes--small",
+-        fieldset: { legend: { text: group.legend, classes: "govuk-fieldset__legend--s" } },
+-        errorMessage: loop.first and errors.species and { text: errors.species },
+-        items: group.items
+-      }) }}
++    {# A choice made under an earlier query has no tick box on screen, so it
++       rides back with the form as a hidden value. #}
++    {% for key in carriedKeys %}
++      <input type="hidden" name="selection" value="{{ key }}" />
+     {% endfor %}
+ 
++    {{ govukInput({
++      id: "commoditySearch",
++      name: "commoditySearch",
++      type: "search",
++      label: { text: copy.searchLabel, classes: "govuk-label--m" },
++      hint: { text: copy.searchHint },
++      classes: "govuk-!-width-three-quarters",
++      value: query,
++      errorMessage: errors.commoditySearch and { text: errors.commoditySearch }
++    }) }}
++
++    {{ govukButton({
++      text: copy.searchButton,
++      classes: "govuk-button--secondary",
++      name: "action",
++      value: "search"
++    }) }}
++
++    {% if commodityGroups.length %}
++      <div id="commodity-search-results">
++        {% for group in commodityGroups %}
++          {{ govukCheckboxes({
++            idPrefix: "species" if loop.first else "species-group-" + loop.index,
++            name: "species",
++            classes: "govuk-checkboxes--small",
++            fieldset: { legend: { text: group.legend, classes: "govuk-fieldset__legend--s" } },
++            items: group.items
++          }) }}
++        {% endfor %}
++      </div>
++    {% elif noResults %}
++      <p class="govuk-body" id="commodity-search-results">{{ copy.noResults }}</p>
++    {% endif %}
++
++    {% if selectedSummary.count %}
++      <div id="commodity-selection">
++        <h2 class="govuk-heading-s">{{ selectedSummary.heading }}</h2>
++        <ul class="govuk-list govuk-!-margin-bottom-4">
++          {% for group in selectedSummary.groups %}
++            <li>
++              <span class="govuk-!-font-weight-bold">{{ group.legend }}</span>: {{ group.items | join(", ") }}
++            </li>
++          {% endfor %}
++        </ul>
++        {{ govukButton({
++          text: copy.selected.clearAll,
++          classes: "govuk-button--secondary",
++          name: "action",
++          value: "clear"
++        }) }}
++      </div>
++    {% endif %}
++
+     {{ govukDetails({
+       summaryText: copy.help.summary,
+       text: copy.help.text
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/selected-keys.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/selected-keys.js
+index 71750607..c7c5016f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/selected-keys.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/selection/selected-keys.js
+@@ -1,10 +1,13 @@
+ import { lineKey } from './line-key.js'
+ import { normaliseKeys } from './keys.js'
+ 
+-export const toList = (value) => (value === undefined ? [] : [value].flat())
++const toList = (value) => (value === undefined ? [] : [value].flat())
+ 
+-export const selectedKeysFromPayload = (payload) =>
+-  normaliseKeys(toList(payload.species))
++// Only the results panel carries tick boxes, so a choice made under an earlier
++// query rides back as a hidden `selection` value. The page's selection is the
++// two together: what is carried, plus what is ticked in the results on screen.
++export const mergedKeysFromPayload = (payload) =>
++  normaliseKeys([...toList(payload.selection), ...toList(payload.species)])
+ 
+ export const storedKeys = (answers) =>
+   normaliseKeys((answers.commodityLines ?? []).map(lineKey))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js
+index 9df537c6..97814cba 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js
+@@ -1,14 +1,46 @@
+ import * as commodities from '../../../../../../services/commodities/index.js'
++import { isSearchable, matchesCode, matchesWords } from '../matching.js'
+ 
+-export const commodityGroups = (selected) =>
+-  commodities.list().map((name) => ({
+-    legend: `${name} (${commodities.commodityCodeFor(name)})`,
+-    items: commodities.speciesFor(name).map((option) => {
+-      const key = `${name}|${option.value}`
+-      return {
+-        value: key,
+-        text: option.text,
+-        checked: selected.includes(key)
+-      }
+-    })
+-  }))
++const legendFor = (name) => `${name} (${commodities.commodityCodeFor(name)})`
++
++// Name or code hits the whole commodity, so every species under it stays in
++// the results; otherwise only the species that match on their own.
++const speciesMatching = (name, query) =>
++  matchesWords(name, query) ||
++  matchesCode(commodities.commodityCodeFor(name), query)
++    ? commodities.speciesFor(name)
++    : commodities
++        .speciesFor(name)
++        .filter((option) => matchesWords(option.text, query))
++
++const itemsFor = (name, query, selected) =>
++  speciesMatching(name, query).map((option) => {
++    const key = `${name}|${option.value}`
++    return {
++      value: key,
++      text: option.text,
++      checked: selected.includes(key)
++    }
++  })
++
++/**
++ * The results panel: the commodities whose species the query reaches, each with
++ * a tick box per matching species. Empty until the query is long enough — the
++ * page lists nothing of its own accord.
++ *
++ * @param {string[]} selected - the selection keys already chosen.
++ * @param {string} query - what the trader typed into the search box.
++ * @returns {Array<{legend: string, items: object[]}>} the matching groups.
++ */
++export const commodityGroups = (selected, query) => {
++  if (!isSearchable(query)) {
++    return []
++  }
++  return commodities
++    .list()
++    .map((name) => ({
++      legend: legendFor(name),
++      items: itemsFor(name, query, selected)
++    }))
++    .filter((group) => group.items.length > 0)
++}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js
+new file mode 100644
+index 00000000..986a8b39
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js
+@@ -0,0 +1,38 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import * as commodities from '../../../../../../services/commodities/index.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { splitKey } from '../selection/keys.js'
++
++const copy = copyFor({ en, cy }).search
++
++const speciesTextFor = (name, value) =>
++  commodities.speciesFor(name).find((option) => option.value === value)?.text ??
++  value
++
++/**
++ * What is on the notification so far, so the trader never has to scroll a
++ * results list to find out. Grouped by commodity in canonical selection order.
++ *
++ * @param {string[]} selected - the selection keys already chosen.
++ * @returns {{count: number, heading: string, groups: Array<{legend: string, items: string[]}>}} the panel view model.
++ */
++export const selectedSummary = (selected) => {
++  const groups = []
++  for (const key of selected) {
++    const [name, value] = splitKey(key)
++    const legend = `${name} (${commodities.commodityCodeFor(name)})`
++    const group = groups.find((entry) => entry.legend === legend)
++    const text = speciesTextFor(name, value)
++    if (group) {
++      group.items.push(text)
++    } else {
++      groups.push({ legend, items: [text] })
++    }
++  }
++  return {
++    count: selected.length,
++    heading: copy.selected.heading(selected.length),
++    groups
++  }
++}

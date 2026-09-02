@@ -1,0 +1,25 @@
+h2. Increment
+
+{{inc-078}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+The origin page asks three questions and gives them three different weights. "Country of origin" and "Does the consignment have a region of origin code?" are set at the small label size, and "Your internal reference for this consignment (optional)" carries no size class at all, so it renders in ordinary body text the same size as the hint below it and reads as a sentence rather than a question. All three are set in {{src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk}} at lines 18, 38 and 46-51.
+
+Design release 1 sets all three questions at the medium heading size and in bold, so the page reads as three questions with their hints and controls beneath them. Its shared class {{app-eu-heading-m}} is 24px at weight 700 ({{app/assets/sass/application.scss}} lines 201-208), the same as {{govuk-label--m}}, against the frontend's 19px bold and 19px regular.
+
+Note: Design release 1 marks the country question up as an {{<h2>}} rather than a label ({{app/views/origin-of-the-import.html}} line 46), while the other two are a legend and a label. The frontend change is still three classes on one template — do not expect to find a matching heading element.
+
+h2. Acceptance criteria
+
+* The country of origin control's label on the origin page is set at the medium size ({{govuk-label--m}}).
+* The region of origin code fieldset legend on the origin page is set at the medium size ({{govuk-fieldset__legend--m}}).
+* The internal reference input's label on the origin page is set at the medium size ({{govuk-label--m}}), so it no longer renders at body weight and reads as a question rather than a sentence.
+* All three question labels on the origin page render at one and the same size. If a service-wide heading scale is being settled elsewhere, take that scale instead — the point is that the page's questions are all one size, not that they are this particular size.
+* The change is confined to {{src/server/app/sets/live-animals/journeys/linear/features/origin/template.njk}} — three classes, one template.
+* The revealed region of origin code field's own label is out of scope here; it is covered by {{inc-079}}.
+* Existing frontend unit tests and the E2E specs and visual baselines covering the origin page pass, with baselines updated where the label size legitimately changed.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

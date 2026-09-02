@@ -74,11 +74,12 @@ jobs:
             defradigital/trade-imports-animals-tests:${{ steps.branch-tag.outputs.tests-tag }} \
             run _assert_stack
 
-      # The runner is ephemeral, so "Start stack" above created the volume from
-      # nothing and the mongo entrypoint ran the init scripts against it.
-      # Assert that state rather than rebuilding it — a rebuild draws the
-      # fresh-volume startup race (EUDPA-358) a second time per shard, and
-      # wipes the indexes every service builds once at startup.
+      # No reseed here. The runner is ephemeral, so "Start stack" above created
+      # the volume from nothing and the mongo entrypoint ran the init scripts
+      # against it. Reseeding did the whole thing a second time, and each wipe
+      # draws the fresh-volume startup race (EUDPA-358) again: three shards
+      # meant six draws per run rather than three. Assert the state instead of
+      # rebuilding it.
       - name: Assert the database is fresh
         run: |
           logs="$(docker compose -p trade-imports logs --no-color mongodb)"

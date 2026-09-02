@@ -137,10 +137,6 @@ cd repos/trade-imports-animals-tests
 npm run test:docker-compose
 ```
 
-The suite does not wipe the database first and does not need to: every spec
-creates the state it asserts on through the backend API, scoped to that run,
-so it passes against a database still holding earlier runs' records.
-
 ## Lifecycle scripts live in `scripts/stack/`
 
 - `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in

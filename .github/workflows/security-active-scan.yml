@@ -58,8 +58,31 @@ jobs:
             defradigital/trade-imports-animals-tests:latest \
             run _assert_stack
 
-      - name: Reseed database
-        run: ./scripts/stack/bounce-mongo.sh
+      # No reseed here. The runner is ephemeral, so "Start stack" above created
+      # the volume from nothing and the mongo entrypoint ran the init scripts
+      # against it — run-stack.sh stages the same fixtures bounce-mongo.sh
+      # would. Reseeding did the whole thing a second time, drew the
+      # fresh-volume startup race (EUDPA-358) a second time, and wiped the
+      # indexes the mongodb-backed services build once at startup, which
+      # nothing rebuilds for the rest of the scan. Assert the state instead of
+      # rebuilding it.
+      - name: Assert the database is fresh
+        run: |
+          logs="$(docker compose -p trade-imports logs --no-color mongodb)"
+          case "$logs" in
+            *'MongoDB init process complete'*) ;;
+            *)
+              echo "::error::mongo did not run its init scripts — the volume was not fresh"
+              exit 1
+              ;;
+          esac
+          docker compose -p trade-imports exec -T mongodb \
+            mongosh --quiet --eval '
+              if (db.getSiblingDB("test").test.countDocuments() < 1) {
+                print("seed fixtures did not apply");
+                quit(1);
+              }
+            '
 
       - name: Clean previous ZAP report
         run: |

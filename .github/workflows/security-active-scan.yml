@@ -72,14 +72,12 @@ jobs:
             defradigital/trade-imports-animals-tests:latest \
             run _assert_stack
 
-      # No reseed here. The runner is ephemeral, so "Start stack" above created
-      # the volume from nothing and the mongo entrypoint ran the init scripts
-      # against it — run-stack.sh stages the same fixtures bounce-mongo.sh
-      # would. Reseeding did the whole thing a second time, drew the
-      # fresh-volume startup race (EUDPA-358) a second time, and wiped the
+      # The runner is ephemeral, so "Start stack" above created the volume from
+      # nothing and the mongo entrypoint ran the init scripts against it.
+      # Assert that state rather than rebuilding it — a rebuild draws the
+      # fresh-volume startup race (EUDPA-358) a second time, and wipes the
       # indexes the mongodb-backed services build once at startup, which
-      # nothing rebuilds for the rest of the scan. Assert the state instead of
-      # rebuilding it.
+      # nothing rebuilds for the rest of the scan.
       - name: Assert the database is fresh
         run: |
           logs="$(docker compose -p trade-imports logs --no-color mongodb)"

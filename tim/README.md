@@ -53,7 +53,6 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 | Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`                 |
 | Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`              |
 | Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`       |
-| Docker → Bounce mongo (bounce-mongo.sh)                      | `tim docker bounce-mongo`         |
 | Start → Frontend (npm run dev)                               | `tim start frontend`              |
 | Start → Backend (mvn spring-boot:run)                        | `tim start backend`               |
 | Start → Admin (npm run dev)                                  | `tim start admin`                 |

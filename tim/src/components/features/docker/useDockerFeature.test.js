@@ -85,7 +85,6 @@ describe('useDockerFeature', () => {
       'Stop the stack',
       'Restart the whole stack',
       'Bounce backend',
-      'Bounce mongo',
       'Back'
     ]) {
       expect(frame).toContain(label)

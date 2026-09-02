@@ -187,8 +187,7 @@ done
 [ ${#up_services[@]} -gt 0 ] || { print_error "error: would start no services"; exit 1; }
 
 # Mongo's entrypoint races itself on a fresh volume and exits 48, taking every
-# depends_on service with it (EUDPA-358). Retrying is the only fix — see
-# bounce-mongo.sh, which carries the same loop for the reseed path. Mongo comes
+# depends_on service with it (EUDPA-358). Retrying is the only fix. Mongo comes
 # up alone first so the stack up below finds it already healthy.
 MONGO_UP_ATTEMPTS="${MONGO_UP_ATTEMPTS:-6}"
 MONGO_RETRY_BACKOFF_SECONDS="${MONGO_RETRY_BACKOFF_SECONDS:-2}"

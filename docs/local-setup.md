@@ -151,19 +151,18 @@ limit the stack to the relevant profiles:
 
 ---
 
-## Reseeding the database
+## The database
 
 The mongo init scripts are staged by `run-stack.sh` from their owning repos:
-the workspace owns the replica-set init, the backend owns the Floci
-provisioning (`compose/start-floci.sh`), and the tests repo owns the
-notification seed fixtures (`seeds/mongodb/` in `trade-imports-animals-tests`).
+the workspace owns the replica-set init and the backend owns the Floci
+provisioning (`compose/start-floci.sh`).
 
-To wipe and reseed mongo without restarting the rest of the stack:
-
-```bash
-./scripts/stack/bounce-mongo.sh
-# or, from the tests repo: npm run database:reseed
-```
+Nothing wipes the database between test runs. Every E2E spec creates the
+state it asserts on through the backend API, scoped to that run, so the suite
+passes against a database still holding earlier runs' records. To start from
+empty, take the stack down (`./scripts/stack/stop-stack.sh` removes the
+volumes) and bring it back up. Wiping the volume under a running stack drops
+the indexes each service builds once at startup, and nothing rebuilds them.
 
 ---
 

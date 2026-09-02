@@ -153,6 +153,12 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md). Cited by SKILL.md files via
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
+- `docs/analysis/` — point-in-time, cross-repo investigation write-ups (not
+  volatile catalogues — snapshot findings, re-run the investigation if the
+  codebases have moved on). See
+  [`docs/analysis/gbn-ag-field-lineage.md`](docs/analysis/gbn-ag-field-lineage.md)
+  for the frontend → NotificationAggregate → GBN-AG → PIMS GBN-AG field-mapping
+  audit.
 
 ## SonarCloud integration
 

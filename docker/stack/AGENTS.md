@@ -16,7 +16,6 @@ compose stack in the workspace and its repos — the
 
 ./scripts/stack/stop-stack.sh         # down --volumes --remove-orphans
 ./scripts/stack/restart-stack.sh ...  # stop then run-stack (forwards -b / -e / -d / --profile)
-./scripts/stack/bounce-mongo.sh       # wipe mongo's volume + re-run init scripts
 ./scripts/stack/bounce-backend.sh     # recreate backend container — picks up edited Java source in --dev mode
 ```
 
@@ -48,7 +47,6 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | Edit source and see changes (Node + Java backend/stub/reference-data hot-reload) | `run-stack.sh -d` |
 | Run one repo-backed service natively from your IDE, rest in docker | `run-stack.sh -e backend` |
 | Run a whole tier natively (e.g. backend on the host, mongo + frontend in docker) | `run-stack.sh --profile frontend --profile infrastructure --profile database` |
-| Reseed mongo before E2E | `bounce-mongo.sh` |
 | Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `run-stack.sh -d` (rebuilds; `bounce-backend.sh` only recreates the container) |
 
 `--branch` and `--dev` are mutually exclusive (hard error). The other flags
@@ -139,16 +137,13 @@ cd repos/trade-imports-animals-tests
 npm run test:docker-compose
 ```
 
-`database:reseed` (called inside `test:docker-compose`) delegates to
-`scripts/stack/bounce-mongo.sh`. Errors out if the stack isn't up.
-
 ## Lifecycle scripts live in `scripts/stack/`
 
 - `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in
   `lib/colour.sh`; compose `-f` list in `lib/compose.sh`; init-script
   staging in `lib/init-scripts.sh`.
-- `stop-stack.sh`, `restart-stack.sh`, `bounce-mongo.sh`, `bounce-backend.sh`
-  — siblings, share `lib/` helpers.
+- `stop-stack.sh`, `restart-stack.sh`, `bounce-backend.sh` — siblings, share
+  `lib/` helpers.
 
 ## Init-script ownership and staging
 
@@ -158,16 +153,11 @@ stack invokes the repo-owned script rather than keeping its own copy:
 | Script | Owner | Path in owning repo |
 |---|---|---|
 | Mongo replica-set init (`10-database-setup.js`) | workspace | `docker/stack/scripts/mongodb/` |
-| Mongo notification seed scripts | tests repo | `seeds/mongodb/` |
 | Floci provisioning (`start-floci.sh`) | backend | `compose/start-floci.sh` |
 | ASB emulator entity config (`servicebus-config.json`) | dynamics-gateway | `servicebus/servicebus-config.json` |
 | ZAP Automation Framework plans (`automation-*.yaml`) | tests repo | `zap/automation-*.yaml` |
 
-The tests repo's `seeds/mongodb/` may currently stage nothing — tests now
-seed notification state at test level through the front door (the backend
-API) rather than the back door (writing directly into Mongo).
-
-`run-stack.sh` and `bounce-mongo.sh` call `stage_init_scripts`
+`run-stack.sh` calls `stage_init_scripts`
 (`lib/init-scripts.sh`), which refreshes `docker/stack/.staged/` — generated,
 gitignored, never edit it — from `repos/<repo>/` when present, sparse-fetching
 the paths from GitHub when not (CI checks out only the workspace repo; the

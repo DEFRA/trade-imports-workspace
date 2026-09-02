@@ -569,7 +569,7 @@ npx playwright show-trace trace.zip
 npm install
 npx playwright install chromium    # first time — install browser binary
 
-npm run test:docker-compose       # against the local workspace stack (reseeds the DB first)
+npm run test:docker-compose       # against the local workspace stack
 npm run test:docker-compose:a11y  # the accessibility suite against the same stack
 npm test                          # CDP Portal config
 ```

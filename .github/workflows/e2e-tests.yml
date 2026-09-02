@@ -17,8 +17,8 @@ on:
 
 jobs:
   # Single suite, sharded three ways for wall-clock. Each shard stands up its
-  # own stack and reseeds it, then emits a blob report; merge-reports stitches
-  # the blobs back into one HTML report.
+  # own stack, then emits a blob report; merge-reports stitches the blobs back
+  # into one HTML report.
   e2e:
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -76,11 +76,10 @@ jobs:
 
       # No reseed here. The runner is ephemeral, so "Start stack" above created
       # the volume from nothing and the mongo entrypoint ran the init scripts
-      # against it — run-stack.sh stages the same fixtures bounce-mongo.sh
-      # would. Reseeding did the whole thing a second time, and each wipe draws
-      # the fresh-volume startup race (EUDPA-358) again: three shards meant six
-      # draws per run rather than three. Assert the state instead of rebuilding
-      # it.
+      # against it. Reseeding did the whole thing a second time, and each wipe
+      # draws the fresh-volume startup race (EUDPA-358) again: three shards
+      # meant six draws per run rather than three. Assert the state instead of
+      # rebuilding it.
       - name: Assert the database is fresh
         run: |
           logs="$(docker compose -p trade-imports logs --no-color mongodb)"

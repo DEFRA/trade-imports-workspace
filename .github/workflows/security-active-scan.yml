@@ -58,8 +58,23 @@ jobs:
             defradigital/trade-imports-animals-tests:latest \
             run _assert_stack
 
-      - name: Reseed database
-        run: ./scripts/stack/bounce-mongo.sh
+      - name: Assert the database is fresh
+        run: |
+          logs="$(docker compose -p trade-imports logs --no-color mongodb)"
+          case "$logs" in
+            *'MongoDB init process complete'*) ;;
+            *)
+              echo "::error::mongo did not run its init scripts — the volume was not fresh"
+              exit 1
+              ;;
+          esac
+          docker compose -p trade-imports exec -T mongodb \
+            mongosh --quiet --eval '
+              if (db.getSiblingDB("test").test.countDocuments() < 1) {
+                print("seed fixtures did not apply");
+                quit(1);
+              }
+            '
 
       - name: Clean previous ZAP report
         run: |

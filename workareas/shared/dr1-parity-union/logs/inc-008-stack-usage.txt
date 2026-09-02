@@ -1,0 +1,45 @@
+1:#!/usr/bin/env bash
+27:# shellcheck source=lib/colour.sh
+29:# shellcheck source=lib/compose.sh
+32:valid_profiles=("${ALL_PROFILES[@]}")
+34:# shellcheck source=lib/flags.sh
+38:# shellcheck source=lib/init-scripts.sh
+42:[ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${valid_profiles[@]}")
+45:# Sanitisation must match the per-repo publish-branch.yml workflows.
+56:# Probe Dockerhub for a branch tag and print a stable fingerprint of its
+57:# manifest on stdout, returning 0 if the tag exists. Returns 1 (empty stdout)
+58:# when the tag is absent. The fingerprint is a content hash of the full
+59:# `docker manifest inspect` output (cksum — POSIX, present on macOS and Linux
+60:# CI, no jq needed): any re-push to the same branch changes the manifest and so
+61:# flips the fingerprint. This lets the post-healthy re-check tell a brand-new
+62:# branch tag apart from a re-pushed one. bash-3.2 safe.
+78:profile_args=()
+79:for profile in "${selected_profiles[@]}"; do
+80:  profile_args+=(--profile "$profile")
+87:done < <(docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" config --services 2>"$compose_config_err" | sort)
+120:printf '%sProfiles:%s %s\n' "$COLOUR_BOLD" "$COLOUR_RESET" "${selected_profiles[*]}"
+131:# Fan out the branch-tag probes concurrently. docker manifest inspect is a
+132:# network round-trip per service; running them in parallel turns 9 sequential
+133:# round-trips into one wall-clock round-trip. Each job touches a marker file on
+134:# success; the print loop below reads the markers so all env-var exports still
+135:# happen in this (parent) shell. bash-3.2 safe (macOS default) and Linux-CI safe:
+136:# only mktemp -d, background jobs, and a bare wait barrier are used.
+138:# The marker directory holds one file per service that resolved to the branch
+139:# tag; its contents are the first-probe manifest fingerprint. It must survive
+140:# until the post-healthy re-check below, so clean it up on any exit rather than
+141:# inline before the compose up.
+192:# Bring the stack up and block until healthy. This used to `exec`; it no longer
+193:# does so the script can run one post-healthy re-check below. A failure here
+194:# still aborts under `set -e` with the compose exit code, preserving the old
+195:# signal/exit-code propagation.
+196:docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" "${up_args[@]}" ${extra[@]+"${extra[@]}"} "${up_services[@]}"
+198:# Post-healthy re-check (branch mode only; --dev never probes Dockerhub).
+199:# Stack startup takes 1-2 minutes to reach healthy — long enough for a slower
+200:# repo pipeline to publish or re-push its branch image after the initial probe.
+201:# Run the probe once more and, for any non-excluded service whose resolution
+202:# flipped latest->branch or whose branch-tag manifest fingerprint changed,
+203:# re-export its tag and recreate just that service with `--pull always`. One
+204:# re-check, not a poll loop: it covers the race window without complicating the
+205:# script, and mitigates rather than eliminates the race — an image that lands
+206:# well after healthy still needs a manual restart.
+250:    docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" "${up_args[@]}" ${extra[@]+"${extra[@]}"} "${recheck_services[@]}"

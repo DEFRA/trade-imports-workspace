@@ -1,0 +1,123 @@
+commit 6684312be39d45b78f8d731e5d28e5808142a01e
+Author: Amir Naveed <amirnaveed@duck.com>
+Date:   Thu Aug 27 15:19:59 2026 +0100
+
+    fix(EUDPA-342): follow the frontend's service navigation into the E2E suite (#124)
+    
+    The notification frontend now signs out from its service navigation, where the
+    item reads "Log out", and shows no signed-in identity at all — Design release 1
+    carries no such strip. Three auth tests and the origin-of-import visual baseline
+    still targeted the deleted strip.
+    
+    - Override linkSignOut on the notification dashboard page object as
+      getByRole('link', { name: 'Log out', exact: true }). The admin portal still
+      renders "Sign out", so the shared BasePage getter and the admin specs are
+      untouched.
+    - Replace 'displays signed in user after signing in' with
+      'does not display the signed in user after signing in'. The identity is gone
+      by decision, so the suite now asserts its absence rather than losing the
+      coverage.
+    - Re-capture both origin-of-import visual baselines (darwin and linux) against
+      the new navigation, and drop the mask on the user's email address — that
+      locator now resolves to nothing, so the mask protected nothing.
+
+diff --git a/tests/e2e/visual/origin-of-import.visual.spec.ts b/tests/e2e/visual/origin-of-import.visual.spec.ts
+index 3b5c7d6..c0f47a1 100644
+--- a/tests/e2e/visual/origin-of-import.visual.spec.ts
++++ b/tests/e2e/visual/origin-of-import.visual.spec.ts
+@@ -8,7 +8,8 @@ test.describe('Origin of import (visual regression)', { tag: '@visual' }, () =>
+     await journey.toOriginOfImport();
+   });
+ 
+-  test('shows expected page appearance on first load', async ({ page, pages }) => {
+-    await expect(page).toHaveScreenshot('origin-of-import.png', { fullPage: true, mask: [pages.originOfImport.user()] });
++  // No mask: the page no longer shows the signed-in user's email address, so there is nothing varying to hide.
++  test('shows expected page appearance on first load', async ({ page }) => {
++    await expect(page).toHaveScreenshot('origin-of-import.png', { fullPage: true });
+   });
+ });
+
+commit c15448f56abcdd5f7928162043240784146e7005
+Author: Martyn Nevers (esynergy) <192345445+martyn-esynergy@users.noreply.github.com>
+Date:   Wed Jul 8 16:04:39 2026 +0100
+
+    test(EUDPA-280): extend a11y tests to scan all pages (#79)
+    
+    * test(EUDPA-280): extend a11y tests to scan all pages
+    
+    Co-authored-by: Claude <noreply@anthropic.com>
+    
+    * test(EUDPA-280): centralise wcag 2.2 aa scan config
+    
+    Co-authored-by: Claude <noreply@anthropic.com>
+    
+    ---------
+    
+    Co-authored-by: Claude <noreply@anthropic.com>
+
+diff --git a/tests/e2e/visual/origin-of-import.visual.spec.ts b/tests/e2e/visual/origin-of-import.visual.spec.ts
+index af854bc..3b5c7d6 100644
+--- a/tests/e2e/visual/origin-of-import.visual.spec.ts
++++ b/tests/e2e/visual/origin-of-import.visual.spec.ts
+@@ -4,8 +4,8 @@ import { test, expect } from '@fixtures';
+ test.use({ headless: true });
+ 
+ test.describe('Origin of import (visual regression)', { tag: '@visual' }, () => {
+-  test.beforeEach(async ({ journeys }) => {
+-    await journeys.toOriginOfImport();
++  test.beforeEach(async ({ journey }) => {
++    await journey.toOriginOfImport();
+   });
+ 
+   test('shows expected page appearance on first load', async ({ page, pages }) => {
+
+commit c8f913505e13dff2a1f13ffc4b880d083fc9d20b
+Author: Martyn Nevers (esynergy) <192345445+martyn-esynergy@users.noreply.github.com>
+Date:   Thu Jul 2 11:22:21 2026 +0100
+
+    feat(EUDPA-272): implement linux snapshot generation (#74)
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+diff --git a/tests/e2e/visual/origin-of-import.visual.spec.ts b/tests/e2e/visual/origin-of-import.visual.spec.ts
+index 4950d7c..af854bc 100644
+--- a/tests/e2e/visual/origin-of-import.visual.spec.ts
++++ b/tests/e2e/visual/origin-of-import.visual.spec.ts
+@@ -8,7 +8,6 @@ test.describe('Origin of import (visual regression)', { tag: '@visual' }, () =>
+     await journeys.toOriginOfImport();
+   });
+ 
+-  // If failing in CI, skip — Linux baselines pending (Martyn, back 30 Jun 2026).
+   test('shows expected page appearance on first load', async ({ page, pages }) => {
+     await expect(page).toHaveScreenshot('origin-of-import.png', { fullPage: true, mask: [pages.originOfImport.user()] });
+   });
+
+commit 882fc5293570b3aa51de77e5eb109eedd4dc5a09
+Author: Martyn Nevers (esynergy) <192345445+martyn-esynergy@users.noreply.github.com>
+Date:   Fri Jun 12 15:08:17 2026 +0100
+
+    test(EUDPA-209): add first visual regression test (#63)
+    
+    Co-authored-by: Claude <noreply@anthropic.com>
+
+diff --git a/tests/e2e/visual/origin-of-import.visual.spec.ts b/tests/e2e/visual/origin-of-import.visual.spec.ts
+new file mode 100644
+index 0000000..4950d7c
+--- /dev/null
++++ b/tests/e2e/visual/origin-of-import.visual.spec.ts
+@@ -0,0 +1,15 @@
++import { test, expect } from '@fixtures';
++
++// Override headless: headed mode uses OS font rendering, producing pixel differences against a headless baseline.
++test.use({ headless: true });
++
++test.describe('Origin of import (visual regression)', { tag: '@visual' }, () => {
++  test.beforeEach(async ({ journeys }) => {
++    await journeys.toOriginOfImport();
++  });
++
++  // If failing in CI, skip — Linux baselines pending (Martyn, back 30 Jun 2026).
++  test('shows expected page appearance on first load', async ({ page, pages }) => {
++    await expect(page).toHaveScreenshot('origin-of-import.png', { fullPage: true, mask: [pages.originOfImport.user()] });
++  });
++});

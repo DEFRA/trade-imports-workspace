@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-008}} from the {{shared/dr1-parity-union}} backlog.
+
+DR1 shows the draft status and the notification reference from the first page of a new notification. The frontend withholds both until the first answer is saved, so a user who has just started a notification cannot see its reference on Origin of the import.
+
+The strip is suppressed deliberately: {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js}} lines 88 to 89 pass the journey to the layout through {{journeyIfStarted}}, which only yields it once the notification has committed answers, and {{src/server/app/shared/layout.njk}} lines 65 to 70 render nothing when it is absent. The reference already exists when the page is first drawn — the backend mints it on create and it is in the page's own URL — so the guard is a presentation choice, not a missing-data symptom.
+
+h2. Acceptance criteria
+
+* Loading Origin of the import on a notification with no saved answers shows a blue {{Draft}} tag and the notification reference above the page heading, in the same strip position as every later journey page.
+* The committed-answers guard is dropped for the strip only: the origin controller passes the journey to {{kit.base}} directly rather than through {{journeyIfStarted}}.
+* {{backLinkFor}} on the same page keeps the committed-answers test, so a fresh notification's back link still goes to the dashboard.
+* The strip is unchanged on the pages that already carry it, and still absent from the confirmation page and the dashboards.
+* Unit tests and the E2E suite pass, with any affected visual baselines for the origin page updated.
+
+h2. Falsified by
+
+Loading Origin of the import on a notification with no saved answers and seeing a Draft tag and reference above the heading.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Frontend evidence: {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js}} lines 88 to 110
+
+Prototype evidence: {{app/views/partials/notification-status.html}} lines 18 to 24

@@ -35,9 +35,14 @@ valid_profiles=("${ALL_PROFILES[@]}" "${OPT_IN_PROFILES[@]}")
 source "$LIB_DIR/flags.sh"
 parse_run_stack_flags "$@"
 
+stage_zap=0
+for profile in ${selected_profiles[@]+"${selected_profiles[@]}"}; do
+  [ "$profile" = security ] && { stage_zap=1; break; }
+done
+
 # shellcheck source=lib/init-scripts.sh
 source "$LIB_DIR/init-scripts.sh"
-stage_init_scripts "$branch"
+stage_init_scripts "$branch" "$stage_zap"
 
 [ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${ALL_PROFILES[@]}")
 [ "$dev" -eq 1 ] && compose_files_add_dev

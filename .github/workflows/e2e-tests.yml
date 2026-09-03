@@ -136,9 +136,8 @@ jobs:
           path: stack-logs.txt
           retention-days: 14
 
-      - name: Tear down stack
-        if: always()
-        run: docker compose -p trade-imports down
+      # No teardown step: the runner is ephemeral and takes every container,
+      # network and volume with it when the job ends.
 
   merge-reports:
     if: always() && needs.e2e.result != 'skipped'

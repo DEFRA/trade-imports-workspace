@@ -20,6 +20,7 @@ HERE="$WORKSPACE/tools/e2e-stability"
 RUNS="$WORKSPACE/workareas/shared/e2e-stability/runs"
 TESTS="$WORKSPACE/repos/trade-imports-animals-tests"
 
+SCRIPT_START=$(date +%s)
 LABEL="${1:?label required}"
 WORKERS="${2:?workers required}"
 RESTART="${3:-}"
@@ -133,8 +134,11 @@ docker ps -a --format '{{.Names}}' | while read -r name; do
     "{{.Name}}	{{.State.Status}}	{{.State.OOMKilled}}	{{.RestartCount}}	{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}"
 done >"$OUT/containers.tsv" 2>/dev/null
 
+# --since this run rather than a fixed tail: a busy frontend writes far more than
+# 500 lines in a two-minute suite, so a tail can end after the failure window it
+# exists to explain. Cap the volume instead of the window.
 docker ps --format '{{.Names}}' | while read -r name; do
-  docker logs --tail 500 --timestamps "$name" >"$OUT/logs/$name.log" 2>&1
+  docker logs --since "$SCRIPT_START" --timestamps "$name" 2>&1 | tail -n 20000 >"$OUT/logs/$name.log"
 done
 
 node "$HERE/summarise.mjs" "$OUT" >"$OUT/summary.json"

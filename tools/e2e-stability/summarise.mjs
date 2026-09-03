@@ -98,15 +98,20 @@ if (fs.existsSync(reportPath)) {
     summary.green = summary.tests.failed.length === 0 && summary.tests.flaky.length === 0 && summary.exitCode === 0;
 
     // Coarse error fingerprints so runs can be compared without reading prose.
+    // Order matters. A test that lands on the service's own 500 page then times out
+    // waiting for a locator reports BOTH, and filing it as a timeout hides the 500 —
+    // so the server-error signature has to be tested before either timeout.
     const fingerprint = (message) => {
-      if (/Timeout .* exceeded.*waiting for locator|locator\.\w+: Timeout/s.test(message)) return 'locator-timeout';
-      if (/Test timeout of \d+ms exceeded/.test(message)) return 'test-timeout';
+      if (/Internal Server Error|Sorry, there is a problem with the service|\b50[0234]\b/.test(message)) {
+        return 'server-5xx';
+      }
       if (/net::ERR_CONNECTION_(REFUSED|RESET)/.test(message)) return 'connection-refused-or-reset';
       if (/net::ERR_EMPTY_RESPONSE|net::ERR_FAILED/.test(message)) return 'empty-response';
       if (/ECONNREFUSED|ECONNRESET|socket hang up|fetch failed/.test(message)) return 'api-connection';
-      if (/\b5\d\d\b|Internal Server Error|Sorry, there is a problem with the service/.test(message)) return 'server-5xx';
-      if (/expected .* received|toHaveText|toHaveValue|toBeVisible/.test(message)) return 'assertion-mismatch';
       if (/Screenshot comparison failed/.test(message)) return 'visual-diff';
+      if (/Timeout .* exceeded.*waiting for locator|locator\.\w+: Timeout/s.test(message)) return 'locator-timeout';
+      if (/Test timeout of \d+ms exceeded/.test(message)) return 'test-timeout';
+      if (/expected .* received|toHaveText|toHaveValue|toBeVisible/.test(message)) return 'assertion-mismatch';
       if (/navigation|page\.goto/.test(message)) return 'navigation';
       return 'other';
     };
@@ -129,13 +134,16 @@ for (const line of read(path.join(dir, 'containers.tsv')).split('\n').filter(Boo
 }
 
 // ---- docker stats peaks ----------------------------------------------------
+// docker stats writes "1.234GiB"; sysctl vm.swapusage writes "11002.50M" with no
+// trailing B, so the unit suffix has to be optional or swap always reads as zero.
 const toMiB = (text) => {
-  const match = /([\d.]+)\s*([KMG]i?B)/i.exec(text ?? '');
+  const match = /([\d.]+)\s*([KMGT])i?B?/i.exec(text ?? '');
   if (!match) return 0;
   const value = Number(match[1]);
   const unit = match[2].toUpperCase();
-  if (unit.startsWith('G')) return value * 1024;
-  if (unit.startsWith('K')) return value / 1024;
+  if (unit === 'T') return value * 1024 * 1024;
+  if (unit === 'G') return value * 1024;
+  if (unit === 'K') return value / 1024;
   return value;
 };
 const cpuPeaks = new Map();

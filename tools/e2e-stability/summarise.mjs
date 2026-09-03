@@ -124,6 +124,26 @@ if (fs.existsSync(reportPath)) {
   }
 }
 
+// ---- rendered error pages --------------------------------------------------
+// A test that lands on the service's own error page reports only the locator
+// timeout that followed, so the 5xx is invisible in report.json. It IS in the
+// page snapshot Playwright saves beside the failure, as a top-level heading.
+const errorPageHeading = /- heading "(50\d|40[034])" \[level=1\]/;
+summary.renderedErrorPages = [];
+const testResults = path.join(dir, 'test-results');
+if (fs.existsSync(testResults)) {
+  for (const entry of fs.readdirSync(testResults, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const context = path.join(testResults, entry.name, 'error-context.md');
+    if (!fs.existsSync(context)) continue;
+    const match = errorPageHeading.exec(read(context));
+    if (match) summary.renderedErrorPages.push({ testDir: entry.name, status: match[1] });
+  }
+}
+if (summary.renderedErrorPages.length > 0) {
+  summary.errorSignatures['rendered-error-page'] = summary.renderedErrorPages.length;
+}
+
 // ---- container health ------------------------------------------------------
 for (const line of read(path.join(dir, 'containers.tsv')).split('\n').filter(Boolean)) {
   const [name, status, oom, restarts, health] = line.split('\t');

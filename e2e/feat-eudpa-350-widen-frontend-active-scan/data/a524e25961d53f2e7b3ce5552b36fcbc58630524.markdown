@@ -1,0 +1,211 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/animal-identifiers-conditional.spec.ts >> Animal identifiers — conditional identifier surface >> a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs
+- Location: tests/e2e/features/animal-identifiers-conditional.spec.ts:4:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('heading', { name: 'Commodity details', level: 1 })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('heading', { name: 'Commodity details', level: 1 })
+
+```
+
+```yaml
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - link "GOV.UK":
+    - /url: https://www.gov.uk/
+    - img "GOV.UK"
+  - region "Service information":
+    - link "Import notification service":
+      - /url: /
+    - navigation "Menu":
+      - list:
+        - listitem:
+          - link "Dashboard":
+            - /url: /
+            - strong: Dashboard
+        - listitem:
+          - link "Address book":
+            - /url: "#"
+        - listitem:
+          - link "Manage account":
+            - /url: "#"
+        - listitem:
+          - link "Log out":
+            - /url: /auth/sign-out
+- paragraph:
+  - strong: Alpha
+  - text: This is a new service. Help us improve it and
+  - link "give your feedback by email":
+    - /url: mailto:APHAServiceDesk@apha.gov.uk
+  - text: .
+- link "Back":
+  - /url: /notifications/GBN-AG-26-FEVR7F/commodities
+- main:
+  - strong: Draft
+  - text: GBN-AG-26-FEVR7F About the consignment
+  - heading "Consignment details" [level=1]
+  - table "Selected commodities":
+    - caption: Selected commodities
+    - rowgroup:
+      - row "Commodity code Common name Actions":
+        - columnheader "Commodity code"
+        - columnheader "Common name"
+        - columnheader "Actions"
+    - rowgroup:
+      - row "01061900 Cat Remove Cat":
+        - cell "01061900"
+        - cell "Cat"
+        - cell "Remove Cat":
+          - button "Remove Cat"
+  - paragraph:
+    - link "Add another commodity":
+      - /url: /notifications/GBN-AG-26-FEVR7F/commodities
+  - heading "Cat (01061900)" [level=2]
+  - heading "Felis catus" [level=3]
+  - text: Number of animals For example, 1, 25 or 5000.
+  - textbox "Number of animals"
+  - text: Number of packages (optional) Such as crates, bags or boxes
+  - textbox "Number of packages (optional)"
+  - separator
+  - button "Save and continue"
+- contentinfo:
+  - heading "Support links" [level=2]
+  - list:
+    - listitem:
+      - link "Privacy":
+        - /url: https://www.gov.uk/help/privacy-notice
+    - listitem:
+      - link "Cookies":
+        - /url: https://www.gov.uk/help/cookies
+    - listitem:
+      - link "Accessibility statement":
+        - /url: https://www.gov.uk/help/accessibility-statement
+  - text: All content is available under the
+  - link "Open Government Licence v3.0":
+    - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+  - text: ", except where otherwise stated"
+  - link "© Crown copyright":
+    - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '@fixtures';
+  2  | 
+  3  | test.describe('Animal identifiers — conditional identifier surface', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+  4  |   test('a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs', async ({
+  5  |     journey,
+  6  |     pages,
+  7  |   }) => {
+  8  |     await journey.startNotification();
+  9  | 
+  10 |     // Batch-create a Cats commodity line. The animal count is save-blocking,
+  11 |     // and a count of 2 keeps the identifier form open after the first record
+  12 |     // is committed — at the declared count the maximum-reached state replaces
+  13 |     // it, which is the cap spec's subject, not this one's.
+  14 |     await pages.overview.task('What are you importing?').click();
+  15 |     await pages.commoditySelection.selectSpecies(['Felis catus']);
+  16 |     await pages.commoditySelection.saveAndContinue.click();
+> 17 |     await expect(pages.consignmentDetails.heading).toBeVisible();
+     |                                                    ^ Error: expect(locator).toBeVisible() failed
+  18 | 
+  19 |     await pages.consignmentDetails.numberOfAnimals.fill('2');
+  20 |     await pages.consignmentDetails.saveAndContinue.click();
+  21 |     await expect(pages.overview.heading).toBeVisible();
+  22 |     await pages.overview.task('Animal identification details').click();
+  23 |     await expect(pages.animalIdentification.heading).toBeVisible();
+  24 |     await expect(pages.page.getByRole('heading', { name: 'Enter details for Felis catus' })).toBeVisible();
+  25 | 
+  26 |     // Cats gate passport + tattoo + permanent address on; ear tag + horse name
+  27 |     // are hidden (they belong to other commodities), and the free-text fallbacks
+  28 |     // are hidden too — a typed commodity is in the notInUnionOf union.
+  29 |     await expect(pages.animalIdentification.passportNumber).toBeVisible();
+  30 |     await expect(pages.page.getByLabel('Tattoo')).toBeVisible();
+  31 |     await expect(pages.animalIdentification.earTag).toBeHidden();
+  32 |     await expect(pages.page.getByLabel('Horse name')).toBeHidden();
+  33 |     await expect(pages.page.getByLabel('Identification details')).toBeHidden();
+  34 |     await expect(pages.page.getByLabel('Animal description')).toBeHidden();
+  35 |     await expect(pages.page.getByLabel('Name or organisation name')).toBeVisible();
+  36 | 
+  37 |     // A partial permanent address blocks the add — the fieldGroup mandates apply
+  38 |     // once any part of the record is provided.
+  39 |     await pages.animalIdentification.passportNumber.fill('UK123456789');
+  40 |     await pages.page.getByLabel('Name or organisation name').fill('Pet Owner');
+  41 |     await pages.animalIdentification.saveAndAddAnother.click();
+  42 |     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  43 |     await expect(pages.page.getByRole('link', { name: 'Enter address line 1' })).toBeVisible();
+  44 | 
+  45 |     // Completing the mandatory address fields commits the unit with its
+  46 |     // { name, address } permanent address and keeps the surface open.
+  47 |     await pages.page.getByLabel('Address line 1').fill('1 Farm Lane');
+  48 |     await pages.page.getByLabel('Town or city').fill('Skipton');
+  49 |     await pages.page.getByLabel('Postal or zip code').fill('BD23 1UD');
+  50 |     await pages.page.getByLabel('Country').selectOption('United Kingdom');
+  51 |     await pages.page.getByLabel('Telephone number').fill('+44 1756 555 0192');
+  52 |     await pages.page.getByLabel('Email address').fill('owner@example.co.uk');
+  53 |     await pages.animalIdentification.saveAndAddAnother.click();
+  54 | 
+  55 |     await expect(pages.animalIdentification.heading).toBeVisible();
+  56 |     const unitRow = pages.page.locator('.govuk-summary-list__row', { hasText: 'Animal 1' });
+  57 |     await expect(unitRow).toContainText('Passport: UK123456789');
+  58 |     await expect(unitRow).toContainText('Permanent address: Pet Owner');
+  59 |   });
+  60 | 
+  61 |   test('a commodity with no typed identifier shows only the free-text fallbacks, and one satisfies the group', async ({
+  62 |     journey,
+  63 |     pages,
+  64 |   }) => {
+  65 |     await journey.startNotification();
+  66 | 
+  67 |     // Fish is in no typed-identifier list, so the notInUnionOf gate turns the
+  68 |     // free-text fallbacks ON and every typed input OFF. The animal count is
+  69 |     // save-blocking, and a count of 2 keeps the identifier form open after the
+  70 |     // first record is committed.
+  71 |     await pages.overview.task('What are you importing?').click();
+  72 |     await pages.commoditySelection.selectSpecies(['Salmo salar']);
+  73 |     await pages.commoditySelection.saveAndContinue.click();
+  74 |     await expect(pages.consignmentDetails.heading).toBeVisible();
+  75 | 
+  76 |     await pages.consignmentDetails.numberOfAnimals.fill('2');
+  77 |     await pages.consignmentDetails.saveAndContinue.click();
+  78 |     await expect(pages.overview.heading).toBeVisible();
+  79 |     await pages.overview.task('Animal identification details').click();
+  80 |     await expect(pages.animalIdentification.heading).toBeVisible();
+  81 | 
+  82 |     await expect(pages.page.getByLabel('Identification details')).toBeVisible();
+  83 |     await expect(pages.page.getByLabel('Animal description')).toBeVisible();
+  84 |     await expect(pages.animalIdentification.passportNumber).toBeHidden();
+  85 |     await expect(pages.page.getByLabel('Tattoo')).toBeHidden();
+  86 |     await expect(pages.animalIdentification.earTag).toBeHidden();
+  87 |     await expect(pages.page.getByLabel('Horse name')).toBeHidden();
+  88 | 
+  89 |     // A fallback alone satisfies the at-least-one identifier group.
+  90 |     await pages.page.getByLabel('Identification details').fill('Tank mark TM-77');
+  91 |     await pages.animalIdentification.saveAndAddAnother.click();
+  92 |     await expect(pages.animalIdentification.heading).toBeVisible();
+  93 |     await expect(pages.page.locator('.govuk-summary-list__row', { hasText: 'Animal 1' })).toContainText(
+  94 |       'Identification details: Tank mark TM-77',
+  95 |     );
+  96 |   });
+  97 | });
+  98 | 
+```

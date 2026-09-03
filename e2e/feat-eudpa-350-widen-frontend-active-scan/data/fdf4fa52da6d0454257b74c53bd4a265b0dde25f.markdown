@@ -1,0 +1,189 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/animal-identifiers-cap.spec.ts >> Animal identifiers cap >> the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species
+- Location: tests/e2e/features/animal-identifiers-cap.spec.ts:4:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByRole('heading', { name: 'Commodity details', level: 1 })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for getByRole('heading', { name: 'Commodity details', level: 1 })
+
+```
+
+```yaml
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - link "GOV.UK":
+    - /url: https://www.gov.uk/
+    - img "GOV.UK"
+  - region "Service information":
+    - link "Import notification service":
+      - /url: /
+    - navigation "Menu":
+      - list:
+        - listitem:
+          - link "Dashboard":
+            - /url: /
+            - strong: Dashboard
+        - listitem:
+          - link "Address book":
+            - /url: "#"
+        - listitem:
+          - link "Manage account":
+            - /url: "#"
+        - listitem:
+          - link "Log out":
+            - /url: /auth/sign-out
+- paragraph:
+  - strong: Alpha
+  - text: This is a new service. Help us improve it and
+  - link "give your feedback by email":
+    - /url: mailto:APHAServiceDesk@apha.gov.uk
+  - text: .
+- link "Back":
+  - /url: /notifications/GBN-AG-26-HKGS67/commodities
+- main:
+  - strong: Draft
+  - text: GBN-AG-26-HKGS67 About the consignment
+  - heading "Consignment details" [level=1]
+  - table "Selected commodities":
+    - caption: Selected commodities
+    - rowgroup:
+      - row "Commodity code Common name Actions":
+        - columnheader "Commodity code"
+        - columnheader "Common name"
+        - columnheader "Actions"
+    - rowgroup:
+      - row "0102 Cow Remove Cow":
+        - cell "0102"
+        - cell "Cow"
+        - cell "Remove Cow":
+          - button "Remove Cow"
+  - paragraph:
+    - link "Add another commodity":
+      - /url: /notifications/GBN-AG-26-HKGS67/commodities
+  - heading "Cow (0102)" [level=2]
+  - heading "Bos taurus" [level=3]
+  - text: Number of animals For example, 1, 25 or 5000.
+  - textbox "Number of animals"
+  - text: Number of packages (optional) Such as crates, bags or boxes
+  - textbox "Number of packages (optional)"
+  - separator
+  - button "Save and continue"
+- contentinfo:
+  - heading "Support links" [level=2]
+  - list:
+    - listitem:
+      - link "Privacy":
+        - /url: https://www.gov.uk/help/privacy-notice
+    - listitem:
+      - link "Cookies":
+        - /url: https://www.gov.uk/help/cookies
+    - listitem:
+      - link "Accessibility statement":
+        - /url: https://www.gov.uk/help/accessibility-statement
+  - text: All content is available under the
+  - link "Open Government Licence v3.0":
+    - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+  - text: ", except where otherwise stated"
+  - link "© Crown copyright":
+    - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '@fixtures';
+  2  | 
+  3  | test.describe('Animal identifiers cap', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+  4  |   test('the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species', async ({
+  5  |     journey,
+  6  |     pages,
+  7  |   }) => {
+  8  |     test.slow();
+  9  |     await journey.startNotification();
+  10 | 
+  11 |     // A cattle line with a declared count of 2 (M = 2).
+  12 |     await pages.overview.task('What are you importing?').click();
+  13 |     await pages.commoditySelection.selectSpecies(['Bos taurus']);
+  14 |     await pages.commoditySelection.saveAndContinue.click();
+> 15 |     await expect(pages.consignmentDetails.heading).toBeVisible();
+     |                                                    ^ Error: expect(locator).toBeVisible() failed
+  16 |     await pages.consignmentDetails.numberOfAnimals.fill('2');
+  17 |     await pages.consignmentDetails.saveAndContinue.click();
+  18 |     await expect(pages.overview.heading).toBeVisible();
+  19 | 
+  20 |     // Counter progression: 1 of 2, then Save and add another moves to 2 of 2
+  21 |     // with the first record in the card's table.
+  22 |     await pages.overview.task('Animal identification details').click();
+  23 |     await expect(pages.page.getByRole('heading', { name: 'Enter details for Bos taurus 1 of 2' })).toBeVisible();
+  24 |     await pages.animalIdentification.earTag.fill('UK000000000001');
+  25 |     await pages.animalIdentification.saveAndAddAnother.click();
+  26 |     await expect(pages.page.getByRole('heading', { name: 'Enter details for Bos taurus 2 of 2' })).toBeVisible();
+  27 |     await expect(pages.page.locator('.govuk-summary-list__row', { hasText: 'Animal 1' })).toContainText('Ear tag: UK000000000001');
+  28 | 
+  29 |     // At N = M the maximum-reached state replaces the entry form; the saved
+  30 |     // records stay removable.
+  31 |     await pages.animalIdentification.earTag.fill('UK000000000002');
+  32 |     await pages.animalIdentification.saveAndAddAnother.click();
+  33 |     await expect(
+  34 |       pages.page.getByText('You have entered details for all 2 Bos taurus animals', {
+  35 |         exact: false,
+  36 |       }),
+  37 |     ).toBeVisible();
+  38 |     await expect(pages.animalIdentification.earTag).toHaveCount(0);
+  39 |     await expect(pages.animalIdentification.saveAndAddAnother).toHaveCount(0);
+  40 | 
+  41 |     // Count-drop guard: lowering the count below the record count blocks the
+  42 |     // details-page save with an error NAMING the species whose summary link
+  43 |     // goes straight to this species' identifier card — the records are never
+  44 |     // silently trimmed.
+  45 |     await pages.animalIdentification.saveAndFinish.click();
+  46 |     await expect(pages.overview.heading).toBeVisible();
+  47 |     await pages.overview.task('What are you importing?').click();
+  48 |     await pages.commoditySelection.saveAndContinue.click();
+  49 |     await expect(pages.consignmentDetails.heading).toBeVisible();
+  50 |     await pages.consignmentDetails.numberOfAnimals.fill('1');
+  51 |     await pages.consignmentDetails.saveAndContinue.click();
+  52 |     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();
+  53 |     const dropError = pages.page.getByRole('link', {
+  54 |       name: 'You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.',
+  55 |     });
+  56 |     await expect(dropError).toBeVisible();
+  57 |     await dropError.click();
+  58 |     await expect(pages.animalIdentification.heading).toBeVisible();
+  59 |     await expect(pages.page.locator('.govuk-summary-list__row', { hasText: 'Animal 2' })).toBeVisible();
+  60 | 
+  61 |     // Remove frees a slot: the entry form reopens at 2 of 2.
+  62 |     await pages.page.locator('.govuk-summary-list__row', { hasText: 'Animal 2' }).getByRole('button', { name: 'Remove' }).click();
+  63 |     await expect(pages.page.getByRole('heading', { name: 'Enter details for Bos taurus 2 of 2' })).toBeVisible();
+  64 | 
+  65 |     // With one record left the drop no longer applies — a count of 1 saves.
+  66 |     await pages.animalIdentification.saveAndFinish.click();
+  67 |     await expect(pages.overview.heading).toBeVisible();
+  68 |     await pages.overview.task('What are you importing?').click();
+  69 |     await pages.commoditySelection.saveAndContinue.click();
+  70 |     await expect(pages.consignmentDetails.heading).toBeVisible();
+  71 |     await pages.consignmentDetails.numberOfAnimals.fill('1');
+  72 |     await pages.consignmentDetails.saveAndContinue.click();
+  73 |     await expect(pages.overview.heading).toBeVisible();
+  74 |   });
+  75 | });
+  76 | 
+```

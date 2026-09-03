@@ -1,0 +1,188 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/additional-details-scope.spec.ts >> Additional details scope >> the unweaned-animals question shows only when a triggering commodity line exists
+- Location: tests/e2e/features/additional-details-scope.spec.ts:4:3
+
+# Error details
+
+```
+Test timeout of 90000ms exceeded.
+```
+
+```
+Error: locator.waitFor: Test timeout of 90000ms exceeded.
+Call log:
+  - waiting for getByRole('heading', { name: 'Commodity details', level: 1 }) to be visible
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e3]:
+    - link "GOV.UK" [ref=e7] [cursor=pointer]:
+      - /url: https://www.gov.uk/
+      - img "GOV.UK" [ref=e8]
+    - region "Service information" [ref=e21]:
+      - generic [ref=e23]:
+        - link "Import notification service" [ref=e25] [cursor=pointer]:
+          - /url: /
+        - navigation "Menu" [ref=e26]:
+          - list [ref=e27]:
+            - listitem [ref=e28]:
+              - link "Dashboard" [ref=e29] [cursor=pointer]:
+                - /url: /
+                - strong [ref=e30]: Dashboard
+            - listitem [ref=e31]:
+              - link "Address book" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e33]:
+              - link "Manage account" [ref=e34] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e35]:
+              - link "Log out" [ref=e36] [cursor=pointer]:
+                - /url: /auth/sign-out
+  - generic [ref=e37]:
+    - paragraph [ref=e39]:
+      - strong [ref=e40]: Alpha
+      - generic [ref=e41]:
+        - text: This is a new service. Help us improve it and
+        - link "give your feedback by email" [ref=e42] [cursor=pointer]:
+          - /url: mailto:APHAServiceDesk@apha.gov.uk
+        - text: .
+    - link "Back" [ref=e43] [cursor=pointer]:
+      - /url: /notifications/GBN-AG-26-T894BE/commodities
+    - main [ref=e44]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - strong [ref=e48]: Draft
+          - text: GBN-AG-26-T894BE
+        - generic [ref=e49]: About the consignment
+        - heading "Consignment details" [level=1] [ref=e50]
+        - table "Selected commodities" [ref=e52]:
+          - caption [ref=e53]: Selected commodities
+          - rowgroup [ref=e54]:
+            - row "Commodity code Common name Actions" [ref=e55]:
+              - columnheader "Commodity code" [ref=e56]
+              - columnheader "Common name" [ref=e57]
+              - columnheader "Actions" [ref=e58]:
+                - generic [ref=e59]: Actions
+          - rowgroup [ref=e60]:
+            - row "01061900 Cat Remove Cat" [ref=e61]:
+              - cell "01061900" [ref=e62]
+              - cell "Cat" [ref=e63]
+              - cell "Remove Cat" [ref=e64]:
+                - button "Remove Cat" [ref=e65] [cursor=pointer]:
+                  - text: Remove
+                  - generic [ref=e66]: Cat
+        - paragraph [ref=e67]:
+          - link "Add another commodity" [ref=e68] [cursor=pointer]:
+            - /url: /notifications/GBN-AG-26-T894BE/commodities
+        - generic [ref=e69]:
+          - heading "Cat (01061900)" [level=2] [ref=e70]
+          - heading "Felis catus" [level=3] [ref=e71]
+          - generic [ref=e72]:
+            - generic [ref=e73]: Number of animals
+            - generic [ref=e74]: For example, 1, 25 or 5000.
+            - textbox "Number of animals" [ref=e75]
+          - generic [ref=e76]:
+            - generic [ref=e77]: Number of packages (optional)
+            - generic [ref=e78]: Such as crates, bags or boxes
+            - textbox "Number of packages (optional)" [ref=e79]
+          - separator [ref=e80]
+          - button "Save and continue" [ref=e82] [cursor=pointer]
+  - contentinfo [ref=e83]:
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - heading "Support links" [level=2] [ref=e98]
+        - list [ref=e99]:
+          - listitem [ref=e100]:
+            - link "Privacy" [ref=e101] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/privacy-notice
+          - listitem [ref=e102]:
+            - link "Cookies" [ref=e103] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/cookies
+          - listitem [ref=e104]:
+            - link "Accessibility statement" [ref=e105] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/accessibility-statement
+        - img [ref=e106]
+        - generic [ref=e108]:
+          - text: All content is available under the
+          - link "Open Government Licence v3.0" [ref=e109] [cursor=pointer]:
+            - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+          - text: ", except where otherwise stated"
+      - link "© Crown copyright" [ref=e111] [cursor=pointer]:
+        - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '@fixtures';
+  2  | 
+  3  | test.describe('Additional details scope', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+  4  |   test('the unweaned-animals question shows only when a triggering commodity line exists', async ({ journey, pages }) => {
+  5  |     // Proving scope needs three commodity shapes, and each one walks the hub,
+  6  |     // selection and consignment pages — roughly 25 loads against a CI runner
+  7  |     // hosting the whole stack, which does not fit the default budget.
+  8  |     test.slow();
+  9  | 
+  10 |     const journeyId = await journey.startNotification();
+  11 | 
+  12 |     const certifiedFor = pages.page.getByRole('group', { name: 'What are the animals certified for?' });
+  13 |     const unweaned = pages.page.getByRole('group', {
+  14 |       name: 'Does the consignment contain any unweaned animals?',
+  15 |     });
+  16 | 
+  17 |     // Each call ADDS a commodity line. The animal count is save-blocking on
+  18 |     // every line, so each box the consignment page is showing — the lines
+  19 |     // added on earlier passes included — is filled before it hands back to the
+  20 |     // hub.
+  21 |     const addCommodity = async (species: string): Promise<void> => {
+  22 |       await pages.overview.open(journeyId);
+  23 |       await pages.overview.task('What are you importing?').click();
+  24 |       await pages.commoditySelection.selectSpecies([species]);
+  25 |       await pages.commoditySelection.saveAndContinue.click();
+> 26 |       await pages.consignmentDetails.heading.waitFor();
+     |                                              ^ Error: locator.waitFor: Test timeout of 90000ms exceeded.
+  27 |       await pages.consignmentDetails.fillEveryAnimalCount('1');
+  28 |       await pages.consignmentDetails.saveAndContinue.click();
+  29 |       await pages.overview.heading.waitFor();
+  30 |     };
+  31 | 
+  32 |     // A blank reason (enforcedAt=submit) walks straight to the tail page,
+  33 |     // skipping the internal-market purpose page.
+  34 |     const openAdditionalDetails = async (): Promise<void> => {
+  35 |       await pages.overview.open(journeyId);
+  36 |       await pages.overview.task('Main reason for importing').click();
+  37 |       await pages.importReason.heading.waitFor();
+  38 |       await pages.importReason.saveAndContinue.click();
+  39 |       await pages.additionalDetails.heading.waitFor();
+  40 |     };
+  41 | 
+  42 |     // A non-triggering commodity (cats): certified-for shows, but the
+  43 |     // notification-level unweaned-animals question is out of scope.
+  44 |     await addCommodity('Felis catus');
+  45 |     await openAdditionalDetails();
+  46 |     await expect(certifiedFor).toBeVisible();
+  47 |     await expect(unweaned).toBeHidden();
+  48 | 
+  49 |     // Adding a triggering commodity (cattle) brings the unweaned-animals question
+  50 |     // into scope across the commodity lines (frame:"anyItem").
+  51 |     await addCommodity('Bos taurus');
+  52 |     await openAdditionalDetails();
+  53 |     await expect(certifiedFor).toBeVisible();
+  54 |     await expect(unweaned).toBeVisible();
+  55 |   });
+  56 | });
+  57 | 
+```

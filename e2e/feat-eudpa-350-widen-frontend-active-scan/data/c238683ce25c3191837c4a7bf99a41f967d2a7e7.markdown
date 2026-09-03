@@ -1,0 +1,331 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/features/documents-limits.spec.ts >> Documents limits >> accepts a 10 MB PDF and rejects the same real file at one byte over
+- Location: tests/e2e/features/documents-limits.spec.ts:49:3
+
+# Error details
+
+```
+Test timeout of 90000ms exceeded.
+```
+
+```
+Error: locator.waitFor: Test timeout of 90000ms exceeded.
+Call log:
+  - waiting for getByRole('heading', { name: 'Commodity details', level: 1 }) to be visible
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e3]:
+    - link "GOV.UK" [ref=e7] [cursor=pointer]:
+      - /url: https://www.gov.uk/
+      - img "GOV.UK" [ref=e8]
+    - region "Service information" [ref=e21]:
+      - generic [ref=e23]:
+        - link "Import notification service" [ref=e25] [cursor=pointer]:
+          - /url: /
+        - navigation "Menu" [ref=e26]:
+          - list [ref=e27]:
+            - listitem [ref=e28]:
+              - link "Dashboard" [ref=e29] [cursor=pointer]:
+                - /url: /
+                - strong [ref=e30]: Dashboard
+            - listitem [ref=e31]:
+              - link "Address book" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e33]:
+              - link "Manage account" [ref=e34] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e35]:
+              - link "Log out" [ref=e36] [cursor=pointer]:
+                - /url: /auth/sign-out
+  - generic [ref=e37]:
+    - paragraph [ref=e39]:
+      - strong [ref=e40]: Alpha
+      - generic [ref=e41]:
+        - text: This is a new service. Help us improve it and
+        - link "give your feedback by email" [ref=e42] [cursor=pointer]:
+          - /url: mailto:APHAServiceDesk@apha.gov.uk
+        - text: .
+    - link "Back" [ref=e43] [cursor=pointer]:
+      - /url: /notifications/GBN-AG-26-87W3ER/commodities
+    - main [ref=e44]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - strong [ref=e48]: Draft
+          - text: GBN-AG-26-87W3ER
+        - generic [ref=e49]: About the consignment
+        - heading "Consignment details" [level=1] [ref=e50]
+        - table "Selected commodities" [ref=e52]:
+          - caption [ref=e53]: Selected commodities
+          - rowgroup [ref=e54]:
+            - row "Commodity code Common name Actions" [ref=e55]:
+              - columnheader "Commodity code" [ref=e56]
+              - columnheader "Common name" [ref=e57]
+              - columnheader "Actions" [ref=e58]:
+                - generic [ref=e59]: Actions
+          - rowgroup [ref=e60]:
+            - row "0102 Cow Remove Cow" [ref=e61]:
+              - cell "0102" [ref=e62]
+              - cell "Cow" [ref=e63]
+              - cell "Remove Cow" [ref=e64]:
+                - button "Remove Cow" [ref=e65] [cursor=pointer]:
+                  - text: Remove
+                  - generic [ref=e66]: Cow
+        - paragraph [ref=e67]:
+          - link "Add another commodity" [ref=e68] [cursor=pointer]:
+            - /url: /notifications/GBN-AG-26-87W3ER/commodities
+        - generic [ref=e69]:
+          - heading "Cow (0102)" [level=2] [ref=e70]
+          - heading "Bos taurus" [level=3] [ref=e71]
+          - generic [ref=e72]:
+            - generic [ref=e73]: Number of animals
+            - generic [ref=e74]: For example, 1, 25 or 5000.
+            - textbox "Number of animals" [ref=e75]
+          - generic [ref=e76]:
+            - generic [ref=e77]: Number of packages (optional)
+            - generic [ref=e78]: Such as crates, bags or boxes
+            - textbox "Number of packages (optional)" [ref=e79]
+          - separator [ref=e80]
+          - button "Save and continue" [ref=e82] [cursor=pointer]
+  - contentinfo [ref=e83]:
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - heading "Support links" [level=2] [ref=e98]
+        - list [ref=e99]:
+          - listitem [ref=e100]:
+            - link "Privacy" [ref=e101] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/privacy-notice
+          - listitem [ref=e102]:
+            - link "Cookies" [ref=e103] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/cookies
+          - listitem [ref=e104]:
+            - link "Accessibility statement" [ref=e105] [cursor=pointer]:
+              - /url: https://www.gov.uk/help/accessibility-statement
+        - img [ref=e106]
+        - generic [ref=e108]:
+          - text: All content is available under the
+          - link "Open Government Licence v3.0" [ref=e109] [cursor=pointer]:
+            - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+          - text: ", except where otherwise stated"
+      - link "© Crown copyright" [ref=e111] [cursor=pointer]:
+        - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1   | import type { PageObjects } from '@page-objects';
+  2   | import type { JourneyOptions } from '@domain/constants/journey-options';
+  3   | import { getRelativeAppDateText } from '@utils/date-utils';
+  4   | 
+  5   | export type JourneyContext = {
+  6   |   journeyId?: string;
+  7   |   referenceNumber?: string;
+  8   |   declarationDate?: string;
+  9   | };
+  10  | 
+  11  | const COUNTRY = 'France';
+  12  | const PORT = 'Aberdeen Harbour (GB ABD)';
+  13  | // Inside the arrival-date window (1 week back to 6 months ahead) wherever the
+  14  | // wall clock happens to be, in the unpadded d/m/yyyy the app itself renders —
+  15  | // so a CYA assertion compares against the app's shape, not the typed string it
+  16  | // happens to echo back.
+  17  | export const ARRIVAL_DATE = getRelativeAppDateText({ monthOffset: 1 });
+  18  | 
+  19  | export class Journey {
+  20  |   constructor(
+  21  |     private readonly pages: PageObjects,
+  22  |     private readonly context: JourneyContext,
+  23  |   ) {}
+  24  | 
+  25  |   async toSignIn(open: (attemptSignIn: boolean) => Promise<void>): Promise<void> {
+  26  |     await open(false);
+  27  |   }
+  28  | 
+  29  |   async toNotificationDashboard(): Promise<void> {
+  30  |     await this.pages.notificationDashboard.open();
+  31  |     await this.pages.notificationDashboard.heading.waitFor();
+  32  |   }
+  33  | 
+  34  |   private async createNotificationAtOrigin(): Promise<string> {
+  35  |     await this.toNotificationDashboard();
+  36  |     await this.pages.notificationDashboard.btnCreateNewNotification.click();
+  37  |     await this.pages.originOfImport.heading.waitFor();
+  38  |     const journeyId = this.pages.originOfImport.journeyIdFromUrl();
+  39  |     this.context.journeyId = journeyId;
+  40  |     this.context.referenceNumber = journeyId;
+  41  |     return journeyId;
+  42  |   }
+  43  | 
+  44  |   // Origin answered — most other tasks are gated behind it, so callers that
+  45  |   // want a usable task list reach the overview this way, not via startNotificationAtOrigin().
+  46  |   async startNotification(): Promise<string> {
+  47  |     const journeyId = await this.createNotificationAtOrigin();
+  48  |     await this.fillOriginOfImport();
+  49  |     await this.saveOriginOfImport();
+  50  |     // Wait for the save to land before navigating away. Opening the overview
+  51  |     // regardless hides a failed save — the run then dies several steps later on
+  52  |     // a task stuck at "Cannot start yet", pointing at the wrong page entirely.
+  53  |     await this.pages.originOfImport.heading.waitFor({ state: 'hidden' });
+  54  |     await this.pages.overview.open(journeyId);
+  55  |     await this.pages.overview.heading.waitFor();
+  56  |     return journeyId;
+  57  |   }
+  58  | 
+  59  |   // Origin unanswered — the entry guard is satisfied by the opening-run
+  60  |   // marker set at creation, not by answering origin itself.
+  61  |   async startNotificationAtOrigin(): Promise<string> {
+  62  |     const journeyId = await this.createNotificationAtOrigin();
+  63  |     await this.pages.overview.open(journeyId);
+  64  |     await this.pages.overview.heading.waitFor();
+  65  |     return journeyId;
+  66  |   }
+  67  | 
+  68  |   // Origin unanswered, as a brand-new notification first shows it.
+  69  |   async toOriginOfImport(): Promise<void> {
+  70  |     await this.createNotificationAtOrigin();
+  71  |   }
+  72  | 
+  73  |   async fillOriginOfImport(options: JourneyOptions = {}): Promise<void> {
+  74  |     await this.pages.originOfImport.selectCountry(COUNTRY);
+  75  |     const requiresRegionCode = options.requiresRegionCode ?? 'No';
+  76  |     await this.pages.originOfImport.radioRequiresOriginCode(requiresRegionCode).check();
+  77  |     if (requiresRegionCode === 'Yes') {
+  78  |       await this.pages.originOfImport.regionCode.fill('75');
+  79  |     }
+  80  |     if (options.internalReference) {
+  81  |       await this.pages.originOfImport.internalReference.fill(options.internalReference);
+  82  |     }
+  83  |   }
+  84  | 
+  85  |   async saveOriginOfImport(): Promise<void> {
+  86  |     await this.pages.originOfImport.saveAndContinue.click();
+  87  |   }
+  88  | 
+  89  |   async answerOrigin(options: JourneyOptions = {}): Promise<void> {
+  90  |     await this.pages.overview.task('Where is this consignment coming from?').click();
+  91  |     await this.fillOriginOfImport(options);
+  92  |     await this.saveOriginOfImport();
+  93  |     await this.pages.overview.heading.waitFor();
+  94  |   }
+  95  | 
+  96  |   async answerCommodity(): Promise<void> {
+  97  |     await this.pages.overview.task('What are you importing?').click();
+  98  |     await this.pages.commoditySelection.selectSpecies(['Bos taurus']);
+  99  |     await this.pages.commoditySelection.saveAndContinue.click();
+> 100 |     await this.pages.consignmentDetails.heading.waitFor();
+      |                                                 ^ Error: locator.waitFor: Test timeout of 90000ms exceeded.
+  101 |     await this.pages.consignmentDetails.numberOfAnimals.fill('1');
+  102 |     await this.pages.consignmentDetails.numberOfPackages.fill('5');
+  103 |     await this.pages.consignmentDetails.saveAndContinue.click();
+  104 |     await this.pages.overview.heading.waitFor();
+  105 |   }
+  106 | 
+  107 |   async answerAnimalIdentification(): Promise<void> {
+  108 |     await this.pages.overview.task('Animal identification details').click();
+  109 |     await this.pages.animalIdentification.earTag.fill('UK123456789012');
+  110 |     await this.pages.animalIdentification.saveAndFinish.click();
+  111 |     await this.pages.overview.heading.waitFor();
+  112 |   }
+  113 | 
+  114 |   async answerReasonAndAdditionalDetails(): Promise<void> {
+  115 |     await this.pages.overview.task('Main reason for importing').click();
+  116 |     await this.pages.importReason.reason('Internal market').check();
+  117 |     await this.pages.importReason.saveAndContinue.click();
+  118 |     await this.pages.importPurpose.heading.waitFor();
+  119 |     await this.pages.importPurpose.purpose('Breeding').check();
+  120 |     await this.pages.importPurpose.saveAndContinue.click();
+  121 |     await this.pages.additionalDetails.heading.waitFor();
+  122 |     await this.pages.additionalDetails.certifiedFor('Slaughter').check();
+  123 |     await this.pages.additionalDetails.containsUnweanedAnimals('No').check();
+  124 |     await this.pages.additionalDetails.saveAndContinue.click();
+  125 |     await this.pages.overview.heading.waitFor();
+  126 |   }
+  127 | 
+  128 |   async unlockSections(): Promise<void> {
+  129 |     await this.answerCommodity();
+  130 |   }
+  131 | 
+  132 |   async toAccompanyingDocuments(): Promise<void> {
+  133 |     await this.startNotification();
+  134 |     await this.unlockSections();
+  135 |     await this.pages.overview.task('Uploaded documents').click();
+  136 |     await this.pages.accompanyingDocuments.heading.waitFor();
+  137 |   }
+  138 | 
+  139 |   async fillAddressesToCph(): Promise<void> {
+  140 |     await this.pages.overview.task('Roles and addresses').click();
+  141 |     const parties = [
+  142 |       ['Consignor or exporter', 'Astra Rosales', 'consignorSelection'],
+  143 |       ['Place of destination', 'Tech Imports Ltd', 'destinationSelection'],
+  144 |       ['Place of origin', 'Origin Farm', 'placeOfOriginSelection'],
+  145 |       ['Consignee', 'British Livestock Ltd', 'consigneeSelection'],
+  146 |       ['Importer', 'Import Co UK', 'importerSelection'],
+  147 |     ] as const;
+  148 |     for (const [role, name, picker] of parties) {
+  149 |       await this.pages.addresses.addParty(role).click();
+  150 |       await this.pages[picker].select(name);
+  151 |       await this.pages[picker].saveAndContinue.click();
+  152 |       await this.pages.addresses.heading.waitFor();
+  153 |     }
+  154 |     await this.pages.addresses.continueButton.click();
+  155 |     await this.pages.cphNumber.heading.waitFor();
+  156 |   }
+  157 | 
+  158 |   async answerAddresses(): Promise<void> {
+  159 |     await this.fillAddressesToCph();
+  160 |     await this.pages.cphNumber.cphNumber.fill('12/345/6789');
+  161 |     await this.pages.cphNumber.saveAndContinue.click();
+  162 |     await this.pages.overview.heading.waitFor();
+  163 |   }
+  164 | 
+  165 |   async fillArrivalDetails(means: string = 'Road Vehicle'): Promise<void> {
+  166 |     await this.pages.arrivalDetails.fillArrivalDate(ARRIVAL_DATE);
+  167 |     await this.pages.arrivalDetails.selectPort(PORT);
+  168 |     await this.pages.page.getByRole('radio', { name: means, exact: true }).check();
+  169 |     await this.pages.arrivalDetails.transportIdentification.fill('FR-892-LK');
+  170 |     await this.pages.arrivalDetails.transportDocumentReference.fill('CMR-2026-884721');
+  171 |   }
+  172 | 
+  173 |   // Re-navigate from the hub to the transporter-type page within an already
+  174 |   // unlocked journey. The page itself saves through unfilled; it is filled
+  175 |   // because a road vehicle keeps transited countries in scope, which is
+  176 |   // answered on the way.
+  177 |   async reachTransporterFromHub(): Promise<void> {
+  178 |     await this.pages.overview.task('Arrival details').click();
+  179 |     await this.pages.arrivalDetails.heading.waitFor();
+  180 |     await this.fillArrivalDetails();
+  181 |     await this.pages.arrivalDetails.saveAndContinue.click();
+  182 |     await this.pages.transitedCountries.heading.waitFor();
+  183 |     await this.pages.transitedCountries.selectCountry('France');
+  184 |     await this.pages.transitedCountries.saveAndContinue.click();
+  185 |     await this.pages.transporter.heading.waitFor();
+  186 |   }
+  187 | 
+  188 |   async answerTransport(): Promise<void> {
+  189 |     await this.pages.overview.task('Arrival details').click();
+  190 |     await this.fillArrivalDetails();
+  191 |     await this.pages.arrivalDetails.saveAndContinue.click();
+  192 |     await this.pages.transitedCountries.heading.waitFor();
+  193 |     await this.pages.transitedCountries.selectCountry('France');
+  194 |     await this.pages.transitedCountries.selectCountry('Belgium');
+  195 |     await this.pages.transitedCountries.saveAndContinue.click();
+  196 |     await this.pages.transporter.heading.waitFor();
+  197 |     await this.pages.transporter.transporterType('Commercial').check();
+  198 |     await this.pages.transporter.saveAndContinue.click();
+  199 |     await this.pages.transporterSelection.heading.waitFor();
+  200 |     await this.pages.transporterSelection.transporter('García Livestock Transport SL').check();
+```

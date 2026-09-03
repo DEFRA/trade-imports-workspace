@@ -53,6 +53,19 @@ fi
 
 docker ps --format '{{.Names}}	{{.Status}}' >"$OUT/containers-before.txt"
 
+# Mongo grows across a long series of runs — the dashboard, search, sort and
+# pagination specs all read a dataset that every prior run has added to, so the
+# before/after counts separate "concurrency broke it" from "the data grew".
+mongo_counts() {
+  docker exec trade-imports-mongodb-1 mongosh --quiet --eval '
+    db.getMongo().getDBNames().forEach(n => {
+      if (["admin", "local", "config"].includes(n)) return;
+      const d = db.getSiblingDB(n);
+      d.getCollectionNames().forEach(c => print(n + "." + c + "=" + d.getCollection(c).countDocuments({})));
+    })' 2>/dev/null
+}
+mongo_counts >"$OUT/mongo-before.txt"
+
 # ---- background samplers ----------------------------------------------------
 (
   while true; do
@@ -105,6 +118,8 @@ trap - EXIT
   echo "wall_seconds=$((END - START))"
   echo "finished_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } >>"$OUT/env.txt"
+
+mongo_counts >"$OUT/mongo-after.txt"
 
 [ -f "$TESTS/FAILED" ] && cp "$TESTS/FAILED" "$OUT/FAILED"
 [ -d "$TESTS/test-results" ] && cp -R "$TESTS/test-results" "$OUT/test-results" 2>/dev/null

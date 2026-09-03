@@ -32,7 +32,26 @@ const summary = {
   peakContainerCpu: [],
   peakContainerMem: [],
   host: { peakLoad1: null, peakSwapUsed: null, peakChromium: null, peakCompressorPages: null },
+  mongo: { before: {}, after: {}, growth: {} },
 };
+
+// ---- accumulating datastore state ------------------------------------------
+const counts = (name) =>
+  Object.fromEntries(
+    read(path.join(dir, name))
+      .split('\n')
+      .filter((line) => line.includes('='))
+      .map((line) => {
+        const at = line.lastIndexOf('=');
+        return [line.slice(0, at), Number(line.slice(at + 1))];
+      }),
+  );
+summary.mongo.before = counts('mongo-before.txt');
+summary.mongo.after = counts('mongo-after.txt');
+for (const [key, after] of Object.entries(summary.mongo.after)) {
+  const delta = after - (summary.mongo.before[key] ?? 0);
+  if (delta !== 0) summary.mongo.growth[key] = delta;
+}
 
 // ---- Playwright JSON report -------------------------------------------------
 const reportPath = path.join(dir, 'report.json');

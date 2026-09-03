@@ -35,9 +35,14 @@ valid_profiles=("${ALL_PROFILES[@]}" "${OPT_IN_PROFILES[@]}")
 source "$LIB_DIR/flags.sh"
 parse_run_stack_flags "$@"
 
+stage_zap=0
+for profile in ${selected_profiles[@]+"${selected_profiles[@]}"}; do
+  [ "$profile" = security ] && { stage_zap=1; break; }
+done
+
 # shellcheck source=lib/init-scripts.sh
 source "$LIB_DIR/init-scripts.sh"
-stage_init_scripts "$branch"
+stage_init_scripts "$branch" "$stage_zap"
 
 [ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${ALL_PROFILES[@]}")
 [ "$dev" -eq 1 ] && compose_files_add_dev
@@ -135,11 +140,16 @@ fi
 # happen in this (parent) shell. bash-3.2 safe (macOS default) and Linux-CI safe:
 # only mktemp -d, background jobs, and a bare wait barrier are used.
 probe_tmpdir=""
+recheck_tmpdir=""
 # The marker directory holds one file per service that resolved to the branch
 # tag; its contents are the first-probe manifest fingerprint. It must survive
 # until the post-healthy re-check below, so clean it up on any exit rather than
 # inline before the compose up.
-cleanup_probe_tmpdir() { [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"; return 0; }
+cleanup_probe_tmpdir() {
+  [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"
+  [ -n "$recheck_tmpdir" ] && rm -rf "$recheck_tmpdir"
+  return 0
+}
 trap cleanup_probe_tmpdir EXIT
 if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
   probe_tmpdir="$(mktemp -d)"
@@ -238,6 +248,24 @@ docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" "${up_args[@]}" ${extr
 # well after healthy still needs a manual restart.
 if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
   printf '%sRe-checking Dockerhub for branch images now the stack is healthy: %s%s\n' "$COLOUR_CYAN" "$sanitised" "$COLOUR_RESET"
+
+  # Fan the re-probes out the same way the first probe above does: one marker
+  # file per service that resolved to the branch tag, holding its fingerprint.
+  recheck_tmpdir="$(mktemp -d)"
+  recheck_pids=()
+  for entry in "${services[@]}"; do
+    IFS='|' read -r label image _ <<< "$entry"
+    is_excluded "$label" && continue
+    in_active=0
+    for s in ${active_services[@]+"${active_services[@]}"}; do
+      [ "$s" = "$image" ] && { in_active=1; break; }
+    done
+    [ "$in_active" -eq 0 ] && continue
+    ( fp="$(probe "$image" "$sanitised")" && printf '%s' "$fp" > "$recheck_tmpdir/$label" ) &
+    recheck_pids+=("$!")
+  done
+  [ ${#recheck_pids[@]} -gt 0 ] && wait ${recheck_pids[@]+"${recheck_pids[@]}"} 2>/dev/null || true
+
   recheck_services=()
   for entry in "${services[@]}"; do
     IFS='|' read -r label image env_var <<< "$entry"
@@ -257,8 +285,12 @@ if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
       first_fp="$(cat "$probe_tmpdir/$label")"
     fi
 
-    # Re-probe now.
-    now_fp="$(probe "$image" "$sanitised")" && now_branch=1 || now_branch=0
+    now_branch=0
+    now_fp=""
+    if [ -f "$recheck_tmpdir/$label" ]; then
+      now_branch=1
+      now_fp="$(cat "$recheck_tmpdir/$label")"
+    fi
 
     if [ "$now_branch" -eq 0 ]; then
       # Still no branch tag — nothing published, nothing to do.

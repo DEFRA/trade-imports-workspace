@@ -1,0 +1,28 @@
+h2. Increment
+
+{{inc-090}} from the {{shared/dr1-parity-union}} backlog.
+
+DR1 offers each species as its common name with the Latin name in brackets — 'African buffalo (Syncerus spp.)'. The frontend offers the bare Latin binomial, so a user who does not read Latin cannot tell the options apart. Under Cow (0102) the four choices read {{Bison bison}}, {{Bos spp.}}, {{Bos taurus}} and {{Bubalus bubalis}}; under Horse, {{Equus caballus}}; under Cat, {{Felis catus}}; under Dog, {{Canis lupus familiaris}}; under Fish, {{Salmo salar}}. A user who knows the animal as a cow, a dog or a salmon never sees that word next to the box they have to tick.
+
+The common name is not decoration on the DR1 side: it is what DR1's search matches on first, and the search hint promises it — 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).' So this has to be in place before the search control ships.
+
+h2. Acceptance criteria
+
+* Every species option on the What are you importing? page renders as *Common name (Latin name)* — for example {{Domestic cattle (Bos taurus)}} in place of the bare {{Bos taurus}}.
+* Where a species carries no common name of its own, the label falls back to *Commodity name (Latin name)* — for example {{Sheep (Ovis aries)}} and {{Ornamental fish (Cyprinidae)}}. 21 of DR1's 144 species entries take this fallback.
+* The common name comes from the commodities catalogue as a piece of data per species, not from a hard-coded mapping in the view. The stub at {{src/server/app/sets/live-animals/services/commodities/stub.js}} gains the field and the label is built in {{src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js}}.
+* Species options are ordered by the rendered display label rather than by the Latin name, so Cattle opens with African buffalo rather than Bison bison.
+* The species heading on the commodity details page is left alone. It is the Latin name on both sides — DR1 holds a common name for that entry and chooses not to render it — so changing it would move away from the signed-off design.
+* Unit tests cover the label rule and the fallback rule.
+
+h2. Notes
+
+Banded as frontend work because the rendering is the part that is wrong today. If the live commodity service turns out not to carry a common name per species, the band moves to needs-backend.
+
+Travels with {{inc-087}} — DR1's search matches on the common name, so the label and the search control depend on the same missing data.
+
+Falsified by: finding a common name already rendered against any species option on the frontend's What are you importing? page.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

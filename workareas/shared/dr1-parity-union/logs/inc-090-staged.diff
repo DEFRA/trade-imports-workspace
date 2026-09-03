@@ -1,0 +1,316 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
+index 5c20a74f..308dab80 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js
+@@ -12,11 +12,23 @@ import { copy } from '../copy/copy.en.js'
+ const BISON_BISON = 'Bison bison'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
++// Every option is offered as its common name with the scientific name in
++// brackets, so the trader who does not read Latin can tell the tick boxes apart.
++const BISON_BISON_LABEL = 'American bison (Bison bison)'
++const BOS_SPP_LABEL = 'Cattle (Bos spp.)'
++const BOS_TAURUS_LABEL = 'Domestic cattle (Bos taurus)'
++const FELIS_CATUS_LABEL = 'Cat (Felis catus)'
++const CANIS_LUPUS_LABEL = 'Dog (Canis lupus familiaris)'
+ const COW_LEGEND = 'Cow (0102)'
+ const SAVE_AND_CONTINUE = 'Save and continue'
+ const BACK_LINK = '.govuk-back-link'
+ 
+ const canonicalSelectionOrder = [BISON_BISON, BOS_TAURUS, FELIS_CATUS]
++const canonicalSelectionLabels = [
++  BISON_BISON_LABEL,
++  BOS_TAURUS_LABEL,
++  FELIS_CATUS_LABEL
++]
+ 
+ const openSelection = async (page) => {
+   await startNotification(page)
+@@ -86,7 +98,29 @@ test.describe('commodity search', () => {
+     await expect(group).toBeVisible()
+     await expect(group.getByRole('checkbox')).toHaveCount(2)
+     await expect(
+-      group.getByRole('checkbox', { name: BOS_TAURUS })
++      group.getByRole('checkbox', { name: BOS_TAURUS_LABEL, exact: true })
++    ).toBeVisible()
++    await expect(page.getByRole('checkbox')).toHaveCount(2)
++  })
++
++  test('offers each species as its common name with the scientific name after it', async ({
++    page
++  }) => {
++    await searchCommodities(page, 'Bos')
++    const labels = await page
++      .locator('.govuk-checkboxes__label')
++      .allInnerTexts()
++    expect(labels).toEqual([BOS_SPP_LABEL, BOS_TAURUS_LABEL])
++  })
++
++  test('finds a species by its common name', async ({ page }) => {
++    await searchCommodities(page, 'cattle')
++    const group = page.getByRole('group', { name: COW_LEGEND })
++    await expect(
++      group.getByRole('checkbox', { name: BOS_SPP_LABEL, exact: true })
++    ).toBeVisible()
++    await expect(
++      group.getByRole('checkbox', { name: BOS_TAURUS_LABEL, exact: true })
+     ).toBeVisible()
+     await expect(page.getByRole('checkbox')).toHaveCount(2)
+   })
+@@ -98,10 +132,10 @@ test.describe('commodity search', () => {
+     await expect(cats).toBeVisible()
+     await expect(dogs).toBeVisible()
+     await expect(
+-      cats.getByRole('checkbox', { name: FELIS_CATUS })
++      cats.getByRole('checkbox', { name: FELIS_CATUS_LABEL, exact: true })
+     ).toBeVisible()
+     await expect(
+-      dogs.getByRole('checkbox', { name: 'Canis lupus familiaris' })
++      dogs.getByRole('checkbox', { name: CANIS_LUPUS_LABEL, exact: true })
+     ).toBeVisible()
+     await expect(page.getByRole('checkbox')).toHaveCount(2)
+   })
+@@ -120,8 +154,8 @@ test.describe('commodity search', () => {
+     const panel = selectionPanel(page)
+ 
+     await expect(panel).toContainText(copy.search.selected.heading(2))
+-    await expect(panel).toContainText(BOS_TAURUS)
+-    await expect(panel).toContainText(FELIS_CATUS)
++    await expect(panel).toContainText(BOS_TAURUS_LABEL)
++    await expect(panel).toContainText(FELIS_CATUS_LABEL)
+ 
+     await page
+       .getByRole('button', { name: copy.search.selected.clearAll })
+@@ -163,8 +197,8 @@ test.describe('commodity search', () => {
+     await page.locator(BACK_LINK).click()
+     const panel = selectionPanel(page)
+     await expect(panel).toContainText(copy.search.selected.heading(3))
+-    for (const name of canonicalSelectionOrder) {
+-      await expect(panel).toContainText(name)
++    for (const label of canonicalSelectionLabels) {
++      await expect(panel).toContainText(label)
+     }
+     await expect(panel).not.toContainText('Canis lupus familiaris')
+   })
+@@ -176,7 +210,9 @@ test.describe('commodity search', () => {
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+     await page.locator(BACK_LINK).click()
+     await searchCommodities(page, 'Bos')
+-    await expect(page.getByRole('checkbox', { name: BOS_TAURUS })).toBeChecked()
++    await expect(
++      page.getByRole('checkbox', { name: BOS_TAURUS_LABEL, exact: true })
++    ).toBeChecked()
+   })
+ 
+   test('has no serious or critical axe violations', async ({ page }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js
+index 4d591e8d..186430a4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js
+@@ -23,7 +23,11 @@ const CAT_FELIS_CATUS_KEY = 'Cat|923501'
+ 
+ const COW_LEGEND = 'Cow (0102)'
+ const CAT_LEGEND = 'Cat (01061900)'
+-const BOS_TAURUS = 'Bos taurus'
++const BISON_BISON = 'American bison (Bison bison)'
++const BOS_SPP = 'Cattle (Bos spp.)'
++const BOS_TAURUS = 'Domestic cattle (Bos taurus)'
++const BUBALUS_BUBALIS = 'Water buffalo (Bubalus bubalis)'
++const FELIS_CATUS = 'Cat (Felis catus)'
+ const SELECT_COMMODITY = 'Select a commodity'
+ 
+ const searchFor = (commoditySearch, payload = {}) =>
+@@ -68,7 +72,7 @@ describe('commodity search', () => {
+       {
+         legend: COW_LEGEND,
+         items: [
+-          { value: 'Cow|1388624', text: 'Bos spp.', checked: false },
++          { value: 'Cow|1388624', text: BOS_SPP, checked: false },
+           { value: COW_BOS_TAURUS_KEY, text: BOS_TAURUS, checked: false }
+         ]
+       }
+@@ -82,13 +86,24 @@ describe('commodity search', () => {
+     const result = await searchFor('Cow')
+     expect(legendsOf(result)).toEqual([COW_LEGEND])
+     expect(textsOf(result)).toEqual([
+-      'Bison bison',
+-      'Bos spp.',
++      BISON_BISON,
++      BOS_SPP,
+       BOS_TAURUS,
+-      'Bubalus bubalis'
++      BUBALUS_BUBALIS
+     ])
+   })
+ 
++  it('Should label a species with its common name and its scientific name', async () => {
++    const result = await searchFor('Salmo')
++    expect(textsOf(result)).toEqual(['Atlantic salmon (Salmo salar)'])
++  })
++
++  it('Should reach a species by its common name', async () => {
++    const result = await searchFor('cattle')
++    expect(legendsOf(result)).toEqual([COW_LEGEND])
++    expect(textsOf(result)).toEqual([BOS_SPP, BOS_TAURUS])
++  })
++
+   it('Should match a commodity code on its leading digits', async () => {
+     const result = await searchFor('0106')
+     expect(legendsOf(result)).toEqual([CAT_LEGEND, 'Dog (01061900)'])
+@@ -149,8 +164,8 @@ describe('commodity search — what has been chosen so far', () => {
+       count: 3,
+       heading: '3 selected',
+       groups: [
+-        { legend: COW_LEGEND, items: ['Bison bison', BOS_TAURUS] },
+-        { legend: CAT_LEGEND, items: ['Felis catus'] }
++        { legend: COW_LEGEND, items: [BISON_BISON, BOS_TAURUS] },
++        { legend: CAT_LEGEND, items: [FELIS_CATUS] }
+       ]
+     })
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js
+index b3798b88..8fabd5cc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.js
+@@ -1,26 +1,29 @@
+ import * as commodities from '../../../../../../services/commodities/index.js'
+ import { isSearchable, matchesCode, matchesWords } from '../matching.js'
+ import { legendFor } from './legend.js'
++import { speciesLabelFor } from './species-label.js'
+ 
+ const commodityMatches = (name, query) =>
+   matchesWords(name, query) ||
+   matchesCode(commodities.commodityCodeFor(name), query)
+ 
+ // Name or code hits the whole commodity, so every species under it stays in
+-// the results; otherwise only the species that match on their own.
++// the results; otherwise only the species that match on their own. A species
++// matches on the label the trader is shown, so the common name in front of the
++// scientific name is searchable rather than decorative.
+ const speciesMatching = (name, query) =>
+   commodityMatches(name, query)
+     ? commodities.speciesFor(name)
+     : commodities
+         .speciesFor(name)
+-        .filter((option) => matchesWords(option.text, query))
++        .filter((option) => matchesWords(speciesLabelFor(name, option), query))
+ 
+ const itemsFor = (name, query, selected) =>
+   speciesMatching(name, query).map((option) => {
+     const key = `${name}|${option.value}`
+     return {
+       value: key,
+-      text: option.text,
++      text: speciesLabelFor(name, option),
+       checked: selected.includes(key)
+     }
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js
+index 422b1382..6253dc88 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js
+@@ -4,12 +4,18 @@ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+ import { splitKey } from '../selection/keys.js'
+ import { legendFor } from './legend.js'
++import { speciesLabelFor } from './species-label.js'
+ 
+ const copy = copyFor({ en, cy }).search
+ 
+-const speciesTextFor = (name, value) =>
+-  commodities.speciesFor(name).find((option) => option.value === value)?.text ??
+-  value
++// The panel names a chosen species the same way its tick box did, so the two
++// halves of the page do not drift apart.
++const speciesTextFor = (name, value) => {
++  const option = commodities
++    .speciesFor(name)
++    .find((candidate) => candidate.value === value)
++  return option ? speciesLabelFor(name, option) : value
++}
+ 
+ const groupsFor = (selected) =>
+   Object.entries(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.js
+new file mode 100644
+index 00000000..00db7dfd
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.js
+@@ -0,0 +1,13 @@
++/**
++ * How a species is labelled wherever it is offered on this page — what the
++ * animal is called in English first, so a trader who does not read Latin can
++ * tell the tick boxes apart, with the scientific name in brackets after it. A
++ * species the catalogue holds no common name for is labelled with the name of
++ * the commodity it sits under instead.
++ *
++ * @param {string} name - the commodity the species sits under.
++ * @param {{text: string, commonName?: string}} option - the species option.
++ * @returns {string} the label shown against the species.
++ */
++export const speciesLabelFor = (name, option) =>
++  `${option.commonName ?? name} (${option.text})`
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.test.js
+new file mode 100644
+index 00000000..32208a12
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/species-label.test.js
+@@ -0,0 +1,21 @@
++import { describe, expect, it } from 'vitest'
++
++import { speciesLabelFor } from './species-label.js'
++
++describe('species label', () => {
++  it('Should put the common name in front of the scientific name', () => {
++    expect(
++      speciesLabelFor('Cow', {
++        value: '1148346',
++        text: 'Bos taurus',
++        commonName: 'Domestic cattle'
++      })
++    ).toBe('Domestic cattle (Bos taurus)')
++  })
++
++  it('Should fall back to the commodity name where a species has no common name', () => {
++    expect(
++      speciesLabelFor('Fish', { value: '901101', text: 'Cyprinidae' })
++    ).toBe('Fish (Cyprinidae)')
++  })
++})
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index fd197a2d..3da14221 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -11,18 +11,23 @@ export const COMMODITY_CODES = {
+ 
+ // Species per commodity. Cow's four are the skeleton's mock-species.json for
+ // 0102; the others carry one representative species each so the batch search
+-// can select across commodity codes.
++// can select across commodity codes. `text` is the scientific name the backend
++// payload carries; `commonName` is what the animal is called in English, and a
++// species the catalogue holds no common name for is shown under the name of its
++// commodity instead.
+ export const COMMODITY_SPECIES = {
+   Cow: [
+-    { value: '716661', text: 'Bison bison' },
+-    { value: '1388624', text: 'Bos spp.' },
+-    { value: '1148346', text: 'Bos taurus' },
+-    { value: '749313', text: 'Bubalus bubalis' }
++    { value: '716661', text: 'Bison bison', commonName: 'American bison' },
++    { value: '1388624', text: 'Bos spp.', commonName: 'Cattle' },
++    { value: '1148346', text: 'Bos taurus', commonName: 'Domestic cattle' },
++    { value: '749313', text: 'Bubalus bubalis', commonName: 'Water buffalo' }
+   ],
+-  Horse: [{ value: '822332', text: 'Equus caballus' }],
+-  Cat: [{ value: '923501', text: 'Felis catus' }],
+-  Dog: [{ value: '923502', text: 'Canis lupus familiaris' }],
+-  Fish: [{ value: '801204', text: 'Salmo salar' }]
++  Horse: [{ value: '822332', text: 'Equus caballus', commonName: 'Horse' }],
++  Cat: [{ value: '923501', text: 'Felis catus', commonName: 'Cat' }],
++  Dog: [{ value: '923502', text: 'Canis lupus familiaris', commonName: 'Dog' }],
++  Fish: [
++    { value: '801204', text: 'Salmo salar', commonName: 'Atlantic salmon' }
++  ]
+ }
+ 
+ export const SPECIES_OPTIONS = Object.values(COMMODITY_SPECIES).flat()

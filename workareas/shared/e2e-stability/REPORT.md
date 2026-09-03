@@ -292,3 +292,96 @@ write. Real swap use was 10.4–13.9 GiB throughout. It rises with worker count 
 (11.0 GiB at 8, 12.3 at 24, 13.9 at 32) but was *highest* during the fresh-stack control runs
 (13.4 GiB), which were the greenest of the matrix. Swap is therefore confirmed as not causal, which is
 what section 4 concluded from the raw `host.tsv` samples before the summary field was fixed.
+
+## 9. Addendum — what the two fixes actually changed
+
+Added after acting on sections 5 and 8. Two changes were made and measured:
+the two flaky specs of section 4 (tests repo, `fix/NO_JIRA-flaky-picker-and-dlq-specs`),
+and five frontend replicas behind an nginx (workspace, `feat/NO_JIRA-scale-the-animals-frontend`).
+
+A confound to state first: partway through this work the published
+`animals-frontend:latest` was rebuilt with the DR1 parity renames (frontend
+`49b6abc8`, tests `f7165ca`/`43df55c`), and the suite grew from 176 tests to 177.
+Every number below is on that newer image, so the honest like-for-like
+comparison is the eight-run set at one replica, not section 2's original
+baseline.
+
+### The spec fixes
+
+Across eight runs at eight workers, `addresses-picker` and the DLQ delete-all
+test flaked **zero times**, having flaked in two and four of twelve runs
+respectively. Both were spec defects, and both are settled.
+
+The green-run rate barely moved though — five of eight, against six of ten
+before — because the flakes they had been masking took over: `cph-number`
+twice and `declaration` once, all three the default-30s-budget class of
+section 5. Fixing the two worst specs did not make the suite green; it
+promoted the next cause.
+
+### Five replicas
+
+| Workers | One replica | Five replicas | Green (five) |
+|---|---|---|---|
+| 8 | 125s | 66–67s | 3 of 3 |
+| 16 | (not measured on this image; 134–143s on the older one) | 59–60s | 3 of 3 |
+| 32 | (155–170s on the older image) | 71–110s | 0 of 3, no hard failures |
+
+Then ten consecutive runs at sixteen workers: **eight green, 61–69s**, no hard
+failures in any of them.
+
+So the suite is roughly twice as fast and more reliable than it was, and
+**sixteen workers is now both green and the fastest setting** — where before it
+was never green and slower than eight.
+
+The mechanism is confirmed rather than inferred. During a sixteen-worker run
+the five replicas sat at 84, 91, 96, 101 and 118 percent CPU — about 490
+percent between them, against the single process's 120. The frontend now uses
+five cores.
+
+Two consequences worth recording:
+
+- **The section 5 timeout increase was not needed after all, and would have
+  been the wrong fix.** The `cph-number` and `declaration` flakes disappear
+  entirely at eight and sixteen workers once the queue is gone. They were
+  symptoms of frontend saturation, exactly as section 4 argued. Raising their
+  budgets first would have masked the real cause and left those tests
+  permanently slower for nothing. The budget change is still the right remedy
+  at thirty-two workers, where those same six specs are what remains.
+- **Thirty-two workers is now a different problem.** No hard failures at all
+  (there were nine or ten), only flakes that recover on retry — but it is
+  slower than sixteen, so there is no reason to run there. The binding
+  constraint has moved off the frontend and onto host CPU, where thirty-two
+  Chromium processes and five replicas share sixteen cores.
+
+### What the intervention broke, and what is still open
+
+Putting a proxy in front of the frontend capped uploads at nginx's default
+1 MB body. The documents page takes a 10 MB multipart POST to the frontend
+itself, so `documents-limits` failed in all nine runs of the first replica
+matrix — a hard failure, on a spec that had passed eight from eight without
+the proxy. Fixed by raising `client_max_body_size` above the app's own limit.
+It is worth noting how this presented: not as a proxy error, but as one
+unrelated-looking spec failing consistently.
+
+Still open, and neither yet attributed:
+
+- `documents-scan-lifecycle` flaked once in ten. It asserts the transient
+  "Checking" state between upload and scan completion, and a stack this much
+  faster narrows that window — a test that asserts an intermediate state gets
+  more fragile as the system speeds up, not less.
+- `auth` "lands on the sign in page when reopening the dashboard after sign
+  out" flaked once in ten, with a bare thirty-second timeout and no further
+  detail captured.
+
+Both are new since the replicas, both sit on paths the proxy touches (upload
+and sign-out), and one run in ten is too thin to tell a proxy problem from an
+ordinary flake. The discriminating measurement is ten runs at sixteen workers
+with `FRONTEND_REPLICAS=1` against these two specs; if they flake there too,
+the proxy is exonerated.
+
+### For CI
+
+`FRONTEND_REPLICAS` defaults to 1, so nothing changes for CI unless it is set.
+It should not simply be set to 5 there: the runner has four vCPUs against this
+machine's sixteen, so five replicas would contend rather than help. The right
+CI value needs its own measurement.

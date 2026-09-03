@@ -28,14 +28,16 @@ OUT="$RUNS/$LABEL"
 rm -rf "$OUT"
 mkdir -p "$OUT/logs"
 
+RESTART_EXIT=na
 if [ "$RESTART" = "--restart-stack" ]; then
   {
     echo "== stopping stack =="
     "$WORKSPACE/scripts/stack/stop-stack.sh"
     echo "== starting stack =="
     "$WORKSPACE/scripts/stack/run-stack.sh"
-    echo "stack bring-up exit=$?"
   } >"$OUT/stack-restart.log" 2>&1
+  RESTART_EXIT=$?
+  echo "run-stack.sh exit=$RESTART_EXIT" >>"$OUT/stack-restart.log"
 fi
 
 # ---- pre-run environment snapshot -------------------------------------------
@@ -49,6 +51,8 @@ fi
   echo "docker_memtotal=$(docker info --format '{{.MemTotal}}')"
   echo "tests_head=$(git -C "$TESTS" rev-parse --short HEAD)"
   echo "restarted_stack=$([ "$RESTART" = '--restart-stack' ] && echo yes || echo no)"
+  echo "stack_restart_exit=$RESTART_EXIT"
+  echo "unhealthy_before=$(docker ps --format '{{.Names}} {{.Status}}' | grep -c unhealthy)"
 } >"$OUT/env.txt"
 
 docker ps --format '{{.Names}}	{{.Status}}' >"$OUT/containers-before.txt"

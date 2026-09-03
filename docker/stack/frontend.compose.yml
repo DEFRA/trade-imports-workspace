@@ -74,8 +74,32 @@ services:
         - wget -qO- http://127.0.0.1:3000/health
     image: defradigital/trade-imports-animals-frontend:${TRADE_IMPORTS_ANIMALS_FRONTEND:-latest}
     platform: linux/amd64
+    # No host port: the replicas sit behind trade-imports-animals-frontend-lb,
+    # which owns :3000. Publishing here would stop more than one from starting.
+    deploy:
+      replicas: ${FRONTEND_REPLICAS:-1}
+  # One Node process serves the whole journey and saturates a core from eight
+  # Playwright workers upward, so extra workers only lengthen its queue. This
+  # fronts N replicas on the one host port the tests and the OIDC redirect URLs
+  # both name. Default of one replica keeps the stack as it was.
+  trade-imports-animals-frontend-lb:
+    profiles: [frontend]
+    depends_on:
+      trade-imports-animals-frontend:
+        condition: service_healthy
+    image: nginx:1.29-alpine
+    healthcheck:
+      interval: 5s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:3000/health
     ports:
       - '3000:3000'
+    volumes:
+      - ./frontend-lb/nginx.conf:/etc/nginx/nginx.conf:ro
   trade-imports-ins-frontend:
     profiles: [frontend]
     extra_hosts:

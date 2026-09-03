@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-095}} from the {{shared/dr1-parity-union}} backlog.
+
+Today {{post-remove.js}} always redirects back to the consignment-details page after a commodity is removed. When the row removed was the last one, that page comes back empty: the selected-commodities table and the quantity blocks disappear, the heading and the buttons stay, and the body reads "You have not added any commodities yet." above a link now labelled "Add a commodity". The user is left on a page that asks nothing.
+
+Design release 1 checks whether anything is left and, where nothing is, sends the user to the commodity question instead of re-rendering the page, so the user lands on "What are you importing?" with the search box in front of them.
+
+h2. Acceptance criteria
+
+* After a removal that leaves the notification with no commodities, the user is redirected to the commodity question page "What are you importing?" rather than re-rendered on the consignment-details page.
+* Where commodities remain after a removal, the user still returns to the consignment-details page as now.
+* The empty-state copy "You have not added any commodities yet." is removed from {{consignment-details.njk}}, since no reachable state renders it.
+* The branch in {{consignment-details.controller.js}} that chooses between the "Add a commodity" and "Add another commodity" link labels is removed, leaving the single remaining label.
+* A removal that empties the per-species commodity rows follows the same redirect, matching the requirements side which applies the same escape to a species removal as to a commodity removal.
+* Unit coverage exists for both branches of the post-remove redirect — commodities remaining, and none remaining.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Implementation evidence: {{src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:36-43}}, {{src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:11-22}}, {{src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:53-58}}
+
+Requirements evidence: {{app/routes.js:9377-9388}} and {{app/routes.js:9390-9400}}

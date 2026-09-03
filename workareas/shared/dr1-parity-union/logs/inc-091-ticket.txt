@@ -1,0 +1,17 @@
+h2. Increment
+
+{{inc-091}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Acceptance criteria
+
+* On the consignment details page, the Selected commodities table lists each chosen species of a commodity on commodity code {{01061900}} as its own row, named by that species' own common name rather than by the commodity name.
+* Each of those per-species rows carries its own Remove, and pressing it takes out that one species only, leaving every other species of the same commodity in place.
+* Every commodity that is not on code {{01061900}} keeps the single commodity-level row and the single Remove it has today.
+* The change is confined to the table view model, the table template and what Remove submits. The store already holds one line per species and only the page collapses them, so no store change is needed. See {{view-model/groups.js}}, {{_selected-commodities-table.njk}} and {{remove/post-remove.js}} under {{src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/}}.
+* Against today's stub catalogue at {{src/server/app/sets/live-animals/services/commodities/stub.js}}, the {{01061900}} rows read the species common name, so the dog row reads "Domestic dog" and the cat row "Domestic cat" where the page renders "Dog" and "Cat" today.
+* Unit tests cover the per-species rows, the per-species Remove and the unchanged commodity-level behaviour for other codes.
+* The E2E specs and visual baselines in the tests repo are updated for the changed Selected commodities table.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

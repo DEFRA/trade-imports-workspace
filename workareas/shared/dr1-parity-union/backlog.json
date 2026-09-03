@@ -5818,6 +5818,8 @@
     },
     {
       "id": "inc-088",
+      "ticket": "EUDPA-378",
+      "branch": "feat/EUDPA-378-frontend-lets-a-user-leave-every-number",
       "type": "obligation-change",
       "milestone": null,
       "domain": "commodities",
@@ -5836,8 +5838,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "a132de04",
       "failure_reason": null,
       "finding": {
         "frontend": "The count is checked for shape but never for presence. Each line gets one rule, an integer-in-range check with a minimum of one (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-33), and that rule's schema explicitly allows the empty string, which short-circuits before the digits test runs (src/server/app/lib/validate/validators.js:123-143). So typing letters is refused — fe-consignment-details-error is that refusal — but pressing \"Save and continue\" with all four boxes blank is accepted and the user moves on to the next page. The frontend's own behaviour test records this: submitting a blank count re-renders no view and stores an empty string (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js:150-168). The notification is not lost, only postponed: the count is a mandatory obligation (src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:60-65), the stored empty string reads as unanswered (src/server/app/model/obligations/is-blank-value.js:6), so the commodities task never completes, the review section stays gated (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:83) and submission is refused (src/server/app/engine/write/submit.js:9-15). The user is stopped, just not at the point of the mistake and never with a reason.",
@@ -6087,7 +6089,23 @@
         "note": "Number of animals accepts a blank. Both trace it to the same allow('') in integerInRange and both cite the frontend's own test asserting the blank saves. C is tighter on the fix (it names the exact message to add, 'Enter the number of animals') and on the consequence chain — the user is not lost, only stopped later at the gated review with no reason given. A is tighter on the knock-on: once blank cannot be saved, the count-drop check has no live case, and the test has to change.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/234",
+          "number": 234,
+          "merged": true,
+          "sha": "2f0d952c266813440f8bf838e77063b34f9e34bf"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/141",
+          "number": 141,
+          "merged": true,
+          "sha": "0830b258b2fafe6ab8e3aac4436edd2db14b19b6"
+        }
+      ]
     },
     {
       "id": "inc-091",
@@ -6108,8 +6126,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "65941868",
       "failure_reason": null,
       "finding": {
         "frontend": "The Selected commodities table carries one row per commodity, whatever was chosen inside it. The captured page shows \"01061900 / Dog / Remove\" as a single row, and the table is built by collapsing the commodity lines to their distinct commodity names (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js:24-33, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk:4-19). Pressing Remove drops every line of that commodity at once (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:26-40). A user who has chosen two species under one 01061900 commodity has no way to drop one of them from this page — the only route back is to reopen the commodity page and untick it there. The catalogue behind the table is itself a hardcoded stub of five commodities and eight species with no reference-data client behind it (src/server/app/sets/live-animals/services/commodities/stub.js:1-26), so the two commodities it carries on code 01061900 — Cat and Dog — hold one species each.",
@@ -6348,10 +6366,26 @@
         "note": "Filed by the matcher as two one-sided findings rather than a pair, so there is no match note; both of its why texts are recorded here. On run A's inc-017, filed onlyA: \"Not a C miss — a scope rule. C's finding contract excludes 'what a stub happens to contain' (FINDING-CONTRACT.md:415-436: both catalogues are fixture data, and if swapping the fixture for real data makes the difference go away it is not a finding). C knows the numbers — its commodity-search finding (its inc-022, union inc-087) cites the twenty-one commodities and the hundred-plus species under Other live mammals — it just refuses to raise the catalogue itself. Worth knowing this is the only needs-backend item in A's commodities area and the largest piece of work in it. The structural half A folded into this finding, the per-species rows for 01061900, C raised on its own as inc-016 (this increment) and showed it needs no backend at all.\" On run C's inc-016, filed onlyC: \"Inside A inc-017's prose, with no id of its own — A lists 'the selected-commodities table gains the per-species row and per-species Remove' as one of three things that follow once the real catalogue arrives. C is materially better here and the difference matters commercially: A has this blocked behind a reference-data API, C shows it is a table-and-Remove change against today's stub, because the store already holds one line per species and only the page collapses them. C also shows the difference is visible today with one species each — DR1's row reads 'Domestic dog', the frontend's reads 'Dog'.\"",
         "better": "C",
         "judged": "The matcher filed these as two one-sided findings — run A's inc-017 as onlyA and run C's inc-016 as onlyC — which reads as though run A had a hole here. The judge overturned that. Run A had seen the same difference and folded it on purpose: its inc-017 names \"the selected-commodities table gains the per-species row and per-species Remove that DR1 uses for the 01061900 'Other live mammals' commodity\" in its difference slot, sources it to the same app/routes.js:623-644 branch in its prototype slot, and records in its correction slot the decision to fold rather than raise it separately, because no captured screen on either side shows it and a finding with no screen to attach to is forbidden by its contract — a decision its own verifier upheld. So the two runs do not differ on sight. They differ on band: run A holds the work behind a reference-data API, while run C shows with its own citations that the store already holds one line per species and only the page collapses them, so it is a table-and-Remove change that can be built today, visible now because Design release 1's row reads \"Domestic dog\" where the frontend's reads \"Dog\". Reclassified as a matched pair with a banding disagreement. The band carried is run C's, and the ruling on that band is the decision with money attached."
-      }
+      },
+      "ticket": "EUDPA-379",
+      "branch": "feat/EUDPA-379-for-commodity-code-01061900-design-relea",
+      "openQuestions": [
+        "Should the commodity stub carry a second species under a 01061900 commodity, and should the two it has take Design release 1's common names? Two consequences of this increment cannot be settled inside it, both because src/server/app/sets/live-animals/services/commodities/stub.js:26-27 gives Cat and Dog one species each whose commonName is identical to its commodity name ('Cat' -> 'Cat', 'Dog' -> 'Dog'). FIRST: the increment's headline case — two chosen species under one 01061900 commodity, each its own row, a Remove that drops one and keeps the sibling — is not reachable through the journey today, because a stored line's species is filtered against that commodity's catalogue (search/selection/keys.js:8-11,23-26 via isCommoditySpecies). The unit and controller tests added by this increment therefore seed the two-line case directly into the store rather than driving it through the search page, and no browser-level test can reach it at all. SECOND: the visible parity difference the increment's own difference slot names — Design release 1's row reads 'Domestic dog' where the frontend's reads 'Dog' — is a difference in stub CONTENT, not in the row-building code, which already names a 01061900 row from speciesCommonName(commodity, species). Run C's finding contract excludes 'what a stub happens to contain' (FINDING-CONTRACT.md:415-436), so this increment deliberately left the data alone; the effect is that the shipped frontend still renders 'Dog' where Design release 1 renders 'Domestic dog'. ACTION FOR THE SERVICE TEAM: decide whether the stub should model a multi-species 01061900 commodity (e.g. adding { value: '923503', text: 'Canis lupus dingo', commonName: 'Dingo' } to COMMODITY_SPECIES.Dog and its value to COMMODITY_TYPE_DATA.Dog[0].species) and whether Cat/Dog should adopt Design release 1's 'Domestic cat'/'Domestic dog'. Either change is a fixture change with cross-file and cross-repo blast radius — it moves the commodity search page's rendered labels and counts (fit/search.fit.spec.js:20-21 label constants and the toHaveCount(2) at :140, search/search.controller.test.js:30) and touches the species labels the tests repo drives (trade-imports-animals-tests tests/e2e/pages/commodities.spec.ts:5-11) — which is why it is held out of this increment rather than fixed in it. It also becomes moot if the catalogue moves to the reference-data API, which is the banding disagreement already recorded on this increment (run A: needs-backend; run C: frontend-work)."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/235",
+          "number": 235,
+          "merged": true,
+          "sha": "084d2d2995835f2723cadc26d6d11c957ed9fc2f"
+        }
+      ]
     },
     {
       "id": "inc-095",
+      "ticket": "EUDPA-381",
+      "branch": "feat/EUDPA-381-removing-the-last-commodity-leaves-the-f",
       "type": "flow-change",
       "milestone": null,
       "domain": "commodities",
@@ -6369,8 +6403,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "574c800d",
       "failure_reason": null,
       "finding": {
         "frontend": "Remove always returns the user to the same page (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:36-43). When the row removed was the last one, that page comes back empty: the selected-commodities table and the quantity blocks disappear, the heading and the buttons stay, and the body reads \"You have not added any commodities yet.\" above a link now labelled \"Add a commodity\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:11-22, with the two labels chosen at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:53-58). The user is on a page that asks nothing and has to notice the link.",
@@ -6500,10 +6534,21 @@
         "note": "A genuine A miss. A's backlog has no mention of the empty state, the 'You have not added any commodities yet.' copy or the post-remove handler anywhere. Neither side photographed the state, so both halves are read from source — C says so, and names the observation that would settle it.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/236",
+          "number": 236,
+          "merged": true,
+          "sha": "fdfd62358739931ed6ca1d786441d05c7ab8b610"
+        }
+      ]
     },
     {
       "id": "inc-084",
+      "ticket": "EUDPA-391",
+      "branch": "feat/EUDPA-391-frontend-heads-the-quantities-page-consi",
       "type": "copy-change",
       "milestone": null,
       "domain": "commodities",
@@ -6522,8 +6567,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "f653ed9c",
       "failure_reason": null,
       "finding": {
         "frontend": "The page that lists what has been chosen and asks for a count per species is headed \"Consignment details\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:9, with the string at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:16). The same words are used again as the browser tab title and as the last breadcrumb, so the name appears three times on the captured page. The name is misleading as well as different: this page asks only about the commodities on the notification, while the things a user would call consignment details — where it is coming from, when it arrives, who is transporting it — are asked on other pages entirely.",
@@ -6661,10 +6706,28 @@
         "note": "Page name 'Consignment details' vs DR1's 'Commodity details'. Same finding, same one copy string carrying h1/tab/breadcrumb, same fix. Both correctly park the section caption ('About the consignment') as a separate service-wide difference. Nothing to choose between them.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/237",
+          "number": 237,
+          "merged": true,
+          "sha": "49b6abc8437622307e87590d01dfa3dcf081586c"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/142",
+          "number": 142,
+          "merged": true,
+          "sha": "f7165ca3823f5cf75e65db068013af7c7fbb5835"
+        }
+      ]
     },
     {
       "id": "inc-089",
+      "ticket": "EUDPA-392",
+      "branch": "feat/EUDPA-392-frontend-labels-the-package-count-number",
       "type": "copy-change",
       "milestone": null,
       "domain": "commodities",
@@ -6682,8 +6745,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "b444cdd2",
       "failure_reason": null,
       "finding": {
         "frontend": "Each commodity line that asks for packages labels the field \"Number of packages (optional)\", with the hint \"Such as crates, bags or boxes\" beneath it (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:32-35, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:24-34). \"(optional)\" is the GOV.UK convention for a field a user may always skip, so it tells the user the count never matters.",
@@ -6843,10 +6906,28 @@
         "note": "Packages labelled '(optional)' where DR1 says '(when required)'. Same finding, same one-line fix. C is the more useful write-up because it flags the open question: neither side validates the box for live animals today, so if 'when required' turns out to mean a rule rather than a hint, that rule is separate work and DR1 never states it. A asserts the two sides already agree it is not enforced and stops there.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/239",
+          "number": 239,
+          "merged": true,
+          "sha": "b829ef5bfc4f733eef9ed90448302d47ff92a432"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/144",
+          "number": 144,
+          "merged": true,
+          "sha": "43df55cbf97aaa77ff89b6c5147fc539458cc159"
+        }
+      ]
     },
     {
       "id": "inc-093",
+      "ticket": "EUDPA-393",
+      "branch": "feat/EUDPA-393-on-the-commodity-details-page-frontend-s",
       "type": "copy-change",
       "milestone": null,
       "domain": "commodities",
@@ -6864,8 +6945,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "bb27b309",
       "failure_reason": null,
       "finding": {
         "frontend": "Below the page heading the type steps down twice and then flattens. The commodity heading \"Cow (0102)\" is a medium heading, the species name \"Bos taurus\" below it is a small heading, and the two field labels — \"Number of animals\" and \"Number of packages (optional)\" — carry no size or weight at all, so they render in ordinary body text at the same size and weight as the hints under them (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:7, :9, :14 and :26). With four commodities on the captured page, the labels and the hints form an unbroken run of same-weight text and only the two headings break it up.",
@@ -7077,10 +7158,21 @@
         "note": "A genuine A miss. Typography was in scope for A — it raised exactly this kind of finding for the origin page (its inc-129, union inc-119; the judge records that A's origin typography finding is in fact its inc-086, union inc-078) — and A has no service-wide type finding that would swallow this one. C measures it: 36px bold commodity heading, 24px species name, 19px bold labels against 19px light hints, cited to the app-consignment-details-page block in the prototype stylesheet.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/240",
+          "number": 240,
+          "merged": true,
+          "sha": "2306d258e2fac8eec5e6dbd24d4779e14f6a0cc3"
+        }
+      ]
     },
     {
       "id": "inc-006",
+      "ticket": "EUDPA-394",
+      "branch": "feat/EUDPA-394-the-save-and-cancel-controls-at-the-foot",
       "type": "copy-change",
       "milestone": null,
       "domain": "service-wide",

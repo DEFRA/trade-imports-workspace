@@ -1,0 +1,267 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js b/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js
+index fd6703cf..7d45014d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js
+@@ -131,6 +131,9 @@ describe('change context — context survives the internal loop navigation', ()
+     expect(groups[0].index).toBe(0)
+   })
+ 
++  // The seed holds one line, so this removal empties the notification and the
++  // user goes back to the commodity question rather than to an empty details
++  // page. The context has to travel with that redirect too.
+   it('Should carry the context through a commodity remove round-trip', async () => {
+     const { journeyId, response, after } = await drive(
+       postHandlerOf(consignmentDetails),
+@@ -141,7 +144,7 @@ describe('change context — context survives the internal loop navigation', ()
+       }
+     )
+     expect(response).toEqual({
+-      redirect: `${pagePath(journeyId, 'consignment-details')}?change=1`
++      redirect: `${pagePath(journeyId, 'commodities')}?change=1`
+     })
+     expect(after.commodityLines ?? []).toHaveLength(0)
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js
+index 53b5002a..241f5f27 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js
+@@ -59,7 +59,6 @@ const render = (
+       request,
+       pagePath(request.params.journeyId, commoditiesPage.slug)
+     ),
+-    addText: lines.length > 0 ? copy.addAnother : copy.addFirst,
+     groups: buildGroups(lines, values, errors),
+     selectedRows: buildSelectedRows(lines),
+     errors,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js
+index 3abcf07c..0c7d42fb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js
+@@ -23,6 +23,7 @@ const post = postHandlerOf(consignmentDetails)
+ 
+ const ANIMALS_REQUIRED_MESSAGE = 'Enter the number of animals'
+ const PAGE_SLUG = 'consignment-details'
++const COMMODITIES_SLUG = 'commodities'
+ 
+ const seedLines = () => ({
+   commodityLines: [
+@@ -245,6 +246,25 @@ describe('#consignmentDetailsController — per-species quantities over every li
+     ).toEqual(['Fish'])
+   })
+ 
++  it('Should send the user back to the commodity question when the removed group was the only one, leaving no commodity behind', async () => {
++    const result = await driveHandler(post, {
++      seed: {
++        commodityLines: [
++          {
++            commoditySelection: 'Fish',
++            speciesSelection: '801204',
++            numberOfAnimalsQuantity: '4'
++          }
++        ]
++      },
++      payload: { action: 'remove:0' }
++    })
++    expect(result.response.redirect).toBe(
++      pagePath(result.journeyId, COMMODITIES_SLUG)
++    )
++    expect(result.after.commodityLines ?? []).toEqual([])
++  })
++
+   it('Should refuse a remove for a group index outside the selection and delete nothing', async () => {
+     const seed = seedLines()
+     const result = await driveHandler(post, {
+@@ -351,6 +371,26 @@ describe('#consignmentDetailsController — commodities on code 01061900 are lis
+     expect(lines[1].numberOfPackages).toBe('4')
+   })
+ 
++  it('Should send the user back to the commodity question when the removed species was the last line left', async () => {
++    const result = await driveHandler(post, {
++      seed: {
++        commodityLines: [
++          {
++            commoditySelection: 'Dog',
++            speciesSelection: '923502',
++            numberOfPackages: '3',
++            numberOfAnimalsQuantity: '7'
++          }
++        ]
++      },
++      payload: { action: 'remove-species:0' }
++    })
++    expect(result.response.redirect).toBe(
++      pagePath(result.journeyId, COMMODITIES_SLUG)
++    )
++    expect(result.after.commodityLines ?? []).toEqual([])
++  })
++
+   it('Should refuse a species remove aimed at a commodity the page lists as one row, and delete nothing', async () => {
+     const seed = seedPerSpeciesLines()
+     const result = await driveHandler(post, {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+index 250503cc..4045fd34 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+@@ -10,18 +10,18 @@
+   {{ sectionCaption(caption) }}
+   <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+ 
++  {# A removal that takes the last line out redirects to the commodity
++     question, so the page is only ever rendered with rows to show. #}
+   {% if hasLines %}
+     <form method="post" novalidate>
+       <input type="hidden" name="crumb" value="{{ crumb }}" />
+       <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+       {{ selectedCommoditiesTable(selectedRows, copy.table) }}
+     </form>
+-  {% else %}
+-    <p class="govuk-body">{{ copy.emptyText }}</p>
+   {% endif %}
+ 
+   <p class="govuk-body">
+-    <a class="govuk-link" href="{{ addHref }}">{{ addText }}</a>
++    <a class="govuk-link" href="{{ addHref }}">{{ copy.addAnother }}</a>
+   </p>
+ 
+   <form method="post" novalidate>
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
+index 8b7a56a2..8e8689c2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
+@@ -3,17 +3,24 @@ import * as state from '../../../../../../../../engine/index.js'
+ import { HTTP_STATUS_BAD_REQUEST } from '../../../../../../../../lib/http-status.js'
+ import * as kit from '../../../../../../../../shared/kit.js'
+ import * as commodities from '../../../../../../services/commodities/index.js'
+-import { consignmentDetailsPage as page } from '../../page.js'
++import { commoditiesPage, consignmentDetailsPage as page } from '../../page.js'
+ import { commodityNamesOf, linesOf } from '../lines.js'
+ 
+ export const groupNames = (answers, evaluation) =>
+   commodityNamesOf(linesOf(answers, evaluation))
+ 
+-const backToPage = (request, h) =>
++// While a line is left the page still has quantities to collect, so a removal
++// returns to it. Take the last line out and it has nothing to ask, so the user
++// goes back to the commodity question instead — that is where the next answer
++// has to come from, and it saves them spotting a link on an empty page.
++const afterRemoval = (request, h, kept) =>
+   h.redirect(
+     kit.withChangeContext(
+       request,
+-      pagePath(request.params.journeyId, page.slug)
++      pagePath(
++        request.params.journeyId,
++        kept.length > 0 ? page.slug : commoditiesPage.slug
++      )
+     )
+   )
+ 
+@@ -32,7 +39,7 @@ export const postRemove = async (request, h, index, lineKey) => {
+     (entry) => entry.commoditySelection !== name
+   )
+   await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)
+-  return backToPage(request, h)
++  return afterRemoval(request, h, kept)
+ }
+ 
+ // A species removal drops one line and leaves the rest of its commodity in
+@@ -52,5 +59,5 @@ export const postRemoveSpecies = async (request, h, index, lineKey) => {
+ 
+   const kept = stored.toSpliced(index, 1)
+   await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)
+-  return backToPage(request, h)
++  return afterRemoval(request, h, kept)
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 0fde283e..a25c35b2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -35,9 +35,7 @@ export const copy = {
+   },
+   consignmentDetails: {
+     title: 'Manylion y llwyth',
+-    emptyText: 'Nid ydych wedi ychwanegu unrhyw nwyddau eto.',
+     addAnother: 'Ychwanegu nwydd arall',
+-    addFirst: 'Ychwanegu nwydd',
+     table: {
+       caption: 'Nwyddau a ddewiswyd',
+       commodityCode: 'Cod nwyddau',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index e4ac8c32..a6c90a2a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -30,9 +30,7 @@ export const copy = {
+   },
+   consignmentDetails: {
+     title: 'Consignment details',
+-    emptyText: 'You have not added any commodities yet.',
+     addAnother: 'Add another commodity',
+-    addFirst: 'Add a commodity',
+     table: {
+       caption: 'Selected commodities',
+       commodityCode: 'Commodity code',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
+index b6df2813..5c4bf1c0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
+@@ -18,6 +18,8 @@ const SECOND_ANIMALS_QUANTITY_FIELD = 'numberOfAnimalsQuantity-1'
+ const SECOND_ANIMALS_QUANTITY_INPUT = `#${SECOND_ANIMALS_QUANTITY_FIELD}`
+ const GOVUK_TABLE = '.govuk-table'
+ const CONSIGNMENT_DETAILS_PATH = 'consignment-details'
++const REMOVE_COW = 'Remove Cow'
++const REMOVE_CAT = 'Remove Cat'
+ 
+ const openDetails = async (page) => {
+   await startNotification(page)
+@@ -91,10 +93,10 @@ test.describe('commodity consignment details — rendering and validation', () =
+     // Cow keeps the commodity-level remove; Cat is on 01061900, so its row is
+     // the species' own and its remove names the line rather than the commodity.
+     await expect(
+-      table.getByRole('button', { name: 'Remove Cow' })
++      table.getByRole('button', { name: REMOVE_COW })
+     ).toHaveAttribute('value', 'remove:0')
+     await expect(
+-      table.getByRole('button', { name: 'Remove Cat' })
++      table.getByRole('button', { name: REMOVE_CAT })
+     ).toHaveAttribute('value', 'remove-species:1')
+   })
+ 
+@@ -189,7 +191,7 @@ test.describe('commodity consignment details — persistence and accessibility',
+     await fillValidQuantities(page)
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+     await page.goto(journeyUrl(page, CONSIGNMENT_DETAILS_PATH))
+-    await page.getByRole('button', { name: 'Remove Cat' }).click()
++    await page.getByRole('button', { name: REMOVE_CAT }).click()
+ 
+     await expect(page.locator(GOVUK_TABLE)).not.toContainText('Cat')
+     await expect(page.locator(FIRST_ANIMALS_QUANTITY_INPUT)).toHaveValue('25')
+@@ -202,7 +204,7 @@ test.describe('commodity consignment details — persistence and accessibility',
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+     await page.goto(journeyUrl(page, CONSIGNMENT_DETAILS_PATH))
+     // Cow is not on 01061900, so its row keeps the commodity-level remove.
+-    await page.getByRole('button', { name: 'Remove Cow' }).click()
++    await page.getByRole('button', { name: REMOVE_COW }).click()
+ 
+     const table = page.locator(GOVUK_TABLE)
+     await expect(table).not.toContainText('Cow')
+@@ -212,6 +214,20 @@ test.describe('commodity consignment details — persistence and accessibility',
+     await expect(page.locator(FIRST_ANIMALS_QUANTITY_INPUT)).toHaveValue('2')
+   })
+ 
++  test('removing the last commodity returns to the commodity question', async ({
++    page
++  }) => {
++    await page.getByRole('button', { name: REMOVE_COW }).click()
++    // Cat is on 01061900, so its row carries the species-level remove — and it
++    // is the only line left, so the page has nothing more to ask.
++    await page.getByRole('button', { name: REMOVE_CAT }).click()
++
++    await expect(
++      page.getByRole('heading', { name: copy.search.title })
++    ).toBeVisible()
++    await expect(page.getByLabel(copy.search.searchLabel)).toBeVisible()
++  })
++
+   test('adds another commodity while preserving an existing quantity', async ({
+     page
+   }) => {

@@ -1,0 +1,154 @@
+{
+  "id": "inc-095",
+  "ticket": "EUDPA-381",
+  "branch": "feat/EUDPA-381-removing-the-last-commodity-leaves-the-f",
+  "type": "flow-change",
+  "milestone": null,
+  "domain": "commodities",
+  "title": "Removing the last commodity leaves the Frontend user on an empty details page with a link to start again; Design release 1 takes them straight back to \"What are you importing?\".",
+  "detail": "Remove always returns the user to the same page (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:36-43). When the row removed was the last one, that page comes back empty: the selected-commodities table and the quantity blocks disappear, the heading and the buttons stay, and the body reads \"You have not added any commodities yet.\" above a link now labelled \"Add a commodity\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:11-22, with the two labels chosen at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:53-58). The user is on a page that asks nothing and has to notice the link.\n\nRemove checks whether anything is left, and where nothing is it sends the user to the commodity question instead of re-rendering the page (app/routes.js:9377-9388). So a user who takes the last commodity out lands on \"What are you importing?\" with the search box in front of them, which is where the answer has to come from.\n\nAfter a removal that empties the notification of commodities, redirect to the commodity page rather than re-rendering the details page. The empty-state copy and the \"Add a commodity\" label then have no state left to render and can go, along with the branch that chooses between the two link labels. Nothing has to land first. Neither side photographed the empty state, so the observation that would confirm the landing page on each is a removal of the only commodity.\n\nFALSIFIED BY: Design release 1 re-rendering the commodity-details page after the last commodity is removed. Its remove branch redirects to the commodity page before the page is rendered, so landing back on the details page would prove this wrong.",
+  "screens": [
+    "fe-consignment-details",
+    "dr1-consignment-details"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:36-43",
+    "prototype": "app/routes.js:9377-9388"
+  },
+  "confidence": "medium",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "Remove always returns the user to the same page (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:36-43). When the row removed was the last one, that page comes back empty: the selected-commodities table and the quantity blocks disappear, the heading and the buttons stay, and the body reads \"You have not added any commodities yet.\" above a link now labelled \"Add a commodity\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:11-22, with the two labels chosen at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:53-58). The user is on a page that asks nothing and has to notice the link.",
+    "prototype": "Remove checks whether anything is left, and where nothing is it sends the user to the commodity question instead of re-rendering the page (app/routes.js:9377-9388). So a user who takes the last commodity out lands on \"What are you importing?\" with the search box in front of them, which is where the answer has to come from.",
+    "difference": "After a removal that empties the notification of commodities, redirect to the commodity page rather than re-rendering the details page. The empty-state copy and the \"Add a commodity\" label then have no state left to render and can go, along with the branch that chooses between the two link labels. Nothing has to land first. Neither side photographed the empty state, so the observation that would confirm the landing page on each is a removal of the only commodity.",
+    "correction": "The claim stands and the falsifier does not fire. Two points of record. The requirements side applies the same escape to a species removal as to a commodity removal (app/routes.js:9395-9397), so if the per-species rows of commodities--01061900-not-listed-per-species are built, the redirect has to cover that path too — worth knowing because the two findings touch the same handler. And the requirements side never renders an empty commodity-details page at all: its Selected commodities block, its Add another commodity link and its whole intro are inside a guard on there being rows (app/views/consignment-details.html:48-84), which is why it has no empty-state copy to compare against.",
+    "falsifiedBy": "Design release 1 re-rendering the commodity-details page after the last commodity is removed. Its remove branch redirects to the commodity page before the page is rendered, so landing back on the details page would prove this wrong.",
+    "verification": "Read both rendered DOMs and both 2x page shots for the populated state, since neither side photographed the empty one. Read the implementation side's removal end to end: post-remove.js:33-42 filters the lines and then redirects unconditionally to the same page, with no branch on what is left; the template's empty state is at consignment-details.njk:11-22 and the two link labels are chosen at consignment-details.controller.js:53-58, exactly as cited. Ran the falsifier on the requirements side at app/routes.js:9378-9388 — the remove-commodity branch tests hasCommoditySelection and redirects to /what-are-you-importing before any render, and the remove-species branch at :9390-9400 does the same. CORRECT.",
+    "relatedTo": []
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js",
+      "lines": {
+        "start": 36,
+        "end": 43
+      },
+      "ranges": [
+        {
+          "start": 36,
+          "end": 43
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js:36-43",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk",
+      "lines": {
+        "start": 11,
+        "end": 22
+      },
+      "ranges": [
+        {
+          "start": 11,
+          "end": 22
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk:11-22",
+      "anchors": [
+        "You have not added any commodities yet.",
+        "Add a commodity"
+      ],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js",
+      "lines": {
+        "start": 53,
+        "end": 58
+      },
+      "ranges": [
+        {
+          "start": 53,
+          "end": 58
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js:53-58",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c4",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/routes.js",
+      "lines": {
+        "start": 9377,
+        "end": 9388
+      },
+      "ranges": [
+        {
+          "start": 9377,
+          "end": 9388
+        }
+      ],
+      "asWritten": "app/routes.js:9377-9388",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    }
+  ],
+  "corpus": "dr1c",
+  "slice": "commodities",
+  "source": "commodities--last-commodity-removed-leaves-empty-page.json",
+  "controls": [
+    {
+      "kind": "label",
+      "text": "Remove"
+    }
+  ],
+  "provenance": {
+    "sourceA": null,
+    "sourceC": "inc-021",
+    "origin": "c-only",
+    "note": "A genuine A miss. A's backlog has no mention of the empty state, the 'You have not added any commodities yet.' copy or the post-remove handler anywhere. Neither side photographed the state, so both halves are read from source — C says so, and names the observation that would settle it.",
+    "better": null,
+    "judged": null
+  }
+}

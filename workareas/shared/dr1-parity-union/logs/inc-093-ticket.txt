@@ -1,0 +1,30 @@
+h2. Increment
+
+{{inc-093}} from the {{shared/dr1-parity-union}} backlog.
+
+On the commodity-details page the frontend sets the commodity heading, the species name and the quantity labels smaller and lighter than Design release 1, so the page loses the reading order the design gives it.
+
+Below the page heading the type steps down twice and then flattens. The commodity heading "Cow (0102)" is a medium heading, the species name "Bos taurus" below it is a small heading, and the two field labels — "Number of animals" and "Number of packages (optional)" — carry no size or weight at all, so they render in ordinary body text at the same size and weight as the hints under them. With four commodities on the captured page, the labels and the hints form an unbroken run of same-weight text and only the two headings break it up.
+
+Design release 1 sets the same block three sizes larger throughout. The commodity heading "Cattle (0102)" is 36px bold — the size of the page heading itself — the species name "Bos taurus" below it is 24px bold, and every field label is 19px bold against a 19px light hint, so each question stands away from its own guidance. Design release 1 setting the per-commodity heading at the same size as the page heading is a deliberate step, not a slip: the commodity blocks are the substance of the page and the heading above them is only its name.
+
+h2. Acceptance criteria
+
+* The per-commodity heading on the commodity-details page renders at the same size and weight as the page heading, matching Design release 1's 36px bold.
+* The species name beneath each commodity heading renders at 24px bold, matching Design release 1.
+* The labels on the quantity inputs — "Number of animals" and the number-of-packages label — render bold at 19px, so each label is distinguishable from the 19px light hint beneath it.
+* All three levels change in the one template that carries them, {{src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk}} (lines 7, 9, 14 and 26), using govuk-frontend classes rather than new custom CSS.
+* Nothing else on the commodity-details page changes size or weight, and the hints stay as they are.
+* The frontend unit tests and the E2E specs pass, with any visual baselines for the commodity-details page updated to the new type scale.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Finding: {{commodities--commodity-details-typography-flattened.json}} (slice {{commodities}}, corpus {{dr1c}})
+
+Screens compared: {{fe-consignment-details}} against {{dr1-consignment-details}}
+
+Design release 1 evidence: {{app/assets/sass/application.scss:1070-1112}} — the {{app-consignment-details-page}} block, whose {{.govuk-label}} rule at 1107-1112 sets weight 700.
+
+Travels with {{inc-084}}, which changes the same page's headings and is cheapest done in the same pass.

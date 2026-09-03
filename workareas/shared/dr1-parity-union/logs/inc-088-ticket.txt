@@ -1,0 +1,19 @@
+h2. Increment
+
+{{inc-088}} from the {{shared/dr1-parity-union}} backlog.
+
+The animal count on the consignment-details page is checked for shape but never for presence. The single integer-in-range rule per commodity line allows the empty string, which short-circuits before the digits test runs, so pressing "Save and continue" with every "Number of animals" box blank is accepted and the user moves on to the next page. The notification is not lost — the count is a mandatory obligation, so the commodities task never completes, the review section stays gated and submission is refused — but the user is stopped away from the point of the mistake and is never told why. Design release 1 holds them on the page until each count is filled in.
+
+h2. Acceptance criteria
+
+* Submitting {{fe-consignment-details}} with any "Number of animals" box left empty holds the user on the page and does not move them to the next page.
+* Each blank count re-renders the page with "Enter the number of animals" in the error summary, linked to that species' box, and the message repeats for every species left blank.
+* A presence rule is added to the animal count, one per commodity line, in {{src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js}}.
+* The message "Enter the number of animals" is added to the commodities English copy in {{src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js}}, alongside the whole-number message already there, and to the Welsh file beside it.
+* The behaviour test that today asserts a blank count re-renders no view and stores an empty string is updated to assert the refusal, in {{consignment-details.controller.test.js}}.
+* The frontend's count-drop check, which today reads a blank count as "no cap" when deciding whether identifier records would be orphaned, is updated now that a blank cannot be saved, so it compares two real numbers.
+* Once every count is present the user is moved on, matching Design release 1 at {{app/routes.js:817-848}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

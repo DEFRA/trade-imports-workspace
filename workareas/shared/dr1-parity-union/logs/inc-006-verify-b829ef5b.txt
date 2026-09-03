@@ -1,0 +1,37 @@
+commit b829ef5bfc4f733eef9ed90448302d47ff92a432
+Author: Hamid Jemei <hamid.jemei@equalexperts.com>
+Date:   Thu Sep 3 21:12:01 2026 +0100
+
+    feat(parity-dr1): Frontend labels the package count "Number of packages (optional)"; Design release 1 labels it "Number of packages (when required)". (#239)
+    
+    Relabel the per-commodity package count on the consignment details page from
+    "Number of packages (optional)" to "Number of packages (when required)", to
+    match Design release 1. "(optional)" is the GOV.UK convention for a field the
+    user may always skip, so it told the user the count never matters; Design
+    release 1's wording says there are circumstances in which it has to be given.
+    
+    - English copy: commodities copy.en.js packages label
+    - Welsh copy: commodities copy.cy.js packages label ("Nifer y pecynnau (pan fo angen)")
+    - Updated the Playwright specs that select the field by its label (shared
+      live-animals journey helper, additional-details, hub)
+    - Added an accessible-name assertion on the packages input in the consignment
+      details fit spec so the label is now covered by a test, and pulled the
+      repeated "numberOfPackages-0" selector into a named constant
+    
+    Neither side validates the box for live animals today, so the wording is the
+    only place the user is told anything about when the count matters. If "when
+    required" turns out to mean a rule rather than a hint, that rule is separate
+    work and Design release 1 does not state it.
+    
+    Increment: inc-089
+    Ticket: EUDPA-392
+    
+    Co-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>
+
+ fit/live-animals-journey.js                                 |  2 +-
+ .../additional-details/additional-details.fit.spec.js       |  2 +-
+ .../journeys/linear/features/commodities/copy/copy.cy.js    |  2 +-
+ .../journeys/linear/features/commodities/copy/copy.en.js    |  2 +-
+ .../commodities/fit/consignment-details.fit.spec.js         | 13 +++++++++----
+ .../journeys/linear/features/hub/hub.fit.spec.js            |  2 +-
+ 6 files changed, 14 insertions(+), 9 deletions(-)

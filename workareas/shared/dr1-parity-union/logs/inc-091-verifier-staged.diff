@@ -1,0 +1,699 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk
+index 5f427a8b..1de84be5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk
+@@ -1,15 +1,17 @@
+ {% from "govuk/components/table/macro.njk" import govukTable %}
+ 
+-{# One row per selected commodity: code, common name, Remove (design 01-14). #}
+-{% macro selectedCommoditiesTable(groups, copy) %}
++{# One row per selected commodity — or one per chosen species where the design
++   lists a commodity's species individually: code, common name, Remove
++   (design 01-14). #}
++{% macro selectedCommoditiesTable(selectedRows, copy) %}
+   {% set rows = [] %}
+-  {% for group in groups %}
++  {% for row in selectedRows %}
+     {% set removeCell %}
+-      <button type="submit" class="govuk-link app-link-button" name="action" value="remove:{{ group.index }}">{{ copy.remove }}<span class="govuk-visually-hidden"> {{ group.name }}</span></button>
++      <button type="submit" class="govuk-link app-link-button" name="action" value="{{ row.removeAction }}">{{ copy.remove }}<span class="govuk-visually-hidden"> {{ row.name }}</span></button>
+     {% endset %}
+     {% set ignored = rows.push([
+-      { text: group.code },
+-      { text: group.name },
++      { text: row.code },
++      { text: row.name },
+       { html: removeCell, classes: "govuk-!-text-align-right" }
+     ]) %}
+   {% endfor %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js
+index 475fc856..53b5002a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js
+@@ -19,11 +19,14 @@ import {
+ import { linesOf } from './lines.js'
+ import {
+   isRemoveAction,
+-  postRemove,
+-  removeIndexOf
+-} from './remove/post-remove.js'
++  isRemoveSpeciesAction,
++  removeIndexOf,
++  removeSpeciesIndexOf
++} from './remove/actions.js'
++import { postRemove, postRemoveSpecies } from './remove/post-remove.js'
+ import { countDropIssues } from './validation/count-drop.js'
+ import { buildGroups } from './view-model/groups.js'
++import { buildSelectedRows } from './view-model/selected-rows.js'
+ import { payloadValues, storedValues } from './view-model/values.js'
+ 
+ export const meta = { ...page, collects: [] }
+@@ -58,6 +61,7 @@ const render = (
+     ),
+     addText: lines.length > 0 ? copy.addAnother : copy.addFirst,
+     groups: buildGroups(lines, values, errors),
++    selectedRows: buildSelectedRows(lines),
+     errors,
+     errorSummary: errorSummary ?? kit.errorSummary(errors)
+   })
+@@ -73,6 +77,9 @@ const post = async (request, h) => {
+   const lines = linesOf(answers, evaluation)
+   const payload = request.payload ?? {}
+   const action = (payload.action ?? '').toString()
++  if (isRemoveSpeciesAction(action)) {
++    return postRemoveSpecies(request, h, removeSpeciesIndexOf(action), lineKey)
++  }
+   if (isRemoveAction(action)) {
+     return postRemove(request, h, removeIndexOf(action), lineKey)
+   }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js
+index efdb5a48..3abcf07c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js
+@@ -22,6 +22,7 @@ import * as consignmentDetails from './consignment-details.controller.js'
+ const post = postHandlerOf(consignmentDetails)
+ 
+ const ANIMALS_REQUIRED_MESSAGE = 'Enter the number of animals'
++const PAGE_SLUG = 'consignment-details'
+ 
+ const seedLines = () => ({
+   commodityLines: [
+@@ -45,6 +46,76 @@ const seedLines = () => ({
+   ]
+ })
+ 
++// Cow (0102) holds two species, Dog and Cat share commodity code 01061900 —
++// the code the design lists species by species.
++const seedPerSpeciesLines = () => ({
++  commodityLines: [
++    {
++      commoditySelection: 'Cow',
++      speciesSelection: '1148346',
++      numberOfPackages: '',
++      numberOfAnimalsQuantity: ''
++    },
++    {
++      commoditySelection: 'Cow',
++      speciesSelection: '716661',
++      numberOfPackages: '',
++      numberOfAnimalsQuantity: ''
++    },
++    {
++      commoditySelection: 'Dog',
++      speciesSelection: '923502',
++      numberOfPackages: '',
++      numberOfAnimalsQuantity: ''
++    },
++    {
++      commoditySelection: 'Cat',
++      speciesSelection: '923501',
++      numberOfPackages: '',
++      numberOfAnimalsQuantity: ''
++    }
++  ]
++})
++
++// Two species under ONE commodity on code 01061900 — the case the design turns
++// into two rows. Today's stub carries one species per 01061900 commodity, so it
++// is seeded straight into the store (see inc-091's open question).
++const seedTwoSpeciesOfOneCommodity = () => ({
++  commodityLines: [
++    {
++      commoditySelection: 'Cow',
++      speciesSelection: '1148346',
++      numberOfPackages: '',
++      numberOfAnimalsQuantity: ''
++    },
++    {
++      commoditySelection: 'Dog',
++      speciesSelection: '923502',
++      numberOfPackages: '3',
++      numberOfAnimalsQuantity: '7'
++    },
++    {
++      commoditySelection: 'Dog',
++      speciesSelection: '900001',
++      numberOfPackages: '4',
++      numberOfAnimalsQuantity: '9'
++    }
++  ]
++})
++
++const getHandlerOf = (featureModule) =>
++  featureModule.routes.find(
++    (route) => route.method === 'GET' && !route.path.includes('remove')
++  ).handler
++
++const contextOf = async (seed) => {
++  const journey = await store.create()
++  await store.seedAnswers(journey.journeyId, seed)
++  const h = stubH()
++  await getHandlerOf(consignmentDetails)(journeyRequest(journey.journeyId), h)
++  return h.captured.view.context
++}
++
+ describe('#consignmentDetailsController — per-species quantities over every line', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+@@ -150,15 +221,7 @@ describe('#consignmentDetailsController — per-species quantities over every li
+   })
+ 
+   it('Should group the view by commodity with one quantity block per species line', async () => {
+-    const journey = await store.create()
+-    await store.seedAnswers(journey.journeyId, seedLines())
+-    const request = journeyRequest(journey.journeyId)
+-    const h = stubH()
+-    const getHandler = consignmentDetails.routes.find(
+-      (route) => route.method === 'GET' && !route.path.includes('remove')
+-    ).handler
+-    await getHandler(request, h)
+-    const { groups } = h.captured.view.context
++    const { groups } = await contextOf(seedLines())
+     expect(groups.map((group) => [group.name, group.code])).toEqual([
+       ['Cow', '0102'],
+       ['Fish', '0301']
+@@ -176,7 +239,7 @@ describe('#consignmentDetailsController — per-species quantities over every li
+       seed: seedLines(),
+       payload: { action: 'remove:0' }
+     })
+-    expect(result.response.redirect).toContain('consignment-details')
++    expect(result.response.redirect).toContain(PAGE_SLUG)
+     expect(
+       result.after.commodityLines.map((line) => line.commoditySelection)
+     ).toEqual(['Fish'])
+@@ -209,7 +272,7 @@ describe('#consignmentDetailsController — per-species quantities over every li
+ 
+     const forged = await server.inject({
+       method: 'POST',
+-      url: pagePath('journey-1', 'consignment-details'),
++      url: pagePath('journey-1', PAGE_SLUG),
+       payload: { action: 'remove:0' }
+     })
+     expect(forged.statusCode).toBe(403)
+@@ -222,6 +285,103 @@ describe('#consignmentDetailsController — per-species quantities over every li
+   })
+ })
+ 
++describe('#consignmentDetailsController — commodities on code 01061900 are listed species by species', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it('Should list each chosen species of a 01061900 commodity as its own row, and every other commodity as one row', async () => {
++    const { selectedRows } = await contextOf(seedPerSpeciesLines())
++    expect(
++      selectedRows.map(({ code, name, removeAction }) => [
++        code,
++        name,
++        removeAction
++      ])
++    ).toEqual([
++      ['0102', 'Cow', 'remove:0'],
++      ['01061900', 'Dog', 'remove-species:2'],
++      ['01061900', 'Cat', 'remove-species:3']
++    ])
++  })
++
++  it('Should remove one species of a 01061900 commodity and leave every other line in place', async () => {
++    const seed = seedPerSpeciesLines()
++    const result = await driveHandler(post, {
++      seed,
++      payload: { action: 'remove-species:2' }
++    })
++    expect(result.response.redirect).toContain(PAGE_SLUG)
++    expect(
++      result.after.commodityLines.map(
++        ({ commoditySelection, speciesSelection }) => [
++          commoditySelection,
++          speciesSelection
++        ]
++      )
++    ).toEqual([
++      ['Cow', '1148346'],
++      ['Cow', '716661'],
++      ['Cat', '923501']
++    ])
++  })
++
++  it('Should remove one species of a 01061900 commodity and leave the other species of that same commodity, answers and all', async () => {
++    const result = await driveHandler(post, {
++      seed: seedTwoSpeciesOfOneCommodity(),
++      payload: { action: 'remove-species:1' }
++    })
++    expect(result.response.redirect).toContain(PAGE_SLUG)
++    const lines = result.after.commodityLines
++    expect(
++      lines.map(({ commoditySelection, speciesSelection }) => [
++        commoditySelection,
++        speciesSelection
++      ])
++    ).toEqual([
++      ['Cow', '1148346'],
++      ['Dog', '900001']
++    ])
++    // reconcileEntriesAt keys by commodity|species, so the surviving Dog line
++    // keeps its own quantities rather than inheriting the removed line's.
++    expect(lines[1].numberOfAnimalsQuantity).toBe(9)
++    expect(lines[1].numberOfPackages).toBe('4')
++  })
++
++  it('Should refuse a species remove aimed at a commodity the page lists as one row, and delete nothing', async () => {
++    const seed = seedPerSpeciesLines()
++    const result = await driveHandler(post, {
++      seed,
++      payload: { action: 'remove-species:0' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.after).toEqual(seed)
++  })
++
++  it('Should refuse a species remove for a line index outside the selection and delete nothing', async () => {
++    const seed = seedPerSpeciesLines()
++    const result = await driveHandler(post, {
++      seed,
++      payload: { action: 'remove-species:9' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.after).toEqual(seed)
++  })
++
++  it('Should refuse a species remove whose line index is not a number and delete nothing', async () => {
++    const seed = seedPerSpeciesLines()
++    const result = await driveHandler(post, {
++      seed,
++      payload: { action: 'remove-species:../0' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.after).toEqual(seed)
++  })
++})
++
+ describe('#consignmentDetailsController — the animal count must be answered before the page saves', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+index 6626b9a9..250503cc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+@@ -14,7 +14,7 @@
+     <form method="post" novalidate>
+       <input type="hidden" name="crumb" value="{{ crumb }}" />
+       <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-      {{ selectedCommoditiesTable(groups, copy.table) }}
++      {{ selectedCommoditiesTable(selectedRows, copy.table) }}
+     </form>
+   {% else %}
+     <p class="govuk-body">{{ copy.emptyText }}</p>
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/lines.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/lines.js
+index d33f931a..9010ff4f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/lines.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/lines.js
+@@ -2,3 +2,9 @@ import * as state from '../../../../../../../engine/index.js'
+ 
+ export const linesOf = (answers, evaluation) =>
+   state.collectionView(answers, ['commodityLines'], evaluation)
++
++// The selected commodities in the order the page shows them — one entry per
++// commodity, however many species lines it holds. Group indexes key back to it.
++export const commodityNamesOf = (lines) => [
++  ...new Set(lines.map(({ entry }) => entry.commoditySelection))
++]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/actions.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/actions.js
+new file mode 100644
+index 00000000..ebaaf126
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/actions.js
+@@ -0,0 +1,17 @@
++// The Selected commodities table offers two removals, told apart by the action
++// its row submits: a commodity row drops every line of that commodity, and a
++// species row drops the one line and leaves the rest of the commodity in place.
++export const REMOVE_ACTION_PREFIX = 'remove:'
++export const REMOVE_SPECIES_ACTION_PREFIX = 'remove-species:'
++
++export const isRemoveAction = (action) =>
++  action.startsWith(REMOVE_ACTION_PREFIX)
++
++export const removeIndexOf = (action) =>
++  Number(action.slice(REMOVE_ACTION_PREFIX.length))
++
++export const isRemoveSpeciesAction = (action) =>
++  action.startsWith(REMOVE_SPECIES_ACTION_PREFIX)
++
++export const removeSpeciesIndexOf = (action) =>
++  Number(action.slice(REMOVE_SPECIES_ACTION_PREFIX.length))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
+index 320f86c2..8b7a56a2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
+@@ -2,22 +2,20 @@ import { pagePath } from '../../../../../../../../shared/paths.js'
+ import * as state from '../../../../../../../../engine/index.js'
+ import { HTTP_STATUS_BAD_REQUEST } from '../../../../../../../../lib/http-status.js'
+ import * as kit from '../../../../../../../../shared/kit.js'
++import * as commodities from '../../../../../../services/commodities/index.js'
+ import { consignmentDetailsPage as page } from '../../page.js'
+-import { linesOf } from '../lines.js'
++import { commodityNamesOf, linesOf } from '../lines.js'
+ 
+-export const REMOVE_ACTION_PREFIX = 'remove:'
++export const groupNames = (answers, evaluation) =>
++  commodityNamesOf(linesOf(answers, evaluation))
+ 
+-export const isRemoveAction = (action) =>
+-  action.startsWith(REMOVE_ACTION_PREFIX)
+-
+-export const removeIndexOf = (action) =>
+-  Number(action.slice(REMOVE_ACTION_PREFIX.length))
+-
+-export const groupNames = (answers, evaluation) => [
+-  ...new Set(
+-    linesOf(answers, evaluation).map(({ entry }) => entry.commoditySelection)
++const backToPage = (request, h) =>
++  h.redirect(
++    kit.withChangeContext(
++      request,
++      pagePath(request.params.journeyId, page.slug)
++    )
+   )
+-]
+ 
+ // A removal drops every line of one commodity group, so it submits the page
+ // form — the crumb travels with it and no GET can trigger it. The group index
+@@ -34,10 +32,25 @@ export const postRemove = async (request, h, index, lineKey) => {
+     (entry) => entry.commoditySelection !== name
+   )
+   await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)
+-  return h.redirect(
+-    kit.withChangeContext(
+-      request,
+-      pagePath(request.params.journeyId, page.slug)
+-    )
+-  )
++  return backToPage(request, h)
++}
++
++// A species removal drops one line and leaves the rest of its commodity in
++// place. The page only offers it for the commodities the design lists species
++// by species, so the line index must name a stored line of one of those;
++// anything else is refused before any reconcile runs.
++export const postRemoveSpecies = async (request, h, index, lineKey) => {
++  const { answers } = await state.get(request, h)
++  const stored = answers.commodityLines ?? []
++  const line = stored[index]
++  if (
++    line === undefined ||
++    !commodities.speciesListedIndividually(line.commoditySelection)
++  ) {
++    return h.response().code(HTTP_STATUS_BAD_REQUEST)
++  }
++
++  const kept = stored.toSpliced(index, 1)
++  await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)
++  return backToPage(request, h)
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js
+index 676012e0..db2616a1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/groups.js
+@@ -1,9 +1,11 @@
+ import * as commodities from '../../../../../../services/commodities/index.js'
+ import { animalsField, packagesApply, packagesField } from '../fields.js'
++import { commodityNamesOf } from '../lines.js'
+ 
+-// One table row + quantity block group per commodity, one species block per
+-// line — the design's Consignment details page over the line-per-species
+-// store (design 01-14/15).
++// One quantity block group per commodity, one species block per line — the
++// design's Consignment details page over the line-per-species store
++// (design 01-14/15). The Selected commodities table rows are built separately,
++// in ./selected-rows.js.
+ export const groupLine = ({ index, entry }, values, errors) => ({
+   index,
+   speciesText:
+@@ -21,13 +23,11 @@ export const linesForGroup = (lines, name, values, errors) =>
+     .filter(({ entry }) => entry.commoditySelection === name)
+     .map((line) => groupLine(line, values, errors))
+ 
+-export const buildGroups = (lines, values, errors) => {
+-  const names = [...new Set(lines.map(({ entry }) => entry.commoditySelection))]
+-  return names.map((name, index) => ({
++export const buildGroups = (lines, values, errors) =>
++  commodityNamesOf(lines).map((name, index) => ({
+     index,
+     name,
+     code: commodities.commodityCodeFor(name) ?? '',
+     showPackages: packagesApply(name),
+     lines: linesForGroup(lines, name, values, errors)
+   }))
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.js
+new file mode 100644
+index 00000000..39455991
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.js
+@@ -0,0 +1,33 @@
++import * as commodities from '../../../../../../services/commodities/index.js'
++import { commodityNamesOf } from '../lines.js'
++import {
++  REMOVE_ACTION_PREFIX,
++  REMOVE_SPECIES_ACTION_PREFIX
++} from '../remove/actions.js'
++
++const commodityRow = (name, code, index) => ({
++  code,
++  name,
++  removeAction: `${REMOVE_ACTION_PREFIX}${index}`
++})
++
++const speciesRows = (lines, name, code) =>
++  lines
++    .filter(({ entry }) => entry.commoditySelection === name)
++    .map(({ index, entry }) => ({
++      code,
++      name: commodities.speciesCommonName(name, entry.speciesSelection),
++      removeAction: `${REMOVE_SPECIES_ACTION_PREFIX}${index}`
++    }))
++
++// One Selected commodities row per commodity, except under commodity code
++// 01061900: there the design gives each chosen species its own row, named by
++// the species rather than by the commodity, with a Remove that drops that
++// species and keeps the rest of the commodity (design 01-14).
++export const buildSelectedRows = (lines) =>
++  commodityNamesOf(lines).flatMap((name, index) => {
++    const code = commodities.commodityCodeFor(name) ?? ''
++    return commodities.speciesListedIndividually(name)
++      ? speciesRows(lines, name, code)
++      : [commodityRow(name, code, index)]
++  })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js
+new file mode 100644
+index 00000000..d2710728
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js
+@@ -0,0 +1,87 @@
++import { afterEach, describe, expect, it, vi } from 'vitest'
++
++import { buildSelectedRows } from './selected-rows.js'
++import * as commodities from '../../../../../../services/commodities/index.js'
++
++const REMOVE_FIRST_SPECIES = 'remove-species:0'
++
++const linesOf = (...pairs) =>
++  pairs.map(([commoditySelection, speciesSelection], index) => ({
++    index,
++    entry: { commoditySelection, speciesSelection }
++  }))
++
++afterEach(() => vi.restoreAllMocks())
++
++describe('#buildSelectedRows', () => {
++  it('Should give a commodity one row keyed to its group index, however many species it holds', () => {
++    expect(
++      buildSelectedRows(
++        linesOf(['Cow', '1148346'], ['Cow', '716661'], ['Fish', '801204'])
++      )
++    ).toEqual([
++      { code: '0102', name: 'Cow', removeAction: 'remove:0' },
++      { code: '0301', name: 'Fish', removeAction: 'remove:1' }
++    ])
++  })
++
++  it('Should key a commodity row to its group index even where a species group is built before it', () => {
++    // Canonical order puts Cat (01061900) before Fish, so Fish is the second
++    // group and its remove must say so — the index keys back to the group list
++    // that post-remove resolves, not to the rows already built.
++    expect(
++      buildSelectedRows(linesOf(['Cat', '923501'], ['Fish', '801204']))
++    ).toEqual([
++      { code: '01061900', name: 'Cat', removeAction: REMOVE_FIRST_SPECIES },
++      { code: '0301', name: 'Fish', removeAction: 'remove:1' }
++    ])
++  })
++
++  it('Should give each species of a commodity on code 01061900 its own row and its own remove', () => {
++    expect(
++      buildSelectedRows(
++        linesOf(['Cow', '1148346'], ['Dog', '923502'], ['Cat', '923501'])
++      )
++    ).toEqual([
++      { code: '0102', name: 'Cow', removeAction: 'remove:0' },
++      { code: '01061900', name: 'Dog', removeAction: 'remove-species:1' },
++      { code: '01061900', name: 'Cat', removeAction: 'remove-species:2' }
++    ])
++  })
++
++  it('Should name a species row from the species own common name rather than from its commodity', () => {
++    // Every 01061900 species in today's stub is called after its commodity, so
++    // the catalogue is stubbed here to tell the two apart at all.
++    const commonName = vi
++      .spyOn(commodities, 'speciesCommonName')
++      .mockImplementation((name, value) =>
++        value === '923502' ? 'Domestic dog' : name
++      )
++
++    expect(buildSelectedRows(linesOf(['Dog', '923502']))).toEqual([
++      {
++        code: '01061900',
++        name: 'Domestic dog',
++        removeAction: REMOVE_FIRST_SPECIES
++      }
++    ])
++    expect(commonName).toHaveBeenCalledWith('Dog', '923502')
++  })
++
++  it('Should give two species of one 01061900 commodity a row and a remove each, keyed to their own stored lines', () => {
++    // Today's stub holds one species per 01061900 commodity, so the second
++    // species is seeded straight in — see inc-091's open question.
++    expect(
++      buildSelectedRows(linesOf(['Dog', '923502'], ['Dog', '900001'])).map(
++        ({ code, removeAction }) => [code, removeAction]
++      )
++    ).toEqual([
++      ['01061900', REMOVE_FIRST_SPECIES],
++      ['01061900', 'remove-species:1']
++    ])
++  })
++
++  it('Should build no rows for an empty selection', () => {
++    expect(buildSelectedRows([])).toEqual([])
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
+index cc767994..b6df2813 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js
+@@ -84,6 +84,20 @@ test.describe('commodity consignment details — rendering and validation', () =
+     ).toHaveAccessibleDescription(copy.consignmentDetails.packages.hint)
+   })
+ 
++  test('lists a commodity on code 01061900 as a species row whose remove drops that species alone', async ({
++    page
++  }) => {
++    const table = page.locator(GOVUK_TABLE)
++    // Cow keeps the commodity-level remove; Cat is on 01061900, so its row is
++    // the species' own and its remove names the line rather than the commodity.
++    await expect(
++      table.getByRole('button', { name: 'Remove Cow' })
++    ).toHaveAttribute('value', 'remove:0')
++    await expect(
++      table.getByRole('button', { name: 'Remove Cat' })
++    ).toHaveAttribute('value', 'remove-species:1')
++  })
++
+   test('back link returns to commodity selection', async ({ page }) => {
+     await page.locator('.govuk-back-link').click()
+     await expect(
+@@ -169,7 +183,7 @@ test.describe('commodity consignment details — persistence and accessibility',
+     await expect(page.locator('#numberOfPackages-1')).toHaveValue('1')
+   })
+ 
+-  test('removes one commodity group without changing another quantity', async ({
++  test('removes one species row without changing another quantity', async ({
+     page
+   }) => {
+     await fillValidQuantities(page)
+@@ -181,6 +195,23 @@ test.describe('commodity consignment details — persistence and accessibility',
+     await expect(page.locator(FIRST_ANIMALS_QUANTITY_INPUT)).toHaveValue('25')
+   })
+ 
++  test('removes one commodity group without changing another quantity', async ({
++    page
++  }) => {
++    await fillValidQuantities(page)
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++    await page.goto(journeyUrl(page, CONSIGNMENT_DETAILS_PATH))
++    // Cow is not on 01061900, so its row keeps the commodity-level remove.
++    await page.getByRole('button', { name: 'Remove Cow' }).click()
++
++    const table = page.locator(GOVUK_TABLE)
++    await expect(table).not.toContainText('Cow')
++    await expect(table).toContainText('Cat')
++    // The cat line is the only one left and its saved count travelled with it,
++    // so the right group was dropped.
++    await expect(page.locator(FIRST_ANIMALS_QUANTITY_INPUT)).toHaveValue('2')
++  })
++
+   test('adds another commodity while preserving an existing quantity', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/services/commodities/index.js b/src/server/app/sets/live-animals/services/commodities/index.js
+index c6fa399c..f2b187ef 100644
+--- a/src/server/app/sets/live-animals/services/commodities/index.js
++++ b/src/server/app/sets/live-animals/services/commodities/index.js
+@@ -41,6 +41,20 @@ export const speciesLabel = (code) =>
+ 
+ export const speciesFor = (name) => COMMODITY_SPECIES[name] ?? []
+ 
++// What the species is called in English. A species the catalogue holds no
++// common name for is named after its commodity instead.
++export const speciesCommonName = (name, value) =>
++  speciesFor(name).find((option) => option.value === value)?.commonName ?? name
++
++// Commodity code 01061900 covers several commodities — cat, dog, ferret and
++// other live mammals — and hundreds of species between them. The design lists a
++// chosen species of one of those under its own name rather than folding it into
++// the commodity (design 01-14).
++const PER_SPECIES_COMMODITY_CODE = '01061900'
++
++export const speciesListedIndividually = (name) =>
++  commodityCodeFor(name) === PER_SPECIES_COMMODITY_CODE
++
+ export const isCommoditySpecies = (name, value) =>
+   speciesFor(name).some((option) => option.value === value)
+ 
+diff --git a/src/server/app/sets/live-animals/services/commodities/index.test.js b/src/server/app/sets/live-animals/services/commodities/index.test.js
+new file mode 100644
+index 00000000..f29fa306
+--- /dev/null
++++ b/src/server/app/sets/live-animals/services/commodities/index.test.js
+@@ -0,0 +1,28 @@
++import { describe, expect, it } from 'vitest'
++
++import { speciesCommonName, speciesListedIndividually } from './index.js'
++
++const NOT_A_COMMODITY = 'not-a-commodity'
++
++describe('#speciesCommonName', () => {
++  it("Should give the species' own common name", () => {
++    expect(speciesCommonName('Cow', '1148346')).toBe('Domestic cattle')
++    expect(speciesCommonName('Cow', '716661')).toBe('American bison')
++  })
++
++  it('Should fall back to the commodity name where the catalogue holds no common name for the species', () => {
++    expect(speciesCommonName('Cow', 'not-in-the-catalogue')).toBe('Cow')
++    expect(speciesCommonName(NOT_A_COMMODITY, '1148346')).toBe(NOT_A_COMMODITY)
++  })
++})
++
++describe('#speciesListedIndividually', () => {
++  it('Should hold for the commodities on code 01061900 and for no others', () => {
++    expect(speciesListedIndividually('Cat')).toBe(true)
++    expect(speciesListedIndividually('Dog')).toBe(true)
++    expect(speciesListedIndividually('Cow')).toBe(false)
++    expect(speciesListedIndividually('Horse')).toBe(false)
++    expect(speciesListedIndividually('Fish')).toBe(false)
++    expect(speciesListedIndividually(NOT_A_COMMODITY)).toBe(false)
++  })
++})

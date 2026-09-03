@@ -1,0 +1,120 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk
+index 5f427a8b..1de84be5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk
+@@ -1,15 +1,17 @@
+ {% from "govuk/components/table/macro.njk" import govukTable %}
+ 
+-{# One row per selected commodity: code, common name, Remove (design 01-14). #}
+-{% macro selectedCommoditiesTable(groups, copy) %}
++{# One row per selected commodity — or one per chosen species where the design
++   lists a commodity's species individually: code, common name, Remove
++   (design 01-14). #}
++{% macro selectedCommoditiesTable(selectedRows, copy) %}
+   {% set rows = [] %}
+-  {% for group in groups %}
++  {% for row in selectedRows %}
+     {% set removeCell %}
+-      <button type="submit" class="govuk-link app-link-button" name="action" value="remove:{{ group.index }}">{{ copy.remove }}<span class="govuk-visually-hidden"> {{ group.name }}</span></button>
++      <button type="submit" class="govuk-link app-link-button" name="action" value="{{ row.removeAction }}">{{ copy.remove }}<span class="govuk-visually-hidden"> {{ row.name }}</span></button>
+     {% endset %}
+     {% set ignored = rows.push([
+-      { text: group.code },
+-      { text: group.name },
++      { text: row.code },
++      { text: row.name },
+       { html: removeCell, classes: "govuk-!-text-align-right" }
+     ]) %}
+   {% endfor %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/actions.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/actions.js
+new file mode 100644
+index 00000000..ebaaf126
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/actions.js
+@@ -0,0 +1,17 @@
++// The Selected commodities table offers two removals, told apart by the action
++// its row submits: a commodity row drops every line of that commodity, and a
++// species row drops the one line and leaves the rest of the commodity in place.
++export const REMOVE_ACTION_PREFIX = 'remove:'
++export const REMOVE_SPECIES_ACTION_PREFIX = 'remove-species:'
++
++export const isRemoveAction = (action) =>
++  action.startsWith(REMOVE_ACTION_PREFIX)
++
++export const removeIndexOf = (action) =>
++  Number(action.slice(REMOVE_ACTION_PREFIX.length))
++
++export const isRemoveSpeciesAction = (action) =>
++  action.startsWith(REMOVE_SPECIES_ACTION_PREFIX)
++
++export const removeSpeciesIndexOf = (action) =>
++  Number(action.slice(REMOVE_SPECIES_ACTION_PREFIX.length))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
+index 320f86c2..8b7a56a2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/remove/post-remove.js
+@@ -2,22 +2,20 @@ import { pagePath } from '../../../../../../../../shared/paths.js'
+ import * as state from '../../../../../../../../engine/index.js'
+ import { HTTP_STATUS_BAD_REQUEST } from '../../../../../../../../lib/http-status.js'
+ import * as kit from '../../../../../../../../shared/kit.js'
++import * as commodities from '../../../../../../services/commodities/index.js'
+ import { consignmentDetailsPage as page } from '../../page.js'
+-import { linesOf } from '../lines.js'
++import { commodityNamesOf, linesOf } from '../lines.js'
+ 
+-export const REMOVE_ACTION_PREFIX = 'remove:'
++export const groupNames = (answers, evaluation) =>
++  commodityNamesOf(linesOf(answers, evaluation))
+ 
+-export const isRemoveAction = (action) =>
+-  action.startsWith(REMOVE_ACTION_PREFIX)
+-
+-export const removeIndexOf = (action) =>
+-  Number(action.slice(REMOVE_ACTION_PREFIX.length))
+-
+-export const groupNames = (answers, evaluation) => [
+-  ...new Set(
+-    linesOf(answers, evaluation).map(({ entry }) => entry.commoditySelection)
++const backToPage = (request, h) =>
++  h.redirect(
++    kit.withChangeContext(
++      request,
++      pagePath(request.params.journeyId, page.slug)
++    )
+   )
+-]
+ 
+ // A removal drops every line of one commodity group, so it submits the page
+ // form — the crumb travels with it and no GET can trigger it. The group index
+@@ -34,10 +32,25 @@ export const postRemove = async (request, h, index, lineKey) => {
+     (entry) => entry.commoditySelection !== name
+   )
+   await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)
+-  return h.redirect(
+-    kit.withChangeContext(
+-      request,
+-      pagePath(request.params.journeyId, page.slug)
+-    )
+-  )
++  return backToPage(request, h)
++}
++
++// A species removal drops one line and leaves the rest of its commodity in
++// place. The page only offers it for the commodities the design lists species
++// by species, so the line index must name a stored line of one of those;
++// anything else is refused before any reconcile runs.
++export const postRemoveSpecies = async (request, h, index, lineKey) => {
++  const { answers } = await state.get(request, h)
++  const stored = answers.commodityLines ?? []
++  const line = stored[index]
++  if (
++    line === undefined ||
++    !commodities.speciesListedIndividually(line.commoditySelection)
++  ) {
++    return h.response().code(HTTP_STATUS_BAD_REQUEST)
++  }
++
++  const kept = stored.toSpliced(index, 1)
++  await state.reconcileEntriesAt(request, h, ['commodityLines'], lineKey, kept)
++  return backToPage(request, h)
+ }

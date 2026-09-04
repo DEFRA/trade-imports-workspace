@@ -50,8 +50,44 @@ that is right. They are blocked because neither is *buildable*: the fix needs an
 address-book record that carries a type, and that record shape travels with the
 address book to the INS epic. Revisit when the typed record lands.
 
-The journey pickers themselves stay buildable, as `inc-062`'s ruling said they
-would: `inc-046`, `inc-052`, `inc-053`, `inc-054`, `inc-055`, `inc-064`.
+The journey pickers themselves stayed buildable at that point, as `inc-062`'s
+ruling said they would: `inc-046`, `inc-052`, `inc-053`, `inc-054`, `inc-055`,
+`inc-064`. **That no longer holds — see the next section, which blocks all six.**
+
+## The address space is blocked while the team works in it
+
+Ruled by Rhys, 2026-09-04. The team has live work on the address pages, so
+parity changes against them would collide with it. Twelve increments are
+`blocked` — deferred until that work settles, not rejected. None may be built
+without a fresh ruling.
+
+**Selects addresses from the address book (6).** `inc-046`, `inc-053`,
+`inc-054`, `inc-055`, `inc-064`, `inc-065` — every increment that changes an
+address-selection page. This supersedes the paragraph above: the six pickers
+`inc-062` kept alive are blocked now for an unrelated reason.
+
+**Addresses on the consignment party page (4).** `inc-052`, `inc-056`,
+`inc-063` on `fe-addresses-hub`, plus `inc-045`, which spans the hub and the
+consignor picker.
+
+**Permanent address where it reaches the party space (2).** `inc-058` reuses
+the place of destination address; `inc-057` moves the whole step into the
+consignment parties section. `inc-058` was mid-build when this ruling landed —
+see the note on EUDPA-399 below.
+
+**What stays buildable, and why.** `inc-009`, `inc-059` and `inc-066` are the
+rest of the permanent-address group: field labels, the fraud warning and the
+country question, all on the animal identification form, touching neither a
+picker nor the party page. `inc-012` changes a button's copy across four pages,
+only one of which is the hub. `inc-061` is a label on the review page. All five
+were considered and deliberately left `todo` — do not sweep them in later
+without a ruling.
+
+**EUDPA-399 is a parked ticket.** It was raised for `inc-058` and the branch
+`feat/EUDPA-399-frontend-makes-a-trader-type-the-animals` was cut in the
+frontend and tests repos before the ruling. Nothing was implemented, committed
+or pushed. The backlog no longer points at it, so a resumed run will not pick
+it up.
 
 ## `inc-161` carries its own design decision
 

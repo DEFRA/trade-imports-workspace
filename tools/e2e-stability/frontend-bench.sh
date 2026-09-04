@@ -7,11 +7,13 @@
 #     mode = image   published :latest images (linux/amd64, so Rosetta-translated)
 #     mode = dev     built from repos/ (native arm64 on Apple silicon)
 #
-# Every VAR=value is exported before the stack starts, so it reaches the
-# containers through compose. Use it for FRONTEND_REPLICAS and for the
-# frontend's own knobs, e.g.
+# Every VAR=value is exported before the stack starts. Exporting is necessary but
+# NOT sufficient: compose only forwards a variable a service either interpolates
+# or names in its own environment block, so a knob the compose file does not
+# mention is silently ignored and the cell measures nothing. frontend-env.txt
+# records what actually reached the container — check it before trusting a cell.
 #
-#   frontend-bench.sh cache-on 8 dev FRONTEND_REPLICAS=1 NUNJUCKS_NO_CACHE=false NUNJUCKS_WATCH=false
+#   frontend-bench.sh cache-on 8 dev TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS=1 NUNJUCKS_NO_CACHE=false NUNJUCKS_WATCH=false
 #
 # Results land in workareas/shared/e2e-stability/bench/<label>/ with the same
 # per-container CPU and memory sampling run-once.sh does, plus the per-test

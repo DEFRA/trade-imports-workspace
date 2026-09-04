@@ -34,37 +34,113 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `infrastructure.compose.yml` | `mssql`, `servicebus-emulator` (Azure Service Bus emulator the dynamics-gateway talks to), `toxiproxy` (sits in front of servicebus-emulator; lets you sever/restore the gateway's ASB connection for DLQ testing) | `servicebus` |
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend` | `backend` |
-| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-frontend-lb` (nginx owning host `:3000`, see below), `trade-imports-animals-admin`, `trade-imports-ins-frontend` | `frontend` |
+| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, plus one nginx per frontend owning its host port — `trade-imports-animals-frontend-lb` (`:3000`), `trade-imports-animals-admin-lb` (`:3001`), `trade-imports-ins-frontend-lb` (`:3002`); see below | `frontend` |
 | `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 
-## Scaling the animals frontend (`FRONTEND_REPLICAS`)
+## Scaling the frontends (`*_REPLICAS`)
 
-The frontend is one Node process and it saturates a core from about eight
-Playwright workers upward, so past that point extra workers only lengthen its
-request queue — the whole suite gets slower and the long journeys start
-crossing their 30s budget. Measured in
-`workareas/shared/e2e-stability/REPORT.md`.
+Each Node frontend is one process, and one process saturates a core from
+about eight Playwright workers upward — past that point extra workers only
+lengthen its request queue, the whole suite slows down and the long journeys
+start crossing their 30s budget. Measured for the animals frontend in
+`workareas/shared/e2e-stability/REPORT.md`; the admin and ins frontends are
+the same shape, so they get the same treatment.
 
-`trade-imports-animals-frontend` therefore publishes no host port. Host
-`:3000` belongs to `trade-imports-animals-frontend-lb`, an nginx that
-round-robins across however many replicas are running:
+A service that publishes a host port cannot run more than one replica, so
+none of the three frontends publishes one. Each host port belongs instead to
+a small nginx that round-robins across however many replicas of its frontend
+are running:
+
+| Host port | nginx service | Round-robins across | Replica count (default 1) |
+|---|---|---|---|
+| `:3000` | `trade-imports-animals-frontend-lb` | `trade-imports-animals-frontend` | `TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS` |
+| `:3001` | `trade-imports-animals-admin-lb` | `trade-imports-animals-admin` | `TRADE_IMPORTS_ANIMALS_ADMIN_REPLICAS` |
+| `:3002` | `trade-imports-ins-frontend-lb` | `trade-imports-ins-frontend` | `TRADE_IMPORTS_INS_FRONTEND_REPLICAS` |
 
 ```bash
-FRONTEND_REPLICAS=5 scripts/stack/run-stack.sh
+TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS=5 scripts/stack/run-stack.sh
+TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS=5 TRADE_IMPORTS_ANIMALS_ADMIN_REPLICAS=2 scripts/stack/run-stack.sh
 ```
 
-The default is 1, which behaves as the single-container stack did apart from
-one nginx hop. Round-robin is safe because no request state is held in
-process memory: sessions are in Redis (`SESSION_CACHE_ENGINE=redis`) and Bell
-keeps the OIDC handshake in a cookie encrypted with a password every replica
-shares from `shared.env`. `frontend-lb/nginx.conf` resolves the service name
-per request through Docker's embedded DNS, so replicas that restart are picked
-up without restarting nginx, and it forwards `Host` unchanged because the
-frontend builds absolute URLs (including the OIDC redirects) from it.
+Every count defaults to 1, so a plain `run-stack.sh` behaves as the
+single-container stack did apart from one nginx hop per frontend, and CI's
+four-vCPU runner carries three idle nginx processes and nothing else. The
+knobs work under `--dev` too: the replicas share the one `src/` bind mount.
 
-Reaching one replica directly means `docker compose port` or
-`docker exec`; there is no per-replica host port to bind.
+Reaching one replica directly means `docker compose port` or `docker exec`;
+there is no per-replica host port to bind.
+
+### One config, three containers
+
+`frontend-lb/nginx.conf` holds three `server` blocks, one per host port, and
+the same file is mounted into all three `-lb` containers. Each container
+therefore listens on 3000, 3001 and 3002 inside the compose network and will
+proxy for any of the three frontends there; only the one port it publishes
+reaches the host. That is harmless and it keeps the config in one place, but
+it is why `trade-imports-animals-admin-lb:3002` reaches the ins frontend if
+you go looking.
+
+Three containers rather than one keep the three failure domains apart. Each
+LB `depends_on` only its own frontend, so an ins frontend that never becomes
+healthy holds `:3002` and nothing else — `:3000` and `:3001` serve as before,
+where a single LB fronting all three would have held every port until every
+frontend was healthy. It is also what lets `-e` keep working: excluding
+`frontend`, `admin` or `ins-frontend` drops its paired `-lb` service with it,
+which is what frees the host port for the native process (see `--exclude`
+below).
+
+### How a request reaches a replica
+
+nginx resolves the frontend's service name per request through Docker's
+embedded DNS (`resolver 127.0.0.11 valid=5s`), which answers with every
+running replica's address. Naming the upstream in a variable is what makes
+nginx resolve per request rather than once at startup: that is how traffic
+spreads across the replicas, how a replica that restarts is picked up
+without restarting nginx, and why nginx can start before its upstreams are
+up.
+
+Round-robin is safe because no request state is held in process memory.
+Sessions live in Redis (`SESSION_CACHE_ENGINE=redis` on all three), and Bell
+keeps the OIDC handshake in a cookie encrypted with the session-cookie
+password, which every replica of a frontend shares because the stack never
+overrides `SESSION_COOKIE_PASSWORD` — they all run their image's config
+default. `Host` is forwarded verbatim (`proxy_set_header Host $http_host`;
+`$host` would strip the port), so the browser keeps talking to
+`localhost:<port>`, the OIDC redirect URLs still match and nothing changes
+for the hostname rules below.
+
+### When a frontend is down
+
+A request to a port whose frontend is gone gets `502 Bad Gateway` from nginx
+straight away — the name no longer resolves, or the connect is refused —
+rather than hanging. Each LB's healthcheck goes through nginx to its
+frontend's `/health`, so a frontend that dies after boot flips its LB
+unhealthy too and `docker compose ps` names the pair. Within the 5s DNS TTL
+of the frontend being healthy again its port serves without anyone touching
+nginx. If the frontend never becomes healthy at boot its LB never starts, so
+the port refuses connections exactly as it did before any LB existed and
+`run-stack.sh`'s `--wait` fails on the frontend's own healthcheck.
+
+### Body size and timeouts
+
+nginx caps request bodies at 1 MB by default, and that cap does not surface
+as a proxy error: it surfaces as one unrelated-looking spec failing on every
+run. The animals documents page posts a 10 MB file to the frontend itself
+(`payload.maxBytes` of 10,001,024 bytes in the documents feature's
+`upload-config.js`), and under the default cap nginx 413s it before the app
+sees it. `client_max_body_size 12m` is set once at `http` level, so it covers
+all three ports. That is behaviour-neutral for admin and ins — neither has a
+multipart route, and hapi's own default `payload.maxBytes` is the same
+1,048,576 bytes, so hapi keeps answering oversize bodies exactly as it does
+with no proxy in front — and it means a multipart route added to either
+later will not hit the 1 MB wall. CDP's own ingress caps at 10 MiB, so an
+app limit raised above that would pass locally and fail deployed.
+
+The 120s read/send timeouts on the `:3000` block were measured under
+Playwright saturation: a big journey page can take a while when the replicas
+are busy, and failing at nginx would report that as a proxy error rather
+than the slow response it is. Admin and ins run on nginx's defaults.
 
 ## Choosing between `-d`, `-e`, and `--profile`
 
@@ -86,7 +162,9 @@ Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `defr
 — the labels in `run-stack.sh`'s `services` array.
 Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
-`host.docker.internal:<port>`.
+`host.docker.internal:<port>`. Excluding `frontend`, `admin` or
+`ins-frontend` also drops its paired `-lb` service, so the host port is free
+for the process you start.
 
 Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002, defra-id-stub 3007,
 backend 8085, reference-data 8086, stub 8087, gateway 8088, address-book 8089, ins-backend 8090.
@@ -263,8 +341,9 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 - `dev.compose.yml` — build/target/volumes overlay for `--dev`.
 - `shared.env` — env vars loaded by multiple services (mongo URIs, AWS test
   creds, floci endpoints, the truststore cert blob).
-- `frontend-lb/nginx.conf` — config for the nginx that owns host `:3000` and
-  round-robins across the animals-frontend replicas (see `FRONTEND_REPLICAS`).
+- `frontend-lb/nginx.conf` — the one config mounted into all three `-lb`
+  containers: a `server` block per host port (`:3000`, `:3001`, `:3002`), each
+  round-robining across its frontend's replicas (see `*_REPLICAS` above).
 - `scripts/mongodb/` — workspace-owned mongo replica-set init (`10-database-setup.js`).
 - `.staged/` — generated by `scripts/stack/lib/init-scripts.sh` on every
   stack start / mongo bounce; gitignored. Contains staged mongo seed fixtures,

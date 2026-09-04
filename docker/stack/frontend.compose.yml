@@ -33,8 +33,26 @@ services:
         - wget -qO- http://127.0.0.1:3001/health
     image: defradigital/trade-imports-animals-admin:${TRADE_IMPORTS_ANIMALS_ADMIN:-latest}
     platform: linux/amd64
+    deploy:
+      replicas: ${TRADE_IMPORTS_ANIMALS_ADMIN_REPLICAS:-1}
+  trade-imports-animals-admin-lb:
+    profiles: [frontend]
+    depends_on:
+      trade-imports-animals-admin:
+        condition: service_healthy
+    image: nginx:1.29-alpine
+    healthcheck:
+      interval: 5s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:3001/health
     ports:
       - '3001:3001'
+    volumes:
+      - ./frontend-lb/nginx.conf:/etc/nginx/nginx.conf:ro
   trade-imports-animals-frontend:
     profiles: [frontend]
     extra_hosts:
@@ -54,6 +72,11 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=development
+      # Defaults match what NODE_ENV=development already implies, so these change
+      # nothing until a run sets them. Declared so a run CAN set them: compose only
+      # forwards variables a service names.
+      - NUNJUCKS_NO_CACHE=${NUNJUCKS_NO_CACHE:-true}
+      - NUNJUCKS_WATCH=${NUNJUCKS_WATCH:-true}
       - SESSION_CACHE_ENGINE=redis
       - TRADE_IMPORTS_ANIMALS_BACKEND_URL=http://host.docker.internal:8085
       - TRADE_IMPORTS_REFERENCE_DATA_URL=http://host.docker.internal:8086
@@ -74,14 +97,8 @@ services:
         - wget -qO- http://127.0.0.1:3000/health
     image: defradigital/trade-imports-animals-frontend:${TRADE_IMPORTS_ANIMALS_FRONTEND:-latest}
     platform: linux/amd64
-    # No host port: the replicas sit behind trade-imports-animals-frontend-lb,
-    # which owns :3000. Publishing here would stop more than one from starting.
     deploy:
-      replicas: ${FRONTEND_REPLICAS:-1}
-  # One Node process serves the whole journey and saturates a core from eight
-  # Playwright workers upward, so extra workers only lengthen its queue. This
-  # fronts N replicas on the one host port the tests and the OIDC redirect URLs
-  # both name. Default of one replica keeps the stack as it was.
+      replicas: ${TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS:-1}
   trade-imports-animals-frontend-lb:
     profiles: [frontend]
     depends_on:
@@ -139,5 +156,23 @@ services:
         - wget -qO- http://127.0.0.1:3002/health
     image: defradigital/trade-imports-ins-frontend:${TRADE_IMPORTS_INS_FRONTEND:-latest}
     platform: linux/amd64
+    deploy:
+      replicas: ${TRADE_IMPORTS_INS_FRONTEND_REPLICAS:-1}
+  trade-imports-ins-frontend-lb:
+    profiles: [frontend]
+    depends_on:
+      trade-imports-ins-frontend:
+        condition: service_healthy
+    image: nginx:1.29-alpine
+    healthcheck:
+      interval: 5s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:3002/health
     ports:
       - '3002:3002'
+    volumes:
+      - ./frontend-lb/nginx.conf:/etc/nginx/nginx.conf:ro

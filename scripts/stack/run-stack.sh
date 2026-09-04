@@ -103,7 +103,9 @@ for label in ${excluded_labels[@]+"${excluded_labels[@]}"}; do
   for entry in "${services[@]}"; do
     IFS='|' read -r l image _ <<< "$entry"
     if [ "$l" = "$label" ]; then
-      excluded_compose_names+=("$image")
+      # A frontend's paired load balancer owns its host port, so excluding the
+      # frontend has to drop the -lb with it or the port stays taken.
+      excluded_compose_names+=("$image" "$image-lb")
       break
     fi
   done

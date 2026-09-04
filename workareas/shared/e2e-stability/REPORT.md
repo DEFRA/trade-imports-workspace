@@ -376,12 +376,12 @@ Still open, and neither yet attributed:
 Both are new since the replicas, both sit on paths the proxy touches (upload
 and sign-out), and one run in ten is too thin to tell a proxy problem from an
 ordinary flake. The discriminating measurement is ten runs at sixteen workers
-with `FRONTEND_REPLICAS=1` against these two specs; if they flake there too,
+with `TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS=1` against these two specs; if they flake there too,
 the proxy is exonerated.
 
 ### For CI
 
-`FRONTEND_REPLICAS` defaults to 1, so nothing changes for CI unless it is set.
+`TRADE_IMPORTS_ANIMALS_FRONTEND_REPLICAS` defaults to 1, so nothing changes for CI unless it is set.
 It should not simply be set to 5 there: the runner has four vCPUs against this
 machine's sixteen, so five replicas would contend rather than help. The right
 CI value needs its own measurement.

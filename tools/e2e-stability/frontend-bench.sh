@@ -35,7 +35,10 @@ mkdir -p "$OUT"
 # The slice: the journey specs whose latency is the thing under investigation,
 # plus a page spec as a cheap control. Fixed so every configuration does
 # identical work.
-SLICE='Notification persistence|CPH number page|Declaration page|Addresses picker'
+# No spaces in this pattern. npm strips the quotes when forwarding args down the
+# test:docker-compose chain, so a pattern with spaces arrives at Playwright split
+# into separate arguments and silently matches the wrong thing. '.' stands in.
+SLICE='Notification.persistence|CPH.number.page|Declaration.page|Addresses.picker'
 
 {
   echo "label=$LABEL"

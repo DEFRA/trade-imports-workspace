@@ -98,6 +98,22 @@ jobs:
               }
             '
 
+      # The tests repo seeds notifications from contributions recorded off a real
+      # UI journey, so they go stale whenever the frontend's obligations or its
+      # Mapper A move. Checking before the suite turns that into one clear
+      # failure naming the fix, rather than a scatter of confusing ones across
+      # every API-seeded spec. One shard is enough — the fixture is shared, and
+      # the check writes nothing, so it needs none of the report mounts below.
+      - name: Check journey contributions are current
+        if: matrix.shardIndex == 1
+        run: |
+          docker run --rm \
+            --network host \
+            --user root \
+            --entrypoint npm \
+            defradigital/trade-imports-animals-tests:${{ steps.branch-tag.outputs.tests-tag }} \
+            run contributions:check
+
       - name: Run E2E tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
         run: |
           docker run --rm \

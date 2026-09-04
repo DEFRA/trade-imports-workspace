@@ -639,3 +639,166 @@ describe('the verify-before-ingest gate', () => {
     expect(() => ingest()).toThrow(/carry no verification record/)
   })
 })
+
+describe('the build-loop verification ladder', () => {
+  // The build loop reads increment.verification as "the ladder, in order" and
+  // treats an absent one as "not a defect", so it improvises instead of
+  // stopping. These tests pin the rungs it is handed.
+  const writeTargets = (verify) => {
+    mkdirSync(join(root, 'tools', 'journey-builder'), { recursive: true })
+    writeFileSync(
+      join(root, 'tools', 'journey-builder', 'targets.json'),
+      JSON.stringify({
+        default: 'live-animals-frontend',
+        targets: {
+          'live-animals-frontend': {
+            repo: 'repos/trade-imports-animals-frontend',
+            verify
+          }
+        }
+      })
+    )
+  }
+
+  const CROSS_REPO = {
+    step: 'stack-e2e',
+    repo: 'repos/trade-imports-animals-tests',
+    command: 'npm run test:docker-compose',
+    needsStack: true
+  }
+
+  const ladderOf = () => backlog().increments[0].verification
+
+  test('emits the target profile rungs cheapest-first', () => {
+    writeTargets({
+      lint: 'lint',
+      unit: 'test:live-animals',
+      e2e: 'test:fit:features',
+      format: 'format:check'
+    })
+    writeFinding('documents--type.json')
+
+    ingest()
+
+    expect(ladderOf()).toEqual([
+      {
+        step: 'unit',
+        repo: 'repos/trade-imports-animals-frontend',
+        command: 'npm run test:live-animals'
+      },
+      {
+        step: 'format',
+        repo: 'repos/trade-imports-animals-frontend',
+        command: 'npm run format:check'
+      },
+      {
+        step: 'lint',
+        repo: 'repos/trade-imports-animals-frontend',
+        command: 'npm run lint'
+      },
+      {
+        step: 'e2e',
+        repo: 'repos/trade-imports-animals-frontend',
+        command: 'npm run test:fit:features'
+      }
+    ])
+  })
+
+  test('omits a rung the target profile does not declare', () => {
+    writeTargets({ unit: 'test:live-animals' })
+    writeFinding('documents--type.json')
+
+    ingest()
+
+    expect(ladderOf().map((rung) => rung.step)).toEqual(['unit'])
+  })
+
+  test('appends the corpus cross-repo rungs after the target ones', () => {
+    writeTargets({ unit: 'test:live-animals' })
+    profile.crossRepoLadder = [CROSS_REPO]
+    writeFinding('documents--type.json')
+
+    ingest()
+
+    expect(ladderOf()).toEqual([
+      {
+        step: 'unit',
+        repo: 'repos/trade-imports-animals-frontend',
+        command: 'npm run test:live-animals'
+      },
+      CROSS_REPO
+    ])
+  })
+
+  test('carries the cross-repo rung even with no target profile on disk', () => {
+    profile.crossRepoLadder = [CROSS_REPO]
+    writeFinding('documents--type.json')
+
+    ingest()
+
+    expect(ladderOf()).toEqual([CROSS_REPO])
+  })
+
+  test('leaves the field off entirely when nothing declares a ladder', () => {
+    writeFinding('documents--type.json')
+
+    ingest()
+
+    expect('verification' in backlog().increments[0]).toBe(false)
+  })
+
+  test('reports the rungs it emitted so an empty ladder is visible', () => {
+    writeTargets({ unit: 'test:live-animals' })
+    profile.crossRepoLadder = [CROSS_REPO]
+    writeFinding('documents--type.json')
+
+    expect(ingest().ladder).toEqual(['unit', 'stack-e2e'])
+    expect(
+      runIngest({
+        profile: { ...profile, crossRepoLadder: [] },
+        workspaceRoot: root,
+        target: 'nope',
+        dryRun: true
+      }).ladder
+    ).toEqual([])
+  })
+
+  test('backfills a ladder onto a backlog ingested before the field existed', () => {
+    writeFinding('documents--type.json')
+    ingest()
+    expect('verification' in backlog().increments[0]).toBe(false)
+
+    writeTargets({ unit: 'test:live-animals' })
+    ingest()
+
+    expect(ladderOf().map((rung) => rung.step)).toEqual(['unit'])
+  })
+
+  test('never swaps the rungs under an increment that already carries them', () => {
+    writeTargets({ unit: 'test:live-animals' })
+    writeFinding('documents--type.json')
+    ingest()
+
+    writeTargets({ unit: 'test:live-animals', lint: 'lint' })
+    ingest()
+
+    expect(ladderOf().map((rung) => rung.step)).toEqual(['unit'])
+  })
+
+  test('keeps the parity verifier prose separate from the ladder', () => {
+    writeTargets({ unit: 'test:live-animals' })
+    writeFinding(
+      'documents--type.json',
+      finding({
+        finding: { ...finding().finding, verification: 'Opened both DOMs.' }
+      })
+    )
+
+    ingest()
+
+    expect(backlog().increments[0].finding.verification).toBe(
+      'Opened both DOMs.'
+    )
+    expect(Array.isArray(ladderOf())).toBe(true)
+  })
+})

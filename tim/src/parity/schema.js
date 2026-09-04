@@ -109,6 +109,17 @@ export const visualFrameSchema = passthrough({
   reframe: z.boolean().optional()
 })
 
+// One rung of a build-loop verification ladder: a command, the repo it runs
+// in, and whether it needs the compose stack up first. `finding.verification`
+// is a different thing entirely — prose recording what a parity verifier
+// opened and what it proved. The build loop reads THIS field as the ladder.
+export const ladderRungSchema = passthrough({
+  step: z.string(),
+  repo: z.string(),
+  command: z.string(),
+  needsStack: z.boolean().optional()
+})
+
 export const incrementSchema = passthrough({
   id: z.string(),
   type: z.string(),
@@ -127,6 +138,7 @@ export const incrementSchema = passthrough({
   failure_reason: nullableString,
 
   notes: z.array(noteSchema).optional(),
+  verification: z.array(ladderRungSchema).optional(),
   decision: decisionSchema.nullable().optional(),
   finding: findingSchema.optional(),
   citations: z.array(citationSchema).optional(),

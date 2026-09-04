@@ -202,6 +202,11 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
     // Off unless a corpus asks for it: the two corpora that predate the flag
     // were ingested without one, and re-ingesting them has to stay a no-op.
     requireVerification: raw.requireVerification === true,
+    // Ladder rungs that run somewhere the build-loop target does not name —
+    // the sibling test suite whose locators break when shared markup or
+    // user-visible copy moves. Empty unless a corpus declares them, so a
+    // corpus that predates the field ingests exactly as it did before.
+    crossRepoLadder: raw.crossRepoLadder ?? [],
     sideIds: sides.map((side) => side.id),
     sideById: Object.fromEntries(sides.map((side) => [side.id, side])),
     paths: {

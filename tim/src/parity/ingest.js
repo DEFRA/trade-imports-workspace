@@ -415,7 +415,7 @@ const authoredFinding = (finding) => ({
   ...(finding.relatedTo ? { relatedTo: finding.relatedTo } : {})
 })
 
-const born = ({ finding, id, corpus }) => ({
+const born = ({ finding, id, corpus, ladder }) => ({
   ...authoredFields({ finding, id, corpus }),
   milestone: null,
   detail: composeDetail(finding.slots),
@@ -424,6 +424,7 @@ const born = ({ finding, id, corpus }) => ({
   status: INITIAL_STATUS,
   commit: null,
   failure_reason: null,
+  ...(ladder.length ? { verification: ladder } : {}),
   finding: authoredFinding(finding)
 })
 
@@ -438,10 +439,15 @@ const born = ({ finding, id, corpus }) => ({
  * @param {object} args
  * @returns {object}
  */
-const refreshed = ({ increment, finding, id, corpus }) => ({
+const refreshed = ({ increment, finding, id, corpus, ladder }) => ({
   ...increment,
   ...authoredFields({ finding, id, corpus }),
   detail: increment.detail || composeDetail(finding.slots),
+  // Backfill only. An increment that already carries a ladder keeps it, because
+  // a run in flight must not have its rungs swapped underneath it — but a
+  // backlog ingested before this field existed gets one, which is the whole
+  // point of the fix.
+  ...(increment.verification || !ladder.length ? {} : { verification: ladder }),
   finding: { ...(increment.finding ?? {}), ...authoredFinding(finding) }
 })
 
@@ -484,6 +490,56 @@ const resolveTarget = ({ workspaceRoot, existing, explicit }) => {
     'USAGE',
     'Nothing names a build-loop target for this backlog. Pass --target.'
   )
+}
+
+/**
+ * The order a ladder climbs. Cheapest and most local first, so a run that is
+ * going to fail fails before it has paid for a stack.
+ *
+ * These are the keys of a target profile's `verify` map, which are npm script
+ * names run in the target repo. A key the profile omits is a rung the ladder
+ * does not have.
+ */
+const LADDER_ORDER = ['unit', 'format', 'lint', 'e2e']
+
+const targetProfile = ({ workspaceRoot, target }) => {
+  const path = join(workspaceRoot, 'tools', 'journey-builder', 'targets.json')
+  if (!existsSync(path)) return null
+  return readJsonFile(path).targets?.[target] ?? null
+}
+
+/**
+ * The command ladder the build loop runs before it commits an increment.
+ *
+ * The loop reads the increment's `verification` as "the ladder, in order", and
+ * treats an absent one as "not a defect" — so it improvises a ladder instead of
+ * stopping. That is how a cross-repo E2E break reached CI on the DR1 run: the
+ * only `verification` on those increments was the parity verifier's prose, no
+ * rung ran the sibling repo's Playwright suite, and nothing reported a gap.
+ * Emitting the rungs here is what makes the loop's own "could not run" rule
+ * bite.
+ *
+ * The target's rungs come first, then any the corpus adds. A corpus declares
+ * `crossRepoLadder` for work that has to hold in a repo the target does not
+ * name — the sibling test suite whose page objects break when shared markup or
+ * user-visible copy moves. It is data, so a programme that cannot afford the
+ * stack time drops it without touching this file.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} args.target - Build-loop target id
+ * @param {object} args.profile - A loaded corpus profile
+ * @returns {object[]} Ladder rungs, in the order they must run
+ */
+export const ladderFor = ({ workspaceRoot, target, profile }) => {
+  const resolved = targetProfile({ workspaceRoot, target })
+  const verify = resolved?.verify ?? {}
+  const own = LADDER_ORDER.filter((step) => verify[step]).map((step) => ({
+    step,
+    repo: resolved.repo,
+    command: `npm run ${verify[step]}`
+  }))
+  return [...own, ...(profile.crossRepoLadder ?? [])]
 }
 
 const tally = (findings, key) =>
@@ -558,6 +614,17 @@ export const runIngest = ({
     )
   }
 
+  const resolvedTarget = resolveTarget({
+    workspaceRoot,
+    existing,
+    explicit: target
+  })
+  const ladder = ladderFor({
+    workspaceRoot,
+    target: resolvedTarget,
+    profile
+  })
+
   const frozen = []
   const increments = findings.map((authored) => {
     const id = ids.get(authored.file)
@@ -566,12 +633,18 @@ export const runIngest = ({
       relatedTo: resolveRelatedTo({ finding: authored, id, slugs })
     }
     const previous = replace ? undefined : byId.get(id)
-    if (!previous) return born({ finding, id, corpus: profile.id })
+    if (!previous) return born({ finding, id, corpus: profile.id, ladder })
     const wouldBe = composeDetail(finding.slots)
     if (previous.detail && previous.detail !== wouldBe) {
       frozen.push(`${id} (${finding.file})`)
     }
-    return refreshed({ increment: previous, finding, id, corpus: profile.id })
+    return refreshed({
+      increment: previous,
+      finding,
+      id,
+      corpus: profile.id,
+      ladder
+    })
   })
 
   if (frozen.length) {
@@ -602,7 +675,7 @@ export const runIngest = ({
   const backlog = {
     ...(existing ?? {}),
     run_id: profile.runId,
-    target: resolveTarget({ workspaceRoot, existing, explicit: target }),
+    target: resolvedTarget,
     corpus: profile.id,
     increments: increments.map((increment, index) =>
       parseIncrement(increment, index)
@@ -618,6 +691,10 @@ export const runIngest = ({
     path: backlogPath,
     findingsDir: dir,
     written: Boolean(write),
+    // Reported rather than assumed: a backlog whose increments carry no ladder
+    // sends the build loop off to improvise one, and that must be visible in
+    // the run output instead of showing up later as a red PR.
+    ladder: ladder.map((rung) => rung.step),
     total: findings.length,
     new: findings.filter(isNew).length,
     refreshed: findings.filter((finding) => !isNew(finding)).length,

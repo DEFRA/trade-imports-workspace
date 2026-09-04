@@ -426,7 +426,9 @@ citation token becomes its `[[cN]]` marker.
 
 **Pass B rewrites into GDS plain English**, over `frontend`, `prototype`,
 `difference`, `correction`, `falsifiedBy` and `decisionRequired.question` only.
-`verification` is an audit record and is never touched. Technical vocabulary
+`finding.verification` is an audit record and is never touched — nor is the
+top-level `verification`, which is the build-loop ladder and holds commands
+rather than prose. Technical vocabulary
 stays — `govukServiceNavigation`, `isGerminalProduct` and
 `showTemperatureQuestion` are the names of real things. What goes: sentences
 over 25 words, passives where an actor exists, nested parentheticals, and
@@ -583,6 +585,38 @@ for that file's shape, and for its two sharp edges:
 - **The increment id is bound to the finding's file name.** Rename the file and
   the id changes, which reads as "old finding struck, new finding added" and
   orphans every ruling and citation attached to the old id.
+
+**`ingest` also writes each increment's `verification` — the build-loop command
+ladder.** Two different things share that word, and keeping them apart is the
+whole point:
+
+| Field | What it is | Who writes it |
+|---|---|---|
+| `finding.verification` | Prose: what a parity verifier opened and what it proved. An audit record; MIGRATE never touches it | the verifying agent |
+| `verification` (top level) | An ordered array of `{step, repo, command}` rungs the build loop runs before it commits | `ingest`, from the target profile + the corpus |
+
+The rungs come from the run's target profile in
+`tools/journey-builder/targets.json` (`verify.*`, cheapest first: unit, format,
+lint, e2e), then any the corpus adds in `crossRepoLadder`. A rung carrying
+`needsStack: true` cannot run without the compose stack.
+
+**Why it matters, and it is not theoretical.** The build loop reads this field
+as "the ladder, in order" and treats an absent one as *not a defect* — so it
+improvises a ladder rather than stopping. On the DR1 run the only `verification`
+those increments carried was the verifier's prose, so no rung ever ran the
+sibling repo's Playwright suite, and `inc-104` shipped a pull request whose
+E2E went red on a locator the increment had deleted:
+
+```
+Locator: locator('.govuk-summary-list__row').filter({ hasText: 'Animal 1' })
+Error: element(s) not found
+```
+
+With the rung declared, the loop's own rule — *record a step that could not run
+as a failure, never as a pass* — turns a dead stack into a halted increment
+instead of a red PR. `ingest` reports the rungs it emitted; **an empty `ladder`
+in that output means the loop will improvise, so treat it as a defect to fix
+before authoring more findings.**
 
 `--replace` rebuilds from scratch and refuses while any increment holds a
 ruling. `--dry-run` reports what it would write and writes nothing.
@@ -937,4 +971,5 @@ Never run both against one run at the same time. Both write the whole file.
 
 - **Guess a citation.** 35 of the 819 citations are queued for a human with the
   reason printed. A confidently wrong permalink is worse than inert code.
-- **Rewrite `verification` or `detail`.**
+- **Rewrite `finding.verification`, the top-level `verification` ladder, or
+  `detail`.**

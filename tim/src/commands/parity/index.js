@@ -167,9 +167,18 @@ const countLine = (label, counts) =>
     .map(([key, n]) => `${key} ${n}`)
     .join('   ')}`
 
+// The build loop treats a missing ladder as "not a defect" and improvises one,
+// so a backlog with no rungs looks identical to a healthy one until a pull
+// request goes red. Say it plainly instead.
+export const ladderLine = (ladder) =>
+  ladder.length
+    ? `ladder: ${ladder.join(' → ')}`
+    : 'No verification ladder, so the build loop will make one up and nothing will run the sibling test suite. Give this corpus a crossRepoLadder, or check the target profile names its verify scripts.'
+
 const renderIngest = (result) =>
   [
     `${result.total} findings from ${result.findingsDir} — ${result.new} new, ${result.refreshed} refreshed, ${result.carriedOver} carried over from the previous run.`,
+    ladderLine(result.ladder),
     countLine('band', result.byBand),
     countLine('domain', result.byDomain),
     countLine('type', result.byType),
@@ -283,9 +292,7 @@ const reorderNextStep = (result) => {
 
 const renderReorder = (result) => {
   const move = result.checked ? 'would move' : 'moved'
-  const stay = result.checked
-    ? 'stay where they are'
-    : 'stayed where they were'
+  const stay = result.checked ? 'stay where they are' : 'stayed where they were'
 
   return [
     reorderHeadline(result),

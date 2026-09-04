@@ -229,11 +229,12 @@ npm run test:docker-compose:security              # passive scan
 npm run test:docker-compose:security:active       # passive + active scan
 ```
 
-See `repos/trade-imports-animals-tests/README.md#security-testing` for the
-full local workflow. It's opt-in unlike `toxiproxy` because it's a heavy
-scanner nobody wants brought up by a plain `run-stack.sh`, and it needs
-`network_mode: host` because the app frontends' OIDC redirect URLs are
-hardcoded to `localhost` — same constraint as the hostname rules below.
+See `repos/trade-imports-animals-tests/docs/security.md` for the full local
+workflow, what is scanned and how the run is gated. It's opt-in unlike
+`toxiproxy` because it's a heavy scanner nobody wants brought up by a plain
+`run-stack.sh`, and it needs `network_mode: host` because the app frontends'
+OIDC redirect URLs are hardcoded to `localhost` — same constraint as the
+hostname rules below.
 
 ## Running E2E tests against this stack
 

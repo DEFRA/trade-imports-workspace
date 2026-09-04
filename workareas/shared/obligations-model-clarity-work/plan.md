@@ -212,9 +212,9 @@ Per the clean-rename principle, all call sites update atomically in the same com
 | `own` | `applicabilityDecision` | `evaluator/implications/index.js`, `scope/*` | Reads as "possession"; hides that it's an applyTo output. Flows from the vocabulary. |
 | `obligationApplicabilityDecisions` | `applicabilityDecisions` | `evaluator/scope/*`, `converge-purge.js` | 27 chars → 22 chars, no loss of meaning in context. Flows from the vocabulary. |
 | `stored` (as noun) | `fulfilment` | `helper-internals.js`, projection internals | The domain term. `const stored = state.fulfilments[id]` becomes `const fulfilment = state.fulfilments[id]`. Keep `stored` only as an adjective when needed. |
-| `isRecordMap` | `isIndexedFulfilments` | `helper-internals.js` | Flows from the vocabulary. Contrasts naturally with the `'unindexed'` classify tag. |
-| `belonging` | `fulfilmentIndexesUnderInstance` (or similar) | `instance-complete.js` (my code) | Answers "belonging to what?" in the name. Long, but explicit; may need iterating. |
-| `nested` (as noun) | `nestedGroup` | `instance-complete.js` | Fine as adjective; underspecified as `for (const nested of ...)`. |
+| `isRecordMap` | `isNonArrayObject` | `helper-internals.js` | **Plan deviation, landed.** Original proposal was `isIndexedFulfilments` (domain-first). During implementation, review noted the check is structurally "non-null, non-array object" — it doesn't verify keys are fulfilmentIndex-shaped; callers rely on convention for the domain interpretation. `isNonArrayObject` names the mechanic honestly; the docstring notes the caller-side convention. Landed in commit `2d6dfc30`. |
+| `belonging` | *(deferred to Phase 2.2)* | `instance-complete.js` (my code) | **Deferred.** Variable holds a filtered subset of `implication.records`. Phase 2.1 reshapes `implication.records → implication.fulfilmentIndexes`; after that `belonging` is a filtered string array and `fulfilmentIndexesUnderInstance` becomes an honest name. Renaming before Phase 2.1 would either lie about the shape (records, not indexes) or embed the doomed `record` term. Land together with the reshape in Phase 2.1's cleanup or in Phase 2.2's polish. |
+| `nested` (as noun) | *(deferred to Phase 2.2)* | `instance-complete.js` | Same file as `belonging`. Land together to avoid two edits. Target name `nestedGroup` unchanged. |
 | `fulfilmentIndexesByObligationId` | keep, add JSDoc `@typedef` | `evaluator/*` | 30 chars but load-bearing and shape-descriptive; add a `Map<ObligationId, Set<FulfilmentIndex>>` shape hint. |
 | `st` | keep | test files only | Tests read fine with the short form and the surrounding builder. |
 
@@ -275,14 +275,26 @@ Prose parity restored: "the unindexed obligation `poApprovedReferenceNumber`", "
 
 Single PR, commits grouped by rename:
 
-- Commit 1: `impl → implication` (largest diff — many files, mechanical). Includes prose alignment where the surrounding comment used `impl`.
-- Commit 2: applyTo output naming — `own → applicabilityDecision`, `obligationApplicabilityDecisions → applicabilityDecisions`.
-- Commit 3: `stored → fulfilment` as noun; `isRecordMap → isIndexedFulfilments`; retire "record map", "fulfilmentsMap", and "storage" from prose.
-- Commit 4: classify-tag renames (1.4) — tags + constructor function names + comments.
-- Commit 5: remaining table entries (`belonging`, `nested`, tests) + anything else the audit surfaces.
-- Commit 6: JSDoc `@typedef`s for load-bearing shapes (`IndexedFulfilments`, `Implication`, `ApplicabilityDecision`) so IDEs surface the canonical vocabulary at call sites.
+Commits as landed on branch `feature/EUDPA-377-vocab-shape-docs`:
 
-**Blast radius (updated):** Phase 1 is now medium-to-large. `impl → implication` alone touches ~10 files under `model/obligations/` plus tests; `stored → fulfilment` ripples through projection internals and helpers; classify-tag renames touch dispatch and tests. Still no behaviour change; test suite catches missed callsites.
+- Commit 1 (`308caddc`): `impl → implication` across model and bridge — 5 files, 68 identifier hits including test-fixture property keys.
+- Commit 2 (`8adf506d`): `own → applicabilityDecision` — 4 constructor parameters + 2 additional locals across 3 files.
+- Commit 3 (`a369f19a`): `obligationApplicabilityDecisions → applicabilityDecisions` — 7 files.
+- Commit 4 (`2d6dfc30`): `isRecordMap → isNonArrayObject` — mechanical name over the domain proposal (`isIndexedFulfilments`). See row above for rationale.
+- Commit 5 (`16184c27`): `stored → fulfilment` (noun uses) — 8 files across model + bridge + tests. `stored` as adjective in prose left alone.
+
+**Deferred to Phase 2.1/2.2:**
+
+- `belonging → fulfilmentIndexesUnderInstance` in `instance-complete.js` — waits for the shape reshape (records → fulfilmentIndexes) so the name is honest.
+- `nested → nestedGroup` in `instance-complete.js` — same file, same reason, land together.
+
+**Not part of Phase 1** (moved to Phase 1.4):
+
+- Classify-tag renames (`'single'` → `'unindexed'`, `'field'` → `'parent-derived'`, etc.) — structural change with classifier branch, keeps its own commit.
+
+**Not landing as a separate typedefs commit:** JSDoc `@typedef`s referenced in the original Commit 6 will accrete opportunistically as each shape becomes stable; no dedicated commit needed.
+
+**Blast radius (as landed):** Phase 1.1 + 1.3 vocabulary was medium — 5 commits, ~35 files touched, all behaviour-neutral. Test suite green after each commit.
 
 ---
 
@@ -387,8 +399,11 @@ Currently the order is arbitrary. Reordering makes the shape of the output list 
 
 ### 2.4 `helpers/projection/internals/filter-and-project.js` — scalar/map duality
 
-- Split into two named functions (`filterScalarByPassingKey`, `filterMapByPassingKey`) and a two-line dispatch. Removes the hidden shape branch.
-- Move `pathMatchesPassingKey` next to its use site.
+**Absorbed into Phase 2.1's shape reshape.** Discussion during EUDPA-377 implementation surfaced that the file's sentinel-`['']` workaround (`scalarPassingKeys` returning `[''` if the scalar passes) is the source of multiple bad names — `recordMapPassingKeys` / `scalarPassingKeys` (misleading — scalars have no key), `pathMatchesPassingKey` with its `key === ''` special case, and the shape-agnostic `decisionForPassingKeys`.
+
+Refactoring the file to branch cleanly on shape (`decisionFromIndexed` + `decisionFromScalar`) removes the sentinel entirely and drops the misleading helpers. Since Phase 2.1 is already restructuring what applyTo output looks like (`own.records → own.fulfilmentIndexes`), doing 2.4 alongside 2.1 avoids touching this file twice. One shape change, one file rewrite.
+
+Behaviour to verify: the scalar-passes-no-projection case currently produces `{ inScope: true, records: [''] }` — a ghost record with fulfilmentIndex `''`. Post-refactor it produces `{ inScope: true, fulfilmentIndexes: [] }` (no record for the scalar itself). If any test asserts on the ghost record, we handle at that point.
 
 ### 2.5 `evaluator/converge-purge.js` — "view" terminology
 

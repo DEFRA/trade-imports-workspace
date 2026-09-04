@@ -4287,6 +4287,8 @@
           },
           {
             "id": "inc-105",
+            "ticket": "EUDPA-397",
+            "branch": "feat/EUDPA-397-frontend-s-animal-identification-page-do",
             "relation": "travels-with",
             "why": "That finding renames the save and cancel controls; this one decides which pages render them, so the rename's blast radius depends on which rule is chosen here."
           }
@@ -7359,8 +7361,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "2ea65f0f",
       "failure_reason": null,
       "finding": {
         "frontend": "The captured error state shows the summary carrying \"Number of animals must be a whole number, like 25\", linked to the first line's count box. The message is used for both failure modes the rule has — a value that is not digits, and a value below one — because the same string is passed for both (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:20-23, with the string at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:36). A user who types 0 is told to enter a whole number, which 0 already is.",
@@ -7493,10 +7495,21 @@
         "judged": null
       },
       "ticket": "EUDPA-395",
-      "branch": "feat/EUDPA-395-when-a-count-is-not-a-whole-number-front"
+      "branch": "feat/EUDPA-395-when-a-count-is-not-a-whole-number-front",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/242",
+          "number": 242,
+          "merged": true,
+          "sha": "3ec2b3682e5df6f7fb9b2da3a6c57fd12b84379e"
+        }
+      ]
     },
     {
       "id": "inc-104",
+      "ticket": "EUDPA-396",
+      "branch": "feat/EUDPA-396-frontend-reads-a-saved-animal-back-as-on",
       "type": "add-section",
       "milestone": null,
       "domain": "identification",
@@ -7515,9 +7528,25 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "9373321d",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/243",
+          "number": 243,
+          "merged": true,
+          "sha": "84b6c72b11e0b0efb80d9fa610ccf61a6e8b3c8b"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/146",
+          "number": 146,
+          "merged": true,
+          "sha": "f89de66435ed7cf431d3b041d61c6020bc3c52e8"
+        }
+      ],
       "finding": {
         "frontend": "Once an animal is saved it becomes one row of a summary list above the entry form: a key reading \"Animal 1\" and a value reading \"Ear tag: UK123456789012\" — every filled identifier joined into a single sentence with its own label repeated inside it, so two identifiers read \"Passport: UK123456789, Ear tag: UK123456789012\", or the words \"No identifier provided\" if none were filled (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js:9-18, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:12-24). There is no header row, so nothing tells a trader which identifiers this commodity expects; a cattle animal saved on an ear tag alone and one saved on both reads as two lines of different lengths and nothing marks which is which, and a reader comparing two animals has to find the identifier name inside each sentence rather than reading down a column. The row is labelled by position rather than by animal — \"Animal 1\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:87) — so on a page holding four commodity lines the same three words head the first row of every one of them.",
         "prototype": "Design release 1 reads the same information back as a table underneath the entry form: a header row of \"Animal\" and then one column per identifier the commodity declares — for cattle, \"Ear tag\" and \"Passport\" — then a row per saved animal whose key is the species and its number, \"Bos taurus 1\", with each identifier in its own cell and a Remove at the end (app/views/partials/animal-identification-saved-animals.html:1-28). Because the columns come from the commodity's own identifier list, a trader can see at a glance which identifiers are expected and which cells are still empty, and the row label says which animal of which species it is. One thing the table does not show is a partly filled animal: Design release 1's saved list carries only records whose every identifier holds a value, where Frontend lists every appended record including ones reading \"No identifier provided\".",
@@ -7688,6 +7717,8 @@
     },
     {
       "id": "inc-105",
+      "ticket": "EUDPA-397",
+      "branch": "feat/EUDPA-397-frontend-s-animal-identification-page-do",
       "type": "add-section",
       "milestone": null,
       "domain": "identification",
@@ -7705,8 +7736,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "31d4b683",
       "failure_reason": null,
       "finding": {
         "frontend": "Between the inset text and the first commodity card there is nothing. The page goes straight from \"You must add all animal identification details before the consignment arrives at the port of entry\" into the identifier forms (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:11-23). What the consignment holds is readable only by scrolling the forms themselves: each card is headed \"Cow (0102) — Bos taurus\" and carries a counter reading \"Enter details for Bos taurus 1 of 2\", so the code and the count are on the page but scattered through it, the common name is nowhere, and there is no link back to the commodity list. The one \"Add a commodity\" link in the template is in the branch that runs when the notification has no commodities at all (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:27-32), so it disappears at the moment the page becomes usable. Frontend does build a Selected commodities table — commodity code, common name and a Remove per row — but only on the consignment details page, at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_selected-commodities-table.njk, and it carries no animal count.",
@@ -7893,7 +7924,16 @@
         "note": "Add DR1's \"Selected commodities\" block above the identification cards. Same ask, same DR1 lines. C is better on the how: it finds that the frontend already builds a Selected commodities table on the consignment-details page and names the view model to reuse, and that the page's one \"Add a commodity\" link exists but only in the branch that runs when there are no commodities — so it vanishes exactly when it becomes useful. A only notes that the frontend's picker is a checkbox list, not a search, so the Change link's destination differs.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/244",
+          "number": 244,
+          "merged": true,
+          "sha": "3c019ac56ecd4fc0840f5a7ded7786e8e9641418"
+        }
+      ]
     },
     {
       "id": "inc-101",
@@ -8609,6 +8649,8 @@
         "relatedTo": [
           {
             "id": "inc-105",
+            "ticket": "EUDPA-397",
+            "branch": "feat/EUDPA-397-frontend-s-animal-identification-page-do",
             "relation": "travels-with",
             "why": "both restore a route out of the identification page back to the commodity answers"
           }

@@ -1,0 +1,458 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_selected-commodities-summary.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_selected-commodities-summary.njk
+new file mode 100644
+index 00000000..4612aa2a
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_selected-commodities-summary.njk
+@@ -0,0 +1,31 @@
++{% from "govuk/components/table/macro.njk" import govukTable %}
++
++{# What the consignment holds, above the identification cards: one row per
++   commodity line with its code, common name and declared animal count, and a
++   Change link per row back to the commodity question (design release 1,
++   animal identification details). #}
++{% macro selectedCommoditiesSummary(rows, changeHref, copy) %}
++  {% set tableRows = [] %}
++  {% for row in rows %}
++    {% set changeCell %}
++      <a class="govuk-link" href="{{ changeHref }}">{{ copy.change }}<span class="govuk-visually-hidden"> {{ row.name }}</span></a>
++    {% endset %}
++    {% set ignored = tableRows.push([
++      { text: row.code },
++      { text: row.name },
++      { text: row.animals },
++      { html: changeCell, classes: "govuk-!-text-align-right" }
++    ]) %}
++  {% endfor %}
++  {{ govukTable({
++    caption: copy.caption,
++    captionClasses: "govuk-table__caption--m",
++    head: [
++      { text: copy.commodityCode },
++      { text: copy.commonName },
++      { text: copy.numberOfAnimals },
++      { html: '<span class="govuk-visually-hidden">' + copy.actionsHidden + '</span>' }
++    ],
++    rows: tableRows
++  }) }}
++{% endmacro %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+index b5abd4ec..1421b6d0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+@@ -16,6 +16,7 @@ import {
+ } from './form/forms.js'
+ import { appendLineRecords } from './records/append.js'
+ import { isRemoveAction, postRemove } from './remove/post-remove.js'
++import { buildSelectedCommodities } from './summary/selected-commodities.js'
+ 
+ export { IDENTIFIER_LABELS } from './identifier/table.js'
+ 
+@@ -43,6 +44,7 @@ const render = (
+     cards: lines.map((line) =>
+       buildCard(answers, line, forms.get(line.index), errors)
+     ),
++    selectedCommodities: buildSelectedCommodities(lines),
+     hasLines: lines.length > 0,
+     addHref: kit.withChangeContext(
+       request,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index 984fd904..e54124ec 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -53,14 +53,16 @@ const fishLine = (extra = {}) => ({
+   ...extra
+ })
+ 
+-const viewCards = async (seed) => {
++const viewContext = async (seed) => {
+   const journey = await store.create()
+   await store.seedAnswers(journey.journeyId, seed)
+   const h = stubH()
+   await getHandler(journeyRequest(journey.journeyId), h)
+-  return h.captured.view.context.cards
++  return h.captured.view.context
+ }
+ 
++const viewCards = async (seed) => (await viewContext(seed)).cards
++
+ const SUITE =
+   '#animalIdentificationController — the single card-per-species surface'
+ 
+@@ -145,6 +147,40 @@ describe(`${SUITE} — the cards view`, () => {
+   })
+ })
+ 
++describe(`${SUITE} — the Selected commodities summary`, () => {
++  setupIdentificationEngine()
++
++  it('Should summarise every line above the cards with its code, common name and declared count', async () => {
++    const context = await viewContext({
++      commodityLines: [
++        cowLine({ numberOfAnimalsQuantity: '2' }),
++        fishLine({ numberOfAnimalsQuantity: '3' })
++      ]
++    })
++    expect(context.selectedCommodities).toEqual([
++      { index: 0, code: '0102', name: 'Domestic cattle', animals: '2' },
++      { index: 1, code: '0301', name: 'Atlantic salmon', animals: '3' }
++    ])
++  })
++
++  // The link to the commodity question used to live only in the no-commodities
++  // branch of the template, so it vanished as soon as the page had cards. The
++  // href the summary and the Add another commodity link both use is the same
++  // one either way.
++  it('Should offer the route back to the commodity question whether or not there is anything to identify', async () => {
++    for (const commodityLines of [[catLine()], []]) {
++      const journey = await store.create()
++      await store.seedAnswers(journey.journeyId, { commodityLines })
++      const h = stubH()
++      await getHandler(journeyRequest(journey.journeyId), h)
++      const { addHref, hasLines } = h.captured.view.context
++
++      expect(hasLines).toBe(commodityLines.length > 0)
++      expect(addHref).toBe(pagePath(journey.journeyId, 'commodities'))
++    }
++  })
++})
++
+ describe(`${SUITE} — the saved-animals table`, () => {
+   setupIdentificationEngine()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk
+index 0ddd31f6..7972c6b3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk
+@@ -1,6 +1,7 @@
+ {% extends "shared/layout.njk" %}
+ {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+ {% from "live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk" import identificationCard %}
++{% from "live-animals/journeys/linear/features/commodities/animal-identification/_selected-commodities-summary.njk" import selectedCommoditiesSummary %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+ 
+@@ -15,6 +16,15 @@
+   }) }}
+ 
+   {% if hasLines %}
++    {# What the consignment holds, before the identifier forms — and the route
++       back to the commodity question, which used to appear only when there was
++       nothing to identify. #}
++    {{ selectedCommoditiesSummary(selectedCommodities, addHref, copy.summary) }}
++
++    <p class="govuk-body">
++      <a class="govuk-link" href="{{ addHref }}">{{ copy.addAnotherCommodity }}</a>
++    </p>
++
+     <form method="post" novalidate>
+       <input type="hidden" name="crumb" value="{{ crumb }}" />
+       <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js
+new file mode 100644
+index 00000000..e50eabb5
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.js
+@@ -0,0 +1,24 @@
++import * as commodities from '../../../../../../services/commodities/index.js'
++
++// The declared count is a number once the line is saved and the entered string
++// on a re-render, so the summary reads it as text either way. A line the user
++// has not counted yet shows nothing rather than "undefined".
++const countText = (value) =>
++  value === null || value === undefined ? '' : String(value)
++
++// One summary row per commodity line, so the table pairs one-for-one with the
++// identification cards below it: commodity code, the species' common name and
++// the number of animals the line declares. The consignment-details page shows
++// the same code/common-name pairing without the count and with a Remove
++// action; here the row action is a Change link back to the commodity question,
++// which is where the commodity list is answered.
++export const buildSelectedCommodities = (lines) =>
++  lines.map(({ index, entry }) => ({
++    index,
++    code: commodities.commodityCodeFor(entry.commoditySelection) ?? '',
++    name: commodities.speciesCommonName(
++      entry.commoditySelection,
++      entry.speciesSelection
++    ),
++    animals: countText(entry.numberOfAnimalsQuantity)
++  }))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.test.js
+new file mode 100644
+index 00000000..12408e17
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary/selected-commodities.test.js
+@@ -0,0 +1,77 @@
++import { afterEach, describe, expect, it, vi } from 'vitest'
++
++import { buildSelectedCommodities } from './selected-commodities.js'
++import * as commodities from '../../../../../../services/commodities/index.js'
++
++const BOS_TAURUS = '1148346'
++const BISON_BISON = '716661'
++
++const linesOf = (...triples) =>
++  triples.map(
++    (
++      [commoditySelection, speciesSelection, numberOfAnimalsQuantity],
++      index
++    ) => ({
++      index,
++      entry: { commoditySelection, speciesSelection, numberOfAnimalsQuantity }
++    })
++  )
++
++afterEach(() => vi.restoreAllMocks())
++
++describe('#buildSelectedCommodities', () => {
++  it('Should give every commodity line its own summary row so the table pairs with the cards', () => {
++    expect(
++      buildSelectedCommodities(
++        linesOf(
++          ['Cow', BOS_TAURUS, 2],
++          ['Cow', BISON_BISON, 5],
++          ['Fish', '801204', 1]
++        )
++      )
++    ).toEqual([
++      { index: 0, code: '0102', name: 'Domestic cattle', animals: '2' },
++      { index: 1, code: '0102', name: 'American bison', animals: '5' },
++      { index: 2, code: '0301', name: 'Atlantic salmon', animals: '1' }
++    ])
++  })
++
++  it('Should read the declared count as text whether it was stored as a number or re-rendered as an entered string', () => {
++    expect(
++      buildSelectedCommodities(
++        linesOf(['Cow', BOS_TAURUS, 25], ['Fish', '801204', '7'])
++      ).map(({ animals }) => animals)
++    ).toEqual(['25', '7'])
++  })
++
++  it('Should show nothing rather than a placeholder for a line with no count yet', () => {
++    expect(
++      buildSelectedCommodities(linesOf(['Cow', BOS_TAURUS, undefined]))
++    ).toEqual([
++      { index: 0, code: '0102', name: 'Domestic cattle', animals: '' }
++    ])
++  })
++
++  it('Should name each row from the species own common name, not from its commodity', () => {
++    const commonName = vi
++      .spyOn(commodities, 'speciesCommonName')
++      .mockReturnValue('Domestic dog')
++
++    expect(buildSelectedCommodities(linesOf(['Dog', '923502', 1]))).toEqual([
++      { index: 0, code: '01061900', name: 'Domestic dog', animals: '1' }
++    ])
++    expect(commonName).toHaveBeenCalledWith('Dog', '923502')
++  })
++
++  it('Should leave the code blank for a commodity the catalogue holds no code for', () => {
++    expect(
++      buildSelectedCommodities(linesOf(['Unlisted', '999999', 1])).map(
++        ({ code }) => code
++      )
++    ).toEqual([''])
++  })
++
++  it('Should build no rows for an empty selection', () => {
++    expect(buildSelectedCommodities([])).toEqual([])
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 8b0773a7..0a230ccf 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -5,6 +5,9 @@
+ // mutations. A translator should review every function leaf.
+ const plural = (count, noun) => `${count} ${noun}`
+ 
++// The visually-hidden head of every table's action column.
++const ACTIONS_HIDDEN = 'Camau gweithredu'
++
+ export const copy = {
+   search: {
+     title: 'Beth ydych chi’n ei fewnforio?',
+@@ -40,7 +43,7 @@ export const copy = {
+       caption: 'Nwyddau a ddewiswyd',
+       commodityCode: 'Cod nwyddau',
+       commonName: 'Enw cyffredin',
+-      actionsHidden: 'Camau gweithredu',
++      actionsHidden: ACTIONS_HIDDEN,
+       remove: 'Tynnu'
+     },
+     animals: {
+@@ -65,6 +68,15 @@ export const copy = {
+       'Rhaid i chi ychwanegu holl fanylion adnabod yr anifeiliaid cyn i’r llwyth gyrraedd y porthladd mynediad.',
+     emptyText: 'Nid ydych wedi ychwanegu unrhyw nwyddau eto.',
+     addCommodity: 'Ychwanegu nwydd',
++    addAnotherCommodity: 'Ychwanegu nwydd arall',
++    summary: {
++      caption: 'Nwyddau a ddewiswyd',
++      commodityCode: 'Cod nwyddau',
++      commonName: 'Enw cyffredin',
++      numberOfAnimals: 'Nifer yr anifeiliaid',
++      actionsHidden: ACTIONS_HIDDEN,
++      change: 'Newid'
++    },
+     identifierLabels: {
+       animalIdentifierPassport: 'Pasbort',
+       animalIdentifierTattoo: 'Tatŵ',
+@@ -76,7 +88,7 @@ export const copy = {
+     table: {
+       animalColumn: 'Anifail',
+       permanentAddressColumn: 'Cyfeiriad parhaol',
+-      actionsHidden: 'Camau gweithredu'
++      actionsHidden: ACTIONS_HIDDEN
+     },
+     typeFields: {
+       animalIdentifierPassport: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index b2c43ad9..3d697846 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -60,6 +60,15 @@ export const copy = {
+       'You must add all animal identification details before the consignment arrives at the port of entry.',
+     emptyText: 'You have not added any commodities yet.',
+     addCommodity: 'Add a commodity',
++    addAnotherCommodity: 'Add another commodity',
++    summary: {
++      caption: 'Selected commodities',
++      commodityCode: 'Commodity code',
++      commonName: 'Common name',
++      numberOfAnimals: 'Number of animals',
++      actionsHidden: 'Actions',
++      change: 'Change'
++    },
+     identifierLabels: {
+       animalIdentifierPassport: 'Passport',
+       animalIdentifierTattoo: 'Tattoo',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+index 15b1c8ed..7575e664 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+@@ -73,6 +73,22 @@ describe('#copy', () => {
+     )
+   })
+ 
++  // The identification page's summary carries the animal count the
++  // consignment-details table has no column for, so it owns its own heads
++  // rather than borrowing that table's.
++  it('Should head the identification summary with the code, the common name and the animal count', () => {
++    expect(copy.identification.summary).toMatchObject({
++      caption: 'Selected commodities',
++      commodityCode: 'Commodity code',
++      commonName: 'Common name',
++      numberOfAnimals: 'Number of animals',
++      change: 'Change'
++    })
++    expect(copy.identification.addAnotherCommodity).toBe(
++      'Add another commodity'
++    )
++  })
++
+   it('Should interpolate capReached', () => {
+     expect(copy.identification.errors.capReached(2)).toBe(
+       'You have already entered details for all 2 animals — remove a record before adding another'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 8be343dd..3e04b679 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -15,6 +15,8 @@ const COUNTRY_FIELD = '#country-0'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
+ const SALMO_SALAR = 'Salmo salar'
++const DOMESTIC_CATTLE = 'Domestic cattle'
++const ATLANTIC_SALMON = 'Atlantic salmon'
+ const INVALID_COUNTRY = 'Invalid country'
+ const PASSPORT_NUMBER = 'UK123456789'
+ const MAX_LINE_LENGTH = 255
+@@ -137,6 +139,19 @@ const savedAnimalRow = (page, species, number) =>
+ const columnHeader = (page, name) =>
+   page.getByRole('columnheader', { name, exact: true })
+ 
++// The Selected commodities summary is named by its table caption.
++const selectedCommoditiesSummary = (page) =>
++  page.getByRole('table', { name: copy.identification.summary.caption })
++
++const expectSummaryRow = async (summary, commonName, code, animals) => {
++  const row = summary.getByRole('row').filter({ hasText: commonName })
++  for (const cell of [code, commonName, animals]) {
++    await expect(
++      row.getByRole('cell', { name: cell, exact: true })
++    ).toBeVisible()
++  }
++}
++
+ const removeAnimalRow = async (page, species, number) => {
+   const row = savedAnimalRow(page, species, number)
+   await row.getByRole('button', { name: copy.identification.removeRow }).click()
+@@ -272,6 +287,67 @@ test.describe('animal identification', () => {
+   })
+ })
+ 
++test.describe('animal identification selected-commodities summary', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('opens with a summary of what the consignment holds, one line per card', async ({
++    page
++  }) => {
++    await openIdentification(
++      page,
++      [
++        ['Cow', [BOS_TAURUS]],
++        ['Fish', [SALMO_SALAR]]
++      ],
++      ['2', '3']
++    )
++    const summary = selectedCommoditiesSummary(page)
++
++    for (const head of [
++      copy.identification.summary.commodityCode,
++      copy.identification.summary.commonName,
++      copy.identification.summary.numberOfAnimals
++    ]) {
++      await expect(
++        summary.getByRole('columnheader', { name: head, exact: true })
++      ).toBeVisible()
++    }
++
++    await expectSummaryRow(summary, DOMESTIC_CATTLE, '0102', '2')
++    await expectSummaryRow(summary, ATLANTIC_SALMON, '0301', '3')
++  })
++
++  test('changes the commodity list from a summary row', async ({ page }) => {
++    await openIdentification(page, [['Cow', [BOS_TAURUS]]], ['2'])
++    await selectedCommoditiesSummary(page)
++      .getByRole('link', {
++        name: `${copy.identification.summary.change} ${DOMESTIC_CATTLE}`
++      })
++      .click()
++
++    await expect(
++      page.getByRole('heading', { name: copy.search.title })
++    ).toBeVisible()
++  })
++
++  // The route back to the commodity question used to appear only when there
++  // was nothing to identify, so it vanished as the page became usable.
++  test('offers Add another commodity while there are commodities to identify', async ({
++    page
++  }) => {
++    await openIdentification(page, [['Cow', [BOS_TAURUS]]], ['2'])
++    await page
++      .getByRole('link', { name: copy.identification.addAnotherCommodity })
++      .click()
++
++    await expect(
++      page.getByRole('heading', { name: copy.search.title })
++    ).toBeVisible()
++  })
++})
++
+ test.describe('animal identification identifier validation', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)

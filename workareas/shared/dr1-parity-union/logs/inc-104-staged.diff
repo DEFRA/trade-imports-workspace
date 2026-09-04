@@ -1,0 +1,540 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+index 1b0220ae..94fc75d3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+@@ -1,6 +1,7 @@
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "govuk/components/select/macro.njk" import govukSelect %}
+ {% from "govuk/components/button/macro.njk" import govukButton %}
++{% from "live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk" import savedAnimalsTable %}
+ 
+ {# One card per species line (design 01-16/17): the entered-identifiers
+    table with per-row Remove, then the counter-driven entry form for the NEXT
+@@ -10,17 +11,7 @@
+     <h2 class="govuk-heading-m">{{ card.title }}</h2>
+ 
+     {% if card.hasUnits %}
+-      <dl class="govuk-summary-list">
+-        {% for unit in card.units %}
+-          <div class="govuk-summary-list__row">
+-            <dt class="govuk-summary-list__key">{{ unit.label }}</dt>
+-            <dd class="govuk-summary-list__value">{{ unit.summary }}</dd>
+-            <dd class="govuk-summary-list__actions">
+-              <button type="submit" class="govuk-link app-link-button" name="action" value="remove:{{ unit.line }}:{{ unit.unitIndex }}">{{ copy.removeRow }}<span class="govuk-visually-hidden"> {{ unit.removeAria }}</span></button>
+-            </dd>
+-          </div>
+-        {% endfor %}
+-      </dl>
++      {{ savedAnimalsTable(card, copy) }}
+     {% endif %}
+ 
+     {% if card.atMax %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk
+new file mode 100644
+index 00000000..e859a228
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk
+@@ -0,0 +1,27 @@
++{% from "govuk/components/table/macro.njk" import govukTable %}
++
++{# The animals already saved against one commodity line: a header row naming
++   every identifier the line declares, then one row per animal keyed by species
++   and number with a cell per identifier and Remove last (design 01-16/17). #}
++{% macro savedAnimalsTable(card, copy) %}
++  {% set head = [{ text: copy.table.animalColumn }] %}
++  {% for label in card.identifierColumns %}
++    {% set ignored = head.push({ text: label }) %}
++  {% endfor %}
++  {% set ignored = head.push({ html: '<span class="govuk-visually-hidden">' + copy.table.actionsHidden + '</span>' }) %}
++
++  {% set rows = [] %}
++  {% for unit in card.units %}
++    {% set removeCell %}
++      <button type="submit" class="govuk-link app-link-button" name="action" value="remove:{{ unit.line }}:{{ unit.unitIndex }}">{{ copy.removeRow }}<span class="govuk-visually-hidden"> {{ unit.removeAria }}</span></button>
++    {% endset %}
++    {% set cells = [{ text: unit.label }] %}
++    {% for cell in unit.cells %}
++      {% set ignored = cells.push({ text: cell }) %}
++    {% endfor %}
++    {% set ignored = cells.push({ html: removeCell, classes: "govuk-!-text-align-right" }) %}
++    {% set ignored = rows.push(cells) %}
++  {% endfor %}
++
++  {{ govukTable({ head: head, rows: rows }) }}
++{% endmacro %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+index e7b6887f..b5abd4ec 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+@@ -17,10 +17,7 @@ import {
+ import { appendLineRecords } from './records/append.js'
+ import { isRemoveAction, postRemove } from './remove/post-remove.js'
+ 
+-export {
+-  IDENTIFIER_LABELS,
+-  animalIdentifierSummary
+-} from './identifier/summary.js'
++export { IDENTIFIER_LABELS } from './identifier/table.js'
+ 
+ export const meta = { ...page, collects: [] }
+ const view = `${TEMPLATES}/features/commodities/animal-identification/animal-identification`
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index 10f1efe2..009b9515 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -44,6 +44,14 @@ const cowLine = (extra = {}) => ({
+   ...extra
+ })
+ 
++const fishLine = (extra = {}) => ({
++  commoditySelection: 'Fish',
++  speciesSelection: '801204',
++  numberOfPackages: '',
++  numberOfAnimalsQuantity: '',
++  ...extra
++})
++
+ const viewCards = async (seed) => {
+   const journey = await store.create()
+   await store.seedAnswers(journey.journeyId, seed)
+@@ -80,7 +88,7 @@ describe(`${SUITE} — the cards view`, () => {
+     expect(card.counter).toBe('Enter details for Bos taurus 2 of 2')
+     expect(card.atMax).toBe(false)
+     expect(card.units).toHaveLength(1)
+-    expect(card.units[0].summary).toContain('Ear tag: UK1')
++    expect(card.units[0].label).toBe('Bos taurus 1')
+   })
+ 
+   it('Should drop the M from the counter while the count is unanswered — no cap, entry still allowed', async () => {
+@@ -136,6 +144,113 @@ describe(`${SUITE} — the cards view`, () => {
+   })
+ })
+ 
++describe(`${SUITE} — the saved-animals table`, () => {
++  setupIdentificationEngine()
++
++  it('Should head the table with every identifier the commodity declares, not only the ones filled in', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        cowLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK1' }]
++        })
++      ]
++    })
++    expect(card.identifierColumns).toEqual(['Passport', 'Tattoo', 'Ear tag'])
++    expect(card.units[0].cells).toEqual(['', '', 'UK1'])
++  })
++
++  it('Should number the rows within a commodity line by the species and the row position', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        cowLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [
++            { animalIdentifierEarTag: 'UK1' },
++            { animalIdentifierPassport: 'UK2' }
++          ]
++        })
++      ]
++    })
++    expect(card.units.map((unit) => unit.label)).toEqual([
++      'Bos taurus 1',
++      'Bos taurus 2'
++    ])
++    expect(card.units[1].cells).toEqual(['UK2', '', ''])
++  })
++
++  it('Should key each row by its own line\'s species so two commodity lines do not both start at "Animal 1"', async () => {
++    const cards = await viewCards({
++      commodityLines: [
++        cowLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK1' }]
++        }),
++        catLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [{ animalIdentifierPassport: 'UK2' }]
++        })
++      ]
++    })
++    expect(cards).toHaveLength(2)
++    expect(cards[0].units.map((unit) => unit.label)).toEqual(['Bos taurus 1'])
++    expect(cards[1].units.map((unit) => unit.label)).toEqual(['Felis catus 1'])
++  })
++
++  it('Should fall back to the positional label when the line names no species', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        cowLine({
++          speciesSelection: '',
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK1' }]
++        })
++      ]
++    })
++    expect(card.units[0].label).toBe('Animal 1')
++  })
++
++  it('Should give the permanent address its own column where the commodity requires one', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        catLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [
++            {
++              animalIdentifierPassport: 'UK123456789',
++              permanentAddress: { name: 'Pet Owner' }
++            }
++          ]
++        })
++      ]
++    })
++    expect(card.identifierColumns).toEqual([
++      'Passport',
++      'Tattoo',
++      'Permanent address'
++    ])
++    expect(card.units[0].cells).toEqual(['UK123456789', '', 'Pet Owner'])
++  })
++
++  it('Should head a fallback-identifier commodity with its own columns and no permanent address', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        fishLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [
++            { animalIdentifierIdentificationDetails: 'Tank mark TM-77' }
++          ]
++        })
++      ]
++    })
++    expect(card.identifierColumns).toEqual([
++      'Identification details',
++      'Description'
++    ])
++    expect(card.units[0].cells).toEqual(['Tank mark TM-77', ''])
++  })
++})
++
+ describe(`${SUITE} — Save and add another`, () => {
+   setupIdentificationEngine()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
+index a1877e99..14601154 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
+@@ -10,7 +10,7 @@ import {
+   permanentAddressApplies,
+   scopedFields
+ } from '../identifier/fields.js'
+-import { animalIdentifierSummary } from '../identifier/summary.js'
++import { identifierCellText, identifierColumns } from '../identifier/table.js'
+ 
+ const copy = copyFor({ en, cy }).identification
+ 
+@@ -42,12 +42,18 @@ const maxReachedTextFor = (cap, species, units, overBy, atMax) => {
+   return null
+ }
+ 
+-const unitEntries = (index, units) =>
++// The row is keyed by the animal, not by its place in the list: on a page
++// holding four commodity lines "Animal 1" heads the first row of every one of
++// them, where "Bos taurus 1" says which animal of which species it is.
++const animalLabelOf = (species, number) =>
++  species ? copy.animalRowNamed(species, number) : copy.animalRow(number)
++
++const unitEntries = (index, species, columns, units) =>
+   units.map((unit, unitIndex) => ({
+     line: index,
+     unitIndex,
+-    label: copy.animalRow(unitIndex + 1),
+-    summary: animalIdentifierSummary(unit),
++    label: animalLabelOf(species, unitIndex + 1),
++    cells: columns.map(([id]) => identifierCellText(unit, id)),
+     removeAria: copy.removeRowAria(unitIndex + 1)
+   }))
+ 
+@@ -90,6 +96,7 @@ export const buildCard = (answers, line, form, errors) => {
+   const values = form?.values ?? blankValuesFor(commodity)
+   const addressValues = form?.addressValues ?? blankAddress()
+   const showAddress = permanentAddressApplies(commodity)
++  const columns = identifierColumns(commodity)
+   return {
+     index,
+     anchor: `identification-card-${index}`,
+@@ -104,7 +111,8 @@ export const buildCard = (answers, line, form, errors) => {
+       atMax
+     ),
+     atMax,
+-    units: unitEntries(index, units),
++    identifierColumns: columns.map(([, label]) => label),
++    units: unitEntries(index, species, columns, units),
+     hasUnits: units.length > 0,
+     fields: visibleIdentifierFields(atMax, commodity, index, values, errors),
+     showAddress: showAddress && !atMax,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js
+deleted file mode 100644
+index 9e3a9b59..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/summary.js
++++ /dev/null
+@@ -1,19 +0,0 @@
+-import { copyFor } from '../../../../../../../../shared/copy.js'
+-import { copy as en } from '../../copy/copy.en.js'
+-import { copy as cy } from '../../copy/copy.cy.js'
+-
+-const copy = copyFor({ en, cy }).identification
+-
+-export const IDENTIFIER_LABELS = copy.identifierLabels
+-
+-export const animalIdentifierSummary = (unit) => {
+-  const parts = Object.entries(IDENTIFIER_LABELS)
+-    .filter(([id]) => (unit[id] ?? '').toString().trim() !== '')
+-    .map(([id, label]) => `${label}: ${unit[id]}`)
+-  if (unit.permanentAddress?.name) {
+-    parts.push(
+-      `${copy.permanentAddressSummaryLabel}: ${unit.permanentAddress.name}`
+-    )
+-  }
+-  return parts.length ? parts.join(', ') : copy.noIdentifier
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/table.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/table.js
+new file mode 100644
+index 00000000..bddfee8a
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/table.js
+@@ -0,0 +1,26 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { permanentAddressApplies, scopedFields } from './fields.js'
++
++const copy = copyFor({ en, cy }).identification
++
++export const IDENTIFIER_LABELS = copy.identifierLabels
++
++const PERMANENT_ADDRESS = 'permanentAddress'
++
++// One column per identifier the COMMODITY declares — not per identifier the
++// trader happened to fill — so the header row says which identifiers this line
++// expects and an empty cell shows which are still missing (design 01-16/17).
++export const identifierColumns = (commodity) => [
++  ...scopedFields(commodity).map((field) => [
++    field.id,
++    IDENTIFIER_LABELS[field.id]
++  ]),
++  ...(permanentAddressApplies(commodity)
++    ? [[PERMANENT_ADDRESS, copy.table.permanentAddressColumn]]
++    : [])
++]
++
++export const identifierCellText = (unit, id) =>
++  (id === PERMANENT_ADDRESS ? unit.permanentAddress?.name : unit[id]) ?? ''
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 44ed06b1..8b0773a7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -73,8 +73,11 @@ export const copy = {
+       animalIdentifierIdentificationDetails: 'Manylion adnabod',
+       animalIdentifierDescription: 'Disgrifiad'
+     },
+-    permanentAddressSummaryLabel: 'Cyfeiriad parhaol',
+-    noIdentifier: 'Dim dynodwr wedi’i ddarparu',
++    table: {
++      animalColumn: 'Anifail',
++      permanentAddressColumn: 'Cyfeiriad parhaol',
++      actionsHidden: 'Camau gweithredu'
++    },
+     typeFields: {
+       animalIdentifierPassport: {
+         label: 'Rhif pasbort',
+@@ -105,6 +108,7 @@ export const copy = {
+     allEntered: (cap, species) =>
+       `Rydych wedi nodi manylion ar gyfer pob un o’r ${cap} anifail ${species}. Tynnwch gofnod os oes angen i chi ei ddisodli.`,
+     animalRow: (number) => `Anifail ${number}`,
++    animalRowNamed: (species, number) => `${species} ${number}`,
+     removeRow: 'Tynnu',
+     removeRowAria: (number) => `anifail ${number}`,
+     permanentAddress: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index f2bd493b..b2c43ad9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -68,8 +68,11 @@ export const copy = {
+       animalIdentifierIdentificationDetails: 'Identification details',
+       animalIdentifierDescription: 'Description'
+     },
+-    permanentAddressSummaryLabel: 'Permanent address',
+-    noIdentifier: 'No identifier provided',
++    table: {
++      animalColumn: 'Animal',
++      permanentAddressColumn: 'Permanent address',
++      actionsHidden: 'Actions'
++    },
+     typeFields: {
+       animalIdentifierPassport: {
+         label: 'Passport number',
+@@ -100,6 +103,7 @@ export const copy = {
+     allEntered: (cap, species) =>
+       `You have entered details for all ${cap} ${species} animals. Remove a record if you need to replace it.`,
+     animalRow: (number) => `Animal ${number}`,
++    animalRowNamed: (species, number) => `${species} ${number}`,
+     removeRow: 'Remove',
+     removeRowAria: (number) => `animal ${number}`,
+     permanentAddress: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index ab2fe152..8be343dd 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -12,8 +12,8 @@ const SAVE_AND_CONTINUE = 'Save and continue'
+ const PASSPORT_FIELD = '#animalIdentifierPassport-0'
+ const EAR_TAG_FIELD = '#animalIdentifierEarTag-0'
+ const COUNTRY_FIELD = '#country-0'
+-const SUMMARY_ROW = '.govuk-summary-list__row'
+ const BOS_TAURUS = 'Bos taurus'
++const FELIS_CATUS = 'Felis catus'
+ const SALMO_SALAR = 'Salmo salar'
+ const INVALID_COUNTRY = 'Invalid country'
+ const PASSPORT_NUMBER = 'UK123456789'
+@@ -60,7 +60,7 @@ const openIdentification = async (page, selections, counts = []) => {
+ }
+ 
+ const openCatIdentification = (page) =>
+-  openIdentification(page, [['Cat', ['Felis catus']]], ['2'])
++  openIdentification(page, [['Cat', [FELIS_CATUS]]], ['2'])
+ 
+ const errorLink = (page, message) =>
+   page.locator('.govuk-error-summary').getByRole('link', { name: message })
+@@ -127,10 +127,18 @@ const submitAdd = (page) =>
+ const saveAndFinish = (page) =>
+   page.getByRole('button', { name: copy.identification.saveAndFinish }).click()
+ 
+-const removeAnimalRow = async (page, index) => {
+-  const row = page.locator(SUMMARY_ROW, {
+-    hasText: copy.identification.animalRow(index)
+-  })
++// A saved animal is one row of the card's table, keyed by its species and
++// number — "Bos taurus 1".
++const savedAnimalRow = (page, species, number) =>
++  page
++    .getByRole('row')
++    .filter({ hasText: copy.identification.animalRowNamed(species, number) })
++
++const columnHeader = (page, name) =>
++  page.getByRole('columnheader', { name, exact: true })
++
++const removeAnimalRow = async (page, species, number) => {
++  const row = savedAnimalRow(page, species, number)
+   await row.getByRole('button', { name: copy.identification.removeRow }).click()
+   return row
+ }
+@@ -144,9 +152,7 @@ const addCatRecordRow = async (page) => {
+   await openCatIdentification(page)
+   await fillCatRecord(page)
+   await submitAdd(page)
+-  return page.locator(SUMMARY_ROW, {
+-    hasText: copy.identification.animalRow(1)
+-  })
++  return savedAnimalRow(page, FELIS_CATUS, 1)
+ }
+ 
+ const submitStaleAdd = (page) =>
+@@ -376,25 +382,81 @@ test.describe('animal identification records', () => {
+     await signIn(page)
+   })
+ 
+-  test('adds a complete record and renders its identifier and permanent-address summary', async ({
++  test('adds a complete record and reads it back as a row of the saved-animals table', async ({
+     page
+   }) => {
+     const row = await addCatRecordRow(page)
+ 
+-    await expect(row).toContainText(
+-      `${copy.identification.identifierLabels.animalIdentifierPassport}: ${PASSPORT_NUMBER}`
+-    )
+-    await expect(row).toContainText(
+-      `${copy.identification.permanentAddressSummaryLabel}: Pet Owner`
+-    )
++    await expect(
++      columnHeader(page, copy.identification.table.animalColumn)
++    ).toBeVisible()
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierPassport
++      )
++    ).toBeVisible()
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierTattoo
++      )
++    ).toBeVisible()
++    await expect(
++      columnHeader(page, copy.identification.table.permanentAddressColumn)
++    ).toBeVisible()
++
++    await expect(
++      row.getByRole('cell', { name: PASSPORT_NUMBER, exact: true })
++    ).toBeVisible()
++    await expect(
++      row.getByRole('cell', { name: 'Pet Owner', exact: true })
++    ).toBeVisible()
++  })
++
++  test('heads the table with every identifier the commodity declares, not only the ones filled in', async ({
++    page
++  }) => {
++    await openIdentification(page, [['Cow', [BOS_TAURUS]]], ['2'])
++    await addCowRecord(page, 'UK000000000001')
++
++    await expect(
++      columnHeader(page, copy.identification.table.animalColumn)
++    ).toBeVisible()
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierPassport
++      )
++    ).toBeVisible()
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierEarTag
++      )
++    ).toBeVisible()
++    await expect(
++      savedAnimalRow(page, BOS_TAURUS, 1).getByRole('cell', {
++        name: 'UK000000000001',
++        exact: true
++      })
++    ).toBeVisible()
+   })
+ 
+   test('removes an added record', async ({ page }) => {
+     await addCatRecordRow(page)
+-    const row = await removeAnimalRow(page, 1)
++    const row = await removeAnimalRow(page, FELIS_CATUS, 1)
+     await expect(row).toHaveCount(0)
+   })
+ 
++  test('has no serious or critical axe violations once an animal is saved', async ({
++    page
++  }) => {
++    const row = await addCatRecordRow(page)
++    await expect(row).toBeVisible()
++    await expectAxeClean(page, 'Animal identification with a saved animal')
++  })
++
+   test('rejects a stale add action after the animal-count cap is reached', async ({
+     page
+   }) => {
+@@ -439,7 +501,7 @@ test.describe('animal identification records', () => {
+     await expect(errorLink(page, countDrop)).toBeVisible()
+     await errorLink(page, countDrop).click()
+ 
+-    await removeAnimalRow(page, 2)
++    await removeAnimalRow(page, BOS_TAURUS, 2)
+     await expect(
+       page.getByRole('heading', {
+         name: copy.identification.counter(BOS_TAURUS, 2, 2)

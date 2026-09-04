@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-104}} from the {{shared/dr1-parity-union}} backlog.
+
+Frontend reads a saved animal back as one run-together line labelled "Animal 1". Design release 1 reads it back in a table with a column per identifier and the species in the row label.
+
+h2. Acceptance criteria
+
+* The list of saved animals on the animal identification page renders as a table, replacing the {{govuk-summary-list}} currently rendered from {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk}} lines 12 to 24.
+* The table has a header row naming each identifier the commodity declares — for cattle, "Ear tag" and "Passport" — using the identifier labels already held in {{src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js}} lines 48 to 55.
+* Each saved animal is one row, keyed by the species and its number — for example "Bos taurus 1" — rather than by position alone as "Animal 1".
+* Each identifier the commodity declares has its own cell in the row, so identifier values read down a column instead of being joined into one sentence.
+* The existing Remove action stays, in the last cell of each row.
+* No new data is introduced: the change is to the template and the card view model only. The card view model already knows which identifiers apply to the line.
+* The nearest working model in this repo is the check answers identifier table at {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/identifier-table.js}} lines 9 to 24. Follow that shape.
+* Unit tests cover the header row, a row per saved animal, one cell per declared identifier, and an empty cell where an identifier holds no value.
+* Existing frontend tests and the affected E2E specs pass, with visual baselines updated where the new table changes them.
+
+h2. Notes
+
+Land this after {{identification--identifier-labels}} \(inc-099\), which fixes the labels the header row uses. Whichever way {{identification--identifier-completeness}} is settled changes what an empty cell means rather than whether the table is right.
+
+Design release 1's reference partial is {{app/views/partials/animal-identification-saved-animals.html}} lines 1 to 28. Note that {{buildSavedAnimalsTable}} in the prototype's {{app/routes.js}} is *not* what this page renders — it feeds the review page only.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

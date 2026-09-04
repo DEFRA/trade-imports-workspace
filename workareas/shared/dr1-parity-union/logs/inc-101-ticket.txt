@@ -1,0 +1,35 @@
+h2. Increment
+
+{{inc-101}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+Frontend knows six ways to identify an animal and a microchip is not one of them: passport, tattoo, ear tag, horse name, and — only for commodities that have no specific identifier at all — free-text identification details and a description ({{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js}} lines 113-198). Which of the four specific types appear is decided by four commodity allowlists in {{src/server/app/sets/live-animals/services/commodities/stub.js}} lines 107-115. Because dogs and horses do have specific identifiers, the free-text fallback is switched off for them, so a trader importing a dog is shown a passport and a tattoo field and nothing else.
+
+Design release 1 asks for a microchip on both identifier sets a companion animal or an equine falls into. A horse (commodity code 0101) is asked for Microchip, Passport and Horse name; a cat, dog, ferret or other live mammal — all commodity code 01061900 — is asked for Microchip, Passport and Tattoo ({{app/data/commodity-identifiers.js}} lines 3-19). Microchip is the first field on both panels. Microchipping is how a dog is identified in law, so the field is not decoration.
+
+This is banded *needs-backend*: the animal identifier record the backend sends to GBNAG recognises only the type codes {{EAR_TAG}} and {{PASSPORT}} ({{TradeProductInstance.AnimalIdentifier}} in {{trade-imports-animals-backend}}), so a microchip captured in Frontend would have nowhere to go once the notification is sent. A note from verification: the outbox drops tattoo, horse name and the free-text identifiers today as well, so the contract work is a general one rather than a single new type code.
+
+h2. Acceptance criteria
+
+* A trader selecting a horse, cat, dog or ferret sees a Microchip field on the animal identification page, alongside the identifiers already offered for that commodity.
+* A seventh identifier obligation for microchip is added beside passport, tattoo, ear tag and horse name in {{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js}}.
+* A {{MICROCHIP_COMMODITIES}} allowlist is added beside the existing four in {{src/server/app/sets/live-animals/services/commodities/stub.js}}, written in the stub's picker-name vocabulary, and covers horse, cat, dog and ferret — not the dog and horse alone.
+* A label and an error message for the microchip field are added to {{src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js}}.
+* The new obligation id is added to the unit record's {{requires.anyOfIds}}, so a microchip on its own satisfies the at-least-one-identifier rule.
+* The new obligation id is added to the specific-identifier union, so the free-text fallback keeps behaving exactly as it does today for commodities with no specific identifier.
+* The backend's animal identifier contract carries a {{MICROCHIP}} type code and the field that feeds it, so a microchip entered in Frontend reaches the outbox rather than being dropped.
+* Unit tests cover the new obligation, the allowlist membership for each of the four commodities, and the backend type-code mapping.
+* The E2E specs and any affected visual baselines in {{trade-imports-animals-tests}} are updated for the new field.
+
+h2. Verification
+
+Falsified by: a microchip field rendered on Frontend's animal identification page for a horse, cat, dog or ferret, or a microchip value carried anywhere in Frontend's notification payload. Verified from source on both sides: a case-insensitive search for microchip across the frontend {{src}} tree returns only the value {{Microchip 900123}} typed into the free-text identification field in two test fixtures, and {{TradeProductInstance.java}} lines 17-18 declare only {{EAR_TAG}} and {{PASSPORT}}.
+
+Screens: {{fe-animal-identification}}, {{dr1-animal-identification-details}}. No capture in this corpus shows the Design release 1 field — its identification capture was taken with cattle selected. Capturing {{dr1-animal-identification-details}} with commodity 01061900 or 0101 selected would show it.
+
+Travels with {{inc-110}} — the same per-commodity identifier sets.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,731 @@
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index 65e3822b..f05281f2 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -262,6 +262,7 @@ describe('controller <-> model commit contract', () => {
+       seed: { commodityLines: [{ commoditySelection: 'Cat' }] },
+       payload: {
+         action: 'add:0',
++        'animalIdentifierMicrochip-0': '900123456789012',
+         'animalIdentifierPassport-0': 'UK123456789',
+         'animalIdentifierEarTag-0': 'UK999',
+         'nameOrOrganisationName-0': 'Pet Owner',
+@@ -274,6 +275,7 @@ describe('controller <-> model commit contract', () => {
+       }
+     })
+     const unit = result.after.commodityLines[0].animalIdentifiers[0]
++    expect(unit.animalIdentifierMicrochip).toBe('900123456789012')
+     expect(unit.animalIdentifierPassport).toBe('UK123456789')
+     expect('animalIdentifierEarTag' in unit).toBe(false)
+     expect(unit.permanentAddress.name).toBe('Pet Owner')
+diff --git a/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js b/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js
+index 9ae64103..9163539a 100644
+--- a/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js
++++ b/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js
+@@ -71,7 +71,8 @@ const mappedAnswers = () => ({
+ 
+ // mappedAnswers plus every obligation Mapper A has no home for: the Tier-A
+ // pair, the Tier-B gaps, the Tier-C documents collection, and a richer
+-// animal-identifier unit carrying the five dropped unit identifiers.
++// animal-identifier unit carrying the microchip (which does have a home) and
++// the five dropped unit identifiers.
+ const answersWithGaps = () => ({
+   ...mappedAnswers(),
+   regionOfOriginCode: 'FR-75',
+@@ -102,6 +103,7 @@ const answersWithGaps = () => ({
+         {
+           animalIdentifierEarTag: 'UK123456789012',
+           animalIdentifierPassport: 'UK123456789',
++          animalIdentifierMicrochip: '900123456789012',
+           animalIdentifierTattoo: 'AB1234',
+           horseName: 'Dobbin',
+           animalIdentifierIdentificationDetails: 'Hive mark HM-2026-004',
+@@ -139,7 +141,12 @@ const groupedLines = () => [
+     commodityType: '2',
+     numberOfPackages: '1',
+     numberOfAnimalsQuantity: '2',
+-    animalIdentifiers: [{ animalIdentifierPassport: 'UK-CAT-1' }]
++    animalIdentifiers: [
++      {
++        animalIdentifierPassport: 'UK-CAT-1',
++        animalIdentifierMicrochip: '900987654321098'
++      }
++    ]
+   }
+ ]
+ 
+@@ -190,7 +197,8 @@ describe('Mapper A — current backend notification (as-is)', () => {
+         text: 'Felis catus',
+         noOfAnimals: '2',
+         noOfPackages: '1',
+-        passport: 'UK-CAT-1'
++        passport: 'UK-CAT-1',
++        microchip: '900987654321098'
+       }
+     ])
+   })
+@@ -283,7 +291,7 @@ describe('Mapper A — current backend notification (as-is)', () => {
+     ).toBe(false)
+   })
+ 
+-  test('Should keep only earTag and passport on the species entry, dropping the five unit identifiers', () => {
++  test('Should keep only earTag, passport and microchip on the species entry, dropping the five unit identifiers', () => {
+     const notification = currentNotificationFrom(answersWithGaps())
+     const species = notification.commodity.commodityComplement[0].species[0]
+ 
+@@ -293,7 +301,8 @@ describe('Mapper A — current backend notification (as-is)', () => {
+       noOfAnimals: '25',
+       noOfPackages: '5',
+       earTag: 'UK123456789012',
+-      passport: 'UK123456789'
++      passport: 'UK123456789',
++      microchip: '900123456789012'
+     })
+     expect('animalIdentifiers' in notification.commodity).toBe(false)
+   })
+diff --git a/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js b/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js
+index 1c94681b..fcf56ba0 100644
+--- a/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js
++++ b/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js
+@@ -6,6 +6,7 @@ const legacyAnimalCount = (value) =>
+ 
+ const unitFrom = (valueAt, identifiers, unitIndex) =>
+   compact({
++    animalIdentifierMicrochip: valueAt(identifiers.microchip, unitIndex),
+     animalIdentifierPassport: valueAt(identifiers.passport, unitIndex),
+     animalIdentifierTattoo: valueAt(identifiers.tattoo, unitIndex),
+     animalIdentifierEarTag: valueAt(identifiers.earTag, unitIndex),
+@@ -30,6 +31,7 @@ export const commodityLinesFromFulfilment = (reader) => {
+     earTag,
+     horseName,
+     identificationDetails,
++    microchip,
+     numberOfAnimals,
+     numberOfPackages,
+     passport,
+@@ -39,6 +41,7 @@ export const commodityLinesFromFulfilment = (reader) => {
+     unitRecord
+   } = obligationSet()
+   const identifierObligations = [
++    microchip,
+     passport,
+     tattoo,
+     earTag,
+@@ -64,6 +67,7 @@ export const commodityLinesFromFulfilment = (reader) => {
+   const valueAt = (obligation, fulfilmentIndex) =>
+     recordsByObligation.get(obligation)[fulfilmentIndex]
+   const identifiers = {
++    microchip,
+     passport,
+     tattoo,
+     earTag,
+diff --git a/src/server/app/services/persistence/records/notification-mapper/shared/lines/species-entry.js b/src/server/app/services/persistence/records/notification-mapper/shared/lines/species-entry.js
+index 7dcc0819..dd4b6882 100644
+--- a/src/server/app/services/persistence/records/notification-mapper/shared/lines/species-entry.js
++++ b/src/server/app/services/persistence/records/notification-mapper/shared/lines/species-entry.js
+@@ -5,7 +5,9 @@ import { compact } from '../compact.js'
+ // falling back to the raw value for unknown codes — matching the skeleton's
+ // `speciesByValue.get(value) ?? value` resolution. One entry per line; the
+ // skeleton pairs one earTag/passport per species row, so the entry carries the
+-// line's first identifier unit.
++// line's first identifier unit. The microchip joins ear tag and passport as an
++// identifier the backend species entry has a home for; the tattoo, the horse
++// name and the two free-text identifiers still have none and are dropped.
+ export const speciesEntryFromLine = (line) => {
+   const unit = line.animalIdentifiers?.[0] ?? {}
+   return compact({
+@@ -14,6 +16,7 @@ export const speciesEntryFromLine = (line) => {
+     noOfAnimals: line.numberOfAnimalsQuantity,
+     noOfPackages: line.numberOfPackages,
+     earTag: unit.animalIdentifierEarTag,
+-    passport: unit.animalIdentifierPassport
++    passport: unit.animalIdentifierPassport,
++    microchip: unit.animalIdentifierMicrochip
+   })
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index 70ca5286..8c8d871d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -24,6 +24,7 @@ const getHandler = animalIdentification.routes.find(
+   (route) => route.method === 'GET'
+ ).handler
+ 
++const MICROCHIP_FIELD_0 = 'animalIdentifierMicrochip-0'
+ const PASSPORT_FIELD_0 = 'animalIdentifierPassport-0'
+ const TATTOO_FIELD_0 = 'animalIdentifierTattoo-0'
+ const IDENTIFICATION_PAGE = 'commodities/identification'
+@@ -103,10 +104,10 @@ describe(`${SUITE} — the cards view`, () => {
+   it('Should show only the commodity-gated fields per card — typed for Cats with the address, no fallbacks', async () => {
+     const [card] = await viewCards({ commodityLines: [catLine()] })
+     const labels = card.fields.map((field) => field.label)
+-    expect(labels).toEqual(['Passport number', 'Tattoo'])
++    expect(labels).toEqual(['Microchip number', 'Passport number', 'Tattoo'])
+     expect(card.showAddress).toBe(true)
+     const ids = card.fields.map((field) => field.id)
+-    expect(ids).toEqual([PASSPORT_FIELD_0, TATTOO_FIELD_0])
++    expect(ids).toEqual([MICROCHIP_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0])
+   })
+ 
+   it('Should replace the entry form with the maximum-reached state at N = M, keeping the rows removable', async () => {
+@@ -262,11 +263,12 @@ describe(`${SUITE} — the saved-animals table`, () => {
+       ]
+     })
+     expect(card.identifierColumns).toEqual([
++      'Microchip',
+       'Passport',
+       'Tattoo',
+       'Permanent address'
+     ])
+-    expect(card.units[0].cells).toEqual(['UK123456789', '', 'Pet Owner'])
++    expect(card.units[0].cells).toEqual(['', 'UK123456789', '', 'Pet Owner'])
+   })
+ 
+   it('Should head a fallback-identifier commodity with its own columns and no permanent address', async () => {
+@@ -523,19 +525,19 @@ describe(`${SUITE} — identifier render matrix — model metadata per selectabl
+     {
+       commodity: 'Horse',
+       species: '822332',
+-      fieldIds: [PASSPORT_FIELD_0, 'horseName-0'],
++      fieldIds: [MICROCHIP_FIELD_0, PASSPORT_FIELD_0, 'horseName-0'],
+       showAddress: false
+     },
+     {
+       commodity: 'Cat',
+       species: '923501',
+-      fieldIds: [PASSPORT_FIELD_0, TATTOO_FIELD_0],
++      fieldIds: [MICROCHIP_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0],
+       showAddress: true
+     },
+     {
+       commodity: 'Dog',
+       species: '923502',
+-      fieldIds: [PASSPORT_FIELD_0, TATTOO_FIELD_0],
++      fieldIds: [MICROCHIP_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0],
+       showAddress: true
+     },
+     {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 0a230ccf..c8042adc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -78,6 +78,7 @@ export const copy = {
+       change: 'Newid'
+     },
+     identifierLabels: {
++      animalIdentifierMicrochip: 'Microsglodyn',
+       animalIdentifierPassport: 'Pasbort',
+       animalIdentifierTattoo: 'Tatŵ',
+       animalIdentifierEarTag: 'Tag clust',
+@@ -91,6 +92,10 @@ export const copy = {
+       actionsHidden: ACTIONS_HIDDEN
+     },
+     typeFields: {
++      animalIdentifierMicrochip: {
++        label: 'Rhif microsglodyn',
++        hint: 'Er enghraifft, 900123456789012'
++      },
+       animalIdentifierPassport: {
+         label: 'Rhif pasbort',
+         hint: 'Er enghraifft, UK123456789'
+@@ -143,6 +148,8 @@ export const copy = {
+     },
+     errors: {
+       identifierMax: {
++        animalIdentifierMicrochip:
++          'Rhaid i’r microsglodyn fod yn 58 nod neu lai',
+         animalIdentifierPassport: 'Rhaid i’r pasbort fod yn 58 nod neu lai',
+         animalIdentifierTattoo: 'Rhaid i’r tatŵ fod yn 58 nod neu lai',
+         animalIdentifierEarTag: 'Rhaid i’r tag clust fod yn 58 nod neu lai',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 3d697846..2ede6e14 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -70,6 +70,7 @@ export const copy = {
+       change: 'Change'
+     },
+     identifierLabels: {
++      animalIdentifierMicrochip: 'Microchip',
+       animalIdentifierPassport: 'Passport',
+       animalIdentifierTattoo: 'Tattoo',
+       animalIdentifierEarTag: 'Ear tag',
+@@ -83,6 +84,10 @@ export const copy = {
+       actionsHidden: 'Actions'
+     },
+     typeFields: {
++      animalIdentifierMicrochip: {
++        label: 'Microchip number',
++        hint: 'For example, 900123456789012'
++      },
+       animalIdentifierPassport: {
+         label: 'Passport number',
+         hint: 'For example, UK123456789'
+@@ -135,6 +140,7 @@ export const copy = {
+     },
+     errors: {
+       identifierMax: {
++        animalIdentifierMicrochip: 'Microchip must be 58 characters or fewer',
+         animalIdentifierPassport: 'Passport must be 58 characters or fewer',
+         animalIdentifierTattoo: 'Tattoo must be 58 characters or fewer',
+         animalIdentifierEarTag: 'Ear tag must be 58 characters or fewer',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js
+index 6135aa67..be3723d4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js
+@@ -10,6 +10,7 @@ import {
+   earTag,
+   horseName,
+   identificationDetails,
++  microchip,
+   numberOfAnimals,
+   numberOfPackages,
+   passport,
+@@ -53,6 +54,7 @@ export const evaluationBindings = feature('commodities', [
+     convert: toNumberWhenParses
+   }),
+   lineLeaf('numberOfPackages', numberOfPackages),
++  unitLeaf('animalIdentifierMicrochip', microchip),
+   unitLeaf('animalIdentifierPassport', passport),
+   unitLeaf('animalIdentifierTattoo', tattoo),
+   unitLeaf('animalIdentifierEarTag', earTag),
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index ab07577b..ab8d98b0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -10,15 +10,18 @@ import { copy } from '../copy/copy.en.js'
+ 
+ const SAVE_AND_CONTINUE = 'Save and continue'
+ const PASSPORT_FIELD = '#animalIdentifierPassport-0'
++const MICROCHIP_FIELD = '#animalIdentifierMicrochip-0'
+ const EAR_TAG_FIELD = '#animalIdentifierEarTag-0'
+ const COUNTRY_FIELD = '#country-0'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
++const CANIS_LUPUS_FAMILIARIS = 'Canis lupus familiaris'
+ const SALMO_SALAR = 'Salmo salar'
+ const DOMESTIC_CATTLE = 'Domestic cattle'
+ const ATLANTIC_SALMON = 'Atlantic salmon'
+ const INVALID_COUNTRY = 'Invalid country'
+ const PASSPORT_NUMBER = 'UK123456789'
++const MICROCHIP_NUMBER = '900123456789012'
+ const MAX_LINE_LENGTH = 255
+ const MAX_TOWN_OR_COUNTY_LENGTH = 100
+ const MAX_POSTAL_OR_ZIP_CODE_LENGTH = 12
+@@ -109,8 +112,7 @@ const validCatAddress = {
+   emailAddress: 'owner@example.co.uk'
+ }
+ 
+-const fillCatRecord = async (page, address = validCatAddress) => {
+-  await page.locator(PASSPORT_FIELD).fill(PASSPORT_NUMBER)
++const fillAddress = async (page, address = validCatAddress) => {
+   for (const [field, value] of Object.entries(address)) {
+     const control = page.locator(`#${field}-0`)
+     if (field === 'country') {
+@@ -121,6 +123,12 @@ const fillCatRecord = async (page, address = validCatAddress) => {
+   }
+ }
+ 
++const fillCatRecord = async (page, address = validCatAddress) => {
++  await page.locator(MICROCHIP_FIELD).fill(MICROCHIP_NUMBER)
++  await page.locator(PASSPORT_FIELD).fill(PASSPORT_NUMBER)
++  await fillAddress(page, address)
++}
++
+ const submitAdd = (page) =>
+   page
+     .getByRole('button', { name: copy.identification.saveAndAddAnother })
+@@ -182,6 +190,7 @@ const submitStaleAdd = (page) =>
+   })
+ 
+ const identifierValidations = [
++  ['Cat', FELIS_CATUS, 'animalIdentifierMicrochip', 'Microchip'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierPassport', 'Passport'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierTattoo', 'Tattoo'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierEarTag', 'Ear tag'],
+@@ -266,7 +275,11 @@ test.describe('animal identification', () => {
+     await expect(page.locator(PASSPORT_FIELD)).toBeVisible()
+     await expect(page.locator('#animalIdentifierTattoo-0')).toBeVisible()
+     await expect(page.locator(EAR_TAG_FIELD)).toBeVisible()
++    await expect(page.locator('#animalIdentifierMicrochip-1')).toBeVisible()
+     await expect(page.locator('#horseName-1')).toBeVisible()
++    // The cow line has no microchip; the fish line has neither.
++    await expect(page.locator(MICROCHIP_FIELD)).toHaveCount(0)
++    await expect(page.locator('#animalIdentifierMicrochip-2')).toHaveCount(0)
+     await expect(
+       page.locator('#animalIdentifierIdentificationDetails-2')
+     ).toBeVisible()
+@@ -285,6 +298,14 @@ test.describe('animal identification', () => {
+     await openIdentification(page, [['Fish', [SALMO_SALAR]]])
+     await expectAxeClean(page, 'Animal identification')
+   })
++
++  test('has no serious or critical axe violations with the microchip field rendered', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++    await expect(page.locator(MICROCHIP_FIELD)).toBeVisible()
++    await expectAxeClean(page, 'Animal identification with a microchip field')
++  })
+ })
+ 
+ test.describe('animal identification selected commodities summary', () => {
+@@ -364,12 +385,14 @@ test.describe('animal identification identifier validation', () => {
+     await openCatIdentification(page)
+     await submitAdd(page)
+ 
++    // The microchip heads a cat's identifiers, so it is the field the
++    // at-least-one-identifier error names.
+     await expectErrorFocus(
+       page,
+       copy.identification.errors.atLeastOneIdentifier,
+-      PASSPORT_FIELD
++      MICROCHIP_FIELD
+     )
+-    await expect(page.locator(PASSPORT_FIELD)).toHaveValue('')
++    await expect(page.locator(MICROCHIP_FIELD)).toHaveValue('')
+   })
+ 
+   for (const [commodity, species, field, label] of identifierValidations) {
+@@ -389,6 +412,24 @@ test.describe('animal identification identifier validation', () => {
+       await expect(page.locator(`#${field}-0`)).toHaveValue(invalid)
+     })
+   }
++
++  test('has no serious or critical axe violations in the microchip error state', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++    await page
++      .locator(MICROCHIP_FIELD)
++      .fill('X'.repeat(MAX_IDENTIFIER_LENGTH + 1))
++    await saveAndFinish(page)
++
++    await expect(
++      errorLink(
++        page,
++        copy.identification.errors.identifierMax.animalIdentifierMicrochip
++      )
++    ).toBeVisible()
++    await expectAxeClean(page, 'Animal identification with a microchip error')
++  })
+ })
+ 
+ test.describe('animal identification address validation', () => {
+@@ -471,6 +512,12 @@ test.describe('animal identification records', () => {
+     await expect(
+       columnHeader(page, copy.identification.table.animalColumn)
+     ).toBeVisible()
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierMicrochip
++      )
++    ).toBeVisible()
+     await expect(
+       columnHeader(
+         page,
+@@ -487,6 +534,9 @@ test.describe('animal identification records', () => {
+       columnHeader(page, copy.identification.table.permanentAddressColumn)
+     ).toBeVisible()
+ 
++    await expect(
++      row.getByRole('cell', { name: MICROCHIP_NUMBER, exact: true })
++    ).toBeVisible()
+     await expect(
+       row.getByRole('cell', { name: PASSPORT_NUMBER, exact: true })
+     ).toBeVisible()
+@@ -524,6 +574,31 @@ test.describe('animal identification records', () => {
+     ).toBeVisible()
+   })
+ 
++  // Microchipping is how a dog is identified in law, so a chip number on its
++  // own has to be enough to save the animal.
++  test('saves a dog identified only by its microchip and reads the number back', async ({
++    page
++  }) => {
++    await openIdentification(page, [['Dog', [CANIS_LUPUS_FAMILIARIS]]])
++    await page.locator(MICROCHIP_FIELD).fill(MICROCHIP_NUMBER)
++    await fillAddress(page)
++    await submitAdd(page)
++
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierMicrochip
++      )
++    ).toBeVisible()
++    await page.reload()
++    await expect(
++      savedAnimalRow(page, CANIS_LUPUS_FAMILIARIS, 1).getByRole('cell', {
++        name: MICROCHIP_NUMBER,
++        exact: true
++      })
++    ).toBeVisible()
++  })
++
+   test('removes an added record', async ({ page }) => {
+     await addCatRecordRow(page)
+     const row = await removeAnimalRow(page, FELIS_CATUS, 1)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+index 38381905..05cc089f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+@@ -568,6 +568,9 @@
+             }
+           ]
+         },
++        "8f030bfa-0734-40c8-9d9e-b9e95dac4724": {
++          "inScope": false
++        },
+         "39657a80-91a2-4fc6-8345-9f0617284a51": {
+           "inScope": true,
+           "reasons": [
+@@ -1217,6 +1220,9 @@
+           "inScope": true,
+           "records": []
+         },
++        "8f030bfa-0734-40c8-9d9e-b9e95dac4724": {
++          "inScope": false
++        },
+         "39657a80-91a2-4fc6-8345-9f0617284a51": {
+           "inScope": false
+         },
+@@ -1462,6 +1468,9 @@
+           "inScope": true,
+           "records": []
+         },
++        "8f030bfa-0734-40c8-9d9e-b9e95dac4724": {
++          "inScope": false
++        },
+         "39657a80-91a2-4fc6-8345-9f0617284a51": {
+           "inScope": false
+         },
+@@ -1754,6 +1763,9 @@
+             }
+           ]
+         },
++        "8f030bfa-0734-40c8-9d9e-b9e95dac4724": {
++          "inScope": false
++        },
+         "39657a80-91a2-4fc6-8345-9f0617284a51": {
+           "inScope": true,
+           "reasons": [
+@@ -2090,6 +2102,9 @@
+           "inScope": true,
+           "records": []
+         },
++        "8f030bfa-0734-40c8-9d9e-b9e95dac4724": {
++          "inScope": false
++        },
+         "39657a80-91a2-4fc6-8345-9f0617284a51": {
+           "inScope": false
+         },
+diff --git a/src/server/app/sets/live-animals/obligations/index.js b/src/server/app/sets/live-animals/obligations/index.js
+index ff847ed3..eb26fc80 100644
+--- a/src/server/app/sets/live-animals/obligations/index.js
++++ b/src/server/app/sets/live-animals/obligations/index.js
+@@ -65,6 +65,7 @@ import {
+   earTag,
+   horseName,
+   identificationDetails,
++  microchip,
+   passport,
+   permanentAddress,
+   tattoo,
+@@ -151,6 +152,7 @@ export {
+   importer,
+   internalReferenceNumber,
+   meansOfTransport,
++  microchip,
+   numberOfAnimals,
+   numberOfPackages,
+   passport,
+@@ -215,6 +217,7 @@ export const obligations = [
+   numberOfPackages,
+   cph,
+   unitRecord,
++  microchip,
+   passport,
+   tattoo,
+   earTag,
+diff --git a/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js b/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js
+index c892609a..e43f55cf 100644
+--- a/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js
++++ b/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js
+@@ -1,6 +1,7 @@
+ import {
+   earTagCommodities,
+   horseNameCommodities,
++  microchipCommodities,
+   passportCommodities,
+   permanentAddressCommodities,
+   tattooCommodities
+@@ -11,6 +12,12 @@ import {
+ } from '../../../../../model/obligations/helpers/index.js'
+ import { commodityCode, commodityLine, numberOfAnimals } from './lines.js'
+ 
++const microchipReason = {
++  code: 'obligation.microchip.applicable.becauseMicrochipCommodity',
++  explanation:
++    'microchip applies on units of lines whose commodityCode is in the microchip list'
++}
++
+ const passportReason = {
+   code: 'obligation.passport.applicable.becausePassportCommodity',
+   explanation:
+@@ -66,7 +73,7 @@ export const unitRecord = {
+   //
+   // V4 spec (Confluence page 6497338582): "Field Block - Mandatory
+   // to Submit - At least one Animal Identifier". Every unit-record
+-  // must carry ≥ 1 of the six identifier obligations. Listed as
++  // must carry ≥ 1 of the seven identifier obligations. Listed as
+   // literal ids in `requires.anyOfIds` rather than obligation
+   // references — id-based deferred resolution avoids
+   // declaration-order coupling and makes the "requires-any-of" edge
+@@ -87,6 +94,7 @@ export const unitRecord = {
+   // by adding / removing units or amending the number.
+   requires: {
+     anyOfIds: [
++      '8f030bfa-0734-40c8-9d9e-b9e95dac4724', // microchip
+       '39657a80-91a2-4fc6-8345-9f0617284a51', // passport
+       '3a768b91-a2b3-4fd7-8456-a01728395b62', // tattoo
+       '3b879ca2-b3c4-4fe8-8567-a1283a4a6c73', // earTag
+@@ -110,6 +118,16 @@ export const unitRecord = {
+ // the commodities service in the stored picker-name vocabulary.
+ // -----------------------------------------------------------------------------
+ 
++export const microchip = {
++  id: '8f030bfa-0734-40c8-9d9e-b9e95dac4724',
++  name: 'animalIdentifierMicrochip',
++  within: unitRecord,
++  status: 'optional',
++  applyTo: allowListed(commodityCode, microchipCommodities, unitRecord, [
++    microchipReason
++  ])
++}
++
+ export const passport = {
+   id: '39657a80-91a2-4fc6-8345-9f0617284a51',
+   name: 'animalIdentifierPassport',
+@@ -156,15 +174,16 @@ export const horseName = {
+ 
+ // Inverse gate — the free-text identifiers apply on units whose parent
+ // line's commodity has NO specific identifier. Expressed as
+-// `notInUnionOf` over the four specific-identifier whitelists.
++// `notInUnionOf` over the five specific-identifier whitelists.
+ // The derived union lives on `.metadata.values`
+ // so the reachability prover can synthesise a witness value (any code
+ // not in the union) and the browser-side controllers can inspect
+-// admissibility without executing the closure. Adding a fifth typed
++// admissibility without executing the closure. Adding a sixth typed
+ // identifier means adding its list to the array here — the derived
+-// union widens automatically. Hand-restated four-conjunct complements
++// union widens automatically. Hand-restated five-conjunct complements
+ // would silently double-gate on such an addition.
+ const specificIdentifierWhitelists = () => [
++  microchipCommodities(),
+   passportCommodities(),
+   tattooCommodities(),
+   earTagCommodities(),
+diff --git a/src/server/app/sets/live-animals/obligations/whitelists.test.js b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+index e8ea6fd0..cd5cfc2c 100644
+--- a/src/server/app/sets/live-animals/obligations/whitelists.test.js
++++ b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+@@ -1,7 +1,7 @@
+ /**
+  * Whitelist scope tests.
+  *
+- * V4 gates seven commodity-scoped obligations on the commodities
++ * V4 gates eight commodity-scoped obligations on the commodities
+  * service's allowlists, in the stored picker-name vocabulary.
+  * Silently widening any allowlist is a real risk (e.g. adding a name
+  * to the package-count list that puts `numberOfPackages` in scope for
+@@ -20,6 +20,7 @@ import {
+   commodityCode,
+   numberOfPackages,
+   cph,
++  microchip,
+   passport,
+   tattoo,
+   earTag,
+@@ -31,6 +32,7 @@ import {
+   earTagCommodities,
+   horseNameCommodities,
+   list,
++  microchipCommodities,
+   packageCountCommodities,
+   passportCommodities,
+   permanentAddressCommodities,
+@@ -111,8 +113,8 @@ describe('CPH list → cph (top-level anyAllowListed)', () => {
+ })
+ 
+ // ---------------------------------------------------------------------------
+-// Unit-record-scoped gates: passport / tattoo / earTag / horseName /
+-// permanentAddress. Each uses
++// Unit-record-scoped gates: microchip / passport / tattoo / earTag /
++// horseName / permanentAddress. Each uses
+ // `applyTo: allowListed(commodityCode, LIST, unitRecord, …)`, so
+ // records are `lineId.unitId` fulfilment indexes for units on
+ // matching-commodity lines.
+@@ -124,6 +126,7 @@ describe('CPH list → cph (top-level anyAllowListed)', () => {
+ // ---------------------------------------------------------------------------
+ 
+ const UNIT_SCOPED_ALLOWLISTS = [
++  { name: 'microchip list', names: microchipCommodities(), gated: microchip },
+   { name: 'passport list', names: passportCommodities(), gated: passport },
+   { name: 'tattoo list', names: tattooCommodities(), gated: tattoo },
+   { name: 'ear-tag list', names: earTagCommodities(), gated: earTag },
+@@ -179,6 +182,7 @@ for (const { name, names, gated } of UNIT_SCOPED_ALLOWLISTS) {
+ const EXPECTED = {
+   'storable package-count entries': ['Cat', 'Cow', 'Dog', 'Horse'],
+   'CPH list': ['Cow'],
++  'microchip list': ['Horse', 'Cat', 'Dog'],
+   'passport list': ['Horse', 'Cow', 'Cat', 'Dog'],
+   'tattoo list': ['Cat', 'Dog', 'Cow'],
+   'ear-tag list': ['Cow'],
+@@ -192,6 +196,7 @@ const ALLOWLISTS_UNDER_TEST = [
+     names: storablePackageCountCommodities()
+   },
+   { name: 'CPH list', names: cphCommodities() },
++  { name: 'microchip list', names: microchipCommodities() },
+   { name: 'passport list', names: passportCommodities() },
+   { name: 'tattoo list', names: tattooCommodities() },
+   { name: 'ear-tag list', names: earTagCommodities() },
+diff --git a/src/server/app/sets/live-animals/services/commodities/index.js b/src/server/app/sets/live-animals/services/commodities/index.js
+index f2b187ef..27b04b04 100644
+--- a/src/server/app/sets/live-animals/services/commodities/index.js
++++ b/src/server/app/sets/live-animals/services/commodities/index.js
+@@ -5,6 +5,7 @@ import {
+   COMMODITY_TYPE_DATA,
+   SPECIES_OPTIONS,
+   PACKAGE_COUNT_COMMODITIES,
++  MICROCHIP_COMMODITIES,
+   PASSPORT_COMMODITIES,
+   TATTOO_COMMODITIES,
+   EAR_TAG_COMMODITIES,
+@@ -60,6 +61,8 @@ export const isCommoditySpecies = (name, value) =>
+ 
+ export const packageCountCommodities = () => PACKAGE_COUNT_COMMODITIES
+ 
++export const microchipCommodities = () => MICROCHIP_COMMODITIES
++
+ export const passportCommodities = () => PASSPORT_COMMODITIES
+ 
+ export const tattooCommodities = () => TATTOO_COMMODITIES
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index 3da14221..f9e6af6e 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -109,6 +109,12 @@ export const PACKAGE_COUNT_COMMODITIES = [
+   '0407 - SPF Eggs'
+ ]
+ 
++// The equine and companion-animal commodities. Design release 1 asks for a
++// microchip on commodity code 0101 (Horse) and on 01061900 — the code Cat, Dog,
++// ferret and the other live mammals share — so ferret is covered by the same
++// entry as Cat and Dog once the picker offers it (design 01-15).
++export const MICROCHIP_COMMODITIES = ['Horse', 'Cat', 'Dog']
++
+ export const PASSPORT_COMMODITIES = ['Horse', 'Cow', 'Cat', 'Dog']
+ 
+ export const TATTOO_COMMODITIES = ['Cat', 'Dog', 'Cow']

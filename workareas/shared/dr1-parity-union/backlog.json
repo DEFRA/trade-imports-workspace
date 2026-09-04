@@ -7937,6 +7937,8 @@
     },
     {
       "id": "inc-101",
+      "ticket": "EUDPA-398",
+      "branch": "feat/EUDPA-398-a-trader-cannot-record-a-microchip-numbe",
       "type": "add-field",
       "milestone": null,
       "domain": "identification",
@@ -7954,9 +7956,25 @@
       "band": "needs-backend",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "a5e763e e13cfba6",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "backend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/91",
+          "number": 91,
+          "merged": true,
+          "sha": "bcad3714e3f35d947c87a31693df5d2b23a4c321"
+        },
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/246",
+          "number": 246,
+          "merged": true,
+          "sha": "ef3ce688fbe8e5f39fb1aff7e9dcb87625f15f34"
+        }
+      ],
       "finding": {
         "frontend": "Frontend knows six ways to identify an animal and a microchip is not one of them: passport, tattoo, ear tag, horse name, and — only for commodities that have no specific identifier at all — free-text identification details and a description (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:113-198). Which of the four specific types appear is decided by four commodity allowlists in src/server/app/sets/live-animals/services/commodities/stub.js:107-115. The word microchip appears nowhere in src/server outside a test fixture, where it is typed as a value into the free-text field. The gap bites hardest on the commodities that need it: because dogs and horses do have specific identifiers, the free-text fallback is switched off for them, so a trader importing a dog is shown a passport and a tattoo field and nothing else. The captured DOM of fe-animal-identification bears this out — the dog line offers animalIdentifierPassport-2 and animalIdentifierTattoo-2, the horse line animalIdentifierPassport-1 and horseName-1, and there is nowhere on the page to put a chip number.",
         "prototype": "Design release 1 asks for a microchip on both identifier sets a companion animal or an equine falls into. Its identifiers are declared per commodity code, and a horse (0101) is asked for Microchip, Passport and Horse name while a cat, dog, ferret or other live mammal — all of them commodity code 01061900 — is asked for Microchip, Passport and Tattoo (app/data/commodity-identifiers.js:3-19). Microchip is the first field on both panels, so it is the identifier the design puts in front of the trader first. Microchipping is how a dog is identified in law, so the field is not decoration.",

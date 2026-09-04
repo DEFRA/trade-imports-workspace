@@ -1,0 +1,178 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index ab07577b..ab8d98b0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -10,15 +10,18 @@ import { copy } from '../copy/copy.en.js'
+ 
+ const SAVE_AND_CONTINUE = 'Save and continue'
+ const PASSPORT_FIELD = '#animalIdentifierPassport-0'
++const MICROCHIP_FIELD = '#animalIdentifierMicrochip-0'
+ const EAR_TAG_FIELD = '#animalIdentifierEarTag-0'
+ const COUNTRY_FIELD = '#country-0'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
++const CANIS_LUPUS_FAMILIARIS = 'Canis lupus familiaris'
+ const SALMO_SALAR = 'Salmo salar'
+ const DOMESTIC_CATTLE = 'Domestic cattle'
+ const ATLANTIC_SALMON = 'Atlantic salmon'
+ const INVALID_COUNTRY = 'Invalid country'
+ const PASSPORT_NUMBER = 'UK123456789'
++const MICROCHIP_NUMBER = '900123456789012'
+ const MAX_LINE_LENGTH = 255
+ const MAX_TOWN_OR_COUNTY_LENGTH = 100
+ const MAX_POSTAL_OR_ZIP_CODE_LENGTH = 12
+@@ -109,8 +112,7 @@ const validCatAddress = {
+   emailAddress: 'owner@example.co.uk'
+ }
+ 
+-const fillCatRecord = async (page, address = validCatAddress) => {
+-  await page.locator(PASSPORT_FIELD).fill(PASSPORT_NUMBER)
++const fillAddress = async (page, address = validCatAddress) => {
+   for (const [field, value] of Object.entries(address)) {
+     const control = page.locator(`#${field}-0`)
+     if (field === 'country') {
+@@ -121,6 +123,12 @@ const fillCatRecord = async (page, address = validCatAddress) => {
+   }
+ }
+ 
++const fillCatRecord = async (page, address = validCatAddress) => {
++  await page.locator(MICROCHIP_FIELD).fill(MICROCHIP_NUMBER)
++  await page.locator(PASSPORT_FIELD).fill(PASSPORT_NUMBER)
++  await fillAddress(page, address)
++}
++
+ const submitAdd = (page) =>
+   page
+     .getByRole('button', { name: copy.identification.saveAndAddAnother })
+@@ -182,6 +190,7 @@ const submitStaleAdd = (page) =>
+   })
+ 
+ const identifierValidations = [
++  ['Cat', FELIS_CATUS, 'animalIdentifierMicrochip', 'Microchip'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierPassport', 'Passport'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierTattoo', 'Tattoo'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierEarTag', 'Ear tag'],
+@@ -266,7 +275,11 @@ test.describe('animal identification', () => {
+     await expect(page.locator(PASSPORT_FIELD)).toBeVisible()
+     await expect(page.locator('#animalIdentifierTattoo-0')).toBeVisible()
+     await expect(page.locator(EAR_TAG_FIELD)).toBeVisible()
++    await expect(page.locator('#animalIdentifierMicrochip-1')).toBeVisible()
+     await expect(page.locator('#horseName-1')).toBeVisible()
++    // The cow line has no microchip; the fish line has neither.
++    await expect(page.locator(MICROCHIP_FIELD)).toHaveCount(0)
++    await expect(page.locator('#animalIdentifierMicrochip-2')).toHaveCount(0)
+     await expect(
+       page.locator('#animalIdentifierIdentificationDetails-2')
+     ).toBeVisible()
+@@ -285,6 +298,14 @@ test.describe('animal identification', () => {
+     await openIdentification(page, [['Fish', [SALMO_SALAR]]])
+     await expectAxeClean(page, 'Animal identification')
+   })
++
++  test('has no serious or critical axe violations with the microchip field rendered', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++    await expect(page.locator(MICROCHIP_FIELD)).toBeVisible()
++    await expectAxeClean(page, 'Animal identification with a microchip field')
++  })
+ })
+ 
+ test.describe('animal identification selected commodities summary', () => {
+@@ -364,12 +385,14 @@ test.describe('animal identification identifier validation', () => {
+     await openCatIdentification(page)
+     await submitAdd(page)
+ 
++    // The microchip heads a cat's identifiers, so it is the field the
++    // at-least-one-identifier error names.
+     await expectErrorFocus(
+       page,
+       copy.identification.errors.atLeastOneIdentifier,
+-      PASSPORT_FIELD
++      MICROCHIP_FIELD
+     )
+-    await expect(page.locator(PASSPORT_FIELD)).toHaveValue('')
++    await expect(page.locator(MICROCHIP_FIELD)).toHaveValue('')
+   })
+ 
+   for (const [commodity, species, field, label] of identifierValidations) {
+@@ -389,6 +412,24 @@ test.describe('animal identification identifier validation', () => {
+       await expect(page.locator(`#${field}-0`)).toHaveValue(invalid)
+     })
+   }
++
++  test('has no serious or critical axe violations in the microchip error state', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++    await page
++      .locator(MICROCHIP_FIELD)
++      .fill('X'.repeat(MAX_IDENTIFIER_LENGTH + 1))
++    await saveAndFinish(page)
++
++    await expect(
++      errorLink(
++        page,
++        copy.identification.errors.identifierMax.animalIdentifierMicrochip
++      )
++    ).toBeVisible()
++    await expectAxeClean(page, 'Animal identification with a microchip error')
++  })
+ })
+ 
+ test.describe('animal identification address validation', () => {
+@@ -471,6 +512,12 @@ test.describe('animal identification records', () => {
+     await expect(
+       columnHeader(page, copy.identification.table.animalColumn)
+     ).toBeVisible()
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierMicrochip
++      )
++    ).toBeVisible()
+     await expect(
+       columnHeader(
+         page,
+@@ -487,6 +534,9 @@ test.describe('animal identification records', () => {
+       columnHeader(page, copy.identification.table.permanentAddressColumn)
+     ).toBeVisible()
+ 
++    await expect(
++      row.getByRole('cell', { name: MICROCHIP_NUMBER, exact: true })
++    ).toBeVisible()
+     await expect(
+       row.getByRole('cell', { name: PASSPORT_NUMBER, exact: true })
+     ).toBeVisible()
+@@ -524,6 +574,31 @@ test.describe('animal identification records', () => {
+     ).toBeVisible()
+   })
+ 
++  // Microchipping is how a dog is identified in law, so a chip number on its
++  // own has to be enough to save the animal.
++  test('saves a dog identified only by its microchip and reads the number back', async ({
++    page
++  }) => {
++    await openIdentification(page, [['Dog', [CANIS_LUPUS_FAMILIARIS]]])
++    await page.locator(MICROCHIP_FIELD).fill(MICROCHIP_NUMBER)
++    await fillAddress(page)
++    await submitAdd(page)
++
++    await expect(
++      columnHeader(
++        page,
++        copy.identification.identifierLabels.animalIdentifierMicrochip
++      )
++    ).toBeVisible()
++    await page.reload()
++    await expect(
++      savedAnimalRow(page, CANIS_LUPUS_FAMILIARIS, 1).getByRole('cell', {
++        name: MICROCHIP_NUMBER,
++        exact: true
++      })
++    ).toBeVisible()
++  })
++
+   test('removes an added record', async ({ page }) => {
+     await addCatRecordRow(page)
+     const row = await removeAnimalRow(page, FELIS_CATUS, 1)

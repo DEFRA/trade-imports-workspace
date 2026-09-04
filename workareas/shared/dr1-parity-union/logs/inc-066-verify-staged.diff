@@ -1,0 +1,304 @@
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index f05281f2..a079cc62 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -269,7 +269,6 @@ describe('controller <-> model commit contract', () => {
+         'addressLine1-0': '1 Farm Lane',
+         'townOrCity-0': 'Skipton',
+         'postalOrZipCode-0': 'BD23 1UD',
+-        'country-0': 'United Kingdom',
+         'telephoneNumber-0': '+44 1756 555 0192',
+         'emailAddress-0': 'owner@example.co.uk'
+       }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+index 94fc75d3..3b52d69a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+@@ -1,5 +1,4 @@
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+-{% from "govuk/components/select/macro.njk" import govukSelect %}
+ {% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk" import savedAnimalsTable %}
+ 
+@@ -36,26 +35,16 @@
+         <p class="govuk-body">{{ copy.permanentAddress.required }}</p>
+ 
+         {% for field in card.addressFields %}
+-          {% if field.kind == "select" %}
+-            {{ govukSelect({
+-              id: field.id,
+-              name: field.id,
+-              label: { text: field.label },
+-              items: field.items,
+-              errorMessage: field.error and { text: field.error }
+-            }) }}
+-          {% else %}
+-            {{ govukInput({
+-              id: field.id,
+-              name: field.id,
+-              label: { text: field.label },
+-              type: field.type,
+-              classes: field.classes,
+-              autocomplete: field.autocomplete,
+-              value: field.value,
+-              errorMessage: field.error and { text: field.error }
+-            }) }}
+-          {% endif %}
++          {{ govukInput({
++            id: field.id,
++            name: field.id,
++            label: { text: field.label },
++            type: field.type,
++            classes: field.classes,
++            autocomplete: field.autocomplete,
++            value: field.value,
++            errorMessage: field.error and { text: field.error }
++          }) }}
+         {% endfor %}
+       {% endif %}
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js
+index 6d0f5fe1..50c3a985 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js
+@@ -1,9 +1,4 @@
+-import {
+-  compose,
+-  maxText,
+-  oneOf
+-} from '../../../../../../../../lib/validate/index.js'
+-import * as countries from '../../../../../../../../services/countries/index.js'
++import { compose, maxText } from '../../../../../../../../lib/validate/index.js'
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+@@ -20,7 +15,6 @@ const ADDRESS_FIELD_ORDER = [
+   'townOrCity',
+   'county',
+   'postalOrZipCode',
+-  'country',
+   'telephoneNumber',
+   'emailAddress'
+ ]
+@@ -63,11 +57,6 @@ export const addressChecksFor = (index) =>
+       POSTCODE_MAX_LENGTH,
+       copy.errors.addressFormat.postalOrZipCode
+     ),
+-    oneOf(
+-      fieldName('country', index),
+-      countries.addressCountries(),
+-      copy.errors.addressFormat.country
+-    ),
+     maxText(
+       fieldName('telephoneNumber', index),
+       TELEPHONE_MAX_LENGTH,
+@@ -105,18 +94,8 @@ export const missingAddressErrors = (values, index) => {
+   )
+ }
+ 
+-const addressCountryItems = (selected) => [
+-  { value: '', text: copy.address.countryPlaceholder },
+-  ...countries.addressCountries().map((name) => ({
+-    value: name,
+-    text: name,
+-    selected: name === selected
+-  }))
+-]
+-
+ export const addressFieldsFor = (index, values, errors) => {
+   const input = (id, label, extra = {}) => ({
+-    kind: 'input',
+     id: fieldName(id, index),
+     label,
+     value: values[id] ?? '',
+@@ -144,13 +123,6 @@ export const addressFieldsFor = (index, values, errors) => {
+       classes: 'govuk-input--width-10',
+       autocomplete: 'postal-code'
+     }),
+-    {
+-      kind: 'select',
+-      id: fieldName('country', index),
+-      label: copy.address.country,
+-      items: addressCountryItems(values.country ?? ''),
+-      error: errors[fieldName('country', index)]
+-    },
+     input('telephoneNumber', copy.address.telephoneNumber, {
+       type: 'tel',
+       classes: 'govuk-input--width-20',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js
+index 69c45d0f..35e09271 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js
+@@ -17,7 +17,6 @@ const unitFromForm = (form) => {
+         townOrCity: form.addressValues.townOrCity,
+         county: form.addressValues.county,
+         postalOrZipCode: form.addressValues.postalOrZipCode,
+-        country: form.addressValues.country,
+         telephoneNumber: form.addressValues.telephoneNumber,
+         emailAddress: form.addressValues.emailAddress
+       }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index c8042adc..2f97a358 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -141,8 +141,6 @@ export const copy = {
+       townOrCity: 'Tref neu ddinas',
+       county: 'Sir (dewisol)',
+       postalOrZipCode: 'Cod post neu god zip',
+-      country: 'Gwlad',
+-      countryPlaceholder: 'Dewiswch wlad',
+       telephoneNumber: 'Rhif ffôn',
+       emailAddress: 'Cyfeiriad e-bost'
+     },
+@@ -164,7 +162,6 @@ export const copy = {
+         addressLine1: 'Rhowch linell gyfeiriad 1',
+         townOrCity: 'Rhowch dref neu ddinas',
+         postalOrZipCode: 'Rhowch god post neu god zip',
+-        country: 'Dewiswch wlad',
+         telephoneNumber: 'Rhowch rif ffôn',
+         emailAddress: 'Rhowch gyfeiriad e-bost'
+       },
+@@ -177,7 +174,6 @@ export const copy = {
+         county: 'Rhaid i’r sir fod yn 100 nod neu lai',
+         postalOrZipCode:
+           'Rhaid i’r cod post neu’r cod zip fod yn 12 nod neu lai',
+-        country: 'Dewiswch wlad o’r rhestr',
+         telephoneNumber: 'Rhaid i’r rhif ffôn fod yn 20 nod neu lai',
+         emailAddress: 'Rhaid i’r cyfeiriad e-bost fod yn 254 nod neu lai'
+       },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 2ede6e14..a89d98fc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -133,8 +133,6 @@ export const copy = {
+       townOrCity: 'Town or city',
+       county: 'County (optional)',
+       postalOrZipCode: 'Postal or zip code',
+-      country: 'Country',
+-      countryPlaceholder: 'Select a country',
+       telephoneNumber: 'Telephone number',
+       emailAddress: 'Email address'
+     },
+@@ -155,7 +153,6 @@ export const copy = {
+         addressLine1: 'Enter address line 1',
+         townOrCity: 'Enter a town or city',
+         postalOrZipCode: 'Enter a postal or zip code',
+-        country: 'Select a country',
+         telephoneNumber: 'Enter a telephone number',
+         emailAddress: 'Enter an email address'
+       },
+@@ -167,7 +164,6 @@ export const copy = {
+         townOrCity: 'Town or city must be 100 characters or less',
+         county: 'County must be 100 characters or less',
+         postalOrZipCode: 'Postal or zip code must be 12 characters or less',
+-        country: 'Select a country from the list',
+         telephoneNumber: 'Telephone number must be 20 characters or less',
+         emailAddress: 'Email address must be 254 characters or less'
+       },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 7de48c85..a91cda0f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -12,14 +12,12 @@ const SAVE_AND_CONTINUE = 'Save and continue'
+ const PASSPORT_FIELD = '#animalIdentifierPassport-0'
+ const MICROCHIP_FIELD = '#animalIdentifierMicrochip-0'
+ const EAR_TAG_FIELD = '#animalIdentifierEarTag-0'
+-const COUNTRY_FIELD = '#country-0'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
+ const CANIS_LUPUS_FAMILIARIS = 'Canis lupus familiaris'
+ const SALMO_SALAR = 'Salmo salar'
+ const DOMESTIC_CATTLE = 'Domestic cattle'
+ const ATLANTIC_SALMON = 'Atlantic salmon'
+-const INVALID_COUNTRY = 'Invalid country'
+ const PASSPORT_NUMBER = 'UK123456789'
+ const MICROCHIP_NUMBER = '900123456789012'
+ const MAX_LINE_LENGTH = 255
+@@ -107,19 +105,13 @@ const validPermanentAddress = {
+   townOrCity: 'Skipton',
+   county: 'North Yorkshire',
+   postalOrZipCode: 'BD23 1UD',
+-  country: 'United Kingdom',
+   telephoneNumber: '+44 1756 555 0192',
+   emailAddress: 'owner@example.co.uk'
+ }
+ 
+ const fillAddress = async (page, address = validPermanentAddress) => {
+   for (const [field, value] of Object.entries(address)) {
+-    const control = page.locator(`#${field}-0`)
+-    if (field === 'country') {
+-      await control.selectOption(value)
+-    } else {
+-      await control.fill(value)
+-    }
++    await page.locator(`#${field}-0`).fill(value)
+   }
+ }
+ 
+@@ -209,7 +201,6 @@ const requiredAddressValidations = [
+   ['address line 1', 'addressLine1'],
+   ['town or city', 'townOrCity'],
+   ['postal or zip code', 'postalOrZipCode'],
+-  ['country', 'country'],
+   ['telephone number', 'telephoneNumber'],
+   ['email address', 'emailAddress']
+ ]
+@@ -286,6 +277,18 @@ test.describe('animal identification', () => {
+     await expect(page.locator('#nameOrOrganisationName-0')).toHaveCount(0)
+   })
+ 
++  test('permanent address asks for eight fields and never for a country', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++
++    for (const field of Object.keys(validPermanentAddress)) {
++      await expect(page.locator(`#${field}-0`)).toBeVisible()
++    }
++    await expect(page.locator('#country-0')).toHaveCount(0)
++    await expect(page.locator('select')).toHaveCount(0)
++  })
++
+   test('back link returns to the overview', async ({ page }) => {
+     await openCatIdentification(page)
+     await page.locator('.govuk-back-link').click()
+@@ -442,11 +445,7 @@ test.describe('animal identification address validation', () => {
+     }) => {
+       await openCatIdentification(page)
+       await fillCatRecord(page)
+-      if (field === 'country') {
+-        await page.locator(COUNTRY_FIELD).selectOption('')
+-      } else {
+-        await page.locator(`#${field}-0`).fill('')
+-      }
++      await page.locator(`#${field}-0`).fill('')
+       await submitAdd(page)
+ 
+       await expectErrorFocus(
+@@ -476,26 +475,6 @@ test.describe('animal identification address validation', () => {
+       await expect(page.locator(PASSPORT_FIELD)).toHaveValue(PASSPORT_NUMBER)
+     })
+   }
+-
+-  test('permanent address validation: an out-of-list country focuses the cleared select and preserves the record', async ({
+-    page
+-  }) => {
+-    await openCatIdentification(page)
+-    await fillCatRecord(page)
+-    await page.locator(COUNTRY_FIELD).evaluate((select, invalidCountry) => {
+-      select.add(new Option(invalidCountry, invalidCountry))
+-      select.value = invalidCountry
+-    }, INVALID_COUNTRY)
+-    await submitAdd(page)
+-
+-    await expectErrorFocus(
+-      page,
+-      copy.identification.errors.addressFormat.country,
+-      COUNTRY_FIELD
+-    )
+-    await expect(page.locator(COUNTRY_FIELD)).toHaveValue('')
+-    await expect(page.locator(PASSPORT_FIELD)).toHaveValue(PASSPORT_NUMBER)
+-  })
+ })
+ 
+ test.describe('animal identification records', () => {

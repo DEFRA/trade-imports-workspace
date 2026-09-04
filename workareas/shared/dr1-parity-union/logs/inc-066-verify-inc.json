@@ -1,0 +1,128 @@
+{
+  "id": "inc-066",
+  "ticket": "EUDPA-400",
+  "branch": "feat/EUDPA-400-frontend-asks-which-country-the-animals",
+  "type": "obligation-change",
+  "milestone": null,
+  "domain": "addresses",
+  "title": "Frontend asks which country the animals will permanently live in; Design release 1 does not ask for a country on the permanent address",
+  "detail": "The permanent address block ends with a mandatory \"Country\" select offering thirty-two countries — the United Kingdom, the EU member states and the rest of the EEA plus Switzerland — under the placeholder \"Select a country\". Leaving it blank once any other address field has been filled produces \"Select a country\", and choosing a value outside the list produces \"Select a country from the list\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:66-70, 147-153). So the frontend treats the place an imported animal will live as a question with thirty-two possible answers.\n\nDesign release 1 asks for eight fields and no country: name or organisation name, address line 1, address line 2 (optional), town or city, county (optional), postcode or zip code, email address and phone number (app/views/partials/permanent-address-new-address-fields.html:6-97, revealed under \"Enter a new address\" and rendered in dr1-permanent-address-animals-new-address-revealed). It does not need one, because the page has already said what this address is for: somewhere the animal \"will permanently reside\" and \"can be checked by the Animal and Plant Health Agency (APHA)\". An address APHA can inspect is a Great Britain address, so there is nothing to choose.\n\nRemove the Country select and its two validation messages from the animal permanent address block, leaving the eight fields Design release 1 asks for. Nothing else in the journey reads the value: it is collected, checked against the country list and written into the animal's address record, and no other page or rule depends on it. This is the one field on this block where the frontend asks the trader for more than the signed-off design does, so removing it shortens the form rather than lengthening it.\n\nFALSIFIED BY: A country field on Design release 1's permanent address page. The captured DOM of dr1-permanent-address-animals-new-address-revealed has exactly eight inputs named permanentAddressDetails[dog-canis-familiaris:0][…] and no select element of any kind.",
+  "screens": [
+    "fe-animal-identification",
+    "dr1-permanent-address-animals-new-address-revealed"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:147-153",
+    "prototype": "app/views/partials/permanent-address-new-address-fields.html:6-97"
+  },
+  "confidence": "high",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "The permanent address block ends with a mandatory \"Country\" select offering thirty-two countries — the United Kingdom, the EU member states and the rest of the EEA plus Switzerland — under the placeholder \"Select a country\". Leaving it blank once any other address field has been filled produces \"Select a country\", and choosing a value outside the list produces \"Select a country from the list\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:66-70, 147-153). So the frontend treats the place an imported animal will live as a question with thirty-two possible answers.",
+    "prototype": "Design release 1 asks for eight fields and no country: name or organisation name, address line 1, address line 2 (optional), town or city, county (optional), postcode or zip code, email address and phone number (app/views/partials/permanent-address-new-address-fields.html:6-97, revealed under \"Enter a new address\" and rendered in dr1-permanent-address-animals-new-address-revealed). It does not need one, because the page has already said what this address is for: somewhere the animal \"will permanently reside\" and \"can be checked by the Animal and Plant Health Agency (APHA)\". An address APHA can inspect is a Great Britain address, so there is nothing to choose.",
+    "difference": "Remove the Country select and its two validation messages from the animal permanent address block, leaving the eight fields Design release 1 asks for. Nothing else in the journey reads the value: it is collected, checked against the country list and written into the animal's address record, and no other page or rule depends on it. This is the one field on this block where the frontend asks the trader for more than the signed-off design does, so removing it shortens the form rather than lengthening it.",
+    "correction": "The finding stands: Design release 1 asks for no country on this address and Frontend makes one mandatory. Two errors fixed. (1) The count was wrong. The select renders thirty-three option elements, of which one is the \"Select a country\" placeholder, so it offers thirty-two countries, not thirty-three — the United Kingdom, the twenty-seven EU member states, Iceland, Liechtenstein, Norway and Switzerland (src/server/app/services/countries/index.js:27). Both sentences have been corrected. (2) The requirements citation pointed at the wrong thing. app/views/permanent-address-animals.html:82-94 is the govukRadios call, not the address fields; the eight fields are in the partial the conditional reveal renders, app/views/partials/permanent-address-new-address-fields.html:6-97. The prose and the evidence path now both point there. The frontend citation was checked and is right.",
+    "falsifiedBy": "A country field on Design release 1's permanent address page. The captured DOM of dr1-permanent-address-animals-new-address-revealed has exactly eight inputs named permanentAddressDetails[dog-canis-familiaris:0][…] and no select element of any kind.",
+    "verification": "Ran the falsifier: the captured Design release 1 DOM holds exactly eight permanentAddressDetails[dog-canis-familiaris:0] inputs and zero select elements, and the same is true of the un-revealed state. Read the frontend's rendered select at capture/html/frontend/fe-animal-identification.html:276-315 and counted its option elements. Read the cited frontend source whole and confirmed Country is in the mandatory-message map at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:119-127 and in the oneOf format check, so the mandatory claim holds. Followed rubric point 2 on the volatile-values list: both country lists are fixture data, but this finding is about the existence of the control rather than its contents, so it is not a fixture difference. Opened both page shots. CORRECT on substance, corrected on two details below."
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js",
+      "lines": null,
+      "ranges": [
+        {
+          "start": 66,
+          "end": 70
+        },
+        {
+          "start": 147,
+          "end": 153
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:66-70, 147-153",
+      "anchors": [
+        "Select a country",
+        "Select a country from the list"
+      ],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/views/partials/permanent-address-new-address-fields.html",
+      "lines": {
+        "start": 6,
+        "end": 97
+      },
+      "ranges": [
+        {
+          "start": 6,
+          "end": 97
+        }
+      ],
+      "asWritten": "app/views/partials/permanent-address-new-address-fields.html:6-97",
+      "anchors": [
+        "Enter a new address"
+      ],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": "frontend",
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js",
+      "lines": {
+        "start": 147,
+        "end": 153
+      },
+      "ranges": [
+        {
+          "start": 147,
+          "end": 153
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:147-153",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "evidence.frontend",
+      "fields": [
+        "evidence.frontend"
+      ]
+    }
+  ],
+  "corpus": "dr1c",
+  "slice": "identification",
+  "source": "identification--permanent-address-country-field.json",
+  "controls": [
+    "country-2"
+  ],
+  "provenance": {
+    "sourceA": null,
+    "sourceC": "inc-059",
+    "origin": "c-only",
+    "note": "A genuine miss by C's favour. A inc-001 reads the same permanent-address block closely enough to cite its postcode and phone labels by line number, but never counts the fields: the frontend asks for a mandatory Country select over thirty-two options where DR1 asks for eight fields and no country. It is also the one finding in this whole area where the frontend asks for MORE than the signed-off design — a direction A's corpus looked for rarely — and C argues it well: an address APHA can inspect is a GB address, so there is nothing to choose.",
+    "better": null,
+    "judged": null
+  }
+}

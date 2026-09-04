@@ -1,0 +1,31 @@
+h2. Increment
+
+{{inc-058}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+On the animal identification page, any animal whose commodity requires a permanent address gets a bare "Permanent address" heading followed by nine empty fields, all visible at once. The trader retypes the name, address, postcode, country, telephone and email for every such animal, even when the animals are going to live at the place of destination already given elsewhere in the notification.
+
+Design release 1 asks "Where will their permanent address be?" and offers each animal a two-option radio, "Select an address": "Same as the place of destination (POD)", or "Enter a new address", which opens the address fields as a conditional reveal.
+
+h2. Acceptance criteria
+
+* A two-option radio, "Select an address", appears above the permanent address fields on the animal identification card, with the options "Same as the place of destination (POD)" and "Enter a new address".
+* The nine permanent address fields are hidden behind the "Enter a new address" option as a conditional reveal, and are shown only when that option is chosen.
+* The "Enter a new address" option carries the hint "This is where they will stay after spending 48 hours at the place of destination."
+* When the notification already holds a place of destination address, that address is shown as the hint under the "Same as the place of destination (POD)" option; when it does not, the option renders with no hint.
+* Choosing "Same as the place of destination (POD)" reuses the place of destination already collected as one of the five consignment parties, so the trader does not retype it.
+* The radio is per animal and appears only where the card already shows the permanent address block, that is where the commodity requires an address.
+* Nothing outside the frontend changes; the E2E specs and visual baselines for the animal identification page are updated to match.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Frontend: {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/\_identification-card.njk}} lines 43-69, and {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js}} lines 126-163.
+
+Place of destination party: {{src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js}} lines 51-55.
+
+Design release 1: {{app/routes.js}} lines 2479-2500, and {{app/views/permanent-address-animals.html}} lines 82-94.
+
+Read together with {{inc-057}}, which moves the same question onto a new permanent-address page.

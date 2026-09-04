@@ -1,0 +1,37 @@
+test(EUDPA-394): refresh the origin-of-import Linux visual baseline
+
+The copy rename in this increment changes the two shared save-action
+labels at the foot of every journey page — "Save and return to hub" ->
+"Save and return to overview" and "Cancel and return to hub" -> "Cancel
+and return to overview". The origin page carries that macro, so the
+committed visual baseline no longer matches and the E2E visual
+regression spec failed on both PRs of this branch:
+
+  expect(page).toHaveScreenshot(expected) failed — 485 pixels
+  (ratio 0.01 of all image pixels) are different.
+  Snapshot: origin-of-import.png
+
+The rendered page is correct; the baseline was stale. The CI diff
+(run 33815256395, shard 3) shows the differing pixels are confined to
+those two labels — nothing else on the page moved.
+
+The Linux baseline is replaced with the image CI itself rendered under
+this branch (origin-of-import-actual.png from the failing run). The two
+attempts of that run produced byte-identical actuals, and the run's
+"expected" is byte-identical to the baseline being replaced, so the
+image is the deterministic container rendering of this branch's page.
+
+No spec, mask or threshold was changed.
+
+KNOWN GAP: origin-of-import-e2e-darwin.png is NOT refreshed here. The
+macOS baseline can only be regenerated against a running workspace
+stack, and this environment has no Docker registry egress (every
+`docker pull` / `docker manifest inspect` hangs), so the stack cannot be
+started. Local `npm run test:visual` on macOS will fail on this page
+until someone with registry access runs
+`npm run test:visual:update:macos`. CI, which compares only the Linux
+baseline, is unaffected.
+
+Increment inc-006 (EUDPA-394).
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

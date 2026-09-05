@@ -10,8 +10,12 @@
 #   load_target "$RUN_ID" "$TARGET_FLAG"
 #
 # Sets: TARGET_ID, TARGET_REPO (absolute), TARGET_SCOPE, TARGET_SPEC_DIR,
-#       TARGET_IMPLEMENTOR, TARGET_COMMIT_PATHS (array), and
-#       TARGET_VERIFY_UNIT / _FORMAT / _LINT / _E2E (empty means skip).
+#       TARGET_IMPLEMENTOR, TARGET_COMMIT_PATHS (array),
+#       TARGET_VERIFY_UNIT / _FORMAT / _LINT / _E2E (empty means skip),
+#       TARGET_JOURNEY_ID, TARGET_SPEC_BRANCH_SUFFIX,
+#       TARGET_SOURCES (compact JSON array, drives prepare-digest.sh), and
+#       TARGET_REMOVE_SECTIONS (compact JSON array) /
+#       TARGET_REPOINT_FIXTURES (true|false) for backlog-generate.sh's tail.
 
 load_target() {
     local run_id="$1"
@@ -58,4 +62,13 @@ load_target() {
     TARGET_VERIFY_FORMAT="$(jq -r '.verify.format // empty' <<<"$profile")"
     TARGET_VERIFY_LINT="$(jq -r '.verify.lint // empty' <<<"$profile")"
     TARGET_VERIFY_E2E="$(jq -r '.verify.e2e // empty' <<<"$profile")"
+
+    TARGET_JOURNEY_ID="$(jq -r '.journeyId // empty' <<<"$profile")"
+    TARGET_SPEC_BRANCH_SUFFIX="$(jq -r '.specBranchSuffix // empty' <<<"$profile")"
+    TARGET_SOURCES="$(jq -c '.sources // []' <<<"$profile")"
+
+    # Absent backlogTail means an empty tail, which is what a greenfield set
+    # wants: no vendored sections to strip and no fixtures to re-point.
+    TARGET_REMOVE_SECTIONS="$(jq -c '.backlogTail.removeSections // []' <<<"$profile")"
+    TARGET_REPOINT_FIXTURES="$(jq -r '.backlogTail.repointTestFixtures // false' <<<"$profile")"
 }

@@ -21,10 +21,8 @@ ALL_PROFILES=(database infrastructure servicebus stubs backend frontend)
 # never brought up by a plain `run-stack.sh`.
 OPT_IN_PROFILES=(security)
 
-# frontend.compose.yml pins `platform: linux/amd64` for the published
-# frontend/admin images. In --dev that pin is inherited by the local build, so
-# the webpack production stage runs under emulation — on arm64 it effectively
-# never finishes. Build for the daemon's own architecture instead. Export
+# Build --dev images for the daemon's own architecture. Under emulation the
+# webpack production stage effectively never finishes on arm64. Export
 # DEV_BUILD_PLATFORM beforehand to force a specific platform.
 compose_files_add_dev() {
   COMPOSE_FILES+=(-f "$STACK_DIR/dev.compose.yml")

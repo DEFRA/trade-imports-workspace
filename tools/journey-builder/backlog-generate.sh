@@ -9,9 +9,11 @@
 #      fields) carry modelGap — those are deferred to step 4. A collection
 #      page whose gaps come only from NESTED collection members is included
 #      here with deferredNested listing what to leave out.
-#   2. remove-car-section per baseline car section (vendored obligations-v2
-#      domain — see the target scope's PROVENANCE.md)
-#   3. repoint-test-fixtures at the target domain
+#   2. remove-car-section per section in the target's backlogTail.removeSections
+#      (the vendored obligations-v2 car domain — see the target scope's
+#      PROVENANCE.md). Empty for a greenfield set, which has nothing vendored.
+#   3. repoint-test-fixtures, only when the target sets
+#      backlogTail.repointTestFixtures
 #   4. model-extension increments (gate: sam, born blocked), then the
 #      deferred gap pages and one add-nested-collection per deferredNested
 #   — all in one linear dependsOn chain (increments edit shared files).
@@ -26,16 +28,21 @@
 set -e
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
+source "$WORKSPACE/tools/journey-builder/target-profile.sh"
 
-RUN_ID=""; AS_JSON=false
+RUN_ID=""; AS_JSON=false; TARGET_FLAG=""; FORCE=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         EUDPA-*) RUN_ID="$1"; shift ;;
         --json) AS_JSON=true; shift ;;
+        --force) FORCE=true; shift ;;
+        --target) TARGET_FLAG="$2"; shift 2 ;;
         *) echo "Unknown arg: $1" >&2; exit 1 ;;
     esac
 done
-[[ -z "$RUN_ID" ]] && { echo "Usage: $0 EUDPA-X [--json]" >&2; exit 1; }
+[[ -z "$RUN_ID" ]] && { echo "Usage: $0 EUDPA-X [--json] [--force] [--target <id>]" >&2; exit 1; }
+
+load_target "$RUN_ID" "$TARGET_FLAG"
 
 WORKAREA="$WORKSPACE/workareas/journey-builder/$RUN_ID"
 meta="$WORKAREA/.digest-meta.json"
@@ -43,17 +50,16 @@ meta="$WORKAREA/.digest-meta.json"
 spec="$(jq -r '.spec_dir' "$meta")/journey-spec.json"
 target="$WORKAREA/backlog.json"
 
-# Section ids in the vendored flow/flow.js belonging to the car domain.
-CAR_SECTIONS='["email","about-you-and-your-vehicle","your-driving-and-cover","add-to-your-policy","named-driver","modifications","protected-ncd","get-your-quote"]'
-
 existing='{"increments":[]}'
 [[ -f "$target" ]] && existing=$(cat "$target")
 
 jq -n \
     --slurpfile s "$spec" \
-    --argjson carSections "$CAR_SECTIONS" \
+    --argjson removeSections "$TARGET_REMOVE_SECTIONS" \
+    --argjson repointFixtures "$TARGET_REPOINT_FIXTURES" \
     --argjson existing "$existing" \
     --arg run_id "$RUN_ID" \
+    --arg target_id "$TARGET_ID" \
     '
     $s[0] as $spec
     | ($spec.obligations | map({key: .id, value: .}) | from_entries) as $byId
@@ -126,9 +132,11 @@ jq -n \
           | {type: "add-nested-collection", collection: ., page: $p.page, section: $p.section, milestone: "M2"} ] | unique ) as $nestedIncs
 
     | ( $step1
-        + [ $carSections[] | {type: "remove-car-section", section: ., milestone: "M1"} ]
-        + [ {type: "repoint-test-fixtures", milestone: "M1",
-             detail: "Re-point engine/test-support fixtures and root model tests at the target domain per PROVENANCE.md."} ]
+        + [ $removeSections[] | {type: "remove-car-section", section: ., milestone: "M1"} ]
+        + (if $repointFixtures
+           then [ {type: "repoint-test-fixtures", milestone: "M1",
+                   detail: "Re-point engine/test-support fixtures and root model tests at the target domain per PROVENANCE.md."} ]
+           else [] end)
         + $extensions + $deferredPages + $nestedIncs )
 
     # number + linear chain + preserve status by content key
@@ -145,8 +153,33 @@ jq -n \
         | . + { status: ($prev.status // "todo"), commit: ($prev.commit // null), failure_reason: ($prev.failure_reason // null) }
         | if (.gate == "sam" and .status == "todo") then .status = "blocked" else . end
       )
-    | { schema_version: 1, run_id: $run_id, increments: . }
-    ' > "$target.tmp" && mv "$target.tmp" "$target"
+    | { schema_version: 1, run_id: $run_id, target: $target_id, increments: . }
+    ' > "$target.tmp"
+
+# Refuse to drop increments this generator cannot re-derive. A backlog gets
+# hand-extended (EUDPA-249 grew 67 increments from 35 derivable ones, several
+# marked "not generator-derivable"), and the parity skill writes its findings
+# backlog to this same filename. Regenerating over either silently destroys
+# that work; status preservation by content key does not save an increment
+# whose key the generator no longer emits.
+if [[ -f "$target" && "$FORCE" != true ]]; then
+    lost=$(jq -r --slurpfile new "$target.tmp" '
+        def ckey: "\(.type):\(.page // .gap // .collection // .section // "tail")";
+        ($new[0].increments | map(ckey)) as $keys
+        | [ .increments[]? | ckey as $k | select(($keys | index($k)) == null) | .id ]
+        | join(", ")' "$target")
+    if [[ -n "$lost" ]]; then
+        rm -f "$target.tmp"
+        echo "Error: regenerating $RUN_ID would drop increments the generator cannot re-derive:" >&2
+        echo "  $lost" >&2
+        echo "These are hand-authored, or were written by another skill — parity writes its" >&2
+        echo "findings backlog to this same file. Regenerating destroys them and their rulings." >&2
+        echo "Re-run with --force only once you are certain they are disposable." >&2
+        exit 1
+    fi
+fi
+
+mv "$target.tmp" "$target"
 
 if [[ "$AS_JSON" == true ]]; then
     cat "$target"

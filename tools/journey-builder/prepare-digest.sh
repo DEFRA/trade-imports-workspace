@@ -15,8 +15,6 @@ set -e
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 source "$WORKSPACE/tools/journey-builder/target-profile.sh"
-CONFLUENCE_PAGE_ID="6497338582"
-CANVAS_FILE="Notes from chat with interaction design.canvas"
 
 RUN_ID=""; REFETCH=false; AS_JSON=false; TARGET_FLAG=""
 while [[ $# -gt 0 ]]; do
@@ -33,10 +31,14 @@ done
 load_target "$RUN_ID" "$TARGET_FLAG"
 FRONTEND_REPO="$TARGET_REPO"
 
+[[ -n "$TARGET_JOURNEY_ID" ]] || { echo "Error: target '$TARGET_ID' declares no journeyId" >&2; exit 1; }
+[[ -n "$TARGET_SPEC_BRANCH_SUFFIX" ]] || { echo "Error: target '$TARGET_ID' declares no specBranchSuffix" >&2; exit 1; }
+[[ "$(jq 'length' <<<"$TARGET_SOURCES")" -gt 0 ]] || { echo "Error: target '$TARGET_ID' declares no sources" >&2; exit 1; }
+
 WORKAREA="$WORKSPACE/workareas/journey-builder/$RUN_ID"
 SOURCES_DIR="$WORKAREA/.sources"
 WORKTREE="$WORKAREA/frontend-worktree"
-SPEC_BRANCH="spike/$RUN_ID-live-animals-spec"
+SPEC_BRANCH="spike/$RUN_ID-$TARGET_SPEC_BRANCH_SUFFIX"
 SPEC_DIR="$WORKTREE/$TARGET_SPEC_DIR"
 
 mkdir -p "$SOURCES_DIR"
@@ -53,16 +55,33 @@ fi
 BASE_SHA=$(git -C "$FRONTEND_REPO" rev-parse "$BASE_BRANCH")
 
 # --- Cache sources --------------------------------------------------------
-if [[ ! -f "$SOURCES_DIR/confluence-v4.page.json" || "$REFETCH" == true ]]; then
-    "$WORKSPACE/tools/confluence/page.sh" "$CONFLUENCE_PAGE_ID" json \
-        > "$SOURCES_DIR/confluence-v4.page.json"
-    # Content lives in body.view (body.storage is empty on this page).
-    jq -r '.body.view.value' "$SOURCES_DIR/confluence-v4.page.json" \
-        > "$SOURCES_DIR/confluence-v4.body.html"
-fi
-if [[ ! -f "$SOURCES_DIR/ixd-canvas.canvas" || "$REFETCH" == true ]]; then
-    cp "$FRONTEND_REPO/$CANVAS_FILE" "$SOURCES_DIR/ixd-canvas.canvas"
-fi
+# Driven by the target's sources[]. A `code` source is read live by the
+# extractor at the pinned base sha, so there is nothing to cache; a `pending`
+# source has nothing to fetch yet.
+while IFS=$'\t' read -r s_id s_type s_ref; do
+    case "$s_type" in
+        confluence)
+            if [[ ! -f "$SOURCES_DIR/$s_id.page.json" || "$REFETCH" == true ]]; then
+                "$WORKSPACE/tools/confluence/page.sh" "$s_ref" json \
+                    > "$SOURCES_DIR/$s_id.page.json"
+                # Content lives in body.view — body.storage is empty on some pages.
+                jq -r '.body.view.value' "$SOURCES_DIR/$s_id.page.json" \
+                    > "$SOURCES_DIR/$s_id.body.html"
+            fi
+            ;;
+        canvas)
+            if [[ ! -f "$SOURCES_DIR/$s_id.canvas" || "$REFETCH" == true ]]; then
+                [[ -f "$FRONTEND_REPO/$s_ref" ]] || {
+                    echo "Error: canvas source '$s_id' expects $FRONTEND_REPO/$s_ref, which does not exist" >&2
+                    exit 1
+                }
+                cp "$FRONTEND_REPO/$s_ref" "$SOURCES_DIR/$s_id.canvas"
+            fi
+            ;;
+        code|pending) ;;
+        *) echo "Error: source '$s_id' has unknown type '$s_type'" >&2; exit 1 ;;
+    esac
+done < <(jq -r '.[] | select(.pending != true) | [.id, .type, (.ref // "")] | @tsv' <<<"$TARGET_SOURCES")
 
 FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -85,24 +104,32 @@ seed_extract() {
             notes: []
         }' > "$target"
 }
-seed_extract "confluence-v4" "confluence" "$CONFLUENCE_PAGE_ID"
-seed_extract "skeleton" "code" "src/server@$BASE_SHA"
-seed_extract "ixd-canvas" "canvas" "$CANVAS_FILE"
+# A `code` source's ref is pinned to the base sha so the extract records
+# exactly which tree it read. `pending` sources get no placeholder — they are
+# declared in the spec so a later hand-filled extract has somewhere to belong.
+while IFS=$'\t' read -r s_id s_type s_ref; do
+    if [[ "$s_type" == "code" ]]; then
+        seed_extract "$s_id" "$s_type" "$s_ref@$BASE_SHA"
+    else
+        seed_extract "$s_id" "$s_type" "$s_ref"
+    fi
+done < <(jq -r '.[] | select(.pending != true) | [.id, .type, (.ref // "")] | @tsv' <<<"$TARGET_SOURCES")
 
 # --- Seed the canonical spec skeleton in the worktree ----------------------
 mkdir -p "$SPEC_DIR/fixtures"
 if [[ ! -f "$SPEC_DIR/journey-spec.json" ]]; then
-    jq -n --arg at "$FETCHED_AT" --arg sha "$BASE_SHA" --arg page "$CONFLUENCE_PAGE_ID" --arg canvas "$CANVAS_FILE" \
+    jq -n --arg at "$FETCHED_AT" --arg sha "$BASE_SHA" \
+        --arg journey "$TARGET_JOURNEY_ID" --argjson sources "$TARGET_SOURCES" \
         '{
             specVersion: 1,
-            journey: "live-animals-import-notification",
-            sources: [
-                { id: "confluence-v4", type: "confluence", ref: $page, fetchedAt: $at, status: "extracting" },
-                { id: "skeleton", type: "code", ref: ("src/server@" + $sha), fetchedAt: $at, status: "extracting" },
-                { id: "ixd-canvas", type: "canvas", ref: $canvas, fetchedAt: $at, status: "extracting" },
-                { id: "figma", type: "figma", ref: null, fetchedAt: null, status: "pending" },
-                { id: "heroku-prototype", type: "prototype", ref: null, fetchedAt: null, status: "pending" }
-            ],
+            journey: $journey,
+            sources: [ $sources[]
+                | if .pending == true
+                  then { id, type, ref: null, fetchedAt: null, status: "pending" }
+                  else { id, type,
+                         ref: (if .type == "code" then (.ref + "@" + $sha) else .ref end),
+                         fetchedAt: $at, status: "extracting" }
+                  end ],
             behaviours: [],
             fieldGroups: {},
             sections: [],
@@ -117,28 +144,40 @@ if [[ ! -f "$SPEC_DIR/fixtures/happy-path.json" ]]; then
 fi
 
 # --- Meta ------------------------------------------------------------------
+# `target` is what lets a later script resolve the same profile without the
+# --target flag — load_target reads it back from here.
 jq -n \
     --arg run_id "$RUN_ID" --arg worktree "$WORKTREE" --arg spec_dir "$SPEC_DIR" \
     --arg branch "$SPEC_BRANCH" --arg base_branch "$BASE_BRANCH" --arg base_sha "$BASE_SHA" \
-    --arg at "$FETCHED_AT" \
+    --arg at "$FETCHED_AT" --arg target "$TARGET_ID" --argjson sources "$TARGET_SOURCES" \
     '{
         run_id: $run_id,
         mode: "digest",
+        target: $target,
         worktree: $worktree,
         spec_dir: $spec_dir,
         spec_branch: $branch,
         base_branch: $base_branch,
         base_sha: $base_sha,
         prepared_at: $at,
-        sources: ["confluence-v4", "skeleton", "ixd-canvas"]
+        sources: [ $sources[] | select(.pending != true) | .id ]
     }' > "$WORKAREA/.digest-meta.json"
 
 if [[ "$AS_JSON" == true ]]; then
     cat "$WORKAREA/.digest-meta.json"
 else
+    active_ids=$(jq -r '[ .[] | select(.pending != true) | .id ] | join(", ")' <<<"$TARGET_SOURCES")
     echo "Workarea:   $WORKAREA"
+    echo "Target:     $TARGET_ID ($TARGET_REPO)"
     echo "Worktree:   $WORKTREE ($SPEC_BRANCH off $BASE_BRANCH@${BASE_SHA:0:8})"
     echo "Spec dir:   $SPEC_DIR"
-    echo "Sources cached: confluence-v4 ($(wc -c < "$SOURCES_DIR/confluence-v4.body.html" | tr -d ' ') bytes html), ixd-canvas, skeleton@${BASE_SHA:0:8}"
-    echo "Extracts:   extract.{confluence-v4,skeleton,ixd-canvas}.json seeded"
+    echo "Sources:    $active_ids"
+    while IFS=$'\t' read -r s_id s_type; do
+        case "$s_type" in
+            confluence) echo "  $s_id: $(wc -c < "$SOURCES_DIR/$s_id.body.html" | tr -d ' ') bytes html" ;;
+            canvas)     echo "  $s_id: cached" ;;
+            code)       echo "  $s_id: read live at ${BASE_SHA:0:8}" ;;
+        esac
+    done < <(jq -r '.[] | select(.pending != true) | [.id, .type] | @tsv' <<<"$TARGET_SOURCES")
+    echo "Extracts:   seeded for $active_ids"
 fi

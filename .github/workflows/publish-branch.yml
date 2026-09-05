@@ -23,16 +23,88 @@ env:
   AWS_ACCOUNT_ID: "094954420758"
 
 jobs:
-  publish-branch:
-    name: Publish branch-tagged image
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
     if: >
       github.actor != 'dependabot[bot]' &&
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v5
 
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-${{ inputs.image-name }}-build-role
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: 'true'
+
+      - name: Login to Docker Hub
+        uses: DEFRA/cdp-build-action/docker-login@main
+
+      # `tags:` and `push:` are deliberately absent — push-by-digest rejects a
+      # tag, and the branch tag is created over both digests by the publish
+      # job. The quoted "name=" is buildx CSV escaping for the two registries.
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          provenance: false
+          sbom: false
+          no-cache: true
+          outputs: >-
+            type=image,"name=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }},defradigital/${{ inputs.image-name }}",push-by-digest=true,name-canonical=true,push=true
+          labels: |
+            defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
+            defra.cdp.git.repo.name=${{ github.repository }}
+            defra.cdp.${{ inputs.run-mode == 'job' && 'testsuite' || 'service' }}.name=${{ inputs.image-name }}
+            defra.cdp.build.run_id=${{ github.run_id }}
+            defra.cdp.run_mode=${{ inputs.run-mode }}
+            git.hash=${{ github.sha }}
+
+      - name: Record the digest
+        shell: bash
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [ -n "$DIGEST" ] || { echo "::error::build produced no digest"; exit 1; }
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - name: Upload the digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ inputs.image-name }}-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish branch-tagged index
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Compute sanitised branch tag
         id: tag
         shell: bash
@@ -50,6 +122,16 @@ jobs:
           echo "tag=$t" >> "$GITHUB_OUTPUT"
           echo "Sanitised '$raw' -> '$t'"
 
+      - name: Download the per-arch digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digest-${{ inputs.image-name }}-*
+          merge-multiple: true
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -64,22 +146,23 @@ jobs:
       - name: Login to Docker Hub
         uses: DEFRA/cdp-build-action/docker-login@main
 
-      - name: Build and push branch-tagged image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          provenance: false
-          sbom: false
-          no-cache: true
-          tags: |
-            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}:${{ steps.tag.outputs.tag }}
-            defradigital/${{ inputs.image-name }}:${{ steps.tag.outputs.tag }}
-          labels: |
-            defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
-            defra.cdp.git.repo.name=${{ github.repository }}
-            defra.cdp.${{ inputs.run-mode == 'job' && 'testsuite' || 'service' }}.name=${{ inputs.image-name }}
-            defra.cdp.build.run_id=${{ github.run_id }}
-            defra.cdp.run_mode=${{ inputs.run-mode }}
-            git.hash=${{ github.sha }}
+      - name: Create the branch tag as a multi-arch index
+        shell: bash
+        working-directory: /tmp/digests
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          ECR_REPO: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.image-name }}
+          HUB_REPO: defradigital/${{ inputs.image-name }}
+        run: |
+          shopt -s nullglob
+          digests=(*)
+          if [ ${#digests[@]} -ne 2 ]; then
+            echo "::error::expected 2 per-arch digests, found ${#digests[@]}"
+            exit 1
+          fi
+          for repo in "$ECR_REPO" "$HUB_REPO"; do
+            sources=()
+            for d in "${digests[@]}"; do sources+=("${repo}@sha256:${d}"); done
+            docker buildx imagetools create -t "${repo}:${TAG}" "${sources[@]}"
+            docker buildx imagetools inspect "${repo}:${TAG}"
+          done

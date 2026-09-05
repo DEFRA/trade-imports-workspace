@@ -120,3 +120,45 @@ services:
     image: defradigital/trade-imports-ins-frontend:${TRADE_IMPORTS_INS_FRONTEND:-latest}
     ports:
       - '3002:3002'
+  trade-imports-plants-frontend:
+    profiles: [frontend]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      trade-imports-defra-id-stub:
+        condition: service_healthy
+        required: false
+      # Countries and ports are primed at boot from reference-data; without this
+      # the frontend can fetch before Spring is listening and exit(1).
+      trade-imports-reference-data:
+        condition: service_healthy
+    env_file:
+      - ./shared.env
+    environment:
+      - PORT=3003
+      - NODE_ENV=development
+      - NUNJUCKS_NO_CACHE=${NUNJUCKS_NO_CACHE:-false}
+      - NUNJUCKS_WATCH=${NUNJUCKS_WATCH:-false}
+      - LOG_FORMAT=ecs
+      - REDIS_TLS=false
+      - SESSION_CACHE_ENGINE=redis
+      - TRADE_IMPORTS_PLANTS_BACKEND_URL=http://host.docker.internal:8091
+      - TRADE_IMPORTS_REFERENCE_DATA_URL=http://host.docker.internal:8086
+      - DEFRA_ID_OIDC_CONFIGURATION_URL=http://host.docker.internal:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration
+      - DEFRA_ID_REDIRECT_URL=http://localhost:3003/auth/sign-in-oidc
+      - DEFRA_ID_SIGN_OUT_REDIRECT_URL=http://localhost:3003/auth/sign-out-oidc
+      - DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED=true
+    healthcheck:
+      # start_period covers the boot window under a CPU-contended cold start.
+      interval: 5s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:3003/health
+    image: defradigital/trade-imports-plants-frontend:${TRADE_IMPORTS_PLANTS_FRONTEND:-latest}
+    ports:
+      - '3003:3003'

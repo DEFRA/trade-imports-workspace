@@ -13,6 +13,7 @@ endif
 
 .PHONY: setup link update reset status install lint test \
         start-frontend start-backend start-admin start-gateway start-address-book \
+        start-ins-backend start-plants-frontend start-plants-backend \
         docker-local-branches docker-compose-up docker-compose-dev docker-compose-down docker-compose-bounce docker-logs docker-restart-backend clean help
 
 # --- Help ---
@@ -215,4 +216,10 @@ start-address-book: ## Start address book API from source (requires Java 25 + Mo
 
 start-ins-backend: ## Start ins-backend API from source (requires Java 25 + MongoDB on :27017)
 	SPRING_PROFILES_ACTIVE=local PORT=8090 mvn -f $(REPOS_DIR)/trade-imports-ins-backend/pom.xml spring-boot:run
+
+start-plants-frontend: ## Start plants frontend dev server from source
+	PORT=3003 npm --prefix $(REPOS_DIR)/trade-imports-plants-frontend run dev
+
+start-plants-backend: ## Start plants-backend API from source (requires Java 25 + MongoDB on :27017)
+	SPRING_PROFILES_ACTIVE=local PORT=8091 mvn -f $(REPOS_DIR)/trade-imports-plants-backend/pom.xml spring-boot:run
 

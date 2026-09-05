@@ -56,6 +56,9 @@ Services started:
 | Animals backend | 8085 | `defradigital/trade-imports-animals-backend:latest` |
 | Admin | 3001 | `defradigital/trade-imports-animals-admin:latest` |
 | INS frontend | 3002 | `defradigital/trade-imports-ins-frontend:latest` |
+| INS backend | 8090 | `defradigital/trade-imports-ins-backend:latest` |
+| Plants frontend | 3003 | `defradigital/trade-imports-plants-frontend:latest` |
+| Plants backend | 8091 | `defradigital/trade-imports-plants-backend:latest` |
 | Address book | 8089 | `defradigital/trade-imports-address-book:latest` |
 | Dynamics gateway | 8088 | `defradigital/trade-imports-dynamics-gateway:latest` |
 | Defra ID stub | 3007 | `defradigital/trade-imports-defra-id-stub` |
@@ -121,9 +124,10 @@ The backend does **not** hot-reload — recreate the container after changing Ja
 ## Option 3 — One service natively, the rest in the stack
 
 Exclude the service you're developing from the stack and run it from source.
-Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`,
-`defra-id-stub`, `reference-data`, `address-book`, `gateway` (the authoritative
-list is the `services` array at the top of `scripts/stack/run-stack.sh`).
+Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`,
+`ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
+`reference-data`, `address-book`, `gateway` (the authoritative list is the
+`services` array at the top of `scripts/stack/run-stack.sh`).
 
 ```bash
 # Terminal 1 — everything except the backend
@@ -185,12 +189,15 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 | Animals frontend | 3000 |
 | Admin | 3001 |
 | INS frontend | 3002 |
+| Plants frontend | 3003 |
 | Defra ID stub | 3007 |
 | Animals backend | 8085 |
 | Reference data | 8086 |
 | Trade imports stub | 8087 |
 | Dynamics gateway | 8088 |
 | Address book | 8089 |
+| INS backend | 8090 |
+| Plants backend | 8091 |
 | cdp-uploader | 7337 |
 | Floci | 4566 |
 | MongoDB | 27017 |

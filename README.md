@@ -16,6 +16,10 @@ Local workspace aggregating the independent GitHub repos of the DEFRA trade impo
 | `repos/trade-imports-dynamics-gateway` | [DEFRA/trade-imports-dynamics-gateway](https://github.com/DEFRA/trade-imports-dynamics-gateway) | Centralised gateway forwarding events to Azure Service Bus | Java / Spring Boot |
 | `repos/trade-imports-address-book` | [DEFRA/trade-imports-address-book](https://github.com/DEFRA/trade-imports-address-book) | Org-scoped address book API | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | [DEFRA/trade-imports-ins-frontend](https://github.com/DEFRA/trade-imports-ins-frontend) | Import Notification Service front-door | Node.js |
+| `repos/trade-imports-ins-backend` | [DEFRA/trade-imports-ins-backend](https://github.com/DEFRA/trade-imports-ins-backend) | Cross-journey notification read model | Java / Spring Boot |
+| `repos/trade-imports-plants-frontend` | [DEFRA/trade-imports-plants-frontend](https://github.com/DEFRA/trade-imports-plants-frontend) | High-risk plants journey | Node.js |
+| `repos/trade-imports-plants-backend` | [DEFRA/trade-imports-plants-backend](https://github.com/DEFRA/trade-imports-plants-backend) | High-risk plants notification persistence | Java / Spring Boot |
+| `repos/trade-imports-schemas` | [DEFRA/trade-imports-schemas](https://github.com/DEFRA/trade-imports-schemas) | Shared schema definitions | Node.js |
 
 ## Quickstart
 

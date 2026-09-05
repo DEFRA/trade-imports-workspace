@@ -119,3 +119,32 @@ services:
       - ../../repos/trade-imports-ins-backend/src:/app/src
     healthcheck:
       start_period: 120s
+
+  trade-imports-plants-frontend:
+    build:
+      context: ../../repos/trade-imports-plants-frontend
+      target: development
+    platform: ${DEV_BUILD_PLATFORM:-linux/amd64}
+    image: ''
+    environment:
+      - NODE_ENV=development
+      - NUNJUCKS_NO_CACHE=true
+      - NUNJUCKS_WATCH=false
+    volumes:
+      - ../../repos/trade-imports-plants-frontend/src:/home/node/src
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3003/health']
+      interval: 5s
+      start_period: 30s
+      retries: 10
+
+  trade-imports-plants-backend:
+    build:
+      context: ../../repos/trade-imports-plants-backend
+      target: dev-run
+    platform: ${DEV_BUILD_PLATFORM:-linux/amd64}
+    image: ''
+    volumes:
+      - ../../repos/trade-imports-plants-backend/src:/app/src
+    healthcheck:
+      start_period: 120s

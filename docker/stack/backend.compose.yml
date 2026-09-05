@@ -169,3 +169,35 @@ services:
     mem_limit: 1g
     ports:
       - '8090:8090'
+  trade-imports-plants-backend:
+    profiles: [backend]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      floci-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+    env_file:
+      - ./shared.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
+      - PORT=8091
+      - SPRING_PROFILES_ACTIVE=local
+      - MONGO_DATABASE=trade-imports-plants-backend
+      - AWS_EMF_AGENT_ENDPOINT=http://host.docker.internal:4566
+      - APP_AWS_ENDPOINT_OVERRIDE=http://host.docker.internal:4566
+      - LOG_LEVEL=INFO
+    healthcheck:
+      interval: 5s
+      retries: 10
+      start_period: 60s
+      test:
+        - CMD
+        - curl
+        - '-f'
+        - http://localhost:8091/health
+    image: defradigital/trade-imports-plants-backend:${TRADE_IMPORTS_PLANTS_BACKEND:-latest}
+    mem_limit: 1g
+    ports:
+      - '8091:8091'

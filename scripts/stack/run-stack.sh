@@ -17,6 +17,8 @@ services=(
   "address-book|trade-imports-address-book|TRADE_IMPORTS_ADDRESS_BOOK"
   "gateway|trade-imports-dynamics-gateway|TRADE_IMPORTS_DYNAMICS_GATEWAY"
   "ins-backend|trade-imports-ins-backend|TRADE_IMPORTS_INS_BACKEND"
+  "plants-frontend|trade-imports-plants-frontend|TRADE_IMPORTS_PLANTS_FRONTEND"
+  "plants-backend|trade-imports-plants-backend|TRADE_IMPORTS_PLANTS_BACKEND"
 )
 
 valid_labels=()

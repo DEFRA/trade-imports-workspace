@@ -18,3 +18,7 @@
 | `make start-backend` | Start backend from source (outside Docker) |
 | `make start-admin` | Start admin dev server from source (outside Docker) |
 | `make start-gateway` | Start dynamics gateway from source (outside Docker) |
+| `make start-address-book` | Start the address book API from source (outside Docker) |
+| `make start-ins-backend` | Start the INS backend API from source (outside Docker) |
+| `make start-plants-frontend` | Start the plants frontend dev server from source (outside Docker) |
+| `make start-plants-backend` | Start the plants backend API from source (outside Docker) |

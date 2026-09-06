@@ -117,6 +117,11 @@ tests = `repos/trade-imports-animals-tests` (`DEFRA/trade-imports-animals-tests`
 `models`: heavy = opus, light = sonnet. Both go into every run copy's FALLBACK through the
 build-orchestrator skill's parameters. Board 13780 (EUDPA).
 
+**`requireApproval` is false for this programme.** Sam ruled on 2026-09-06, in as many
+words, that an increment merges when its pipeline goes green and the run does not wait
+for a human approval. The loop's own style, code, adversarial-verify and judge pass is the
+review. Write `requireApproval: false` into every run copy's FALLBACK.
+
 The M0 CI-workflow increments (inc-002 to inc-011) change only YAML under `.github/`, which
 neither prettier's globs nor eslint read. Their ladders run the unit, format and lint rungs;
 the proof is the PR's own checks, which the loop watches. Several plans carry open questions

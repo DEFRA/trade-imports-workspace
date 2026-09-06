@@ -1,4 +1,4 @@
-# High-risk plants — programme notes for the batch orchestrator (L1 reads this; L0 never does)
+# High-risk plants — programme notes for the build-orchestrator skill
 
 Run **EUDPA-409** under epic **EUDPA-407**. Target `high-risk-plants-frontend` in
 `tools/journey-builder/targets.json`. Backlog: `backlog.json` beside this file, 63
@@ -114,8 +114,8 @@ asking about the old path; rule it not applicable under the orchestrator and mov
 `repos`: frontend = `repos/trade-imports-plants-frontend` (`DEFRA/trade-imports-plants-frontend`),
 backend = `repos/trade-imports-plants-backend` (`DEFRA/trade-imports-plants-backend`),
 tests = `repos/trade-imports-animals-tests` (`DEFRA/trade-imports-animals-tests`).
-`models`: heavy = opus, light = sonnet. Both are recorded in the ledger's programme block;
-L1 copies them into every run copy's FALLBACK.
+`models`: heavy = opus, light = sonnet. Both go into every run copy's FALLBACK through the
+build-orchestrator skill's parameters. Board 13780 (EUDPA).
 
 The M0 CI-workflow increments (inc-002 to inc-011) change only YAML under `.github/`, which
 neither prettier's globs nor eslint read. Their ladders run the unit, format and lint rungs;

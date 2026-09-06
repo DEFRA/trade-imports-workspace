@@ -20,6 +20,12 @@
     "  canvas     — ref is a path relative to the target repo. Copied verbatim.",
     "  code       — ref is a path inside the repo; pinned to the base sha at",
     "               prepare time and read live by the extractor, not cached.",
+    "  document   — one file (policy paper, exported spec). ref is",
+    "               WORKSPACE-relative, not repo-relative, because these live",
+    "               in the workspace. Cached as <id>.<original extension>.",
+    "  images     — a directory of screenshots (a mural export, a design",
+    "               board). ref is WORKSPACE-relative and names the directory.",
+    "               Cached as <id>/ so the extractor can enumerate it.",
     "An entry marked \"pending\": true keeps its real type but is neither fetched",
     "nor given an extract placeholder. It is seeded into the spec's sources[]",
     "with status \"pending\", so a later hand-filled extract has somewhere to",
@@ -103,6 +109,42 @@
       ],
       "sources": [
         {
+          "id": "phnns-policy",
+          "type": "document",
+          "ref": "workareas/high-risk-plants/high-risk-plants-requirements/Plant Health National Notification Scheme (PHNNS).docx",
+          "description": "PRIMARY. The policy paper. Prose sections plus six annexes."
+        },
+        {
+          "id": "confluence-user-needs",
+          "type": "confluence",
+          "ref": "6518997286",
+          "description": "PRIMARY. Confluence 'User needs - National Notification System'"
+        },
+        {
+          "id": "confluence-requirements",
+          "type": "confluence",
+          "ref": "6518997274",
+          "description": "PRIMARY. Confluence 'Requirements - National Notification System'"
+        },
+        {
+          "id": "mural",
+          "type": "images",
+          "ref": "workareas/high-risk-plants/high-risk-plants-requirements",
+          "description": "PRIMARY. Mural screenshots. Carries detail the policy paper does not."
+        },
+        {
+          "id": "prototype",
+          "type": "repo",
+          "ref": "/Users/samfarrington/git/defra/defra-design/GB-notification-service",
+          "description": "SECONDARY. Design prototype. Little or nothing plants-specific — do not force value out of it."
+        },
+        {
+          "id": "live-animals",
+          "type": "repo",
+          "ref": "repos/trade-imports-animals-frontend",
+          "description": "SECONDARY. Read for CONSISTENCY of shape and copy, not as a requirement source."
+        },
+        {
           "id": "skeleton",
           "type": "code",
           "ref": "src/server",
@@ -110,11 +152,13 @@
         }
       ],
       "_sourcesNote": [
-        "Only the code skeleton so far. The requirement sources are not settled:",
-        "screenshots and Confluence pages are expected, and the product owner has",
-        "ruled that the CHED-PP corpus under workareas/trace-requirements/ched-pp/",
-        "is NOT a source for this journey. Add entries here as they are agreed —",
-        "a confluence entry needs its page id, a canvas entry a repo-relative path."
+        "Priority when sources disagree: policy paper, then the two Confluence",
+        "pages and the mural, then the prototype, then live-animals. Record every",
+        "disagreement as a conflict rather than picking silently.",
+        "",
+        "HIGH-RISK PLANTS ONLY. The product owner has ruled that CHED-PP is a",
+        "different thing and that the corpus under workareas/trace-requirements/",
+        "ched-pp/ is NOT a source. Do not read it."
       ],
       "backlogTail": {},
       "verify": {

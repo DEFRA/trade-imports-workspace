@@ -78,6 +78,46 @@ while IFS=$'\t' read -r s_id s_type s_ref; do
                 cp "$FRONTEND_REPO/$s_ref" "$SOURCES_DIR/$s_id.canvas"
             fi
             ;;
+        document)
+            # One file — policy paper, spec, exported doc. ref is
+            # WORKSPACE-relative, because these live in the workspace rather
+            # than in the target repo. The extension is kept so the extractor
+            # knows what it is holding.
+            existing=$(find "$SOURCES_DIR" -maxdepth 1 -name "$s_id.*" -not -name '*.json' 2>/dev/null | head -1)
+            if [[ -z "$existing" || "$REFETCH" == true ]]; then
+                [[ -f "$WORKSPACE/$s_ref" ]] || {
+                    echo "Error: document source '$s_id' expects $WORKSPACE/$s_ref, which does not exist" >&2
+                    exit 1
+                }
+                cp "$WORKSPACE/$s_ref" "$SOURCES_DIR/$s_id.${s_ref##*.}"
+            fi
+            ;;
+        images)
+            # A directory of screenshots — a mural export, a design board. ref
+            # is WORKSPACE-relative and names the directory, not one file;
+            # cached as .sources/<id>/ so the extractor can enumerate it.
+            if [[ ! -d "$SOURCES_DIR/$s_id" || "$REFETCH" == true ]]; then
+                [[ -d "$WORKSPACE/$s_ref" ]] || {
+                    echo "Error: images source '$s_id' expects directory $WORKSPACE/$s_ref, which does not exist" >&2
+                    exit 1
+                }
+                mkdir -p "$SOURCES_DIR/$s_id"
+                cp -R "$WORKSPACE/$s_ref/." "$SOURCES_DIR/$s_id/"
+            fi
+            ;;
+        repo)
+            # Another checkout read live — the live-animals repo, a prototype.
+            # ref is workspace-relative, or absolute for a repo outside the
+            # workspace. Nothing is cached; the extractor reads it in place,
+            # so fail loudly here rather than let a worker invent content for
+            # a path that is not there.
+            resolved="$s_ref"
+            [[ "$resolved" == /* ]] || resolved="$WORKSPACE/$s_ref"
+            [[ -d "$resolved" ]] || {
+                echo "Error: repo source '$s_id' expects directory $resolved, which does not exist" >&2
+                exit 1
+            }
+            ;;
         code|pending) ;;
         *) echo "Error: source '$s_id' has unknown type '$s_type'" >&2; exit 1 ;;
     esac
@@ -108,11 +148,21 @@ seed_extract() {
 # exactly which tree it read. `pending` sources get no placeholder — they are
 # declared in the spec so a later hand-filled extract has somewhere to belong.
 while IFS=$'\t' read -r s_id s_type s_ref; do
-    if [[ "$s_type" == "code" ]]; then
-        seed_extract "$s_id" "$s_type" "$s_ref@$BASE_SHA"
-    else
-        seed_extract "$s_id" "$s_type" "$s_ref"
-    fi
+    case "$s_type" in
+        code)
+            seed_extract "$s_id" "$s_type" "$s_ref@$BASE_SHA"
+            ;;
+        repo)
+            # Pinned to that repo's own HEAD, not the target's base sha, so the
+            # extract records exactly which tree was read.
+            resolved="$s_ref"
+            [[ "$resolved" == /* ]] || resolved="$WORKSPACE/$s_ref"
+            seed_extract "$s_id" "$s_type" "$s_ref@$(git -C "$resolved" rev-parse HEAD)"
+            ;;
+        *)
+            seed_extract "$s_id" "$s_type" "$s_ref"
+            ;;
+    esac
 done < <(jq -r '.[] | select(.pending != true) | [.id, .type, (.ref // "")] | @tsv' <<<"$TARGET_SOURCES")
 
 # --- Seed the canonical spec skeleton in the worktree ----------------------
@@ -177,6 +227,9 @@ else
             confluence) echo "  $s_id: $(wc -c < "$SOURCES_DIR/$s_id.body.html" | tr -d ' ') bytes html" ;;
             canvas)     echo "  $s_id: cached" ;;
             code)       echo "  $s_id: read live at ${BASE_SHA:0:8}" ;;
+            document)   echo "  $s_id: $(find "$SOURCES_DIR" -maxdepth 1 -name "$s_id.*" -not -name '*.json' -exec basename {} \; | head -1)" ;;
+            images)     echo "  $s_id: $(find "$SOURCES_DIR/$s_id" -type f | wc -l | tr -d ' ') files" ;;
+            repo)       echo "  $s_id: read live" ;;
         esac
     done < <(jq -r '.[] | select(.pending != true) | [.id, .type] | @tsv' <<<"$TARGET_SOURCES")
     echo "Extracts:   seeded for $active_ids"

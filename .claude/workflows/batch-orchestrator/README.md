@@ -144,7 +144,19 @@ each run's cost is one increment's cost.
 | **Per increment** | **15 + 3n** |
 
 Plus one preflight per run. Each CI fix attempt adds two — a fixer and a re-watch — so a worst-case red
-PR at the default `ciFixAttempts: 3` adds six. Failure paths add a single rollback agent and then stop,
+PR at the default `ciFixAttempts: 3` adds six. The planner L1 spawns for an unplanned increment is an
+ordinary subagent outside the Workflow, so it counts against nothing here.
+
+### Plans are written just in time
+
+A backlog straight from `backlog-generate.sh` carries a type, a subject and a chain position per
+increment, and the loop reads a plan — `filesToTouch`, `acceptanceCriteria`, `verification` and the
+rest. L1 fills that gap one increment at a time: when the increment it has just derived has no
+`sizeGuess`, it spawns one `INCREMENT_PLANNER` for it, checks the write, then runs its usual plan
+checks and builds. Nothing is planned further ahead than the next increment, so every plan is written
+against the tree the previous landings actually left, and no one is asked to review sixty plans at
+once. An up-front pass over a few increments is still possible when the first batches should start
+faster; a plan that already exists is used as it stands. Failure paths add a single rollback agent and then stop,
 so they cost less than a clean increment, not more.
 
 `lifecycle: 'local'` drops the six lifecycle stages, giving `9 + 3n` — the old figure.

@@ -126,26 +126,12 @@ jq -r '[.increments[] | select(.status!="done" and .status!="deferred")] | lengt
 ```
 
 **Is there buildable work** — a count, not a list. You need this only to decide whether to start a
-batch at all; **L1 picks the actual increments**:
+batch at all; **L1 picks the actual increments**, and plans each one just in time where the generator
+left it unplanned:
 
 ```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess != null)] | length' <backlog>
+jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all)] | length' <backlog>
 ```
-
-**⚠ THAT QUERY LIES BY OMISSION. RUN ITS COMPANION EVERY TIME.** The `sizeGuess != null` filter
-silently drops unplanned stubs — increments that exist as a title and nothing else. They are not
-buildable and must never be built, but if you do not count them separately you will read a zero above
-as "the backlog is finished" when it actually means "the backlog is blocked on planning":
-
-```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | .increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess == null) | "WITHHELD, UNPLANNED: \(.id)"' <backlog>
-```
-
-The companion names ids because you must quote them to the user when you stop. That is the only place
-increment ids legitimately enter your context from the backlog, and only when the run is ending.
-
-If the count is `0` **and** the companion returns rows, the backlog is not finished. Stop and tell the
-user which ids need planning. Do not build them.
 
 **The ledger tail:**
 
@@ -372,8 +358,7 @@ git -C <workspace-tilde> pull --ff-only
 
 Not a fast-forward means someone else has been running this programme. **Stop and say so.**
 
-Then run the four counts, the buildable count and its companion. If the buildable count is `0`, go to
-**Stopping**.
+Then run the four counts and the buildable count. If the buildable count is `0`, go to **Stopping**.
 
 You now know a batch is worth starting. You do **not** know, and must not work out, which increments it
 will build.
@@ -558,10 +543,7 @@ on its own tells nobody the pace.
 
 Stop, and say plainly which of these fired:
 
-- **Backlog exhausted.** The buildable count is `0` and the companion returns nothing. Report the final
-  count.
-- **Blocked on planning.** The buildable count is `0` but the companion lists withheld unplanned stubs.
-  Name them.
+- **Backlog exhausted.** The buildable count is `0`. Report the final count.
 - **A designed gate.** L1 reports the loop halted at an increment's `gate`. Quote the gate text. Do not
   start the next batch.
 - **Two batches in a row failed with nothing landed.** Something systemic is wrong and more batches

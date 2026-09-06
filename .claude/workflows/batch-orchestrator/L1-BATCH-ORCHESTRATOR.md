@@ -90,7 +90,7 @@ Stop and return when any of these is true:
 | Reason | Meaning |
 |---|---|
 | `budget-spent` | You built `<budget>` increments. The only "full" ending |
-| `no-buildable` | Nothing is buildable any more — dependencies unmet, or only unplanned stubs left |
+| `no-buildable` | Nothing is buildable any more — every remaining increment has an unmet dependency |
 | `premise-invalidated` | What just landed removed the next increment's basis, and it needs re-planning rather than a patch |
 | `gate` | The increment carried a designed halt gate. The loop lands it, then stops |
 | `increment-failed` | Baseline red, implement failed, or a red ladder rolled back |
@@ -156,21 +156,57 @@ programme facts live; this file holds only method.
 Not once per batch. Once per increment, immediately after the previous one lands:
 
 ```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess != null) | .id] | .[0] // "NONE"' <backlog>
+jq -r '[.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | .id] | .[0] // "NONE"' <backlog>
 ```
 
 `NONE` means stop and return with `no-buildable`.
 
-**⚠ THAT QUERY LIES BY OMISSION.** The `sizeGuess != null` filter silently drops **unplanned stubs** —
-increments that are a title and nothing else. Run its companion each time so you know what it withheld:
+### Planning it, if it is not planned yet
+
+An increment straight from the generator is a type, a subject and a place in the chain. The loop reads
+a plan — `title`, `kind`, `sizeGuess`, `filesToTouch`, `acceptanceCriteria`, `verification`,
+`openQuestions`, `implementorSkill`, `recipe`, `notes` — and `sizeGuess` is the marker that one exists:
 
 ```bash
-jq -r '[.increments[] | select(.status=="done") | .id] as $done | .increments[] | select(.status!="done" and .status!="deferred") | select([.dependsOn[] | IN($done[])] | all) | select(.sizeGuess == null) | "WITHHELD, UNPLANNED: \(.id)"' <backlog>
+jq -r --arg id "<id>" '.increments[] | select(.id==$id) | .sizeGuess // "UNPLANNED"' <backlog>
 ```
 
-**Never build an unplanned stub.** Building one means inventing the plan on the spot, and an invented
-plan is the most expensive thing that can enter this loop. Record any it withheld in your batch report
-and on your `owed-to-human` line — they need planning, which is not your job.
+`UNPLANNED` means plan it now, just in time, before Step 1. Spawn ONE `general-purpose` subagent with
+exactly this prompt and wait for it:
+
+```
+Follow <workspace-tilde>/.claude/skills/journey-builder/references/INCREMENT_PLANNER.md for run-id
+<run-id>, increment <id>. Read that file in full first with the Read tool at
+<workspace-abs>/.claude/skills/journey-builder/references/INCREMENT_PLANNER.md and do exactly what it
+says. In notes refer to other increments by their key or page name, never by inc-NNN.
+
+GUARD RAILS: one Bash command per call — no &&, no ;, no shell |, no cd. Tilde paths in Bash, absolute
+paths for Read and Write. Never the Grep or Glob tools. Never bare node, never python, never sonar.
+Never run a suite. Never edit a repo file. Never edit backlog.json directly — only through
+tools/journey-builder/backlog-plan-increment.sh. Headless: never ask a question. Verification rungs
+never carry an environment-variable prefix.
+
+Report in at most ten lines.
+```
+
+`<run-id>` is the backlog's top-level `run_id`. The planner reads the increment, the spec objects it
+names, the recipes and any animals feature it mirrors, and writes the plan through
+`backlog-plan-increment.sh`, which validates it. Then check the write yourself before going on:
+
+```bash
+jq -r --arg id "<id>" '.increments[] | select(.id==$id) | "\(.sizeGuess // "UNPLANNED") files=\(.filesToTouch|length) ac=\(.acceptanceCriteria|length) rungs=\(.verification|length)"' <backlog>
+```
+
+Still `UNPLANNED`, or any count zero: spawn the planner once more with the same prompt. A second miss
+is a stop — return `increment-failed` with the id and what the planner reported, because an increment
+the planner cannot plan is a spec problem, not a build problem. **Never write a plan yourself and never
+build without one.** An invented plan is the most expensive thing that can enter this loop, and a plan
+written by the agent about to build it has no independent check — which is what Step 1 is for.
+
+Planning just in time rather than up front is deliberate: the plan is written against the tree as it
+actually is after the previous landings, and nobody reviews sixty plans in one sitting. Record the
+planner's report in the batch report, open questions included. An increment that already carries a
+plan (an earlier pass wrote it) is used as it stands; Step 1 checks it either way.
 
 Also check the programme's do-not-build list in `PROGRAMME-NOTES.md`. If the derived id is on it, skip
 it and take the next one; if that empties the set, return `no-buildable`.

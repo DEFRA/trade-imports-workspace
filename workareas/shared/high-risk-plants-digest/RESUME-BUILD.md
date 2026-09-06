@@ -34,7 +34,11 @@ Owed to a human: none.
 Before the first increment:
 - `git -C ~/git/defra/trade-imports-workspace pull --ff-only`. backlog.json is the state.
 - Raise Dynamic workflow size in /config; one increment is 22 to 46 agents.
-- The stack must be up for fit and e2e rungs: `tim docker dev`. It was up at handover.
+- The Docker daemon went down at handover and was relaunched (`open -a Docker`); the
+  stack containers do not come back on their own. Run `tim docker dev` before any
+  backend increment (inc-013, inc-014 — Testcontainers under `mvn verify`) or any
+  tests-repo increment (inc-022 onwards). The frontend fit rung self-hosts in stub mode
+  and needs no stack, so inc-002 to inc-012 run without it.
 - Every repo checkout under repos/ must be clean and on main. They were at handover.
 
 What to expect:

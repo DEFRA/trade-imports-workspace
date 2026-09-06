@@ -34,6 +34,10 @@ artifacts that downstream `tools/` scripts consume.
 | `parity` | `references/SPEC_AUTHOR.md` | Per-slice Playwright capture specs. Fan out the writing; the running is serialised, one server one session |
 | `parity` | `references/SCREEN_PAIRER.md` | One-shot — which screen answers which, plus the two one-sided lists, into `pairs.cjs` |
 | `parity` | `references/DUPLICATE_SWEEPER.md` | One-shot — the only pass that sees more than one slice, adjudicating cross-slice duplicate candidates |
+| `journey-builder` | `references/SOURCE_EXTRACTOR.md` | Per-source extraction of a target's requirement sources into `extract.<source>.json` (one per source, parallel) |
+| `journey-builder` | `references/SPEC_RECONCILER.md` | One-shot — reconciles the extracts into `journey-spec.json` and `conflicts.json` |
+| `journey-builder` | `references/INCREMENT_PLANNER.md` | Per-increment plan into the build loop's shape, written through `backlog-plan-increment.sh` (ten at a time, in dependency order) |
+| `journey-builder` | `references/MODEL_EXTENDER.md` | One gated `model-extension` increment — grows the engine's obligation vocabulary |
 
 Cursor reads `.claude/skills/` natively (per
 <https://cursor.com/docs/context/skills>). It has no parallel subagent

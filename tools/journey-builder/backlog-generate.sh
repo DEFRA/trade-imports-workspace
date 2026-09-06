@@ -34,9 +34,22 @@
 # Milestones: pages in the target's milestoneZeroSection = M0 (none when the
 # target omits it); steps 1-3 = M1; step 4 = M2. An extra takes its declared
 # milestone, else that of the increment it anchors to (M1 at start/end).
-# Idempotent: status/commit preserved by CONTENT key (type + subject; an
-# extra's subject is its key), not position — re-ordering must not resurrect
-# or orphan statuses.
+#
+# repo is one of the build loop's keys (frontend | backend | tests), never a
+# path: a page gets the target repo's key, an extra's declared path is mapped
+# onto its key through the target profile's repos table.
+#
+# Idempotent by CONTENT key (type + subject; an extra's subject is its key),
+# not position — re-ordering must not resurrect or orphan anything. Two
+# groups of fields survive regeneration under that key:
+#   - the run's state: status, commit, failure_reason, and the lifecycle
+#     record the loop persists (ticket, branch, prs)
+#   - the plan backlog-plan-increment.sh wrote: kind, sizeGuess,
+#     filesToTouch, acceptanceCriteria, verification, openQuestions,
+#     implementorSkill, recipe, notes — and title where the generator has
+#     none (a page). An extra's title and every increment's repo are the
+#     spec's and are re-derived each time; change them with
+#     backlog-set-extra.sh, not by planning.
 #
 # Usage:
 #   backlog-generate.sh EUDPA-X [--json] [--force] [--dry-run] [--target <id>]
@@ -133,11 +146,19 @@ jq -n \
     --argjson existing "$existing" \
     --arg run_id "$RUN_ID" \
     --arg target_id "$TARGET_ID" \
-    --arg target_repo "${TARGET_REPO#"$WORKSPACE"/}" \
+    --argjson repos "$TARGET_REPOS" \
+    --arg target_repo_key "$TARGET_REPO_KEY" \
+    --argjson planned '["kind","sizeGuess","filesToTouch","acceptanceCriteria","verification","openQuestions","implementorSkill","recipe","notes","ticket","branch","prs"]' \
     '
     $s[0] as $spec
     | ($spec.obligations | map({key: .id, value: .}) | from_entries) as $byId
     | def obs($ids): [ $ids[] | $byId[.] | select(. != null) ];
+    def repoKey($raw):
+        if $raw == null then $target_repo_key
+        elif ($repos | has($raw)) then $raw
+        else ( first($repos | to_entries[] | select(.value.path == $raw) | .key)
+               // error("extra repo \($raw | tojson) is neither a repo key (\($repos | keys | join(", "))) nor a path in the target profile'"'"'s repos table") )
+        end;
     def directGaps($ids):
         [ obs($ids)[]
           | .modelGap // empty,
@@ -233,13 +254,17 @@ jq -n \
            end) as $slot
         | $slot.at as $at
         | $list[:$at]
-          + [ { type: $x.type, key: $x.key, repo: ($x.repo // $target_repo),
+          + [ { type: $x.type, key: $x.key, repo: repoKey($x.repo),
                 title: $x.title, detail: ($x.detail // null),
                 milestone: ($x.milestone // $slot.milestone), gate: ($x.gate // null) } ]
           + $list[$at:]
       )
 
-    # number + linear chain + preserve status by content key
+    # every increment the spec yields lives in the target repo; extras said
+    # where they live when they were spliced in
+    | map(. + { repo: (.repo // $target_repo_key) })
+
+    # number + linear chain + preserve the run state and the plan by content key
     | def ckey: "\(.type):\(.key // .page // .gap // .collection // .section // "tail")";
     to_entries
     | map(
@@ -251,6 +276,8 @@ jq -n \
         | . as $inc
         | (first($existing.increments[]? | select(ckey == ($inc | ckey))) // null) as $prev
         | . + { status: ($prev.status // "todo"), commit: ($prev.commit // null), failure_reason: ($prev.failure_reason // null) }
+        | . + { title: (.title // $prev.title) }
+        | . + ( [ $planned[] | select($prev[.] != null) | { (.): $prev[.] } ] | add // {} )
         | if (.gate == "sam" and .status == "todo") then .status = "blocked" else . end
       )
     | { schema_version: 1, run_id: $run_id, target: $target_id, increments: . }

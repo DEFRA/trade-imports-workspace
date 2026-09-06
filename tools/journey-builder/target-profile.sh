@@ -9,7 +9,10 @@
 #   source "$WORKSPACE/tools/journey-builder/target-profile.sh"
 #   load_target "$RUN_ID" "$TARGET_FLAG"
 #
-# Sets: TARGET_ID, TARGET_REPO (absolute), TARGET_SCOPE, TARGET_SPEC_DIR,
+# Sets: TARGET_ID, TARGET_REPO (absolute), TARGET_REPOS (compact JSON — the
+#       loop's frontend/backend/tests keys, each with path and github),
+#       TARGET_REPO_KEY (which of those keys the target repo is),
+#       TARGET_SCOPE, TARGET_SPEC_DIR,
 #       TARGET_IMPLEMENTOR, TARGET_COMMIT_PATHS (array),
 #       TARGET_VERIFY_UNIT / _FORMAT / _LINT / _E2E (empty means skip),
 #       TARGET_JOURNEY_ID, TARGET_SPEC_BRANCH_SUFFIX,
@@ -50,6 +53,16 @@ load_target() {
     local repo_rel
     repo_rel="$(jq -r '.repo' <<<"$profile")"
     TARGET_REPO="$WORKSPACE/$repo_rel"
+
+    # The loop's repo keys. A page increment gets the key whose path is the
+    # target repo; an extra's declared path is mapped onto its key the same
+    # way, so backlog.json never carries a path where the loop expects a key.
+    TARGET_REPOS="$(jq -c '.repos // {}' <<<"$profile")"
+    TARGET_REPO_KEY="$(jq -r --arg repo "$repo_rel" '(.repos // {}) | to_entries[] | select(.value.path == $repo) | .key' <<<"$profile")"
+    [[ -n "$TARGET_REPO_KEY" ]] || {
+        echo "Error: target '$TARGET_ID' has no repos entry whose path is its repo ($repo_rel) — add a repos block to $targets_file" >&2
+        return 1
+    }
     TARGET_SCOPE="$(jq -r '.scope' <<<"$profile")"
     TARGET_SPEC_DIR="$(jq -r '.specDir // empty' <<<"$profile")"
     TARGET_IMPLEMENTOR="$(jq -r '.implementorSkill // empty' <<<"$profile")"

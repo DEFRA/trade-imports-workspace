@@ -208,17 +208,23 @@ location, so the copy behaves identically wherever it sits.
 The ledger records `scriptPath` next to `driver`, so any batch can be traced to the script that
 produced it.
 
-⚠ **The run copy needs a `.gitignore` entry.** `workareas/*` is ignored but `!workareas/shared/`
-re-includes the handoff namespace, and only `*.log` is excluded within it — so for any programme under
-`workareas/shared/`, `build-loop.run.js` appears as untracked in the workspace's `git status`. The
-workspace `.gitignore` wants:
+The workspace `.gitignore` excludes `build-loop.run.js` wherever it sits, so the run copy never shows in
+`git status`. L1 confirms that with `git check-ignore` once per batch and raises it on its
+`owed-to-human` line if the rule has gone.
 
-```
-workareas/*/*/build-loop.run.js
-```
+### The repo table and the model tiers travel with the programme
 
-That line is not added here — it is a workspace change, outside this directory. Until it lands, L1
-checks with `git check-ignore` each batch and raises it on its `owed-to-human` line.
+The loop's `repos` config says where `frontend`, `backend` and `tests` live — a workspace-relative path
+and a GitHub slug each. The animals repos are its default; a programme in another repo family (the
+plants frontend and backend, with `tests` still the animals tests repo) overrides it. The table lives in
+the ledger's `programme.repos`, L0 binds it into every L1, and L1 writes it into every run copy's
+`FALLBACK`. **No orchestrator prompt carries a repo path of its own** — the same three keys mean
+different repos in different programmes, and a path typed from memory is how a plants increment ends up
+built in the animals frontend.
+
+`programme.models` is the optional model per tier: `heavy` for implement, the reviewers, the verifiers,
+judge, fix and CI fix; `light` for the lifecycle and plumbing stages. `{}` inherits the session model
+everywhere.
 
 ## The ledger
 
@@ -233,7 +239,7 @@ empty` must accept the ledger at all times; L0 writes it with a
 ```json
 {
   "ledgerVersion": 1,
-  "programme": { "workarea": "…", "branch": "main", "scope": "…", "executor": "claude", "lifecycle": "full", "jiraProject": "EUDPA", "epic": "EUDPA-20628", "jiraInProgressStatus": "In Progress", "jiraDoneStatus": "Done", "batchSize": 5 },
+  "programme": { "workarea": "…", "branch": "main", "scope": "…", "executor": "claude", "lifecycle": "full", "jiraProject": "EUDPA", "epic": "EUDPA-20628", "jiraInProgressStatus": "In Progress", "jiraDoneStatus": "Done", "repos": { "frontend": { "path": "repos/…", "github": "DEFRA/…" }, "backend": { "…": "…" }, "tests": { "…": "…" } }, "models": {}, "batchSize": 5 },
   "batches": [
     {
       "batch": 3,
@@ -311,10 +317,9 @@ a different machine picks it up. It does **not** support two engineers running t
 Before picking up a run:
 
 1. **Pull the workspace repo.** `backlog.json` and the ledger are the state; everything else is derived.
-2. **Have the canonical symlink.** `~/git/defra/trade-imports-animals-workspace` must resolve to your
-   checkout — symlink it if your clone is elsewhere (CLAUDE.md rule 1). L0 resolves the absolute form
-   with `git rev-parse --show-toplevel`; nothing in these prompts or in `increment-build-loop.js` holds a
-   home directory.
+2. **Have the canonical clone.** `~/git/defra/trade-imports-workspace` must be your checkout
+   (CLAUDE.md rule 1). L0 resolves the absolute form with `git rev-parse --show-toplevel`; nothing in
+   these prompts or in `increment-build-loop.js` holds a home directory.
 3. **Have your own credentials.** `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY`, a `gh`
    login with push and merge rights on the repos, and a Codex login if the programme runs
    `executor: codex`. See [`docs/agent-onboarding.md`](../../../docs/agent-onboarding.md).
@@ -337,7 +342,7 @@ not travel** — that work stays on the machine that made it.
 ## Starting a run
 
 1. Raise **Dynamic workflow size** in `/config`.
-2. Confirm `~/git/defra/trade-imports-animals-workspace` resolves, and pull it.
+2. Confirm `~/git/defra/trade-imports-workspace` resolves, and pull it.
 3. Confirm the programme has a `backlog.json` under `workareas/<workarea-rel>/` and that every repo is
    clean. Repos do not need to be on any particular branch — each increment cuts its own off `<branch>`.
 4. Open a fresh session. Paste [`L0-TOP-ORCHESTRATOR.md`](L0-TOP-ORCHESTRATOR.md) with its PARAMETERS
@@ -375,11 +380,6 @@ What it does **not** do, and must not be relied on for:
   can invoke `Workflow` at runtime is not established. L1 carries a documented fallback: brief Codex
   per increment directly, using the generic briefs in [`../codex/`](../codex/). L1 records which path it
   used in `driver`, so the ledger says which one actually ran.
-- **The run copy is untracked noise until `.gitignore` covers it.** See *The run copy* above. The
-  workspace needs `workareas/*/*/build-loop.run.js` adding to `.gitignore`; until it does,
-  `build-loop.run.js` shows up in `git status` for any programme under `workareas/shared/`. L1 checks
-  with `git check-ignore` each batch and reports it as owed to a human. It is visible noise, not
-  silent damage.
 - **L0's verification is cheap, so it is shallow.** L0 confirms a SHA exists and that the backlog
   agrees. It cannot detect an increment that landed green and wrong. Catching that is L1's job, in
   Steps 4 to 6 of its brief, and there is no second line of defence above it.
@@ -403,7 +403,7 @@ What it does **not** do, and must not be relied on for:
 One programme among several. Nothing in the method is specific to it.
 
 ```
-<workspace-tilde>  ~/git/defra/trade-imports-animals-workspace
+<workspace-tilde>  ~/git/defra/trade-imports-workspace
 <workspace-abs>    whatever `git -C <workspace-tilde> rev-parse --show-toplevel` prints on YOUR machine
 <workarea-rel>     shared/plant-products-ched-pp
 <workarea>         <workspace-tilde>/workareas/shared/plant-products-ched-pp
@@ -417,6 +417,10 @@ One programme among several. Nothing in the method is specific to it.
 <epic>             EUDPA-20628
 <in-progress>      In Progress
 <done-status>      Done
+<repos>            {"frontend":{"path":"repos/trade-imports-animals-frontend","github":"DEFRA/trade-imports-animals-frontend"},
+                    "backend":{"path":"repos/trade-imports-animals-backend","github":"DEFRA/trade-imports-animals-backend"},
+                    "tests":{"path":"repos/trade-imports-animals-tests","github":"DEFRA/trade-imports-animals-tests"}}
+<models>           {}
 <batch-size>       5
 ```
 

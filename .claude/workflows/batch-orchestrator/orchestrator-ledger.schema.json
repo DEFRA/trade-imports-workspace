@@ -6,6 +6,25 @@
   "type": "object",
   "required": ["ledgerVersion", "programme", "batches"],
   "additionalProperties": false,
+  "$defs": {
+    "repo": {
+      "type": "object",
+      "required": ["path", "github"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^repos/[^/]+$",
+          "description": "Workspace-relative checkout path, e.g. repos/trade-imports-plants-frontend"
+        },
+        "github": {
+          "type": "string",
+          "pattern": "^[^/\\s]+/[^/\\s]+$",
+          "description": "GitHub owner/name slug, e.g. DEFRA/trade-imports-plants-frontend"
+        }
+      }
+    }
+  },
   "properties": {
     "ledgerVersion": {
       "const": 1
@@ -53,6 +72,26 @@
         "jiraDoneStatus": {
           "type": "string",
           "description": "The board's finished status, set after the merge, e.g. Done. Same caveat as jiraInProgressStatus: confirm it against the board. A ticket at any other status, however final it reads, is not a landing"
+        },
+        "repos": {
+          "type": "object",
+          "description": "Where the three repos an increment can name live. L0 binds this into every L1 and L1 writes it into every run copy's FALLBACK, so no prompt carries a repo path of its own. The animals repos for an animals programme; the plants frontend and backend, with tests still the animals tests repo, for a plants one",
+          "required": ["frontend", "backend", "tests"],
+          "additionalProperties": false,
+          "properties": {
+            "frontend": { "$ref": "#/$defs/repo" },
+            "backend": { "$ref": "#/$defs/repo" },
+            "tests": { "$ref": "#/$defs/repo" }
+          }
+        },
+        "models": {
+          "type": "object",
+          "description": "The model per tier the loop runs with. heavy = implement, the reviewers, the adversarial verifiers, judge, fix and CI fix; light = the lifecycle and plumbing stages. A tier left out inherits the session model",
+          "additionalProperties": false,
+          "properties": {
+            "heavy": { "type": "string" },
+            "light": { "type": "string" }
+          }
         },
         "batchSize": {
           "type": "integer",

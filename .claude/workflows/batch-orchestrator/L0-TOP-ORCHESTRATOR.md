@@ -8,7 +8,7 @@
 ## PARAMETERS — fill these in before pasting
 
 ```
-<workspace-tilde>  ~/git/defra/trade-imports-animals-workspace   (canonical — see below)
+<workspace-tilde>  ~/git/defra/trade-imports-workspace   (canonical — see below)
 <workspace-abs>    RESOLVE IT, do not type one. See FIRST ACTION step 0
 <workarea-rel>     shared/<programme>
 <workarea>         <workspace-tilde>/workareas/<workarea-rel>
@@ -23,6 +23,11 @@
 <epic>             parent epic every raised ticket hangs off. full only
 <in-progress>      the board's working status. full only. On EUDPA: In Progress
 <done-status>      the board's finished status. full only. On EUDPA: Done
+<repos>            the repo table, one JSON object: {"frontend":{"path":"repos/<name>","github":"DEFRA/<name>"},
+                   "backend":{…},"tests":{…}}. All three keys, always. The animals repos for an animals
+                   programme; the plants frontend and backend (tests stays animals-tests) for a plants one
+<models>           optional model per tier, e.g. {"heavy":"opus","light":"sonnet"}. {} inherits the
+                   session model for every stage
 <batch-size>       5
 ```
 
@@ -198,9 +203,14 @@ gh pr view <url> --json state,mergedAt,mergeCommit
 <workspace-tilde>/tools/jira/ticket.sh <KEY> summary
 ```
 
-Repo paths: `frontend` = `repos/trade-imports-animals-frontend`, `backend` =
-`repos/trade-imports-animals-backend`, `tests` = `repos/trade-imports-animals-tests`. An increment whose
-`repo` field is `both` lands **two** commits and **two** PRs, backend first.
+Repo paths come from the ledger's `programme.repos` table, never from memory — the same three keys mean
+different repos in different programmes. Read the one you need with:
+
+```bash
+jq -r '.programme.repos | to_entries[] | "\(.key) \(.value.path) \(.value.github)"' <ledger>
+```
+
+An increment whose `repo` field is `both` lands **two** commits and **two** PRs, backend first.
 
 **Keeping the workarea shareable** — the plan of record must reach the next machine:
 
@@ -228,20 +238,20 @@ Glob tools.
 
 **0. Resolve the workspace path. Do not type a home directory.**
 
-The prompt gives `<workspace-tilde>` as `~/git/defra/trade-imports-animals-workspace` — the canonical
-path CLAUDE.md rule 1 requires, reached by a symlink where the clone is elsewhere. Confirm it, and get
-the absolute form for the Read/Write/Edit tools:
+The prompt gives `<workspace-tilde>` as `~/git/defra/trade-imports-workspace` — the canonical clone
+location CLAUDE.md rule 1 requires. Confirm it, and get the absolute form for the Read/Write/Edit tools:
 
 ```bash
-git -C ~/git/defra/trade-imports-animals-workspace rev-parse --show-toplevel
+git -C ~/git/defra/trade-imports-workspace rev-parse --show-toplevel
 ```
 
 What it prints is `<workspace-abs>`. Bind both and use them everywhere below.
 
-If that command fails, the canonical symlink is missing on this machine. Try
-`git -C ~/git/defra/trade-imports-animals rev-parse --show-toplevel` and use that instead, and put the
-missing symlink on your `owed-to-human` note. **If neither resolves, stop** — say the workspace could not
-be found and that rule 1 wants the canonical path symlinked. Never guess a home directory.
+If that command fails, the workspace is not at its canonical path on this machine. Try
+`git -C ~/git/defra/trade-imports-animals-workspace rev-parse --show-toplevel` (the older clone name)
+and use that instead, and put the missing canonical clone on your `owed-to-human` note. **If neither
+resolves, stop** — say the workspace could not be found and that rule 1 wants it cloned at the canonical
+path. Never guess a home directory.
 
 **0b. Pull the workspace repo.** Someone may have handed this run over:
 
@@ -269,6 +279,8 @@ If `<ledger>` does not exist, create it with the Write tool, filled from your PA
     "epic": "<epic>",
     "jiraInProgressStatus": "<in-progress>",
     "jiraDoneStatus": "<done-status>",
+    "repos": <repos>,
+    "models": <models>,
     "batchSize": <batch-size>
   },
   "batches": []
@@ -277,7 +289,9 @@ If `<ledger>` does not exist, create it with the Write tool, filled from your PA
 
 Omit `jiraProject`, `epic` and the two status names when `<lifecycle>` is `local`. Recording the statuses
 here is what lets a later session — or a colleague picking the run up — see which board wording this
-programme was built against, without going back to the board.
+programme was built against, without going back to the board. `repos` is recorded for the same reason:
+it is where L1 reads the repo table it patches into every run copy, so a programme in the plants repos
+never has an animals path typed into it from memory.
 
 Then run all four validation queries. Its shape is fixed by
 `.claude/workflows/batch-orchestrator/orchestrator-ledger.schema.json`.
@@ -408,6 +422,8 @@ PARAMETER BINDINGS:
   <epic>            = <epic>
   <in-progress>     = <in-progress>
   <done-status>     = <done-status>
+  <repos>           = <repos>
+  <models>          = <models>
   <batch-number>    = <n>
   <budget>          = <batch-size>
   <report-path>     = <workarea>/logs/batches/batch-<nnn>.md
@@ -503,8 +519,8 @@ be committed. Then check what you left behind:
 git -C <workspace-tilde> status --short <workarea>
 ```
 
-`build-loop.run.js` showing as untracked is expected until the `.gitignore` line L1 asks for lands.
-Anything else there is a surprise: say so.
+The workspace `.gitignore` excludes `build-loop.run.js`, so it must not show. Anything there is a
+surprise: say so.
 
 **If the push is rejected** because someone else pushed first:
 

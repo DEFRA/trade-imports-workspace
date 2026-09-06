@@ -1,0 +1,3626 @@
+commit 95e4f1669af9dd06a297dca5433f079ce8a237e0
+Author: Rhys Sharrem <rhys.sharrem@defra.onmicrosoft.com>
+Date:   Sun Sep 6 11:24:44 2026 +0100
+
+    wip(parity-dr1): Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen; Frontend hides them until the next page and asks each one on a page of its own. — red verification ladder
+    
+    Increment inc-067 (EUDPA-406). Preserved as work-in-progress: the
+    verification ladder did not go green, so this must not be treated as
+    reviewable and no pull request has been raised.
+    
+    What went red: the tests-repo E2E leg
+    (playwright.docker-compose.config.ts against the workspace stack) could
+    not run. The container trade-imports-trade-imports-animals-backend-1 was
+    Exited(1), killed by com.mongodb.MongoTimeoutException against
+    host.docker.internal:27017. With no backend, GET / in the frontend threw
+    'TypeError: fetch failed' out of
+    services/persistence/records/real/lifecycle/read.js:33 via
+    dashboard/controller.js:57 and returned 500, so every Playwright worker
+    failed to mint a session at fixtures/auth-state.ts:97 and the run aborted
+    before reaching any assertion. 5 specs failed, all inside the worker auth
+    fixture, none inside this increment's code.
+    
+    Assessment: environment fault, not a defect in the diff — a Node frontend
+    change cannot break the Java backend's Mongo connection. Needs a healthy
+    stack, or CI, to re-run the E2E leg.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01QU1nK61XsgdY25ueTiqM45
+
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index 9e7589be..714aa9a9 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -47,8 +47,9 @@ test.describe('live-animals journey glue', () => {
+     ).toBeVisible()
+ 
+     await page.getByRole('radio', { name: 'Internal market' }).check()
+-    await save()
+-    await expect(heading('Purpose in the internal market')).toBeVisible()
++    await expect(
++      page.getByRole('group', { name: 'Purpose in the internal market' })
++    ).toBeVisible()
+ 
+     await page.getByRole('radio', { name: 'Breeding' }).check()
+     await save()
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 0ff5397a..033cb56f 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -268,7 +268,8 @@ export const completeAnswerSections = async (page) => {
+ 
+   await task('Main reason for importing')
+   await page.getByRole('radio', { name: 'Internal market' }).check()
+-  await save()
++  // The purpose is a conditional reveal under the reason, so both answers go
++  // in on the one submit.
+   await page.getByRole('radio', { name: 'Breeding' }).check()
+   await save()
+   await expect(
+diff --git a/scripts/lighthouse/audit-targets.js b/scripts/lighthouse/audit-targets.js
+index ff2a9c78..982db1b8 100644
+--- a/scripts/lighthouse/audit-targets.js
++++ b/scripts/lighthouse/audit-targets.js
+@@ -39,10 +39,7 @@ export const SKIPPED = new Map([
+  * Everything else is audited on the draft. */
+ export const FILLED_BY = new Map([
+   ['/notifications/{journeyId}/confirmation', 'submitted'],
+-  ['/notifications/{journeyId}/destination-country', 'transit'],
+-  ['/notifications/{journeyId}/port-of-exit', 'transit'],
+-  ['/notifications/{journeyId}/transporters/private', 'transit'],
+-  ['/notifications/{journeyId}/exit-date', 'temporaryAdmission']
++  ['/notifications/{journeyId}/transporters/private', 'transit']
+ ])
+ 
+ /** Query strings a route needs before it will render rather than redirect.
+diff --git a/scripts/lighthouse/audit-targets.test.js b/scripts/lighthouse/audit-targets.test.js
+index d73be678..977a86d1 100644
+--- a/scripts/lighthouse/audit-targets.test.js
++++ b/scripts/lighthouse/audit-targets.test.js
+@@ -15,8 +15,7 @@ import {
+ const journeyIds = {
+   draft: 'GBN-AG-26-DRAFT1',
+   submitted: 'GBN-AG-26-SUBMIT',
+-  transit: 'GBN-AG-26-TRANS1',
+-  temporaryAdmission: 'GBN-AG-26-TEMPA1'
++  transit: 'GBN-AG-26-TRANS1'
+ }
+ 
+ const ORIGIN = 'http://localhost:3000'
+@@ -40,13 +39,8 @@ describe('#auditPaths', () => {
+       [`/notifications/${journeyIds.submitted}/confirmation`]
+     )
+     expect(paths.filter((path) => path.includes(journeyIds.transit))).toEqual([
+-      `/notifications/${journeyIds.transit}/destination-country`,
+-      `/notifications/${journeyIds.transit}/port-of-exit`,
+       `/notifications/${journeyIds.transit}/transporters/private`
+     ])
+-    expect(
+-      paths.filter((path) => path.includes(journeyIds.temporaryAdmission))
+-    ).toEqual([`/notifications/${journeyIds.temporaryAdmission}/exit-date`])
+     expect(
+       paths.filter((path) => path.includes(journeyIds.draft))
+     ).toHaveLength(paths.length - FILLED_BY.size - 1)
+diff --git a/scripts/lighthouse/seed-notification.js b/scripts/lighthouse/seed-notification.js
+index 4ae6b3e4..ca33869e 100644
+--- a/scripts/lighthouse/seed-notification.js
++++ b/scripts/lighthouse/seed-notification.js
+@@ -120,35 +120,20 @@ const CONTACT_STEP = {
+   fields: firstOption('contactAddress')
+ }
+ 
+-/** The steps each reason for import brings into scope. A page whose obligation
+- * is out of scope still renders, so a shape that never answers it is a page
+- * Lighthouse audits blank. */
+-const REASON_STEPS = new Map([
++/** The follow-up answers each reason for import reveals on the reason page
++ * itself, keyed by the branch's own input name. A reason whose reveal is not
++ * opened submits nothing extra. */
++const REASON_REVEAL_FIELDS = new Map([
+   [
+     'internalMarket',
+-    [
+-      {
+-        slug: 'import-purpose',
+-        fields: { purposeInInternalMarket: values.purposeInInternalMarket }
+-      }
+-    ]
++    () => ({ purposeInInternalMarket: values.purposeInInternalMarket })
+   ],
+   [
+     'transit',
+-    [
+-      {
+-        slug: 'destination-country',
+-        fields: firstListedOption('destinationCountry')
+-      },
+-      { slug: 'port-of-exit', fields: firstListedOption('portOfExit') }
+-    ]
+-  ],
+-  [
+-    'temporaryAdmissionHorses',
+-    [
+-      { slug: 'port-of-exit', fields: firstListedOption('portOfExit') },
+-      { slug: 'exit-date', fields: { exitDate: ukDate(arrival) } }
+-    ]
++    (page) => ({
++      ...firstListedOption('transitPortOfExit')(page),
++      ...firstListedOption('transitDestinationCountry')(page)
++    })
+   ]
+ ])
+ 
+@@ -195,28 +180,35 @@ export const SEED_SHAPES = {
+     transporterType: values.transporterType,
+     submit: true
+   },
+-  transit: { reasonForImport: 'transit', transporterType: 'Private' },
+-  temporaryAdmission: {
+-    reasonForImport: 'temporaryAdmissionHorses',
+-    transporterType: values.transporterType
+-  }
++  transit: { reasonForImport: 'transit', transporterType: 'Private' }
+ }
+ 
+-const stepsIn = (steps, key, label) => {
+-  const scoped = steps.get(key)
+-  if (!scoped) {
+-    throw new Error(`The seed has no steps for ${label} "${key}"`)
++const branchFor = (branches, key, label) => {
++  const branch = branches.get(key)
++  if (!branch) {
++    throw new Error(`The seed has nothing for ${label} "${key}"`)
+   }
+-  return scoped
++  return branch
+ }
+ 
++const reasonStep = (reasonForImport) => ({
++  slug: 'import-reason',
++  fields: (page) => ({
++    reasonForImport,
++    ...branchFor(
++      REASON_REVEAL_FIELDS,
++      reasonForImport,
++      'reason for import'
++    )(page)
++  })
++})
++
+ export const seedSteps = ({ reasonForImport, transporterType }) => [
+   ...BEFORE_REASON,
+-  { slug: 'import-reason', fields: { reasonForImport } },
+-  ...stepsIn(REASON_STEPS, reasonForImport, 'reason for import'),
++  reasonStep(reasonForImport),
+   ...AFTER_REASON,
+   { slug: 'transporters', fields: { transporterType } },
+-  ...stepsIn(TRANSPORTER_STEPS, transporterType, 'transporter type'),
++  ...branchFor(TRANSPORTER_STEPS, transporterType, 'transporter type'),
+   CONTACT_STEP
+ ]
+ 
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index a079cc62..e17a487a 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -28,7 +28,6 @@ import * as commoditiesSearch from './sets/live-animals/journeys/linear/features
+ import * as consignmentDetails from './sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js'
+ import * as animalIdentification from './sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js'
+ import * as importReason from './sets/live-animals/journeys/linear/features/import-reason/controller.js'
+-import * as importPurpose from './sets/live-animals/journeys/linear/features/import-purpose/controller.js'
+ import * as additionalDetails from './sets/live-animals/journeys/linear/features/additional-details/controller.js'
+ import * as documents from './sets/live-animals/journeys/linear/features/documents/controller.js'
+ import * as addresses from './sets/live-animals/journeys/linear/features/addresses/controller.js'
+@@ -79,19 +78,6 @@ const cases = [
+       internalReferenceNumber: 'Imports456GB'
+     }
+   },
+-  {
+-    id: 'import-reason',
+-    collects: importReason.meta.collects,
+-    handler: postHandlerOf(importReason),
+-    payload: { reasonForImport: 'internalMarket' }
+-  },
+-  {
+-    id: 'import-purpose',
+-    collects: importPurpose.meta.collects,
+-    handler: postHandlerOf(importPurpose),
+-    seed: { reasonForImport: 'internalMarket' },
+-    payload: { purposeInInternalMarket: 'breeding' }
+-  },
+   {
+     id: 'additional-details',
+     collects: additionalDetails.meta.collects,
+@@ -169,6 +155,67 @@ const cases = [
+   }
+ ]
+ 
++// The reason page asks its follow-up questions as conditional reveals, so
++// which of its collects a POST commits is the reason's call. One case per
++// reason, and the union of them has to be everything the page declares.
++const REASON_REVEALS = [
++  { reasonForImport: 'reEntry', payload: {}, commits: [] },
++  {
++    reasonForImport: 'internalMarket',
++    payload: { purposeInInternalMarket: 'breeding' },
++    commits: ['purposeInInternalMarket']
++  },
++  {
++    reasonForImport: 'transhipmentOrOnwardTravel',
++    payload: { transhipmentDestinationCountry: 'IE' },
++    commits: ['destinationCountry']
++  },
++  {
++    reasonForImport: 'transit',
++    payload: { transitPortOfExit: 'GB DVR', transitDestinationCountry: 'IE' },
++    commits: ['destinationCountry', 'portOfExit']
++  },
++  {
++    reasonForImport: 'temporaryAdmissionHorses',
++    payload: {
++      temporaryAdmissionExitDate: '20/12/2026',
++      temporaryAdmissionPortOfExit: 'GB DVR'
++    },
++    commits: ['exitDate', 'portOfExit']
++  }
++]
++
++describe('reason-for-import commit contract — one reveal per reason', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it.each(REASON_REVEALS)(
++    'Should commit the reason $reasonForImport and only the answers its reveal opens',
++    async ({ reasonForImport, payload, commits }) => {
++      const result = await drive(postHandlerOf(importReason), {
++        payload: { reasonForImport, ...payload }
++      })
++      expect(new Set(committedIds(result))).toEqual(
++        new Set(['reasonForImport', ...commits])
++      )
++    }
++  )
++
++  it('Should cover every collect the reason page declares across its reveals', () => {
++    const covered = new Set([
++      'reasonForImport',
++      ...REASON_REVEALS.flatMap(({ commits }) => commits)
++    ])
++    expect([...covered].sort()).toEqual(
++      [...committableCollects(importReason.meta.collects)].sort()
++    )
++  })
++})
++
+ describe('controller <-> model commit contract', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 456f6b31..70063bc8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -346,7 +346,7 @@ describe(`${SUITE} — fully-populated notification`, () => {
+       /\/origin\?change=1$/
+     )
+     expect(changeHrefOf(rows, PURPOSE_IN_MARKET_KEY)).toMatch(
+-      /\/import-purpose\?change=1$/
++      /\/import-reason\?change=1$/
+     )
+     expect(changeHrefOf(rows, TRANSITED_COUNTRIES_KEY)).toMatch(
+       /\/transit-countries\?change=1$/
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js
+deleted file mode 100644
+index 3d430a63..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js
++++ /dev/null
+@@ -1,90 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  requiredOneOf,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import * as countries from '../../../../../../services/countries/index.js'
+-import { destinationCountryPage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['destinationCountry'] }
+-const view = `${TEMPLATES}/features/destination-country/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const DIVIDER_OPTION = { value: '', text: '──────────', disabled: true }
+-
+-const countryItems = () => [
+-  { value: '', text: copy.country.placeholder },
+-  DIVIDER_OPTION,
+-  ...countries.originCountries()
+-]
+-
+-const fields = () =>
+-  compose(
+-    requiredOneOf(
+-      'destinationCountry',
+-      countries.originCountries().map(({ value }) => value),
+-      copy.errors.countryRequired
+-    )
+-  )
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    countryItems: countryItems()
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, {
+-    destinationCountry: answers.destinationCountry ?? ''
+-  })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = { destinationCountry: payload.destinationCountry ?? '' }
+-  const { errors } = validate(fields(), payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.cy.js
+deleted file mode 100644
+index 7ef3a84b..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.cy.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Gwlad gyrchfan',
+-  country: {
+-    label: 'Gwlad gyrchfan',
+-    hint: 'Y wlad y mae’r llwyth yn teithio ymlaen iddi ar ôl Prydain Fawr.',
+-    placeholder: 'Dewiswch wlad'
+-  },
+-  errors: {
+-    countryRequired: 'Dewiswch y wlad gyrchfan'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js
+deleted file mode 100644
+index 448e2543..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js
++++ /dev/null
+@@ -1,11 +0,0 @@
+-export const copy = {
+-  title: 'Destination country',
+-  country: {
+-    label: 'Destination country',
+-    hint: 'The country the consignment travels on to after Great Britain.',
+-    placeholder: 'Select a country'
+-  },
+-  errors: {
+-    countryRequired: 'Select the destination country'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.test.js
+deleted file mode 100644
+index 0a97a680..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.test.js
++++ /dev/null
+@@ -1,55 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as destinationCountry from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const leaves = (node, path = []) =>
+-  typeof node === 'object' && node !== null
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('destination-country copy module', () => {
+-  it('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-})
+-
+-describe('GET destination-country — copy reaches the view', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should supply the feature copy module and the shared chrome copy', async () => {
+-    const get = destinationCountry.routes.find(
+-      (route) => route.method === 'GET'
+-    ).handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    expect(result.view.context.sharedCopy.saveActions.saveAndContinue).toBe(
+-      'Save and continue'
+-    )
+-    expect(result.view.context.countryItems[0].text).toBe(
+-      copy.country.placeholder
+-    )
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/destination-country.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/destination-country.fit.spec.js
+deleted file mode 100644
+index 7c0ae3b3..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/destination-country.fit.spec.js
++++ /dev/null
+@@ -1,105 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
+-import { countriesOrigin } from '../../../../../../services/_capture/fixtures.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON = 'form button[type="submit"]'
+-
+-const startAtDestinationCountry = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page.locator('input[name="reasonForImport"][value="transit"]').check()
+-  await page.locator(SUBMIT_BUTTON).first().click()
+-  await page.goto(reasonUrl.replace(/\/import-reason$/, '/destination-country'))
+-  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+-}
+-
+-test.describe('destination-country feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtDestinationCountry(page)
+-  })
+-
+-  test('renders the captured country options and feature copy', async ({
+-    page
+-  }) => {
+-    await expect(
+-      page.getByLabel(copy.country.label)
+-    ).toHaveAccessibleDescription(copy.country.hint)
+-    const select = page.locator('select#destinationCountry')
+-    await expect(select.locator('option').first()).toHaveText(
+-      copy.country.placeholder
+-    )
+-    const renderedCountries = await select
+-      .locator('option')
+-      .evaluateAll((options) =>
+-        options.slice(2).map((option) => ({
+-          code: option.value,
+-          name: option.textContent
+-        }))
+-      )
+-    expect(renderedCountries).toEqual(countriesOrigin)
+-  })
+-
+-  test('country validation: when no country is selected, links to and focuses the empty select', async ({
+-    page
+-  }) => {
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    const countryError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.countryRequired })
+-    await expect(countryError).toBeVisible()
+-    await countryError.click()
+-    await expect(page.getByLabel(copy.country.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue('')
+-  })
+-
+-  test('saves a valid country, redirects and persists the answer', async ({
+-    page
+-  }) => {
+-    const destinationUrl = page.url()
+-    const france = countriesOrigin.find(({ code }) => code === 'FR')
+-
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(destinationUrl)
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue(france.code)
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/destination-country$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('has no serious or critical axe violations', async ({ page }) => {
+-    const results = await new AxeBuilder({ page })
+-      .withTags(['wcag2a', 'wcag2aa'])
+-      .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
+-
+-    expect(
+-      seriousOrCritical,
+-      `Destination country has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-    ).toEqual([])
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/evaluation.js
+deleted file mode 100644
+index e129f0a9..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/evaluation.js
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { destinationCountry } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('destination-country', [
+-  scalar({ field: 'destinationCountry', obligation: destinationCountry })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/page.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/page.js
+deleted file mode 100644
+index f2ac5782..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const destinationCountryPage = {
+-  id: 'destination-country',
+-  slug: 'destination-country'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk
+deleted file mode 100644
+index 7e5f49e3..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk
++++ /dev/null
+@@ -1,28 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "govuk/components/select/macro.njk" import govukSelect %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+-
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ govukSelect({
+-      id: "destinationCountry",
+-      name: "destinationCountry",
+-      label: { text: copy.country.label, classes: "govuk-label--s" },
+-      hint: { text: copy.country.hint },
+-      value: values.destinationCountry,
+-      errorMessage: errors.destinationCountry and { text: errors.destinationCountry },
+-      items: countryItems
+-    }) }}
+-
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+-  </form>
+-{% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/evaluation.js
+index 3dd517ab..0207f7a3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/evaluation.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/evaluation.js
+@@ -3,13 +3,9 @@ import { evaluationBindings as addresses } from './addresses/evaluation.js'
+ import { evaluationBindings as commodities } from './commodities/evaluation.js'
+ import { evaluationBindings as contact } from './contact/evaluation.js'
+ import { evaluationBindings as cphNumber } from './cph-number/evaluation.js'
+-import { evaluationBindings as destinationCountry } from './destination-country/evaluation.js'
+ import { evaluationBindings as documents } from './documents/evaluation.js'
+-import { evaluationBindings as exitDate } from './exit-date/evaluation.js'
+-import { evaluationBindings as importPurpose } from './import-purpose/evaluation.js'
+ import { evaluationBindings as importReason } from './import-reason/evaluation.js'
+ import { evaluationBindings as origin } from './origin/evaluation.js'
+-import { evaluationBindings as portOfExit } from './port-of-exit/evaluation.js'
+ import { evaluationBindings as system } from './system/evaluation.js'
+ import { evaluationBindings as transport } from './transport/evaluation.js'
+ 
+@@ -17,10 +13,6 @@ export const featureEvaluationBindings = Object.freeze([
+   system,
+   origin,
+   importReason,
+-  importPurpose,
+-  destinationCountry,
+-  portOfExit,
+-  exitDate,
+   additionalDetails,
+   addresses,
+   transport,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js
+deleted file mode 100644
+index 7f3ded96..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js
++++ /dev/null
+@@ -1,77 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  dateText,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import { exitDatePage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['exitDate'] }
+-const view = `${TEMPLATES}/features/exit-date/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const fields = () => compose(dateText('exitDate', copy.errors.dateInvalid))
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    exitDate: kit.dateField('exitDate', {
+-      label: copy.date.label,
+-      hint: copy.date.hint,
+-      value: values.exitDate ?? {},
+-      error: errors.exitDate
+-    })
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, { exitDate: answers.exitDate ?? {} })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = { exitDate: kit.readDate(payload, 'exitDate') }
+-  const { errors } = validate(fields(), payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.cy.js
+deleted file mode 100644
+index 0a03cc25..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.cy.js
++++ /dev/null
+@@ -1,11 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Dyddiad ymadael',
+-  date: {
+-    label: 'Dyddiad ymadael',
+-    hint: 'Y dyddiad y disgwylir i’r anifeiliaid adael Prydain Fawr. Er enghraifft, 27/3/2026'
+-  },
+-  errors: {
+-    dateInvalid: 'Rhowch ddyddiad ymadael go iawn'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js
+deleted file mode 100644
+index c1cd9047..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-export const copy = {
+-  title: 'Exit date',
+-  date: {
+-    label: 'Exit date',
+-    hint: 'The date the animals are expected to leave Great Britain. For example, 27/3/2026'
+-  },
+-  errors: {
+-    dateInvalid: 'Enter a real exit date'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.test.js
+deleted file mode 100644
+index 4049480d..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.test.js
++++ /dev/null
+@@ -1,51 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as exitDate from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const leaves = (node, path = []) =>
+-  typeof node === 'object' && node !== null
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('#copy', () => {
+-  it('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-})
+-
+-describe('GET /exit-date', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should supply the feature copy module and the shared chrome copy', async () => {
+-    const get = exitDate.routes.find((route) => route.method === 'GET').handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    expect(result.view.context.sharedCopy.saveActions.saveAndContinue).toBe(
+-      'Save and continue'
+-    )
+-    expect(result.view.context.exitDate.label.text).toBe(copy.date.label)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/evaluation.js
+deleted file mode 100644
+index 98f62ca5..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/evaluation.js
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { exitDate } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('exit-date', [
+-  scalar({ field: 'exitDate', obligation: exitDate })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js
+deleted file mode 100644
+index 0bac7375..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js
++++ /dev/null
+@@ -1,194 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON = 'form button[type="submit"]'
+-const CHOOSE_DATE_LABEL = 'Choose date'
+-
+-const startAtExitDate = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page
+-    .locator('input[name="reasonForImport"][value="temporaryAdmissionHorses"]')
+-    .check()
+-  await page.locator(SUBMIT_BUTTON).first().click()
+-
+-  const portUrl = reasonUrl.replace(/\/import-reason$/, '/port-of-exit')
+-  await page.goto(portUrl)
+-  await page.getByLabel('Port of exit').selectOption('GB ABD')
+-  await page.locator(SUBMIT_BUTTON).first().click()
+-  await page.goto(portUrl.replace(/\/port-of-exit$/, '/exit-date'))
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/exit-date$/)
+-  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+-}
+-
+-const todayInPicker = (page) =>
+-  page.evaluate(() => {
+-    const date = new Date()
+-    const days = [
+-      'Sunday',
+-      'Monday',
+-      'Tuesday',
+-      'Wednesday',
+-      'Thursday',
+-      'Friday',
+-      'Saturday'
+-    ]
+-    const months = [
+-      'January',
+-      'February',
+-      'March',
+-      'April',
+-      'May',
+-      'June',
+-      'July',
+-      'August',
+-      'September',
+-      'October',
+-      'November',
+-      'December'
+-    ]
+-    return {
+-      accessibleName: `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`,
+-      inputValue: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+-    }
+-  })
+-
+-test.describe('exit-date feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtExitDate(page)
+-  })
+-
+-  test('renders the MoJ date picker and feature copy', async ({ page }) => {
+-    await expect(page.getByLabel(copy.date.label)).toHaveAccessibleDescription(
+-      copy.date.hint
+-    )
+-    await expect(page.getByLabel(copy.date.label)).toBeVisible()
+-    await expect(
+-      page.getByRole('button', { name: CHOOSE_DATE_LABEL })
+-    ).toBeVisible()
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/exit-date$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('date validation: when partially entered, links to and focuses the preserved input', async ({
+-    page
+-  }) => {
+-    await page.getByLabel(copy.date.label).fill('27/')
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    const dateError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.dateInvalid })
+-    await expect(dateError).toBeVisible()
+-    await dateError.click()
+-    await expect(page.getByLabel(copy.date.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue('27/')
+-  })
+-
+-  test('date validation: when not a real date, links to and focuses the preserved input', async ({
+-    page
+-  }) => {
+-    await page.getByLabel(copy.date.label).fill('31/2/2026')
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    const dateError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.dateInvalid })
+-    await expect(dateError).toBeVisible()
+-    await dateError.click()
+-    await expect(page.getByLabel(copy.date.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue('31/2/2026')
+-  })
+-})
+-
+-test.describe('exit-date date picker', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtExitDate(page)
+-  })
+-
+-  test('selects a date in the calendar, redirects and persists it', async ({
+-    page
+-  }) => {
+-    const exitDateUrl = page.url()
+-    const today = await todayInPicker(page)
+-
+-    await page.getByRole('button', { name: CHOOSE_DATE_LABEL }).click()
+-    await expect(page.getByRole('dialog')).toBeVisible()
+-    await page
+-      .getByRole('dialog')
+-      .getByRole('button', { name: today.accessibleName, exact: true })
+-      .click()
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue(today.inputValue)
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(exitDateUrl)
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue(today.inputValue)
+-  })
+-
+-  test('has no serious or critical axe violations with the picker dialog open', async ({
+-    page
+-  }) => {
+-    await page.getByRole('button', { name: CHOOSE_DATE_LABEL }).click()
+-    await expect(page.getByRole('dialog')).toBeVisible()
+-
+-    const results = await new AxeBuilder({ page })
+-      .withTags(['wcag2a', 'wcag2aa'])
+-      .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
+-
+-    expect(
+-      seriousOrCritical,
+-      `Exit date has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-    ).toEqual([])
+-  })
+-})
+-
+-test.describe('exit-date feature without JavaScript', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-  })
+-
+-  test.use({ javaScriptEnabled: false })
+-
+-  test.beforeEach(async ({ page }) => {
+-    await startAtExitDate(page)
+-  })
+-
+-  test('accepts a directly typed dd/mm/yyyy date and persists it', async ({
+-    page
+-  }) => {
+-    await page.getByLabel(copy.date.label).fill('27/3/2026')
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(`${page.url()}/exit-date`)
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue('27/3/2026')
+-    await expect(
+-      page.getByRole('button', { name: CHOOSE_DATE_LABEL })
+-    ).toHaveCount(0)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/page.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/page.js
+deleted file mode 100644
+index d2d2c56a..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const exitDatePage = {
+-  id: 'exit-date',
+-  slug: 'exit-date'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
+deleted file mode 100644
+index 06a609d0..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
++++ /dev/null
+@@ -1,22 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "moj/components/date-picker/macro.njk" import mojDatePicker %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+-
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ mojDatePicker(exitDate) }}
+-
+-    {# Third page of the exit-details row — reached from the port of exit page,
+-       not from the hub, so it ends with the primary alone. #}
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+-  </form>
+-{% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index 554c19dc..61d8c9d9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -33,7 +33,7 @@ const sharedCopy = copyFor({ en: sharedEn, cy: sharedCy })
+ const GROUPS = [
+   {
+     id: 'about-the-consignment',
+-    rows: ['origin', 'commodities', 'importReason', 'exitDetails']
++    rows: ['origin', 'commodities', 'importReason']
+   },
+   {
+     id: 'commodity-details',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+index 2a69c544..6dfefba1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+@@ -37,10 +37,6 @@ export const copy = {
+       title: 'Prif reswm dros fewnforio',
+       hint: 'Pam rydych chi’n mewnforio’r anifeiliaid a’u diben yn y farchnad fewnol'
+     },
+-    exitDetails: {
+-      title: 'Manylion ymadael',
+-      hint: 'Ble mae’r llwyth yn teithio ymlaen iddo a phryd mae’n gadael Prydain Fawr'
+-    },
+     additionalDetails: {
+       title: 'Manylion ychwanegol am y nwyddau',
+       hint: 'Ar gyfer beth mae’r anifeiliaid wedi’u hardystio ac a oes unrhyw rai heb eu diddyfnu'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+index 7a449bdd..6ebc4104 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+@@ -36,10 +36,6 @@ export const copy = {
+       title: 'Main reason for importing',
+       hint: 'Why you are importing the animals and their purpose in the internal market'
+     },
+-    exitDetails: {
+-      title: 'Exit details',
+-      hint: 'Where the consignment travels on to and when it leaves Great Britain'
+-    },
+     additionalDetails: {
+       title: 'Additional commodity details',
+       hint: 'What the animals are certified for and whether any are unweaned'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js
+deleted file mode 100644
+index 8cd855e1..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js
++++ /dev/null
+@@ -1,89 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import {
+-  HTTP_STATUS_BAD_REQUEST,
+-  HTTP_STATUS_INTERNAL_SERVER_ERROR
+-} from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  oneOf,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
+-import { importPurposePage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['purposeInInternalMarket'] }
+-const view = `${TEMPLATES}/features/import-purpose/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const fields = compose(
+-  oneOf(
+-    'purposeInInternalMarket',
+-    importReasonPurpose.purposes().map((option) => option.value)
+-  )
+-)
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    purposeOptions: importReasonPurpose.purposes().map((option) => ({
+-      ...option,
+-      hint: { text: copy.purposeHints[option.value] },
+-      checked: option.value === values.purposeInInternalMarket
+-    }))
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, {
+-    purposeInInternalMarket: answers.purposeInInternalMarket ?? ''
+-  })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = {
+-    purposeInInternalMarket: payload.purposeInInternalMarket ?? ''
+-  }
+-  const { errors } = validate(fields, payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors).code(HTTP_STATUS_BAD_REQUEST)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.test.js
+deleted file mode 100644
+index 2e6d4461..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.test.js
++++ /dev/null
+@@ -1,107 +0,0 @@
+-import {
+-  afterEach,
+-  beforeAll,
+-  beforeEach,
+-  describe,
+-  expect,
+-  it,
+-  vi
+-} from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../services/persistence/records/stub/index.js'
+-import { records as realRecords } from '../../../../../../services/persistence/records/real/index.js'
+-import { session as sessionStub } from '../../../../../../services/persistence/session/stub.js'
+-import {
+-  driveHandler,
+-  postHandlerOf
+-} from '../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../index.js'
+-
+-import * as importPurpose from './controller.js'
+-
+-const post = postHandlerOf(importPurpose)
+-
+-describe('POST import-purpose — invalid payload', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should answer 400 and re-render an out-of-list purpose, committing nothing', async () => {
+-    const result = await driveHandler(post, {
+-      payload: { purposeInInternalMarket: 'not-a-real-purpose' }
+-    })
+-    expect(result.response.statusCode).toBe(400)
+-    expect(result.view.context.errors.purposeInInternalMarket).toBeDefined()
+-    expect(result.after).toEqual(result.before)
+-  })
+-})
+-
+-describe('POST import-purpose — save failures', () => {
+-  beforeAll(() => {
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-
+-  beforeEach(() => {
+-    store.clear()
+-    vi.stubGlobal(
+-      'fetch',
+-      vi.fn(async () => ({
+-        ok: false,
+-        status: 503,
+-        statusText: 'Service Unavailable'
+-      }))
+-    )
+-  })
+-
+-  afterEach(() => {
+-    configureRecords(recordsStub)
+-    vi.unstubAllGlobals()
+-  })
+-
+-  const failingOnControllerCommit = (failure) => {
+-    let replaceCalls = 0
+-    configureRecords({
+-      ...recordsStub,
+-      replaceFulfilment: (...args) => {
+-        replaceCalls += 1
+-        return replaceCalls === 1
+-          ? recordsStub.replaceFulfilment(...args)
+-          : failure(...args)
+-      }
+-    })
+-  }
+-
+-  it('Should re-render a real backend request failure at 500 with the cleaned value and banner', async () => {
+-    failingOnControllerCommit(realRecords.replaceFulfilment)
+-
+-    const result = await driveHandler(post, {
+-      payload: { purposeInInternalMarket: 'breeding' }
+-    })
+-
+-    expect(result.response.statusCode).toBe(500)
+-    expect(result.view.context.recoverableError).toBe(true)
+-    expect(result.view.context.values).toEqual({
+-      purposeInInternalMarket: 'breeding'
+-    })
+-  })
+-
+-  it('Should let a programming error escape to the promoted catch-all without an in-page banner', async () => {
+-    failingOnControllerCommit(async () => {
+-      throw new TypeError('programming failure')
+-    })
+-
+-    await expect(
+-      driveHandler(post, {
+-        payload: { purposeInInternalMarket: 'breeding' }
+-      })
+-    ).rejects.toThrow(new TypeError('programming failure'))
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.cy.js
+deleted file mode 100644
+index c11323ff..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.cy.js
++++ /dev/null
+@@ -1,27 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Diben yn y farchnad fewnol',
+-  legend: 'Diben yn y farchnad fewnol',
+-  purposeHints: {
+-    'transfer-of-ownership-sale-gift':
+-      'Unrhyw symudiad anifail sydd â’r nod o werthu’r anifail neu drosglwyddo perchnogaeth yr anifail o un person neu endid i’r llall. Er enghraifft, anifeiliaid sydd wedi’u gwerthu ac sy’n cael eu symud at berchennog newydd neu a fydd yn cael eu gwerthu ar ôl cyrraedd Prydain Fawr, pryniannau gan fridiwr/siop dramor a lle mae anifail yn cael ei symud at berchennog newydd heb unrhyw werthiant (e.e. rhodd)',
+-    'transfer-of-ownership-rescue':
+-      'Mae perchnogaeth anifail/anifeiliaid yn newid o un person neu endid i’r llall drwy ailgartrefu ac mae’n cael ei fabwysiadu/faethu gan deuluoedd newydd, gyda neu heb gyfnewid neu roi arian.',
+-    breeding:
+-      'Anifeiliaid ar gyfer atgenhedlu. Mae hyn yn cynnwys anifeiliaid y bwriedir iddynt gyfrannu at gronfa enynnol rhaglen fridio, gwella ansawdd da byw, neu gynhyrchu epil',
+-    research: 'Anifeiliaid i’w defnyddio mewn ymchwil wyddonol neu feddygol.',
+-    'racing-competition-show-or-training':
+-      'Anifeiliaid i gymryd rhan mewn digwyddiadau cystadleuol neu hyfforddi',
+-    'approved-premises-or-body':
+-      'Anifeiliaid ar gyfer arddangosfeydd, sŵau, casgliadau, neu raglenni cadwraeth lle mae angen trwydded neu gymeradwyaeth.',
+-    'companion-animal-not-for-resale-or-rehoming':
+-      'Anifeiliaid mewn perchnogaeth breifat sy’n cael eu mewnforio o dan y rheolau masnachol gan nad yw’r anifail yn gallu bodloni’r gofynion anfasnachol, er enghraifft, un neu fwy o anifeiliaid yn cael eu cludo gan gludwr masnachol heb eu perchennog neu berson awdurdodedig, perchennog nad yw’n teithio o fewn pum niwrnod i symudiad yr anifeiliaid neu grŵp o bump neu fwy o anifeiliaid yng nghwmni eu perchennog.',
+-    production:
+-      'Anifeiliaid sy’n cael eu ffermio i gynhyrchu cig, llaeth, wyau, gwlân neu unrhyw gynnyrch neu is-gynnyrch anifail arall',
+-    slaughter:
+-      'Anifeiliaid i’w lladd a’u prosesu ar gyfer cynhyrchu cig yn fuan ar ôl cyrraedd Prydain Fawr.',
+-    fattening: 'Anifeiliaid i’w pesgi ar gyfer cynhyrchu cig.',
+-    restocking:
+-      'I ailgyflenwi neu wella poblogaethau rhywogaethau, er enghraifft, ailstocio anifeiliaid hela neu bysgod.'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js
+deleted file mode 100644
+index 55c18f99..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js
++++ /dev/null
+@@ -1,26 +0,0 @@
+-export const copy = {
+-  title: 'Purpose in the internal market',
+-  legend: 'Purpose in the internal market',
+-  purposeHints: {
+-    'transfer-of-ownership-sale-gift':
+-      "Any movement of an animal that has as it's aim, the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (e.g. a gift)",
+-    'transfer-of-ownership-rescue':
+-      'Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.',
+-    breeding:
+-      'Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring',
+-    research: 'Animals for use in scientific or medical research.',
+-    'racing-competition-show-or-training':
+-      'Animals to participate in competitive or training events',
+-    'approved-premises-or-body':
+-      'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.',
+-    'companion-animal-not-for-resale-or-rehoming':
+-      "Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
+-    production:
+-      'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product',
+-    slaughter:
+-      'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.',
+-    fattening: 'Animals to be fattened for meat production.',
+-    restocking:
+-      'To replenish or enhance populations of species, for example, restocking of game or fish.'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.test.js
+deleted file mode 100644
+index 480c0ea2..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.test.js
++++ /dev/null
+@@ -1,61 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, test } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import * as importReasonPurpose from '../../../../../../../services/import-reason-purpose/index.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as importPurpose from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const isPlainObject = (node) => typeof node === 'object' && node !== null
+-
+-const leaves = (node, path = []) =>
+-  isPlainObject(node)
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('#copy', () => {
+-  test('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-
+-  test('Should carry a hint for every service purpose option', () => {
+-    for (const option of importReasonPurpose.purposes()) {
+-      expect(copy.purposeHints[option.value]).toBeTruthy()
+-    }
+-  })
+-})
+-
+-describe('GET /import-purpose', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  test('Should supply the feature copy module and hint every option from it', async () => {
+-    const get = importPurpose.routes.find(
+-      (route) => route.method === 'GET'
+-    ).handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    for (const option of result.view.context.purposeOptions) {
+-      expect(option.hint.text).toBe(copy.purposeHints[option.value])
+-    }
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/evaluation.js
+deleted file mode 100644
+index 204f7838..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/evaluation.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { purposeInInternalMarket } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('import-purpose', [
+-  scalar({
+-    field: 'purposeInInternalMarket',
+-    obligation: purposeInInternalMarket
+-  })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.fit.spec.js
+deleted file mode 100644
+index a32297c6..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.fit.spec.js
++++ /dev/null
+@@ -1,132 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import {
+-  answerOriginEntry,
+-  expectPageEndsWithPrimaryAlone
+-} from '../../../../../../../../../fit/live-animals-journey.js'
+-import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
+-import { validatorDefaults } from '../../../../../../shared/copy.en.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
+-const PURPOSE_INPUT_SELECTOR = 'input[name="purposeInInternalMarket"]'
+-
+-const startAtImportPurpose = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page
+-    .locator('input[name="reasonForImport"][value="internalMarket"]')
+-    .check()
+-  await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-  await page.goto(reasonUrl.replace(/\/import-reason$/, '/import-purpose'))
+-  await expect(page.getByRole('heading', { name: copy.legend })).toBeVisible()
+-}
+-
+-const expectNoSeriousOrCriticalAxeViolations = async (page) => {
+-  const results = await new AxeBuilder({ page })
+-    .withTags(['wcag2a', 'wcag2aa'])
+-    .analyze()
+-  const seriousOrCritical = results.violations.filter(({ impact }) =>
+-    ['serious', 'critical'].includes(impact)
+-  )
+-
+-  expect(
+-    seriousOrCritical,
+-    `Import purpose has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-  ).toEqual([])
+-}
+-
+-test.describe('import-purpose feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtImportPurpose(page)
+-  })
+-
+-  test('renders the service-backed purposes and feature copy', async ({
+-    page
+-  }) => {
+-    const group = page.getByRole('group', { name: copy.legend })
+-    const renderedValues = await group
+-      .locator(PURPOSE_INPUT_SELECTOR)
+-      .evaluateAll((inputs) => inputs.map((input) => input.value))
+-    expect(renderedValues).toEqual(
+-      importReasonPurpose.purposes().map(({ value }) => value)
+-    )
+-    for (const option of importReasonPurpose.purposes()) {
+-      await expect(
+-        page.getByRole('radio', { name: option.text, exact: true })
+-      ).toBeVisible()
+-      await expect(group).toContainText(copy.purposeHints[option.value])
+-    }
+-  })
+-
+-  test('ends with the primary alone, being reached from the import reason page', async ({
+-    page
+-  }) => {
+-    await expectPageEndsWithPrimaryAlone(page)
+-  })
+-
+-  test('purpose validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection', async ({
+-    page
+-  }) => {
+-    await page
+-      .locator(PURPOSE_INPUT_SELECTOR)
+-      .first()
+-      .evaluate((input) => {
+-        input.value = 'not-a-real-purpose'
+-        input.checked = true
+-      })
+-    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-
+-    const purposeError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: validatorDefaults.oneOf })
+-    await expect(purposeError).toBeVisible()
+-    await purposeError.click()
+-    await expect(page.locator(PURPOSE_INPUT_SELECTOR).first()).toBeFocused()
+-    await expect(page.locator(`${PURPOSE_INPUT_SELECTOR}:checked`)).toHaveCount(
+-      0
+-    )
+-  })
+-
+-  test('saves a valid purpose, redirects and persists the answer', async ({
+-    page
+-  }) => {
+-    const purposeUrl = page.url()
+-    const selected = importReasonPurpose
+-      .purposes()
+-      .find(({ value }) => value === 'breeding')
+-
+-    await page.getByRole('radio', { name: selected.text, exact: true }).check()
+-    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(purposeUrl)
+-    await expect(
+-      page.getByRole('radio', { name: selected.text, exact: true })
+-    ).toBeChecked()
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/import-purpose$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('has no serious or critical axe violations', async ({ page }) => {
+-    await expectNoSeriousOrCriticalAxeViolations(page)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/page.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/page.js
+deleted file mode 100644
+index 14244c84..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const importPurposePage = {
+-  id: 'import-purpose',
+-  slug: 'import-purpose'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
+deleted file mode 100644
+index 6d4125ad..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
++++ /dev/null
+@@ -1,31 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "govuk/components/radios/macro.njk" import govukRadios %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ govukRadios({
+-      name: "purposeInInternalMarket",
+-      fieldset: {
+-        legend: {
+-          text: copy.legend,
+-          isPageHeading: true,
+-          classes: "govuk-fieldset__legend--l"
+-        }
+-      },
+-      errorMessage: errors.purposeInInternalMarket and { text: errors.purposeInInternalMarket },
+-      items: purposeOptions
+-    }) }}
+-
+-    {# Second page of the import-reason row — reached from the reason page,
+-       not from the hub, so it ends with the primary alone. #}
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+-  </form>
+-{% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
+index 14e7dfcf..bb8bfa96 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
+@@ -7,27 +7,164 @@ import {
+ } from '../../../../../../lib/http-status.js'
+ import {
+   compose,
++  dateText,
+   oneOf,
++  requiredOneOf,
+   validate
+ } from '../../../../../../lib/validate/index.js'
+ import * as kit from '../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
++import * as countries from '../../../../../../services/countries/index.js'
+ import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
++import * as ports from '../../../../../../services/ports/index.js'
+ import { importReasonPage as page } from './page.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
+ 
+-export const meta = { ...page, collects: ['reasonForImport'] }
++export const meta = {
++  ...page,
++  collects: [
++    'reasonForImport',
++    'purposeInInternalMarket',
++    'destinationCountry',
++    'portOfExit',
++    'exitDate'
++  ]
++}
+ const view = `${TEMPLATES}/features/import-reason/template`
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const fields = compose(
+-  oneOf(
+-    'reasonForImport',
+-    importReasonPurpose.reasons().map((option) => option.value)
++const PURPOSE_FIELD = 'purposeInInternalMarket'
++const TRANSHIPMENT_COUNTRY_FIELD = 'transhipmentDestinationCountry'
++const TRANSIT_COUNTRY_FIELD = 'transitDestinationCountry'
++const TRANSIT_PORT_FIELD = 'transitPortOfExit'
++const TEMPORARY_ADMISSION_PORT_FIELD = 'temporaryAdmissionPortOfExit'
++const TEMPORARY_ADMISSION_DATE_FIELD = 'temporaryAdmissionExitDate'
++
++// The follow-up questions each reason opens as a conditional reveal, in the
++// order the reveal asks them. Two reasons ask the destination country and two
++// ask the port of exit, and two inputs cannot share a name, so each branch
++// carries its own form field and maps back to the one answer behind it — the
++// same split the origin page makes between `regionOfOriginCodeSuffix` and the
++// `regionOfOriginCode` it stores. Which of the four answers is in scope stays
++// the obligations' call (obligations/sections/import-reason.js); this says
++// only where the question is asked.
++const REVEALS = Object.freeze({
++  internalMarket: [{ field: PURPOSE_FIELD, answer: 'purposeInInternalMarket' }],
++  transhipmentOrOnwardTravel: [
++    { field: TRANSHIPMENT_COUNTRY_FIELD, answer: 'destinationCountry' }
++  ],
++  transit: [
++    { field: TRANSIT_PORT_FIELD, answer: 'portOfExit' },
++    { field: TRANSIT_COUNTRY_FIELD, answer: 'destinationCountry' }
++  ],
++  temporaryAdmissionHorses: [
++    { field: TEMPORARY_ADMISSION_DATE_FIELD, answer: 'exitDate' },
++    { field: TEMPORARY_ADMISSION_PORT_FIELD, answer: 'portOfExit' }
++  ],
++  reEntry: []
++})
++
++const revealsFor = (reasonForImport) =>
++  Object.hasOwn(REVEALS, reasonForImport) ? REVEALS[reasonForImport] : []
++
++const countryRule = (field) =>
++  requiredOneOf(
++    field,
++    countries.originCountries().map(({ value }) => value),
++    copy.errors.countryRequired
++  )
++
++const portRule = (field) =>
++  requiredOneOf(
++    field,
++    ports.list().map((port) => port.code),
++    copy.errors.portRequired
++  )
++
++const RULES = Object.freeze({
++  [PURPOSE_FIELD]: () =>
++    oneOf(
++      PURPOSE_FIELD,
++      importReasonPurpose.purposes().map((option) => option.value)
++    ),
++  [TRANSHIPMENT_COUNTRY_FIELD]: () => countryRule(TRANSHIPMENT_COUNTRY_FIELD),
++  [TRANSIT_COUNTRY_FIELD]: () => countryRule(TRANSIT_COUNTRY_FIELD),
++  [TRANSIT_PORT_FIELD]: () => portRule(TRANSIT_PORT_FIELD),
++  [TEMPORARY_ADMISSION_PORT_FIELD]: () =>
++    portRule(TEMPORARY_ADMISSION_PORT_FIELD),
++  [TEMPORARY_ADMISSION_DATE_FIELD]: () =>
++    dateText(TEMPORARY_ADMISSION_DATE_FIELD, copy.errors.dateInvalid)
++})
++
++// Only the reveal the submitted reason opens is answerable, so only its
++// fields are measured. A field belonging to another branch arrives empty and
++// is neither validated nor committed.
++const fields = (reasonForImport) =>
++  compose(
++    oneOf(
++      'reasonForImport',
++      importReasonPurpose.reasons().map((option) => option.value)
++    ),
++    ...revealsFor(reasonForImport).map((reveal) => RULES[reveal.field]())
++  )
++
++const formValuesFrom = (payload) => ({
++  reasonForImport: payload.reasonForImport ?? '',
++  [PURPOSE_FIELD]: payload[PURPOSE_FIELD] ?? '',
++  [TRANSHIPMENT_COUNTRY_FIELD]: payload[TRANSHIPMENT_COUNTRY_FIELD] ?? '',
++  [TRANSIT_COUNTRY_FIELD]: payload[TRANSIT_COUNTRY_FIELD] ?? '',
++  [TRANSIT_PORT_FIELD]: payload[TRANSIT_PORT_FIELD] ?? '',
++  [TEMPORARY_ADMISSION_PORT_FIELD]:
++    payload[TEMPORARY_ADMISSION_PORT_FIELD] ?? '',
++  [TEMPORARY_ADMISSION_DATE_FIELD]: kit.readDate(
++    payload,
++    TEMPORARY_ADMISSION_DATE_FIELD
++  )
++})
++
++// A stored answer prefills every branch that asks for it, so switching between
++// two reasons that share a question keeps the answer in front of the user.
++const formValuesFromAnswers = (answers) => ({
++  reasonForImport: answers.reasonForImport ?? '',
++  [PURPOSE_FIELD]: answers.purposeInInternalMarket ?? '',
++  [TRANSHIPMENT_COUNTRY_FIELD]: answers.destinationCountry ?? '',
++  [TRANSIT_COUNTRY_FIELD]: answers.destinationCountry ?? '',
++  [TRANSIT_PORT_FIELD]: answers.portOfExit ?? '',
++  [TEMPORARY_ADMISSION_PORT_FIELD]: answers.portOfExit ?? '',
++  [TEMPORARY_ADMISSION_DATE_FIELD]: answers.exitDate ?? {}
++})
++
++// The reason and the answers its own reveal collected. An answer belonging to
++// a reason no longer chosen is left out and the evaluator purges it, so a
++// flip never carries a stale answer forward.
++const answersFrom = (values) => ({
++  reasonForImport: values.reasonForImport,
++  ...Object.fromEntries(
++    revealsFor(values.reasonForImport).map(({ field, answer }) => [
++      answer,
++      values[field]
++    ])
+   )
+-)
++})
++
++const DIVIDER_OPTION = { value: '', text: '──────────', disabled: true }
++
++const countryItems = () => [
++  { value: '', text: copy.country.placeholder },
++  DIVIDER_OPTION,
++  ...countries.originCountries()
++]
++
++const portItems = () => [
++  { value: '', text: copy.port.placeholder },
++  DIVIDER_OPTION,
++  ...ports.list().map((port) => ({
++    value: port.code,
++    text: `${port.name} (${port.code})`
++  }))
++]
+ 
+ const render = (h, journey, values, errors = {}, recoverableError = false) =>
+   h.view(view, {
+@@ -45,18 +182,31 @@ const render = (h, journey, values, errors = {}, recoverableError = false) =>
+       ...option,
+       hint: { text: copy.reasonHints[option.value] },
+       checked: option.value === values.reasonForImport
+-    }))
++    })),
++    purposeOptions: importReasonPurpose.purposes().map((option) => ({
++      ...option,
++      hint: { text: copy.purpose.hints[option.value] },
++      checked: option.value === values[PURPOSE_FIELD]
++    })),
++    countryItems: countryItems(),
++    portItems: portItems(),
++    exitDateField: kit.dateField(TEMPORARY_ADMISSION_DATE_FIELD, {
++      label: copy.date.label,
++      hint: copy.date.hint,
++      value: values[TEMPORARY_ADMISSION_DATE_FIELD],
++      error: errors[TEMPORARY_ADMISSION_DATE_FIELD]
++    })
+   })
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, { reasonForImport: answers.reasonForImport ?? '' })
++  return render(h, journey, formValuesFromAnswers(answers))
+ }
+ 
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+-  const values = { reasonForImport: payload.reasonForImport ?? '' }
+-  const { errors } = validate(fields, payload)
++  const values = formValuesFrom(payload)
++  const { errors } = validate(fields(values.reasonForImport), payload)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+     return render(h, journey, values, errors).code(HTTP_STATUS_BAD_REQUEST)
+@@ -65,7 +215,7 @@ const post = async (request, h) => {
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+-      committed = await state.commit(request, h, values)
++      committed = await state.commit(request, h, answersFrom(values))
+     },
+     async () => {
+       const { journey } = await state.get(request, h)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+index 67a38741..1de97a80 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+@@ -13,15 +13,22 @@ import {
+ import { dispatchPages } from '../index.js'
+ 
+ import * as importReason from './controller.js'
++import { copy } from './copy/copy.en.js'
+ 
+ const post = postHandlerOf(importReason)
++const get = importReason.routes.find((route) => route.method === 'GET').handler
++
++const EXIT_DATE_TEXT = '20/12/2026'
++const EXIT_DATE_PARTS = { day: '20', month: '12', year: '2026' }
++
++const configure = () => {
++  configureRecords(recordsStub)
++  configureSession(sessionStub)
++  buildDispatch(dispatchPages)
++}
+ 
+ describe('POST import-reason — invalid payload', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
++  beforeAll(configure)
+   beforeEach(() => store.clear())
+ 
+   it('Should answer 400 and re-render an out-of-list reason, committing nothing', async () => {
+@@ -32,4 +39,166 @@ describe('POST import-reason — invalid payload', () => {
+     expect(result.view.context.errors.reasonForImport).toBeDefined()
+     expect(result.after).toEqual(result.before)
+   })
++
++  it('Should answer 400 for a reason that names an Object.prototype member, committing nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: { reasonForImport: 'constructor' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.reasonForImport).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse the destination country the transit reveal asks for and keep the port the user did choose', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: 'GB DVR',
++        transitDestinationCountry: ''
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.transitDestinationCountry).toBeDefined()
++    expect(result.view.context.values.transitPortOfExit).toBe('GB DVR')
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unreal exit date the temporary-admission reveal asks for', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: '31/2/2026',
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionExitDate).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unanswered port of exit on the transit reveal', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: '',
++        transitDestinationCountry: 'IE'
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.transitPortOfExit).toBe(
++      copy.errors.portRequired
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unanswered port of exit on the temporary-admission reveal', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: EXIT_DATE_TEXT,
++        temporaryAdmissionPortOfExit: ''
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionPortOfExit).toBe(
++      copy.errors.portRequired
++    )
++    expect(result.after).toEqual(result.before)
++  })
++})
++
++describe('POST import-reason — the reveal the reason opens', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should commit the transit reveal as the two answers behind its fields', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: 'GB DVR',
++        transitDestinationCountry: 'IE'
++      }
++    })
++    expect(result.after.portOfExit).toBe('GB DVR')
++    expect(result.after.destinationCountry).toBe('IE')
++  })
++
++  it('Should drop the answers of the reason the user moved away from', async () => {
++    const flipped = await driveHandler(post, {
++      seed: {
++        reasonForImport: 'transit',
++        portOfExit: 'GB DVR',
++        destinationCountry: 'IE'
++      },
++      payload: {
++        reasonForImport: 'internalMarket',
++        purposeInInternalMarket: 'breeding'
++      }
++    })
++    expect(flipped.after.purposeInInternalMarket).toBe('breeding')
++    expect(flipped.after.portOfExit).toBeUndefined()
++    expect(flipped.after.destinationCountry).toBeUndefined()
++  })
++
++  it('Should commit the temporary-admission reveal as the two answers behind its fields', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: EXIT_DATE_TEXT,
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.after.exitDate).toEqual(EXIT_DATE_PARTS)
++    expect(result.after.portOfExit).toBe('GB DVR')
++  })
++
++  it('Should ignore a field belonging to a reason the user did not choose', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transhipmentOrOnwardTravel',
++        transhipmentDestinationCountry: 'FR',
++        transitDestinationCountry: 'IE',
++        transitPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.response.redirect).toBeDefined()
++    expect(result.after.destinationCountry).toBe('FR')
++    expect(result.after.portOfExit).toBeUndefined()
++  })
++})
++
++describe('GET import-reason — the reveals prefill from the one answer behind them', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should offer a stored port of exit to both reveals that ask for it', async () => {
++    const result = await driveHandler(get, {
++      seed: { reasonForImport: 'transit', portOfExit: 'GB DVR' }
++    })
++    expect(result.view.context.values.transitPortOfExit).toBe('GB DVR')
++    expect(result.view.context.values.temporaryAdmissionPortOfExit).toBe(
++      'GB DVR'
++    )
++  })
++
++  it('Should offer a stored exit date back to the temporary-admission reveal', async () => {
++    const result = await driveHandler(get, {
++      seed: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        exitDate: EXIT_DATE_PARTS
++      }
++    })
++    expect(result.view.context.exitDateField.value).toBe(EXIT_DATE_TEXT)
++  })
++
++  it('Should offer a stored destination country to both reveals that ask for it', async () => {
++    const result = await driveHandler(get, {
++      seed: {
++        reasonForImport: 'transhipmentOrOnwardTravel',
++        destinationCountry: 'IE'
++      }
++    })
++    expect(result.view.context.values.transhipmentDestinationCountry).toBe('IE')
++    expect(result.view.context.values.transitDestinationCountry).toBe('IE')
++  })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
+index 4a8e182d..6aa9e120 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
+@@ -13,5 +13,49 @@ export const copy = {
+       'Ar gyfer anifeiliaid a awdurdodwyd i ail-fynediad, neu allforion a wrthodwyd sy’n dychwelyd i Brydain Fawr.',
+     temporaryAdmissionHorses:
+       'Ar gyfer ceffylau a awdurdodwyd i fynediad dros dro.'
++  },
++  purpose: {
++    legend: 'Diben yn y farchnad fewnol',
++    hints: {
++      'transfer-of-ownership-sale-gift':
++        'Unrhyw symudiad anifail sydd â’r nod o werthu’r anifail neu drosglwyddo perchnogaeth yr anifail o un person neu endid i’r llall. Er enghraifft, anifeiliaid sydd wedi’u gwerthu ac sy’n cael eu symud at berchennog newydd neu a fydd yn cael eu gwerthu ar ôl cyrraedd Prydain Fawr, pryniannau gan fridiwr/siop dramor a lle mae anifail yn cael ei symud at berchennog newydd heb unrhyw werthiant (e.e. rhodd)',
++      'transfer-of-ownership-rescue':
++        'Mae perchnogaeth anifail/anifeiliaid yn newid o un person neu endid i’r llall drwy ailgartrefu ac mae’n cael ei fabwysiadu/faethu gan deuluoedd newydd, gyda neu heb gyfnewid neu roi arian.',
++      breeding:
++        'Anifeiliaid ar gyfer atgenhedlu. Mae hyn yn cynnwys anifeiliaid y bwriedir iddynt gyfrannu at gronfa enynnol rhaglen fridio, gwella ansawdd da byw, neu gynhyrchu epil',
++      research: 'Anifeiliaid i’w defnyddio mewn ymchwil wyddonol neu feddygol.',
++      'racing-competition-show-or-training':
++        'Anifeiliaid i gymryd rhan mewn digwyddiadau cystadleuol neu hyfforddi',
++      'approved-premises-or-body':
++        'Anifeiliaid ar gyfer arddangosfeydd, sŵau, casgliadau, neu raglenni cadwraeth lle mae angen trwydded neu gymeradwyaeth.',
++      'companion-animal-not-for-resale-or-rehoming':
++        'Anifeiliaid mewn perchnogaeth breifat sy’n cael eu mewnforio o dan y rheolau masnachol gan nad yw’r anifail yn gallu bodloni’r gofynion anfasnachol, er enghraifft, un neu fwy o anifeiliaid yn cael eu cludo gan gludwr masnachol heb eu perchennog neu berson awdurdodedig, perchennog nad yw’n teithio o fewn pum niwrnod i symudiad yr anifeiliaid neu grŵp o bump neu fwy o anifeiliaid yng nghwmni eu perchennog.',
++      production:
++        'Anifeiliaid sy’n cael eu ffermio i gynhyrchu cig, llaeth, wyau, gwlân neu unrhyw gynnyrch neu is-gynnyrch anifail arall',
++      slaughter:
++        'Anifeiliaid i’w lladd a’u prosesu ar gyfer cynhyrchu cig yn fuan ar ôl cyrraedd Prydain Fawr.',
++      fattening: 'Anifeiliaid i’w pesgi ar gyfer cynhyrchu cig.',
++      restocking:
++        'I ailgyflenwi neu wella poblogaethau rhywogaethau, er enghraifft, ailstocio anifeiliaid hela neu bysgod.'
++    }
++  },
++  country: {
++    label: 'Gwlad gyrchfan',
++    hint: 'Y wlad y mae’r llwyth yn teithio ymlaen iddi ar ôl Prydain Fawr.',
++    placeholder: 'Dewiswch wlad'
++  },
++  port: {
++    label: 'Porthladd ymadael',
++    hint: 'Dewiswch ble bydd y llwyth yn gadael Prydain Fawr. Mae ymadael a mynediad yn rhannu’r un rhestr porthladdoedd.',
++    placeholder: 'Dewiswch borthladd ymadael'
++  },
++  date: {
++    label: 'Dyddiad ymadael',
++    hint: 'Y dyddiad y disgwylir i’r anifeiliaid adael Prydain Fawr. Er enghraifft, 27/3/2026'
++  },
++  errors: {
++    countryRequired: 'Dewiswch y wlad gyrchfan',
++    portRequired: 'Dewiswch y porthladd ymadael',
++    dateInvalid: 'Rhowch ddyddiad ymadael go iawn'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
+index ae1135e2..48bb0aee 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
+@@ -11,5 +11,49 @@ export const copy = {
+     reEntry:
+       'For animals authorised for re-entry, or rejected exports re-entering Great Britain.',
+     temporaryAdmissionHorses: 'For horses authorised for temporary entry.'
++  },
++  purpose: {
++    legend: 'Purpose in the internal market',
++    hints: {
++      'transfer-of-ownership-sale-gift':
++        "Any movement of an animal that has as it's aim, the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (e.g. a gift)",
++      'transfer-of-ownership-rescue':
++        'Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.',
++      breeding:
++        'Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring',
++      research: 'Animals for use in scientific or medical research.',
++      'racing-competition-show-or-training':
++        'Animals to participate in competitive or training events',
++      'approved-premises-or-body':
++        'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.',
++      'companion-animal-not-for-resale-or-rehoming':
++        "Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
++      production:
++        'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product',
++      slaughter:
++        'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.',
++      fattening: 'Animals to be fattened for meat production.',
++      restocking:
++        'To replenish or enhance populations of species, for example, restocking of game or fish.'
++    }
++  },
++  country: {
++    label: 'Destination country',
++    hint: 'The country the consignment travels on to after Great Britain.',
++    placeholder: 'Select a country'
++  },
++  port: {
++    label: 'Port of exit',
++    hint: 'Choose where the consignment will leave Great Britain. Exit and entry share the same port list.',
++    placeholder: 'Select port of exit'
++  },
++  date: {
++    label: 'Exit date',
++    hint: 'The date the animals are expected to leave Great Britain. For example, 27/3/2026'
++  },
++  errors: {
++    countryRequired: 'Select the destination country',
++    portRequired: 'Select the port of exit',
++    dateInvalid: 'Enter a real exit date'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
+index fac5f031..b55d27df 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
+@@ -8,6 +8,7 @@ import { records as recordsStub } from '../../../../../../../services/persistenc
+ import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+ import { driveHandler } from '../../../../../../../engine/test-support.js'
+ import * as importReasonPurpose from '../../../../../../../services/import-reason-purpose/index.js'
++import * as ports from '../../../../../../../services/ports/index.js'
+ import { dispatchPages } from '../../index.js'
+ 
+ import * as importReason from '../controller.js'
+@@ -35,6 +36,12 @@ describe('import-reason copy module', () => {
+       expect(copy.reasonHints[option.value]).toBeTruthy()
+     }
+   })
++
++  it('Should carry a hint for every service purpose option the internal-market reveal asks', () => {
++    for (const option of importReasonPurpose.purposes()) {
++      expect(copy.purpose.hints[option.value]).toBeTruthy()
++    }
++  })
+ })
+ 
+ describe('GET import-reason — copy reaches the view', () => {
+@@ -55,5 +62,27 @@ describe('GET import-reason — copy reaches the view', () => {
+     for (const option of result.view.context.reasonOptions) {
+       expect(option.hint.text).toBe(copy.reasonHints[option.value])
+     }
++    for (const option of result.view.context.purposeOptions) {
++      expect(option.hint.text).toBe(copy.purpose.hints[option.value])
++    }
++  })
++
++  it('Should carry the reveal placeholders, the port list and the exit-date label into the view', async () => {
++    const get = importReason.routes.find(
++      (route) => route.method === 'GET'
++    ).handler
++    const result = await driveHandler(get)
++
++    expect(result.view.context.countryItems[0].text).toBe(
++      copy.country.placeholder
++    )
++    expect(result.view.context.portItems[0].text).toBe(copy.port.placeholder)
++    expect(result.view.context.portItems.slice(2)).toEqual(
++      ports.list().map((port) => ({
++        value: port.code,
++        text: `${port.name} (${port.code})`
++      }))
++    )
++    expect(result.view.context.exitDateField.label.text).toBe(copy.date.label)
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js
+index d0a223a2..be7c96bf 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js
+@@ -2,8 +2,21 @@ import {
+   feature,
+   scalar
+ } from '../../../../../../bridge/fulfilment-bindings.js'
+-import { reasonForImport } from '../../../../obligations/index.js'
++import {
++  destinationCountry,
++  exitDate,
++  portOfExit,
++  purposeInInternalMarket,
++  reasonForImport
++} from '../../../../obligations/index.js'
+ 
+ export const evaluationBindings = feature('import-reason', [
+-  scalar({ field: 'reasonForImport', obligation: reasonForImport })
++  scalar({ field: 'reasonForImport', obligation: reasonForImport }),
++  scalar({
++    field: 'purposeInInternalMarket',
++    obligation: purposeInInternalMarket
++  }),
++  scalar({ field: 'destinationCountry', obligation: destinationCountry }),
++  scalar({ field: 'portOfExit', obligation: portOfExit }),
++  scalar({ field: 'exitDate', obligation: exitDate })
+ ])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
+index de265190..944e3b88 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
+@@ -1,21 +1,42 @@
+ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ 
+-import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
++import {
++  answerOriginEntry,
++  chooseTodayFromDatePicker
++} from '../../../../../../../../../fit/live-animals-journey.js'
++import { countriesOrigin } from '../../../../../../services/_capture/fixtures.js'
+ import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
+ import { validatorDefaults } from '../../../../../../shared/copy.en.js'
+ import { copy } from './copy/copy.en.js'
+ import { signIn } from '../../../../../../../../../fit/sign-in.js'
+ 
+ const REASON_INPUT_SELECTOR = 'input[name="reasonForImport"]'
++const SUBMIT_BUTTON = 'form button[type="submit"]'
++const CHOOSE_DATE_LABEL = 'Choose date'
++const PORT_CODE = 'GB DVR'
++const COUNTRY_CODE = 'IE'
++const TRANSIT_PORT = '#transitPortOfExit'
++const TRANSIT_COUNTRY = '#transitDestinationCountry'
++const TEMPORARY_ADMISSION_DATE = '#temporaryAdmissionExitDate'
++const TEMPORARY_ADMISSION_PORT = '#temporaryAdmissionPortOfExit'
++
++// govuk-frontend's own conditional-reveal script puts aria-expanded on the
++// radio it belongs to, which axe reads as an attribute a radio may not carry.
++// The same filter guards the origin page's axe tests.
++const isGovukConditionalRevealFalsePositive = (violation) =>
++  violation.id === 'aria-allowed-attr' &&
++  violation.nodes.every((node) =>
++    /govuk-(radios|checkboxes)__input/.test(node.html)
++  )
+ 
+ const expectNoSeriousOrCriticalAxeViolations = async (page) => {
+   const results = await new AxeBuilder({ page })
+     .withTags(['wcag2a', 'wcag2aa'])
+     .analyze()
+-  const seriousOrCritical = results.violations.filter(({ impact }) =>
+-    ['serious', 'critical'].includes(impact)
+-  )
++  const seriousOrCritical = results.violations
++    .filter(({ impact }) => ['serious', 'critical'].includes(impact))
++    .filter((violation) => !isGovukConditionalRevealFalsePositive(violation))
+ 
+   expect(
+     seriousOrCritical,
+@@ -38,6 +59,22 @@ const startAtImportReason = async (page) => {
+   await expect(page.getByRole('heading', { name: copy.legend })).toBeVisible()
+ }
+ 
++const radioFor = (page, value) =>
++  page.locator(`${REASON_INPUT_SELECTOR}[value="${value}"]`)
++
++/** The reveal a reason opens, found through the radio that controls it — so
++ * the lookup only works while the radio really does control a reveal. */
++const revealFor = async (page, value) => {
++  const controls = await radioFor(page, value).getAttribute('aria-controls')
++  expect(controls, `${value} controls a reveal`).toBeTruthy()
++  return page.locator(`#${controls}`)
++}
++
++const fieldIdsIn = (reveal) =>
++  reveal
++    .locator('select, input:not([type="hidden"])')
++    .evaluateAll((fields) => fields.map((field) => field.id))
++
+ test.describe('import-reason feature', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+@@ -72,7 +109,7 @@ test.describe('import-reason feature', () => {
+         input.value = 'not-a-real-reason'
+         input.checked = true
+       })
+-    await page.locator('form button[type="submit"]').first().click()
++    await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     const reasonError = page
+       .getByRole('alert')
+@@ -92,15 +129,22 @@ test.describe('import-reason feature', () => {
+     const selected = importReasonPurpose
+       .reasons()
+       .find(({ value }) => value === 'internalMarket')
++    const purpose = importReasonPurpose
++      .purposes()
++      .find(({ value }) => value === 'breeding')
+ 
+     await page.getByRole('radio', { name: selected.text, exact: true }).check()
+-    await page.locator('form button[type="submit"]').first().click()
++    await page.getByRole('radio', { name: purpose.text, exact: true }).check()
++    await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+     await page.goto(reasonUrl)
+     await expect(
+       page.getByRole('radio', { name: selected.text, exact: true })
+     ).toBeChecked()
++    await expect(
++      page.getByRole('radio', { name: purpose.text, exact: true })
++    ).toBeChecked()
+   })
+ 
+   test('back link returns to the notification hub', async ({ page }) => {
+@@ -115,3 +159,165 @@ test.describe('import-reason feature', () => {
+     await expectNoSeriousOrCriticalAxeViolations(page)
+   })
+ })
++
++test.describe('import-reason reveals', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await startAtImportReason(page)
++  })
++
++  test('opens no reveal until a reason that needs one is chosen', async ({
++    page
++  }) => {
++    const transitReveal = await revealFor(page, 'transit')
++    await expect(transitReveal).toBeHidden()
++
++    await radioFor(page, 'reEntry').check()
++    await expect(transitReveal).toBeHidden()
++    await expect(radioFor(page, 'reEntry')).not.toHaveAttribute('aria-controls')
++  })
++
++  test('asks the internal-market purpose under its own radio', async ({
++    page
++  }) => {
++    await radioFor(page, 'internalMarket').check()
++    const reveal = await revealFor(page, 'internalMarket')
++
++    await expect(reveal).toBeVisible()
++    await expect(reveal.getByText(copy.purpose.legend)).toBeVisible()
++    const renderedPurposes = await reveal
++      .locator('input[name="purposeInInternalMarket"]')
++      .evaluateAll((inputs) => inputs.map((input) => input.value))
++    expect(renderedPurposes).toEqual(
++      importReasonPurpose.purposes().map(({ value }) => value)
++    )
++  })
++
++  test('asks transit for the port of exit and then the destination country', async ({
++    page
++  }) => {
++    await radioFor(page, 'transit').check()
++    const reveal = await revealFor(page, 'transit')
++
++    await expect(reveal).toBeVisible()
++    expect(await fieldIdsIn(reveal)).toEqual([
++      'transitPortOfExit',
++      'transitDestinationCountry'
++    ])
++    await expect(page.locator(TRANSIT_PORT)).toHaveAccessibleName(
++      copy.port.label
++    )
++    await expect(page.locator(TRANSIT_COUNTRY)).toHaveAccessibleName(
++      copy.country.label
++    )
++    const renderedCountries = await page
++      .locator(`${TRANSIT_COUNTRY} option`)
++      .evaluateAll((options) =>
++        options.slice(2).map((option) => ({
++          code: option.value,
++          name: option.textContent
++        }))
++      )
++    expect(renderedCountries).toEqual(countriesOrigin)
++  })
++
++  test('asks temporary admission for the exit date and then the port of exit', async ({
++    page
++  }) => {
++    await radioFor(page, 'temporaryAdmissionHorses').check()
++    const reveal = await revealFor(page, 'temporaryAdmissionHorses')
++
++    await expect(reveal).toBeVisible()
++    await expect(
++      reveal.getByRole('button', { name: CHOOSE_DATE_LABEL })
++    ).toBeVisible()
++    await expect(
++      page.locator(TEMPORARY_ADMISSION_DATE)
++    ).toHaveAccessibleDescription(copy.date.hint)
++    expect(await fieldIdsIn(reveal)).toEqual([
++      'temporaryAdmissionExitDate',
++      'temporaryAdmissionPortOfExit'
++    ])
++  })
++
++  test('asks transhipment for the destination country alone', async ({
++    page
++  }) => {
++    await radioFor(page, 'transhipmentOrOnwardTravel').check()
++    const reveal = await revealFor(page, 'transhipmentOrOnwardTravel')
++
++    await expect(reveal).toBeVisible()
++    expect(await fieldIdsIn(reveal)).toEqual(['transhipmentDestinationCountry'])
++  })
++
++  test('saves a reason and its reveal in one submit, and offers the answers back', async ({
++    page
++  }) => {
++    const reasonUrl = page.url()
++
++    await radioFor(page, 'transit').check()
++    await page.locator(TRANSIT_PORT).selectOption(PORT_CODE)
++    await page.locator(TRANSIT_COUNTRY).selectOption(COUNTRY_CODE)
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
++    await page.goto(reasonUrl)
++    await expect(radioFor(page, 'transit')).toBeChecked()
++    await expect(page.locator(TRANSIT_PORT)).toHaveValue(PORT_CODE)
++    await expect(page.locator(TRANSIT_COUNTRY)).toHaveValue(COUNTRY_CODE)
++  })
++
++  test('refuses an unanswered reveal, links to the field and keeps the reveal open', async ({
++    page
++  }) => {
++    await radioFor(page, 'transit').check()
++    await page.locator(TRANSIT_PORT).selectOption(PORT_CODE)
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    const countryError = page
++      .getByRole('alert')
++      .getByRole('link', { name: copy.errors.countryRequired })
++    await expect(countryError).toBeVisible()
++    await countryError.click()
++    await expect(page.locator(TRANSIT_COUNTRY)).toBeFocused()
++    await expect(page.locator(TRANSIT_PORT)).toHaveValue(PORT_CODE)
++  })
++
++  test('saves an exit date chosen from the picker inside the reveal, and offers it back', async ({
++    page
++  }) => {
++    const reasonUrl = page.url()
++
++    await radioFor(page, 'temporaryAdmissionHorses').check()
++    const expected = await chooseTodayFromDatePicker(page, copy.date.label)
++    await expect(page.locator(TEMPORARY_ADMISSION_DATE)).toHaveValue(expected)
++    await page.locator(TEMPORARY_ADMISSION_PORT).selectOption(PORT_CODE)
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
++    await page.goto(reasonUrl)
++    await expect(page.locator(TEMPORARY_ADMISSION_DATE)).toHaveValue(expected)
++    await expect(page.locator(TEMPORARY_ADMISSION_PORT)).toHaveValue(PORT_CODE)
++  })
++
++  test('has no serious or critical axe violations with a reveal open and in error', async ({
++    page
++  }) => {
++    await radioFor(page, 'transit').check()
++    await page.locator(SUBMIT_BUTTON).first().click()
++    await expect(page.getByRole('alert')).toBeVisible()
++
++    await expectNoSeriousOrCriticalAxeViolations(page)
++  })
++
++  test('has no serious or critical axe violations with the picker dialog open inside a reveal', async ({
++    page
++  }) => {
++    await radioFor(page, 'temporaryAdmissionHorses').check()
++    const reveal = await revealFor(page, 'temporaryAdmissionHorses')
++    await reveal.getByRole('button', { name: CHOOSE_DATE_LABEL }).click()
++    await expect(reveal.getByRole('dialog')).toBeVisible()
++
++    await expectNoSeriousOrCriticalAxeViolations(page)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk
+index fa0b38d3..2c868f88 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk
+@@ -1,5 +1,7 @@
+ {% extends "shared/layout.njk" %}
+ {% from "govuk/components/radios/macro.njk" import govukRadios %}
++{% from "govuk/components/select/macro.njk" import govukSelect %}
++{% from "moj/components/date-picker/macro.njk" import mojDatePicker %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+ 
+@@ -7,6 +9,91 @@
+   {% include "shared/error-summary.njk" %}
+ 
+   {{ sectionCaption(caption) }}
++
++  {# Each reason that needs follow-up questions opens them underneath itself,
++     so the whole reason is answered in one go. A question two reasons ask
++     carries a form field per reason — two inputs cannot share a name — and the
++     controller maps both back to the one answer. #}
++  {% set internalMarketReveal %}
++    {{ govukRadios({
++      name: "purposeInInternalMarket",
++      fieldset: {
++        legend: {
++          text: copy.purpose.legend,
++          classes: "govuk-fieldset__legend--m"
++        }
++      },
++      errorMessage: errors.purposeInInternalMarket and { text: errors.purposeInInternalMarket },
++      items: purposeOptions
++    }) }}
++  {% endset %}
++
++  {% set transhipmentReveal %}
++    {{ govukSelect({
++      id: "transhipmentDestinationCountry",
++      name: "transhipmentDestinationCountry",
++      label: { text: copy.country.label, classes: "govuk-label--s" },
++      hint: { text: copy.country.hint },
++      value: values.transhipmentDestinationCountry,
++      errorMessage: errors.transhipmentDestinationCountry and { text: errors.transhipmentDestinationCountry },
++      items: countryItems
++    }) }}
++  {% endset %}
++
++  {% set transitReveal %}
++    {{ govukSelect({
++      id: "transitPortOfExit",
++      name: "transitPortOfExit",
++      label: { text: copy.port.label, classes: "govuk-label--s" },
++      hint: { text: copy.port.hint },
++      value: values.transitPortOfExit,
++      errorMessage: errors.transitPortOfExit and { text: errors.transitPortOfExit },
++      items: portItems
++    }) }}
++
++    {{ govukSelect({
++      id: "transitDestinationCountry",
++      name: "transitDestinationCountry",
++      label: { text: copy.country.label, classes: "govuk-label--s" },
++      hint: { text: copy.country.hint },
++      value: values.transitDestinationCountry,
++      errorMessage: errors.transitDestinationCountry and { text: errors.transitDestinationCountry },
++      items: countryItems
++    }) }}
++  {% endset %}
++
++  {% set temporaryAdmissionReveal %}
++    {{ mojDatePicker(exitDateField) }}
++
++    {{ govukSelect({
++      id: "temporaryAdmissionPortOfExit",
++      name: "temporaryAdmissionPortOfExit",
++      label: { text: copy.port.label, classes: "govuk-label--s" },
++      hint: { text: copy.port.hint },
++      value: values.temporaryAdmissionPortOfExit,
++      errorMessage: errors.temporaryAdmissionPortOfExit and { text: errors.temporaryAdmissionPortOfExit },
++      items: portItems
++    }) }}
++  {% endset %}
++
++  {% set reveals = {
++    internalMarket: internalMarketReveal,
++    transhipmentOrOnwardTravel: transhipmentReveal,
++    transit: transitReveal,
++    temporaryAdmissionHorses: temporaryAdmissionReveal
++  } %}
++
++  {% set reasonItems = [] %}
++  {% for option in reasonOptions %}
++    {% set ignored = reasonItems.push({
++      value: option.value,
++      text: option.text,
++      hint: option.hint,
++      checked: option.checked,
++      conditional: { html: reveals[option.value] }
++    }) %}
++  {% endfor %}
++
+   <form method="post" novalidate>
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+@@ -21,7 +108,7 @@
+         }
+       },
+       errorMessage: errors.reasonForImport and { text: errors.reasonForImport },
+-      items: reasonOptions
++      items: reasonItems
+     }) }}
+ 
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/index.js b/src/server/app/sets/live-animals/journeys/linear/features/index.js
+index 36901667..a3f49364 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/index.js
+@@ -5,10 +5,6 @@ import * as commoditiesSearch from './commodities/search/search.controller.js'
+ import * as consignmentDetails from './commodities/consignment-details/consignment-details.controller.js'
+ import * as animalIdentification from './commodities/animal-identification/animal-identification.controller.js'
+ import * as importReason from './import-reason/controller.js'
+-import * as importPurpose from './import-purpose/controller.js'
+-import * as destinationCountry from './destination-country/controller.js'
+-import * as portOfExit from './port-of-exit/controller.js'
+-import * as exitDate from './exit-date/controller.js'
+ import * as additionalDetails from './additional-details/controller.js'
+ import * as documents from './documents/controller.js'
+ import * as addresses from './addresses/controller.js'
+@@ -34,10 +30,6 @@ export const dispatchPages = [
+   consignmentDetails.meta,
+   animalIdentification.meta,
+   importReason.meta,
+-  importPurpose.meta,
+-  destinationCountry.meta,
+-  portOfExit.meta,
+-  exitDate.meta,
+   additionalDetails.meta,
+   documents.meta,
+   addresses.meta,
+@@ -59,10 +51,6 @@ export const allRoutes = [
+   ...consignmentDetails.routes,
+   ...animalIdentification.routes,
+   ...importReason.routes,
+-  ...importPurpose.routes,
+-  ...destinationCountry.routes,
+-  ...portOfExit.routes,
+-  ...exitDate.routes,
+   ...additionalDetails.routes,
+   ...documents.routes,
+   ...addresses.routes,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js
+deleted file mode 100644
+index 03b26a00..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/controller.js
++++ /dev/null
+@@ -1,90 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  requiredOneOf,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import * as ports from '../../../../../../services/ports/index.js'
+-import { portOfExitPage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['portOfExit'] }
+-const view = `${TEMPLATES}/features/port-of-exit/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const portItems = (selected) => [
+-  { value: '', text: copy.port.placeholder },
+-  { value: '', text: '──────────', disabled: true },
+-  ...ports.list().map((port) => ({
+-    value: port.code,
+-    text: `${port.name} (${port.code})`,
+-    selected: port.code === selected
+-  }))
+-]
+-
+-const fields = () =>
+-  compose(
+-    requiredOneOf(
+-      'portOfExit',
+-      ports.list().map((port) => port.code),
+-      copy.errors.portRequired
+-    )
+-  )
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    portItems: portItems(values.portOfExit)
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, { portOfExit: answers.portOfExit ?? '' })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = { portOfExit: payload.portOfExit ?? '' }
+-  const { errors } = validate(fields(), payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.cy.js
+deleted file mode 100644
+index d2de029a..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.cy.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Porthladd ymadael',
+-  port: {
+-    label: 'Porthladd ymadael',
+-    hint: 'Dewiswch ble bydd y llwyth yn gadael Prydain Fawr. Mae ymadael a mynediad yn rhannu’r un rhestr porthladdoedd.',
+-    placeholder: 'Dewiswch borthladd ymadael'
+-  },
+-  errors: {
+-    portRequired: 'Dewiswch y porthladd ymadael'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js
+deleted file mode 100644
+index c6933a82..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js
++++ /dev/null
+@@ -1,11 +0,0 @@
+-export const copy = {
+-  title: 'Port of exit',
+-  port: {
+-    label: 'Port of exit',
+-    hint: 'Choose where the consignment will leave Great Britain. Exit and entry share the same port list.',
+-    placeholder: 'Select port of exit'
+-  },
+-  errors: {
+-    portRequired: 'Select the port of exit'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.test.js
+deleted file mode 100644
+index 112c25c4..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.test.js
++++ /dev/null
+@@ -1,53 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as portOfExit from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const leaves = (node, path = []) =>
+-  typeof node === 'object' && node !== null
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('#copy', () => {
+-  it('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-})
+-
+-describe('GET /port-of-exit', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should supply the feature copy module and the shared chrome copy', async () => {
+-    const get = portOfExit.routes.find(
+-      (route) => route.method === 'GET'
+-    ).handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    expect(result.view.context.sharedCopy.saveActions.saveAndContinue).toBe(
+-      'Save and continue'
+-    )
+-    expect(result.view.context.portItems[0].text).toBe(copy.port.placeholder)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/evaluation.js
+deleted file mode 100644
+index 3b399509..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/evaluation.js
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { portOfExit } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('port-of-exit', [
+-  scalar({ field: 'portOfExit', obligation: portOfExit })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/page.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/page.js
+deleted file mode 100644
+index 5d24a4af..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const portOfExitPage = {
+-  id: 'port-of-exit',
+-  slug: 'port-of-exit'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/port-of-exit.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/port-of-exit.fit.spec.js
+deleted file mode 100644
+index 872b4066..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/port-of-exit.fit.spec.js
++++ /dev/null
+@@ -1,121 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import {
+-  answerOriginEntry,
+-  expectPageEndsWithPrimaryAlone
+-} from '../../../../../../../../../fit/live-animals-journey.js'
+-import { portsOfEntry } from '../../../../../../services/_capture/fixtures.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
+-
+-const startAtPortOfExit = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page
+-    .locator('input[name="reasonForImport"][value="temporaryAdmissionHorses"]')
+-    .check()
+-  await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-  await page.goto(reasonUrl.replace(/\/import-reason$/, '/port-of-exit'))
+-  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+-}
+-
+-test.describe('port-of-exit feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtPortOfExit(page)
+-  })
+-
+-  test('renders the captured port options and feature copy', async ({
+-    page
+-  }) => {
+-    await expect(page.getByLabel(copy.port.label)).toHaveAccessibleDescription(
+-      copy.port.hint
+-    )
+-    const select = page.locator('select#portOfExit')
+-    await expect(select.locator('option').first()).toHaveText(
+-      copy.port.placeholder
+-    )
+-    const renderedPorts = await select
+-      .locator('option')
+-      .evaluateAll((options) =>
+-        options.slice(2).map((option) => ({
+-          code: option.value,
+-          name: option.textContent
+-        }))
+-      )
+-    expect(renderedPorts).toEqual(
+-      portsOfEntry.map((port) => ({
+-        code: port.code,
+-        name: `${port.name} (${port.code})`
+-      }))
+-    )
+-  })
+-
+-  test('ends with the primary alone, being reached from the destination country page', async ({
+-    page
+-  }) => {
+-    await expectPageEndsWithPrimaryAlone(page)
+-  })
+-
+-  test('port validation: when no port is selected, links to and focuses the empty select', async ({
+-    page
+-  }) => {
+-    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-
+-    const portError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.portRequired })
+-    await expect(portError).toBeVisible()
+-    await portError.click()
+-    await expect(page.getByLabel(copy.port.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.port.label)).toHaveValue('')
+-  })
+-
+-  test('saves a valid port, redirects and persists the answer', async ({
+-    page
+-  }) => {
+-    const portUrl = page.url()
+-    const selected = portsOfEntry.find(({ code }) => code === 'GB ABD')
+-
+-    await page.getByLabel(copy.port.label).selectOption(selected.code)
+-    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(portUrl)
+-    await expect(page.getByLabel(copy.port.label)).toHaveValue(selected.code)
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/port-of-exit$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('has no serious or critical axe violations', async ({ page }) => {
+-    const results = await new AxeBuilder({ page })
+-      .withTags(['wcag2a', 'wcag2aa'])
+-      .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
+-
+-    expect(
+-      seriousOrCritical,
+-      `Port of exit has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-    ).toEqual([])
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk
+deleted file mode 100644
+index e856cb78..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/template.njk
++++ /dev/null
+@@ -1,30 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "govuk/components/select/macro.njk" import govukSelect %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+-
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ govukSelect({
+-      id: "portOfExit",
+-      name: "portOfExit",
+-      label: { text: copy.port.label, classes: "govuk-label--s" },
+-      hint: { text: copy.port.hint },
+-      value: values.portOfExit,
+-      errorMessage: errors.portOfExit and { text: errors.portOfExit },
+-      items: portItems
+-    }) }}
+-
+-    {# Second page of the exit-details row — reached from the destination
+-       country page, not from the hub, so it ends with the primary alone. #}
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+-  </form>
+-{% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+index c27842e5..1e579a5f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+@@ -17,10 +17,6 @@ import { assembleRequestView } from '../../../../../engine/request-view.js'
+ 
+ import * as origin from './origin/controller.js'
+ import * as importReason from './import-reason/controller.js'
+-import * as importPurpose from './import-purpose/controller.js'
+-import * as destinationCountry from './destination-country/controller.js'
+-import * as portOfExit from './port-of-exit/controller.js'
+-import * as exitDate from './exit-date/controller.js'
+ import * as additionalDetails from './additional-details/controller.js'
+ import * as addresses from './addresses/controller.js'
+ import * as cphNumber from './cph-number/controller.js'
+@@ -87,10 +83,12 @@ delete privateTransportFixture.commercialTransporter
+ const scalarPages = [
+   ['origin', origin, parityFixture],
+   ['import reason', importReason, parityFixture],
+-  ['import purpose', importPurpose, parityFixture],
+-  ['destination country', destinationCountry, transitFixture],
+-  ['port of exit', portOfExit, transitFixture],
+-  ['exit date', exitDate, temporaryAdmissionFixture],
++  ['import reason on transit', importReason, transitFixture],
++  [
++    'import reason on temporary admission',
++    importReason,
++    temporaryAdmissionFixture
++  ],
+   ['additional details', additionalDetails, parityFixture],
+   ['addresses', addresses, parityFixture],
+   ['CPH number', cphNumber, parityFixture],
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js b/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
+index 0870a493..d71e011c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
+@@ -15,7 +15,7 @@ import {
+ import { dispatchPages } from './index.js'
+ import { base, hubExitTarget } from '../../../../../shared/kit.js'
+ 
+-import * as importPurpose from './import-purpose/controller.js'
++import * as importReason from './import-reason/controller.js'
+ import * as consignmentDetails from './commodities/consignment-details/consignment-details.controller.js'
+ import * as animalIdentification from './commodities/animal-identification/animal-identification.controller.js'
+ import * as documents from './documents/controller.js'
+@@ -68,22 +68,25 @@ describe('save actions — hub exit semantics', () => {
+     expect(hubExitTarget({ params: { journeyId: 'journey-1' } })).toBeNull()
+   })
+ 
+-  // purposeInInternalMarket is activated by reasonForImport=internalMarket,
+-  // so the commits below seed the gate to keep the committed value in scope —
+-  // plus the two enforcedAt=continue prerequisites, so the section's next
+-  // page (additional-details) is reachable for the no-exit contrast.
+-  const purposeInScope = {
++  // The reason page carries its own reveal, so the payload answers both the
++  // reason and the purpose it opens. The seed supplies the two
++  // enforcedAt=continue prerequisites, so the section's next page
++  // (additional-details) is reachable for the no-exit contrast.
++  const reasonPrerequisites = {
+     countryOfOrigin: 'FR',
+-    commodityLines: [{ commoditySelection: 'Cat' }],
+-    reasonForImport: 'internalMarket'
++    commodityLines: [{ commoditySelection: 'Cat' }]
++  }
++  const internalMarketPayload = {
++    reasonForImport: 'internalMarket',
++    purposeInInternalMarket: 'breeding'
+   }
+ 
+   it('Should commit the page and redirect to the hub on Save and return to overview', async () => {
+     const { journeyId, response, after } = await drivePost(
+-      postHandlerOf(importPurpose),
++      postHandlerOf(importReason),
+       {
+-        payload: { purposeInInternalMarket: 'breeding', exit: 'hub' },
+-        seed: purposeInScope
++        payload: { ...internalMarketPayload, exit: 'hub' },
++        seed: reasonPrerequisites
+       }
+     )
+     expect(response).toEqual({ redirect: hubPath(journeyId) })
+@@ -92,10 +95,10 @@ describe('save actions — hub exit semantics', () => {
+ 
+   it('Should keep Save and continue on the flow target when no exit is named', async () => {
+     const { journeyId, response, after } = await drivePost(
+-      postHandlerOf(importPurpose),
++      postHandlerOf(importReason),
+       {
+-        payload: { purposeInInternalMarket: 'breeding' },
+-        seed: purposeInScope
++        payload: internalMarketPayload,
++        seed: reasonPrerequisites
+       }
+     )
+     expect(response).toEqual({
+@@ -105,11 +108,14 @@ describe('save actions — hub exit semantics', () => {
+   })
+ 
+   it('Should reject an invalid Save and return to overview with the same errors as Save and continue', async () => {
+-    const invalid = { purposeInInternalMarket: 'not-a-purpose' }
+-    const plain = await drivePost(postHandlerOf(importPurpose), {
++    const invalid = {
++      reasonForImport: 'internalMarket',
++      purposeInInternalMarket: 'not-a-purpose'
++    }
++    const plain = await drivePost(postHandlerOf(importReason), {
+       payload: invalid
+     })
+-    const exit = await drivePost(postHandlerOf(importPurpose), {
++    const exit = await drivePost(postHandlerOf(importReason), {
+       payload: { ...invalid, exit: 'hub' }
+     })
+     expect(plain.response.redirect).toBeUndefined()
+@@ -122,11 +128,11 @@ describe('save actions — hub exit semantics', () => {
+ 
+   it('Should send a change-context Save and continue back to check your answers', async () => {
+     const { journeyId, response } = await drivePost(
+-      postHandlerOf(importPurpose),
++      postHandlerOf(importReason),
+       {
+-        payload: { purposeInInternalMarket: 'breeding' },
++        payload: internalMarketPayload,
+         query: { change: '1' },
+-        seed: purposeInScope
++        seed: reasonPrerequisites
+       }
+     )
+     expect(response).toEqual({
+@@ -136,11 +142,11 @@ describe('save actions — hub exit semantics', () => {
+ 
+   it('Should let an explicit hub exit win over the change context', async () => {
+     const { journeyId, response, after } = await drivePost(
+-      postHandlerOf(importPurpose),
++      postHandlerOf(importReason),
+       {
+-        payload: { purposeInInternalMarket: 'breeding', exit: 'hub' },
++        payload: { ...internalMarketPayload, exit: 'hub' },
+         query: { change: '1' },
+-        seed: purposeInScope
++        seed: reasonPrerequisites
+       }
+     )
+     expect(response).toEqual({ redirect: hubPath(journeyId) })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js
+index a73cf840..ff9ad3c5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js
+@@ -16,6 +16,15 @@ const ANY_GOVUK_CAPTION =
+   '.govuk-caption-s, .govuk-caption-m, .govuk-caption-l, .govuk-caption-xl'
+ const ABOUT_THE_CONSIGNMENT = 'About the consignment'
+ 
++// govuk-frontend's own conditional-reveal script puts aria-expanded on the
++// radio it belongs to, which axe reads as an attribute a radio may not carry.
++// The same filter guards the origin page's axe tests.
++const isGovukConditionalRevealFalsePositive = (violation) =>
++  violation.id === 'aria-allowed-attr' &&
++  violation.nodes.every((node) =>
++    /govuk-(radios|checkboxes)__input/.test(node.html)
++  )
++
+ const startAtOrigin = async (page) => {
+   await page.goto('/')
+   await page.getByRole('button', { name: dashboardCopy.startButton }).click()
+@@ -96,9 +105,9 @@ test.describe('section caption above the page heading', () => {
+     const results = await new AxeBuilder({ page })
+       .withTags(['wcag2a', 'wcag2aa'])
+       .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
++    const seriousOrCritical = results.violations
++      .filter(({ impact }) => ['serious', 'critical'].includes(impact))
++      .filter((violation) => !isGovukConditionalRevealFalsePositive(violation))
+ 
+     expect(
+       seriousOrCritical,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
+index 090cfef1..3d0de540 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
+@@ -20,10 +20,6 @@ import { routes as commoditiesSearchRoutes } from './commodities/search/search.c
+ import { routes as consignmentDetailsRoutes } from './commodities/consignment-details/consignment-details.controller.js'
+ import { routes as animalIdentificationRoutes } from './commodities/animal-identification/animal-identification.controller.js'
+ import { routes as importReasonRoutes } from './import-reason/controller.js'
+-import { routes as importPurposeRoutes } from './import-purpose/controller.js'
+-import { routes as destinationCountryRoutes } from './destination-country/controller.js'
+-import { routes as portOfExitRoutes } from './port-of-exit/controller.js'
+-import { routes as exitDateRoutes } from './exit-date/controller.js'
+ import { routes as additionalDetailsRoutes } from './additional-details/controller.js'
+ import { routes as addressesRoutes } from './addresses/controller.js'
+ import { routes as cphNumberRoutes } from './cph-number/controller.js'
+@@ -58,22 +54,6 @@ parityFixture.commodityLines[0].animalIdentifiers[1] = {
+   animalIdentifierPassport: 'UK123456780'
+ }
+ 
+-const transitFixture = {
+-  ...parityFixture,
+-  reasonForImport: 'transit',
+-  destinationCountry: comprehensive.destinationCountry,
+-  portOfExit: comprehensive.portOfExit
+-}
+-delete transitFixture.purposeInInternalMarket
+-
+-const temporaryAdmissionFixture = {
+-  ...parityFixture,
+-  reasonForImport: 'temporaryAdmissionHorses',
+-  portOfExit: comprehensive.portOfExit,
+-  exitDate: comprehensive.exitDate
+-}
+-delete temporaryAdmissionFixture.purposeInInternalMarket
+-
+ const privateTransportFixture = {
+   ...parityFixture,
+   transporterType: 'Private',
+@@ -129,20 +109,6 @@ const CAPTIONED_PAGES = [
+     parityFixture
+   ],
+   ['import reason', ABOUT_THE_CONSIGNMENT, importReasonRoutes, parityFixture],
+-  ['import purpose', ABOUT_THE_CONSIGNMENT, importPurposeRoutes, parityFixture],
+-  [
+-    'destination country',
+-    ABOUT_THE_CONSIGNMENT,
+-    destinationCountryRoutes,
+-    transitFixture
+-  ],
+-  ['port of exit', ABOUT_THE_CONSIGNMENT, portOfExitRoutes, transitFixture],
+-  [
+-    'exit date',
+-    ABOUT_THE_CONSIGNMENT,
+-    exitDateRoutes,
+-    temporaryAdmissionFixture
+-  ],
+   [
+     'additional details',
+     'Commodity details',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/flow.js b/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
+index d0e3301a..0477f842 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
+@@ -6,10 +6,6 @@ import {
+   consignmentDetailsPage
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+-import { importPurposePage } from '../features/import-purpose/page.js'
+-import { destinationCountryPage } from '../features/destination-country/page.js'
+-import { portOfExitPage } from '../features/port-of-exit/page.js'
+-import { exitDatePage } from '../features/exit-date/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import { documentsPage } from '../features/documents/page.js'
+ import { addressesPage } from '../features/addresses/page.js'
+@@ -47,14 +43,7 @@ export const sections = [
+   },
+   {
+     id: 'consignment',
+-    pages: [
+-      importReasonPage,
+-      importPurposePage,
+-      destinationCountryPage,
+-      portOfExitPage,
+-      exitDatePage,
+-      additionalDetailsPage
+-    ]
++    pages: [importReasonPage, additionalDetailsPage]
+   },
+   {
+     id: 'documents',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+index 396e0de4..9931348c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+@@ -23,7 +23,7 @@ import { entryGuardTarget, guardedJourneyPath } from './entry-guard.js'
+ import * as origin from '../features/origin/controller.js'
+ import * as consignmentDetails from '../features/commodities/consignment-details/consignment-details.controller.js'
+ import * as animalIdentification from '../features/commodities/animal-identification/animal-identification.controller.js'
+-import * as importPurpose from '../features/import-purpose/controller.js'
++import * as importReason from '../features/import-reason/controller.js'
+ import * as additionalDetails from '../features/additional-details/controller.js'
+ import * as hub from '../features/hub/controller.js'
+ import * as dashboard from '../features/dashboard/controller.js'
+@@ -187,16 +187,16 @@ const saveAndContinueFollowsTheRunSequence = () => {
+     )
+   })
+ 
+-  it('Should send import purpose to the first line identification mid-run', async () => {
++  it('Should send import reason to the first line identification mid-run', async () => {
+     const journey = await store.create()
+-    await store.seedAnswers(journey.journeyId, {
+-      ...lineSeed,
+-      reasonForImport: 'internalMarket'
+-    })
++    await store.seedAnswers(journey.journeyId, lineSeed)
+     const h = captureH()
+-    await postHandlerOf(importPurpose)(
++    await postHandlerOf(importReason)(
+       buildRequest(journey.journeyId, {
+-        payload: { purposeInInternalMarket: 'breeding' },
++        payload: {
++          reasonForImport: 'internalMarket',
++          purposeInInternalMarket: 'breeding'
++        },
+         record: active(journey.journeyId)
+       }),
+       h
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+index c90ad59c..258cafb2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+@@ -6,7 +6,6 @@ import {
+   consignmentDetailsPage
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+-import { importPurposePage } from '../features/import-purpose/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import { pageGatePasses } from '../../../../../flow/gates.js'
+ 
+@@ -27,7 +26,6 @@ export const RUN_STEPS = [
+     target: flowPageTarget(consignmentDetailsPage)
+   },
+   { id: importReasonPage.id, target: flowPageTarget(importReasonPage) },
+-  { id: importPurposePage.id, target: flowPageTarget(importPurposePage) },
+   {
+     id: animalIdentificationPage.id,
+     target: flowPageTarget(animalIdentificationPage)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+index 9cb69ecf..8d46845f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+@@ -8,7 +8,6 @@ import {
+   consignmentDetailsPage
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+-import { importPurposePage } from '../features/import-purpose/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import { portOfEntryPage } from '../features/transport/page.js'
+ import { makeScope } from '../../../../../engine/index.js'
+@@ -53,25 +52,12 @@ describe('#nextRunTarget — the opening run sequence', () => {
+     )
+   })
+ 
+-  it('Should send import reason to the conditional purpose page only when the purpose is in scope', () => {
+-    expect(
+-      next(importReasonPage.id, {
+-        ...lineSeed,
+-        reasonForImport: 'internalMarket'
+-      })
+-    ).toBe(pagePath(JOURNEY_ID, 'import-purpose'))
+-    expect(
+-      next(importReasonPage.id, { ...lineSeed, reasonForImport: 'transit' })
+-    ).toBe(pagePath(JOURNEY_ID, animalIdentificationPage.slug))
+-  })
+-
+-  it('Should send import purpose to the identification surface', () => {
+-    expect(
+-      next(importPurposePage.id, {
+-        ...lineSeed,
+-        reasonForImport: 'internalMarket'
+-      })
+-    ).toBe(pagePath(JOURNEY_ID, animalIdentificationPage.slug))
++  it('Should send import reason straight to the identification surface — its follow-up questions are answered on the reason page itself', () => {
++    for (const reasonForImport of ['internalMarket', 'transit']) {
++      expect(next(importReasonPage.id, { ...lineSeed, reasonForImport })).toBe(
++        pagePath(JOURNEY_ID, animalIdentificationPage.slug)
++      )
++    }
+   })
+ 
+   it('Should pass identification through to additional details with zero identifier records', () => {
+@@ -86,7 +72,7 @@ describe('#nextRunTarget — the opening run sequence', () => {
+ 
+   it('Should collapse to the hub when every later step is unreachable', () => {
+     expect(
+-      next(importPurposePage.id, {
++      next(importReasonPage.id, {
+         countryOfOrigin: 'FR',
+         reasonForImport: 'internalMarket'
+       })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
+index b43cdd96..f0153a3b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
+@@ -9,10 +9,6 @@ import {
+   consignmentDetailsPage
+ } from '../../features/commodities/page.js'
+ import { importReasonPage } from '../../features/import-reason/page.js'
+-import { importPurposePage } from '../../features/import-purpose/page.js'
+-import { destinationCountryPage } from '../../features/destination-country/page.js'
+-import { portOfExitPage } from '../../features/port-of-exit/page.js'
+-import { exitDatePage } from '../../features/exit-date/page.js'
+ import { additionalDetailsPage } from '../../features/additional-details/page.js'
+ import { addressesPage } from '../../features/addresses/page.js'
+ import { cphNumberPage } from '../../features/cph-number/page.js'
+@@ -56,11 +52,7 @@ export const captionSections = [
+       commoditiesPage,
+       consignmentDetailsPage,
+       animalIdentificationPage,
+-      importReasonPage,
+-      importPurposePage,
+-      destinationCountryPage,
+-      portOfExitPage,
+-      exitDatePage
++      importReasonPage
+     ]
+   },
+   { id: 'commodityDetails', pages: [additionalDetailsPage] },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js
+index ce3b01b8..578eac9f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js
+@@ -18,10 +18,6 @@ const CAPTIONED = [
+   ['consignmentDetails', ABOUT_THE_CONSIGNMENT],
+   ['animalIdentification', ABOUT_THE_CONSIGNMENT],
+   ['import-reason', ABOUT_THE_CONSIGNMENT],
+-  ['import-purpose', ABOUT_THE_CONSIGNMENT],
+-  ['destination-country', ABOUT_THE_CONSIGNMENT],
+-  ['port-of-exit', ABOUT_THE_CONSIGNMENT],
+-  ['exit-date', ABOUT_THE_CONSIGNMENT],
+   ['additional-details', 'Commodity details'],
+   ['addresses', CONSIGNMENT_PARTIES],
+   ['cphNumber', CONSIGNMENT_PARTIES],
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
+index 829bf13d..ebb1c4fc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
+@@ -38,7 +38,6 @@ const cases = {
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
+-      NA,
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
+@@ -67,7 +66,6 @@ const cases = {
+       IN_PROGRESS,
+       NOT_STARTED,
+       NOT_STARTED,
+-      NA,
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
+@@ -99,7 +97,6 @@ const cases = {
+       IN_PROGRESS,
+       IN_PROGRESS,
+       NOT_STARTED,
+-      NA,
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
+@@ -138,7 +135,6 @@ const cases = {
+       IN_PROGRESS,
+       FULFILLED,
+       NOT_STARTED,
+-      NA,
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
+@@ -167,7 +163,6 @@ const cases = {
+       FULFILLED,
+       FULFILLED,
+       FULFILLED,
+-      NA,
+       FULFILLED,
+       FULFILLED,
+       FULFILLED,
+@@ -196,7 +191,6 @@ const cases = {
+       FULFILLED,
+       NOT_STARTED,
+       FULFILLED,
+-      NA,
+       FULFILLED,
+       NOT_STARTED,
+       FULFILLED,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+index 934d4727..1fd1f5ad 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+@@ -7,10 +7,6 @@ import {
+   consignmentDetailsPage
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+-import { importPurposePage } from '../features/import-purpose/page.js'
+-import { destinationCountryPage } from '../features/destination-country/page.js'
+-import { portOfExitPage as portOfExitFeaturePage } from '../features/port-of-exit/page.js'
+-import { exitDatePage } from '../features/exit-date/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import { documentsPage } from '../features/documents/page.js'
+ import { addressesPage } from '../features/addresses/page.js'
+@@ -31,12 +27,7 @@ export const taskRows = [
+     pages: [commoditiesPage, consignmentDetailsPage],
+     parts: [{ collection: 'commodityLines', except: ['animalIdentifiers'] }]
+   },
+-  { id: 'importReason', pages: [importReasonPage, importPurposePage] },
+-  {
+-    id: 'exitDetails',
+-    pages: [destinationCountryPage, portOfExitFeaturePage, exitDatePage],
+-    conditional: true
+-  },
++  { id: 'importReason', pages: [importReasonPage] },
+   { id: 'additionalDetails', pages: [additionalDetailsPage] },
+   {
+     id: 'animalIdentification',

@@ -1,3 +1,32 @@
+commit 95e4f1669af9dd06a297dca5433f079ce8a237e0
+Author: Rhys Sharrem <rhys.sharrem@defra.onmicrosoft.com>
+Date:   Sun Sep 6 11:24:44 2026 +0100
+
+    wip(parity-dr1): Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen; Frontend hides them until the next page and asks each one on a page of its own. — red verification ladder
+    
+    Increment inc-067 (EUDPA-406). Preserved as work-in-progress: the
+    verification ladder did not go green, so this must not be treated as
+    reviewable and no pull request has been raised.
+    
+    What went red: the tests-repo E2E leg
+    (playwright.docker-compose.config.ts against the workspace stack) could
+    not run. The container trade-imports-trade-imports-animals-backend-1 was
+    Exited(1), killed by com.mongodb.MongoTimeoutException against
+    host.docker.internal:27017. With no backend, GET / in the frontend threw
+    'TypeError: fetch failed' out of
+    services/persistence/records/real/lifecycle/read.js:33 via
+    dashboard/controller.js:57 and returned 500, so every Playwright worker
+    failed to mint a session at fixtures/auth-state.ts:97 and the run aborted
+    before reaching any assertion. 5 specs failed, all inside the worker auth
+    fixture, none inside this increment's code.
+    
+    Assessment: environment fault, not a defect in the diff — a Node frontend
+    change cannot break the Java backend's Mongo connection. Needs a healthy
+    stack, or CI, to re-run the E2E leg.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01QU1nK61XsgdY25ueTiqM45
+
 diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
 index 9cb69ecf..8d46845f 100644
 --- a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js

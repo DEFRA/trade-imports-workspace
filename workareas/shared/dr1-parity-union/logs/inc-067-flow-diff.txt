@@ -1,0 +1,117 @@
+commit 95e4f1669af9dd06a297dca5433f079ce8a237e0
+Author: Rhys Sharrem <rhys.sharrem@defra.onmicrosoft.com>
+Date:   Sun Sep 6 11:24:44 2026 +0100
+
+    wip(parity-dr1): Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen; Frontend hides them until the next page and asks each one on a page of its own. — red verification ladder
+    
+    Increment inc-067 (EUDPA-406). Preserved as work-in-progress: the
+    verification ladder did not go green, so this must not be treated as
+    reviewable and no pull request has been raised.
+    
+    What went red: the tests-repo E2E leg
+    (playwright.docker-compose.config.ts against the workspace stack) could
+    not run. The container trade-imports-trade-imports-animals-backend-1 was
+    Exited(1), killed by com.mongodb.MongoTimeoutException against
+    host.docker.internal:27017. With no backend, GET / in the frontend threw
+    'TypeError: fetch failed' out of
+    services/persistence/records/real/lifecycle/read.js:33 via
+    dashboard/controller.js:57 and returned 500, so every Playwright worker
+    failed to mint a session at fixtures/auth-state.ts:97 and the run aborted
+    before reaching any assertion. 5 specs failed, all inside the worker auth
+    fixture, none inside this increment's code.
+    
+    Assessment: environment fault, not a defect in the diff — a Node frontend
+    change cannot break the Java backend's Mongo connection. Needs a healthy
+    stack, or CI, to re-run the E2E leg.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01QU1nK61XsgdY25ueTiqM45
+
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/flow.js b/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
+index d0e3301a..0477f842 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
+@@ -6,10 +6,6 @@ import {
+   consignmentDetailsPage
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+-import { importPurposePage } from '../features/import-purpose/page.js'
+-import { destinationCountryPage } from '../features/destination-country/page.js'
+-import { portOfExitPage } from '../features/port-of-exit/page.js'
+-import { exitDatePage } from '../features/exit-date/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import { documentsPage } from '../features/documents/page.js'
+ import { addressesPage } from '../features/addresses/page.js'
+@@ -47,14 +43,7 @@ export const sections = [
+   },
+   {
+     id: 'consignment',
+-    pages: [
+-      importReasonPage,
+-      importPurposePage,
+-      destinationCountryPage,
+-      portOfExitPage,
+-      exitDatePage,
+-      additionalDetailsPage
+-    ]
++    pages: [importReasonPage, additionalDetailsPage]
+   },
+   {
+     id: 'documents',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+index 396e0de4..9931348c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+@@ -23,7 +23,7 @@ import { entryGuardTarget, guardedJourneyPath } from './entry-guard.js'
+ import * as origin from '../features/origin/controller.js'
+ import * as consignmentDetails from '../features/commodities/consignment-details/consignment-details.controller.js'
+ import * as animalIdentification from '../features/commodities/animal-identification/animal-identification.controller.js'
+-import * as importPurpose from '../features/import-purpose/controller.js'
++import * as importReason from '../features/import-reason/controller.js'
+ import * as additionalDetails from '../features/additional-details/controller.js'
+ import * as hub from '../features/hub/controller.js'
+ import * as dashboard from '../features/dashboard/controller.js'
+@@ -187,16 +187,16 @@ const saveAndContinueFollowsTheRunSequence = () => {
+     )
+   })
+ 
+-  it('Should send import purpose to the first line identification mid-run', async () => {
++  it('Should send import reason to the first line identification mid-run', async () => {
+     const journey = await store.create()
+-    await store.seedAnswers(journey.journeyId, {
+-      ...lineSeed,
+-      reasonForImport: 'internalMarket'
+-    })
++    await store.seedAnswers(journey.journeyId, lineSeed)
+     const h = captureH()
+-    await postHandlerOf(importPurpose)(
++    await postHandlerOf(importReason)(
+       buildRequest(journey.journeyId, {
+-        payload: { purposeInInternalMarket: 'breeding' },
++        payload: {
++          reasonForImport: 'internalMarket',
++          purposeInInternalMarket: 'breeding'
++        },
+         record: active(journey.journeyId)
+       }),
+       h
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+index c90ad59c..258cafb2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+@@ -6,7 +6,6 @@ import {
+   consignmentDetailsPage
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+-import { importPurposePage } from '../features/import-purpose/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import { pageGatePasses } from '../../../../../flow/gates.js'
+ 
+@@ -27,7 +26,6 @@ export const RUN_STEPS = [
+     target: flowPageTarget(consignmentDetailsPage)
+   },
+   { id: importReasonPage.id, target: flowPageTarget(importReasonPage) },
+-  { id: importPurposePage.id, target: flowPageTarget(importPurposePage) },
+   {
+     id: animalIdentificationPage.id,
+     target: flowPageTarget(animalIdentificationPage)

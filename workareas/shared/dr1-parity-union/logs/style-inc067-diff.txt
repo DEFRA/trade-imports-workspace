@@ -1,0 +1,228 @@
+commit 95e4f1669af9dd06a297dca5433f079ce8a237e0
+Author: Rhys Sharrem <rhys.sharrem@defra.onmicrosoft.com>
+Date:   Sun Sep 6 11:24:44 2026 +0100
+
+    wip(parity-dr1): Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen; Frontend hides them until the next page and asks each one on a page of its own. — red verification ladder
+    
+    Increment inc-067 (EUDPA-406). Preserved as work-in-progress: the
+    verification ladder did not go green, so this must not be treated as
+    reviewable and no pull request has been raised.
+    
+    What went red: the tests-repo E2E leg
+    (playwright.docker-compose.config.ts against the workspace stack) could
+    not run. The container trade-imports-trade-imports-animals-backend-1 was
+    Exited(1), killed by com.mongodb.MongoTimeoutException against
+    host.docker.internal:27017. With no backend, GET / in the frontend threw
+    'TypeError: fetch failed' out of
+    services/persistence/records/real/lifecycle/read.js:33 via
+    dashboard/controller.js:57 and returned 500, so every Playwright worker
+    failed to mint a session at fixtures/auth-state.ts:97 and the run aborted
+    before reaching any assertion. 5 specs failed, all inside the worker auth
+    fixture, none inside this increment's code.
+    
+    Assessment: environment fault, not a defect in the diff — a Node frontend
+    change cannot break the Java backend's Mongo connection. Needs a healthy
+    stack, or CI, to re-run the E2E leg.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01QU1nK61XsgdY25ueTiqM45
+
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+index 67a38741..1de97a80 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+@@ -13,15 +13,22 @@ import {
+ import { dispatchPages } from '../index.js'
+ 
+ import * as importReason from './controller.js'
++import { copy } from './copy/copy.en.js'
+ 
+ const post = postHandlerOf(importReason)
++const get = importReason.routes.find((route) => route.method === 'GET').handler
++
++const EXIT_DATE_TEXT = '20/12/2026'
++const EXIT_DATE_PARTS = { day: '20', month: '12', year: '2026' }
++
++const configure = () => {
++  configureRecords(recordsStub)
++  configureSession(sessionStub)
++  buildDispatch(dispatchPages)
++}
+ 
+ describe('POST import-reason — invalid payload', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
++  beforeAll(configure)
+   beforeEach(() => store.clear())
+ 
+   it('Should answer 400 and re-render an out-of-list reason, committing nothing', async () => {
+@@ -32,4 +39,166 @@ describe('POST import-reason — invalid payload', () => {
+     expect(result.view.context.errors.reasonForImport).toBeDefined()
+     expect(result.after).toEqual(result.before)
+   })
++
++  it('Should answer 400 for a reason that names an Object.prototype member, committing nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: { reasonForImport: 'constructor' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.reasonForImport).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse the destination country the transit reveal asks for and keep the port the user did choose', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: 'GB DVR',
++        transitDestinationCountry: ''
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.transitDestinationCountry).toBeDefined()
++    expect(result.view.context.values.transitPortOfExit).toBe('GB DVR')
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unreal exit date the temporary-admission reveal asks for', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: '31/2/2026',
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionExitDate).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unanswered port of exit on the transit reveal', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: '',
++        transitDestinationCountry: 'IE'
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.transitPortOfExit).toBe(
++      copy.errors.portRequired
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unanswered port of exit on the temporary-admission reveal', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: EXIT_DATE_TEXT,
++        temporaryAdmissionPortOfExit: ''
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionPortOfExit).toBe(
++      copy.errors.portRequired
++    )
++    expect(result.after).toEqual(result.before)
++  })
++})
++
++describe('POST import-reason — the reveal the reason opens', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should commit the transit reveal as the two answers behind its fields', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: 'GB DVR',
++        transitDestinationCountry: 'IE'
++      }
++    })
++    expect(result.after.portOfExit).toBe('GB DVR')
++    expect(result.after.destinationCountry).toBe('IE')
++  })
++
++  it('Should drop the answers of the reason the user moved away from', async () => {
++    const flipped = await driveHandler(post, {
++      seed: {
++        reasonForImport: 'transit',
++        portOfExit: 'GB DVR',
++        destinationCountry: 'IE'
++      },
++      payload: {
++        reasonForImport: 'internalMarket',
++        purposeInInternalMarket: 'breeding'
++      }
++    })
++    expect(flipped.after.purposeInInternalMarket).toBe('breeding')
++    expect(flipped.after.portOfExit).toBeUndefined()
++    expect(flipped.after.destinationCountry).toBeUndefined()
++  })
++
++  it('Should commit the temporary-admission reveal as the two answers behind its fields', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: EXIT_DATE_TEXT,
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.after.exitDate).toEqual(EXIT_DATE_PARTS)
++    expect(result.after.portOfExit).toBe('GB DVR')
++  })
++
++  it('Should ignore a field belonging to a reason the user did not choose', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transhipmentOrOnwardTravel',
++        transhipmentDestinationCountry: 'FR',
++        transitDestinationCountry: 'IE',
++        transitPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.response.redirect).toBeDefined()
++    expect(result.after.destinationCountry).toBe('FR')
++    expect(result.after.portOfExit).toBeUndefined()
++  })
++})
++
++describe('GET import-reason — the reveals prefill from the one answer behind them', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should offer a stored port of exit to both reveals that ask for it', async () => {
++    const result = await driveHandler(get, {
++      seed: { reasonForImport: 'transit', portOfExit: 'GB DVR' }
++    })
++    expect(result.view.context.values.transitPortOfExit).toBe('GB DVR')
++    expect(result.view.context.values.temporaryAdmissionPortOfExit).toBe(
++      'GB DVR'
++    )
++  })
++
++  it('Should offer a stored exit date back to the temporary-admission reveal', async () => {
++    const result = await driveHandler(get, {
++      seed: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        exitDate: EXIT_DATE_PARTS
++      }
++    })
++    expect(result.view.context.exitDateField.value).toBe(EXIT_DATE_TEXT)
++  })
++
++  it('Should offer a stored destination country to both reveals that ask for it', async () => {
++    const result = await driveHandler(get, {
++      seed: {
++        reasonForImport: 'transhipmentOrOnwardTravel',
++        destinationCountry: 'IE'
++      }
++    })
++    expect(result.view.context.values.transhipmentDestinationCountry).toBe('IE')
++    expect(result.view.context.values.transitDestinationCountry).toBe('IE')
++  })
+ })

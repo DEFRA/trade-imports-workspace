@@ -1,0 +1,480 @@
+commit c71cea3954afc4803288a99499fd20f5c8e4e440
+Author: Rhys Sharrem <rhys.sharrem@defra.onmicrosoft.com>
+Date:   Sun Sep 6 11:24:54 2026 +0100
+
+    wip(parity-dr1): Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen; Frontend hides them until the next page and asks each one on a page of its own. — red verification ladder
+    
+    Increment inc-067 (EUDPA-406). Preserved as work-in-progress: the
+    verification ladder did not go green, so this must not be treated as
+    reviewable and no pull request has been raised.
+    
+    What went red: the tests-repo E2E leg
+    (playwright.docker-compose.config.ts against the workspace stack) could
+    not run. The container trade-imports-trade-imports-animals-backend-1 was
+    Exited(1), killed by com.mongodb.MongoTimeoutException against
+    host.docker.internal:27017. With no backend, GET / in the frontend threw
+    'TypeError: fetch failed' out of
+    services/persistence/records/real/lifecycle/read.js:33 via
+    dashboard/controller.js:57 and returned 500, so every Playwright worker
+    failed to mint a session at fixtures/auth-state.ts:97 and the run aborted
+    before reaching any assertion. 5 specs failed, all inside the worker auth
+    fixture, none inside this increment's code.
+    
+    Assessment: environment fault, not a defect in the diff — a Node frontend
+    change cannot break the Java backend's Mongo connection. Needs a healthy
+    stack, or CI, to re-run the E2E leg.
+    
+    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01QU1nK61XsgdY25ueTiqM45
+
+diff --git a/flows/journey.ts b/flows/journey.ts
+index a596192..cec61a5 100644
+--- a/flows/journey.ts
++++ b/flows/journey.ts
+@@ -114,10 +114,10 @@ export class Journey {
+   async answerReasonAndAdditionalDetails(): Promise<void> {
+     await this.pages.overview.task('Main reason for importing').click();
+     await this.pages.importReason.reason('Internal market').check();
++    // The purpose is a conditional reveal under the reason, so both answers go
++    // in on the one submit.
++    await this.pages.importReason.purpose('Breeding').check();
+     await this.pages.importReason.saveAndContinue.click();
+-    await this.pages.importPurpose.heading.waitFor();
+-    await this.pages.importPurpose.purpose('Breeding').check();
+-    await this.pages.importPurpose.saveAndContinue.click();
+     await this.pages.additionalDetails.heading.waitFor();
+     await this.pages.additionalDetails.certifiedFor('Slaughter').check();
+     await this.pages.additionalDetails.containsUnweanedAnimals('No').check();
+@@ -251,17 +251,11 @@ export class Journey {
+     await this.pages.importReason.heading.waitFor();
+   }
+ 
+-  async toImportPurpose(): Promise<void> {
++  async toAdditionalDetails(): Promise<void> {
+     await this.toImportReason();
+     await this.pages.importReason.reason('Internal market').check();
++    await this.pages.importReason.purpose('Breeding').check();
+     await this.pages.importReason.saveAndContinue.click();
+-    await this.pages.importPurpose.heading.waitFor();
+-  }
+-
+-  async toAdditionalDetails(): Promise<void> {
+-    await this.toImportPurpose();
+-    await this.pages.importPurpose.purpose('Breeding').check();
+-    await this.pages.importPurpose.saveAndContinue.click();
+     await this.pages.additionalDetails.heading.waitFor();
+   }
+ 
+diff --git a/page-objects/factory.ts b/page-objects/factory.ts
+index de80d85..9df5e7d 100644
+--- a/page-objects/factory.ts
++++ b/page-objects/factory.ts
+@@ -9,16 +9,12 @@ import { ConsignmentDetailsPage } from './notification/consignment-details-page'
+ import { ContactAddressPage } from './notification/contact-address-page';
+ import { CphNumberPage } from './notification/cph-number-page';
+ import { DeclarationPage } from './notification/declaration-page';
+-import { DestinationCountryPage } from './notification/destination-country-page';
+-import { ExitDatePage } from './notification/exit-date-page';
+-import { ImportPurposePage } from './notification/import-purpose-page';
+ import { ImportReasonPage } from './notification/import-reason-page';
+ import { NotificationCancelAmendPage } from './notification/notification-cancel-amend-page';
+ import { NotificationDashboardPage } from './notification/notification-dashboard-page';
+ import { NotificationViewPage } from './notification/notification-view-page';
+ import { OriginOfImportPage } from './notification/origin-of-import-page';
+ import { OverviewPage } from './notification/overview-page';
+-import { PortOfExitPage } from './notification/port-of-exit-page';
+ import { PrivateTransporterPage } from './notification/private-transporter-page';
+ import { PartyPickerPage } from './notification/party-picker-page';
+ import { TransitedCountriesPage } from './notification/transited-countries-page';
+@@ -47,11 +43,7 @@ export function createPageObjects(page: Page) {
+     consignmentDetails: new ConsignmentDetailsPage(page),
+     animalIdentification: new AnimalIdentificationPage(page),
+     importReason: new ImportReasonPage(page),
+-    importPurpose: new ImportPurposePage(page),
+     additionalDetails: new AdditionalDetailsPage(page),
+-    destinationCountry: new DestinationCountryPage(page),
+-    portOfExit: new PortOfExitPage(page),
+-    exitDate: new ExitDatePage(page),
+     accompanyingDocuments: new AccompanyingDocumentsPage(page),
+     addresses: new AddressesPage(page),
+     consignorSelection: new PartyPickerPage(page, 'consignors/select', 'Consignor or exporter'),
+diff --git a/page-objects/notification/destination-country-page.ts b/page-objects/notification/destination-country-page.ts
+deleted file mode 100644
+index 39f4814..0000000
+--- a/page-objects/notification/destination-country-page.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { type Locator, type Page } from '@playwright/test';
+-import { NotificationPage } from '@page-objects/base/base-page';
+-
+-export class DestinationCountryPage extends NotificationPage {
+-  constructor(page: Page) {
+-    super(page, 'destination-country');
+-  }
+-
+-  get heading(): Locator {
+-    return this.page.getByRole('heading', { level: 1, name: 'Destination country' });
+-  }
+-
+-  get country(): Locator {
+-    return this.page.getByLabel('Destination country');
+-  }
+-
+-  get saveAndContinue(): Locator {
+-    return this.page.getByRole('button', { name: 'Save and continue' });
+-  }
+-}
+diff --git a/page-objects/notification/exit-date-page.ts b/page-objects/notification/exit-date-page.ts
+deleted file mode 100644
+index e7a2fa6..0000000
+--- a/page-objects/notification/exit-date-page.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { type Locator, type Page } from '@playwright/test';
+-import { NotificationPage } from '@page-objects/base/base-page';
+-
+-export class ExitDatePage extends NotificationPage {
+-  constructor(page: Page) {
+-    super(page, 'exit-date');
+-  }
+-
+-  get heading(): Locator {
+-    return this.page.getByRole('heading', { level: 1, name: 'Exit date' });
+-  }
+-
+-  get exitDate(): Locator {
+-    return this.page.getByLabel('Exit date');
+-  }
+-
+-  get saveAndContinue(): Locator {
+-    return this.page.getByRole('button', { name: 'Save and continue' });
+-  }
+-}
+diff --git a/page-objects/notification/import-purpose-page.ts b/page-objects/notification/import-purpose-page.ts
+deleted file mode 100644
+index 31f8a05..0000000
+--- a/page-objects/notification/import-purpose-page.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { type Locator, type Page } from '@playwright/test';
+-import { NotificationPage } from '@page-objects/base/base-page';
+-
+-export class ImportPurposePage extends NotificationPage {
+-  constructor(page: Page) {
+-    super(page, 'import-purpose');
+-  }
+-
+-  get heading(): Locator {
+-    return this.page.getByRole('heading', { level: 1, name: 'Purpose in the internal market' });
+-  }
+-
+-  purpose(name: string): Locator {
+-    return this.page.getByRole('radio', { name, exact: true });
+-  }
+-
+-  get saveAndContinue(): Locator {
+-    return this.page.getByRole('button', { name: 'Save and continue' });
+-  }
+-}
+diff --git a/page-objects/notification/import-reason-page.ts b/page-objects/notification/import-reason-page.ts
+index 7bda0c1..dcd3b5d 100644
+--- a/page-objects/notification/import-reason-page.ts
++++ b/page-objects/notification/import-reason-page.ts
+@@ -14,6 +14,33 @@ export class ImportReasonPage extends NotificationPage {
+     return this.page.getByRole('radio', { name, exact: true });
+   }
+ 
++  purpose(name: string): Locator {
++    return this.page.getByRole('radio', { name, exact: true });
++  }
++
++  // The reveals are addressed by id, not by label: two reasons ask the
++  // destination country and two ask the port of exit, so each label is on the
++  // page twice and only the id tells the branches apart.
++  get transitPortOfExit(): Locator {
++    return this.page.locator('#transitPortOfExit');
++  }
++
++  get transitDestinationCountry(): Locator {
++    return this.page.locator('#transitDestinationCountry');
++  }
++
++  get transhipmentDestinationCountry(): Locator {
++    return this.page.locator('#transhipmentDestinationCountry');
++  }
++
++  get temporaryAdmissionPortOfExit(): Locator {
++    return this.page.locator('#temporaryAdmissionPortOfExit');
++  }
++
++  get temporaryAdmissionExitDate(): Locator {
++    return this.page.locator('#temporaryAdmissionExitDate');
++  }
++
+   get saveAndContinue(): Locator {
+     return this.page.getByRole('button', { name: 'Save and continue' });
+   }
+diff --git a/page-objects/notification/port-of-exit-page.ts b/page-objects/notification/port-of-exit-page.ts
+deleted file mode 100644
+index 8e1d726..0000000
+--- a/page-objects/notification/port-of-exit-page.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { type Locator, type Page } from '@playwright/test';
+-import { NotificationPage } from '@page-objects/base/base-page';
+-
+-export class PortOfExitPage extends NotificationPage {
+-  constructor(page: Page) {
+-    super(page, 'port-of-exit');
+-  }
+-
+-  get heading(): Locator {
+-    return this.page.getByRole('heading', { level: 1, name: 'Port of exit' });
+-  }
+-
+-  get port(): Locator {
+-    return this.page.getByLabel('Port of exit');
+-  }
+-
+-  get saveAndContinue(): Locator {
+-    return this.page.getByRole('button', { name: 'Save and continue' });
+-  }
+-}
+diff --git a/tests/a11y/notification-journey-filled-state.spec.ts b/tests/a11y/notification-journey-filled-state.spec.ts
+index 6b6faa8..bc9d0e7 100644
+--- a/tests/a11y/notification-journey-filled-state.spec.ts
++++ b/tests/a11y/notification-journey-filled-state.spec.ts
+@@ -6,6 +6,10 @@ import { fileUploadPaths } from '@resources/file-upload/paths';
+ // disagreement, not a service defect. Exclude just that input from origin scans.
+ const conditionalRadioInput = '#regionOfOriginCodeRequirement';
+ 
++// The same upstream disagreement on the reason page, where four of the five
++// reasons open a conditional reveal, so four radios carry aria-expanded.
++const conditionalReasonRadios = 'input[name="reasonForImport"][aria-controls]';
++
+ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+   test.beforeEach(async ({ journey }) => {
+     await journey.startNotification();
+@@ -47,17 +51,11 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+     await test.step('Import reason', async () => {
+       await pages.overview.task('Main reason for importing').click();
+       await pages.importReason.reason('Internal market').check();
+-      await runA11yScan();
++      await pages.importReason.purpose('Breeding').check();
++      await runA11yScan({ exclude: conditionalReasonRadios });
+       await pages.importReason.saveAndContinue.click();
+     });
+ 
+-    await test.step('Import purpose', async () => {
+-      await pages.importPurpose.heading.waitFor();
+-      await pages.importPurpose.purpose('Breeding').check();
+-      await runA11yScan();
+-      await pages.importPurpose.saveAndContinue.click();
+-    });
+-
+     await test.step('Additional details', async () => {
+       await pages.additionalDetails.heading.waitFor();
+       await pages.additionalDetails.certifiedFor('Slaughter').check();
+diff --git a/tests/a11y/notification-journey-initial-state.spec.ts b/tests/a11y/notification-journey-initial-state.spec.ts
+index e474f5c..1b22fd4 100644
+--- a/tests/a11y/notification-journey-initial-state.spec.ts
++++ b/tests/a11y/notification-journey-initial-state.spec.ts
+@@ -5,6 +5,10 @@ import { test, WCAG_STANDARD } from '@fixtures/a11y';
+ // disagreement, not a service defect. Exclude just that input from origin scans.
+ const conditionalRadioInput = '#regionOfOriginCodeRequirement';
+ 
++// The same upstream disagreement on the reason page, where four of the five
++// reasons open a conditional reveal, so four radios carry aria-expanded.
++const conditionalReasonRadios = 'input[name="reasonForImport"][aria-controls]';
++
+ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+   test.beforeEach(async ({ journey }) => {
+     await journey.toNotificationDashboard();
+@@ -61,18 +65,12 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+     await test.step('Import reason', async () => {
+       await pages.overview.task('Main reason for importing').click();
+       await pages.importReason.heading.waitFor();
+-      await runA11yScan();
++      await runA11yScan({ exclude: conditionalReasonRadios });
+       await pages.importReason.reason('Internal market').check();
++      await pages.importReason.purpose('Breeding').check();
+       await pages.importReason.saveAndContinue.click();
+     });
+ 
+-    await test.step('Import purpose', async () => {
+-      await pages.importPurpose.heading.waitFor();
+-      await runA11yScan();
+-      await pages.importPurpose.purpose('Breeding').check();
+-      await pages.importPurpose.saveAndContinue.click();
+-    });
+-
+     await test.step('Additional details', async () => {
+       await pages.additionalDetails.heading.waitFor();
+       await runA11yScan();
+diff --git a/tests/e2e/features/reason-purpose-scope.spec.ts b/tests/e2e/features/reason-purpose-scope.spec.ts
+index 94f9654..98a02e2 100644
+--- a/tests/e2e/features/reason-purpose-scope.spec.ts
++++ b/tests/e2e/features/reason-purpose-scope.spec.ts
+@@ -7,47 +7,40 @@ test.describe('Reason and purpose scope', { tag: ['@integration', '@duplicated-i
+ 
+     const reasonRow = pages.page.locator('.govuk-task-list__item', { hasText: 'Main reason for importing' });
+ 
+-    // Internal market: the purpose page opens and completing reason + purpose + the
+-    // tail page completes the row.
++    // Internal market: the purpose reveals under the reason, so reason + purpose
++    // go in on one submit and the tail page completes the row.
+     await pages.overview.task('Main reason for importing').click();
+     await pages.importReason.reason('Internal market').check();
++    await pages.importReason.purpose('Breeding').check();
+     await pages.importReason.saveAndContinue.click();
+-    await expect(pages.importPurpose.heading).toBeVisible();
+-    await pages.importPurpose.purpose('Breeding').check();
+-    await pages.importPurpose.saveAndContinue.click();
+     await expect(pages.additionalDetails.heading).toBeVisible();
+     await pages.additionalDetails.certifiedFor('Slaughter').check();
+     await pages.additionalDetails.saveAndContinue.click();
+     await expect(reasonRow).toContainText('Completed');
+ 
+-    // Transit: the purpose is no longer owed, but the reason-gated exit-details
+-    // pages (destination country + port of exit) come into scope and are
+-    // save-enforced, so the walk answers them before the tail page.
++    // Transit: the purpose is no longer owed, but the reason-gated exit details
++    // (port of exit + destination country) come into scope and reveal under the
++    // reason, so the walk answers them on the same submit.
+     await pages.overview.task('Main reason for importing').click();
+     await pages.importReason.reason('Transit').check();
++    await pages.importReason.transitPortOfExit.selectOption({ index: 2 });
++    await pages.importReason.transitDestinationCountry.selectOption('FR');
+     await pages.importReason.saveAndContinue.click();
+-    await expect(pages.page.getByRole('heading', { name: 'Destination country' })).toBeVisible();
+-    await pages.page.getByLabel('Destination country').selectOption('FR');
+-    await pages.page.getByRole('button', { name: 'Save and continue' }).click();
+-    await expect(pages.page.getByRole('heading', { name: 'Port of exit' })).toBeVisible();
+-    await pages.page.getByLabel('Port of exit').selectOption({ index: 2 });
+-    await pages.page.getByRole('button', { name: 'Save and continue' }).click();
+     await expect(pages.additionalDetails.heading).toBeVisible();
+     await pages.additionalDetails.saveAndContinue.click();
+     await expect(pages.overview.heading).toBeVisible();
+     await expect(reasonRow).toContainText('Completed');
+ 
+     // Back to the internal market: leaving scope wiped the saved purpose, so no
+-    // radio is pre-selected and the task is owed again.
++    // purpose radio is pre-selected and the task is owed again. The assertion is
++    // scoped to the purpose radios — the reason radio is checked on this page.
+     await pages.overview.task('Main reason for importing').click();
+     await pages.importReason.reason('Internal market').check();
+-    await pages.importReason.saveAndContinue.click();
+-    await expect(pages.importPurpose.heading).toBeVisible();
+-    await expect(pages.page.getByRole('radio', { checked: true })).toHaveCount(0);
++    await expect(pages.page.locator('input[name="purposeInInternalMarket"]:checked')).toHaveCount(0);
+ 
+     // A blank purpose save is not an error (enforcedAt=submit); it walks on to the
+     // tail page and leaves the task open.
+-    await pages.importPurpose.saveAndContinue.click();
++    await pages.importReason.saveAndContinue.click();
+     await expect(pages.additionalDetails.heading).toBeVisible();
+     await pages.additionalDetails.saveAndContinue.click();
+     await expect(pages.overview.heading).toBeVisible();
+diff --git a/tests/e2e/pages/import-purpose.spec.ts b/tests/e2e/pages/import-purpose.spec.ts
+deleted file mode 100644
+index 851fcab..0000000
+--- a/tests/e2e/pages/import-purpose.spec.ts
++++ /dev/null
+@@ -1,24 +0,0 @@
+-import { test, expect } from '@fixtures';
+-
+-test.describe('Import purpose page', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+-  test.beforeEach(async ({ journey }) => {
+-    await journey.toImportPurpose();
+-  });
+-
+-  test('renders the page controls', async ({ pages }) => {
+-    await expect(pages.importPurpose.heading).toBeVisible();
+-    await expect(pages.importPurpose.purpose('Breeding')).toBeVisible();
+-    await expect(pages.importPurpose.saveAndContinue).toBeVisible();
+-  });
+-
+-  test('leaves the import purpose unchecked on load', async ({ pages }) => {
+-    await expect(pages.importPurpose.purpose('Breeding')).not.toBeChecked();
+-  });
+-
+-  test('accepts a valid import purpose', async ({ pages }) => {
+-    await pages.importPurpose.purpose('Breeding').check();
+-    await pages.importPurpose.saveAndContinue.click();
+-
+-    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
+-  });
+-});
+diff --git a/tests/e2e/pages/import-reason.spec.ts b/tests/e2e/pages/import-reason.spec.ts
+index 9b76057..20dbf03 100644
+--- a/tests/e2e/pages/import-reason.spec.ts
++++ b/tests/e2e/pages/import-reason.spec.ts
+@@ -21,4 +21,16 @@ test.describe('Import reason page', { tag: ['@integration', '@duplicated-in-fron
+ 
+     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
+   });
++
++  test('reveals the import purpose under the internal market reason and accepts it', async ({ pages }) => {
++    await pages.importReason.reason('Internal market').check();
++
++    await expect(pages.importReason.purpose('Breeding')).toBeVisible();
++    await expect(pages.importReason.purpose('Breeding')).not.toBeChecked();
++
++    await pages.importReason.purpose('Breeding').check();
++    await pages.importReason.saveAndContinue.click();
++
++    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
++  });
+ });
+diff --git a/tests/security/frontend-conditional-pages.spec.ts b/tests/security/frontend-conditional-pages.spec.ts
+index 5e5f5b7..eaa5ab6 100644
+--- a/tests/security/frontend-conditional-pages.spec.ts
++++ b/tests/security/frontend-conditional-pages.spec.ts
+@@ -14,39 +14,27 @@ const PRIVATE_TRANSPORTER = {
+ test.describe('Security scan (frontend, conditional pages)', { tag: '@active' }, () => {
+   test('routes the reason-gated and transporter-gated pages through the ZAP proxy', async ({ journey, pages }) => {
+     test.slow();
+-    // Three pages the submission journey never sees, because its answers put
+-    // them out of scope. Two reasons are needed, not one: transit brings the
+-    // destination country and port of exit into scope, and the temporary
+-    // admission of horses brings the port of exit and the exit date.
++    // Two reveal payloads the submission journey never sends, because its
++    // answers put them out of scope. Two reasons are needed, not one: transit
++    // reveals the port of exit and the destination country, and the temporary
++    // admission of horses reveals the exit date and the port of exit.
+     await journey.startNotification();
+     await journey.unlockSections();
+ 
+     await pages.overview.task('Main reason for importing').click();
+     await pages.importReason.reason('Transit').check();
++    await pages.importReason.transitPortOfExit.selectOption({ index: 2 });
++    await pages.importReason.transitDestinationCountry.selectOption('FR');
+     await pages.importReason.saveAndContinue.click();
+-
+-    await expect(pages.destinationCountry.heading).toBeVisible();
+-    await pages.destinationCountry.country.selectOption('FR');
+-    await pages.destinationCountry.saveAndContinue.click();
+-
+-    await expect(pages.portOfExit.heading).toBeVisible();
+-    await pages.portOfExit.port.selectOption({ index: 2 });
+-    await pages.portOfExit.saveAndContinue.click();
+     await pages.additionalDetails.heading.waitFor();
+     await pages.additionalDetails.saveAndContinue.click();
+     await pages.overview.heading.waitFor();
+ 
+     await pages.overview.task('Main reason for importing').click();
+     await pages.importReason.reason('Temporary admission horses').check();
++    await pages.importReason.temporaryAdmissionExitDate.fill(getRelativeAppDateText({ monthOffset: 2 }));
++    await pages.importReason.temporaryAdmissionPortOfExit.selectOption({ index: 2 });
+     await pages.importReason.saveAndContinue.click();
+-
+-    await expect(pages.portOfExit.heading).toBeVisible();
+-    await pages.portOfExit.port.selectOption({ index: 2 });
+-    await pages.portOfExit.saveAndContinue.click();
+-
+-    await expect(pages.exitDate.heading).toBeVisible();
+-    await pages.exitDate.exitDate.fill(getRelativeAppDateText({ monthOffset: 2 }));
+-    await pages.exitDate.saveAndContinue.click();
+     await pages.additionalDetails.heading.waitFor();
+     await pages.additionalDetails.saveAndContinue.click();
+     await pages.overview.heading.waitFor();

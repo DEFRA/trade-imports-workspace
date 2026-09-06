@@ -38,8 +38,14 @@ fi
 
 if [[ "$CLAIM" == true ]]; then
     inc_id=$(echo "$next" | jq -r '.id')
+    # Each call writes through its own temp file: concurrent callers sharing one
+    # temp name rename over each other and drop items. Same directory keeps the
+    # mv an atomic rename; the trap clears the temp if jq fails.
+    tmp="$(mktemp "$target.XXXXXX")"
+    trap 'rm -f "$tmp"' EXIT
     jq --arg id "$inc_id" '.increments |= map(if .id == $id then .status = "inprogress" else . end)' \
-        "$target" > "$target.tmp" && mv "$target.tmp" "$target"
+        "$target" > "$tmp"
+    mv "$tmp" "$target"
 fi
 
 echo "$next"

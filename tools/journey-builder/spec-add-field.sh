@@ -62,7 +62,7 @@ obligation=$(jq -n --arg id "$ID" --arg at "$APPLIES_AT" --arg kind "$KIND" \
 has_provenance=false
 for i in "${!KEYS[@]}"; do
     if [[ "${IS_JSON[$i]}" == 1 ]]; then
-        if ! echo "${VALS[$i]}" | jq -e . > /dev/null 2>&1; then
+        if ! echo "${VALS[$i]}" | jq . > /dev/null 2>&1; then
             echo "Error: --json ${KEYS[$i]} value is not valid JSON" >&2; exit 1
         fi
         obligation=$(jq -n --argjson cur "$obligation" --arg k "${KEYS[$i]}" --argjson v "${VALS[$i]}" '$cur + {($k): $v}')
@@ -76,5 +76,11 @@ done
 dupe=$(jq --arg id "$ID" '[.obligations[] | select(.id == $id)] | length' "$spec")
 [[ "$dupe" -gt 0 ]] && { echo "Error: obligation '$ID' already exists" >&2; exit 1; }
 
-jq --argjson o "$obligation" '.obligations += [$o]' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$spec.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+jq --argjson o "$obligation" '.obligations += [$o]' "$spec" > "$tmp"
+mv "$tmp" "$spec"
 echo "Added obligation '$ID' ($APPLIES_AT, $KIND)"

@@ -15,7 +15,8 @@
 #       TARGET_JOURNEY_ID, TARGET_SPEC_BRANCH_SUFFIX,
 #       TARGET_SOURCES (compact JSON array, drives prepare-digest.sh), and
 #       TARGET_REMOVE_SECTIONS (compact JSON array) /
-#       TARGET_REPOINT_FIXTURES (true|false) for backlog-generate.sh's tail.
+#       TARGET_REPOINT_FIXTURES (true|false) for backlog-generate.sh's tail,
+#       TARGET_MILESTONE_ZERO_SECTION (empty means every page is M1).
 
 load_target() {
     local run_id="$1"
@@ -71,4 +72,9 @@ load_target() {
     # wants: no vendored sections to strip and no fixtures to re-point.
     TARGET_REMOVE_SECTIONS="$(jq -c '.backlogTail.removeSections // []' <<<"$profile")"
     TARGET_REPOINT_FIXTURES="$(jq -r '.backlogTail.repointTestFixtures // false' <<<"$profile")"
+
+    # Which section opens the run as M0 is a property of the journey, not of
+    # the generator: live-animals walks origin first, a greenfield set has no
+    # agreed first section yet and is all M1.
+    TARGET_MILESTONE_ZERO_SECTION="$(jq -r '.milestoneZeroSection // empty' <<<"$profile")"
 }

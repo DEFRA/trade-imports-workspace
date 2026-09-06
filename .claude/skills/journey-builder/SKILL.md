@@ -57,19 +57,72 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
    inline comments, provisional copy). Commit on the spec branch only
    after Sam approves.
 
+## Mode: rule
+
+A gate session produces rulings, and every ruling is recorded and applied in
+one call so the ledger and the spec cannot drift.
+`tools/journey-builder/spec-add-decision.sh EUDPA-X --subject conflict:c-012
+--ruling resolve --resolution "..." --rationale "..." --decided-by panel|sam
+--decided-at YYYY-MM-DD [--dissent "..."] [--escalate] [--supersedes d-003]`
+appends a `d-NNN` entry to `<spec_dir>/decisions.json` (beside
+journey-spec.json, on the spec branch) and stamps the subject in the same
+write: a conflict gets `resolution`, `resolvedBy` and `decision`; a
+behaviour (`--ruling adopt|park|reject|keep-open`) gets its status
+(adopted / parked / rejected / open-question), a ` | Ruling: ...` note on
+its detail, and `decision`. The caller passes `--decided-at` — the script
+never reads the clock, so a replayed session gives a byte-identical ledger.
+
+A subject carries one current decision. To change a ruling, add a new
+decision with `--supersedes <d-id>`: the earlier entry flips to
+`superseded` with `supersededBy`, the new one is current, and the subject
+is re-stamped. A decision may only supersede a current one for its own
+subject, so the chain stays linear and readable.
+
+When a ruling changes a fact rather than a status — a mandate, a page
+title, which page collects an obligation — apply it with the setters
+rather than by hand-editing JSON: `spec-set-field.sh EUDPA-X --id
+<obligationId> [--field K=V] [--json K='<json>'] [--unset K]` and
+`spec-set-page.sh EUDPA-X --id <pageId> [--field K=V] [--json K='<json>']
+[--unset K] [--collects a,b,c]`. Both refuse to change `id` (other entries
+reference it) and validate `--json` values, so `false` and `null` are
+accepted. Removals and extra edits go through their own scripts for the same
+reason: `spec-remove-field.sh` (drops the obligation and every collects /
+item / fields reference in one pass, refusing while another obligation is
+gated on it), `spec-remove-page.sh` (refusing while the page still collects,
+and dropping a section it empties), `backlog-set-extra.sh` and
+`backlog-remove-extra.sh` (refusing while another extra anchors on the
+key). Then re-run `spec-lint.sh`: it errors on a `decision` reference
+the ledger does not hold, and warns on conflicts resolved without a
+decision and on decisions whose subject has gone.
+
 ## Mode: backlog
 
 `tools/journey-builder/backlog-generate.sh EUDPA-X` derives
 `workareas/journey-builder/EUDPA-X/backlog.json` from the spec:
 one increment per page in section order (add-page / add-collection),
-model-extension increments (`gate: "sam"`, born blocked) before the first
-page needing each modelGap, then the car-domain removal tail
-(remove-car-section per baseline section + repoint-test-fixtures) — that tail
-belongs to the original prototype programme, whose vendored baseline shipped
-the car domain to keep the engine-test net green; it does not apply to a
-promoted target. Idempotent —
-re-running preserves statuses. Inspect with `backlog-counts.sh` /
-`jq` over the file.
+then the car-domain removal tail (remove-car-section per baseline section +
+repoint-test-fixtures) — that tail belongs to the original prototype
+programme, whose vendored baseline shipped the car domain to keep the
+engine-test net green; it does not apply to a promoted target — then the
+model-extension increments (`gate: "sam"`, born blocked) and the pages
+deferred behind them. Idempotent — re-running preserves statuses by content
+key, and refuses to drop an increment it cannot re-derive. `--dry-run`
+prints what it would write without touching the file. Inspect with
+`backlog-counts.sh` / `jq` over the file.
+
+Work a run needs that no spec page can yield — repo hygiene in the target
+repo, a tripwire test to restore, E2E coverage that lives in the tests repo —
+is declared, not hand-edited into backlog.json. `backlog-add-extra.sh
+EUDPA-X --key K --type fix|e2e|chore|restore --title "..." --detail "..."
+--anchor 'before=page:origin' [--repo repos/x] [--milestone M1] [--gate sam]`
+appends to `<spec_dir>/backlog-extras.json`, which sits beside
+journey-spec.json on the spec branch and is reviewed at the spec gate. The
+generator splices each extra in at its anchor (`start`, `end`,
+`before`/`after` a `page:<pageId>` or an earlier `key:<extraKey>`) before
+numbering, so it joins the linear chain, keeps its status across
+regenerations under the key `<type>:<key>`, inherits the milestone of what
+it anchors to unless told otherwise, and is born blocked when gated. The
+type vocabulary is deliberately small; widen it in both scripts together.
 
 ## Mode: build (the loop)
 
@@ -119,4 +172,7 @@ Never run both against one run at the same time. Both write the whole file.
 `tools/journey-builder/`: `prepare-digest.sh`, `extract-add-item.sh`,
 `extract-finalize.sh`, `spec-add-field.sh`, `spec-add-page.sh`,
 `spec-add-conflict.sh`, `spec-add-behaviour.sh`, `spec-add-fieldgroup.sh`,
-`spec-lint.sh [--format]`.
+`spec-set-field.sh`, `spec-set-page.sh`, `spec-remove-field.sh`,
+`spec-remove-page.sh`, `spec-add-decision.sh`, `spec-resolve-conflict.sh`,
+`spec-set-behaviour-status.sh`, `spec-lint.sh [--format]`,
+`backlog-add-extra.sh`, `backlog-set-extra.sh`, `backlog-remove-extra.sh`.

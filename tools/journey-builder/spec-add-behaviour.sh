@@ -35,8 +35,14 @@ spec="$(jq -r '.spec_dir' "$meta")/journey-spec.json"
 dupe=$(jq --arg id "$ID" '[.behaviours[] | select(.id == $id)] | length' "$spec")
 [[ "$dupe" -gt 0 ]] && { echo "Error: behaviour '$ID' already exists" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$spec.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq --arg id "$ID" --arg source "$SOURCE" --arg status "$STATUS" --arg detail "$DETAIL" \
     '.behaviours += [{id: $id, source: $source, status: $status, detail: $detail}]' \
-    "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+    "$spec" > "$tmp"
+mv "$tmp" "$spec"
 
 echo "Added behaviour '$ID' ($STATUS)"

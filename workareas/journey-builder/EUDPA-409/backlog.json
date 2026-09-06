@@ -94,10 +94,12 @@
       "dependsOn": [
         "inc-001"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "751e00b",
       "failure_reason": null,
       "kind": "fix",
+      "ticket": "EUDPA-412",
+      "branch": "fix/EUDPA-412-add-the-fit-tests-job-to-check-pull-requ",
       "sizeGuess": "S",
       "filesToTouch": [
         {
@@ -125,7 +127,16 @@
         "The target profile's commitPaths for high-risk-plants-frontend are only `src/server/app` and `package.json`, and commit-increment.sh runs `git add` against exactly those paths (tools/journey-builder/commit-increment.sh:33) while rollback-increment.sh checks out and cleans only those (rollback-increment.sh:32-33). A `.github/workflows/` edit therefore will not be staged, committed or rolled back. This affects inc-002 through inc-011 (every ci-* extra) and inc-001 (scripts/lighthouse/). Either commitPaths gains `.github` and `scripts`, or the loop needs an explicit extra-paths escape for repo-hygiene increments. The implementor cannot resolve this from inside the repo."
       ],
       "recipe": "repos/trade-imports-animals-frontend/.github/workflows/check-pull-request.yml:87-128 (the `playwright` / \"FIT Tests\" job and the comment above it); repos/trade-imports-plants-frontend/playwright.config.js (the `journeys` and `features` projects); repos/trade-imports-plants-frontend/package.json (`playwright:install`, `test:fit:ci`)",
-      "notes": "The extra's detail cites \"animals check-pull-request.yml:60-128\", but that range spans two jobs: `security-audit` (lines 67-86) and `playwright` (87-128). Only the `playwright` job belongs to this increment — `security-audit` is inc-003's (ci-security-audit-non-gating). The detail also says \"with the plants image name\"; the animals FIT job contains no image name at all (the only image name in either workflow is the docker build tag inside pr-validator, which plants already has correct as `trade-imports-plants-frontend`). Read as vestigial: nothing in the new job is renamed, and the artifact keeps the animals name `frontend-playwright-report`, which is unambiguous inside the plants repo. Where the extra's text and the files disagreed, the files won.\n\nNo journey code and no set files are touched, so `test:high-risk-plants` passes with no tests and `test:fit` passes on `--pass-with-no-tests` while the set is empty — the job proves the wiring now and starts biting as soon as the first feature increment lands its `*.fit.spec.js`. `format:check` (prettier over js/cjs/md/json) and `lint` (eslint/stylelint/depcruise) cover no YAML, so neither rung can catch a mistake in this file; the real proof is the PR's own checks, which the loop watches. The fit rung is deliberately omitted from the ladder for this CI-only change (PROGRAMME-NOTES verification ladder; INCREMENT_PLANNER: a CI-workflow-only change still runs the unit, format and lint rungs).\n\nThis is the first of ten consecutive ci-* increments, inc-002 to inc-011, four of which (inc-002, inc-003, inc-004, inc-005) edit this same file. inc-002 runs first, so the file is as it stands on the branch: one `pr-validator` job, `security-audit` still a step inside it, no schedule trigger, SonarCloud commented out. Add the new job; leave the rest for the increments that own it. npm in this repo is pinned to 11.6.2 — run any local install through `npx --yes npm@11.6.2` (PROGRAMME-NOTES)."
+      "notes": "The extra's detail cites \"animals check-pull-request.yml:60-128\", but that range spans two jobs: `security-audit` (lines 67-86) and `playwright` (87-128). Only the `playwright` job belongs to this increment — `security-audit` is inc-003's (ci-security-audit-non-gating). The detail also says \"with the plants image name\"; the animals FIT job contains no image name at all (the only image name in either workflow is the docker build tag inside pr-validator, which plants already has correct as `trade-imports-plants-frontend`). Read as vestigial: nothing in the new job is renamed, and the artifact keeps the animals name `frontend-playwright-report`, which is unambiguous inside the plants repo. Where the extra's text and the files disagreed, the files won.\n\nNo journey code and no set files are touched, so `test:high-risk-plants` passes with no tests and `test:fit` passes on `--pass-with-no-tests` while the set is empty — the job proves the wiring now and starts biting as soon as the first feature increment lands its `*.fit.spec.js`. `format:check` (prettier over js/cjs/md/json) and `lint` (eslint/stylelint/depcruise) cover no YAML, so neither rung can catch a mistake in this file; the real proof is the PR's own checks, which the loop watches. The fit rung is deliberately omitted from the ladder for this CI-only change (PROGRAMME-NOTES verification ladder; INCREMENT_PLANNER: a CI-workflow-only change still runs the unit, format and lint rungs).\n\nThis is the first of ten consecutive ci-* increments, inc-002 to inc-011, four of which (inc-002, inc-003, inc-004, inc-005) edit this same file. inc-002 runs first, so the file is as it stands on the branch: one `pr-validator` job, `security-audit` still a step inside it, no schedule trigger, SonarCloud commented out. Add the new job; leave the rest for the increments that own it. npm in this repo is pinned to 11.6.2 — run any local install through `npx --yes npm@11.6.2` (PROGRAMME-NOTES).",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/8",
+          "number": 8,
+          "merged": true,
+          "sha": "c4f97cae38460f35caa2a6e0e0ca88d20ce78494"
+        }
+      ]
     },
     {
       "type": "fix",

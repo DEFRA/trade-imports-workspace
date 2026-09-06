@@ -1,0 +1,86 @@
+# High-risk plants — programme notes for the batch orchestrator (L1 reads this; L0 never does)
+
+Run **EUDPA-409** under epic **EUDPA-407**. Target `high-risk-plants-frontend` in
+`tools/journey-builder/targets.json`. Backlog: `backlog.json` beside this file, 63
+increments derived from the ruled spec, none built.
+
+## The repos
+
+| `repo` | Path | Notes |
+|---|---|---|
+| `frontend` | `repos/trade-imports-plants-frontend` | Node. The engine is complete, the `high-risk-plants` set is empty. `npm run test:high-risk-plants`, `format:check`, `lint` (includes `lint:arch`), `PORT=3053 npm run test:fit:features`. npm pinned `11.6.2` — run installs through `npx --yes npm@11.6.2`. |
+| `backend` | `repos/trade-imports-plants-backend` | Java / Spring Boot. Integration tests need `mvn verify`. |
+| `tests` | `repos/trade-imports-animals-tests` | Playwright. Plants gets a fourth project `plants` beside `e2e`, `admin`, `ins`; page objects under `page-objects/plants/`; specs under `tests/e2e/features/plants/`. |
+
+Cross-repo branches share the same name (CLAUDE.md rule 2). Merge order backend, then
+frontend, then tests.
+
+## The spec is the requirement
+
+`src/server/app/sets/high-risk-plants/spec/` in the plants frontend:
+
+- `journey-spec.json` — 29 obligations, 15 pages in 8 sections in journey order, 98
+  behaviours. Every obligation and page carries an `animals` tag: `same-as-animals`
+  (copy the animals shape and copy verbatim), `variant-of-animals` (copy the shape;
+  `divergence` says what differs and why), `plants-only`.
+- `conflicts.json` — 40 conflicts, every one resolved; the `decision` field points at the
+  ruling.
+- `decisions.json` — the ledger of 83 rulings with rationale and dissent. **A ruling is
+  changed only by `tools/journey-builder/spec-add-decision.sh --supersedes d-NNN`**, never
+  by editing. `panel/README.md` explains.
+- `backlog-extras.json` — the non-page increments (`fix`, `chore`, `restore`, `e2e`) with
+  their anchors.
+
+Where the spec and an increment's own text disagree, the spec wins; write the discrepancy
+into the increment's `notes`.
+
+## Standing rulings (product owner, 2026-09-06) — do not build
+
+- Users, sign-in models, agents acting on behalf of an importer, delegation of authority,
+  plant-operator registration, "who is the notifier". Parked.
+- Bulk upload. Parked.
+- Per the epic: document uploads, outbox and GBN-AG event publishing, a combined
+  animals+plants list in INS.
+- Anything a behaviour records as `parked` or `rejected` in the spec.
+
+## Increment types and who implements them
+
+- `add-page` / `add-collection` — the `frontend-change` skill in the plants frontend, in the
+  mode the type names. It reads the set's recipe docs under
+  `src/server/app/sets/high-risk-plants/docs/`. Each carries its unit tests, its in-repo
+  `*.fit.spec.js`, and `copy.en.js` + `copy.cy.js` (structure-identical;
+  `copy-parity.test.js` enforces it — Welsh is part of the increment, never a follow-up).
+- `fix` / `chore` / `restore` — described by the extra's `title` and `detail`; `repo` names
+  where. Java best-practices for the backend, the Node style guide for the frontend.
+- `e2e` — in the tests repo, Playwright best-practices; the journey-level spec for the
+  section named, page objects included. The stack must be up (`tim docker dev`).
+
+The first feature increment disarms two tripwires (`copy-convention.test.js`,
+`copy-parity.test.js` under `src/server/app/`); the `restore-*` increments that follow it
+restore the per-feature checks. Expect the tripwires to fail on that first increment and
+handle them in the increment that follows, not by weakening them.
+
+Consistency with animals, without sharing: where a page or obligation is `same-as-animals`
+or `variant-of-animals`, read the animals feature under
+`repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/` and copy its
+shape. Never import from it, never centralise. Declare the duplication in the feature's
+docs and move on.
+
+## Gated increments
+
+Three extras are born `blocked` with `gate: sam` and sit at the end of the chain:
+`backend-reference-prefix` (needs the agreed plants type code), `country-block-decision`,
+`chrome-placeholders-and-service-name`. They halt the loop when reached; that is by design.
+
+## Verification ladder
+
+Frontend increments: `test:high-risk-plants`, `format:check`, `lint`, then
+`PORT=3053 npm run test:fit:features` with the stack up. Backend: `mvn verify`. Tests
+repo: `npm run test:docker-compose` scoped to the plants project. Read test output from a
+file once; never grep a streaming run.
+
+## Known first-pass gaps the backlog already carries
+
+The 17 M0 hygiene increments (lighthouse scripts, eight CI workflow gaps, Dependabot in both
+plants repos, backend CI parity, depcruise baseline, unused services, doc drift) come first
+and touch no journey code. They are cheap and unblock the rest.

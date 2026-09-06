@@ -84,3 +84,29 @@ file once; never grep a streaming run.
 The 17 M0 hygiene increments (lighthouse scripts, eight CI workflow gaps, Dependabot in both
 plants repos, backend CI parity, depcruise baseline, unused services, doc drift) come first
 and touch no journey code. They are cheap and unblock the rest.
+
+## What the loop commits, and what commitPaths is for
+
+The batch orchestrator drives `increment-build-loop.js`, whose land stage stages whatever
+the increment produced (everything but logs, coverage and Playwright artefacts) and commits
+it. It does not read `commitPaths` from the target profile. That list belongs to the
+journey-builder skill's own build mode (`commit-increment.sh`, `rollback-increment.sh`) and
+is widened for this target to cover `.github`, `scripts`, `docs` and the README, so the M0
+hygiene increments land under either path. A plan whose `openQuestions` raise commitPaths is
+asking about the old path; rule it not applicable under the orchestrator and move on.
+
+## Repos and models this programme runs with
+
+`repos`: frontend = `repos/trade-imports-plants-frontend` (`DEFRA/trade-imports-plants-frontend`),
+backend = `repos/trade-imports-plants-backend` (`DEFRA/trade-imports-plants-backend`),
+tests = `repos/trade-imports-animals-tests` (`DEFRA/trade-imports-animals-tests`).
+`models`: heavy = opus, light = sonnet. Both are recorded in the ledger's programme block;
+L1 copies them into every run copy's FALLBACK.
+
+The M0 CI-workflow increments (inc-002 to inc-011) change only YAML under `.github/`, which
+neither prettier's globs nor eslint read. Their ladders run the unit, format and lint rungs;
+the proof is the PR's own checks, which the loop watches. Several plans carry open questions
+about things the checkout cannot see — a CDP build role, the `SONAR_TOKEN` secret, whether
+GitHub Pages is enabled, whether branch protection requires a job. Those resolve when the
+PR's checks run: a red check there is evidence about the platform, not the change, and a
+`ci-red` stop on one of them is a platform question for Sam rather than a code fix.

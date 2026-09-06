@@ -85,7 +85,13 @@ rather than by hand-editing JSON: `spec-set-field.sh EUDPA-X --id
 `spec-set-page.sh EUDPA-X --id <pageId> [--field K=V] [--json K='<json>']
 [--unset K] [--collects a,b,c]`. Both refuse to change `id` (other entries
 reference it) and validate `--json` values, so `false` and `null` are
-accepted. Then re-run `spec-lint.sh`: it errors on a `decision` reference
+accepted. Removals and extra edits go through their own scripts for the same
+reason: `spec-remove-field.sh` (drops the obligation and every collects /
+item / fields reference in one pass, refusing while another obligation is
+gated on it), `spec-remove-page.sh` (refusing while the page still collects,
+and dropping a section it empties), `backlog-set-extra.sh` and
+`backlog-remove-extra.sh` (refusing while another extra anchors on the
+key). Then re-run `spec-lint.sh`: it errors on a `decision` reference
 the ledger does not hold, and warns on conflicts resolved without a
 decision and on decisions whose subject has gone.
 
@@ -166,6 +172,7 @@ Never run both against one run at the same time. Both write the whole file.
 `tools/journey-builder/`: `prepare-digest.sh`, `extract-add-item.sh`,
 `extract-finalize.sh`, `spec-add-field.sh`, `spec-add-page.sh`,
 `spec-add-conflict.sh`, `spec-add-behaviour.sh`, `spec-add-fieldgroup.sh`,
-`spec-set-field.sh`, `spec-set-page.sh`, `spec-add-decision.sh`,
-`spec-resolve-conflict.sh`, `spec-set-behaviour-status.sh`,
-`spec-lint.sh [--format]`, `backlog-add-extra.sh`.
+`spec-set-field.sh`, `spec-set-page.sh`, `spec-remove-field.sh`,
+`spec-remove-page.sh`, `spec-add-decision.sh`, `spec-resolve-conflict.sh`,
+`spec-set-behaviour-status.sh`, `spec-lint.sh [--format]`,
+`backlog-add-extra.sh`, `backlog-set-extra.sh`, `backlog-remove-extra.sh`.

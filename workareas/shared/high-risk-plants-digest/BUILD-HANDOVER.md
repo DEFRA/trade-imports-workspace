@@ -1,5 +1,14 @@
 # Handover — build the high-risk plants backlog in batches
 
+> **Superseded on 2026-09-06.** The three-tier batch orchestrator this handover describes was
+> abandoned on `feat/parity-report-triage-view` on 21 August (a subagent cannot invoke the
+> Workflow tool, so its middle tier could never start the loop) and has now been removed from
+> `main`. The proven path is the `build-orchestrator` skill driving `increment-build-loop.js`
+> from the main session, with `repos` set to the plants table and no up-front planning pass.
+> Items 1, 2 and 4 below are done; item 3 is optional under that skill. Resume with:
+> "Resume the high-risk plants build with the build-orchestrator skill" and the parameters in
+> `workareas/journey-builder/EUDPA-409/PROGRAMME-NOTES.md`.
+
 Copy the block below into a fresh session.
 
 ---

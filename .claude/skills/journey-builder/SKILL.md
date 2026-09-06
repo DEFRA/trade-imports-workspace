@@ -126,17 +126,16 @@ type vocabulary is deliberately small; widen it in both scripts together.
 
 ## Mode: plan
 
-The generator gives an increment a type, a subject and a place in the chain;
-the build loop and the batch orchestrator also need `title`, `kind`,
-`sizeGuess`, `filesToTouch`, `acceptanceCriteria`, `verification`,
-`openQuestions`, `implementorSkill`, `recipe` and `notes`. The orchestrator
-withholds any increment whose `sizeGuess` is null, so nothing is buildable
-until it is planned.
+The generator gives an increment a type, a subject and a place in the chain.
+That is a buildable increment: the `build-orchestrator` skill's derive query
+is status and dependencies only, and the loop's implementor derives the change
+from the increment's `detail`, the spec objects it names and the code.
 
-Plans are written **just in time**: the batch orchestrator's L1 spawns one
-`general-purpose` planner for the increment it has just derived, when that
-increment has no `sizeGuess`, and builds it once the write is checked. The
-planner follows
+A plan — `title`, `kind`, `sizeGuess`, `filesToTouch`, `acceptanceCriteria`,
+`verification`, `openQuestions`, `implementorSkill`, `recipe`, `notes` — is
+optional context the loop reads when present. Where one is wanted ahead of a
+build, one `general-purpose` planner per increment writes it; the planner
+follows
 `~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/INCREMENT_PLANNER.md`
 for run-id EUDPA-X and increment inc-NNN: it reads the increment, the spec
 objects it names, the recipes, and (for a mirrored page) the animals feature,

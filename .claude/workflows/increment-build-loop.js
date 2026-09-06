@@ -40,26 +40,52 @@ export const meta = {
 //                   lifecycle is 'full'
 //   jiraInProgressStatus  the board's working status, set when the build starts
 //   jiraDoneStatus        the board's finished status, set after the merge
+//   jiraBoard       the numeric board id raised tickets are moved onto. Required
+//                   when lifecycle is 'full'. Board membership is NOT a field on
+//                   the issue and NOT implied by status: a freshly raised ticket
+//                   lands in the board's backlog and stays there, invisible to
+//                   the team, however many times it is transitioned. Moving it
+//                   is a separate agile call, and this is the id it needs
 //   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
 //                   run stops
 //   ciWatchMinutes  how long one CI watch may block before it counts as RED
+//   requireApproval whether EVERY PR of an increment needs an APPROVING REVIEW
+//                   ON GITHUB before the merge stage may merge ANY of them.
+//                   Default true. Green CI is not consent: it proves the code
+//                   runs, not that anyone agreed to it. The gate is collected
+//                   for the whole increment up front, not per PR as each one is
+//                   reached — a per-PR gate merged an approved frontend and then
+//                   stopped on its unapproved sibling in the tests repo, leaving
+//                   half an increment on the base branch and CDP red. With this
+//                   on, a run stops with every PR open rather than merging
+//                   unapproved work, and resumes once someone approves.
+//                   GitHub forbids approving your own PR, so the approver is
+//                   always somebody other than whoever the run raised it as.
+//                   Set false only for a programme that genuinely wants
+//                   unattended merges
+//   approvalWaitMinutes  how long the merge stage may wait for those approvals
+//                   before it stops and leaves every PR open. Default 20
 //   repos           the three repos an increment's "repo" field can name —
 //                   frontend, backend, tests — each with its workspace-relative
 //                   path and its GitHub owner/name slug. The animals repos are
 //                   the default; a programme in another repo family (the plants
-//                   frontend and backend, say) overrides the table here. The
-//                   batch orchestrator copies it from the ledger's programme block
+//                   frontend and backend, say) overrides the table here
 //   models          optional model per tier. heavy = implement, the reviewers,
 //                   the adversarial verifiers, judge, fix and CI fix; light = the
 //                   lifecycle and plumbing stages (ticket, branch, baseline,
 //                   ladder, land, PR, CI watch, merge, done). A tier left out
 //                   inherits the calling session's model
 //
+
 // Status names are BOARD CONFIGURATION, not constants — every board words them
 // differently and a workflow change renames them. They live here so a programme
 // never has to edit a stage. Confirm them against the board itself with
 // `tools/jira/transition-ticket.sh <ANY-KEY> --list`; the script's own --help
 // text is generic placeholder wording and is not board truth.
+//
+// `jiraBoard` is the same kind of configuration. 13780 is the EUDPA board; a
+// programme on another board must say so, and the run throws at startup if the
+// id is missing rather than quietly leaving every ticket in the backlog.
 // ---------------------------------------------------------------------------
 const FALLBACK = {
   workarea: 'shared/plant-products-ched-pp',
@@ -71,6 +97,7 @@ const FALLBACK = {
   epic: '',
   jiraInProgressStatus: 'In Progress',
   jiraDoneStatus: 'Done',
+  jiraBoard: 13780,
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
   repos: {
@@ -92,12 +119,20 @@ const JIRA_PROJECT = CFG.jiraProject ?? 'EUDPA'
 const EPIC = CFG.epic ?? ''
 const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus ?? 'In Progress'
 const STATUS_DONE = CFG.jiraDoneStatus ?? 'Done'
+const JIRA_BOARD = CFG.jiraBoard ?? ''
 const CI_FIX_ATTEMPTS = CFG.ciFixAttempts ?? 3
 const CI_WATCH_MINUTES = CFG.ciWatchMinutes ?? 30
+const REQUIRE_APPROVAL = CFG.requireApproval ?? true
+const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes ?? 20
 
 // One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
 // longer wait is that many consecutive watches, and running out of them is RED.
 const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
+
+// Approval polls are cheap, so the window is a count of two-minute checks.
+// Running out is NOT a failure — it means nobody has looked yet, and the PR is
+// left open for them to.
+const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 if (!WORKAREA_REL) {
   throw new Error(
@@ -123,6 +158,11 @@ if (LIFECYCLE === 'full' && !/^[A-Z]+-\d+$/.test(EPIC)) {
 if (LIFECYCLE === 'full' && (!STATUS_IN_PROGRESS.trim() || !STATUS_DONE.trim())) {
   throw new Error(
     `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
+  )
+}
+if (LIFECYCLE === 'full' && !/^\d+$/.test(String(JIRA_BOARD))) {
+  throw new Error(
+    `increment-build-loop: config.jiraBoard is required when lifecycle is "full" — the numeric id of the board raised tickets are moved onto, e.g. 13780 for EUDPA. Without it every ticket is raised into the board's backlog and stays there, which no status change fixes. Got "${JIRA_BOARD}"`
   )
 }
 if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
@@ -173,6 +213,9 @@ const light = withTier('light')
 // what it returns. Nothing here may be a literal home directory: the run has to
 // work on whichever machine picks the programme up.
 // ---------------------------------------------------------------------------
+// The first is canonical (CLAUDE.md rule 1). The other two are the names this
+// workspace had before it was renamed, kept so a machine still carrying the old
+// clone or symlink resolves rather than throwing.
 const WORKSPACE_CANDIDATES = [
   '~/git/defra/trade-imports-workspace',
   '~/git/defra/trade-imports-animals-workspace',
@@ -239,9 +282,31 @@ const ghTable = Object.entries(GH_REPO)
 const REPO_RULE = `REPO PATHS: ${repoTable}. An increment whose "repo" field is \`both\` means BOTH the backend and the
 frontend repo — do the work in each, on the SAME branch name (CLAUDE.md rule 2, cross-repo branch parity).`
 
-const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN FRONTEND. The backend is the
-provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that calls an endpoint
-which is not there yet. BOTH PRs must be GREEN BEFORE EITHER ONE MERGES.`
+// Canonical merge order for a cross-repo increment. Lower merges first.
+//
+// backend before frontend: the backend is the provider and the frontend the
+// consumer, so the base branch is never left holding a frontend that calls an
+// endpoint which is not there yet.
+//
+// tests before frontend: CDP runs the tests repo's suite against the deployed
+// frontend, so a frontend that merges ahead of its own test fixes is exercised
+// by stale specs and CDP goes red. That has happened.
+//
+// `prs` is built by append — the PR stage raises in `repos` order and a CI
+// fixer pushes whatever it had to open on the end — so the array's own order is
+// an accident of when a PR appeared, not a merge plan. Sort it here rather than
+// asking the merge agent to reorder: order is a decision the script owns.
+const MERGE_RANK = { backend: 0, tests: 1, frontend: 2 }
+const sortForMerge = (list) =>
+  [...list].sort((a, b) => (MERGE_RANK[a.repo] ?? 99) - (MERGE_RANK[b.repo] ?? 99))
+
+const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN TESTS, THEN FRONTEND. The
+backend is the provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that
+calls an endpoint which is not there yet; and CDP runs the tests repo's suite against the deployed frontend, so a
+frontend merged ahead of its own test fixes is exercised by stale specs and CDP goes red.
+EVERY PR of the increment must be GREEN — AND, where the approval gate is on, APPROVED — BEFORE ANY ONE OF THEM
+MERGES. Half an increment on \`${BASE_BRANCH}\` is the failure this ordering exists to prevent, and nothing
+auto-reverts it.`
 
 // A `blocked` line means the stage hit something no fixer can fix. It stops the
 // run without spending fix attempts on it.
@@ -261,8 +326,42 @@ GUARD RAILS (mandatory, every step):
   \`gh run watch --exit-status\`, with the Bash tool's \`timeout\` parameter set to 600000 (its ceiling).
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - Never \`git push --force\`. Never merge a PR that is not green.
+- NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
+  does it by merging an approved PR. Every other push in every other stage goes to a work branch, always with the
+  fully-qualified refspec form given below. A push that updates \`${BASE_BRANCH}\` has bypassed CI, review and the
+  approval gate at once.
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
+
+// How every stage pushes, and why it looks paranoid.
+//
+// A stage once put a commit straight onto the tests repo's `main`. No PR, no CI,
+// no approval — and the merge stage was innocent: it had merged nothing at all.
+// Two things combined:
+//
+//   1. `git checkout -b <work> origin/main` sets the new branch's upstream to
+//      `origin/main`, because git's default `branch.autoSetupMerge` tracks a
+//      remote-tracking start point. The branch is now *named* for the increment
+//      and *pointed at* main.
+//   2. `repos/trade-imports-animals-tests` and `-backend` are configured
+//      `push.default=tracking`, so a push that has to resolve its own
+//      destination resolves it to that upstream — `main`.
+//
+// So the fix is at both ends: cut with `--no-track` so no work branch ever
+// carries the base branch as upstream, and push with an explicit fully-qualified
+// refspec so no push ever has a destination left to resolve. Either alone would
+// have stopped it; a stage that pushes is worth two locks.
+const PUSH_RULE = `HOW TO PUSH — the exact form, every time, no variations:
+\`git -C ${TILDE}/<repoPath> push -u origin refs/heads/<branch>:refs/heads/<branch>\`
+Never \`--force\`. Never a bare \`git push\`. Never \`push origin <branch>\` — that leaves git to work out the
+destination, and in a repo configured \`push.default=tracking\` (two of these three repos are) it resolves to the
+branch's upstream, which is how a commit once landed on \`${BASE_BRANCH}\` with no PR behind it. The fully
+qualified \`refs/heads/X:refs/heads/X\` can only ever update branch X.
+
+BEFORE ANY COMMIT OR PUSH, prove you are on the branch you think you are:
+\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`
+If that prints anything other than the work branch — \`${BASE_BRANCH}\` above all — STOP and report ok:false.
+Do not commit "just this once" and sort the branch out afterwards.`
 
 // Preserving a failed attempt. A stash is machine-local: on another machine the
 // ref means nothing and the work is gone. Under the full lifecycle the increment
@@ -273,6 +372,7 @@ const preserveWork = (id, branch, reason, evidence) =>
     ? `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${GUARDRAILS}
 ${REPO_RULE}
+${PUSH_RULE}
 EVIDENCE: ${evidence}
 TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
 1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
@@ -280,8 +380,8 @@ TASK — the work goes onto its own branch, not into a stash. A stash ref does n
    test-results/, no Playwright artefacts.
 3. Commit it on \`${branch}\`, marked as failing: subject \`wip(${SCOPE}): <increment title> — ${reason}\`,
    body naming exactly what went red, and the usual trailer.
-4. \`git -C ${TILDE}/<repoPath> push -u origin ${branch}\` — never \`--force\`. That is what lets another
-   engineer fetch the attempt and see what was tried.
+4. \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${branch}:refs/heads/${branch}\` — never \`--force\`.
+   That is what lets another engineer fetch the attempt and see what was tried.
 5. Do NOT open a pull request. This work does not pass its ladder and must not look reviewable.
 6. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
 7. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG}: what went red, the branch name and
@@ -313,6 +413,38 @@ const incrementSchema = {
     summary: { type: 'string' },
     changedFiles: { type: 'array', items: { type: 'string' } },
     notes: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+// The CI fixer's schema is the increment schema plus a channel for a PR it had
+// to open in a repo the increment did not start with — a frontend change whose
+// fix lands in the tests repo, typically. Without somewhere to report that, a
+// fixer that raises a second PR leaves it invisible to every later stage, and
+// the increment merges half of itself.
+const CI_FIX_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' },
+    changedFiles: { type: 'array', items: { type: 'string' } },
+    notes: { type: 'string' },
+    newPrs: {
+      type: 'array',
+      description:
+        'Every PR you opened in a repo that had none for this branch. Empty if you only pushed to branches that already had one.',
+      items: {
+        type: 'object',
+        required: ['repo', 'url'],
+        properties: {
+          repo: { type: 'string' },
+          url: { type: 'string' },
+          number: { type: 'number' }
+        },
+        additionalProperties: false
+      }
+    }
   },
   additionalProperties: false
 }
@@ -413,12 +545,17 @@ const LAND_SCHEMA = {
 
 const TICKET_SCHEMA = {
   type: 'object',
-  required: ['ok', 'key', 'repos', 'branch', 'resumeAt', 'summary'],
+  required: ['ok', 'key', 'repos', 'branch', 'resumeAt', 'movedToBoard', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     key: { type: 'string', description: 'The Jira key, e.g. EUDPA-12345' },
     created: { type: 'boolean', description: 'true ONLY if this run raised it. false when you reused a persisted key' },
     status: { type: 'string', description: "The ticket's status when this stage finished, verbatim as the board words it" },
+    movedToBoard: {
+      type: 'boolean',
+      description:
+        'true ONLY if move-to-board.sh ran and exited 0 this time. Never infer it from the status, and never assume a reused ticket is already on the board — the call is idempotent, so run it and report what happened'
+    },
     repos: {
       type: 'array',
       description: 'Every repo this increment touches, in merge order. A "both" increment is ["backend","frontend"]',
@@ -515,6 +652,12 @@ const CI_SCHEMA = {
     },
     failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
+    stopReason: {
+      type: 'string',
+      enum: ['none', 'awaiting-approval', 'changes-requested', 'not-mergeable', 'pr-red', 'base-branch-red', 'pr-left-open'],
+      description:
+        'WHICH stop condition fired, as a fixed value the caller branches on. `blocked` is prose for a human; this is the machine answer and the two must agree. "none" when green. Set "awaiting-approval" ONLY when the PR is green and simply has no approving review yet — never for anything that is actually wrong, because the caller reports that one as a healthy pause rather than a failure'
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -523,10 +666,15 @@ const CI_SCHEMA = {
 const readIncrement = (id) => `
 THE INCREMENT — read it in full before anything else:
 Run this Bash command and read the output: \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`
-That object is your complete specification: filesToTouch (paths + action + what), obligations, flowChanges,
-schemaFields, copyKeys, specs, acceptanceCriteria, verification (the ladder, in order), notes, openQuestions.
-It is self-contained BY DESIGN — if you find yourself needing information that is not in it, that is a defect
-worth reporting in your summary, not a reason to improvise.
+That object is your brief. Backlogs differ in shape, so read what THIS one carries and work from that.
+It may spell the change out — filesToTouch (paths + action + what), obligations, flowChanges, schemaFields,
+copyKeys, specs, acceptanceCriteria, verification (the ladder, in order), notes, openQuestions. It may
+instead state a finding and cite the evidence for it, and leave the change to you. Both are supported inputs.
+A field that is absent is NOT a defect and NOT a reason to stop: THE BACKLOG SAYS WHAT IS WRONG, AND
+WORKING OUT WHAT TO CHANGE IS YOUR JOB. Derive it from the code and the cited evidence, and say in your
+summary what you derived and why.
+What IS worth reporting as a defect is a claim that does not hold — a path that is not there, a citation
+whose line has moved on, an asserted behaviour the application does not have. Thin is fine; wrong is not.
 Supporting context: read ONLY what the increment's "recipe" field cites, resolving workarea-relative paths
 against ${WORKAREA}. Read the cited sections, not the whole document.
 `
@@ -733,7 +881,17 @@ report ok:false with BOTH the status you were asked for — \`${STATUS_IN_PROGRE
 transitions the board actually offers, so the config fix is obvious from your report alone.
 Do NOT guess a nearby status and do NOT pick one off the list yourself.
 
-STEP 4 — THE BRANCH NAME.
+STEP 4 — PUT IT ON THE BOARD. Run this for EVERY increment, whether you raised the ticket or reused it:
+\`${JIRA}/move-to-board.sh ${JIRA_BOARD} <KEY>\`
+A raised ticket lands in the board's BACKLOG, and STEP 3 does not get it out. Board membership is not a
+field on the issue and is not implied by status — two tickets identical in every field sit one on the board
+and one in the backlog. So a ticket left here is one the team cannot see, on a run that otherwise looks
+clean. The call is idempotent, so running it on a ticket already on the board is a harmless no-op; that is
+why it is unconditional rather than something you reason about.
+Set movedToBoard:true when the command exits 0. If it fails, report ok:false with the command's full output
+— do not carry on, and do not fall back to a status change, which cannot do this.
+
+STEP 5 — THE BRANCH NAME.
 - If \`branch\` is already persisted on the increment, REUSE IT VERBATIM. Do not recompute it.
 - Otherwise build it as \`<type>/<KEY>-<slug>\` and persist it to the increment's \`branch\` field
   (Edit ${BACKLOG}, then \`jq empty ${BACKLOG_TILDE}\`):
@@ -743,7 +901,7 @@ STEP 4 — THE BRANCH NAME.
     leading and trailing \`-\`, truncate to 40 characters and trim any trailing \`-\` again.
   This matches CLAUDE.md rule 2 (\`<type>/${JIRA_PROJECT}-XXXX[-slug]\`).
 
-STEP 5 — WHERE TO RESUME, from what STEP 1 showed you. Take the FIRST that matches:
+STEP 6 — WHERE TO RESUME, from what STEP 1 showed you. Take the FIRST that matches:
 - \`prs\` is non-empty and every entry is marked merged → resumeAt "done".
 - \`prs\` is non-empty → resumeAt "ci".
 - \`commit\` is set and \`prs\` is empty or absent → resumeAt "pr".
@@ -753,11 +911,22 @@ Re-entering an increment must never rebuild work that is already committed on it
 status.** A board status is moved by people for reasons this loop cannot see, and a ticket parked at
 Deskcheck or IN QA says nothing about how far the build got.
 
-STEP 6 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
+STEP 7 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
 tests → \["tests"\]; both → \["backend","frontend"\] IN THAT ORDER.
+If the field is ABSENT, \`null\` or empty — whole backlogs are written without it — do NOT guess a single repo
+from the increment's title or band. Read its \`band\` and apply this:
+  \`frontend-work\` or anything else that changes the UI → \["frontend","tests"\]
+  \`needs-backend\` → \["backend","frontend","tests"\]
+  a band that is plainly tests-only → \["tests"\]
+**Include \`tests\` in every case that changes what a user sees.** A UI change breaks the E2E specs and their
+visual baselines essentially always, so the tests repo is part of the increment from the start, not a surprise.
+Naming it here is what gets it BRANCHED, and a repo that is never branched sits on \`${BASE_BRANCH}\` for the
+whole run — which is how an increment once committed straight onto the tests repo's main. Over-listing a repo
+costs nothing: a repo with no changes simply gets no commit and no PR.
 
-Report ok:true only if the ticket exists, its status is one you left alone or successfully set, and the
-branch name is persisted. Report \`status\` as the ticket's status when you finished, verbatim.
+Report ok:true only if the ticket exists, its status is one you left alone or successfully set, STEP 4
+moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
+finished, verbatim.
 Return the structured output only.`,
       light({ label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA })
     )
@@ -768,10 +937,26 @@ Return the structured output only.`,
       break
     }
 
+    // A ticket in the backlog is one the team cannot see, and nothing later in
+    // the lifecycle notices. Checked here rather than trusted to the stage's own
+    // ok, because "I set the status" reads like success from inside that stage.
+    if (!ticket.movedToBoard) {
+      log(`${id}: TICKET STAGE FAILED — ${ticket.key} was not moved onto board ${JIRA_BOARD}`)
+      results.push({
+        id,
+        ticket: ticket.key,
+        outcome: 'ticket-failed',
+        detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
+      })
+      break
+    }
+
     workBranch = ticket.branch
     repos = ticket.repos
     resumeAt = ticket.resumeAt ?? 'build'
-    log(`${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on ${workBranch}, resuming at ${resumeAt}`)
+    log(
+      `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on board ${JIRA_BOARD}, branch ${workBranch}, resuming at ${resumeAt}`
+    )
 
     // ---------------------------------------------------------------------
     // Branch — off FRESH base, in every repo the increment touches. Refuses on
@@ -798,10 +983,19 @@ REPOS, in order: ${repos.join(', ')}. Do all of the following for EACH of them.
    - It does not → does it exist on the remote?
      \`git -C ${TILDE}/<repoPath> ls-remote --heads origin ${workBranch}\`
      - Remote has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --track origin/${workBranch}\`
-     - Nobody has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} origin/${BASE_BRANCH}\`
+     - Nobody has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
+       \`--no-track\` is load-bearing and NOT optional. Without it the new branch takes \`origin/${BASE_BRANCH}\`
+       as its upstream, and a later push in a \`push.default=tracking\` repo follows that upstream onto
+       \`${BASE_BRANCH}\`. That is exactly how an increment once put a commit on the tests repo's main with no PR.
    NEVER a bare \`checkout -b ${workBranch}\` — that branches off whatever the repo happened to be on.
 4. Confirm where you landed: \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\` and
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`. The second must print \`${workBranch}\`.
+5. Confirm the branch does not point at the base branch for its upstream:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref --symbolic-full-name ${workBranch}@{upstream}\`
+   It must print \`origin/${workBranch}\`, or fail with "no upstream" — either is correct, and both are safe.
+   If it prints \`origin/${BASE_BRANCH}\` the branch was cut by an older run that lacked \`--no-track\`: repair it
+   with \`git -C ${TILDE}/<repoPath> branch --unset-upstream ${workBranch}\` and say so in your summary.
+   Do NOT leave it and rely on the push form to save you.
 
 The branch name is IDENTICAL in every repo. That is CLAUDE.md rule 2 and it is load-bearing: the workspace
 stack probes each repo for a branch-tagged image, so a mismatched name breaks the linked-branch pickup.
@@ -844,7 +1038,11 @@ TASK:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
-   in your summary. Do not assert a particular branch and do not switch branches — an earlier stage owns that.
+   in your summary. Do not switch branches — an earlier stage owns that.
+   One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
+   checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
+   on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
+   catch a repo the branch stage did not cover.
 3. Run the FASTEST meaningful suite for each repo, to a log, and read it once:
    frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${WORKAREA_TILDE}/logs/${id}-baseline-frontend.log 2>&1\`
    backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${WORKAREA_TILDE}/logs/${id}-baseline-backend.log 2>&1\`
@@ -1205,14 +1403,19 @@ ${REPO_RULE}
 TASK:
 1. Look up its repo: \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`, and its
    title for the commit subject.
-2. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
+2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
+   \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
+   a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no PR,
+   no CI and no review behind it. That has happened here once already.
+3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
-3. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
+4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
    naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and the trailer:
    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
    A \`both\` increment gets ONE commit per repo, each with the same subject.
-4. Do NOT push. A later stage owns that.
-5. Update ${BACKLOG}: add a "commit" field with the short SHA${LIFECYCLE === 'local' ? ' and set this increment\'s "status" to "done"' : '. Leave "status" alone — this increment is not done until its PR is merged'}.
+5. Do NOT push. A later stage owns that.
+6. Update ${BACKLOG}: add a "commit" field with the short SHA${LIFECYCLE === 'local' ? ' and set this increment\'s "status" to "done"' : '. Leave "status" alone — this increment is not done until its PR is merged'}.
    Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
 Report the commit SHA. For a \`both\` increment report both, backend first, space separated.
 Return the structured output only.`,
@@ -1254,13 +1457,24 @@ Return the structured output only.`,
         `You are the PULL REQUEST STAGE for increment ${id} (${ticket.key}) on branch \`${workBranch}\`.
 YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS BRANCH.
 ${GUARDRAILS}
+${PUSH_RULE}
 ${MERGE_ORDER_RULE}
 REPOS, in order: ${repos.join(', ')}. GitHub repos: ${ghTable}. Repo paths: ${repoTable}.
 
 For EACH repo, in that order:
-1. \`git -C ${TILDE}/<repoPath> push -u origin ${workBranch}\` — never \`--force\`. If the push is rejected as
+1. Prove the repo is on the work branch before you push a thing:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` MUST print \`${workBranch}\`. If it prints
+   \`${BASE_BRANCH}\`, report ok:false naming the repo — the branch stage did not cover this repo and pushing
+   from here would put the increment's commits on the base branch.
+2. HAS THIS REPO ANYTHING TO SAY? \`git -C ${TILDE}/<repoPath> rev-list --count origin/${BASE_BRANCH}..HEAD\`
+   - \`0\` → the increment branched this repo but changed nothing in it. SKIP IT: no push, no PR, no backlog
+     entry. Say so in your summary and move to the next repo. This is normal and is not a failure — repos are
+     listed generously so they get branched, because a repo left on \`${BASE_BRANCH}\` is the dangerous one.
+   - anything else → carry on.
+3. \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
+   \`--force\`, and never the short \`push origin ${workBranch}\` form. If the push is rejected as
    non-fast-forward, report ok:false naming the repo; a diverged branch needs a human.
-2. LOOK FOR AN EXISTING PR FIRST. One command:
+4. LOOK FOR AN EXISTING PR FIRST. One command:
    \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state,title\`
    - It returns an OPEN pr → REUSE IT. Do not create anything. raised:false.
    - It returns only a MERGED or CLOSED pr → report ok:false. A merged branch being re-pushed means the
@@ -1271,12 +1485,14 @@ For EACH repo, in that order:
         order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
      b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
      raised:true.
-3. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array holds
+5. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array holds
    \`{"repo":"<repo>","url":"<url>","number":<n>}\` for every PR that now exists — appending, never replacing an
    entry that is already there. Re-check with \`jq empty ${BACKLOG_TILDE}\`. Do this after EACH repo, not once at
    the end: a run that dies between two PRs must not lose the first.
 
-Report every PR in prs\[\], in the same order. Report ok:true only when every repo has exactly one open PR.
+Report every PR in prs\[\], in the same order. Report ok:true only when every repo that had commits ahead of
+\`${BASE_BRANCH}\` has exactly one open PR, and every repo you skipped at step 2 genuinely had none. At least one
+PR must exist — a run where EVERY repo was empty means nothing was built, and that is ok:false.
 Return the structured output only.`,
         light({ label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA })
       )
@@ -1334,10 +1550,11 @@ Return the structured output only.`,
         ciAttempt += 1
         log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
 
-        await agent(
+        const fix = await agent(
           `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
 CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you do not close anything.
 ${GUARDRAILS}
+${PUSH_RULE}
 ${readIncrement(id)}
 THE PULL REQUESTS:
 ${prList(prs)}
@@ -1354,13 +1571,63 @@ TASK:
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
 3. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
    read once.
-4. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
-   \`git -C ${TILDE}/<repoPath> push origin ${workBranch}\` — never \`--force\`.
-5. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+4. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
+   The repo you are fixing may be one the BRANCH STAGE never touched: it only branched the repos the increment
+   declared, and a fix that lands somewhere else arrives here with that repo still sitting on \`${BASE_BRANCH}\`.
+   Committing there and pushing is how this loop once put an unreviewed commit on the tests repo's main.
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`
+   - It prints \`${workBranch}\` → good, carry on.
+   - It prints anything else → your changes are uncommitted in the working tree and travel with a checkout, so:
+     \`git -C ${TILDE}/<repoPath> fetch origin\`, then does the branch exist?
+     \`git -C ${TILDE}/<repoPath> ls-remote --heads origin ${workBranch}\`
+     - Remote has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --track origin/${workBranch}\`
+     - It does not → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
+       \`--no-track\` is mandatory — see HOW TO PUSH above for what it prevents.
+     Then re-run \`rev-parse --abbrev-ref HEAD\` and confirm it now prints \`${workBranch}\` before going on.
+5. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
+   \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
+   \`--force\`, and never the short \`push origin ${workBranch}\` form.
+6. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
+   REGISTER IT.** A frontend change whose fix lands in the tests repo is the ordinary case, not an exception.
+   An unregistered PR is invisible to the watcher and to the merge stage, so the increment merges one repo,
+   calls itself done, and silently leaves the other open — which has happened. Worse has happened: the same repo,
+   left on \`${BASE_BRANCH}\` because it was never branched, took the commit directly onto the base branch and
+   there was no PR to leave open. Step 4 is what stops that; do not skip it for a repo you are adding here.
+   Use the SAME branch name \`${workBranch}\` (CLAUDE.md rule 2, cross-repo branch parity). Repo paths:
+   ${repoTable}. GitHub repos: ${ghTable}. For each such repo:
+   a. Confirm it is on \`${workBranch}\` — \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` — and if it
+      is not, put it there by step 4's method before anything else. Then
+      \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
+      \`--force\`, never the short form.
+   b. Look for an existing PR first:
+      \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state\`
+      An OPEN one → reuse it, do not create a second. A MERGED or CLOSED one → report ok:false; the lifecycle
+      is out of step and a new PR would hide that.
+   c. Nothing there → write the body to ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md saying what broke, what you
+      changed and which increment and ticket it belongs to, then
+      \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <what you fixed>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
+   d. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array also holds
+      \`{"repo":"<repo>","url":"<url>","number":<n>}\` — appending, never replacing an entry already there.
+      \`jq empty ${BACKLOG_TILDE}\` after. Do this per repo, not once at the end.
+   e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
+      THIS run reads. Skipping either one is how a PR gets left behind.
+7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
-          heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: incrementSchema })
+          heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
         )
+
+        // Fold in anything the fixer had to open elsewhere, deduped by url, so
+        // the next watch() blocks on it and the merge stage merges it. `prs` is
+        // a plain variable and the script has no filesystem access, so a PR the
+        // fixer wrote only to the backlog would otherwise stay invisible for
+        // the rest of the run.
+        for (const p of fix?.newPrs ?? []) {
+          if (p?.url && !prs.some((existing) => existing.url === p.url)) {
+            prs.push(p)
+            log(`${id}: CI fixer opened ${p.repo} ${p.url} — added to this increment's PRs`)
+          }
+        }
 
         ci = await watch()
       }
@@ -1384,28 +1651,78 @@ Return the structured output only.`,
       }
 
       // -------------------------------------------------------------------
-      // Merge — provider first, and watch the base branch after each one.
+      // Merge — approvals collected for the WHOLE increment first, then merge
+      // in canonical order, watching the base branch after each one.
       // -------------------------------------------------------------------
       phase('Merge')
 
+      // Merge order is the script's decision, not the order PRs happened to be
+      // appended in. See MERGE_RANK.
+      const mergeOrder = sortForMerge(prs)
+
       const merge = await agent(
-        `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green. Merge them and
-prove \`${BASE_BRANCH}\` survived it.
+        `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is
+necessary but NOT sufficient — every one of them also needs an approving review on GitHub, and you collect ALL of
+those BEFORE you merge ANYTHING` : ''}.
+Merge them and prove \`${BASE_BRANCH}\` survived it.
 ${GUARDRAILS}
 ${MERGE_ORDER_RULE}
 THE PULL REQUESTS, in merge order:
-${prList(prs)}
+${prList(mergeOrder)}
+${
+  REQUIRE_APPROVAL
+    ? `
+STEP A — THE APPROVAL SWEEP. Do this for EVERY pr above BEFORE you merge a single one.
+**This is a whole-increment gate, not a per-PR one.** It runs first because it used to run per-PR inside the merge
+loop, and that merged an approved frontend while its sibling tests PR was still waiting on a reviewer — half an
+increment on \`${BASE_BRANCH}\`, stale specs against a shipped UI, and CDP red. Nothing auto-reverted it.
+Green CI is not consent either: it proves the code runs, not that a person agreed to it.
 
-For EACH pr, in that order:
+For EACH pr above, read its decision — this changes nothing, so the order does not matter here:
+   \`gh pr view <url> --repo <ghRepo> --json reviewDecision,reviews\`
+   - \`APPROVED\` → that one is satisfied. Go on to the next pr.
+   - \`CHANGES_REQUESTED\` → **STOP IMMEDIATELY, before merging anything.** Report green:false,
+     \`stopReason: "changes-requested"\`, and blocked "<repo> PR has changes requested".
+     Leave every PR open. Do NOT merge the others, do NOT dismiss the review, and do NOT push a fix — a reviewer
+     asked for something and answering them is a human's job, not this stage's.
+   - anything else, including empty (\`REVIEW_REQUIRED\`, or no reviews yet) → nobody has looked at that one yet.
+
+If any pr is still unapproved after that pass, WAIT: re-read the unapproved ones with the same command, up to
+${APPROVAL_POLLS} times, sleeping 120 seconds between checks via \`sleep 120\`, until every pr reports
+\`APPROVED\` — or any one of them reports \`CHANGES_REQUESTED\`, which stops you as above.
+   - every pr \`APPROVED\` → the gate is satisfied for the whole increment. Go to STEP B.
+   - still short after ${APPROVAL_POLLS} checks → **STOP, and this is not a failure.** Report green:false,
+     \`stopReason: "awaiting-approval"\`, and blocked "<repo> PR is green and awaiting approval: <url>" naming
+     EVERY pr still unapproved. **Merge nothing** — not even the ones that are approved. Leave them all open and
+     untouched. Somebody will approve them and the increment resumes from its \`prs\` field on the next run,
+     re-entering here with the approvals already in place.
+
+NEVER merge a PR whose reviewDecision you have not just read and seen to be \`APPROVED\`, and never merge any PR
+of this increment while a sibling is unapproved. Do not approve one yourself, do not ask anyone to, and do not
+work around the gate by any other route — GitHub refuses a self-approval and defeating that refusal is never this
+stage's business.
+
+STEP B — THE MERGES. Only now, and only with every approval in hand. For EACH pr, in the merge order listed:`
+    : `
+For EACH pr, in that order:`
+}
 1. If this is not the first pr, RE-CHECK IT FIRST — merging the previous one moved \`${BASE_BRANCH}\` underneath
    it. \`gh pr checks <url> --watch --fail-fast --interval 30\`, Bash \`timeout\` 600000, at most
-   ${CI_WATCH_WINDOWS} times. **If it is now RED, STOP.** Report green:false, name it in blocked as
+   ${CI_WATCH_WINDOWS} times. **If it is now RED, STOP.** Report green:false, \`stopReason: "pr-red"\`, name it
+   in blocked as
    "<repo> PR went red after <previous repo> merged", and leave BOTH the merged commit and this open PR exactly
    as they are. Do NOT revert the merge, do NOT close the PR, do NOT force anything through. A revert is a
    human's call.
 2. Confirm it is mergeable and green:
    \`gh pr view <url> --repo <ghRepo> --json mergeable,mergeStateStatus,statusCheckRollup\`
-   Anything other than a clean, green, mergeable PR stops you. NEVER merge a red PR, under any circumstance.
+   Anything other than a clean, green, mergeable PR stops you, with \`stopReason: "not-mergeable"\`. NEVER
+   merge a red PR, under any circumstance.${
+     REQUIRE_APPROVAL
+       ? `
+   Re-read its \`reviewDecision\` in the same call and confirm it is still \`APPROVED\` — a review can be
+   dismissed between STEP A and here. Anything else stops you with \`stopReason: "awaiting-approval"\`.`
+       : ''
+   }
 3. \`gh pr merge <url> --repo <ghRepo> --squash --delete-branch\`
 4. Get the merge commit: \`gh pr view <url> --repo <ghRepo> --json mergeCommit\`
 5. WATCH \`${BASE_BRANCH}\` for that commit — a green PR can still break the base branch.
@@ -1413,24 +1730,61 @@ For EACH pr, in that order:
    then, for each run it names, BLOCK on it with the tool's \`timeout\` set to 600000:
    \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/${id}-main-<repo>.log 2>&1\`
    At most ${CI_WATCH_WINDOWS} watches per run; still unresolved after that counts as RED.
-   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, put "the base branch went red after merging
+   **If \`${BASE_BRANCH}\` goes RED, STOP.** Report green:false, \`stopReason: "base-branch-red"\`, put "the
+   base branch went red after merging
    <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
    base branch being red is a human decision, not a repair job.
 6. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
    its merge \`"sha"\`. \`jq empty ${BACKLOG_TILDE}\` after. Do this after EACH merge.
 
-green:true ONLY if every pr merged AND ${BASE_BRANCH} went green afterwards for every one of them.
+FINAL SWEEP, after the last merge and before you report. **The list above is not proof that it is the whole
+increment.** A CI fixer may have opened a PR in another repo, and if anything went wrong when it registered
+that PR you would never see it here. So go and look, rather than trusting this list. For EACH of
+${Object.values(GH_REPO).join(', ')}:
+   \`gh pr list --repo <ghRepo> --head ${workBranch} --state open --json number,url,title\`
+Every one must come back empty. If ANY repo still has an open PR on \`${workBranch}\`:
+**STOP and report green:false**, \`stopReason: "pr-left-open"\`, with "<repo> still has an open PR on this
+branch: <url>" in blocked. Do NOT merge it yourself — it has not been through the watcher or the approval
+gate in this run, and merging an unvetted PR to clear a warning is worse than the warning. Leave everything
+as it is and name it, so a human can finish it.
+
+green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them, AND the final
+sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
         light({ label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA })
       )
 
       if (!merge || !merge.green) {
         const detail = merge ? [merge.blocked, ...(merge.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'merge agent died'
-        log(`${id}: MERGE/BASE-BRANCH STOP — ${detail}`)
+        // Waiting on a reviewer is not a broken increment, and must never be
+        // reported as one: `main-red` reads as "something is wrong with the
+        // build", and the fix for that is nothing like "go and ask a colleague".
+        //
+        // The stage says which condition fired in `stopReason`, a fixed enum
+        // value, rather than us reading it back out of its prose. Anything we
+        // do not recognise — including a stage that never set it — falls to
+        // `main-red`, because the two mistakes are not symmetrical: calling a
+        // healthy pause a failure wastes somebody's afternoon, while calling a
+        // red base branch a healthy pause hides it.
+        const stopReason = merge?.stopReason
+        const atGate = stopReason === 'awaiting-approval' || stopReason === 'changes-requested'
+        // `pr-left-open` is its own outcome rather than `main-red`. The base
+        // branch is fine; what is wrong is that the increment is only partly
+        // merged, and the two need completely different things from a human.
+        const leftOpen = stopReason === 'pr-left-open'
+        const outcome = atGate || leftOpen ? stopReason : 'main-red'
+        log(
+          atGate
+            ? `${id}: STOPPED AT THE APPROVAL GATE (${stopReason}) — ${detail}`
+            : leftOpen
+              ? `${id}: PARTLY MERGED — a PR on ${workBranch} is still open: ${detail}`
+              : `${id}: MERGE/BASE-BRANCH STOP${stopReason ? ` (${stopReason})` : ' (stopReason not set)'} — ${detail}`
+        )
         results.push({
           id,
           ticket: ticket.key,
-          outcome: 'main-red',
+          outcome,
+          stopReason: stopReason ?? 'not-set',
           prs: prs.map((p) => p.url),
           merged: merge?.merged ?? [],
           detail: detail || 'the merge stage did not reach green',

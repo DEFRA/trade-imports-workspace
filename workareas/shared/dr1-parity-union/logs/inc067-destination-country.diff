@@ -1,0 +1,362 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js
+deleted file mode 100644
+index 3d430a63..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js
++++ /dev/null
+@@ -1,90 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  requiredOneOf,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import * as countries from '../../../../../../services/countries/index.js'
+-import { destinationCountryPage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['destinationCountry'] }
+-const view = `${TEMPLATES}/features/destination-country/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const DIVIDER_OPTION = { value: '', text: '──────────', disabled: true }
+-
+-const countryItems = () => [
+-  { value: '', text: copy.country.placeholder },
+-  DIVIDER_OPTION,
+-  ...countries.originCountries()
+-]
+-
+-const fields = () =>
+-  compose(
+-    requiredOneOf(
+-      'destinationCountry',
+-      countries.originCountries().map(({ value }) => value),
+-      copy.errors.countryRequired
+-    )
+-  )
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    countryItems: countryItems()
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, {
+-    destinationCountry: answers.destinationCountry ?? ''
+-  })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = { destinationCountry: payload.destinationCountry ?? '' }
+-  const { errors } = validate(fields(), payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.cy.js
+deleted file mode 100644
+index 7ef3a84b..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.cy.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Gwlad gyrchfan',
+-  country: {
+-    label: 'Gwlad gyrchfan',
+-    hint: 'Y wlad y mae’r llwyth yn teithio ymlaen iddi ar ôl Prydain Fawr.',
+-    placeholder: 'Dewiswch wlad'
+-  },
+-  errors: {
+-    countryRequired: 'Dewiswch y wlad gyrchfan'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js
+deleted file mode 100644
+index 448e2543..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js
++++ /dev/null
+@@ -1,11 +0,0 @@
+-export const copy = {
+-  title: 'Destination country',
+-  country: {
+-    label: 'Destination country',
+-    hint: 'The country the consignment travels on to after Great Britain.',
+-    placeholder: 'Select a country'
+-  },
+-  errors: {
+-    countryRequired: 'Select the destination country'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.test.js
+deleted file mode 100644
+index 0a97a680..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.test.js
++++ /dev/null
+@@ -1,55 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as destinationCountry from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const leaves = (node, path = []) =>
+-  typeof node === 'object' && node !== null
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('destination-country copy module', () => {
+-  it('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-})
+-
+-describe('GET destination-country — copy reaches the view', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should supply the feature copy module and the shared chrome copy', async () => {
+-    const get = destinationCountry.routes.find(
+-      (route) => route.method === 'GET'
+-    ).handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    expect(result.view.context.sharedCopy.saveActions.saveAndContinue).toBe(
+-      'Save and continue'
+-    )
+-    expect(result.view.context.countryItems[0].text).toBe(
+-      copy.country.placeholder
+-    )
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/destination-country.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/destination-country.fit.spec.js
+deleted file mode 100644
+index 7c0ae3b3..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/destination-country.fit.spec.js
++++ /dev/null
+@@ -1,105 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
+-import { countriesOrigin } from '../../../../../../services/_capture/fixtures.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON = 'form button[type="submit"]'
+-
+-const startAtDestinationCountry = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page.locator('input[name="reasonForImport"][value="transit"]').check()
+-  await page.locator(SUBMIT_BUTTON).first().click()
+-  await page.goto(reasonUrl.replace(/\/import-reason$/, '/destination-country'))
+-  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+-}
+-
+-test.describe('destination-country feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtDestinationCountry(page)
+-  })
+-
+-  test('renders the captured country options and feature copy', async ({
+-    page
+-  }) => {
+-    await expect(
+-      page.getByLabel(copy.country.label)
+-    ).toHaveAccessibleDescription(copy.country.hint)
+-    const select = page.locator('select#destinationCountry')
+-    await expect(select.locator('option').first()).toHaveText(
+-      copy.country.placeholder
+-    )
+-    const renderedCountries = await select
+-      .locator('option')
+-      .evaluateAll((options) =>
+-        options.slice(2).map((option) => ({
+-          code: option.value,
+-          name: option.textContent
+-        }))
+-      )
+-    expect(renderedCountries).toEqual(countriesOrigin)
+-  })
+-
+-  test('country validation: when no country is selected, links to and focuses the empty select', async ({
+-    page
+-  }) => {
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    const countryError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.countryRequired })
+-    await expect(countryError).toBeVisible()
+-    await countryError.click()
+-    await expect(page.getByLabel(copy.country.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue('')
+-  })
+-
+-  test('saves a valid country, redirects and persists the answer', async ({
+-    page
+-  }) => {
+-    const destinationUrl = page.url()
+-    const france = countriesOrigin.find(({ code }) => code === 'FR')
+-
+-    await page.getByLabel(copy.country.label).selectOption(france.code)
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(destinationUrl)
+-    await expect(page.getByLabel(copy.country.label)).toHaveValue(france.code)
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/destination-country$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('has no serious or critical axe violations', async ({ page }) => {
+-    const results = await new AxeBuilder({ page })
+-      .withTags(['wcag2a', 'wcag2aa'])
+-      .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
+-
+-    expect(
+-      seriousOrCritical,
+-      `Destination country has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-    ).toEqual([])
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/evaluation.js
+deleted file mode 100644
+index e129f0a9..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/evaluation.js
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { destinationCountry } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('destination-country', [
+-  scalar({ field: 'destinationCountry', obligation: destinationCountry })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/page.js b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/page.js
+deleted file mode 100644
+index f2ac5782..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const destinationCountryPage = {
+-  id: 'destination-country',
+-  slug: 'destination-country'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk
+deleted file mode 100644
+index 7e5f49e3..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/destination-country/template.njk
++++ /dev/null
+@@ -1,28 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "govuk/components/select/macro.njk" import govukSelect %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+-
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ govukSelect({
+-      id: "destinationCountry",
+-      name: "destinationCountry",
+-      label: { text: copy.country.label, classes: "govuk-label--s" },
+-      hint: { text: copy.country.hint },
+-      value: values.destinationCountry,
+-      errorMessage: errors.destinationCountry and { text: errors.destinationCountry },
+-      items: countryItems
+-    }) }}
+-
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+-  </form>
+-{% endblock %}

@@ -1,0 +1,835 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
+index 14e7dfcf..81ce45c4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
+@@ -7,27 +7,163 @@ import {
+ } from '../../../../../../lib/http-status.js'
+ import {
+   compose,
++  dateText,
+   oneOf,
++  requiredOneOf,
+   validate
+ } from '../../../../../../lib/validate/index.js'
+ import * as kit from '../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
++import * as countries from '../../../../../../services/countries/index.js'
+ import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
++import * as ports from '../../../../../../services/ports/index.js'
+ import { importReasonPage as page } from './page.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
+ 
+-export const meta = { ...page, collects: ['reasonForImport'] }
++export const meta = {
++  ...page,
++  collects: [
++    'reasonForImport',
++    'purposeInInternalMarket',
++    'destinationCountry',
++    'portOfExit',
++    'exitDate'
++  ]
++}
+ const view = `${TEMPLATES}/features/import-reason/template`
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const fields = compose(
+-  oneOf(
+-    'reasonForImport',
+-    importReasonPurpose.reasons().map((option) => option.value)
++const PURPOSE_FIELD = 'purposeInInternalMarket'
++const TRANSHIPMENT_COUNTRY_FIELD = 'transhipmentDestinationCountry'
++const TRANSIT_COUNTRY_FIELD = 'transitDestinationCountry'
++const TRANSIT_PORT_FIELD = 'transitPortOfExit'
++const TEMPORARY_ADMISSION_PORT_FIELD = 'temporaryAdmissionPortOfExit'
++const TEMPORARY_ADMISSION_DATE_FIELD = 'temporaryAdmissionExitDate'
++
++// The follow-up questions each reason opens as a conditional reveal, in the
++// order the reveal asks them. Two reasons ask the destination country and two
++// ask the port of exit, and two inputs cannot share a name, so each branch
++// carries its own form field and maps back to the one answer behind it — the
++// same split the origin page makes between `regionOfOriginCodeSuffix` and the
++// `regionOfOriginCode` it stores. Which of the four answers is in scope stays
++// the obligations' call (obligations/sections/import-reason.js); this says
++// only where the question is asked.
++const REVEALS = Object.freeze({
++  internalMarket: [{ field: PURPOSE_FIELD, answer: 'purposeInInternalMarket' }],
++  transhipmentOrOnwardTravel: [
++    { field: TRANSHIPMENT_COUNTRY_FIELD, answer: 'destinationCountry' }
++  ],
++  transit: [
++    { field: TRANSIT_PORT_FIELD, answer: 'portOfExit' },
++    { field: TRANSIT_COUNTRY_FIELD, answer: 'destinationCountry' }
++  ],
++  temporaryAdmissionHorses: [
++    { field: TEMPORARY_ADMISSION_DATE_FIELD, answer: 'exitDate' },
++    { field: TEMPORARY_ADMISSION_PORT_FIELD, answer: 'portOfExit' }
++  ],
++  reEntry: []
++})
++
++const revealsFor = (reasonForImport) => REVEALS[reasonForImport] ?? []
++
++const countryRule = (field) =>
++  requiredOneOf(
++    field,
++    countries.originCountries().map(({ value }) => value),
++    copy.errors.countryRequired
++  )
++
++const portRule = (field) =>
++  requiredOneOf(
++    field,
++    ports.list().map((port) => port.code),
++    copy.errors.portRequired
++  )
++
++const RULES = Object.freeze({
++  [PURPOSE_FIELD]: () =>
++    oneOf(
++      PURPOSE_FIELD,
++      importReasonPurpose.purposes().map((option) => option.value)
++    ),
++  [TRANSHIPMENT_COUNTRY_FIELD]: () => countryRule(TRANSHIPMENT_COUNTRY_FIELD),
++  [TRANSIT_COUNTRY_FIELD]: () => countryRule(TRANSIT_COUNTRY_FIELD),
++  [TRANSIT_PORT_FIELD]: () => portRule(TRANSIT_PORT_FIELD),
++  [TEMPORARY_ADMISSION_PORT_FIELD]: () =>
++    portRule(TEMPORARY_ADMISSION_PORT_FIELD),
++  [TEMPORARY_ADMISSION_DATE_FIELD]: () =>
++    dateText(TEMPORARY_ADMISSION_DATE_FIELD, copy.errors.dateInvalid)
++})
++
++// Only the reveal the submitted reason opens is answerable, so only its
++// fields are measured. A field belonging to another branch arrives empty and
++// is neither validated nor committed.
++const fields = (reasonForImport) =>
++  compose(
++    oneOf(
++      'reasonForImport',
++      importReasonPurpose.reasons().map((option) => option.value)
++    ),
++    ...revealsFor(reasonForImport).map((reveal) => RULES[reveal.field]())
++  )
++
++const formValuesFrom = (payload) => ({
++  reasonForImport: payload.reasonForImport ?? '',
++  [PURPOSE_FIELD]: payload[PURPOSE_FIELD] ?? '',
++  [TRANSHIPMENT_COUNTRY_FIELD]: payload[TRANSHIPMENT_COUNTRY_FIELD] ?? '',
++  [TRANSIT_COUNTRY_FIELD]: payload[TRANSIT_COUNTRY_FIELD] ?? '',
++  [TRANSIT_PORT_FIELD]: payload[TRANSIT_PORT_FIELD] ?? '',
++  [TEMPORARY_ADMISSION_PORT_FIELD]:
++    payload[TEMPORARY_ADMISSION_PORT_FIELD] ?? '',
++  [TEMPORARY_ADMISSION_DATE_FIELD]: kit.readDate(
++    payload,
++    TEMPORARY_ADMISSION_DATE_FIELD
++  )
++})
++
++// A stored answer prefills every branch that asks for it, so switching between
++// two reasons that share a question keeps the answer in front of the user.
++const formValuesFromAnswers = (answers) => ({
++  reasonForImport: answers.reasonForImport ?? '',
++  [PURPOSE_FIELD]: answers.purposeInInternalMarket ?? '',
++  [TRANSHIPMENT_COUNTRY_FIELD]: answers.destinationCountry ?? '',
++  [TRANSIT_COUNTRY_FIELD]: answers.destinationCountry ?? '',
++  [TRANSIT_PORT_FIELD]: answers.portOfExit ?? '',
++  [TEMPORARY_ADMISSION_PORT_FIELD]: answers.portOfExit ?? '',
++  [TEMPORARY_ADMISSION_DATE_FIELD]: answers.exitDate ?? {}
++})
++
++// The reason and the answers its own reveal collected. An answer belonging to
++// a reason no longer chosen is left out and the evaluator purges it, so a
++// flip never carries a stale answer forward.
++const answersFrom = (values) => ({
++  reasonForImport: values.reasonForImport,
++  ...Object.fromEntries(
++    revealsFor(values.reasonForImport).map(({ field, answer }) => [
++      answer,
++      values[field]
++    ])
+   )
+-)
++})
++
++const DIVIDER_OPTION = { value: '', text: '──────────', disabled: true }
++
++const countryItems = () => [
++  { value: '', text: copy.country.placeholder },
++  DIVIDER_OPTION,
++  ...countries.originCountries()
++]
++
++const portItems = () => [
++  { value: '', text: copy.port.placeholder },
++  DIVIDER_OPTION,
++  ...ports.list().map((port) => ({
++    value: port.code,
++    text: `${port.name} (${port.code})`
++  }))
++]
+ 
+ const render = (h, journey, values, errors = {}, recoverableError = false) =>
+   h.view(view, {
+@@ -45,18 +181,31 @@ const render = (h, journey, values, errors = {}, recoverableError = false) =>
+       ...option,
+       hint: { text: copy.reasonHints[option.value] },
+       checked: option.value === values.reasonForImport
+-    }))
++    })),
++    purposeOptions: importReasonPurpose.purposes().map((option) => ({
++      ...option,
++      hint: { text: copy.purpose.hints[option.value] },
++      checked: option.value === values[PURPOSE_FIELD]
++    })),
++    countryItems: countryItems(),
++    portItems: portItems(),
++    exitDateField: kit.dateField(TEMPORARY_ADMISSION_DATE_FIELD, {
++      label: copy.date.label,
++      hint: copy.date.hint,
++      value: values[TEMPORARY_ADMISSION_DATE_FIELD],
++      error: errors[TEMPORARY_ADMISSION_DATE_FIELD]
++    })
+   })
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, { reasonForImport: answers.reasonForImport ?? '' })
++  return render(h, journey, formValuesFromAnswers(answers))
+ }
+ 
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+-  const values = { reasonForImport: payload.reasonForImport ?? '' }
+-  const { errors } = validate(fields, payload)
++  const values = formValuesFrom(payload)
++  const { errors } = validate(fields(values.reasonForImport), payload)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+     return render(h, journey, values, errors).code(HTTP_STATUS_BAD_REQUEST)
+@@ -65,7 +214,7 @@ const post = async (request, h) => {
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+-      committed = await state.commit(request, h, values)
++      committed = await state.commit(request, h, answersFrom(values))
+     },
+     async () => {
+       const { journey } = await state.get(request, h)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+index 67a38741..6ad6edbd 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+@@ -15,13 +15,16 @@ import { dispatchPages } from '../index.js'
+ import * as importReason from './controller.js'
+ 
+ const post = postHandlerOf(importReason)
++const get = importReason.routes.find((route) => route.method === 'GET').handler
++
++const configure = () => {
++  configureRecords(recordsStub)
++  configureSession(sessionStub)
++  buildDispatch(dispatchPages)
++}
+ 
+ describe('POST import-reason — invalid payload', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
++  beforeAll(configure)
+   beforeEach(() => store.clear())
+ 
+   it('Should answer 400 and re-render an out-of-list reason, committing nothing', async () => {
+@@ -32,4 +35,93 @@ describe('POST import-reason — invalid payload', () => {
+     expect(result.view.context.errors.reasonForImport).toBeDefined()
+     expect(result.after).toEqual(result.before)
+   })
++
++  it('Should refuse the destination country the transit reveal asks for and keep the port the user did choose', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: 'GB DVR',
++        transitDestinationCountry: ''
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.transitDestinationCountry).toBeDefined()
++    expect(result.view.context.values.transitPortOfExit).toBe('GB DVR')
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should refuse an unreal exit date the temporary-admission reveal asks for', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: '31/2/2026',
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionExitDate).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should ignore a field belonging to a reason the user did not choose', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'reEntry',
++        transitPortOfExit: '',
++        transitDestinationCountry: '',
++        temporaryAdmissionExitDate: ''
++      }
++    })
++    expect(result.response.redirect).toBeDefined()
++    expect(result.after.reasonForImport).toBe('reEntry')
++  })
++})
++
++describe('POST import-reason — the reveal the reason opens', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should commit the transit reveal as the two answers behind its fields', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transit',
++        transitPortOfExit: 'GB DVR',
++        transitDestinationCountry: 'IE'
++      }
++    })
++    expect(result.after.portOfExit).toBe('GB DVR')
++    expect(result.after.destinationCountry).toBe('IE')
++  })
++
++  it('Should drop the answers of the reason the user moved away from', async () => {
++    const flipped = await driveHandler(post, {
++      seed: {
++        reasonForImport: 'transit',
++        portOfExit: 'GB DVR',
++        destinationCountry: 'IE'
++      },
++      payload: {
++        reasonForImport: 'internalMarket',
++        purposeInInternalMarket: 'breeding'
++      }
++    })
++    expect(flipped.after.purposeInInternalMarket).toBe('breeding')
++    expect(flipped.after.portOfExit).toBeUndefined()
++    expect(flipped.after.destinationCountry).toBeUndefined()
++  })
++})
++
++describe('GET import-reason — the reveals prefill from the one answer behind them', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should offer a stored port of exit to both reveals that ask for it', async () => {
++    const result = await driveHandler(get, {
++      seed: { reasonForImport: 'transit', portOfExit: 'GB DVR' }
++    })
++    expect(result.view.context.values.transitPortOfExit).toBe('GB DVR')
++    expect(result.view.context.values.temporaryAdmissionPortOfExit).toBe(
++      'GB DVR'
++    )
++  })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
+index 4a8e182d..6aa9e120 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
+@@ -13,5 +13,49 @@ export const copy = {
+       'Ar gyfer anifeiliaid a awdurdodwyd i ail-fynediad, neu allforion a wrthodwyd sy’n dychwelyd i Brydain Fawr.',
+     temporaryAdmissionHorses:
+       'Ar gyfer ceffylau a awdurdodwyd i fynediad dros dro.'
++  },
++  purpose: {
++    legend: 'Diben yn y farchnad fewnol',
++    hints: {
++      'transfer-of-ownership-sale-gift':
++        'Unrhyw symudiad anifail sydd â’r nod o werthu’r anifail neu drosglwyddo perchnogaeth yr anifail o un person neu endid i’r llall. Er enghraifft, anifeiliaid sydd wedi’u gwerthu ac sy’n cael eu symud at berchennog newydd neu a fydd yn cael eu gwerthu ar ôl cyrraedd Prydain Fawr, pryniannau gan fridiwr/siop dramor a lle mae anifail yn cael ei symud at berchennog newydd heb unrhyw werthiant (e.e. rhodd)',
++      'transfer-of-ownership-rescue':
++        'Mae perchnogaeth anifail/anifeiliaid yn newid o un person neu endid i’r llall drwy ailgartrefu ac mae’n cael ei fabwysiadu/faethu gan deuluoedd newydd, gyda neu heb gyfnewid neu roi arian.',
++      breeding:
++        'Anifeiliaid ar gyfer atgenhedlu. Mae hyn yn cynnwys anifeiliaid y bwriedir iddynt gyfrannu at gronfa enynnol rhaglen fridio, gwella ansawdd da byw, neu gynhyrchu epil',
++      research: 'Anifeiliaid i’w defnyddio mewn ymchwil wyddonol neu feddygol.',
++      'racing-competition-show-or-training':
++        'Anifeiliaid i gymryd rhan mewn digwyddiadau cystadleuol neu hyfforddi',
++      'approved-premises-or-body':
++        'Anifeiliaid ar gyfer arddangosfeydd, sŵau, casgliadau, neu raglenni cadwraeth lle mae angen trwydded neu gymeradwyaeth.',
++      'companion-animal-not-for-resale-or-rehoming':
++        'Anifeiliaid mewn perchnogaeth breifat sy’n cael eu mewnforio o dan y rheolau masnachol gan nad yw’r anifail yn gallu bodloni’r gofynion anfasnachol, er enghraifft, un neu fwy o anifeiliaid yn cael eu cludo gan gludwr masnachol heb eu perchennog neu berson awdurdodedig, perchennog nad yw’n teithio o fewn pum niwrnod i symudiad yr anifeiliaid neu grŵp o bump neu fwy o anifeiliaid yng nghwmni eu perchennog.',
++      production:
++        'Anifeiliaid sy’n cael eu ffermio i gynhyrchu cig, llaeth, wyau, gwlân neu unrhyw gynnyrch neu is-gynnyrch anifail arall',
++      slaughter:
++        'Anifeiliaid i’w lladd a’u prosesu ar gyfer cynhyrchu cig yn fuan ar ôl cyrraedd Prydain Fawr.',
++      fattening: 'Anifeiliaid i’w pesgi ar gyfer cynhyrchu cig.',
++      restocking:
++        'I ailgyflenwi neu wella poblogaethau rhywogaethau, er enghraifft, ailstocio anifeiliaid hela neu bysgod.'
++    }
++  },
++  country: {
++    label: 'Gwlad gyrchfan',
++    hint: 'Y wlad y mae’r llwyth yn teithio ymlaen iddi ar ôl Prydain Fawr.',
++    placeholder: 'Dewiswch wlad'
++  },
++  port: {
++    label: 'Porthladd ymadael',
++    hint: 'Dewiswch ble bydd y llwyth yn gadael Prydain Fawr. Mae ymadael a mynediad yn rhannu’r un rhestr porthladdoedd.',
++    placeholder: 'Dewiswch borthladd ymadael'
++  },
++  date: {
++    label: 'Dyddiad ymadael',
++    hint: 'Y dyddiad y disgwylir i’r anifeiliaid adael Prydain Fawr. Er enghraifft, 27/3/2026'
++  },
++  errors: {
++    countryRequired: 'Dewiswch y wlad gyrchfan',
++    portRequired: 'Dewiswch y porthladd ymadael',
++    dateInvalid: 'Rhowch ddyddiad ymadael go iawn'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
+index ae1135e2..48bb0aee 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
+@@ -11,5 +11,49 @@ export const copy = {
+     reEntry:
+       'For animals authorised for re-entry, or rejected exports re-entering Great Britain.',
+     temporaryAdmissionHorses: 'For horses authorised for temporary entry.'
++  },
++  purpose: {
++    legend: 'Purpose in the internal market',
++    hints: {
++      'transfer-of-ownership-sale-gift':
++        "Any movement of an animal that has as it's aim, the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (e.g. a gift)",
++      'transfer-of-ownership-rescue':
++        'Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.',
++      breeding:
++        'Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring',
++      research: 'Animals for use in scientific or medical research.',
++      'racing-competition-show-or-training':
++        'Animals to participate in competitive or training events',
++      'approved-premises-or-body':
++        'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.',
++      'companion-animal-not-for-resale-or-rehoming':
++        "Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
++      production:
++        'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product',
++      slaughter:
++        'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.',
++      fattening: 'Animals to be fattened for meat production.',
++      restocking:
++        'To replenish or enhance populations of species, for example, restocking of game or fish.'
++    }
++  },
++  country: {
++    label: 'Destination country',
++    hint: 'The country the consignment travels on to after Great Britain.',
++    placeholder: 'Select a country'
++  },
++  port: {
++    label: 'Port of exit',
++    hint: 'Choose where the consignment will leave Great Britain. Exit and entry share the same port list.',
++    placeholder: 'Select port of exit'
++  },
++  date: {
++    label: 'Exit date',
++    hint: 'The date the animals are expected to leave Great Britain. For example, 27/3/2026'
++  },
++  errors: {
++    countryRequired: 'Select the destination country',
++    portRequired: 'Select the port of exit',
++    dateInvalid: 'Enter a real exit date'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
+index fac5f031..7a97e021 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
+@@ -35,6 +35,12 @@ describe('import-reason copy module', () => {
+       expect(copy.reasonHints[option.value]).toBeTruthy()
+     }
+   })
++
++  it('Should carry a hint for every service purpose option the internal-market reveal asks', () => {
++    for (const option of importReasonPurpose.purposes()) {
++      expect(copy.purpose.hints[option.value]).toBeTruthy()
++    }
++  })
+ })
+ 
+ describe('GET import-reason — copy reaches the view', () => {
+@@ -55,5 +61,8 @@ describe('GET import-reason — copy reaches the view', () => {
+     for (const option of result.view.context.reasonOptions) {
+       expect(option.hint.text).toBe(copy.reasonHints[option.value])
+     }
++    for (const option of result.view.context.purposeOptions) {
++      expect(option.hint.text).toBe(copy.purpose.hints[option.value])
++    }
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js
+index d0a223a2..be7c96bf 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/evaluation.js
+@@ -2,8 +2,21 @@ import {
+   feature,
+   scalar
+ } from '../../../../../../bridge/fulfilment-bindings.js'
+-import { reasonForImport } from '../../../../obligations/index.js'
++import {
++  destinationCountry,
++  exitDate,
++  portOfExit,
++  purposeInInternalMarket,
++  reasonForImport
++} from '../../../../obligations/index.js'
+ 
+ export const evaluationBindings = feature('import-reason', [
+-  scalar({ field: 'reasonForImport', obligation: reasonForImport })
++  scalar({ field: 'reasonForImport', obligation: reasonForImport }),
++  scalar({
++    field: 'purposeInInternalMarket',
++    obligation: purposeInInternalMarket
++  }),
++  scalar({ field: 'destinationCountry', obligation: destinationCountry }),
++  scalar({ field: 'portOfExit', obligation: portOfExit }),
++  scalar({ field: 'exitDate', obligation: exitDate })
+ ])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
+index de265190..11face44 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
+@@ -2,20 +2,36 @@ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ 
+ import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
++import { countriesOrigin } from '../../../../../../services/_capture/fixtures.js'
+ import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
+ import { validatorDefaults } from '../../../../../../shared/copy.en.js'
+ import { copy } from './copy/copy.en.js'
+ import { signIn } from '../../../../../../../../../fit/sign-in.js'
+ 
+ const REASON_INPUT_SELECTOR = 'input[name="reasonForImport"]'
++const SUBMIT_BUTTON = 'form button[type="submit"]'
++const CHOOSE_DATE_LABEL = 'Choose date'
++const PORT_CODE = 'GB DVR'
++const COUNTRY_CODE = 'IE'
++const TRANSIT_PORT = '#transitPortOfExit'
++const TRANSIT_COUNTRY = '#transitDestinationCountry'
++
++// govuk-frontend's own conditional-reveal script puts aria-expanded on the
++// radio it belongs to, which axe reads as an attribute a radio may not carry.
++// The same filter guards the origin page's axe tests.
++const isGovukConditionalRevealFalsePositive = (violation) =>
++  violation.id === 'aria-allowed-attr' &&
++  violation.nodes.every((node) =>
++    /govuk-(radios|checkboxes)__input/.test(node.html)
++  )
+ 
+ const expectNoSeriousOrCriticalAxeViolations = async (page) => {
+   const results = await new AxeBuilder({ page })
+     .withTags(['wcag2a', 'wcag2aa'])
+     .analyze()
+-  const seriousOrCritical = results.violations.filter(({ impact }) =>
+-    ['serious', 'critical'].includes(impact)
+-  )
++  const seriousOrCritical = results.violations
++    .filter(({ impact }) => ['serious', 'critical'].includes(impact))
++    .filter((violation) => !isGovukConditionalRevealFalsePositive(violation))
+ 
+   expect(
+     seriousOrCritical,
+@@ -38,6 +54,22 @@ const startAtImportReason = async (page) => {
+   await expect(page.getByRole('heading', { name: copy.legend })).toBeVisible()
+ }
+ 
++const radioFor = (page, value) =>
++  page.locator(`${REASON_INPUT_SELECTOR}[value="${value}"]`)
++
++/** The reveal a reason opens, found through the radio that controls it — so
++ * the lookup only works while the radio really does control a reveal. */
++const revealFor = async (page, value) => {
++  const controls = await radioFor(page, value).getAttribute('aria-controls')
++  expect(controls, `${value} controls a reveal`).toBeTruthy()
++  return page.locator(`#${controls}`)
++}
++
++const fieldIdsIn = (reveal) =>
++  reveal
++    .locator('select, input:not([type="hidden"])')
++    .evaluateAll((fields) => fields.map((field) => field.id))
++
+ test.describe('import-reason feature', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+@@ -72,7 +104,7 @@ test.describe('import-reason feature', () => {
+         input.value = 'not-a-real-reason'
+         input.checked = true
+       })
+-    await page.locator('form button[type="submit"]').first().click()
++    await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     const reasonError = page
+       .getByRole('alert')
+@@ -94,7 +126,8 @@ test.describe('import-reason feature', () => {
+       .find(({ value }) => value === 'internalMarket')
+ 
+     await page.getByRole('radio', { name: selected.text, exact: true }).check()
+-    await page.locator('form button[type="submit"]').first().click()
++    await page.getByRole('radio', { name: 'Breeding', exact: true }).check()
++    await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+     await page.goto(reasonUrl)
+@@ -115,3 +148,134 @@ test.describe('import-reason feature', () => {
+     await expectNoSeriousOrCriticalAxeViolations(page)
+   })
+ })
++
++test.describe('import-reason reveals', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await startAtImportReason(page)
++  })
++
++  test('opens no reveal until a reason that needs one is chosen', async ({
++    page
++  }) => {
++    const transitReveal = await revealFor(page, 'transit')
++    await expect(transitReveal).toBeHidden()
++
++    await radioFor(page, 'reEntry').check()
++    await expect(transitReveal).toBeHidden()
++    await expect(radioFor(page, 'reEntry')).not.toHaveAttribute('aria-controls')
++  })
++
++  test('asks the internal-market purpose under its own radio', async ({
++    page
++  }) => {
++    await radioFor(page, 'internalMarket').check()
++    const reveal = await revealFor(page, 'internalMarket')
++
++    await expect(reveal).toBeVisible()
++    await expect(reveal.getByText(copy.purpose.legend)).toBeVisible()
++    const renderedPurposes = await reveal
++      .locator('input[name="purposeInInternalMarket"]')
++      .evaluateAll((inputs) => inputs.map((input) => input.value))
++    expect(renderedPurposes).toEqual(
++      importReasonPurpose.purposes().map(({ value }) => value)
++    )
++  })
++
++  test('asks transit for the port of exit and then the destination country', async ({
++    page
++  }) => {
++    await radioFor(page, 'transit').check()
++    const reveal = await revealFor(page, 'transit')
++
++    await expect(reveal).toBeVisible()
++    expect(await fieldIdsIn(reveal)).toEqual([
++      'transitPortOfExit',
++      'transitDestinationCountry'
++    ])
++    await expect(page.locator(TRANSIT_COUNTRY)).toHaveAccessibleName(
++      copy.country.label
++    )
++    const renderedCountries = await page
++      .locator(`${TRANSIT_COUNTRY} option`)
++      .evaluateAll((options) =>
++        options.slice(2).map((option) => ({
++          code: option.value,
++          name: option.textContent
++        }))
++      )
++    expect(renderedCountries).toEqual(countriesOrigin)
++  })
++
++  test('asks temporary admission for the exit date and then the port of exit', async ({
++    page
++  }) => {
++    await radioFor(page, 'temporaryAdmissionHorses').check()
++    const reveal = await revealFor(page, 'temporaryAdmissionHorses')
++
++    await expect(reveal).toBeVisible()
++    await expect(
++      reveal.getByRole('button', { name: CHOOSE_DATE_LABEL })
++    ).toBeVisible()
++    await expect(
++      page.locator('#temporaryAdmissionExitDate')
++    ).toHaveAccessibleDescription(copy.date.hint)
++    expect(await fieldIdsIn(reveal)).toEqual([
++      'temporaryAdmissionExitDate',
++      'temporaryAdmissionPortOfExit'
++    ])
++  })
++
++  test('asks transhipment for the destination country alone', async ({
++    page
++  }) => {
++    await radioFor(page, 'transhipmentOrOnwardTravel').check()
++    const reveal = await revealFor(page, 'transhipmentOrOnwardTravel')
++
++    await expect(reveal).toBeVisible()
++    expect(await fieldIdsIn(reveal)).toEqual(['transhipmentDestinationCountry'])
++  })
++
++  test('saves a reason and its reveal in one submit, and offers the answers back', async ({
++    page
++  }) => {
++    const reasonUrl = page.url()
++
++    await radioFor(page, 'transit').check()
++    await page.locator(TRANSIT_PORT).selectOption(PORT_CODE)
++    await page.locator(TRANSIT_COUNTRY).selectOption(COUNTRY_CODE)
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
++    await page.goto(reasonUrl)
++    await expect(radioFor(page, 'transit')).toBeChecked()
++    await expect(page.locator(TRANSIT_PORT)).toHaveValue(PORT_CODE)
++    await expect(page.locator(TRANSIT_COUNTRY)).toHaveValue(COUNTRY_CODE)
++  })
++
++  test('refuses an unanswered reveal, links to the field and keeps the reveal open', async ({
++    page
++  }) => {
++    await radioFor(page, 'transit').check()
++    await page.locator(TRANSIT_PORT).selectOption(PORT_CODE)
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    const countryError = page
++      .getByRole('alert')
++      .getByRole('link', { name: copy.errors.countryRequired })
++    await expect(countryError).toBeVisible()
++    await countryError.click()
++    await expect(page.locator(TRANSIT_COUNTRY)).toBeFocused()
++    await expect(page.locator(TRANSIT_PORT)).toHaveValue(PORT_CODE)
++  })
++
++  test('has no serious or critical axe violations with a reveal open and in error', async ({
++    page
++  }) => {
++    await radioFor(page, 'transit').check()
++    await page.locator(SUBMIT_BUTTON).first().click()
++    await expect(page.getByRole('alert')).toBeVisible()
++
++    await expectNoSeriousOrCriticalAxeViolations(page)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk
+index fa0b38d3..a5ff1f6a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk
+@@ -1,5 +1,7 @@
+ {% extends "shared/layout.njk" %}
+ {% from "govuk/components/radios/macro.njk" import govukRadios %}
++{% from "govuk/components/select/macro.njk" import govukSelect %}
++{% from "moj/components/date-picker/macro.njk" import mojDatePicker %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+ 
+@@ -7,6 +9,91 @@
+   {% include "shared/error-summary.njk" %}
+ 
+   {{ sectionCaption(caption) }}
++
++  {# Each reason that needs follow-up questions opens them underneath itself,
++     so the whole reason is answered in one go. A question two reasons ask
++     carries a form field per reason — two inputs cannot share a name — and the
++     controller maps both back to the one answer. #}
++  {% set internalMarketReveal %}
++    {{ govukRadios({
++      name: "purposeInInternalMarket",
++      fieldset: {
++        legend: {
++          text: copy.purpose.legend,
++          classes: "govuk-fieldset__legend--m"
++        }
++      },
++      errorMessage: errors.purposeInInternalMarket and { text: errors.purposeInInternalMarket },
++      items: purposeOptions
++    }) }}
++  {% endset %}
++
++  {% set transhipmentReveal %}
++    {{ govukSelect({
++      id: "transhipmentDestinationCountry",
++      name: "transhipmentDestinationCountry",
++      label: { text: copy.country.label, classes: "govuk-label--s" },
++      hint: { text: copy.country.hint },
++      value: values.transhipmentDestinationCountry,
++      errorMessage: errors.transhipmentDestinationCountry and { text: errors.transhipmentDestinationCountry },
++      items: countryItems
++    }) }}
++  {% endset %}
++
++  {% set transitReveal %}
++    {{ govukSelect({
++      id: "transitPortOfExit",
++      name: "transitPortOfExit",
++      label: { text: copy.port.label, classes: "govuk-label--s" },
++      hint: { text: copy.port.hint },
++      value: values.transitPortOfExit,
++      errorMessage: errors.transitPortOfExit and { text: errors.transitPortOfExit },
++      items: portItems
++    }) }}
++
++    {{ govukSelect({
++      id: "transitDestinationCountry",
++      name: "transitDestinationCountry",
++      label: { text: copy.country.label, classes: "govuk-label--s" },
++      hint: { text: copy.country.hint },
++      value: values.transitDestinationCountry,
++      errorMessage: errors.transitDestinationCountry and { text: errors.transitDestinationCountry },
++      items: countryItems
++    }) }}
++  {% endset %}
++
++  {% set temporaryAdmissionReveal %}
++    {{ mojDatePicker(exitDateField) }}
++
++    {{ govukSelect({
++      id: "temporaryAdmissionPortOfExit",
++      name: "temporaryAdmissionPortOfExit",
++      label: { text: copy.port.label, classes: "govuk-label--s" },
++      hint: { text: copy.port.hint },
++      value: values.temporaryAdmissionPortOfExit,
++      errorMessage: errors.temporaryAdmissionPortOfExit and { text: errors.temporaryAdmissionPortOfExit },
++      items: portItems
++    }) }}
++  {% endset %}
++
++  {% set reveals = {
++    internalMarket: internalMarketReveal,
++    transhipmentOrOnwardTravel: transhipmentReveal,
++    transit: transitReveal,
++    temporaryAdmissionHorses: temporaryAdmissionReveal
++  } %}
++
++  {% set reasonItems = [] %}
++  {% for option in reasonOptions %}
++    {% set appended = reasonItems.push({
++      value: option.value,
++      text: option.text,
++      hint: option.hint,
++      checked: option.checked,
++      conditional: { html: reveals[option.value] }
++    }) %}
++  {% endfor %}
++
+   <form method="post" novalidate>
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+@@ -21,7 +108,7 @@
+         }
+       },
+       errorMessage: errors.reasonForImport and { text: errors.reasonForImport },
+-      items: reasonOptions
++      items: reasonItems
+     }) }}
+ 
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}

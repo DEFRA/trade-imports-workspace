@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-067}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 asks the purpose and exit questions as conditional reveals under the import reason the user has just chosen. The frontend hides them until the next page and asks each one on a page of its own, so Transit costs a user three page loads and two hub tasks where Design release 1 costs one.
+
+h2. Acceptance criteria
+
+* The four follow-up questions — purpose in the internal market, destination country, port of exit and exit date — are asked as GOV.UK conditional reveals under the {{importReason}} radio that requires them, on the import reason page itself.
+* Internal market reveals the purpose question with its eleven radios under a medium fieldset legend reading "Purpose in the internal market"; Transhipment or onward travel reveals Destination country; Transit reveals Port of exit then Destination country, in that order; Temporary admission horses reveals Exit date then Port of exit, in that order; Re-entry reveals nothing.
+* The four standalone pages are removed from the linear flow in {{src/server/app/sets/live-animals/journeys/linear/flow/flow.js}}, along with the page-name headings and breadcrumbs those pages carried.
+* The conditional exit-details task row in {{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js}} is retired.
+* No obligation changes: the gates in {{src/server/app/sets/live-animals/obligations/sections/import-reason.js}} already match Design release 1's reveal conditions exactly, and the existing purge-on-flip behaviour is preserved.
+* A user choosing any single reason answers the reason and everything it requires with one Save and continue.
+* The E2E specs and visual baselines in the tests repo are updated to the single-page reveal journey.
+
+h2. Out of scope
+
+* The destination-country hint and the leading sentence of the exit-date hint are booked separately as {{inc-068}}.
+* The "Exit details" hub row copy work is booked separately as {{inc-069}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

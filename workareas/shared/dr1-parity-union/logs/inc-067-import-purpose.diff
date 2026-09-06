@@ -1,0 +1,543 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js
+deleted file mode 100644
+index 8cd855e1..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js
++++ /dev/null
+@@ -1,89 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import {
+-  HTTP_STATUS_BAD_REQUEST,
+-  HTTP_STATUS_INTERNAL_SERVER_ERROR
+-} from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  oneOf,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
+-import { importPurposePage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['purposeInInternalMarket'] }
+-const view = `${TEMPLATES}/features/import-purpose/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const fields = compose(
+-  oneOf(
+-    'purposeInInternalMarket',
+-    importReasonPurpose.purposes().map((option) => option.value)
+-  )
+-)
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    purposeOptions: importReasonPurpose.purposes().map((option) => ({
+-      ...option,
+-      hint: { text: copy.purposeHints[option.value] },
+-      checked: option.value === values.purposeInInternalMarket
+-    }))
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, {
+-    purposeInInternalMarket: answers.purposeInInternalMarket ?? ''
+-  })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = {
+-    purposeInInternalMarket: payload.purposeInInternalMarket ?? ''
+-  }
+-  const { errors } = validate(fields, payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors).code(HTTP_STATUS_BAD_REQUEST)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.test.js
+deleted file mode 100644
+index 2e6d4461..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.test.js
++++ /dev/null
+@@ -1,107 +0,0 @@
+-import {
+-  afterEach,
+-  beforeAll,
+-  beforeEach,
+-  describe,
+-  expect,
+-  it,
+-  vi
+-} from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../services/persistence/records/stub/index.js'
+-import { records as realRecords } from '../../../../../../services/persistence/records/real/index.js'
+-import { session as sessionStub } from '../../../../../../services/persistence/session/stub.js'
+-import {
+-  driveHandler,
+-  postHandlerOf
+-} from '../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../index.js'
+-
+-import * as importPurpose from './controller.js'
+-
+-const post = postHandlerOf(importPurpose)
+-
+-describe('POST import-purpose — invalid payload', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should answer 400 and re-render an out-of-list purpose, committing nothing', async () => {
+-    const result = await driveHandler(post, {
+-      payload: { purposeInInternalMarket: 'not-a-real-purpose' }
+-    })
+-    expect(result.response.statusCode).toBe(400)
+-    expect(result.view.context.errors.purposeInInternalMarket).toBeDefined()
+-    expect(result.after).toEqual(result.before)
+-  })
+-})
+-
+-describe('POST import-purpose — save failures', () => {
+-  beforeAll(() => {
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-
+-  beforeEach(() => {
+-    store.clear()
+-    vi.stubGlobal(
+-      'fetch',
+-      vi.fn(async () => ({
+-        ok: false,
+-        status: 503,
+-        statusText: 'Service Unavailable'
+-      }))
+-    )
+-  })
+-
+-  afterEach(() => {
+-    configureRecords(recordsStub)
+-    vi.unstubAllGlobals()
+-  })
+-
+-  const failingOnControllerCommit = (failure) => {
+-    let replaceCalls = 0
+-    configureRecords({
+-      ...recordsStub,
+-      replaceFulfilment: (...args) => {
+-        replaceCalls += 1
+-        return replaceCalls === 1
+-          ? recordsStub.replaceFulfilment(...args)
+-          : failure(...args)
+-      }
+-    })
+-  }
+-
+-  it('Should re-render a real backend request failure at 500 with the cleaned value and banner', async () => {
+-    failingOnControllerCommit(realRecords.replaceFulfilment)
+-
+-    const result = await driveHandler(post, {
+-      payload: { purposeInInternalMarket: 'breeding' }
+-    })
+-
+-    expect(result.response.statusCode).toBe(500)
+-    expect(result.view.context.recoverableError).toBe(true)
+-    expect(result.view.context.values).toEqual({
+-      purposeInInternalMarket: 'breeding'
+-    })
+-  })
+-
+-  it('Should let a programming error escape to the promoted catch-all without an in-page banner', async () => {
+-    failingOnControllerCommit(async () => {
+-      throw new TypeError('programming failure')
+-    })
+-
+-    await expect(
+-      driveHandler(post, {
+-        payload: { purposeInInternalMarket: 'breeding' }
+-      })
+-    ).rejects.toThrow(new TypeError('programming failure'))
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.cy.js
+deleted file mode 100644
+index c11323ff..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.cy.js
++++ /dev/null
+@@ -1,27 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Diben yn y farchnad fewnol',
+-  legend: 'Diben yn y farchnad fewnol',
+-  purposeHints: {
+-    'transfer-of-ownership-sale-gift':
+-      'Unrhyw symudiad anifail sydd â’r nod o werthu’r anifail neu drosglwyddo perchnogaeth yr anifail o un person neu endid i’r llall. Er enghraifft, anifeiliaid sydd wedi’u gwerthu ac sy’n cael eu symud at berchennog newydd neu a fydd yn cael eu gwerthu ar ôl cyrraedd Prydain Fawr, pryniannau gan fridiwr/siop dramor a lle mae anifail yn cael ei symud at berchennog newydd heb unrhyw werthiant (e.e. rhodd)',
+-    'transfer-of-ownership-rescue':
+-      'Mae perchnogaeth anifail/anifeiliaid yn newid o un person neu endid i’r llall drwy ailgartrefu ac mae’n cael ei fabwysiadu/faethu gan deuluoedd newydd, gyda neu heb gyfnewid neu roi arian.',
+-    breeding:
+-      'Anifeiliaid ar gyfer atgenhedlu. Mae hyn yn cynnwys anifeiliaid y bwriedir iddynt gyfrannu at gronfa enynnol rhaglen fridio, gwella ansawdd da byw, neu gynhyrchu epil',
+-    research: 'Anifeiliaid i’w defnyddio mewn ymchwil wyddonol neu feddygol.',
+-    'racing-competition-show-or-training':
+-      'Anifeiliaid i gymryd rhan mewn digwyddiadau cystadleuol neu hyfforddi',
+-    'approved-premises-or-body':
+-      'Anifeiliaid ar gyfer arddangosfeydd, sŵau, casgliadau, neu raglenni cadwraeth lle mae angen trwydded neu gymeradwyaeth.',
+-    'companion-animal-not-for-resale-or-rehoming':
+-      'Anifeiliaid mewn perchnogaeth breifat sy’n cael eu mewnforio o dan y rheolau masnachol gan nad yw’r anifail yn gallu bodloni’r gofynion anfasnachol, er enghraifft, un neu fwy o anifeiliaid yn cael eu cludo gan gludwr masnachol heb eu perchennog neu berson awdurdodedig, perchennog nad yw’n teithio o fewn pum niwrnod i symudiad yr anifeiliaid neu grŵp o bump neu fwy o anifeiliaid yng nghwmni eu perchennog.',
+-    production:
+-      'Anifeiliaid sy’n cael eu ffermio i gynhyrchu cig, llaeth, wyau, gwlân neu unrhyw gynnyrch neu is-gynnyrch anifail arall',
+-    slaughter:
+-      'Anifeiliaid i’w lladd a’u prosesu ar gyfer cynhyrchu cig yn fuan ar ôl cyrraedd Prydain Fawr.',
+-    fattening: 'Anifeiliaid i’w pesgi ar gyfer cynhyrchu cig.',
+-    restocking:
+-      'I ailgyflenwi neu wella poblogaethau rhywogaethau, er enghraifft, ailstocio anifeiliaid hela neu bysgod.'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js
+deleted file mode 100644
+index 55c18f99..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js
++++ /dev/null
+@@ -1,26 +0,0 @@
+-export const copy = {
+-  title: 'Purpose in the internal market',
+-  legend: 'Purpose in the internal market',
+-  purposeHints: {
+-    'transfer-of-ownership-sale-gift':
+-      "Any movement of an animal that has as it's aim, the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (e.g. a gift)",
+-    'transfer-of-ownership-rescue':
+-      'Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.',
+-    breeding:
+-      'Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring',
+-    research: 'Animals for use in scientific or medical research.',
+-    'racing-competition-show-or-training':
+-      'Animals to participate in competitive or training events',
+-    'approved-premises-or-body':
+-      'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.',
+-    'companion-animal-not-for-resale-or-rehoming':
+-      "Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.",
+-    production:
+-      'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product',
+-    slaughter:
+-      'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.',
+-    fattening: 'Animals to be fattened for meat production.',
+-    restocking:
+-      'To replenish or enhance populations of species, for example, restocking of game or fish.'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.test.js
+deleted file mode 100644
+index 480c0ea2..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.test.js
++++ /dev/null
+@@ -1,61 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, test } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import * as importReasonPurpose from '../../../../../../../services/import-reason-purpose/index.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as importPurpose from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const isPlainObject = (node) => typeof node === 'object' && node !== null
+-
+-const leaves = (node, path = []) =>
+-  isPlainObject(node)
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('#copy', () => {
+-  test('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-
+-  test('Should carry a hint for every service purpose option', () => {
+-    for (const option of importReasonPurpose.purposes()) {
+-      expect(copy.purposeHints[option.value]).toBeTruthy()
+-    }
+-  })
+-})
+-
+-describe('GET /import-purpose', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  test('Should supply the feature copy module and hint every option from it', async () => {
+-    const get = importPurpose.routes.find(
+-      (route) => route.method === 'GET'
+-    ).handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    for (const option of result.view.context.purposeOptions) {
+-      expect(option.hint.text).toBe(copy.purposeHints[option.value])
+-    }
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/evaluation.js
+deleted file mode 100644
+index 204f7838..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/evaluation.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { purposeInInternalMarket } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('import-purpose', [
+-  scalar({
+-    field: 'purposeInInternalMarket',
+-    obligation: purposeInInternalMarket
+-  })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.fit.spec.js
+deleted file mode 100644
+index a32297c6..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/import-purpose.fit.spec.js
++++ /dev/null
+@@ -1,132 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import {
+-  answerOriginEntry,
+-  expectPageEndsWithPrimaryAlone
+-} from '../../../../../../../../../fit/live-animals-journey.js'
+-import * as importReasonPurpose from '../../../../../../services/import-reason-purpose/index.js'
+-import { validatorDefaults } from '../../../../../../shared/copy.en.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
+-const PURPOSE_INPUT_SELECTOR = 'input[name="purposeInInternalMarket"]'
+-
+-const startAtImportPurpose = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page
+-    .locator('input[name="reasonForImport"][value="internalMarket"]')
+-    .check()
+-  await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-  await page.goto(reasonUrl.replace(/\/import-reason$/, '/import-purpose'))
+-  await expect(page.getByRole('heading', { name: copy.legend })).toBeVisible()
+-}
+-
+-const expectNoSeriousOrCriticalAxeViolations = async (page) => {
+-  const results = await new AxeBuilder({ page })
+-    .withTags(['wcag2a', 'wcag2aa'])
+-    .analyze()
+-  const seriousOrCritical = results.violations.filter(({ impact }) =>
+-    ['serious', 'critical'].includes(impact)
+-  )
+-
+-  expect(
+-    seriousOrCritical,
+-    `Import purpose has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-  ).toEqual([])
+-}
+-
+-test.describe('import-purpose feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtImportPurpose(page)
+-  })
+-
+-  test('renders the service-backed purposes and feature copy', async ({
+-    page
+-  }) => {
+-    const group = page.getByRole('group', { name: copy.legend })
+-    const renderedValues = await group
+-      .locator(PURPOSE_INPUT_SELECTOR)
+-      .evaluateAll((inputs) => inputs.map((input) => input.value))
+-    expect(renderedValues).toEqual(
+-      importReasonPurpose.purposes().map(({ value }) => value)
+-    )
+-    for (const option of importReasonPurpose.purposes()) {
+-      await expect(
+-        page.getByRole('radio', { name: option.text, exact: true })
+-      ).toBeVisible()
+-      await expect(group).toContainText(copy.purposeHints[option.value])
+-    }
+-  })
+-
+-  test('ends with the primary alone, being reached from the import reason page', async ({
+-    page
+-  }) => {
+-    await expectPageEndsWithPrimaryAlone(page)
+-  })
+-
+-  test('purpose validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection', async ({
+-    page
+-  }) => {
+-    await page
+-      .locator(PURPOSE_INPUT_SELECTOR)
+-      .first()
+-      .evaluate((input) => {
+-        input.value = 'not-a-real-purpose'
+-        input.checked = true
+-      })
+-    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-
+-    const purposeError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: validatorDefaults.oneOf })
+-    await expect(purposeError).toBeVisible()
+-    await purposeError.click()
+-    await expect(page.locator(PURPOSE_INPUT_SELECTOR).first()).toBeFocused()
+-    await expect(page.locator(`${PURPOSE_INPUT_SELECTOR}:checked`)).toHaveCount(
+-      0
+-    )
+-  })
+-
+-  test('saves a valid purpose, redirects and persists the answer', async ({
+-    page
+-  }) => {
+-    const purposeUrl = page.url()
+-    const selected = importReasonPurpose
+-      .purposes()
+-      .find(({ value }) => value === 'breeding')
+-
+-    await page.getByRole('radio', { name: selected.text, exact: true }).check()
+-    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(purposeUrl)
+-    await expect(
+-      page.getByRole('radio', { name: selected.text, exact: true })
+-    ).toBeChecked()
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/import-purpose$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('has no serious or critical axe violations', async ({ page }) => {
+-    await expectNoSeriousOrCriticalAxeViolations(page)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/page.js b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/page.js
+deleted file mode 100644
+index 14244c84..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const importPurposePage = {
+-  id: 'import-purpose',
+-  slug: 'import-purpose'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
+deleted file mode 100644
+index 6d4125ad..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-purpose/template.njk
++++ /dev/null
+@@ -1,31 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "govuk/components/radios/macro.njk" import govukRadios %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ govukRadios({
+-      name: "purposeInInternalMarket",
+-      fieldset: {
+-        legend: {
+-          text: copy.legend,
+-          isPageHeading: true,
+-          classes: "govuk-fieldset__legend--l"
+-        }
+-      },
+-      errorMessage: errors.purposeInInternalMarket and { text: errors.purposeInInternalMarket },
+-      items: purposeOptions
+-    }) }}
+-
+-    {# Second page of the import-reason row — reached from the reason page,
+-       not from the hub, so it ends with the primary alone. #}
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+-  </form>
+-{% endblock %}

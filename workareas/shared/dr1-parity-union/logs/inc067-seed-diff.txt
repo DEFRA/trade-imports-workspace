@@ -1,0 +1,73 @@
+diff --git a/scripts/lighthouse/seed-notification.js b/scripts/lighthouse/seed-notification.js
+index 4ae6b3e4..211b5176 100644
+--- a/scripts/lighthouse/seed-notification.js
++++ b/scripts/lighthouse/seed-notification.js
+@@ -120,35 +120,27 @@ const CONTACT_STEP = {
+   fields: firstOption('contactAddress')
+ }
+ 
+-/** The steps each reason for import brings into scope. A page whose obligation
+- * is out of scope still renders, so a shape that never answers it is a page
+- * Lighthouse audits blank. */
+-const REASON_STEPS = new Map([
++/** The follow-up answers each reason for import reveals on the reason page
++ * itself, keyed by the branch's own input name. A reason whose reveal is not
++ * opened submits nothing extra. */
++const REASON_REVEAL_FIELDS = new Map([
+   [
+     'internalMarket',
+-    [
+-      {
+-        slug: 'import-purpose',
+-        fields: { purposeInInternalMarket: values.purposeInInternalMarket }
+-      }
+-    ]
++    () => ({ purposeInInternalMarket: values.purposeInInternalMarket })
+   ],
+   [
+     'transit',
+-    [
+-      {
+-        slug: 'destination-country',
+-        fields: firstListedOption('destinationCountry')
+-      },
+-      { slug: 'port-of-exit', fields: firstListedOption('portOfExit') }
+-    ]
++    (page) => ({
++      ...firstListedOption('transitPortOfExit')(page),
++      ...firstListedOption('transitDestinationCountry')(page)
++    })
+   ],
+   [
+     'temporaryAdmissionHorses',
+-    [
+-      { slug: 'port-of-exit', fields: firstListedOption('portOfExit') },
+-      { slug: 'exit-date', fields: { exitDate: ukDate(arrival) } }
+-    ]
++    (page) => ({
++      temporaryAdmissionExitDate: ukDate(arrival),
++      ...firstListedOption('temporaryAdmissionPortOfExit')(page)
++    })
+   ]
+ ])
+ 
+@@ -210,10 +202,17 @@ const stepsIn = (steps, key, label) => {
+   return scoped
+ }
+ 
++const reasonStep = (reasonForImport) => ({
++  slug: 'import-reason',
++  fields: (page) => ({
++    reasonForImport,
++    ...stepsIn(REASON_REVEAL_FIELDS, reasonForImport, 'reason for import')(page)
++  })
++})
++
+ export const seedSteps = ({ reasonForImport, transporterType }) => [
+   ...BEFORE_REASON,
+-  { slug: 'import-reason', fields: { reasonForImport } },
+-  ...stepsIn(REASON_STEPS, reasonForImport, 'reason for import'),
++  reasonStep(reasonForImport),
+   ...AFTER_REASON,
+   { slug: 'transporters', fields: { transporterType } },
+   ...stepsIn(TRANSPORTER_STEPS, transporterType, 'transporter type'),

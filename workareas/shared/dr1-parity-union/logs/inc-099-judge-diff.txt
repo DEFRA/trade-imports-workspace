@@ -1,0 +1,117 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index c4a1e4d1..9e7589be 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -126,7 +126,7 @@ test.describe('live-animals journey glue', () => {
+     await expect(page).toHaveURL(
+       /\/identification\?change=1(?:#identification-card-0)?$/
+     )
+-    await page.getByLabel('Ear tag number').fill('UK000000000002')
++    await page.getByLabel('Ear tag', { exact: true }).fill('UK000000000002')
+     await page.getByRole('button', { name: 'Save and add another' }).click()
+     await expect(page).toHaveURL(
+       /\/identification\?change=1(?:#identification-card-0)?$/
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 1de33207..0ff5397a 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -260,7 +260,9 @@ export const completeAnswerSections = async (page) => {
+   await expect(
+     page.getByRole('heading', { name: 'Identification details', exact: true })
+   ).toBeVisible()
+-  await page.getByLabel('Ear tag number').fill(unit.animalIdentifierEarTag)
++  await page
++    .getByLabel('Ear tag', { exact: true })
++    .fill(unit.animalIdentifierEarTag)
+   await page.getByRole('button', { name: 'Save and finish' }).click()
+   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index b185bcc0..72963e85 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -105,7 +105,7 @@ describe(`${SUITE} — the cards view`, () => {
+   it('Should show only the commodity-gated fields per card — typed for Cats with the address, no fallbacks', async () => {
+     const [card] = await viewCards({ commodityLines: [catLine()] })
+     const labels = card.fields.map((field) => field.label)
+-    expect(labels).toEqual(['Microchip number', 'Passport number', 'Tattoo'])
++    expect(labels).toEqual(['Microchip number', 'Passport', 'Tattoo'])
+     expect(card.showAddress).toBe(true)
+     const ids = card.fields.map((field) => field.id)
+     expect(ids).toEqual([MICROCHIP_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 6ae0e98d..23d013ed 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -103,7 +103,7 @@ export const copy = {
+         hint: 'Er enghraifft, 900123456789012'
+       },
+       animalIdentifierPassport: {
+-        label: 'Rhif pasbort',
++        label: 'Pasbort',
+         hint: 'Er enghraifft, UK123456789'
+       },
+       animalIdentifierTattoo: {
+@@ -111,7 +111,7 @@ export const copy = {
+         hint: 'Er enghraifft, AB1234'
+       },
+       animalIdentifierEarTag: {
+-        label: 'Rhif tag clust',
++        label: 'Tag clust',
+         hint: 'Er enghraifft, UK123456789012'
+       },
+       horseName: { label: 'Enw’r ceffyl' }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 94f9cce6..9ec2dc84 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -95,7 +95,7 @@ export const copy = {
+         hint: 'For example, 900123456789012'
+       },
+       animalIdentifierPassport: {
+-        label: 'Passport number',
++        label: 'Passport',
+         hint: 'For example, UK123456789'
+       },
+       animalIdentifierTattoo: {
+@@ -103,7 +103,7 @@ export const copy = {
+         hint: 'For example, AB1234'
+       },
+       animalIdentifierEarTag: {
+-        label: 'Ear tag number',
++        label: 'Ear tag',
+         hint: 'For example, UK123456789012'
+       },
+       horseName: { label: 'Horse name' }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 2ccf18d8..3b25aa13 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -280,6 +280,27 @@ test.describe('animal identification', () => {
+     await expect(page.locator('#nameOrOrganisationName-0')).toHaveCount(0)
+   })
+ 
++  // Design release 1 names an identifier once and uses that name both on the
++  // entry field and as the column heading of the saved-animals table. A trader
++  // who types under "Passport number" and reads the value back under
++  // "Passport" is being shown two names for one thing, so the entry label is
++  // pinned to the column label rather than to a wording of its own.
++  test('labels each identifier field with the word the saved-animals table heads it with', async ({
++    page
++  }) => {
++    await openIdentification(page, [['Cow', [BOS_TAURUS]]])
++
++    for (const field of [
++      'animalIdentifierPassport',
++      'animalIdentifierTattoo',
++      'animalIdentifierEarTag'
++    ]) {
++      await expect(page.locator(`label[for="${field}-0"]`)).toHaveText(
++        copy.identification.identifierLabels[field]
++      )
++    }
++  })
++
+   test('permanent address asks for eight fields and never for a country', async ({
+     page
+   }) => {

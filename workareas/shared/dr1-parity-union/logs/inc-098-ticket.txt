@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-098}} from the {{shared/dr1-parity-union}} backlog.
+
+Each identification card is headed with the commodity, the species and a counter — "Enter details for Bos taurus 1 of 2" — and that counter is the only thing on the card that mentions the number the trader is being held to. There is no link beside it, and no link anywhere on the page back to consignment details. A trader who realises at animal three that they entered two has to leave through "Save and return to hub" or the breadcrumb, find the consignment details row on the hub, and come back. It bites harder than it looks because the frontend enforces the count in both directions: entering fewer than the line says leaves the section in progress, and reducing the number afterwards is refused outright with "You have N identifier records for X but entered M animals".
+
+Design release 1 puts a "Change number of animals" link in the header bar of every species panel, to the right of the species name, pointing at the consignment details page. It is the same link on every panel: it names no species, carries no query and carries no return, so wherever the trader clicks it they land on the consignment details page with all the counts on it and find their own way back.
+
+h2. Acceptance criteria
+
+* Each identification card's heading area carries a link labelled "Change number of animals", to the right of the species name, matching Design release 1.
+* The link's target is the same consignment details route the notification hub already links to.
+* The link renders once per species panel, so a notification with four commodity lines renders four of them, each with identical markup.
+* The link carries no species id, no query string and no return parameter — Design release 1's link is a bare href, and carrying a change context would be an improvement on Design release 1 rather than parity with it.
+* The change is made in {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk}}, with the target passed through the card view model at {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js}}.
+* Unit tests cover the view model supplying the target, and the E2E specs and visual baselines in the tests repo are updated for the new link.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Frontend: {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:9-29}}
+
+Design release 1: {{app/views/animal-identification-details.html:96-98}}
+
+Travels with EUDPA-397 (inc-105) — both restore a route out of the identification page back to the commodity answers.

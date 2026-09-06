@@ -175,3 +175,24 @@ prototype   491b39263e4f3b613bc398851b701425b74438ee
 Verification ladder: `test:live-animals`, `format:check`, `lint`,
 `test:fit:features`. The frontend pins npm through `packageManager`, so an
 ambient npm rejects the lockfile.
+
+## Disputed increments are deferred to their own pass
+
+Ruled by Rhys, 2026-09-04. Every `disputed`-band increment is held out of the
+build loop and carries the status `deferred`. Three were `todo` when the ruling
+landed: `inc-103`, `inc-126`, `inc-145`. The other four disputed increments were
+already withheld — `inc-024`, `inc-026`, `inc-028` are `blocked` with the
+dashboard, and `inc-062` is `dropped`.
+
+A disputed band means the two runs read the same requirement oppositely, and on
+one of the two readings the finding is struck rather than built. That is not a
+call an implementor can make. `inc-103` is the clearest case: Design release 1
+holds a trader on an animal until every identifier for that commodity has a
+value, while the V4 line the frontend implements says "Field Block - Mandatory
+to Submit - At least one Animal Identifier". Only the design authority can say
+which governs. `inc-103` also carries an ordering constraint that is *not* in
+its `dependsOn` — the commodity identifier sets must be corrected first, or a
+requires-all rule would demand a tattoo for every cow.
+
+Resolve them as a group, then set each to `todo` or `rejected`. Until then they
+must not be swept back in by a run that only reads statuses.

@@ -1,0 +1,26 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
+index fac5f031..7a97e021 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js
+@@ -35,6 +35,12 @@ describe('import-reason copy module', () => {
+       expect(copy.reasonHints[option.value]).toBeTruthy()
+     }
+   })
++
++  it('Should carry a hint for every service purpose option the internal-market reveal asks', () => {
++    for (const option of importReasonPurpose.purposes()) {
++      expect(copy.purpose.hints[option.value]).toBeTruthy()
++    }
++  })
+ })
+ 
+ describe('GET import-reason — copy reaches the view', () => {
+@@ -55,5 +61,8 @@ describe('GET import-reason — copy reaches the view', () => {
+     for (const option of result.view.context.reasonOptions) {
+       expect(option.hint.text).toBe(copy.reasonHints[option.value])
+     }
++    for (const option of result.view.context.purposeOptions) {
++      expect(option.hint.text).toBe(copy.purpose.hints[option.value])
++    }
+   })
+ })

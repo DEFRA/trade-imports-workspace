@@ -1,0 +1,195 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+index 3b52d69a..1814a88e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+@@ -7,7 +7,13 @@
+    record — replaced by the maximum-reached state at N = M. #}
+ {% macro identificationCard(card, copy) %}
+   <section id="{{ card.anchor }}" class="govuk-!-margin-bottom-6">
+-    <h2 class="govuk-heading-m">{{ card.title }}</h2>
++    <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ card.title }}</h2>
++
++    {# The counter below is the only mention of the number the trader is held
++       to, so the way to correct that number sits beside it. #}
++    <p class="govuk-body">
++      <a class="govuk-link" href="{{ card.changeCountHref }}">{{ copy.changeAnimalCount }}</a>
++    </p>
+ 
+     {% if card.hasUnits %}
+       {{ savedAnimalsTable(card, copy) }}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+index 1421b6d0..42ddd2c6 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+@@ -2,7 +2,10 @@ import { hubPath, pagePath } from '../../../../../../../shared/paths.js'
+ import { TEMPLATES } from '../../../config.js'
+ import * as state from '../../../../../../../engine/index.js'
+ import * as kit from '../../../../../../../shared/kit.js'
+-import { animalIdentificationPage as page } from '../page.js'
++import {
++  animalIdentificationPage as page,
++  consignmentDetailsPage
++} from '../page.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+@@ -34,6 +37,10 @@ const render = (
+   { forms = new Map(), errors = {}, cardErrors = [] } = {}
+ ) => {
+   const lines = state.collectionView(answers, ['commodityLines'], evaluation)
++  const changeCountHref = pagePath(
++    request.params.journeyId,
++    consignmentDetailsPage.slug
++  )
+   return h.view(view, {
+     ...kit.base(copy.title, {
+       backLink: hubPath(journey.journeyId),
+@@ -42,7 +49,7 @@ const render = (
+     }),
+     copy,
+     cards: lines.map((line) =>
+-      buildCard(answers, line, forms.get(line.index), errors)
++      buildCard(answers, line, forms.get(line.index), errors, changeCountHref)
+     ),
+     selectedCommodities: buildSelectedCommodities(lines),
+     hasLines: lines.length > 0,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index 8c8d871d..3794c79b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -180,6 +180,26 @@ describe(`${SUITE} — the Selected commodities summary`, () => {
+       expect(addHref).toBe(pagePath(journey.journeyId, 'commodities'))
+     }
+   })
++
++  // A trader who miscounted has nowhere to go from the counter otherwise: the
++  // count lives on consignment details, and dropping it is refused outright.
++  it('Should point every card at the consignment-details page to change the animal count', async () => {
++    const journey = await store.create()
++    await store.seedAnswers(journey.journeyId, {
++      commodityLines: [
++        cowLine({ numberOfAnimalsQuantity: '2' }),
++        catLine({ numberOfAnimalsQuantity: '3' })
++      ]
++    })
++    const h = stubH()
++    await getHandler(journeyRequest(journey.journeyId), h)
++    const { cards } = h.captured.view.context
++
++    expect(cards.map((card) => card.changeCountHref)).toEqual([
++      pagePath(journey.journeyId, 'consignment-details'),
++      pagePath(journey.journeyId, 'consignment-details')
++    ])
++  })
+ })
+ 
+ describe(`${SUITE} — the saved-animals table`, () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
+index 14601154..0e1b23df 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
+@@ -87,7 +87,11 @@ const visibleAddressFields = (
+ ) =>
+   showAddress && !atMax ? addressFieldsFor(index, addressValues, errors) : []
+ 
+-export const buildCard = (answers, line, form, errors) => {
++// The card counter is the only place the declared animal count appears, so
++// every card carries the route back to the page that sets it. Design release 1
++// puts the same bare link on every panel: no species, no query, no change
++// context — the trader lands on the counts and finds their own way back.
++export const buildCard = (answers, line, form, errors, changeCountHref) => {
+   const { index, entry } = line
+   const commodity = entry.commoditySelection
+   const units = entry.animalIdentifiers ?? []
+@@ -102,6 +106,7 @@ export const buildCard = (answers, line, form, errors) => {
+     anchor: `identification-card-${index}`,
+     title: cardTitleOf(entry),
+     species,
++    changeCountHref,
+     counter: atMax ? null : counterOf(species, units.length, cap),
+     maxReachedText: maxReachedTextFor(
+       cap,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 2f97a358..1883569d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -69,6 +69,7 @@ export const copy = {
+     emptyText: 'Nid ydych wedi ychwanegu unrhyw nwyddau eto.',
+     addCommodity: 'Ychwanegu nwydd',
+     addAnotherCommodity: 'Ychwanegu nwydd arall',
++    changeAnimalCount: 'Newid nifer yr anifeiliaid',
+     summary: {
+       caption: 'Nwyddau a ddewiswyd',
+       commodityCode: 'Cod nwyddau',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index a89d98fc..989935c6 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -61,6 +61,7 @@ export const copy = {
+     emptyText: 'You have not added any commodities yet.',
+     addCommodity: 'Add a commodity',
+     addAnotherCommodity: 'Add another commodity',
++    changeAnimalCount: 'Change number of animals',
+     summary: {
+       caption: 'Selected commodities',
+       commodityCode: 'Commodity code',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+index 7575e664..84f0cbd0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+@@ -89,6 +89,17 @@ describe('#copy', () => {
+     )
+   })
+ 
++  // Every card gets the same link, so it names no species — it says what it
++  // changes, not which animal it changes it for.
++  it('Should label the route back to the animal count without naming a species', () => {
++    expect(copy.identification.changeAnimalCount).toBe(
++      'Change number of animals'
++    )
++    expect(copyCy.identification.changeAnimalCount).toBe(
++      'Newid nifer yr anifeiliaid'
++    )
++  })
++
+   it('Should interpolate capReached', () => {
+     expect(copy.identification.errors.capReached(2)).toBe(
+       'You have already entered details for all 2 animals — remove a record before adding another'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index a91cda0f..4d175062 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -296,6 +296,33 @@ test.describe('animal identification', () => {
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+   })
+ 
++  // A trader who miscounts has to reach the count from the card that told
++  // them it was wrong — the count itself lives on consignment details.
++  test('offers Change number of animals on every card and lands on the consignment details page', async ({
++    page
++  }) => {
++    await openIdentification(
++      page,
++      [
++        ['Cow', [BOS_TAURUS]],
++        ['Fish', [SALMO_SALAR]]
++      ],
++      ['2', '3']
++    )
++    const changeCount = page.getByRole('link', {
++      name: copy.identification.changeAnimalCount,
++      exact: true
++    })
++    await expect(changeCount).toHaveCount(2)
++
++    await changeCount.first().click()
++
++    await expect(
++      page.getByRole('heading', { name: copy.consignmentDetails.title })
++    ).toBeVisible()
++    await expect(page.locator('#numberOfAnimalsQuantity-0')).toHaveValue('2')
++  })
++
+   test('has no serious or critical axe violations', async ({ page }) => {
+     await openIdentification(page, [['Fish', [SALMO_SALAR]]])
+     await expectAxeClean(page, 'Animal identification')

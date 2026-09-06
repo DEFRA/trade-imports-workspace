@@ -1,0 +1,179 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+index 3024fb70..9b45894b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+@@ -57,6 +57,7 @@
+             id: field.id,
+             name: field.id,
+             label: { text: field.label },
++            hint: field.hint and { text: field.hint },
+             type: field.type,
+             classes: field.classes,
+             autocomplete: field.autocomplete,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js
+index 50c3a985..7605b9ab 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js
+@@ -126,7 +126,8 @@ export const addressFieldsFor = (index, values, errors) => {
+     input('telephoneNumber', copy.address.telephoneNumber, {
+       type: 'tel',
+       classes: 'govuk-input--width-20',
+-      autocomplete: 'tel'
++      autocomplete: 'tel',
++      hint: copy.addressHints.telephoneNumber
+     }),
+     input('emailAddress', copy.address.emailAddress, {
+       type: 'email',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 23d013ed..c4481674 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -155,6 +155,9 @@ export const copy = {
+       telephoneNumber: 'Rhif ffôn',
+       emailAddress: 'Cyfeiriad e-bost'
+     },
++    addressHints: {
++      telephoneNumber: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad'
++    },
+     errors: {
+       identifierMax: {
+         animalIdentifierMicrochip:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 9ec2dc84..3cdf1f5b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -143,10 +143,16 @@ export const copy = {
+       addressLine2: 'Address line 2 (optional)',
+       townOrCity: 'Town or city',
+       county: 'County (optional)',
+-      postalOrZipCode: 'Postal or zip code',
+-      telephoneNumber: 'Telephone number',
++      postalOrZipCode: 'Postcode or Zip code',
++      telephoneNumber: 'Phone number',
+       emailAddress: 'Email address'
+     },
++    // A trader giving an address outside the UK has no way of knowing the
++    // number will be dialled from here unless the field says so, so the phone
++    // field is the one address field that carries a hint.
++    addressHints: {
++      telephoneNumber: 'For international numbers include the country code'
++    },
+     errors: {
+       identifierMax: {
+         animalIdentifierMicrochip: 'Microchip must be 58 characters or fewer',
+@@ -163,8 +169,8 @@ export const copy = {
+         nameOrOrganisationName: 'Enter a name or organisation name',
+         addressLine1: 'Enter address line 1',
+         townOrCity: 'Enter a town or city',
+-        postalOrZipCode: 'Enter a postal or zip code',
+-        telephoneNumber: 'Enter a telephone number',
++        postalOrZipCode: 'Enter a postcode or Zip code',
++        telephoneNumber: 'Enter a phone number',
+         emailAddress: 'Enter an email address'
+       },
+       addressFormat: {
+@@ -174,8 +180,8 @@ export const copy = {
+         addressLine2: 'Address line 2 must be 255 characters or less',
+         townOrCity: 'Town or city must be 100 characters or less',
+         county: 'County must be 100 characters or less',
+-        postalOrZipCode: 'Postal or zip code must be 12 characters or less',
+-        telephoneNumber: 'Telephone number must be 20 characters or less',
++        postalOrZipCode: 'Postcode or Zip code must be 12 characters or less',
++        telephoneNumber: 'Phone number must be 20 characters or less',
+         emailAddress: 'Email address must be 254 characters or less'
+       },
+       atLeastOneIdentifier: 'Enter at least one identifier for this animal',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+index cfc85333..effd7a14 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+@@ -151,6 +151,30 @@ describe('#copy', () => {
+     )
+   })
+ 
++  // Design release 1 names these two address fields 'Postcode or Zip code' and
++  // 'Phone number', and hints the phone field so a trader abroad knows to give
++  // a diallable number. The errors are pinned alongside the labels because an
++  // error that names the field by another word sends the trader looking for a
++  // field that is not on the page.
++  it('Should label the permanent address postcode and phone fields as Design release 1 does', () => {
++    expect(copy.identification.address.postalOrZipCode).toBe(
++      'Postcode or Zip code'
++    )
++    expect(copy.identification.address.telephoneNumber).toBe('Phone number')
++    expect(copy.identification.addressHints.telephoneNumber).toBe(
++      'For international numbers include the country code'
++    )
++    expect(copyCy.identification.addressHints.telephoneNumber).toBe(
++      'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad'
++    )
++    expect(copy.identification.errors.addressMandatory.telephoneNumber).toBe(
++      'Enter a phone number'
++    )
++    expect(copy.identification.errors.addressFormat.postalOrZipCode).toBe(
++      'Postcode or Zip code must be 12 characters or less'
++    )
++  })
++
+   it('Should interpolate capReached', () => {
+     expect(copy.identification.errors.capReached(2)).toBe(
+       'You have already entered details for all 2 animals — remove a record before adding another'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index f0edef30..00e51869 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -203,8 +203,8 @@ const requiredAddressValidations = [
+   ['name or organisation name', 'nameOrOrganisationName'],
+   ['address line 1', 'addressLine1'],
+   ['town or city', 'townOrCity'],
+-  ['postal or zip code', 'postalOrZipCode'],
+-  ['telephone number', 'telephoneNumber'],
++  ['postcode or Zip code', 'postalOrZipCode'],
++  ['phone number', 'telephoneNumber'],
+   ['email address', 'emailAddress']
+ ]
+ 
+@@ -235,12 +235,12 @@ const addressFormatValidations = [
+     'C'.repeat(MAX_TOWN_OR_COUNTY_LENGTH + 1)
+   ],
+   [
+-    'postal or zip code over 12 characters',
++    'postcode or Zip code over 12 characters',
+     'postalOrZipCode',
+     'P'.repeat(MAX_POSTAL_OR_ZIP_CODE_LENGTH + 1)
+   ],
+   [
+-    'telephone number over 20 characters',
++    'phone number over 20 characters',
+     'telephoneNumber',
+     '1'.repeat(MAX_TELEPHONE_LENGTH + 1)
+   ],
+@@ -315,6 +315,28 @@ test.describe('animal identification', () => {
+     await expect(page.locator('select')).toHaveCount(0)
+   })
+ 
++  // Design release 1 asks for the postcode and the phone number in these
++  // words, and tells a trader abroad to include the country code — without
++  // that hint the number they give may not be diallable from here.
++  test('permanent address names the postcode and phone fields as Design release 1 does', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++
++    await expect(
++      page.getByLabel(copy.identification.address.postalOrZipCode, {
++        exact: true
++      })
++    ).toBeVisible()
++    await expect(
++      page.getByLabel(copy.identification.address.telephoneNumber, {
++        exact: true
++      })
++    ).toHaveAccessibleDescription(
++      copy.identification.addressHints.telephoneNumber
++    )
++  })
++
+   // Asking for the address without saying why leaves an invented one looking
+   // harmless. The warning names the offence, and the second bullet names the
+   // body that will turn up at whatever address was given.

@@ -1,0 +1,426 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js
+deleted file mode 100644
+index 7f3ded96..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js
++++ /dev/null
+@@ -1,77 +0,0 @@
+-import { hubPath } from '../../../../../../shared/paths.js'
+-import { TEMPLATES } from '../../config.js'
+-import * as state from '../../../../../../engine/index.js'
+-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../lib/http-status.js'
+-import {
+-  compose,
+-  dateText,
+-  validate
+-} from '../../../../../../lib/validate/index.js'
+-import * as kit from '../../../../../../shared/kit.js'
+-import { copyFor } from '../../../../../../shared/copy.js'
+-import { exitDatePage as page } from './page.js'
+-import { copy as en } from './copy/copy.en.js'
+-import { copy as cy } from './copy/copy.cy.js'
+-
+-export const meta = { ...page, collects: ['exitDate'] }
+-const view = `${TEMPLATES}/features/exit-date/template`
+-
+-const copy = copyFor({ en, cy })
+-
+-const fields = () => compose(dateText('exitDate', copy.errors.dateInvalid))
+-
+-const render = (h, journey, values, errors = {}, recoverableError = false) =>
+-  h.view(view, {
+-    ...kit.base(copy.title, {
+-      backLink: hubPath(journey.journeyId),
+-      journey,
+-      page,
+-      recoverableError
+-    }),
+-    copy,
+-    values,
+-    errors,
+-    errorSummary: kit.errorSummary(errors),
+-    exitDate: kit.dateField('exitDate', {
+-      label: copy.date.label,
+-      hint: copy.date.hint,
+-      value: values.exitDate ?? {},
+-      error: errors.exitDate
+-    })
+-  })
+-
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, { exitDate: answers.exitDate ?? {} })
+-}
+-
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const values = { exitDate: kit.readDate(payload, 'exitDate') }
+-  const { errors } = validate(fields(), payload)
+-  if (errors) {
+-    const { journey } = await state.get(request, h)
+-    return render(h, journey, values, errors)
+-  }
+-
+-  let committed
+-  const { failure } = await kit.recoverableSave(
+-    async () => {
+-      committed = await state.commit(request, h, values)
+-    },
+-    async () => {
+-      const { journey } = await state.get(request, h)
+-      return render(h, journey, values, {}, true).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
+-    }
+-  )
+-  if (failure) {
+-    return failure
+-  }
+-
+-  const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
+-}
+-
+-export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.cy.js
+deleted file mode 100644
+index 0a03cc25..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.cy.js
++++ /dev/null
+@@ -1,11 +0,0 @@
+-// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+-export const copy = {
+-  title: 'Dyddiad ymadael',
+-  date: {
+-    label: 'Dyddiad ymadael',
+-    hint: 'Y dyddiad y disgwylir i’r anifeiliaid adael Prydain Fawr. Er enghraifft, 27/3/2026'
+-  },
+-  errors: {
+-    dateInvalid: 'Rhowch ddyddiad ymadael go iawn'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js
+deleted file mode 100644
+index c1cd9047..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-export const copy = {
+-  title: 'Exit date',
+-  date: {
+-    label: 'Exit date',
+-    hint: 'The date the animals are expected to leave Great Britain. For example, 27/3/2026'
+-  },
+-  errors: {
+-    dateInvalid: 'Enter a real exit date'
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.test.js
+deleted file mode 100644
+index 4049480d..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.test.js
++++ /dev/null
+@@ -1,51 +0,0 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+-
+-import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+-import { store } from '../../../../../../../engine/store.js'
+-import { configureRecords } from '../../../../../../../engine/persistence/records.js'
+-import { configureSession } from '../../../../../../../engine/persistence/session.js'
+-import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
+-import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+-import { driveHandler } from '../../../../../../../engine/test-support.js'
+-import { dispatchPages } from '../../index.js'
+-
+-import * as exitDate from '../controller.js'
+-import { copy } from './copy.en.js'
+-
+-const leaves = (node, path = []) =>
+-  typeof node === 'object' && node !== null
+-    ? Object.entries(node).flatMap(([key, value]) =>
+-        leaves(value, [...path, key])
+-      )
+-    : [{ path: path.join('.'), value: node }]
+-
+-describe('#copy', () => {
+-  it('Should have a non-empty string at every leaf', () => {
+-    for (const { path, value } of leaves(copy)) {
+-      expect(typeof value, `${path} must be a string`).toBe('string')
+-      expect(value.trim().length, `${path} must not be empty`).toBeGreaterThan(
+-        0
+-      )
+-    }
+-  })
+-})
+-
+-describe('GET /exit-date', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
+-  beforeEach(() => store.clear())
+-
+-  it('Should supply the feature copy module and the shared chrome copy', async () => {
+-    const get = exitDate.routes.find((route) => route.method === 'GET').handler
+-    const result = await driveHandler(get)
+-    expect(result.view.context.copy).toBe(copy)
+-    expect(result.view.context.pageTitle).toBe(copy.title)
+-    expect(result.view.context.sharedCopy.saveActions.saveAndContinue).toBe(
+-      'Save and continue'
+-    )
+-    expect(result.view.context.exitDate.label.text).toBe(copy.date.label)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/evaluation.js
+deleted file mode 100644
+index 98f62ca5..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/evaluation.js
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {
+-  feature,
+-  scalar
+-} from '../../../../../../bridge/fulfilment-bindings.js'
+-import { exitDate } from '../../../../obligations/index.js'
+-
+-export const evaluationBindings = feature('exit-date', [
+-  scalar({ field: 'exitDate', obligation: exitDate })
+-])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js
+deleted file mode 100644
+index 0bac7375..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/exit-date.fit.spec.js
++++ /dev/null
+@@ -1,194 +0,0 @@
+-import AxeBuilder from '@axe-core/playwright'
+-import { expect, test } from '@playwright/test'
+-
+-import { answerOriginEntry } from '../../../../../../../../../fit/live-animals-journey.js'
+-import { copy } from './copy/copy.en.js'
+-import { signIn } from '../../../../../../../../../fit/sign-in.js'
+-
+-const SUBMIT_BUTTON = 'form button[type="submit"]'
+-const CHOOSE_DATE_LABEL = 'Choose date'
+-
+-const startAtExitDate = async (page) => {
+-  await page.goto('/')
+-  await page
+-    .locator('form[action="/notifications"]')
+-    .getByRole('button')
+-    .click()
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
+-
+-  const reasonUrl = page.url().replace(/\/origin$/, '/import-reason')
+-  await answerOriginEntry(page)
+-
+-  await page.goto(reasonUrl)
+-  await page
+-    .locator('input[name="reasonForImport"][value="temporaryAdmissionHorses"]')
+-    .check()
+-  await page.locator(SUBMIT_BUTTON).first().click()
+-
+-  const portUrl = reasonUrl.replace(/\/import-reason$/, '/port-of-exit')
+-  await page.goto(portUrl)
+-  await page.getByLabel('Port of exit').selectOption('GB ABD')
+-  await page.locator(SUBMIT_BUTTON).first().click()
+-  await page.goto(portUrl.replace(/\/port-of-exit$/, '/exit-date'))
+-  await expect(page).toHaveURL(/\/notifications\/[^/]+\/exit-date$/)
+-  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+-}
+-
+-const todayInPicker = (page) =>
+-  page.evaluate(() => {
+-    const date = new Date()
+-    const days = [
+-      'Sunday',
+-      'Monday',
+-      'Tuesday',
+-      'Wednesday',
+-      'Thursday',
+-      'Friday',
+-      'Saturday'
+-    ]
+-    const months = [
+-      'January',
+-      'February',
+-      'March',
+-      'April',
+-      'May',
+-      'June',
+-      'July',
+-      'August',
+-      'September',
+-      'October',
+-      'November',
+-      'December'
+-    ]
+-    return {
+-      accessibleName: `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`,
+-      inputValue: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+-    }
+-  })
+-
+-test.describe('exit-date feature', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtExitDate(page)
+-  })
+-
+-  test('renders the MoJ date picker and feature copy', async ({ page }) => {
+-    await expect(page.getByLabel(copy.date.label)).toHaveAccessibleDescription(
+-      copy.date.hint
+-    )
+-    await expect(page.getByLabel(copy.date.label)).toBeVisible()
+-    await expect(
+-      page.getByRole('button', { name: CHOOSE_DATE_LABEL })
+-    ).toBeVisible()
+-  })
+-
+-  test('back link returns to the notification hub', async ({ page }) => {
+-    const hubUrl = page.url().replace(/\/exit-date$/, '')
+-
+-    await page.getByRole('link', { name: 'Back', exact: true }).click()
+-
+-    await expect(page).toHaveURL(hubUrl)
+-  })
+-
+-  test('date validation: when partially entered, links to and focuses the preserved input', async ({
+-    page
+-  }) => {
+-    await page.getByLabel(copy.date.label).fill('27/')
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    const dateError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.dateInvalid })
+-    await expect(dateError).toBeVisible()
+-    await dateError.click()
+-    await expect(page.getByLabel(copy.date.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue('27/')
+-  })
+-
+-  test('date validation: when not a real date, links to and focuses the preserved input', async ({
+-    page
+-  }) => {
+-    await page.getByLabel(copy.date.label).fill('31/2/2026')
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    const dateError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.dateInvalid })
+-    await expect(dateError).toBeVisible()
+-    await dateError.click()
+-    await expect(page.getByLabel(copy.date.label)).toBeFocused()
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue('31/2/2026')
+-  })
+-})
+-
+-test.describe('exit-date date picker', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-    await startAtExitDate(page)
+-  })
+-
+-  test('selects a date in the calendar, redirects and persists it', async ({
+-    page
+-  }) => {
+-    const exitDateUrl = page.url()
+-    const today = await todayInPicker(page)
+-
+-    await page.getByRole('button', { name: CHOOSE_DATE_LABEL }).click()
+-    await expect(page.getByRole('dialog')).toBeVisible()
+-    await page
+-      .getByRole('dialog')
+-      .getByRole('button', { name: today.accessibleName, exact: true })
+-      .click()
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue(today.inputValue)
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(exitDateUrl)
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue(today.inputValue)
+-  })
+-
+-  test('has no serious or critical axe violations with the picker dialog open', async ({
+-    page
+-  }) => {
+-    await page.getByRole('button', { name: CHOOSE_DATE_LABEL }).click()
+-    await expect(page.getByRole('dialog')).toBeVisible()
+-
+-    const results = await new AxeBuilder({ page })
+-      .withTags(['wcag2a', 'wcag2aa'])
+-      .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
+-
+-    expect(
+-      seriousOrCritical,
+-      `Exit date has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-    ).toEqual([])
+-  })
+-})
+-
+-test.describe('exit-date feature without JavaScript', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await signIn(page)
+-  })
+-
+-  test.use({ javaScriptEnabled: false })
+-
+-  test.beforeEach(async ({ page }) => {
+-    await startAtExitDate(page)
+-  })
+-
+-  test('accepts a directly typed dd/mm/yyyy date and persists it', async ({
+-    page
+-  }) => {
+-    await page.getByLabel(copy.date.label).fill('27/3/2026')
+-    await page.locator(SUBMIT_BUTTON).first().click()
+-
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
+-    await page.goto(`${page.url()}/exit-date`)
+-    await expect(page.getByLabel(copy.date.label)).toHaveValue('27/3/2026')
+-    await expect(
+-      page.getByRole('button', { name: CHOOSE_DATE_LABEL })
+-    ).toHaveCount(0)
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/page.js b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/page.js
+deleted file mode 100644
+index d2d2c56a..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/page.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-export const exitDatePage = {
+-  id: 'exit-date',
+-  slug: 'exit-date'
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
+deleted file mode 100644
+index 06a609d0..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/exit-date/template.njk
++++ /dev/null
+@@ -1,22 +0,0 @@
+-{% extends "shared/layout.njk" %}
+-{% from "moj/components/date-picker/macro.njk" import mojDatePicker %}
+-{% from "shared/save-actions.njk" import saveActions %}
+-{% from "shared/section-caption.njk" import sectionCaption %}
+-
+-{% block journeyContent %}
+-  {% include "shared/error-summary.njk" %}
+-
+-  {{ sectionCaption(caption) }}
+-  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+-
+-  <form method="post" novalidate>
+-    <input type="hidden" name="crumb" value="{{ crumb }}" />
+-    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+-
+-    {{ mojDatePicker(exitDate) }}
+-
+-    {# Third page of the exit-details row — reached from the port of exit page,
+-       not from the hub, so it ends with the primary alone. #}
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+-  </form>
+-{% endblock %}

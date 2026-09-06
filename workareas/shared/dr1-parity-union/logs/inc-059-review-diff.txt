@@ -1,0 +1,138 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+index 42b3224e..3024fb70 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+@@ -1,5 +1,6 @@
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "govuk/components/button/macro.njk" import govukButton %}
++{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+ {% from "live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk" import savedAnimalsTable %}
+ 
+ {# One card per species line (design 01-16/17): the entered-identifiers
+@@ -37,8 +38,19 @@
+       {% endfor %}
+ 
+       {% if card.showAddress %}
+-        <h3 class="govuk-heading-s">{{ copy.permanentAddress.heading }}</h3>
+-        <p class="govuk-body">{{ copy.permanentAddress.required }}</p>
++        {# Design release 1 puts the fraud warning and the definition of a
++           permanent address above the question, because the reason the
++           address matters — APHA checks it — is what stops an invented one. #}
++        {{ govukWarningText({ text: copy.permanentAddress.warning }) }}
++
++        <p class="govuk-body">{{ copy.permanentAddress.definitionLeadIn }}</p>
++        <ul class="govuk-list govuk-list--bullet">
++          {% for item in copy.permanentAddress.definitionItems %}
++            <li>{{ item }}</li>
++          {% endfor %}
++        </ul>
++
++        <h3 class="govuk-heading-s">{{ copy.permanentAddress.question }}</h3>
+ 
+         {% for field in card.addressFields %}
+           {{ govukInput({
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index 1883569d..7bffe8bb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -130,8 +130,13 @@ export const copy = {
+     removeRow: 'Tynnu',
+     removeRowAria: (number) => `anifail ${number}`,
+     permanentAddress: {
+-      heading: 'Cyfeiriad parhaol',
+-      required: 'Mae angen cyfeiriad parhaol ar gyfer yr anifail hwn.'
++      warning: 'Mae darparu cyfeiriad ffug yn weithred o dwyll',
++      definitionLeadIn: 'Cyfeiriad parhaol yw lle bydd anifail:',
++      definitionItems: [
++        'yn preswylio’n barhaol',
++        'yn gallu cael ei wirio gan yr Asiantaeth Iechyd Anifeiliaid a Phlanhigion (APHA)'
++      ],
++      question: 'Ble bydd eu cyfeiriad parhaol?'
+     },
+     saveAndAddAnother: 'Cadw ac ychwanegu un arall',
+     saveAndFinish: 'Cadw a gorffen',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 989935c6..0b9a88d2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -122,8 +122,13 @@ export const copy = {
+     removeRow: 'Remove',
+     removeRowAria: (number) => `animal ${number}`,
+     permanentAddress: {
+-      heading: 'Permanent address',
+-      required: 'A permanent address is required for this animal.'
++      warning: 'Providing a false address is an act of fraud',
++      definitionLeadIn: 'A permanent address is where an animal:',
++      definitionItems: [
++        'will permanently reside',
++        'can be checked by the Animal and Plant Health Agency (APHA)'
++      ],
++      question: 'Where will their permanent address be?'
+     },
+     saveAndAddAnother: 'Save and add another',
+     saveAndFinish: 'Save and finish',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+index 84f0cbd0..1cc2adf7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+@@ -100,6 +100,28 @@ describe('#copy', () => {
+     )
+   })
+ 
++  // Saying the address is required tells the trader nothing about why an
++  // invented one is a problem. The warning names the offence and the second
++  // bullet names APHA, who will turn up at whatever address was given.
++  it('Should warn that a false permanent address is fraud and say APHA can check it', () => {
++    expect(copy.identification.permanentAddress.warning).toBe(
++      'Providing a false address is an act of fraud'
++    )
++    expect(copy.identification.permanentAddress.definitionLeadIn).toBe(
++      'A permanent address is where an animal:'
++    )
++    expect(copy.identification.permanentAddress.definitionItems).toEqual([
++      'will permanently reside',
++      'can be checked by the Animal and Plant Health Agency (APHA)'
++    ])
++    expect(copy.identification.permanentAddress.question).toBe(
++      'Where will their permanent address be?'
++    )
++    expect(copyCy.identification.permanentAddress.definitionItems[1]).toContain(
++      'APHA'
++    )
++  })
++
+   it('Should interpolate capReached', () => {
+     expect(copy.identification.errors.capReached(2)).toBe(
+       'You have already entered details for all 2 animals — remove a record before adding another'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 33e2b30a..e8b4f654 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -289,6 +289,27 @@ test.describe('animal identification', () => {
+     await expect(page.locator('select')).toHaveCount(0)
+   })
+ 
++  // Asking for the address without saying why leaves an invented one looking
++  // harmless. The warning names the offence, and the second bullet names the
++  // body that will turn up at whatever address was given.
++  test('permanent address warns that a false address is fraud and says APHA can check it', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++
++    const guidance = copy.identification.permanentAddress
++    await expect(page.getByText(guidance.warning)).toBeVisible()
++    await expect(page.getByText(guidance.definitionLeadIn)).toBeVisible()
++    for (const item of guidance.definitionItems) {
++      await expect(
++        page.getByRole('listitem').filter({ hasText: item })
++      ).toBeVisible()
++    }
++    await expect(
++      page.getByRole('heading', { name: guidance.question })
++    ).toBeVisible()
++  })
++
+   test('back link returns to the overview', async ({ page }) => {
+     await openCatIdentification(page)
+     await page.locator('.govuk-back-link').click()

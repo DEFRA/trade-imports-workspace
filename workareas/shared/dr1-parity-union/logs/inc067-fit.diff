@@ -1,0 +1,140 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index 9e7589be..714aa9a9 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -47,8 +47,9 @@ test.describe('live-animals journey glue', () => {
+     ).toBeVisible()
+ 
+     await page.getByRole('radio', { name: 'Internal market' }).check()
+-    await save()
+-    await expect(heading('Purpose in the internal market')).toBeVisible()
++    await expect(
++      page.getByRole('group', { name: 'Purpose in the internal market' })
++    ).toBeVisible()
+ 
+     await page.getByRole('radio', { name: 'Breeding' }).check()
+     await save()
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 0ff5397a..033cb56f 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -268,7 +268,8 @@ export const completeAnswerSections = async (page) => {
+ 
+   await task('Main reason for importing')
+   await page.getByRole('radio', { name: 'Internal market' }).check()
+-  await save()
++  // The purpose is a conditional reveal under the reason, so both answers go
++  // in on the one submit.
+   await page.getByRole('radio', { name: 'Breeding' }).check()
+   await save()
+   await expect(
+diff --git a/scripts/lighthouse/audit-targets.js b/scripts/lighthouse/audit-targets.js
+index ff2a9c78..982db1b8 100644
+--- a/scripts/lighthouse/audit-targets.js
++++ b/scripts/lighthouse/audit-targets.js
+@@ -39,10 +39,7 @@ export const SKIPPED = new Map([
+  * Everything else is audited on the draft. */
+ export const FILLED_BY = new Map([
+   ['/notifications/{journeyId}/confirmation', 'submitted'],
+-  ['/notifications/{journeyId}/destination-country', 'transit'],
+-  ['/notifications/{journeyId}/port-of-exit', 'transit'],
+-  ['/notifications/{journeyId}/transporters/private', 'transit'],
+-  ['/notifications/{journeyId}/exit-date', 'temporaryAdmission']
++  ['/notifications/{journeyId}/transporters/private', 'transit']
+ ])
+ 
+ /** Query strings a route needs before it will render rather than redirect.
+diff --git a/scripts/lighthouse/audit-targets.test.js b/scripts/lighthouse/audit-targets.test.js
+index d73be678..6b556294 100644
+--- a/scripts/lighthouse/audit-targets.test.js
++++ b/scripts/lighthouse/audit-targets.test.js
+@@ -40,13 +40,13 @@ describe('#auditPaths', () => {
+       [`/notifications/${journeyIds.submitted}/confirmation`]
+     )
+     expect(paths.filter((path) => path.includes(journeyIds.transit))).toEqual([
+-      `/notifications/${journeyIds.transit}/destination-country`,
+-      `/notifications/${journeyIds.transit}/port-of-exit`,
+       `/notifications/${journeyIds.transit}/transporters/private`
+     ])
++    // The exit questions moved onto the reason page, which the draft answers,
++    // so no route is audited on the temporary-admission notification.
+     expect(
+       paths.filter((path) => path.includes(journeyIds.temporaryAdmission))
+-    ).toEqual([`/notifications/${journeyIds.temporaryAdmission}/exit-date`])
++    ).toEqual([])
+     expect(
+       paths.filter((path) => path.includes(journeyIds.draft))
+     ).toHaveLength(paths.length - FILLED_BY.size - 1)
+diff --git a/scripts/lighthouse/seed-notification.js b/scripts/lighthouse/seed-notification.js
+index 4ae6b3e4..211b5176 100644
+--- a/scripts/lighthouse/seed-notification.js
++++ b/scripts/lighthouse/seed-notification.js
+@@ -120,35 +120,27 @@ const CONTACT_STEP = {
+   fields: firstOption('contactAddress')
+ }
+ 
+-/** The steps each reason for import brings into scope. A page whose obligation
+- * is out of scope still renders, so a shape that never answers it is a page
+- * Lighthouse audits blank. */
+-const REASON_STEPS = new Map([
++/** The follow-up answers each reason for import reveals on the reason page
++ * itself, keyed by the branch's own input name. A reason whose reveal is not
++ * opened submits nothing extra. */
++const REASON_REVEAL_FIELDS = new Map([
+   [
+     'internalMarket',
+-    [
+-      {
+-        slug: 'import-purpose',
+-        fields: { purposeInInternalMarket: values.purposeInInternalMarket }
+-      }
+-    ]
++    () => ({ purposeInInternalMarket: values.purposeInInternalMarket })
+   ],
+   [
+     'transit',
+-    [
+-      {
+-        slug: 'destination-country',
+-        fields: firstListedOption('destinationCountry')
+-      },
+-      { slug: 'port-of-exit', fields: firstListedOption('portOfExit') }
+-    ]
++    (page) => ({
++      ...firstListedOption('transitPortOfExit')(page),
++      ...firstListedOption('transitDestinationCountry')(page)
++    })
+   ],
+   [
+     'temporaryAdmissionHorses',
+-    [
+-      { slug: 'port-of-exit', fields: firstListedOption('portOfExit') },
+-      { slug: 'exit-date', fields: { exitDate: ukDate(arrival) } }
+-    ]
++    (page) => ({
++      temporaryAdmissionExitDate: ukDate(arrival),
++      ...firstListedOption('temporaryAdmissionPortOfExit')(page)
++    })
+   ]
+ ])
+ 
+@@ -210,10 +202,17 @@ const stepsIn = (steps, key, label) => {
+   return scoped
+ }
+ 
++const reasonStep = (reasonForImport) => ({
++  slug: 'import-reason',
++  fields: (page) => ({
++    reasonForImport,
++    ...stepsIn(REASON_REVEAL_FIELDS, reasonForImport, 'reason for import')(page)
++  })
++})
++
+ export const seedSteps = ({ reasonForImport, transporterType }) => [
+   ...BEFORE_REASON,
+-  { slug: 'import-reason', fields: { reasonForImport } },
+-  ...stepsIn(REASON_STEPS, reasonForImport, 'reason for import'),
++  reasonStep(reasonForImport),
+   ...AFTER_REASON,
+   { slug: 'transporters', fields: { transporterType } },
+   ...stepsIn(TRANSPORTER_STEPS, transporterType, 'transporter type'),

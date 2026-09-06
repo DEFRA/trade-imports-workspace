@@ -35,9 +35,10 @@
 # target omits it); steps 1-3 = M1; step 4 = M2. An extra takes its declared
 # milestone, else that of the increment it anchors to (M1 at start/end).
 #
-# repo is one of the build loop's keys (frontend | backend | tests), never a
-# path: a page gets the target repo's key, an extra's declared path is mapped
-# onto its key through the target profile's repos table.
+# repo is one of the build loop's keys (frontend | backend | tests | both),
+# never a path: a page gets the target repo's key, an extra's declared key
+# passes through, and an extra's declared path is mapped onto its key through
+# the target profile's repos table. both means backend then frontend.
 #
 # Idempotent by CONTENT key (type + subject; an extra's subject is its key),
 # not position — re-ordering must not resurrect or orphan anything. Two
@@ -155,6 +156,7 @@ jq -n \
     | def obs($ids): [ $ids[] | $byId[.] | select(. != null) ];
     def repoKey($raw):
         if $raw == null then $target_repo_key
+        elif $raw == "both" then "both"
         elif ($repos | has($raw)) then $raw
         else ( first($repos | to_entries[] | select(.value.path == $raw) | .key)
                // error("extra repo \($raw | tojson) is neither a repo key (\($repos | keys | join(", "))) nor a path in the target profile'"'"'s repos table") )

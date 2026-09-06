@@ -133,20 +133,25 @@ the build loop and the batch orchestrator also need `title`, `kind`,
 withholds any increment whose `sizeGuess` is null, so nothing is buildable
 until it is planned.
 
-Fan out one `general-purpose` Task subagent per increment, in `dependsOn`
-order, ten at a time: "Follow
-~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/INCREMENT_PLANNER.md
-for run-id EUDPA-X, increment inc-NNN." Each reads the increment, the spec
-objects it names, the recipes, and (for a mirrored page) the animals
-feature, writes `<workarea>/plans/inc-NNN.json`, and applies it with
+Plans are written **just in time**: the batch orchestrator's L1 spawns one
+`general-purpose` planner for the increment it has just derived, when that
+increment has no `sizeGuess`, and builds it once the write is checked. The
+planner follows
+`~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/INCREMENT_PLANNER.md`
+for run-id EUDPA-X and increment inc-NNN: it reads the increment, the spec
+objects it names, the recipes, and (for a mirrored page) the animals feature,
+writes `<workarea>/plans/inc-NNN.json`, and applies it with
 `tools/journey-builder/backlog-plan-increment.sh EUDPA-X --increment inc-NNN
 --plan <file>` — the only write path; the script validates the shape and
 refuses a plan that changes what the spec owns (an extra's `title`, every
-increment's `repo`). After each batch the parent verifies every write with
-`jq` (sizeGuess set, non-empty files, criteria and rungs) before the next
-batch, and re-spawns any planner whose write is missing — never plans in the
-parent. Plan the M0 increments first so a run can start while the journey
-pages are still being planned.
+increment's `repo`). A plan that already exists is used as it stands.
+
+An up-front pass is optional — a handful of planners in `dependsOn` order,
+each write verified with `jq` (sizeGuess set, non-empty files, criteria and
+rungs) — for when the first batches should start faster. Nobody reviews sixty
+plans at once, so do not plan the whole backlog ahead of the build. Plans name
+other increments by key or page, never by `inc-NNN`: ids shift when an extra
+is added or withdrawn.
 
 `backlog-generate.sh` preserves the planned fields by content key, so a
 regeneration after planning keeps the plan. A done increment is not

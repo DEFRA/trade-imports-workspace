@@ -74,13 +74,53 @@ Three extras are born `blocked` with `gate: sam` and sit at the end of the chain
 
 ## Verification ladder
 
-Frontend increments: `test:high-risk-plants`, `format:check`, `lint`, then
-`PORT=3053 npm run test:fit:features` with the stack up. Backend: `mvn verify`. Tests
-repo: `npm run test:docker-compose` scoped to the plants project. Read test output from a
-file once; never grep a streaming run.
+Frontend increments: `test:high-risk-plants`, `test`, `format:check`, `lint`, then
+`test:fit:ci` with the stack up — that script pins `PORT=3053` itself, so no rung ever carries
+an environment-variable prefix (the permission matcher does not allowlist one). Backend:
+`mvn -f <repo>/pom.xml clean verify`. Tests repo: `lint`, `typecheck`, `format:check`, then
+`test:docker-compose -- --project=plants`. Every rung is written as the full
+`npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> run <script>` or
+`mvn -f ~/git/defra/trade-imports-workspace/repos/<repo>/pom.xml …` command. Read test
+output from a file once; never grep a streaming run.
 
 ## Known first-pass gaps the backlog already carries
 
 The 17 M0 hygiene increments (lighthouse scripts, eight CI workflow gaps, Dependabot in both
 plants repos, backend CI parity, depcruise baseline, unused services, doc drift) come first
 and touch no journey code. They are cheap and unblock the rest.
+
+## The tripwires fold into the dashboard (d-084), and ids shifted
+
+The two `restore-*` extras for the copy tripwires were withdrawn on 2026-09-06 under
+decision d-084: the dashboard increment rewrites `copy-convention.test.js` and
+`copy-parity.test.js` in the same commit as the first feature folder, because a PR that
+left them red could never merge. Every increment after `dashboard-date-submitted-real-list`
+moved up by two ids in that regeneration. Plan `notes` written before it may still say
+`inc-NNN` for a later increment — trust the key or page name they give, not the number.
+From then on plans name other increments by key, never by id.
+
+## What the loop commits, and what commitPaths is for
+
+The batch orchestrator drives `increment-build-loop.js`, whose land stage stages whatever
+the increment produced (everything but logs, coverage and Playwright artefacts) and commits
+it. It does not read `commitPaths` from the target profile. That list belongs to the
+journey-builder skill's own build mode (`commit-increment.sh`, `rollback-increment.sh`) and
+is widened for this target to cover `.github`, `scripts`, `docs` and the README, so the M0
+hygiene increments land under either path. A plan whose `openQuestions` raise commitPaths is
+asking about the old path; rule it not applicable under the orchestrator and move on.
+
+## Repos and models this programme runs with
+
+`repos`: frontend = `repos/trade-imports-plants-frontend` (`DEFRA/trade-imports-plants-frontend`),
+backend = `repos/trade-imports-plants-backend` (`DEFRA/trade-imports-plants-backend`),
+tests = `repos/trade-imports-animals-tests` (`DEFRA/trade-imports-animals-tests`).
+`models`: heavy = opus, light = sonnet. Both are recorded in the ledger's programme block;
+L1 copies them into every run copy's FALLBACK.
+
+The M0 CI-workflow increments (inc-002 to inc-011) change only YAML under `.github/`, which
+neither prettier's globs nor eslint read. Their ladders run the unit, format and lint rungs;
+the proof is the PR's own checks, which the loop watches. Several plans carry open questions
+about things the checkout cannot see — a CDP build role, the `SONAR_TOKEN` secret, whether
+GitHub Pages is enabled, whether branch protection requires a job. Those resolve when the
+PR's checks run: a red check there is evidence about the platform, not the change, and a
+`ci-red` stop on one of them is a platform question for Sam rather than a code fix.

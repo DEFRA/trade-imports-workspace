@@ -51,7 +51,7 @@ page=$(jq -n --arg id "$ID" --arg slug "$SLUG" --arg title "$TITLE" --argjson co
     '{id: $id, slug: $slug, title: $title, gate: null, collects: $collects}')
 for i in "${!KEYS[@]}"; do
     if [[ "${IS_JSON[$i]}" == 1 ]]; then
-        if ! echo "${VALS[$i]}" | jq -e . > /dev/null 2>&1; then
+        if ! echo "${VALS[$i]}" | jq . > /dev/null 2>&1; then
             echo "Error: --json ${KEYS[$i]} value is not valid JSON" >&2; exit 1
         fi
         page=$(jq -n --argjson cur "$page" --arg k "${KEYS[$i]}" --argjson v "${VALS[$i]}" '$cur + {($k): $v}')

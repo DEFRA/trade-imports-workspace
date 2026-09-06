@@ -62,7 +62,7 @@ obligation=$(jq -n --arg id "$ID" --arg at "$APPLIES_AT" --arg kind "$KIND" \
 has_provenance=false
 for i in "${!KEYS[@]}"; do
     if [[ "${IS_JSON[$i]}" == 1 ]]; then
-        if ! echo "${VALS[$i]}" | jq -e . > /dev/null 2>&1; then
+        if ! echo "${VALS[$i]}" | jq . > /dev/null 2>&1; then
             echo "Error: --json ${KEYS[$i]} value is not valid JSON" >&2; exit 1
         fi
         obligation=$(jq -n --argjson cur "$obligation" --arg k "${KEYS[$i]}" --argjson v "${VALS[$i]}" '$cur + {($k): $v}')

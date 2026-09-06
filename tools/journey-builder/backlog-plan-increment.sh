@@ -57,6 +57,19 @@ jq empty "$PLAN" 2>/dev/null || { echo "Error: $PLAN is not valid JSON" >&2; exi
 target="$WORKSPACE/workareas/journey-builder/$RUN_ID/backlog.json"
 [[ -f "$target" ]] || { echo "Error: $target not found — run backlog-generate.sh first" >&2; exit 1; }
 
+# Planners run ten at a time and each call is a read-modify-write of the
+# whole file, so two overlapping calls would keep only the later one's plan.
+# A directory is the lock because mkdir is atomic everywhere; a crashed
+# writer leaves it behind, which the timeout names.
+lock="$target.lock"
+waited=0
+until mkdir "$lock" 2>/dev/null; do
+    waited=$((waited + 1))
+    [[ $waited -gt 600 ]] && { echo "Error: $lock has been held for over a minute — a crashed writer left it; remove it once nothing is planning" >&2; exit 1; }
+    sleep 0.1
+done
+trap 'rmdir "$lock" 2>/dev/null' EXIT
+
 current=$(jq --arg id "$INC" '[.increments[] | select(.id == $id)] | first // empty' "$target")
 [[ -n "$current" ]] || { echo "Error: increment '$INC' not found" >&2; exit 1; }
 
@@ -110,11 +123,10 @@ if [[ -n "$problems" ]]; then
     exit 1
 fi
 
-# Each call writes through its own temp file so concurrent planners cannot
-# rename over each other. Same directory keeps the mv an atomic rename; the
-# trap clears the temp if jq fails.
+# The write goes through a temp file in the same directory so the mv is an
+# atomic rename; the trap clears the temp if jq fails and frees the lock.
 tmp="$(mktemp "$target.XXXXXX")"
-trap 'rm -f "$tmp"' EXIT
+trap 'rm -f "$tmp"; rmdir "$lock" 2>/dev/null' EXIT
 jq --arg id "$INC" --slurpfile plan "$PLAN" '
     def kind_for($type):
         { "fix": "fix", "chore": "chore", "restore": "test", "e2e": "test",

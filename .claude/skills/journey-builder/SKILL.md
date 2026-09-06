@@ -1,6 +1,6 @@
 ---
 name: journey-builder
-description: Run the serial build loop over a canonical backlog against whichever codebase the run's target profile names (tools/journey-builder/targets.json — currently the live-animals set in trade-imports-animals-frontend). Digest mode distils the requirement sources — Confluence "Live Animals Data Fields V4", the src/server skeleton journey, the interaction-design canvas — into a canonical machine-readable spec (journey-spec.json + conflicts.json) reviewed at a spec gate. Backlog mode derives ordered increments from the spec; build mode pops one increment at a time, invokes the target's implementor skill (frontend-change for the frontend target), re-verifies in the parent, and commits or rolls back, halting at model-extension gates and milestone walk-throughs. Use when the user asks to digest journey requirements, regenerate the backlog, run/resume the build loop, or verify a target (triggers: "digest journey requirements", "journey spec", "journey-builder", "run the loop", "build the backlog"). NOT for a single already-agreed change to the frontend — that is frontend-change on its own. NOT for the car-insurance spike or generic ticket work.
+description: Run the serial build loop over a canonical backlog against whichever codebase the run's target profile names (tools/journey-builder/targets.json — today live-animals-frontend and high-risk-plants-frontend). Digest mode distils the requirement sources the target declares in its sources[] — a Confluence page, the repo's own skeleton, an interaction-design canvas — into a canonical machine-readable spec (journey-spec.json + conflicts.json) reviewed at a spec gate. Backlog mode derives ordered increments from the spec; build mode pops one increment at a time, invokes the target's implementor skill (frontend-change for both frontend targets), re-verifies in the parent, and commits or rolls back, halting at model-extension gates and milestone walk-throughs. Use when the user asks to digest journey requirements, regenerate the backlog, run/resume the build loop, or verify a target (triggers: "digest journey requirements", "journey spec", "journey-builder", "run the loop", "build the backlog"). NOT for a single already-agreed change to the frontend — that is frontend-change on its own. NOT for the car-insurance spike or generic ticket work.
 ---
 
 # journey-builder
@@ -22,10 +22,9 @@ original prototype programme). State lives in
 `workareas/journey-builder/<run-id>/`.
 
 The canonical spec lives in the frontend **worktree** at
-`<workarea>/frontend-worktree/<target scope>/spec/` (branch
-`spike/<run-id>-live-animals-spec`) — never write into
-`repos/trade-imports-animals-frontend` directly: other agents work in that
-checkout.
+`<workarea>/frontend-worktree/<target specDir>/` (branch
+`spike/<run-id>-<target specBranchSuffix>`) — never write into the target's own
+checkout under `repos/` directly: other agents work in it.
 
 Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
 
@@ -34,10 +33,17 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
 1. `tools/journey-builder/prepare-digest.sh EUDPA-X` — seeds workarea +
    worktree + cached sources + extract placeholders + spec skeleton.
    Idempotent; `--refetch` refreshes cached sources.
-2. Fan out THREE `general-purpose` Task subagents in parallel, one per
-   source (confluence-v4, skeleton, ixd-canvas), each told:
+2. Fan out one `general-purpose` Task subagent per non-pending source the
+   target declares — read them from `.digest-meta.json`'s `sources`, do not
+   assume the live-animals three. Each is told:
    "Follow ~/git/defra/trade-imports-workspace/.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md
    for source <s>, run-id EUDPA-X."
+
+   `SOURCE_EXTRACTOR.md` carries parsing rules per source **id**, and those
+   rules are shape-specific: "five tables, three column schemas" describes one
+   particular Confluence page, not Confluence in general. A target introducing
+   a new source must add its extraction rules there first — the plumbing is
+   target-driven, the reading is not.
 3. Verify every extract has `status: "complete"` and non-trivial counts
    (`jq .status,.fields,.pages,.behaviours` per file). Re-spawn gaps —
    do not extract in the parent.
@@ -74,9 +80,9 @@ Serial by design — increments edit shared files (registry, flow, hub, CYA).
 2. If the increment has `gate: "sam"` or closes a milestone → STOP, present
    to Sam (model-extension design panel / milestone walk-through).
 3. Invoke the target's `implementorSkill` with the increment's `type` as its
-   mode — for `live-animals-frontend` that is `frontend-change`, which already
-   owns the repo's own recipe docs, the obligation and flow guard rails, and
-   its own verification ladder. One increment per invocation.
+   mode — both frontend targets name `frontend-change`, which reads the target
+   repo's own recipe docs, the obligation and flow guard rails, and its own
+   verification ladder. One increment per invocation.
 4. Parent re-verifies: `tools/journey-builder/verify-increment.sh EUDPA-X`
    — never trust the worker's green. Mismatch → rollback + failed.
 5. Loop to 1. Halt early on 3 consecutive failures (systemic signal).

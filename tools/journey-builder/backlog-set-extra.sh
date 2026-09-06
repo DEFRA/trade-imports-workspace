@@ -109,7 +109,10 @@ milestone=$(jq -r '.milestone // ""' <<<"$merged")
 gate=$(jq -r '.gate // ""' <<<"$merged")
 [[ -z "$gate" || "$gate" == "sam" ]] || { echo "Error: gate '$gate' must be sam" >&2; exit 1; }
 repo=$(jq -r '.repo // ""' <<<"$merged")
-[[ -z "$repo" || -d "$WORKSPACE/$repo" ]] || { echo "Error: repo '$repo' is not a directory under the workspace" >&2; exit 1; }
+case "$repo" in
+    ""|frontend|backend|tests|both) ;;
+    *) [[ -d "$WORKSPACE/$repo" ]] || { echo "Error: repo '$repo' is neither a repo key (frontend, backend, tests, both) nor a directory under the workspace" >&2; exit 1; } ;;
+esac
 
 # Each call writes through its own temp file: concurrent callers sharing one
 # temp name rename over each other and drop items. Same directory keeps the

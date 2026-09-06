@@ -12,7 +12,9 @@
 # --anchor is one of: start | end | before=page:<pageId> | after=page:<pageId>
 #   | before=key:<extraKey> | after=key:<extraKey>. A key anchor must name
 #   an extra earlier in the file: the generator resolves in file order.
-# --repo is workspace-relative and defaults to the target repo.
+# --repo is one of the build loop's keys (frontend | backend | tests | both —
+#   both meaning backend then frontend) or a workspace-relative path the
+#   target profile's repos table maps onto a key. Defaults to the target repo.
 # --milestone defaults to that of the anchored increment (M1 at start/end).
 # --gate sam makes the extra born blocked, like a model-extension.
 #
@@ -58,7 +60,10 @@ esac
 }
 [[ -z "$MILESTONE" || "$MILESTONE" =~ ^M[0-9]+$ ]] || { echo "Error: --milestone '$MILESTONE' must look like M1" >&2; exit 1; }
 [[ -z "$GATE" || "$GATE" == "sam" ]] || { echo "Error: --gate '$GATE' must be sam" >&2; exit 1; }
-[[ -z "$REPO" || -d "$WORKSPACE/$REPO" ]] || { echo "Error: --repo '$REPO' is not a directory under the workspace" >&2; exit 1; }
+case "$REPO" in
+    ""|frontend|backend|tests|both) ;;
+    *) [[ -d "$WORKSPACE/$REPO" ]] || { echo "Error: --repo '$REPO' is neither a repo key (frontend, backend, tests, both) nor a directory under the workspace" >&2; exit 1; } ;;
+esac
 
 meta="$WORKSPACE/workareas/journey-builder/$RUN_ID/.digest-meta.json"
 [[ -f "$meta" ]] || { echo "Error: $meta not found — run prepare-digest.sh first" >&2; exit 1; }

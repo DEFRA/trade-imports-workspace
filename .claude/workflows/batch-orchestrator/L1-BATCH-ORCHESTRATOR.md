@@ -9,7 +9,7 @@ L0 gives you these. Everything below resolves against them.
 
 ```
 <workspace-tilde>  the workspace root, tilde form — use in Bash. Canonically
-                   ~/git/defra/trade-imports-animals-workspace (CLAUDE.md rule 1)
+                   ~/git/defra/trade-imports-workspace (CLAUDE.md rule 1)
 <workspace-abs>    the workspace root, absolute — use for Read/Write/Edit. L0 resolved
                    it on THIS machine; never substitute a home directory of your own
 <workarea-rel>     path under workareas/, e.g. shared/<programme>
@@ -25,6 +25,10 @@ L0 gives you these. Everything below resolves against them.
 <epic>             parent epic every raised ticket hangs off. full only
 <in-progress>      the board's working status, e.g. In Progress. full only
 <done-status>      the board's finished status, e.g. Done. full only
+<repos>            the repo table, one JSON object with frontend, backend and tests keys, each
+                   holding a workspace-relative path and a GitHub owner/name slug. Copied from
+                   the ledger's programme block by L0; it is the ONLY source of repo paths here
+<models>           the model per tier, e.g. {"heavy":"opus","light":"sonnet"}, or {} to inherit
 <batch-number>     this batch's number
 <budget>           the MOST increments you may build before returning. Not a target
 <report-path>      where your full batch report goes
@@ -33,9 +37,10 @@ L0 gives you these. Everything below resolves against them.
 **You are given a budget, not a list.** L0 does not know which increments this batch will build and
 must not be told in advance. You derive each one from `backlog.json` after the previous one lands.
 
-Repo paths: `frontend` = `repos/trade-imports-animals-frontend`, `backend` =
-`repos/trade-imports-animals-backend`, `tests` = `repos/trade-imports-animals-tests`. An increment whose
-`repo` field is `both` touches the backend and the frontend, on the same branch name in each.
+Repo paths are `<repos>`: `frontend`, `backend` and `tests` each resolve to `<workspace-tilde>/<path>`
+from that table, and to its `github` slug for anything `gh` does. Never type a repo path from memory —
+the same three keys name different repos in different programmes. An increment whose `repo` field is
+`both` touches the backend and the frontend, on the same branch name in each.
 
 ## WHAT "LANDED" MEANS
 
@@ -282,11 +287,15 @@ const FALLBACK = {
   jiraDoneStatus: '<done-status>',
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
+  repos: <repos, written as a JS object literal — the three entries, each with path and github>,
+  models: <models, written as a JS object literal>,
   increments: ['<the one id you derived>']
 }
 ```
 
-**One id. Never more.** Change nothing else in the copy. If you find yourself editing any other line,
+**One id. Never more.** Change nothing else in the copy. `repos` and `models` come from your bindings,
+which L0 copied from the ledger; write them out in full every time, because the pristine copy carries
+the animals table and a run against the wrong repo is the most expensive mistake this loop can make. If you find yourself editing any other line,
 stop — a divergence between the run copy and the tracked loop is a defect, and the next copy will
 silently erase your evidence of it.
 
@@ -305,6 +314,8 @@ Workflow({
     epic: "<epic>",
     jiraInProgressStatus: "<in-progress>",
     jiraDoneStatus: "<done-status>",
+    repos: <repos>,
+    models: <models>,
     increments: ["<the one id you derived>"]
   }
 })
@@ -331,17 +342,16 @@ Empty output is the pass. Anything else means something edited the shared loop �
 **5. Report the path you ran** as `scriptPath` in your report, so the ledger records which script
 produced the batch.
 
-⚠ Under `workareas/shared/`, the workspace tracks files by default, so `build-loop.run.js` will appear
-as untracked in `git status` unless the workspace `.gitignore` excludes it. Check once per batch:
+The workspace `.gitignore` excludes `build-loop.run.js` wherever it sits. Confirm once per batch:
 
 ```bash
 git -C <workspace-tilde> check-ignore -q <workarea>/build-loop.run.js
 ```
 
-Exit 0 means it is ignored and there is nothing to do. A non-zero exit means it is not — put
-`workareas/*/*/build-loop.run.js needs a .gitignore line` on your `owed-to-human` line. **Do not add the
-line yourself** and do not commit the run copy; a `.gitignore` edit is a workspace change, not
-programme work.
+Exit 0 means it is ignored and there is nothing to do. A non-zero exit means the rule has gone — put
+`build-loop.run.js is no longer gitignored` on your `owed-to-human` line. **Do not edit `.gitignore`
+yourself** and do not commit the run copy; a `.gitignore` edit is a workspace change, not programme
+work.
 
 ### Fallback path — brief Codex per increment
 

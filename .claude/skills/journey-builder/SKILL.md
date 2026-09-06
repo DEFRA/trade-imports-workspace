@@ -62,14 +62,29 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
 `tools/journey-builder/backlog-generate.sh EUDPA-X` derives
 `workareas/journey-builder/EUDPA-X/backlog.json` from the spec:
 one increment per page in section order (add-page / add-collection),
-model-extension increments (`gate: "sam"`, born blocked) before the first
-page needing each modelGap, then the car-domain removal tail
-(remove-car-section per baseline section + repoint-test-fixtures) — that tail
-belongs to the original prototype programme, whose vendored baseline shipped
-the car domain to keep the engine-test net green; it does not apply to a
-promoted target. Idempotent —
-re-running preserves statuses. Inspect with `backlog-counts.sh` /
-`jq` over the file.
+then the car-domain removal tail (remove-car-section per baseline section +
+repoint-test-fixtures) — that tail belongs to the original prototype
+programme, whose vendored baseline shipped the car domain to keep the
+engine-test net green; it does not apply to a promoted target — then the
+model-extension increments (`gate: "sam"`, born blocked) and the pages
+deferred behind them. Idempotent — re-running preserves statuses by content
+key, and refuses to drop an increment it cannot re-derive. `--dry-run`
+prints what it would write without touching the file. Inspect with
+`backlog-counts.sh` / `jq` over the file.
+
+Work a run needs that no spec page can yield — repo hygiene in the target
+repo, a tripwire test to restore, E2E coverage that lives in the tests repo —
+is declared, not hand-edited into backlog.json. `backlog-add-extra.sh
+EUDPA-X --key K --type fix|e2e|chore|restore --title "..." --detail "..."
+--anchor 'before=page:origin' [--repo repos/x] [--milestone M1] [--gate sam]`
+appends to `<spec_dir>/backlog-extras.json`, which sits beside
+journey-spec.json on the spec branch and is reviewed at the spec gate. The
+generator splices each extra in at its anchor (`start`, `end`,
+`before`/`after` a `page:<pageId>` or an earlier `key:<extraKey>`) before
+numbering, so it joins the linear chain, keeps its status across
+regenerations under the key `<type>:<key>`, inherits the milestone of what
+it anchors to unless told otherwise, and is born blocked when gated. The
+type vocabulary is deliberately small; widen it in both scripts together.
 
 ## Mode: build (the loop)
 
@@ -119,4 +134,4 @@ Never run both against one run at the same time. Both write the whole file.
 `tools/journey-builder/`: `prepare-digest.sh`, `extract-add-item.sh`,
 `extract-finalize.sh`, `spec-add-field.sh`, `spec-add-page.sh`,
 `spec-add-conflict.sh`, `spec-add-behaviour.sh`, `spec-add-fieldgroup.sh`,
-`spec-lint.sh [--format]`.
+`spec-lint.sh [--format]`, `backlog-add-extra.sh`.

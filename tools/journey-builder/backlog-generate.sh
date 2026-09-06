@@ -16,55 +16,118 @@
 #      backlogTail.repointTestFixtures
 #   4. model-extension increments (gate: sam, born blocked), then the
 #      deferred gap pages and one add-nested-collection per deferredNested
+#   5. declared extras from <spec_dir>/backlog-extras.json, spliced in at
+#      their anchors before numbering. These are the increments a run needs
+#      that no spec page can yield — repo hygiene, restored tests, E2E
+#      coverage in another repo. Declaring them beside journey-spec.json puts
+#      them on the spec branch, reviewed at the spec gate, and makes them
+#      re-derivable, so they no longer have to be hand-edited into
+#      backlog.json where the "lost" check below would block every
+#      regeneration. Anchors resolve in file order: start, end, before/after
+#      page:<pageId> (an entry sub-page resolves to the collection increment
+#      that folds it in), before/after key:<extraKey> (an extra declared
+#      earlier in the file). type is fix, e2e, chore or restore — kept small
+#      so the build loop's dispatch stays predictable; widen it here and in
+#      backlog-add-extra.sh together.
 #   — all in one linear dependsOn chain (increments edit shared files).
 #
-# Milestones: origin page = M0; steps 1-3 = M1; step 4 = M2.
-# Idempotent: status/commit preserved by CONTENT key (type + subject),
-# not position — re-ordering must not resurrect or orphan statuses.
+# Milestones: origin page = M0; steps 1-3 = M1; step 4 = M2. An extra takes
+# its declared milestone, else that of the increment it anchors to (M1 at
+# start/end).
+# Idempotent: status/commit preserved by CONTENT key (type + subject; an
+# extra's subject is its key), not position — re-ordering must not resurrect
+# or orphan statuses.
 #
 # Usage:
-#   backlog-generate.sh EUDPA-X [--json]
+#   backlog-generate.sh EUDPA-X [--json] [--force] [--dry-run] [--target <id>]
 
 set -e
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 source "$WORKSPACE/tools/journey-builder/target-profile.sh"
 
-RUN_ID=""; AS_JSON=false; TARGET_FLAG=""; FORCE=false
+RUN_ID=""; AS_JSON=false; TARGET_FLAG=""; FORCE=false; DRY_RUN=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         EUDPA-*) RUN_ID="$1"; shift ;;
         --json) AS_JSON=true; shift ;;
         --force) FORCE=true; shift ;;
+        --dry-run) DRY_RUN=true; shift ;;
         --target) TARGET_FLAG="$2"; shift 2 ;;
         *) echo "Unknown arg: $1" >&2; exit 1 ;;
     esac
 done
-[[ -z "$RUN_ID" ]] && { echo "Usage: $0 EUDPA-X [--json] [--force] [--target <id>]" >&2; exit 1; }
+[[ -z "$RUN_ID" ]] && { echo "Usage: $0 EUDPA-X [--json] [--force] [--dry-run] [--target <id>]" >&2; exit 1; }
 
 load_target "$RUN_ID" "$TARGET_FLAG"
 
 WORKAREA="$WORKSPACE/workareas/journey-builder/$RUN_ID"
 meta="$WORKAREA/.digest-meta.json"
 [[ -f "$meta" ]] || { echo "Error: $meta not found" >&2; exit 1; }
-spec="$(jq -r '.spec_dir' "$meta")/journey-spec.json"
+spec_dir="$(jq -r '.spec_dir // empty' "$meta")"
+[[ -n "$spec_dir" ]] || { echo "Error: $meta has no spec_dir — this run is not spec-driven; its backlog is hand-authored" >&2; exit 1; }
+spec="$spec_dir/journey-spec.json"
+[[ -f "$spec" ]] || { echo "Error: $spec not found" >&2; exit 1; }
 target="$WORKAREA/backlog.json"
+
+# A dry run must leave the workarea untouched, so its scratch output cannot
+# sit beside the real backlog the way the normal temp does.
+out="$target.tmp"
+[[ "$DRY_RUN" == true ]] && out="$(mktemp "${TMPDIR:-/tmp}/backlog-generate.XXXXXX")"
 
 # A failed jq (a missing or unreadable spec, say) would otherwise leave the
 # half-written temp beside the real backlog. mv consumes it on success, so the
 # cleanup is a no-op then.
-trap 'rm -f "$target.tmp"' EXIT
+trap 'rm -f "$out"' EXIT
 
 existing='{"increments":[]}'
 [[ -f "$target" ]] && existing=$(cat "$target")
+
+# Validate the extras file up front so a typo is reported by key rather than
+# surfacing as a half-resolved anchor deep in the merge.
+extras='{"schema_version":1,"increments":[]}'
+extras_file="$spec_dir/backlog-extras.json"
+if [[ -f "$extras_file" ]]; then
+    problems=$(jq -r '
+        def anchorOk:
+            type == "object" and (
+                (keys == ["start"] and .start == true)
+                or (keys == ["end"] and .end == true)
+                or ((keys == ["before"] or keys == ["after"])
+                    and ((.before // .after) | type == "string" and test("^(page|key):.+$"))) );
+        if .schema_version != 1 then "schema_version must be 1"
+        elif (.increments | type) != "array" then "increments must be an array"
+        else
+            ( .increments | map(.key) | group_by(.) | map(select(length > 1) | "duplicate key \(.[0] | tojson)")[] ),
+            ( .increments[]
+              | . as $x
+              | (.key // "") as $k
+              | if ($k | type) != "string" or $k == "" then "an extra has no key"
+                else
+                  ( if (["fix", "e2e", "chore", "restore"] | index($x.type)) == null
+                    then "extra \($k): type \($x.type | tojson) is not one of fix, e2e, chore, restore" else empty end ),
+                  ( if (.title // "") == "" then "extra \($k): title is required" else empty end ),
+                  ( if (.anchor | anchorOk | not)
+                    then "extra \($k): anchor \(.anchor | tojson) must be {\"start\":true}, {\"end\":true}, or {\"before\"|\"after\": \"page:<pageId>\"|\"key:<extraKey>\"}" else empty end )
+                end )
+        end' "$extras_file")
+    if [[ -n "$problems" ]]; then
+        echo "Error: $extras_file is invalid:" >&2
+        sed 's/^/  /' <<<"$problems" >&2
+        exit 1
+    fi
+    extras=$(cat "$extras_file")
+fi
 
 jq -n \
     --slurpfile s "$spec" \
     --argjson removeSections "$TARGET_REMOVE_SECTIONS" \
     --argjson repointFixtures "$TARGET_REPOINT_FIXTURES" \
+    --argjson extras "$extras" \
     --argjson existing "$existing" \
     --arg run_id "$RUN_ID" \
     --arg target_id "$TARGET_ID" \
+    --arg target_repo "${TARGET_REPO#"$WORKSPACE"/}" \
     '
     $s[0] as $spec
     | ($spec.obligations | map({key: .id, value: .}) | from_entries) as $byId
@@ -144,8 +207,34 @@ jq -n \
            else [] end)
         + $extensions + $deferredPages + $nestedIncs )
 
+    # step 5: splice each extra in at its anchor, in file order
+    | reduce $extras.increments[] as $x (.;
+        . as $list
+        | $x.anchor as $a
+        | (if $a.start then {at: 0, milestone: "M1"}
+           elif $a.end then {at: ($list | length), milestone: "M1"}
+           else
+             (($a.before // $a.after) | capture("^(?<kind>page|key):(?<id>.+)$")) as $ref
+             | ($list
+                | map(if $ref.kind == "page"
+                      then (.page == $ref.id or (((.entryPages // []) | map(.id) | index($ref.id)) != null))
+                      else .key == $ref.id end)
+                | index(true)) as $i
+             | if $i == null
+               then error("extra \($x.key): anchor \($a | tojson) does not resolve — no increment for \($ref.kind) \($ref.id | tojson)"
+                          + (if $ref.kind == "key" then " (a key anchor must name an extra declared earlier in the file)" else "" end))
+               else {at: (if $a.before then $i else $i + 1 end), milestone: $list[$i].milestone} end
+           end) as $slot
+        | $slot.at as $at
+        | $list[:$at]
+          + [ { type: $x.type, key: $x.key, repo: ($x.repo // $target_repo),
+                title: $x.title, detail: ($x.detail // null),
+                milestone: ($x.milestone // $slot.milestone), gate: ($x.gate // null) } ]
+          + $list[$at:]
+      )
+
     # number + linear chain + preserve status by content key
-    | def ckey: "\(.type):\(.page // .gap // .collection // .section // "tail")";
+    | def ckey: "\(.type):\(.key // .page // .gap // .collection // .section // "tail")";
     to_entries
     | map(
         (.key + 1) as $n
@@ -154,12 +243,12 @@ jq -n \
         + { id: $id,
             dependsOn: (if .key == 0 then [] else ["inc-" + (($n - 1) | tostring | if length < 3 then ("0" * (3 - length)) + . else . end)] end) }
         | . as $inc
-        | (first($existing.increments[]? | select((. | "\(.type):\(.page // .gap // .collection // .section // "tail")") == ($inc | ckey))) // null) as $prev
+        | (first($existing.increments[]? | select(ckey == ($inc | ckey))) // null) as $prev
         | . + { status: ($prev.status // "todo"), commit: ($prev.commit // null), failure_reason: ($prev.failure_reason // null) }
         | if (.gate == "sam" and .status == "todo") then .status = "blocked" else . end
       )
     | { schema_version: 1, run_id: $run_id, target: $target_id, increments: . }
-    ' > "$target.tmp"
+    ' > "$out"
 
 # Refuse to drop increments this generator cannot re-derive. A backlog gets
 # hand-extended (EUDPA-249 grew 67 increments from 35 derivable ones, several
@@ -168,27 +257,36 @@ jq -n \
 # that work; status preservation by content key does not save an increment
 # whose key the generator no longer emits.
 if [[ -f "$target" && "$FORCE" != true ]]; then
-    lost=$(jq -r --slurpfile new "$target.tmp" '
-        def ckey: "\(.type):\(.page // .gap // .collection // .section // "tail")";
+    lost=$(jq -r --slurpfile new "$out" '
+        def ckey: "\(.type):\(.key // .page // .gap // .collection // .section // "tail")";
         ($new[0].increments | map(ckey)) as $keys
         | [ .increments[]? | ckey as $k | select(($keys | index($k)) == null) | .id ]
         | join(", ")' "$target")
     if [[ -n "$lost" ]]; then
-        rm -f "$target.tmp"
+        rm -f "$out"
         echo "Error: regenerating $RUN_ID would drop increments the generator cannot re-derive:" >&2
         echo "  $lost" >&2
         echo "These are hand-authored, or were written by another skill — parity writes its" >&2
         echo "findings backlog to this same file. Regenerating destroys them and their rulings." >&2
-        echo "Re-run with --force only once you are certain they are disposable." >&2
+        echo "Declare extras in $extras_file (backlog-add-extra.sh) to make yours re-derivable," >&2
+        echo "or re-run with --force only once you are certain they are disposable." >&2
         exit 1
     fi
 fi
 
-mv "$target.tmp" "$target"
+print_backlog() {
+    if [[ "$AS_JSON" == true ]]; then
+        cat "$1"
+    else
+        jq -r '.increments | group_by(.milestone) | map("\(.[0].milestone): \(length) increments") | join(", ")' "$1"
+        jq -r '.increments[] | "\(.id) [\(.milestone)] \(.type) \(.key // .page // .collection // .section // .gap // "") (\(.status))"' "$1"
+    fi
+}
 
-if [[ "$AS_JSON" == true ]]; then
-    cat "$target"
-else
-    jq -r '.increments | group_by(.milestone) | map("\(.[0].milestone): \(length) increments") | join(", ")' "$target"
-    jq -r '.increments[] | "\(.id) [\(.milestone)] \(.type) \(.page // .collection // .section // .gap // "") (\(.status))"' "$target"
+if [[ "$DRY_RUN" == true ]]; then
+    print_backlog "$out"
+    exit 0
 fi
+
+mv "$out" "$target"
+print_backlog "$target"

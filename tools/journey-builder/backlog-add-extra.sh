@@ -76,6 +76,11 @@ case "$ANCHOR" in
     *) anchor_json=$(jq -cn --arg side "${ANCHOR%%=*}" --arg ref "${ANCHOR#*=}" '{($side): $ref}') ;;
 esac
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$target.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq \
     --arg key "$KEY" --arg type "$TYPE" --arg title "$TITLE" --arg detail "$DETAIL" \
     --arg repo "$REPO" --arg milestone "$MILESTONE" --arg gate "$GATE" --argjson anchor "$anchor_json" \
@@ -88,6 +93,7 @@ jq \
         milestone: (if $milestone == "" then null else $milestone end),
         gate: (if $gate == "" then null else $gate end),
         anchor: $anchor
-    }]' "$target" > "$target.tmp" && mv "$target.tmp" "$target"
+    }]' "$target" > "$tmp"
+mv "$tmp" "$target"
 
 echo "$KEY"

@@ -34,8 +34,14 @@ spec="$(jq -r '.spec_dir' "$meta")/journey-spec.json"
 exists=$(jq --arg id "$ID" '[.behaviours[] | select(.id == $id)] | length' "$spec")
 [[ "$exists" -eq 0 ]] && { echo "Error: behaviour '$ID' not found" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$spec.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq --arg id "$ID" --arg status "$STATUS" --arg note "$NOTE" \
     '.behaviours |= map(if .id == $id then .status = $status | .detail = (.detail + " | " + $note) else . end)' \
-    "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+    "$spec" > "$tmp"
+mv "$tmp" "$spec"
 
 echo "Behaviour '$ID' -> $STATUS"

@@ -77,7 +77,12 @@ if [[ -n "$ID" ]]; then
     [[ "$dupe" -gt 0 ]] && { echo "Error: $KIND '$ID' already exists in $SOURCE extract" >&2; exit 1; }
 fi
 
-jq --arg s "$section" --argjson item "$item" '.[$s] += [$item]' "$target" > "$target.tmp" \
-    && mv "$target.tmp" "$target"
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$target.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+jq --arg s "$section" --argjson item "$item" '.[$s] += [$item]' "$target" > "$tmp"
+mv "$tmp" "$target"
 
 echo "Added $KIND${ID:+ '$ID'} to extract.$SOURCE.json"

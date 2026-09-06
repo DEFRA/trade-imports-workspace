@@ -71,9 +71,14 @@ spec="$spec_dir/journey-spec.json"
 target="$WORKAREA/backlog.json"
 
 # A dry run must leave the workarea untouched, so its scratch output cannot
-# sit beside the real backlog the way the normal temp does.
-out="$target.tmp"
-[[ "$DRY_RUN" == true ]] && out="$(mktemp "${TMPDIR:-/tmp}/backlog-generate.XXXXXX")"
+# sit beside the real backlog the way the normal temp does. The normal temp
+# is per-call, so concurrent generators cannot rename over each other, and
+# in the target's directory so the mv stays an atomic rename.
+if [[ "$DRY_RUN" == true ]]; then
+    out="$(mktemp "${TMPDIR:-/tmp}/backlog-generate.XXXXXX")"
+else
+    out="$(mktemp "$target.XXXXXX")"
+fi
 
 # A failed jq (a missing or unreadable spec, say) would otherwise leave the
 # half-written temp beside the real backlog. mv consumes it on success, so the

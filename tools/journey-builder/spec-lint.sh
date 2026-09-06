@@ -46,8 +46,16 @@ jq -e . "$spec" > /dev/null || { echo "ERROR: $spec is not valid JSON"; exit 1; 
 jq -e . "$conflicts" > /dev/null || { echo "ERROR: $conflicts is not valid JSON"; exit 1; }
 
 if [[ "$FORMAT" == true ]]; then
-    jq '.' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
-    jq '.' "$conflicts" > "$conflicts.tmp" && mv "$conflicts.tmp" "$conflicts"
+    # Each call writes through its own temp files: concurrent callers sharing
+    # one temp name rename over each other and drop items. Same directory keeps
+    # the mv an atomic rename; the trap clears the temps if jq fails.
+    spec_tmp="$(mktemp "$spec.XXXXXX")"
+    conflicts_tmp="$(mktemp "$conflicts.XXXXXX")"
+    trap 'rm -f "$spec_tmp" "$conflicts_tmp"' EXIT
+    jq '.' "$spec" > "$spec_tmp"
+    mv "$spec_tmp" "$spec"
+    jq '.' "$conflicts" > "$conflicts_tmp"
+    mv "$conflicts_tmp" "$conflicts"
     # The spec lives in the frontend repo, whose pre-commit hook runs
     # prettier --check; finish with prettier so the two formatters agree.
     worktree_root="$(jq -r '.worktree' "$meta")"

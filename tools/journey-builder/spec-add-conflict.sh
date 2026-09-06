@@ -33,6 +33,11 @@ target="$(jq -r '.spec_dir' "$meta")/conflicts.json"
 next=$(jq '(.conflicts | map(.id | ltrimstr("c-") | tonumber) | max // 0) + 1' "$target")
 new_id=$(printf "c-%03d" "$next")
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$target.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq \
     --arg id "$new_id" --arg fields "$FIELDS" --arg sources "$SOURCES" --arg detail "$DETAIL" \
     '.conflicts += [{
@@ -42,6 +47,7 @@ jq \
         detail: $detail,
         resolution: null,
         resolvedBy: null
-    }]' "$target" > "$target.tmp" && mv "$target.tmp" "$target"
+    }]' "$target" > "$tmp"
+mv "$tmp" "$target"
 
 echo "$new_id"

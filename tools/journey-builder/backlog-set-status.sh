@@ -37,6 +37,11 @@ target="$WORKSPACE/workareas/journey-builder/$RUN_ID/backlog.json"
 exists=$(jq --arg id "$INC" '[.increments[] | select(.id == $id)] | length' "$target")
 [[ "$exists" -eq 0 ]] && { echo "Error: increment '$INC' not found" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$target.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq --arg id "$INC" --arg status "$STATUS" --arg commit "$COMMIT" --arg reason "$REASON" \
     '.increments |= map(
         if .id == $id then
@@ -46,6 +51,7 @@ jq --arg id "$INC" --arg status "$STATUS" --arg commit "$COMMIT" --arg reason "$
         elif ($status == "failed" and (.dependsOn | index($id)) != null and .status == "todo") then
             .status = "blocked" | .failure_reason = ("blocked by failed " + $id)
         else . end
-    )' "$target" > "$target.tmp" && mv "$target.tmp" "$target"
+    )' "$target" > "$tmp"
+mv "$tmp" "$target"
 
 echo "$INC -> $STATUS"

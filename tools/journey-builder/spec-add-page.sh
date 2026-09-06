@@ -63,6 +63,11 @@ done
 page_dupe=$(jq --arg id "$ID" '[.sections[].pages[] | select(.id == $id)] | length' "$spec")
 [[ "$page_dupe" -gt 0 ]] && { echo "Error: page '$ID' already exists" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$spec.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq \
     --arg section "$SECTION" --arg stitle "${SECTION_TITLE:-$SECTION}" \
     --argjson page "$page" \
@@ -74,6 +79,7 @@ jq \
         if .id == $section
         then .pages += [$page]
         else . end)
-    ' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+    ' "$spec" > "$tmp"
+mv "$tmp" "$spec"
 
 echo "Added page '$ID' to section '$SECTION' (collects: ${COLLECTS:-none})"

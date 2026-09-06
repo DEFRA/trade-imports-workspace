@@ -29,8 +29,14 @@ target="$(jq -r '.spec_dir' "$meta")/conflicts.json"
 exists=$(jq --arg id "$ID" '[.conflicts[] | select(.id == $id)] | length' "$target")
 [[ "$exists" -eq 0 ]] && { echo "Error: conflict '$ID' not found" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$target.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq --arg id "$ID" --arg res "$RESOLUTION" --arg by "$RESOLVED_BY" \
     '.conflicts |= map(if .id == $id then .resolution = $res | .resolvedBy = $by else . end)' \
-    "$target" > "$target.tmp" && mv "$target.tmp" "$target"
+    "$target" > "$tmp"
+mv "$tmp" "$target"
 
 echo "Resolved $ID"

@@ -31,9 +31,9 @@
 #      backlog-add-extra.sh together.
 #   — all in one linear dependsOn chain (increments edit shared files).
 #
-# Milestones: origin page = M0; steps 1-3 = M1; step 4 = M2. An extra takes
-# its declared milestone, else that of the increment it anchors to (M1 at
-# start/end).
+# Milestones: pages in the target's milestoneZeroSection = M0 (none when the
+# target omits it); steps 1-3 = M1; step 4 = M2. An extra takes its declared
+# milestone, else that of the increment it anchors to (M1 at start/end).
 # Idempotent: status/commit preserved by CONTENT key (type + subject; an
 # extra's subject is its key), not position — re-ordering must not resurrect
 # or orphan statuses.
@@ -128,6 +128,7 @@ jq -n \
     --slurpfile s "$spec" \
     --argjson removeSections "$TARGET_REMOVE_SECTIONS" \
     --argjson repointFixtures "$TARGET_REPOINT_FIXTURES" \
+    --arg milestoneZeroSection "$TARGET_MILESTONE_ZERO_SECTION" \
     --argjson extras "$extras" \
     --argjson existing "$existing" \
     --arg run_id "$RUN_ID" \
@@ -187,7 +188,7 @@ jq -n \
     # step 1: gap-free pages (nested-only gaps ride along with a deferral note)
     | [ $pageIncs[] | select(.directGaps | length == 0)
         | { type, section, page, slug, obligations,
-            milestone: (if .section == "origin" then "M0" else "M1" end) }
+            milestone: (if $milestoneZeroSection != "" and .section == $milestoneZeroSection then "M0" else "M1" end) }
           + (if (.entryPages // [] | length) > 0 then { entryPages } else {} end)
           + (if (.deferredNested | length) > 0
              then { deferredNested, note: ("Implement WITHOUT nested collection(s) " + (.deferredNested | join(", ")) + " — they arrive in M2 behind the model-extension gate. Entry sub-pages that exist only for the deferred collection also wait for M2.") }

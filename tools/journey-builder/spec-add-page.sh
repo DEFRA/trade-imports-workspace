@@ -10,12 +10,15 @@
 #       --id country-of-origin --slug origin/country --title "Country of origin" \
 #       --collects countryOfOrigin,regionCodeRequirement,regionCode \
 #       [--json gate='{"...":"..."}'] [--field provisionalCopy=true]
+#
+# --slug is required but may be empty (`--slug ''`): the set's root page has
+# no slug of its own.
 
 set -e
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
-RUN_ID=""; SECTION=""; SECTION_TITLE=""; ID=""; SLUG=""; TITLE=""; COLLECTS=""
+RUN_ID=""; SECTION=""; SECTION_TITLE=""; ID=""; SLUG=""; SLUG_GIVEN=false; TITLE=""; COLLECTS=""
 KEYS=(); VALS=(); IS_JSON=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,7 +26,7 @@ while [[ $# -gt 0 ]]; do
         --section) SECTION="$2"; shift 2 ;;
         --section-title) SECTION_TITLE="$2"; shift 2 ;;
         --id) ID="$2"; shift 2 ;;
-        --slug) SLUG="$2"; shift 2 ;;
+        --slug) SLUG="$2"; SLUG_GIVEN=true; shift 2 ;;
         --title) TITLE="$2"; shift 2 ;;
         --collects) COLLECTS="$2"; shift 2 ;;
         --field|--json)
@@ -36,9 +39,13 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown arg: $1" >&2; exit 1 ;;
     esac
 done
-for v in RUN_ID SECTION ID SLUG TITLE; do
+for v in RUN_ID SECTION ID TITLE; do
     [[ -z "${!v}" ]] && { echo "Error: missing $v" >&2; exit 1; }
 done
+# The slug must be stated, not defaulted: the set's root page (the dashboard)
+# legitimately has an empty one, so `--slug ''` is a deliberate value while a
+# missing --slug is a forgotten one.
+[[ "$SLUG_GIVEN" == true ]] || { echo "Error: missing SLUG (pass --slug '' for the set's root page)" >&2; exit 1; }
 
 meta="$WORKSPACE/workareas/journey-builder/$RUN_ID/.digest-meta.json"
 [[ -f "$meta" ]] || { echo "Error: $meta not found — run prepare-digest.sh first" >&2; exit 1; }

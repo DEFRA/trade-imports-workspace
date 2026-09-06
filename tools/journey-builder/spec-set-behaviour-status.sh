@@ -1,9 +1,13 @@
 #!/bin/bash
 # Update a behaviour's status, appending a ruling note (gate-session helper).
 #
+# Statuses: adopted (build it), open-question (undecided), parked (decided
+# not now — it stays in the spec so the question is not re-asked), rejected
+# (decided never — kept so the rejection and its reason are on record).
+#
 # Usage:
 #   spec-set-behaviour-status.sh EUDPA-X --id back-navigation-variants \
-#       --status adopted --note "Ruling: ..."
+#       --status adopted|open-question|parked|rejected --note "Ruling: ..."
 
 set -e
 
@@ -23,8 +27,8 @@ for v in RUN_ID ID STATUS NOTE; do
     [[ -z "${!v}" ]] && { echo "Error: missing $v" >&2; exit 1; }
 done
 case "$STATUS" in
-    adopted|open-question) ;;
-    *) echo "Error: --status must be adopted|open-question" >&2; exit 1 ;;
+    adopted|open-question|parked|rejected) ;;
+    *) echo "Error: --status must be adopted|open-question|parked|rejected" >&2; exit 1 ;;
 esac
 
 meta="$WORKSPACE/workareas/journey-builder/$RUN_ID/.digest-meta.json"

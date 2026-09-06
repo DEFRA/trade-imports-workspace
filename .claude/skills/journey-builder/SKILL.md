@@ -57,6 +57,38 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
    inline comments, provisional copy). Commit on the spec branch only
    after Sam approves.
 
+## Mode: rule
+
+A gate session produces rulings, and every ruling is recorded and applied in
+one call so the ledger and the spec cannot drift.
+`tools/journey-builder/spec-add-decision.sh EUDPA-X --subject conflict:c-012
+--ruling resolve --resolution "..." --rationale "..." --decided-by panel|sam
+--decided-at YYYY-MM-DD [--dissent "..."] [--escalate] [--supersedes d-003]`
+appends a `d-NNN` entry to `<spec_dir>/decisions.json` (beside
+journey-spec.json, on the spec branch) and stamps the subject in the same
+write: a conflict gets `resolution`, `resolvedBy` and `decision`; a
+behaviour (`--ruling adopt|park|reject|keep-open`) gets its status
+(adopted / parked / rejected / open-question), a ` | Ruling: ...` note on
+its detail, and `decision`. The caller passes `--decided-at` — the script
+never reads the clock, so a replayed session gives a byte-identical ledger.
+
+A subject carries one current decision. To change a ruling, add a new
+decision with `--supersedes <d-id>`: the earlier entry flips to
+`superseded` with `supersededBy`, the new one is current, and the subject
+is re-stamped. A decision may only supersede a current one for its own
+subject, so the chain stays linear and readable.
+
+When a ruling changes a fact rather than a status — a mandate, a page
+title, which page collects an obligation — apply it with the setters
+rather than by hand-editing JSON: `spec-set-field.sh EUDPA-X --id
+<obligationId> [--field K=V] [--json K='<json>'] [--unset K]` and
+`spec-set-page.sh EUDPA-X --id <pageId> [--field K=V] [--json K='<json>']
+[--unset K] [--collects a,b,c]`. Both refuse to change `id` (other entries
+reference it) and validate `--json` values, so `false` and `null` are
+accepted. Then re-run `spec-lint.sh`: it errors on a `decision` reference
+the ledger does not hold, and warns on conflicts resolved without a
+decision and on decisions whose subject has gone.
+
 ## Mode: backlog
 
 `tools/journey-builder/backlog-generate.sh EUDPA-X` derives
@@ -134,4 +166,6 @@ Never run both against one run at the same time. Both write the whole file.
 `tools/journey-builder/`: `prepare-digest.sh`, `extract-add-item.sh`,
 `extract-finalize.sh`, `spec-add-field.sh`, `spec-add-page.sh`,
 `spec-add-conflict.sh`, `spec-add-behaviour.sh`, `spec-add-fieldgroup.sh`,
+`spec-set-field.sh`, `spec-set-page.sh`, `spec-add-decision.sh`,
+`spec-resolve-conflict.sh`, `spec-set-behaviour-status.sh`,
 `spec-lint.sh [--format]`, `backlog-add-extra.sh`.

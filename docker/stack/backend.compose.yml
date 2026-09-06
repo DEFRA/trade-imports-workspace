@@ -79,6 +79,11 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      # /countries fetches an MDM token from the stub first, so without this
+      # reference-data reports healthy while it cannot serve.
+      trade-imports-stub:
+        condition: service_healthy
+        required: false
     env_file:
       - ./shared.env
     environment:

@@ -10,10 +10,24 @@ Which sources exist is per-target: the run's target profile declares them in
 `.digest-meta.json`. The per-source sections below are the rules for the
 live-animals sources (`confluence-v4`, `skeleton`, `ixd-canvas`) and they are
 **shape-specific** — "five tables, three column schemas" describes one
-particular Confluence page, not Confluence in general. If you are handed a
-source with no section below, stop and say so: its extraction rules have to be
-written before it can be read, and guessing at a document's structure is how a
-spec acquires invented requirements.
+particular Confluence page, not Confluence in general.
+
+**If your source has no section below, your first job is to write one.** Open
+the source, work out its actual structure — sections, tables, annexes, board
+regions, whatever it turns out to be — and write that down as a new section here
+before you extract a single item. Then extract against it.
+
+Characterise first, extract second. Reading a document as you go and inferring
+its shape from the parts you happen to hit is how a spec acquires invented
+requirements: you end up recording your reading of it rather than what it says.
+Say in your finalize summary what structure you found, so the reconciler knows
+how much of the source your extract actually covers.
+
+`document` sources are not all readable in place. A `.docx` is a zip — get its
+text with `unzip -p <file> word/document.xml`, then strip the tags (marking
+`</w:p>`, `</w:tr>` and `</w:tc>` boundaries first, or the whole document
+collapses onto one line and you will lose every table). A PDF is readable
+directly. `images` sources are read with the Read tool, one file at a time.
 
 ## Ground rules
 

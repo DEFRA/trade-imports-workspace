@@ -50,6 +50,11 @@ meta="$WORKAREA/.digest-meta.json"
 spec="$(jq -r '.spec_dir' "$meta")/journey-spec.json"
 target="$WORKAREA/backlog.json"
 
+# A failed jq (a missing or unreadable spec, say) would otherwise leave the
+# half-written temp beside the real backlog. mv consumes it on success, so the
+# cleanup is a no-op then.
+trap 'rm -f "$target.tmp"' EXIT
+
 existing='{"increments":[]}'
 [[ -f "$target" ]] && existing=$(cat "$target")
 

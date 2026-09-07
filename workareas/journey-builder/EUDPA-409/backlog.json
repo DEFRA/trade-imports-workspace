@@ -2109,11 +2109,13 @@
       "milestone": "M1",
       "gate": null,
       "id": "inc-025",
+      "ticket": "EUDPA-482",
+      "branch": "chore/EUDPA-482-copy-the-delete-notification-confirmatio",
       "dependsOn": [
         "inc-024"
       ],
       "status": "todo",
-      "commit": null,
+      "commit": "6e3fd90",
       "failure_reason": null,
       "kind": "chore",
       "sizeGuess": "M",
@@ -2180,9 +2182,18 @@
         "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run lint",
         "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "ENGINE-LEVEL OWNERSHIP, out of scope here by AC 12 ('no engine or shared change'). engine/journey.js currentJourney adopts ANY loadable journeyId into the caller's session before returning it (`if (!(await isKnownJourney(request, journeyId))) { await session.addKnownJourney(request, h, journeyId) }`), so every controller that calls state.get on a foreign id both discloses that journey (reference, status, journey strip) and silently defeats the isKnownJourney guard on every mutator that runs after it in the same request — softDeleteJourney, amendJourney, cancelAmendJourney, copyJourney. Nothing on the wire scopes the read either: records/real/http/headers.js sends only Content-Type and the tracing header, and only listKnownJourneys (the dashboard list) passes organisationId. inc-025 closes the destructive path with a controller-local isKnownJourney guard on both delete handlers, but the read-side disclosure stays open on the hub and on every page controller. DECISION NEEDED: either stop currentJourney auto-adopting unknown ids (a set-wide engine change with its own increment), or scope the record read on organisationId at the persistence boundary. Route this to the existing unscoped-notifications security ticket rather than letting each new controller re-solve it."
+      ],
       "recipe": "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/add-a-page.md (sections 4 and 5 only — this is an action-slug controller, not a dispatch page: no page.js, no dispatchPages entry, no flow/task-row/run/section-caption entry); repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/testing.md; copy the shape of repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/",
-      "notes": "WHAT IS ALREADY THERE. inc-018 built the dashboard: the per-status action links including Delete (from sharedCopy.notificationActions.delete.text), the actionHidden copy leaf the fit spec locates by, and the '?deleted=1' banner this page redirects into. inc-025 built the hub, which is where the dashboard's create POST lands, so the fit spec's 'start a notification' step ends on /notifications/<id>/... and the URL yields the journey id. inc-020 and inc-021 have already re-armed copy-convention.test.js and copy-parity.test.js as directory scans over features/, so this feature's copy pair is picked up automatically — add no registration and weaken nothing; every ladder rung must be green here.\n\nTHE ENGINE NEEDS NOTHING NEW. Verified in the plants repo: engine/index.js exports get, DRAFT, SUBMITTED, AMEND and DELETED; engine/journey.js:177 exports softDeleteJourney(request, _h, journeyId); shared/kit.js exports base (which leaves caption undefined when no page is passed), recoverableSave and routeOptions; shared/paths.js exports dashboardPath, pagePath and pageRoutePath; lib/http-status.js exports HTTP_STATUS_INTERNAL_SERVER_ERROR; shared/copy.en.js and copy.cy.js already carry notificationActions.delete with its success banner; both the stub and real records adapters expose softDelete; engine/test-support.js exports journeyRequest and stubH. config.js TEMPLATES is 'high-risk-plants/journeys/linear', so the view path is `${TEMPLATES}/features/delete-notification/template`.\n\nNOT THIS INCREMENT. The entry guard stays inert — inc-030 (restore-entry-guard) is the increment that adds the amend/cancel-amend/copy/delete slugs to the paths the guard ignores, and its detail names them; do not touch flow/entry-guard.js here. No section-caption entry either: animals keeps delete-notification out of captionSections and out of the BARE list, because BARE only has to decide the flow pages (section-captions.test.js 'Should decide every flow page') and this page is not one. No doc edit: the set README feature table is inc-060 and every add-a-page.md EXEMPLAR PLACEHOLDER is owned by inc-026, inc-032, inc-034 or inc-035.\n\nSPEC vs INCREMENT TEXT (the spec and the animals shape win, per PROGRAMME-NOTES 'Where the spec and an increment's own text disagree, the spec wins'):\n1. The extra's detail calls the second action 'No, return to dashboard (link)'. Animals renders it as a govukButton with href and classes 'govuk-button--secondary' inside the button group, and its fit spec asserts getByRole('button', { name: copy.noLink }) with an href attribute of '/'. The same detail opens 'Copy from animals delete-notification', so copy the animals markup: a secondary button, not an anchor.\n2. The detail says 'bare caption'. There is no caption leaf and no captions map entry — bareness is achieved by passing no page identity to kit.base, exactly as animals does.\n3. add-a-page.md section 5 says a page with collects: [] still joins dispatchPages. It does not apply: this controller has no page identity at all and animals leaves delete-notification out of dispatchPages while registering its routes (animals features/index.js:26, 80). Mirror animals.\n\nCONSISTENCY WITHOUT SHARING. Copy the shape of repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/ (controller.js, controller.test.js, template.njk, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, delete-notification.fit.spec.js). Never import from the animals repo and never centralise; the fit spec's one divergence is that plants has no fit/live-animals-journey.js equivalent — sign in with fit/sign-in.js and drive the dashboard directly, taking the journey id from the URL with a local helper in the spec.\n\nRULING BEHIND THIS INCREMENT. c-030 / d-062 / behaviour notification-actions-after-submission (d-065): the animals post-submission action set is in scope minus Copy as new, and 'the delete-notification and cancel-amend confirmation pages are copied from animals as chore extras (they are action-slug controllers, not dispatch pages), the delete page before the start-section E2E'. Copy as new and the 'Notification copied' banner stay parked — build neither. The lateness and 'may a submitted notification be deleted' questions are recorded as parked policy questions, not blockers for this page.\n\ncommitPaths in the target profile is not this increment's concern: the orchestrator's land stage stages what the increment produced (PROGRAMME-NOTES.md, 'What the loop commits')."
+      "notes": "WHAT IS ALREADY THERE. inc-018 built the dashboard: the per-status action links including Delete (from sharedCopy.notificationActions.delete.text), the actionHidden copy leaf the fit spec locates by, and the '?deleted=1' banner this page redirects into. inc-025 built the hub, which is where the dashboard's create POST lands, so the fit spec's 'start a notification' step ends on /notifications/<id>/... and the URL yields the journey id. inc-020 and inc-021 have already re-armed copy-convention.test.js and copy-parity.test.js as directory scans over features/, so this feature's copy pair is picked up automatically — add no registration and weaken nothing; every ladder rung must be green here.\n\nTHE ENGINE NEEDS NOTHING NEW. Verified in the plants repo: engine/index.js exports get, DRAFT, SUBMITTED, AMEND and DELETED; engine/journey.js:177 exports softDeleteJourney(request, _h, journeyId); shared/kit.js exports base (which leaves caption undefined when no page is passed), recoverableSave and routeOptions; shared/paths.js exports dashboardPath, pagePath and pageRoutePath; lib/http-status.js exports HTTP_STATUS_INTERNAL_SERVER_ERROR; shared/copy.en.js and copy.cy.js already carry notificationActions.delete with its success banner; both the stub and real records adapters expose softDelete; engine/test-support.js exports journeyRequest and stubH. config.js TEMPLATES is 'high-risk-plants/journeys/linear', so the view path is `${TEMPLATES}/features/delete-notification/template`.\n\nNOT THIS INCREMENT. The entry guard stays inert — inc-030 (restore-entry-guard) is the increment that adds the amend/cancel-amend/copy/delete slugs to the paths the guard ignores, and its detail names them; do not touch flow/entry-guard.js here. No section-caption entry either: animals keeps delete-notification out of captionSections and out of the BARE list, because BARE only has to decide the flow pages (section-captions.test.js 'Should decide every flow page') and this page is not one. No doc edit: the set README feature table is inc-060 and every add-a-page.md EXEMPLAR PLACEHOLDER is owned by inc-026, inc-032, inc-034 or inc-035.\n\nSPEC vs INCREMENT TEXT (the spec and the animals shape win, per PROGRAMME-NOTES 'Where the spec and an increment's own text disagree, the spec wins'):\n1. The extra's detail calls the second action 'No, return to dashboard (link)'. Animals renders it as a govukButton with href and classes 'govuk-button--secondary' inside the button group, and its fit spec asserts getByRole('button', { name: copy.noLink }) with an href attribute of '/'. The same detail opens 'Copy from animals delete-notification', so copy the animals markup: a secondary button, not an anchor.\n2. The detail says 'bare caption'. There is no caption leaf and no captions map entry — bareness is achieved by passing no page identity to kit.base, exactly as animals does.\n3. add-a-page.md section 5 says a page with collects: [] still joins dispatchPages. It does not apply: this controller has no page identity at all and animals leaves delete-notification out of dispatchPages while registering its routes (animals features/index.js:26, 80). Mirror animals.\n\nCONSISTENCY WITHOUT SHARING. Copy the shape of repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/ (controller.js, controller.test.js, template.njk, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, delete-notification.fit.spec.js). Never import from the animals repo and never centralise; the fit spec's one divergence is that plants has no fit/live-animals-journey.js equivalent — sign in with fit/sign-in.js and drive the dashboard directly, taking the journey id from the URL with a local helper in the spec.\n\nRULING BEHIND THIS INCREMENT. c-030 / d-062 / behaviour notification-actions-after-submission (d-065): the animals post-submission action set is in scope minus Copy as new, and 'the delete-notification and cancel-amend confirmation pages are copied from animals as chore extras (they are action-slug controllers, not dispatch pages), the delete page before the start-section E2E'. Copy as new and the 'Notification copied' banner stay parked — build neither. The lateness and 'may a submitted notification be deleted' questions are recorded as parked policy questions, not blockers for this page.\n\ncommitPaths in the target profile is not this increment's concern: the orchestrator's land stage stages what the increment produced (PROGRAMME-NOTES.md, 'What the loop commits').",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/38",
+          "number": 38
+        }
+      ]
     },
     {
       "type": "e2e",
@@ -2624,8 +2635,8 @@
       "type": "restore",
       "key": "restore-contract-and-coverage-tests",
       "repo": "frontend",
-      "title": "Recreate contract.test.js and obligations/coverage.test.js with the first collecting controller",
-      "detail": "src/server/app/contract.test.js (the L1 table pinning that each collecting controller's valid POST commits exactly the committable names in its meta.collects) was removed with the animals cases and does not exist; sets/high-risk-plants/obligations/coverage.test.js (manifest identity, within chains, group invariants, gate dependencies) does not exist either. Recreate both with the commodity-type case; every later collecting page adds a contract case. Evidence: skeleton contract-test-table, missing-tests-and-fixtures; behaviour contract-test-table.",
+      "title": "Recreate contract.test.js and obligations/coverage.test.js with the first collecting controller, and close the single-field page and validated-field fit spec EXEMPLAR PLACEHOLDERs (add-a-page.md, features.md)",
+      "detail": "src/server/app/contract.test.js (the L1 table pinning that each collecting controller's valid POST commits exactly the committable names in its meta.collects) was removed with the animals cases and does not exist; sets/high-risk-plants/obligations/coverage.test.js (manifest identity, within chains, group invariants, gate dependencies) does not exist either. Recreate both with the commodity-type case; every later collecting page adds a contract case. Evidence: skeleton contract-test-table, missing-tests-and-fixtures; behaviour contract-test-table.\n\nadd-a-page.md carries placeholders for 'the smallest single-field collecting page' and 'the validated-field fit spec establishing the initial-plus-error axe pattern'; features.md carries one for 'the first collecting controller'. commodity-type is that page: replace the three blocks with links to journeys/linear/features/commodity-type (controller, template, copy, controller.test.js, commodity-type.fit.spec.js) and delete the notes. Evidence: skeleton exemplar-placeholders.",
       "milestone": "M1",
       "gate": null,
       "id": "inc-029",
@@ -2644,19 +2655,14 @@
           "what": "the L1 commit-contract table, wired to the real high-risk-plants set, with the commodity-type case"
         },
         {
-          "path": "src/server/app/sets/high-risk-plants/obligations/coverage.test.js",
-          "action": "create",
-          "what": "set-owned manifest checks: identity, within chains, derived groups, dependsOn resolution, ENFORCED_AT_CONTINUE membership"
-        },
-        {
-          "path": "src/server/app/sets/high-risk-plants/docs/obligation-model.md",
+          "path": "src/server/app/sets/high-risk-plants/docs/add-a-collection.md",
           "action": "edit",
-          "what": "Set checks: coverage.test.js now exists — drop it from 'Neither file exists yet', leave the whitelists.test.js sentence"
+          "what": "section 7: drop 'That file does not exist right now ... so recreate it' from the contract-test paragraph"
         },
         {
           "path": "src/server/app/sets/high-risk-plants/docs/add-a-page.md",
           "action": "edit",
-          "what": "section 9: remove the 'That file does not exist right now' paragraph, keep the manual-table warning"
+          "what": "replace the 'Read these files first' EXEMPLAR PLACEHOLDER (lines 12-30) with the commodity-type file list, replace the 'Accessibility test' EXEMPLAR PLACEHOLDER (lines 303-304) with a citation of commodity-type.fit.spec.js, and correct the stale contract.test.js passage in section 9 (lines 250-252) | section 9: remove the 'That file does not exist right now' paragraph, keep the manual-table warning"
         },
         {
           "path": "src/server/app/sets/high-risk-plants/docs/add-a-section.md",
@@ -2664,9 +2670,19 @@
           "what": "section 4: remove the 'That file does not exist right now ... Recreate it with this group's cases' paragraph"
         },
         {
-          "path": "src/server/app/sets/high-risk-plants/docs/add-a-collection.md",
+          "path": "src/server/app/sets/high-risk-plants/docs/features.md",
           "action": "edit",
-          "what": "section 7: drop 'That file does not exist right now ... so recreate it' from the contract-test paragraph"
+          "what": "replace the 'Collecting controllers' EXEMPLAR PLACEHOLDER (lines 38-42) with a link to commodity-type's controller.js, and correct the stale 'holds only its two barrels today' paragraph (lines 8-13)"
+        },
+        {
+          "path": "src/server/app/sets/high-risk-plants/docs/obligation-model.md",
+          "action": "edit",
+          "what": "Set checks: coverage.test.js now exists — drop it from 'Neither file exists yet', leave the whitelists.test.js sentence"
+        },
+        {
+          "path": "src/server/app/sets/high-risk-plants/obligations/coverage.test.js",
+          "action": "create",
+          "what": "set-owned manifest checks: identity, within chains, derived groups, dependsOn resolution, ENFORCED_AT_CONTINUE membership"
         }
       ],
       "acceptanceCriteria": [
@@ -2681,19 +2697,34 @@
         "The animals 'system-populated fields declared but not presented' block (poApprovedReferenceNumber) is NOT copied: SYSTEM_POPULATED in bridge/obligation-source.js is empty in this repo and no plants obligation is system-populated in journey-spec.json. Copying it would assert a name this set does not have",
         "Every claim the two new files falsify is removed from the set docs in the same commit: add-a-page.md section 9 ('That file does not exist right now — it was removed along with the animals controller cases it was made of. The first collecting controller in this set recreates it.'), add-a-section.md section 4 (the same paragraph, 'Recreate it with this group's cases'), add-a-collection.md section 7 ('That file does not exist right now ... so recreate it') and obligation-model.md Set checks ('Neither file exists yet. Write coverage.test.js with the first obligation...'), which keeps its whitelists.test.js half — whitelists.test.js is still absent and is owned by restore-whitelists-test. The manual-table warnings stay as they are, and no EXEMPLAR PLACEHOLDER block is closed here",
         "Both new files pass the repo's eslint config for src/server/**: sonarjs/no-duplicate-string, sonarjs/no-identical-functions, sonarjs/cognitive-complexity and sonarjs/max-lines-per-function are errors there and test files are exempt only from no-magic-numbers (eslint.config.js:18-58), so repeated literals such as the obligation name become named constants",
-        "Placement is what makes each file run: contract.test.js sits at src/server/app/ so `npm test` runs it and `npm run test:high-risk-plants` (scoped to src/server/app/sets/high-risk-plants) does not — docs/testing.md, 'It does not run L1 or L2 tests. Run npm test for ... controller contract checks'; coverage.test.js sits under the set so both rungs run it. Neither file changes lint:arch: dependency-cruiser excludes **/*.test.js from the graph (.dependency-cruiser.cjs options.exclude)"
+        "Placement is what makes each file run: contract.test.js sits at src/server/app/ so `npm test` runs it and `npm run test:high-risk-plants` (scoped to src/server/app/sets/high-risk-plants) does not — docs/testing.md, 'It does not run L1 or L2 tests. Run npm test for ... controller contract checks'; coverage.test.js sits under the set so both rungs run it. Neither file changes lint:arch: dependency-cruiser excludes **/*.test.js from the graph (.dependency-cruiser.cjs options.exclude)",
+        "add-a-page.md's 'Read these files first' section carries no EXEMPLAR PLACEHOLDER and instead lists, as markdown links relative to docs/, every file the placeholder itself names: page.js, controller.js, template.njk, evaluation.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, controller.test.js, its fit spec and its obligation section - all for journeys/linear/features/commodity-type (add-a-page.md:23-26; backlog-extras.json exemplar-single-field-page detail)",
+        "The placeholder's second paragraph, 'A second exemplar is needed for per-rule validation and the initial-render plus error-state accessibility tests ... established by the first feature spec that covers a validated field' (add-a-page.md:28-30), is deleted, because that exemplar now exists",
+        "add-a-page.md's 'Accessibility test' section cites journeys/linear/features/commodity-type/commodity-type.fit.spec.js as the spec establishing the initial-render plus error-state axe pattern, and the EXEMPLAR PLACEHOLDER at lines 303-304 is gone. commodity-type qualifies as a validated field: its obligation has mandate required=true and errorCopy \"Select what you are importing\" (journey-spec.json obligations[commodityType])",
+        "features.md's 'Collecting controllers' section replaces the placeholder at lines 38-42 with a link to ../journeys/linear/features/commodity-type/controller.js, names it the first collecting controller in this set, and cites add-a-page.md as the minimal example - the instruction the placeholder itself gives (features.md:41-42)",
+        "After the change, `grep -rn \"EXEMPLAR PLACEHOLDER\" src/server/app/sets/high-risk-plants/docs/` returns no hit in add-a-page.md or features.md. The hits that remain in add-a-field.md, add-a-section.md, add-a-collection.md and README.md are untouched - they belong to exemplar-multi-field-page, exemplar-first-section, exemplar-check-answers, exemplar-first-collection and exemplar-readme-table",
+        "Every link added resolves to a file that exists: each target sits under src/server/app/sets/high-risk-plants/ and is written from docs/ in the ../journeys/linear/features/... form the two files already use (features.md:9; add-a-page.md:34-36)",
+        "The obligation section linked is the module under obligations/sections/ that declares commodityType, read from obligations/index.js. Its filename is not invented here: the commodity-type page increment chose it",
+        "add-a-page.md section 9 no longer states that src/server/app/contract.test.js 'does not exist right now' (lines 250-252). restore-contract-and-coverage-tests recreated it with the commodity-type case, so the passage instead points at the existing table and keeps the rule that a new controller must add its own case",
+        "features.md no longer states that the features folder 'holds only its two barrels today' (lines 8-13). dashboard, hub and commodity-type are in it by this point; the paragraph names the barrels and their role without claiming the folder is otherwise empty",
+        "Nothing outside src/server/app/sets/high-risk-plants/docs/ changes, and inside those two files no recipe step, rule or command is rewritten - only the placeholder blocks and the two stale statements (the extra's detail limits this increment to replacing the blocks and deleting the notes)",
+        "The reminder that plants features copy the animals shape but never import from it survives the edit in some form: the placeholder's 'Do not follow the animals paths' line is replaced, not silently dropped (PROGRAMME-NOTES.md 'Consistency with animals, without sharing')",
+        "format:check passes on both edited files: prettier's format:check glob covers **/*.md (package.json), so the markdown must be prettier-clean"
       ],
       "verification": [
-        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants",
-        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test",
         "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run format:check",
         "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run lint",
-        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci"
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test"
       ],
       "openQuestions": [],
       "implementorSkill": null,
       "recipe": "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/obligation-model.md (Set checks); repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/add-a-page.md (section 9, Add unit and contract tests); repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/testing.md; mirror repos/trade-imports-animals-frontend/src/server/app/contract.test.js and repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/obligations/coverage.test.js",
-      "notes": "WHAT IS ALREADY THERE WHEN THIS STARTS. The commodity-type increment created journeys/linear/features/commodity-type/ (page.js, controller.js exporting `meta = { ...page, collects: ['commodityType'] }`, controller.test.js, template.njk, evaluation.js, the copy pair and the fit spec), the first obligations/sections/ module and the commodityType entry in obligations/index.js; restore-entry-guard then made flow/entry-guard.js live with commodity-type as the entry page. Everything the two new files import already exists and was checked in the plants repo: engine/test-support.js exports driveHandler, postHandlerOf, postHandlerEndingWith, journeyRequest and stubH; bridge/obligation-source.js exports walkObligations, obligationByName, SYSTEM_POPULATED and ENFORCED_AT_CONTINUE; lib/answered.js exports isAnswered; flow/dispatch.js exports buildDispatch; services/persistence/records/stub/index.js and services/persistence/session/stub.js are both present; model/obligations/helpers/index.js re-exports obligationMetadata. Nothing new is needed from the engine.\n\nTHE ONE REAL TRAP, AND WHERE IT DIVERGES FROM ANIMALS. The animals repo's test/setup-obligation-set.js wires the REAL live-animals set globally, so its contract.test.js gets the real manifest for free. The plants repo's setup does the opposite: test/setup-obligation-set.js calls installFixture(), which configures a synthetic journey-neutral set (the engine is journey-agnostic and its tests must not depend on the installed set — sets/high-risk-plants/docs/obligation-model.md, 'The Vitest suite does NOT wire this set'). bridge/obligation-source.js reads the CONFIGURED set, so a contract.test.js copied verbatim from animals would resolve commodityType against the fixture, find nothing, compare an empty set with an empty set and pass while proving nothing. Configure the plants set in beforeAll and put the fixture back with installFixture() in afterAll. The two non-vacuity criteria exist for the same reason — this file is the one place in the suite where a green run can be a lie.\n\nTHE TABLE STAYS MANUAL — A DELIBERATE NON-CHANGE. behaviour contract-test-table says the first collecting controller recreates the file 'and every later collecting page adds a case', and add-a-page.md, add-a-section.md and add-a-collection.md all say the same in the same words: 'A new controller that is absent from the table does not make the test fail, so add the case even when the suite is green.' Do NOT add a completeness guard that walks dispatchPages and fails on a controller with a non-empty meta.collects and no case. It is tempting and it would be stronger, but it contradicts four places in the ruled documentation and would falsify three recipe paragraphs this increment is otherwise leaving alone. If it is ever wanted it is its own extra.\n\nIF THE ENFORCED_AT_CONTINUE ASSERTION IS RED. behaviour enforced-at-continue makes commodityType a member and the obligation carries enforcedAtContinue: 'true', but the one-line addition to the Set in bridge/obligation-source.js belongs to the commodity-type page increment and no extra owns it. If the assertion fails, the earlier increment omitted it: add the single entry here rather than weakening the assertion, and say so in the commit body. bridge/obligation-source.js is deliberately not in filesToTouch because it is expected to need no change.\n\nSPEC vs INCREMENT TEXT. No disagreement found. The extra's 'manifest identity, within chains, group invariants, gate dependencies' maps one-to-one onto the animals coverage.test.js sections minus its poApprovedReferenceNumber block, which is animals-only; the extra's 'with any scope seed that brings conditional obligations into scope — e.g. commodityType=potatoes for arrivalTime' describes later cases, not this one — commodityType is itself the gate and needs no seed.\n\nLADDER. Every rung must be green: the copy tripwires were re-armed as directory scans before the first feature (d-084 and the wire-section-captions work), and this increment adds no copy pair, so nothing here should touch them. `npm test` carries a pretest build and runs with coverage; read each run's output from a file once, never from a streaming grep. commitPaths in the target profile is not this increment's concern — the orchestrator's land stage stages what the increment produced (PROGRAMME-NOTES.md, 'What the loop commits')."
+      "notes": "COMBINED from inc-029 (restore-contract-and-coverage-tests) and inc-030 (exemplar-single-field-page) under the combination proposal of 2026-09-07: both are the documentation and test catch-up that the commodity-type page leaves behind, both edit docs/add-a-page.md, and inc-030's correction of the stale contract.test.js passage in add-a-page.md section 9 is the same passage inc-029 removes, so built apart the second increment re-edits lines the first has just touched.\n\nWHAT IS ALREADY THERE WHEN THIS STARTS. The commodity-type increment created journeys/linear/features/commodity-type/ (page.js, controller.js exporting `meta = { ...page, collects: ['commodityType'] }`, controller.test.js, template.njk, evaluation.js, the copy pair and the fit spec), the first obligations/sections/ module and the commodityType entry in obligations/index.js; restore-entry-guard then made flow/entry-guard.js live with commodity-type as the entry page. Everything the two new files import already exists and was checked in the plants repo: engine/test-support.js exports driveHandler, postHandlerOf, postHandlerEndingWith, journeyRequest and stubH; bridge/obligation-source.js exports walkObligations, obligationByName, SYSTEM_POPULATED and ENFORCED_AT_CONTINUE; lib/answered.js exports isAnswered; flow/dispatch.js exports buildDispatch; services/persistence/records/stub/index.js and services/persistence/session/stub.js are both present; model/obligations/helpers/index.js re-exports obligationMetadata. Nothing new is needed from the engine.\n\nTHE ONE REAL TRAP, AND WHERE IT DIVERGES FROM ANIMALS. The animals repo's test/setup-obligation-set.js wires the REAL live-animals set globally, so its contract.test.js gets the real manifest for free. The plants repo's setup does the opposite: test/setup-obligation-set.js calls installFixture(), which configures a synthetic journey-neutral set (the engine is journey-agnostic and its tests must not depend on the installed set — sets/high-risk-plants/docs/obligation-model.md, 'The Vitest suite does NOT wire this set'). bridge/obligation-source.js reads the CONFIGURED set, so a contract.test.js copied verbatim from animals would resolve commodityType against the fixture, find nothing, compare an empty set with an empty set and pass while proving nothing. Configure the plants set in beforeAll and put the fixture back with installFixture() in afterAll. The two non-vacuity criteria exist for the same reason — this file is the one place in the suite where a green run can be a lie.\n\nTHE TABLE STAYS MANUAL — A DELIBERATE NON-CHANGE. behaviour contract-test-table says the first collecting controller recreates the file 'and every later collecting page adds a case', and add-a-page.md, add-a-section.md and add-a-collection.md all say the same in the same words: 'A new controller that is absent from the table does not make the test fail, so add the case even when the suite is green.' Do NOT add a completeness guard that walks dispatchPages and fails on a controller with a non-empty meta.collects and no case. It is tempting and it would be stronger, but it contradicts four places in the ruled documentation and would falsify three recipe paragraphs this increment is otherwise leaving alone. If it is ever wanted it is its own extra.\n\nIF THE ENFORCED_AT_CONTINUE ASSERTION IS RED. behaviour enforced-at-continue makes commodityType a member and the obligation carries enforcedAtContinue: 'true', but the one-line addition to the Set in bridge/obligation-source.js belongs to the commodity-type page increment and no extra owns it. If the assertion fails, the earlier increment omitted it: add the single entry here rather than weakening the assertion, and say so in the commit body. bridge/obligation-source.js is deliberately not in filesToTouch because it is expected to need no change.\n\nSPEC vs INCREMENT TEXT. No disagreement found. The extra's 'manifest identity, within chains, group invariants, gate dependencies' maps one-to-one onto the animals coverage.test.js sections minus its poApprovedReferenceNumber block, which is animals-only; the extra's 'with any scope seed that brings conditional obligations into scope — e.g. commodityType=potatoes for arrivalTime' describes later cases, not this one — commodityType is itself the gate and needs no seed.\n\nLADDER. Every rung must be green: the copy tripwires were re-armed as directory scans before the first feature (d-084 and the wire-section-captions work), and this increment adds no copy pair, so nothing here should touch them. `npm test` carries a pretest build and runs with coverage; read each run's output from a file once, never from a streaming grep. commitPaths in the target profile is not this increment's concern — the orchestrator's land stage stages what the increment produced (PROGRAMME-NOTES.md, 'What the loop commits').\n\nMarkdown only, in two files, no code. The unit, lint and fit rungs are regression proof; format:check is the rung that can actually fail, because prettier's globs include **/*.md. The CI-workflow carve-out in PROGRAMME-NOTES (unit, format and lint only) covers YAML under .github/ and does not apply here, so the full frontend ladder runs.\n\nOrdering: the commodity-type page increment creates every file this increment links, and restore-contract-and-coverage-tests (this increment's dependsOn) recreated src/server/app/contract.test.js. Both must have landed. exemplar-hub already closed add-a-page.md's hub and flow/task-rows.test.js placeholder - do not re-open or re-close it. The docs/README.md exemplar table row for add-a-page.md is closed by exemplar-readme-table at the end of M1; leave README.md alone here.\n\nDiscrepancy between the increment's own text and the doc: the detail names the link set as 'controller, template, copy, controller.test.js, commodity-type.fit.spec.js'. The placeholder in add-a-page.md (lines 23-26) asks for a longer list - page.js, controller.js, template.njk, evaluation.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, controller.test.js, the fit spec and the obligation section. The doc's list wins: it is the placeholder's own closing instruction and a superset of the detail's.\n\nScope added beyond the extra's three blocks, deliberately: two statements in these same two files were made false by increments that ran before this one - add-a-page.md's 'That file does not exist right now' about contract.test.js, and features.md's 'holds only its two barrels today'. docs-drift-sweep ran at M0 and could not have covered post-M0 drift, and no later extra owns either sentence. Correcting them costs two paragraphs in files already being edited; leaving them would ship documentation that contradicts the repo.\n\nDo not invent the obligation section filename: read src/server/app/sets/high-risk-plants/obligations/index.js and link what is there. The animals set keeps these under obligations/sections/ (arrival.js, commodities/, origin.js and so on) - that is the shape, not a name to copy blindly.",
+      "absorbs": [
+        "inc-030"
+      ]
     },
     {
       "type": "chore",
@@ -2707,7 +2738,7 @@
       "dependsOn": [
         "inc-029"
       ],
-      "status": "todo",
+      "status": "merged-into",
       "commit": null,
       "failure_reason": null,
       "kind": "chore",
@@ -2748,7 +2779,8 @@
       "openQuestions": [],
       "implementorSkill": null,
       "recipe": "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/README.md; repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/add-a-page.md; repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/features.md",
-      "notes": "Markdown only, in two files, no code. The unit, lint and fit rungs are regression proof; format:check is the rung that can actually fail, because prettier's globs include **/*.md. The CI-workflow carve-out in PROGRAMME-NOTES (unit, format and lint only) covers YAML under .github/ and does not apply here, so the full frontend ladder runs.\n\nOrdering: the commodity-type page increment creates every file this increment links, and restore-contract-and-coverage-tests (this increment's dependsOn) recreated src/server/app/contract.test.js. Both must have landed. exemplar-hub already closed add-a-page.md's hub and flow/task-rows.test.js placeholder - do not re-open or re-close it. The docs/README.md exemplar table row for add-a-page.md is closed by exemplar-readme-table at the end of M1; leave README.md alone here.\n\nDiscrepancy between the increment's own text and the doc: the detail names the link set as 'controller, template, copy, controller.test.js, commodity-type.fit.spec.js'. The placeholder in add-a-page.md (lines 23-26) asks for a longer list - page.js, controller.js, template.njk, evaluation.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, controller.test.js, the fit spec and the obligation section. The doc's list wins: it is the placeholder's own closing instruction and a superset of the detail's.\n\nScope added beyond the extra's three blocks, deliberately: two statements in these same two files were made false by increments that ran before this one - add-a-page.md's 'That file does not exist right now' about contract.test.js, and features.md's 'holds only its two barrels today'. docs-drift-sweep ran at M0 and could not have covered post-M0 drift, and no later extra owns either sentence. Correcting them costs two paragraphs in files already being edited; leaving them would ship documentation that contradicts the repo.\n\nDo not invent the obligation section filename: read src/server/app/sets/high-risk-plants/obligations/index.js and link what is there. The animals set keeps these under obligations/sections/ (arrival.js, commodities/, origin.js and so on) - that is the shape, not a name to copy blindly."
+      "notes": "Markdown only, in two files, no code. The unit, lint and fit rungs are regression proof; format:check is the rung that can actually fail, because prettier's globs include **/*.md. The CI-workflow carve-out in PROGRAMME-NOTES (unit, format and lint only) covers YAML under .github/ and does not apply here, so the full frontend ladder runs.\n\nOrdering: the commodity-type page increment creates every file this increment links, and restore-contract-and-coverage-tests (this increment's dependsOn) recreated src/server/app/contract.test.js. Both must have landed. exemplar-hub already closed add-a-page.md's hub and flow/task-rows.test.js placeholder - do not re-open or re-close it. The docs/README.md exemplar table row for add-a-page.md is closed by exemplar-readme-table at the end of M1; leave README.md alone here.\n\nDiscrepancy between the increment's own text and the doc: the detail names the link set as 'controller, template, copy, controller.test.js, commodity-type.fit.spec.js'. The placeholder in add-a-page.md (lines 23-26) asks for a longer list - page.js, controller.js, template.njk, evaluation.js, copy/copy.en.js, copy/copy.cy.js, copy/copy.test.js, controller.test.js, the fit spec and the obligation section. The doc's list wins: it is the placeholder's own closing instruction and a superset of the detail's.\n\nScope added beyond the extra's three blocks, deliberately: two statements in these same two files were made false by increments that ran before this one - add-a-page.md's 'That file does not exist right now' about contract.test.js, and features.md's 'holds only its two barrels today'. docs-drift-sweep ran at M0 and could not have covered post-M0 drift, and no later extra owns either sentence. Correcting them costs two paragraphs in files already being edited; leaving them would ship documentation that contradicts the repo.\n\nDo not invent the obligation section filename: read src/server/app/sets/high-risk-plants/obligations/index.js and link what is there. The animals set keeps these under obligations/sections/ (arrival.js, commodities/, origin.js and so on) - that is the shape, not a name to copy blindly.",
+      "mergedInto": "inc-029"
     },
     {
       "type": "add-collection",
@@ -2769,7 +2801,7 @@
       "repo": "frontend",
       "id": "inc-031",
       "dependsOn": [
-        "inc-030"
+        "inc-029"
       ],
       "status": "todo",
       "commit": null,
@@ -2780,8 +2812,8 @@
       "type": "chore",
       "key": "exemplar-first-section",
       "repo": "frontend",
-      "title": "Close the multi-page feature group EXEMPLAR PLACEHOLDERs (add-a-section.md)",
-      "detail": "add-a-section.md carries placeholders for 'a multi-page feature group with shared copy and fit/', 'the check-answers output' and 'the multi-page axe helper'. The commodities feature (list page + commodity-details entry sub-page, one copy/ pair, fit/ folder with a shared axe helper) is that group: replace the first and third blocks with links to journeys/linear/features/commodities and delete the notes; the check-answers output block closes with exemplar-check-answers. Evidence: skeleton exemplar-placeholders.",
+      "title": "Close the multi-page feature group and collection shapes EXEMPLAR PLACEHOLDERs (add-a-section.md, add-a-collection.md) and create obligations/whitelists.test.js against the set-owned commodities service",
+      "detail": "add-a-section.md carries placeholders for 'a multi-page feature group with shared copy and fit/', 'the check-answers output' and 'the multi-page axe helper'. The commodities feature (list page + commodity-details entry sub-page, one copy/ pair, fit/ folder with a shared axe helper) is that group: replace the first and third blocks with links to journeys/linear/features/commodities and delete the notes; the check-answers output block closes with exemplar-check-answers. Evidence: skeleton exemplar-placeholders.\n\nadd-a-collection.md carries one placeholder for 'the three collection shapes — single-page loop, two-page batch with a per-instance conditional and a floor, nested collection with a cap'. commodityLines is the two-page batch with per-instance conditionals (category reveals) and a minEntries floor: link it for that shape and say plainly that the single-page loop and the nested capped collection have no plants exemplar (animals documents and animalIdentifiers remain the references). Delete the note. Evidence: skeleton exemplar-placeholders, collections-engine-api.\n\nThe commodities increment introduces the first allow-lists (the per-category lists behind genus, species, commodityCode, potatoVariety, potatoIntendedUse, eppoCode, sizeOfTree, phytosanitaryTreatments gates, plus valuesByCommodityType). Every allow-list must come from sets/high-risk-plants/services/commodities and whitelists.test.js must check each against it so a hand-typed list cannot drift; the file does not exist. Evidence: skeleton set-owned-services-seam, missing-tests-and-fixtures; behaviour set-owned-commodities-service.",
       "milestone": "M1",
       "gate": null,
       "id": "inc-032",
@@ -2790,7 +2822,12 @@
       ],
       "status": "todo",
       "commit": null,
-      "failure_reason": null
+      "failure_reason": null,
+      "notes": "COMBINED from inc-032 (exemplar-first-section), inc-033 (exemplar-first-collection) and inc-034 (restore-whitelists-test) under the combination proposal of 2026-09-07: all three exist only to close what the commodities collection (inc-031) opens, none is a page, and they are consecutive in the chain. inc-032 and inc-033 each replace placeholder blocks in one recipe doc with links into journeys/linear/features/commodities; inc-034 lands the whitelists test that add-a-collection.md line 178 and obligation-model.md line 85 already describe against the same feature's allow-lists. If Sam prefers the test to stand alone, remove inc-034 from absorbs and leave inc-034's dependsOn pointed at inc-032.",
+      "absorbs": [
+        "inc-033",
+        "inc-034"
+      ]
     },
     {
       "type": "chore",
@@ -2804,9 +2841,10 @@
       "dependsOn": [
         "inc-032"
       ],
-      "status": "todo",
+      "status": "merged-into",
       "commit": null,
-      "failure_reason": null
+      "failure_reason": null,
+      "mergedInto": "inc-032"
     },
     {
       "type": "restore",
@@ -2820,9 +2858,10 @@
       "dependsOn": [
         "inc-033"
       ],
-      "status": "todo",
+      "status": "merged-into",
       "commit": null,
-      "failure_reason": null
+      "failure_reason": null,
+      "mergedInto": "inc-032"
     },
     {
       "type": "e2e",
@@ -2834,7 +2873,7 @@
       "gate": null,
       "id": "inc-035",
       "dependsOn": [
-        "inc-034"
+        "inc-032"
       ],
       "status": "todo",
       "commit": null,
@@ -2913,7 +2952,12 @@
       "status": "todo",
       "commit": null,
       "failure_reason": null,
-      "title": null
+      "title": "Add the arrival-details page (arrival date, arrival time, proposed place of landing) and close the several-field conditional page and normalising-input EXEMPLAR PLACEHOLDERs (add-a-field.md)",
+      "detail": "add-a-field.md carries placeholders for 'a several-field feature with conditional scope, service-backed options, per-rule validation and check-answers rows' and 'a normalising-input field'. arrival-details is that page (date with switching label, time revealed for potatoes, place of landing over the ports service, per-rule validation, CYA rows) and its date/time parsing is the normalising input: replace both blocks with links to journeys/linear/features/arrival-details and delete the notes. The third add-a-field placeholder (check-answers view-model/) closes with exemplar-check-answers. Evidence: skeleton exemplar-placeholders.",
+      "notes": "COMBINED from inc-039 (add-page arrival-details) and inc-040 (exemplar-multi-field-page) under the combination proposal of 2026-09-07: inc-040 exists only to replace two placeholder blocks in add-a-field.md with links into journeys/linear/features/arrival-details, the folder this page creates. The planner must plan both: the page from journey-spec.json (section arrival, page arrival-details, obligations arrivalDate, arrivalTime, proposedPlaceOfLanding) and the extra from backlog-extras.json by key exemplar-multi-field-page; the extra's detail is carried in this increment's detail. The third add-a-field.md placeholder (check-answers view-model/) is NOT closed here; it belongs to exemplar-check-answers.",
+      "absorbs": [
+        "inc-040"
+      ]
     },
     {
       "type": "chore",
@@ -2927,9 +2971,10 @@
       "dependsOn": [
         "inc-039"
       ],
-      "status": "todo",
+      "status": "merged-into",
       "commit": null,
-      "failure_reason": null
+      "failure_reason": null,
+      "mergedInto": "inc-039"
     },
     {
       "type": "e2e",
@@ -2941,7 +2986,7 @@
       "gate": null,
       "id": "inc-041",
       "dependsOn": [
-        "inc-040"
+        "inc-039"
       ],
       "status": "todo",
       "commit": null,

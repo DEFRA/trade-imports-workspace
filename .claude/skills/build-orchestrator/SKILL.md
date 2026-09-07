@@ -123,7 +123,7 @@ chosen in advance. A list committed five deep throws away everything the first
 increment teaches.
 
 ```bash
-jq -r '["done","deferred","dropped","blocked","rejected"] as $withheld | [.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status | IN($withheld[]) | not) | select([(.dependsOn // [])[] | IN($done[])] | all) | .id] | .[0] // "NONE"' workareas/<workarea>/backlog.json
+jq -r '["done","deferred","dropped","blocked","rejected","merged-into"] as $withheld | [.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status | IN($withheld[]) | not) | select([(.dependsOn // [])[] | IN($done[])] | all) | .id] | .[0] // "NONE"' workareas/<workarea>/backlog.json
 ```
 
 `NONE` → stop with `no-buildable`.

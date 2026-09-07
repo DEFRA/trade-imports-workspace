@@ -767,11 +767,13 @@
       "milestone": "M0",
       "gate": null,
       "id": "inc-013",
+      "ticket": "EUDPA-423",
+      "branch": "fix/EUDPA-423-enable-dependabot-in-the-plants-backend",
       "dependsOn": [
         "inc-012"
       ],
       "status": "todo",
-      "commit": null,
+      "commit": "bb1bb15",
       "failure_reason": null,
       "kind": "fix",
       "sizeGuess": "S",
@@ -812,7 +814,14 @@
         "A `dependabot.yml` only takes effect if the dependency graph and Dependabot version updates are enabled on DEFRA/trade-imports-plants-backend at repo or org level. The checkout cannot see that setting, and a config GitHub is not reading produces no PRs and no error. Check the repo's Insights, Dependency graph, Dependabot tab after merge for the parsed config and the first Monday run; if it is off, that is a repo-settings question for Sam, not a change to this file."
       ],
       "recipe": "mirror repos/trade-imports-animals-backend/.github/dependabot.yml:1-27 (the policy the extra names — comments, blank-line grouping, schedule, limit, versioning-strategy, allow) with line 4's ecosystem corrected from nuget to maven; the corrected shape is corroborated by the workspace's one live Java/Maven config, repos/trade-imports-dynamics-gateway/.github/dependabot.yml:1-20; README wording copied from repos/trade-imports-animals-backend/README.md:122-123",
-      "notes": "Second of the two Dependabot increments and the FIRST increment of this backlog in the plants BACKEND — the twelve before it are all in the plants frontend. dependsOn inc-012, which does the same job in the plants frontend: a different repo, so the dependency is ordering and reviewer consistency, not a file conflict, and nothing inc-012 creates is edited here.\n\nDiscrepancy between the increment's own text and the evidence, and the resolution. (1) The detail says \"mirroring the animals backend policy (maven + github-actions)\", but the animals backend's live dependabot.yml:4 declares `nuget`, not `maven`, and that repo has no .csproj or .sln anywhere — its only manifest is pom.xml. Commit 5ba526a renamed the CDP template into place with zero content change, so the ecosystem was never corrected and has never updated a Java dependency there. Do NOT copy `nuget`: the detail's parenthetical is the requirement, the ecosystem is `maven`, and dynamics-gateway is the workspace's proof of the corrected shape. The animals-backend `nuget` entry is a real defect but it is out of scope here and is NOT a reason to touch the animals repo in this increment. (2) The detail says only \"Add .github/dependabot.yml\" and is silent on the template it supersedes and on the README; the evidence settles both — 5ba526a is a git rename and it edited README.md in the same commit, and no repo in this workspace holds both files. Unlike its sibling inc-012 (whose plan rules 'No README change' because the plants FRONTEND README has no Dependabot section at all), the plants backend README does carry the CDP section and would be left stating a falsehood, so the README edit is in scope here. inc-017 (docs-drift-sweep) cannot pick it up: that extra's repo is `frontend`.\n\ninc-014 (backend-ci-parity) follows immediately and adds e2e-tests.yml, publish-branch.yml, cleanup-e2e-reports.yml and a publish-arm64 job to this repo's .github/workflows/, and restores the sonarcloud calls. The `github-actions` entry landing here needs no revision when they arrive — it globs `/`. Landing this first is deliberate: the action pins are already inconsistent (actions/checkout@v5 in check-pull-request.yml:20, publish.yml:29 and publish-hotfix.yml:26 but @v4 in sonarcloud.yml:16), so Dependabot has real work from day one. `DEFRA/cdp-build-action/build@main` (publish.yml:42) and `build-hotfix@main` are branch refs Dependabot will not bump; that is expected and matches animals.\n\nOnce this merges, every weekly bot PR runs check-pull-request.yml, whose `Run tests with Testcontainers` step is `mvn clean verify` followed by a full `docker build --no-cache`. Animals accepts the same cost; no guard is added here.\n\nThe local rung needs Docker running: the integration tests are Testcontainers-backed (pom.xml, src/test/java/uk/gov/defra/trade/imports/plants/integration/IntegrationBase.java, MongoConfigIT.java) and `mvn test` alone would skip Failsafe, so the ladder is `mvn ... clean verify` and nothing lighter. There is no maven wrapper at the repo root, so `mvn` comes from PATH. No frontend rung applies — this increment touches no JavaScript, so `test:high-risk-plants`, `format:check` and `lint` have nothing to say about it — and the fit rung is off the ladder for the same reason it is off inc-002 to inc-011: a config file changes no runtime behaviour a browser run could observe. The PR's own checks, which the loop watches, are the real proof.\n\nM0 hygiene: no journey code, no obligation, no copy, no Welsh, and no interaction with the copy-convention or copy-parity tripwires, which live in the frontend and are not armed until the first feature increment. The spec ties in only through behaviour `nfr-sustainable` / d-081, which parks Annex 6's unqualified 'Sustainable' and records that if policy ever means maintainability then this extra already serves it — a fact kept in the ledger, not a requirement, and no increment follows from it. commitPaths already covers `.github`, `docs` and `README.md` for this target and is not the orchestrator's concern (PROGRAMME-NOTES.md)."
+      "notes": "Second of the two Dependabot increments and the FIRST increment of this backlog in the plants BACKEND — the twelve before it are all in the plants frontend. dependsOn inc-012, which does the same job in the plants frontend: a different repo, so the dependency is ordering and reviewer consistency, not a file conflict, and nothing inc-012 creates is edited here.\n\nDiscrepancy between the increment's own text and the evidence, and the resolution. (1) The detail says \"mirroring the animals backend policy (maven + github-actions)\", but the animals backend's live dependabot.yml:4 declares `nuget`, not `maven`, and that repo has no .csproj or .sln anywhere — its only manifest is pom.xml. Commit 5ba526a renamed the CDP template into place with zero content change, so the ecosystem was never corrected and has never updated a Java dependency there. Do NOT copy `nuget`: the detail's parenthetical is the requirement, the ecosystem is `maven`, and dynamics-gateway is the workspace's proof of the corrected shape. The animals-backend `nuget` entry is a real defect but it is out of scope here and is NOT a reason to touch the animals repo in this increment. (2) The detail says only \"Add .github/dependabot.yml\" and is silent on the template it supersedes and on the README; the evidence settles both — 5ba526a is a git rename and it edited README.md in the same commit, and no repo in this workspace holds both files. Unlike its sibling inc-012 (whose plan rules 'No README change' because the plants FRONTEND README has no Dependabot section at all), the plants backend README does carry the CDP section and would be left stating a falsehood, so the README edit is in scope here. inc-017 (docs-drift-sweep) cannot pick it up: that extra's repo is `frontend`.\n\ninc-014 (backend-ci-parity) follows immediately and adds e2e-tests.yml, publish-branch.yml, cleanup-e2e-reports.yml and a publish-arm64 job to this repo's .github/workflows/, and restores the sonarcloud calls. The `github-actions` entry landing here needs no revision when they arrive — it globs `/`. Landing this first is deliberate: the action pins are already inconsistent (actions/checkout@v5 in check-pull-request.yml:20, publish.yml:29 and publish-hotfix.yml:26 but @v4 in sonarcloud.yml:16), so Dependabot has real work from day one. `DEFRA/cdp-build-action/build@main` (publish.yml:42) and `build-hotfix@main` are branch refs Dependabot will not bump; that is expected and matches animals.\n\nOnce this merges, every weekly bot PR runs check-pull-request.yml, whose `Run tests with Testcontainers` step is `mvn clean verify` followed by a full `docker build --no-cache`. Animals accepts the same cost; no guard is added here.\n\nThe local rung needs Docker running: the integration tests are Testcontainers-backed (pom.xml, src/test/java/uk/gov/defra/trade/imports/plants/integration/IntegrationBase.java, MongoConfigIT.java) and `mvn test` alone would skip Failsafe, so the ladder is `mvn ... clean verify` and nothing lighter. There is no maven wrapper at the repo root, so `mvn` comes from PATH. No frontend rung applies — this increment touches no JavaScript, so `test:high-risk-plants`, `format:check` and `lint` have nothing to say about it — and the fit rung is off the ladder for the same reason it is off inc-002 to inc-011: a config file changes no runtime behaviour a browser run could observe. The PR's own checks, which the loop watches, are the real proof.\n\nM0 hygiene: no journey code, no obligation, no copy, no Welsh, and no interaction with the copy-convention or copy-parity tripwires, which live in the frontend and are not armed until the first feature increment. The spec ties in only through behaviour `nfr-sustainable` / d-081, which parks Annex 6's unqualified 'Sustainable' and records that if policy ever means maintainability then this extra already serves it — a fact kept in the ledger, not a requirement, and no increment follows from it. commitPaths already covers `.github`, `docs` and `README.md` for this target and is not the orchestrator's concern (PROGRAMME-NOTES.md).",
+      "prs": [
+        {
+          "repo": "backend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-backend/pull/2",
+          "number": 2
+        }
+      ]
     },
     {
       "type": "fix",
@@ -3109,6 +3118,89 @@
       "status": "blocked",
       "commit": null,
       "failure_reason": null
+    },
+    {
+      "type": "chore",
+      "key": "engine-sync-with-animals",
+      "repo": "frontend",
+      "title": "Sync the ported engine and platform with the animals frontend's refactoring since the port base",
+      "detail": "The plants frontend ported its journey-agnostic engine and platform from the animals frontend at origin/main @2ed89aef (plants commit dba9c35, 2026-09-05, 'bring the plants frontend up to the trade-imports shape'). Animals has kept refactoring those layers since. Diff the common areas between animals main as it stands when this increment runs and 2ed89aef, and port every engine-level change forward into plants so the two engines match again. The common areas are src/server/app minus sets/ (analysis, auth, bridge, docs, engine, flow, lib, model, services, shared, routes.js and the app-level test files), the auth, signout, common, config, client and plugins layers, test/ and test-helpers/, scripts/, the platform docs, and the build and lint configuration (package.json and its overrides block, webpack, vitest, playwright, dependency-cruiser, sonar-project.properties). Evidence: `git -C repos/trade-imports-animals-frontend log 2ed89aef..origin/main -- . ':!src/server/app/sets'` lists the commits; `diff -rq --exclude=sets --exclude=node_modules` across the two src/server/app trees shows the drift. Raised by Sam on 2026-09-07 because animals refactoring will otherwise leave plants on a fork of the engine.",
+      "milestone": "M1",
+      "gate": null,
+      "id": "inc-062",
+      "dependsOn": [
+        "inc-058"
+      ],
+      "status": "todo",
+      "commit": null,
+      "failure_reason": null,
+      "kind": "chore",
+      "sizeGuess": "L",
+      "filesToTouch": [
+        {
+          "path": "src/server/app/engine/",
+          "action": "edit",
+          "what": "port forward every change animals made to the engine since 2ed89aef; keep the plants tests running against the synthetic fixture manifest under test/fixtures/, not the live-animals set"
+        },
+        {
+          "path": "src/server/app/model/",
+          "action": "edit",
+          "what": "port forward the obligation-model and analysis changes (helpers, evaluator, reachability, no-display-keys); a helper animals removed is removed here too unless a plants obligation now uses it"
+        },
+        {
+          "path": "src/server/app/bridge/",
+          "action": "edit",
+          "what": "port forward the bridge changes (applicability, scope, fulfilments, obligation-source, status structure); add any journey-neutral characterisation or golden test animals added, pointed at the fixture manifest"
+        },
+        {
+          "path": "src/server/app/services/",
+          "action": "edit",
+          "what": "port forward persistence, run-mode and records-port changes; do NOT restore the commodity-reference seam, document-uploads, document-types or certification-purposes — those are journey-specific removals the shape commit made on purpose"
+        },
+        {
+          "path": "src/server/app/lib/ and src/server/app/shared/ and src/server/app/flow/ and src/server/app/routes.js",
+          "action": "edit",
+          "what": "port forward; routes.js keeps pointing at the high-risk-plants set"
+        },
+        {
+          "path": "src/server/app/docs/",
+          "action": "edit",
+          "what": "port forward the platform docs (architecture, flow-and-gates, limits, obligation-model, persistence, services, test-ownership, testing, validation) wherever animals changed the engine description; keep the plants-specific passages the set docs own"
+        },
+        {
+          "path": "test/, test-helpers/, scripts/, vitest.config.js, webpack.config.js, playwright.config.js, .dependency-cruiser.cjs, package.json, package-lock.json",
+          "action": "edit",
+          "what": "port forward test harness, build and lint configuration changes; any dependency bump goes through `npx --yes npm@11.6.2 install` because npm is pinned"
+        },
+        {
+          "path": "src/server/app/sets/high-risk-plants/docs/",
+          "action": "edit",
+          "what": "only where a ported engine change alters what a recipe tells the implementor to do; declare in the set README which animals commit range this sync covers so the next sync starts from there"
+        }
+      ],
+      "acceptanceCriteria": [
+        "The increment starts by recording the sync window: the animals commit range 2ed89aef..<animals main SHA at build time>, restricted to paths outside src/server/app/sets/. That range and the SHA it ends at are written into the set README under a 'Engine sync' heading, so the next sync knows its base. If the range is empty the increment lands that note alone and stops.",
+        "Every commit in the range is classified as engine (journey-agnostic: engine/, model/, bridge/, lib/, shared/, flow/, services/ ports and codecs, auth, config, plugins, test harness, build and lint config, platform docs) or journey (anything whose behaviour is only meaningful for live animals: parity-dr1 copy and page changes, set-specific fulfilments, mapper-a field mappings, live-animals fixtures). Engine commits are ported; journey commits are not. The classification is listed in the PR description, one line per commit, so a reviewer can disagree with a line rather than re-derive the split.",
+        "After the port, `diff -rq --exclude=sets --exclude=node_modules` between the two src/server/app trees shows only the deliberate plants divergences: the synthetic fixture manifest wiring under test/fixtures/ and test/setup-obligation-set.js, the removed commodity-reference seam and the removed document-uploads, document-types and certification-purposes services, journey-neutral naming in docs and JSDoc, and routes.js pointing at the high-risk-plants set. Each remaining difference is named in the PR description with the reason it stays.",
+        "No file under src/server/app/sets/ is touched except the set README's 'Engine sync' note and any recipe doc that a ported engine change made wrong. No journey copy, obligation, page or fulfilment is added, and nothing is imported from the animals repo — the port is a copy, declared, never a dependency (PROGRAMME-NOTES.md 'Consistency with animals, without sharing').",
+        "Tests animals added to the engine since the base (for example a characterisation, golden or contract test) come across pointed at the plants fixture manifest, not at live-animals data, and pass. A test that cannot be made journey-neutral is left out and named in the PR description with the reason.",
+        "The obligation-purity guard, copy-convention.test.js and copy-parity.test.js are not weakened. If animals changed those tripwires, the plants versions take the same change while keeping their per-feature checks for the high-risk-plants set.",
+        "No behaviour change in the plants journey: every plants feature's own unit tests and *.fit.spec.js pass unchanged, and the plants E2E project in the tests repo (`npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose -- --project=plants`) passes against the synced frontend with the stack up.",
+        "Every rung of the ladder is green, including lint:arch (dependency-cruiser) with no new violations and format:check."
+      ],
+      "verification": [
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run format:check",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run lint",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose -- --project=plants"
+      ],
+      "openQuestions": [
+        "Whether this sync should recur — one increment at the end of the build catches the drift up to that day, but animals will keep moving. If Sam wants it repeatable, the 'Engine sync' README note is the base for a follow-on chore extra; a shared package is ruled out by the no-sharing rule."
+      ],
+      "recipe": "docs/best-practices/node/code-style.md; repos/trade-imports-plants-frontend/src/server/app/docs/README.md; repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/README.md",
+      "notes": "Added by the orchestrator on 2026-09-07 at Sam's request ('add something to the end of the increment backlog which will be to diff against animals repo for the common areas — there's been refactoring in animals this will need to sync up with'). Not in the spec's backlog-extras.json; if the backlog is ever regenerated from the spec this increment must be re-added or the extra written into backlog-extras.json first.\n\nPORT BASE: plants commit dba9c35 says it ported animals origin/main @2ed89aef. On 2026-09-07 the animals checkout's main is still at 2ed89aef, so the drift is on animals origin or on branches not yet merged; the increment measures the range when it runs, not now. Engine files already differ in 80 places between the two checkouts (5,862 differing lines outside sets/), but most of that is the shape commit's deliberate journey-neutral rewrite of the engine tests, not animals refactoring — the classification step exists to keep those apart.\n\nDELIBERATE DIVERGENCES the sync must not undo (from dba9c35's own message): the engine tests run against a synthetic fixture manifest under test/fixtures/ with structural names (scalarField, statusToggle, branchSelector, compositeBlockOne, itemCollection, nestedCollection); the commodity-reference seam (commodityCodeFor, speciesLabel, typeTextForId) was removed; the repo names no journey domain outside the tests-repo reference and the recipes' guard rails. Animals-only folders today that stay out: services/certification-purposes, services/document-types, services/document-uploads, notification-mapper/mapper-a, notification-mapper/shared, notification-mapper/commodity-reference.js, and the mapper-a contract tests. Document uploads are also parked per the epic (PROGRAMME-NOTES.md standing rulings).\n\nORDER: dependsOn inc-058, the last unblocked increment, so it runs once every plants feature has landed and the engine is synced exactly once against a finished set. It deliberately does not depend on the three gated extras (inc-059 to inc-061): they are born blocked awaiting Sam's rulings, and a sync that waited on a ruling would never run. If one of them lands first and touches engine files, this increment absorbs the diff.\n\nSIZE: L is a guess. The range is unmeasured; a handful of engine commits is an M, a rewrite of the obligation helpers (EUDPA-360 shape) is an L, and if animals has moved the persistence contract it may need to be split by layer. The implementor should say which in the PR description rather than force one PR."
     }
   ]
 }

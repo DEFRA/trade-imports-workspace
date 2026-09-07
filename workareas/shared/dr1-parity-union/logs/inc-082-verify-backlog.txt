@@ -1,0 +1,129 @@
+{
+  "id": "inc-082",
+  "ticket": "EUDPA-476",
+  "branch": "feat/EUDPA-476-the-frontend-refuses-to-save-the-origin",
+  "type": "obligation-change",
+  "milestone": null,
+  "domain": "origin",
+  "title": "The frontend refuses to save the origin page until a country of origin is chosen; DR1 lets the user save what they have and shows the task as still to do.",
+  "detail": "Save and continue with no country chosen returns the page with 'Select the country where the animal originates from' in the error summary and against the field, and nothing on the page is kept. A user who knows the internal reference but is waiting on the health certificate to confirm the country cannot record what they do know (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67).\n\nDR1 saves whatever is on the origin page and moves on. Country of origin is not checked at all on submit — the only check the page makes is on the region code once Yes is chosen (app/routes.js:245-262). The unanswered country still counts against the task: the hub reads the origin task as complete only when both the country and the region-code answer are present (app/routes.js:232-244), so the gap is shown rather than enforced, and it is caught again at the review page before the declaration.\n\nStop blocking on country of origin at the page and let a partly answered origin page save. Keep the field mandatory for completeness, so the hub still shows the task as unfinished and the review page still stops a submission without it. The same save-what-you-have behaviour already applies on the frontend's reason-for-import page, so the pattern exists — this brings origin into line with it. Check the other pages in this slice for the same mismatch before treating it as an origin-only change.\n\nFALSIFIED BY: Submitting DR1's origin page with the country search empty and being returned to the page with an error about the country.",
+  "screens": [
+    "fe-origin",
+    "dr1-origin-of-the-import"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67",
+    "prototype": "app/routes.js:245-262"
+  },
+  "confidence": "high",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "Save and continue with no country chosen returns the page with 'Select the country where the animal originates from' in the error summary and against the field, and nothing on the page is kept. A user who knows the internal reference but is waiting on the health certificate to confirm the country cannot record what they do know (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67).",
+    "prototype": "DR1 saves whatever is on the origin page and moves on. Country of origin is not checked at all on submit — the only check the page makes is on the region code once Yes is chosen (app/routes.js:245-262). The unanswered country still counts against the task: the hub reads the origin task as complete only when both the country and the region-code answer are present (app/routes.js:232-244), so the gap is shown rather than enforced, and it is caught again at the review page before the declaration.",
+    "difference": "Stop blocking on country of origin at the page and let a partly answered origin page save. Keep the field mandatory for completeness, so the hub still shows the task as unfinished and the review page still stops a submission without it. The same save-what-you-have behaviour already applies on the frontend's reason-for-import page, so the pattern exists — this brings origin into line with it. Check the other pages in this slice for the same mismatch before treating it as an origin-only change.",
+    "correction": "Verified sound, including the two supporting claims. WHERE EACH SIDE ENFORCES: the frontend blocks at the page (requiredOneOf on countryOfOrigin, src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67) and again at completeness — countryOfOrigin is mandatory in the obligation model (src/server/app/sets/live-animals/obligations/sections/origin.js) so the hub row and readyForCheckYourAnswers both hold. DR1 does not check the country on the page at all (validateOriginOfImport tests only the region code, app/routes.js:246-263) but does hold it at both later points: hasOriginDetails requires it for the hub task (app/routes.js:231-245) and hasReviewNotificationComplete gates Continue on the review page (app/routes.js:4529-4532, 10068-10075). So this is the one page in the slice where the frontend is the STRICTER side, and the finding has it the right way round. CONFIRMED: 'the same save-what-you-have behaviour already applies on the frontend's reason-for-import page' — that page validates with a plain oneOf, not requiredOneOf, so an empty reason saves (src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:25-30). HOW CHECKED: read both page validators, the origin obligation section, hasOriginDetails, hasReviewNotificationComplete and both review POST handlers.",
+    "falsifiedBy": "Submitting DR1's origin page with the country search empty and being returned to the page with an error about the country.",
+    "relatedTo": [
+      {
+        "id": "inc-080",
+        "relation": "travels-with",
+        "why": "the two sides put the hard stop in opposite places on the same page"
+      }
+    ]
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
+      "lines": {
+        "start": 63,
+        "end": 67
+      },
+      "ranges": [
+        {
+          "start": 63,
+          "end": 67
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/routes.js",
+      "lines": {
+        "start": 245,
+        "end": 262
+      },
+      "ranges": [
+        {
+          "start": 245,
+          "end": 262
+        }
+      ],
+      "asWritten": "app/routes.js:245-262",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/routes.js",
+      "lines": {
+        "start": 232,
+        "end": 244
+      },
+      "ranges": [
+        {
+          "start": 232,
+          "end": 244
+        }
+      ],
+      "asWritten": "app/routes.js:232-244",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    }
+  ],
+  "corpus": "dr1",
+  "slice": "origin-and-reason",
+  "source": "origin-and-reason--country-of-origin-blocks-save-and-continue.json",
+  "controls": [
+    "countryOfOrigin"
+  ],
+  "provenance": {
+    "sourceA": "inc-081",
+    "sourceC": null,
+    "origin": "a-only",
+    "note": "C missed it. This is the one page in the slice where the frontend is the STRICTER side, and C never asked the question — its inc-075 detail recites 'the origin page's rule set requires a country' as background without ever checking whether DR1 does the same. It does not: DR1 validates only the region code on submit and catches the missing country at the hub and the review page instead. C is capable of finding frontend-stricter differences (it raised the equivalent on transit countries at inc-119), so this is an oversight rather than a policy. A's verification is solid — it read both validators, both hub gates and both review gates.",
+    "better": null,
+    "judged": null
+  }
+}

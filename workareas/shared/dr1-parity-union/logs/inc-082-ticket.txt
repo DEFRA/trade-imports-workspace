@@ -1,0 +1,23 @@
+h2. Increment
+
+{{inc-082}} from the {{shared/dr1-parity-union}} backlog.
+
+The frontend refuses to save the origin page until a country of origin is chosen. DR1 lets the user save what they have and shows the task as still to do.
+
+Save and continue with no country chosen returns the page with "Select the country where the animal originates from" in the error summary and against the field, and nothing on the page is kept. A user who knows the internal reference but is waiting on the health certificate to confirm the country cannot record what they do know ({{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67}}).
+
+DR1 saves whatever is on the origin page and moves on. Country of origin is not checked at all on submit — the only check the page makes is on the region code once Yes is chosen ({{app/routes.js:245-262}}). The unanswered country still counts against the task: the hub reads the origin task as complete only when both the country and the region-code answer are present ({{app/routes.js:232-244}}), so the gap is shown rather than enforced, and it is caught again at the review page before the declaration.
+
+h2. Acceptance criteria
+
+* The origin page saves and continues when no country of origin has been chosen, keeping whatever else the user has entered — no error summary and no field-level error for the country.
+* The region-code check is unchanged: once Yes is chosen, a missing or invalid region code still stops the page.
+* {{countryOfOrigin}} stays mandatory in the origin obligation section ({{src/server/app/sets/live-animals/obligations/sections/origin.js}}), so the hub still shows the origin task as unfinished while the country is missing.
+* The check-your-answers gate still holds — a notification with no country of origin cannot be submitted.
+* The change follows the save-what-you-have pattern already used on the reason-for-import page, which validates with a plain {{oneOf}} rather than {{requiredOneOf}} ({{src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:25-30}}).
+* The other pages in the origin-and-reason slice are checked for the same page-level-versus-completeness mismatch before this is treated as an origin-only change.
+* Unit tests cover the empty-country save, the hub row staying incomplete, and the review gate still blocking; the E2E specs and their visual baselines are updated for the new behaviour.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

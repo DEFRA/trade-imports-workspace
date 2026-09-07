@@ -10788,6 +10788,8 @@
     },
     {
       "id": "inc-082",
+      "ticket": "EUDPA-476",
+      "branch": "feat/EUDPA-476-the-frontend-refuses-to-save-the-origin",
       "type": "obligation-change",
       "milestone": null,
       "domain": "origin",
@@ -10805,9 +10807,25 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
-      "failure_reason": null,
+      "status": "done",
+      "commit": "4c577d03",
+      "failure_reason": "Cleared 2026-09-07. The loop stopped this increment as main-red after merging frontend #259 and tests #155. The red runs did not belong to main: E2E run 34143052503 and Lighthouse run 34143052111 were both PR runs for feature/EUDPA-295-freeze-address-on-submit, which publishes its report to e2e/feature-eudpa-295-freeze-address-on-submit and reports its check on PR #211. Both workflows are workflow_run-triggered and gated to pull_request events, and GitHub displays such runs against the default branch, so the loop read them as main. The EUDPA-295 tests branch (PR #123) is 7 commits behind main and lacks 140c021 (#155), the spec update this increment shipped, so it asserted an error summary the frontend no longer shows. Corroborating evidence: 4e37bd2 went red at 16:19 after four green runs with no frontend change. inc-082 landed correctly in both repos.",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/259",
+          "number": 259,
+          "merged": true,
+          "sha": "4c577d03dc7c0fcd322bb520687f1a3f53892979"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/155",
+          "number": 155,
+          "merged": true,
+          "sha": "140c021c2c2ad76d0517a7a7683865acb533f753"
+        }
+      ],
       "finding": {
         "frontend": "Save and continue with no country chosen returns the page with 'Select the country where the animal originates from' in the error summary and against the field, and nothing on the page is kept. A user who knows the internal reference but is waiting on the health certificate to confirm the country cannot record what they do know (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:63-67).",
         "prototype": "DR1 saves whatever is on the origin page and moves on. Country of origin is not checked at all on submit — the only check the page makes is on the region code once Yes is chosen (app/routes.js:245-262). The unanswered country still counts against the task: the hub reads the origin task as complete only when both the country and the region-code answer are present (app/routes.js:232-244), so the gap is shown rather than enforced, and it is caught again at the review page before the declaration.",

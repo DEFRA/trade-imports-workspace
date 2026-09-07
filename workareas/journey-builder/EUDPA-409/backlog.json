@@ -577,8 +577,10 @@
       "dependsOn": [
         "inc-009"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "ticket": "EUDPA-420",
+      "branch": "fix/EUDPA-420-add-cleanup-e2e-reports-yml-pr-close-nig",
+      "commit": "fe0cc97",
       "failure_reason": null,
       "kind": "fix",
       "sizeGuess": "S",
@@ -609,7 +611,16 @@
         "The reusable workflow opens with `actions/checkout@v4` on `ref: gh-pages` (workspace cleanup-e2e-reports.yml:24-28) and ends by orphan-resetting and force-pushing that branch. The plants frontend has no gh-pages branch yet — it is first created when a deployed E2E run publishes its report (workspace e2e-tests.yml:217, peaceiris/actions-gh-pages@v4) or when the Lighthouse workflow does (inc-011). Until then every 03:00 cron and every PR-close run of this workflow fails at checkout. The spec says copy animals and is silent on this: accept a red nightly until the first report publishes, seed an empty gh-pages branch, or guard the job? Animals never faced it because its gh-pages branch predates the cleanup workflow."
       ],
       "recipe": "mirror repos/trade-imports-animals-frontend/.github/workflows/cleanup-e2e-reports.yml:1-18 (the whole file); the reusable workflow it calls is .github/workflows/cleanup-e2e-reports.yml in this workspace repo",
-      "notes": "Fourth of the four CI-workflow-gap increments and the only one that creates a caller with no repo-specific values in it. dependsOn inc-009 (e2e-tests.yml), which itself depends on inc-008 (publish-branch.yml): those two are what put E2E report subdirectories on gh-pages for this workflow to prune, so landing it before them leaves it correct but with nothing to do. inc-011 (lighthouse.yml) later publishes into the sibling `lighthouse/` prefix the same reusable workflow prunes (workspace cleanup-e2e-reports.yml: `for parent in e2e lighthouse`) — no change here is needed when it lands. Discrepancy between the increment's own text and the evidence: the detail says \"Copy it with the plants names\", but there are no plants names to apply — the animals file is entirely repo-agnostic and the reusable workflow derives the repository from `github.repository`. Copy it verbatim; do not invent an input, an image name or a job rename to justify the phrase. The evidence citation still holds: animals cleanup-e2e-reports.yml is exactly 18 lines. Plants' other workflows pin `actions/checkout@v7` where animals pins v4 (plants publish.yml:27) — irrelevant here, the caller has no steps of its own; do not add any. The fit rung is deliberately off this ladder, as on inc-002 to inc-009: for a CI-workflow-only change the planner's rule is unit, format and lint locally, with the PR's own checks (which the loop watches) as the real proof; a workflow file changes no runtime behaviour a browser run could observe. No journey code, no copy, no Welsh, no tripwire interaction — this increment is M0 hygiene and predates the first feature increment."
+      "notes": "Fourth of the four CI-workflow-gap increments and the only one that creates a caller with no repo-specific values in it. dependsOn inc-009 (e2e-tests.yml), which itself depends on inc-008 (publish-branch.yml): those two are what put E2E report subdirectories on gh-pages for this workflow to prune, so landing it before them leaves it correct but with nothing to do. inc-011 (lighthouse.yml) later publishes into the sibling `lighthouse/` prefix the same reusable workflow prunes (workspace cleanup-e2e-reports.yml: `for parent in e2e lighthouse`) — no change here is needed when it lands. Discrepancy between the increment's own text and the evidence: the detail says \"Copy it with the plants names\", but there are no plants names to apply — the animals file is entirely repo-agnostic and the reusable workflow derives the repository from `github.repository`. Copy it verbatim; do not invent an input, an image name or a job rename to justify the phrase. The evidence citation still holds: animals cleanup-e2e-reports.yml is exactly 18 lines. Plants' other workflows pin `actions/checkout@v7` where animals pins v4 (plants publish.yml:27) — irrelevant here, the caller has no steps of its own; do not add any. The fit rung is deliberately off this ladder, as on inc-002 to inc-009: for a CI-workflow-only change the planner's rule is unit, format and lint locally, with the PR's own checks (which the loop watches) as the real proof; a workflow file changes no runtime behaviour a browser run could observe. No journey code, no copy, no Welsh, no tripwire interaction — this increment is M0 hygiene and predates the first feature increment.",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/16",
+          "number": 16,
+          "merged": true,
+          "sha": "f17f803c573eb3758d4f15e11eaab16dfd1f0534"
+        }
+      ]
     },
     {
       "type": "fix",

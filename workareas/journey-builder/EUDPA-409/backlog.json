@@ -631,11 +631,13 @@
       "milestone": "M0",
       "gate": null,
       "id": "inc-011",
+      "ticket": "EUDPA-421",
+      "branch": "fix/EUDPA-421-add-lighthouse-yml-lighthouse-ci-on-work",
       "dependsOn": [
         "inc-010"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "59e6bc8",
       "failure_reason": null,
       "kind": "fix",
       "sizeGuess": "S",
@@ -680,7 +682,16 @@
         "Whether a red Lighthouse check should block plants PRs before the first journey page exists. The set registers no routes yet (features/index.js exports allRoutes = []), so lighthouse:targets writes no URLs and lighthouserc.cjs:22-24 throws 'lists no URLs' — the check will conclude failure on every plants PR until the first page increment lands in M1. Landing the workflow now is still right: the extra's anchor puts it here and the scripts inc-001 wrote need the pipeline. Whether the check is required is branch protection, a repo setting outside the diff."
       ],
       "recipe": "repos/trade-imports-animals-frontend/.github/workflows/lighthouse.yml:1-197 (the whole file — the shape to copy); .github/actions/report-lighthouse-status/action.yml:4-19 (the composite action's four inputs); repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/lighthouse.md:105-119 (the CI ownership section this increment closes); repos/trade-imports-animals-frontend/.github/workflows/publish-branch.yml:1 (the workflow name the workflow_run trigger matches)",
-      "notes": "Dependencies. The extra's detail says this \"depends on lighthouse-scripts and ci-publish-branch-workflow\" while the backlog's dependsOn carries only inc-010 (the chain order). Both named dependencies land earlier — inc-001 (lighthouse-scripts) and inc-008 (ci-publish-branch-workflow) — so the chain already satisfies the detail. Recorded rather than treated as a discrepancy to fix.\n\nWhat earlier increments left. inc-001 created scripts/lighthouse/audit-targets.js, seed-notification.js and audit-targets.test.js and rewrote the earlier sections of docs/lighthouse.md, leaving the CI ownership section explicitly open for this increment; flag-simple-findings.cjs, run-audit.js, seed-audit-targets.js, lighthouserc.cjs, scripts/npm-version.js and tests/lighthouse/auth-setup.cjs were already in the repo. inc-008 created publish-branch.yml, whose `name:` this workflow's workflow_run trigger matches — `ls .github/workflows/` and read the name that is actually there rather than assuming 'Publish Branch Image'. So docs/lighthouse.md is an edit here, not a create.\n\nCopy, do not adapt. The animals workflow needs exactly one plants change (the frontend repository name). Do not retune ports, base URLs, report directories, retention or the compose project: 3003 is what both the stack and lighthouserc.cjs already use, lighthouse-report/ is what lighthouserc.cjs writes, and `trade-imports` is the stack's compose project name. Do not add an SEO column to the report index or an SEO assertion anywhere (docs/lighthouse.md 'There is no SEO assertion, and none should be added').\n\nThe ladder. prettier's format:check globs cover md, so the docs/lighthouse.md edit is checked; nothing in the ladder reads YAML — not prettier, not eslint, not stylelint, not depcruise — so no rung can catch a mistake in the workflow file. The real proof is the PR's own checks, which the loop watches, and PROGRAMME-NOTES rules that a red check on an M0 CI increment is evidence about the platform rather than the change. The fit rung is omitted deliberately for this CI-only change. npm in this repo is pinned to 11.6.2 — run any local install through `npx --yes npm@11.6.2`.\n\nExpect the Lighthouse job itself to fail until the first journey page lands (see the second open question). That is not a reason to weaken lighthouserc.cjs, to stub a URL list, or to gate the workflow behind dispatch only."
+      "notes": "Dependencies. The extra's detail says this \"depends on lighthouse-scripts and ci-publish-branch-workflow\" while the backlog's dependsOn carries only inc-010 (the chain order). Both named dependencies land earlier — inc-001 (lighthouse-scripts) and inc-008 (ci-publish-branch-workflow) — so the chain already satisfies the detail. Recorded rather than treated as a discrepancy to fix.\n\nWhat earlier increments left. inc-001 created scripts/lighthouse/audit-targets.js, seed-notification.js and audit-targets.test.js and rewrote the earlier sections of docs/lighthouse.md, leaving the CI ownership section explicitly open for this increment; flag-simple-findings.cjs, run-audit.js, seed-audit-targets.js, lighthouserc.cjs, scripts/npm-version.js and tests/lighthouse/auth-setup.cjs were already in the repo. inc-008 created publish-branch.yml, whose `name:` this workflow's workflow_run trigger matches — `ls .github/workflows/` and read the name that is actually there rather than assuming 'Publish Branch Image'. So docs/lighthouse.md is an edit here, not a create.\n\nCopy, do not adapt. The animals workflow needs exactly one plants change (the frontend repository name). Do not retune ports, base URLs, report directories, retention or the compose project: 3003 is what both the stack and lighthouserc.cjs already use, lighthouse-report/ is what lighthouserc.cjs writes, and `trade-imports` is the stack's compose project name. Do not add an SEO column to the report index or an SEO assertion anywhere (docs/lighthouse.md 'There is no SEO assertion, and none should be added').\n\nThe ladder. prettier's format:check globs cover md, so the docs/lighthouse.md edit is checked; nothing in the ladder reads YAML — not prettier, not eslint, not stylelint, not depcruise — so no rung can catch a mistake in the workflow file. The real proof is the PR's own checks, which the loop watches, and PROGRAMME-NOTES rules that a red check on an M0 CI increment is evidence about the platform rather than the change. The fit rung is omitted deliberately for this CI-only change. npm in this repo is pinned to 11.6.2 — run any local install through `npx --yes npm@11.6.2`.\n\nExpect the Lighthouse job itself to fail until the first journey page lands (see the second open question). That is not a reason to weaken lighthouserc.cjs, to stub a URL list, or to gate the workflow behind dispatch only.",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/17",
+          "number": 17,
+          "merged": true,
+          "sha": "491dd5af6241d6a5df8a81165ed7ec59b38e8b28"
+        }
+      ]
     },
     {
       "type": "fix",

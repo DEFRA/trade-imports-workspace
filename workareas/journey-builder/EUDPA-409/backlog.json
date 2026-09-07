@@ -457,8 +457,10 @@
       "dependsOn": [
         "inc-007"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "ticket": "EUDPA-418",
+      "branch": "fix/EUDPA-418-add-publish-branch-yml-branch-tagged-ima",
+      "commit": "c5189b6",
       "failure_reason": null,
       "kind": "fix",
       "sizeGuess": "S",
@@ -491,7 +493,16 @@
         "Whether CDP has provisioned the IAM role `arn:aws:iam::094954420758:role/github-trade-imports-plants-frontend-build-role` and the ECR repository `trade-imports-plants-frontend` that the reusable workflow assumes (workspace .github/workflows/publish-branch.yml:49-57). publish.yml already builds this repo through DEFRA/cdp-build-action, so the repo is onboarded and defradigital/trade-imports-plants-frontend exists, but the branch-image role is a separate grant. It cannot be checked from the repo — if the new workflow's first PR run fails at 'Configure AWS credentials' or the ECR login, that is an infrastructure request to the CDP platform team, not a defect in this increment."
       ],
       "recipe": "repos/trade-imports-animals-frontend/.github/workflows/publish-branch.yml (the shape to copy, 18 lines); .github/workflows/publish-branch.yml in the workspace repo (the reusable workflow being called — its inputs are image-name, required, and run-mode, optional, default 'service')",
-      "notes": "Spec vs increment text: none — the backlog increment's title and detail are verbatim from backlog-extras.json key ci-publish-branch-workflow, and both match the skeleton evidence (extract.skeleton.json id ci-e2e-workflows-missing). No discrepancy to record.\n\nChain: dependsOn inc-007, which edits publish.yml and publish-hotfix.yml only — it creates nothing this increment edits, and this increment's file does not exist yet in the plants frontend (`ls .github/workflows/` shows check-pull-request.yml, publish-hotfix.yml, publish.yml only), so the action is `create`. This increment is in turn what inc-009 (e2e-tests.yml), inc-010 (cleanup-e2e-reports.yml) and inc-011 (lighthouse.yml) hang their workflow_run trigger on; do not fold any of their content in here.\n\nCopy the shape from animals, do not import or centralise: all eleven repos that delegate to the workspace's reusable publish-branch.yml carry the identical 18-line file and differ only in the image-name line (and run-mode: job in the tests repo). The duplication is deliberate — GitHub requires the caller file to live in the calling repo.\n\ninc-006 adds a publish-arm64 job to publish.yml; that is publish.yml's concern. The reusable branch workflow already builds amd64 and arm64 in a matrix and pushes by digest, so nothing arch-related is added here.\n\nVerification ladder: this is a CI-workflow-only change, so the ladder is the unit, format and lint rungs; `PORT=3053 npm run test:fit:features` is deliberately omitted (no journey code, no server change, and it needs the stack up). Note that `format:check` globs `\"src/**/*.js\"` and `\"**/*.{js,cjs,md,json,config.js,test.js}\"` — YAML is outside prettier's set here, so the rung proves nothing about this file; keep the file at animals' exact two-space indentation by hand. `lint` is run-s lint:js lint:scss lint:arch and likewise does not read .github/. npm is pinned to 11.6.2 via packageManager: if a rung needs an install first, run it through `npx --yes npm@11.6.2`."
+      "notes": "Spec vs increment text: none — the backlog increment's title and detail are verbatim from backlog-extras.json key ci-publish-branch-workflow, and both match the skeleton evidence (extract.skeleton.json id ci-e2e-workflows-missing). No discrepancy to record.\n\nChain: dependsOn inc-007, which edits publish.yml and publish-hotfix.yml only — it creates nothing this increment edits, and this increment's file does not exist yet in the plants frontend (`ls .github/workflows/` shows check-pull-request.yml, publish-hotfix.yml, publish.yml only), so the action is `create`. This increment is in turn what inc-009 (e2e-tests.yml), inc-010 (cleanup-e2e-reports.yml) and inc-011 (lighthouse.yml) hang their workflow_run trigger on; do not fold any of their content in here.\n\nCopy the shape from animals, do not import or centralise: all eleven repos that delegate to the workspace's reusable publish-branch.yml carry the identical 18-line file and differ only in the image-name line (and run-mode: job in the tests repo). The duplication is deliberate — GitHub requires the caller file to live in the calling repo.\n\ninc-006 adds a publish-arm64 job to publish.yml; that is publish.yml's concern. The reusable branch workflow already builds amd64 and arm64 in a matrix and pushes by digest, so nothing arch-related is added here.\n\nVerification ladder: this is a CI-workflow-only change, so the ladder is the unit, format and lint rungs; `PORT=3053 npm run test:fit:features` is deliberately omitted (no journey code, no server change, and it needs the stack up). Note that `format:check` globs `\"src/**/*.js\"` and `\"**/*.{js,cjs,md,json,config.js,test.js}\"` — YAML is outside prettier's set here, so the rung proves nothing about this file; keep the file at animals' exact two-space indentation by hand. `lint` is run-s lint:js lint:scss lint:arch and likewise does not read .github/. npm is pinned to 11.6.2 via packageManager: if a rung needs an install first, run it through `npx --yes npm@11.6.2`.",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/14",
+          "number": 14,
+          "merged": true,
+          "sha": "828a52c50d563ba53c6e834eec25b735bdc207fc"
+        }
+      ]
     },
     {
       "type": "fix",

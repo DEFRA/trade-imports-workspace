@@ -18,7 +18,9 @@ Usage: $(basename "$0") [-b|--branch <name>] [-e|--exclude <label>]... [--profil
                          reach it via host.docker.internal.
   --profile <name>       Limit the stack to services in the named profile(s).
                          Repeatable. Valid: database, infrastructure,
-                         servicebus, stubs, backend, frontend. Defaults to all six.
+                         servicebus, stubs, backend, frontend, security.
+                         Defaults to all six except security, which is
+                         opt-in only and must be requested explicitly.
                          Strict — passing only a subset may leave \`depends_on\`
                          unmet; use this when intentionally running a
                          dependency natively (e.g. backend in IntelliJ).

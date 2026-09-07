@@ -112,8 +112,8 @@ E2E runs against the running workspace stack. A stack started before
 this run (or from Dockerhub `:latest`) does **not** contain the upgrade
 — its frontend/admin/stub containers are stale. You must rebuild the
 six repo-backed services from local source so the changes are actually
-under test. Dev mode wipes the mongo/floci volumes; that's fine —
-`test:docker-compose` reseeds the DB itself (4b).
+under test. Dev mode wipes the mongo/floci volumes; that's fine — the
+suite creates the state it asserts on (4b).
 
 This is destructive to the user's running stack (tears it down, wipes
 volumes). Confirm before doing it if the user has a live stack they
@@ -135,8 +135,8 @@ docker-compose-dev` == `scripts/stack/run-stack.sh -d`.)
 
 ### 4b. Run E2E
 
-From the tests repo, run the docker-compose suite (reseeds the DB,
-cleans, then runs Playwright against the dockerised stack):
+From the tests repo, run the docker-compose suite (cleans, then runs
+Playwright against the dockerised stack):
 
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose

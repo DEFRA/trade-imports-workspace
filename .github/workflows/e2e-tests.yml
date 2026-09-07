@@ -17,8 +17,8 @@ on:
 
 jobs:
   # Single suite, sharded three ways for wall-clock. Each shard stands up its
-  # own stack and reseeds it, then emits a blob report; merge-reports stitches
-  # the blobs back into one HTML report.
+  # own stack, then emits a blob report; merge-reports stitches the blobs back
+  # into one HTML report.
   e2e:
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -74,12 +74,29 @@ jobs:
             defradigital/trade-imports-animals-tests:${{ steps.branch-tag.outputs.tests-tag }} \
             run _assert_stack
 
-      - name: Reseed database
-        # STACK_BRANCH keeps the reseed's staged init fixtures on the PR
-        # branch — unset, bounce-mongo.sh sparse-fetches the default branch.
-        env:
-          STACK_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
-        run: ./scripts/stack/bounce-mongo.sh
+      # No reseed here. The runner is ephemeral, so "Start stack" above created
+      # the volume from nothing and the mongo entrypoint ran the init scripts
+      # against it. Reseeding did the whole thing a second time, and each wipe
+      # draws the fresh-volume startup race (EUDPA-358) again: three shards
+      # meant six draws per run rather than three. Assert the state instead of
+      # rebuilding it.
+      - name: Assert the database is fresh
+        run: |
+          logs="$(docker compose -p trade-imports logs --no-color mongodb)"
+          case "$logs" in
+            *'MongoDB init process complete'*) ;;
+            *)
+              echo "::error::mongo did not run its init scripts — the volume was not fresh"
+              exit 1
+              ;;
+          esac
+          docker compose -p trade-imports exec -T mongodb \
+            mongosh --quiet --eval '
+              if (db.getSiblingDB("test").test.countDocuments() < 1) {
+                print("seed fixtures did not apply");
+                quit(1);
+              }
+            '
 
       - name: Run E2E tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
         run: |
@@ -119,9 +136,8 @@ jobs:
           path: stack-logs.txt
           retention-days: 14
 
-      - name: Tear down stack
-        if: always()
-        run: docker compose -p trade-imports down
+      # No teardown step: the runner is ephemeral and takes every container,
+      # network and volume with it when the job ends.
 
   merge-reports:
     if: always() && needs.e2e.result != 'skipped'

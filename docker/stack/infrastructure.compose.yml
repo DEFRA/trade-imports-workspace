@@ -23,6 +23,7 @@ services:
       SQS_SCAN_RESULTS_CALLBACK: http://host.docker.internal:4566/000000000000/cdp-uploader-scan-results-callback.fifo
       USE_SINGLE_INSTANCE_CACHE: 'true'
     image: defradigital/cdp-uploader:latest
+    # CDP publish this one amd64-only, so it has to stay translated.
     platform: linux/amd64
     ports:
       - '7337:7337'
@@ -68,6 +69,7 @@ services:
   mssql:
     profiles: [servicebus]
     image: mcr.microsoft.com/mssql/server:2022-latest
+    # SQL Server has no arm64 image, so it has to stay translated.
     platform: linux/amd64
     environment:
       ACCEPT_EULA: 'Y'
@@ -83,7 +85,6 @@ services:
     profiles: [servicebus]
     # Pinned to match the dynamics-gateway Testcontainers integration tests
     image: mcr.microsoft.com/azure-messaging/servicebus-emulator:1.1.2
-    platform: linux/amd64
     depends_on:
       mssql:
         condition: service_healthy

@@ -46,6 +46,16 @@ requireApproval      whether EVERY PR of an increment needs an approving review
               Default true                              full only
 approvalWaitMinutes  how long the merge stage waits for those approvals before
               stopping with every PR open. Default 20   full only
+repos         where frontend, backend and tests live: a workspace-relative path
+              and a GitHub owner/name slug each. Defaults to the animals repos.
+              A programme in the plants repos says so here — the same three
+              keys name different repos in different programmes, and a path
+              typed from memory is how a plants increment ends up built in the
+              animals frontend
+models        optional model per tier: heavy (implement, reviewers, verifiers,
+              judge, fix, CI fix) and light (ticket, branch, baseline, ladder,
+              land, PR, CI watch, merge, done). A tier left out inherits the
+              session model
 ```
 
 `lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
@@ -180,11 +190,19 @@ const FALLBACK = {
   ciWatchMinutes: 30,
   requireApproval: true,
   approvalWaitMinutes: 20,
+  repos: {
+    frontend: { path: 'repos/<frontend repo>', github: 'DEFRA/<frontend repo>' },
+    backend: { path: 'repos/<backend repo>', github: 'DEFRA/<backend repo>' },
+    tests: { path: 'repos/<tests repo>', github: 'DEFRA/<tests repo>' }
+  },
+  models: { heavy: '<model or leave the object empty>', light: '<model>' },
   increments: ['<the one id you derived>']
 }
 ```
 
-**One id. Never more.** Change nothing else in the copy.
+**One id. Never more.** Change nothing else in the copy. Write `repos` out in
+full every time: the pristine copy carries the animals table, and the loop
+builds wherever that table points.
 
 Write `requireApproval` in explicitly, even though `true` is the loop's default.
 The patched `FALLBACK` is what a person reads to see what governs a run, and a
@@ -308,6 +326,8 @@ epic         <epic>
 inProgress   <inProgress>
 doneStatus   <doneStatus>
 board        <board>
+repos        <the repos table, one JSON object>
+models       <the models object, or {}>
 stopAfter    <a number, or all>
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).

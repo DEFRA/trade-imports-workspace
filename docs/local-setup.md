@@ -56,6 +56,9 @@ Services started:
 | Animals backend | 8085 | `defradigital/trade-imports-animals-backend:latest` |
 | Admin | 3001 | `defradigital/trade-imports-animals-admin:latest` |
 | INS frontend | 3002 | `defradigital/trade-imports-ins-frontend:latest` |
+| INS backend | 8090 | `defradigital/trade-imports-ins-backend:latest` |
+| Plants frontend | 3003 | `defradigital/trade-imports-plants-frontend:latest` |
+| Plants backend | 8091 | `defradigital/trade-imports-plants-backend:latest` |
 | Address book | 8089 | `defradigital/trade-imports-address-book:latest` |
 | Dynamics gateway | 8088 | `defradigital/trade-imports-dynamics-gateway:latest` |
 | Defra ID stub | 3007 | `defradigital/trade-imports-defra-id-stub` |
@@ -121,9 +124,10 @@ The backend does **not** hot-reload — recreate the container after changing Ja
 ## Option 3 — One service natively, the rest in the stack
 
 Exclude the service you're developing from the stack and run it from source.
-Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`,
-`defra-id-stub`, `reference-data`, `address-book`, `gateway` (the authoritative
-list is the `services` array at the top of `scripts/stack/run-stack.sh`).
+Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`,
+`ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
+`reference-data`, `address-book`, `gateway` (the authoritative list is the
+`services` array at the top of `scripts/stack/run-stack.sh`).
 
 ```bash
 # Terminal 1 — everything except the backend
@@ -151,19 +155,18 @@ limit the stack to the relevant profiles:
 
 ---
 
-## Reseeding the database
+## The database
 
 The mongo init scripts are staged by `run-stack.sh` from their owning repos:
-the workspace owns the replica-set init, the backend owns the Floci
-provisioning (`compose/start-floci.sh`), and the tests repo owns the
-notification seed fixtures (`seeds/mongodb/` in `trade-imports-animals-tests`).
+the workspace owns the replica-set init and the backend owns the Floci
+provisioning (`compose/start-floci.sh`).
 
-To wipe and reseed mongo without restarting the rest of the stack:
-
-```bash
-./scripts/stack/bounce-mongo.sh
-# or, from the tests repo: npm run database:reseed
-```
+Nothing wipes the database between test runs. Every E2E spec creates the
+state it asserts on through the backend API, scoped to that run, so the suite
+passes against a database still holding earlier runs' records. To start from
+empty, take the stack down (`./scripts/stack/stop-stack.sh` removes the
+volumes) and bring it back up. Wiping the volume under a running stack drops
+the indexes each service builds once at startup, and nothing rebuilds them.
 
 ---
 
@@ -186,12 +189,15 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 | Animals frontend | 3000 |
 | Admin | 3001 |
 | INS frontend | 3002 |
+| Plants frontend | 3003 |
 | Defra ID stub | 3007 |
 | Animals backend | 8085 |
 | Reference data | 8086 |
 | Trade imports stub | 8087 |
 | Dynamics gateway | 8088 |
 | Address book | 8089 |
+| INS backend | 8090 |
+| Plants backend | 8091 |
 | cdp-uploader | 7337 |
 | Floci | 4566 |
 | MongoDB | 27017 |

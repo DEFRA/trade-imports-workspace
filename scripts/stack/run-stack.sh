@@ -17,6 +17,8 @@ services=(
   "address-book|trade-imports-address-book|TRADE_IMPORTS_ADDRESS_BOOK"
   "gateway|trade-imports-dynamics-gateway|TRADE_IMPORTS_DYNAMICS_GATEWAY"
   "ins-backend|trade-imports-ins-backend|TRADE_IMPORTS_INS_BACKEND"
+  "plants-frontend|trade-imports-plants-frontend|TRADE_IMPORTS_PLANTS_FRONTEND"
+  "plants-backend|trade-imports-plants-backend|TRADE_IMPORTS_PLANTS_BACKEND"
 )
 
 valid_labels=()
@@ -29,17 +31,22 @@ source "$LIB_DIR/colour.sh"
 # shellcheck source=lib/compose.sh
 source "$LIB_DIR/compose.sh"
 
-valid_profiles=("${ALL_PROFILES[@]}")
+valid_profiles=("${ALL_PROFILES[@]}" "${OPT_IN_PROFILES[@]}")
 
 # shellcheck source=lib/flags.sh
 source "$LIB_DIR/flags.sh"
 parse_run_stack_flags "$@"
 
+stage_zap=0
+for profile in ${selected_profiles[@]+"${selected_profiles[@]}"}; do
+  [ "$profile" = security ] && { stage_zap=1; break; }
+done
+
 # shellcheck source=lib/init-scripts.sh
 source "$LIB_DIR/init-scripts.sh"
-stage_init_scripts "$branch"
+stage_init_scripts "$branch" "$stage_zap"
 
-[ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${valid_profiles[@]}")
+[ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${ALL_PROFILES[@]}")
 [ "$dev" -eq 1 ] && compose_files_add_dev
 
 # Sanitisation must match the per-repo publish-branch.yml workflows.
@@ -135,11 +142,16 @@ fi
 # happen in this (parent) shell. bash-3.2 safe (macOS default) and Linux-CI safe:
 # only mktemp -d, background jobs, and a bare wait barrier are used.
 probe_tmpdir=""
+recheck_tmpdir=""
 # The marker directory holds one file per service that resolved to the branch
 # tag; its contents are the first-probe manifest fingerprint. It must survive
 # until the post-healthy re-check below, so clean it up on any exit rather than
 # inline before the compose up.
-cleanup_probe_tmpdir() { [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"; return 0; }
+cleanup_probe_tmpdir() {
+  [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"
+  [ -n "$recheck_tmpdir" ] && rm -rf "$recheck_tmpdir"
+  return 0
+}
 trap cleanup_probe_tmpdir EXIT
 if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
   probe_tmpdir="$(mktemp -d)"
@@ -186,6 +198,38 @@ done
 
 [ ${#up_services[@]} -gt 0 ] || { print_error "error: would start no services"; exit 1; }
 
+# Mongo's entrypoint races itself on a fresh volume and exits 48, taking every
+# depends_on service with it (EUDPA-358). Retrying is the only fix. Mongo comes
+# up alone first so the stack up below finds it already healthy.
+MONGO_UP_ATTEMPTS="${MONGO_UP_ATTEMPTS:-6}"
+MONGO_RETRY_BACKOFF_SECONDS="${MONGO_RETRY_BACKOFF_SECONDS:-2}"
+
+start_mongodb_first() {
+  local attempt=1
+  while true; do
+    if docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
+      up --wait --detach --pull always mongodb; then
+      return 0
+    fi
+    if [ "$attempt" -ge "$MONGO_UP_ATTEMPTS" ]; then
+      print_error "mongo failed to start after $MONGO_UP_ATTEMPTS attempts"
+      return 1
+    fi
+    print_error "mongo failed to start (attempt $attempt/$MONGO_UP_ATTEMPTS), retrying"
+    docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
+      rm --stop --force --volumes mongodb >/dev/null 2>&1 || true
+    attempt=$((attempt + 1))
+    sleep "$MONGO_RETRY_BACKOFF_SECONDS"
+  done
+}
+
+for svc in "${up_services[@]}"; do
+  if [ "$svc" = "mongodb" ]; then
+    start_mongodb_first
+    break
+  fi
+done
+
 up_args=(up --wait --detach --pull always)
 [ "$dev" -eq 1 ] && up_args+=(--build)
 
@@ -206,6 +250,24 @@ docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" "${up_args[@]}" ${extr
 # well after healthy still needs a manual restart.
 if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
   printf '%sRe-checking Dockerhub for branch images now the stack is healthy: %s%s\n' "$COLOUR_CYAN" "$sanitised" "$COLOUR_RESET"
+
+  # Fan the re-probes out the same way the first probe above does: one marker
+  # file per service that resolved to the branch tag, holding its fingerprint.
+  recheck_tmpdir="$(mktemp -d)"
+  recheck_pids=()
+  for entry in "${services[@]}"; do
+    IFS='|' read -r label image _ <<< "$entry"
+    is_excluded "$label" && continue
+    in_active=0
+    for s in ${active_services[@]+"${active_services[@]}"}; do
+      [ "$s" = "$image" ] && { in_active=1; break; }
+    done
+    [ "$in_active" -eq 0 ] && continue
+    ( fp="$(probe "$image" "$sanitised")" && printf '%s' "$fp" > "$recheck_tmpdir/$label" ) &
+    recheck_pids+=("$!")
+  done
+  [ ${#recheck_pids[@]} -gt 0 ] && wait ${recheck_pids[@]+"${recheck_pids[@]}"} 2>/dev/null || true
+
   recheck_services=()
   for entry in "${services[@]}"; do
     IFS='|' read -r label image env_var <<< "$entry"
@@ -225,8 +287,12 @@ if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
       first_fp="$(cat "$probe_tmpdir/$label")"
     fi
 
-    # Re-probe now.
-    now_fp="$(probe "$image" "$sanitised")" && now_branch=1 || now_branch=0
+    now_branch=0
+    now_fp=""
+    if [ -f "$recheck_tmpdir/$label" ]; then
+      now_branch=1
+      now_fp="$(cat "$recheck_tmpdir/$label")"
+    fi
 
     if [ "$now_branch" -eq 0 ]; then
       # Still no branch tag — nothing published, nothing to do.

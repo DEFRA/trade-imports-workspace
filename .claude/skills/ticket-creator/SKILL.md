@@ -226,6 +226,28 @@ Edit the file in place as the user gives feedback. Only move to Step 5 once
 the user explicitly approves. Update the **Status** line to `APPROVED`
 before creating.
 
+### Condensing a long draft
+
+When the user asks to shorten the draft ("condense", "shorten this", "too
+long"), rewrite `draft.md` in place against the GDS rules in
+`~/git/defra/trade-imports-workspace/docs/best-practices/gds/writing.md`.
+
+| Cut | Keep                                          |
+|-----|-----------------------------------------------|
+| Repeated context, restated background | Acceptance criteria — unless they're repeated |
+| Rationale the parent epic already carries | Steps to reproduce, expected vs actual        |
+| Hedging ("it would be good if") | Ticket keys, links, service and field names   |
+| Passive voice, long noun phrases | Environment, feature flag, mockup links       |
+
+Keep the section ordering the template defines. Never drop an acceptance
+criterion or a reproduction step to hit a length target, unless either the AC or
+reproduction step is repeated — condensing is a prose edit, not a scope edit.
+
+Tell the user what came out:
+
+> Condensed `<slug>`: N lines → M. Removed: <one line per cut>.
+> AC and repro steps unchanged, except duplicates — name each one dropped.
+
 ## Step 5: Create Ticket
 
 ```bash

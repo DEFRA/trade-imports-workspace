@@ -8,8 +8,7 @@ workspace root, driven by the `scripts/stack/` wrappers (`run-stack.sh`,
 
 Init scripts are owned by the service that needs them and staged into the
 stack by `scripts/stack/lib/init-scripts.sh`: the backend owns the Floci
-provisioning (`compose/start-floci.sh`), the tests repo owns the mongo
-seed fixtures (`seeds/mongodb/`), and the workspace owns the mongo
+provisioning (`compose/start-floci.sh`) and the workspace owns the mongo
 replica-set init.
 
 The patterns below apply to the stack's overlay files — they're not language-specific.

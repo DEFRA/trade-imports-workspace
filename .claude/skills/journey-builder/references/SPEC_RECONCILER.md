@@ -58,7 +58,9 @@ consumable by the add-page skill and by `spec-lint.sh`'s coverage assert.
   detail "descoped: ..." so the exclusion is provenanced). 
 - **Sections/pages**: derive section order from the skeleton's step order,
   page grouping from skeleton pages, titles GDS plain-English (flag
-  `--field provisionalCopy=true` on pages whose titles you invented —
+  `--field provisionalCopy=true` on any page or obligation whose copy is not
+  verbatim from the source journey and awaits the copy pass, with the scope
+  stated in `notes` and `titleCy` kept wherever the title itself is verbatim —
   Figma reconciliation comes later). Every non-collection-member obligation
   must land in exactly one page's `--collects`. Collection member fields are
   covered by their collection's entry page: give the collection's list/entry

@@ -110,11 +110,6 @@ const STACK_COMMANDS = [
     name: 'bounce-backend',
     description: 'Restart just the backend container (bounce-backend.sh)',
     script: 'bounce-backend.sh'
-  },
-  {
-    name: 'bounce-mongo',
-    description: 'Restart just the mongo container (bounce-mongo.sh)',
-    script: 'bounce-mongo.sh'
   }
 ]
 

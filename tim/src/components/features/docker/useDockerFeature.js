@@ -12,7 +12,6 @@ const DOCKER_ITEMS = [
   { label: 'Stop the stack (stop-stack.sh)', value: 'down' },
   { label: 'Restart the whole stack (restart-stack.sh)', value: 'restart' },
   { label: 'Bounce backend (bounce-backend.sh)', value: 'bounce-backend' },
-  { label: 'Bounce mongo (bounce-mongo.sh)', value: 'bounce-mongo' },
   { label: 'Back', value: 'back' }
 ]
 
@@ -25,11 +24,6 @@ const ACTION_SPEC = {
     script: 'bounce-backend.sh',
     args: [],
     label: 'bounce backend'
-  },
-  'bounce-mongo': {
-    script: 'bounce-mongo.sh',
-    args: [],
-    label: 'bounce mongo'
   }
 }
 

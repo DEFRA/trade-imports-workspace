@@ -1,15 +1,52 @@
 {
   "_comment": [
-    "Build-loop targets. The loop scripts know nothing about any particular",
-    "codebase; a target profile tells them where to work, what to stage and how",
-    "to verify. Adding a target is a data edit, not a script change.",
+    "Build-loop AND digest targets. The scripts know nothing about any",
+    "particular codebase or journey; a target profile tells them where to work,",
+    "what to read, what to stage and how to verify. Adding a target is a data",
+    "edit, not a script change.",
     "",
     "A run picks its target from, in order: an explicit --target flag, the",
-    "backlog's top-level \"target\" field, .digest-meta.json, then the default",
-    "below. See target-profile.sh.",
+    "backlog's top-level \"target\" field, .digest-meta.json's \"target\", then the",
+    "default below. See target-profile.sh.",
     "",
     "verify.* are npm script names run in the target repo. Omit one to skip that",
-    "rung of the ladder."
+    "rung of the ladder.",
+    "",
+    "repos maps the build loop's three repo keys — frontend, backend, tests —",
+    "onto a workspace-relative path and a GitHub owner/name slug each. An",
+    "increment's repo field holds a key, never a path: backlog-generate.sh",
+    "maps an extra's declared repo path onto its key with this table, and the",
+    "batch orchestrator copies the table into the ledger's programme block so",
+    "increment-build-loop.js builds in the right checkout. repo (singular)",
+    "must be one of the paths in it — that key is what a page increment gets.",
+    "",
+    "sources[] drives prepare-digest.sh. Each entry needs an id and a type; what",
+    "else it needs depends on the type:",
+    "  confluence — ref is the page id. Fetched via tools/confluence/page.sh and",
+    "               cached as <id>.page.json plus <id>.body.html (body.view, not",
+    "               body.storage, which is empty on some pages).",
+    "  canvas     — ref is a path relative to the target repo. Copied verbatim.",
+    "  code       — ref is a path inside the repo; pinned to the base sha at",
+    "               prepare time and read live by the extractor, not cached.",
+    "  document   — one file (policy paper, exported spec). ref is",
+    "               WORKSPACE-relative, not repo-relative, because these live",
+    "               in the workspace. Cached as <id>.<original extension>.",
+    "  images     — a directory of screenshots (a mural export, a design",
+    "               board). ref is WORKSPACE-relative and names the directory.",
+    "               Cached as <id>/ so the extractor can enumerate it.",
+    "An entry marked \"pending\": true keeps its real type but is neither fetched",
+    "nor given an extract placeholder. It is seeded into the spec's sources[]",
+    "with status \"pending\", so a later hand-filled extract has somewhere to",
+    "belong — that is how figma arrived on the live-animals run.",
+    "",
+    "backlogTail drives the fixed tail backlog-generate.sh appends after the",
+    "per-page increments. Both keys are optional; omit them and the tail is",
+    "empty, which is what a greenfield set wants.",
+    "",
+    "milestoneZeroSection names the one spec section whose pages land as M0 —",
+    "the first walk-through — before everything else in M1. Optional; omit it",
+    "and every page is M1, which is what a set with no agreed first section",
+    "wants."
   ],
 
   "default": "live-animals-frontend",
@@ -18,15 +55,143 @@
     "live-animals-frontend": {
       "description": "The live-animals set in the real frontend, where the prototype was promoted to.",
       "repo": "repos/trade-imports-animals-frontend",
+      "repos": {
+        "frontend": { "path": "repos/trade-imports-animals-frontend", "github": "DEFRA/trade-imports-animals-frontend" },
+        "backend": { "path": "repos/trade-imports-animals-backend", "github": "DEFRA/trade-imports-animals-backend" },
+        "tests": { "path": "repos/trade-imports-animals-tests", "github": "DEFRA/trade-imports-animals-tests" }
+      },
       "scope": "src/server/app/sets/live-animals",
       "specDir": "src/server/app/sets/live-animals/spec",
+      "journeyId": "live-animals-import-notification",
+      "specBranchSuffix": "live-animals-spec",
       "implementorSkill": "frontend-change",
       "commitPaths": [
         "src/server/app",
         "package.json"
       ],
+      "sources": [
+        {
+          "id": "confluence-v4",
+          "type": "confluence",
+          "ref": "6497338582",
+          "description": "Confluence \"Live Animals Data Fields V4\""
+        },
+        {
+          "id": "skeleton",
+          "type": "code",
+          "ref": "src/server",
+          "description": "The journey skeleton already in the repo"
+        },
+        {
+          "id": "ixd-canvas",
+          "type": "canvas",
+          "ref": "Notes from chat with interaction design.canvas",
+          "description": "Obsidian canvas from the interaction-design session"
+        },
+        { "id": "figma", "type": "figma", "pending": true },
+        { "id": "heroku-prototype", "type": "prototype", "pending": true }
+      ],
+      "backlogTail": {
+        "removeSections": [
+          "email",
+          "about-you-and-your-vehicle",
+          "your-driving-and-cover",
+          "add-to-your-policy",
+          "named-driver",
+          "modifications",
+          "protected-ncd",
+          "get-your-quote"
+        ],
+        "removeSectionsNote": "Section ids in the vendored flow/flow.js belonging to the car-insurance domain the obligations-v2 baseline shipped with. See the target scope's PROVENANCE.md.",
+        "repointTestFixtures": true
+      },
+      "milestoneZeroSection": "origin",
       "verify": {
         "unit": "test:live-animals",
+        "format": "format:check",
+        "lint": "lint",
+        "e2e": "test:fit:features"
+      }
+    },
+
+    "high-risk-plants-frontend": {
+      "description": "The high-risk-plants set in the plants frontend. Greenfield: the set is empty and the journey's requirements are not agreed yet.",
+      "repo": "repos/trade-imports-plants-frontend",
+      "repos": {
+        "frontend": { "path": "repos/trade-imports-plants-frontend", "github": "DEFRA/trade-imports-plants-frontend" },
+        "backend": { "path": "repos/trade-imports-plants-backend", "github": "DEFRA/trade-imports-plants-backend" },
+        "tests": { "path": "repos/trade-imports-animals-tests", "github": "DEFRA/trade-imports-animals-tests" }
+      },
+      "scope": "src/server/app/sets/high-risk-plants",
+      "specDir": "src/server/app/sets/high-risk-plants/spec",
+      "journeyId": "high-risk-plants-import-notification",
+      "specBranchSuffix": "high-risk-plants-spec",
+      "implementorSkill": "frontend-change",
+      "commitPaths": [
+        "src/server/app",
+        "package.json",
+        ".github",
+        "scripts",
+        "docs",
+        "README.md",
+        ".dependency-cruiser-known-violations.json"
+      ],
+      "sources": [
+        {
+          "id": "phnns-policy",
+          "type": "document",
+          "ref": "workareas/high-risk-plants/high-risk-plants-requirements/Plant Health National Notification Scheme (PHNNS).docx",
+          "description": "PRIMARY. The policy paper. Prose sections plus six annexes."
+        },
+        {
+          "id": "confluence-user-needs",
+          "type": "confluence",
+          "ref": "6518997286",
+          "description": "PRIMARY. Confluence 'User needs - National Notification System'"
+        },
+        {
+          "id": "confluence-requirements",
+          "type": "confluence",
+          "ref": "6518997274",
+          "description": "PRIMARY. Confluence 'Requirements - National Notification System'"
+        },
+        {
+          "id": "mural",
+          "type": "images",
+          "ref": "workareas/high-risk-plants/high-risk-plants-requirements/mural",
+          "description": "PRIMARY. Mural screenshots. Carries detail the policy paper does not."
+        },
+        {
+          "id": "prototype",
+          "type": "repo",
+          "ref": "/Users/samfarrington/git/defra/defra-design/GB-notification-service",
+          "description": "SECONDARY. Design prototype. Little or nothing plants-specific — do not force value out of it."
+        },
+        {
+          "id": "live-animals",
+          "type": "repo",
+          "ref": "repos/trade-imports-animals-frontend",
+          "description": "SECONDARY. Read for CONSISTENCY of shape and copy, not as a requirement source."
+        },
+        {
+          "id": "skeleton",
+          "type": "code",
+          "ref": "src/server",
+          "description": "The engine and the empty set — what exists to build into"
+        }
+      ],
+      "_sourcesNote": [
+        "Priority when sources disagree: policy paper, then the two Confluence",
+        "pages and the mural, then the prototype, then live-animals. Record every",
+        "disagreement as a conflict rather than picking silently.",
+        "",
+        "HIGH-RISK PLANTS ONLY. The product owner has ruled that CHED-PP is a",
+        "different thing and that the corpus under workareas/trace-requirements/",
+        "ched-pp/ is NOT a source. Do not read it."
+      ],
+      "backlogTail": {},
+      "verify": {
+        "unit": "test:high-risk-plants",
         "format": "format:check",
         "lint": "lint",
         "e2e": "test:fit:features"

@@ -65,6 +65,16 @@ export const meta = {
 //                   unattended merges
 //   approvalWaitMinutes  how long the merge stage may wait for those approvals
 //                   before it stops and leaves every PR open. Default 20
+//   repos           the three repos an increment's "repo" field can name —
+//                   frontend, backend, tests — each with its workspace-relative
+//                   path and its GitHub owner/name slug. The animals repos are
+//                   the default; a programme in another repo family (the plants
+//                   frontend and backend, say) overrides the table here
+//   models          optional model per tier. heavy = implement, the reviewers,
+//                   the adversarial verifiers, judge, fix and CI fix; light = the
+//                   lifecycle and plumbing stages (ticket, branch, baseline,
+//                   ladder, land, PR, CI watch, merge, done). A tier left out
+//                   inherits the calling session's model
 //
 
 // Status names are BOARD CONFIGURATION, not constants — every board words them
@@ -90,6 +100,12 @@ const FALLBACK = {
   jiraBoard: 13780,
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
+  repos: {
+    frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
+    backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
+    tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
+  },
+  models: {},
   increments: ['pp-053']
 }
 const CFG = typeof args === 'object' && args && args.increments ? args : FALLBACK
@@ -154,6 +170,44 @@ if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
 }
 
 // ---------------------------------------------------------------------------
+// Repos. An increment names its repo as frontend, backend or tests (or both,
+// meaning backend then frontend); this table says where each one lives on disk
+// and on GitHub. All three keys are required so every stage's REPO PATHS line
+// reads the same whichever repo family the programme builds in.
+// ---------------------------------------------------------------------------
+const REPOS = CFG.repos ?? FALLBACK.repos
+const REPO_KEYS = ['frontend', 'backend', 'tests']
+
+for (const key of REPO_KEYS) {
+  const entry = REPOS?.[key]
+  const pathOk = typeof entry?.path === 'string' && /^repos\/[^/]+$/.test(entry.path)
+  const githubOk = typeof entry?.github === 'string' && /^[^/\s]+\/[^/\s]+$/.test(entry.github)
+  if (!pathOk || !githubOk) {
+    throw new Error(
+      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-${key}" and a "github" owner/name slug like "DEFRA/trade-imports-animals-${key}" — got ${JSON.stringify(entry)}`
+    )
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Models. Two tiers, both optional. heavy() and light() wrap an agent's options
+// so a stage inherits the session model unless the programme set its tier.
+// ---------------------------------------------------------------------------
+const MODELS = CFG.models ?? FALLBACK.models ?? {}
+const MODEL_TIERS = ['heavy', 'light']
+
+for (const tier of MODEL_TIERS) {
+  const model = MODELS[tier]
+  if (model !== undefined && (typeof model !== 'string' || !model.trim())) {
+    throw new Error(`increment-build-loop: config.models.${tier} must be a model name or left out — got ${JSON.stringify(model)}`)
+  }
+}
+
+const withTier = (tier) => (opts) => (MODELS[tier] ? { ...opts, model: MODELS[tier] } : opts)
+const heavy = withTier('heavy')
+const light = withTier('light')
+
+// ---------------------------------------------------------------------------
 // Workspace root. A workflow script has no filesystem and no environment, so it
 // cannot see $HOME — an agent resolves the root and everything else hangs off
 // what it returns. Nothing here may be a literal home directory: the run has to
@@ -191,7 +245,7 @@ Set canonical:true only if candidate 1 worked; if it did not, say so in your sum
 rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
 No Grep/Glob tools. One command per Bash call.`,
-  { label: 'workspace', phase: 'Baseline', schema: WORKSPACE_SCHEMA }
+  light({ label: 'workspace', phase: 'Baseline', schema: WORKSPACE_SCHEMA })
 )
 
 if (!workspace || !workspace.ok || !workspace.abs?.startsWith('/') || !workspace.tilde?.startsWith('~/')) {
@@ -215,17 +269,8 @@ const BRIEFS = ABS + '/.claude/workflows/codex'
 const BRIEFS_TILDE = TILDE + '/.claude/workflows/codex'
 const JIRA = TILDE + '/tools/jira'
 
-const REPO_PATH = {
-  frontend: 'repos/trade-imports-animals-frontend',
-  backend: 'repos/trade-imports-animals-backend',
-  tests: 'repos/trade-imports-animals-tests'
-}
-
-const GH_REPO = {
-  frontend: 'DEFRA/trade-imports-animals-frontend',
-  backend: 'DEFRA/trade-imports-animals-backend',
-  tests: 'DEFRA/trade-imports-animals-tests'
-}
+const REPO_PATH = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].path]))
+const GH_REPO = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].github]))
 
 const repoTable = Object.entries(REPO_PATH)
   .map(([k, v]) => `${k}=${v}`)
@@ -704,7 +749,7 @@ ok here is about the RUN, NEVER about what Codex concluded: a Codex run that fin
 a red suite or an unapplied fix is still ok:true to you. NEVER write ${lastMessageTilde} yourself and never
 invent a result.
 Return the structured output only.`,
-    { label: `${id} codex:${stage}`, phase: phaseName, schema: incrementSchema }
+    light({ label: `${id} codex:${stage}`, phase: phaseName, schema: incrementSchema })
   )
 }
 
@@ -720,7 +765,7 @@ Read ${lastMessage} once with the Read tool. It conforms to ${BRIEFS}/schemas/${
 ${relay}
 Add nothing of your own — no findings, no opinions, no work. Run no suite. Edit no file.
 Return the structured output only.`,
-    { label: `${id} relay:${stage}`, phase: phaseName, schema }
+    light({ label: `${id} relay:${stage}`, phase: phaseName, schema })
   )
 }
 
@@ -750,7 +795,7 @@ const preflight = await agent(
 \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
 If it prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Do nothing else. One Bash call, no Grep/Glob tools, tilde paths only.`,
-  { label: 'preflight', phase: 'Baseline', schema: incrementSchema }
+  light({ label: 'preflight', phase: 'Baseline', schema: incrementSchema })
 )
 
 if (!preflight || !preflight.ok) {
@@ -883,12 +928,26 @@ Report ok:true only if the ticket exists, its status is one you left alone or su
 moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
 finished, verbatim.
 Return the structured output only.`,
-      { label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA }
+      light({ label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA })
     )
 
     if (!ticket || !ticket.ok || !ticket.key) {
       log(`${id}: TICKET STAGE FAILED — ${ticket ? ticket.summary : 'agent failed'}`)
       results.push({ id, outcome: 'ticket-failed', detail: ticket?.summary ?? 'agent failed' })
+      break
+    }
+
+    // A ticket in the backlog is one the team cannot see, and nothing later in
+    // the lifecycle notices. Checked here rather than trusted to the stage's own
+    // ok, because "I set the status" reads like success from inside that stage.
+    if (!ticket.movedToBoard) {
+      log(`${id}: TICKET STAGE FAILED — ${ticket.key} was not moved onto board ${JIRA_BOARD}`)
+      results.push({
+        id,
+        ticket: ticket.key,
+        outcome: 'ticket-failed',
+        detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
+      })
       break
     }
 
@@ -956,7 +1015,7 @@ The branch name is IDENTICAL in every repo. That is CLAUDE.md rule 2 and it is l
 stack probes each repo for a branch-tagged image, so a mismatched name breaks the linked-branch pickup.
 Report ok:true only when every repo is on ${workBranch} with a clean tree.
 Return the structured output only.`,
-      { label: `${id} branch`, phase: 'Branch', schema: BRANCH_SCHEMA }
+      light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_SCHEMA })
     )
 
     if (!branched || !branched.ok) {
@@ -1004,7 +1063,7 @@ TASK:
    tests:    read package.json and run its unit/lint script if one exists; if the suite needs a running stack, SKIP it and say so.
 4. Report ok:true only if every repo's tree is clean and every suite is green.
 Return the structured output only.`,
-    { label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema }
+    light({ label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema })
   )
 
   if (!baseline || !baseline.ok) {
@@ -1033,12 +1092,15 @@ HOW TO BUILD IT — route on the increment's "repo" field:
   \`src/server/app/sets/<set>/docs/add-a-*.md\` (or the obligation/flow maintenance guard rails) — read that recipe
   and follow it, varying as little as possible. Do NOT improvise around a recipe. The recipes are set-relative, so
   where the increment targets a set other than the one a recipe was written against (\`sets/<set>/\`), substitute the
-  set folder and otherwise follow it exactly. Where the increment cites a gap that no recipe covers, the increment's
-  own filesToTouch IS the script, and any exemplar it names is the shape to imitate.
+  set folder and otherwise follow it exactly. THIS programme's frontend is \`${TILDE}/${REPO_PATH.frontend}\` — the
+  skill's own path examples name the repo it was written against, so wherever the skill or a recipe spells out a
+  repo path or an npm --prefix, substitute this repo and this increment's set. Where the increment cites a gap that
+  no recipe covers, the increment's own filesToTouch IS the script, and any exemplar it names is the shape to
+  imitate.
 - **backend** → follow the increment plus the workspace Java best practices
-  (${TILDE}/docs/best-practices/java/). Mirror the existing animals package idiom exactly. Compact-constructor null
-  guards on public records at API boundaries. One round-trip + one unknown-value negative per enum — never a test
-  per enum constant.
+  (${TILDE}/docs/best-practices/java/). Mirror the package idiom \`${TILDE}/${REPO_PATH.backend}\` already has; where
+  it has no precedent, the animals backend is the house reference. Compact-constructor null guards on public
+  records at API boundaries. One round-trip + one unknown-value negative per enum — never a test per enum constant.
 - **tests** → follow the increment plus ${TILDE}/docs/best-practices/playwright/. Independent tests, raw
   role/label locators, no page objects where the repo does not already use them, no sleeps, expect.poll only for
   non-locator state.
@@ -1056,14 +1118,14 @@ RULES:
 
 Return ok, a summary, changedFiles (repo-relative paths you created or edited), and notes (anything the reviewers
 or the judge should know, including anything the increment got wrong).`,
-    { label: `${id} implement`, phase: 'Implement', schema: incrementSchema }
+    heavy({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
   )
 
   if (!impl || !impl.ok) {
     log(`${id}: IMPLEMENT FAILED — preserving the attempt. ${impl ? impl.summary : 'agent failed'}`)
     const kept = await agent(
       preserveWork(id, workBranch, 'the implementor could not finish it', impl?.summary ?? 'the implementor agent died'),
-      { label: `${id} preserve`, phase: 'Implement', schema: incrementSchema }
+      light({ label: `${id} preserve`, phase: 'Implement', schema: incrementSchema })
     )
     results.push({
       id,
@@ -1104,7 +1166,7 @@ helper functions rather than dense inline callbacks; names say what a thing does
 Report ONLY real findings, each with a concrete fix. No praise, no summary of what the file does. If the file is
 clean, return an empty findings array.
 Return the structured output only.`,
-      { label: `${id} style:${file.split('/').pop()}`, phase: 'Review', schema: FINDINGS_SCHEMA }
+      heavy({ label: `${id} style:${file.split('/').pop()}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -1129,7 +1191,7 @@ SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Spe
   platform-layer file that has learned a set's vocabulary.
 Report ONLY real findings with a concrete failure scenario. Style nits belong to a different reviewer — skip them.
 Return the structured output only.`,
-      { label: `${id} review:${file.split('/').pop()}`, phase: 'Review', schema: FINDINGS_SCHEMA }
+      heavy({ label: `${id} review:${file.split('/').pop()}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -1147,7 +1209,7 @@ copy.en.js without the matching copy.cy.js key); an obligation with no schema fi
 nothing writes; and anything the increment's filesToTouch listed that is NOT in the diff, or in the diff but NOT
 listed.
 Return the structured output only.`,
-      { label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA }
+      heavy({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
 
   const reviewResults = EXECUTOR === 'codex'
@@ -1198,7 +1260,7 @@ really exists here). Read those sources ONCE and reuse them across all ${items.l
 For each: real:false if it is wrong, already handled elsewhere, out of the increment's scope, or a matter of taste
 dressed as a defect. real:true ONLY if you could not refute it. Cite file:line in every reasoning.
 Return one verdict per finding, using the SAME numbers as above. Return the structured output only.`,
-          { label: `${id} verify:${file.split('/').pop()}`, phase: 'Verify findings', schema: VERDICT_SCHEMA }
+          heavy({ label: `${id} verify:${file.split('/').pop()}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
         ).then((v) => {
           // A dead verifier must not silently delete findings — pass them to the
           // judge marked unrefuted rather than dropping them on the floor.
@@ -1252,7 +1314,7 @@ correct increment over a large polished one.
 For every fix-now item, write a COMPLETE instruction in fixNow[]: the file, exactly what to change, and how to
 prove it (the test or assertion that should now pass). A fixer with no other context must be able to execute it.
 Return the structured output only.`,
-        { label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA }
+        heavy({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
   }
 
@@ -1290,7 +1352,7 @@ judge rejected or deferred. Do NOT expand scope. If a fix turns out to be wrong 
 summary rather than forcing it — a fix that requires weakening a test is not a fix. Leave everything STAGED, do
 not commit.
 Return the structured output only.`,
-        { label: `${id} fix`, phase: 'Fix', schema: incrementSchema }
+        heavy({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
       )
     }
   }
@@ -1317,7 +1379,7 @@ TASK — run the increment's "verification" array IN ORDER, each to its own log 
   pretend it passed: record it in failures[] as "could not run: <reason>" and set green:false.
 Report green:true ONLY if every step actually ran and actually passed.
 Return the structured output only.`,
-    { label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA }
+    light({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
   )
 
   // -----------------------------------------------------------------------
@@ -1334,7 +1396,7 @@ Return the structured output only.`,
         'red verification ladder',
         ladder ? (ladder.failures ?? []).join(' | ') : 'verifier agent failed'
       ),
-      { label: `${id} preserve`, phase: 'Land', schema: incrementSchema }
+      light({ label: `${id} preserve`, phase: 'Land', schema: incrementSchema })
     )
     results.push({
       id,
@@ -1371,7 +1433,7 @@ TASK:
    Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
 Report the commit SHA. For a \`both\` increment report both, backend first, space separated.
 Return the structured output only.`,
-    { label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA }
+    light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
   } // build
 
@@ -1446,7 +1508,7 @@ Report every PR in prs\[\], in the same order. Report ok:true only when every re
 \`${BASE_BRANCH}\` has exactly one open PR, and every repo you skipped at step 2 genuinely had none. At least one
 PR must exist — a run where EVERY repo was empty means nothing was built, and that is ok:false.
 Return the structured output only.`,
-        { label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA }
+        light({ label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA })
       )
 
       if (!pr || !pr.ok || (pr.prs ?? []).length === 0) {
@@ -1492,7 +1554,7 @@ For EACH pr, in the order listed:
 gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
 green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
 Return the structured output only.`,
-          { label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA }
+          light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })
         )
 
       let ci = await watch()
@@ -1566,7 +1628,7 @@ TASK:
 7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
-          { label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA }
+          heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
         )
 
         // Fold in anything the fixer had to open elsewhere, deduped by url, so
@@ -1703,7 +1765,7 @@ as it is and name it, so a human can finish it.
 green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them, AND the final
 sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
-        { label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA }
+        light({ label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA })
       )
 
       if (!merge || !merge.green) {
@@ -1769,7 +1831,7 @@ TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIG
    \`prs\` in place — they are the record of how it got there. Keep the JSON valid
    (\`jq empty ${BACKLOG_TILDE}\`).
 Return the structured output only.`,
-      { label: `${id} done`, phase: 'Done', schema: incrementSchema }
+      light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
     )
 
     if (!done || !done.ok) {
@@ -1807,7 +1869,7 @@ Return the structured output only.`,
 If it prints \`null\`, return ok:true with summary "no gate". Otherwise return ok:false and put the gate's full text
 in summary — the run will stop so a human can review before dependent increments proceed.
 Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
-    { label: `${id} gate check`, phase: LIFECYCLE === 'full' ? 'Done' : 'Land', schema: incrementSchema }
+    light({ label: `${id} gate check`, phase: LIFECYCLE === 'full' ? 'Done' : 'Land', schema: incrementSchema })
   )
 
   if (gate && !gate.ok) {

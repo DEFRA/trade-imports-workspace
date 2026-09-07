@@ -26,6 +26,8 @@ It defaults to the fallback because `args` plumbing has proved unreliable in thi
 | `branch` | The branch every repo in the programme is cut onto. The baseline guard checks it |
 | `scope` | Conventional-commit scope for the landing commit. Defaults to the workarea's basename |
 | `executor` | `claude` (default) or `codex` — see below |
+| `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Defaults to the animals repos; a programme in the plants repos overrides it |
+| `models` | Optional model per tier — `heavy` (implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done). A tier left out inherits the session model |
 | `increments` | The increment ids to build, in order |
 
 A list runs **serially**, and the run stops at the first failure so a broken increment is

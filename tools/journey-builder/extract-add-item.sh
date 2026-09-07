@@ -62,7 +62,7 @@ item="{}"
 [[ -n "$ID" ]] && item=$(jq -n --arg id "$ID" '{id: $id}')
 for i in "${!KEYS[@]}"; do
     if [[ "${IS_JSON[$i]}" == 1 ]]; then
-        if ! echo "${VALS[$i]}" | jq -e . > /dev/null 2>&1; then
+        if ! echo "${VALS[$i]}" | jq . > /dev/null 2>&1; then
             echo "Error: --json ${KEYS[$i]} value is not valid JSON" >&2; exit 1
         fi
         item=$(jq -n --argjson cur "$item" --arg k "${KEYS[$i]}" --argjson v "${VALS[$i]}" '$cur + {($k): $v}')
@@ -77,7 +77,12 @@ if [[ -n "$ID" ]]; then
     [[ "$dupe" -gt 0 ]] && { echo "Error: $KIND '$ID' already exists in $SOURCE extract" >&2; exit 1; }
 fi
 
-jq --arg s "$section" --argjson item "$item" '.[$s] += [$item]' "$target" > "$target.tmp" \
-    && mv "$target.tmp" "$target"
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$target.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+jq --arg s "$section" --argjson item "$item" '.[$s] += [$item]' "$target" > "$tmp"
+mv "$tmp" "$target"
 
 echo "Added $KIND${ID:+ '$ID'} to extract.$SOURCE.json"

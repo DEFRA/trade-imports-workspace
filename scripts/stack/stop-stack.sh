@@ -12,7 +12,7 @@ source "$LIB_DIR/colour.sh"
 source "$LIB_DIR/compose.sh"
 
 profile_args=()
-for profile in "${ALL_PROFILES[@]}"; do
+for profile in "${ALL_PROFILES[@]}" "${OPT_IN_PROFILES[@]}"; do
   profile_args+=(--profile "$profile")
 done
 

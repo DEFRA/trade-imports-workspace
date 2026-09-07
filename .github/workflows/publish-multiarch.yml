@@ -1,0 +1,159 @@
+name: Publish Multi-Arch Docker Hub Tags
+
+# Adds a linux/arm64 manifest to the Docker Hub tags DEFRA/cdp-build-action has
+# just pushed, without rebuilding or replacing the amd64 image it published.
+# ECR is never touched: CDP's deployment path is byte-for-byte unchanged.
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: 'Docker image name (e.g. trade-imports-animals-frontend)'
+        required: true
+        type: string
+      run-mode:
+        description: 'CDP run mode label: "service" (default) or "job" (test suites)'
+        required: false
+        type: string
+        default: 'service'
+      include-version-tag:
+        description: 'Also index the X.Y.Z tag CDP created on this commit'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  arm64:
+    name: Add linux/arm64 to the Docker Hub tags
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Docker Hub only. No ECR login: nothing here may reach the registry CDP
+      # deploys from.
+      - name: Login to Docker Hub
+        uses: DEFRA/cdp-build-action/docker-login@main
+        with:
+          iam-role-name: github-${{ inputs.image-name }}-build-role
+
+      - name: Build linux/arm64 and push it by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64
+          provenance: false
+          sbom: false
+          no-cache: true
+          outputs: type=image,name=defradigital/${{ inputs.image-name }},push-by-digest=true,name-canonical=true,push=true
+          labels: |
+            defra.cdp.git.repo.url=${{ github.server_url }}/${{ github.repository }}
+            defra.cdp.git.repo.name=${{ github.repository }}
+            defra.cdp.${{ inputs.run-mode == 'job' && 'testsuite' || 'service' }}.name=${{ inputs.image-name }}
+            defra.cdp.build.run_id=${{ github.run_id }}
+            defra.cdp.run_mode=${{ inputs.run-mode }}
+            git.hash=${{ github.sha }}
+
+      - name: Read back the amd64 manifest CDP pushed for this commit
+        id: amd64
+        shell: bash
+        env:
+          REPO: defradigital/${{ inputs.image-name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          desc="$(docker buildx imagetools inspect "${REPO}:latest" --format '{{json .Manifest}}')"
+          media="$(jq -r '.mediaType' <<<"$desc")"
+
+          case "$media" in
+            *image.index.v1+json | *manifest.list.v2+json)
+              # A previous run already made this tag an index; take its amd64 entry.
+              amd64="$(docker buildx imagetools inspect "${REPO}:latest" --raw |
+                jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest')"
+              ;;
+            *)
+              amd64="$(jq -r '.digest' <<<"$desc")"
+              ;;
+          esac
+
+          if [ -z "$amd64" ]; then
+            echo "::error::no linux/amd64 manifest under ${REPO}:latest"
+            exit 1
+          fi
+
+          hash="$(docker buildx imagetools inspect "${REPO}@${amd64}" \
+            --format '{{json .Image.Config.Labels}}' | jq -r '.["git.hash"] // ""')"
+
+          if [ "$hash" != "$EXPECTED_SHA" ]; then
+            echo "::warning::${REPO}:latest carries git.hash=${hash}, not ${EXPECTED_SHA}. A newer publish run has moved the tag; that run will attach its own arm64."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "amd64=$amd64" >> "$GITHUB_OUTPUT"
+          echo "Matched ${REPO}:latest -> ${amd64} (git.hash ${hash})"
+
+      - name: Find the version tag CDP created on this commit
+        id: version
+        if: ${{ inputs.include-version-tag && steps.amd64.outputs.skip != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force --quiet
+          mapfile -t tags < <(git tag --points-at HEAD | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          if [ "${#tags[@]}" -eq 1 ]; then
+            echo "tag=${tags[0]}" >> "$GITHUB_OUTPUT"
+            echo "Version tag on HEAD: ${tags[0]}"
+          else
+            echo "::notice::found ${#tags[@]} semver tags on HEAD; indexing :latest only"
+          fi
+
+      - name: Republish the Docker Hub tags as a multi-arch index
+        if: ${{ steps.amd64.outputs.skip != 'true' }}
+        shell: bash
+        env:
+          REPO: defradigital/${{ inputs.image-name }}
+          AMD64: ${{ steps.amd64.outputs.amd64 }}
+          ARM64: ${{ steps.build.outputs.digest }}
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$ARM64" ]; then
+            echo "::error::the arm64 build produced no digest"
+            exit 1
+          fi
+
+          tags=(latest)
+
+          if [ -n "$VERSION_TAG" ]; then
+            vdigest="$(docker buildx imagetools inspect "${REPO}:${VERSION_TAG}" \
+              --format '{{json .Manifest}}' | jq -r '.digest // ""')"
+            if [ "$vdigest" = "$AMD64" ]; then
+              tags+=("$VERSION_TAG")
+            else
+              echo "::notice::${REPO}:${VERSION_TAG} is not the manifest verified above; leaving it alone"
+            fi
+          fi
+
+          for t in "${tags[@]}"; do
+            docker buildx imagetools create -t "${REPO}:${t}" "${REPO}@${AMD64}" "${REPO}@${ARM64}"
+            arches="$(docker buildx imagetools inspect "${REPO}:${t}" --raw |
+              jq -r '[.manifests[] | select(.platform.os == "linux") | .platform.architecture] | sort | join(",")')"
+            if [ "$arches" != "amd64,arm64" ]; then
+              echo "::error::${REPO}:${t} resolved to platforms [${arches}], expected amd64,arm64"
+              exit 1
+            fi
+            docker buildx imagetools inspect "${REPO}:${t}"
+          done

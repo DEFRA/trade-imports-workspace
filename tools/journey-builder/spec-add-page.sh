@@ -10,12 +10,15 @@
 #       --id country-of-origin --slug origin/country --title "Country of origin" \
 #       --collects countryOfOrigin,regionCodeRequirement,regionCode \
 #       [--json gate='{"...":"..."}'] [--field provisionalCopy=true]
+#
+# --slug is required but may be empty (`--slug ''`): the set's root page has
+# no slug of its own.
 
 set -e
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
-RUN_ID=""; SECTION=""; SECTION_TITLE=""; ID=""; SLUG=""; TITLE=""; COLLECTS=""
+RUN_ID=""; SECTION=""; SECTION_TITLE=""; ID=""; SLUG=""; SLUG_GIVEN=false; TITLE=""; COLLECTS=""
 KEYS=(); VALS=(); IS_JSON=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,7 +26,7 @@ while [[ $# -gt 0 ]]; do
         --section) SECTION="$2"; shift 2 ;;
         --section-title) SECTION_TITLE="$2"; shift 2 ;;
         --id) ID="$2"; shift 2 ;;
-        --slug) SLUG="$2"; shift 2 ;;
+        --slug) SLUG="$2"; SLUG_GIVEN=true; shift 2 ;;
         --title) TITLE="$2"; shift 2 ;;
         --collects) COLLECTS="$2"; shift 2 ;;
         --field|--json)
@@ -36,9 +39,13 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown arg: $1" >&2; exit 1 ;;
     esac
 done
-for v in RUN_ID SECTION ID SLUG TITLE; do
+for v in RUN_ID SECTION ID TITLE; do
     [[ -z "${!v}" ]] && { echo "Error: missing $v" >&2; exit 1; }
 done
+# The slug must be stated, not defaulted: the set's root page (the dashboard)
+# legitimately has an empty one, so `--slug ''` is a deliberate value while a
+# missing --slug is a forgotten one.
+[[ "$SLUG_GIVEN" == true ]] || { echo "Error: missing SLUG (pass --slug '' for the set's root page)" >&2; exit 1; }
 
 meta="$WORKSPACE/workareas/journey-builder/$RUN_ID/.digest-meta.json"
 [[ -f "$meta" ]] || { echo "Error: $meta not found — run prepare-digest.sh first" >&2; exit 1; }
@@ -51,7 +58,7 @@ page=$(jq -n --arg id "$ID" --arg slug "$SLUG" --arg title "$TITLE" --argjson co
     '{id: $id, slug: $slug, title: $title, gate: null, collects: $collects}')
 for i in "${!KEYS[@]}"; do
     if [[ "${IS_JSON[$i]}" == 1 ]]; then
-        if ! echo "${VALS[$i]}" | jq -e . > /dev/null 2>&1; then
+        if ! echo "${VALS[$i]}" | jq . > /dev/null 2>&1; then
             echo "Error: --json ${KEYS[$i]} value is not valid JSON" >&2; exit 1
         fi
         page=$(jq -n --argjson cur "$page" --arg k "${KEYS[$i]}" --argjson v "${VALS[$i]}" '$cur + {($k): $v}')
@@ -63,6 +70,11 @@ done
 page_dupe=$(jq --arg id "$ID" '[.sections[].pages[] | select(.id == $id)] | length' "$spec")
 [[ "$page_dupe" -gt 0 ]] && { echo "Error: page '$ID' already exists" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$spec.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq \
     --arg section "$SECTION" --arg stitle "${SECTION_TITLE:-$SECTION}" \
     --argjson page "$page" \
@@ -74,6 +86,7 @@ jq \
         if .id == $section
         then .pages += [$page]
         else . end)
-    ' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+    ' "$spec" > "$tmp"
+mv "$tmp" "$spec"
 
 echo "Added page '$ID' to section '$SECTION' (collects: ${COLLECTS:-none})"

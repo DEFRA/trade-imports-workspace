@@ -12,6 +12,10 @@
 #   - coverage: every obligation is collected by exactly one page, OR is a
 #     member of exactly one collection's item[], OR is system/renderOnly
 #   - obligation conflicts[] ids exist in conflicts.json
+#   - every `decision` a conflict or behaviour points at exists in
+#     decisions.json (absent ledger = empty ledger)
+#   - advisory: conflicts resolved without a decision id; decisions whose
+#     subject no longer exists
 #
 # --format rewrites both files through jq (2-space indent) for stable diffs.
 #
@@ -37,6 +41,7 @@ meta="$WORKSPACE/workareas/journey-builder/$RUN_ID/.digest-meta.json"
 spec_dir="$(jq -r '.spec_dir' "$meta")"
 spec="$spec_dir/journey-spec.json"
 conflicts="$spec_dir/conflicts.json"
+decisions="$spec_dir/decisions.json"
 
 errors=0
 fail() { echo "ERROR: $1"; errors=$((errors + 1)); }
@@ -44,15 +49,40 @@ warn() { echo "WARN:  $1"; }
 
 jq -e . "$spec" > /dev/null || { echo "ERROR: $spec is not valid JSON"; exit 1; }
 jq -e . "$conflicts" > /dev/null || { echo "ERROR: $conflicts is not valid JSON"; exit 1; }
+# The ledger only exists once a ruling has been recorded; before that an
+# empty one is the truth, not an error.
+ledger='{"schema_version":1,"decisions":[]}'
+if [[ -f "$decisions" ]]; then
+    jq -e . "$decisions" > /dev/null || { echo "ERROR: $decisions is not valid JSON"; exit 1; }
+    ledger=$(cat "$decisions")
+fi
 
 if [[ "$FORMAT" == true ]]; then
-    jq '.' "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
-    jq '.' "$conflicts" > "$conflicts.tmp" && mv "$conflicts.tmp" "$conflicts"
+    # Each call writes through its own temp files: concurrent callers sharing
+    # one temp name rename over each other and drop items. Same directory keeps
+    # the mv an atomic rename; the trap clears the temps if jq fails.
+    spec_tmp="$(mktemp "$spec.XXXXXX")"
+    conflicts_tmp="$(mktemp "$conflicts.XXXXXX")"
+    trap 'rm -f "$spec_tmp" "$conflicts_tmp"' EXIT
+    jq '.' "$spec" > "$spec_tmp"
+    mv "$spec_tmp" "$spec"
+    jq '.' "$conflicts" > "$conflicts_tmp"
+    mv "$conflicts_tmp" "$conflicts"
     # The spec lives in the frontend repo, whose pre-commit hook runs
     # prettier --check; finish with prettier so the two formatters agree.
+    # Prettier resolves its config from the cwd, not from the file's path, so
+    # it must run from the worktree on worktree-relative paths — invoked from
+    # elsewhere it formats with no config and the hook rejects the result.
+    # The hook checks every JSON under the repo, so the optional files beside
+    # the spec go through the same pass when they exist.
     worktree_root="$(jq -r '.worktree' "$meta")"
     if [[ -x "$worktree_root/node_modules/.bin/prettier" ]]; then
-        "$worktree_root/node_modules/.bin/prettier" --log-level warn --write "$spec" "$conflicts"
+        rel_spec_dir="${spec_dir#"$worktree_root"/}"
+        format_paths=("$rel_spec_dir/journey-spec.json" "$rel_spec_dir/conflicts.json")
+        for optional in decisions.json backlog-extras.json fixtures/happy-path.json; do
+            [[ -f "$spec_dir/$optional" ]] && format_paths+=("$rel_spec_dir/$optional")
+        done
+        ( cd "$worktree_root" && node_modules/.bin/prettier --log-level warn --write "${format_paths[@]}" )
     fi
 fi
 
@@ -144,11 +174,33 @@ unresolved_conflicts=$(jq -r --slurpfile c "$conflicts" '
     | "obligation \($o.id) references unknown conflict \(.)"' "$spec")
 [[ -n "$unresolved_conflicts" ]] && while read -r u; do fail "$u"; done <<< "$unresolved_conflicts"
 
+# --- decision refs ----------------------------------------------------------
+unresolved_decisions=$(jq -r --slurpfile c "$conflicts" --argjson ledger "$ledger" '
+    ([$ledger.decisions[].id]) as $ids
+    | ( $c[0].conflicts[] | select(.decision != null) | {kind: "conflict", id, decision} ),
+      ( .behaviours[] | select(.decision != null) | {kind: "behaviour", id, decision} )
+    | select(.decision as $ref | ($ids | index($ref)) == null)
+    | "\(.kind) \(.id) references unknown decision \(.decision)"' "$spec")
+[[ -n "$unresolved_decisions" ]] && while read -r u; do fail "$u"; done <<< "$unresolved_decisions"
+
 # --- advisory ---------------------------------------------------------------
 gaps=$(jq -r '[.obligations[] | select(.modelGap != null)] | length' "$spec")
 [[ "$gaps" -gt 0 ]] && warn "$gaps obligation(s) carry modelGap markers (expected — they become gated model-extension increments)"
 open=$(jq -r '[.conflicts[] | select(.resolution == null)] | length' "$conflicts")
 [[ "$open" -gt 0 ]] && warn "$open unresolved conflict(s) (recorded, non-blocking)"
+unledgered=$(jq -r '[.conflicts[] | select(.resolution != null and .decision == null)] | length' "$conflicts")
+[[ "$unledgered" -gt 0 ]] && warn "$unledgered conflict(s) resolved without a decision id (no rationale on record — spec-add-decision.sh records one)"
+orphaned=$(jq -r --slurpfile c "$conflicts" --argjson ledger "$ledger" '
+    ([$c[0].conflicts[].id]) as $conflict_ids
+    | ([.behaviours[].id]) as $behaviour_ids
+    | [ $ledger.decisions[]
+        | .subject as $s
+        | select(
+            ($s.kind == "conflict" and (($conflict_ids | index($s.id)) == null))
+            or ($s.kind == "behaviour" and (($behaviour_ids | index($s.id)) == null))
+            or ($s.kind != "conflict" and $s.kind != "behaviour")) ]
+    | length' "$spec")
+[[ "$orphaned" -gt 0 ]] && warn "$orphaned decision(s) whose subject no longer exists (ledger kept as history, non-blocking)"
 
 counts=$(jq -r '"\(.obligations | length) obligations, \([.sections[].pages[]] | length) pages in \(.sections | length) sections, \(.behaviours | length) behaviours, \(.fieldGroups | keys | length) fieldGroups"' "$spec")
 

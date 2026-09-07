@@ -32,8 +32,14 @@ spec="$(jq -r '.spec_dir' "$meta")/journey-spec.json"
 exists=$(jq --arg id "$ID" '.fieldGroups | has($id)' "$spec")
 [[ "$exists" == "true" ]] && { echo "Error: fieldGroup '$ID' already exists" >&2; exit 1; }
 
+# Each call writes through its own temp file: concurrent callers sharing one
+# temp name rename over each other and drop items. Same directory keeps the
+# mv an atomic rename; the trap clears the temp if jq fails.
+tmp="$(mktemp "$spec.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
 jq --arg id "$ID" --arg fields "$FIELDS" --arg detail "$DETAIL" \
     '.fieldGroups[$id] = {fields: ($fields | split(",")), detail: (if $detail == "" then null else $detail end)}' \
-    "$spec" > "$spec.tmp" && mv "$spec.tmp" "$spec"
+    "$spec" > "$tmp"
+mv "$tmp" "$spec"
 
 echo "Added fieldGroup '$ID' ($(echo "$FIELDS" | tr ',' '\n' | wc -l | tr -d ' ') fields)"

@@ -10,14 +10,19 @@ COMPOSE_FILES=(
   -f "$STACK_DIR/stubs.compose.yml"
   -f "$STACK_DIR/backend.compose.yml"
   -f "$STACK_DIR/frontend.compose.yml"
+  -f "$STACK_DIR/security.compose.yml"
 )
 
 ALL_PROFILES=(database infrastructure servicebus stubs backend frontend)
 
-# frontend.compose.yml pins `platform: linux/amd64` for the published
-# frontend/admin images. In --dev that pin is inherited by the local build, so
-# the webpack production stage runs under emulation — on arm64 it effectively
-# never finishes. Build for the daemon's own architecture instead. Export
+# Opt-in only — deliberately excluded from ALL_PROFILES (and so from
+# run-stack.sh's no-flags default). Nothing in the default stack depends on
+# ZAP; it's a heavy scanner requested deliberately via `--profile security`,
+# never brought up by a plain `run-stack.sh`.
+OPT_IN_PROFILES=(security)
+
+# Build --dev images for the daemon's own architecture. Under emulation the
+# webpack production stage effectively never finishes on arm64. Export
 # DEV_BUILD_PLATFORM beforehand to force a specific platform.
 compose_files_add_dev() {
   COMPOSE_FILES+=(-f "$STACK_DIR/dev.compose.yml")

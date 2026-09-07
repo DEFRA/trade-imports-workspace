@@ -61,6 +61,10 @@ Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-refe
 | `repos/trade-imports-dynamics-gateway` | DEFRA/trade-imports-dynamics-gateway | Centralised gateway forwarding events to Azure Service Bus (ADR-EUDP-001 Option B) | Java / Spring Boot |
 | `repos/trade-imports-address-book` | DEFRA/trade-imports-address-book | Org-scoped address book API (system of record for Standard Address Block records) | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | DEFRA/trade-imports-ins-frontend | Import Notification Service front-door (address-book UI, sign-in, dashboard shell) | Node.js |
+| `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
+| `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (set empty — awaiting requirements) | Node.js |
+| `repos/trade-imports-plants-backend` | DEFRA/trade-imports-plants-backend | High-risk plants notification persistence | Java / Spring Boot |
+| `repos/trade-imports-schemas` | DEFRA/trade-imports-schemas | Shared schema definitions | Node.js |
 
 Work on a specific repo by entering its directory:
 
@@ -154,6 +158,12 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md). Cited by SKILL.md files via
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
+- `docs/analysis/` — point-in-time, cross-repo investigation write-ups (not
+  volatile catalogues — snapshot findings, re-run the investigation if the
+  codebases have moved on). See
+  [`docs/analysis/gbn-ag-field-lineage.md`](docs/analysis/gbn-ag-field-lineage.md)
+  for the frontend → NotificationAggregate → GBN-AG → PIMS GBN-AG field-mapping
+  audit.
 
 ## SonarCloud integration
 

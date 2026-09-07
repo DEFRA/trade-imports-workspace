@@ -11,6 +11,7 @@ services:
     env_file:
       - ./shared.env
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
       - PORT=8085
       - SPRING_PROFILES_ACTIVE=local
       - AWS_EMF_AGENT_ENDPOINT=http://host.docker.internal:4566
@@ -23,14 +24,14 @@ services:
     healthcheck:
       interval: 5s
       retries: 10
-      start_period: 60s
+      start_period: 120s
       test:
         - CMD
         - curl
         - '-f'
         - http://localhost:8085/health
     image: defradigital/trade-imports-animals-backend:${TRADE_IMPORTS_ANIMALS_BACKEND:-latest}
-    platform: linux/amd64
+    mem_limit: 1g
     ports:
       - '8085:8085'
   trade-imports-dynamics-gateway:
@@ -46,6 +47,7 @@ services:
     env_file:
       - ./shared.env
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
       - PORT=8088
       - SPRING_PROFILES_ACTIVE=local
       - AWS_EMF_AGENT_ENDPOINT=http://host.docker.internal:4566
@@ -60,14 +62,14 @@ services:
     healthcheck:
       interval: 5s
       retries: 10
-      start_period: 60s
+      start_period: 120s
       test:
         - CMD
         - curl
         - '-f'
         - http://localhost:8088/health
     image: defradigital/trade-imports-dynamics-gateway:${TRADE_IMPORTS_DYNAMICS_GATEWAY:-latest}
-    platform: linux/amd64
+    mem_limit: 1g
     ports:
       - '8088:8088'
   trade-imports-reference-data:
@@ -77,9 +79,15 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      # /countries fetches an MDM token from the stub first, so without this
+      # reference-data reports healthy while it cannot serve.
+      trade-imports-stub:
+        condition: service_healthy
+        required: false
     env_file:
       - ./shared.env
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
       - PORT=8086
       - SPRING_PROFILES_ACTIVE=local
       - MONGO_DATABASE=trade-imports-reference-data
@@ -94,14 +102,14 @@ services:
     healthcheck:
       interval: 5s
       retries: 10
-      start_period: 30s
+      start_period: 60s
       test:
         - CMD
         - curl
         - '-f'
         - http://localhost:8086/health
     image: defradigital/trade-imports-reference-data:${TRADE_IMPORTS_REFERENCE_DATA:-latest}
-    platform: linux/amd64
+    mem_limit: 1g
     ports:
       - '8086:8086'
   trade-imports-address-book:
@@ -114,6 +122,7 @@ services:
     env_file:
       - ./shared.env
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
       - PORT=8089
       - SPRING_PROFILES_ACTIVE=local
       - MONGO_DATABASE=trade-imports-address-book
@@ -122,14 +131,14 @@ services:
     healthcheck:
       interval: 5s
       retries: 10
-      start_period: 30s
+      start_period: 60s
       test:
         - CMD
         - curl
         - '-f'
         - http://localhost:8089/health
     image: defradigital/trade-imports-address-book:${TRADE_IMPORTS_ADDRESS_BOOK:-latest}
-    platform: linux/amd64
+    mem_limit: 1g
     ports:
       - '8089:8089'
   trade-imports-ins-backend:
@@ -137,26 +146,63 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      floci-init:
+        condition: service_completed_successfully
       mongodb:
         condition: service_healthy
     env_file:
       - ./shared.env
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
       - PORT=8090
       - SPRING_PROFILES_ACTIVE=local
       - MONGO_DATABASE=trade-imports-ins-backend
       - AWS_EMF_AGENT_ENDPOINT=http://host.docker.internal:4566
+      - APP_AWS_ENDPOINT_OVERRIDE=http://host.docker.internal:4566
+      - NOTIFICATION_SQS_QUEUE_URL=http://host.docker.internal:4566/000000000000/trade_imports_animals_eu_notifications_ins_backend.fifo
       - LOG_LEVEL=INFO
     healthcheck:
       interval: 5s
       retries: 10
-      start_period: 30s
+      start_period: 60s
       test:
         - CMD
         - curl
         - '-f'
         - http://localhost:8090/health
     image: defradigital/trade-imports-ins-backend:${TRADE_IMPORTS_INS_BACKEND:-latest}
-    platform: linux/amd64
+    mem_limit: 1g
     ports:
       - '8090:8090'
+  trade-imports-plants-backend:
+    profiles: [backend]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      floci-init:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+    env_file:
+      - ./shared.env
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0 -XX:TieredStopAtLevel=1
+      - PORT=8091
+      - SPRING_PROFILES_ACTIVE=local
+      - MONGO_DATABASE=trade-imports-plants-backend
+      - AWS_EMF_AGENT_ENDPOINT=http://host.docker.internal:4566
+      - APP_AWS_ENDPOINT_OVERRIDE=http://host.docker.internal:4566
+      - LOG_LEVEL=INFO
+    healthcheck:
+      interval: 5s
+      retries: 10
+      start_period: 60s
+      test:
+        - CMD
+        - curl
+        - '-f'
+        - http://localhost:8091/health
+    image: defradigital/trade-imports-plants-backend:${TRADE_IMPORTS_PLANTS_BACKEND:-latest}
+    mem_limit: 1g
+    ports:
+      - '8091:8091'

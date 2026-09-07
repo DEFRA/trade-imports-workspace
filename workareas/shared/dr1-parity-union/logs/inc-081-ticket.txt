@@ -1,0 +1,32 @@
+h2. Increment
+
+{{inc-081}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Problem
+
+A user importing from the Canary Islands, Jersey or French Guiana cannot say so. The frontend's country list holds 31 entries, all of them sovereign states, and the same list serves both the country of origin and the destination country questions. DR1 offers 41 entries — the 27 EU member states plus fourteen regions, territories and crown dependencies, each labelled with its parent in brackets.
+
+The frontend list also holds four entries DR1 does not offer (Iceland, Liechtenstein, Norway and Switzerland) and names three entries differently: Czechia, Ireland and 'Netherlands (the)' against DR1's Czech Republic, Republic of Ireland and Netherlands.
+
+h2. Acceptance criteria
+
+* The country of origin question offers DR1's 41 entries, including the fourteen regions and dependencies: Azores (Portugal), Canary Islands (Spain), Ceuta (Spain), French Guiana (France), Guadeloupe (France), Guernsey (United Kingdom), Isle of Man (United Kingdom), Jersey (United Kingdom), Madeira (Portugal), Martinique (France), Mayotte (France), Melilla (Spain), Reunion (France) and Saint Martin (France).
+* The destination country question offers the same list, picked up from the one shared source rather than a second copy.
+* The three contested entries are labelled as DR1 labels them: Czech Republic, Republic of Ireland and Netherlands.
+* Whether Iceland, Liechtenstein, Norway and Switzerland are dropped is settled and recorded before any removal. DR1 not offering them may be an omission rather than a rule.
+* The region-of-origin prefix table stays in step with the list, so no entry is left without a prefix. The prototype keeps these as two parallel tables keyed on the same label strings: {{app/data/countries.js}} and {{app/data/country-region-prefixes.js}}.
+* Tests cover the new entries on both questions, and the E2E specs and their visual baselines are updated to match.
+
+h2. Notes
+
+The frontend's list is fetched from the reference data service under {{GBNAG_SPS_EX}}, with a captured fixture standing in under stub mode, so the change may be a query or a fixture change rather than a file edit.
+
+Frontend evidence: {{src/server/app/services/countries/index.js:24}} and {{src/server/app/sets/live-animals/journeys/linear/features/destination-country/controller.js:27}}.
+
+Prototype evidence: {{app/data/countries.js:1-79}}.
+
+Travels with {{inc-077}} (the control and the list it searches are one piece of work) and {{inc-079}} (DR1 derives the region code prefix from this same list).
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

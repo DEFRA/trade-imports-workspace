@@ -89,6 +89,47 @@ frontend and tests repos before the ruling. Nothing was implemented, committed
 or pushed. The backlog no longer points at it, so a resumed run will not pick
 it up.
 
+## Reference-data lists come from MDM, not from this backlog
+
+Ruled by Rhys, 2026-09-07. The lists of countries, regions and territories are
+**master reference data**, and the service will take them from MDM in a proper
+integration **after the DR1 parity build**. Widening a hard-coded list in the
+frontend now is work MDM replaces, so a parity finding whose whole fix is "the
+list should hold more things" is deferred rather than built.
+
+**`inc-081` is `blocked` on these grounds** — the country list holds only
+sovereign states where DR1 offers fourteen regions and territories alongside
+them. EUDPA-475 was raised and **CLOSED** without implementation. The branch
+`feat/EUDPA-475-a-user-importing-from-the-canary-islands` was cut in the
+frontend; nothing was implemented, committed or pushed. The backlog still names
+the ticket and the branch, so a resume reuses them rather than raising a second
+ticket — but the `blocked` status keeps it out of the loop until MDM lands.
+
+**Two more increments cite reference data and are worth ruling as a group.**
+Both are `needs-backend`, and both are about the 78-entry port list that today
+is a frontend fixture at
+`src/server/app/services/_capture/fixtures/ports-of-entry.json`:
+
+- `inc-071` — the port-of-exit select reuses the port-of-entry list, so nothing
+  marks which ports may lawfully handle animals leaving GB. The fix needs an
+  approved-for-animals attribute the list does not carry.
+- `inc-127` — three port names are malformed in that fixture: "Teestort" for
+  Teesport, a shouted "TILBURY", and "Portsmouth Port" with a doubled space.
+  The misspelling is the one that costs a user something, because the search
+  matches the text as written.
+
+Both were left `todo` deliberately at this ruling. `inc-127` may be worth fixing
+in the fixture regardless, since the misspelling makes a port unfindable today
+and the correction travels to MDM as a data-quality report.
+
+**What this ruling does *not* cover.** The per-commodity identifier findings —
+`inc-106`, `inc-107`, `inc-110` — read like reference data but are not. Their
+fix is local: `inc-110`'s tattoo-on-every-cow comes from a tattoo allowlist in
+`src/server/app/sets/live-animals/services/commodities/stub.js`, gated by the
+identifiers obligation, all of it in this repo and shippable today. They stay
+`todo`. Do not sweep them in on the word "list" — a band that is really
+`frontend-work` blocks work that could ship.
+
 ## `inc-161` carries its own design decision
 
 `inc-161` replaces the rejected `inc-013`. It was ruled to **rule (b)**:

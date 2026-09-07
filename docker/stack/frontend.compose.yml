@@ -92,6 +92,8 @@ services:
       # frontend can fetch before Spring is listening and exit(1).
       trade-imports-reference-data:
         condition: service_healthy
+      trade-imports-ins-backend:
+        condition: service_healthy
     env_file:
       - ./shared.env
     environment:
@@ -104,6 +106,11 @@ services:
       - SESSION_CACHE_ENGINE=redis
       - TRADE_IMPORTS_ADDRESS_BOOK_URL=http://host.docker.internal:8089
       - TRADE_IMPORTS_REFERENCE_DATA_URL=http://host.docker.internal:8086
+      - TRADE_IMPORTS_INS_BACKEND_URL=http://host.docker.internal:8090
+      # Browser-visible deep-link base — must stay localhost, not
+      # host.docker.internal, like DEFRA_ID_REDIRECT_URL below (see
+      # docker/stack/AGENTS.md's localhost-vs-host.docker.internal split).
+      - TRADE_IMPORTS_ANIMALS_FRONTEND_URL=http://localhost:3000
       - DEFRA_ID_OIDC_CONFIGURATION_URL=http://host.docker.internal:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration
       - DEFRA_ID_REDIRECT_URL=http://localhost:3002/auth/sign-in-oidc
       - DEFRA_ID_SIGN_OUT_REDIRECT_URL=http://localhost:3002/auth/sign-out-oidc

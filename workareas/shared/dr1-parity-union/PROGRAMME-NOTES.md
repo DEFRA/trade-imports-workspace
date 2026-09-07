@@ -91,36 +91,44 @@ it up.
 
 ## Reference-data lists come from MDM, not from this backlog
 
-Ruled by Rhys, 2026-09-07. The lists of countries, regions and territories are
-**master reference data**, and the service will take them from MDM in a proper
-integration **after the DR1 parity build**. Widening a hard-coded list in the
-frontend now is work MDM replaces, so a parity finding whose whole fix is "the
-list should hold more things" is deferred rather than built.
+Ruled by Rhys, 2026-09-07. The lists of countries, regions, territories and
+ports are **master reference data**, and the service will take them from MDM in
+a proper integration **after the DR1 parity build**. Editing a hard-coded list
+in the frontend now is work MDM replaces, so a parity finding whose fix is the
+*content* of such a list — what it holds, how each entry is spelt, what
+attributes each entry carries — is deferred rather than built. Three increments
+are `blocked` on these grounds: `inc-081`, `inc-071` and `inc-127`. None may be
+built without a fresh ruling.
 
-**`inc-081` is `blocked` on these grounds** — the country list holds only
-sovereign states where DR1 offers fourteen regions and territories alongside
-them. EUDPA-475 was raised and **CLOSED** without implementation. The branch
+**`inc-081` — the country list** holds only sovereign states where DR1 offers
+fourteen regions and territories alongside them. EUDPA-475 was raised and
+**CLOSED** without implementation; the branch
 `feat/EUDPA-475-a-user-importing-from-the-canary-islands` was cut in the
-frontend; nothing was implemented, committed or pushed. The backlog still names
-the ticket and the branch, so a resume reuses them rather than raising a second
-ticket — but the `blocked` status keeps it out of the loop until MDM lands.
+frontend, never committed to, and has since been deleted. The backlog still
+names the ticket and the branch, so a resume would reuse them rather than raise
+a second ticket — but the `blocked` status keeps it out of the loop until MDM
+lands.
 
-**Two more increments cite reference data and are worth ruling as a group.**
-Both are `needs-backend`, and both are about the 78-entry port list that today
-is a frontend fixture at
+**The two port increments are `blocked` on the same grounds.** Both are
+`needs-backend`, and both are about the 78-entry port list that today is a
+frontend fixture at
 `src/server/app/services/_capture/fixtures/ports-of-entry.json`:
 
 - `inc-071` — the port-of-exit select reuses the port-of-entry list, so nothing
   marks which ports may lawfully handle animals leaving GB. The fix needs an
-  approved-for-animals attribute the list does not carry.
+  approved-for-animals attribute the list does not carry, and that record shape
+  travels with MDM.
 - `inc-127` — three port names are malformed in that fixture: "Teestort" for
   Teesport, a shouted "TILBURY", and "Portsmouth Port" with a doubled space.
-  The misspelling is the one that costs a user something, because the search
-  matches the text as written.
+  The corrections are better handed to MDM as a data-quality report than made
+  in a fixture MDM replaces.
 
-Both were left `todo` deliberately at this ruling. `inc-127` may be worth fixing
-in the fixture regardless, since the misspelling makes a port unfindable today
-and the correction travels to MDM as a data-quality report.
+**`inc-127` is a live defect for as long as this block stands.** The search
+matches the text as written, so a user typing "Teesport" gets nothing back and
+the port looks absent from the service. That was known when the block was
+ruled — it is the accepted cost of not editing a fixture MDM will replace, not
+an oversight. If MDM slips, this is the first of the three to reconsider: the
+fix is three strings.
 
 **What this ruling does *not* cover.** The per-commodity identifier findings —
 `inc-106`, `inc-107`, `inc-110` — read like reference data but are not. Their

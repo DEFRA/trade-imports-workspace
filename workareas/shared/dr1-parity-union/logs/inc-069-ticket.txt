@@ -1,0 +1,30 @@
+h2. Increment
+
+{{inc-069}} from the {{shared/dr1-parity-union}} backlog.
+
+The frontend hub carries an "Exit details" task that DR1 does not have. DR1 asks where the consignment goes on to and when it leaves as part of the main reason for import.
+
+Group 1 of the frontend hub holds a fourth task, "Exit details", hinted "Where the consignment travels on to and when it leaves Great Britain" ({{src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:39-42}}). It stands for three pages of its own — destination country, port of exit and exit date ({{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-39}}) — and it appears with its own status tag whenever the reason for import puts any of those questions in scope.
+
+DR1's hub has three tasks in "About the consignment" and no exit task. Destination country, port of exit and exit date are asked on the reason-for-import page itself, as conditional reveals under the answer that calls for them, and they count towards the "Main reason for import" task: that task reads Complete only once the reveal's own questions are answered too ({{app/routes.js:1343-1367}}).
+
+h2. Acceptance criteria
+
+* Group 1 of the hub shows three tasks, not four — the "Exit details" row is gone from {{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js}}.
+* Destination country, port of exit and exit date are folded into the "Main reason for import" task, so that task's status reflects those follow-up answers as well as the reason itself.
+* The "Exit details" task copy and hint are removed from {{src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js}}.
+* The hub renders three tasks in group 1 for every reason for import, including the ones that put destination country, port of exit or exit date in scope \(for example temporary admission of horses\).
+* Removing the row removes the return-route defect that travelled with it \(inc-042\).
+* E2E specs and their visual baselines in the tests repo are updated to match the three-task hub.
+
+h2. Dependency
+
+This depends on the conditional-reveal change booked as {{inc-067}}. While destination country, port of exit and exit date live on pages of their own, the task row is the only thing holding them, so this cannot land first.
+
+h2. Falsified by
+
+An "Exit details" or equivalent fourth task appearing in DR1's "About the consignment" section for any reason for import.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

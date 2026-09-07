@@ -1,0 +1,218 @@
+{
+  "id": "inc-069",
+  "ticket": "EUDPA-473",
+  "branch": "feat/EUDPA-473-the-frontend-hub-carries-an-exit-details",
+  "type": "flow-change",
+  "milestone": null,
+  "domain": "hub",
+  "title": "The frontend hub carries an Exit details task DR1 does not have — DR1 asks where the consignment goes on to and when it leaves as part of the main reason for import.",
+  "detail": "Group 1 of the frontend hub holds a fourth task, 'Exit details', hinted 'Where the consignment travels on to and when it leaves Great Britain' (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:39-42). It stands for three pages of its own — destination country, port of exit and exit date (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-39) — and it appears with its own status tag whenever the reason for import puts any of those questions in scope. It is absent from the captured hub because the captured notification has no reason for import yet. The 'Main reason for importing' task next to it covers only the reason itself and the internal-market purpose (:34).\n\nDR1's hub has three tasks in 'About the consignment' and no exit task. Destination country, port of exit and exit date are asked on the reason-for-import page itself, as conditional reveals under the answer that calls for them, and they count towards the 'Main reason for import' task: that task reads Complete only once the reveal's own questions are answered too (app/routes.js:1343-1367). A DR1 user sees one task for the whole of why-and-where-onward, and its status covers all of it.\n\nFold destination country, port of exit and exit date into the 'Main reason for import' task so the hub shows three tasks in group 1, not four, and so that task's status reflects the follow-up answers as well as the reason. The dependency is the reveal change itself, booked as inc-067: while the three questions live on pages of their own the task row is the only thing holding them, so this cannot land first. That finding asks for the same deletion in its own words — its work statement says to delete the four pages, the conditional exit-details task row and the four page-name headings that go with them — so the diff is not in doubt and only the slicing is; booking the hub half here is what lets a planner schedule it, track it and see the return-route defect that goes with it. Doing it removes the Exit details row and with it that defect.\n\nFALSIFIED BY: An 'Exit details' or equivalent fourth task appearing in DR1's 'About the consignment' section for any reason for import.",
+  "screens": [
+    "fe-hub-exit-details-blocked",
+    "fe-hub",
+    "dr1-notification-hub"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:34-39",
+    "prototype": "app/routes.js:5751-5769"
+  },
+  "confidence": "high",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "Group 1 of the frontend hub holds a fourth task, 'Exit details', hinted 'Where the consignment travels on to and when it leaves Great Britain' (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:39-42). It stands for three pages of its own — destination country, port of exit and exit date (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-39) — and it appears with its own status tag whenever the reason for import puts any of those questions in scope. It is absent from the captured hub because the captured notification has no reason for import yet. The 'Main reason for importing' task next to it covers only the reason itself and the internal-market purpose (:34).",
+    "prototype": "DR1's hub has three tasks in 'About the consignment' and no exit task. Destination country, port of exit and exit date are asked on the reason-for-import page itself, as conditional reveals under the answer that calls for them, and they count towards the 'Main reason for import' task: that task reads Complete only once the reveal's own questions are answered too (app/routes.js:1343-1367). A DR1 user sees one task for the whole of why-and-where-onward, and its status covers all of it.",
+    "difference": "Fold destination country, port of exit and exit date into the 'Main reason for import' task so the hub shows three tasks in group 1, not four, and so that task's status reflects the follow-up answers as well as the reason. The dependency is the reveal change itself, booked as inc-067: while the three questions live on pages of their own the task row is the only thing holding them, so this cannot land first. That finding asks for the same deletion in its own words — its work statement says to delete the four pages, the conditional exit-details task row and the four page-name headings that go with them — so the diff is not in doubt and only the slicing is; booking the hub half here is what lets a planner schedule it, track it and see the return-route defect that goes with it. Doing it removes the Exit details row and with it that defect.",
+    "correction": "The finding stands; it was pointing at the wrong picture. SCREENS FIXED: it named fe-hub and dr1-notification-hub, and the task this finding is entirely about does not render on either. fe-hub was captured with no reason for import, so the conditional row is hidden — the string 'Exit details' occurs nowhere in fe-hub.html — and DR1's hub has no such task at all, which is the finding. The one place in the corpus where the row is on a page is fe-hub-exit-details-blocked, captured after this finding was written by driving the journey to temporary admission of horses, and it is now named first. The frontend slot's sentence 'It is absent from the captured hub because the captured notification has no reason for import yet' remains true of fe-hub and is left as it stands; read it as being about that one screen, not about the corpus. The crop the fix produces shows the fourth task exactly as the finding describes it — 'Exit details', hinted 'Where the consignment travels on to and when it leaves Great Britain', sitting under the internal-market row — so the count this finding disputes, four tasks in group 1 against DR1's three, can now be seen rather than taken on trust.",
+    "falsifiedBy": "An 'Exit details' or equivalent fourth task appearing in DR1's 'About the consignment' section for any reason for import.",
+    "relatedTo": [
+      {
+        "id": "inc-042",
+        "relation": "travels-with",
+        "why": "this change removes the row the defect lives in"
+      },
+      {
+        "id": "inc-037",
+        "relation": "travels-with",
+        "why": "both change which tasks sit in which hub group"
+      },
+      {
+        "id": "inc-038",
+        "relation": "travels-with",
+        "why": "both change which tasks sit in which hub group"
+      },
+      {
+        "id": "inc-067",
+        "relation": "travels-with",
+        "why": "the reveal move is this change's stated dependency, and it asks for the same row to be deleted"
+      }
+    ]
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js",
+      "lines": {
+        "start": 39,
+        "end": 42
+      },
+      "ranges": [
+        {
+          "start": 39,
+          "end": 42
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:39-42",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+      "lines": {
+        "start": 35,
+        "end": 39
+      },
+      "ranges": [
+        {
+          "start": 35,
+          "end": 39
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-39",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+      "lines": {
+        "start": 34,
+        "end": 34
+      },
+      "ranges": [
+        {
+          "start": 34,
+          "end": 34
+        }
+      ],
+      "asWritten": ":34",
+      "anchors": [],
+      "resolution": "human",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ],
+      "why": "Continues from task-rows.js:35-39 in the same paragraph. Line 34 is the importReason row: pages [importReasonPage, importPurposePage] and nothing else.",
+      "needsHuman": false
+    },
+    {
+      "ref": "c4",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/routes.js",
+      "lines": {
+        "start": 1343,
+        "end": 1367
+      },
+      "ranges": [
+        {
+          "start": 1343,
+          "end": 1367
+        }
+      ],
+      "asWritten": "app/routes.js:1343-1367",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c5",
+      "kind": "code",
+      "side": "frontend",
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+      "lines": {
+        "start": 34,
+        "end": 39
+      },
+      "ranges": [
+        {
+          "start": 34,
+          "end": 39
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:34-39",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "evidence.frontend",
+      "fields": [
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c6",
+      "kind": "code",
+      "side": "prototype",
+      "repo": "prototype",
+      "path": "app/routes.js",
+      "lines": {
+        "start": 5751,
+        "end": 5769
+      },
+      "ranges": [
+        {
+          "start": 5751,
+          "end": 5769
+        }
+      ],
+      "asWritten": "app/routes.js:5751-5769",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "evidence.prototype",
+      "fields": [
+        "evidence.prototype"
+      ]
+    }
+  ],
+  "corpus": "dr1",
+  "slice": "hub",
+  "source": "hub--exit-details-is-not-a-dr1-task.json",
+  "controls": [
+    "Exit details",
+    "Main reason for import"
+  ],
+  "provenance": {
+    "sourceA": "inc-056",
+    "sourceC": "inc-067",
+    "origin": "both",
+    "note": "The frontend hub carries an 'Exit details' task DR1 has no equivalent of. Again C found it but did not book it — inc-067's remedy says to delete 'the conditional exit-details task row', and inc-044 cites the same row in passing as proof the frontend knows how to hide a row. A books it as a hub finding with an explicit dependency on the reveal change. Same diff either way; A's version is the one a planner can schedule.",
+    "better": "A",
+    "judged": "Overturned. The matcher filed run A's inc-056 as a run-C hole under \"Notification hub / task list\"; the judge found it is a matched pair, cross-domain, against run C's inc-067. Run C's work statement asks in terms for the deletion of 'the conditional exit-details task row' alongside the four pages and the four page-name headings, which is the same diff run A's inc-056 asks for — take the fourth row out of hub group 1 and let the reason task's status carry the follow-ups. Run A itself raises the row's removal twice, its own inc-089 closing with the observation that the Exit details hub task disappears and that the hub change depends on the reveal move. So both runs found the difference; the divergence is slicing rather than sight — run A gave the hub half its own id and a dependency edge where run C swallows it inside the reveal finding. The label mattered because a business analyst reading an 'onlyA' row would have raised a hub ticket that run C's inc-067 already contains. The trackability point is real and belongs in the note on a matched pair, not in a one-sided list."
+  }
+}

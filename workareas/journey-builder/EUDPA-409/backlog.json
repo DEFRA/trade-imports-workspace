@@ -3177,9 +3177,31 @@
         "inc-041"
       ],
       "status": "todo",
-      "commit": null,
-      "failure_reason": null,
-      "title": null
+      "commit": "502c606",
+      "failure_reason": "CI red for a cross-repo ordering reason, not a code defect. The plants frontend place-of-destination page calls the address book; the stack only gives it TRADE_IMPORTS_ADDRESS_BOOK_URL via workspace PR #40 (docker/stack/frontend.compose.yml), which is still on the branch. The frontend and tests E2E jobs, and the frontend Lighthouse job, all check out DEFRA/trade-imports-workspace at main by design (workspace e2e-tests.yml checkout ref, lighthouse.yml checkout ref), so on those runs the env var is absent, the address-book fetch throws and /destinations/select returns 500. Proof the code is sound: workspace PR #40 run 34284836860 (shards started 22:34, after both branch images published) ran the branch-tagged plants-frontend and animals-tests images against the branch stack and all three shards passed, including arrival.spec.ts:150 and :233, the two tests failing on the caller runs. Both caller workflows are workflow_run-triggered, so they always execute the copy of the workflow file on the default branch: nothing pushed to a PR branch can change which workspace ref they resolve. Resolution is ordering only: merge workspace PR #40 to main first, then re-trigger the frontend and tests Publish Branch Image runs (a push to each branch) so their E2E and Lighthouse checks re-run against the updated main stack.",
+      "title": "Add the place-of-destination page (destination section)",
+      "ticket": "EUDPA-517",
+      "branch": "feat/EUDPA-517-add-the-place-of-destination-page-destin",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/48",
+          "number": 48
+        },
+        {
+          "repo": "workspace",
+          "url": "https://github.com/DEFRA/trade-imports-workspace/pull/40",
+          "number": 40
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/177",
+          "number": 177
+        }
+      ],
+      "openQuestions": [
+        "The hub tags the destination row Completed from answer presence alone (flow/task-rows.js rowStatus -> statusOf is a synchronous pure read of the answers tree), but the answer is a reference — {addressId} — that can stop resolving when the organisation soft-deletes the address-book record. The page itself then shows no selection (place-of-destination/controller.js chosenFor rejects record.deleted), so the hub and the page disagree, and readyForCheckYourAnswers rolls up through the same rowStatus. Making the hub judgement reference-aware would need an async address-book lookup in a synchronous pure path, so it is not an inc-042 change. inc-043 ('Reinstate the answers-read sanitiser for address-book-backed parties') is the intended fix — wire configureAnswersForRead from routes.js with a set-owned sanitiser, the way animals routes.js:53 wires withoutUnresolvedPartyRefs, so a deleted reference drops out of fulfilment and evaluation and the row falls back to Not started. Confirm on inc-043 that the sanitiser covers placeOfDestination and add a hub unit test seeding an addressId the stub book does not hold."
+      ]
     },
     {
       "type": "restore",

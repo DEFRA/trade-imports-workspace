@@ -1,0 +1,31 @@
+{
+  "file": "src/server/routes/home/fit/dashboard.fit.spec.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "df4190f8340f859a610e9620518b475c13e79713",
+  "pr": 25,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T14:55:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Two Major coverage gaps: the AC1 FIT never asserts origin or arrival date, and the AC5 FIT never asserts the results list is empty.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "AC1 FIT only asserts reference numbers and statuses; stub origin countries and arrival dates are never checked, so a missing identifying column still passes.",
+      "fix": "Assert the stub origin names (France, Ireland, Germany) and formatted arrival dates (10 Sep 2026, 12 Sep 2026, 8 Sep 2026), as list.fit.spec.js does for table columns.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 98,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "AC5 FIT asserts the No notifications found message but not that the results list is empty, so leftover rows would still pass.",
+      "fix": "After the no-match search, also assert the table is gone (getByRole('table') toHaveCount(0) or the known stub refs toHaveCount(0)).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

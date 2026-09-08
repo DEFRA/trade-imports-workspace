@@ -1,0 +1,30 @@
+{
+  "file": "src/server/routes/home/controller.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "df4190f8340f859a610e9620518b475c13e79713",
+  "pr": 25,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T13:43:05Z",
+  "verdict": "RISKY",
+  "verdict_reason": "Unescaped reference numbers in govukTable html can XSS the dashboard, and a countries-client failure also takes the whole page down.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 44,
+      "severity": "Critical",
+      "category": "xss",
+      "issue": "buildTableRows interpolates notification.referenceNumber into govukTable html without escaping, so a reference containing markup can XSS the dashboard (the address-book list uses escapeHtml for the same visually-hidden text).",
+      "fix": "HTML-escape referenceNumber (and treat href as an attribute) before interpolating into the View link html, matching address-book/list/controller.js.",
+      "best_practice": "node/govuk-frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 58,
+      "severity": "Major",
+      "category": "resilience",
+      "issue": "getCountries is on the same try path as listNotifications, so a reference-data failure 500s the dashboard even though originCountry already falls back to the raw code.",
+      "fix": "Fetch countries separately (warn and use {} on failure) so listNotifications can still render the rows required by AC1."
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

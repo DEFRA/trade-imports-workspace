@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "0ba65961acc9f612158eba8e7e7fc15d66a14961",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T12:48:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Two Major test gaps: copy CREATED is not pinned to the new aggregate, and idempotent/error paths do not assert that outbox is never written.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1961,
+      "severity": "Major",
+      "category": "tests",
+      "issue": "copyNotification_shouldEmitNotificationCreated_forNewNotification uses any() for the aggregate, so it still passes if NOTIFICATION_CREATED is emitted for the source rather than the new copy",
+      "fix": "Capture the appendEvent aggregate and assert its referenceNumber equals newRef; keep verifyNoMoreInteractions to ensure the source emits nothing",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 2367,
+      "severity": "Major",
+      "category": "tests",
+      "issue": "softDelete_shouldBeIdempotent_onAlreadyDeleted (and the copy/cancelAmend/softDelete error-path tests) still only verify never save, so a spurious outbox append on those paths would not fail",
+      "fix": "Add verify(outboxService, never()).appendEvent(any(), any(), any(), any()) on the idempotent delete and the copy/cancelAmend/softDelete failure tests, matching submitNotification_shouldThrowBadRequest_whenAlreadySubmitted",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:34Z"
+}

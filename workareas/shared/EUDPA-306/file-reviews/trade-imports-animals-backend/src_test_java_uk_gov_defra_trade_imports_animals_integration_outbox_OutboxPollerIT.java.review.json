@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "0ba65961acc9f612158eba8e7e7fc15d66a14961",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T12:34:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Delivery tests skip the new NotificationCreated SNS payload, and the ordering test no longer asserts version order on the queue.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 50,
+      "severity": "Major",
+      "category": "missing-assertion",
+      "issue": "shouldDeliverToSnsAndMarkPublishedAt (and shouldDeliverNotificationEditedToSns) now wait for two SNS messages after NotificationCreated was added as v1, but only inspect the later event; a wrong Created eventType or payload on the wire would still pass.",
+      "fix": "Assert the aggregateVersion 1 envelope too: eventType NotificationCreated, publishedAt set, and the same identifier/correlation checks used for Submitted/Edited.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 2,
+      "line": 123,
+      "severity": "Major",
+      "category": "missing-assertion",
+      "issue": "shouldPublishAggregateVersionsInOrder no longer asserts delivery order: it sorts Mongo events by version (tautological) and picks SNS messages with snsEnvelopeByAggregateVersion, so any permutation of v1-v3 would pass.",
+      "fix": "Assert SQS arrival order is aggregateVersion 1, then 2, then 3 (Created, Submitted, Submitted), or extract versions from messages in receive order and assert they equal [1, 2, 3].",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:34Z"
+}

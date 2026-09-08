@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java",
+  "repo": "trade-imports-ins-backend",
+  "commit": "c4c70e7f766295bdaf516aa784e4528b96439627",
+  "pr": 7,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T13:04:35Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new derived queries are correctly named and covered by Mongo ITs, but they have no matching indexes on AggregatedNotification.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "performance",
+      "issue": "findAllByStatusNot and findByReferenceNumberAndStatusNot add derived queries with no matching Mongo indexes on AggregatedNotification, so list pagination/sort and reference lookup will collection-scan as the store grows; Optional lookup also throws if duplicate referenceNumbers exist.",
+      "fix": "Add indexes on AggregatedNotification to match the new queries: unique sparse on referenceNumber, and compounds covering status plus arrivalDate/lastUpdated for the paginated list.",
+      "best_practice": "java/spring-data-mongodb.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

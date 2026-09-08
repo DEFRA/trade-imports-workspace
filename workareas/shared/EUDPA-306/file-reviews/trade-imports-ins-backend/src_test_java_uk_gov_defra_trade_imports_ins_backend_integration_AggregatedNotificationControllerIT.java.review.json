@@ -1,0 +1,58 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+  "repo": "trade-imports-ins-backend",
+  "commit": "c4c70e7f766295bdaf516aa784e4528b96439627",
+  "pr": 7,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T13:16:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "HTTP coverage misses pagination wiring and AC1 row fields; remaining issues are style and isolation nits.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 31,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "GET /notifications is never called with page, so a controller that drops the page param would still pass this IT; pagination is only asserted as default page 1.",
+      "fix": "Seed more than page-size rows and GET /notifications?page=2, asserting the second slice plus size/totalPages.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 2,
+      "line": 34,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "List assertions only check referenceNumber; AC1 also requires status, origin country, commodity and arrival date on each row, and seed never sets commodity.",
+      "fix": "Seed commodity and assert jsonPath for status, originCountry, commodity and arrivalDate on a returned row.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 3,
+      "line": 56,
+      "severity": "Minor",
+      "category": "coverage",
+      "issue": "The named exact-match test only picks one of two complete references; a prefix or contains lookup of GBN-AG-26-002 would still pass, so AC4 exact-match is not locked.",
+      "fix": "Add a case that GET with a prefix or substring of a stored reference returns empty content.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 4,
+      "line": 26,
+      "severity": "Minor",
+      "category": "test-style",
+      "issue": "New IT methods omit the required Given / When / Then comment blocks used in NotificationSqsListenerIT and mandated by the integration testing guide.",
+      "fix": "Add // Given, // When, // Then (or // When / Then) comments to each test.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 5,
+      "line": 22,
+      "severity": "Minor",
+      "category": "test-isolation",
+      "issue": "setup drops the Mongo collection instead of deleting documents via the repository, which diverges from IntegrationBase guidance and from NotificationSqsListenerIT.",
+      "fix": "Inject AggregatedNotificationRepository and call deleteAll() in @BeforeEach.",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

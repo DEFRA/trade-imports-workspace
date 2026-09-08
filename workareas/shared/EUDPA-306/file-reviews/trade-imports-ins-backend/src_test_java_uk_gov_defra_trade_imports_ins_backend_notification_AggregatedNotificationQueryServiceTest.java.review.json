@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryServiceTest.java",
+  "repo": "trade-imports-ins-backend",
+  "commit": "c4c70e7f766295bdaf516aa784e4528b96439627",
+  "pr": 7,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T13:19:44Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "List, pagination and exact reference lookup are covered, but sort is never asserted on the PageRequest so a regression there would go unnoticed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 53,
+      "severity": "Major",
+      "category": "missing-test",
+      "issue": "findAll always builds PageRequest with AggregatedNotificationSort.toSort(sort), but every test passes null for sort and the Pageable captor only asserts page index and size — dropping or ignoring sort would still pass.",
+      "fix": "Capture Pageable in the list-path tests and assert getSort() equals the default sort for null, plus one test that a non-null sort param (e.g. lastUpdated,asc) is forwarded on the PageRequest.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 38,
+      "severity": "Minor",
+      "category": "test-style",
+      "issue": "None of the tests use the required Given / When / Then comment blocks.",
+      "fix": "Add explicit // Given, // When, // Then (or // When & Then) comments to each test method.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

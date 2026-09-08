@@ -1,0 +1,83 @@
+{
+  "ticket": "EUDPA-306",
+  "repo": "trade-imports-animals-backend",
+  "items": [
+    {
+      "id": 1,
+      "line": 45,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "NO_VERSION_ID_EVENTS always omits versionId for NOTIFICATION_EDITED, including AMEND-phase saves after a submission, so the firehose snapshot can drop the current version; VersionId tests never cover EDITED.",
+      "fix": "Omit versionId only when submissionCount is 0 (keep CREATED/DELETED as always-absent); carry the current count on post-submit EDITED; add VersionId tests for draft edit (absent) and AMEND edit (carry-forward).",
+      "file": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 50,
+      "severity": "Major",
+      "category": "missing-assertion",
+      "issue": "shouldDeliverToSnsAndMarkPublishedAt (and shouldDeliverNotificationEditedToSns) now wait for two SNS messages after NotificationCreated was added as v1, but only inspect the later event; a wrong Created eventType or payload on the wire would still pass.",
+      "fix": "Assert the aggregateVersion 1 envelope too: eventType NotificationCreated, publishedAt set, and the same identifier/correlation checks used for Submitted/Edited.",
+      "best_practice": "java/testing/integration.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 123,
+      "severity": "Major",
+      "category": "missing-assertion",
+      "issue": "shouldPublishAggregateVersionsInOrder no longer asserts delivery order: it sorts Mongo events by version (tautological) and picks SNS messages with snsEnvelopeByAggregateVersion, so any permutation of v1-v3 would pass.",
+      "fix": "Assert SQS arrival order is aggregateVersion 1, then 2, then 3 (Created, Submitted, Submitted), or extract versions from messages in receive order and assert they equal [1, 2, 3].",
+      "best_practice": "java/testing/integration.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 1961,
+      "severity": "Major",
+      "category": "tests",
+      "issue": "copyNotification_shouldEmitNotificationCreated_forNewNotification uses any() for the aggregate, so it still passes if NOTIFICATION_CREATED is emitted for the source rather than the new copy",
+      "fix": "Capture the appendEvent aggregate and assert its referenceNumber equals newRef; keep verifyNoMoreInteractions to ensure the source emits nothing",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 2367,
+      "severity": "Major",
+      "category": "tests",
+      "issue": "softDelete_shouldBeIdempotent_onAlreadyDeleted (and the copy/cancelAmend/softDelete error-path tests) still only verify never save, so a spurious outbox append on those paths would not fail",
+      "fix": "Add verify(outboxService, never()).appendEvent(any(), any(), any(), any()) on the idempotent delete and the copy/cancelAmend/softDelete failure tests, matching submitNotification_shouldThrowBadRequest_whenAlreadySubmitted",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 470,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "VersionId nested class covers CREATED and DELETED as no-versionId events but omits NOTIFICATION_EDITED, which OutboxService.NO_VERSION_ID_EVENTS also includes (including amend-phase page saves after a submission).",
+      "fix": "Add a VersionId test that appends NOTIFICATION_EDITED (DRAFT, and AMEND after a stubbed submission count) and asserts exchangedDocument does not contain versionId.",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

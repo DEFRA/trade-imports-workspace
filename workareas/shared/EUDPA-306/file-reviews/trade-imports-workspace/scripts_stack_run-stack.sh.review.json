@@ -1,0 +1,21 @@
+{
+  "file": "scripts/stack/run-stack.sh",
+  "repo": "trade-imports-workspace",
+  "commit": "b3abe18c19bbc5f2535896a688ff9128abcbd4df",
+  "pr": 15,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T15:07:18Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new mongo-first retry omits bounce-mongo.sh's wait-timeout, port-release wait and failure logs, so retries can fail for a different reason than the exit-48 race.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 196,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "start_mongodb_first is not the same retry loop as bounce-mongo.sh: it omits --wait-timeout 90, wait_for_port_release after rm, and mongo logs on failure, so a post-crash :27017 bind or a slow healthcheck can burn the 6 attempts",
+      "fix": "Call bounce-mongo.sh's start_mongodb_with_retries (it is already sourceable) instead of a weaker copy, or at least pass --wait-timeout 90, dump logs, and wait for port 27017 to release before retrying"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

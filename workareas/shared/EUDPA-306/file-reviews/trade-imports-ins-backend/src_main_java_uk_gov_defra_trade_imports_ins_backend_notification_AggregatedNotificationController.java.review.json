@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java",
+  "repo": "trade-imports-ins-backend",
+  "commit": "c4c70e7f766295bdaf516aa784e4528b96439627",
+  "pr": 7,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-08T12:57:19Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "List/sort/lookup wiring looks sound and is covered by ITs, but @Min(1) on page will 500 because ConstraintViolationException is swallowed by the RuntimeException handler.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 37,
+      "severity": "Major",
+      "category": "error-handling",
+      "issue": "@Min(1) on page uses method validation (ConstraintViolationException) but GlobalExceptionHandler only maps MethodArgumentNotValidException to 400 and catches RuntimeException as 500, so GET /notifications?page=0 will 500.",
+      "fix": "Handle ConstraintViolationException as 400 ProblemDetail and add an HTTP test that page=0 returns 400, not 500.",
+      "best_practice": "java/spring-boot.md"
+    }
+  ],
+  "reconciled_at": "2026-09-08T15:12:35Z"
+}

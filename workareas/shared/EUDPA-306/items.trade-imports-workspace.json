@@ -1,0 +1,30 @@
+{
+  "ticket": "EUDPA-306",
+  "repo": "trade-imports-workspace",
+  "items": [
+    {
+      "id": 1,
+      "line": 196,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "start_mongodb_first is not the same retry loop as bounce-mongo.sh: it omits --wait-timeout 90, wait_for_port_release after rm, and mongo logs on failure, so a post-crash :27017 bind or a slow healthcheck can burn the 6 attempts",
+      "fix": "Call bounce-mongo.sh's start_mongodb_with_retries (it is already sourceable) instead of a weaker copy, or at least pass --wait-timeout 90, dump logs, and wait for port 27017 to release before retrying",
+      "file": "scripts/stack/run-stack.sh",
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "Out of EUDPA-306: mongo start retry is EUDPA-358 stack reliability, not dashboard AC."
+    },
+    {
+      "id": 2,
+      "file": "docker/stack/frontend.compose.yml",
+      "line": "105",
+      "severity": "Major",
+      "category": "config",
+      "issue": "trade-imports-ins-frontend has TRADE_IMPORTS_ADDRESS_BOOK_URL and TRADE_IMPORTS_REFERENCE_DATA_URL via host.docker.internal but no TRADE_IMPORTS_INS_BACKEND_URL, so a container-run dashboard keeps the default http://localhost:8090 and cannot reach INS backend.",
+      "fix": "Set TRADE_IMPORTS_INS_BACKEND_URL=http://host.docker.internal:8090 on the ins-frontend service (and depends_on the backend if the dashboard should not boot first).",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

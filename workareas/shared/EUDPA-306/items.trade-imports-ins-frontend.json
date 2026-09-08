@@ -1,0 +1,122 @@
+{
+  "ticket": "EUDPA-306",
+  "repo": "trade-imports-ins-frontend",
+  "items": [
+    {
+      "id": 1,
+      "line": 379,
+      "severity": "Minor",
+      "category": "config",
+      "issue": "New URL keys tradeImportsInsBackendApi.baseUrl and tradeImportsAnimalsFrontend.baseUrl use format: String, so a malformed TRADE_IMPORTS_INS_BACKEND_URL or TRADE_IMPORTS_ANIMALS_FRONTEND_URL fails late inside new URL() rather than at config.validate().",
+      "fix": "Set format: 'url' on both new baseUrl keys (convict-format-with-validator is already registered).",
+      "best_practice": "node/hapi.md",
+      "file": "src/config/config.js",
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "Out of EUDPA-306: convict format String vs url is a config nit."
+    },
+    {
+      "id": 2,
+      "line": 72,
+      "severity": "Major",
+      "category": "missing-assertion",
+      "issue": "buildPaginationLinks test claims to carry referenceNumber but passes undefined and never asserts it on previous/next or item hrefs, so dropping search from pagination links would still pass",
+      "fix": "Pass a real referenceNumber (as address-book-helper.test.js does for search terms) and assert it appears on previous, next, and numbered item hrefs",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/common/helpers/notification-dashboard-helper.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 44,
+      "severity": "Critical",
+      "category": "xss",
+      "issue": "buildTableRows interpolates notification.referenceNumber into govukTable html without escaping, so a reference containing markup can XSS the dashboard (the address-book list uses escapeHtml for the same visually-hidden text).",
+      "fix": "HTML-escape referenceNumber (and treat href as an attribute) before interpolating into the View link html, matching address-book/list/controller.js.",
+      "best_practice": "node/govuk-frontend.md",
+      "file": "src/server/routes/home/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 58,
+      "severity": "Major",
+      "category": "resilience",
+      "issue": "getCountries is on the same try path as listNotifications, so a reference-data failure 500s the dashboard even though originCountry already falls back to the raw code.",
+      "fix": "Fetch countries separately (warn and use {} on failure) so listNotifications can still render the rows required by AC1.",
+      "file": "src/server/routes/home/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 57,
+      "severity": "Major",
+      "category": "missing-assertion",
+      "issue": "AC1 test is titled to cover commodity but the fixture sets commodity to null and never asserts a commodity value appears in the row.",
+      "fix": "Give the fixture a commodity string and assert that value is present in the rendered HTML.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/routes/home/controller.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 218,
+      "severity": "Major",
+      "category": "missing-coverage",
+      "issue": "Sort query forwarding is tested but the page query is never forwarded or validated, so a broken parsePage would still pass this suite.",
+      "fix": "Add a test that GET /?page=2 forwards page: 2, and that an invalid page falls back to 1.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/routes/home/controller.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "line": 21,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "AC1 FIT only asserts reference numbers and statuses; stub origin countries and arrival dates are never checked, so a missing identifying column still passes.",
+      "fix": "Assert the stub origin names (France, Ireland, Germany) and formatted arrival dates (10 Sep 2026, 12 Sep 2026, 8 Sep 2026), as list.fit.spec.js does for table columns.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/routes/home/fit/dashboard.fit.spec.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "line": 98,
+      "severity": "Major",
+      "category": "coverage",
+      "issue": "AC5 FIT asserts the No notifications found message but not that the results list is empty, so leftover rows would still pass.",
+      "fix": "After the no-match search, also assert the table is gone (getByRole('table') toHaveCount(0) or the known stub refs toHaveCount(0)).",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/routes/home/fit/dashboard.fit.spec.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "line": 84,
+      "severity": "Major",
+      "category": "accessibility",
+      "issue": "govukTable has no caption, so screen readers announce the notifications list with no accessible name",
+      "fix": "Pass caption (visually hidden if the Dashboard heading is enough) and captionClasses on govukTable",
+      "best_practice": "node/govuk-frontend.md",
+      "file": "src/server/routes/home/index.njk",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

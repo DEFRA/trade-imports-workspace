@@ -1,0 +1,50 @@
+{
+  "capability": "live-animals/journey-pages/transporter-selection",
+  "areaCode": "TRANSPORTER-SELECT",
+  "specFile": "openspec/specs/live-animals/journey-pages/transporter-selection/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-TRANSPORTER-SELECT-001",
+      "name": "The page asks which transporter is carrying the consignment, with none chosen in advance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-SELECT-001-A",
+          "name": "The page presents its list with no transporter preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter-selection.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts heading, one transporter radio and save — not address or approval number text" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter-selection.spec.ts", "test": "leaves the transporter unchecked on load", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial transporter page renders address and approval details", "strength": "full", "notes": "asserts address line, country and approval number beside the radio; page title copy says 'Search for an approved commercial transporter' but the template is govukRadios only — no search control exists in the njk or in any test (honest gap, not smoothed over)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-SELECT-002",
+      "name": "A chosen transporter is accepted and kept on return",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-SELECT-002-A",
+          "name": "Choosing a transporter saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter-selection.spec.ts", "test": "accepts a valid transporter", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial transporter selection saves and persists", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "partial", "notes": "saves a commercial transporter as part of the scope walk; main subject is scope wipe, not this page alone" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-SELECT-002-B",
+          "name": "The chosen transporter is still shown selected on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial transporter selection saves and persists", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "reopens the select page and asserts the chosen transporter remains checked" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "capability": "live-animals/notification-status-and-reference",
+  "areaCode": "STATUS-REF",
+  "specFile": "openspec/specs/live-animals/notification-status-and-reference/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-STATUS-REF-001",
+      "name": "Every page of a notification shows what state it is in",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-STATUS-REF-001-A",
+          "name": "Each state is shown, and distinguished by colour",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should map a draft journey to a blue Draft tag with the reference", "strength": "full", "notes": "govuk-tag--blue" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should map a submitted journey to a green Submitted tag", "strength": "full", "notes": "govuk-tag--green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should map an amend journey to a yellow Amending tag", "strength": "full", "notes": "govuk-tag--yellow; user-facing Amending label" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should map a deleted journey to a grey Deleted tag", "strength": "full", "notes": "govuk-tag--grey; no Playwright walk of a deleted notification's pages found" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "shows the Draft strip with the notification reference", "strength": "partial", "notes": "Draft tag text only — not colour class" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "lands on the view page with the Submitted strip and reference", "strength": "partial", "notes": "Submitted tag text only — not colour class" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-STATUS-REF-002",
+      "name": "Every page of a notification shows its reference number, from the moment it is created",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-STATUS-REF-002-A",
+          "name": "The reference is shown on the entry page before anything is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reference-strip.spec.ts", "test": "the Draft tag and GBN-AG reference show from the entry page onwards, and not on the dashboard", "strength": "full", "notes": "entry-page half: Draft tag + GBN-AG before any save" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the draft status and the notification reference before any answer is saved", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should render the strip on origin while the journey has no saved answers", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-STATUS-REF-002-B",
+          "name": "The reference and state stay visible through every later page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reference-strip.spec.ts", "test": "the Draft tag and GBN-AG reference show from the entry page onwards, and not on the dashboard", "strength": "full", "notes": "after first save: Overview, origin task page, commodity selection each keep Draft + GBN-AG" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should render the strip on the hub with the journey reference", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should render the strip on a post-origin task page", "strength": "full", "notes": "import-reason page" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-STATUS-REF-003",
+      "name": "No state or reference is shown where there is no notification to describe",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-STATUS-REF-003-A",
+          "name": "The dashboard shows no state or reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reference-strip.spec.ts", "test": "the Draft tag and GBN-AG reference show from the entry page onwards, and not on the dashboard", "strength": "full", "notes": "asserts journey strip count 0 on the dashboard" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should render no strip on the dashboard", "strength": "full", "notes": "journeyStrip undefined in dashboard view context" }
+          ]
+        }
+      ]
+    }
+  ]
+}

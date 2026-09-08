@@ -1,0 +1,78 @@
+{
+  "capability": "live-animals/journey-pages/private-transporter-details",
+  "areaCode": "PRIVATE-TRANS",
+  "specFile": "openspec/specs/live-animals/journey-pages/private-transporter-details/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PRIVATE-TRANS-001",
+      "name": "The page asks for the transporter's name and full contact address, with two fields optional",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-001-A",
+          "name": "The page presents its name and address questions, marking two fields optional",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page renders all address fields and explanatory copy", "strength": "full", "notes": "asserts every field label from copy, including 'Address line 2 (optional)' and 'County (optional)'; field-group partial-fill behaviour is owned by live-animals/addresses, not duplicated here" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PRIVATE-TRANS-002",
+      "name": "A complete set of private transporter details is saved as one record and reloads into the form",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-002-A",
+          "name": "Completing the details saves them and returns to Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "after completing mandatory fields, asserts Overview" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PRIVATE-TRANS-002-B",
+          "name": "Returning to the page shows the saved details in the form",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "reopens and asserts name and country values" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "full", "notes": "also asserts email on return" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PRIVATE-TRANS-003",
+      "name": "A blank mandatory field, an over-length one, and an invalid country are each rejected in their own way",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-003-A",
+          "name": "A blank mandatory field blocks the save without losing the rest of the address",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter validation: empty address line 1 links to and focuses the preserved field", "strength": "full", "notes": "same pattern for every mandatory field in the requiredPrivateValidations loop; asserts other fields preserved" }
+          ]
+        },
+        {
+          "id": "SCN-PRIVATE-TRANS-003-B",
+          "name": "An over-length field blocks the save with its value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter validation: address line 1 over 255 characters links to and focuses the preserved value", "strength": "full", "notes": "formatPrivateValidations covers every length-capped field the same way" }
+          ]
+        },
+        {
+          "id": "SCN-PRIVATE-TRANS-003-C",
+          "name": "An invalid country blocks the save and clears, rather than preserving",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter validation: out-of-list country focuses the cleared select and preserves other values", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

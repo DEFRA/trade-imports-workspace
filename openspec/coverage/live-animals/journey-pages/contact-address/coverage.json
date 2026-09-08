@@ -1,0 +1,85 @@
+{
+  "capability": "live-animals/journey-pages/contact-address",
+  "areaCode": "CONTACT",
+  "specFile": "openspec/specs/live-animals/journey-pages/contact-address/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-CONTACT-001",
+      "name": "The page offers the address book as a plain list, each option showing its address, with none chosen in advance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONTACT-001-A",
+          "name": "The page presents its list with no address chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/contact-address.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts the form and one option are visible, not the full list or the address-summary detail" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/contact-address.spec.ts", "test": "leaves the contact address unchecked on load", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "renders the address-book contacts and feature copy", "strength": "full", "notes": "this is what surfaced the address-summary detail — asserts every option's name and postal-address text" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONTACT-002",
+      "name": "A chosen contact address is accepted and persists",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONTACT-002-A",
+          "name": "Choosing a contact address saves without error and persists on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/contact-address.spec.ts", "test": "accepts a valid contact address", "strength": "partial", "notes": "proves the save only, not persistence on return" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "selects a valid contact, redirects and persists the selection", "strength": "full", "notes": "this is what surfaced the persistence-on-return half of the requirement" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONTACT-003",
+      "name": "The contact address is optional, and saving without one returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONTACT-003-A",
+          "name": "Saving with no address chosen is allowed and exits to Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/contact-address.spec.ts", "test": "saving with no contact address selected is allowed and exits to the hub", "strength": "full", "notes": "not exercised by the fit suite — this path is E2E-only" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONTACT-004",
+      "name": "An invalid submitted option is refused without preserving it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONTACT-004-A",
+          "name": "An invalid selection is rejected and not preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "contact validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection", "strength": "full", "notes": "this test is what surfaced the requirement itself — a tampered/invalid value was previously undocumented; not exercised anywhere in E2E" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONTACT-005",
+      "name": "The back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONTACT-005-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "this requirement was entirely absent from the spec until this pass" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "capability": "admin/outbox-events",
+  "areaCode": "ADMIN-OUTBOX",
+  "specFile": "openspec/specs/admin/outbox-events/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ADMIN-OUTBOX-001",
+      "name": "An operator can find a notification's outbox events by its reference number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-OUTBOX-001-A",
+          "name": "Searching by reference number shows that notification's outbox events",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-outbox-events.spec.ts", "test": "shows the outbox event for a submitted notification", "strength": "full", "notes": "asserts event type, non-empty timestamp, and View JSON detail with reference and SUBMITTED status" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/server/outbox-events/controller.test.js", "test": "Should render events table when referenceNumber is provided and events exist", "strength": "full", "notes": "renders table with event type and View JSON" }
+          ]
+        },
+        {
+          "id": "SCN-ADMIN-OUTBOX-001-B",
+          "name": "An unknown reference number shows an empty state",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-outbox-events.spec.ts", "test": "shows the empty state for an unknown reference number", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/server/outbox-events/controller.test.js", "test": "Should render empty state when referenceNumber is provided but no events exist", "strength": "full", "notes": "asserts empty-state copy names the searched reference" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-OUTBOX-002",
+      "name": "An operator can replay a notification's outbox events",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-OUTBOX-002-A",
+          "name": "Replaying a notification's events shows a success banner and does not change what is recorded",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-replay.spec.ts", "test": "replays outbox events and shows success banner", "strength": "full", "notes": "asserts success banner and same three events still listed after replay" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-replay.spec.ts", "test": "writes a REPLAY_EVENTS audit record covering three outbox events", "strength": "full", "notes": "asserts SUCCESS audit with notification reference and numberOfEvents=3" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/server/outbox-events/controller.test.js", "test": "Should redirect to outbox-events page with replayed=1 on success", "strength": "partial", "notes": "server redirect only" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/server/outbox-events/controller.test.js", "test": "Should show success banner after a successful replay", "strength": "partial", "notes": "banner render on ?replayed=1; does not assert list unchanged or audit" }
+          ]
+        }
+      ]
+    }
+  ]
+}

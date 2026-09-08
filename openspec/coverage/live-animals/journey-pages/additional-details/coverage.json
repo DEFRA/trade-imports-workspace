@@ -1,0 +1,86 @@
+{
+  "capability": "live-animals/journey-pages/additional-details",
+  "areaCode": "ADDL-DETAILS",
+  "specFile": "openspec/specs/live-animals/journey-pages/additional-details/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ADDL-DETAILS-001",
+      "name": "The page asks what the animals are certified for and whether any are unweaned, with nothing chosen in advance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDL-DETAILS-001-A",
+          "name": "The page presents its questions with nothing preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/additional-details.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts heading, one certification option, one unweaned option and save — not the full certification list from the service" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/additional-details.spec.ts", "test": "leaves the additional details unchecked on load", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "renders service-backed certification options and conditional copy", "strength": "full", "notes": "asserts every certification purpose from the service and both unweaned options; does not assert nothing preselected" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDL-DETAILS-002",
+      "name": "A complete set of additional details is accepted, and persists",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDL-DETAILS-002-A",
+          "name": "Answering both questions saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/additional-details.spec.ts", "test": "accepts valid additional details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves both answers, redirects and persists them", "strength": "full", "notes": "also covers persistence (002-B)" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-002-B",
+          "name": "Saved answers are shown again on reopening",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves both answers, redirects and persists them", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDL-DETAILS-003",
+      "name": "An invalid answer to one question is refused without discarding a valid answer to the other",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDL-DETAILS-003-A",
+          "name": "An invalid certification purpose is refused, keeping a valid unweaned answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "certification validation: invalid option links to and focuses the group while preserving the valid unweaned answer", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-003-B",
+          "name": "An invalid unweaned answer is refused, keeping a valid certification purpose",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "unweaned validation: invalid option links to and focuses the group while preserving the valid certification", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDL-DETAILS-004",
+      "name": "The back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDL-DETAILS-004-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

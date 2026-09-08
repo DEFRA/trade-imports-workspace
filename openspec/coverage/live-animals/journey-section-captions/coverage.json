@@ -1,0 +1,87 @@
+{
+  "capability": "live-animals/journey-section-captions",
+  "areaCode": "CAPTIONS",
+  "specFile": "openspec/specs/live-animals/journey-section-captions/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-CAPTIONS-001",
+      "name": "A question page names the part of the notification it belongs to, above its heading",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CAPTIONS-001-A",
+          "name": "A question page is captioned with the part it belongs to",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "names the section immediately above the heading of a consignment question", "strength": "full", "notes": "pins caption as the element directly above the origin heading" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "names the section on a page whose heading is the question legend", "strength": "full", "notes": "import-reason: caption above the legend heading" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should caption the origin page \"About the consignment\" and render it in its template", "strength": "full", "notes": "one of CAPTIONED_PAGES; the same it.each covers every captioned journey page" }
+          ]
+        },
+        {
+          "id": "SCN-CAPTIONS-001-B",
+          "name": "Every page of a part carries the same caption",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "names the section immediately above the heading of a consignment question", "strength": "full", "notes": "origin → About the consignment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "names the section on a page whose heading is the question legend", "strength": "full", "notes": "import-reason → same About the consignment caption" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should caption the animal identification page \"About the consignment\" and render it in its template", "strength": "full", "notes": "with origin / commodity search / consignment details / import reason all About the consignment in CAPTIONED_PAGES" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CAPTIONS-002",
+      "name": "The dashboard carries its own caption, unlike Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CAPTIONS-002-A",
+          "name": "The dashboard is captioned, where Overview is not",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "names the dashboard above its heading", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "leaves the overview bare, as Design release 1 does", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should caption the dashboard page \"Dashboard\" and render it in its template", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should leave the overview page uncaptioned", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CAPTIONS-003",
+      "name": "The parts named in the caption are not the same grouping as the Overview sections",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CAPTIONS-003-A",
+          "name": "A page's caption does not name the Overview section its task sits under",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should caption the animal identification page \"About the consignment\" and render it in its template", "strength": "full", "notes": "caption is About the consignment" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings", "strength": "full", "notes": "lists Animal identification details under 2. Commodity details — proving the Overview grouping diverges from the caption" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CAPTIONS-004",
+      "name": "A page that is not part of the journey's questioning carries no caption",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CAPTIONS-004-A",
+          "name": "A page outside the questioning opens straight into its heading",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js", "test": "leaves the overview bare, as Design release 1 does", "strength": "partial", "notes": "Overview only among the listed bare pages" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should leave the overview page uncaptioned", "strength": "partial", "notes": "BARE_PAGES also covers check your answers, contact and declaration — not confirmation" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should leave the check your answers page uncaptioned", "strength": "partial", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should leave the contact page uncaptioned", "strength": "partial", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js", "test": "Should leave the declaration page uncaptioned", "strength": "partial", "notes": "confirmation is listed in the scenario but absent from BARE_PAGES and the fit suite — scenario remains partial until confirmation is asserted bare" }
+          ]
+        }
+      ]
+    }
+  ]
+}

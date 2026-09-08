@@ -1,0 +1,77 @@
+{
+  "capability": "live-animals/journey-obligations/import-reason",
+  "areaCode": "OB-IMPORT-REASON",
+  "specFile": "openspec/specs/live-animals/journey-obligations/import-reason/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-OB-IMPORT-REASON-001",
+      "name": "The reason for importing decides which four further obligations apply",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-IMPORT-REASON-001-A",
+          "name": "Internal market asks only for the purpose",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks the internal-market purpose under its own radio", "strength": "full", "notes": "asserts purpose radios in the reveal; destination/port/exit live under other reveals" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reason-purpose-scope.spec.ts", "test": "purpose is owed only for the internal market and is wiped when the reason changes", "strength": "full", "notes": "Internal market + purpose Breeding completes the row; Transit then asks exit fields instead" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when reasonForImport is internalMarket", "strength": "full", "notes": "V4 — purposeInInternalMarket conditional gate" }
+          ]
+        },
+        {
+          "id": "SCN-OB-IMPORT-REASON-001-B",
+          "name": "Transit asks for the destination country and the port of exit",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "full", "notes": "field ids exactly transitPortOfExit then transitDestinationCountry" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reason-purpose-scope.spec.ts", "test": "purpose is owed only for the internal market and is wiped when the reason changes", "strength": "full", "notes": "Transit: fills port of exit + destination country on the same submit" }
+          ]
+        },
+        {
+          "id": "SCN-OB-IMPORT-REASON-001-C",
+          "name": "Transhipment or onward travel asks only for the destination country",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transhipment for the destination country alone", "strength": "full", "notes": "field ids exactly ['transhipmentDestinationCountry']" }
+          ]
+        },
+        {
+          "id": "SCN-OB-IMPORT-REASON-001-D",
+          "name": "Temporary admission of horses asks for the port of exit and the exit date",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks temporary admission for the exit date and then the port of exit", "strength": "full", "notes": "field ids temporaryAdmissionExitDate then temporaryAdmissionPortOfExit" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves an exit date chosen from the picker inside the reveal, and offers it back", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OB-IMPORT-REASON-001-E",
+          "name": "Any other reason asks for none of the four",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "opens no reveal until a reason that needs one is chosen", "strength": "full", "notes": "reEntry keeps transit reveal hidden and has no aria-controls" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when reasonForImport is absent", "strength": "partial", "notes": "purpose out of scope on empty; not every 'other' reason enumerated in one test" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-IMPORT-REASON-002",
+      "name": "Changing the reason discards the answers the previous reason called for",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-IMPORT-REASON-002-A",
+          "name": "Changing the reason away and back asks the question afresh",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reason-purpose-scope.spec.ts", "test": "purpose is owed only for the internal market and is wiped when the reason changes", "strength": "full", "notes": "Internal market → Transit → Internal market: purpose radios unchecked" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should drop the answers of the reason the user moved away from", "strength": "full", "notes": "transit exit fields cleared when flipping to internalMarket" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "purges stored purpose when reasonForImport flips away from internalMarket", "strength": "full", "notes": "" }
+          ],
+          "notes": "No FIT wipe round-trip; fit only persists a chosen reason's own reveal."
+        }
+      ]
+    }
+  ]
+}

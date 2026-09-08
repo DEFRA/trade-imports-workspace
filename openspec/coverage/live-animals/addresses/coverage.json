@@ -1,0 +1,250 @@
+{
+  "capability": "live-animals/addresses",
+  "areaCode": "ADDR",
+  "specFile": "openspec/specs/live-animals/addresses/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ADDR-001",
+      "name": "The journey reads the address book and never writes to it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-001-A",
+          "name": "Choosing an address for a consignment role offers no way to add one",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-read-only.spec.ts", "test": "the party picker offers no way to add an address", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-B",
+          "name": "Choosing the consignment contact address offers no way to add one",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/contact-address.spec.ts", "test": "offers no way to add an address", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-001-C",
+          "name": "The create-address page is not served from the notification journey",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-read-only.spec.ts", "test": "the create-address page is no longer served", "strength": "full", "notes": "asserts HTTP 404 on the journey create-address URL" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-002",
+      "name": "Four roles stay linked to the address book, and two hold a copy",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-002-A",
+          "name": "Editing a linked address changes what the draft notification shows",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "editing a linked address in the address book changes what the draft notification shows", "strength": "full", "notes": "asserts hub row name and check-your-answers town/postcode after an address-book edit" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-002-B",
+          "name": "Editing the record behind a copied role leaves the notification unchanged",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.test.js", "test": "Should pass an inline party through without reading the book (D24, D26)", "strength": "partial", "notes": "proves place of origin and contact are never re-read from the book, so an edit cannot propagate — no E2E edits a copied role's source record and re-checks the notification" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/journeys/persistence/persistence-notification.spec.ts", "test": "submitted notification persists the journey answers and reloads read-only", "strength": "partial", "notes": "asserts placeOfOrigin and consignment are stored as copies without addressId; does not edit the book afterwards" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-003",
+      "name": "Deleting an address clears the roles linked to it and leaves the roles that copied it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-003-A",
+          "name": "Deleting a linked address clears it from the notification and hides it from the picker",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "deleting a linked address treats it as never entered and hides it from the picker", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-003-B",
+          "name": "Deleting the record behind a copied role leaves that role intact",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.test.js", "test": "Should keep an inline party whose source address has been deleted", "strength": "partial", "notes": "proves withoutUnresolvedPartyRefs keeps the inline copy when the book no longer holds the source — no E2E deletes the source behind place of origin or contact and re-checks the hub" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-004",
+      "name": "An address book record that is unavailable is not treated as deleted",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-004-A",
+          "name": "An address book outage is not mistaken for a deletion",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.test.js", "test": "Should let an address-book outage propagate rather than read as a deletion", "strength": "partial", "notes": "proves resolveParties throws on book failure instead of returning undefined (deletion shape); no UI/E2E asserts the failure is surfaced to the user" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-005",
+      "name": "The review page blocks submission while a linked address has been deleted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-005-A",
+          "name": "A deleted address is named on the review page and blocks submission until replaced",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "the review page names a deleted address, walks the trader to a replacement and lets the submit through once it is replaced", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-006",
+      "name": "Choosing a role's address offers a search of the whole book, reporting how many matched",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-006-A",
+          "name": "Searching narrows the list and reports the count",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Showing 2 of 2 for a scoped search token" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search narrows the address book and preserves the query", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-006-B",
+          "name": "Clearing the search restores the whole book",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "clears the search and re-asserts the paginated Showing 5 of N caption" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-007",
+      "name": "Choosing a role's address without selecting one is refused, focusing the first address in the list",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-007-A",
+          "name": "Saving with nothing selected links to and focuses the first address",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "Consignor or exporter validation: no selection links to and focuses the first address", "strength": "full", "notes": "same pattern is asserted for every party title in the suite" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-008",
+      "name": "A search with no matches shows its own empty state, and its validation focuses the search field",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-008-A",
+          "name": "A search with no matches shows an empty state and preserves the term",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search with no matches shows its empty state", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-008-B",
+          "name": "Saving after a no-match search focuses the search field, not an address",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker validation after no matches links to and focuses the preserved search", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-009",
+      "name": "An address's full details can be read without leaving the list",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-009-A",
+          "name": "Expanding an address shows its details in place",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "expands details in place and asserts London without leaving the list" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker expands an address to show its full details", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-010",
+      "name": "Choosing a role's address is paged, and a choice made on any page is the one saved",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-010-A",
+          "name": "A record found on a later page is chosen and saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-011",
+      "name": "A saved choice is carried and named when the list is reopened, even where its row is not shown",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-011-A",
+          "name": "Reopening the list names the saved choice and keeps it on save",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Selected address: name with the radio absent, then save keeps the hub row" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-012",
+      "name": "An address keyed in by hand must be completed once any part of it is filled",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-012-A",
+          "name": "A partially filled private-transporter address blocks the save",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "name-only then Enter address line 1; completing mandatory fields then returns to Overview — ownership of this field-group rule lives here, not in private-transporter-details" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter validation: empty address line 1 links to and focuses the preserved field", "strength": "partial", "notes": "clears one field from a complete fill rather than starting partial; still proves the mandate" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-012-B",
+          "name": "A partially filled permanent address for an animal identifier blocks the save",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "passport + owner name only → Enter address line 1; completing address fields then adds the unit" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address validation: empty address line 1 links to and focuses the preserved field", "strength": "partial", "notes": "clears one field from a complete fill; same mandate, different entry path" }
+          ]
+        }
+      ]
+    }
+  ]
+}

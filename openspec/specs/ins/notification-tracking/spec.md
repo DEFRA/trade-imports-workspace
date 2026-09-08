@@ -7,14 +7,17 @@ The Import Notification Service keeping track of every notification across the j
 ## Requirements
 
 ### Requirement: One record is kept per notification, updated in place as it changes
+**ID**: REQ-INS-TRACK-001
 The system MUST keep one record per notification once it exists, MUST keep that record up to date as the notification's status and detail change, and MUST NOT create a second record for the same notification when it is submitted.
 
 #### Scenario: An in-progress notification is tracked as Draft, with its detail
+**ID**: SCN-INS-TRACK-001-A
 - **GIVEN** a user has worked through a notification up to its declaration page, without submitting
 - **WHEN** the service is asked what it holds for that notification
 - **THEN** one record exists for it, showing a Draft status and reflecting the answers entered so far
 
 #### Scenario: Submitting the notification updates the same record to Submitted
+**ID**: SCN-INS-TRACK-001-B
 - **GIVEN** an in-progress notification is already tracked as Draft
 - **WHEN** the user submits the notification
 - **THEN** that same record updates to show a Submitted status

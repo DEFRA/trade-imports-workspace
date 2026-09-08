@@ -1,0 +1,192 @@
+{
+  "capability": "live-animals/journey-pages/check-your-answers",
+  "areaCode": "CYA",
+  "specFile": "openspec/specs/live-animals/journey-pages/check-your-answers/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-CYA-001",
+      "name": "Check-your-answers numbers its own sections over only what it renders, omitting anything unanswered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-001-A",
+          "name": "Check-your-answers numbers only the sections it renders",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "asserts 1. About / 2. Movement / 3. Addresses and zero Documents headings when none uploaded" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "renders the recorded answers in the numbered design sections", "strength": "full", "notes": "draft full notification — same numbered sections, Documents omitted" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the identifier table and documents section when neither holds an entry", "strength": "partial", "notes": "proves Documents is omitted when empty; does not assert the renumbered About/Movement/Addresses sequence" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should render the numbered design sections in order", "strength": "partial", "notes": "full seed including documents — numbering with Documents present, not the omit-and-renumber case" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-001-B",
+          "name": "Commodity and consignment detail appear within a section, not as numbered sections",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "asserts h3 Consignment details / Commodity details / Species under the numbered sections" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-001-C",
+          "name": "A fully answered notification's check-your-answers reflects every entered value",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "cards for import, species, arrival, transport, roles, contact" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders entered and missing answers in their summary rows", "strength": "partial", "notes": "origin values only plus Not provided arrival — not every section" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should resolve service-backed labels for coded answers", "strength": "partial", "notes": "label resolution for a full seed; one of several fully-populated unit cases" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-001-D",
+          "name": "Check-your-answers lists every address role with its selected party",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "asserts all five role names; does not assert country on each row" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should expand party rows to the stored name plus address lines", "strength": "full", "notes": "consignor expands to name + lines including Switzerland; destination name-only when no lines stored" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-002",
+      "name": "Anything not yet answered is shown as \"Not provided\", not as an error",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-002-A",
+          "name": "An unanswered optional field reads Not provided",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "journey with only the entry page answered renders Not provided for the blank rows", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should render Not provided for a blank plain answer", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should render Not provided for a blank date", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-002-B",
+          "name": "An unanswered party role reads Not provided, with no error shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "new journey shows no address error before a role has been answered", "strength": "full", "notes": "Not provided on consignor and no error link" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should render Not provided for a role that has never been answered", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should not flag a role that has never been answered", "strength": "full", "notes": "error summary null — unanswered is not an outstanding reference" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-003",
+      "name": "A back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-003-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-004",
+      "name": "A Change link returns to check-your-answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-004-A",
+          "name": "Editing an answer via Change returns to check-your-answers with the new value",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/change-from-cya.spec.ts", "test": "a Change link opens the answering page with change context and the save returns to check your answers with the new value", "strength": "full", "notes": "origin and import-reason legs both return with the new value" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Change link threads context and returns to the same review after saving", "strength": "full", "notes": "clears internal reference and asserts Not provided on return" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-005",
+      "name": "A draft notification offers submission and none of the post-submission actions",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-005-A",
+          "name": "The draft view invites submission and withholds the post-submission actions",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "offers submission and none of the post-submit actions", "strength": "full", "notes": "Now submit heading, Continue, zero Copy as new / Delete / Cancel amendment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable %s journey", "strength": "partial", "notes": "it.each DRAFT — copyAction and deleteHref null; does not assert the submit invite copy" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should expose Cancel amendment only on an amending CYA", "strength": "partial", "notes": "draft cancelAmendHref null — one clause of the withhold" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-006",
+      "name": "Continuing from a ready draft notification moves on to the declaration",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-006-A",
+          "name": "Continuing opens the declaration",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "Continue moves on to the declaration", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should redirect to the declaration once its prerequisites are answered", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-007",
+      "name": "Continuing from a notification that is not yet ready returns to Overview instead",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-007-A",
+          "name": "Continuing an incomplete notification returns to Overview without an error",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "new journey shows no address error before a role has been answered", "strength": "full", "notes": "Continue returns to hub URL; no outstanding-role error shown" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should redirect to the hub when the next review page is not yet reachable", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should not refuse Continue for a role that has never been answered", "strength": "full", "notes": "redirects to hub, not 400" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-008",
+      "name": "A submitted notification offers copy-as-new and delete",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-008-A",
+          "name": "The submitted view offers the actions open to a submitted notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "offers Copy as new and Delete on the read-only view", "strength": "full", "notes": "also asserts Cancel amendment absent" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit every Change href for a submitted journey", "strength": "full", "notes": "copyAction.href /delete, cancelAmendHref null" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should expose Cancel amendment only on an amending CYA", "strength": "partial", "notes": "submitted cancelAmendHref null" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-009",
+      "name": "Copying a submitted notification from this page opens a new draft under its own reference",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-009-A",
+          "name": "Copy as new opens a distinct new draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-view-states.spec.ts", "test": "copies the submitted notification to a new draft", "strength": "full", "notes": "lands on Overview with a distinct GBN-AG reference" }
+          ]
+        }
+      ]
+    }
+  ]
+}

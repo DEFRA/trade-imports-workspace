@@ -1,0 +1,148 @@
+{
+  "capability": "live-animals/journey-pages/import-reason",
+  "areaCode": "IMPORT-REASON",
+  "specFile": "openspec/specs/live-animals/journey-pages/import-reason/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-IMPORT-REASON-001",
+      "name": "The page asks the reason for importing, with nothing chosen in advance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-001-A",
+          "name": "The page presents its question with no reason preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/import-reason.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts heading, one reason and save — not the full reason list" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/import-reason.spec.ts", "test": "leaves the import reason unchecked on load", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "renders the service-backed reasons and feature copy", "strength": "full", "notes": "asserts every reason from the service with its hint; does not assert nothing preselected" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-002",
+      "name": "A chosen reason is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-002-A",
+          "name": "Choosing a reason saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/import-reason.spec.ts", "test": "accepts a valid import reason", "strength": "full", "notes": "Internal market without purpose — purpose is enforced at submit, so the page accepts the reason alone" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "full", "notes": "saves Internal market with a purpose and asserts persistence" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-003",
+      "name": "The internal market reason reveals a follow-up purpose question",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-003-A",
+          "name": "Choosing internal market reveals the purpose question and accepts an answer to it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/import-reason.spec.ts", "test": "reveals the import purpose under the internal market reason and accepts it", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks the internal-market purpose under its own radio", "strength": "full", "notes": "asserts every purpose option and that none are pre-chosen beyond the reveal opening" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "full", "notes": "accepts reason + purpose together" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-004",
+      "name": "The port of exit is chosen from the same list as the port of entry",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-004-A",
+          "name": "The port of exit offers the port of entry's list",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-005",
+      "name": "A reason needing more than the purpose question reveals its own questions inline, under that reason",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-005-A",
+          "name": "Transit reveals the port of exit and then the destination country",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "full", "notes": "asserts field order by id under the reveal" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-005-B",
+          "name": "Transhipment or onward travel reveals the destination country alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transhipment for the destination country alone", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-005-C",
+          "name": "Temporary admission of horses reveals the exit date and then the port of exit",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks temporary admission for the exit date and then the port of exit", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-006",
+      "name": "An incompletely answered reveal is rejected without closing it, keeping what was already answered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-006-A",
+          "name": "Answering only the port of exit under Transit is rejected, keeping the port and the reveal open",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "refuses an unanswered reveal, links to the field and keeps the reveal open", "strength": "full", "notes": "Transit with port filled, country empty; asserts focus on country and port still held" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-007",
+      "name": "An invalid submitted reason is refused without preserving it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-007-A",
+          "name": "An invalid reason is rejected and not preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "reason validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection", "strength": "full", "notes": "this test is what surfaced the requirement — a tampered value was previously undocumented; not in E2E" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-008",
+      "name": "The back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-008-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "this requirement was absent from the spec until this pass" }
+          ]
+        }
+      ]
+    }
+  ]
+}

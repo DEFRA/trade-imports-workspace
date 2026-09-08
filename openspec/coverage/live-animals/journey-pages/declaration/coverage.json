@@ -1,0 +1,69 @@
+{
+  "capability": "live-animals/journey-pages/declaration",
+  "areaCode": "DECLARATION",
+  "specFile": "openspec/specs/live-animals/journey-pages/declaration/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-DECLARATION-001",
+      "name": "The page asks the user to confirm the declaration, having told them what they are agreeing to",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-001-A",
+          "name": "The page presents the declaration's statements, the date, and its confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/declaration.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts heading, confirmation checkbox and continue — not the declaration statements or date" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "renders every declaration statement and the current date", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DECLARATION-002",
+      "name": "Continuing without confirming the declaration is rejected, focusing the confirmation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-002-A",
+          "name": "Continuing with the declaration unconfirmed shows an error summary that focuses the confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/declaration.spec.ts", "test": "shows an error summary when submitted unconfirmed", "strength": "partial", "notes": "asserts the error heading only — does not follow the link or assert focus / unchecked" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "declaration validation: when unchecked, links to and focuses the clear checkbox", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DECLARATION-003",
+      "name": "The page offers a route back to check your answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-003-A",
+          "name": "The back link opens check your answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "back link returns to check answers", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DECLARATION-004",
+      "name": "The declaration page is not shown once the notification has been submitted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-004-A",
+          "name": "Requesting the declaration page for a submitted notification redirects to confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "submits a complete notification, redirects to confirmation and keeps the declaration", "strength": "full", "notes": "after submit, revisiting the declaration URL lands on confirmation" }
+          ]
+        }
+      ]
+    }
+  ]
+}

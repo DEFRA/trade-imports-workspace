@@ -1,0 +1,127 @@
+schema: spec-driven
+
+context: |
+  DEFRA trade-imports. This workspace aggregates independent service repos;
+  it is not a monorepo. See CLAUDE.md at the workspace root.
+
+  Specs under openspec/specs/ are a Behaviour Spec: intended behaviour, held
+  separately from implemented behaviour (code) and verified behaviour (tests),
+  so drift between the three can be surfaced. Reconstructed under EUDPA-471
+  from a passing Playwright run in repos/trade-imports-animals-tests.
+
+  Capabilities nest by service area:
+    live-animals/  the importer-facing animal notification journey
+    admin/         the internal operator interface
+    ins/           Import Notification Service front door and its read model
+
+  Within live-animals, journey-pages/ holds one capability per screen of the
+  notification flow, each named for the page it describes and recording that
+  page's exact title. journey-obligations/ holds the conditional rules, one
+  capability per page whose ANSWERS gate something — stated from the triggering
+  page so the permutations read as a set, and cross-referenced from each page
+  the rule reaches. Capabilities outside both are the cross-cutting ones and
+  the screens that sit outside the flow (the dashboard, sign-in).
+
+  "Obligation" is domain vocabulary, not implementation: it is a thing a
+  notification must declare, carrying a scope, a mandate status and a
+  cardinality. Keep the word.
+
+  journey-flow and journey-obligations are the two specs closest to restating
+  each other; hold the line between them. journey-flow owns whether a PAGE is
+  offered — the order, the skipping, the gates as a mechanism.
+  journey-obligations owns whether a QUESTION applies — which answer puts what
+  in or out of play. Neither states the other's half.
+
+  Conventions:
+  - Requirements use MUST (not SHALL).
+  - A requirement's opening words say how widely it applies, so its scope reads
+    without opening the spec:
+      "The page ..."                     this capability's own page
+      "Every page / a task page ..."     holds across the journey's pages
+      "A notification / every ..."       holds for every notification
+      "An operator ..."                  the admin actor
+    Do not label a requirement by its breadth ("meta", "general"). Breadth is a
+    property of the subject, so name the subject and the breadth follows. A
+    requirement whose opening does not match the spec it sits in is usually
+    misfiled, not badly worded.
+  - Scenarios are Given/When/Then, plain English, observable behaviour only —
+    no selectors, route paths, or test-framework mechanics.
+  - Cross-cutting mechanisms (obligations, addresses, authentication) get their
+    own capability rather than being scattered across the screens they appear
+    on.
+  - Prefer a shared name prefix over a deeper directory. Capabilities sort
+    alphabetically, so journey-* and notification-* already group in every
+    listing without adding path depth or a taxonomy to learn. Reach for a
+    directory only when a group genuinely holds many members, as journey-pages/
+    does. Leave nothing sorting alone at the end of the list.
+  - A directory is either one capability or a folder of them, never both. The
+    CLI does allow a spec.md beside child directories, but one directory
+    behaving differently from every other costs more than it saves — put the
+    general case in a named child alongside its siblings instead.
+  - Name a directory that holds other capabilities for the KIND OF THING it
+    holds, not for the area it belongs to: journey-pages/, journey-obligations/.
+    Name a leaf capability for its own subject. Plurality follows from that and
+    is not itself the signal — addresses, notification-events and
+    transited-countries are plural leaves because their subject is plural. The
+    service directories (live-animals/, admin/, ins/) are exempt: they are
+    named for the service.
+  - Name a capability for what the system does and for whom, never for the
+    mechanism that achieves it. A name a reader could only understand by
+    opening the code is the wrong name: not `journey-strip` (a CSS class) but
+    notification-status-and-reference; not `notification-aggregate` (a storage
+    pattern) but notification-tracking. This does not outrank the domain: an
+    obligation is a thing the problem domain has, so it keeps its name.
+  - Use the product's own words ONLY where the user sees them. A page title is
+    observable and belongs in the spec — the page is "Overview", not "the hub",
+    and each journey spec records its title so a rename shows up as drift. A
+    class name, a variable, a test filename or a module is not observable and
+    must not name a requirement. Operators do see "Outbox events" and "DLQ
+    process" in the admin interface, so those names stand.
+  - One subject, one capability. Never specify the same behaviour twice —
+    cross-reference the owning capability from the Purpose instead.
+  - Share a capability only where one implementation serves several pages with
+    the SAME behaviour (the address picker). Where two pages merely resemble
+    each other, spec them separately — a shared requirement that is true of one
+    and false of the other is worse than saying it twice.
+  - Cite another capability by its full path in backticks, e.g. under
+    `live-animals/addresses`. OpenSpec does not resolve or validate
+    cross-references — they are prose — so the uniform form is what makes them
+    greppable and checkable. Bare names are ambiguous: three capabilities are
+    named `authentication`. After renaming or moving a capability, re-check
+    every reference against the output of `openspec list --specs`.
+  - A Purpose is one or two sentences saying what the capability is for. It
+    never mentions tests, suites or how the spec was reconstructed — a spec
+    states intended behaviour, and keeping that separate from what is verified
+    is the whole point. Record provenance outside the spec.
+  - Cross-reference another capability only where behaviour a reader would
+    expect here actually lives elsewhere — a page taking an address inherits
+    the address-book rules, so it cites them. Do not signpost neighbours.
+  - Never generalise one verified instance into a claim about its siblings
+    without checking each.
+  - Where the system has two groupings that look alike, spec the difference
+    explicitly, with a scenario naming a case where they diverge. Three such
+    requirements exist already (flow sections vs Overview task rows, caption
+    parts vs Overview sections, check-your-answers numbering vs Overview's),
+    each written after the two were wrongly assumed to match.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

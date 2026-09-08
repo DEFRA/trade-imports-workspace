@@ -1,0 +1,31 @@
+h2. Increment
+
+{{inc-140}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 opens the "Upload documents" page with a block of guidance telling a trader what to attach and why. The frontend goes straight from the h1 into the form: no body paragraph, no bulleted list of document kinds, no details expander and no link out to GOV.UK guidance. The copy file holds no guidance keys either, so there is nothing waiting to be switched on. This is content only — no new field, no validation, no service call.
+
+h2. Acceptance criteria
+
+* The documents page renders an intro paragraph above the form reading "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages."
+* Below that paragraph the page renders "Other documents you may need to attach include:" over a bulleted list of "import licences or authorisations" and "commercial documents or invoices".
+* Below the list the page renders a closed {{govukDetails}} expander summarised "Check which additional documents you must upload".
+* The expander holds a two-column table headed Consignment / Documents needed with three rows: animals that do not need a health certificate need an exporter's declaration that they are fit to travel; livestock transiting bluetongue restricted territories need Bluetongue declaration GBHC172; rodents imported for research purposes need an RM39 licence and supplementary health certificate.
+* The expander ends with the link "Check the documents you need on GOV.UK (opens in a new tab)" pointing at the clean GOV.UK import-of-products guidance URL. The prototype's analytics query parameters, including the {{_gl}} cross-domain linker value, are NOT carried across.
+* All new strings live in {{src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js}} — no hard-coded copy in the template.
+* The markup sits in {{src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk}} between the h1 and the opening {{<form>}} element, built from govuk-frontend macros and {{govuk-*}} classes only — no custom CSS and no hand-rolled components.
+* No new field, no new validation rule and no new service call are added by this increment.
+* The E2E specs and visual baselines in {{trade-imports-animals-tests}} are updated to cover the new guidance block and pass.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Frontend evidence: {{src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:16-32}}
+
+Design release 1 evidence: {{app/views/upload-documents.html:37-79}}
+
+Screens: {{fe-documents}}, {{dr1-upload-documents}}, {{dr1-upload-documents-empty}}
+
+h2. Note for the content designer
+
+Whether those three table rows are settled content or a placeholder to be replaced is worth confirming. Under the contract Design release 1 is the signed-off definition, so this increment builds the rows as they stand and treats any later rewrite as a later change.

@@ -1,0 +1,225 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+index 258cafb2..7ab968bc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+@@ -7,17 +7,46 @@ import {
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
++import {
++  portOfEntryPage,
++  privateTransporterDetailsPage,
++  transitCountriesPage,
++  transportersPage,
++  transportersSelectPage
++} from '../features/transport/page.js'
++import { documentsPage } from '../features/documents/page.js'
++import { addressesPage } from '../features/addresses/page.js'
++import { cphNumberPage } from '../features/cph-number/page.js'
++import { consignmentContactSelectPage } from '../features/contact/page.js'
++import { notificationViewPage } from '../features/check-answers/page.js'
+ import { pageGatePasses } from '../../../../../flow/gates.js'
+ 
+ const flowPageTarget = (page) => (scope, journeyId) =>
+   pageGatePasses(page, scope) ? pagePath(journeyId, page.slug) : null
+ 
++/** The review page ends the run rather than asking a question in it, so it
++ * carries the same authored gate the review flow section does: it opens once
++ * every task row is ready. A run that arrives with the notification still
++ * incomplete falls through to the hub instead. */
++const reviewTarget = (scope, journeyId) =>
++  scope.readyForCheckYourAnswers
++    ? pagePath(journeyId, notificationViewPage.slug)
++    : null
++
+ /** The opening run's ordered steps — a null target skips the step (see
+- * docs/flow-and-gates.md, "The opening run"). The commodity leg is a
+- * two-page shape: batch search then the consolidated details page
+- * (whose derived gate holds until a line exists). The identification step
+- * is a single card-per-species surface, gated like every other
+- * flow page (its RULE 1 prerequisite holds it until a line exists). */
++ * docs/flow-and-gates.md, "The opening run"). The run is the whole
++ * notification, not a first leg of it: "Save and continue" carries a new
++ * notification from the origin page through to the review page in one pass,
++ * and the hub is somewhere the user chooses to go through the secondary
++ * "Save and return to overview" button.
++ *
++ * The commodity leg is a two-page shape: batch search then the consolidated
++ * details page (whose derived gate holds until a line exists). The
++ * identification step is a single card-per-species surface, gated like every
++ * other flow page (its RULE 1 prerequisite holds it until a line exists). The
++ * transporter leg lists both of its branch pages and the addresses leg both of
++ * its pages; the derived gates pick the one the answers reach, so the run does
++ * not need to know which branch it is on. */
+ export const RUN_STEPS = [
+   { id: originPage.id, target: flowPageTarget(originPage) },
+   { id: commoditiesPage.id, target: flowPageTarget(commoditiesPage) },
+@@ -33,7 +62,26 @@ export const RUN_STEPS = [
+   {
+     id: additionalDetailsPage.id,
+     target: flowPageTarget(additionalDetailsPage)
+-  }
++  },
++  { id: portOfEntryPage.id, target: flowPageTarget(portOfEntryPage) },
++  { id: transitCountriesPage.id, target: flowPageTarget(transitCountriesPage) },
++  { id: transportersPage.id, target: flowPageTarget(transportersPage) },
++  {
++    id: transportersSelectPage.id,
++    target: flowPageTarget(transportersSelectPage)
++  },
++  {
++    id: privateTransporterDetailsPage.id,
++    target: flowPageTarget(privateTransporterDetailsPage)
++  },
++  { id: documentsPage.id, target: flowPageTarget(documentsPage) },
++  { id: addressesPage.id, target: flowPageTarget(addressesPage) },
++  { id: cphNumberPage.id, target: flowPageTarget(cphNumberPage) },
++  {
++    id: consignmentContactSelectPage.id,
++    target: flowPageTarget(consignmentContactSelectPage)
++  },
++  { id: notificationViewPage.id, target: reviewTarget }
+ ]
+ 
+ export const nextRunTarget = (stepId, scope, journeyId) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+index 8d46845f..6b9d9ae2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+@@ -1,3 +1,4 @@
++import { readFileSync } from 'node:fs'
+ import { beforeAll, describe, expect, it } from 'vitest'
+ 
+ import { hubPath, pagePath } from '../../../../../shared/paths.js'
+@@ -9,7 +10,20 @@ import {
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+-import { portOfEntryPage } from '../features/transport/page.js'
++import {
++  portOfEntryPage,
++  privateTransporterDetailsPage,
++  transitCountriesPage,
++  transportersPage,
++  transportersSelectPage
++} from '../features/transport/page.js'
++import { documentsPage } from '../features/documents/page.js'
++import { addressesPage } from '../features/addresses/page.js'
++import { cphNumberPage } from '../features/cph-number/page.js'
++import { consignmentContactSelectPage } from '../features/contact/page.js'
++import { notificationViewPage } from '../features/check-answers/page.js'
++import { declarationPage } from '../features/declaration/page.js'
++import { dashboardPage } from '../features/dashboard/page.js'
+ import { makeScope } from '../../../../../engine/index.js'
+ import { buildDispatch } from '../../../../../flow/dispatch.js'
+ import { nextRunTarget } from './run.js'
+@@ -23,6 +37,12 @@ const lineSeed = {
+   commodityLines: [{ commoditySelection: 'Cat', speciesSelection: '923501' }]
+ }
+ 
++// A whole notification, so the tail of the run can be walked with every later
++// question already answerable and the review page open.
++const { values: completeSeed } = JSON.parse(
++  readFileSync(new URL('./fixtures/happy-path.json', import.meta.url))
++)
++
+ describe('#nextRunTarget — the opening run sequence', () => {
+   beforeAll(() => {
+     buildDispatch(dispatchPages)
+@@ -66,8 +86,10 @@ describe('#nextRunTarget — the opening run sequence', () => {
+     )
+   })
+ 
+-  it('Should end the run on the hub after additional details', () => {
+-    expect(next(additionalDetailsPage.id, lineSeed)).toBe(hubPath(JOURNEY_ID))
++  it('Should carry additional details on to the arrival details rather than ending on the hub', () => {
++    expect(next(additionalDetailsPage.id, lineSeed)).toBe(
++      pagePath(JOURNEY_ID, portOfEntryPage.slug)
++    )
+   })
+ 
+   it('Should collapse to the hub when every later step is unreachable', () => {
+@@ -79,8 +101,80 @@ describe('#nextRunTarget — the opening run sequence', () => {
+     ).toBe(hubPath(JOURNEY_ID))
+   })
+ 
+-  it('Should return null for a page outside the run — transport is hub-only, never a run step', () => {
+-    expect(next('documents', lineSeed)).toBeNull()
+-    expect(next(portOfEntryPage.id, lineSeed)).toBeNull()
++  it('Should return null for a page outside the run', () => {
++    expect(next(dashboardPage.id, lineSeed)).toBeNull()
++    expect(next(declarationPage.id, lineSeed)).toBeNull()
++  })
++})
++
++describe('#nextRunTarget — the run past the arrival details', () => {
++  beforeAll(() => {
++    buildDispatch(dispatchPages)
++  })
++
++  const step = (stepId) => next(stepId, completeSeed)
++
++  it('Should send the arrival details to the transit countries when the consignment travels by road', () => {
++    expect(step(portOfEntryPage.id)).toBe(
++      pagePath(JOURNEY_ID, transitCountriesPage.slug)
++    )
++  })
++
++  it('Should skip the transit countries when they do not apply to the means of transport', () => {
++    expect(
++      next(portOfEntryPage.id, {
++        ...completeSeed,
++        meansOfTransport: 'AIRCRAFT'
++      })
++    ).toBe(pagePath(JOURNEY_ID, transportersPage.slug))
++  })
++
++  it('Should send the transit countries on to the transporter question', () => {
++    expect(step(transitCountriesPage.id)).toBe(
++      pagePath(JOURNEY_ID, transportersPage.slug)
++    )
++  })
++
++  it('Should take the transporter branch the answers reach and skip the other', () => {
++    expect(step(transportersPage.id)).toBe(
++      pagePath(JOURNEY_ID, transportersSelectPage.slug)
++    )
++    expect(step(transportersSelectPage.id)).toBe(
++      pagePath(JOURNEY_ID, documentsPage.slug)
++    )
++    expect(
++      next(transportersPage.id, { ...completeSeed, transporterType: 'Private' })
++    ).toBe(pagePath(JOURNEY_ID, privateTransporterDetailsPage.slug))
++  })
++
++  it('Should send the documents on to the roles and addresses', () => {
++    expect(step(documentsPage.id)).toBe(
++      pagePath(JOURNEY_ID, addressesPage.slug)
++    )
++  })
++
++  it('Should send the roles and addresses on to the CPH number and then the contact address', () => {
++    expect(step(addressesPage.id)).toBe(
++      pagePath(JOURNEY_ID, cphNumberPage.slug)
++    )
++    expect(step(cphNumberPage.id)).toBe(
++      pagePath(JOURNEY_ID, consignmentContactSelectPage.slug)
++    )
++  })
++
++  it('Should end the run on the review page once every task row is ready', () => {
++    expect(step(consignmentContactSelectPage.id)).toBe(
++      pagePath(JOURNEY_ID, notificationViewPage.slug)
++    )
++  })
++
++  it('Should rest on the hub instead when the notification is not ready to review', () => {
++    expect(next(consignmentContactSelectPage.id, lineSeed)).toBe(
++      hubPath(JOURNEY_ID)
++    )
++  })
++
++  it('Should rest on the hub after the review page — the run is over', () => {
++    expect(step(notificationViewPage.id)).toBe(hubPath(JOURNEY_ID))
+   })
+ })

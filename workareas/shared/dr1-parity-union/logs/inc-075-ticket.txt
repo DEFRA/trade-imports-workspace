@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-075}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Background
+
+Submitting the destination-country page empty puts "Select the destination country" in the error summary and against the select, and the port-of-exit page puts "Select the port of exit". The definite article implies the service already knows which one is meant. The exit-date page's only message is "Enter a real exit date", which repeats the field name that is already the page heading and the label.
+
+Design release 1 writes the same three messages with the indefinite article and without repeating the field name — "Select a destination country", "Select a port of exit" and "Enter a real date" ({{app/routes.js:1398}}, {{:1407}}, {{:1426}}) — which is the GDS wording for a choice the user has yet to make. Both sides are symmetrical about enforcement here, so only the wording differs.
+
+h2. Acceptance criteria
+
+* {{src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js}} line 9 reads "Select a destination country" instead of "Select the destination country".
+* {{src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js}} line 9 reads "Select a port of exit" instead of "Select the port of exit".
+* {{src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js}} line 8 reads "Enter a real date" instead of "Enter a real exit date".
+* The Welsh copy files beside each of those three English files carry the equivalent change.
+* Each new message appears in both places it is rendered — the error summary link and the field's {{govuk-error-message}} — on submitting each page empty.
+* The origin page's "Select the country where the animal originates from" is brought into line with the same pattern for consistency across the service. This is a tidy, not a parity difference, because Design release 1 does not validate the country on that page at all.
+* Unit tests and any E2E specs or visual baselines that assert the old wording are updated to the new wording.
+
+h2. Notes
+
+Nothing has to land first. Sequence with {{inc-072}} and {{inc-073}}, which add two more messages to the same copy files, and with {{inc-067}}, which decides which page these messages eventually appear on — the wording is the same either way.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

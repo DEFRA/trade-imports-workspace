@@ -1,0 +1,203 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+index 7d6a5e67..15cf8e9f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js
+@@ -9,7 +9,6 @@ import {
+   compose,
+   maxText,
+   oneOf,
+-  pattern,
+   requiredMaxText,
+   validate
+ } from '../../../../../../lib/validate/index.js'
+@@ -152,15 +151,14 @@ const fields = (requirement) =>
+     ),
+     oneOf('regionOfOriginCodeRequirement', REGION_CODE_REQUIREMENT_ANSWERS),
+     regionCodeSuffixRule(requirement),
++    // The reference is the user's own, and the service never reads it: a
++    // reference their records write as ACME-2026/01, or with a space in it,
++    // has to go in as they hold it. So nothing rules on the characters — only
++    // the length, and the hint says the limit before the user meets it.
+     maxText(
+       'internalReferenceNumber',
+       INTERNAL_REFERENCE_MAX_LENGTH,
+       copy.errors.internalReferenceMaxLength
+-    ),
+-    pattern(
+-      'internalReferenceNumber',
+-      /^\w*$/,
+-      copy.errors.internalReferencePattern
+     )
+   )
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+index 6f729ab5..6020ee44 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js
+@@ -29,6 +29,9 @@ const get = origin.routes.find((route) => route.method === 'GET').handler
+ 
+ const COUNTRY_FROM_LIST_MESSAGE = 'Select a country from the list'
+ const REGION_CODE_REQUIRED_MESSAGE = 'Enter the region of origin code'
++const INTERNAL_REFERENCE_MAX_LENGTH = 58
++const INTERNAL_REFERENCE_MAX_LENGTH_MESSAGE =
++  'Internal reference must be 58 characters or less'
+ 
+ describe('POST /origin — invalid payload', () => {
+   beforeAll(() => {
+@@ -50,15 +53,14 @@ describe('POST /origin — invalid payload', () => {
+       message: COUNTRY_FROM_LIST_MESSAGE
+     },
+     {
+-      name: 'invalid-character internalReferenceNumber',
++      name: 'an internal reference over the length limit',
+       payload: {
+         countryOfOrigin: 'FR',
+         regionOfOriginCodeRequirement: 'no',
+-        internalReferenceNumber: 'bad ref!'
++        internalReferenceNumber: 'A'.repeat(INTERNAL_REFERENCE_MAX_LENGTH + 1)
+       },
+       field: 'internalReferenceNumber',
+-      message:
+-        'Internal reference must only contain letters, numbers and underscores'
++      message: INTERNAL_REFERENCE_MAX_LENGTH_MESSAGE
+     }
+   ]
+ 
+@@ -171,6 +173,45 @@ describe('POST /origin — valid internal reference', () => {
+     expect(result.view).toBeUndefined()
+     expect(result.after.internalReferenceNumber).toBe('Imports456_GB')
+   })
++
++  // The reference is whatever the user's own system calls the consignment, so
++  // the punctuation their records use has to survive the page untouched.
++  const punctuatedReferences = [
++    'ACME-2026/01',
++    'Acme ref 12',
++    'ACME.2026.01',
++    'ACME-2026/01 (batch 2)'
++  ]
++
++  it.each(punctuatedReferences)(
++    'Should accept and save the internal reference %s',
++    async (internalReferenceNumber) => {
++      const result = await driveHandler(post, {
++        payload: {
++          countryOfOrigin: 'FR',
++          regionOfOriginCodeRequirement: 'no',
++          internalReferenceNumber
++        }
++      })
++
++      expect(result.view).toBeUndefined()
++      expect(result.after.internalReferenceNumber).toBe(internalReferenceNumber)
++    }
++  )
++
++  it('Should accept an internal reference at the length limit', async () => {
++    const atLimit = 'A'.repeat(INTERNAL_REFERENCE_MAX_LENGTH)
++    const result = await driveHandler(post, {
++      payload: {
++        countryOfOrigin: 'FR',
++        regionOfOriginCodeRequirement: 'no',
++        internalReferenceNumber: atLimit
++      }
++    })
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.internalReferenceNumber).toBe(atLimit)
++  })
+ })
+ 
+ describe('POST /origin — region of origin code prefix and suffix', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+index 12ddbe3d..cbf365a8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js
+@@ -19,7 +19,7 @@ export const copy = {
+   },
+   internalReference: {
+     label: 'Eich cyfeirnod mewnol ar gyfer y llwyth hwn (dewisol)',
+-    hint: 'Rhowch unrhyw gyfeirnod mewnol yr hoffech ei ddefnyddio i adnabod y llwyth hwn, neu gadewch yn wag.'
++    hint: 'Rhowch unrhyw gyfeirnod mewnol yr hoffech ei ddefnyddio i adnabod y llwyth hwn, neu gadewch yn wag. Gall fod hyd at 58 nod.'
+   },
+   errors: {
+     countryFromList: 'Dewiswch wlad o’r rhestr',
+@@ -27,8 +27,6 @@ export const copy = {
+     regionCodeMaxLength:
+       "Rhaid i'r cod rhanbarth tarddiad fod yn 5 nod neu lai",
+     internalReferenceMaxLength:
+-      "Rhaid i'r cyfeirnod mewnol fod yn 58 nod neu lai",
+-    internalReferencePattern:
+-      "Rhaid i'r cyfeirnod mewnol gynnwys llythrennau, rhifau a thanlinellau yn unig"
++      "Rhaid i'r cyfeirnod mewnol fod yn 58 nod neu lai"
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+index 8dcade97..f1451d29 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js
+@@ -18,15 +18,13 @@ export const copy = {
+   },
+   internalReference: {
+     label: 'Your internal reference for this consignment (optional)',
+-    hint: 'Enter any internal reference you want to use to identify this consignment, or leave blank.'
++    hint: 'Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.'
+   },
+   errors: {
+     countryFromList: 'Select a country from the list',
+     regionCodeRequired: 'Enter the region of origin code',
+     regionCodeMaxLength: 'Region of origin code must be 5 characters or less',
+     internalReferenceMaxLength:
+-      'Internal reference must be 58 characters or less',
+-    internalReferencePattern:
+-      'Internal reference must only contain letters, numbers and underscores'
++      'Internal reference must be 58 characters or less'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+index 2b12d138..9eb71462 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+@@ -21,6 +21,7 @@ const countryHidden = 'select#countryOfOrigin-select'
+ const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
+ const INTERNAL_REFERENCE_MAX_LENGTH = 58
+ const INTERNAL_REFERENCE = 'Imports456GB'
++const PUNCTUATED_INTERNAL_REFERENCE = 'ACME-2026/01 batch 2.'
+ const OUT_OF_LIST_COUNTRY = 'XX'
+ 
+ const countryField = (page) =>
+@@ -548,21 +549,25 @@ test.describe('origin internal reference validation', () => {
+     )
+   })
+ 
+-  test('internal reference validation: when characters are invalid, links to and focuses the preserved value', async ({
++  // The reference belongs to the user's own records, so the punctuation those
++  // records use — hyphens, slashes, spaces, full stops — goes in as they hold
++  // it, and comes back the same when they return to the page.
++  test('internal reference validation: saves a reference punctuated the way the user holds it', async ({
+     page
+   }) => {
++    const originUrl = page.url()
++
+     await chooseCountry(page, france)
+-    await page.getByLabel(copy.internalReference.label).fill('bad ref!')
++    await page
++      .getByLabel(copy.internalReference.label)
++      .fill(PUNCTUATED_INTERNAL_REFERENCE)
+     await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
+ 
+-    const referenceError = page
+-      .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.internalReferencePattern })
+-    await expect(referenceError).toBeVisible()
+-    await referenceError.click()
+-    await expect(page.getByLabel(copy.internalReference.label)).toBeFocused()
++    await expect(page).toHaveURL(/\/notifications\/[^/]+\/commodities$/)
++
++    await page.goto(originUrl)
+     await expect(page.getByLabel(copy.internalReference.label)).toHaveValue(
+-      'bad ref!'
++      PUNCTUATED_INTERNAL_REFERENCE
+     )
+   })
+ })

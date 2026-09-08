@@ -1,0 +1,21 @@
+h2. Increment
+
+{{inc-083}} from the {{shared/dr1-parity-union}} backlog.
+
+The origin page invites "any internal reference you want to use to identify this consignment", but the frontend only lets letters, numbers and underscores through. Entering ACME-2026/01, or a reference with a space in it, returns the page with "Internal reference must only contain letters, numbers and underscores". A 58-character ceiling also applies, surfaced only as "Internal reference must be 58 characters or less".
+
+DR1 asks the same optional question with the same label and the same hint, and imposes no rule on it at all: the submitted value is trimmed and stored, with no length or character check. The field is the user's own reference and the service does not read it.
+
+h2. Acceptance criteria
+
+* The internal reference field accepts spaces, hyphens, slashes and full stops, so a reference such as ACME-2026/01 submits without error.
+* The character rule in {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js}} lines 75 to 82 is removed, so the error "Internal reference must only contain letters, numbers and underscores" can no longer be raised.
+* The 58-character ceiling is either confirmed as a real downstream storage constraint and its limit stated in the field hint, or removed. It must not remain enforced only through an error message.
+* The field stays optional, and its label and hint are otherwise unchanged.
+* Unit tests cover a reference containing a hyphen, a slash and a space being accepted, and the E2E specs and visual baselines in the tests repo are updated where the change affects them.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+Frontend evidence: {{src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:75-82}}
+DR1 evidence: {{app/routes.js:9237-9244}}

@@ -1,0 +1,1587 @@
+diff --git a/src/server/app/bridge/applicability.js b/src/server/app/bridge/applicability.js
+index 258f7178..146240b8 100644
+--- a/src/server/app/bridge/applicability.js
++++ b/src/server/app/bridge/applicability.js
+@@ -10,14 +10,29 @@
+  * stored picker-name vocabulary, so the stored commodity compares
+  * directly.
+  *
+- * `notInUnionOf` gates (the free-text identifiers) are complements: they
+- * apply exactly when the commodity is NOT in the derived union. Every
+- * other shape applies when the commodity is in the list; an obligation
+- * with no commodity gate never applies here.
++ * `notInUnionOf` gates are complements: they apply exactly when the
++ * commodity is NOT in the derived union. Every other shape applies when
++ * the commodity is in the list; an obligation with no commodity gate never
++ * applies here, so a commodity on none of the identifier allowlists is
++ * asked for no identifier at all.
+  */
+ 
+ import { obligationByName } from '../model/obligations/manifest.js'
+ 
++/**
++ * Whether an allow-list gate's metadata admits a stored value. The
++ * complement shape (`notInUnionOf`) admits everything the derived union
++ * leaves out; every other shape admits what its list holds.
++ *
++ * @param {object} [metadata] - the gate's `applyTo.metadata`.
++ * @param {*} value - the stored value of the gate obligation.
++ * @returns {boolean}
++ */
++export const gateAdmits = (metadata, value) => {
++  const inList = (metadata?.values ?? []).includes(value)
++  return metadata?.gateType === 'notInUnionOf' ? !inList : inList
++}
++
+ /**
+  * Whether the named obligation applies to a commodity, judged from the
+  * manifest's gate metadata alone (no journey state).
+@@ -26,12 +41,8 @@ import { obligationByName } from '../model/obligations/manifest.js'
+  * @param {string} commodityName - the picker commodity name (e.g. 'Cow').
+  * @returns {boolean}
+  */
+-export const appliesForCommodity = (obligationName, commodityName) => {
+-  const metadata = obligationByName(obligationName)?.applyTo?.metadata
+-  const values = metadata?.values ?? []
+-  const inList = values.includes(commodityName)
+-  return metadata?.gateType === 'notInUnionOf' ? !inList : inList
+-}
++export const appliesForCommodity = (obligationName, commodityName) =>
++  gateAdmits(obligationByName(obligationName)?.applyTo?.metadata, commodityName)
+ 
+ /**
+  * The manifest's cap on the documents collection
+diff --git a/src/server/app/bridge/applicability.test.js b/src/server/app/bridge/applicability.test.js
+index 705107f3..3e8e4107 100644
+--- a/src/server/app/bridge/applicability.test.js
++++ b/src/server/app/bridge/applicability.test.js
+@@ -1,5 +1,5 @@
+ import { describe, expect, it } from 'vitest'
+-import { appliesForCommodity } from './applicability.js'
++import { appliesForCommodity, gateAdmits } from './applicability.js'
+ 
+ describe('#appliesForCommodity', () => {
+   it('Should apply an allowListed obligation for a commodity in its list', () => {
+@@ -18,23 +18,24 @@ describe('#appliesForCommodity', () => {
+     expect(appliesForCommodity('countyParishHoldingCph', 'Fish')).toBe(false)
+   })
+ 
+-  it('Should invert for notInUnionOf obligations — free-text identifiers apply only outside the specific-identifier union', () => {
+-    expect(
+-      appliesForCommodity('animalIdentifierIdentificationDetails', 'Fish')
+-    ).toBe(true)
+-    expect(appliesForCommodity('animalIdentifierDescription', 'Fish')).toBe(
+-      true
+-    )
+-    expect(
+-      appliesForCommodity('animalIdentifierIdentificationDetails', 'Cow')
+-    ).toBe(false)
++  // Design release 1 asks for identification only where the commodity has an
++  // identifier type of its own. Fish is on none of the allowlists and there is
++  // no free-text fallback, so no identifier applies to it at all.
++  it('Should apply no identifier to a commodity on none of the identifier lists', () => {
++    for (const identifier of [
++      'animalIdentifierMicrochip',
++      'animalIdentifierPassport',
++      'animalIdentifierTattoo',
++      'animalIdentifierEarTag',
++      'horseName'
++    ]) {
++      expect(appliesForCommodity(identifier, 'Fish')).toBe(false)
++    }
+   })
+ 
+   it('Should treat an unknown commodity as outside every allowlist', () => {
+     expect(appliesForCommodity('horseName', 'no-such-commodity')).toBe(false)
+-    expect(
+-      appliesForCommodity('animalIdentifierIdentificationDetails', 'Unicorn')
+-    ).toBe(true)
++    expect(appliesForCommodity('permanentAddress', 'Unicorn')).toBe(false)
+   })
+ 
+   it('Should never apply for an obligation with no commodity gate', () => {
+@@ -42,3 +43,27 @@ describe('#appliesForCommodity', () => {
+     expect(appliesForCommodity('no-such-obligation', 'Cow')).toBe(false)
+   })
+ })
++
++// The manifest carries no complement gate today, so the inversion is pinned
++// against the metadata shape directly rather than through a named obligation.
++describe('#gateAdmits', () => {
++  it('Should admit a value its allowlist holds', () => {
++    expect(
++      gateAdmits({ gateType: 'allowListed', values: ['Cow'] }, 'Cow')
++    ).toBe(true)
++    expect(
++      gateAdmits({ gateType: 'allowListed', values: ['Cow'] }, 'Fish')
++    ).toBe(false)
++  })
++
++  it('Should invert for a notInUnionOf complement gate', () => {
++    const gate = { gateType: 'notInUnionOf', values: ['Cow'] }
++    expect(gateAdmits(gate, 'Fish')).toBe(true)
++    expect(gateAdmits(gate, 'Cow')).toBe(false)
++  })
++
++  it('Should admit nothing without gate metadata', () => {
++    expect(gateAdmits(undefined, 'Cow')).toBe(false)
++    expect(gateAdmits({}, 'Cow')).toBe(false)
++  })
++})
+diff --git a/src/server/app/bridge/status/completeness/index.js b/src/server/app/bridge/status/completeness/index.js
+index 341a93dd..96b6451b 100644
+--- a/src/server/app/bridge/status/completeness/index.js
++++ b/src/server/app/bridge/status/completeness/index.js
+@@ -38,7 +38,12 @@ const collectionSatisfied = (
+     state
+   )
+   if (fulfilmentIndexes.length === 0) {
+-    return emptyCollectionSatisfiesFloor(collection)
++    return emptyCollectionSatisfiesFloor(
++      collection,
++      obligation,
++      parentFulfilmentIndex,
++      state
++    )
+   }
+   const invariantErrors = groupInvariantErrors(obligation, state)
+   if (collectionCapExceeded(invariantErrors)) {
+diff --git a/src/server/app/bridge/status/completeness/invariants.js b/src/server/app/bridge/status/completeness/invariants.js
+index edb63cac..ec8c6d96 100644
+--- a/src/server/app/bridge/status/completeness/invariants.js
++++ b/src/server/app/bridge/status/completeness/invariants.js
+@@ -1,3 +1,6 @@
++import { obligations } from '../../../model/obligations/manifest.js'
++import { gateAdmits } from '../../applicability.js'
++
+ // Collection cap (MAX_ENTRIES) — group-level, no fulfilmentIndex.
+ export const collectionCapExceeded = (invariantErrors) =>
+   invariantErrors.some((error) => error.code === 'MAX_ENTRIES')
+@@ -14,6 +17,41 @@ export const parentCountInvariantViolated = (
+     (error) => error.fulfilmentIndex === parentFulfilmentIndex
+   )
+ 
+-// Empty collection: satisfied iff there's no requiredAtLeastOne floor.
+-export const emptyCollectionSatisfiesFloor = (collection) =>
+-  !collection.requiredAtLeastOne
++// Whether any leaf of an `anyOfIds` rule could ever apply under this parent
++// instance. A leaf with no gate always could; a gated leaf only where the
++// parent's stored gate value is admitted. Mirrors the model's `checkAnyOfIds`,
++// which skips an instance no listed leaf is in scope for — asked here before
++// any instance exists, so it reads the gate metadata rather than the
++// implications.
++const anyOfLeafCouldApply = (group, parentFulfilmentIndex, state) =>
++  (group.requires.anyOfIds ?? []).some((leafId) => {
++    const metadata = obligations().find((candidate) => candidate.id === leafId)
++      ?.applyTo?.metadata
++    if (!metadata) {
++      return true
++    }
++    return gateAdmits(
++      metadata,
++      state.fulfilments?.[metadata.obligationId]?.[parentFulfilmentIndex]
++    )
++  })
++
++// Empty collection: satisfied iff no requiredAtLeastOne floor bites. A floor
++// that is only an `anyOfIds` rule is vacuous under a parent none of its leaves
++// could apply to — a commodity line whose commodity carries no identifier of
++// its own is asked for no animal records, rather than for records it could
++// never fill in.
++export const emptyCollectionSatisfiesFloor = (
++  collection,
++  group,
++  parentFulfilmentIndex,
++  state
++) => {
++  if (!collection.requiredAtLeastOne) {
++    return true
++  }
++  if (group?.requires?.minEntries || parentFulfilmentIndex === null) {
++    return false
++  }
++  return !anyOfLeafCouldApply(group, parentFulfilmentIndex, state)
++}
+diff --git a/src/server/app/model/analysis/coverage.test.js b/src/server/app/model/analysis/coverage.test.js
+index 8259ad1d..cf362caa 100644
+--- a/src/server/app/model/analysis/coverage.test.js
++++ b/src/server/app/model/analysis/coverage.test.js
+@@ -148,8 +148,7 @@ describe('coverage — helper classification sets are exported and disjoint', ()
+   })
+ 
+   it('Should export OPAQUE_HELPER_TYPES as a Set (may be empty — see reachability.js)', () => {
+-    // The `notInUnionOf` helper landed and migrated the two
+-    // former opaque sites (identificationDetails, description) onto it.
++    // Every gate on the manifest is a structured helper today.
+     // The set is retained as the enforcement point for future opaque-
+     // by-design helpers, but is currently EMPTY on the manifest — a
+     // clean-slate state. Any addition here MUST cite a rationale in
+diff --git a/src/server/app/model/analysis/reachability/reachability.test.js b/src/server/app/model/analysis/reachability/reachability.test.js
+index 365b675b..55e59b27 100644
+--- a/src/server/app/model/analysis/reachability/reachability.test.js
++++ b/src/server/app/model/analysis/reachability/reachability.test.js
+@@ -602,26 +602,21 @@ describe('#proveWithWitnesses — real V4 manifest classification', () => {
+     expect(classifiedCount).toBe(obligations.length)
+   })
+ 
+-  it('Should have the expected classification counts after the notInUnionOf migration (≥14 synthesisable, 0 opaque)', () => {
++  it('Should have the expected classification counts (≥14 synthesisable, 0 opaque)', () => {
+     const result = proveWithWitnesses(obligations)
+-    // identificationDetails + description
+-    // migrated off `allowListedByPredicate` onto `notInUnionOf`. Both
+-    // now witness-synthesisable — the manifest carries ZERO opaque
+-    // gates.
+-    //
+-    // Structured helpers: allowListed, anyAllowListed, notInUnionOf and
+-    // the meta-first gates are all synthesisable. Trivial: structural
+-    // groups, the four applyTo-less accompanying-document fields and
+-    // the retain-value regionOfOriginCode (both branches in scope).
++    // Structured helpers: allowListed, anyAllowListed and the meta-first
++    // gates are all synthesisable, so the manifest carries ZERO opaque
++    // gates. Trivial: structural groups, the four applyTo-less
++    // accompanying-document fields and the retain-value
++    // regionOfOriginCode (both branches in scope).
+     expect(result.witnesses.synthesisable.length).toBeGreaterThanOrEqual(14)
+-    // The two former-opaque gates are now synthesisable.
++    // Every commodity-gated identifier is witness-synthesisable from its
++    // own allowlist.
+     const synthesisableNames = result.witnesses.synthesisable.map(
+       (id) => obligations.find((o) => o.id === id).name
+     )
+-    expect(synthesisableNames).toContain(
+-      'animalIdentifierIdentificationDetails'
+-    )
+-    expect(synthesisableNames).toContain('animalIdentifierDescription')
++    expect(synthesisableNames).toContain('animalIdentifierEarTag')
++    expect(synthesisableNames).toContain('horseName')
+     // No opaque gates left on the manifest.
+     expect(result.witnesses.opaque).toEqual([])
+   })
+diff --git a/src/server/app/model/analysis/reachability/witness/synthesise.js b/src/server/app/model/analysis/reachability/witness/synthesise.js
+index 50bedb26..1ce90fc8 100644
+--- a/src/server/app/model/analysis/reachability/witness/synthesise.js
++++ b/src/server/app/model/analysis/reachability/witness/synthesise.js
+@@ -74,9 +74,8 @@ function synthesiseFromMetadata(meta) {
+       // Witness = any value NOT in that union. A stable sentinel that
+       // is virtually guaranteed not to collide with real commodity
+       // codes; defensively confirmed against the derived union.
+-      // Include the gatedParentGroup id (if any) for depth-N gates —
+-      // identificationDetails + description both project onto
+-      // unitRecord.
++      // Include the gatedParentGroup id (if any) for depth-N gates,
++      // which project onto that group's fulfilmentIndexes.
+       return synthesiseNotInUnionOfWitness(meta)
+ 
+     case 'equalsGate':
+diff --git a/src/server/app/model/obligations/evaluator.test.js b/src/server/app/model/obligations/evaluator.test.js
+index 054ac51f..b41e625c 100644
+--- a/src/server/app/model/obligations/evaluator.test.js
++++ b/src/server/app/model/obligations/evaluator.test.js
+@@ -35,12 +35,11 @@ const {
+   numberOfPackages,
+   cph,
+   unitRecord,
++  microchip,
+   passport,
+   tattoo,
+   earTag,
+   horseName,
+-  identificationDetails,
+-  description,
+   permanentAddress,
+   documents,
+   accompanyingDocumentType,
+@@ -136,11 +135,6 @@ const horseNameReason = {
+   code: 'obligation.horseName.applicable.becauseHorseCommodity',
+   explanation: 'horseName applies on units of horse-commodity lines'
+ }
+-const identificationDetailsReason = {
+-  code: 'obligation.identificationDetails.applicable.becauseNoSpecificIdentifier',
+-  explanation:
+-    'identificationDetails applies on units of lines whose commodityCode has no specific identifier type'
+-}
+ const permanentAddressReason = {
+   code: 'obligation.permanentAddress.applicable.becausePermanentAddressCommodity',
+   explanation:
+@@ -879,81 +873,35 @@ describe('V4 — horseName (gatedBy allowListed(commodityCode, horse-name list))
+ })
+ 
+ // ---------------------------------------------------------------------------
+-// identificationDetails / description — inverse gate (in scope only where
+-// no specific identifier applies)
++// A commodity on none of the identifier allowlists. Design release 1 asks
++// nothing at all of it: there is no free-text fallback to catch it, so every
++// identifier obligation stays out of scope on its line.
+ // ---------------------------------------------------------------------------
+ 
+-describe('V4 — identificationDetails (inverse gate — no specific identifier applies)', () => {
+-  it('is in scope for fish (no specific identifier)', () => {
+-    const result = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_FISH]: 'Fish' },
+-      [identificationDetails.id]: {
+-        [`${LINE_FISH}.${UNIT_1}`]: 'Tank 12, batch 7'
+-      }
+-    })
+-    expect(result.obligations[identificationDetails.id].inScope).toBe(true)
+-    expect(result.obligations[identificationDetails.id].reasons).toEqual([
+-      identificationDetailsReason
+-    ])
+-  })
+-
+-  it('is out of scope for cows (passport / tattoo / earTag apply)', () => {
++describe('V4 — a commodity with no identifier type of its own', () => {
++  it('puts no identifier obligation in scope on a fish line', () => {
+     const result = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_COW]: 'Cow' }
+-    })
+-    expect(result.obligations[identificationDetails.id]).toEqual({
+-      inScope: false
+-    })
+-  })
+-
+-  it('is out of scope for horse (passport / horseName apply)', () => {
+-    const result = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_HORSE]: 'Horse' }
+-    })
+-    expect(result.obligations[identificationDetails.id]).toEqual({
+-      inScope: false
++      [commodityCode.id]: { [LINE_FISH]: 'Fish' }
+     })
++    for (const identifier of [microchip, passport, tattoo, earTag, horseName]) {
++      expect(result.obligations[identifier.id]).toEqual({ inScope: false })
++    }
+   })
+ 
+-  it('is out of scope for cats (passport / tattoo apply)', () => {
++  it('purges an identifier value smuggled onto a fish unit', () => {
+     const result = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_CAT]: 'Cat' }
+-    })
+-    expect(result.obligations[identificationDetails.id]).toEqual({
+-      inScope: false
++      [commodityCode.id]: { [LINE_FISH]: 'Fish' },
++      [earTag.id]: { [`${LINE_FISH}.${UNIT_1}`]: 'STRAY' }
+     })
++    expect(result.fulfilments[earTag.id]).toBeUndefined()
+   })
+ 
+-  it('purges a stored idDetails value on a specific-identifier line', () => {
++  it('leaves the at-least-one-identifier rule with nothing to ask on such a line', () => {
+     const result = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_COW]: 'Cow' },
+-      [identificationDetails.id]: {
+-        [`${LINE_COW}.${UNIT_1}`]: 'STRAY'
+-      }
+-    })
+-    expect(result.fulfilments[identificationDetails.id]).toBeUndefined()
+-  })
+-})
+-
+-describe('V4 — description (same inverse gate as identificationDetails)', () => {
+-  it('is in scope for fish, out of scope for cows', () => {
+-    const fish = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_FISH]: 'Fish' }
+-    })
+-    const cow = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_COW]: 'Cow' }
+-    })
+-    // With no unit storage the inScope flag reflects "any path in scope"
+-    // → for fish, the enumerated paths at unit level are empty, so
+-    // technically no fulfilmentIndexes are in scope even though the gate
+-    // would permit them. Add a stored fulfilment to make fish concrete.
+-    const fishWithUnit = evaluator.evaluate({
+       [commodityCode.id]: { [LINE_FISH]: 'Fish' },
+-      [description.id]: { [`${LINE_FISH}.${UNIT_1}`]: 'Farmed salmon' }
++      [numberOfAnimals.id]: { [LINE_FISH]: 2 }
+     })
+-    expect(fishWithUnit.obligations[description.id].inScope).toBe(true)
+-    expect(cow.obligations[description.id]).toEqual({ inScope: false })
+-    expect(fish.obligations[description.id]).toEqual({ inScope: false })
++    expect(groupInvariantErrors(unitRecord, result)).toEqual([])
+   })
+ })
+ 
+diff --git a/src/server/app/model/obligations/helpers/helpers.test.js b/src/server/app/model/obligations/helpers/helpers.test.js
+index 5bf98e3d..21dba603 100644
+--- a/src/server/app/model/obligations/helpers/helpers.test.js
++++ b/src/server/app/model/obligations/helpers/helpers.test.js
+@@ -107,9 +107,9 @@ describe('allowListed', () => {
+ // Rationale: notInUnionOf is a derived-union helper over the metadata's
+ // .values — strictly better than a hand-restated four-whitelist
+ // complement, which silently double-gates if you add a fifth typed
+-// identifier and forget a conjunct. The helper migrated the two opaque
+-// `allowListedByPredicate` sites (identificationDetails, description)
+-// onto it.
++// identifier and forget a conjunct. The live-animals manifest carries no
++// complement gate today; the helper stays as the platform's supported
++// shape for one.
+ // ---------------------------------------------------------------------------
+ 
+ describe('notInUnionOf', () => {
+diff --git a/src/server/app/model/obligations/state-queries.js b/src/server/app/model/obligations/state-queries.js
+index f7299d1d..ee424b58 100644
+--- a/src/server/app/model/obligations/state-queries.js
++++ b/src/server/app/model/obligations/state-queries.js
+@@ -137,14 +137,31 @@ const checkAnyOfIds = (group, fulfilmentIndexes, state) => {
+   return errors
+ }
+ 
++// The parent instances the count rule asks about. A rule may carry
++// `applyToParent` — a gate over the PARENT's own stored value, in the same
++// shape `applyTo` uses — so a parent the group can carry no records for is
++// asked for none. Without it every in-scope parent is asked.
++const countedParents = (group, state) => {
++  const parents = state.obligations?.[group.within.id]?.fulfilmentIndexes ?? []
++  const { applyToParent } = group.requires.fulfilmentIndexCountEquals
++  if (!applyToParent) {
++    return parents
++  }
++  const decision = applyToParent(state.fulfilments ?? {}, new Map())
++  if (!decision?.inScope) {
++    return []
++  }
++  const asked = new Set(decision.fulfilmentIndexes ?? [])
++  return parents.filter((parent) => asked.has(parent))
++}
++
+ const checkFulfilmentIndexCountEquals = (group, fulfilmentIndexes, state) => {
+   if (!group.requires.fulfilmentIndexCountEquals || !group.within) {
+     return []
+   }
+   const { fieldId, errorCode: countErrorCode } =
+     group.requires.fulfilmentIndexCountEquals
+-  const parentImplication = state.obligations?.[group.within.id]
+-  const parentFulfilmentIndexes = parentImplication?.fulfilmentIndexes ?? []
++  const parentFulfilmentIndexes = countedParents(group, state)
+   const errors = []
+   for (const parentFulfilmentIndex of parentFulfilmentIndexes) {
+     const expected = state.fulfilments?.[fieldId]?.[parentFulfilmentIndex]
+@@ -183,10 +200,12 @@ const checkFulfilmentIndexCountEquals = (group, fulfilmentIndexes, state) => {
+  * Per-instance (one error per offending fulfilmentIndex):
+  *   - `anyOfIds` — one error per in-scope instance where none of the
+  *     required leaves has a non-blank fulfilment.
+- *   - `fulfilmentIndexCountEquals: { fieldId, errorCode }` — one error
+- *     per in-scope parent (`group.within`) instance whose count of
+- *     child fulfilmentIndexes differs from the non-blank expected
+- *     count at `state.fulfilments[fieldId][parentFulfilmentIndex]`.
++ *   - `fulfilmentIndexCountEquals: { fieldId, errorCode, applyToParent? }`
++ *     — one error per in-scope parent (`group.within`) instance whose
++ *     count of child fulfilmentIndexes differs from the non-blank
++ *     expected count at
++ *     `state.fulfilments[fieldId][parentFulfilmentIndex]`. The optional
++ *     `applyToParent` gate narrows which parents are asked at all.
+  */
+ export function groupInvariantErrors(group, state) {
+   if (!group?.requires) {
+diff --git a/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js b/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js
+index da19e11e..49c5024c 100644
+--- a/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js
++++ b/src/server/app/services/persistence/records/notification-mapper/notification-mapper.test.js
+@@ -106,8 +106,6 @@ const answersWithGaps = () => ({
+           animalIdentifierMicrochip: '900123456789012',
+           animalIdentifierTattoo: 'AB1234',
+           horseName: 'Dobbin',
+-          animalIdentifierIdentificationDetails: 'Hive mark HM-2026-004',
+-          animalIdentifierDescription: 'Brown cow',
+           permanentAddress: address('Owner', ORIGIN_FARM_LINE1)
+         }
+       ]
+diff --git a/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js b/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js
+index c25e8d17..ef6d38b6 100644
+--- a/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js
++++ b/src/server/app/services/persistence/records/notification-mapper/shared/lines/from-fulfilment.js
+@@ -7,8 +7,6 @@ const IDENTIFIER_KEYS = [
+   'tattoo',
+   'earTag',
+   'horseName',
+-  'identificationDetails',
+-  'description',
+   'permanentAddress'
+ ]
+ 
+@@ -25,11 +23,6 @@ const unitFrom = (valueAt, identifiers, unitIndex) =>
+     animalIdentifierTattoo: valueAt(identifiers.tattoo, unitIndex),
+     animalIdentifierEarTag: valueAt(identifiers.earTag, unitIndex),
+     horseName: valueAt(identifiers.horseName, unitIndex),
+-    animalIdentifierIdentificationDetails: valueAt(
+-      identifiers.identificationDetails,
+-      unitIndex
+-    ),
+-    animalIdentifierDescription: valueAt(identifiers.description, unitIndex),
+     permanentAddress: valueAt(identifiers.permanentAddress, unitIndex)
+   })
+ 
+diff --git a/src/server/app/services/persistence/records/real/real.integration.test.js b/src/server/app/services/persistence/records/real/real.integration.test.js
+index 748b4ac1..01f5d0e9 100644
+--- a/src/server/app/services/persistence/records/real/real.integration.test.js
++++ b/src/server/app/services/persistence/records/real/real.integration.test.js
+@@ -74,9 +74,7 @@ const answers = {
+           animalIdentifierEarTag: 'UK123456700001',
+           animalIdentifierPassport: 'PP-001',
+           animalIdentifierTattoo: 'AB1234',
+-          horseName: 'Dobbin',
+-          animalIdentifierIdentificationDetails: 'Chip 981000012345678',
+-          animalIdentifierDescription: 'Brown cow'
++          horseName: 'Dobbin'
+         }
+       ]
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+index 646985e4..7600e23c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js
+@@ -20,15 +20,25 @@ import {
+ import { appendLineRecords } from './records/append.js'
+ import { isRemoveAction, postRemove } from './remove/post-remove.js'
+ import { buildSelectedCommodities } from './summary/selected-commodities.js'
++import { scopedFields } from './identifier/fields.js'
+ 
+ export { IDENTIFIER_LABELS } from './identifier/table.js'
+-export { scopedFields } from './identifier/fields.js'
++export { scopedFields }
+ 
+ export const meta = { ...page, collects: [] }
+ const view = `${TEMPLATES}/features/commodities/animal-identification/animal-identification`
+ 
+ const copy = copyFor({ en, cy }).identification
+ 
++// Design release 1 asks for identification only where the commodity has an
++// identifier type of its own. A line whose commodity declares none has nothing
++// to ask, so it gets no panel — and a notification where no line declares one
++// has no page at all: the request carries on to the next step of the journey.
++const identifiedLines = (answers, evaluation) =>
++  state
++    .collectionView(answers, ['commodityLines'], evaluation)
++    .filter(({ entry }) => scopedFields(entry.commoditySelection).length > 0)
++
+ const render = (
+   request,
+   h,
+@@ -37,7 +47,7 @@ const render = (
+   evaluation,
+   { forms = new Map(), errors = {}, cardErrors = [] } = {}
+ ) => {
+-  const lines = state.collectionView(answers, ['commodityLines'], evaluation)
++  const lines = identifiedLines(answers, evaluation)
+   const changeCountHref = kit.withChangeContext(
+     request,
+     pagePath(request.params.journeyId, consignmentDetailsPage.slug)
+@@ -63,20 +73,36 @@ const render = (
+   })
+ }
+ 
++// Nothing on this consignment carries an identifier, so the page does not
++// exist for this person: send them on rather than showing an empty one. The
++// guard sits on both handlers, so a stale form posting to it moves on too.
++const noIdentifiersTarget = async (request, answers, evaluation, scope) =>
++  identifiedLines(answers, evaluation).length === 0
++    ? kit.nextTarget(request, page, scope)
++    : null
++
+ const get = async (request, h) => {
+-  const { journey, answers, evaluation } = await state.get(request, h)
++  const { journey, answers, evaluation, scope } = await state.get(request, h)
++  const onwards = await noIdentifiersTarget(request, answers, evaluation, scope)
++  if (onwards) {
++    return h.redirect(onwards)
++  }
+   return render(request, h, journey, answers, evaluation)
+ }
+ 
+ const post = async (request, h) => {
+-  const { journey, answers, evaluation } = await state.get(request, h)
++  const { journey, answers, evaluation, scope } = await state.get(request, h)
++  const onwards = await noIdentifiersTarget(request, answers, evaluation, scope)
++  if (onwards) {
++    return h.redirect(onwards)
++  }
+   const payload = request.payload ?? {}
+   const action = (payload.action ?? '').toString()
+   if (isRemoveAction(action)) {
+     return postRemove(request, h, action)
+   }
+   const addIndex = parseAddAction(action)
+-  const lines = state.collectionView(answers, ['commodityLines'], evaluation)
++  const lines = identifiedLines(answers, evaluation)
+ 
+   const {
+     forms,
+@@ -125,8 +151,8 @@ const post = async (request, h) => {
+       )
+     )
+   }
+-  const { scope } = await state.get(request, h)
+-  return h.redirect(await kit.nextTarget(request, page, scope))
++  const { scope: savedScope } = await state.get(request, h)
++  return h.redirect(await kit.nextTarget(request, page, savedScope))
+ }
+ 
+ export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index de8fd850..2916d006 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -188,12 +188,12 @@ describe(`${SUITE} — the Selected commodities summary`, () => {
+     const context = await viewContext({
+       commodityLines: [
+         cowLine({ numberOfAnimalsQuantity: '2' }),
+-        fishLine({ numberOfAnimalsQuantity: '3' })
++        horseLine({ numberOfAnimalsQuantity: '3' })
+       ]
+     })
+     expect(context.selectedCommodities).toEqual([
+       { code: '0102', name: 'Domestic cattle', animals: '2' },
+-      { code: '0301', name: 'Atlantic salmon', animals: '3' }
++      { code: '0101', name: 'Horse', animals: '3' }
+     ])
+   })
+ 
+@@ -201,17 +201,15 @@ describe(`${SUITE} — the Selected commodities summary`, () => {
+   // branch of the template, so it vanished as soon as the page had cards. The
+   // href the summary and the Add another commodity link both use is the same
+   // one either way.
+-  it('Should offer the route back to the commodity question whether or not there is anything to identify', async () => {
+-    for (const commodityLines of [[catLine()], []]) {
+-      const journey = await store.create()
+-      await store.seedAnswers(journey.journeyId, { commodityLines })
+-      const h = stubH()
+-      await getHandler(journeyRequest(journey.journeyId), h)
+-      const { addHref, hasLines } = h.captured.view.context
+-
+-      expect(hasLines).toBe(commodityLines.length > 0)
+-      expect(addHref).toBe(pagePath(journey.journeyId, 'commodities'))
+-    }
++  it('Should offer the route back to the commodity question alongside the cards', async () => {
++    const journey = await store.create()
++    await store.seedAnswers(journey.journeyId, { commodityLines: [catLine()] })
++    const h = stubH()
++    await getHandler(journeyRequest(journey.journeyId), h)
++    const { addHref, hasLines } = h.captured.view.context
++
++    expect(hasLines).toBe(true)
++    expect(addHref).toBe(pagePath(journey.journeyId, 'commodities'))
+   })
+ 
+   // A trader who miscounted has nowhere to go from the counter otherwise: the
+@@ -348,22 +346,21 @@ describe(`${SUITE} — the saved-animals table`, () => {
+     expect(card.units[0].cells).toEqual(['', 'UK123456789', '', 'Pet Owner'])
+   })
+ 
+-  it('Should head a fallback-identifier commodity with its own columns and no permanent address', async () => {
++  it('Should head a horse line with the three identifiers it carries and no permanent address', async () => {
+     const [card] = await viewCards({
+       commodityLines: [
+-        fishLine({
++        horseLine({
+           numberOfAnimalsQuantity: '2',
+-          animalIdentifiers: [
+-            { animalIdentifierIdentificationDetails: 'Tank mark TM-77' }
+-          ]
++          animalIdentifiers: [{ horseName: 'Shergar' }]
+         })
+       ]
+     })
+     expect(card.identifierColumns).toEqual([
+-      'Identification details',
+-      'Description'
++      'Microchip',
++      'Passport',
++      'Horse name'
+     ])
+-    expect(card.units[0].cells).toEqual(['Tank mark TM-77', ''])
++    expect(card.units[0].cells).toEqual(['', '', 'Shergar'])
+   })
+ })
+ 
+@@ -573,7 +570,9 @@ describe(`${SUITE} — Remove`, () => {
+ // The identifier-field render reads the `.metadata.values` (the coverage-gated
+ // sidecar), normalising the selected commodity NAME to a CN code via
+ // commodityCodeFor before comparing. This matrix pins the rendered fields per
+-// selectable species (Cow/Horse/Cat/Dog/Fish).
++// selectable species that carries identifiers (Cow/Horse/Cat/Dog). Fish
++// carries none, so it is not in the matrix — it earns no panel at all, which
++// the "no commodity carries an identifier" suite below pins instead.
+ describe(`${SUITE} — identifier render matrix — model metadata per selectable species`, () => {
+   setupIdentificationEngine()
+ 
+@@ -618,15 +617,6 @@ describe(`${SUITE} — identifier render matrix — model metadata per selectabl
+       species: '923502',
+       fieldIds: [MICROCHIP_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0],
+       showAddress: true
+-    },
+-    {
+-      commodity: 'Fish',
+-      species: '801204',
+-      fieldIds: [
+-        'animalIdentifierIdentificationDetails-0',
+-        'animalIdentifierDescription-0'
+-      ],
+-      showAddress: false
+     }
+   ]
+ 
+@@ -639,3 +629,50 @@ describe(`${SUITE} — identifier render matrix — model metadata per selectabl
+     }
+   )
+ })
++
++// Design release 1 asks for identification only where the commodity has an
++// identifier type of its own. Fish is on none of the allowlists, so it earns
++// no panel — and where no line earns one there is no page to show: the
++// request carries on to the next step rather than rendering an empty surface.
++describe(`${SUITE} — a commodity that carries no identifier of its own`, () => {
++  setupIdentificationEngine()
++
++  const requestPage = async (seed) => {
++    const journey = await store.create()
++    await store.seedAnswers(journey.journeyId, seed)
++    const h = stubH()
++    const response = await getHandler(journeyRequest(journey.journeyId), h)
++    return { journeyId: journey.journeyId, response, view: h.captured.view }
++  }
++
++  it('Should give a fish line no panel and no place in the summary', async () => {
++    const context = await viewContext({
++      commodityLines: [
++        cowLine({ numberOfAnimalsQuantity: '2' }),
++        fishLine({ numberOfAnimalsQuantity: '3' })
++      ]
++    })
++    expect(context.cards.map((card) => card.title)).toEqual([
++      'Cow (0102) — Bos taurus'
++    ])
++    expect(context.selectedCommodities).toEqual([
++      { code: '0102', name: 'Domestic cattle', animals: '2' }
++    ])
++  })
++
++  it('Should carry a request for the page on when no line carries an identifier', async () => {
++    const { journeyId, response, view } = await requestPage({
++      commodityLines: [fishLine({ numberOfAnimalsQuantity: '3' })]
++    })
++    expect(view).toBeUndefined()
++    expect(response).toEqual({ redirect: hubPath(journeyId) })
++  })
++
++  it('Should carry a request for the page on when the notification has no commodities', async () => {
++    const { journeyId, response, view } = await requestPage({
++      commodityLines: []
++    })
++    expect(view).toBeUndefined()
++    expect(response).toEqual({ redirect: hubPath(journeyId) })
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js
+index fbe14cd5..96860aa9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js
+@@ -8,11 +8,6 @@ import { fieldName } from '../fields.js'
+ 
+ const copy = copyFor({ en, cy }).identification
+ 
+-const toFields = (byId) =>
+-  Object.entries(byId).map(([id, field]) => ({ id, ...field }))
+-
+-const FALLBACK_FIELDS = toFields(copy.fallbackFields)
+-
+ const IDENTIFIER_MAX_MESSAGES = copy.errors.identifierMax
+ 
+ const IDENTIFIER_MAX_LENGTH = 58
+@@ -21,20 +16,15 @@ const IDENTIFIER_MAX_LENGTH = 58
+ // of labels and hints, not a running order (design 01-14/16/17). Applicability
+ // still decides whether a listed identifier renders, so the obligation model
+ // stays the one authority on what is in scope.
+-const scopedTypeFields = (commodity) =>
++//
++// A commodity that declares no identifier is asked for none: design release 1
++// has no free-text fallback, so the list is empty and the line gets no panel.
++export const scopedFields = (commodity) =>
+   commodities
+     .identifiersFor(commodity)
+     .filter((id) => appliesForCommodity(id, commodity))
+     .map((id) => ({ id, ...copy.typeFields[id] }))
+ 
+-const scopedFallbackFields = (commodity) =>
+-  FALLBACK_FIELDS.filter((field) => appliesForCommodity(field.id, commodity))
+-
+-export const scopedFields = (commodity) => [
+-  ...scopedTypeFields(commodity),
+-  ...scopedFallbackFields(commodity)
+-]
+-
+ export const permanentAddressApplies = (commodity) =>
+   appliesForCommodity('permanentAddress', commodity)
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+index c4481674..51368da7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js
+@@ -8,11 +8,6 @@ const plural = (count, noun) => `${count} ${noun}`
+ // The visually-hidden head of every table's action column.
+ const ACTIONS_HIDDEN = 'Camau gweithredu'
+ 
+-// The fallback identifier type an animal falls back to when it has no
+-// passport, tattoo or ear tag — named once for its list label and its field
+-// label. Not the identification page's own name, which is its own string.
+-const FALLBACK_IDENTIFIER_LABEL = 'Manylion adnabod'
+-
+ export const copy = {
+   search: {
+     title: 'Beth ydych chi’n ei fewnforio?',
+@@ -88,9 +83,7 @@ export const copy = {
+       animalIdentifierPassport: 'Pasbort',
+       animalIdentifierTattoo: 'Tatŵ',
+       animalIdentifierEarTag: 'Tag clust',
+-      horseName: 'Enw’r ceffyl',
+-      animalIdentifierIdentificationDetails: FALLBACK_IDENTIFIER_LABEL,
+-      animalIdentifierDescription: 'Disgrifiad'
++      horseName: 'Enw’r ceffyl'
+     },
+     table: {
+       animalColumn: 'Anifail',
+@@ -116,13 +109,6 @@ export const copy = {
+       },
+       horseName: { label: 'Enw’r ceffyl' }
+     },
+-    fallbackFields: {
+-      animalIdentifierIdentificationDetails: {
+-        label: FALLBACK_IDENTIFIER_LABEL,
+-        hint: 'Unrhyw ffordd arall y caiff yr anifail hwn ei adnabod, os nad oes ganddo basbort, tatŵ na thag clust'
+-      },
+-      animalIdentifierDescription: { label: 'Disgrifiad o’r anifail' }
+-    },
+     counterNoCap: (species) => `Rhowch fanylion ar gyfer ${species}`,
+     counter: (species, next, cap) =>
+       `Rhowch fanylion ar gyfer ${species} ${next} o ${cap}`,
+@@ -165,11 +151,7 @@ export const copy = {
+         animalIdentifierPassport: 'Rhaid i’r pasbort fod yn 58 nod neu lai',
+         animalIdentifierTattoo: 'Rhaid i’r tatŵ fod yn 58 nod neu lai',
+         animalIdentifierEarTag: 'Rhaid i’r tag clust fod yn 58 nod neu lai',
+-        horseName: 'Rhaid i enw’r ceffyl fod yn 58 nod neu lai',
+-        animalIdentifierIdentificationDetails:
+-          'Rhaid i’r manylion adnabod fod yn 58 nod neu lai',
+-        animalIdentifierDescription:
+-          'Rhaid i’r disgrifiad fod yn 58 nod neu lai'
++        horseName: 'Rhaid i enw’r ceffyl fod yn 58 nod neu lai'
+       },
+       addressMandatory: {
+         nameOrOrganisationName: 'Rhowch enw neu enw sefydliad',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+index 3cdf1f5b..a1ae25eb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js
+@@ -1,10 +1,5 @@
+ const plural = (count, noun) => `${count} ${noun}${count === 1 ? '' : 's'}`
+ 
+-// The fallback identifier type an animal falls back to when it has no
+-// passport, tattoo or ear tag — named once for its list label and its field
+-// label. Not the identification page's own name, which is its own string.
+-const FALLBACK_IDENTIFIER_LABEL = 'Identification details'
+-
+ export const copy = {
+   search: {
+     title: 'What are you importing?',
+@@ -80,9 +75,7 @@ export const copy = {
+       animalIdentifierPassport: 'Passport',
+       animalIdentifierTattoo: 'Tattoo',
+       animalIdentifierEarTag: 'Ear tag',
+-      horseName: 'Horse name',
+-      animalIdentifierIdentificationDetails: FALLBACK_IDENTIFIER_LABEL,
+-      animalIdentifierDescription: 'Description'
++      horseName: 'Horse name'
+     },
+     table: {
+       animalColumn: 'Animal',
+@@ -108,13 +101,6 @@ export const copy = {
+       },
+       horseName: { label: 'Horse name' }
+     },
+-    fallbackFields: {
+-      animalIdentifierIdentificationDetails: {
+-        label: FALLBACK_IDENTIFIER_LABEL,
+-        hint: 'Any other way this animal is identified, if it has no passport, tattoo or ear tag'
+-      },
+-      animalIdentifierDescription: { label: 'Animal description' }
+-    },
+     counterNoCap: (species) => `Enter details for ${species}`,
+     counter: (species, next, cap) =>
+       `Enter details for ${species} ${next} of ${cap}`,
+@@ -159,11 +145,7 @@ export const copy = {
+         animalIdentifierPassport: 'Passport must be 58 characters or fewer',
+         animalIdentifierTattoo: 'Tattoo must be 58 characters or fewer',
+         animalIdentifierEarTag: 'Ear tag must be 58 characters or fewer',
+-        horseName: 'Horse name must be 58 characters or fewer',
+-        animalIdentifierIdentificationDetails:
+-          'Identification details must be 58 characters or fewer',
+-        animalIdentifierDescription:
+-          'Description must be 58 characters or fewer'
++        horseName: 'Horse name must be 58 characters or fewer'
+       },
+       addressMandatory: {
+         nameOrOrganisationName: 'Enter a name or organisation name',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js
+index be3723d4..ec6dcaba 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js
+@@ -6,10 +6,8 @@ import {
+   commodityCode,
+   commodityLine,
+   commodityType,
+-  description,
+   earTag,
+   horseName,
+-  identificationDetails,
+   microchip,
+   numberOfAnimals,
+   numberOfPackages,
+@@ -59,7 +57,5 @@ export const evaluationBindings = feature('commodities', [
+   unitLeaf('animalIdentifierTattoo', tattoo),
+   unitLeaf('animalIdentifierEarTag', earTag),
+   unitLeaf('horseName', horseName),
+-  unitLeaf('animalIdentifierIdentificationDetails', identificationDetails),
+-  unitLeaf('animalIdentifierDescription', description),
+   unitLeaf('permanentAddress', permanentAddress)
+ ])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index b21257b0..33e621d0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -19,7 +19,6 @@ const EQUUS_CABALLUS = 'Equus caballus'
+ const CANIS_LUPUS_FAMILIARIS = 'Canis lupus familiaris'
+ const SALMO_SALAR = 'Salmo salar'
+ const DOMESTIC_CATTLE = 'Domestic cattle'
+-const ATLANTIC_SALMON = 'Atlantic salmon'
+ const PASSPORT_NUMBER = 'UK123456789'
+ const MICROCHIP_NUMBER = '900123456789012'
+ const MAX_LINE_LENGTH = 255
+@@ -193,14 +192,7 @@ const identifierValidations = [
+   ['Cow', BOS_TAURUS, 'animalIdentifierPassport', 'Passport'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierTattoo', 'Tattoo'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierEarTag', 'Ear tag'],
+-  ['Horse', EQUUS_CABALLUS, 'horseName', 'Horse name'],
+-  [
+-    'Fish',
+-    SALMO_SALAR,
+-    'animalIdentifierIdentificationDetails',
+-    'Identification details'
+-  ],
+-  ['Fish', SALMO_SALAR, 'animalIdentifierDescription', 'Description']
++  ['Horse', EQUUS_CABALLUS, 'horseName', 'Horse name']
+ ]
+ 
+ const requiredAddressValidations = [
+@@ -277,10 +269,9 @@ test.describe('animal identification', () => {
+     await expect(page.locator('#horseName-1')).toBeVisible()
+     await expect(page.locator(MICROCHIP_FIELD)).toHaveCount(0)
+     await expect(page.locator('#animalIdentifierMicrochip-2')).toHaveCount(0)
+-    await expect(
+-      page.locator('#animalIdentifierIdentificationDetails-2')
+-    ).toBeVisible()
+-    await expect(page.locator('#animalIdentifierDescription-2')).toBeVisible()
++    // Fish carries no identifier of its own, so its line earns no panel —
++    // design release 1 offers no free-text box to fall back on.
++    await expect(page.locator('#identification-card-2')).toHaveCount(0)
+     await expect(page.locator('#nameOrOrganisationName-0')).toHaveCount(0)
+   })
+ 
+@@ -409,7 +400,7 @@ test.describe('animal identification', () => {
+       page,
+       [
+         ['Cow', [BOS_TAURUS]],
+-        ['Fish', [SALMO_SALAR]]
++        ['Horse', [EQUUS_CABALLUS]]
+       ],
+       ['2', '3']
+     )
+@@ -427,7 +418,7 @@ test.describe('animal identification', () => {
+   })
+ 
+   test('has no serious or critical axe violations', async ({ page }) => {
+-    await openIdentification(page, [['Fish', [SALMO_SALAR]]])
++    await openIdentification(page, [['Cow', [BOS_TAURUS]]])
+     await expectAxeClean(page, 'Animal identification')
+   })
+ 
+@@ -438,6 +429,25 @@ test.describe('animal identification', () => {
+     await expect(page.locator(MICROCHIP_FIELD)).toBeVisible()
+     await expectAxeClean(page, 'Animal identification with a microchip field')
+   })
++
++  // Design release 1 asks for identification only where the commodity has an
++  // identifier of its own. A consignment holding nothing but ornamental fish
++  // has nothing to identify, so the page does not exist for that person: a
++  // request for it carries them on rather than showing an empty surface.
++  test('carries a consignment with nothing to identify past the page', async ({
++    page
++  }) => {
++    await addLines(page, [['Fish', [SALMO_SALAR]]], ['3'])
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++    await page
++      .getByRole('link', { name: hubCopy.rows.animalIdentification.title })
++      .click()
++
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++    await expect(
++      page.getByRole('heading', { name: 'Identification details', exact: true })
++    ).toHaveCount(0)
++  })
+ })
+ 
+ test.describe('animal identification selected commodities summary', () => {
+@@ -452,7 +462,7 @@ test.describe('animal identification selected commodities summary', () => {
+       page,
+       [
+         ['Cow', [BOS_TAURUS]],
+-        ['Fish', [SALMO_SALAR]]
++        ['Horse', [EQUUS_CABALLUS]]
+       ],
+       ['2', '3']
+     )
+@@ -469,7 +479,7 @@ test.describe('animal identification selected commodities summary', () => {
+     }
+ 
+     await expectSummaryRow(summary, DOMESTIC_CATTLE, '0102', '2')
+-    await expectSummaryRow(summary, ATLANTIC_SALMON, '0301', '3')
++    await expectSummaryRow(summary, 'Horse', '0101', '3')
+ 
+     const main = await page.locator('main').innerHTML()
+     expect(main.indexOf(copy.identification.summary.caption)).toBeLessThan(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-corpus.js b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-corpus.js
+index 69c0df7a..a963703c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-corpus.js
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-corpus.js
+@@ -46,8 +46,7 @@ const comprehensive = {
+         },
+         {
+           horseName: 'Silver',
+-          animalIdentifierIdentificationDetails: 'Microchip 900123',
+-          animalIdentifierDescription: 'Brown with a white blaze',
++          animalIdentifierMicrochip: '900123456789012',
+           permanentAddress: animalAddress
+         }
+       ]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+index 15da8efe..7efffe6d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+@@ -122,6 +122,9 @@
+         "line1": "1"
+       },
+       "263b4c5d-6e7f-4c93-8012-6cd3e4f50618": "12/345/6789",
++      "8f030bfa-0734-40c8-9d9e-b9e95dac4724": {
++        "line0.unit1": "900123456789012"
++      },
+       "39657a80-91a2-4fc6-8345-9f0617284a51": {
+         "line0.unit0": "UK123456789"
+       },
+@@ -135,12 +138,6 @@
+       "3c98adb3-c4d5-4ff9-8678-a2394b5b7d84": {
+         "line0.unit1": "Silver"
+       },
+-      "3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95": {
+-        "line0.unit1": "Microchip 900123"
+-      },
+-      "3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6": {
+-        "line0.unit1": "Brown with a white blaze"
+-      },
+       "3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7": {
+         "line0.unit1": {
+           "name": "Owner",
+@@ -553,12 +550,6 @@
+         "3c98adb3-c4d5-4ff9-8678-a2394b5b7d84": {
+           "inScope": false
+         },
+-        "3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95": {
+-          "inScope": false
+-        },
+-        "3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6": {
+-          "inScope": false
+-        },
+         "3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7": {
+           "inScope": false
+         },
+@@ -713,9 +704,8 @@
+               "animalIdentifierEarTag": "UK123456789012"
+             },
+             {
++              "animalIdentifierMicrochip": "900123456789012",
+               "horseName": "Silver",
+-              "animalIdentifierIdentificationDetails": "Microchip 900123",
+-              "animalIdentifierDescription": "Brown with a white blaze",
+               "permanentAddress": {
+                 "name": "Owner",
+                 "address": {
+@@ -1078,12 +1068,6 @@
+         "3c98adb3-c4d5-4ff9-8678-a2394b5b7d84": {
+           "inScope": false
+         },
+-        "3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95": {
+-          "inScope": false
+-        },
+-        "3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6": {
+-          "inScope": false
+-        },
+         "3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7": {
+           "inScope": false
+         },
+@@ -1302,12 +1286,6 @@
+         "3c98adb3-c4d5-4ff9-8678-a2394b5b7d84": {
+           "inScope": false
+         },
+-        "3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95": {
+-          "inScope": false
+-        },
+-        "3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6": {
+-          "inScope": false
+-        },
+         "3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7": {
+           "inScope": false
+         },
+@@ -1599,12 +1577,6 @@
+         "3c98adb3-c4d5-4ff9-8678-a2394b5b7d84": {
+           "inScope": false
+         },
+-        "3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95": {
+-          "inScope": false
+-        },
+-        "3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6": {
+-          "inScope": false
+-        },
+         "3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7": {
+           "inScope": false
+         },
+@@ -1888,12 +1860,6 @@
+         "3c98adb3-c4d5-4ff9-8678-a2394b5b7d84": {
+           "inScope": false
+         },
+-        "3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95": {
+-          "inScope": false
+-        },
+-        "3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6": {
+-          "inScope": false
+-        },
+         "3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7": {
+           "inScope": false
+         },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/flow-reachability.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/flow-reachability.test.js
+index 06e069f3..f8896df5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/flow-reachability.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/flow-reachability.test.js
+@@ -119,10 +119,10 @@ describe('#proveFlowReachability', () => {
+ 
+   it('Should cover the base seed gaps through the seed variants', () => {
+     // The specific obligations the base Cow-line seed cannot scope: the
+-    // 0101-gated horse name, the 01061900-gated permanent address, the
+-    // notInUnionOf free-text identifiers (0301 line) and the per-document
+-    // dependants (typed document record). Each must be scoped by at least
+-    // one variant × state — this pins the variants to their purpose.
++    // 0101-gated horse name, the 01061900-gated permanent address and the
++    // per-document dependants (typed document record). Each must be scoped
++    // by at least one variant × state — this pins the variants to their
++    // purpose.
+     const scopedNames = new Set()
+     for (const { answers } of seedVariants()) {
+       for (const state of enumerateScopeStates()) {
+@@ -143,8 +143,6 @@ describe('#proveFlowReachability', () => {
+     for (const name of [
+       'horseName',
+       'permanentAddress',
+-      'animalIdentifierIdentificationDetails',
+-      'animalIdentifierDescription',
+       'accompanyingDocumentType',
+       'accompanyingDocumentAttachmentType',
+       'accompanyingDocumentReference',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js b/src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js
+index 59ef1eec..5694d34e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/reachability-fixtures/seeds.js
+@@ -73,8 +73,7 @@ export const submitReadySeed = {
+  * Seed variants — overlays on `submitReadySeed` whose commodity/documents
+  * choices open the gates the base seed leaves shut. The base seed's single
+  * Cow line never scopes the Horse-gated `horseName`, the Cat/Dog-gated
+- * `permanentAddress`, the `notInUnionOf` free-text identifiers (Cow sits in
+- * the passport∪tattoo∪earTag union) or the four per-document leaves (no
++ * `permanentAddress` or the four per-document leaves (no
+  * `documents` records). Values are the real canned commodity and
+  * document-type reference data — the same vocabulary
+  * the pages store.
+@@ -120,8 +119,8 @@ export const seedVariants = () => [
+     }
+   },
+   {
+-    // Fish is outside the specific-identifier union — the notInUnionOf
+-    // free-text identifiers (identificationDetails, description) apply.
++    // Fish is on none of the identifier allowlists, so no identifier
++    // obligation applies to its line and it carries no animal records.
+     id: 'fish-line',
+     answers: {
+       ...submitReadySeed,
+@@ -129,10 +128,7 @@ export const seedVariants = () => [
+         {
+           commoditySelection: 'Fish',
+           speciesSelection: '801204',
+-          numberOfAnimalsQuantity: '40',
+-          animalIdentifiers: [
+-            { animalIdentifierIdentificationDetails: 'Tank 12, batch 7' }
+-          ]
++          numberOfAnimalsQuantity: '40'
+         }
+       ]
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+index 64d20bbc..b5e3be19 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+@@ -142,36 +142,6 @@ describe('#rowStatus — one status per hub task row', () => {
+     ).toBe(FULFILLED)
+   })
+ 
+-  describe('the conditional transit-countries row', () => {
+-    it('Should be Not applicable (absent) while the means of transport is not overland', () => {
+-      expect(statusIn('transitCountries', unlocked)).toBe(NA)
+-      expect(
+-        statusIn('transitCountries', {
+-          ...unlocked,
+-          meansOfTransport: 'AIRPLANE'
+-        })
+-      ).toBe(NA)
+-    })
+-
+-    it('Should appear as Not yet started for each overland means and complete once countries are added', () => {
+-      for (const means of ['RAILWAY', 'ROAD_VEHICLE']) {
+-        expect(
+-          statusIn('transitCountries', {
+-            ...unlocked,
+-            meansOfTransport: means
+-          })
+-        ).toBe(NOT_STARTED)
+-      }
+-      expect(
+-        statusIn('transitCountries', {
+-          ...unlocked,
+-          meansOfTransport: 'ROAD_VEHICLE',
+-          transitedCountries: ['FR', 'BE']
+-        })
+-      ).toBe(FULFILLED)
+-    })
+-  })
+-
+   describe('the commodities/identification facet split of commodityLines', () => {
+     it('Should read Not yet started on both rows while no line exists', () => {
+       expect(statusIn('commodities', {})).toBe(NOT_STARTED)
+@@ -214,12 +184,25 @@ describe('#rowStatus — one status per hub task row', () => {
+             commoditySelection: 'Cow',
+             animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
+           },
+-          { commoditySelection: 'Fish' }
++          { commoditySelection: 'Horse' }
+         ]
+       }
+       expect(statusIn('animalIdentification', answers)).toBe(IN_PROGRESS)
+     })
+ 
++    it('Should ask no animal records of a line whose commodity carries no identifier of its own', () => {
++      const answers = {
++        commodityLines: [
++          {
++            commoditySelection: 'Cow',
++            animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
++          },
++          { commoditySelection: 'Fish' }
++        ]
++      }
++      expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
++    })
++
+     it('Should resolve the enclosing-commodity activations through the facet (a Cat identifier owes its permanent address)', () => {
+       const catLine = (identifier) => ({
+         commodityLines: [
+@@ -245,6 +228,36 @@ describe('#rowStatus — one status per hub task row', () => {
+   })
+ })
+ 
++describe('#rowStatus — the conditional transit-countries row', () => {
++  it('Should be Not applicable (absent) while the means of transport is not overland', () => {
++    expect(statusIn('transitCountries', unlocked)).toBe(NA)
++    expect(
++      statusIn('transitCountries', {
++        ...unlocked,
++        meansOfTransport: 'AIRPLANE'
++      })
++    ).toBe(NA)
++  })
++
++  it('Should appear as Not yet started for each overland means and complete once countries are added', () => {
++    for (const means of ['RAILWAY', 'ROAD_VEHICLE']) {
++      expect(
++        statusIn('transitCountries', {
++          ...unlocked,
++          meansOfTransport: means
++        })
++      ).toBe(NOT_STARTED)
++    }
++    expect(
++      statusIn('transitCountries', {
++        ...unlocked,
++        meansOfTransport: 'ROAD_VEHICLE',
++        transitedCountries: ['FR', 'BE']
++      })
++    ).toBe(FULFILLED)
++  })
++})
++
+ describe('#rowGatePasses / #rowEntry — a row is gated exactly as its first page is', () => {
+   it('Should open only the origin row on a blank journey', () => {
+     const scope = makeScope({})
+diff --git a/src/server/app/sets/live-animals/obligations/index.js b/src/server/app/sets/live-animals/obligations/index.js
+index 17dee6d6..57fbf8e8 100644
+--- a/src/server/app/sets/live-animals/obligations/index.js
++++ b/src/server/app/sets/live-animals/obligations/index.js
+@@ -61,10 +61,8 @@ import {
+   containsUnweanedAnimals
+ } from './sections/commodities/aggregates.js'
+ import {
+-  description,
+   earTag,
+   horseName,
+-  identificationDetails,
+   microchip,
+   passport,
+   permanentAddress,
+@@ -140,7 +138,6 @@ export {
+   containsUnweanedAnimals,
+   countryOfOrigin,
+   cph,
+-  description,
+   destinationCountry,
+   documentFilename,
+   documents,
+@@ -148,7 +145,6 @@ export {
+   earTag,
+   exitDate,
+   horseName,
+-  identificationDetails,
+   importer,
+   internalReferenceNumber,
+   meansOfTransport,
+@@ -222,8 +218,6 @@ export const obligations = [
+   tattoo,
+   earTag,
+   horseName,
+-  identificationDetails,
+-  description,
+   permanentAddress,
+   documents,
+   accompanyingDocumentType,
+diff --git a/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js b/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js
+index e200a5e4..1680645a 100644
+--- a/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js
++++ b/src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js
+@@ -1,15 +1,13 @@
+ import {
+   earTagCommodities,
+   horseNameCommodities,
++  identifiedCommodities,
+   microchipCommodities,
+   passportCommodities,
+   permanentAddressCommodities,
+   tattooCommodities
+ } from '../../../services/commodities/index.js'
+-import {
+-  allowListed,
+-  notInUnionOf
+-} from '../../../../../model/obligations/helpers/index.js'
++import { allowListed } from '../../../../../model/obligations/helpers/index.js'
+ import { commodityCode, commodityLine, numberOfAnimals } from './lines.js'
+ 
+ const microchipReason = {
+@@ -41,18 +39,6 @@ const horseNameReason = {
+   explanation: 'horseName applies on units of horse-commodity lines'
+ }
+ 
+-const identificationDetailsReason = {
+-  code: 'obligation.identificationDetails.applicable.becauseNoSpecificIdentifier',
+-  explanation:
+-    'identificationDetails applies on units of lines whose commodityCode has no specific identifier type'
+-}
+-
+-const descriptionReason = {
+-  code: 'obligation.description.applicable.becauseNoSpecificIdentifier',
+-  explanation:
+-    'description applies on units of lines whose commodityCode has no specific identifier type'
+-}
+-
+ const permanentAddressReason = {
+   code: 'obligation.permanentAddress.applicable.becausePermanentAddressCommodity',
+   explanation:
+@@ -73,7 +59,7 @@ export const unitRecord = {
+   //
+   // V4 spec (Confluence page 6497338582): "Field Block - Mandatory
+   // to Submit - At least one Animal Identifier". Every unit-record
+-  // must carry ≥ 1 of the seven identifier obligations. Listed as
++  // must carry ≥ 1 of the five identifier obligations. Listed as
+   // literal ids in `requires.anyOfIds` rather than obligation
+   // references — id-based deferred resolution avoids
+   // declaration-order coupling and makes the "requires-any-of" edge
+@@ -84,6 +70,16 @@ export const unitRecord = {
+   // invariant, so the per-unit-records subsection stays In progress
+   // until the user fixes it.
+   //
++  // Every listed identifier is commodity-gated, so on a line whose
++  // commodity carries none of them the rule has nothing it could
++  // ask for. It is vacuous there rather than unsatisfiable:
++  // `checkAnyOfIds` skips an instance no listed leaf is in scope
++  // for, and the empty-collection floor the bridge derives from
++  // this key does the same (bridge/status/completeness/invariants.js).
++  // Design release 1 asks for identification only where the
++  // commodity has an identifier of its own; such a line gets no
++  // unit records and none are demanded of it.
++  //
+   // V4 spec cross-check ("unit records ARE animals" reading of
+   // Confluence page 6497338582): the count of unit-record instances
+   // on a given commodity line must equal `numberOfAnimals` on that
+@@ -98,14 +94,17 @@ export const unitRecord = {
+       '39657a80-91a2-4fc6-8345-9f0617284a51', // passport
+       '3a768b91-a2b3-4fd7-8456-a01728395b62', // tattoo
+       '3b879ca2-b3c4-4fe8-8567-a1283a4a6c73', // earTag
+-      '3c98adb3-c4d5-4ff9-8678-a2394b5b7d84', // horseName
+-      '3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95', // identificationDetails
+-      '3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6' // description
++      '3c98adb3-c4d5-4ff9-8678-a2394b5b7d84' // horseName
+     ],
+     errorCode: 'obligation.unitRecord.identifiersRequired',
+     fulfilmentIndexCountEquals: {
+       fieldId: numberOfAnimals.id,
+-      errorCode: 'obligation.unitRecord.countMustMatchNumberOfAnimals'
++      errorCode: 'obligation.unitRecord.countMustMatchNumberOfAnimals',
++      // Only a line whose commodity carries an identifier of its own is
++      // asked for one record per animal. A commodity on none of the
++      // identifier allowlists gets no identification panel, so it is asked
++      // for no records and the count has nothing to compare.
++      applyToParent: allowListed(commodityCode, identifiedCommodities, null)
+     }
+   }
+ }
+@@ -172,49 +171,12 @@ export const horseName = {
+   ])
+ }
+ 
+-// Inverse gate — the free-text identifiers apply on units whose parent
+-// line's commodity has NO specific identifier. Expressed as
+-// `notInUnionOf` over the five specific-identifier whitelists.
+-// The derived union lives on `.metadata.values`
+-// so the reachability prover can synthesise a witness value (any code
+-// not in the union) and the browser-side controllers can inspect
+-// admissibility without executing the closure. Adding a sixth typed
+-// identifier means adding its list to the array here — the derived
+-// union widens automatically. Hand-restated five-conjunct complements
+-// would silently double-gate on such an addition.
+-const specificIdentifierWhitelists = () => [
+-  microchipCommodities(),
+-  passportCommodities(),
+-  tattooCommodities(),
+-  earTagCommodities(),
+-  horseNameCommodities()
+-]
+-
+-export const identificationDetails = {
+-  id: '3da9bec4-d5e6-4a0a-8789-a34a5c6c8e95',
+-  name: 'animalIdentifierIdentificationDetails',
+-  within: unitRecord,
+-  status: 'optional',
+-  applyTo: notInUnionOf(
+-    commodityCode,
+-    specificIdentifierWhitelists,
+-    unitRecord,
+-    [identificationDetailsReason]
+-  )
+-}
+-
+-export const description = {
+-  id: '3ebacfd5-e6f7-4b1b-889a-a45b6d7d9fa6',
+-  name: 'animalIdentifierDescription',
+-  within: unitRecord,
+-  status: 'optional',
+-  applyTo: notInUnionOf(
+-    commodityCode,
+-    specificIdentifierWhitelists,
+-    unitRecord,
+-    [descriptionReason]
+-  )
+-}
++// A commodity on none of the identifier allowlists is asked for no
++// identifier at all. There is no free-text fallback: design release 1
++// asks for identification only where the commodity has an identifier
++// type of its own, so an unlisted commodity — ornamental fish, say —
++// carries no identifier obligation and gets no panel on the
++// identification page.
+ 
+ export const permanentAddress = {
+   id: '3fcbd0e6-f708-4c2c-89ab-a56c7e8ea0b7',
+diff --git a/src/server/app/sets/live-animals/services/commodities/index.js b/src/server/app/sets/live-animals/services/commodities/index.js
+index 0977f4ac..c82d8499 100644
+--- a/src/server/app/sets/live-animals/services/commodities/index.js
++++ b/src/server/app/sets/live-animals/services/commodities/index.js
+@@ -11,6 +11,7 @@ import {
+   TATTOO_COMMODITIES,
+   EAR_TAG_COMMODITIES,
+   HORSE_NAME_COMMODITIES,
++  IDENTIFIED_COMMODITIES,
+   PERMANENT_ADDRESS_COMMODITIES,
+   UNWEANED_ANIMAL_COMMODITIES,
+   CPH_COMMODITIES
+@@ -63,8 +64,9 @@ export const isCommoditySpecies = (name, value) =>
+ export const packageCountCommodities = () => PACKAGE_COUNT_COMMODITIES
+ 
+ // The identifiers this commodity carries, in the order it asks for them. A
+-// commodity the catalogue holds no identifiers for carries none, and is
+-// identified in free text instead.
++// commodity the catalogue holds no identifiers for is asked for none — design
++// release 1 has no free-text fallback, so such a commodity gets no
++// identification panel at all.
+ export const identifiersFor = (name) => COMMODITY_IDENTIFIERS[name] ?? []
+ 
+ export const microchipCommodities = () => MICROCHIP_COMMODITIES
+@@ -77,6 +79,10 @@ export const earTagCommodities = () => EAR_TAG_COMMODITIES
+ 
+ export const horseNameCommodities = () => HORSE_NAME_COMMODITIES
+ 
++// The commodities that carry an identifier of their own — the ones design
++// release 1 asks a trader to identify.
++export const identifiedCommodities = () => IDENTIFIED_COMMODITIES
++
+ export const permanentAddressCommodities = () => PERMANENT_ADDRESS_COMMODITIES
+ 
+ export const unweanedCommodities = () => UNWEANED_ANIMAL_COMMODITIES
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index 490e3ae1..050a0497 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -113,9 +113,9 @@ export const PACKAGE_COUNT_COMMODITIES = [
+ // for them. The order belongs to the COMMODITY, not to the service: a cow is
+ // asked for its ear tag before its passport because the ear tag is what a cow
+ // actually carries, where a horse is asked for its microchip first
+-// (design 01-14/16/17). A commodity with no typed identifier — Fish — is
+-// described in free text instead, which the `notInUnionOf` gate on the
+-// identification-details and description obligations derives.
++// (design 01-14/16/17). A commodity with an empty list — Fish — is asked for
++// nothing at all: design release 1 offers no free-text fallback, so such a
++// line gets no identification panel and no animal records.
+ //
+ // The five per-identifier allowlists below are DERIVED from this map, so an
+ // identifier's gate and its position on the panel cannot drift apart. Adding
+@@ -163,6 +163,14 @@ export const EAR_TAG_COMMODITIES = commoditiesCarrying('animalIdentifierEarTag')
+ 
+ export const HORSE_NAME_COMMODITIES = commoditiesCarrying('horseName')
+ 
++// The commodities design release 1 asks a trader to identify at all — the
++// ones the catalogue gives an identifier of their own. A commodity outside
++// this list is asked for no animal records, so it is not held to the
++// one-record-per-animal count either.
++export const IDENTIFIED_COMMODITIES = COMMODITY_OPTIONS.filter(
++  (name) => (COMMODITY_IDENTIFIERS[name] ?? []).length > 0
++)
++
+ export const PERMANENT_ADDRESS_COMMODITIES = ['Cat', 'Dog']
+ 
+ export const UNWEANED_ANIMAL_COMMODITIES = ['Cow', 'Horse']

@@ -1,0 +1,31 @@
+h2. Increment
+
+{{inc-073}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Problem
+
+Exit date is a date picker on a page of its own, reached only when the reason for import is Temporary admission horses. Leave the box empty, press Save and continue, and the journey moves on: the page validates with {{dateText}}, which allows an empty string through before it ever tries to read a date ({{src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js:21}} and {{src/server/app/lib/validate/validators.js:209-234}}). The only message the page owns is "Enter a real exit date" ({{src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:8}}), and no message for the date being missing exists anywhere in the service.
+
+The rule itself is not missing: {{exitDate}} is mandatory once in scope ({{src/server/app/sets/live-animals/obligations/sections/import-reason.js:103-116}}), so the Exit details hub row stays incomplete and the review section stays gated ({{src/server/app/flow/section-status.js:11-15}}, applied at {{src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85}}). So the user is not let through the service — they are let past the question and told nothing, and find out only when the check-answers step will not open.
+
+Design release 1 returns the user to the same page with an error summary and an error against the field, and distinguishes the two failures: an empty box gives "Enter an exit date" and one it cannot read gives "Enter a real date" ({{app/routes.js:1424-1432}}).
+
+h2. Acceptance criteria
+
+* Submitting the exit-date page with the box empty, on a Temporary admission horses import, returns the user to the same page with a {{govuk-error-summary}} and an error against the field, rather than advancing the journey.
+* The missing-date message is "Enter an exit date", added as a required check ahead of the date parse in {{src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js}}.
+* The reason radio itself is NOT made required. Design release 1 leaves the main reason optional to proceed and the frontend already matches that, so nothing about the radio changes.
+* Submitting the page with a date that cannot be read still returns an error, and behaviour for a valid date is unchanged.
+* Test coverage proves both the empty submit and the valid submit, and the E2E specs and visual baselines in {{trade-imports-animals-tests}} are updated for the new error state.
+
+h2. Notes
+
+Align the invalid-date message in the same pass if it has not already been done: Design release 1 says "Enter a real date" where the frontend says "Enter a real exit date". That string is booked with the rest of the exit-message copy as {{inc-075}}.
+
+If {{inc-067}} lands first and the exit date becomes a conditional reveal on the reason page, the same check belongs on the reveal instead of on a page that will no longer exist.
+
+The extra sentence the frontend puts in front of the exit-date hint is a separate copy change, booked as {{inc-068}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

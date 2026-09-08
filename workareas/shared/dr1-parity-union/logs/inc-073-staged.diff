@@ -1,0 +1,370 @@
+diff --git a/src/server/app/docs/validation.md b/src/server/app/docs/validation.md
+index 0579c2da..4e41a90a 100644
+--- a/src/server/app/docs/validation.md
++++ b/src/server/app/docs/validation.md
+@@ -55,6 +55,13 @@ The date helpers validate a `dd/mm/yyyy` text value, then
+ `minDate`/`maxDate` through to the picker's `data-min-date`/`data-max-date`
+ attributes.
+ 
++`dateText` leaves the field optional: a blank value passes before the calendar
++check runs. `requiredDateText` is the save-blocking form, and takes two messages
++so a blank answer and an unreadable one read differently. It is a primitive
++rather than `compose(requiredText, dateText)` because composing merges
++`dateText`'s empty-string allowance onto the required rule — the same reason
++`requiredMaxText` and `requiredIntegerInRange` exist.
++
+ `dateTextInRange` layers inclusive `Date` bounds on top of the `dateText`
+ calendar check. The caller supplies the bounds, so the policy and the
+ current-date read stay in the journey feature, out of `lib/validate`. A picker
+diff --git a/src/server/app/lib/validate/index.js b/src/server/app/lib/validate/index.js
+index 3478fb00..ff89a3bf 100644
+--- a/src/server/app/lib/validate/index.js
++++ b/src/server/app/lib/validate/index.js
+@@ -16,7 +16,8 @@ export {
+   requiredIntegerInRange,
+   dateParts,
+   dateText,
+-  dateTextInRange
++  dateTextInRange,
++  requiredDateText
+ } from './validators.js'
+ export {
+   addUtcDays,
+diff --git a/src/server/app/lib/validate/validate.test.js b/src/server/app/lib/validate/validate.test.js
+index 7f85234b..dc455d2d 100644
+--- a/src/server/app/lib/validate/validate.test.js
++++ b/src/server/app/lib/validate/validate.test.js
+@@ -9,6 +9,7 @@ import {
+   maxText,
+   oneOf,
+   postcode,
++  requiredDateText,
+   requiredExactDigits,
+   requiredIntegerInRange,
+   requiredMaxText,
+@@ -31,6 +32,7 @@ const REGION_CODE_MAX_LENGTH_MESSAGE =
+   'Region of origin code must be 5 characters or less'
+ const ANIMALS_REQUIRED_MESSAGE = 'Enter the number of animals'
+ const ANIMALS_WHOLE_NUMBER_MESSAGE = 'Enter a whole number greater than 0'
++const NOT_A_DATE = 'not a date'
+ 
+ describe('#requiredText — the sole save-blocking primitive', () => {
+   const schema = requiredText('fullName', FULL_NAME_REQUIRED_MESSAGE)
+@@ -349,7 +351,7 @@ describe('#dateText — optional dd/mm/yyyy input', () => {
+     expect(run(schema, { dateOfBirth: '27/03/1985' }).errors).toBeNull()
+   })
+ 
+-  it.each(['27/3', '31/2/2000', '2000-03-27', 'not a date'])(
++  it.each(['27/3', '31/2/2000', '2000-03-27', NOT_A_DATE])(
+     'Should reject %s on the single input',
+     (value) => {
+       expect(run(schema, { dateOfBirth: value }).errors).toEqual({
+@@ -359,6 +361,52 @@ describe('#dateText — optional dd/mm/yyyy input', () => {
+   )
+ })
+ 
++describe('#requiredDateText — save-blocking dd/mm/yyyy input', () => {
++  const REQUIRED_MESSAGE = 'Enter an exit date'
++  const INVALID_MESSAGE = 'Enter a real exit date'
++  const schema = requiredDateText('exitDate', {
++    required: REQUIRED_MESSAGE,
++    invalid: INVALID_MESSAGE
++  })
++
++  it('Should accept real dates with one- or two-digit parts', () => {
++    expect(run(schema, { exitDate: '7/3/1985' }).errors).toBeNull()
++    expect(run(schema, { exitDate: '27/03/1985' }).errors).toBeNull()
++  })
++
++  it.each(['', '   '])(
++    'Should ask for the date when the value is %j',
++    (value) => {
++      expect(run(schema, { exitDate: value }).errors).toEqual({
++        exitDate: REQUIRED_MESSAGE
++      })
++    }
++  )
++
++  it('Should ask for the date when the field is absent altogether', () => {
++    expect(run(schema, {}).errors).toEqual({ exitDate: REQUIRED_MESSAGE })
++  })
++
++  it.each(['27/3', '31/2/2000', '2000-03-27', NOT_A_DATE])(
++    'Should reject %s as not a real date rather than as missing',
++    (value) => {
++      expect(run(schema, { exitDate: value }).errors).toEqual({
++        exitDate: INVALID_MESSAGE
++      })
++    }
++  )
++
++  it('Should fall back to the shared date message when no invalid message is given', () => {
++    const withoutInvalidMessage = requiredDateText('exitDate', {
++      required: REQUIRED_MESSAGE
++    })
++
++    expect(run(withoutInvalidMessage, { exitDate: NOT_A_DATE }).errors).toEqual(
++      { exitDate: validatorDefaults.date }
++    )
++  })
++})
++
+ describe('#dateTextInRange — inclusive bounds on a dd/mm/yyyy input', () => {
+   const INVALID_MESSAGE = 'Enter a real arrival date'
+   const RANGE_MESSAGE = 'Arrival date must be between 1/3/2026 and 30/9/2026'
+@@ -389,7 +437,7 @@ describe('#dateTextInRange — inclusive bounds on a dd/mm/yyyy input', () => {
+     }
+   )
+ 
+-  it.each(['31/2/2026', '27/3', '2026-03-27', 'not a date'])(
++  it.each(['31/2/2026', '27/3', '2026-03-27', NOT_A_DATE])(
+     'Should reject %s as not a real date, not as out of range',
+     (value) => {
+       expect(run(schema, { arrivalDateAtPort: value }).errors).toEqual({
+diff --git a/src/server/app/lib/validate/validators.js b/src/server/app/lib/validate/validators.js
+index 71e8949a..99e938ca 100644
+--- a/src/server/app/lib/validate/validators.js
++++ b/src/server/app/lib/validate/validators.js
+@@ -252,6 +252,19 @@ const isOutsideBounds = (date, min, max) =>
+   (min != null && date.getTime() < min.getTime()) ||
+   (max != null && date.getTime() > max.getTime())
+ 
++// Reads `dd/mm/yyyy` text and holds it to the calendar, and to the bounds when
++// there are any. Shared by the optional and the save-blocking date rules so
++// both read the same text the same way.
++const realDateWithin = (min, max) => (raw, helpers) => {
++  const parsed = parseDateText(raw)
++  if (!parsed) {
++    return helpers.error(INVALID_ERROR_CODE)
++  }
++  return isOutsideBounds(parsed, min, max)
++    ? helpers.error(RANGE_ERROR_CODE)
++    : raw
++}
++
+ /**
+  * Blank passes, so the range rule never makes an optional field required.
+  * @param {string} name
+@@ -275,15 +288,7 @@ export const dateTextInRange = (
+     Joi.string()
+       .trim()
+       .allow('')
+-      .custom((raw, helpers) => {
+-        const parsed = parseDateText(raw)
+-        if (!parsed) {
+-          return helpers.error(INVALID_ERROR_CODE)
+-        }
+-        return isOutsideBounds(parsed, min, max)
+-          ? helpers.error(RANGE_ERROR_CODE)
+-          : raw
+-      })
++      .custom(realDateWithin(min, max))
+       .messages({
+         [INVALID_ERROR_CODE]: invalidMessage,
+         [RANGE_ERROR_CODE]: rangeMessage ?? invalidMessage
+@@ -292,3 +297,29 @@ export const dateTextInRange = (
+ 
+ export const dateText = (name, message = defaults.date) =>
+   dateTextInRange(name, { invalidMessage: message })
++
++/**
++ * Save-blocking `dd/mm/yyyy` text. A separate primitive rather than
++ * `compose(requiredText, dateText)` because `dateText` allows the empty string,
++ * and composing schemas merges that allowance onto the required rule — blank
++ * would then pass. `requiredMaxText` and `requiredIntegerInRange` exist for the
++ * same reason.
++ * @param {string} name
++ * @param {object} messages
++ * @param {string} messages.required - Shown when the value is blank or absent.
++ * @param {string} [messages.invalid] - Shown when the value is not a real
++ * calendar date.
++ */
++export const requiredDateText = (name, messages) =>
++  single(
++    name,
++    Joi.string()
++      .trim()
++      .required()
++      .custom(realDateWithin())
++      .messages({
++        'string.empty': messages.required,
++        'any.required': messages.required,
++        [INVALID_ERROR_CODE]: messages.invalid ?? defaults.date
++      })
++  )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
+index 005b8ae4..4d79f0e2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js
+@@ -7,8 +7,8 @@ import {
+ } from '../../../../../../lib/http-status.js'
+ import {
+   compose,
+-  dateText,
+   oneOf,
++  requiredDateText,
+   requiredOneOf,
+   validate
+ } from '../../../../../../lib/validate/index.js'
+@@ -85,9 +85,9 @@ const portRule = (field) =>
+ 
+ // The reason radio itself is optional to proceed — Design release 1 says so in
+ // its own words — but the questions a chosen reason reveals are enforced here,
+-// not left to the submit. The purpose, both destination countries and both
+-// ports of exit are required. The exit date is the one gap still open: it has
+-// only to be a real date, so a blank one is still let through.
++// not left to the submit. The purpose, both destination countries, both ports
++// of exit and the exit date are all required, and the exit date is told apart
++// twice over: blank asks for one, unreadable says it is not a real date.
+ const RULES = Object.freeze({
+   [PURPOSE_FIELD]: () =>
+     requiredOneOf(
+@@ -101,7 +101,10 @@ const RULES = Object.freeze({
+   [TEMPORARY_ADMISSION_PORT_FIELD]: () =>
+     portRule(TEMPORARY_ADMISSION_PORT_FIELD),
+   [TEMPORARY_ADMISSION_DATE_FIELD]: () =>
+-    dateText(TEMPORARY_ADMISSION_DATE_FIELD, copy.errors.dateInvalid)
++    requiredDateText(TEMPORARY_ADMISSION_DATE_FIELD, {
++      required: copy.errors.dateRequired,
++      invalid: copy.errors.dateInvalid
++    })
+ })
+ 
+ // Only the reveal the submitted reason opens is answerable, so only its
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+index a301bb95..1586772e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js
+@@ -115,6 +115,60 @@ describe('POST import-reason — invalid payload', () => {
+     expect(result.after).toEqual(result.before)
+   })
+ 
++  it('Should refuse an unanswered exit date on the temporary-admission reveal, committing nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: '',
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionExitDate).toBe(
++      copy.errors.dateRequired
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should ask for both the exit date and the port of exit when neither is answered', async () => {
++    const result = await driveHandler(post, {
++      payload: { reasonForImport: 'temporaryAdmissionHorses' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.temporaryAdmissionExitDate).toBe(
++      copy.errors.dateRequired
++    )
++    expect(result.view.context.errors.temporaryAdmissionPortOfExit).toBe(
++      copy.errors.portRequired
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should tell a blank exit date apart from one it cannot read', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'temporaryAdmissionHorses',
++        temporaryAdmissionExitDate: '31/2/2026',
++        temporaryAdmissionPortOfExit: 'GB DVR'
++      }
++    })
++    expect(result.view.context.errors.temporaryAdmissionExitDate).toBe(
++      copy.errors.dateInvalid
++    )
++  })
++
++  // The exit date is asked only under temporary admission, so leaving it blank
++  // under any other reason is not a mistake to report.
++  it('Should not ask for the exit date under a reason that never reveals it', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        reasonForImport: 'transhipmentOrOnwardTravel',
++        transhipmentDestinationCountry: 'FR'
++      }
++    })
++    expect(result.response.redirect).toBeDefined()
++  })
++
+   it('Should refuse an unreal exit date the temporary-admission reveal asks for', async () => {
+     const result = await driveHandler(post, {
+       payload: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
+index bbfbef9e..f9744cfe 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js
+@@ -55,6 +55,7 @@ export const copy = {
+     purposeRequired: 'Dewiswch ddiben yn y farchnad fewnol',
+     countryRequired: 'Dewiswch y wlad gyrchfan',
+     portRequired: 'Dewiswch y porthladd ymadael',
++    dateRequired: 'Rhowch ddyddiad ymadael',
+     dateInvalid: 'Rhowch ddyddiad ymadael go iawn'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
+index a384b07b..4f8ae4ca 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js
+@@ -53,6 +53,7 @@ export const copy = {
+     purposeRequired: 'Select a purpose in the internal market',
+     countryRequired: 'Select the destination country',
+     portRequired: 'Select the port of exit',
++    dateRequired: 'Enter an exit date',
+     dateInvalid: 'Enter a real exit date'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
+index 5a4d4063..cfcc0b5f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js
+@@ -356,6 +356,43 @@ test.describe('import-reason reveals', () => {
+     await expect(page.locator(TEMPORARY_ADMISSION_PORT)).toHaveValue(PORT_CODE)
+   })
+ 
++  test('refuses a blank exit date, links to the picker input and keeps the port the user did choose', async ({
++    page
++  }) => {
++    await radioFor(page, 'temporaryAdmissionHorses').check()
++    await page.locator(TEMPORARY_ADMISSION_PORT).selectOption(PORT_CODE)
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    const dateError = page
++      .getByRole('alert')
++      .getByRole('link', { name: copy.errors.dateRequired })
++    await expect(dateError).toBeVisible()
++
++    const reveal = await revealFor(page, 'temporaryAdmissionHorses')
++    await expect(reveal).toContainText(copy.errors.dateRequired)
++
++    await dateError.click()
++    await expect(page.locator(TEMPORARY_ADMISSION_DATE)).toBeFocused()
++    await expect(page.locator(TEMPORARY_ADMISSION_PORT)).toHaveValue(PORT_CODE)
++  })
++})
++
++test.describe('import-reason reveal accessibility', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await startAtImportReason(page)
++  })
++
++  test('has no serious or critical axe violations with the exit date missing', async ({
++    page
++  }) => {
++    await radioFor(page, 'temporaryAdmissionHorses').check()
++    await page.locator(SUBMIT_BUTTON).first().click()
++    await expect(page.getByRole('alert')).toBeVisible()
++
++    await expectNoSeriousOrCriticalAxeViolations(page)
++  })
++
+   test('has no serious or critical axe violations with a reveal open and in error', async ({
+     page
+   }) => {

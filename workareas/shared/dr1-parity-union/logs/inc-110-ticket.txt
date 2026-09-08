@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-110}} from the {{shared/dr1-parity-union}} backlog.
+
+The cow identification record offers three fields — Passport number, Tattoo, Ear tag number. Tattoo is there because Cow sits on the tattoo allowlist alongside Cat and Dog in {{src/server/app/sets/live-animals/services/commodities/stub.js}} line 109, which gates the tattoo obligation in {{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js}} lines 127 to 135.
+
+DR1's cattle panel offers two fields, Ear tag then Passport. Tattoo is not on the cattle set at all — {{app/data/commodity-identifiers.js}} lines 9 to 12 give commodity code 0102 exactly Ear tag and Passport, and Tattoo appears only under 01061900, the cat, dog and ferret code.
+
+h2. Acceptance criteria
+
+* Cow is removed from the tattoo allowlist {{TATTOO_COMMODITIES}} in {{src/server/app/sets/live-animals/services/commodities/stub.js}}, so the tattoo obligation no longer applies to cattle lines.
+* Tattoo stays in scope for Cat and Dog — their identification records are unchanged.
+* A cow identification record shows only Passport number and Ear tag number.
+* The at-least-one-identifier rule on the cow unit record is still satisfiable through the ear tag or the passport.
+* Stored answers are checked: a saved cow record already holding a tattoo value is orphaned by this change, so decide and implement whether the stored answer is cleared when the obligation goes out of scope.
+* Unit tests cover the cow, cat and dog identifier sets, and the E2E specs and visual baselines in the tests repo are updated for the changed cow panel.
+
+h2. Notes
+
+Field order is out of scope here. With tattoo gone the frontend renders Passport then Ear tag where DR1 renders Ear tag then Passport, because the frontend orders identifiers globally and DR1 orders them per commodity. That is tracked separately as {{identification--identifier-field-order}}.
+
+Falsified by: finding a Tattoo field on DR1's cattle identification panel, or a cattle entry in {{app/data/commodity-identifiers.js}} that carries a tattoo identifier.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

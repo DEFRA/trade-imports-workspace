@@ -1,0 +1,21 @@
+feat(parity-dr1): DR1 puts each commodity's identifier boxes in the order that commodity's own list gives; the frontend puts them in one fixed order for every animal, so a cow is asked for its passport before its ear tag.
+
+The identifier running order was a property of the service, not of the
+commodity: the identification copy block declared passport, tattoo, ear tag
+and horse name in that sequence and the card rendered whichever of them were
+in scope without resorting, so every animal was asked in the same order.
+
+Move the order onto the commodity. The commodity catalogue now carries an
+ordered identifier list per commodity (COMMODITY_IDENTIFIERS, read through a
+new commodities.identifiersFor), and the identification card and the
+check-answers identifier columns render the boxes in that order. The copy
+block goes back to being a lookup of labels and hints. Applicability still
+decides whether a listed identifier renders, so the obligation model remains
+the one authority on what is in scope.
+
+Cattle now reads Ear tag then Passport, and a horse reads Microchip,
+Passport, Horse name, matching DR1.
+
+Increment inc-106, ticket EUDPA-497.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>

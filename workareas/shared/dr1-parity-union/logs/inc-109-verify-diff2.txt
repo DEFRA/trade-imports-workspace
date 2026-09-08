@@ -1,0 +1,146 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+index 9b45894b..6b943d6a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk
+@@ -67,12 +67,17 @@
+         {% endfor %}
+       {% endif %}
+ 
+-      {{ govukButton({
+-        text: copy.saveAndAddAnother,
+-        classes: "govuk-button--secondary",
+-        name: "action",
+-        value: "add:" ~ card.index
+-      }) }}
++      {# The wording says what is left on this line: "Save and finish" on the
++         last outstanding animal, and no button at all where the line holds a
++         single animal — the page's own Save and continue captures that one. #}
++      {% if card.saveButtonText %}
++        {{ govukButton({
++          text: card.saveButtonText,
++          classes: "govuk-button--secondary",
++          name: "action",
++          value: "add:" ~ card.index
++        }) }}
++      {% endif %}
+     {% endif %}
+   </section>
+   <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible" />
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index 64cfd1e0..350c2e37 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -182,6 +182,79 @@ describe(`${SUITE} — the cards view`, () => {
+   })
+ })
+ 
++// Design release 1 lets the in-card button name what is left on the line, so
++// the words tell the trader what pressing them does next.
++describe(`${SUITE} — the in-card save button`, () => {
++  setupIdentificationEngine()
++
++  it('Should invite another record while more than one animal is still outstanding', async () => {
++    const [card] = await viewCards({
++      commodityLines: [cowLine({ numberOfAnimalsQuantity: '3' })]
++    })
++    expect(card.saveButtonText).toBe('Save and add another')
++  })
++
++  it('Should finish the line on the last outstanding animal rather than inviting another', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        cowLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK1' }]
++        })
++      ]
++    })
++    expect(card.counter).toBe('Enter details for Bos taurus 2 of 2')
++    expect(card.saveButtonText).toBe('Save and finish')
++  })
++
++  // One animal has nothing to add after it, so the card offers no button of
++  // its own — the page's Save and continue captures the record.
++  it('Should offer no in-card button on a line of one animal', async () => {
++    const [card] = await viewCards({
++      commodityLines: [cowLine({ numberOfAnimalsQuantity: '1' })]
++    })
++    expect(card.counter).toBe('Enter details for Bos taurus 1 of 1')
++    expect(card.saveButtonText).toBeNull()
++  })
++
++  it('Should keep the open wording while the count is unanswered — no last animal to name', async () => {
++    const [card] = await viewCards({ commodityLines: [catLine()] })
++    expect(card.saveButtonText).toBe('Save and add another')
++  })
++
++  it('Should drop the button with the rest of the entry block at N = M', async () => {
++    const [card] = await viewCards({
++      commodityLines: [
++        cowLine({
++          numberOfAnimalsQuantity: '2',
++          animalIdentifiers: [
++            { animalIdentifierEarTag: 'UK1' },
++            { animalIdentifierEarTag: 'UK2' }
++          ]
++        })
++      ]
++    })
++    expect(card.atMax).toBe(true)
++    expect(card.saveButtonText).toBeNull()
++  })
++
++  // The button the single-animal line no longer has is not a lost route to
++  // saving: the page primary already captures the record it holds.
++  it('Should still capture a one-animal record through the page primary', async () => {
++    const result = await driveHandler(post, {
++      seed: {
++        commodityLines: [cowLine({ numberOfAnimalsQuantity: '1' })]
++      },
++      payload: { 'animalIdentifierEarTag-0': 'UK1' }
++    })
++    expect(result.response).toEqual({ redirect: hubPath(result.journeyId) })
++    expect(result.after.commodityLines[0].animalIdentifiers).toHaveLength(1)
++    expect(
++      result.after.commodityLines[0].animalIdentifiers[0].animalIdentifierEarTag
++    ).toBe('UK1')
++  })
++})
++
+ describe(`${SUITE} — the Selected commodities summary`, () => {
+   setupIdentificationEngine()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
+index 0e1b23df..91e1445c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/view-model.js
+@@ -68,6 +68,21 @@ const capacityStateFor = (answers, index, unitCount) => {
+   return { cap, atMax, overBy }
+ }
+ 
++// Design release 1 makes the in-card button say what pressing it will do next.
++// A line of one animal gets no button of its own — there is nothing to add
++// after this record, so the page's own Save and continue captures it. The last
++// animal still outstanding finishes the line rather than inviting another. An
++// unanswered count has no last animal to name, so it keeps the open wording.
++const saveButtonTextFor = (cap, records) => {
++  if (cap === null) {
++    return copy.saveAndAddAnother
++  }
++  if (cap <= 1) {
++    return null
++  }
++  return cap - records === 1 ? copy.saveAndFinish : copy.saveAndAddAnother
++}
++
+ const visibleIdentifierFields = (atMax, commodity, index, values, errors) =>
+   atMax
+     ? []
+@@ -116,6 +131,7 @@ export const buildCard = (answers, line, form, errors, changeCountHref) => {
+       atMax
+     ),
+     atMax,
++    saveButtonText: atMax ? null : saveButtonTextFor(cap, units.length),
+     identifierColumns: columns.map(([, label]) => label),
+     units: unitEntries(index, species, columns, units),
+     hasUnits: units.length > 0,

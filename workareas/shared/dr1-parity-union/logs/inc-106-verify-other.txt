@@ -1,0 +1,108 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+index 3c38b2e6..80ee085b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.test.js
+@@ -8,6 +8,10 @@ import { records as recordsStub } from '../../../../../../../services/persistenc
+ import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+ import { driveHandler } from '../../../../../../../engine/test-support.js'
+ import { dispatchPages } from '../../index.js'
++import {
++  list,
++  identifiersFor
++} from '../../../../../services/commodities/index.js'
+ 
+ import * as search from '../search/search.controller.js'
+ import { copy } from './copy.en.js'
+@@ -70,6 +74,30 @@ describe('#copy', () => {
+     }
+   })
+ 
++  // The commodity now sets the running order of its own identifier boxes, so
++  // the copy block is a lookup rather than a list. An identifier a commodity
++  // asks for but the copy block has no entry for would render an unlabelled
++  // box, which this closes off in both locales.
++  it('Should carry an entry field and a column heading for every identifier a commodity asks for', () => {
++    for (const commodity of list()) {
++      for (const identifier of identifiersFor(commodity)) {
++        expect(
++          copy.identification.typeFields[identifier]?.label,
++          `${commodity} asks for ${identifier}`
++        ).toEqual(expect.any(String))
++        expect(copy.identification.identifierLabels[identifier]).toEqual(
++          expect.any(String)
++        )
++        expect(copyCy.identification.typeFields[identifier]?.label).toEqual(
++          expect.any(String)
++        )
++        expect(copyCy.identification.identifierLabels[identifier]).toEqual(
++          expect.any(String)
++        )
++      }
++    }
++  })
++
+   // A user reading only the first sentence could conclude that no health
+   // certificate means no notification. The second sentence closes that off.
+   it('Should tell the user that a consignment without a health certificate must still be notified', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 00e51869..ece43c6d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -15,6 +15,7 @@ const MICROCHIP_FIELD = '#animalIdentifierMicrochip-0'
+ const EAR_TAG_FIELD = '#animalIdentifierEarTag-0'
+ const BOS_TAURUS = 'Bos taurus'
+ const FELIS_CATUS = 'Felis catus'
++const EQUUS_CABALLUS = 'Equus caballus'
+ const CANIS_LUPUS_FAMILIARIS = 'Canis lupus familiaris'
+ const SALMO_SALAR = 'Salmo salar'
+ const DOMESTIC_CATTLE = 'Domestic cattle'
+@@ -189,7 +190,7 @@ const identifierValidations = [
+   ['Cow', BOS_TAURUS, 'animalIdentifierPassport', 'Passport'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierTattoo', 'Tattoo'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierEarTag', 'Ear tag'],
+-  ['Horse', 'Equus caballus', 'horseName', 'Horse name'],
++  ['Horse', EQUUS_CABALLUS, 'horseName', 'Horse name'],
+   [
+     'Fish',
+     SALMO_SALAR,
+@@ -261,7 +262,7 @@ test.describe('animal identification', () => {
+   }) => {
+     await openIdentification(page, [
+       ['Cow', [BOS_TAURUS]],
+-      ['Horse', ['Equus caballus']],
++      ['Horse', [EQUUS_CABALLUS]],
+       ['Fish', [SALMO_SALAR]]
+     ])
+ 
+@@ -280,6 +281,31 @@ test.describe('animal identification', () => {
+     await expect(page.locator('#nameOrOrganisationName-0')).toHaveCount(0)
+   })
+ 
++  // Design release 1 asks for each commodity's identifiers in the order that
++  // commodity's own list gives. A cow carries an ear tag, so the ear tag is
++  // the box it is asked for first — and a horse, which carries a chip, is
++  // asked for its microchip first. One running order for every animal cannot
++  // say both.
++  test('asks a cattle line for its ear tag before its passport, and a horse for its microchip first', async ({
++    page
++  }) => {
++    await openIdentification(page, [
++      ['Cow', [BOS_TAURUS]],
++      ['Horse', [EQUUS_CABALLUS]]
++    ])
++
++    await expect(page.locator('label[for$="-0"]')).toHaveText([
++      'Ear tag',
++      'Passport',
++      'Tattoo'
++    ])
++    await expect(page.locator('label[for$="-1"]')).toHaveText([
++      'Microchip number',
++      'Passport',
++      'Horse name'
++    ])
++  })
++
+   // Design release 1 names an identifier once and uses that name both on the
+   // entry field and as the column heading of the saved-animals table. A trader
+   // who types under "Passport number" and reads the value back under

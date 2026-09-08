@@ -1,0 +1,129 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js
+index c7cdaea4..fbe14cd5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js
+@@ -1,5 +1,6 @@
+ import { compose, maxText } from '../../../../../../../../lib/validate/index.js'
+ import { appliesForCommodity } from '../../../../../../../../bridge/applicability.js'
++import * as commodities from '../../../../../../services/commodities/index.js'
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+@@ -10,16 +11,21 @@ const copy = copyFor({ en, cy }).identification
+ const toFields = (byId) =>
+   Object.entries(byId).map(([id, field]) => ({ id, ...field }))
+ 
+-const TYPE_FIELDS = toFields(copy.typeFields)
+-
+ const FALLBACK_FIELDS = toFields(copy.fallbackFields)
+ 
+ const IDENTIFIER_MAX_MESSAGES = copy.errors.identifierMax
+ 
+ const IDENTIFIER_MAX_LENGTH = 58
+ 
++// The commodity sets the order of its own boxes — the copy block is a lookup
++// of labels and hints, not a running order (design 01-14/16/17). Applicability
++// still decides whether a listed identifier renders, so the obligation model
++// stays the one authority on what is in scope.
+ const scopedTypeFields = (commodity) =>
+-  TYPE_FIELDS.filter((field) => appliesForCommodity(field.id, commodity))
++  commodities
++    .identifiersFor(commodity)
++    .filter((id) => appliesForCommodity(id, commodity))
++    .map((id) => ({ id, ...copy.typeFields[id] }))
+ 
+ const scopedFallbackFields = (commodity) =>
+   FALLBACK_FIELDS.filter((field) => appliesForCommodity(field.id, commodity))
+diff --git a/src/server/app/sets/live-animals/services/commodities/index.js b/src/server/app/sets/live-animals/services/commodities/index.js
+index 27b04b04..0977f4ac 100644
+--- a/src/server/app/sets/live-animals/services/commodities/index.js
++++ b/src/server/app/sets/live-animals/services/commodities/index.js
+@@ -1,6 +1,7 @@
+ import {
+   COMMODITY_OPTIONS,
+   COMMODITY_CODES,
++  COMMODITY_IDENTIFIERS,
+   COMMODITY_SPECIES,
+   COMMODITY_TYPE_DATA,
+   SPECIES_OPTIONS,
+@@ -61,6 +62,11 @@ export const isCommoditySpecies = (name, value) =>
+ 
+ export const packageCountCommodities = () => PACKAGE_COUNT_COMMODITIES
+ 
++// The identifiers this commodity carries, in the order it asks for them. A
++// commodity the catalogue holds no identifiers for carries none, and is
++// identified in free text instead.
++export const identifiersFor = (name) => COMMODITY_IDENTIFIERS[name] ?? []
++
+ export const microchipCommodities = () => MICROCHIP_COMMODITIES
+ 
+ export const passportCommodities = () => PASSPORT_COMMODITIES
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index 9b69b498..490e3ae1 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -109,19 +109,59 @@ export const PACKAGE_COUNT_COMMODITIES = [
+   '0407 - SPF Eggs'
+ ]
+ 
++// The identifiers each commodity carries, in the order Design release 1 asks
++// for them. The order belongs to the COMMODITY, not to the service: a cow is
++// asked for its ear tag before its passport because the ear tag is what a cow
++// actually carries, where a horse is asked for its microchip first
++// (design 01-14/16/17). A commodity with no typed identifier — Fish — is
++// described in free text instead, which the `notInUnionOf` gate on the
++// identification-details and description obligations derives.
++//
++// The five per-identifier allowlists below are DERIVED from this map, so an
++// identifier's gate and its position on the panel cannot drift apart. Adding
++// an identifier to a commodity is one edit here.
++export const COMMODITY_IDENTIFIERS = {
++  Cow: [
++    'animalIdentifierEarTag',
++    'animalIdentifierPassport',
++    'animalIdentifierTattoo'
++  ],
++  Horse: ['animalIdentifierMicrochip', 'animalIdentifierPassport', 'horseName'],
++  Cat: [
++    'animalIdentifierMicrochip',
++    'animalIdentifierPassport',
++    'animalIdentifierTattoo'
++  ],
++  Dog: [
++    'animalIdentifierMicrochip',
++    'animalIdentifierPassport',
++    'animalIdentifierTattoo'
++  ],
++  Fish: []
++}
++
++const commoditiesCarrying = (identifier) =>
++  COMMODITY_OPTIONS.filter((name) =>
++    COMMODITY_IDENTIFIERS[name]?.includes(identifier)
++  )
++
+ // The equine and companion-animal commodities. Design release 1 asks for a
+ // microchip on commodity code 0101 (Horse) and on 01061900 — the code Cat, Dog,
+ // ferret and the other live mammals share — so ferret is covered by the same
+ // entry as Cat and Dog once the picker offers it (design 01-16/17).
+-export const MICROCHIP_COMMODITIES = ['Horse', 'Cat', 'Dog']
++export const MICROCHIP_COMMODITIES = commoditiesCarrying(
++  'animalIdentifierMicrochip'
++)
+ 
+-export const PASSPORT_COMMODITIES = ['Horse', 'Cow', 'Cat', 'Dog']
++export const PASSPORT_COMMODITIES = commoditiesCarrying(
++  'animalIdentifierPassport'
++)
+ 
+-export const TATTOO_COMMODITIES = ['Cat', 'Dog', 'Cow']
++export const TATTOO_COMMODITIES = commoditiesCarrying('animalIdentifierTattoo')
+ 
+-export const EAR_TAG_COMMODITIES = ['Cow']
++export const EAR_TAG_COMMODITIES = commoditiesCarrying('animalIdentifierEarTag')
+ 
+-export const HORSE_NAME_COMMODITIES = ['Horse']
++export const HORSE_NAME_COMMODITIES = commoditiesCarrying('horseName')
+ 
+ export const PERMANENT_ADDRESS_COMMODITIES = ['Cat', 'Dog']
+ 

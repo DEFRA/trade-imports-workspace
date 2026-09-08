@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-106}} from the {{shared/dr1-parity-union}} backlog.
+
+DR1 puts each commodity's identifier boxes in the order that commodity's own list gives. The frontend puts them in one fixed order for every animal, so a cow is asked for its passport before its ear tag.
+
+The frontend order is a property of the service rather than of the commodity: the identification copy block declares passport, tattoo, ear tag and horse name in that sequence, and the card renders whichever of them are in scope without resorting them ({{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js}}, lines 21 to 30). DR1 asks for each commodity's identifiers in the order that commodity's own list sets, and the orders genuinely differ: cattle is ear tag then passport, a horse is microchip, passport, horse name, and a cat, dog or ferret is microchip, passport, tattoo ({{app/data/commodity-identifiers.js}}, lines 3 to 19).
+
+h2. Acceptance criteria
+
+* Each commodity carries its identifiers as an ordered list, and the identification card renders the boxes in that commodity's order rather than in the fixed order declared in the copy block.
+* Cattle asks for the ear tag before the passport.
+* A horse asks for microchip, then passport, then horse name, for whichever of those fields are in scope.
+* The two free-text fallbacks still come after the typed identifier fields.
+* No other commodity's identifier order changes as a side effect.
+* Unit tests and the E2E specs pass, with visual baselines updated where the field order has moved.
+
+h2. Notes
+
+This has to be settled before the microchip field is added, because a global order has nowhere to put a field that DR1 asks for first on some commodities and not at all on others. It also comes after the tattoo box comes off cattle, or the cow panel has a third box in the middle of the pair.
+
+Falsified by: finding DR1's cattle panel render passport above ear tag, or finding the frontend sort a commodity's identifier fields by anything other than the order they are declared in the copy block.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

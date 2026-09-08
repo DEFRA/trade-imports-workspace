@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-044}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Problem
+
+A new live-animals notification runs through seven questions and is then dropped on the hub. Pressing "Save and continue" on the additional animal details page goes to the hub, not to the arrival details, because the opening sequence has run out and the fall-through returns the hub path ({{src/server/app/sets/live-animals/journeys/linear/flow/run.js}} lines 22-53). From there the pattern repeats: every later section is entered from a task row and ends by returning to the hub, because the within-section next target also falls through to the hub when a section has no further page ({{src/server/app/flow/navigation.js}} lines 27-37). The four sections still to answer — documents, addresses, transport and the consignment contact ({{src/server/app/sets/live-animals/journeys/linear/flow/flow.js}} lines 59-80) — are four separate departures from the task list and four returns to it.
+
+Design release 1 has one sequence and runs it end to end: origin, what are you importing, reason for import, consignment details, animal identification where it applies, additional details, arrival details, transit countries where they apply, transporter, upload documents, roles and addresses, contact address, review and declaration ({{app/routes.js}} lines 1256-1285), and saving a page moves to the next step in that list ({{app/routes.js}} lines 1287-1305). The hub is somewhere a user chooses to go, not somewhere the journey puts them.
+
+h2. Acceptance criteria
+
+* The journey sequence carries on past the additional animal details page instead of ending there, so "Save and continue" moves to the next question in the notification.
+* The sequence follows Design release 1's order after the additional animal details: arrival details, transit countries where they apply, transporter, upload documents, roles and addresses, contact address, then review.
+* A user who follows the primary button through a new notification reaches the review page in one pass, without being sent to the hub between sections.
+* The fall-through to the hub at {{src/server/app/sets/live-animals/journeys/linear/flow/run.js}} lines 41-53 and {{src/server/app/flow/navigation.js}} line 36 applies only at the end of the journey, not at the end of every section.
+* The hub stays reachable from every page through the existing secondary "Save and return to overview" control. No new control is added to get back to it.
+* Existing unit tests and E2E specs are updated to match the new sequencing, including any capture or spec that asserts the post-save URL after the additional animal details page is the bare journey path.
+
+h2. Out of scope
+
+Unlocking the hub's task rows ({{inc-032}}). That decides what a user can start from the task list. This decides whether they are sent to the task list at all.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

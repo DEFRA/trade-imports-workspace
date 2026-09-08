@@ -10933,6 +10933,8 @@
     },
     {
       "id": "inc-083",
+      "ticket": "EUDPA-480",
+      "branch": "feat/EUDPA-480-the-frontend-rejects-an-internal-referen",
       "type": "obligation-change",
       "milestone": null,
       "domain": "origin",
@@ -10950,8 +10952,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "a523c8bf",
       "failure_reason": null,
       "finding": {
         "frontend": "The field invites 'any internal reference you want to use to identify this consignment', but only letters, numbers and underscores get through. Typing ACME-2026/01, or a reference with a space in it, returns the page with 'Internal reference must only contain letters, numbers and underscores'. There is also a 58-character ceiling, with 'Internal reference must be 58 characters or less' (src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:75-82).",
@@ -11048,10 +11050,28 @@
         "note": "C missed it. C's inc-075 detail even mentions in passing that the origin ruleset applies 'two rules to the internal reference' — so C's evidence shows the rules were still there at its capture, it simply never compared them against DR1, which imposes none. No mention of 'underscores' or the 58-character ceiling anywhere in C's backlog. Worth keeping: a trader whose own reference is ACME-2026/01 cannot enter it, and A flags that 58 may be arbitrary and that any surviving limit should be stated in the hint rather than only in an error.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/261",
+          "number": 261,
+          "merged": true,
+          "sha": "7a5161a33b353541a08fb801c0bc308b4da45ce0"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/157",
+          "number": 157,
+          "merged": true,
+          "sha": "7b33514da99925d47d8b422791afdc51718cfdc4"
+        }
+      ]
     },
     {
       "id": "inc-070",
+      "ticket": "EUDPA-483",
+      "branch": "feat/EUDPA-483-frontend-heads-the-reason-page-with-the",
       "type": "copy-change",
       "milestone": null,
       "domain": "import-reason",
@@ -11069,8 +11089,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "c0920a7a",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/262",
+          "number": 262,
+          "merged": true,
+          "sha": "b972f2286b6df3a2e93586d0ac4947162d72dac9"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/159",
+          "number": 159,
+          "merged": true,
+          "sha": "7676d56c2eea3b5420c037eb077455edf0ece720"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The page's largest text is the question itself: the radio fieldset's legend is promoted to the page heading, so a user meets \"What is the main reason for importing the animals?\" set at the large heading size (src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:11-19, taking its text from copy.legend at src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:3). At the captured width the question wraps onto two lines, pushing the first radio down the screen before the user has read a single option. The page is named separately, and differently, as \"Reason for import\" — that is the copy.title at :2, and it is what the breadcrumb and the browser tab both show. So the page calls itself two different things in three places.",
@@ -11278,6 +11314,8 @@
     },
     {
       "id": "inc-072",
+      "ticket": "EUDPA-485",
+      "branch": "feat/EUDPA-485-frontend-lets-a-user-leave-the-internal",
       "type": "obligation-change",
       "milestone": null,
       "domain": "import-reason",
@@ -11295,8 +11333,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "8ec89d53",
       "failure_reason": null,
       "finding": {
         "frontend": "A user who chooses Internal market, reaches the purpose page with its eleven radios, selects nothing and presses Save and continue is taken to the next page. The page has no error message to show and its copy file carries none for a blank answer — it validates with oneOf, which treats an empty string as a valid choice (src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js:25-30, and the validator itself at src/server/app/lib/validate/validators.js:114-121). Frontend is not permissive everywhere on this journey: destination country and port of exit both use requiredOneOf and both produce an error, which the captured screens fe-destination-country-error and fe-port-of-exit-error show. The notification is not submittable in this state — purposeInInternalMarket is mandatory once in scope (src/server/app/sets/live-animals/obligations/sections/import-reason.js:43-56), and the review section is gated on every task row being fulfilled, not applicable or optional (src/server/app/flow/section-status.js:11-15, applied at src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85, the gate itself at :83). So this is not a hole a user can submit through: it is a user who is let past the question and told nothing, meets a hub row they cannot clear, and finds out only when the check-answers step will not open.",
@@ -11637,10 +11675,28 @@
         "note": "Internal-market purpose can be left blank and the user walks on; DR1 stops them with 'Select a purpose in the internal market'. C merges this with the identical exit-date gap into one finding (see next row); A keeps them apart. A's version quotes the DR1 error-summary and reveal behaviour in more detail; C's names the culprit validator (oneOf at validators.js:118 explicitly permits an empty string). Even on substance. — The same pair is matched again under \"Origin of the import\", where the matcher wrote: Both: choose Internal market, select no purpose, and the frontend advances silently; DR1 stops with 'Select a purpose in the internal market'. C merges this with the identical exit-date gap into one finding (see the inc-083 row). A splits them and is the better ticket for it — two pages, two validators, two copy files. C is better at one thing: it traces the whole enforcement ladder to prove the notification is not actually submittable in this state, so nobody mistakes it for a data-integrity hole. The two notes disagree on which run is better: the \"Reason for import and exit details\" row says neither, the \"Origin of the import\" row says A. Better is taken from the \"Reason for import and exit details\" row, so the spine is run C's, split here into the purpose half with run A's error-rendering detail and later-gate citations folded in.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/263",
+          "number": 263,
+          "merged": true,
+          "sha": "ffb8ecd006e7a0c6269fe197adaf969dce067ed8"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/161",
+          "number": 161,
+          "merged": true,
+          "sha": "1626c25e7044fa0c71a990b3b617f20dde89c878"
+        }
+      ]
     },
     {
       "id": "inc-073",
+      "ticket": "EUDPA-487",
+      "branch": "feat/EUDPA-487-frontend-lets-a-user-leave-the-exit-date",
       "type": "obligation-change",
       "milestone": null,
       "domain": "import-reason",
@@ -11658,8 +11714,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "7e3e068b",
       "failure_reason": null,
       "finding": {
         "frontend": "Exit date is a date picker on a page of its own, reached only when the reason is Temporary admission horses. Leave the box empty, press Save and continue, and the journey moves on: the page validates with dateText, which allows an empty string through before it ever tries to read a date (src/server/app/sets/live-animals/journeys/linear/features/exit-date/controller.js:21 and src/server/app/lib/validate/validators.js:209-234). The only message the page owns is \"Enter a real exit date\" (src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:8), and there is no message for the date being missing anywhere in the service — the string \"Enter an exit date\" appears nowhere in trade-imports-animals-frontend or trade-imports-animals-tests. The rule itself is not missing: exitDate is mandatory once in scope (src/server/app/sets/live-animals/obligations/sections/import-reason.js:103-116), so the Exit details hub row stays incomplete, and the review section is gated on every task row being fulfilled, not applicable or optional (src/server/app/flow/section-status.js:11-15, applied at src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85, the gate itself at :83). So this is not a hole a user can submit through: it is a user who is let past the question and told nothing, and who finds out only when the check-answers step will not open.",
@@ -12033,10 +12089,21 @@
         "note": "Second half of the same C finding: exit date can be left blank under Temporary admission horses with no message, where DR1 says 'Enter an exit date'. Both runs also spot that the frontend's 'Enter a real exit date' should be DR1's 'Enter a real date' — A tucks it into this finding's remedy, C promotes it into inc-066. C alone notices that DR1 deliberately leaves the main reason radio itself optional, so the two sides already agree there and disagree only about what hangs off it — a useful scoping fact A never states. — The same pair is matched again under \"Origin of the import\", where the matcher wrote: Both: the exit date can be left blank on a temporary-admission-horses import and the frontend says nothing; DR1 asks with 'Enter an exit date'. C folds it into the purpose finding above rather than giving it an id. A is stronger — it grepped both the frontend and tests repos to prove the string 'Enter an exit date' exists nowhere in the service, and its own verification pulls back the title's overstatement (the journey does stop the user later, just never at the point of the mistake). A also raises the 'Enter a real exit date' / 'Enter a real date' wording here, where C moves it to inc-066. The two notes disagree on which run is better: the \"Reason for import and exit details\" row says neither, the \"Origin of the import\" row says A. Better is taken from the \"Reason for import and exit details\" row, so the spine is run C's, split here into the exit-date half with run A's absent-string grep and later-gate citations folded in.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/264",
+          "number": 264,
+          "merged": true,
+          "sha": "7dc0fa5eee5209207477f636befae68ad92de58e"
+        }
+      ]
     },
     {
       "id": "inc-074",
+      "ticket": "EUDPA-489",
+      "branch": "feat/EUDPA-489-four-of-the-eleven-internal-market-purpo",
       "type": "copy-change",
       "milestone": null,
       "domain": "import-reason",
@@ -12054,8 +12121,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "83561ee8",
       "failure_reason": null,
       "finding": {
         "frontend": "The eleven purpose options and their order match Design release 1 exactly, but four of the hints beneath them do not. Transfer of ownership - Sale/gift reads \"Any movement of an animal that has as it's aim, the sale of or the transfer of ownership of the animal ... with no sale involved (e.g. a gift)\" — a wrong possessive, a comma splitting \"aim\" from what follows, \"e.g.\" instead of words, and no closing full stop. Three more end without a full stop: Breeding, \"... or produce offspring\"; Racing, competition, show or training, \"Animals to participate in competitive or training events\"; and Production, \"... any other animal product or by-product\". All four come from src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js:6, :10, :13 and :19. The other seven hints — Rescue, Research, Approved premises or body, Companion animal not for resale or rehoming, Slaughter, Fattening and Restocking — match word for word.",
@@ -12304,10 +12371,21 @@
         "note": "Identical finding, independently derived: the same four of eleven internal-market purpose hints (it's/its, the stray comma, 'e.g.' for 'for example', three missing full stops), the same two source files, the same conclusion that the other seven match word for word. The strongest agreement in the area — two agents reading the same copy file months apart produced the same four-item list. — The same pair is matched again under \"Origin of the import\", where the matcher wrote: Both: four of the eleven internal-market purpose hints drift from DR1 — \"it's\" for \"its\", a stray comma, \"e.g.\" for \"for example\", three missing full stops. Near-identical findings down to the quoted strings and the same one-file fix. A's verification carries one guard rail C does not: the 'traveling' spelling in the Companion animal hint is shared by both sides and must NOT be tidied in the same pass. The two notes disagree on which run is better: the \"Reason for import and exit details\" row says neither, the \"Origin of the import\" row says A. Better is taken from the \"Reason for import and exit details\" row, so the spine is run C's, with run A's guard rail and its named option labels folded in.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/265",
+          "number": 265,
+          "merged": true,
+          "sha": "a2ff1077436b46a684f109823d142319f057f805"
+        }
+      ]
     },
     {
       "id": "inc-075",
+      "ticket": "EUDPA-491",
+      "branch": "feat/EUDPA-491-frontend-s-error-messages-for-the-exit-qu",
       "type": "copy-change",
       "milestone": null,
       "domain": "import-reason",
@@ -12327,8 +12405,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "a534a905",
       "failure_reason": null,
       "finding": {
         "frontend": "Submitting the destination-country page empty puts \"Select the destination country\" in the error summary and against the select, and the port-of-exit page puts \"Select the port of exit\" — both are in the captured error screens, in the summary list and repeated as the field's error message. The definite article implies the service already knows which one is meant. The exit-date page's only message is \"Enter a real exit date\", which repeats the field name that is already the page heading and the label. The three strings live in src/server/app/sets/live-animals/journeys/linear/features/destination-country/copy/copy.en.js:9, src/server/app/sets/live-animals/journeys/linear/features/port-of-exit/copy/copy.en.js:9 and src/server/app/sets/live-animals/journeys/linear/features/exit-date/copy/copy.en.js:8.",
@@ -12540,7 +12618,16 @@
         "note": "'Select the destination country' / 'Select the port of exit' where DR1 and GDS style say 'Select a …'. C bundles in the third string, 'Enter a real exit date' → 'Enter a real date', so the whole exit-message copy change is one ticket; A splits that third string off into inc-083. C also remembers the Welsh copy files, which A does not mention anywhere in this area. — The same pair is matched again under \"Origin of the import\", where the matcher wrote: Both: the destination-country and port-of-exit errors read 'Select the …' where DR1 and GDS style read 'Select a …'. C's version is wider and readier to hand to a developer — it adds the third string on the same theme ('Enter a real exit date' repeating a field name that is already the heading and the label), names all three copy files, and remembers the Welsh files beside them. A instead asks for a service-wide sweep for the same pattern, which is a bigger and vaguer ask. Both notes agree that C is the better spine; A's sweep instruction is folded in, narrowed to the one further instance A itself identified.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/266",
+          "number": 266,
+          "merged": true,
+          "sha": "4511fb3ac55354556a8ded2aa4fac29b94669083"
+        }
+      ]
     },
     {
       "id": "inc-071",
@@ -12828,6 +12915,8 @@
     },
     {
       "id": "inc-044",
+      "ticket": "EUDPA-493",
+      "branch": "feat/EUDPA-493-halfway-through-a-new-notification-the-f",
       "type": "flow-change",
       "milestone": null,
       "domain": "hub",
@@ -12847,8 +12936,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "86f3dfd4",
       "failure_reason": null,
       "finding": {
         "frontend": "A new notification is walked through seven questions and then dropped on the hub. The sequence is origin, what are you importing, consignment details, main reason for importing, purpose in the internal market, animal identification and additional animal details (src/server/app/sets/live-animals/journeys/linear/flow/run.js:22-39); pressing \"Save and continue\" on the last of them does not go to the arrival details, it goes to the hub, because the sequence has run out and the fall-through returns the hub path (src/server/app/sets/live-animals/journeys/linear/flow/run.js:41-53). From there the pattern repeats for the rest of the notification: every later section is entered from a task row and ends by returning to the hub, because the within-section next target also falls through to the hub when a section has no further page (src/server/app/flow/navigation.js:27-37). The four sections still to answer at that point — documents, addresses, transport and the consignment contact (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:59-80) — are therefore four separate departures from the task list and four returns to it.",
@@ -13087,10 +13176,21 @@
         "note": "A real catch that run A missed completely, and the biggest thing run C tells a BA about this area. Run A has no finding on journey sequencing at all: it never cites src/server/app/sets/live-animals/journeys/linear/flow/run.js, never cites DR1's step list at app/routes.js:1256-1305, and no A finding in any domain describes the fall-through to the hub. C shows the frontend's opening run stops after the additional-animal-details page and every later section is a separate departure from and return to the task list, where DR1 runs origin through to declaration in one sequence and treats the hub as somewhere a user chooses to go. C is careful to separate it from row unlocking: that decides what a user can start from the list, this decides whether they are sent to the list at all. It is filed under hub but it is really a journey-flow finding, which is plausibly why A's slicing let it fall between two authors.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/267",
+          "number": 267,
+          "merged": true,
+          "sha": "c8b27d1fac908e26d2955d8576d7d0a6a2d95b75"
+        }
+      ]
     },
     {
       "id": "inc-112",
+      "ticket": "EUDPA-494",
+      "branch": "feat/EUDPA-494-frontend-sets-both-questions-on-the-addi",
       "type": "copy-change",
       "milestone": null,
       "domain": "identification",
@@ -13108,8 +13208,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "d7742b61",
       "failure_reason": null,
       "finding": {
         "frontend": "The additional details page asks two questions — \"What are the animals certified for?\" and \"Does the consignment contain any unweaned animals?\" — and sets both fieldset legends at the small size, govuk-fieldset__legend--s (src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:18 and :32). At 19px they are barely larger than the hints and option labels beneath them, so the sixteen radios and the two radios run together as one list rather than reading as two separate questions.",
@@ -13245,10 +13345,21 @@
         "note": "A missed it, and it is the kind of finding A was otherwise good at — A authored exactly this comparison for the origin page (small labels and legends against DR1's medium plus app-eu-heading-m). It simply did not run the same check on this page. Two classes in one template; sixteen certification radios and two unweaned radios currently run together as one list.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/268",
+          "number": 268,
+          "merged": true,
+          "sha": "544db0996788aef7c4a57baf1d8dc047bdb390e5"
+        }
+      ]
     },
     {
       "id": "inc-097",
+      "ticket": "EUDPA-495",
+      "branch": "feat/EUDPA-495-frontend-tells-a-trader-the-certificatio",
       "type": "copy-change",
       "milestone": null,
       "domain": "identification",
@@ -13266,9 +13377,18 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "3fe81481",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/269",
+          "number": 269,
+          "merged": true,
+          "sha": "d56554ec90ff298c82a1baf29c83ea77438cd1a9"
+        }
+      ],
       "finding": {
         "frontend": "The hint under \"What are the animals certified for?\" reads \"You'll find this on the health certificate.\" (src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:5). A trader importing live animals is holding several certificates, and \"the health certificate\" does not say which one to look at. The line also uses a contraction where the rest of the service does not.",
         "prototype": "Design release 1's hint on the same question reads \"This information can be found on the ITAHC.\" (app/views/additional-animal-details.html:52-55). The Intra Trade Animal Health Certificate is the specific document the sixteen certification purposes are copied off, and naming it removes the guess. It is the same document Design release 1's upload-documents guidance calls the ITAHC. Everything else on this page matches: the same sixteen options in the same order from Further keeping to Other, and the same unweaned-animals question with the same hint.",
@@ -13357,6 +13477,8 @@
     },
     {
       "id": "inc-106",
+      "ticket": "EUDPA-497",
+      "branch": "feat/EUDPA-497-dr1-puts-each-commodity-s-identifier-box",
       "type": "flow-change",
       "milestone": null,
       "domain": "identification",
@@ -13374,8 +13496,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "bb2d7778",
       "failure_reason": null,
       "finding": {
         "frontend": "The boxes come out in the same order whatever animal is being identified, because the order is a property of the service rather than of the commodity: the identification copy block declares passport, tattoo, ear tag and horse name in that sequence and the card renders whichever of them are in scope without resorting them (src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js:21-30). On the captured cow the person is asked for Passport number, then Tattoo, then Ear tag number. The two free-text fallbacks are appended after the typed fields by the same rule.",
@@ -13460,10 +13582,21 @@
         "note": "C missed it, and had the evidence in hand. C's verification note on inc-056 records the frontend's three cattle fields as \"Passport number\", \"Tattoo\", \"Ear tag number\" and DR1's two as \"Ear tag\", \"Passport\" — it read both orders off the screenshots and never authored the ordering difference. No C finding mentions identifier order. A's point is load-bearing: a global order has nowhere to put a microchip that DR1 asks for first on some commodities and not at all on others, so this has to be settled before the microchip work.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/270",
+          "number": 270,
+          "merged": true,
+          "sha": "40bac5c158ed804ecb8e68321e87d3b44f419c70"
+        }
+      ]
     },
     {
       "id": "inc-107",
+      "ticket": "EUDPA-500",
+      "branch": "feat/EUDPA-500-dr1-asks-nothing-at-all-about-identifyin",
       "type": "obligation-change",
       "milestone": null,
       "domain": "identification",
@@ -13482,8 +13615,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "1bdac85e",
       "failure_reason": null,
       "finding": {
         "frontend": "Every commodity gets an identification record. Where the commodity is on none of the four identifier allowlists — of the five commodities the frontend offers, that is Fish — the record falls back to two free-text fields, 'Identification details' (hinted 'Any other way this animal is identified, if it has no passport, tattoo or ear tag') and 'Animal description'. fe-animal-identification-fish is that page: a salmon line headed 'Fish (0301) — Salmo salar', with those two boxes and no others, asking a person to say in prose how one fish out of a consignment is told from the next. The fallback obligations apply by the inverse gate at src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:174-198, and the person must still enter one record per animal counted before the task can complete.",
@@ -13588,10 +13721,28 @@
         "note": "C missed the substance. Run C never mentions fish on the identification page at all — \"Fish (0301)\" appears only in its commodity-picker finding. The half of A's finding about making the identification task row conditional does have a C id (inc-044, hub domain, well argued and arguably better on the mechanics of dropping the row), but the free-text fallback fields — the two boxes asking a trader to describe one salmon in prose — have no C counterpart.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/271",
+          "number": 271,
+          "merged": true,
+          "sha": "ab94d0cc6a2e4d04721502f2237635fc359c6d8a"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/165",
+          "number": 165,
+          "merged": true,
+          "sha": "a31d18a5c7693504f4889a510404f52ccd72ffc7"
+        }
+      ]
     },
     {
       "id": "inc-108",
+      "ticket": "EUDPA-502",
+      "branch": "feat/EUDPA-502-the-identification-page-s-green-button-r",
       "type": "copy-change",
       "milestone": null,
       "domain": "identification",
@@ -13609,8 +13760,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "127dde5f",
       "failure_reason": null,
       "finding": {
         "frontend": "At the foot of the identification page the green button reads 'Save and finish' — the only page in the service where it does not read 'Save and continue'. Every other journey page takes the shared macro's default (src/server/app/shared/save-actions.njk:5); this page passes an override at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25, using the string at src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:95. The button behaves like every other Save and continue: it saves whatever is in the open record and moves the person to the next page.",
@@ -13765,7 +13916,23 @@
         "note": "C missed it. The string \"Save and finish\" appears nowhere in run C's backlog. Small on its own, but A explains why it is not free-standing: it collides with the in-card button wording in A inc-075 (union inc-109), and doing that one without this one leaves two identically labelled buttons on the page doing different things.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/272",
+          "number": 272,
+          "merged": true,
+          "sha": "73810cd57988ec10080e2f165d41916d42f71d06"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/167",
+          "number": 167,
+          "merged": true,
+          "sha": "50dd7ca2ef5997ef7c4c2501774ef1388eb83261"
+        }
+      ]
     },
     {
       "id": "inc-109",
@@ -13788,8 +13955,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "2402a3d6",
       "failure_reason": null,
       "finding": {
         "frontend": "The button inside the record loop reads 'Save and add another' whatever is left to enter, and three captured states now say so. On a line of one animal the counter reads 'Enter details for Bos taurus 1 of 1' and the button still invites the person to add another. On a line of two with one already saved the counter reads 'Enter details for Bos taurus 2 of 2' — this is the last animal there is — and the button still reads 'Save and add another'. Only when the last record is saved does the wording stop being wrong, and that is because the whole entry block goes: the page then shows the saved records and the sentence 'You have entered details for all 2 Bos taurus animals'. So the words never tell the person what pressing them will do next. The button is rendered with no condition of its own at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk:71-76.",
@@ -13873,7 +14040,25 @@
         "note": "C missed it. C mentions \"Save and add another\" only as a landmark when locating the permanent-address block inside the card, never as a difference. A's evidence is three captured states — one-of-one, last-of-two, and at-maximum — showing the words never tell the trader what pressing them will do.",
         "better": null,
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-504",
+      "branch": "feat/EUDPA-504-the-frontend-shows-save-and-add-another",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/273",
+          "number": 273,
+          "merged": true,
+          "sha": "47241e5d9172f42aa5843cd337b04bb4ae1951a1"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/169",
+          "number": 169,
+          "merged": true,
+          "sha": "06f873b96e92f4063468287ac3057e3598474ef9"
+        }
+      ]
     },
     {
       "id": "inc-110",
@@ -13894,8 +14079,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "4856d372",
       "failure_reason": null,
       "finding": {
         "frontend": "The cow identification record offers three fields in this order — Passport number, Tattoo, Ear tag number. Tattoo is there because Cow is on the tattoo allowlist alongside Cat and Dog (src/server/app/sets/live-animals/services/commodities/stub.js:109), which gates the tattoo obligation at src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:127-135.",
@@ -14000,10 +14185,23 @@
         "note": "C missed it, and this is the most surprising miss in the area, because C's own verification note for inc-056 states that the frontend labels three cattle fields and DR1 labels two. C compared the labels of the fields both sides have and never asked why the frontend has an extra one. The fix is one name off one allowlist.",
         "better": null,
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-508",
+      "branch": "feat/EUDPA-508-the-frontend-asks-for-a-tattoo-on-every",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/275",
+          "number": 275,
+          "merged": true,
+          "sha": "b1ff013c8773c7215646f5f5729a1339b1e96234"
+        }
+      ]
     },
     {
       "id": "inc-111",
+      "ticket": "EUDPA-509",
+      "branch": "feat/EUDPA-509-the-frontend-asks-whether-the-consignmen",
       "type": "obligation-change",
       "milestone": null,
       "domain": "identification",
@@ -14021,8 +14219,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "66a03a8a",
       "failure_reason": null,
       "finding": {
         "frontend": "'Does the consignment contain any unweaned animals?' is rendered whenever any commodity line is a Cow or a Horse, and is mandatory when it is rendered. The rule is the two-name allowlist at src/server/app/sets/live-animals/services/commodities/stub.js:117, read by the obligation at src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:46-55. A person importing horses alone is asked the question and cannot continue without answering it.",
@@ -14121,7 +14319,16 @@
         "note": "C missed it and asserted the opposite. C's inc-053 says the page carries \"the same unweaned-animals question with the same hint\", and its verification note says \"the unweaned question and its hint match word for word\". C compared the copy and never compared which commodities make the question appear. A BA reading only run C would conclude this question is at parity; it is not — a horses-only consignment is asked a question DR1 does not ask, and cannot continue without answering it.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/276",
+          "number": 276,
+          "merged": true,
+          "sha": "598c60456ab53759b2213c0e66540967579beee0"
+        }
+      ]
     },
     {
       "id": "inc-139",

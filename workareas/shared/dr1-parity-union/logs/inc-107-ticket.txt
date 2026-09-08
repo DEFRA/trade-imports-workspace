@@ -1,0 +1,30 @@
+h2. Increment
+
+{{inc-107}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+Every commodity in the frontend gets an identification record. Where the commodity is on none of the four identifier allowlists — of the five commodities the frontend offers, that is Fish — the record falls back to two free-text fields, 'Identification details' (hinted 'Any other way this animal is identified, if it has no passport, tattoo or ear tag') and 'Animal description'. The fallback obligations apply by the inverse gate at {{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:174-198}}.
+
+DR1 asks for identification only where the commodity has a typed identifier set. Fourteen of DR1's twenty-one commodities carry an empty identifier list, ornamental fish among them ({{app/data/commodities.js:280-290}}), and nothing in DR1 offers a free-text identifier of any kind. Where no commodity on the consignment has identifiers, the page does not exist for that person: {{renderAnimalIdentificationDetailsPage}} returns {{res.redirect('/additional-animal-details')}} when {{hasAnimalIdentifiersRequired}} is false ({{app/routes.js:8893-8897}}), covering the GET and every re-render after a post.
+
+h2. Acceptance criteria
+
+* The {{identificationDetails}} and {{description}} fallback obligations are dropped, so a commodity with no typed identifier gets no identification fields at all.
+* A commodity whose identifier list is empty renders no identification panel, and no free-text identification or description field is rendered on any identification panel.
+* Where no commodity line on the consignment has a typed identifier, a request for the identification page redirects on to additional details, on the GET and on every re-render after a post.
+* The at-least-one-identifier rule on the unit record is re-checked once the fallbacks are gone — a Fish line would have no identifier obligation able to satisfy it, so the unit-record count rule must not demand a record it cannot accept.
+* Unit tests cover the empty-identifier-list commodity (no panel, no fields) and the redirect when no commodity has a typed identifier.
+* E2E specs and their visual baselines in the tests repo are updated for the removed fields and the redirect.
+
+h2. Scope note
+
+The hub task row is owned by a separate finding ({{inc-035}}, {{hub--identification-task-always-shown}}) and is not in scope here. This increment owns the fields on the page and the redirect when no commodity has identifiers.
+
+h2. Falsified by
+
+Finding a free-text identification or description field rendered on any DR1 identification panel, or a DR1 identification panel rendered for a commodity whose identifier list is empty.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,22 @@
+h2. Increment
+
+{{inc-111}} from the {{shared/dr1-parity-union}} backlog.
+
+The frontend asks whether the consignment holds unweaned animals when it holds horses. Design release 1 asks that question only of cattle and pigs.
+
+The rule is the two-name allowlist {{UNWEANED_ANIMAL_COMMODITIES}} at {{src/server/app/sets/live-animals/services/commodities/stub.js:117}}, read by the obligation at {{src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:46-55}}. A person importing horses alone is asked the question and cannot continue without answering it.
+
+In DR1, {{getUnweanedOptions}} ({{app/routes.js:1156-1183}}) returns options only where a selected commodity carries a non-empty {{unweanedOptions}} array, and only cattle and pig do. Horse, sheep and goat carry none.
+
+h2. Acceptance criteria
+
+* {{Horse}} is removed from the unweaned-animals commodity allowlist at {{src/server/app/sets/live-animals/services/commodities/stub.js:117}}, leaving {{Cow}}.
+* A consignment whose only commodity line is a horse is not asked "Does the consignment contain any unweaned animals?" on additional details, and can continue without answering it.
+* A consignment with a cattle line is still asked the question, and it is still mandatory when it is rendered.
+* The stale V4 intent comment at {{src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:29-38}}, which names equines, cattle, pigs, sheep and goats, is removed or corrected — DR1 is the authority and it contradicts that comment on three of the five.
+* {{Pig}} is out of scope here: it is not in {{COMMODITY_OPTIONS}} at all, so it can only be added once the commodity catalogue is filled out.
+* Existing unit and component tests pass, and any test asserting the question appears for horses is updated.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,21 @@
+test(parity-dr1): follow the internal-market purpose becoming required
+
+The frontend now refuses a blank purpose under the Internal market
+reason and returns the page with "Select a purpose in the internal
+market" (EUDPA-485, increment inc-072). Two E2E specs still described
+the old permissive behaviour and failed against the branch build:
+
+- pages/import-reason.spec.ts "accepts a valid import reason" chose
+  Internal market and expected no error summary. Re-entry opens no
+  reveal, so it is the reason that submits with nothing else owed —
+  the same choice change-from-cya.spec.ts makes. A new case covers the
+  refusal the old one was accidentally asserting against.
+- features/reason-purpose-scope.spec.ts walked past a blank purpose and
+  expected the tail page plus an unfinished task row. It now expects the
+  error on the page, then answers the purpose and completes the row.
+
+No production code changed here; the frontend fit specs for the same
+behaviour already pass.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WohzXrdxfbRLGSMJxs93GQ

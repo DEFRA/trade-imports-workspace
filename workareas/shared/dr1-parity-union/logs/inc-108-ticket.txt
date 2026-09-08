@@ -1,0 +1,19 @@
+h2. Increment
+
+{{inc-108}} from the {{shared/dr1-parity-union}} backlog.
+
+The identification page's green button reads *Save and finish*, the only page in the service that does not read *Save and continue*. Every other journey page takes the shared macro's default at {{src/server/app/shared/save-actions.njk:5}}; this page passes an override at {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk:25}}, using the string at {{src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:95}}. The button behaves like every other *Save and continue*: it saves the open record and moves the person to the next page.
+
+DR1's identification page ends with *Save and continue* and does the same thing ({{app/views/animal-identification-details.html:144-148}}, handled at {{app/routes.js:10415-10423}}). DR1 keeps *Save and finish* for a different job: the in-panel button on the last outstanding animal of a species, meaning finish this species, not finish this page.
+
+h2. Acceptance criteria
+
+* The identification page's primary button reads *Save and continue*, taking the shared default from {{src/server/app/shared/save-actions.njk}} rather than an override.
+* The override passed at {{animal-identification.njk:25}} is removed, and the now-unused *Save and finish* string in the commodities copy files is removed or left only where it is still used.
+* The change lands in both English and Welsh copy files.
+* The button's behaviour is unchanged: it saves the open record and moves the person to the next page.
+* Unit and component tests for the identification page pass, and any test or E2E spec asserting on the old label is updated to the new one.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-072}} from the {{shared/dr1-parity-union}} backlog.
+
+A user who chooses Internal market, reaches the purpose page with its eleven radios, selects nothing and presses Save and continue is taken to the next page. The page has no error message to show and its copy file carries none for a blank answer — it validates with {{oneOf}}, which treats an empty string as a valid choice. Design release 1 keeps the user on the page with "Select a purpose in the internal market" until it is answered.
+
+The notification is not submittable in this state — {{purposeInInternalMarket}} is mandatory once in scope and the review section is gated on every task row being fulfilled, not applicable or optional. So this is not a hole a user can submit through: it is a user who is let past the question and told nothing, meets a hub row they cannot clear, and finds out only when the check-answers step will not open.
+
+h2. Acceptance criteria
+
+* Choosing Internal market and leaving the purpose blank returns the user to the same page with a {{govuk-error-summary}} headed "There is a problem" and one entry, instead of advancing to the next page.
+* The error message on both the summary and the field is exactly "Select a purpose in the internal market".
+* The summary link moves focus to the first radio in the purpose list.
+* {{purposeInInternalMarket}} validates with {{requiredOneOf}} rather than {{oneOf}} in {{src/server/app/sets/live-animals/journeys/linear/features/import-purpose/controller.js}}.
+* The message is added to an errors block in {{src/server/app/sets/live-animals/journeys/linear/features/import-purpose/copy/copy.en.js}}, which today has no errors block at all.
+* The main reason radio is NOT made required — Design release 1 lets a user leave it blank and the frontend already matches that.
+* If {{inc-067}} has landed first and the purpose has become a conditional reveal on the reason page, the same check belongs on the reveal instead of on a page that no longer exists.
+
+h2. Notes
+
+Falsified by an error already rendered on {{fe-import-purpose}} after an empty submit. {{oneOf}} allows an empty string explicitly at {{src/server/app/lib/validate/validators.js:118}}, so finding the page returning an error summary with nothing filled in would prove this wrong.
+
+Travels with {{inc-067}}, {{inc-068}}, {{inc-069}} (the questions that can be skipped move onto the reason page, so the checks land wherever the questions end up) and {{inc-075}} (both change the same copy file's error strings).
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

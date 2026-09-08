@@ -1,0 +1,251 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js
+index 21895314..a81b715b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js
+@@ -13,11 +13,14 @@ import { copy } from './copy/copy.en.js'
+ 
+ const SAVE_AND_CONTINUE = 'Save and continue'
+ 
+-const startAtAdditionalDetails = async (page) => {
++// The species drives which questions the page asks, so it is the one thing
++// the set-up varies: cattle are asked the unweaned-animals question and
++// horses are not.
++const startAtAdditionalDetails = async (page, species = 'Bos taurus') => {
+   await startNotification(page)
+   await answerCountryOfOrigin(page)
+   await page.getByRole('link', { name: 'What are you importing?' }).click()
+-  await selectSpecies(page, ['Bos taurus'])
++  await selectSpecies(page, [species])
+   await page
+     .getByRole('button', { name: SAVE_AND_CONTINUE, exact: true })
+     .click()
+@@ -85,6 +88,47 @@ test.describe('additional-details feature — rendering', () => {
+   })
+ })
+ 
++// Design release 1 asks the unweaned-animals question only of a commodity
++// that carries unweaned options — cattle, not horses — so a horses-only
++// consignment is asked what the animals are certified for and nothing else.
++test.describe('additional-details feature — the unweaned commodity gate', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await startAtAdditionalDetails(page, 'Equus caballus')
++  })
++
++  test('does not ask a horses-only consignment about unweaned animals', async ({
++    page
++  }) => {
++    await expect(
++      page.getByRole('group', { name: copy.certified.legend })
++    ).toBeVisible()
++    await expect(
++      page.getByRole('group', { name: copy.unweaned.legend })
++    ).toHaveCount(0)
++  })
++
++  test('saves a horses-only consignment without an unweaned answer', async ({
++    page
++  }) => {
++    const detailsUrl = page.url()
++
++    await page.getByRole('radio', { name: 'Slaughter', exact: true }).check()
++    await page
++      .getByRole('button', { name: SAVE_AND_CONTINUE, exact: true })
++      .click()
++
++    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
++    await page.goto(detailsUrl)
++    await expect(
++      page.getByRole('radio', { name: 'Slaughter', exact: true })
++    ).toBeChecked()
++    await expect(
++      page.getByRole('group', { name: copy.unweaned.legend })
++    ).toHaveCount(0)
++  })
++})
++
+ test.describe('additional-details feature — validation', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 925656ea..a6b2fdad 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -662,7 +662,9 @@ describe(`${SUITE} — commodity-gate render matrix — model metadata per selec
+ 
+   const MATRIX = [
+     { commodity: 'Cow', packages: true, unweaned: true, cph: true },
+-    { commodity: 'Horse', packages: true, unweaned: true, cph: false },
++    // Design release 1 asks the unweaned-animals question only of a commodity
++    // carrying unweaned options, and a horse carries none.
++    { commodity: 'Horse', packages: true, unweaned: false, cph: false },
+     { commodity: 'Cat', packages: true, unweaned: false, cph: false },
+     { commodity: 'Dog', packages: true, unweaned: false, cph: false },
+     { commodity: 'Fish', packages: false, unweaned: false, cph: false }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+index 3fb68352..9ffe65ef 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+@@ -376,7 +376,7 @@
+           "reasons": [
+             {
+               "code": "obligation.containsUnweanedAnimals.mandatory.becauseApplicableCommodity",
+-              "explanation": "consignment includes at least one commodity that requires unweaned-animal tracking (equines, cattle, pigs, sheep, or goats)"
++              "explanation": "consignment includes at least one commodity that is asked the unweaned-animals question"
+             }
+           ]
+         },
+@@ -924,7 +924,7 @@
+           "reasons": [
+             {
+               "code": "obligation.containsUnweanedAnimals.mandatory.becauseApplicableCommodity",
+-              "explanation": "consignment includes at least one commodity that requires unweaned-animal tracking (equines, cattle, pigs, sheep, or goats)"
++              "explanation": "consignment includes at least one commodity that is asked the unweaned-animals question"
+             }
+           ]
+         },
+@@ -1409,7 +1409,7 @@
+           "reasons": [
+             {
+               "code": "obligation.containsUnweanedAnimals.mandatory.becauseApplicableCommodity",
+-              "explanation": "consignment includes at least one commodity that requires unweaned-animal tracking (equines, cattle, pigs, sheep, or goats)"
++              "explanation": "consignment includes at least one commodity that is asked the unweaned-animals question"
+             }
+           ]
+         },
+diff --git a/src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js b/src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js
+index b53236a7..25375585 100644
+--- a/src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js
++++ b/src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js
+@@ -28,9 +28,10 @@ export const cph = {
+ 
+ // -----------------------------------------------------------------------------
+ // Contains unweaned animals — notification-level yes/no, gated on the
+-// active commodities per V4. Only mandatory when the
+-// consignment includes at least one commodity requiring unweaned
+-// tracking (equines / cattle / pigs / sheep / goats). Declared here
++// active commodities. Only mandatory when the consignment includes at
++// least one commodity design release 1 asks the question of; which
++// commodities those are is the commodities service's to say
++// (UNWEANED_ANIMAL_COMMODITIES). Declared here
+ // (rather than up top with
+ // the other notification-level scalar obligations) because the
+ // applyTo closure captures `commodityCode` — declaring it before
+@@ -40,7 +41,7 @@ export const cph = {
+ const unweanedApplicableReason = {
+   code: 'obligation.containsUnweanedAnimals.mandatory.becauseApplicableCommodity',
+   explanation:
+-    'consignment includes at least one commodity that requires unweaned-animal tracking (equines, cattle, pigs, sheep, or goats)'
++    'consignment includes at least one commodity that is asked the unweaned-animals question'
+ }
+ 
+ export const containsUnweanedAnimals = {
+diff --git a/src/server/app/sets/live-animals/obligations/whitelists.test.js b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+index 11b58446..2e4734d9 100644
+--- a/src/server/app/sets/live-animals/obligations/whitelists.test.js
++++ b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+@@ -1,7 +1,7 @@
+ /**
+  * Whitelist scope tests.
+  *
+- * V4 gates eight commodity-scoped obligations on the commodities
++ * V4 gates nine commodity-scoped obligations on the commodities
+  * service's allowlists, in the stored picker-name vocabulary.
+  * Silently widening any allowlist is a real risk (e.g. adding a name
+  * to the package-count list that puts `numberOfPackages` in scope for
+@@ -20,6 +20,7 @@ import {
+   commodityCode,
+   numberOfPackages,
+   cph,
++  containsUnweanedAnimals,
+   microchip,
+   passport,
+   tattoo,
+@@ -36,7 +37,8 @@ import {
+   packageCountCommodities,
+   passportCommodities,
+   permanentAddressCommodities,
+-  tattooCommodities
++  tattooCommodities,
++  unweanedCommodities
+ } from '../services/commodities/index.js'
+ 
+ // Sentinel — a commodity name deliberately not present in any V4
+@@ -114,6 +116,43 @@ describe('CPH list → cph (top-level anyAllowListed)', () => {
+   })
+ })
+ 
++// ---------------------------------------------------------------------------
++// Notification-level gate: containsUnweanedAnimals
++//
++// Same shape as cph — `anyAllowListed(commodityCode, unweanedCommodities())`
++// — so the question is asked once for the consignment as soon as ANY line
++// carries a commodity design release 1 asks it of.
++// ---------------------------------------------------------------------------
++
++describe('unweaned list → containsUnweanedAnimals (top-level anyAllowListed)', () => {
++  for (const name of unweanedCommodities()) {
++    it(`Should put containsUnweanedAnimals in scope when a line has commodity = '${name}'`, () => {
++      const state = evaluate({
++        [commodityCode.id]: { line1: name }
++      })
++      expect(state.obligations[containsUnweanedAnimals.id].inScope).toBe(true)
++    })
++  }
++
++  it(`Should not put containsUnweanedAnimals in scope when no line matches`, () => {
++    const state = evaluate({
++      [commodityCode.id]: { line1: CONTROL_NAME }
++    })
++    expect(state.obligations[containsUnweanedAnimals.id].inScope).toBe(false)
++  })
++
++  // Design release 1 asks the question only of a commodity carrying unweaned
++  // options, and horses carry none — so a horses-only consignment is never
++  // asked it. Named rather than left to the sentinel because Horse is a real
++  // commodity the picker offers and the gate used to hold it.
++  it('Should not put containsUnweanedAnimals in scope for a horses-only consignment', () => {
++    const state = evaluate({
++      [commodityCode.id]: { line1: 'Horse' }
++    })
++    expect(state.obligations[containsUnweanedAnimals.id].inScope).toBe(false)
++  })
++})
++
+ // ---------------------------------------------------------------------------
+ // Unit-record-scoped gates: microchip / passport / tattoo / earTag /
+ // horseName / permanentAddress. Each uses
+@@ -184,6 +223,7 @@ for (const { name, names, gated } of UNIT_SCOPED_ALLOWLISTS) {
+ const EXPECTED = {
+   'storable package-count entries': ['Cat', 'Cow', 'Dog', 'Horse'],
+   'CPH list': ['Cow'],
++  'unweaned list': ['Cow'],
+   'microchip list': ['Horse', 'Cat', 'Dog'],
+   'passport list': ['Horse', 'Cow', 'Cat', 'Dog'],
+   'tattoo list': ['Cat', 'Dog'],
+@@ -198,6 +238,7 @@ const ALLOWLISTS_UNDER_TEST = [
+     names: storablePackageCountCommodities()
+   },
+   { name: 'CPH list', names: cphCommodities() },
++  { name: 'unweaned list', names: unweanedCommodities() },
+   { name: 'microchip list', names: microchipCommodities() },
+   { name: 'passport list', names: passportCommodities() },
+   { name: 'tattoo list', names: tattooCommodities() },
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index 5710e4c0..008bc8db 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -176,6 +176,12 @@ export const IDENTIFIED_COMMODITIES = COMMODITY_OPTIONS.filter(
+ // rule, so the address is never collected. Pinned by commodities/index.test.js.
+ export const PERMANENT_ADDRESS_COMMODITIES = ['Cat', 'Dog']
+ 
+-export const UNWEANED_ANIMAL_COMMODITIES = ['Cow', 'Horse']
++// The commodities design release 1 asks the unweaned-animals question of. DR1
++// asks it only where a selected commodity carries unweaned options, and its
++// catalogue puts those on cattle and pigs alone — not on horses, and not on
++// sheep or goats. Of the five commodities this catalogue offers today only Cow
++// qualifies; Pig joins the list when the catalogue grows to hold it. Pinned by
++// obligations/whitelists.test.js.
++export const UNWEANED_ANIMAL_COMMODITIES = ['Cow']
+ 
+ export const CPH_COMMODITIES = ['Cow']

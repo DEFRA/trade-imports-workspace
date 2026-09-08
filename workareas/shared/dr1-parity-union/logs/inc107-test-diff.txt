@@ -1,0 +1,154 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index de8fd850..2916d006 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -188,12 +188,12 @@ describe(`${SUITE} — the Selected commodities summary`, () => {
+     const context = await viewContext({
+       commodityLines: [
+         cowLine({ numberOfAnimalsQuantity: '2' }),
+-        fishLine({ numberOfAnimalsQuantity: '3' })
++        horseLine({ numberOfAnimalsQuantity: '3' })
+       ]
+     })
+     expect(context.selectedCommodities).toEqual([
+       { code: '0102', name: 'Domestic cattle', animals: '2' },
+-      { code: '0301', name: 'Atlantic salmon', animals: '3' }
++      { code: '0101', name: 'Horse', animals: '3' }
+     ])
+   })
+ 
+@@ -201,17 +201,15 @@ describe(`${SUITE} — the Selected commodities summary`, () => {
+   // branch of the template, so it vanished as soon as the page had cards. The
+   // href the summary and the Add another commodity link both use is the same
+   // one either way.
+-  it('Should offer the route back to the commodity question whether or not there is anything to identify', async () => {
+-    for (const commodityLines of [[catLine()], []]) {
+-      const journey = await store.create()
+-      await store.seedAnswers(journey.journeyId, { commodityLines })
+-      const h = stubH()
+-      await getHandler(journeyRequest(journey.journeyId), h)
+-      const { addHref, hasLines } = h.captured.view.context
+-
+-      expect(hasLines).toBe(commodityLines.length > 0)
+-      expect(addHref).toBe(pagePath(journey.journeyId, 'commodities'))
+-    }
++  it('Should offer the route back to the commodity question alongside the cards', async () => {
++    const journey = await store.create()
++    await store.seedAnswers(journey.journeyId, { commodityLines: [catLine()] })
++    const h = stubH()
++    await getHandler(journeyRequest(journey.journeyId), h)
++    const { addHref, hasLines } = h.captured.view.context
++
++    expect(hasLines).toBe(true)
++    expect(addHref).toBe(pagePath(journey.journeyId, 'commodities'))
+   })
+ 
+   // A trader who miscounted has nowhere to go from the counter otherwise: the
+@@ -348,22 +346,21 @@ describe(`${SUITE} — the saved-animals table`, () => {
+     expect(card.units[0].cells).toEqual(['', 'UK123456789', '', 'Pet Owner'])
+   })
+ 
+-  it('Should head a fallback-identifier commodity with its own columns and no permanent address', async () => {
++  it('Should head a horse line with the three identifiers it carries and no permanent address', async () => {
+     const [card] = await viewCards({
+       commodityLines: [
+-        fishLine({
++        horseLine({
+           numberOfAnimalsQuantity: '2',
+-          animalIdentifiers: [
+-            { animalIdentifierIdentificationDetails: 'Tank mark TM-77' }
+-          ]
++          animalIdentifiers: [{ horseName: 'Shergar' }]
+         })
+       ]
+     })
+     expect(card.identifierColumns).toEqual([
+-      'Identification details',
+-      'Description'
++      'Microchip',
++      'Passport',
++      'Horse name'
+     ])
+-    expect(card.units[0].cells).toEqual(['Tank mark TM-77', ''])
++    expect(card.units[0].cells).toEqual(['', '', 'Shergar'])
+   })
+ })
+ 
+@@ -573,7 +570,9 @@ describe(`${SUITE} — Remove`, () => {
+ // The identifier-field render reads the `.metadata.values` (the coverage-gated
+ // sidecar), normalising the selected commodity NAME to a CN code via
+ // commodityCodeFor before comparing. This matrix pins the rendered fields per
+-// selectable species (Cow/Horse/Cat/Dog/Fish).
++// selectable species that carries identifiers (Cow/Horse/Cat/Dog). Fish
++// carries none, so it is not in the matrix — it earns no panel at all, which
++// the "no commodity carries an identifier" suite below pins instead.
+ describe(`${SUITE} — identifier render matrix — model metadata per selectable species`, () => {
+   setupIdentificationEngine()
+ 
+@@ -618,15 +617,6 @@ describe(`${SUITE} — identifier render matrix — model metadata per selectabl
+       species: '923502',
+       fieldIds: [MICROCHIP_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0],
+       showAddress: true
+-    },
+-    {
+-      commodity: 'Fish',
+-      species: '801204',
+-      fieldIds: [
+-        'animalIdentifierIdentificationDetails-0',
+-        'animalIdentifierDescription-0'
+-      ],
+-      showAddress: false
+     }
+   ]
+ 
+@@ -639,3 +629,50 @@ describe(`${SUITE} — identifier render matrix — model metadata per selectabl
+     }
+   )
+ })
++
++// Design release 1 asks for identification only where the commodity has an
++// identifier type of its own. Fish is on none of the allowlists, so it earns
++// no panel — and where no line earns one there is no page to show: the
++// request carries on to the next step rather than rendering an empty surface.
++describe(`${SUITE} — a commodity that carries no identifier of its own`, () => {
++  setupIdentificationEngine()
++
++  const requestPage = async (seed) => {
++    const journey = await store.create()
++    await store.seedAnswers(journey.journeyId, seed)
++    const h = stubH()
++    const response = await getHandler(journeyRequest(journey.journeyId), h)
++    return { journeyId: journey.journeyId, response, view: h.captured.view }
++  }
++
++  it('Should give a fish line no panel and no place in the summary', async () => {
++    const context = await viewContext({
++      commodityLines: [
++        cowLine({ numberOfAnimalsQuantity: '2' }),
++        fishLine({ numberOfAnimalsQuantity: '3' })
++      ]
++    })
++    expect(context.cards.map((card) => card.title)).toEqual([
++      'Cow (0102) — Bos taurus'
++    ])
++    expect(context.selectedCommodities).toEqual([
++      { code: '0102', name: 'Domestic cattle', animals: '2' }
++    ])
++  })
++
++  it('Should carry a request for the page on when no line carries an identifier', async () => {
++    const { journeyId, response, view } = await requestPage({
++      commodityLines: [fishLine({ numberOfAnimalsQuantity: '3' })]
++    })
++    expect(view).toBeUndefined()
++    expect(response).toEqual({ redirect: hubPath(journeyId) })
++  })
++
++  it('Should carry a request for the page on when the notification has no commodities', async () => {
++    const { journeyId, response, view } = await requestPage({
++      commodityLines: []
++    })
++    expect(view).toBeUndefined()
++    expect(response).toEqual({ redirect: hubPath(journeyId) })
++  })
++})

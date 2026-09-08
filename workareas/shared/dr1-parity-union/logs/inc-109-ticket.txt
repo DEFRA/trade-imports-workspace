@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-109}} from the {{shared/dr1-parity-union}} backlog.
+
+The button inside the animal identification record loop reads "Save and add another" whatever is left to enter. On a line of one animal the counter reads "Enter details for Bos taurus 1 of 1" and the button still invites the person to add another. On a line of two with one already saved the counter reads "Enter details for Bos taurus 2 of 2" — the last animal there is — and the button still reads "Save and add another". So the words never tell the person what pressing them will do next.
+
+DR1 makes the in-panel button say what is actually left to do: no in-panel button at all when the species has one animal (the page's own "Save and continue" captures the record), "Save and finish" on the last outstanding animal, and "Save and add another" otherwise.
+
+h2. Acceptance criteria
+
+* Where the line's number of animals is one, no in-card save button renders; the page-level "Save and continue" captures the record.
+* Where this is the last outstanding record on the line, the in-card button reads "Save and finish".
+* Where more records remain after this one, the in-card button continues to read "Save and add another".
+* The count comes from the card view model, which already knows the cap and how many units are saved.
+* The page-level buttons are left alone — they are the journey's own pattern and a separate concern.
+* The at-maximum behaviour is unchanged: once the line holds as many records as animals the whole entry block is replaced by the at-maximum message.
+
+h2. Evidence
+
+Frontend: {{src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk}} lines 71-76.
+
+DR1 prototype: {{app/routes.js}} lines 1711-1722 — {{showSaveButton}} is false when {{totalAnimals <= 1}}, the text is "Save and finish" when exactly one record is outstanding and "Save and add another" otherwise.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,153 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index a3bdb7dc..85587481 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -66,7 +66,7 @@ test.describe('live-animals journey glue', () => {
+       page.getByRole('heading', { name: 'Identification details', exact: true })
+     ).toBeVisible()
+ 
+-    await page.getByRole('button', { name: 'Save and finish' }).click()
++    await save()
+     await expect(
+       page.getByRole('heading', { name: 'Additional details', exact: true })
+     ).toBeVisible()
+@@ -184,7 +184,7 @@ test.describe('live-animals journey glue', () => {
+     await expect(page).toHaveURL(
+       /\/identification\?change=1(?:#identification-card-0)?$/
+     )
+-    await page.getByRole('button', { name: 'Save and finish' }).click()
++    await page.getByRole('button', { name: 'Save and continue' }).click()
+     await expect(page).toHaveURL(/\/notification-view(?:#.*)?$/)
+     await expect(page.getByText('UK000000000002')).toBeVisible()
+ 
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 7f233ec9..af10c41f 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -269,7 +269,7 @@ export const answerAnimalIdentification = async (page) => {
+   await page
+     .getByLabel('Ear tag', { exact: true })
+     .fill(unit.animalIdentifierEarTag)
+-  await page.getByRole('button', { name: 'Save and finish' }).click()
++  await save(page)
+ }
+ 
+ export const answerImportReason = async (page) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index f6d3b9c4..64cfd1e0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -427,13 +427,15 @@ describe(`${SUITE} — Save and add another`, () => {
+   })
+ })
+ 
+-describe(`${SUITE} — Save and finish`, () => {
++// The page primary is the shared "Save and continue", so it carries no action
++// of its own — the post falls through to the save-and-move-on default.
++describe(`${SUITE} — Save and continue`, () => {
+   setupIdentificationEngine()
+ 
+   it('Should append the held record then exit along the section flow to the hub', async () => {
+     const result = await driveHandler(post, {
+       seed: { commodityLines: [cowLine({ numberOfAnimalsQuantity: '2' })] },
+-      payload: { action: 'finish', 'animalIdentifierEarTag-0': 'UK1' }
++      payload: { 'animalIdentifierEarTag-0': 'UK1' }
+     })
+     expect(result.response).toEqual({
+       redirect: hubPath(result.journeyId)
+@@ -446,7 +448,7 @@ describe(`${SUITE} — Save and finish`, () => {
+   it('Should exit without appending when no form holds data — the zero-record pass', async () => {
+     const result = await driveHandler(post, {
+       seed: { commodityLines: [cowLine()] },
+-      payload: { action: 'finish' }
++      payload: {}
+     })
+     expect(result.response).toEqual({
+       redirect: hubPath(result.journeyId)
+@@ -458,7 +460,6 @@ describe(`${SUITE} — Save and finish`, () => {
+     const result = await driveHandler(post, {
+       seed: { commodityLines: [cowLine(), catLine()] },
+       payload: {
+-        action: 'finish',
+         'animalIdentifierEarTag-0': 'UK1',
+         'animalIdentifierPassport-1': 'UK123456789'
+       }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk
+index 83666f0c..1049880f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.njk
+@@ -32,6 +32,6 @@
+       {{ identificationCard(card, copy) }}
+     {% endfor %}
+ 
+-    {{ saveActions(hubHref, { text: copy.saveAndFinish, name: "action", value: "finish" }, sharedCopy.saveActions) }}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 33e621d0..427f38a0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -132,8 +132,10 @@ const submitAdd = (page) =>
+     .getByRole('button', { name: copy.identification.saveAndAddAnother })
+     .click()
+ 
+-const saveAndFinish = (page) =>
+-  page.getByRole('button', { name: copy.identification.saveAndFinish }).click()
++// The page ends on the same primary as every other journey page — the shared
++// "Save and continue", not a wording of its own.
++const saveAndContinue = (page) =>
++  page.getByRole('button', { name: SAVE_AND_CONTINUE, exact: true }).click()
+ 
+ // A saved animal is one row of the card's table, keyed by its species and
+ // number — "Bos taurus 1".
+@@ -384,6 +386,22 @@ test.describe('animal identification', () => {
+     ).toBeVisible()
+   })
+ 
++  // Design release 1 ends this page the way it ends every other page of the
++  // journey. "Save and finish" here would say a different thing from the rest
++  // of the service for the same action.
++  test('ends on the same Save and continue as every other journey page', async ({
++    page
++  }) => {
++    await openCatIdentification(page)
++
++    await expect(
++      page.getByRole('button', { name: SAVE_AND_CONTINUE, exact: true })
++    ).toBeVisible()
++    await expect(
++      page.getByRole('button', { name: 'Save and finish' })
++    ).toHaveCount(0)
++  })
++
+   test('back link returns to the overview', async ({ page }) => {
+     await openCatIdentification(page)
+     await page.locator('.govuk-back-link').click()
+@@ -544,7 +562,7 @@ test.describe('animal identification identifier validation', () => {
+       await openIdentification(page, [[commodity, [species]]])
+       const invalid = 'X'.repeat(MAX_IDENTIFIER_LENGTH + 1)
+       await page.locator(`#${field}-0`).fill(invalid)
+-      await saveAndFinish(page)
++      await saveAndContinue(page)
+ 
+       await expectErrorFocus(
+         page,
+@@ -562,7 +580,7 @@ test.describe('animal identification identifier validation', () => {
+     await page
+       .locator(MICROCHIP_FIELD)
+       .fill('X'.repeat(MAX_IDENTIFIER_LENGTH + 1))
+-    await saveAndFinish(page)
++    await saveAndContinue(page)
+ 
+     await expect(
+       errorLink(
+@@ -766,7 +784,7 @@ test.describe('animal identification records', () => {
+     ).toBeVisible()
+     await expect(page.locator(EAR_TAG_FIELD)).toHaveCount(0)
+ 
+-    await saveAndFinish(page)
++    await saveAndContinue(page)
+     await page.getByRole('link', { name: 'What are you importing?' }).click()
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+     await page.locator('#numberOfAnimalsQuantity-0').fill('1')

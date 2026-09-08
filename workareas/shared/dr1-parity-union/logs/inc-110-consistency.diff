@@ -1,0 +1,247 @@
+diff --git a/src/server/app/model/obligations/evaluator.test.js b/src/server/app/model/obligations/evaluator.test.js
+index 33177dcb..9e4df6bb 100644
+--- a/src/server/app/model/obligations/evaluator.test.js
++++ b/src/server/app/model/obligations/evaluator.test.js
+@@ -107,7 +107,7 @@ const cphReason = {
+ // scannable.
+ const LINE_UNKNOWN = 'line1' // commodity not in any allowlist
+ const LINE_FISH = 'line2' //  Fish — no packages, no CPH, no specific identifier
+-const LINE_COW = 'line4' //   Cow — packages AND CPH, passport + tattoo + earTag
++const LINE_COW = 'line4' //   Cow — packages AND CPH, passport + earTag
+ const LINE_HORSE = 'lineH' // Horse — packages, passport + horseName
+ const LINE_CAT = 'lineD' //   Cat — packages, passport + tattoo + permanentAddress
+ 
+@@ -809,10 +809,10 @@ describe('V4 — passport (gatedBy allowListed(commodityCode, passport list))',
+ // ---------------------------------------------------------------------------
+ 
+ describe('V4 — tattoo (gatedBy allowListed(commodityCode, tattoo list))', () => {
+-  it('is in scope for a cow line (Cow in the tattoo list)', () => {
++  it('is in scope for a cat line (Cat in the tattoo list)', () => {
+     const result = evaluator.evaluate({
+-      [commodityCode.id]: { [LINE_COW]: 'Cow' },
+-      [tattoo.id]: { [`${LINE_COW}.${UNIT_1}`]: 'CT-99' }
++      [commodityCode.id]: { [LINE_CAT]: 'Cat' },
++      [tattoo.id]: { [`${LINE_CAT}.${UNIT_1}`]: 'CT-99' }
+     })
+     expect(result.obligations[tattoo.id].inScope).toBe(true)
+     expect(result.obligations[tattoo.id].reasons).toEqual([tattooReason])
+@@ -824,6 +824,15 @@ describe('V4 — tattoo (gatedBy allowListed(commodityCode, tattoo list))', () =
+     })
+     expect(result.obligations[tattoo.id]).toEqual({ inScope: false })
+   })
++
++  // Design release 1 puts the tattoo on the cat, dog and ferret code and not
++  // on cattle, so a cow is asked for its ear tag and its passport only.
++  it('is out of scope for cow (Cow not in the tattoo list)', () => {
++    const result = evaluator.evaluate({
++      [commodityCode.id]: { [LINE_COW]: 'Cow' }
++    })
++    expect(result.obligations[tattoo.id]).toEqual({ inScope: false })
++  })
+ })
+ 
+ describe('V4 — earTag (gatedBy allowListed(commodityCode, ear-tag list))', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+index 00c140a9..a3652000 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js
+@@ -133,8 +133,7 @@ describe(`${SUITE} — the cards view`, () => {
+     const [cow] = await viewCards({ commodityLines: [cowLine()] })
+     expect(cow.fields.map((field) => field.id)).toEqual([
+       EAR_TAG_FIELD_0,
+-      PASSPORT_FIELD_0,
+-      TATTOO_FIELD_0
++      PASSPORT_FIELD_0
+     ])
+ 
+     const [horse] = await viewCards({ commodityLines: [horseLine()] })
+@@ -358,8 +357,8 @@ describe(`${SUITE} — the saved-animals table`, () => {
+         })
+       ]
+     })
+-    expect(card.identifierColumns).toEqual(['Ear tag', 'Passport', 'Tattoo'])
+-    expect(card.units[0].cells).toEqual(['UK1', '', ''])
++    expect(card.identifierColumns).toEqual(['Ear tag', 'Passport'])
++    expect(card.units[0].cells).toEqual(['UK1', ''])
+   })
+ 
+   it('Should number the rows within a commodity line by the species and the row position', async () => {
+@@ -378,7 +377,7 @@ describe(`${SUITE} — the saved-animals table`, () => {
+       BOS_TAURUS_1,
+       'Bos taurus 2'
+     ])
+-    expect(card.units[1].cells).toEqual(['', 'UK2', ''])
++    expect(card.units[1].cells).toEqual(['', 'UK2'])
+   })
+ 
+   it('Should key each row by its own line\'s species so two commodity lines do not both start at "Animal 1"', async () => {
+@@ -687,7 +686,7 @@ describe(`${SUITE} — identifier render matrix — model metadata per selectabl
+     {
+       commodity: 'Cow',
+       species: '1148346',
+-      fieldIds: [EAR_TAG_FIELD_0, PASSPORT_FIELD_0, TATTOO_FIELD_0],
++      fieldIds: [EAR_TAG_FIELD_0, PASSPORT_FIELD_0],
+       showAddress: false
+     },
+     {
+@@ -769,8 +768,7 @@ describe(`${SUITE} — a commodity that carries no identifier of its own`, () =>
+     expect(context.cards[0].anchor).toBe('identification-card-1')
+     expect(context.cards[0].fields.map((field) => field.id)).toEqual([
+       'animalIdentifierEarTag-1',
+-      'animalIdentifierPassport-1',
+-      'animalIdentifierTattoo-1'
++      'animalIdentifierPassport-1'
+     ])
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 1413c004..3542ef31 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -199,8 +199,8 @@ const submitStaleAdd = (page) =>
+ 
+ const identifierValidations = [
+   ['Cat', FELIS_CATUS, 'animalIdentifierMicrochip', 'Microchip'],
++  ['Cat', FELIS_CATUS, 'animalIdentifierTattoo', 'Tattoo'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierPassport', 'Passport'],
+-  ['Cow', BOS_TAURUS, 'animalIdentifierTattoo', 'Tattoo'],
+   ['Cow', BOS_TAURUS, 'animalIdentifierEarTag', 'Ear tag'],
+   ['Horse', EQUUS_CABALLUS, 'horseName', 'Horse name']
+ ]
+@@ -273,8 +273,11 @@ test.describe('animal identification', () => {
+ 
+     await expect(page.getByText(copy.identification.inset)).toBeVisible()
+     await expect(page.locator(PASSPORT_FIELD)).toBeVisible()
+-    await expect(page.locator('#animalIdentifierTattoo-0')).toBeVisible()
+     await expect(page.locator(EAR_TAG_FIELD)).toBeVisible()
++    // Design release 1 puts the tattoo on the cat, dog and ferret code and
++    // not on cattle, so a cow is asked for its ear tag and its passport and
++    // nothing else.
++    await expect(page.locator('#animalIdentifierTattoo-0')).toHaveCount(0)
+     await expect(page.locator('#animalIdentifierMicrochip-1')).toBeVisible()
+     await expect(page.locator('#horseName-1')).toBeVisible()
+     await expect(page.locator(MICROCHIP_FIELD)).toHaveCount(0)
+@@ -301,11 +304,7 @@ test.describe('animal identification', () => {
+     ])
+ 
+     await expect(page.locator('label[for$="-0"]')).toHaveText(
+-      entryLabelsOf([
+-        'animalIdentifierEarTag',
+-        'animalIdentifierPassport',
+-        'animalIdentifierTattoo'
+-      ])
++      entryLabelsOf(['animalIdentifierEarTag', 'animalIdentifierPassport'])
+     )
+     await expect(page.locator('label[for$="-1"]')).toHaveText(
+       entryLabelsOf([
+@@ -323,14 +322,13 @@ test.describe('animal identification', () => {
+   // pinned to the column label rather than to a wording of its own.
+   // Cattle only: microchip's entry label still reads 'Microchip number', a
+   // wording Design release 1 has not settled here.
+-  test('labels the passport, tattoo and ear tag fields on a cattle line with the words the saved-animals table heads them with', async ({
++  test('labels the passport and ear tag fields on a cattle line with the words the saved-animals table heads them with', async ({
+     page
+   }) => {
+     await openIdentification(page, [['Cow', [BOS_TAURUS]]])
+ 
+     for (const field of [
+       'animalIdentifierPassport',
+-      'animalIdentifierTattoo',
+       'animalIdentifierEarTag'
+     ]) {
+       await expect(page.locator(`label[for="${field}-0"]`)).toHaveText(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+index 7efffe6d..3fb68352 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+@@ -287,9 +287,6 @@
+         "39657a80-91a2-4fc6-8345-9f0617284a51": {
+           "line0.unit0": "UK123456789"
+         },
+-        "3a768b91-a2b3-4fd7-8456-a01728395b62": {
+-          "line0.unit0": "AB1234"
+-        },
+         "3b879ca2-b3c4-4fe8-8567-a1283a4a6c73": {
+           "line0.unit0": "UK123456789012",
+           "line1.unit0": "UK000000000001"
+@@ -526,15 +523,7 @@
+           ]
+         },
+         "3a768b91-a2b3-4fd7-8456-a01728395b62": {
+-          "inScope": true,
+-          "status": "optional",
+-          "fulfilmentIndexes": ["line0.unit0", "line1.unit0"],
+-          "reasons": [
+-            {
+-              "code": "obligation.tattoo.applicable.becauseTattooCommodity",
+-              "explanation": "tattoo applies on units of lines whose commodityCode is in the tattoo list"
+-            }
+-          ]
++          "inScope": false
+         },
+         "3b879ca2-b3c4-4fe8-8567-a1283a4a6c73": {
+           "inScope": true,
+@@ -1553,15 +1542,7 @@
+           ]
+         },
+         "3a768b91-a2b3-4fd7-8456-a01728395b62": {
+-          "inScope": true,
+-          "status": "optional",
+-          "fulfilmentIndexes": ["line0.unit0"],
+-          "reasons": [
+-            {
+-              "code": "obligation.tattoo.applicable.becauseTattooCommodity",
+-              "explanation": "tattoo applies on units of lines whose commodityCode is in the tattoo list"
+-            }
+-          ]
++          "inScope": false
+         },
+         "3b879ca2-b3c4-4fe8-8567-a1283a4a6c73": {
+           "inScope": true,
+diff --git a/src/server/app/sets/live-animals/obligations/whitelists.test.js b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+index 04e16f9a..11b58446 100644
+--- a/src/server/app/sets/live-animals/obligations/whitelists.test.js
++++ b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+@@ -186,7 +186,7 @@ const EXPECTED = {
+   'CPH list': ['Cow'],
+   'microchip list': ['Horse', 'Cat', 'Dog'],
+   'passport list': ['Horse', 'Cow', 'Cat', 'Dog'],
+-  'tattoo list': ['Cat', 'Dog', 'Cow'],
++  'tattoo list': ['Cat', 'Dog'],
+   'ear-tag list': ['Cow'],
+   'horse-name list': ['Horse'],
+   'permanent-address list': ['Cat', 'Dog']
+diff --git a/src/server/app/sets/live-animals/services/commodities/index.test.js b/src/server/app/sets/live-animals/services/commodities/index.test.js
+index f4544c86..1338689b 100644
+--- a/src/server/app/sets/live-animals/services/commodities/index.test.js
++++ b/src/server/app/sets/live-animals/services/commodities/index.test.js
+@@ -47,8 +47,7 @@ describe('#identifiersFor', () => {
+   it('Should give each commodity its identifiers in the order it asks for them', () => {
+     expect(identifiersFor('Cow')).toEqual([
+       'animalIdentifierEarTag',
+-      'animalIdentifierPassport',
+-      'animalIdentifierTattoo'
++      'animalIdentifierPassport'
+     ])
+     expect(identifiersFor('Horse')).toEqual([
+       'animalIdentifierMicrochip',
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index c39f77c5..5710e4c0 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -121,11 +121,10 @@ export const PACKAGE_COUNT_COMMODITIES = [
+ // identifier's gate and its position on the panel cannot drift apart. Adding
+ // an identifier to a commodity is one edit here.
+ export const COMMODITY_IDENTIFIERS = {
+-  Cow: [
+-    'animalIdentifierEarTag',
+-    'animalIdentifierPassport',
+-    'animalIdentifierTattoo'
+-  ],
++  // A cow is asked for an ear tag and a passport and nothing else: design
++  // release 1 puts the tattoo on commodity code 01061900 — the cat, dog and
++  // ferret code — and not on 0102 (design 01-14/16/17).
++  Cow: ['animalIdentifierEarTag', 'animalIdentifierPassport'],
+   Horse: ['animalIdentifierMicrochip', 'animalIdentifierPassport', 'horseName'],
+   Cat: [
+     'animalIdentifierMicrochip',

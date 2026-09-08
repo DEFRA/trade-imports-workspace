@@ -1,0 +1,616 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index 0600c75f..a3bdb7dc 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -1,6 +1,17 @@
+ import { expect, test } from '@playwright/test'
+ import {
+   addDocument,
++  answerAdditionalDetails,
++  answerAnimalIdentification,
++  answerArrivalDetails,
++  answerCommodityDetails,
++  answerContactAddress,
++  answerCphNumber,
++  answerImportReason,
++  answerOriginDetails,
++  answerRolesAndAddresses,
++  answerTransitCountries,
++  answerTransporter,
+   chooseCountryOfOrigin,
+   completeAnswerSections,
+   journeyUrl,
+@@ -15,7 +26,7 @@ test.describe('live-animals journey glue', () => {
+     await signIn(page)
+   })
+ 
+-  test('entry guards and the page-owned opening spine carry a fresh notification to the hub', async ({
++  test('entry guards and the page-owned opening spine carry a fresh notification on past the additional details', async ({
+     page
+   }) => {
+     const heading = (name) => page.getByRole('heading', { name })
+@@ -62,16 +73,59 @@ test.describe('live-animals journey glue', () => {
+ 
+     await page.getByRole('radio', { name: 'Slaughter' }).check()
+     await save()
++    // The run carries the notification on rather than dropping it on the hub.
++    await expect(heading('Arrival details')).toBeVisible()
++
++    // The hub is somewhere the user chooses to go, and reaching it ends run
++    // mode, so later task saves return to the ordinary hub resting state.
++    await page.goto(journeyUrl(page))
+     await expect(heading('Overview')).toBeVisible()
+ 
+-    // Completing the opening run ends run mode, so later task saves return to
+-    // the ordinary hub resting state.
+     await page.goto(journeyUrl(page, 'origin'))
+     await expect(heading('Origin of the import')).toBeVisible()
+     await save()
+     await expect(heading('Overview')).toBeVisible()
+   })
+ 
++  test('the opening run carries a new notification through to the review page in one pass', async ({
++    page
++  }) => {
++    test.slow()
++    const heading = (name) => page.getByRole('heading', { name })
++
++    await page.goto('/')
++    await page.getByRole('button', { name: 'Start a new notification' }).click()
++    await expect(heading('Origin of the import')).toBeVisible()
++
++    await answerOriginDetails(page)
++    await expect(heading('What are you importing?')).toBeVisible()
++
++    await answerCommodityDetails(page)
++    await expect(heading('Main reason for import')).toBeVisible()
++
++    await answerImportReason(page)
++    await answerAnimalIdentification(page)
++    await answerAdditionalDetails(page)
++
++    await expect(heading('Arrival details')).toBeVisible()
++    await answerArrivalDetails(page)
++    await answerTransitCountries(page)
++    await answerTransporter(page)
++
++    // Documents are optional, so the run passes through the page and the user
++    // continues without adding one.
++    await expect(page).toHaveURL(/\/accompanying-documents$/)
++    await page.getByRole('button', { name: 'Continue' }).click()
++
++    await answerRolesAndAddresses(page)
++    await answerCphNumber(page)
++    await answerContactAddress(page)
++
++    // No question in the notification sent the user to the hub on the way.
++    await expect(page).toHaveURL(/\/notification-view$/)
++    await expect(heading('Check your answers')).toBeVisible()
++  })
++
+   test('a notification created in another session, holding no answers, is sent back to the entry page', async ({
+     page,
+     browser
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 033cb56f..46759dda 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -226,13 +226,16 @@ export const addDocument = async (page, entry) => {
+   await page.getByRole('button', { name: 'Save and add another' }).click()
+ }
+ 
+-export const completeAnswerSections = async (page) => {
+-  const [line] = values.commodityLines
+-  const save = () =>
+-    page.getByRole('button', { name: 'Save and continue' }).click()
+-  const task = (name) => page.getByRole('link', { name }).click()
++const save = (page) =>
++  page.getByRole('button', { name: 'Save and continue' }).click()
+ 
+-  await task('Where is this consignment coming from?')
++// One page-answering block per question, so the same keystrokes drive the
++// journey whether it is reached page by page through the opening run or one
++// task at a time from the hub. Each block ends on its own save and leaves the
++// landing assertion to the caller, because where a page lands is exactly what
++// the two ways of walking the journey disagree about.
++
++export const answerOriginDetails = async (page) => {
+   await chooseCountryOfOrigin(page)
+   await page.getByRole('radio', { name: 'Yes' }).check()
+   await page
+@@ -241,11 +244,13 @@ export const completeAnswerSections = async (page) => {
+   await page
+     .getByLabel('Your internal reference for this consignment (optional)')
+     .fill(values.internalReferenceNumber)
+-  await save()
++  await save(page)
++}
+ 
+-  await task('What are you importing?')
++export const answerCommodityDetails = async (page) => {
++  const [line] = values.commodityLines
+   await selectSpecies(page, ['Bos taurus'])
+-  await save()
++  await save(page)
+   await expect(
+     page.getByRole('heading', { name: 'Commodity details' })
+   ).toBeVisible()
+@@ -253,10 +258,11 @@ export const completeAnswerSections = async (page) => {
+   await page
+     .getByLabel('Number of packages (when required)')
+     .fill(line.numberOfPackages)
+-  await save()
+-  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+-  const [unit] = line.animalIdentifiers
+-  await task('Animal identification details')
++  await save(page)
++}
++
++export const answerAnimalIdentification = async (page) => {
++  const [unit] = values.commodityLines[0].animalIdentifiers
+   await expect(
+     page.getByRole('heading', { name: 'Identification details', exact: true })
+   ).toBeVisible()
+@@ -264,14 +270,17 @@ export const completeAnswerSections = async (page) => {
+     .getByLabel('Ear tag', { exact: true })
+     .fill(unit.animalIdentifierEarTag)
+   await page.getByRole('button', { name: 'Save and finish' }).click()
+-  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++}
+ 
+-  await task('Main reason for importing')
++export const answerImportReason = async (page) => {
+   await page.getByRole('radio', { name: 'Internal market' }).check()
+   // The purpose is a conditional reveal under the reason, so both answers go
+   // in on the one submit.
+   await page.getByRole('radio', { name: 'Breeding' }).check()
+-  await save()
++  await save(page)
++}
++
++export const answerAdditionalDetails = async (page) => {
+   await expect(
+     page.getByRole('heading', { name: 'Additional details', exact: true })
+   ).toBeVisible()
+@@ -282,9 +291,10 @@ export const completeAnswerSections = async (page) => {
+     })
+     .getByRole('radio', { name: 'No' })
+     .check()
+-  await save()
++  await save(page)
++}
+ 
+-  await task('Roles and addresses')
++export const answerRolesAndAddresses = async (page) => {
+   const parties = [
+     ['Consignor or exporter', values.consignor.name],
+     ['Place of destination', values.placeOfDestination.name],
+@@ -300,18 +310,22 @@ export const completeAnswerSections = async (page) => {
+       .getByRole('link', { name: 'Add' })
+       .click()
+     await page.getByRole('radio', { name }).check()
+-    await save()
++    await save(page)
+   }
+   await page.getByRole('button', { name: 'Continue' }).click()
++}
++
++export const answerCphNumber = async (page) => {
+   await expect(
+     page.getByRole('heading', { name: 'County Parish Holding (CPH)' })
+   ).toBeVisible()
+   await page
+     .getByLabel('County Parish Holding (CPH)')
+     .fill(values.countyParishHoldingCph)
+-  await save()
++  await save(page)
++}
+ 
+-  await task('Arrival details')
++export const answerArrivalDetails = async (page) => {
+   await page
+     .getByLabel('Arrival date at port of entry')
+     .fill(ARRIVAL_DATE_IN_WINDOW)
+@@ -325,22 +339,64 @@ export const completeAnswerSections = async (page) => {
+   await page
+     .getByLabel('Transport document reference')
+     .fill(values.transportDocumentReference)
+-  await save()
++  await save(page)
++}
++
++export const answerTransitCountries = async (page) => {
+   await page.getByRole('checkbox', { name: 'France' }).check()
+   await page.getByRole('checkbox', { name: 'Belgium' }).check()
+-  await save()
++  await save(page)
++}
++
++export const answerTransporter = async (page) => {
+   await page
+     .getByRole('radio', { name: values.transporterType, exact: true })
+     .check()
+-  await save()
++  await save(page)
+   await page
+     .getByRole('radio', { name: values.commercialTransporter.name })
+     .check()
+-  await save()
++  await save(page)
++}
+ 
+-  await task('Contact address')
++export const answerContactAddress = async (page) => {
+   await page.getByRole('radio', { name: values.contactAddress.name }).check()
+-  await save()
++  await save(page)
++}
++
++/** Answers the whole notification one task row at a time, the way a returning
++ * user works once the opening run is over. */
++export const completeAnswerSections = async (page) => {
++  const task = (name) => page.getByRole('link', { name }).click()
++  const overview = () =>
++    expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++  await task('Where is this consignment coming from?')
++  await answerOriginDetails(page)
++
++  await task('What are you importing?')
++  await answerCommodityDetails(page)
++  await overview()
++
++  await task('Animal identification details')
++  await answerAnimalIdentification(page)
++  await overview()
++
++  await task('Main reason for importing')
++  await answerImportReason(page)
++  await answerAdditionalDetails(page)
++
++  await task('Roles and addresses')
++  await answerRolesAndAddresses(page)
++  await answerCphNumber(page)
++
++  await task('Arrival details')
++  await answerArrivalDetails(page)
++  await answerTransitCountries(page)
++  await answerTransporter(page)
++
++  await task('Contact address')
++  await answerContactAddress(page)
+ }
+ 
+ /**
+diff --git a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+index 46746524..850c682b 100644
+--- a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
++++ b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+@@ -33,6 +33,19 @@ task-row ids under visible headings and supplies their presentation order.
+ `nextRunTarget`. [`entry-guard.js`](../journeys/linear/flow/entry-guard.js) owns the
+ journey's redirect policy before handlers run.
+ 
++The run is the whole notification, not its first leg. `RUN_STEPS` runs origin,
++what you are importing, the consignment details, the reason for import, animal
++identification, the additional details, the arrival details, the transit
++countries, the transporter, the uploaded documents, the roles and addresses, the
++CPH number, the contact address and then the review page, so "Save and continue"
++carries a new notification from the entry page to the review page in one pass.
++The hub is somewhere the user chooses to go — through the secondary "Save and
++return to overview" button on every page, or by opening the notification from the
++dashboard — not somewhere the run puts them between sections. The review step
++carries the same authored gate the review flow section does, so a run that
++arrives with the notification incomplete falls through to the hub; so does a run
++whose remaining steps are all gated out.
++
+ The opening run begins when the notification is created — the dashboard's
+ create POST in
+ [`features/dashboard/controller.js`](../journeys/linear/features/dashboard/controller.js)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+index ee28ae47..71b73511 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+@@ -57,7 +57,7 @@ test.describe('cph-number feature', () => {
+     await expect(page).toHaveURL(hubUrl)
+   })
+ 
+-  test('strips slashes, saves a valid CPH number, redirects and persists it', async ({
++  test('strips slashes, saves a valid CPH number, continues the run and persists it', async ({
+     page
+   }) => {
+     const cphUrl = page.url()
+@@ -65,7 +65,12 @@ test.describe('cph-number feature', () => {
+     await page.getByLabel(copy.cph.label).fill('123/456/789')
+     await page.locator(SUBMIT_BUTTON).first().click()
+ 
+-    await expect(page).toHaveURL(/\/notifications\/[^/]+$/)
++    // The notification was created in this session, so the opening run is still
++    // running and carries the page on to the next question rather than back to
++    // the hub.
++    await expect(page).toHaveURL(
++      /\/notifications\/[^/]+\/consignment\/contact\/select$/
++    )
+     await page.goto(cphUrl)
+     await expect(page.getByLabel(copy.cph.label)).toHaveValue('123456789')
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+index 9931348c..d69c0f8f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+@@ -25,6 +25,7 @@ import * as consignmentDetails from '../features/commodities/consignment-details
+ import * as animalIdentification from '../features/commodities/animal-identification/animal-identification.controller.js'
+ import * as importReason from '../features/import-reason/controller.js'
+ import * as additionalDetails from '../features/additional-details/controller.js'
++import * as cphNumber from '../features/cph-number/controller.js'
+ import * as hub from '../features/hub/controller.js'
+ import * as dashboard from '../features/dashboard/controller.js'
+ 
+@@ -206,7 +207,7 @@ const saveAndContinueFollowsTheRunSequence = () => {
+     )
+   })
+ 
+-  it('Should land additional details on the hub — the run is exhausted', async () => {
++  it('Should carry additional details on to the arrival details mid-run rather than ending on the hub', async () => {
+     const journey = await store.create()
+     await store.seedAnswers(journey.journeyId, lineSeed)
+     const h = captureH()
+@@ -217,7 +218,33 @@ const saveAndContinueFollowsTheRunSequence = () => {
+       }),
+       h
+     )
+-    expect(h.captured.redirect).toBe(hubPath(journey.journeyId))
++    expect(h.captured.redirect).toBe(
++      pagePath(journey.journeyId, 'port-of-entry')
++    )
++  })
++
++  it('Should carry a later section on to the next question too — the run is the whole notification, not its opening leg', async () => {
++    const inRun = await store.create()
++    await store.seedAnswers(inRun.journeyId, lineSeed)
++    const h = captureH()
++    await postHandlerOf(cphNumber)(
++      buildRequest(inRun.journeyId, {
++        payload: { countyParishHoldingCph: '123456789' },
++        record: active(inRun.journeyId)
++      }),
++      h
++    )
++    expect(h.captured.redirect).toBe(
++      pagePath(inRun.journeyId, 'consignment/contact/select')
++    )
++
++    // Outside the run the page is the addresses section's last page, so the
++    // section flow rests on the hub.
++    const outside = await drive(postHandlerOf(cphNumber), {
++      payload: { countyParishHoldingCph: '123456789' },
++      seed: lineSeed
++    })
++    expect(outside.h.captured.redirect).toBe(hubPath(outside.journeyId))
+   })
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+index 258cafb2..7ab968bc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+@@ -7,17 +7,46 @@ import {
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
++import {
++  portOfEntryPage,
++  privateTransporterDetailsPage,
++  transitCountriesPage,
++  transportersPage,
++  transportersSelectPage
++} from '../features/transport/page.js'
++import { documentsPage } from '../features/documents/page.js'
++import { addressesPage } from '../features/addresses/page.js'
++import { cphNumberPage } from '../features/cph-number/page.js'
++import { consignmentContactSelectPage } from '../features/contact/page.js'
++import { notificationViewPage } from '../features/check-answers/page.js'
+ import { pageGatePasses } from '../../../../../flow/gates.js'
+ 
+ const flowPageTarget = (page) => (scope, journeyId) =>
+   pageGatePasses(page, scope) ? pagePath(journeyId, page.slug) : null
+ 
++/** The review page ends the run rather than asking a question in it, so it
++ * carries the same authored gate the review flow section does: it opens once
++ * every task row is ready. A run that arrives with the notification still
++ * incomplete falls through to the hub instead. */
++const reviewTarget = (scope, journeyId) =>
++  scope.readyForCheckYourAnswers
++    ? pagePath(journeyId, notificationViewPage.slug)
++    : null
++
+ /** The opening run's ordered steps — a null target skips the step (see
+- * docs/flow-and-gates.md, "The opening run"). The commodity leg is a
+- * two-page shape: batch search then the consolidated details page
+- * (whose derived gate holds until a line exists). The identification step
+- * is a single card-per-species surface, gated like every other
+- * flow page (its RULE 1 prerequisite holds it until a line exists). */
++ * docs/flow-and-gates.md, "The opening run"). The run is the whole
++ * notification, not a first leg of it: "Save and continue" carries a new
++ * notification from the origin page through to the review page in one pass,
++ * and the hub is somewhere the user chooses to go through the secondary
++ * "Save and return to overview" button.
++ *
++ * The commodity leg is a two-page shape: batch search then the consolidated
++ * details page (whose derived gate holds until a line exists). The
++ * identification step is a single card-per-species surface, gated like every
++ * other flow page (its RULE 1 prerequisite holds it until a line exists). The
++ * transporter leg lists both of its branch pages and the addresses leg both of
++ * its pages; the derived gates pick the one the answers reach, so the run does
++ * not need to know which branch it is on. */
+ export const RUN_STEPS = [
+   { id: originPage.id, target: flowPageTarget(originPage) },
+   { id: commoditiesPage.id, target: flowPageTarget(commoditiesPage) },
+@@ -33,7 +62,26 @@ export const RUN_STEPS = [
+   {
+     id: additionalDetailsPage.id,
+     target: flowPageTarget(additionalDetailsPage)
+-  }
++  },
++  { id: portOfEntryPage.id, target: flowPageTarget(portOfEntryPage) },
++  { id: transitCountriesPage.id, target: flowPageTarget(transitCountriesPage) },
++  { id: transportersPage.id, target: flowPageTarget(transportersPage) },
++  {
++    id: transportersSelectPage.id,
++    target: flowPageTarget(transportersSelectPage)
++  },
++  {
++    id: privateTransporterDetailsPage.id,
++    target: flowPageTarget(privateTransporterDetailsPage)
++  },
++  { id: documentsPage.id, target: flowPageTarget(documentsPage) },
++  { id: addressesPage.id, target: flowPageTarget(addressesPage) },
++  { id: cphNumberPage.id, target: flowPageTarget(cphNumberPage) },
++  {
++    id: consignmentContactSelectPage.id,
++    target: flowPageTarget(consignmentContactSelectPage)
++  },
++  { id: notificationViewPage.id, target: reviewTarget }
+ ]
+ 
+ export const nextRunTarget = (stepId, scope, journeyId) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+index 8d46845f..6b9d9ae2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+@@ -1,3 +1,4 @@
++import { readFileSync } from 'node:fs'
+ import { beforeAll, describe, expect, it } from 'vitest'
+ 
+ import { hubPath, pagePath } from '../../../../../shared/paths.js'
+@@ -9,7 +10,20 @@ import {
+ } from '../features/commodities/page.js'
+ import { importReasonPage } from '../features/import-reason/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+-import { portOfEntryPage } from '../features/transport/page.js'
++import {
++  portOfEntryPage,
++  privateTransporterDetailsPage,
++  transitCountriesPage,
++  transportersPage,
++  transportersSelectPage
++} from '../features/transport/page.js'
++import { documentsPage } from '../features/documents/page.js'
++import { addressesPage } from '../features/addresses/page.js'
++import { cphNumberPage } from '../features/cph-number/page.js'
++import { consignmentContactSelectPage } from '../features/contact/page.js'
++import { notificationViewPage } from '../features/check-answers/page.js'
++import { declarationPage } from '../features/declaration/page.js'
++import { dashboardPage } from '../features/dashboard/page.js'
+ import { makeScope } from '../../../../../engine/index.js'
+ import { buildDispatch } from '../../../../../flow/dispatch.js'
+ import { nextRunTarget } from './run.js'
+@@ -23,6 +37,12 @@ const lineSeed = {
+   commodityLines: [{ commoditySelection: 'Cat', speciesSelection: '923501' }]
+ }
+ 
++// A whole notification, so the tail of the run can be walked with every later
++// question already answerable and the review page open.
++const { values: completeSeed } = JSON.parse(
++  readFileSync(new URL('./fixtures/happy-path.json', import.meta.url))
++)
++
+ describe('#nextRunTarget — the opening run sequence', () => {
+   beforeAll(() => {
+     buildDispatch(dispatchPages)
+@@ -66,8 +86,10 @@ describe('#nextRunTarget — the opening run sequence', () => {
+     )
+   })
+ 
+-  it('Should end the run on the hub after additional details', () => {
+-    expect(next(additionalDetailsPage.id, lineSeed)).toBe(hubPath(JOURNEY_ID))
++  it('Should carry additional details on to the arrival details rather than ending on the hub', () => {
++    expect(next(additionalDetailsPage.id, lineSeed)).toBe(
++      pagePath(JOURNEY_ID, portOfEntryPage.slug)
++    )
+   })
+ 
+   it('Should collapse to the hub when every later step is unreachable', () => {
+@@ -79,8 +101,80 @@ describe('#nextRunTarget — the opening run sequence', () => {
+     ).toBe(hubPath(JOURNEY_ID))
+   })
+ 
+-  it('Should return null for a page outside the run — transport is hub-only, never a run step', () => {
+-    expect(next('documents', lineSeed)).toBeNull()
+-    expect(next(portOfEntryPage.id, lineSeed)).toBeNull()
++  it('Should return null for a page outside the run', () => {
++    expect(next(dashboardPage.id, lineSeed)).toBeNull()
++    expect(next(declarationPage.id, lineSeed)).toBeNull()
++  })
++})
++
++describe('#nextRunTarget — the run past the arrival details', () => {
++  beforeAll(() => {
++    buildDispatch(dispatchPages)
++  })
++
++  const step = (stepId) => next(stepId, completeSeed)
++
++  it('Should send the arrival details to the transit countries when the consignment travels by road', () => {
++    expect(step(portOfEntryPage.id)).toBe(
++      pagePath(JOURNEY_ID, transitCountriesPage.slug)
++    )
++  })
++
++  it('Should skip the transit countries when they do not apply to the means of transport', () => {
++    expect(
++      next(portOfEntryPage.id, {
++        ...completeSeed,
++        meansOfTransport: 'AIRCRAFT'
++      })
++    ).toBe(pagePath(JOURNEY_ID, transportersPage.slug))
++  })
++
++  it('Should send the transit countries on to the transporter question', () => {
++    expect(step(transitCountriesPage.id)).toBe(
++      pagePath(JOURNEY_ID, transportersPage.slug)
++    )
++  })
++
++  it('Should take the transporter branch the answers reach and skip the other', () => {
++    expect(step(transportersPage.id)).toBe(
++      pagePath(JOURNEY_ID, transportersSelectPage.slug)
++    )
++    expect(step(transportersSelectPage.id)).toBe(
++      pagePath(JOURNEY_ID, documentsPage.slug)
++    )
++    expect(
++      next(transportersPage.id, { ...completeSeed, transporterType: 'Private' })
++    ).toBe(pagePath(JOURNEY_ID, privateTransporterDetailsPage.slug))
++  })
++
++  it('Should send the documents on to the roles and addresses', () => {
++    expect(step(documentsPage.id)).toBe(
++      pagePath(JOURNEY_ID, addressesPage.slug)
++    )
++  })
++
++  it('Should send the roles and addresses on to the CPH number and then the contact address', () => {
++    expect(step(addressesPage.id)).toBe(
++      pagePath(JOURNEY_ID, cphNumberPage.slug)
++    )
++    expect(step(cphNumberPage.id)).toBe(
++      pagePath(JOURNEY_ID, consignmentContactSelectPage.slug)
++    )
++  })
++
++  it('Should end the run on the review page once every task row is ready', () => {
++    expect(step(consignmentContactSelectPage.id)).toBe(
++      pagePath(JOURNEY_ID, notificationViewPage.slug)
++    )
++  })
++
++  it('Should rest on the hub instead when the notification is not ready to review', () => {
++    expect(next(consignmentContactSelectPage.id, lineSeed)).toBe(
++      hubPath(JOURNEY_ID)
++    )
++  })
++
++  it('Should rest on the hub after the review page — the run is over', () => {
++    expect(step(notificationViewPage.id)).toBe(hubPath(JOURNEY_ID))
+   })
+ })

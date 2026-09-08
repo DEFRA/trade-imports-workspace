@@ -2857,10 +2857,25 @@
       "dependsOn": [
         "inc-029"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "90a9a37",
       "failure_reason": null,
-      "title": null
+      "title": null,
+      "ticket": "EUDPA-492",
+      "branch": "feat/EUDPA-492-commodities-collection-commodity-details",
+      "openQuestions": [
+        "Where the multi-page group's shared Playwright helper lives. `journeys/linear/features/commodities/fit/axe.js` is a Playwright-only helper sitting under `src/`, where every scope config classifies it as production source: `sonar-project.properties:18-21` and `.sonarcloud.properties:6-9` both set `sonar.sources=src/` with `sonar.test.inclusions` limited to `src/**/*.test.js,src/**/*.fit.spec.js` (which `fit/axe.js` does not match), and `vitest.config.js:25` sets `coverage.include: ['src/**/*.js']` while the suite exclude drops `.fit.spec.js` — so the helper is the only Playwright module measured for coverage, landing in lcov as 0/8 lines of 'main' code. It is also why `JSON_INDENT` exists at `axe.js:11` (eslint.config.js:45-47 applies no-magic-numbers to `src/server/**/*.js` while exempting `*.test.js`/`*.spec.js`). Both candidate fixes fall outside this target's commitPaths (`src/server/app`, `package.json`, `.github`, `scripts`, `docs`, `README.md`, `.dependency-cruiser-known-violations.json`): moving it to the repo-root `fit/` directory beside `fit/sign-in.js` writes a file the loop cannot stage, and excluding `src/**/fit/**` means editing `sonar-project.properties`, `.sonarcloud.properties` and `vitest.config.js`, none of which are commitable here either. Needs a repo-config decision plus a commitPaths widening before it can be actioned.",
+        "Whether the duplicated preamble between `commodities/fit/details.fit.spec.js` and `commodities/fit/list.fit.spec.js` should be extracted. The two files share the same eight imports, the COMMODITY_TYPE_URL / DETAILS_URL / DETAILS_EDIT_URL / LIST_URL regexes, SEED_POTATOES, MARIS_PIPER, `saveAndContinue`, `fieldNamed` and two already-diverged copies of `startAtDetails`. Extracting a `fit/journey.js` beside `axe.js` would add a second shared helper in exactly the location the axe.js question above says is misclassified as production source, so the two must be settled together; and the workspace rule 'feature folders are independent by design — declare duplication, don't extract' argues for leaving spec-local duplication alone. Settle the axe.js placement first, then decide whether a shared journey helper joins it."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/42",
+          "number": 42,
+          "merged": true,
+          "sha": "afa4d11b478032c9be89ff6c00cfbd0970648ff4"
+        }
+      ]
     },
     {
       "type": "chore",

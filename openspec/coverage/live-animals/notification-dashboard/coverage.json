@@ -1,0 +1,318 @@
+{
+  "capability": "live-animals/notification-dashboard",
+  "areaCode": "DASH",
+  "specFile": "openspec/specs/live-animals/notification-dashboard/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-DASH-001",
+      "name": "The dashboard is where the service opens, and where a new notification starts",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-001-A",
+          "name": "A signed-in user lands on the notification dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "lands on the notification dashboard", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-001-B",
+          "name": "Starting a new notification opens the journey's entry page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "allows creating a new notification, landing on the journey entry page", "strength": "full", "notes": "asserts Origin of the import heading" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "starts a new notification at the origin page", "strength": "full", "notes": "also asserts URL /notifications/.../origin" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-001-C",
+          "name": "A newly started notification is listed as a draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "starts a journey at the origin page and lists the draft", "strength": "full", "notes": "startNotification lands on Overview first; then searches dashboard and asserts Draft plus resume/copy/delete" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "draft notification renders only its available actions", "strength": "full", "notes": "Draft status with resume/copy/delete; View and Amend absent" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-002",
+      "name": "The dashboard lists notifications as cards with a result count",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-002-A",
+          "name": "The list shows a result count alongside the matching cards",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "displays the notification list and result count", "strength": "full", "notes": "searches by reference; asserts totalResults visible and exactly one card" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-003",
+      "name": "A notification card shows the notification's key details",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-003-A",
+          "name": "A submitted notification's card shows its details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "submitted notification renders its row data and actions", "strength": "partial", "notes": "asserts reference, commodity, origin, consignor, consignee, arrival, Submitted — does not assert date created" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "displays details on a notification card", "strength": "partial", "notes": "asserts reference, commodity, origin, arrival, Submitted, date created — page object exposes consignor/consignee but this test never asserts them" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should build rich display fields using cached country and commodity reference data", "strength": "partial", "notes": "asserts commodity/origin/arrival/consignor/consignee on a draft row, not a submitted card with Created date" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-004",
+      "name": "The actions offered on a card depend on the notification's status",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-004-A",
+          "name": "A draft notification's card offers resume, copy and delete",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "shows resume, copy and delete actions for a draft notification", "strength": "full", "notes": "also asserts Amend not visible" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "draft notification renders only its available actions", "strength": "full", "notes": "also asserts View and Amend absent" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should list a draft row with a Draft tag, its created date and a Resume action", "strength": "full", "notes": "actions Resume, Copy as new, Delete" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-004-B",
+          "name": "A submitted notification's card offers view, copy and amend",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "shows view, copy and amend actions for a submitted notification", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "submitted notification renders its row data and actions", "strength": "full", "notes": "also asserts Delete; scenario does not forbid it" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should list a submitted row with a Submitted tag, its dates and View + Amend actions", "strength": "full", "notes": "actions View, Amend, Copy as new, Delete" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-004-C",
+          "name": "A notification being amended offers resume and cancel-amendment",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "amending notification renders resume and cancel-amend actions", "strength": "full", "notes": "Amending status plus Resume and Cancel amendment" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should list an amending journey with a yellow Amending tag", "strength": "full", "notes": "actions Resume, Copy as new, Cancel amendment, Delete" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-005",
+      "name": "Copying a notification from its dashboard card opens a new draft under its own reference",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-005-A",
+          "name": "Copying from a card opens a distinct new draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard.spec.ts", "test": "copies a submitted notification from its searched dashboard card", "strength": "full", "notes": "lands on Overview with a distinct GBN-AG reference" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js", "test": "copy creates a separate draft notification", "strength": "full", "notes": "from dashboard Copy as new; asserts Overview, Draft, different reference" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-006",
+      "name": "The notification list is paged twenty-five at a time",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-006-A",
+          "name": "A list longer than one page is paged and reports its range",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/notification-dashboard-pagination.spec.ts", "test": "uses GOV.UK pagination and reports the result range", "strength": "full", "notes": "seeds 26 notifications; asserts 1 to 25, next, page 2 from 26, previous, different first card" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "paginates at the 20-row boundary and preserves the selected sort", "strength": "partial", "notes": "stub LIST_PAGE_SIZE is 20, not production twenty-five; still proves next/previous and range reporting" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-007",
+      "name": "A user can search the dashboard by reference number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-007-A",
+          "name": "Search form is available on the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "displays the filter notifications search form", "strength": "full", "notes": "Filter notifications heading, form, reference input, Search button" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-007-B",
+          "name": "Searching by a complete reference number returns the matching notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "returns matching notification when searching by complete reference number", "strength": "full", "notes": "URL query, one card, Showing 1 Result" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "reference search finds an exact notification and preserves sort", "strength": "partial", "notes": "exact match and URL; does not assert the Showing 1 Result label" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-007-C",
+          "name": "Viewing a result found by reference-number search opens that notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "opens notification view when clicking View after searching by reference number", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-007-D",
+          "name": "An unmatched reference number shows no results",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "shows no notifications found when search has no matches", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "reference search with no match preserves the query and renders its empty state", "strength": "full", "notes": "asserts noResults copy and zero matching cards" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-007-E",
+          "name": "Free-text search is treated as a search with no matches, not an invalid input",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "shows no notifications found when search text is free text", "strength": "full", "notes": "No notifications found and no error summary" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-008",
+      "name": "A reference-number search survives sorting and paging",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-008-A",
+          "name": "Changing sort order keeps the active reference-number search",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "preserves referenceNumber when updating sort after search", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-008-B",
+          "name": "A page parameter in the URL does not clear an active reference-number search",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-search.spec.ts", "test": "preserves referenceNumber in the URL when a page param is present", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-009",
+      "name": "The notification list can be ordered four ways, newest arrival first by default",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-009-A",
+          "name": "Default sort order is arrival date, newest first",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-sort.spec.ts", "test": "default sort option is \"Arrival (newest to oldest)\"", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the empty notification list and default sort", "strength": "full", "notes": "sort value arrivalDate,desc" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-009-B",
+          "name": "Sort dropdown offers all four expected orderings",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-sort.spec.ts", "test": "sort dropdown contains all four expected options", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-009-C",
+          "name": "Selecting a sort option resubmits the list without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-sort.spec.ts", "test": "selecting \"Arrival (newest to oldest)\" submits and reloads without error", "strength": "full", "notes": "parameterised over all four sort values; each asserts ?sort= and heading" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-sort.spec.ts", "test": "selecting \"Arrival (oldest to newest)\" submits and reloads without error", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-sort.spec.ts", "test": "selecting \"Date created (newest to oldest)\" submits and reloads without error", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-dashboard-sort.spec.ts", "test": "selecting \"Date created (oldest to newest)\" submits and reloads without error", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-010",
+      "name": "Deleting a notification asks for confirmation, and removes it from the dashboard once confirmed",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-010-A",
+          "name": "Declining the delete confirmation leaves the notification untouched",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "No returns to the dashboard and keeps the notification", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-010-B",
+          "name": "Confirming deletion shows a confirmation message",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "confirmation removes the notification and shows the success banner", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-delete.spec.ts", "test": "deletes a draft notification", "strength": "full", "notes": "asserts The notification has been deleted." }
+          ]
+        },
+        {
+          "id": "SCN-DASH-010-C",
+          "name": "A deleted notification no longer appears in a dashboard search",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/notification-delete.spec.ts", "test": "deletes the notification and removes it from the dashboard", "strength": "full", "notes": "submitted notification; search returns zero cards" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "confirmation removes the notification and shows the success banner", "strength": "partial", "notes": "asserts the card heading is gone on the dashboard after delete, without a reference-number search" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-011",
+      "name": "An empty dashboard explains that no notifications exist yet",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-011-A",
+          "name": "A user with no notifications sees an empty state",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the empty notification list and default sort", "strength": "full", "notes": "body copy, emptyText, and none-results label" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DASH-012",
+      "name": "The service tells the user it is in an alpha phase, and offers a route to feedback",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DASH-012-A",
+          "name": "The dashboard carries the alpha banner",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "dashboard tells the user the service is in alpha and offers feedback", "strength": "full", "notes": "Alpha tag, feedback body, mailto link" }
+          ]
+        },
+        {
+          "id": "SCN-DASH-012-B",
+          "name": "The alpha banner follows onto a notification's pages",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "the banner follows the layout onto an answering page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

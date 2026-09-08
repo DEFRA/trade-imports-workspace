@@ -1,0 +1,173 @@
+{
+  "capability": "live-animals/journey-pages/commodity-details",
+  "areaCode": "COMMODITY-DETAILS",
+  "specFile": "openspec/specs/live-animals/journey-pages/commodity-details/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-COMMODITY-DETAILS-001",
+      "name": "The page asks a number of animals, and where owed a number of packages, per species chosen — starting empty",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-001-A",
+          "name": "The page presents one set of questions per chosen species, all empty",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/consignment-details.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "single-species journey seed — asserts animals, packages and save, not multi-commodity nesting" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/consignment-details.spec.ts", "test": "leaves the number of animals empty on load", "strength": "partial", "notes": "asserts animals empty for one species only; does not assert packages empty or multi-species" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "partial", "notes": "Cow + Cat under nested headings with animals and packages — does not assert every field empty on first open" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "steps the type down from commodity heading to species heading to quantity labels", "strength": "partial", "notes": "proves commodity → species heading nesting via size classes; not emptiness" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-002",
+      "name": "A complete set of commodity details is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-002-A",
+          "name": "Entering the counts for every species saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/consignment-details.spec.ts", "test": "accepts valid consignment details", "strength": "partial", "notes": "single species only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "saves and persists per-species counts", "strength": "full", "notes": "fills animals and packages for two species then asserts Overview" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-003",
+      "name": "A collection table lists every chosen species, each removable on its own",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-003-A",
+          "name": "The table lists each commodity and species with its code",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "full", "notes": "asserts Cow/0102 and Cat/01061900 in the table" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-003-B",
+          "name": "Removing one species leaves another's saved counts untouched",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removes one species row without changing another quantity", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removes one commodity group without changing another quantity", "strength": "full", "notes": "commodity-level remove for Cow leaves Cat's saved count" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-004",
+      "name": "A number of animals or a number of packages must be a positive whole number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-004-A",
+          "name": "A non-whole-number animal count is rejected, preserving the other valid counts",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: invalid number of animals for Bos taurus links to and focuses the preserved value", "strength": "full", "notes": "fills valid counts then sets animals to 2.5; asserts focus and the other species' count held" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: invalid number of animals for Felis catus links to and focuses the preserved value", "strength": "full", "notes": "zero is rejected as not a positive whole number" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-004-B",
+          "name": "A non-whole-number package count is rejected the same way",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: invalid number of packages for Bos taurus links to and focuses the preserved value", "strength": "full", "notes": "non-numeric 'boxes'" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: invalid number of packages for Felis catus links to and focuses the preserved value", "strength": "full", "notes": "negative package count" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-005",
+      "name": "The page holds until every species has a number of animals",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-005-A",
+          "name": "Leaving every species' count blank names each one in the error",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: when every animal count is blank, holds the page and names each species", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-005-B",
+          "name": "Leaving one species' count blank names only that species",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: when one animal count is filled, only the blank species is named", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-006",
+      "name": "Species and counts persist across a reload",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-006-A",
+          "name": "Reloading the page after saving shows the same counts",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "saves and persists per-species counts", "strength": "full", "notes": "re-opens via journey URL after save; equivalent to a reload of the saved page" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-007",
+      "name": "Adding another commodity from this page preserves what was already entered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-007-A",
+          "name": "Adding another commodity keeps the earlier species selected and their counts intact",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "adds another commodity while preserving an existing quantity", "strength": "full", "notes": "asserts earlier species still selected on selection page, saved counts unchanged, new species empty" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-008",
+      "name": "Removing every species returns the user to commodity selection",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-008-A",
+          "name": "Removing the last two species returns to commodity selection",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removing the last commodity returns to the commodity question", "strength": "full", "notes": "removes both then reopens details URL and bounces to selection again" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-009",
+      "name": "The back link returns to commodity selection",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-009-A",
+          "name": "The back link opens commodity selection",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "back link returns to commodity selection", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

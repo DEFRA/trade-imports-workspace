@@ -1,0 +1,798 @@
+{
+  "capability": "ins/address-book",
+  "areaCode": "INS-ADDR",
+  "specFile": "openspec/specs/ins/address-book/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-INS-ADDR-001",
+      "name": "An address is shared across every user in the organisation that added it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-001-A",
+          "name": "An address added by one user is visible to a colleague in the same organisation",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-cross-user-visibility.spec.ts",
+              "test": "an address added by one user is visible to another user in the same organisation",
+              "strength": "full",
+              "notes": "Andrew creates; Sarah in the same org sees the row"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-002",
+      "name": "Deleting an address tombstones it rather than removing it, and the tombstone is invisible to every user in the organisation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-002-A",
+          "name": "A deleted address is removed from the list but not destroyed",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-delete.spec.ts",
+              "test": "deleting through the UI tombstones the record rather than removing it",
+              "strength": "full",
+              "notes": "list row gone; getAddress still returns deleted=true with name intact"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/delete.fit.spec.js",
+              "test": "confirming removes the address and confirms it on the address book",
+              "strength": "partial",
+              "notes": "proves list removal and banner; does not assert the by-id tombstone still exists"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/view/controller.test.js",
+              "test": "GET returns 404 for soft-deleted tombstones",
+              "strength": "partial",
+              "notes": "frontend hides tombstones from view; API tombstone retention is the E2E assertion"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-002-B",
+          "name": "A deletion by one user removes the address for every user in the organisation",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-delete.spec.ts",
+              "test": "an address deleted by one user is gone for another in the same organisation",
+              "strength": "full",
+              "notes": "Andrew deletes; Sarah's list has no row"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-003",
+      "name": "Editing an address replaces the whole record, clearing any optional field left blank",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-003-A",
+          "name": "Leaving an optional field blank on edit clears it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-edit.spec.ts",
+              "test": "an edit replaces the whole record, clearing the optional fields left blank",
+              "strength": "full",
+              "notes": "omits addressLine2 and county on save; API get shows both empty"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-003-B",
+          "name": "A renamed address replaces the old one in the list",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-edit.spec.ts",
+              "test": "the edited address replaces the old one in the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/edit.fit.spec.js",
+              "test": "saving changes confirms them on the address book",
+              "strength": "full",
+              "notes": "new View link present; old View seed-name link gone"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-004",
+      "name": "A newly created address persists its full set of details",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-004-A",
+          "name": "Every field entered when creating an address is persisted",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-persistence.spec.ts",
+              "test": "a created address persists with its full Standard Address Block",
+              "strength": "partial",
+              "notes": "fills every field including optionals, finds Mongo doc by name, but only asserts addressLine2 and county — not the other fields"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "saves a valid address, shows a confirmation banner and lists the new address",
+              "strength": "partial",
+              "notes": "proves save and list presence by name only, not field-level persistence"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/add/controller.test.js",
+              "test": "POST creates address and redirects with success banner",
+              "strength": "partial",
+              "notes": "asserts createAddress payload has required fields; omits optional addressLine2/county from the payload under test"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-005",
+      "name": "The add and edit forms ask for the same Standard Address Block, with two fields optional",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-005-A",
+          "name": "The add form asks for every field, marking address line 2 and county optional",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "renders every field, hints and populated country options",
+              "strength": "full",
+              "notes": "optional labels, phone country-code hint, United Kingdom in country list"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/edit.fit.spec.js",
+              "test": "prefills every field from the stored address",
+              "strength": "partial",
+              "notes": "proves edit asks for the same fields and phone hint; does not re-assert optional labelling or country list population"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/address-schema.test.js",
+              "test": "maxLengths and mandatory flags match AddressRequest",
+              "strength": "partial",
+              "notes": "schema marks addressLine2/county optional; not the form labelling"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-006",
+      "name": "A mandatory field left blank blocks the save, naming and focusing it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-006-A",
+          "name": "Leaving a mandatory field blank on add blocks the save",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Name or organisation name links to and focuses the preserved field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Address line 1 links to and focuses the preserved field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Town or city links to and focuses the preserved field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Postcode or Zip code links to and focuses the preserved field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Country links to and focuses the preserved field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Phone number links to and focuses the preserved field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "empty Email address links to and focuses the preserved field",
+              "strength": "full",
+              "notes": "also asserts other filled fields (name) survive the failed save"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/address-schema.test.js",
+              "test": "rejects missing mandatory fields",
+              "strength": "partial",
+              "notes": "schema only — no focus or value-preservation UX"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-006-B",
+          "name": "Clearing a mandatory field on edit blocks the save",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/edit.fit.spec.js",
+              "test": "a rejected save keeps the edits rather than the stored address",
+              "strength": "full",
+              "notes": "clears name while editing town; error focuses name; Fort William preserved"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-007",
+      "name": "Every field has a maximum length, and exceeding it blocks the save without losing the value",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-007-A",
+          "name": "A field over its maximum length blocks the save with the value preserved",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Name or organisation name over 255 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Address line 1 over 255 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Address line 2 (optional) over 255 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Town or city over 100 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "County (optional) over 100 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Postcode or Zip code over 12 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Phone number over 20 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "Email address over 254 characters links to and focuses the preserved value",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/address-schema.test.js",
+              "test": "rejects over-max fields",
+              "strength": "partial",
+              "notes": "schema rejects over-length postcode; no focus/preserve UX"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/address-schema.test.js",
+              "test": "maxLengths and mandatory flags match AddressRequest",
+              "strength": "partial",
+              "notes": "documents the stated limits (255/100/12/20/254) but does not exercise the form"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-008",
+      "name": "An email address must be in a valid format",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-008-A",
+          "name": "A malformed email address is rejected",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "rejects a malformed email address",
+              "strength": "full",
+              "notes": "message distinct from blank-email ('Enter an email address in the correct format'); value preserved"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/edit.fit.spec.js",
+              "test": "a malformed email is rejected and the value preserved",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/address-schema.test.js",
+              "test": "enforces email format and accepts free-string phone",
+              "strength": "partial",
+              "notes": "schema rejects not-an-email; no focus/preserve UX"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-009",
+      "name": "Saving a new or edited address shows a confirmation naming it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-009-A",
+          "name": "Adding an address confirms it and lists it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "saves a valid address, shows a confirmation banner and lists the new address",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-009-B",
+          "name": "Editing an address's name confirms it under its new name",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/edit.fit.spec.js",
+              "test": "saving changes confirms them on the address book",
+              "strength": "full",
+              "notes": "'updated in your address book' banner; View under new name only"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-edit.spec.ts",
+              "test": "an edit replaces the whole record, clearing the optional fields left blank",
+              "strength": "partial",
+              "notes": "asserts success banner visible after rename, but not the banner text naming the address as updated"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-010",
+      "name": "Cancelling the add or edit form discards changes and returns to the address book",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-010-A",
+          "name": "Cancelling add discards the form without creating an address",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/add.fit.spec.js",
+              "test": "returns to the address book without creating an address",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/add/controller.test.js",
+              "test": "Cancel returns to list without creating an address",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-010-B",
+          "name": "Cancelling edit discards the changes, leaving the stored address as it was",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/edit.fit.spec.js",
+              "test": "Cancel returns to the address book without saving",
+              "strength": "full",
+              "notes": "typed name absent; original View seed-name link still present"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/edit/controller.test.js",
+              "test": "Cancel returns to list without updating",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-011",
+      "name": "Deleting an address asks for confirmation, naming the address, before it is removed",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-011-A",
+          "name": "Delete confirmation names the address and can be backed out of",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/delete.fit.spec.js",
+              "test": "asks for confirmation and names the address being deleted",
+              "strength": "full",
+              "notes": "confirmation text names the address; Back href to its details"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-011-B",
+          "name": "Cancelling the delete confirmation leaves the address untouched",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/delete.fit.spec.js",
+              "test": "Cancel returns to the address details with nothing deleted",
+              "strength": "full",
+              "notes": "returns to details; list still offers View"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/delete/controller.test.js",
+              "test": "Cancel returns to address details without deleting",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-011-C",
+          "name": "Confirming deletion removes the address and confirms it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/delete.fit.spec.js",
+              "test": "confirming removes the address and confirms it on the address book",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/address-book-delete.spec.ts",
+              "test": "deleting through the UI tombstones the record rather than removing it",
+              "strength": "partial",
+              "notes": "confirms delete and list removal; does not assert the success banner text"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/delete/controller.test.js",
+              "test": "Confirm soft-deletes address and redirects to list",
+              "strength": "partial",
+              "notes": "redirect after delete; banner text not asserted here"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-012",
+      "name": "The address book list shows each address's key details, with a way to view, and a way to add one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-012-A",
+          "name": "The list renders each address's details, with columns and an add action",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/list.fit.spec.js",
+              "test": "renders addresses in a table with Name, Address and Country columns",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/list/controller.test.js",
+              "test": "renders address list with Name, Address and Country columns",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-B",
+          "name": "Selecting an address from the list opens its own details page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/view.fit.spec.js",
+              "test": "clicking View on a row opens that address details page",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-C",
+          "name": "The address book is reached from the service's navigation",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/list.fit.spec.js",
+              "test": "Dashboard and Address book links are visible and navigate correctly",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/config/nunjucks/context/build-navigation.test.js",
+              "test": "renders exactly two links with no About entry",
+              "strength": "partial",
+              "notes": "navigation includes Address book href; does not click through"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-013",
+      "name": "The list is paged once it holds more than one page of addresses",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-013-A",
+          "name": "More than twenty-five addresses are shown across pages",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/list.fit.spec.js",
+              "test": "paginates when there are more than 25 addresses",
+              "strength": "full",
+              "notes": "Showing 1-25 of 30 then 26-30 of 30 after Page 2"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/list/controller.test.js",
+              "test": "renders numbered pagination when more than one page",
+              "strength": "partial",
+              "notes": "renders page 2 range text from mocked API; does not click through page 1→2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-014",
+      "name": "An empty address book invites the user to add the first address",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-014-A",
+          "name": "No addresses shows an empty-state message and an add action",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/list.fit.spec.js",
+              "test": "shows an empty-state message and an option to add one",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/list/controller.test.js",
+              "test": "shows empty state when org has no addresses",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-015",
+      "name": "Viewing an address lists the full Standard Address Block against its labels, and offers to edit or delete it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-015-A",
+          "name": "The view page lists every field against its label, blank fields included",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/view.fit.spec.js",
+              "test": "lists every Standard Address Block field against its label",
+              "strength": "full",
+              "notes": "definitions include empty strings for blank address line 2 and county"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/view/controller.test.js",
+              "test": "renders each Standard Address Block field on its own row, labelled as on the edit form",
+              "strength": "partial",
+              "notes": "buildRows labels every field; fixture has optionals filled, so blank-field display is the FIT"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-015-B",
+          "name": "The view page offers to edit or delete the address being viewed",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/view.fit.spec.js",
+              "test": "offers Edit and Delete for the address being viewed",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/view/controller.test.js",
+              "test": "GET renders read-only address details with Edit and Delete actions",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-015-C",
+          "name": "Back from the view page returns to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/address-book/fit/view.fit.spec.js",
+              "test": "Back returns to the address book",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

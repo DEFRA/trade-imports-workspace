@@ -1,0 +1,256 @@
+{
+  "capability": "live-animals/journey-pages/origin-of-import",
+  "areaCode": "ORIGIN",
+  "specFile": "openspec/specs/live-animals/journey-pages/origin-of-import/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ORIGIN-001",
+      "name": "The page asks which country the consignment comes from and whether an origin code is needed",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-001-A",
+          "name": "The page presents its question and controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/origin.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-002",
+      "name": "The country field is a searchable list that filters as the user types",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-002-A",
+          "name": "Typing part of a country's name offers the matching country",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "filters as you type, submits the country code and persists it", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "filters the list as the user types, case-insensitively", "strength": "full", "notes": "stronger than the E2E test: asserts two cases, mixed case included" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-002-B",
+          "name": "The chosen country's name is shown again on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "filters as you type, submits the country code and persists it", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "leaves the chosen country visible in the box and submits its code", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-003",
+      "name": "The country field offers the origin countries the service accepts, and submits a country code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-003-A",
+          "name": "The country list holds a placeholder and the accepted origin countries",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "filters as you type, submits the country code and persists it", "strength": "full", "notes": "asserts the no-JS fallback select holds a placeholder plus 31 countries (count 32)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "renders the captured MDM country options and feature copy", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-003-B",
+          "name": "Choosing a country submits and keeps its code",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "filters as you type, submits the country code and persists it", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "leaves the chosen country visible in the box and submits its code", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-004",
+      "name": "The country field offers its whole list on focus, before anything is typed",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-004-A",
+          "name": "Opening the country field offers the full list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "offers the whole country list on focus, without typing", "strength": "full", "notes": "this test is what surfaced the requirement itself — it was undocumented until this pilot" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-005",
+      "name": "A search matching no country says so",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-005-A",
+          "name": "A country search with no matches shows a no-results message",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "tells the user when nothing matches what they typed", "strength": "full", "notes": "this test is what surfaced the requirement itself — it was undocumented until this pilot" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-006",
+      "name": "The country field works without client-side JavaScript",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-006-A",
+          "name": "An ordinary country list remains available beneath the searchable field",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "native select submits and persists the country code", "strength": "full", "notes": "javaScriptEnabled: false" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "filters as you type, submits the country code and persists it", "strength": "partial", "notes": "asserts the fallback select exists and carries the code, but does not disable JavaScript to prove it works without it" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-007",
+      "name": "A complete origin answer is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-007-A",
+          "name": "Choosing a country and answering the origin-code question saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/origin.spec.ts", "test": "accepts valid origin details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "saves valid values, redirects to the next page and persists the answer", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-008",
+      "name": "Saving without a country is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-008-A",
+          "name": "Saving with no country chosen shows an error summary",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/origin.spec.ts", "test": "shows an error summary when submitted without a country", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: when no country is chosen, links to and focuses the empty field", "strength": "full", "notes": "more precise than the E2E test: names the focus behaviour" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-009",
+      "name": "The page also asks for an optional internal reference, capped at 58 characters and restricted to a fixed pattern",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-009-A",
+          "name": "An over-length internal reference is rejected with the value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "internal reference validation: when over 58 characters, links to and focuses the preserved value", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-009-B",
+          "name": "An internal reference with disallowed characters is rejected with the value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "internal reference validation: when characters are invalid, links to and focuses the preserved value", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should accept and save an internal reference containing an underscore", "strength": "partial", "notes": "proves the converse (a valid character is accepted), not the rejection this scenario claims" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-010",
+      "name": "The region of origin code has a maximum length of five characters",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-010-A",
+          "name": "An over-length region code is rejected with the value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when over 5 characters, links to and focuses the preserved value", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should reject a typed part over 5 characters and commit nothing", "strength": "full", "notes": "also proves the country and required-answer are held, matching the scenario's AND clauses" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should reject a typed part over 5 characters even when the answer is No", "strength": "full", "notes": "extra evidence: the limit applies regardless of whether a code is required" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-011",
+      "name": "Answering that a region code is required but leaving it empty is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-011-A",
+          "name": "An empty region code is rejected when one is required",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when Yes is chosen and the box is empty, holds the user on the page", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is blank", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is only the prefix", "strength": "full", "notes": "edge case: user typed only the country prefix, e.g. \"fr-\"" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the box was never submitted", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-012",
+      "name": "Once a region code is required, the chosen country's code is shown as a fixed prefix beside the region code field",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-012-A",
+          "name": "The country's code prefixes the region code field",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the country already chosen as a fixed prefix beside the region code box", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should render the country as the prefix and only the rest in the box", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-012-B",
+          "name": "The prefix follows whichever country was chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "the prefix follows the country the user chose", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-013",
+      "name": "The back link's target depends on whether the journey already has answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-013-A",
+          "name": "The back link opens the dashboard before any answer is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the dashboard while the journey is unanswered", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-013-B",
+          "name": "The back link opens Overview once the journey has an answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the notification hub once the journey has answers", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

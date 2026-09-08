@@ -1,0 +1,239 @@
+{
+  "capability": "live-animals/journey-pages/arrival-details",
+  "areaCode": "ARRIVAL",
+  "specFile": "openspec/specs/live-animals/journey-pages/arrival-details/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ARRIVAL-001",
+      "name": "The page asks how and when the consignment arrives",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-001-A",
+          "name": "The page presents its questions unanswered",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts port, means, identification, document reference and save are visible" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "leaves the arrival details unanswered on load", "strength": "partial", "notes": "title claims unanswered, but the body only asserts port and means are visible — never that they are empty or unchecked" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "partial", "notes": "asserts means radios, hints and every captured port option; does not assert unanswered on first open" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-002",
+      "name": "The port field offers every port before typing, and filters by name or code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-002-A",
+          "name": "Opening the port field offers the full list",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "partial", "notes": "clicks the combobox and asserts one known option is visible, not the full count" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "shows the full list of ports on focus", "strength": "full", "notes": "asserts option count equals portsOfEntry.length" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-002-B",
+          "name": "Typing a port's code offers that port",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "filters by port name or code, case-insensitively (AC1)", "strength": "full", "notes": "stronger: name and code cases" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-002-C",
+          "name": "Typing text that matches no port shows a no-results message",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "shows the no-results message when nothing matches (AC3)", "strength": "full", "notes": "not covered in E2E" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-003",
+      "name": "Choosing a port submits and keeps its code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-003-A",
+          "name": "The chosen port's code is what the notification keeps",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and routes overland transport to transit countries", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-003-B",
+          "name": "The chosen port is shown as its name and code together",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "asserts combobox value is 'Aberdeen Harbour (GB ABD)'" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "selecting a port shows its name and code and submits the code (AC2)", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-004",
+      "name": "The port field works without client-side JavaScript",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-004-A",
+          "name": "An ordinary port list remains available beneath the searchable field",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "native select submits and persists the port code (no-JS fallback)", "strength": "full", "notes": "javaScriptEnabled: false" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "partial", "notes": "asserts the hidden native select carries the code under JS; does not disable JavaScript" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "partial", "notes": "asserts the hidden select's option codes match the fixture" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-005",
+      "name": "A complete set of arrival details is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-005-A",
+          "name": "Answering every arrival question saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "accepts valid arrival details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and routes overland transport to transit countries", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-006",
+      "name": "Saving the page empty is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-006-A",
+          "name": "Saving with nothing answered shows an error summary",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "shows an error summary when submitted empty", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-007",
+      "name": "The arrival date is confined to one week back and six months ahead",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-007-A",
+          "name": "The date picker offers only the allowed window",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "restricts the date picker to one week back and six months ahead", "strength": "full", "notes": "asserts data-min-date and data-max-date attributes" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-007-B",
+          "name": "A date typed outside the window is rejected with an error naming the range",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "rejects a typed arrival date outside the allowed window", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "a typed date before the earliest allowed date links to and focuses the preserved value", "strength": "full", "notes": "paired with the after-latest twin in the same describe" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-007-C",
+          "name": "An impossible date is rejected with its own error, distinct from the out-of-window error",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "arrival date validation: impossible date links to and focuses the preserved value", "strength": "full", "notes": "asserts arrivalDateInvalid (not the out-of-range message), focus, preserved 31/2/2026, and port still held" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-007-D",
+          "name": "The date picker's own calendar excludes the day before the window, and allows the boundary day itself",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the picker calendar excludes the day before the window and allows the boundary itself", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-007-E",
+          "name": "A rejected arrival date is not kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/arrival-details.spec.ts", "test": "does not save an arrival date outside the allowed window", "strength": "full", "notes": "leaves and re-enters the same notification; asserts the rejected value is gone" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-008",
+      "name": "The transport identification and document reference are each capped at 58 characters",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-008-A",
+          "name": "An over-length transport identification is rejected with the value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transport identification validation: over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-008-B",
+          "name": "An over-length document reference is rejected with the value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transport document validation: over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-009",
+      "name": "An invalid port or means of transport is rejected by clearing it, while the page's other answers are kept",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-009-A",
+          "name": "An invalid port clears the port field, keeping the rest of the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "port validation: out-of-list value links to and focuses the cleared field while preserving other values", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-009-B",
+          "name": "An invalid means of transport clears the whole group, keeping the rest of the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: out-of-list value links to and focuses the cleared group while preserving other values", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-010",
+      "name": "The back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-010-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "arrival back link returns to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

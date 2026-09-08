@@ -1,0 +1,86 @@
+{
+  "capability": "live-animals/journey-pages/transited-countries",
+  "areaCode": "TRANSIT-COUNTRIES",
+  "specFile": "openspec/specs/live-animals/journey-pages/transited-countries/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-001",
+      "name": "The page asks which countries the consignment travels through, as one list of all thirty-one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-001-A",
+          "name": "The page presents one group of all thirty-one countries",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "renders one 31-country checkbox group", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit page renders captured country options and feature copy", "strength": "full", "notes": "asserts checkbox values equal the captured origin-country codes" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-002",
+      "name": "Several transited countries can be chosen together and are kept",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-002-A",
+          "name": "Two chosen countries are saved and shown again on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "accepts and persists multiple transited countries", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists selected transit countries", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "saves France and Belgium as part of the scope walk; main subject is means-based wipe, not persistence alone" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-003",
+      "name": "Saving without choosing a country is rejected, focusing the empty group",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-003-A",
+          "name": "Saving with nothing chosen shows an error summary and focuses the group",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "shows an error summary when submitted empty", "strength": "partial", "notes": "asserts the error summary heading only — not focus on the group" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: no countries links to and focuses the empty checkbox group", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-004",
+      "name": "An invalid country submitted clears every chosen country",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-004-A",
+          "name": "An out-of-list country clears the whole selection",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: out-of-list country links to and focuses the cleared checkbox group", "strength": "full", "notes": "not covered in E2E" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-005",
+      "name": "Transited countries are capped at twelve",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-005-A",
+          "name": "Choosing thirteen countries is rejected, keeping every selection",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: more than 12 countries links to the focused group and preserves selections", "strength": "full", "notes": "injects thirteen hidden inputs; asserts error naming the limit and thirteen still checked" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "capability": "live-animals/journey-obligations/origin-of-import",
+  "areaCode": "OB-ORIGIN",
+  "specFile": "openspec/specs/live-animals/journey-obligations/origin-of-import/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-OB-ORIGIN-001",
+      "name": "Whether a region of origin code is required decides whether the code is mandatory, not whether it is asked for",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-ORIGIN-001-A",
+          "name": "Answering that a region code is required makes it mandatory",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when Yes is chosen and the box is empty, holds the user on the page", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is blank", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the box was never submitted", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OB-ORIGIN-001-B",
+          "name": "Answering that no region code is required leaves it optional",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: No leaves the empty box unasked for", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should let a blank box through when the answer is No", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-ORIGIN-002",
+      "name": "A region of origin code already given is kept when it becomes optional",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-OB-ORIGIN-002-A",
+          "name": "The code survives being made optional",
+          "coverage": "none",
+          "tests": [],
+          "notes": "GAP: checked all three tiers (E2E country-of-origin-type-ahead.spec.ts, the fit suite's full region-code section, and every region-code unit test in controller.test.js) — none give a country a region code, then switch the requirement answer to No, then assert the code is still held. Every existing test that touches 'No' starts from an empty box. This scenario's claim is currently unverified anywhere."
+        }
+      ]
+    }
+  ]
+}

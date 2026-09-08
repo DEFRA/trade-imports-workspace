@@ -1,0 +1,84 @@
+{
+  "capability": "admin/authentication",
+  "areaCode": "ADMIN-AUTH",
+  "specFile": "openspec/specs/admin/authentication/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ADMIN-AUTH-001",
+      "name": "Any admin page requires the user to be signed in",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-AUTH-001-A",
+          "name": "Opening the admin dashboard unauthenticated requires signing in first",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "lands on the sign in page when opening the admin dashboard", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "allows signing into the admin dashboard", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/plugins/auth.test.js", "test": "redirectTo builds /auth/sign-in redirect including pathname and search", "strength": "partial", "notes": "proves the unauthenticated redirect URL carries the requested path, not the post-sign-in landing" }
+          ]
+        },
+        {
+          "id": "SCN-ADMIN-AUTH-001-B",
+          "name": "Opening a deeper admin page unauthenticated requires signing in first",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "lands on the sign in page when opening a page further in the journey", "strength": "full", "notes": "opens notifications while unauthenticated" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "allows signing into a page further in the journey", "strength": "full", "notes": "asserts return to notifications, not the dashboard" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/auth/get-safe-redirect.test.js", "test": "returns redirect when redirect starts with \"/\"", "strength": "partial", "notes": "allows deep-link return paths" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/plugins/auth.test.js", "test": "getBellOptions.location stores safe redirect and returns redirectUrl", "strength": "partial", "notes": "stores the requested path for post-sign-in return" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-AUTH-002",
+      "name": "Empty or invalid sign-in credentials show one generic error",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-AUTH-002-A",
+          "name": "Empty credentials, or an empty password alone, are both rejected the same way",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "displays an error message when signing in with empty credentials", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "displays an error message when signing in with empty password", "strength": "full", "notes": "asserts the identical error text as the empty-credentials test" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-AUTH-003",
+      "name": "Signing out ends the session and requires signing in again to return",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-AUTH-003-A",
+          "name": "Signing out shows a confirmation and locks the admin dashboard again",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "allows signing out after signing in", "strength": "full", "notes": "asserts the sign-out confirmation page" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "lands on the sign in page when reopening the admin dashboard after sign out", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/server/signout/controller.test.js", "test": "clears auth and yar cookies before redirecting", "strength": "partial", "notes": "proves session cookies are cleared on sign-out; does not assert the confirmation page" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-AUTH-004",
+      "name": "The admin dashboard shows the signed-in user's identity",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-AUTH-004-A",
+          "name": "The admin dashboard shows who is signed in",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-auth.spec.ts", "test": "displays signed in user after signing in", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/config/nunjucks/context/context.test.js", "test": "Should describe the signed-in user from their session", "strength": "partial", "notes": "builds userSession.displayName for templates; does not assert the dashboard markup" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "capability": "admin/notification-management",
+  "areaCode": "ADMIN-NOTIF",
+  "specFile": "openspec/specs/admin/notification-management/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-ADMIN-NOTIF-001",
+      "name": "An operator can find and delete a notification by its exact reference number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-NOTIF-001-A",
+          "name": "Deleting a submitted notification by reference number",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-notifications.spec.ts", "test": "finds and deletes a submitted notification by reference number", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-admin", "file": "src/server/notifications/controller.test.js", "test": "Should return 204 when delete succeeds", "strength": "partial", "notes": "API success only; no UI confirm, success message, or list removal" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-NOTIF-002",
+      "name": "An operator can select one or more notifications by checkbox and delete them together",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-NOTIF-002-A",
+          "name": "Deleting a checked notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-notifications.spec.ts", "test": "deletes a notification by checkbox", "strength": "full", "notes": "first step: checkbox → confirm → success message → row gone" }
+          ]
+        },
+        {
+          "id": "SCN-ADMIN-NOTIF-002-B",
+          "name": "Cancelling the delete confirmation leaves the notification untouched",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-notifications.spec.ts", "test": "cancelling checkbox deletion keeps the notification visible", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-NOTIF-003",
+      "name": "Deleting by an unknown reference number is rejected, not silently ignored",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-NOTIF-003-A",
+          "name": "An unknown reference number is rejected with an error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-notifications.spec.ts", "test": "does not allow deleting a notification by invalid reference number", "strength": "full", "notes": "first step asserts the problem-deleting error banner" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADMIN-NOTIF-004",
+      "name": "Every delete attempt is written to an audit trail, whether it succeeds or fails",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADMIN-NOTIF-004-A",
+          "name": "A successful delete is audited",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-notifications.spec.ts", "test": "deletes a notification by checkbox", "strength": "full", "notes": "compose-only step asserts one SUCCESS DELETE_NOTIFICATIONS audit with operator CRN and that reference; path is checkbox delete rather than by-reference, but THEN clauses match" }
+          ]
+        },
+        {
+          "id": "SCN-ADMIN-NOTIF-004-B",
+          "name": "A failed delete is also audited",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/admin-notifications.spec.ts", "test": "does not allow deleting a notification by invalid reference number", "strength": "full", "notes": "compose-only step asserts one FAILURE DELETE_NOTIFICATIONS audit naming the operator and attempted reference" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,264 @@
+{
+  "capability": "live-animals/journey-pages/upload-documents",
+  "areaCode": "DOCS",
+  "specFile": "openspec/specs/live-animals/journey-pages/upload-documents/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-DOCS-001",
+      "name": "The page states its upload constraints and shows an empty state before anything is added",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-001-A",
+          "name": "The empty page states its constraints",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders feature copy, upload constraints and empty state", "strength": "full", "notes": "accept attribute, must-be / smaller-than / allowed types, empty copy, add and continue" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-002",
+      "name": "The page offers a route back to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-002-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-003",
+      "name": "A notification can hold at most ten accompanying documents",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-003-A",
+          "name": "A tenth document is accepted and an eleventh is rejected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-limits.spec.ts", "test": "accepts a tenth document and rejects an eleventh with the maximum-documents error", "strength": "full", "notes": "ten Safe rows, eleventh error link, list stays at ten" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "rejects another upload after the maximum document capacity is reached", "strength": "full", "notes": "uploads ten then eleventh; error links to #documents-added and preserves the typed reference" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-004",
+      "name": "Each accompanying document has a maximum file size",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-004-A",
+          "name": "A file at exactly the size limit is accepted, one byte over is rejected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-limits.spec.ts", "test": "accepts a 10 MB PDF and rejects the same real file at one byte over", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-004-B",
+          "name": "Picking a grossly oversize file is refused before any document is added",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-reject.spec.ts", "test": "refuses an oversize file pick without adding a document", "strength": "full", "notes": "empty-state copy still shown" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: client-side oversize error focuses the summary and retains metadata", "strength": "partial", "notes": "client oversize path with metadata retained — does not assert the empty-list clause (page already had metadata filled, no prior docs)" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-004-C",
+          "name": "An oversize file submitted without the browser check running is still refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: server rejects an oversize multipart payload", "strength": "full", "notes": "bypasses client check via form.submit(); focuses file field; empty state remains" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-005",
+      "name": "Only supported file types can be uploaded",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-005-A",
+          "name": "An unsupported file type is rejected",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: unsupported type links to and focuses the upload while preserving metadata", "strength": "partial", "notes": "focus + preserved reference/date — does not re-assert empty-state copy (no document row is added either)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-006",
+      "name": "The reference and date of issue are each required, and individually validated",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-006-A",
+          "name": "An empty reference links to and focuses the reference field, preserving the date",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: empty value links to and focuses the preserved field", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-B",
+          "name": "A reference over the maximum length links to and focuses the reference field, preserving the value",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "reference validation: over 58 characters links to and focuses the preserved value", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-C",
+          "name": "An empty date of issue links to and focuses the date field, preserving the reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "date validation: empty value links to and focuses the preserved field", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-D",
+          "name": "An impossible date links to and focuses the date field, preserving what was typed",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "date validation: impossible date links to and focuses the preserved value", "strength": "full", "notes": "31/2/2026 retained" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-006-E",
+          "name": "No file chosen links to and focuses the file field, preserving the reference and date",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "file validation: no file links to and focuses the upload while preserving metadata", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-007",
+      "name": "Every uploaded document is virus-scanned before it can be used",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-007-A",
+          "name": "A clean upload becomes Safe and viewable",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: shows Checking with no view link, then Safe with a view link", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Checking then Safe on the row — does not assert view-link absence while Checking" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while checking, then renders Safe and allows the journey to continue", "strength": "partial", "notes": "Checking then Safe; continue gate — view-link transition covered better by E2E" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-007-B",
+          "name": "An infected upload is flagged and blocked",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted with Checking, then Virus found with error summary and no view link", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders Virus found and its per-file error until the document is removed", "strength": "full", "notes": "Checking → Virus found, error, zero view links" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-008",
+      "name": "The user cannot continue while a document is still being scanned or is infected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-008-A",
+          "name": "Continuing is blocked while a scan is still checking",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while checking, then renders Safe and allows the journey to continue", "strength": "full", "notes": "cannotContinue error while Checking; after Safe, Continue reaches Overview" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-008-B",
+          "name": "Continuing is blocked while an infected document remains",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders Virus found and its per-file error until the document is removed", "strength": "full", "notes": "Continue re-shows virus error; after remove, Continue reaches Overview" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-009",
+      "name": "Each document's scan status updates independently, and completion is announced",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-009-A",
+          "name": "One document settles while another stays pending",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "updates one settled row in place, announces it and leaves a still-pending row alone", "strength": "full", "notes": "Safe + view link + announcer; stuck row still Checking" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-010",
+      "name": "Scan progress can be followed without client-side JavaScript",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-010-A",
+          "name": "A manual refresh reflects scan progress until the file is Safe",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-refresh-no-js.spec.ts", "test": "the refresh fallback reflects scan progress without client JavaScript", "strength": "full", "notes": "javaScriptEnabled: false; refresh until Safe; refresh gone; view link present" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-011",
+      "name": "An uploaded document can be viewed and removed",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-011-A",
+          "name": "Viewing a Safe document downloads exactly the uploaded file",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "downloads a saved document with safe response headers", "strength": "partial", "notes": "content-type PDF, nosniff, body starts with %PDF- — not a full byte-for-byte compare against the upload buffer" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-011-B",
+          "name": "Removing a document takes it off the notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "removes a saved document and restores the empty state", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-012",
+      "name": "An attached document keeps its exact file and survives a reload",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-012-A",
+          "name": "An uploaded document is kept intact and still listed after a reload",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/journeys/persistence/persistence-accompanying-document.spec.ts", "test": "uploads a document that persists to Mongo and reloads", "strength": "full", "notes": "Mongo projection: reference, content type/length, COMPLETE scan; row still listed after reopen" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "capability": "live-animals/journey-obligations/scope-and-status",
+  "areaCode": "OB-SCOPE",
+  "specFile": "openspec/specs/live-animals/journey-obligations/scope-and-status/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-OB-SCOPE-001",
+      "name": "An obligation either applies to a notification or does not, and when it applies it is either mandatory or optional",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-SCOPE-001-A",
+          "name": "An obligation that does not apply is neither asked for nor required",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "exemplar: cats → CPH neither asked nor blocking Continue to Overview" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "full", "notes": "exemplar: Airplane → transit page skipped and hub row absent" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should open the review section once every answer section is ready — even with the declaration unanswered (no deadlock)", "strength": "partial", "notes": "readiness with optional/N/A rows; not a named out-of-scope ask" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "partial", "notes": "row N/A status for an out-of-scope obligation set" }
+          ],
+          "notes": "General rule evidenced by per-obligation scope suites rather than a single cross-cutting E2E that submits with every optional/out-of-scope combination."
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-SCOPE-002",
+      "name": "An obligation that stops applying has its answer discarded",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-SCOPE-002-A",
+          "name": "An answer is discarded when the obligation stops applying",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "full", "notes": "round-trip: countries cleared when means leaves overland and returns" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/reason-purpose-scope.spec.ts", "test": "purpose is owed only for the internal market and is wiped when the reason changes", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/engine/mutators.test.js", "test": "Should run the evaluator as the wipe authority: deselecting the last triggering commodity destroys the dependent", "strength": "full", "notes": "containsUnweanedAnimals wiped when last Cow line removed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-SCOPE-003",
+      "name": "An obligation that only changes status keeps its answer",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-OB-SCOPE-003-A",
+          "name": "An answer survives a change of status",
+          "coverage": "none",
+          "tests": [],
+          "notes": "GAP: evaluator.test.js and commit-purge-authority.test.js retain regionOfOriginCode fulfilments on a mandatory→optional flip, and helpers.test.js covers the regionCode gate shape — but the scenario also requires the answer to be still shown. Checked E2E (no status-flip UI), FIT (none), and page controllers — same hole origin-of-import already records for SCN-OB-ORIGIN-002-A. Fulfilment retain alone is not enough for 'still shown'."
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-SCOPE-004",
+      "name": "A task row reflects only what applies to the notification in hand",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-SCOPE-004-A",
+          "name": "A row whose obligations do not apply does not hold submission back",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "transitCountries row N/A" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should keep the review section gated on the row roll-up exactly as before", "strength": "partial", "notes": "review readiness uses row roll-up including N/A" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/status.test.js", "test": "Should keep a complete journey ready when no document has been started", "strength": "full", "notes": "optional documents row does not block readiness" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "completed answers unlock Check and submit and open the review", "strength": "partial", "notes": "happy path includes in-scope rows; does not isolate an N/A row as the reason review opens" }
+          ],
+          "notes": "No E2E that completes review while asserting a named N/A row was the reason it was not blocked."
+        }
+      ]
+    }
+  ]
+}

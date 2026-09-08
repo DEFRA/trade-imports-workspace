@@ -1,0 +1,108 @@
+schema: spec-driven
+
+context: |
+  DEFRA trade-imports. This workspace aggregates independent service repos;
+  it is not a monorepo. See CLAUDE.md at the workspace root.
+
+  Specs under openspec/specs/ are a Behaviour Spec: intended behaviour, held
+  separately from implemented behaviour (code) and verified behaviour (tests),
+  so drift between the three can be surfaced. Never put test names or suites
+  in spec.md — coverage links live in openspec/coverage/.
+
+  Commands and gap queries: docs/reference/openspec.md.
+  Area codes: openspec/coverage/AREAS.md — never invent a new AREA code;
+  add a row there first if a capability is genuinely missing.
+
+  Capabilities nest by service area:
+    live-animals/  the importer-facing animal notification journey
+    admin/         the internal operator interface
+    ins/           Import Notification Service front door and its read model
+
+  Within live-animals: journey-pages/ = one capability per screen (record the
+  page's exact title); journey-obligations/ = conditional rules, stated from
+  the triggering page; everything else is cross-cutting or outside the flow
+  (dashboard, sign-in).
+
+  "Obligation" is domain vocabulary: a thing a notification must declare,
+  with scope, mandate status and cardinality. Keep the word.
+
+  journey-flow vs journey-obligations — hold the line. journey-flow owns
+  whether a PAGE is offered (order, skipping, gates as mechanism).
+  journey-obligations owns whether a QUESTION applies (which answer puts
+  what in or out of play). Neither states the other's half.
+
+  Stable IDs (required on every requirement and scenario):
+  - First line of the body: `**ID**: REQ-<AREA>-NNN` or
+    `SCN-<AREA>-NNN-<LETTER>` (NNN in file order; LETTER within the
+    requirement). OpenSpec treats this as metadata — it does not touch the
+    requirement/scenario NAME (the delta join key) or MUST/length checks.
+  - AREA is assigned once in openspec/coverage/AREAS.md, never path-derived.
+    Obligations that share a leaf name with a journey page use an OB-
+    prefix (e.g. ORIGIN vs OB-ORIGIN).
+
+  Test coverage (workspace-owned, outside OpenSpec CLI):
+  - Lives in openspec/coverage/<capability-path>/coverage.json only.
+  - Attaches to SCENARIOS; requirement coverage rolls up from scenarios.
+  - Each link: (type, repo, file, test name) with type e2e|fit|unit and
+    strength full|partial. Scenario coverage is derived: full if any link
+    is full; partial if links but none full; none if empty. Never hand-edit
+    coverage independently of the tests array.
+  - `coverage: "full"` means a strong witness exists — not suite confidence.
+    Confidence comes from the e2e/fit/unit mix; see docs/reference/openspec.md
+    ("Reading a coverage row").
+  - Build coverage by reading test bodies, not titles. Fix small
+    evidence-backed spec gaps inline; leave genuine holes as none + notes.
+  - Find gaps by querying the JSON (commands in docs/reference/openspec.md),
+    not by re-deriving coverage with an AI.
+
+  Conventions:
+  - Requirements use MUST (not SHALL).
+  - Opening words signal scope: "The page …", "Every page / a task page …",
+    "A notification / every …", "An operator …". Do not label breadth
+    ("meta", "general") — name the subject. Wrong opening usually means
+    misfiled, not badly worded.
+  - Scenarios: Given/When/Then, plain English, observable only — no
+    selectors, routes, or test-framework mechanics.
+  - Cross-cutting mechanisms (obligations, addresses, authentication) get
+    their own capability, not scatter across screens.
+  - Prefer a shared name prefix over deeper directories; add a directory only
+    when a group has many members (as journey-pages/ does). A directory is
+    either one capability or a folder of them, never both.
+  - Folder names = kind of thing (journey-pages/, journey-obligations/);
+    leaf names = subject. Service dirs (live-animals/, admin/, ins/) are
+    named for the service. Name capabilities for what the system does and
+    for whom, not for mechanisms (not journey-strip →
+    notification-status-and-reference). Domain words (obligation) stay.
+  - Product words only where the user sees them (page titles, "Outbox
+    events"). Never name requirements after classes, files, or modules.
+  - One subject, one capability. Cross-reference owners from Purpose; cite
+    full paths in backticks (`live-animals/addresses`). Share a capability
+    only when one implementation serves several pages with the SAME
+    behaviour.
+  - Purpose: one or two sentences; never tests or how the spec was authored.
+  - Cross-reference only where a reader would expect the behaviour here but
+    it lives elsewhere. Never generalise one verified instance to siblings
+    unchecked. Where two groupings look alike, spec the difference with a
+    scenario that diverges.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

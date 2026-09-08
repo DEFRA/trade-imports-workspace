@@ -1,0 +1,68 @@
+{
+  "capability": "ins/notification-tracking",
+  "areaCode": "INS-TRACK",
+  "specFile": "openspec/specs/ins/notification-tracking/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-INS-TRACK-001",
+      "name": "One record is kept per notification, updated in place as it changes",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRACK-001-A",
+          "name": "An in-progress notification is tracked as Draft, with its detail",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/aggregated-notification.spec.ts",
+              "test": "creates and updates aggregated notification document through the submission lifecycle",
+              "strength": "full",
+              "notes": "first half: polls Mongo for one DRAFT doc with referenceNumber, originCountry and arrivalDate after journey.toDeclaration()"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertServiceTest.java",
+              "test": "upsert_callsMongoTemplate_withVersionGuardedQuery",
+              "strength": "partial",
+              "notes": "proves upsert writes DRAFT status and snapshot fields under a version guard; does not run the live-animals journey"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRACK-001-B",
+          "name": "Submitting the notification updates the same record to Submitted",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/ins/aggregated-notification.spec.ts",
+              "test": "creates and updates aggregated notification document through the submission lifecycle",
+              "strength": "full",
+              "notes": "second half: after submit, same _id is SUBMITTED, countDocuments(_id)=1, aggregateVersion advanced"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertServiceTest.java",
+              "test": "upsert_callsMongoTemplate_withVersionGuardedQuery",
+              "strength": "partial",
+              "notes": "version-guarded upsert is the mechanism that updates in place rather than inserting a second record"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertServiceTest.java",
+              "test": "upsert_delegatesVersionFilterToMongo_forStaleEvent",
+              "strength": "partial",
+              "notes": "stale lower versions match nothing via $lt — supports in-place update without duplicates"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

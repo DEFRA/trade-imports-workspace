@@ -1,0 +1,63 @@
+{
+  "capability": "live-animals/notification-events",
+  "areaCode": "EVENTS",
+  "specFile": "openspec/specs/live-animals/notification-events/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-EVENTS-001",
+      "name": "One outbox event is recorded per meaningful lifecycle transition",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-EVENTS-001-A",
+          "name": "Creating a notification records a creation event",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-created.spec.ts", "test": "writes a NotificationCreated event immediately on draft creation", "strength": "full", "notes": "Mongo outbox; notificationStatusCode DRAFT and statusChanges DRAFT" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-001-B",
+          "name": "Submitting a notification records a submission event carrying the submitted detail",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-notification.spec.ts", "test": "records a NotificationSubmitted outbox event on UI submission", "strength": "full", "notes": "SUBMITTED status, consignment fields, and authenticated actor identity" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-001-C",
+          "name": "Starting and cancelling an amendment each record their own event",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-amendment.spec.ts", "test": "records the authenticated actor and cumulative status changes on amendment", "strength": "full", "notes": "joint: NotificationAmendmentRequested with AMEND status" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-amendment-cancelled.spec.ts", "test": "writes a NotificationAmendmentCancelled event when an amendment is cancelled", "strength": "full", "notes": "joint: cancelled event with SUBMITTED status and statusChanges through AMEND back to SUBMITTED" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-001-D",
+          "name": "Soft-deleting a draft and soft-deleting a submitted notification record different events",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-deleted.spec.ts", "test": "writes a NotificationDeleted event when a draft is soft-deleted", "strength": "full", "notes": "DELETED status" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-deleted.spec.ts", "test": "writes a NotificationSubmissionDeleted event when a submitted notification is soft-deleted", "strength": "full", "notes": "distinct event type; DELETED status" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-EVENTS-002",
+      "name": "Deleting a never-submitted draft records no withdrawal event",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-EVENTS-002-A",
+          "name": "Deleting a draft that was never submitted records no separate withdrawal event",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/admin/outbox-event-withdrawal.spec.ts", "test": "does not write a withdrawn event when a draft is deleted", "strength": "full", "notes": "asserts zero NotificationWithdrawn documents for the aggregate" }
+          ]
+        }
+      ]
+    }
+  ]
+}

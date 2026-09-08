@@ -1,0 +1,191 @@
+{
+  "capability": "live-animals/journey-pages/commodity-selection",
+  "areaCode": "COMMODITY-SELECT",
+  "specFile": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-COMMODITY-SELECT-001",
+      "name": "The page asks what is being imported and holds nothing until it is searched",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-001-A",
+          "name": "The page opens empty, with only a search box",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "offers a search box and lists nothing until it is used", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers a search box and lists nothing until it is used", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-002",
+      "name": "A search shorter than three characters returns nothing",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-002-A",
+          "name": "A two-character search lists nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "lists nothing for a query shorter than three characters", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "lists nothing for a query shorter than three characters", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-003",
+      "name": "A search can match a commodity's code or a species' common or scientific name",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-003-A",
+          "name": "Searching by common name finds the same species as searching by code",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds a species by its common name", "strength": "full", "notes": "searches 'cattle' and finds Bos spp. / Bos taurus under Cow (0102)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species as its common name with the scientific name after it", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "partial", "notes": "searches by commodity code (e.g. 0102) and finds the same Cow group; does not itself search by common name" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-004",
+      "name": "Matching species are grouped under the commodity they belong to, one group per matching commodity",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-004-A",
+          "name": "A search groups its matching species under their commodity heading",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "groups the matching species under their commodity heading", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-004-B",
+          "name": "A search matching more than one commodity renders a group for each",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity", "strength": "full", "notes": "search 0106 yields Cat and Dog groups" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "groups the matching species under their commodity heading", "strength": "partial", "notes": "walks codes including 01061900 which yields both Cat and Dog groups, but does not assert both on one render" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-004-C",
+          "name": "A search matching nothing says so",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "says so when nothing matches", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "says so when nothing matches", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-005",
+      "name": "The page explains what a commodity code is and links out to look one up",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-005-A",
+          "name": "The commodity-code help explains the code and links to the Trade Tariff tool",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "explains commodity codes and links out to the Trade Tariff tool", "strength": "full", "notes": "asserts href, target=_blank and rel" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-006",
+      "name": "Species chosen under different searches are all kept, in a canonical order",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-006-A",
+          "name": "Species found under separate searches are kept together",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "accepts and persists multiple commodity-species pairs found under different queries", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "saves pairs found under different queries, in canonical order", "strength": "full", "notes": "also covers 006-B" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "ticks a result that is already on the notification", "strength": "full", "notes": "re-search shows previously saved species still chosen" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-006-B",
+          "name": "Saved species are ordered canonically, not by the order they were chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "saves pairs found under different queries, in canonical order", "strength": "full", "notes": "chooses Felis, Bos, Bison then asserts consignment-details headings in canonical order" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-007",
+      "name": "The back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-007-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-008",
+      "name": "The tally counts what has been chosen and can be cleared",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-008-A",
+          "name": "The tally reports the choice and clearing empties it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "counts what has been chosen and clears it on request", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "counts and lists what has been chosen, and clears it on request", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-009",
+      "name": "Saving without choosing a commodity is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-009-A",
+          "name": "Saving with nothing chosen shows an error summary",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/commodities.spec.ts", "test": "shows an error summary when submitted empty", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "validation: no commodity links to and focuses the search box", "strength": "full", "notes": "stronger than E2E: names focus on the search box" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-010",
+      "name": "A notification must carry at least one commodity line",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-010-A",
+          "name": "A notification with no commodity line cannot be submitted",
+          "coverage": "none",
+          "tests": [],
+          "notes": "GAP: checked commodities.spec.ts, search.fit.spec.js, and grepped E2E/FIT for submit-with-no-commodity — none refuse submission of a notification that has zero commodity lines. Empty-page save (009) is a different claim. Obligation/whitelist unit tests exist around commodityLines scope but do not assert a submit refusal for a missing line."
+        }
+      ]
+    }
+  ]
+}

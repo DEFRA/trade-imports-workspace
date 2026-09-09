@@ -110,6 +110,16 @@ raw role/label locators, no page objects where the repo does not already use the
 - Run test suites **to a file** under `<logs>` and read that file once. Do not re-run a suite
   just to see its output again. For Playwright failures read `test-results/*/error-context.md`, not the
   tail of the run.
+- **Browser-driven suites are not yours to run.** Anything that launches a real browser — the in-repo
+  `*.fit.spec.js` suites (`test:fit`, `test:fit:features`, `test:fit:ci`), Playwright E2E, Lighthouse —
+  cannot start under your sandbox: Chromium is refused its Mach port and every test fails at launch,
+  which tells you nothing about the change. A later **verification-ladder stage runs the full ladder,
+  browser legs included**, outside your sandbox. Leave those rungs to it.
+  Run every rung you *can*: unit and set suites, `format:check` or `format`, `lint`, and for the backend
+  `mvn verify`. Those are yours and a red one is still yours to fix. Then in `notes` name the rungs you
+  did not run and why, so the ladder knows what it is covering. Do not attempt a sandbox bypass, and do
+  not report `ok: false` merely because a browser rung was unavailable to you — a change whose runnable
+  rungs are all green is `ok: true` with the deferral recorded.
 - **Stage** your work (`git -C <repo> add`) but **do not commit**. Landing happens after review.
 - Test failures are yours to fix. "Pre-existing" and "separate issue" are not available to you — if the
   suite is red when you finish, you have not finished.

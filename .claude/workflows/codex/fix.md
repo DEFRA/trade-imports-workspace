@@ -37,9 +37,15 @@ Workspace root `<workspace>`; plan of record `<backlog>`; logs
 
 ## Verify before you report
 
-Run the increment's own `verification` array in order. **Additionally, if the diff touches `src/main` in
-the backend, run `mvn verify` (not just `mvn test`)** — integration tests run under Failsafe at `verify`
-and a `mvn test` ladder would skip them entirely.
+Run the increment's own `verification` array in order, or where it has none, the unit, format and lint
+rungs the repo defines. **Additionally, if the diff touches `src/main` in the backend, run `mvn verify`
+(not just `mvn test`)** — integration tests run under Failsafe at `verify` and a `mvn test` ladder would
+skip them entirely.
+
+**Browser-driven suites are not yours to run** — the in-repo `*.fit.spec.js` suites, Playwright E2E and
+Lighthouse cannot start under your sandbox, and a later verification-ladder stage runs them outside it.
+Skip those rungs, run every other one, and name what you skipped in `notes`. A browser rung you could
+not run is not a reason to report `ok: false`.
 
 Run suites to a file under `<logs>` and read the file once. At most 3 self-repair attempts on a red step;
 if still red, report `ok: false` with exactly what is red and what you tried.

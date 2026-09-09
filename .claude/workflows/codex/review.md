@@ -12,16 +12,23 @@ Compound commands, pipes, `node`, `npx`, absolute paths and `cd` are all fine he
 
 ## Constants
 
-Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<skills>`, `<INCREMENT_ID>` — is
-bound to a real value in the prompt that pointed you here. Use those bindings; never guess one.
+Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<skills>`, `<INCREMENT_ID>`,
+`<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a real value in the prompt that pointed
+you here. Use those bindings; never guess one.
 
-Workspace root `<workspace>`; plan of record `<backlog>`; repos
-under `<workspace>/repos/` (`trade-imports-animals-frontend`, `-backend`, `-tests`).
+Workspace root `<workspace>`; plan of record `<backlog>`. The three repos are `<frontendRepo>`,
+`<backendRepo>` and `<testsRepo>` — bound per run, and different between programmes. Never substitute
+a repo name you remember from another run.
 
 ## Step 1 — load the standard
 
 Read the increment: `jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog>`.
-Its `acceptanceCriteria` are the contract; its `filesToTouch` is the agreed scope fence.
+Where it has `acceptanceCriteria` those are the contract, and where it has `filesToTouch` that is the
+agreed scope fence. **A thin increment carries neither, and that is normal** — backlogs differ, and the
+implementor is expected to derive the solution from the repo's own recipes and conventions. Then the
+contract is what the increment's descriptors (`type`, `title`, `detail`, `section`, `page`, `slug`,
+`obligations`) plus the governing recipe together require. Judge the change against that. Never raise a
+finding whose substance is that the increment was underspecified.
 
 Read the personas that define the house standard and apply all three:
 

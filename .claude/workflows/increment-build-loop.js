@@ -734,11 +734,14 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <skills>       = ${SKILLS}
   <branch>       = ${workingBranch ?? BASE_BRANCH}
   <INCREMENT_ID> = ${id}
+  <frontendRepo> = ${ABS}/${REPOS.frontend.path}
+  <backendRepo>  = ${ABS}/${REPOS.backend.path}
+  <testsRepo>    = ${ABS}/${REPOS.tests.path}
 
 ${instructions}
 ---8<---
 STEP 2 — run EXACTLY this one command with run_in_background true, then wait for it to exit:
-\`codex exec -C ${WORKAREA_TILDE} --skip-git-repo-check -s workspace-write -c sandbox_workspace_write.network_access=true --output-schema ${BRIEFS_TILDE}/schemas/${schemaFile} -o ${lastMessageTilde} "Read ${promptFileTilde} and follow it in full." > ${runLog} 2>&1\`
+\`codex exec -C ${TILDE} --skip-git-repo-check -s workspace-write -c sandbox_workspace_write.network_access=true --output-schema ${BRIEFS_TILDE}/schemas/${schemaFile} -o ${lastMessageTilde} "Read ${promptFileTilde} and follow it in full." > ${runLog} 2>&1\`
 STEP 3 — check that it produced a result. One Bash call: \`jq empty ${lastMessageTilde}\`
 STEP 4 — report TRANSPORT and nothing else:
 - ok:true ONLY if the command exited ZERO and \`jq empty\` accepted ${lastMessageTilde}. Put Codex's

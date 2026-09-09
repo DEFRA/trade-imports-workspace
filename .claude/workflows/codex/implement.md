@@ -14,8 +14,8 @@ discipline, house rules — applies in full.
 ## Constants
 
 Every `<placeholder>` in this brief — `<workspace>`, `<workarea>`, `<backlog>`, `<logs>`, `<skills>`,
-`<branch>`, `<INCREMENT_ID>` — is bound to a real value in the prompt that pointed you here. Use those
-bindings; never guess one.
+`<branch>`, `<INCREMENT_ID>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a real
+value in the prompt that pointed you here. Use those bindings; never guess one.
 
 | Thing | Path |
 |---|---|
@@ -24,9 +24,13 @@ bindings; never guess one.
 | Workarea | `<workarea>` |
 | Logs | `<logs>` |
 | Skills | `<skills>` |
-| frontend repo | `<workspace>/repos/trade-imports-animals-frontend` |
-| backend repo | `<workspace>/repos/trade-imports-animals-backend` |
-| tests repo | `<workspace>/repos/trade-imports-animals-tests` |
+| frontend repo | `<frontendRepo>` |
+| backend repo | `<backendRepo>` |
+| tests repo | `<testsRepo>` |
+
+Those three are **bound per run** and differ between programmes — the same three roles name different
+repos in different backlogs. Never substitute a repo name you remember from another run; a path typed
+from memory is how one programme's increment ends up built in another programme's repo.
 
 Every repo this increment touches is already on branch `<branch>`, cut for this increment by an earlier
 stage. Do not switch branches and do not create one.
@@ -40,15 +44,28 @@ each, on that same branch name in both.
 jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog>
 ```
 
-That object is your complete specification: `filesToTouch` (paths + action + what), `obligations`,
-`flowChanges`, `schemaFields`, `copyKeys`, `specs`, `acceptanceCriteria`, `verification` (the ladder, in
-order), `notes`, `openQuestions`. It is self-contained **by design** — if you find yourself needing
-information that is not in it, that is a defect worth reporting in your `notes`, not a licence to
-improvise.
+That object states what the increment is. **How detailed it is varies enormously between backlogs, and
+a thin one is normal, not broken.** Some carry a full specification — `filesToTouch` (paths + action +
+what), `flowChanges`, `schemaFields`, `copyKeys`, `specs`, `acceptanceCriteria`, `verification` (the
+ladder, in order), `recipe`. Others carry little more than `type`, `repo`, a `title` or `detail`, and a
+few descriptors such as `section`, `page`, `slug` or `obligations`. **Both shapes are buildable.** Read
+whichever fields are present; never require a field, and never treat its absence as a blocker.
 
-Supporting context: read only what the increment's `recipe` field actually cites, resolving
-workarea-relative paths against `<workarea>`. Where it cites a document by heading, read the cited
-sections, not the whole file.
+**You work out the solution. That is the job.** Where the increment does not spell something out, derive
+it the way an engineer joining this codebase would: from the repo's own recipes and conventions, from
+the neighbouring features, and from the workspace best practices. Do not stop and ask to be handed a
+paint-by-numbers spec, and do not report a thin increment as a defect.
+
+What a thin increment still owes you is a claim that holds up. **Thin is fine; wrong is not.** Report in
+`notes` — and only in `notes` — the things that are actually false: a path that is not there, a citation
+whose line has moved on, an asserted behaviour the application does not have, two fields that contradict
+each other. Those are defects. Silence about a detail is not.
+
+Supporting context: if the increment has a `recipe` field, read what it cites, resolving
+workarea-relative paths against `<workarea>`; where it cites a document by heading, read the cited
+sections, not the whole file. If it has no `recipe`, find the governing recipe yourself — for a frontend
+increment that is the set's own docs, reached through the `frontend-change` skill in Step 2. Read what
+you need to get it right and no more.
 
 ## Step 2 — build it, routed on the increment's `repo` field
 
@@ -59,11 +76,13 @@ rails) — read that recipe and follow it, varying as little as possible. Do **n
 recipe. The recipes are set-relative, so where your increment targets a set other than the one a recipe was
 written against, substitute the set folder and otherwise follow it exactly. Where the increment cites a gap
 that no recipe covers, the increment's own `filesToTouch` **is** the script and any exemplar it names is
-the shape to imitate.
+the shape to imitate — and where it has no `filesToTouch` either, the recipe plus the nearest existing
+feature of the same kind is the shape to imitate. Latitude about *how* is not latitude about *whether*:
+where a recipe governs, follow it.
 
 **backend** — follow the increment plus the workspace Java best practices under
-`<workspace>/docs/best-practices/java/`. Mirror the existing `uk.gov.defra.trade.imports.animals` package
-idiom exactly. Compact-constructor null guards on public records at API boundaries. One round-trip test
+`<workspace>/docs/best-practices/java/`. Mirror the package idiom already in `<backendRepo>` exactly —
+read what is there rather than assuming a package name; each programme's backend has its own. Compact-constructor null guards on public records at API boundaries. One round-trip test
 plus one unknown-value negative per enum — **never** a test per enum constant. Integration tests (`*IT`)
 run under Failsafe: `mvn verify`, not `mvn test`.
 
@@ -82,8 +101,8 @@ raw role/label locators, no page objects where the repo does not already use the
   puts a planning change inside a diff nobody is reviewing as a planning change.
 - Every user-facing string goes in `copy.en.js` **and** `copy.cy.js` with identical structure. No display
   logic in obligations or in the model — no labels, titleKeys or hints there.
-- Write the specs the increment lists (co-located Playwright spec, axe test). They are part of the
-  increment, not optional extras.
+- Write the specs the increment lists (co-located Playwright spec, axe test) — or, where it lists none,
+  the specs the governing recipe calls for. They are part of the increment, not optional extras.
 - **Frontend work: run `npm run format` before you report.** The repo's pre-commit hook runs
   `format:check && lint && test`, so a formatting miss blocks the commit even when your ladder was green.
   Watch for it after edits that change a line's length — shortening `it.fails(` to `it(`, for example,

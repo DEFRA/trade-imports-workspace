@@ -27,9 +27,12 @@ Workspace root `<workspace>`; plan of record `<backlog>`; logs
 - If a fix turns out to be **wrong or impossible** — it breaks a test that is pinning correct behaviour,
   or the premise is false — **stop on that item**, leave it unapplied, and explain in `notes`. Do not
   improvise an alternative, and never weaken or delete a test to make a fix land.
-- Read the increment's `acceptanceCriteria` before you start; they are the contract every fix serves.
-- Keep the house idiom: mirror the existing `uk.gov.defra.trade.imports.animals` package for Java, the
-  workspace best practices under `<workspace>/docs/best-practices/`.
+- Read the increment before you start: its `acceptanceCriteria` where it has them, otherwise its
+  descriptors and the recipe the implementor followed. That is the contract every fix serves. A thin
+  increment is normal and is not a reason to stop.
+- Keep the house idiom: for Java, mirror the package idiom already in the repo you are editing — read
+  what is there rather than assuming a package name. Otherwise the workspace best practices under
+  `<workspace>/docs/best-practices/`.
 - **Stage** your work (`git add`), do **not** commit.
 
 ## Verify before you report

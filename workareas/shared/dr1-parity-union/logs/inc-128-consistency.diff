@@ -1,0 +1,202 @@
+diff --git a/src/client/stylesheets/components/_date-picker.scss b/src/client/stylesheets/components/_date-picker.scss
+new file mode 100644
+index 00000000..16292e39
+--- /dev/null
++++ b/src/client/stylesheets/components/_date-picker.scss
+@@ -0,0 +1,25 @@
++@use "../../../../node_modules/govuk-frontend" as *;
++
++// MoJ date picker — in-flow calendar (pushes content down, no overlay).
++//
++// The component ships an absolutely positioned dialog, so an open calendar
++// floats over whatever follows the date field. On the arrival details page
++// that hides "Port of entry" and "Means of transport to the port of entry"
++// behind the calendar, and the trader has to close it to read them again.
++//
++// Static positioning drops the dialog back into the flow of the page: the
++// questions after it move down instead of disappearing behind it. It also
++// makes the inline `top` and `right` offsets the component writes on every
++// open inert, so no script is needed to clear them.
++//
++// 7 day buttons of 44px plus the dialog's own govuk-spacing(4) padding on
++// each side is 348px, so the calendar never has to shrink or wrap.
++$app-datepicker-dialog-max-width: 360px;
++
++.app-datepicker--in-flow .moj-datepicker__dialog {
++  box-sizing: border-box;
++  position: static;
++  width: 100%;
++  max-width: $app-datepicker-dialog-max-width;
++  margin-top: govuk-spacing(2);
++}
+diff --git a/src/client/stylesheets/components/_index.scss b/src/client/stylesheets/components/_index.scss
+index 67c39935..65ef849f 100644
+--- a/src/client/stylesheets/components/_index.scss
++++ b/src/client/stylesheets/components/_index.scss
+@@ -1,6 +1,7 @@
+ // import custom component styles
+ @use "../../../server/common/components/accessible-autocomplete/accessible-autocomplete";
+ @use "commodity-total";
++@use "date-picker";
+ @use "notification-list";
+ @use "notifications-pagination";
+ @use "task-list";
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+index 0cc81ece..a777c3d4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+@@ -32,6 +32,9 @@ const transitedCountriesChecked = `${transitedCountriesInputs}:checked`
+ const MAX_TRANSPORT_FIELD_LENGTH = 58
+ const DOVER_OPTION = 'Port of Dover (GB DVR)'
+ const PORT_OF_ENTRY_PAGE = 'port-of-entry'
++// The visually hidden name the MoJ picker gives the button that opens the
++// calendar.
++const CHOOSE_DATE = 'Choose date'
+ 
+ const dateWindow = arrivalWindow()
+ const outOfRangeError = copy.portOfEntry.errors.arrivalDateOutOfRange(
+@@ -87,6 +90,14 @@ const choosePort = async (page, code = values.portOfEntry) => {
+   await page.getByRole('option', { name: portLabel(code), exact: true }).click()
+ }
+ 
++// Positions measured against the document, not the viewport, so a scroll
++// between two measurements cannot make an unmoved element look like it moved.
++const documentTop = (locator) =>
++  locator.evaluate((el) => el.getBoundingClientRect().top + window.scrollY)
++
++const documentBottom = (locator) =>
++  locator.evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY)
++
+ const errorLink = (page, message) =>
+   page.locator('.govuk-error-summary').getByRole('link', { name: message })
+ 
+@@ -309,11 +320,32 @@ test.describe('arrival details validation', () => {
+     await expect(page.locator(portHidden)).toHaveValue(values.portOfEntry)
+   })
+ 
++  test('the open calendar sits in the flow of the page and pushes the port question below it', async ({
++    page
++  }) => {
++    await openArrival(page)
++    const port = page.getByLabel(copy.portOfEntry.port.label, { exact: true })
++    const closed = await documentTop(port)
++
++    await page.getByRole('button', { name: CHOOSE_DATE }).click()
++    const dialog = page.getByRole('dialog')
++    await expect(dialog).toBeVisible()
++
++    const calendarBottom = await documentBottom(dialog)
++    const open = await documentTop(port)
++
++    // The calendar takes up room rather than floating: the port question moves
++    // down the page ...
++    expect(open).toBeGreaterThan(closed)
++    // ... and starts below the calendar's bottom edge instead of behind it.
++    expect(open).toBeGreaterThanOrEqual(calendarBottom)
++  })
++
+   test('the picker calendar excludes the day before the window and allows the boundary itself', async ({
+     page
+   }) => {
+     await openArrival(page)
+-    await page.getByRole('button', { name: 'Choose date' }).click()
++    await page.getByRole('button', { name: CHOOSE_DATE }).click()
+     await expect(page.getByRole('dialog')).toBeVisible()
+ 
+     const today = addUtcDays(dateWindow.min, DAYS_BEFORE)
+@@ -651,7 +683,7 @@ test.describe('arrival and transit accessibility', () => {
+     page
+   }) => {
+     await openArrival(page)
+-    await page.getByRole('button', { name: 'Choose date' }).click()
++    await page.getByRole('button', { name: CHOOSE_DATE }).click()
+     await expect(page.getByRole('dialog')).toBeVisible()
+     await expectAxeClean(page, 'Arrival details with date picker open')
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js
+index 2cffa544..4d258e54 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js
+@@ -109,7 +109,10 @@ const render = (
+       value: values.arrivalDateAtPort ?? {},
+       error: errors.arrivalDateAtPort,
+       minDate: dateWindow.minText,
+-      maxDate: dateWindow.maxText
++      maxDate: dateWindow.maxText,
++      // Opens the calendar in the flow of the page so it pushes the port and
++      // transport questions down rather than covering them.
++      formGroupClasses: 'app-datepicker--in-flow'
+     })
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js
+index ec871b32..dd4dcbda 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js
+@@ -170,6 +170,14 @@ describe('port-of-entry — the arrival-date window', () => {
+     expect(result.view.context.arrivalDate.maxDate).toBe(dateWindow.maxText)
+   })
+ 
++  it('Should mark the picker in-flow so an open calendar pushes the questions below it down rather than covering them', async () => {
++    const result = await driveHandler(get)
++
++    expect(result.view.context.arrivalDate.formGroup).toEqual({
++      classes: 'app-datepicker--in-flow'
++    })
++  })
++
+   it.each([
+     ['a day before the earliest allowed date', dayOutside('min', -1)],
+     ['a day after the latest allowed date', dayOutside('max', 1)]
+diff --git a/src/server/app/shared/kit.js b/src/server/app/shared/kit.js
+index 4bad3ac1..81a7025d 100644
+--- a/src/server/app/shared/kit.js
++++ b/src/server/app/shared/kit.js
+@@ -224,10 +224,13 @@ const dateInputValue = (value) =>
+  * verbatim into `data-min-date`, and the MoJ picker parses nothing else. Pass
+  * `arrivalWindow().minText`, never its sibling `min`.
+  * @param {string} [options.maxDate] - `d/m/yyyy` text, same contract.
++ * @param {string} [options.formGroupClasses] - classes for the field's form
++ * group. The MoJ macro builds the calendar dialog inside the form group, so
++ * this is the only hook a stylesheet has on one picker rather than all of them.
+  */
+ export const dateField = (
+   name,
+-  { label, hint, value = {}, error, minDate, maxDate } = {}
++  { label, hint, value = {}, error, minDate, maxDate, formGroupClasses } = {}
+ ) => {
+   return {
+     id: name,
+@@ -238,6 +241,7 @@ export const dateField = (
+     errorMessage: error ? { text: error } : undefined,
+     value: dateInputValue(value),
+     minDate,
+-    maxDate
++    maxDate,
++    formGroup: formGroupClasses ? { classes: formGroupClasses } : undefined
+   }
+ }
+diff --git a/src/server/app/shared/kit.test.js b/src/server/app/shared/kit.test.js
+index 7f0274ec..d5952ecd 100644
+--- a/src/server/app/shared/kit.test.js
++++ b/src/server/app/shared/kit.test.js
+@@ -22,4 +22,19 @@ describe('#dateField — MoJ date-picker view model', () => {
+     expect(field.minDate).toBeUndefined()
+     expect(field.maxDate).toBeUndefined()
+   })
++
++  it('Should carry form-group classes through, so a stylesheet can reach one picker rather than all of them', () => {
++    const field = dateField('arrivalDateAtPort', {
++      label: 'Arrival date at port of entry',
++      formGroupClasses: 'app-datepicker--in-flow'
++    })
++
++    expect(field.formGroup).toEqual({ classes: 'app-datepicker--in-flow' })
++  })
++
++  it('Should leave the form group undefined when no classes are supplied, so the macro emits the default markup', () => {
++    const field = dateField('exitDate', { label: 'Exit date' })
++
++    expect(field.formGroup).toBeUndefined()
++  })
+ })

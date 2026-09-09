@@ -1,0 +1,20 @@
+h2. Increment
+
+{{inc-128}} from the {{shared/dr1-parity-union}} backlog.
+
+On the port-of-entry page, opening the arrival date calendar drops the dialog on top of the questions below it. The Ministry of Justice date picker is taken exactly as the package ships it — {{src/client/stylesheets/application.scss:2}} imports the component's partial and adds nothing, and the macro is called unadorned at {{src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk:16}} — and that component's default is an overlay. The open dialog covers "Port of entry" and "Means of transport to the port of entry".
+
+Design release 1 opens the same calendar in the flow of the page, pushing the following questions down so nothing is covered. It pins the dialog to {{position: static}} with a fixed maximum width ({{app/assets/sass/application.scss:18-31}}, applied to the arrival page's date field at {{:1663-1665}}), and clears the inline offsets the component writes each time the dialog opens.
+
+h2. Acceptance criteria
+
+* Opening the arrival date calendar on the port-of-entry page pushes "Port of entry" and "Means of transport to the port of entry" down the page instead of covering them.
+* The dialog is positioned {{static}}, full width up to a fixed maximum, with a small top margin, as a new rule in the frontend's own styles.
+* The inline {{top}} offset the component writes when the dialog opens (captured as {{style="top: 43px;"}}) is beaten or cleared, so the in-flow layout holds.
+* Everything else about the picker is unchanged — the toggle, the dialog role and {{aria-modal}}, the month-and-year heading, the four navigation buttons and the "Select" and "Close" pair all behave as before.
+* No focus ring is suppressed; that difference in Design release 1 is deliberately not being copied.
+* The E2E specs and their visual baselines for the port-of-entry page are updated to match.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

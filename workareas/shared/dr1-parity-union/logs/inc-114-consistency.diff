@@ -1,0 +1,308 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index b2f2100a..7e0bd163 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -8,7 +8,6 @@ import {
+ import { COUNTRY_LABELS } from '../src/server/app/services/countries/stub.js'
+ import { STUB_BOOK } from '../src/server/app/services/address-book/stub/index.js'
+ import { PORTS } from '../src/server/app/services/ports/stub.js'
+-import { copy as transportCopy } from '../src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js'
+ import { copy as sharedAppCopy } from '../src/server/app/shared/copy.en.js'
+ 
+ export { signIn } from './sign-in.js'
+@@ -83,9 +82,6 @@ export const { values } = JSON.parse(
+   )
+ )
+ 
+-const meansOfTransportLabel =
+-  transportCopy.portOfEntry.means.options[values.meansOfTransport]
+-
+ // The arrival-date window moves with the wall clock, so the driver computes a
+ // date inside it rather than reading the fixed value out of the fixture.
+ const arrivalDate = addUtcMonths(new Date(), 1)
+@@ -352,8 +348,8 @@ export const answerArrivalDetails = async (page) => {
+     .fill(ARRIVAL_DATE_IN_WINDOW)
+   await choosePortOfEntry(page)
+   await page
+-    .getByRole('radio', { name: meansOfTransportLabel, exact: true })
+-    .check()
++    .locator('select#meansOfTransport')
++    .selectOption(values.meansOfTransport)
+   await page
+     .getByLabel('Transport identification')
+     .fill(values.transportIdentification)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index 626bae4f..00751882 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -14,7 +14,8 @@ export const copy = {
+       noResults: 'Dim porthladdoedd wedi’u darganfod'
+     },
+     means: {
+-      legend: 'Cyfrwng cludo i’r porthladd mynediad',
++      label: 'Cyfrwng cludo i’r porthladd mynediad',
++      placeholder: 'Dewiswch un',
+       options: {
+         AIRPLANE: 'Awyren',
+         RAILWAY: 'Rheilffordd',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index c19a19dd..5814a7fe 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -13,7 +13,8 @@ export const copy = {
+       noResults: 'No ports found'
+     },
+     means: {
+-      legend: 'Means of transport to the port of entry',
++      label: 'Means of transport to the port of entry',
++      placeholder: 'Select one',
+       options: {
+         AIRPLANE: 'Airplane',
+         RAILWAY: 'Railway',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+index 0bab429e..e79b568f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+@@ -81,6 +81,9 @@ describe('GET /port-of-entry', () => {
+     expect(result.view.context.portItems[0].text).toBe(
+       copy.portOfEntry.port.placeholder
+     )
++    expect(result.view.context.meansItems[0].text).toBe(
++      copy.portOfEntry.means.placeholder
++    )
+     expect(result.view.context.arrivalDate.label.text).toBe(
+       copy.portOfEntry.arrivalDate.label
+     )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+index ba5a9cee..a60af9ec 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+@@ -26,6 +26,7 @@ import { MAX_TRANSITED_COUNTRIES } from '../transit-countries/transit-countries.
+ // a "-select" suffix (it still submits the port code).
+ const portInput = 'input#portOfEntry'
+ const portHidden = 'select#portOfEntry-select'
++const meansSelect = 'select#meansOfTransport'
+ const transitedCountriesInputs = 'input[name="transitedCountries"]'
+ const transitedCountriesChecked = `${transitedCountriesInputs}:checked`
+ const MAX_TRANSPORT_FIELD_LENGTH = 58
+@@ -120,11 +121,7 @@ const fillValidArrival = async (page) => {
+     .getByLabel(copy.portOfEntry.arrivalDate.label)
+     .fill(ARRIVAL_DATE_IN_WINDOW)
+   await choosePort(page)
+-  await page
+-    .getByRole('radio', {
+-      name: copy.portOfEntry.means.options[values.meansOfTransport]
+-    })
+-    .check()
++  await page.locator(meansSelect).selectOption(values.meansOfTransport)
+   await page
+     .getByLabel(copy.portOfEntry.identification.label)
+     .fill(values.transportIdentification)
+@@ -135,9 +132,7 @@ const fillValidArrival = async (page) => {
+ 
+ const openTransit = async (page) => {
+   await openArrival(page)
+-  await page
+-    .getByRole('radio', { name: copy.portOfEntry.means.options.ROAD_VEHICLE })
+-    .check()
++  await page.locator(meansSelect).selectOption('ROAD_VEHICLE')
+   await submit(page)
+   await expect(
+     page.getByRole('heading', { name: copy.transitCountries.title })
+@@ -160,12 +155,18 @@ test.describe('arrival details rendering', () => {
+       copy.portOfEntry.arrivalDate.hint(dateWindow.minText, dateWindow.maxText)
+     )
+     await expect(page.getByText(copy.portOfEntry.port.hint)).toBeVisible()
+-    await expect(
+-      page.getByRole('group', { name: copy.portOfEntry.means.legend })
+-    ).toBeVisible()
+-    for (const label of Object.values(copy.portOfEntry.means.options)) {
+-      await expect(page.getByRole('radio', { name: label })).toBeVisible()
+-    }
++    // Means of transport is a dropdown: it opens on the placeholder with
++    // nothing chosen, and the four options are the reference list in order.
++    const means = page.getByLabel(copy.portOfEntry.means.label, { exact: true })
++    await expect(means).toBeVisible()
++    await expect(means).toHaveValue('')
++    const meansOptions = await means
++      .locator('option')
++      .evaluateAll((items) => items.map((option) => option.textContent.trim()))
++    expect(meansOptions).toEqual([
++      copy.portOfEntry.means.placeholder,
++      ...Object.values(copy.portOfEntry.means.options)
++    ])
+     await expect(
+       page.getByLabel(copy.portOfEntry.identification.label)
+     ).toHaveAccessibleDescription(copy.portOfEntry.identification.hint)
+@@ -205,7 +206,11 @@ test.describe('port of entry type-ahead', () => {
+     await expect(
+       page.getByRole('option', { name: DOVER_OPTION, exact: true })
+     ).toBeVisible()
+-    await expect(page.getByRole('option')).toHaveCount(portsOfEntry.length)
++    // Scoped to the type-ahead's own menu: the means-of-transport dropdown
++    // puts options on the page too, and they are not ports.
++    await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(
++      portsOfEntry.length
++    )
+   })
+ 
+   test('filters by port name or code, case-insensitively (AC1)', async ({
+@@ -260,11 +265,7 @@ test.describe('port of entry without JavaScript', () => {
+     await page
+       .getByLabel(copy.portOfEntry.port.label, { exact: true })
+       .selectOption(values.portOfEntry)
+-    await page
+-      .getByRole('radio', {
+-        name: copy.portOfEntry.means.options[values.meansOfTransport]
+-      })
+-      .check()
++    await page.locator(meansSelect).selectOption(values.meansOfTransport)
+     await page
+       .getByLabel(copy.portOfEntry.identification.label)
+       .fill(values.transportIdentification)
+@@ -413,28 +414,22 @@ test.describe('arrival details validation', () => {
+     ).toHaveValue(values.transportIdentification)
+   })
+ 
+-  test('means validation: out-of-list value links to and focuses the cleared group while preserving other values', async ({
++  test('means validation: out-of-list value links to and focuses the cleared dropdown while preserving other values', async ({
+     page
+   }) => {
+     await openArrival(page)
+     await fillValidArrival(page)
+-    await page
+-      .getByRole('radio', { name: copy.portOfEntry.means.options.AIRPLANE })
+-      .evaluate((radio) => {
+-        radio.value = 'INVALID'
+-        radio.checked = true
+-      })
++    await page.locator(meansSelect).evaluate((select) => {
++      select.add(new Option('Invalid means', 'INVALID'))
++      select.value = 'INVALID'
++    })
+     await submit(page)
+ 
+     const link = errorLink(page, validatorDefaults.oneOf)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(
+-      page.locator('input[name="meansOfTransport"]').first()
+-    ).toBeFocused()
+-    await expect(
+-      page.locator('input[name="meansOfTransport"]:checked')
+-    ).toHaveCount(0)
++    await expect(page.locator(meansSelect)).toBeFocused()
++    await expect(page.locator(meansSelect)).toHaveValue('')
+     await expect(page.locator(portHidden)).toHaveValue(values.portOfEntry)
+   })
+ })
+@@ -520,11 +515,7 @@ test.describe('arrival save and routing', () => {
+       page.getByLabel(copy.portOfEntry.arrivalDate.label)
+     ).toHaveValue(ARRIVAL_DATE_IN_WINDOW)
+     await expect(page.locator(portHidden)).toHaveValue(values.portOfEntry)
+-    await expect(
+-      page.getByRole('radio', {
+-        name: copy.portOfEntry.means.options[values.meansOfTransport]
+-      })
+-    ).toBeChecked()
++    await expect(page.locator(meansSelect)).toHaveValue(values.meansOfTransport)
+     await expect(
+       page.getByLabel(copy.portOfEntry.identification.label)
+     ).toHaveValue(values.transportIdentification)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js
+index 9a10793c..2cffa544 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js
+@@ -46,6 +46,15 @@ const portItems = (selected) => [
+   }))
+ ]
+ 
++const meansItems = (selected) => [
++  { value: '', text: copy.means.placeholder },
++  ...transportReference.meansOfTransport().map((code) => ({
++    value: code,
++    text: copy.means.options[code],
++    selected: code === selected
++  }))
++]
++
+ const fields = (dateWindow) =>
+   compose(
+     dateTextInRange('arrivalDateAtPort', {
+@@ -93,6 +102,7 @@ const render = (
+     errors,
+     errorSummary: kit.errorSummary(errors),
+     portItems: portItems(values.portOfEntry),
++    meansItems: meansItems(values.meansOfTransport),
+     arrivalDate: kit.dateField('arrivalDateAtPort', {
+       label: copy.arrivalDate.label,
+       hint: copy.arrivalDate.hint(dateWindow.minText, dateWindow.maxText),
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js
+index 3b6b59d3..ec871b32 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js
+@@ -118,6 +118,29 @@ describe('GET port-of-entry — server-rendered select data (no-JS path)', () =>
+       selected: false
+     })
+   })
++
++  it('Should supply the means of transport as a placeholder followed by every reference code, none selected', async () => {
++    const result = await driveHandler(get)
++    expect(result.view.context.meansItems).toEqual([
++      { value: '', text: 'Select one' },
++      { value: 'AIRPLANE', text: 'Airplane', selected: false },
++      { value: 'RAILWAY', text: 'Railway', selected: false },
++      { value: 'ROAD_VEHICLE', text: 'Road Vehicle', selected: false },
++      { value: 'VESSEL', text: 'Vessel', selected: false }
++    ])
++  })
++
++  it('Should mark the saved means of transport as the selected option', async () => {
++    const result = await driveHandler(get, {
++      seed: { meansOfTransport: 'VESSEL' }
++    })
++    const selected = result.view.context.meansItems.filter(
++      (item) => item.selected
++    )
++    expect(selected).toEqual([
++      { value: 'VESSEL', text: 'Vessel', selected: true }
++    ])
++  })
+ })
+ 
+ describe('port-of-entry — the arrival-date window', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk
+index 2c73ebfe..58420f05 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.njk
+@@ -1,7 +1,7 @@
+ {% extends "shared/layout.njk" %}
+ {% from "accessible-autocomplete/macro.njk" import appAccessibleAutocomplete %}
+ {% from "moj/components/date-picker/macro.njk" import mojDatePicker %}
+-{% from "govuk/components/radios/macro.njk" import govukRadios %}
++{% from "govuk/components/select/macro.njk" import govukSelect %}
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+@@ -29,16 +29,12 @@
+       autocomplete: { showAllValues: true, noResults: copy.port.noResults }
+     }) }}
+ 
+-    {{ govukRadios({
++    {{ govukSelect({
++      id: "meansOfTransport",
+       name: "meansOfTransport",
+-      fieldset: { legend: { text: copy.means.legend, classes: "govuk-fieldset__legend--s" } },
+-      errorMessage: errors.meansOfTransport and { text: errors.meansOfTransport },
+-      items: [
+-        { value: "AIRPLANE", text: copy.means.options["AIRPLANE"], checked: values.meansOfTransport == "AIRPLANE" },
+-        { value: "RAILWAY", text: copy.means.options["RAILWAY"], checked: values.meansOfTransport == "RAILWAY" },
+-        { value: "ROAD_VEHICLE", text: copy.means.options["ROAD_VEHICLE"], checked: values.meansOfTransport == "ROAD_VEHICLE" },
+-        { value: "VESSEL", text: copy.means.options["VESSEL"], checked: values.meansOfTransport == "VESSEL" }
+-      ]
++      label: { text: copy.means.label, classes: "govuk-label--s" },
++      items: meansItems,
++      errorMessage: errors.meansOfTransport and { text: errors.meansOfTransport }
+     }) }}
+ 
+     {{ govukInput({

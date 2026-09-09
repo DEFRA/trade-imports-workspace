@@ -741,8 +741,23 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
 
 ${instructions}
 ---8<---
-STEP 2 — run EXACTLY this one command with run_in_background true, then wait for it to exit:
+STEP 2 — run EXACTLY this one command with run_in_background true:
 \`codex exec -C ${TILDE} --skip-git-repo-check -s workspace-write -c sandbox_workspace_write.network_access=true --output-schema ${BRIEFS_TILDE}/schemas/${schemaFile} -o ${lastMessageTilde} "Read ${promptFileTilde} and follow it in full." > ${runLog} 2>&1\`
+
+STEP 2b — WAIT FOR IT PROPERLY. This is the step that decides whether the stage works.
+**Codex takes anywhere from 5 to 30 minutes on a wide increment. Do NOT poll it.** Every status check
+costs you a turn, you have far fewer turns than a poll-every-few-seconds loop needs, and an agent that
+runs out is FORCED to finalise while Codex is still working — which reports a healthy run as a failure
+and throws away everything it did. That is the single most common way this stage breaks. So:
+- Do NOT \`tail\`, \`cat\` or \`ls\` the log or the result file to "see how it is going".
+- Do NOT re-run the codex command. It is already running; a second one corrupts the first's output.
+- Make exactly ONE more Bash call, ALSO with run_in_background true, which blocks until Codex has
+  written its result and then exits on its own:
+  \`i=0; until [ -f ${lastMessageTilde} ]; do i=$((i+1)); if [ $i -gt 90 ]; then break; fi; sleep 20; done\`
+  Then wait for that job's completion notification. One notification, no turns burnt waiting.
+- That loop gives Codex up to 30 minutes and ends the moment the result appears. If it returns and the
+  result file still does not exist, Codex genuinely failed — that is a real ok:false, not a timing artefact.
+
 STEP 3 — check that it produced a result. One Bash call: \`jq empty ${lastMessageTilde}\`
 STEP 4 — report TRANSPORT and nothing else:
 - ok:true ONLY if the command exited ZERO and \`jq empty\` accepted ${lastMessageTilde}. Put Codex's

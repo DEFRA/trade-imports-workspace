@@ -741,29 +741,44 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
 
 ${instructions}
 ---8<---
-STEP 2 — run EXACTLY this one command with run_in_background true:
-\`codex exec -C ${TILDE} --skip-git-repo-check -s workspace-write -c sandbox_workspace_write.network_access=true --output-schema ${BRIEFS_TILDE}/schemas/${schemaFile} -o ${lastMessageTilde} "Read ${promptFileTilde} and follow it in full." > ${runLog} 2>&1\`
+STEP 2 — run Codex IN SLICES. Read this whole step before your first call.
 
-STEP 2b — WAIT FOR IT PROPERLY. This is the step that decides whether the stage works.
-**Codex takes anywhere from 5 to 30 minutes on a wide increment. Do NOT poll it.** Every status check
-costs you a turn, you have far fewer turns than a poll-every-few-seconds loop needs, and an agent that
-runs out is FORCED to finalise while Codex is still working — which reports a healthy run as a failure
-and throws away everything it did. That is the single most common way this stage breaks. So:
-- Do NOT \`tail\`, \`cat\` or \`ls\` the log or the result file to "see how it is going".
-- Do NOT re-run the codex command. It is already running; a second one corrupts the first's output.
-- Make exactly ONE more Bash call, ALSO with run_in_background true, which blocks until Codex has
-  written its result and then exits on its own:
-  \`i=0; until [ -f ${lastMessageTilde} ]; do i=$((i+1)); if [ $i -gt 90 ]; then break; fi; sleep 20; done\`
-  Then wait for that job's completion notification. One notification, no turns burnt waiting.
-- That loop gives Codex up to 30 minutes and ends the moment the result appears. If it returns and the
-  result file still does not exist, Codex genuinely failed — that is a real ok:false, not a timing artefact.
+**Never use run_in_background for any of it.** You cannot wait for a background job: the moment you stop
+making tool calls you are forced to finalise, and Codex dies with you mid-work. That reports a healthy
+run as a failure and throws away everything it did. It is the single most common way this stage breaks,
+and no amount of patience or polling fixes it — a poll costs a turn, and you do not have enough turns.
+Every call below is a FOREGROUND call that returns by itself, so you never wait for anything.
+
+Codex often needs longer than one Bash call allows. That is fine: its session is on disk and a killed run
+resumes exactly where it stopped. So you run it in slices, each slice one foreground call.
+
+2a. FOREGROUND Bash, timeout 570000:
+\`codex exec -C ${TILDE} --skip-git-repo-check -s workspace-write -c sandbox_workspace_write.network_access=true --output-schema ${BRIEFS_TILDE}/schemas/${schemaFile} -o ${lastMessageTilde} "Read ${promptFileTilde} and follow it in full." > ${runLog} 2>&1\`
+- Returns normally → go to STEP 3.
+- The tool reports it exceeded the timeout and was MOVED TO THE BACKGROUND → Codex is still running and
+  must not be left there. Go to 2b.
+
+2b. FOREGROUND Bash, fast — end the slice and find the session:
+\`pkill -f "codex [e]xec.*${id}-${stage}" ; grep -m1 "session id:" ${runLog}\`
+The bracket in \`[e]xec\` is deliberate: it stops the pattern matching your own shell. Nothing is lost —
+Codex writes its session to disk as it goes.
+
+2c. FOREGROUND Bash, timeout 570000 — resume that session:
+\`codex exec -C ${TILDE} --skip-git-repo-check -s workspace-write -c sandbox_workspace_write.network_access=true --output-schema ${BRIEFS_TILDE}/schemas/${schemaFile} -o ${lastMessageTilde} resume <SESSION_ID> "Continue where you left off and finish the task. Write your final result." >> ${runLog} 2>&1\`
+**Every flag comes BEFORE \`resume\`** — \`codex exec resume -C ...\` is rejected outright.
+- Returns normally → STEP 3.
+- Backgrounded again → repeat 2b, then 2c, reusing the SAME session id.
+
+At most FIVE slices. If Codex has written no result after that, it has genuinely failed — report that.
 
 STEP 3 — check that it produced a result. One Bash call: \`jq empty ${lastMessageTilde}\`
 STEP 4 — report TRANSPORT and nothing else:
-- ok:true ONLY if the command exited ZERO and \`jq empty\` accepted ${lastMessageTilde}. Put Codex's
-  \`tokens used\` line from the tail of ${runLog} in your summary.
-- ok:false in EVERY other case — non-zero exit, ${lastMessageTilde} missing, or jq rejecting it. Quote the
-  tail of ${runLog} in your summary so the failure is diagnosable.
+- ok:true ONLY if the LAST slice you ran exited ZERO and \`jq empty\` accepted ${lastMessageTilde}. Put
+  Codex's \`tokens used\` line from the tail of ${runLog} in your summary, and say how many slices it took.
+- ok:false in EVERY other case — the last slice exited non-zero, ${lastMessageTilde} missing, or jq
+  rejecting it. Quote the tail of ${runLog} in your summary so the failure is diagnosable.
+A slice that was backgrounded and then killed at 2b is NOT a failure — it is the normal way a long run is
+cut into pieces, and only the final slice's exit code counts.
 ok here is about the RUN, NEVER about what Codex concluded: a Codex run that finished and reported a problem,
 a red suite or an unapplied fix is still ok:true to you. NEVER write ${lastMessageTilde} yourself and never
 invent a result.

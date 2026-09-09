@@ -733,6 +733,7 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <logs>         = ${WORKAREA}/logs
   <skills>       = ${SKILLS}
   <branch>       = ${workingBranch ?? BASE_BRANCH}
+  <baseBranch>   = ${BASE_BRANCH}
   <INCREMENT_ID> = ${id}
   <frontendRepo> = ${ABS}/${REPOS.frontend.path}
   <backendRepo>  = ${ABS}/${REPOS.backend.path}

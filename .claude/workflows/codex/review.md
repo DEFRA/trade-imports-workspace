@@ -13,8 +13,9 @@ Compound commands, pipes, `node`, `npx`, absolute paths and `cd` are all fine he
 ## Constants
 
 Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<skills>`, `<INCREMENT_ID>`,
-`<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a real value in the prompt that pointed
-you here. Use those bindings; never guess one.
+`<branch>`, `<baseBranch>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a real value
+in the prompt that pointed you here. Use those bindings; never guess one. `<repo>` below means whichever
+of the three repo paths the increment's `repo` field names.
 
 Workspace root `<workspace>`; plan of record `<backlog>`. The three repos are `<frontendRepo>`,
 `<backendRepo>` and `<testsRepo>` — bound per run, and different between programmes. Never substitute
@@ -47,10 +48,22 @@ field may cite a plan that names more. Read them and hunt for them alongside the
 
 ## Step 2 — see the change
 
+Review **the increment's whole change**, which is everything the branch has added on top of the base —
+not just what happens to be sitting in the index right now:
+
 ```bash
-git -C <workspace>/repos/<repo> diff --staged --stat
-git -C <workspace>/repos/<repo> diff --staged
+git -C <repo> diff <baseBranch>...HEAD --stat
+git -C <repo> diff <baseBranch>...HEAD
+git -C <repo> diff --staged --stat
+git -C <repo> diff --staged
 ```
+
+Both halves matter, and either can be empty. On an ordinary run the work is staged and uncommitted, so
+the first pair is empty and the second holds everything. On a **resumed** increment an earlier attempt
+may already have committed its work to the branch as a `wip(...)` commit, so the first pair holds it and
+the second is empty or holds only the newest edits. **An empty index is not an empty change** — if
+`git diff --staged` returns nothing, that is never on its own grounds to report a clean review. Where the
+two overlap you will see a file twice; review it once, in its final state.
 
 Read changed files **in full** where the diff alone could mislead. A diff hides the surrounding contract.
 

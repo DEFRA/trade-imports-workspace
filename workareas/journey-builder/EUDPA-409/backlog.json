@@ -3245,16 +3245,30 @@
       "key": "e2e-destination-section",
       "repo": "tests",
       "title": "Journey-level spec: destination section (picker, label by arrival status)",
-      "detail": "tests/e2e/features/plants/destination.spec.ts with the address-picker page object: search the org address book, paginate at 5, select and see the Selected address inset; heading reads Intended destination for pre-arrival and potatoes, Where is the consignment now for already-arrived; a deleted record renders Not provided on CYA; hub row Completed. Evidence: behaviours address-book-picker, restore-answers-read-sanitiser.",
+      "detail": "tests/e2e/features/plants/destination.spec.ts with the address-picker page object: search the org address book, paginate at 5, select and see the Selected address inset; heading reads Intended destination for pre-arrival and potatoes, Where is the consignment now for already-arrived; the picker refuses a save with no row ticked; hub row Completed once saved, and deleting the chosen address-book record takes the answer off the notification — the hub row falls back to Not yet started and the Selected address inset disappears. The CYA half of the deleted-record clause (renders Not provided) is carried forward to inc-055: no check-answers feature exists in the plants frontend yet. Evidence: behaviours address-book-picker, restore-answers-read-sanitiser.",
       "milestone": "M1",
       "gate": null,
       "id": "inc-044",
       "dependsOn": [
         "inc-043"
       ],
-      "status": "todo",
-      "commit": null,
-      "failure_reason": null
+      "status": "done",
+      "commit": "0c2b065",
+      "failure_reason": null,
+      "ticket": "EUDPA-530",
+      "branch": "feat/EUDPA-530-journey-level-spec-destination-section-p",
+      "openQuestions": [
+        "Deferred to inc-055 (e2e-review-section): the CYA leg of the deleted-record clause — a notification whose placeOfDestination address-book record has been deleted must render Not provided on Check your answers. inc-043 routed the rendered-page proof of the answers-read sanitiser here; inc-044 can only prove it on the hub row and the absent Selected address inset because the plants frontend has no check-answers feature yet (features/ holds arrival-status, arrival-details, commodities, commodity-type, dashboard, delete-notification, hub, origin, place-of-destination; CYA arrives with inc-050/inc-051). The clause has been written into inc-055's detail so the proof is not lost."
+      ],
+      "prs": [
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/181",
+          "number": 181,
+          "merged": true,
+          "sha": "2f6fd4dd76f427b15bd68781c939f6b3f3d95d42"
+        }
+      ]
     },
     {
       "type": "add-page",
@@ -3438,7 +3452,7 @@
       "key": "e2e-review-section",
       "repo": "tests",
       "title": "Journey-level spec: check and submit section (CYA, declaration, confirmation)",
-      "detail": "tests/e2e/features/plants/review.spec.ts with page objects for notification-view, declaration and confirmation: Check and submit is Cannot start yet until every row is done; CYA shows the three numbered sections with Change links that round-trip back to CYA; the declaration checkbox is required; submission shows the panel with the reference, Date of notification, Status Submitted, and the late banner when the date implies lateness (potato notified inside two days; plants notified more than four days after arrival); a submitted journey is read-only on CYA; the dashboard lists it as Submitted. Evidence: behaviours declaration-and-submit-gate, timing-window-enforcement-and-late-highlight, cya-change-round-trip. Post-submission actions (c-030): Amend on a Submitted card moves the strip and card to Amending and opens the hub; Cancel amendment from the dashboard or CYA opens Cancel this amendment?, Yes restores the submitted answers and lands on CYA read-only with the amendment-cancelled banner and Status Submitted; Delete of a submitted notification from CYA lands on the dashboard with the Notification deleted banner; an amendment that moves the arrival date and is re-submitted does not change the late banner. Carried forward from inc-037 (origin-value-list-by-commodity ruling D3 / d-054, c-027 re-check on c-022): a notification whose origin was saved as France and which then gains a ware-potato line must, on Check your answers, raise the origin mismatch error with a Change link to origin and refuse submission — inc-037 could only cover the origin-POST half because no check-answers feature or submit route existed then.",
+      "detail": "tests/e2e/features/plants/review.spec.ts with page objects for notification-view, declaration and confirmation: Check and submit is Cannot start yet until every row is done; CYA shows the three numbered sections with Change links that round-trip back to CYA; the declaration checkbox is required; submission shows the panel with the reference, Date of notification, Status Submitted, and the late banner when the date implies lateness (potato notified inside two days; plants notified more than four days after arrival); a submitted journey is read-only on CYA; the dashboard lists it as Submitted. Evidence: behaviours declaration-and-submit-gate, timing-window-enforcement-and-late-highlight, cya-change-round-trip. Post-submission actions (c-030): Amend on a Submitted card moves the strip and card to Amending and opens the hub; Cancel amendment from the dashboard or CYA opens Cancel this amendment?, Yes restores the submitted answers and lands on CYA read-only with the amendment-cancelled banner and Status Submitted; Delete of a submitted notification from CYA lands on the dashboard with the Notification deleted banner; an amendment that moves the arrival date and is re-submitted does not change the late banner. Carried forward from inc-037 (origin-value-list-by-commodity ruling D3 / d-054, c-027 re-check on c-022): a notification whose origin was saved as France and which then gains a ware-potato line must, on Check your answers, raise the origin mismatch error with a Change link to origin and refuse submission — inc-037 could only cover the origin-POST half because no check-answers feature or submit route existed then. Carried forward from inc-043/inc-044 (restore-answers-read-sanitiser): a notification whose placeOfDestination address-book record has since been deleted must render Not provided for that row on Check your answers — inc-044 could only prove the hub row falling back to Not yet started and the Selected address inset disappearing, because no check-answers feature existed then.",
       "milestone": "M1",
       "gate": null,
       "id": "inc-055",

@@ -94,6 +94,16 @@ raw role/label locators, no page objects where the repo does not already use the
 
 - Implement **exactly** the increment's scope. Do not fix adjacent things you notice — put them in
   `notes` and let a later increment or the judge deal with them.
+- **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
+  change inserts or reorders a page, the tests-repo spec covering the page BEFORE yours still expects the
+  old next page. It will pass locally, pass its own repo's checks, and go red in CI or after merge. Update
+  that spec yourself, in `<testsRepo>`, on the SAME branch name — cross-repo branch parity means the stack
+  serves your branch frontend to your branch specs, so your own ladder catches it in seconds rather than a
+  CI round trip finding it in half an hour. An increment that ships a page and leaves a stale spec behind
+  is not finished. This is in scope even when the increment's `repo` field says only `frontend`.
+- **Work that belongs to this increment gets DONE, never deferred.** The scope fence above stops you
+  wandering into other people's increments; it is not a licence to leave your own half-finished. If
+  something is in scope and you are unsure whether to do it, DO IT.
 - **Never edit `backlog.json`.** It is the orchestrator's artefact and the plan of record. If your work
   reveals that a new increment is needed — a defect you must not fix here, a missing dependency edge, a
   step the plan omitted — describe it fully in `notes`, including what it should depend on and what its

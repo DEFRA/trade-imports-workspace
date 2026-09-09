@@ -1128,6 +1128,13 @@ HOW TO BUILD IT — route on the increment's "repo" field:
 RULES:
 - Implement EXACTLY the increment's scope. Do not fix adjacent things you notice — report them in notes instead;
   a later increment or the judge will deal with them.
+- **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
+  change inserts or reorders a page, the tests-repo spec covering the page BEFORE yours still expects the old
+  next page. It will pass locally, pass its own repo's checks, and go red in CI or, worse, after merge. On this
+  programme that has caught out EVERY add-page increment so far. Update that spec yourself, in the tests repo,
+  on the SAME branch name — cross-repo branch parity means the stack serves your branch frontend to your branch
+  specs, so your own ladder catches the mismatch in seconds rather than a CI round trip finding it in half an
+  hour. An increment that ships a page and leaves a stale spec behind is not finished.
 - **Work that belongs to THIS increment gets DONE, never deferred.** The scope fence stops you wandering into
   other people's increments; it is not a licence to leave your own half-finished. If something is in scope and
   you are unsure whether to do it, DO IT — an increment that lands incomplete is worse than one that lands wide.

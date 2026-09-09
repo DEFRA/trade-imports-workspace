@@ -3516,12 +3516,28 @@
       "dependsOn": [
         "inc-051"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "59671e9 8be79ef",
       "failure_reason": null,
       "title": null,
       "ticket": "EUDPA-546",
       "branch": "feat/EUDPA-546-add-declaration-page-with-lateness-contr",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/56",
+          "number": 56,
+          "merged": true,
+          "sha": "6376979a0d6f93c71ed1a9cd4c8127e3d62f1f6a"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/191",
+          "number": 191,
+          "merged": true,
+          "sha": "6ff09671e17674f3ae5172323efe05643cd9ae1f"
+        }
+      ],
       "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update.LATENESS MOVED IN (2026-09-09): raised as a major finding on inc-050 (EUDPA-542) by the code reviewer, confirmed by adversarial verification, and ruled defer-to-open-question by the judge because the contract needs both callers. inc-055 and inc-057 already assert the late banner in their journey specs and depend on this increment through inc-053 and inc-054, so this is what makes those assertions buildable. Without it they would have failed the way inc-047 did against the missing check-answers page. ATTEMPT FAILED (2026-09-09): red verification ladder. Frontend FIT step red at declaration.fit.spec.js:171 'accepts a late notification and shows the stored late banner on the read-only view' — expect(page.getByText(copy.late.warning(copy.late.potatoes(2)), { exact: true })).toBeVisible() times out, reproduced identically across 3 attempts (not the known transient-500 beforeEach flake). Root cause per error-context.md: check-answers/template.njk:34's govukWarningText macro always renders iconFallbackText + message as one <strong> node ('Warning If you submit...'), so a getByText with { exact: true } against the message alone can never match — this is a test-authoring defect (stray exact:true inconsistent with this codebase's own commodity-type.fit.spec.js:82 pattern for the same macro), not an application defect; declaration/review lateness code is believed correct. 0 code edits applied — no legitimate code-only fix found without weakening the test, which guardrails forbid. Tests-repo leg (typecheck/lint/format:check, contact.spec.ts navigation-update spec) not attempted — ladder protocol requires each step green before the next runs. Work preserved as wip commits on branch feat/EUDPA-546-add-declaration-page-with-lateness-contr: trade-imports-plants-frontend@6119b56, trade-imports-animals-tests@8be79ef. Both pushed, no PR opened. Next attempt should branch from here and either fix declaration.fit.spec.js:171 to drop { exact: true } (test-authoring fix, not a weakening of the assertion's content) or find a genuine code-side cause the diagnostics above missed.",
       "detail": "Adds the declaration page, per the add-page recipe. ALSO CARRIES THE LATENESS CONTRACT, moved here from inc-050 on 2026-09-09. journey-spec.json notification-view.lateWarning and .readOnly require a DRAFT lateness warning on check-answers and a SUBMITTED late-notification banner; nothing renders either today. The inc-050 judge ruled it could not be built there because it is a two-caller contract: a new pure module, which the spec names review/lateness.js beside the check-answers feature, with a (clock, commodityType, arrivalDate) signature and a request-clock seam, called once to render the draft warning on check-answers and again with the finalise clock in this page POST, whose result is committed as lateNotificationIndicator. Nothing populates lateNotificationIndicator until this increment, so the SUBMITTED half could not be exercised from inc-050 at all and building half the contract there invited a rewrite. THE WORK: build the module with its own boundary tests, wire both callers, render the draft warning on check-answers and the submitted banner. Take the day counts from timing-windows.js rather than restating them. The copy is a function taking that day count, so the feature copy.test.js leaf assertion that every leaf is a non-empty string has to be reworked to allow a function leaf; copy.en.js and copy.cy.js stay structure-identical as copy-parity.test.js requires."
     },

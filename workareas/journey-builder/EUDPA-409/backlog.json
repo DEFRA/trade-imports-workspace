@@ -3449,8 +3449,8 @@
       "dependsOn": [
         "inc-048"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "88fcbc2 c033489",
       "failure_reason": null,
       "title": null,
       "ticket": "EUDPA-542",
@@ -3458,7 +3458,23 @@
       "openQuestions": [
         "DEFERRED FROM inc-050 REVIEW (2026-09-09) — the lateness warning and the late-notification banner on notification-view. journey-spec.json pages[notification-view].lateWarning requires a DRAFT-only govukWarningText above the submit block when the lateness helper says late (d-006, c-035), and the readOnly field requires a late-notification banner on the SUBMITTED view read from the stored lateNotificationIndicator (d-007, d-062/c-030). Neither is built: check-answers/controller.js passes no lateness data, template.njk renders no govukWarningText and no govukNotificationBanner, and copy/copy.en.js has no lateness leaf. Deferred out of inc-050 rather than dropped, because it is the one finding that expands the increment beyond the page itself: it needs a NEW pure module (spec names it review/lateness.js beside the check-answers feature, signature (clock, commodityType, arrivalDate) -> on-time | late, using startOfDayInZone/startOfUtcDay/addUtcDays from lib/validate/calendar.js with POTATO_DAYS_BEFORE_ARRIVAL and PLANTS_WOOD_DAYS_AFTER_ARRIVAL from features/timing-windows.js), a request-clock seam and its unit tests, and provisional copy in both locales that no source supplies beyond the two rule strings in the lateNotificationIndicator spec entry. The spec also says that same helper is called a SECOND time with the finalise clock in the declaration POST, where the value is committed — that is inc-052's (declaration/submit) work, and nothing populates lateNotificationIndicator until then, so the SUBMITTED banner cannot be exercised end-to-end from inc-050. PROPOSED OWNER: inc-052 (declaration and submit), which must land review/lateness.js once and wire BOTH callers — the DRAFT warning and banner on notification-view and the commit before records.finalise. If inc-052 is not extended to cover it, this needs a new increment; the finding notes that no increment currently owns it (inc-018's own openQuestions already records the same gap for the dashboard Late tag)."
       ],
-      "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update."
+      "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update.",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/54",
+          "number": 54,
+          "merged": true,
+          "sha": "7169877197867e2556eea9cb20a9f524240ce025"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/190",
+          "number": 190,
+          "merged": true,
+          "sha": "0dffe04f51928e26404e13355002f46e98ba045a"
+        }
+      ]
     },
     {
       "type": "chore",
@@ -3493,7 +3509,8 @@
       "commit": null,
       "failure_reason": null,
       "title": null,
-      "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update."
+      "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update.LATENESS MOVED IN (2026-09-09): raised as a major finding on inc-050 (EUDPA-542) by the code reviewer, confirmed by adversarial verification, and ruled defer-to-open-question by the judge because the contract needs both callers. inc-055 and inc-057 already assert the late banner in their journey specs and depend on this increment through inc-053 and inc-054, so this is what makes those assertions buildable. Without it they would have failed the way inc-047 did against the missing check-answers page.",
+      "detail": "Adds the declaration page, per the add-page recipe. ALSO CARRIES THE LATENESS CONTRACT, moved here from inc-050 on 2026-09-09. journey-spec.json notification-view.lateWarning and .readOnly require a DRAFT lateness warning on check-answers and a SUBMITTED late-notification banner; nothing renders either today. The inc-050 judge ruled it could not be built there because it is a two-caller contract: a new pure module, which the spec names review/lateness.js beside the check-answers feature, with a (clock, commodityType, arrivalDate) signature and a request-clock seam, called once to render the draft warning on check-answers and again with the finalise clock in this page POST, whose result is committed as lateNotificationIndicator. Nothing populates lateNotificationIndicator until this increment, so the SUBMITTED half could not be exercised from inc-050 at all and building half the contract there invited a rewrite. THE WORK: build the module with its own boundary tests, wire both callers, render the draft warning on check-answers and the submitted banner. Take the day counts from timing-windows.js rather than restating them. The copy is a function taking that day count, so the feature copy.test.js leaf assertion that every leaf is a non-empty string has to be reworked to allow a function leaf; copy.en.js and copy.cy.js stay structure-identical as copy-parity.test.js requires."
     },
     {
       "type": "add-page",

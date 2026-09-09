@@ -1,0 +1,862 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 2b94a51e..f9668619 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -327,13 +327,21 @@ export const answerRolesAndAddresses = async (page) => {
+   await save(page)
+ }
+ 
++// The fixture holds the number in the slashed form a trader reads it in; the
++// page takes it in three boxes of two, three and four digits.
++export const CPH_DIGITS = values.countyParishHoldingCph.replaceAll('/', '')
++
+ export const answerCphNumber = async (page) => {
+   await expect(
+     page.getByRole('heading', {
+       name: 'Add the county parish holding number (CPH)'
+     })
+   ).toBeVisible()
+-  await page.getByLabel('CPH number').fill(values.countyParishHoldingCph)
++  await page.getByLabel('County', { exact: true }).fill(CPH_DIGITS.slice(0, 2))
++  await page.getByLabel('Parish', { exact: true }).fill(CPH_DIGITS.slice(2, 5))
++  await page
++    .getByLabel('Holding number', { exact: true })
++    .fill(CPH_DIGITS.slice(5, 9))
+   await save(page)
+ }
+ 
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index 94c9138a..836bbcc8 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -91,7 +91,7 @@ const cases = [
+     collects: cphNumber.meta.collects,
+     handler: postHandlerOf(cphNumber),
+     seed: { commodityLines: [{ commoditySelection: 'Cow' }] },
+-    payload: { countyParishHoldingCph: '12/345/6789' }
++    payload: { cphCounty: '12', cphParish: '345', cphHolding: '6789' }
+   },
+   {
+     id: 'port-of-entry',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js
+index 4c67f69f..6ec53eff 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js
+@@ -29,16 +29,73 @@ export const isCphApplicable = (answers) =>
+     commodities.cphCommodities().includes(line?.commoditySelection)
+   )
+ 
+-const CPH_DIGITS = 9
++// A county parish holding number is two digits of county, three of parish and
++// four of holding. The page asks for the three parts separately so an error can
++// name the part that is wrong; the stored answer stays the nine bare digits the
++// backend already receives, so the wire contract does not move.
++const COUNTY = 'cphCounty'
++const PARISH = 'cphParish'
++const HOLDING = 'cphHolding'
++
++const COUNTY_DIGITS = 2
++const PARISH_DIGITS = 3
++const HOLDING_DIGITS = 4
++
++const PART_ORDER = [
++  [COUNTY, COUNTY_DIGITS],
++  [PARISH, PARISH_DIGITS],
++  [HOLDING, HOLDING_DIGITS]
++]
+ 
+ const fields = compose(
+-  requiredExactDigits('countyParishHoldingCph', CPH_DIGITS, {
+-    required: copy.errors.cphRequired,
+-    length: copy.errors.cphLength,
+-    digitsOnly: copy.errors.cphDigitsOnly
++  requiredExactDigits(COUNTY, COUNTY_DIGITS, {
++    required: copy.errors.countyRequired,
++    length: copy.errors.countyLength,
++    digitsOnly: copy.errors.countyDigitsOnly
++  }),
++  requiredExactDigits(PARISH, PARISH_DIGITS, {
++    required: copy.errors.parishRequired,
++    length: copy.errors.parishLength,
++    digitsOnly: copy.errors.parishDigitsOnly
++  }),
++  requiredExactDigits(HOLDING, HOLDING_DIGITS, {
++    required: copy.errors.holdingRequired,
++    length: copy.errors.holdingLength,
++    digitsOnly: copy.errors.holdingDigitsOnly
+   })
+ )
+ 
++const readParts = (payload) =>
++  Object.fromEntries(
++    PART_ORDER.map(([part]) => [part, String(payload[part] ?? '').trim()])
++  )
++
++// A stored answer is nine bare digits, but a seeded or legacy one can carry the
++// slashes a trader used to type, so the split reads digits only.
++const splitStored = (stored) => {
++  const digits = String(stored ?? '').replace(/\D/g, '')
++  let taken = 0
++  return Object.fromEntries(
++    PART_ORDER.map(([part, count]) => {
++      const slice = digits.slice(taken, taken + count)
++      taken += count
++      return [part, slice]
++    })
++  )
++}
++
++const joinParts = (parts) => PART_ORDER.map(([part]) => parts[part]).join('')
++
++const isBlankSubmit = (parts) =>
++  PART_ORDER.every(([part]) => parts[part] === '')
++
++// A trader who submits the page untouched has not got three problems, they have
++// one — so the empty page answers with the whole question, at the first box.
++const partErrors = (parts) =>
++  isBlankSubmit(parts)
++    ? { [COUNTY]: copy.errors.cphRequired }
++    : validate(fields, parts).errors
++
+ const hubEntryReturn = (request) =>
+   request.query.return === 'addresses'
+     ? pagePath(request.params.journeyId, 'addresses')
+@@ -66,34 +123,30 @@ const render = (
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(request, h, journey, {
+-    countyParishHoldingCph: answers.countyParishHoldingCph ?? ''
+-  })
++  return render(
++    request,
++    h,
++    journey,
++    splitStored(answers.countyParishHoldingCph)
++  )
+ }
+ 
+ const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const rawCphNumber = payload.countyParishHoldingCph ?? ''
+-  const values = {
+-    countyParishHoldingCph: rawCphNumber.replaceAll('/', '')
+-  }
+-  const { errors } = validate(fields, values)
++  const parts = readParts(request.payload ?? {})
++  const errors = partErrors(parts)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+-    return render(
+-      request,
+-      h,
+-      journey,
+-      { countyParishHoldingCph: rawCphNumber },
+-      { errors }
+-    ).code(HTTP_STATUS_BAD_REQUEST)
++    return render(request, h, journey, parts, { errors }).code(
++      HTTP_STATUS_BAD_REQUEST
++    )
+   }
+ 
++  const values = { countyParishHoldingCph: joinParts(parts) }
+   const { failure, value: committed } = await kit.recoverableSave(
+     () => state.commit(request, h, values),
+     async () => {
+       const { journey } = await state.get(request, h)
+-      return render(request, h, journey, values, {
++      return render(request, h, journey, parts, {
+         recoverableError: true
+       }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js
+index 1f1b839a..ab8a5b75 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js
+@@ -20,7 +20,7 @@ import * as cphNumber from './controller.js'
+ const postCph = postHandlerOf(cphNumber)
+ const getCph = cphNumber.routes.find((route) => route.method === 'GET').handler
+ 
+-const VALID_CPH_WITH_SLASHES = '12/345/6789'
++const VALID_PARTS = { cphCounty: '12', cphParish: '345', cphHolding: '6789' }
+ 
+ const seed = () => ({ commodityLines: [{ commoditySelection: 'Cow' }] })
+ 
+@@ -39,7 +39,7 @@ const driveWithQuery = async (handler, { payload = {}, query = {} } = {}) => {
+   }
+ }
+ 
+-describe('POST cph-number — the 9-digit rule after slash stripping', () => {
++describe('POST cph-number — three parts joined into the nine stored digits', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+     configureSession(sessionStub)
+@@ -47,71 +47,121 @@ describe('POST cph-number — the 9-digit rule after slash stripping', () => {
+   })
+   beforeEach(() => store.clear())
+ 
+-  it('Should commit a 9-digit CPH', async () => {
++  it('Should join the county, parish and holding parts into nine bare digits', async () => {
+     const result = await driveHandler(postCph, {
+       seed: seed(),
+-      payload: { countyParishHoldingCph: '123456789' }
++      payload: VALID_PARTS
+     })
+     expect(result.view).toBeUndefined()
+     expect(result.after.countyParishHoldingCph).toBe('123456789')
+   })
+ 
+-  it('Should validate the stripped value, not the raw value, and commit it stripped', async () => {
++  it('Should trim each part before joining it', async () => {
+     const result = await driveHandler(postCph, {
+       seed: seed(),
+-      payload: { countyParishHoldingCph: VALID_CPH_WITH_SLASHES }
++      payload: { cphCounty: ' 12 ', cphParish: ' 345', cphHolding: '6789 ' }
+     })
+     expect(result.view).toBeUndefined()
+     expect(result.after.countyParishHoldingCph).toBe('123456789')
+   })
+ 
+-  it('Should reject a blank submit, committing nothing', async () => {
++  it('Should answer an untouched page with the whole question at the first box', async () => {
+     const result = await driveHandler(postCph, {
+       seed: seed(),
+-      payload: { countyParishHoldingCph: '' }
++      payload: { cphCounty: '', cphParish: '', cphHolding: '' }
+     })
+     expect(result.response.statusCode).toBe(400)
+     expect(result.view.context.errors).toEqual({
+-      countyParishHoldingCph: 'Enter a CPH number'
++      cphCounty: 'Enter a CPH number'
+     })
+     expect(result.after.countyParishHoldingCph).toBeUndefined()
+   })
+ 
+-  it('Should reject a stripped value shorter than 9 digits', async () => {
++  it('Should name the missing part when the others are answered', async () => {
+     const result = await driveHandler(postCph, {
+       seed: seed(),
+-      payload: { countyParishHoldingCph: '12/345/678' }
++      payload: { ...VALID_PARTS, cphParish: '' }
+     })
+     expect(result.view.context.errors).toEqual({
+-      countyParishHoldingCph: 'CPH number must be exactly 9 digits'
++      cphParish: 'Enter the parish'
+     })
+     expect(result.after.countyParishHoldingCph).toBeUndefined()
+   })
+ 
+-  it('Should reject a stripped value longer than 9 digits, echoing the raw input', async () => {
++  it('Should hold each part to its own length', async () => {
+     const result = await driveHandler(postCph, {
+       seed: seed(),
+-      payload: { countyParishHoldingCph: '123456789/12' }
++      payload: { cphCounty: '1', cphParish: '34', cphHolding: '678' }
+     })
+     expect(result.view.context.errors).toEqual({
+-      countyParishHoldingCph: 'CPH number must be exactly 9 digits'
++      cphCounty: 'County must be 2 digits',
++      cphParish: 'Parish must be 3 digits',
++      cphHolding: 'Holding number must be 4 digits'
+     })
+-    expect(result.view.context.values.countyParishHoldingCph).toBe(
+-      '123456789/12'
+-    )
+     expect(result.after.countyParishHoldingCph).toBeUndefined()
+   })
+ 
+-  it('Should reject non-digit characters', async () => {
++  it('Should reject non-digits in a part, echoing what the trader typed', async () => {
+     const result = await driveHandler(postCph, {
+       seed: seed(),
+-      payload: { countyParishHoldingCph: '12345678a' }
++      payload: { ...VALID_PARTS, cphHolding: '678a' }
+     })
+     expect(result.view.context.errors).toEqual({
+-      countyParishHoldingCph: 'CPH number must only contain numbers'
++      cphHolding: 'Holding number must only contain numbers'
++    })
++    expect(result.view.context.values).toEqual({
++      ...VALID_PARTS,
++      cphHolding: '678a'
+     })
+     expect(result.after.countyParishHoldingCph).toBeUndefined()
+   })
++
++  it('Should reject slashes typed into a part, so the parts stay the parts', async () => {
++    const result = await driveHandler(postCph, {
++      seed: seed(),
++      payload: { cphCounty: '12/345/6789', cphParish: '', cphHolding: '' }
++    })
++    expect(result.view.context.errors).toEqual({
++      cphCounty: 'County must be 2 digits',
++      cphParish: 'Enter the parish',
++      cphHolding: 'Enter the holding number'
++    })
++    expect(result.after.countyParishHoldingCph).toBeUndefined()
++  })
++})
++
++describe('GET cph-number — the stored number back in its parts', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it('Should show three empty boxes when nothing is stored', async () => {
++    const result = await driveHandler(getCph, { seed: seed() })
++    expect(result.view.context.values).toEqual({
++      cphCounty: '',
++      cphParish: '',
++      cphHolding: ''
++    })
++  })
++
++  it('Should split the stored nine digits 2/3/4', async () => {
++    const result = await driveHandler(getCph, {
++      seed: { ...seed(), countyParishHoldingCph: '123456789' }
++    })
++    expect(result.view.context.values).toEqual(VALID_PARTS)
++  })
++
++  // Answers seeded by fixtures still carry the slashed form the page used to
++  // accept, so the split reads digits only rather than slicing the separators.
++  it('Should split a stored value that still carries slashes', async () => {
++    const result = await driveHandler(getCph, {
++      seed: { ...seed(), countyParishHoldingCph: '12/345/6789' }
++    })
++    expect(result.view.context.values).toEqual(VALID_PARTS)
++  })
+ })
+ 
+ describe('cph-number — addresses-hub entry (?return=addresses)', () => {
+@@ -141,7 +191,7 @@ describe('cph-number — addresses-hub entry (?return=addresses)', () => {
+   describe('POST /cph-number', () => {
+     it('Should save and return to the addresses hub when entered from its CPH row', async () => {
+       const result = await driveWithQuery(postCph, {
+-        payload: { countyParishHoldingCph: VALID_CPH_WITH_SLASHES },
++        payload: VALID_PARTS,
+         query: { return: 'addresses' }
+       })
+       expect(result.response).toEqual({
+@@ -151,7 +201,7 @@ describe('cph-number — addresses-hub entry (?return=addresses)', () => {
+ 
+     it('Should keep the sequential exit to the main hub when entered without return context', async () => {
+       const result = await driveWithQuery(postCph, {
+-        payload: { countyParishHoldingCph: VALID_CPH_WITH_SLASHES }
++        payload: VALID_PARTS
+       })
+       expect(result.response).toEqual({
+         redirect: hubPath(result.journeyId)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
+index 03424af0..ddd74e82 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
+@@ -3,7 +3,10 @@ export const copy = {
+   title: 'Ychwanegu rhif daliad plwyf sirol (CPH)',
+   cph: {
+     label: 'Rhif CPH',
+-    hint: 'Er enghraifft, 123456789 neu 123/456/789.'
++    hint: 'Er enghraifft, 12/345/6789.',
++    county: 'Sir',
++    parish: 'Plwyf',
++    holding: 'Rhif daliad'
+   },
+   help: {
+     summary: 'Beth yw rhif CPH?',
+@@ -14,7 +17,14 @@ export const copy = {
+   },
+   errors: {
+     cphRequired: 'Nodwch rif CPH',
+-    cphLength: "Rhaid i'r rhif CPH fod yn union 9 digid",
+-    cphDigitsOnly: "Rhaid i'r rhif CPH gynnwys rhifau yn unig"
++    countyRequired: 'Nodwch y sir',
++    countyLength: "Rhaid i'r sir fod yn 2 ddigid",
++    countyDigitsOnly: "Rhaid i'r sir gynnwys rhifau yn unig",
++    parishRequired: 'Nodwch y plwyf',
++    parishLength: "Rhaid i'r plwyf fod yn 3 digid",
++    parishDigitsOnly: "Rhaid i'r plwyf gynnwys rhifau yn unig",
++    holdingRequired: 'Nodwch y rhif daliad',
++    holdingLength: "Rhaid i'r rhif daliad fod yn 4 digid",
++    holdingDigitsOnly: "Rhaid i'r rhif daliad gynnwys rhifau yn unig"
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
+index 3bae8114..4950bb71 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
+@@ -2,7 +2,10 @@ export const copy = {
+   title: 'Add the county parish holding number (CPH)',
+   cph: {
+     label: 'CPH number',
+-    hint: 'For example, 123456789 or 123/456/789.'
++    hint: 'For example, 12/345/6789.',
++    county: 'County',
++    parish: 'Parish',
++    holding: 'Holding number'
+   },
+   help: {
+     summary: 'What is a CPH number?',
+@@ -13,7 +16,14 @@ export const copy = {
+   },
+   errors: {
+     cphRequired: 'Enter a CPH number',
+-    cphLength: 'CPH number must be exactly 9 digits',
+-    cphDigitsOnly: 'CPH number must only contain numbers'
++    countyRequired: 'Enter the county',
++    countyLength: 'County must be 2 digits',
++    countyDigitsOnly: 'County must only contain numbers',
++    parishRequired: 'Enter the parish',
++    parishLength: 'Parish must be 3 digits',
++    parishDigitsOnly: 'Parish must only contain numbers',
++    holdingRequired: 'Enter the holding number',
++    holdingLength: 'Holding number must be 4 digits',
++    holdingDigitsOnly: 'Holding number must only contain numbers'
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js
+index 771a2a90..a8fa29d9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js
+@@ -40,6 +40,27 @@ describe('cph-number copy module', () => {
+     expect(copyCy.cph.label).toBe('Rhif CPH')
+   })
+ 
++  // The three boxes take the number in its real parts, so each carries a label
++  // of its own. Design release 1 hides these labels with its own stylesheet;
++  // the service keeps them visible, because three unlabelled boxes under one
++  // legend would be worse than the single field they replace.
++  it('Should name each part of the number', () => {
++    expect(copy.cph.county).toBe('County')
++    expect(copy.cph.parish).toBe('Parish')
++    expect(copy.cph.holding).toBe('Holding number')
++    expect(copyCy.cph.county).toBe('Sir')
++    expect(copyCy.cph.parish).toBe('Plwyf')
++    expect(copyCy.cph.holding).toBe('Rhif daliad')
++  })
++
++  // A CPH number is two digits of county, three of parish and four of holding.
++  // The example has to teach that grouping — the page used to offer 123/456/789,
++  // a 3/3/3 shape no CPH number uses.
++  it('Should give an example in the real 2/3/4 grouping', () => {
++    expect(copy.cph.hint).toBe('For example, 12/345/6789.')
++    expect(copyCy.cph.hint).toBe('Er enghraifft, 12/345/6789.')
++  })
++
+   // Design release 1 puts the help behind a "What is a CPH number?" expander:
+   // a definition and where to find the number. The second paragraph names APHA
+   // documents only — DR1's GOV.UK holding-details link is a placeholder href,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+index 34b6e896..89e1d9f5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+@@ -11,6 +11,33 @@ import { signIn } from '../../../../../../../../../fit/sign-in.js'
+ 
+ const SUBMIT_BUTTON = 'form button[type="submit"]'
+ 
++const partBoxes = (page) => ({
++  county: page.getByLabel(copy.cph.county, { exact: true }),
++  parish: page.getByLabel(copy.cph.parish, { exact: true }),
++  holding: page.getByLabel(copy.cph.holding, { exact: true })
++})
++
++const fillCph = async (page, { county, parish, holding }) => {
++  const boxes = partBoxes(page)
++  await boxes.county.fill(county)
++  await boxes.parish.fill(parish)
++  await boxes.holding.fill(holding)
++}
++
++const expectNoSeriousAxeViolations = async (page, label) => {
++  const results = await new AxeBuilder({ page })
++    .withTags(['wcag2a', 'wcag2aa'])
++    .analyze()
++  const seriousOrCritical = results.violations.filter(({ impact }) =>
++    ['serious', 'critical'].includes(impact)
++  )
++
++  expect(
++    seriousOrCritical,
++    `${label} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++  ).toEqual([])
++}
++
+ const startAtCphNumber = async (page) => {
+   await page.goto('/')
+   await page
+@@ -39,24 +66,54 @@ test.describe('cph-number feature', () => {
+ 
+   test('renders the CPH copy', async ({ page }) => {
+     // The page heading is an instruction in its own right, directly under the
+-    // caption — the field beneath it carries the shorter label, so the two are
+-    // separate strings rather than one label doubling as the heading.
++    // caption — the group of boxes beneath it carries the shorter legend, so the
++    // two are separate strings rather than one label doubling as the heading.
+     await expect(
+       page.locator('span.govuk-caption-l + h1.govuk-heading-l')
+     ).toHaveText(copy.title)
+ 
+-    // The field label is a label, not the heading: a revert to
+-    // `isPageHeading: true` on the input would put it back into a second h1.
++    // The question's name is a legend, not the heading: a revert to
++    // `isPageHeading: true` would put it back into a second h1.
+     await expect(
+       page.getByRole('heading', { name: copy.cph.label })
+     ).toHaveCount(0)
+     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+ 
+-    await expect(page.getByLabel(copy.cph.label)).toHaveAccessibleDescription(
+-      copy.cph.hint
++    await expect(page.getByRole('group', { name: copy.cph.label })).toHaveCount(
++      1
+     )
+   })
+ 
++  test('takes the number in three boxes sized to its parts', async ({
++    page
++  }) => {
++    const boxes = partBoxes(page)
++
++    // The widths and the maxlengths are what teach the 2/3/4 shape — they are
++    // the reason the page needs no copy to explain how the digits divide up.
++    await expect(boxes.county).toHaveClass(/govuk-input--width-2/)
++    await expect(boxes.county).toHaveAttribute('maxlength', '2')
++    await expect(boxes.parish).toHaveClass(/govuk-input--width-3/)
++    await expect(boxes.parish).toHaveAttribute('maxlength', '3')
++    await expect(boxes.holding).toHaveClass(/govuk-input--width-4/)
++    await expect(boxes.holding).toHaveAttribute('maxlength', '4')
++
++    for (const box of Object.values(boxes)) {
++      await expect(box).toHaveAttribute('inputmode', 'numeric')
++    }
++  })
++
++  test('describes the whole number once, in the real 2/3/4 grouping', async ({
++    page
++  }) => {
++    // The hint sits on the group rather than on any one box, because it
++    // explains the whole number. 123/456/789 is a grouping no CPH number uses.
++    await expect(
++      page.getByRole('group', { name: copy.cph.label })
++    ).toHaveAccessibleDescription(copy.cph.hint)
++    await expect(page.getByText('123/456/789')).toHaveCount(0)
++  })
++
+   test('keeps the CPH help collapsed above the field until it is opened', async ({
+     page
+   }) => {
+@@ -73,9 +130,7 @@ test.describe('cph-number feature', () => {
+     await expect(
+       page.locator('details').filter({ hasText: copy.help.summary })
+     ).toHaveCount(1)
+-    await expect(
+-      page.locator('details ~ form #countyParishHoldingCph')
+-    ).toHaveCount(1)
++    await expect(page.locator('details ~ form #cphCounty')).toHaveCount(1)
+ 
+     await summary.click()
+ 
+@@ -97,12 +152,12 @@ test.describe('cph-number feature', () => {
+     await expect(page).toHaveURL(hubUrl)
+   })
+ 
+-  test('strips slashes, saves a valid CPH number, continues the run and persists it', async ({
++  test('joins the parts, saves the nine digits, continues the run and comes back split', async ({
+     page
+   }) => {
+     const cphUrl = page.url()
+ 
+-    await page.getByLabel(copy.cph.label).fill('123/456/789')
++    await fillCph(page, { county: '12', parish: '345', holding: '6789' })
+     await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     // The notification was created in this session, so the opening run is still
+@@ -111,22 +166,16 @@ test.describe('cph-number feature', () => {
+     await expect(page).toHaveURL(
+       /\/notifications\/[^/]+\/consignment\/contact\/select$/
+     )
++
+     await page.goto(cphUrl)
+-    await expect(page.getByLabel(copy.cph.label)).toHaveValue('123456789')
++    const boxes = partBoxes(page)
++    await expect(boxes.county).toHaveValue('12')
++    await expect(boxes.parish).toHaveValue('345')
++    await expect(boxes.holding).toHaveValue('6789')
+   })
+ 
+   test('has no serious or critical axe violations', async ({ page }) => {
+-    const results = await new AxeBuilder({ page })
+-      .withTags(['wcag2a', 'wcag2aa'])
+-      .analyze()
+-    const seriousOrCritical = results.violations.filter(({ impact }) =>
+-      ['serious', 'critical'].includes(impact)
+-    )
+-
+-    expect(
+-      seriousOrCritical,
+-      `CPH number has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+-    ).toEqual([])
++    await expectNoSeriousAxeViolations(page, 'CPH number')
+   })
+ })
+ 
+@@ -136,11 +185,9 @@ test.describe('cph-number validation', () => {
+     await startAtCphNumber(page)
+   })
+ 
+-  test('CPH validation: when empty, links to and focuses the preserved empty input', async ({
++  test('CPH validation: an untouched page asks the whole question at the first box', async ({
+     page
+   }) => {
+-    const input = page.getByLabel(copy.cph.label)
+-
+     await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     const requiredError = page
+@@ -148,39 +195,86 @@ test.describe('cph-number validation', () => {
+       .getByRole('link', { name: copy.errors.cphRequired })
+     await expect(requiredError).toBeVisible()
+     await requiredError.click()
+-    await expect(input).toBeFocused()
+-    await expect(input).toHaveValue('')
++
++    const boxes = partBoxes(page)
++    await expect(boxes.county).toBeFocused()
++    await expect(boxes.county).toHaveValue('')
+   })
+ 
+-  test('CPH validation: when not 9 digits, links to and focuses the preserved raw value', async ({
++  test('CPH validation: a short part names that part and keeps every value', async ({
+     page
+   }) => {
+-    const input = page.getByLabel(copy.cph.label)
+-    await input.fill('12/345/678')
++    await fillCph(page, { county: '12', parish: '34', holding: '6789' })
+     await page.locator(SUBMIT_BUTTON).first().click()
+ 
+-    const lengthError = page
++    const parishError = page
+       .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.cphLength })
+-    await expect(lengthError).toBeVisible()
+-    await lengthError.click()
+-    await expect(input).toBeFocused()
+-    await expect(input).toHaveValue('12/345/678')
++      .getByRole('link', { name: copy.errors.parishLength })
++    await expect(parishError).toBeVisible()
++    await parishError.click()
++
++    const boxes = partBoxes(page)
++    await expect(boxes.parish).toBeFocused()
++    await expect(boxes.parish).toHaveValue('34')
++    await expect(boxes.county).toHaveValue('12')
++    await expect(boxes.holding).toHaveValue('6789')
+   })
+ 
+-  test('CPH validation: when containing non-digits, links to and focuses the preserved raw value', async ({
++  test('CPH validation: a missing part names that part rather than the whole number', async ({
+     page
+   }) => {
+-    const input = page.getByLabel(copy.cph.label)
+-    await input.fill('12345678A')
++    await fillCph(page, { county: '12', parish: '345', holding: '' })
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    const holdingError = page
++      .getByRole('alert')
++      .getByRole('link', { name: copy.errors.holdingRequired })
++    await expect(holdingError).toBeVisible()
++    await holdingError.click()
++    await expect(partBoxes(page).holding).toBeFocused()
++  })
++
++  test('CPH validation: a non-digit part names that part and keeps what was typed', async ({
++    page
++  }) => {
++    await fillCph(page, { county: '12', parish: '345', holding: '678a' })
+     await page.locator(SUBMIT_BUTTON).first().click()
+ 
+     const digitsError = page
+       .getByRole('alert')
+-      .getByRole('link', { name: copy.errors.cphDigitsOnly })
++      .getByRole('link', { name: copy.errors.holdingDigitsOnly })
+     await expect(digitsError).toBeVisible()
+     await digitsError.click()
+-    await expect(input).toBeFocused()
+-    await expect(input).toHaveValue('12345678A')
++
++    const boxes = partBoxes(page)
++    await expect(boxes.holding).toBeFocused()
++    await expect(boxes.holding).toHaveValue('678a')
++  })
++
++  test('CPH validation: every wrong part is named at once', async ({
++    page
++  }) => {
++    await fillCph(page, { county: '1', parish: '34', holding: '678' })
++    await page.locator(SUBMIT_BUTTON).first().click()
++
++    const summary = page.getByRole('alert')
++    await expect(
++      summary.getByRole('link', { name: copy.errors.countyLength })
++    ).toBeVisible()
++    await expect(
++      summary.getByRole('link', { name: copy.errors.parishLength })
++    ).toBeVisible()
++    await expect(
++      summary.getByRole('link', { name: copy.errors.holdingLength })
++    ).toBeVisible()
++  })
++
++  test('has no serious or critical axe violations in the error state', async ({
++    page
++  }) => {
++    await page.locator(SUBMIT_BUTTON).first().click()
++    await expect(page.getByRole('alert')).toBeVisible()
++
++    await expectNoSeriousAxeViolations(page, 'CPH number in its error state')
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+index 565311ef..115aac6b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+@@ -1,5 +1,7 @@
+ {% extends "shared/layout.njk" %}
+ {% from "govuk/components/details/macro.njk" import govukDetails %}
++{% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
++{% from "govuk/components/hint/macro.njk" import govukHint %}
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+@@ -26,15 +28,70 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+-    {{ govukInput({
+-      id: "countyParishHoldingCph",
+-      name: "countyParishHoldingCph",
+-      label: { text: copy.cph.label, classes: "govuk-label--s" },
+-      hint: { text: copy.cph.hint },
+-      classes: "govuk-input--width-10",
+-      value: values.countyParishHoldingCph,
+-      errorMessage: errors.countyParishHoldingCph and { text: errors.countyParishHoldingCph }
+-    }) }}
++    {# One question in three boxes. The stepping widths and the maxlengths carry
++       the 2/3/4 shape of a CPH number without a word of copy, and each box keeps
++       a visible label so a trader knows which part they are in. The
++       govuk-date-input layout classes are the Design System's only shipped way
++       to sit inputs side by side; nothing here is a date. #}
++    {% set cphPartsHtml %}
++      {{ govukHint({
++        id: "cph-hint",
++        text: copy.cph.hint
++      }) }}
++
++      <div class="govuk-date-input">
++        <div class="govuk-date-input__item">
++          {{ govukInput({
++            id: "cphCounty",
++            name: "cphCounty",
++            label: { text: copy.cph.county, classes: "govuk-date-input__label" },
++            classes: "govuk-input--width-2",
++            inputmode: "numeric",
++            spellcheck: false,
++            attributes: { maxlength: "2" },
++            value: values.cphCounty,
++            errorMessage: errors.cphCounty and { text: errors.cphCounty }
++          }) }}
++        </div>
++
++        <div class="govuk-date-input__item">
++          {{ govukInput({
++            id: "cphParish",
++            name: "cphParish",
++            label: { text: copy.cph.parish, classes: "govuk-date-input__label" },
++            classes: "govuk-input--width-3",
++            inputmode: "numeric",
++            spellcheck: false,
++            attributes: { maxlength: "3" },
++            value: values.cphParish,
++            errorMessage: errors.cphParish and { text: errors.cphParish }
++          }) }}
++        </div>
++
++        <div class="govuk-date-input__item">
++          {{ govukInput({
++            id: "cphHolding",
++            name: "cphHolding",
++            label: { text: copy.cph.holding, classes: "govuk-date-input__label" },
++            classes: "govuk-input--width-4",
++            inputmode: "numeric",
++            spellcheck: false,
++            attributes: { maxlength: "4" },
++            value: values.cphHolding,
++            errorMessage: errors.cphHolding and { text: errors.cphHolding }
++          }) }}
++        </div>
++      </div>
++    {% endset %}
++
++    <div class="govuk-form-group">
++      {{ govukFieldset({
++        role: "group",
++        describedBy: "cph-hint",
++        legend: { text: copy.cph.label, classes: "govuk-fieldset__legend--s" },
++        html: cphPartsHtml
++      }) }}
++    </div>
+ 
+     {# Second page of the addresses row — reached from the hub's addresses
+        page, not from the hub, so it ends with the primary alone. #}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js b/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
+index e17b9f3a..ce6f4618 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
+@@ -221,7 +221,7 @@ describe('save actions — hub exit semantics', () => {
+       commodityLines: [{ commoditySelection: 'Cow' }]
+     }
+     const returned = await drivePost(postHandlerOf(cphNumber), {
+-      payload: { countyParishHoldingCph: '123456789' },
++      payload: { cphCounty: '12', cphParish: '345', cphHolding: '6789' },
+       query: { return: 'addresses' },
+       seed: cphInScope
+     })
+@@ -230,7 +230,12 @@ describe('save actions — hub exit semantics', () => {
+     })
+ 
+     const exit = await drivePost(postHandlerOf(cphNumber), {
+-      payload: { countyParishHoldingCph: '123456789', exit: 'hub' },
++      payload: {
++        cphCounty: '12',
++        cphParish: '345',
++        cphHolding: '6789',
++        exit: 'hub'
++      },
+       query: { return: 'addresses' },
+       seed: cphInScope
+     })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+index fabc76a0..e8b0c2df 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js
+@@ -263,7 +263,7 @@ const saveAndContinueFollowsTheRunSequence = () => {
+     const h = captureH()
+     await postHandlerOf(cphNumber)(
+       buildRequest(inRun.journeyId, {
+-        payload: { countyParishHoldingCph: '123456789' },
++        payload: { cphCounty: '12', cphParish: '345', cphHolding: '6789' },
+         record: active(inRun.journeyId)
+       }),
+       h
+@@ -275,7 +275,7 @@ const saveAndContinueFollowsTheRunSequence = () => {
+     // Outside the run the page is the addresses section's last page, so the
+     // section flow rests on the hub.
+     const outside = await drive(postHandlerOf(cphNumber), {
+-      payload: { countyParishHoldingCph: '123456789' },
++      payload: { cphCounty: '12', cphParish: '345', cphHolding: '6789' },
+       seed: lineSeed
+     })
+     expect(outside.h.captured.redirect).toBe(hubPath(outside.journeyId))

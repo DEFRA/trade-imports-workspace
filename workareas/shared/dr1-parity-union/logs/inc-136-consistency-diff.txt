@@ -1,0 +1,875 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index ab3d4d1d..0ca67f73 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -191,6 +191,7 @@ test.describe('live-animals journey glue', () => {
+ 
+     const secondDocument = {
+       accompanyingDocumentReference: 'INV-2026-0042',
++      accompanyingDocumentType: 'COMMERCIAL_INVOICE',
+       accompanyingDocumentDateOfIssue: { day: '3', month: '1', year: '2026' },
+       filename: 'commercial-invoice.pdf'
+     }
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 81b69f1a..b0f9237e 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -225,6 +225,9 @@ export const addDocument = async (page, entry) => {
+   await page
+     .getByLabel('Document reference')
+     .fill(entry.accompanyingDocumentReference)
++  await page
++    .getByLabel('Document type')
++    .selectOption(entry.accompanyingDocumentType)
+   const issued = entry.accompanyingDocumentDateOfIssue
+   await page
+     .getByLabel('Date of issue')
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js b/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js
+index 7d45014d..834c6347 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js
+@@ -176,6 +176,7 @@ describe('change context — context survives the internal loop navigation', ()
+         payload: {
+           action: 'add',
+           accompanyingDocumentReference: 'GBHC1234567890',
++          accompanyingDocumentType: 'ITAHC',
+           accompanyingDocumentDateOfIssue: '12/12/2025',
+           file: {
+             filename: 'itahc-certificate.pdf',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/document-type-options.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/document-type-options.js
+new file mode 100644
+index 00000000..1a2c073e
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/document-type-options.js
+@@ -0,0 +1,14 @@
++import * as documentTypes from '../../../../../../../services/document-types/index.js'
++
++// The document-types service is the list; the design decides how much of it
++// the trader sees. Design release 1 offers thirteen types — the service enum
++// minus HEALTH_CERTIFICATE, which the design keeps for its own internal
++// testing release and never puts in front of a trader. A record already
++// holding that type still renders (the table reads the label by code); the
++// page just never offers it as a new choice.
++const NOT_OFFERED = ['HEALTH_CERTIFICATE']
++
++// Read at call time, not frozen at module load: the list is service-backed and
++// the values are primed at boot.
++export const offeredDocumentTypes = () =>
++  documentTypes.documentTypes().filter((code) => !NOT_OFFERED.includes(code))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js
+index 7aa35e27..50e5c98b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js
+@@ -18,7 +18,6 @@ import { isRemoveAction, removeIndexOf } from './contracts/remove-action.js'
+ import { UPLOAD_ID_PATTERN, ownsUpload } from './contracts/upload-id.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
+-import { deriveDocumentTypeFromFilename } from './derive-document-type.js'
+ import { capacityExceededError, documentAddErrors } from './form/errors.js'
+ import {
+   EMPTY_FORM,
+@@ -106,13 +105,9 @@ const postAdd = async (request, h, payload) => {
+   }
+ 
+   const filename = pendingDocumentSave?.filename ?? payload.file.filename
+-  const entry = {
+-    ...bare,
+-    accompanyingDocumentType: deriveDocumentTypeFromFilename(filename)
+-  }
+   const outcome = pendingDocumentSave
+     ? { uploadId: pendingDocumentSave.uploadId }
+-    : await uploadOutcome(pageState, entry, payload.file, filename)
++    : await uploadOutcome(pageState, bare, payload.file, filename)
+   if (outcome.failed) {
+     return render(request, h, pageState, bare, {
+       errors: { file: UPLOAD_FAILURE_MESSAGE }
+@@ -120,7 +115,7 @@ const postAdd = async (request, h, payload) => {
+   }
+ 
+   const savedEntry = {
+-    ...entry,
++    ...bare,
+     accompanyingDocumentAttachmentType: attachmentTypeFor(filename),
+     uploadId: outcome.uploadId,
+     filename
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+index 90541465..7628bcb0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+@@ -20,6 +20,7 @@ import {
+   stubH
+ } from '../../../../../../engine/test-support.js'
+ import { documentUploads } from '../../../../../../services/document-uploads/index.js'
++import * as documentTypes from '../../../../../../services/document-types/index.js'
+ import { dispatchPages } from '../index.js'
+ 
+ import * as documents from './controller.js'
+@@ -46,9 +47,12 @@ const pdfFile = (filename = 'itahc-certificate.pdf', size = 8) => ({
+ 
+ const DATE_OF_ISSUE_TEXT = '12/12/2025'
+ const VIRUS_NOTES_FILENAME = 'virus-notes.pdf'
++// The one member of the service enum design release 1 keeps to itself.
++const EXCLUDED_TYPE = 'HEALTH_CERTIFICATE'
+ 
+ const validDocument = {
+   accompanyingDocumentReference: 'GBHC1234567890',
++  accompanyingDocumentType: 'ITAHC',
+   accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT
+ }
+ 
+@@ -78,6 +82,7 @@ describe('documents — real upload leg on the single-page loop', () => {
+       payload: {
+         action: 'add',
+         file: pdfFile(),
++        accompanyingDocumentType: 'ITAHC',
+         accompanyingDocumentDateOfIssue: '31/2/2000'
+       }
+     })
+@@ -88,26 +93,58 @@ describe('documents — real upload leg on the single-page loop', () => {
+     expect(result.after).toEqual(result.before)
+   })
+ 
+-  it('Should require a document reference and a date of issue at add time', async () => {
++  it('Should require a document reference, a document type and a date of issue at add time', async () => {
+     const result = await driveHandler(post, {
+       payload: { action: 'add', file: pdfFile() }
+     })
+     expect(result.view.context.errors.accompanyingDocumentReference).toBe(
+       'Enter a document reference'
+     )
++    expect(result.view.context.errors.accompanyingDocumentType).toBe(
++      'Select a document type'
++    )
+     expect(result.view.context.errors.accompanyingDocumentDateOfIssue).toBe(
+       'Enter the date of issue'
+     )
+     expect(result.after).toEqual(result.before)
+   })
+ 
+-  it('Should not upload or persist an otherwise-started document with either mandatory form field blank', async () => {
++  it('Should list the add errors in the order the fields appear on the page', async () => {
++    const result = await driveHandler(post, {
++      payload: { action: 'add' }
++    })
++    expect(Object.keys(result.view.context.errors)).toEqual([
++      'accompanyingDocumentReference',
++      'accompanyingDocumentType',
++      'accompanyingDocumentDateOfIssue',
++      'file'
++    ])
++  })
++
++  it('Should refuse a document type the page never offered and append nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        action: 'add',
++        ...validDocument,
++        accompanyingDocumentType: 'HEALTH_CERTIFICATE',
++        file: pdfFile()
++      }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(result.view.context.errors.accompanyingDocumentType).toBe(
++      'Select a document type'
++    )
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should not upload or persist an otherwise-started document with any mandatory form field blank', async () => {
+     const upload = vi.spyOn(documentUploads, 'upload')
+     const incompletePayloads = [
+       {
+         payload: {
+           action: 'add',
+           file: pdfFile(),
++          accompanyingDocumentType: 'ITAHC',
+           accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT
+         },
+         errorField: 'accompanyingDocumentReference'
+@@ -116,7 +153,17 @@ describe('documents — real upload leg on the single-page loop', () => {
+         payload: {
+           action: 'add',
+           file: pdfFile(),
+-          accompanyingDocumentReference: 'GBHC1234567890'
++          accompanyingDocumentReference: 'GBHC1234567890',
++          accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT
++        },
++        errorField: 'accompanyingDocumentType'
++      },
++      {
++        payload: {
++          action: 'add',
++          file: pdfFile(),
++          accompanyingDocumentReference: 'GBHC1234567890',
++          accompanyingDocumentType: 'ITAHC'
+         },
+         errorField: 'accompanyingDocumentDateOfIssue'
+       }
+@@ -132,7 +179,7 @@ describe('documents — real upload leg on the single-page loop', () => {
+     upload.mockRestore()
+   })
+ 
+-  it('Should append the uploaded document with the type and attachment type derived from the filename, then redirect', async () => {
++  it('Should append the uploaded document with the chosen type and the attachment type derived from the filename, then redirect', async () => {
+     const result = await driveHandler(post, {
+       payload: { action: 'add', ...validDocument, file: pdfFile('itahc.pdf') }
+     })
+@@ -144,16 +191,17 @@ describe('documents — real upload leg on the single-page loop', () => {
+     expect(entry.accompanyingDocumentType).toBe('ITAHC')
+   })
+ 
+-  it('Should derive Other for a filename matching no document type', async () => {
++  it('Should store the chosen type whatever the filename says', async () => {
+     const result = await driveHandler(post, {
+       payload: {
+         action: 'add',
+         ...validDocument,
+-        file: pdfFile('holiday-snaps.pdf')
++        accompanyingDocumentType: 'COMMERCIAL_INVOICE',
++        file: pdfFile('itahc-certificate.pdf')
+       }
+     })
+     const [entry] = result.after.documents
+-    expect(entry.accompanyingDocumentType).toBe('OTHER')
++    expect(entry.accompanyingDocumentType).toBe('COMMERCIAL_INVOICE')
+   })
+ 
+   it('Should refuse an add without a file and append nothing', async () => {
+@@ -515,6 +563,31 @@ describe('documents — scan-status poll and view context', () => {
+     expect(result.view.context.rows[0][4].html).not.toContain('View file')
+   })
+ 
++  it('Should offer the thirteen design-release document types behind a placeholder, in the service order', async () => {
++    const result = await driveHandler(get)
++    const items = result.view.context.documentTypeItems
++    expect(items[0]).toEqual({ value: '', text: 'Select one' })
++    expect(items.slice(1).map(({ value }) => value)).toEqual(
++      documentTypes.documentTypes().filter((code) => code !== EXCLUDED_TYPE)
++    )
++    expect(items.slice(1).map(({ text }) => text)).toEqual([
++      'Intra Trade Animal Health Certificate (ITAHC)',
++      'Veterinary health certificate',
++      'Air waybill',
++      'Import permit',
++      'Letter of authority (Directive 2008/61/EC)',
++      'Commercial invoice',
++      'Sea waybill',
++      'Rail waybill',
++      'Bill of lading',
++      'Catch certificate',
++      'Laboratory sampling results for aflatoxin (Reg 2019/1793)',
++      'Journey log',
++      'Other'
++    ])
++    expect(result.view.context.values.accompanyingDocumentType).toBe('')
++  })
++
+   it('Should register the multipart POST route with the 10MB payload cap', () => {
+     const server = Hapi.server()
+     server.route(documents.routes)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+index 566f7104..cba2254a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+@@ -42,6 +42,10 @@ export const copy = {
+     label: 'Cyfeirnod y ddogfen',
+     hint: 'Er enghraifft, GBHC1234567890.'
+   },
++  documentType: {
++    label: 'Math o ddogfen',
++    placeholder: 'Dewiswch un'
++  },
+   dateOfIssue: {
+     label: 'Dyddiad cyhoeddi',
+     hint: 'Er enghraifft, 12/12/2025'
+@@ -62,7 +66,7 @@ export const copy = {
+     actionsHidden: 'Camau gweithredu'
+   },
+   types: {
+-    ITAHC: 'ITAHC',
++    ITAHC: 'Tystysgrif Iechyd Anifeiliaid Masnach Fewnol (ITAHC)',
+     VETERINARY_HEALTH_CERTIFICATE: 'Tystysgrif iechyd milfeddygol',
+     AIR_WAYBILL: 'Bil cludo awyr',
+     IMPORT_PERMIT: 'Trwydded fewnforio',
+@@ -103,6 +107,7 @@ export const copy = {
+     referenceMaxLength: 'Rhaid i gyfeirnod y ddogfen fod yn 58 nod neu lai',
+     dateInvalid: 'Rhowch ddyddiad cyhoeddi go iawn',
+     referenceRequired: 'Rhowch gyfeirnod dogfen',
++    typeRequired: 'Dewiswch fath o ddogfen',
+     dateRequired: 'Rhowch y dyddiad cyhoeddi',
+     fileRequired: 'Dewiswch ffeil i’w huwchlwytho',
+     cannotContinue:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index a2efa7f6..a65b6f82 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -37,6 +37,10 @@ export const copy = {
+     label: 'Document reference',
+     hint: 'For example, GBHC1234567890.'
+   },
++  documentType: {
++    label: 'Document type',
++    placeholder: 'Select one'
++  },
+   dateOfIssue: {
+     label: 'Date of issue',
+     hint: 'For example, 12/12/2025'
+@@ -57,7 +61,7 @@ export const copy = {
+     actionsHidden: 'Actions'
+   },
+   types: {
+-    ITAHC: 'ITAHC',
++    ITAHC: 'Intra Trade Animal Health Certificate (ITAHC)',
+     VETERINARY_HEALTH_CERTIFICATE: 'Veterinary health certificate',
+     AIR_WAYBILL: 'Air waybill',
+     IMPORT_PERMIT: 'Import permit',
+@@ -98,6 +102,7 @@ export const copy = {
+     referenceMaxLength: 'Document reference must be 58 characters or fewer',
+     dateInvalid: 'Enter a real date of issue',
+     referenceRequired: 'Enter a document reference',
++    typeRequired: 'Select a document type',
+     dateRequired: 'Enter the date of issue',
+     fileRequired: 'Select a file to upload',
+     cannotContinue:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+index 025413e7..7daa1f22 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+@@ -112,4 +112,14 @@ describe('GET /accompanying-documents', () => {
+       copy.dateOfIssue.label
+     )
+   })
++
++  it('Should label every offered document type from the feature copy', async () => {
++    const get = documents.routes.find((route) => route.method === 'GET').handler
++    const result = await driveHandler(get)
++    const [placeholder, ...types] = result.view.context.documentTypeItems
++    expect(placeholder.text).toBe(copy.documentType.placeholder)
++    for (const { value, text } of types) {
++      expect(text, `${value} must be labelled`).toBe(copy.types[value])
++    }
++  })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js
+deleted file mode 100644
+index cd87ae7f..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js
++++ /dev/null
+@@ -1,40 +0,0 @@
+-import * as documentTypes from '../../../../../../services/document-types/index.js'
+-
+-/**
+- * Derive the accompanying-document type enum code from an uploaded
+- * filename.
+- *
+- * The trader does not pick a type; the filename carries it (e.g.
+- * `itahc-scan.pdf`, `veterinary_health_certificate.docx`). Matching is
+- * token-based against the document-types service enum: the filename
+- * (extension stripped, separators normalised to spaces) must contain a
+- * code's words in order. Longest candidate wins so
+- * `veterinary-health-certificate.pdf` derives
+- * 'VETERINARY_HEALTH_CERTIFICATE', not 'HEALTH_CERTIFICATE'. No match
+- * derives 'OTHER'.
+- *
+- * @param {string} [filename] - the uploaded file's name.
+- * @returns {string} a member of `documentTypes()`.
+- */
+-export const deriveDocumentTypeFromFilename = (filename = '') => {
+-  const haystack = ` ${normalise(stripExtension(filename))} `
+-  const hit = candidates().find(({ key }) => haystack.includes(` ${key} `))
+-  return hit?.code ?? FALLBACK
+-}
+-
+-const FALLBACK = 'OTHER'
+-
+-const normalise = (value) =>
+-  value
+-    .toLowerCase()
+-    .replace(/[^a-z0-9]+/g, ' ')
+-    .trim()
+-
+-const stripExtension = (filename) => filename.replace(/\.[^.]+$/, '')
+-
+-const candidates = () =>
+-  documentTypes
+-    .documentTypes()
+-    .map((code) => ({ code, key: normalise(code) }))
+-    .filter(({ code, key }) => key.length > 0 && code !== FALLBACK)
+-    .sort((first, second) => second.key.length - first.key.length)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.test.js
+deleted file mode 100644
+index 9359074d..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.test.js
++++ /dev/null
+@@ -1,50 +0,0 @@
+-import { describe, expect, it } from 'vitest'
+-
+-import * as documentTypes from '../../../../../../services/document-types/index.js'
+-import { deriveDocumentTypeFromFilename } from './derive-document-type.js'
+-
+-describe('#deriveDocumentTypeFromFilename', () => {
+-  it('Should derive an enum code from its tokens in the filename', () => {
+-    expect(deriveDocumentTypeFromFilename('itahc-scan.pdf')).toBe('ITAHC')
+-    expect(deriveDocumentTypeFromFilename('health_certificate_2026.docx')).toBe(
+-      'HEALTH_CERTIFICATE'
+-    )
+-    expect(deriveDocumentTypeFromFilename('My Journey Log.PDF')).toBe(
+-      'JOURNEY_LOG'
+-    )
+-  })
+-
+-  it('Should prefer the longest matching code over its substring', () => {
+-    expect(
+-      deriveDocumentTypeFromFilename('veterinary-health-certificate.pdf')
+-    ).toBe('VETERINARY_HEALTH_CERTIFICATE')
+-  })
+-
+-  it("Should not require the display label's parenthetical qualifier in the filename", () => {
+-    expect(deriveDocumentTypeFromFilename('letter-of-authority.pdf')).toBe(
+-      'LETTER_OF_AUTHORITY'
+-    )
+-  })
+-
+-  it('Should not match partial words', () => {
+-    expect(deriveDocumentTypeFromFilename('itahcx.pdf')).toBe('OTHER')
+-  })
+-
+-  it('Should fall back to OTHER for an unrecognised filename', () => {
+-    expect(deriveDocumentTypeFromFilename('holiday-photo.png')).toBe('OTHER')
+-    expect(deriveDocumentTypeFromFilename('')).toBe('OTHER')
+-    expect(deriveDocumentTypeFromFilename()).toBe('OTHER')
+-  })
+-
+-  it('Should always derive a member of the document-types service enum', () => {
+-    const list = documentTypes.documentTypes()
+-    for (const filename of [
+-      'itahc.pdf',
+-      'air-waybill.docx',
+-      'random-notes.xlsx',
+-      'catch certificate.png'
+-    ]) {
+-      expect(list).toContain(deriveDocumentTypeFromFilename(filename))
+-    }
+-  })
+-})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+index 9fe888d4..a5127bce 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+@@ -25,6 +25,7 @@ const DATE_OF_ISSUE = { day: '3', month: '1', year: '2026' }
+ 
+ const documentNamed = (reference, filename) => ({
+   accompanyingDocumentReference: reference,
++  accompanyingDocumentType: 'ITAHC',
+   accompanyingDocumentDateOfIssue: DATE_OF_ISSUE,
+   filename
+ })
+@@ -34,6 +35,9 @@ const uploadDocument = async (page, document) => {
+   await page
+     .getByLabel(copy.reference.label)
+     .fill(document.accompanyingDocumentReference)
++  await page
++    .getByLabel(copy.documentType.label)
++    .selectOption(document.accompanyingDocumentType)
+   await page
+     .getByLabel(copy.dateOfIssue.label)
+     .fill(`${issued.day}/${issued.month}/${issued.year}`)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+index 141fbc2b..bf809f6a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+@@ -43,29 +43,30 @@ const setUploadFile = (page, filename, bytes, mimeType = 'application/pdf') =>
+ 
+ const validDocument = {
+   accompanyingDocumentReference: 'ITAHC-2026-0001',
++  accompanyingDocumentType: 'ITAHC',
+   accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT,
+   filename: 'itahc-upload.pdf'
+ }
+ 
+-const fillDocument = async (page, document = validDocument) => {
++const fillMetadata = async (page, document = validDocument) => {
+   await page
+     .getByLabel(copy.reference.label)
+     .fill(document.accompanyingDocumentReference)
++  await page
++    .getByLabel(copy.documentType.label)
++    .selectOption(document.accompanyingDocumentType)
+   await page
+     .getByLabel(copy.dateOfIssue.label)
+     .fill(document.accompanyingDocumentDateOfIssue)
+-  await setUploadFile(page, document.filename)
+ }
+ 
+-const fillMetadataOnly = async (page) => {
+-  await page
+-    .getByLabel(copy.reference.label)
+-    .fill(validDocument.accompanyingDocumentReference)
+-  await page
+-    .getByLabel(copy.dateOfIssue.label)
+-    .fill(validDocument.accompanyingDocumentDateOfIssue)
++const fillDocument = async (page, document = validDocument) => {
++  await fillMetadata(page, document)
++  await setUploadFile(page, document.filename)
+ }
+ 
++const fillMetadataOnly = (page) => fillMetadata(page)
++
+ const submitAdd = (page) =>
+   page.getByRole('button', { name: copy.addAnother }).click()
+ 
+@@ -78,6 +79,9 @@ const expectPreservedMetadata = async (page) => {
+   await expect(page.getByLabel(copy.reference.label)).toHaveValue(
+     validDocument.accompanyingDocumentReference
+   )
++  await expect(page.getByLabel(copy.documentType.label)).toHaveValue(
++    validDocument.accompanyingDocumentType
++  )
+   await expect(page.getByLabel(copy.dateOfIssue.label)).toHaveValue(
+     validDocument.accompanyingDocumentDateOfIssue
+   )
+@@ -111,6 +115,7 @@ test.describe('document upload page', () => {
+     await expect(
+       page.getByLabel(copy.dateOfIssue.label)
+     ).toHaveAccessibleDescription(copy.dateOfIssue.hint)
++    await expect(page.getByLabel(copy.documentType.label)).toHaveValue('')
+     await expect(page.getByLabel(copy.file.label)).toHaveAttribute(
+       'accept',
+       ACCEPT_ATTRIBUTE
+@@ -131,6 +136,47 @@ test.describe('document upload page', () => {
+     ).toBeVisible()
+   })
+ 
++  test('offers the thirteen document types behind a placeholder, between the reference and the date', async ({
++    page
++  }) => {
++    const select = page.getByLabel(copy.documentType.label)
++    await expect(select.getByRole('option')).toHaveText([
++      copy.documentType.placeholder,
++      copy.types.ITAHC,
++      copy.types.VETERINARY_HEALTH_CERTIFICATE,
++      copy.types.AIR_WAYBILL,
++      copy.types.IMPORT_PERMIT,
++      copy.types.LETTER_OF_AUTHORITY,
++      copy.types.COMMERCIAL_INVOICE,
++      copy.types.SEA_WAYBILL,
++      copy.types.RAIL_WAYBILL,
++      copy.types.BILL_OF_LADING,
++      copy.types.CATCH_CERTIFICATE,
++      copy.types.LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN,
++      copy.types.JOURNEY_LOG,
++      copy.types.OTHER
++    ])
++    // The design keeps this one for its own internal testing release.
++    await expect(
++      select.getByRole('option', {
++        name: copy.types.HEALTH_CERTIFICATE,
++        exact: true
++      })
++    ).toHaveCount(0)
++
++    // A locator resolves in document order, so this pins where the select sits.
++    const controlIds = await page
++      .locator(
++        '#accompanyingDocumentReference, #accompanyingDocumentType, #accompanyingDocumentDateOfIssue'
++      )
++      .evaluateAll((controls) => controls.map((control) => control.id))
++    expect(controlIds).toEqual([
++      'accompanyingDocumentReference',
++      'accompanyingDocumentType',
++      'accompanyingDocumentDateOfIssue'
++    ])
++  })
++
+   test('groups the fields and the add button under the file upload heading, leaving the page actions outside', async ({
+     page
+   }) => {
+@@ -141,6 +187,7 @@ test.describe('document upload page', () => {
+       fileUpload.getByRole('heading', { name: copy.fileUploadHeading })
+     ).toBeVisible()
+     await expect(fileUpload.getByLabel(copy.reference.label)).toBeVisible()
++    await expect(fileUpload.getByLabel(copy.documentType.label)).toBeVisible()
+     await expect(fileUpload.getByLabel(copy.dateOfIssue.label)).toBeVisible()
+     await expect(fileUpload.getByLabel(copy.file.label)).toBeVisible()
+     await expect(
+@@ -206,6 +253,50 @@ test.describe('document upload reference validation', () => {
+   })
+ })
+ 
++test.describe('document upload type validation', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await openDocuments(page)
++  })
++
++  test('type validation: leaving the placeholder links to and focuses the select, preserving the other answers', async ({
++    page
++  }) => {
++    await fillDocument(page, {
++      ...validDocument,
++      accompanyingDocumentType: ''
++    })
++    await submitAdd(page)
++
++    const link = errorLink(page, copy.errors.typeRequired)
++    await expect(link).toBeVisible()
++    await link.click()
++    await expect(page.getByLabel(copy.documentType.label)).toBeFocused()
++    await expect(page.getByLabel(copy.documentType.label)).toHaveValue('')
++    await expect(page.getByLabel(copy.reference.label)).toHaveValue(
++      validDocument.accompanyingDocumentReference
++    )
++    await expect(page.getByLabel(copy.dateOfIssue.label)).toHaveValue(
++      validDocument.accompanyingDocumentDateOfIssue
++    )
++  })
++
++  test('the chosen type is what the saved row reports, whatever the file is called', async ({
++    page
++  }) => {
++    test.slow()
++    await uploadDocument(page, {
++      ...validDocument,
++      accompanyingDocumentType: 'COMMERCIAL_INVOICE',
++      filename: 'itahc-upload.pdf'
++    })
++
++    const row = rowFor(page, validDocument.accompanyingDocumentReference)
++    await expect(row).toContainText(copy.types.COMMERCIAL_INVOICE)
++    await expect(page.getByLabel(copy.documentType.label)).toHaveValue('')
++  })
++})
++
+ test.describe('document upload date validation', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+@@ -357,6 +448,7 @@ test.describe('document upload saved rows', () => {
+     const issued = document.accompanyingDocumentDateOfIssue
+     await uploadDocument(page, {
+       accompanyingDocumentReference: document.accompanyingDocumentReference,
++      accompanyingDocumentType: document.accompanyingDocumentType,
+       accompanyingDocumentDateOfIssue: `${issued.day}/${issued.month}/${issued.year}`,
+       filename: document.filename
+     })
+@@ -441,14 +533,14 @@ test.describe('document upload capacity and accessibility', () => {
+     test.slow()
+     for (let index = 1; index <= MAX_DOCUMENTS; index++) {
+       await uploadDocument(page, {
++        ...validDocument,
+         accompanyingDocumentReference: `ITAHC-CAPACITY-${index}`,
+-        accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT,
+         filename: `itahc-capacity-${index}.pdf`
+       })
+     }
+     await fillDocument(page, {
++      ...validDocument,
+       accompanyingDocumentReference: 'ITAHC-ONE-TOO-MANY',
+-      accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT,
+       filename: 'itahc-one-too-many.pdf'
+     })
+     await submitAdd(page)
+@@ -469,6 +561,15 @@ test.describe('document upload capacity and accessibility', () => {
+     await expectNoSeriousAxeViolations(page, 'Empty document upload page')
+   })
+ 
++  test('validation error state has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await submitAdd(page)
++    await expect(page.locator('.govuk-error-summary')).toBeVisible()
++    await expect(page.locator('#accompanyingDocumentType-error')).toBeVisible()
++    await expectNoSeriousAxeViolations(page, 'Document upload error state')
++  })
++
+   test('document date picker has no serious or critical axe violations', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js
+index 9c0b0845..f6a1136a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js
+@@ -40,13 +40,31 @@ export const fileErrors = (file) => {
+   return {}
+ }
+ 
++// The error summary lists the fields in the order it is handed them, and the
++// summary has to read down the page. Presence and format rules fire in their
++// own order, so the merged result is rebuilt in the page's order.
++const FIELD_ORDER = [
++  'accompanyingDocumentReference',
++  'accompanyingDocumentType',
++  'accompanyingDocumentDateOfIssue',
++  'file'
++]
++
++const inFieldOrder = (errors) =>
++  Object.fromEntries(
++    FIELD_ORDER.filter((field) => errors[field]).map((field) => [
++      field,
++      errors[field]
++    ])
++  )
++
+ export const documentAddErrors = (payload, bare, pendingDocumentSave) => {
+-  const { errors } = validate(fields, payload)
+-  return {
++  const { errors } = validate(fields(), payload)
++  return inFieldOrder({
+     ...errors,
+     ...presenceErrors(bare),
+     ...(pendingDocumentSave ? {} : fileErrors(payload.file))
+-  }
++  })
+ }
+ 
+ export const capacityExceededError = () => [
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js
+index d4dff796..3e643d2a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js
+@@ -1,12 +1,14 @@
+ import {
+   compose,
+   dateText,
+-  maxText
++  maxText,
++  requiredOneOf
+ } from '../../../../../../../lib/validate/index.js'
+ import * as kit from '../../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
++import { offeredDocumentTypes } from '../contracts/document-type-options.js'
+ import { UPLOAD_ID_PATTERN } from '../contracts/upload-id.js'
+ import { attachmentTypeFor } from '../upload-config.js'
+ 
+@@ -14,19 +16,31 @@ const copy = copyFor({ en, cy })
+ 
+ export const REFERENCE_MAX_LENGTH = 58
+ 
+-export const fields = compose(
+-  maxText(
+-    'accompanyingDocumentReference',
+-    REFERENCE_MAX_LENGTH,
+-    copy.errors.referenceMaxLength
+-  ),
+-  dateText('accompanyingDocumentDateOfIssue', copy.errors.dateInvalid)
+-)
++// Built per add, not frozen at module load: the offered types are
++// service-backed and the list is primed at boot. The order is the order the
++// fields appear on the page, so the error summary reads down the form.
++export const fields = () =>
++  compose(
++    maxText(
++      'accompanyingDocumentReference',
++      REFERENCE_MAX_LENGTH,
++      copy.errors.referenceMaxLength
++    ),
++    // One message covers both mistakes a select can make: left on the
++    // placeholder, or carrying a value the page never offered.
++    requiredOneOf(
++      'accompanyingDocumentType',
++      offeredDocumentTypes(),
++      copy.errors.typeRequired
++    ),
++    dateText('accompanyingDocumentDateOfIssue', copy.errors.dateInvalid)
++  )
+ 
+ export const documentFromPayload = (payload) => ({
+   accompanyingDocumentReference: (
+     payload.accompanyingDocumentReference ?? ''
+   ).trim(),
++  accompanyingDocumentType: (payload.accompanyingDocumentType ?? '').trim(),
+   accompanyingDocumentDateOfIssue: kit.readDate(
+     payload,
+     'accompanyingDocumentDateOfIssue'
+@@ -35,6 +49,7 @@ export const documentFromPayload = (payload) => ({
+ 
+ export const EMPTY_FORM = {
+   accompanyingDocumentReference: '',
++  accompanyingDocumentType: '',
+   accompanyingDocumentDateOfIssue: {}
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+index c9c8241b..4980fd50 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+@@ -1,5 +1,6 @@
+ {% extends "shared/layout.njk" %}
+ {% from "govuk/components/input/macro.njk" import govukInput %}
++{% from "govuk/components/select/macro.njk" import govukSelect %}
+ {% from "moj/components/date-picker/macro.njk" import mojDatePicker %}
+ {% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+ {% from "govuk/components/table/macro.njk" import govukTable %}
+@@ -84,6 +85,15 @@
+           errorMessage: errors.accompanyingDocumentReference and { text: errors.accompanyingDocumentReference }
+         }) }}
+ 
++        {{ govukSelect({
++          id: "accompanyingDocumentType",
++          name: "accompanyingDocumentType",
++          label: { text: copy.documentType.label, classes: "govuk-label--s" },
++          value: values.accompanyingDocumentType,
++          items: documentTypeItems,
++          errorMessage: errors.accompanyingDocumentType and { text: errors.accompanyingDocumentType }
++        }) }}
++
+         {{ mojDatePicker(dateOfIssue) }}
+ 
+         {%- set fileHintHtml -%}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/document-type.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/document-type.js
+new file mode 100644
+index 00000000..6e9a9df2
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/document-type.js
+@@ -0,0 +1,17 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { offeredDocumentTypes } from '../../contracts/document-type-options.js'
++
++const copy = copyFor({ en, cy })
++
++// A placeholder first, then the offered types in the service's order. The
++// placeholder carries no value, so a form left on it submits an empty type
++// and the add rules say so.
++export const documentTypeItems = () => [
++  { value: '', text: copy.documentType.placeholder },
++  ...offeredDocumentTypes().map((code) => ({
++    value: code,
++    text: copy.types[code]
++  }))
++]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js
+index 71837b4b..05640ab9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js
+@@ -10,6 +10,7 @@ import {
+ } from '../upload-config.js'
+ import { documentsPage as page } from '../page.js'
+ import { rejectedErrors } from '../scan/summary-errors.js'
++import { documentTypeItems } from './fragments/document-type.js'
+ import { scanCopyJson } from './fragments/status.js'
+ import { getAttempt, refreshHref } from './refresh.js'
+ import { documentRows } from './rows.js'
+@@ -57,6 +58,7 @@ export const render = ({
+     maxFileSize: MAX_FILE_SIZE_BYTES,
+     oversizeFileMessage: OVERSIZE_FILE_MESSAGE,
+     scanCopyJson,
++    documentTypeItems: documentTypeItems(),
+     dateOfIssue: kit.dateField('accompanyingDocumentDateOfIssue', {
+       label: copy.dateOfIssue.label,
+       hint: copy.dateOfIssue.hint,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js b/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
+index d71e011c..e17b9f3a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js
+@@ -200,6 +200,7 @@ describe('save actions — hub exit semantics', () => {
+       payload: {
+         action: 'add',
+         accompanyingDocumentReference: 'GBHC1234567890',
++        accompanyingDocumentType: 'ITAHC',
+         accompanyingDocumentDateOfIssue: '12/12/2025',
+         file: {
+           filename: 'itahc-certificate.pdf',

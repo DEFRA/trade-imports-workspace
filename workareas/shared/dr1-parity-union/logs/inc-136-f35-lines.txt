@@ -1,0 +1,43 @@
+    ).toBeVisible()
+  })
+
+  test('offers the thirteen document types behind a placeholder, between the reference and the date', async ({
+    page
+  }) => {
+    const select = page.getByLabel(copy.documentType.label)
+    await expect(select.getByRole('option')).toHaveText([
+      copy.documentType.placeholder,
+      copy.types.ITAHC,
+      copy.types.VETERINARY_HEALTH_CERTIFICATE,
+      copy.types.AIR_WAYBILL,
+      copy.types.IMPORT_PERMIT,
+      copy.types.LETTER_OF_AUTHORITY,
+      copy.types.COMMERCIAL_INVOICE,
+      copy.types.SEA_WAYBILL,
+      copy.types.RAIL_WAYBILL,
+      copy.types.BILL_OF_LADING,
+      copy.types.CATCH_CERTIFICATE,
+      copy.types.LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN,
+      copy.types.JOURNEY_LOG,
+      copy.types.OTHER
+    ])
+    // The design keeps this one for its own internal testing release.
+    await expect(
+      select.getByRole('option', {
+        name: copy.types.HEALTH_CERTIFICATE,
+        exact: true
+      })
+    ).toHaveCount(0)
+
+    // A locator resolves in document order, so this pins where the select sits.
+    const controlIds = await page
+      .locator(
+        '#accompanyingDocumentReference, #accompanyingDocumentType, #accompanyingDocumentDateOfIssue'
+      )
+      .evaluateAll((controls) => controls.map((control) => control.id))
+    expect(controlIds).toEqual([
+      'accompanyingDocumentReference',
+      'accompanyingDocumentType',
+      'accompanyingDocumentDateOfIssue'
+    ])
+  })

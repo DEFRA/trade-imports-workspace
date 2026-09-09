@@ -1,0 +1,328 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js
+index 50e5c98b..08cc760d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js
+@@ -22,7 +22,8 @@ import { capacityExceededError, documentAddErrors } from './form/errors.js'
+ import {
+   EMPTY_FORM,
+   documentFromPayload,
+-  pendingDocumentSaveFrom
++  pendingDocumentSaveFrom,
++  startsADocument
+ } from './form/payload.js'
+ import { loadPage } from './handlers/load-page.js'
+ import { fileResponse, uploadDetails } from './handlers/reads/download.js'
+@@ -88,7 +89,16 @@ const uploadOutcome = async (pageState, entry, file, filename) => {
+   }
+ }
+ 
+-const postAdd = async (request, h, payload) => {
++const pageHref = (request) =>
++  kit.withChangeContext(request, pagePath(request.params.journeyId, page.slug))
++
++// The single-page loop: a saved document leaves the trader on the page it was
++// added from, ready for the next one.
++const backToPage = (request, h) => h.redirect(pageHref(request))
++
++// `afterSave` is where a saved document lands the trader. Adding another keeps
++// them on the page; finishing the form with Continue carries them on.
++const postAdd = async (request, h, payload, afterSave) => {
+   const pageState = await loadPage(request, h)
+   const bare = documentFromPayload(payload)
+   const pendingDocumentSave = pendingDocumentSaveFrom(payload)
+@@ -120,7 +130,7 @@ const postAdd = async (request, h, payload) => {
+     uploadId: outcome.uploadId,
+     filename
+   }
+-  return saveAddedDocument(request, h, pageState, savedEntry, bare)
++  return saveAddedDocument(request, h, pageState, savedEntry, bare, afterSave)
+ }
+ 
+ const isAlreadySaved = (pageState, uploadId) =>
+@@ -128,7 +138,14 @@ const isAlreadySaved = (pageState, uploadId) =>
+     ({ entry: document }) => document.uploadId === uploadId
+   )
+ 
+-const saveAddedDocument = async (request, h, pageState, savedEntry, bare) => {
++const saveAddedDocument = async (
++  request,
++  h,
++  pageState,
++  savedEntry,
++  bare,
++  afterSave
++) => {
+   const { failure } = await kit.recoverableSave(
+     async () => {
+       if (isAlreadySaved(pageState, savedEntry.uploadId)) {
+@@ -153,12 +170,7 @@ const saveAddedDocument = async (request, h, pageState, savedEntry, bare) => {
+   if (failure) {
+     return failure
+   }
+-  return h.redirect(
+-    kit.withChangeContext(
+-      request,
+-      pagePath(request.params.journeyId, page.slug)
+-    )
+-  )
++  return afterSave()
+ }
+ 
+ const documentAt = (answers, evaluation, index) =>
+@@ -187,12 +199,7 @@ const retryProjectionSave = async (
+   if (failure) {
+     return failure
+   }
+-  return h.redirect(
+-    kit.withChangeContext(
+-      request,
+-      pagePath(request.params.journeyId, page.slug)
+-    )
+-  )
++  return backToPage(request, h)
+ }
+ 
+ const postRemove = async (request, h, index, { retryUploadId = null } = {}) => {
+@@ -214,15 +221,11 @@ const postRemove = async (request, h, index, { retryUploadId = null } = {}) => {
+     return h.response().code(HTTP_STATUS_BAD_REQUEST)
+   }
+ 
+-  const backToPage = kit.withChangeContext(
+-    request,
+-    pagePath(request.params.journeyId, page.slug)
+-  )
+   if (entry.uploadId && !retryUploadId) {
+     try {
+       await documentUploads.remove(entry.uploadId)
+     } catch {
+-      return h.redirect(backToPage)
++      return backToPage(request, h)
+     }
+   }
+   const { failure } = await kit.recoverableSave(
+@@ -244,9 +247,28 @@ const postRemove = async (request, h, index, { retryUploadId = null } = {}) => {
+     return failure
+   }
+ 
+-  return h.redirect(backToPage)
++  return backToPage(request, h)
+ }
+ 
++// Leaving the page, once nothing is left to save. A file still being checked
++// holds Continue back; the exit to the overview is a deliberate stop and goes.
++const leavePage = async (request, h) => {
++  const pageState = await loadPage(request, h)
++  if (!kit.hubExitTarget(request) && isStillSettling(pageState.documents)) {
++    return render(request, h, pageState, EMPTY_FORM, {
++      summaryErrors: settlingSummaryErrors(pageState.documents)
++    })
++  }
++  return h.redirect(await kit.nextTarget(request, page, pageState.scope))
++}
++
++// Continue submits the add-a-document fields along with it, so a part-filled
++// form reaching here is a document the trader means to attach. Finish it —
++// save it, or say what is missing — rather than drop it without a word. The
++// exit to the overview is the one action that deliberately leaves it behind.
++const continuesADocument = (request, payload) =>
++  !kit.hubExitTarget(request) && startsADocument(payload)
++
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+   const action = payload.action ?? ''
+@@ -259,18 +281,15 @@ const post = async (request, h) => {
+     })
+   }
+   if (action === 'add') {
+-    return postAdd(request, h, payload)
++    return postAdd(request, h, payload, () => backToPage(request, h))
+   }
+   if (isRemoveAction(action)) {
+     return postRemove(request, h, removeIndexOf(action))
+   }
+-  const pageState = await loadPage(request, h)
+-  if (!kit.hubExitTarget(request) && isStillSettling(pageState.documents)) {
+-    return render(request, h, pageState, EMPTY_FORM, {
+-      summaryErrors: settlingSummaryErrors(pageState.documents)
+-    })
++  if (continuesADocument(request, payload)) {
++    return postAdd(request, h, payload, () => leavePage(request, h))
+   }
+-  return h.redirect(await kit.nextTarget(request, page, pageState.scope))
++  return leavePage(request, h)
+ }
+ 
+ const isOversizeBoom = (request) =>
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+index 538cece3..393391a8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+@@ -426,8 +426,80 @@ describe('documents — listing, scanning and removing', () => {
+   })
+ 
+   it('Should treat a POST without the add action as Continue, appending nothing', async () => {
++    const result = await driveHandler(post, { payload: {} })
++    expect(result.response.redirect).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++})
++
++// Continue posts the add-a-document fields with it. Design release 1 reads a
++// chosen document type as the trader saying a document is coming, and finishes
++// the form rather than dropping it.
++describe('documents — Continue finishes a part-filled document', () => {
++  beforeAll(configureEngine)
++  beforeEach(() => store.clear())
++
++  it('Should carry an untouched form past the page, appending nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: { action: 'continue' }
++    })
++    expect(result.response.redirect).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should save the document Continue carries rather than discard it', async () => {
++    const result = await driveHandler(post, {
++      payload: { action: 'continue', ...validDocument, file: pdfFile() }
++    })
++    const [entry] = result.after.documents
++    expect(entry.accompanyingDocumentReference).toBe('GBHC1234567890')
++    expect(entry.accompanyingDocumentType).toBe('ITAHC')
++    expect(entry.uploadId).toBeDefined()
++  })
++
++  // The saved file is fresh off the upload, so the scan guard the page already
++  // applies to Continue holds the trader here until it settles.
++  it('Should hold the trader on the page while the document it just saved is scanned', async () => {
++    const result = await driveHandler(post, {
++      payload: { action: 'continue', ...validDocument, file: pdfFile() }
++    })
++    expect(result.response.redirect).toBeUndefined()
++    expect(summaryTexts(result)).toContain(
++      'You cannot continue until all documents have been scanned or removed'
++    )
++  })
++
++  it('Should name what is missing when Continue carries a type and nothing else, appending nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: { action: 'continue', accompanyingDocumentType: 'ITAHC' }
++    })
++    expect(result.response.statusCode).toBe(400)
++    expect(Object.keys(result.view.context.errors)).toEqual([
++      'accompanyingDocumentReference',
++      'accompanyingDocumentDateOfIssue',
++      'file'
++    ])
++    expect(result.after).toEqual(result.before)
++  })
++
++  // Uploading is optional, and the type is the whole of the signal: without one
++  // there is no document to finish, so the rest of the form goes with the page.
++  it('Should carry a form with no document type chosen past the page, appending nothing', async () => {
++    const result = await driveHandler(post, {
++      payload: {
++        action: 'continue',
++        accompanyingDocumentReference: 'GBHC1234567890',
++        accompanyingDocumentDateOfIssue: DATE_OF_ISSUE_TEXT,
++        file: pdfFile()
++      }
++    })
++    expect(result.response.redirect).toBeDefined()
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should leave a part-filled form behind on the exit to the overview, appending nothing', async () => {
+     const result = await driveHandler(post, {
+-      payload: { action: 'continue', ...validDocument }
++      payload: { exit: 'hub', ...validDocument, file: pdfFile() }
+     })
+     expect(result.response.redirect).toBeDefined()
+     expect(result.after).toEqual(result.before)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+index 4b34a386..154c0a84 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+@@ -77,6 +77,9 @@ const fillDocument = async (page, document = validDocument) => {
+ const submitAdd = (page) =>
+   page.getByRole('button', { name: copy.addAnother }).click()
+ 
++const submitContinue = (page) =>
++  page.getByRole('button', { name: copy.continueButton }).click()
++
+ const uploadDocument = async (page, document = validDocument) => {
+   await fillDocument(page, document)
+   await submitAdd(page)
+@@ -477,6 +480,52 @@ test.describe('document upload oversize validation', () => {
+   })
+ })
+ 
++// Continue posts the add-a-document fields with it, so a trader who fills the
++// form and presses the primary button has to end up with the document saved or
++// told what is missing — never carried on with the file quietly dropped.
++test.describe('document upload continue', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await openDocuments(page)
++  })
++
++  test('continue saves the document the trader filled in, then leaves once it is scanned', async ({
++    page
++  }) => {
++    test.slow()
++    await fillDocument(page)
++    await submitContinue(page)
++
++    const row = rowFor(page, validDocument.accompanyingDocumentReference)
++    await expect(row).toContainText(copy.types.ITAHC)
++    await expect(row).toContainText(copy.scanTags.safe)
++
++    await submitContinue(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++  })
++
++  test('continue with a document type and nothing else says what is missing', async ({
++    page
++  }) => {
++    await page
++      .getByLabel(copy.documentType.label)
++      .selectOption(validDocument.accompanyingDocumentType)
++    await submitContinue(page)
++
++    await expect(errorLink(page, copy.errors.referenceRequired)).toBeVisible()
++    await expect(errorLink(page, copy.errors.dateRequired)).toBeVisible()
++    await expect(errorLink(page, copy.errors.fileRequired)).toBeVisible()
++    await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
++  })
++
++  test('continue with an untouched form leaves the page, uploading being optional', async ({
++    page
++  }) => {
++    await submitContinue(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++  })
++})
++
+ test.describe('document upload saved rows', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js
+index 3e643d2a..02d6515a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js
+@@ -47,6 +47,15 @@ export const documentFromPayload = (payload) => ({
+   )
+ })
+ 
++// The one field a trader cannot fill in by accident, so it is the one that
++// says a document is on its way (design release 1). A form carrying a chosen
++// type is a part-filled document to be finished, not an empty form being
++// skipped past; a form without one is left alone, uploading being optional.
++export const startsADocument = (payload) =>
++  offeredDocumentTypes().includes(
++    (payload.accompanyingDocumentType ?? '').trim()
++  )
++
+ export const EMPTY_FORM = {
+   accompanyingDocumentReference: '',
+   accompanyingDocumentType: '',

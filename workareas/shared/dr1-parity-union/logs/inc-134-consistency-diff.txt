@@ -1,0 +1,136 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+index eeea30d2..7f305040 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+@@ -586,6 +586,17 @@ describe('documents — scan-status poll and view context', () => {
+     })
+   })
+ 
++  it('Should hand the view the document limit the hint states, straight from the obligation', async () => {
++    // The hint and the too-many error must name the same number. The view gets
++    // it from the same contract the error does, so raising the obligation's
++    // maxEntries moves both at once.
++    const result = await driveHandler(get)
++    expect(result.view.context.maxDocuments).toBe(MAX_DOCUMENTS)
++    expect(result.view.context.maxDocuments).toBe(
++      manifestDocuments.requires.maxEntries
++    )
++  })
++
+   it('Should hand the view the browser-side upload limit and the scan copy the client rewrites tags with', async () => {
+     const result = await driveHandler(get)
+     expect(result.view.context.maxFileSize).toBe(MAX_FILE_SIZE_BYTES)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+index e9e7eb2c..dd0c71a7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+@@ -55,6 +55,7 @@ export const copy = {
+     mustBe: 'Rhaid i’ch ffeil fod:',
+     smallerThan: 'yn llai na',
+     a: 'yn',
++    upToMaximum: (max) => `hyd at uchafswm o ${max} ffeil`,
+     noZipFiles: 'Ni chaniateir ffeiliau ZIP am resymau diogelwch',
+     chooseButton: 'Dewiswch ffeil',
+     dropInstruction: 'neu ollwng ffeil',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index 35116790..a3862221 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -50,6 +50,10 @@ export const copy = {
+     mustBe: 'Your file must be:',
+     smallerThan: 'smaller than',
+     a: 'a',
++    // The limit is stated here before the trader picks a file, and again by
++    // errors.maxDocuments once they reach it (design release 1). Both take the
++    // number as an argument so the hint and the error cannot disagree.
++    upToMaximum: (max) => `up to a maximum of ${max} files`,
+     noZipFiles: 'ZIP files are not allowed for security reasons',
+     // Wording for the JavaScript-enhanced drop zone. These match the design
+     // system's own defaults so the control reads the way traders meet it
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+index 7d3714d8..4b681ede 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+@@ -84,6 +84,14 @@ describe('#copy', () => {
+     )
+   })
+ 
++  it('Should state how many documents a notification holds before a file is chosen', () => {
++    // The hint carries the count as well as the size and the file types, so a
++    // trader is told the limit ahead of choosing rather than on refusal. The
++    // number is an argument, never a literal, so it can only ever be the
++    // obligation's — the same value errors.maxDocuments is given.
++    expect(copy.file.upToMaximum(15)).toBe('up to a maximum of 15 files')
++  })
++
+   it('Should word the drop zone the way the design system does', () => {
+     // The template hands these to govukFileUpload, so a drift here silently
+     // reworded a control traders meet elsewhere on GOV.UK.
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+index cedfa604..2829c8c7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+@@ -134,6 +134,9 @@ test.describe('document upload page', () => {
+     await expect(
+       page.getByText(`${copy.file.a} ${ALLOWED_FILE_TYPES_HINT}`)
+     ).toBeVisible()
++    await expect(
++      page.getByText(copy.file.upToMaximum(MAX_DOCUMENTS))
++    ).toBeVisible()
+     await expect(page.getByText(copy.file.noZipFiles)).toBeVisible()
+     await expect(page.getByText(copy.empty)).toBeVisible()
+     await expect(
+@@ -580,6 +583,21 @@ test.describe('document upload saved rows', () => {
+     ).toBeVisible()
+   })
+ 
++  test('keeps stating the document limit once a document is saved', async ({
++    page
++  }) => {
++    test.slow()
++    await uploadDocument(page)
++    await expect(
++      rowFor(page, validDocument.accompanyingDocumentReference)
++    ).toBeVisible()
++    // The trader is told how many more they may add while adding them, not
++    // only on the empty page and not only once they are refused.
++    await expect(
++      page.getByText(copy.file.upToMaximum(MAX_DOCUMENTS))
++    ).toBeVisible()
++  })
++
+   test('downloads a saved document with safe response headers', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+index 2e9d43ce..d35f83dc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+@@ -101,6 +101,7 @@
+           <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+             <li>{{ copy.file.smallerThan }} {{ maxFileSizeLabel }}</li>
+             <li>{{ copy.file.a }} {{ allowedFileTypesHint }}</li>
++            <li>{{ copy.file.upToMaximum(maxDocuments) }}</li>
+             <li>{{ copy.file.noZipFiles }}</li>
+           </ul>
+         {%- endset -%}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js
+index 05640ab9..525295ac 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/render.js
+@@ -8,6 +8,7 @@ import {
+   MAX_FILE_SIZE_LABEL,
+   OVERSIZE_FILE_MESSAGE
+ } from '../upload-config.js'
++import { MAX_DOCUMENTS } from '../contracts/max-documents.js'
+ import { documentsPage as page } from '../page.js'
+ import { rejectedErrors } from '../scan/summary-errors.js'
+ import { documentTypeItems } from './fragments/document-type.js'
+@@ -56,6 +57,7 @@ export const render = ({
+     allowedFileTypesHint: ALLOWED_FILE_TYPES_HINT,
+     maxFileSizeLabel: MAX_FILE_SIZE_LABEL,
+     maxFileSize: MAX_FILE_SIZE_BYTES,
++    maxDocuments: MAX_DOCUMENTS,
+     oversizeFileMessage: OVERSIZE_FILE_MESSAGE,
+     scanCopyJson,
+     documentTypeItems: documentTypeItems(),

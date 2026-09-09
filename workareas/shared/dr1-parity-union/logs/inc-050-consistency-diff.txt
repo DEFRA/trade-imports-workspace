@@ -1,0 +1,128 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
+index 5c6e99ea..03424af0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
+@@ -5,6 +5,13 @@ export const copy = {
+     label: 'Rhif CPH',
+     hint: 'Er enghraifft, 123456789 neu 123/456/789.'
+   },
++  help: {
++    summary: 'Beth yw rhif CPH?',
++    definition:
++      'Mae rhif daliad plwyf sirol (CPH) yn rhif 9 digid unigryw a ddefnyddir i adnabod tir ac adeiladau lle mae da byw yn cael eu cadw, eu symud neu eu trin.',
++    whereToFind:
++      "Gallwch ddod o hyd i'ch rhif CPH ar ddogfennau gan yr Asiantaeth Iechyd Anifeiliaid a Phlanhigion (APHA)."
++  },
+   errors: {
+     cphRequired: 'Nodwch rif CPH',
+     cphLength: "Rhaid i'r rhif CPH fod yn union 9 digid",
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
+index 0645750e..3bae8114 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
+@@ -4,6 +4,13 @@ export const copy = {
+     label: 'CPH number',
+     hint: 'For example, 123456789 or 123/456/789.'
+   },
++  help: {
++    summary: 'What is a CPH number?',
++    definition:
++      'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.',
++    whereToFind:
++      'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'
++  },
+   errors: {
+     cphRequired: 'Enter a CPH number',
+     cphLength: 'CPH number must be exactly 9 digits',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js
+index 7e0ddec1..771a2a90 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.test.js
+@@ -39,6 +39,21 @@ describe('cph-number copy module', () => {
+     expect(copyCy.title).toBe('Ychwanegu rhif daliad plwyf sirol (CPH)')
+     expect(copyCy.cph.label).toBe('Rhif CPH')
+   })
++
++  // Design release 1 puts the help behind a "What is a CPH number?" expander:
++  // a definition and where to find the number. The second paragraph names APHA
++  // documents only — DR1's GOV.UK holding-details link is a placeholder href,
++  // so there is no destination to ship yet and no link string to hold.
++  it('Should explain what a CPH number is and where to find one', () => {
++    expect(copy.help.summary).toBe('What is a CPH number?')
++    expect(copy.help.definition).toBe(
++      'A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.'
++    )
++    expect(copy.help.whereToFind).toBe(
++      'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).'
++    )
++    expect(copyCy.help.summary).toBe('Beth yw rhif CPH?')
++  })
+ })
+ 
+ describe('GET cph-number — copy reaches the view', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+index c9fc6a21..a6fb5301 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+@@ -57,6 +57,32 @@ test.describe('cph-number feature', () => {
+     )
+   })
+ 
++  test('keeps the CPH help collapsed above the field until it is opened', async ({
++    page
++  }) => {
++    const summary = page.getByText(copy.help.summary, { exact: true })
++    await expect(summary).toBeVisible()
++
++    // Collapsed by default: the help costs a trader who already knows what a
++    // CPH number is nothing but a line of summary text.
++    await expect(page.getByText(copy.help.definition)).toBeHidden()
++    await expect(page.getByText(copy.help.whereToFind)).toBeHidden()
++
++    // Above the input, not below it — the explanation has to arrive before the
++    // question it explains.
++    await expect(
++      page.locator(`details:has-text("${copy.help.summary}")`)
++    ).toHaveCount(1)
++    await expect(
++      page.locator('details ~ form #countyParishHoldingCph')
++    ).toHaveCount(1)
++
++    await summary.click()
++
++    await expect(page.getByText(copy.help.definition)).toBeVisible()
++    await expect(page.getByText(copy.help.whereToFind)).toBeVisible()
++  })
++
+   test('ends with the primary alone, being reached from the addresses page', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+index 3561752e..565311ef 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+@@ -1,4 +1,5 @@
+ {% extends "shared/layout.njk" %}
++{% from "govuk/components/details/macro.njk" import govukDetails %}
+ {% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+@@ -9,6 +10,18 @@
+   {{ sectionCaption(caption) }}
+   <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+ 
++  {# Collapsed above the field, so it costs a trader who already knows nothing
++     and gives one who does not a definition and where to look. #}
++  {% set cphHelpHtml %}
++    <p class="govuk-body">{{ copy.help.definition }}</p>
++    <p class="govuk-body">{{ copy.help.whereToFind }}</p>
++  {% endset %}
++
++  {{ govukDetails({
++    summaryText: copy.help.summary,
++    html: cphHelpHtml
++  }) }}
++
+   <form method="post" novalidate>
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />

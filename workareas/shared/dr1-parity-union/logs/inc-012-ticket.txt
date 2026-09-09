@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-012}} from the {{shared/dr1-parity-union}} backlog.
+
+The accompanying-documents page and the consignment addresses hub each end with a primary button reading "Continue". Design release 1 reads "Save and continue" on both, and reserves a bare "Continue" for the end of the journey, where there is nothing left to save. On both frontend pages the "Continue" button sits immediately left of a secondary "Save and return to hub", so the page offers a button that says it saves beside one that does not.
+
+h2. Acceptance criteria
+
+* The documents page primary button reads "Save and continue" — change the per-feature copy key at {{src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:51}} from "Continue" to "Save and continue".
+* The documents override at {{src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:92}} stays in place, because it also carries {{name="action"}} and {{value="continue"}}, which the post dispatcher branches on. Only its text changes.
+* The consignment addresses hub primary button reads "Save and continue" — change the per-feature copy key at {{src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:8}}. That override carries nothing else, so the page may instead drop its primary argument at {{src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:16}} and fall through to the shared macro default at {{src/server/app/shared/save-actions.njk:5}}.
+* Seven captured screens change: the four documents states \(fe-documents, fe-documents-populated, fe-documents-scanning, fe-documents-error\) and the three addresses hub states \(fe-addresses-hub, fe-addresses-hub-empty, fe-addresses-hub-complete\).
+* Five captured screens MUST NOT change: fe-check-answers, fe-check-answers-incomplete, fe-check-answers-submitted, fe-declaration and fe-declaration-error. Design release 1 reads "Continue" on check your answers and the declaration too, so those pages already agree and renaming them would introduce a difference that does not exist today.
+* This is not a service-wide rename. The shared keys at {{src/server/app/shared/copy.en.js:42-45}} — "Save and return to hub" and "Cancel and return to hub" — are a separate increment and must not change here.
+* The contact address page and the transporter-type page are out of scope; that difference runs the other way and is recorded in its own increment.
+* E2E specs and visual baselines in the tests repo are updated for the seven changed screens.
+
+h2. Sequencing
+
+Lands with or after {{inc-133}} \(the documents page discards a filled-in but unadded document\). Renaming the button "Save and continue" while it still discards work makes the label state something untrue. Related to {{inc-006}}, which renames the two controls to its right.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

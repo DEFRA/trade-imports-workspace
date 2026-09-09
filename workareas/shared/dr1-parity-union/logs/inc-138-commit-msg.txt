@@ -1,0 +1,29 @@
+feat(parity-dr1): The frontend rejects any document over 10 MB; Design release 1 allows files up to 50MB
+
+Raise the accepted document upload size from 10 MB to 50MB so the live-animals
+documents page matches Design release 1, and settle the unit label on the
+unspaced "50MB" form that DR1 uses.
+
+MAX_FILE_SIZE_MB moves from 10 to 50 in upload-config.js, which carries
+MAX_FILE_SIZE_BYTES (50,000,000), MAX_PAYLOAD_BYTES (50,001,024), the
+browser-side data-max-file-size attribute and the oversize error message
+"The selected file must be smaller than 50MB" with it. The code comment that
+recorded 10 MB as a choice made against the CDP nginx 10 MiB ingress cap is
+replaced with the standing requirement that the ingress cap must allow at
+least MAX_PAYLOAD_BYTES.
+
+The E2E suite in the tests repo tracks the same number: TEN_MB_BYTES becomes
+MAX_FILE_SIZE_BYTES, ABOVE_PAYLOAD_CAP_BYTES is derived from it rather than
+pinned to a literal, and the boundary spec imports the shared oversize message
+instead of repeating it.
+
+Deferred and recorded against the ticket rather than fixed here: the CDP
+ingress request-body cap in front of the frontend must be confirmed at
+>= 50,001,024 bytes before this is deployed, and the POST route still buffers
+the whole upload in the Node heap, which now costs 5x more per in-flight
+upload.
+
+Increment: inc-138
+Ticket: EUDPA-518
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>

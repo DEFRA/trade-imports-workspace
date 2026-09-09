@@ -1,0 +1,25 @@
+h2. Increment
+
+{{inc-134}} from the {{shared/dr1-parity-union}} backlog.
+
+Nothing on the documents page says how many documents a notification may hold. The file-requirements hint above the upload control in {{src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk}} lines 43-48 states exactly two requirements — that a file must be "smaller than 10 MB" and that it must be "a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX" — and no count appears anywhere on the page. A trader learns the limit only by reaching it, when the error summary tells them, after they have already chosen a file and tried to upload it.
+
+Design release 1 states the count as one of the requirements in the same hint, alongside the size and the file types: "up to a maximum of 15 files" ({{app/views/upload-documents.html}} line 168). The trader is told before they choose anything.
+
+h2. Acceptance criteria
+
+* The file-requirements hint above the upload control on the documents page states how many documents a notification may hold, as a bullet beside the existing file-size and file-type bullets.
+* The new copy lives in {{src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js}} beside the existing size and file-type copy, and is rendered from {{src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk}}.
+* The number in the hint is read from the same obligation value the "too many documents" error message reads, not hard-coded, so the hint and the error can never disagree.
+* The hint states the limit before a trader picks a file, on both the empty and the populated states of the documents page.
+* Existing documents-feature unit tests and E2E specs pass, with coverage of the new bullet and its obligation-driven number.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Finding: {{documents--document-limit-not-stated-before-a-file-is-chosen.json}} (corpus {{dr1c}}, slice {{documents}}, band {{frontend-work}})
+
+Screens: {{fe-documents}}, {{fe-documents-populated}}, {{dr1-upload-documents}}
+
+Travels with {{inc-135}} (raises the cap value this sentence would state) and {{inc-138}} (also changes a bullet in the same hint).

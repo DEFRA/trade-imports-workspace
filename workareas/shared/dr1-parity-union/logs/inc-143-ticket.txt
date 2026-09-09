@@ -1,0 +1,21 @@
+h2. Increment
+
+{{inc-143}} from the {{shared/dr1-parity-union}} backlog.
+
+The upload page's validation messages are held in one copy file per language ({{src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js}}, lines 63-81). Four of them are worded differently from DR1 ({{app/routes.js}}, lines 9101-9152). Each string serves both the error summary and the field message, so one edit each fixes both places.
+
+h2. Acceptance criteria
+
+* {{copy.errors.dateRequired}} reads *Enter a date of issue*, not *Enter the date of issue*.
+* {{copy.errors.dateInvalid}} reads *Enter a real date*, not *Enter a real date of issue*. This message is raised by the {{dateText}} validator in {{src/server/app/sets/live-animals/journeys/linear/features/documents/form/payload.js}} line 23.
+* {{copy.errors.fileRequired}} reads *Upload a document*, not *Select a file to upload*. The message changes shape as well as wording — it tells the trader what to do rather than what to select.
+* {{copy.errors.maxDocuments}} reads *You can upload a maximum of \{max\} files*, not *You can add a maximum of 10 documents*. Only the wording changes here; the maximum stays derived from the obligation, and the number itself is a separate increment.
+* The same four changes are made in every language copy file, not only the English one.
+* {{copy.errors.referenceRequired}} is left alone — *Enter a document reference* already matches DR1 word for word.
+* The frontend's own extra messages keep their wording, because DR1 has no counterpart for them: reference length, oversize file, wrong file type, upload failure, unscanned documents, virus found.
+* Every test asserting one of the four old strings is updated to the new wording, and the suite passes.
+* Falsifier: submitting the frontend's upload form empty reads back *Enter a date of issue* and *Upload a document* in the error summary.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

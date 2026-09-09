@@ -1,0 +1,86 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+index ba3da417..2e0a44cd 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+@@ -98,11 +98,12 @@ export const copy = {
+   empty: 'Nid ydych wedi ychwanegu unrhyw ddogfennau eto.',
+   notProvided: 'Heb ei ddarparu',
+   scanTags: {
+-    safe: 'Diogel',
++    complete: 'Gwiriad wedi’i gwblhau',
+     virusFound: 'Firws wedi’i ganfod',
+-    checking: 'Yn gwirio',
++    scanning: 'Yn sganio am firws',
+     unknown: 'Anhysbys'
+   },
++  scanStatusHidden: (reference) => `Statws gwirio firws ar gyfer ${reference}`,
+   announce: {
+     safe: 'Sgan y ddogfen wedi’i gwblhau: mae’r ffeil yn ddiogel i’w defnyddio',
+     virusFound:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index c77fce94..aac34844 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -98,12 +98,20 @@ export const copy = {
+   stillChecking: 'Still checking some documents. Refresh again in a moment.',
+   empty: 'You have not added any documents yet.',
+   notProvided: 'Not provided',
++  // The Status column reports the virus check, not a verdict on the file
++  // (design release 1): "Scanning for virus" while it runs, "Check completed"
++  // once it has. Virus found and Unknown have no design release 1 counterpart
++  // and keep the wording this service already uses.
+   scanTags: {
+-    safe: 'Safe',
++    complete: 'Check completed',
+     virusFound: 'Virus found',
+-    checking: 'Checking',
++    scanning: 'Scanning for virus',
+     unknown: 'Unknown'
+   },
++  // Read out ahead of the tag so the status names the document it belongs to.
++  // The tag carries no other text, so without this a screen reader hears
++  // "Check completed" with nothing saying what was checked.
++  scanStatusHidden: (reference) => `Virus check status for ${reference}`,
+   announce: {
+     safe: 'Document scan complete: the file is safe to use',
+     virusFound:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+index 88569418..5233fbaa 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+@@ -114,6 +114,35 @@ describe('#copy', () => {
+     expect(copy.file.leftDropZone).toBe('Left drop zone')
+   })
+ 
++  it('Should name the virus check in the status tags rather than judge the file', () => {
++    // Design release 1 words the Status column as a report on the check: what
++    // is running, then that it has finished. "Safe" was a verdict about the
++    // file and "Checking" never said what was being checked.
++    expect(copy.scanTags.scanning).toBe('Scanning for virus')
++    expect(copy.scanTags.complete).toBe('Check completed')
++    // The other two states are ours, not design release 1's, and stand.
++    expect(copy.scanTags.virusFound).toBe('Virus found')
++    expect(copy.scanTags.unknown).toBe('Unknown')
++  })
++
++  it('Should name the document the status belongs to for a screen reader', () => {
++    // The tag carries no other text, so the hidden label is the only thing
++    // tying "Check completed" to the row it sits in. The reference is an
++    // argument, never a literal, in both decks.
++    expect(copy.scanStatusHidden('GBHC1234567890')).toBe(
++      'Virus check status for GBHC1234567890'
++    )
++    expect(copy.scanStatusHidden('ITAHC-000123')).toBe(
++      'Virus check status for ITAHC-000123'
++    )
++    // Asserted on the interpolation rather than the whole sentence: the Welsh
++    // wording is machine-draft awaiting a translator, the reference is what
++    // must survive that review.
++    expect(copyCy.scanStatusHidden('GBHC1234567890')).toContain(
++      'GBHC1234567890'
++    )
++  })
++
+   it('Should build the upload-config messages from the copy templates', () => {
+     expect(FILE_TYPE_MESSAGE).toBe(
+       copy.errors.fileType(ALLOWED_FILE_TYPES_HINT)

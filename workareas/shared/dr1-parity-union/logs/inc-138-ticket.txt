@@ -1,0 +1,29 @@
+h2. Increment
+
+{{inc-138}} from the {{shared/dr1-parity-union}} backlog.
+
+The upload control's hint reads "Your file must be:" over two bullets, the first of which is "smaller than 10 MB". The limit is enforced twice — in the browser, from a {{data-max-file-size}} attribute of {{10000000}} on the form element, and on the server, where a file over the limit is refused with "The selected file must be smaller than 10 MB". Design release 1 states 50MB as the ceiling a trader may upload to, and repeats that bullet in every error state of the page. So a trader with a 20 MB scanned health certificate cannot attach it and is given no alternative.
+
+Ten decimal megabytes is a deliberate choice made against the platform rather than against the design — the code comment records that the value stays clear of the 10 MiB nginx ingress cap on the hosting platform. That is why this increment is banded *needs-backend*: the request-body cap on the hosting platform's ingress and on whatever receives the upload has to allow at least 50MB first, or a large file is rejected by the infrastructure before the service sees it and the trader gets a platform error page instead of a validation message.
+
+h2. Acceptance criteria
+
+* The ingress request-body cap on the hosting platform, and on the document-upload service that receives the file, is confirmed to allow at least 50MB before the frontend number changes. Roughly a fivefold increase on the ceiling in force today, so it is confirmed rather than assumed.
+* The accepted file size is raised from 10 MB to 50MB in {{src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js}}, where the value and its label live in one place.
+* {{MAX_PAYLOAD_BYTES}} in the same file moves with the new limit, staying just above it, so an oversize post is caught and answered rather than silently dropped.
+* The stale code comment recording the 10 MiB nginx ingress reason is updated to match the ceiling actually in force.
+* The hint bullet on the upload documents page names the new 50MB limit.
+* The oversize error message in {{src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js}} names the new 50MB limit and matches the hint bullet.
+* The browser-side check reads the new value from the form's {{data-max-file-size}} attribute, so client and server agree on one number.
+* The unit wording is settled in the same edit — Design release 1 writes "50MB" with no space where the frontend writes "10 MB" with one. Pick one form and apply it to the hint bullet and the error message alike.
+* Unit tests cover a file at the new limit and a file over it, and the E2E suite and its visual baselines are updated for the changed hint and error text.
+
+h2. Verification
+
+Falsified by finding a {{data-max-file-size}} attribute other than {{10000000}} on the form in the captured DOM of {{fe-documents}}, or a hint bullet on that page naming a limit other than 10 MB.
+
+Travels with {{inc-134}} and {{inc-135}} — all three change limits stated in the same file-requirements hint bullet list.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -14688,8 +14688,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "ffb746cc b7d44ec",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/281",
+          "number": 281,
+          "merged": true,
+          "sha": "4994d97717ef4cd3ed54d3460646f51d2df52588"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/171",
+          "number": 171,
+          "merged": true,
+          "sha": "829107fad56780d2a1e621669e34f84d66273f0c"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The upload form asks for a document reference, a date of issue and a file, and nothing else (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:31-58). There is no document-type control anywhere on the page. Once the file is saved the type appears in the Document type column of the saved table, but the user never chose it: the controller derives it from the filename (src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:109-112) by token-matching the filename against the document-types enum, longest match wins, falling back to OTHER when nothing matches. The module's own docstring states the rule outright — \"The trader does not pick a type; the filename carries it\" (src/server/app/sets/live-animals/journeys/linear/features/documents/derive-document-type.js:3-18). A user who uploads scan001.pdf gets OTHER; a user who renames the same file itahc.pdf gets ITAHC. Nothing shows the guess before it is saved and nothing lets the user put it right afterwards — the only actions offered on a saved row are View file and Remove, and neither changes the type, so the only way out of a wrong guess is to remove the document and upload it again under a different filename. The obligation model already declares accompanyingDocumentType mandatory for every document (src/server/app/sets/live-animals/obligations/sections/documents.js:30-35), so a field the model requires has no surface at all.",
@@ -15063,10 +15079,17 @@
         "note": "No document-type control; the type is guessed from the filename. Both nail it and both quote DR1's thirteen options. A is materially better: it flags that DR1 spells the first option out as \"Intra Trade Animal Health Certificate (ITAHC)\" where the frontend's label is the bare acronym, and that the frontend's enum carries a fourteenth type (HEALTH_CERTIFICATE) DR1 does not offer — two alignment items C loses entirely. C's one addition worth keeping: a wrong guess is uncorrectable, since the only row actions are View file and Remove.",
         "better": "A",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-512",
+      "branch": "feat/EUDPA-512-dr1-asks-the-user-to-choose-a-document-t",
+      "openQuestions": [
+        "The merged-error-summary ordering idiom is now hand-rolled in four places. src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:46-59 (new in this increment) is a character-for-character match of the Object.fromEntries(ORDER.filter(f => merged[f]).map(f => [f, merged[f]])) shape at src/server/app/sets/live-animals/journeys/linear/features/private-transporter-details/private-transporter-details.controller.js:130-138, and the same local field-order-array idiom appears at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address/fields.js:11,74,81,84 and src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:51,65. Each copy has to be kept in step with its own template by hand, and the resulting summary order is what the accessibility tests pin. NOT FIXED HERE because four independent local FIELD_ORDER arrays is what this repo currently does, so the new code follows the house pattern rather than departing from it; the remedy is to lift an orderedErrors(order, errors) helper into src/server/app/shared/kit.js beside errorSummary and repoint all four call sites, which touches three features outside an add-field increment whose acceptance criteria are limited to adding the Document type select and retiring deriveDocumentTypeFromFilename, and which carries a11y-ordering regression risk for no behavioural gain. ACTION: raise a standalone refactor ticket for the shared orderedErrors helper."
+      ]
     },
     {
       "id": "inc-137",
+      "ticket": "EUDPA-514",
+      "branch": "feat/EUDPA-514-design-release-1-lets-a-trader-drop-a-do",
       "type": "add-field",
       "milestone": null,
       "domain": "documents",
@@ -15084,8 +15107,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "24b08e2b 2503575",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/282",
+          "number": 282,
+          "merged": true,
+          "sha": "8ca4c30aa26a8ea98ae7f49aaa8382d8da495292"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/173",
+          "number": 173,
+          "merged": true,
+          "sha": "bb323df7636ad4ba725e2ed1cafdddd055cd2cb7"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The file control is a bare input rendered by the standard file-upload component with no JavaScript enhancement (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58). What the trader sees on fe-documents is whatever the browser draws for a file input — on the capture, a small grey \"Choose File\" button with \"No file chosen\" beside it, in the browser's own type rather than the service's. There is no drop target, so a file cannot be dragged onto the page, and the chosen filename is shown only in the browser's own text beside the button, in the browser's own wording and without being announced to a screen reader.",
@@ -15172,10 +15211,16 @@
         "note": "Native file button vs DR1's drop zone with a polite live region naming the chosen file. Both correctly rule that govuk-frontend's enhanced file upload already ships this rather than hand-rolling DR1's bespoke markup. C is better on the how (names govuk-frontend 6.3 and the client bundle to initialise); A is better on scope (the zone takes its own error style — the red dashed border on the error screen — and the unenhanced input stays as the no-JS fallback). Neither is complete alone.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "openQuestions": [
+        "How should the clear-previous-client-errors path be pinned? This increment rewrote restoreControlState (src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/submit.js:10-20) so it now resolves two different elements — the marker and aria-describedby state are read off the control (the enhanced drop-zone button, id \"file\"), while the govuk-file-upload--error class is removed from uploadInput(control) (the hidden input, id \"file-input\") — and nothing in the repo executes it. It is reached only from clearPreviousClientErrors (submit.js:35-37) when an element already carries data-client-error=\"file-size-input\", i.e. on a SECOND submit after a client-side oversize error. Every FIT test submits at most once: fit/upload.fit.spec.js calls submitAdd once per test, fit/drop-zone.fit.spec.js:101-115 submits once for the server-side file-required case, and there are no unit tests beside the client modules (no *.test.js under documents/client/). clearPreviousClientErrors does run on every submit, but always over an empty NodeList, so the rewritten body never executes. The failure it would let through: a trader hits the oversize error, swaps in a valid file and presses Add another; if the control/input resolution were wrong the stale aria-describedby=\"file-hint file-error\" would survive on the drop-zone button after clearPreviousClientErrors had already removed the <p id=\"file-error\">, leaving a dangling idref, plus a stale govuk-file-upload--error class on the input. DEFERRED rather than fixed in this increment because neither available test shape covers it cheaply. A FIT case cannot observe the cleared state: submitting a valid file after the oversize error posts the form and navigates, so the client-side DOM under assertion is gone before it can be checked, and a second OVERSIZE submit re-renders the same error, so the only observable difference is masked (applyControlErrorState at field-error.js:24-28 already filters the error id out of aria-describedby, so even a broken restore would not duplicate the token). The clean pin is a jsdom unit test over the oversize-validation client modules, but the repo has never run one: vitest.config.js:6 sets environment 'node' globally and no file in src/ carries an @vitest-environment jsdom docblock, so this would introduce the first browser-environment unit test in the codebase — a test-infrastructure decision wider than this increment. ACTION: decide whether documents/client/ gets a jsdom unit-test lane (jsdom 30.0.1 is already a devDependency, package.json:109, so it is a per-file docblock plus a convention, not a new dependency); if yes, add a unit test that runs initUploadForm against a fixture of the enhanced markup, submits twice, and asserts that after the first clear the button's aria-describedby is back to its pre-error value, the data-client-error/data-client-error-prev-describedby datasets are gone, and govuk-file-upload--error is off the input, not the button.",
+        "Does the no-JavaScript fallback for the documents file upload actually work, and who proves it? The increment's own detail promises that \"the unenhanced input stays behind it as the no-JavaScript fallback, so nothing is taken away from a trader whose JavaScript does not run\", and that claim is currently unverified. The test at src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js:94 runs in the default JavaScript-enabled context, and by the time it asserts, govuk-frontend has already set hidden on the raw input (node_modules/govuk-frontend/dist/govuk/components/file-upload/file-upload.mjs:51), so its two assertions (toHaveCount(1) and name=\"file\") only prove the enhancement did not duplicate or rename the posted field. Hide the raw input for real — app CSS such as .govuk-file-upload-wrapper .govuk-file-upload { display: none }, or a {% if %} around the macro call — and a JS-off trader is left with a dashed empty wrapper and no way to attach a document, while the suite stays green. This increment renames that test to what it really pins; the missing coverage stays open. DEFERRED rather than fixed here because a genuine JS-off case cannot reuse the existing setup chain. The idiom exists (test.use({ javaScriptEnabled: false }) at features/origin/origin.fit.spec.js:330 and features/transport/arrival-transit.fit.spec.js:251), but reaching the documents page needs unlockSections (fit/live-animals-journey.js:203-215), which goes through answerCountryOfOrigin -> chooseCountryOfOrigin, and that drives the accessible-autocomplete type-ahead via getByRole('option') — JavaScript-only. The shared drop-zone helper openDocuments cannot be reused either: it waits on .govuk-file-upload-button__status (drop-zone.fit.spec.js:28), which the component only creates at init and so never appears with JS off. Building a JS-off route to the documents page therefore means adding a no-JavaScript variant of the shared journey helper, which touches every feature's FIT setup and is well outside this increment's blast radius. ACTION: add a JS-off setup path to fit/live-animals-journey.js (a variant of unlockSections that answers country of origin through the native <select> rather than the type-ahead), then add a test.describe with test.use({ javaScriptEnabled: false }) to documents/fit/drop-zone.fit.spec.js asserting the plain input is visible, has no hidden attribute, is reachable via getByLabel(copy.file.label), that no .govuk-file-upload-button exists, and that a file set on it and submitted attaches the document and renders its row."
+      ]
     },
     {
       "id": "inc-135",
+      "ticket": "EUDPA-516",
+      "branch": "feat/EUDPA-516-frontend-caps-a-notification-at-10-accom",
       "type": "obligation-change",
       "milestone": null,
       "domain": "documents",
@@ -15194,8 +15239,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "95296210",
       "failure_reason": null,
       "finding": {
         "frontend": "A notification may hold at most ten documents. The cap is an obligation on the documents group (src/server/app/sets/live-animals/obligations/sections/documents.js:24-27) and the page reads it from there (src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/max-documents.js:3). A trader who chooses an eleventh file is refused on submit, with an error summary reading \"You can add a maximum of 10 documents\" (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73).",
@@ -15459,7 +15504,23 @@
         "note": "Second half of A's merged finding: cap of 10 vs DR1's 15. Same value, same file. C additionally notes the obligation file's own header comment describes the group as 0..10 and needs updating with it, and argues the band explicitly (frontend-only constant, no counterpart on the wire). A does not mention the comment.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/283",
+          "number": 283,
+          "merged": true,
+          "sha": "c0d2bb8b8f0813643b3a28222b20eaaf9ca3444c"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/175",
+          "number": 175,
+          "merged": true,
+          "sha": "49d5102c8d28f640702d43e0f7f8cf58f8f9019c"
+        }
+      ]
     },
     {
       "id": "inc-138",
@@ -15480,8 +15541,8 @@
       "band": "needs-backend",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "3fe7da19 50ff56f",
       "failure_reason": null,
       "finding": {
         "frontend": "The upload control's hint reads \"Your file must be:\" over two bullets, the first of which is \"smaller than 10 MB\". The limit is enforced twice — in the browser, from a data-max-file-size attribute of 10000000 on the form element, and on the server, where a file over the limit is refused with \"The selected file must be smaller than 10 MB\" (src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:34-36). The route's own payload cap, MAX_PAYLOAD_BYTES, is set just above the file limit so that an oversize post is caught and answered rather than silently dropped (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-49). Ten decimal megabytes is a deliberate choice made against the platform rather than against the design: the code says so, at src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:40-46, where the comment records that the value stays clear of the 10 MiB nginx ingress cap on the hosting platform. So a trader with a 20 MB scanned health certificate cannot attach it and is given no alternative on the page.",
@@ -15621,10 +15682,34 @@
         "note": "10 MB vs DR1's 50MB. Both banded needs-backend and both found the code comment recording that 10 MB was chosen to clear the platform's nginx ingress cap — the same non-obvious reason, reached independently, which is the strongest agreement in this area. A adds MAX_PAYLOAD_BYTES and the unit inconsistency (\"50MB\" unspaced vs \"10 MB\" spaced); C adds the captured client-side data-max-file-size=10000000 attribute.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-518",
+      "branch": "feat/EUDPA-518-the-frontend-rejects-any-document-over-1",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/284",
+          "number": 284,
+          "merged": true,
+          "sha": "52d396d5862be3506131ab913acd87b0e6ad144a"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/176",
+          "number": 176,
+          "merged": true,
+          "sha": "5cb79a69740832edb1a08e48183ee27ada0e3e44"
+        }
+      ],
+      "openQuestions": [
+        "BLOCKING BEFORE DEPLOY — has the CDP nginx ingress request-body cap in front of trade-imports-animals-frontend been raised to at least 50,001,024 bytes (MAX_PAYLOAD_BYTES)? This increment's first acceptance criterion is that the ingress cap 'is confirmed to allow at least 50MB before the frontend number changes', and nothing in any repo of this workspace confirms it. Evidence that it has NOT been raised: grep across the frontend repo for proxy-body-size / client_max_body_size returns nothing, so the frontend owns no ingress config; and a second repo independently records the ceiling as still 10 MiB — repos/trade-imports-animals-tests/resources/file-upload/constants.ts:5-9 documents ABOVE_PAYLOAD_CAP_BYTES as chosen to sit 'below the 10 MiB (10,485,760 B) CDP nginx ingress cap'. The backend half of the dependency IS met and was verified: repos/trade-imports-animals-backend/src/main/resources/application.yml:29 sets spring.servlet.multipart.max-file-size to 50MB, :30 max-request-size 51MB, :45 cdp.uploader.max-file-size 52428800. So the ingress is the single outstanding limit. CONSEQUENCE IF DEPLOYED UNCONFIRMED: every file between 10,485,760 and 50,000,000 bytes now passes both the browser check (data-max-file-size is rendered from MAX_FILE_SIZE_BYTES at features/documents/template.njk:60) and the server check (payload.maxBytes = MAX_PAYLOAD_BYTES at features/documents/controller.js:306), and is then killed by the ingress. The trader gets a platform 413 error page and loses the document type, reference and issue date they had typed, because handleOversizePayload (controller.js:309-311) is an onPreResponse extension and never runs for a request that never reaches hapi. That is strictly worse than today's inline 'The selected file must be smaller than 10 MB' with the metadata preserved — a user-visible regression across a 5x band of file sizes. DEFERRED rather than fixed in code because code in this repo cannot settle it: the change is a CDP platform ingress setting owned outside every repo in this workspace, and there is no config, manifest or IaC file here to change. The reviewed alternative — sourcing MAX_FILE_SIZE_MB from convict in src/config/config.js behind DOCUMENT_MAX_FILE_SIZE_MB so the app limit can be flipped independently — was rejected as a fix for this increment: with a default of 10 the increment achieves no parity in any environment and the E2E suite can no longer know which limit is in force, and with a default of 50 the regression ships anyway, so the env var buys a rollback lever at the cost of two sources of truth for a number the ticket says lives in one place. ACTION FOR THE SERVICE TEAM: confirm the ingress proxy-body-size in front of this service is >= 50,001,024 and record the confirmation (ticket or config reference) against EUDPA-518 before this branch is deployed to CDP; if it cannot be raised, hold the merge and split the increment so only the unit/label correction ('10 MB' -> '10MB') lands.",
+        "What is the memory headroom of the frontend container under the new 50MB upload ceiling? MAX_PAYLOAD_BYTES rises 5x while the POST route still buffers the whole upload in the Node heap: features/documents/controller.js:305-308 sets maxBytes: MAX_PAYLOAD_BYTES with parse: true and multipart: { output: 'annotated' }, so subtext holds the raw body and then the parsed Buffer; features/documents/handlers/reads/download.js:32 passes bytes: file.payload onward; and src/server/app/services/document-uploads/real.js:53 copies it again into new Blob([bytes]) before fetch serialises the outbound multipart. That is roughly three resident copies per in-flight upload — about 150 MB at 50MB against about 30 MB at the previous 10 MB — and nothing bounds it: there is no max-old-space-size, NODE_OPTIONS or container memory setting anywhere in the repo (Dockerfile or package.json). A handful of concurrent large certificate uploads on a small CDP container would exhaust the heap and OOM-restart the pod, dropping every in-flight journey on that instance, not only the uploads. DEFERRED rather than fixed in this increment because both remedies expand the blast radius well beyond a limit change: either confirm and record the container's memory allocation and the concurrency envelope it supports (an infrastructure fact nobody in the repo holds), or stop buffering — switch the route to multipart: { output: 'stream' } (or 'file') and stream file.payload into the outbound body, which touches controller.js, download.js, real.js and their tests and changes the shape of the upload service contract. ACTION: decide which, and size it as its own increment. Note the same multiplier hits the frontend fit specs, which allocate MAX_FILE_SIZE_BYTES + 100_000 buffers at features/documents/fit/upload.fit.spec.js:404, :446 and :466 — 50.1 MB each rather than 10.1 MB."
+      ]
     },
     {
       "id": "inc-133",
+      "ticket": "EUDPA-519",
+      "branch": "feat/EUDPA-519-a-trader-who-fills-in-the-document-form",
       "type": "flow-change",
       "milestone": null,
       "domain": "documents",
@@ -15642,8 +15727,17 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "3374bf76",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/285",
+          "number": 285,
+          "merged": true,
+          "sha": "86d87ba4eb052f1ed07f27bdd98b73b2977966d7"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The page offers two ways to submit the document form and only one of them keeps anything. \"Save and add another\" posts action=add and saves the document. \"Continue\" posts action=continue from inside the same form, so the reference, the date of issue and the chosen file all travel to the server in that request — and the server never looks at them. The post handler branches on the action and reads the payload only for add and remove; every other action loads the page state fresh, checks whether any already-saved document is still being scanned, and redirects to the next page (src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js:255-279). Nothing is saved, no error is shown, and the next screen gives no sign that anything was dropped. A trader who fills the three fields, chooses their health certificate and presses the primary green button — the one the whole rest of the journey has taught them to press — arrives at the next page having attached nothing. \"Save and return to hub\" behaves the same way.",
@@ -15756,6 +15850,8 @@
     },
     {
       "id": "inc-144",
+      "ticket": "EUDPA-520",
+      "branch": "feat/EUDPA-520-design-release-1-tells-a-trader-that-zip",
       "type": "copy-change",
       "milestone": null,
       "domain": "documents",
@@ -15773,8 +15869,17 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "e491ae0a",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/286",
+          "number": 286,
+          "merged": true,
+          "sha": "b8706cd3ee6552e7613df5534b70725facecf7b5"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The file-requirements hint says nothing about archives. Headed \"Your file must be:\", it has two bullets — a size and a list of accepted types — and the word ZIP appears nowhere on the page. A ZIP file is in fact refused, because the accepted types are an allow-list of eight extensions (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:3-18) applied both as the file input's accept attribute and as a server-side check, but the trader who tries one is told only \"The selected file must be a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\", and only after they have chosen the file. Somebody who has zipped several certificates together to save uploads is left to infer the rule and is given no reason for it.",
@@ -15915,6 +16020,8 @@
     },
     {
       "id": "inc-134",
+      "ticket": "EUDPA-521",
+      "branch": "feat/EUDPA-521-frontend-never-tells-a-trader-how-many-d",
       "type": "copy-change",
       "milestone": null,
       "domain": "documents",
@@ -15933,8 +16040,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "aa47c65a",
       "failure_reason": null,
       "finding": {
         "frontend": "Nothing on the documents page says how many documents a notification may hold. The captured DOM of fe-documents and fe-documents-populated states exactly two requirements above the upload control — that a file must be \"smaller than 10 MB\" and that it must be \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\" (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:43-48) — and no count appears anywhere on either page. A trader learns the limit only by reaching it, at which point the error summary tells them (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73), anchored to the saved-documents table rather than to the form (src/server/app/sets/live-animals/journeys/linear/features/documents/form/errors.js:52-57), after they have already chosen a file and tried to upload it. The Add affordance is not hidden at the cap either, so there is no silent signal in place of the missing sentence.",
@@ -16075,10 +16182,21 @@
         "note": "The limit is never stated before the user uploads. A folds this into one finding with the cap value; C separates it and argues the two are independently schedulable in either order — the page could state today's limit of ten without touching the cap. C also insists the bullet read from the obligation value rather than hard-code a number so the hint and the error can never disagree. The split is the better shape.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/287",
+          "number": 287,
+          "merged": true,
+          "sha": "083e3d0b9ca7c3e80cbd021581043ae59c9503a7"
+        }
+      ]
     },
     {
       "id": "inc-012",
+      "ticket": "EUDPA-522",
+      "branch": "feat/EUDPA-522-the-documents-page-and-the-consignment-a",
       "type": "copy-change",
       "milestone": null,
       "domain": "service-wide",
@@ -16102,8 +16220,17 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "c7311516",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/288",
+          "number": 288,
+          "merged": true,
+          "sha": "7015270de5adf7fd2edbc2a10f7ff8e8817ab849"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "Almost every journey page ends with a primary button reading \"Save and continue\", which is what the shared button macro renders when a page passes no primary of its own (src/server/app/shared/save-actions.njk:5, reading src/server/app/shared/copy.en.js:43). Four pages pass their own primary and label it just \"Continue\", and between them they account for twelve of the sixty-seven captured frontend screens: the accompanying-documents page in all four of its captured states (fe-documents, fe-documents-populated, fe-documents-scanning, fe-documents-error), the consignment addresses hub in all three (fe-addresses-hub, fe-addresses-hub-empty, fe-addresses-hub-complete), check your answers in all three (fe-check-answers, fe-check-answers-incomplete, fe-check-answers-submitted) and the declaration in both (fe-declaration, fe-declaration-error). The two overrides that matter are src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:92 and src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk:16, each reading a per-feature copy key set to the string \"Continue\" at src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:51 and src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:8. On both of those pages the \"Continue\" button sits immediately to the left of a secondary button reading \"Save and return to hub\", so the page offers the user a choice between a button that says it saves and a button that does not.",
@@ -16445,8 +16572,17 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "7f4f2970",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/289",
+          "number": 289,
+          "merged": true,
+          "sha": "4e2fe7078ccaad131d0e82124c9d626cf70f40ae"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The second bullet of the file-requirements hint reads \"a PDF, DOC, DOCX, JPEG, PNG, XLS or XLSX\" — seven types, with JPG absent. A .jpg file is nevertheless accepted: it is in the allow-list and in the input's accept attribute (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:10-11,24-26), which the captured DOM shows as \".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\". JPG disappears from the sentence because the hint is built from the accepted MIME types rather than the extensions, and .jpeg and .jpg share image/jpeg, so the second of the pair is dropped (src/server/app/sets/live-animals/journeys/linear/features/documents/upload-config.js:28-36). A trader whose phone or scanner produced a .jpg reads a list their file is not on and may convert or rename it for no reason. The same truncated list is repeated back in the error message when a file is refused, so a trader whose file is turned away for some other reason reads a list that does not include the extension they are holding.",
@@ -16555,10 +16691,14 @@
         "note": "JPG accepted but missing from the file-type hint. Both diagnose the same cause — the hint is collapsed on MIME type and .jpeg/.jpg share image/jpeg — and both note the truncated list is reused in the rejection message. C is marginally better evidenced, quoting the captured accept attribute in full.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-523",
+      "branch": "feat/EUDPA-523-the-frontend-accepts-a-jpg-file-but-leav"
     },
     {
       "id": "inc-142",
+      "ticket": "EUDPA-524",
+      "branch": "feat/EUDPA-524-the-frontend-labels-a-document-s-virus-c",
       "type": "copy-change",
       "milestone": null,
       "domain": "documents",
@@ -16578,8 +16718,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "efe97e21",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/290",
+          "number": 290,
+          "merged": true,
+          "sha": "c3bfd6ad78dce9fdeee96a555e6601d04dd39652"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/178",
+          "number": 178,
+          "merged": true,
+          "sha": "750e06c9add961ca43fc28ac0a538711bc4cf26a"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The Status column of the saved-documents table shows a tag per document. While the scan runs it is a blue tag reading \"Checking\" and once the scan clears it is a green tag reading \"Safe\" — both captured, on fe-documents-scanning, whose two rows show one of each. Two further states exist behind the same mechanism: \"Virus found\" when the scan fails and \"Unknown\" when the status cannot be read. The words come from src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:52-57 and are applied at src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:7-24. Neither of the two shared labels says what Design release 1's says: \"Checking\" does not name what is being checked, and \"Safe\" is a verdict about the file where Design release 1's is a statement about the check. The tag carries no other text, so a screen-reader user hears \"Safe\" with nothing saying what is safe or what was checked.",
@@ -16736,6 +16892,8 @@
     },
     {
       "id": "inc-132",
+      "ticket": "EUDPA-525",
+      "branch": "feat/EUDPA-525-dr1-labels-the-file-field-attachment-the",
       "type": "copy-change",
       "milestone": null,
       "domain": "documents",
@@ -16753,8 +16911,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "7aa24ebc",
       "failure_reason": null,
       "finding": {
         "frontend": "The file field's label is \"Upload a file\" (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:12), rendered in bold as a small label above the requirements list (src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk:51-58). It repeats the page heading, \"Upload documents\", as an instruction rather than naming the thing being collected, which is out of step with the two fields above it — \"Document reference\" and \"Date of issue\" — which both name their answer. The same instruction is repeated a third time by the \"Save and add another\" button, so the trader reads \"Upload documents\", then \"Upload a file\", then presses a button to save.",
@@ -16893,10 +17051,21 @@
         "note": "File field labelled \"Upload a file\" vs DR1's \"Attachment\". Same finding, same one-line fix. A is marginally better: it asks for the change in both language copy files, C names only copy.en.js:12 and would leave the Welsh copy behind.",
         "better": "A",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/291",
+          "number": 291,
+          "merged": true,
+          "sha": "56f7a440e219ddf7dc6790fc1aab4d6d94efc40a"
+        }
+      ]
     },
     {
       "id": "inc-143",
+      "ticket": "EUDPA-526",
+      "branch": "feat/EUDPA-526-four-of-the-upload-page-s-validation-mes",
       "type": "copy-change",
       "milestone": null,
       "domain": "documents",
@@ -16916,8 +17085,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "08d3dd6c",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/292",
+          "number": 292,
+          "merged": true,
+          "sha": "17fd3b0ab4319bd1681431ef283cc186aa663624"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/179",
+          "number": 179,
+          "merged": true,
+          "sha": "0e472f386cf5bf6d65a2b6f9ec6076e35d17e221"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The page's messages are held in one copy file (src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:63-81). A blank date of issue gives \"Enter the date of issue\"; an unparseable one gives \"Enter a real date of issue\"; a missing file gives \"Select a file to upload\"; going over the cap gives \"You can add a maximum of 10 documents\". A blank reference gives \"Enter a document reference\", which is the one message that already matches DR1 word for word. Each message is used twice, once in the error summary and once against the field, so each is a single string doing both jobs.",
@@ -17658,6 +17843,8 @@
     },
     {
       "id": "inc-049",
+      "ticket": "EUDPA-527",
+      "branch": "feat/EUDPA-527-frontend-heads-the-cph-page-county-paris",
       "type": "copy-change",
       "milestone": null,
       "domain": "addresses",
@@ -17677,9 +17864,25 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "3b2e7e90",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/293",
+          "number": 293,
+          "merged": true,
+          "sha": "549c9cc9e44b91cf95a3864bfe127012a694c9be"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/180",
+          "number": 180,
+          "merged": true,
+          "sha": "107adb73ba8ec41b2501023717f358cee7d92520"
+        }
+      ],
       "finding": {
         "frontend": "The CPH page is headed \"County Parish Holding (CPH)\" — a noun phrase with no verb and initial capitals on each word — and the field carries the same string as its label (src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:2-6). On the Consignment addresses page the same thing is called \"County Parish Holding number (CPH)\", hinted \"The County Parish Holding (CPH) number identifies the holding where the animals will be kept.\" (src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:9-12). So a trader meets three spellings of one term in two pages.",
         "prototype": "Design release 1 heads the page with the instruction \"Add the county parish holding number (CPH)\" and labels the field beneath it simply \"CPH number\" (app/views/cph-number.html:33, app/views/partials/cph-number-input.html:9). On the addresses page the row is headed \"County parish holding (CPH) number\", hinted \"The county parish holding (CPH) number identifies the holding where the animals will be kept.\" (app/data/consignment-address-sections.js:71-73). The term is lower case throughout, and \"number\" follows the bracketed abbreviation rather than preceding it.",
@@ -18215,6 +18418,8 @@
     },
     {
       "id": "inc-050",
+      "ticket": "EUDPA-531",
+      "branch": "feat/EUDPA-531-dr1-s-cph-page-explains-what-a-cph-numbe",
       "type": "add-section",
       "milestone": null,
       "domain": "addresses",
@@ -18232,8 +18437,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "a0472eb5",
       "failure_reason": null,
       "finding": {
         "frontend": "The page opens on the error summary and goes straight to the form and the single input (src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:6-25); the copy file holds a title, a label, a hint and three error messages, and no help strings (src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:1-12). fe-cph-number is a heading, an example and a box. A trader who does not know what a CPH number is, or does not know they have one, has nothing on the page to work from and no route to finding out.",
@@ -18345,10 +18550,21 @@
         "note": "\"What is a CPH number?\" expander missing entirely. Near-identical findings, same DR1 source lines, both flag the placeholder GOV.UK href. A is marginally better because it quotes both paragraphs verbatim, so the copy can be lifted straight out; C paraphrases them.",
         "better": "A",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/294",
+          "number": 294,
+          "merged": true,
+          "sha": "fbb543f486b524a355c8f2c7e4bdd9ffe0bb7db2"
+        }
+      ]
     },
     {
       "id": "inc-051",
+      "ticket": "EUDPA-532",
+      "branch": "feat/EUDPA-532-dr1-collects-the-cph-number-as-three-box",
       "type": "add-field",
       "milestone": null,
       "domain": "addresses",
@@ -18366,8 +18582,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "05c8747a 9884517",
       "failure_reason": null,
       "finding": {
         "frontend": "One govukInput at width-10 takes the whole number (src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk:11-23). fe-cph-number shows a single empty box with nothing to say how the nine digits divide up. On submit the controller strips slashes and checks for exactly nine digits (src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:75-80,32-40), so \"123456789\", \"12/345/6789\" and \"1/2/3456789\" are all accepted and stored identically; a trader who mistypes a digit in the wrong part gets no signal, because nothing on the page knows which part is which. What the page does say about the shape is wrong. The hint under the box reads \"For example, 123456789 or 123/456/789.\" (src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js:5), and its second example teaches a 3/3/3 grouping that no CPH number uses: a county parish holding number is two digits of county, three of parish and four of holding. The error never surfaces in testing, because the controller strips the slashes before counting digits (src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js:77), so a trader who copies the pattern still passes validation. The casualty is the trader who comes away believing their own number is wrongly formatted, or who transcribes it into the wrong grouping somewhere else.",
@@ -18591,7 +18807,23 @@
         "note": "CPH taken as one free-text box where DR1 uses three boxes sized 2/3/4. Same diff, same widths and maxlengths. A is better on the trap: it records that DR1 itself validates nothing on this page, so the frontend's nine-digit check is the stricter behaviour and must be kept rather than copied away. C notes, usefully, that DR1's three labels are screen-reader-only.",
         "better": "A",
         "judged": "Run A's inc-008 — that the frontend's CPH example teaches a 3/3/3 grouping no CPH number uses — was filed by the matcher as a hole in run C. The judge overturned that. The diff is already inside run C's inc-006, which quotes the frontend's hint verbatim and asks for \"For example 12/345/6789\" as the replacement string, so anyone building run C's finding writes exactly the one-string change run A asked for: this is a granularity split, not a miss, and it must not be reported to a BA as something run C missed. What run A carries alone is the argument rather than the diff — that the 3/3/3 grouping is factually wrong where 2/3/4 is the real shape, that the slash-stripping at cph-number/controller.js:77 hides the error from testing, and that the string fix is independently shippable ahead of the three-box rebuild — and that argument is folded into this increment. Run A's inc-008 therefore has no union id of its own."
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/296",
+          "number": 296,
+          "merged": true,
+          "sha": "6fd505b7001e4f0d6e70dc627499c71f04418cb3"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/183",
+          "number": 183,
+          "merged": true,
+          "sha": "c1f7032eade82353c5711f4dfd88b8364f70f788"
+        }
+      ]
     },
     {
       "id": "inc-114",

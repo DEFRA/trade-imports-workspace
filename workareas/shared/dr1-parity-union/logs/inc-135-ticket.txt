@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-135}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+Frontend caps a notification at ten accompanying documents. The cap is an obligation on the documents group at {{src/server/app/sets/live-animals/obligations/sections/documents.js:24-27}}, and the page reads it through {{src/server/app/sets/live-animals/journeys/linear/features/documents/contracts/max-documents.js:3}}. A trader who chooses an eleventh file is refused on submit with "You can add a maximum of 10 documents" from {{src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js:73}}.
+
+Design release 1 allows fifteen. {{MAX_UPLOADED_DOCUMENTS}} is 15 at {{app/routes.js:9025}} and backs the validation at {{app/routes.js:9103-9112}}.
+
+h2. Acceptance criteria
+
+* {{maxEntries}} on the documents group is raised from 10 to 15 at {{src/server/app/sets/live-animals/obligations/sections/documents.js:25}}.
+* The obligation file's own header comment, which describes the group as 0..10 at {{src/server/app/sets/live-animals/obligations/sections/documents.js:2-16}}, is updated to match the new cap.
+* A trader can add fifteen documents to a notification and is refused only on the sixteenth.
+* The submit guard and the error summary both report the new number, taken from the obligation rather than hard-coded. The copy at {{copy.en.js:73}} already interpolates the value, so no copy change is expected.
+* Existing unit and E2E coverage for the documents feature is updated to the new cap and passes.
+
+h2. Out of scope
+
+* Whether the error message says "documents" or Design release 1's "files" is settled by {{inc-143}}, not here.
+* Stating the limit on the page before a trader chooses a file is {{inc-134}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

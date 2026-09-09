@@ -1,0 +1,313 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index 0ca67f73..6e03a131 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -115,7 +115,7 @@ test.describe('live-animals journey glue', () => {
+     // Documents are optional, so the run passes through the page and the user
+     // continues without adding one.
+     await expect(page).toHaveURL(/\/accompanying-documents$/)
+-    await page.getByRole('button', { name: 'Continue' }).click()
++    await page.getByRole('button', { name: 'Save and continue' }).click()
+ 
+     await answerRolesAndAddresses(page)
+     await answerCphNumber(page)
+@@ -163,7 +163,7 @@ test.describe('live-animals journey glue', () => {
+         hasText: document.accompanyingDocumentReference
+       })
+     ).toContainText('Safe')
+-    await page.getByRole('button', { name: 'Continue' }).click()
++    await page.getByRole('button', { name: 'Save and continue' }).click()
+ 
+     await page.getByRole('link', { name: 'Check and submit' }).click()
+ 
+@@ -211,7 +211,7 @@ test.describe('live-animals journey glue', () => {
+     await expect(page).toHaveURL(
+       /\/accompanying-documents\?change=1(?:&attempt=\d+)?$/
+     )
+-    await page.getByRole('button', { name: 'Continue' }).click()
++    await page.getByRole('button', { name: 'Save and continue' }).click()
+     await expect(page).toHaveURL(/\/notification-view(?:#.*)?$/)
+     await expect(
+       page.getByText(secondDocument.accompanyingDocumentReference)
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index c84e64c2..b7922077 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -324,7 +324,7 @@ export const answerRolesAndAddresses = async (page) => {
+     await page.getByRole('radio', { name }).check()
+     await save(page)
+   }
+-  await page.getByRole('button', { name: 'Continue' }).click()
++  await save(page)
+ }
+ 
+ export const answerCphNumber = async (page) => {
+diff --git a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+index ff8511fc..1a90e1fa 100644
+--- a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
++++ b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+@@ -38,14 +38,14 @@ what you are importing, the consignment details, the reason for import, animal
+ identification, the additional details, the arrival details, the transit
+ countries, the transporter, the uploaded documents, the roles and addresses, the
+ CPH number, the contact address and then the review page, so the primary button —
+-"Save and continue", or "Continue" on the uploaded-documents and
+-roles-and-addresses pages — carries a new notification from the entry page to the
+-review page in one pass. The hub is somewhere the user chooses to go — through the
+-secondary "Save and return to overview" button on every page, or by opening the
+-notification from the dashboard — not somewhere the run puts them between
+-sections. Taking that button, or otherwise landing on the hub — including the
+-run's own fall-through when the review gate or every remaining step is closed —
+-renders the hub, and rendering it completes the run
++"Save and continue" on every one of them but the review page, which ends with
++"Continue" — carries a new notification from the entry page to the review page
++in one pass. The hub is somewhere the user chooses
++to go — through the secondary "Save and return to overview" button on every
++page, or by opening the notification from the dashboard — not somewhere the run
++puts them between sections. Taking that button, or otherwise landing on the
++hub — including the run's own fall-through when the review gate or every
++remaining step is closed — renders the hub, and rendering it completes the run
+ ([`completeOpeningRun`](../../../flow/run-state.js), called from
+ [`features/hub/controller.js`](../journeys/linear/features/hub/controller.js)).
+ After that, saving a page follows `nextInSection` and returns to the hub at the
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+index 78dfee7b..4e776968 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+@@ -6,7 +6,6 @@ export const copy = {
+     notAddedYet: 'Heb ei ychwanegu eto',
+     change: 'Newid',
+     add: 'Ychwanegu',
+-    continueButton: 'Parhau',
+     cph: {
+       title: 'Rhif Daliad Plwyf Sirol (CPH)',
+       hint: 'Mae’r rhif Daliad Plwyf Sirol (CPH) yn adnabod y daliad lle bydd yr anifeiliaid yn cael eu cadw.'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+index 38e05ba8..e5da9cbe 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+@@ -5,7 +5,6 @@ export const copy = {
+     notAddedYet: 'Not added yet',
+     change: 'Change',
+     add: 'Add',
+-    continueButton: 'Continue',
+     cph: {
+       title: 'County Parish Holding number (CPH)',
+       hint: 'The County Parish Holding (CPH) number identifies the holding where the animals will be kept.'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+index da32d9d4..323b2533 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+@@ -97,7 +97,10 @@ test.describe('addresses hub', () => {
+     }
+ 
+     await expect(
+-      page.getByRole('button', { name: copy.hub.continueButton })
++      page.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
+     ).toBeVisible()
+   })
+ 
+@@ -116,7 +119,7 @@ test.describe('addresses hub', () => {
+         .check()
+       await saveAndContinue(page)
+     }
+-    await page.getByRole('button', { name: copy.hub.continueButton }).click()
++    await saveAndContinue(page)
+ 
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+     await expect(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk
+index acf846a2..e75ff458 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk
+@@ -16,6 +16,6 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+-    {{ saveActions(hubHref, { text: copy.continueButton }, sharedCopy.saveActions) }}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+index dd0c71a7..ba3da417 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+@@ -97,7 +97,6 @@ export const copy = {
+   stillChecking: 'Yn dal i wirio rhai dogfennau. Adnewyddwch eto mewn eiliad.',
+   empty: 'Nid ydych wedi ychwanegu unrhyw ddogfennau eto.',
+   notProvided: 'Heb ei ddarparu',
+-  continueButton: 'Parhau',
+   scanTags: {
+     safe: 'Diogel',
+     virusFound: 'Firws wedi’i ganfod',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index a3862221..c77fce94 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -98,7 +98,6 @@ export const copy = {
+   stillChecking: 'Still checking some documents. Refresh again in a moment.',
+   empty: 'You have not added any documents yet.',
+   notProvided: 'Not provided',
+-  continueButton: 'Continue',
+   scanTags: {
+     safe: 'Safe',
+     virusFound: 'Virus found',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+index 6de15976..09b9a486 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+@@ -5,6 +5,7 @@ import {
+   startNotification,
+   unlockSections
+ } from '../../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../../../shared/copy.en.js'
+ import { copy } from '../copy/copy.en.js'
+ import { SCAN_STATUS } from '../scan-poll.js'
+ 
+@@ -73,7 +74,12 @@ test.describe('document scan-status rendering', () => {
+     )
+     await expect(row).toContainText(copy.scanTags.checking)
+ 
+-    await page.getByRole('button', { name: copy.continueButton }).click()
++    await page
++      .getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
++      .click()
+     await expect(
+       errorSummaryLink(page, copy.errors.cannotContinue)
+     ).toBeVisible()
+@@ -83,7 +89,12 @@ test.describe('document scan-status rendering', () => {
+       'data-scan-status',
+       SCAN_STATUS.COMPLETE
+     )
+-    await page.getByRole('button', { name: copy.continueButton }).click()
++    await page
++      .getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
++      .click()
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+   })
+ 
+@@ -101,7 +112,12 @@ test.describe('document scan-status rendering', () => {
+     ).toBeVisible()
+     await expect(row.getByRole('link', { name: copy.viewFile })).toHaveCount(0)
+ 
+-    await page.getByRole('button', { name: copy.continueButton }).click()
++    await page
++      .getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
++      .click()
+     await expect(
+       errorSummaryLink(page, copy.errors.virusFound(document.filename))
+     ).toBeVisible()
+@@ -112,7 +128,12 @@ test.describe('document scan-status rendering', () => {
+       })
+       .click()
+     await expect(row).toHaveCount(0)
+-    await page.getByRole('button', { name: copy.continueButton }).click()
++    await page
++      .getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
++      .click()
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+index 271d715c..cd3eed9e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+@@ -6,6 +6,7 @@ import {
+   unlockSections,
+   values
+ } from '../../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../../../shared/copy.en.js'
+ import { copy } from '../copy/copy.en.js'
+ import { MAX_DOCUMENTS } from '../contracts/max-documents.js'
+ import { REFERENCE_MAX_LENGTH } from '../form/payload.js'
+@@ -78,7 +79,12 @@ const submitAdd = (page) =>
+   page.getByRole('button', { name: copy.addAnother }).click()
+ 
+ const submitContinue = (page) =>
+-  page.getByRole('button', { name: copy.continueButton }).click()
++  page
++    .getByRole('button', {
++      name: sharedCopy.saveActions.saveAndContinue,
++      exact: true
++    })
++    .click()
+ 
+ const uploadDocument = async (page, document = validDocument) => {
+   await fillDocument(page, document)
+@@ -143,7 +149,10 @@ test.describe('document upload page', () => {
+       page.getByRole('button', { name: copy.addAnother })
+     ).toBeVisible()
+     await expect(
+-      page.getByRole('button', { name: copy.continueButton })
++      page.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
+     ).toBeVisible()
+   })
+ 
+@@ -205,10 +214,16 @@ test.describe('document upload page', () => {
+       fileUpload.getByRole('button', { name: copy.addAnother })
+     ).toBeVisible()
+     await expect(
+-      fileUpload.getByRole('button', { name: copy.continueButton })
++      fileUpload.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
+     ).toHaveCount(0)
+     await expect(
+-      page.getByRole('button', { name: copy.continueButton })
++      page.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
+     ).toBeVisible()
+   })
+ 
+@@ -576,10 +591,16 @@ test.describe('document upload saved rows', () => {
+       rowFor(fileUpload, validDocument.accompanyingDocumentReference)
+     ).toBeVisible()
+     await expect(
+-      fileUpload.getByRole('button', { name: copy.continueButton })
++      fileUpload.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
+     ).toHaveCount(0)
+     await expect(
+-      page.getByRole('button', { name: copy.continueButton })
++      page.getByRole('button', {
++        name: sharedCopy.saveActions.saveAndContinue,
++        exact: true
++      })
+     ).toBeVisible()
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+index d35f83dc..634affd7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+@@ -158,7 +158,7 @@
+       </div>
+     </section>
+ 
+-    {{ saveActions(hubHref, { text: copy.continueButton, name: "action", value: "continue" }, sharedCopy.saveActions) }}
++    {{ saveActions(hubHref, { text: sharedCopy.saveActions.saveAndContinue, name: "action", value: "continue" }, sharedCopy.saveActions) }}
+   </form>
+ 
+   <div id="js-scan-status-announcer"

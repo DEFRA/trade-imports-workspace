@@ -1,0 +1,25 @@
+h2. Increment
+
+{{inc-133}} from the {{shared/dr1-parity-union}} backlog.
+
+A trader who fills in the add-a-document form and presses the primary Continue button loses the reference, the date of issue and the chosen file without being told. The fields do post — the dispatcher in {{src/server/app/sets/live-animals/journeys/linear/features/documents/controller.js}} lines 255-279 reads the payload only for the add and remove actions, and every other action reloads page state and redirects. Design release 1 instead treats a part-filled form as an intention to attach: it validates and either saves the document or stays on the page and says what is missing ({{app/routes.js}} lines 10173-10193).
+
+h2. Acceptance criteria
+
+* A Continue post that carries a part-filled add-a-document form runs the same validation the Add path already runs, rather than falling through to the redirect.
+* Where that form validates, the document is added to the notification and the trader moves on to the next page.
+* Where it does not validate, the page re-renders on the same screen with the existing field error messages — "Enter a document reference", "Select a document type", "Enter a date of issue" and "Upload a document" — so nothing the trader entered is lost silently.
+* An untouched add-a-document form still continues with no error. Uploading a document stays optional.
+* Interim rule for "the trader meant to attach something": any of the reference, the date of issue or the file being non-empty. Design release 1 keys this on the document type having been chosen, and the frontend has no document type field until {{documents--document-type-not-asked}} lands, so this interim rule is stricter than Design release 1 and must be recorded in the change as an extrapolation, not as a Design release 1 requirement.
+* "Save and return to hub" is left unchanged — Design release 1 deliberately discards a part-filled form on that action, so only Continue changes.
+* Reuse the existing save path {{postAdd}} at lines 92-129 of the same controller. No new validation, no new copy and no service change.
+
+h2. Notes
+
+Travels with {{inc-136}} (document type field): once the document type exists, the interim non-empty rule should be revisited against Design release 1's document-type-chosen signal.
+
+Falsified by: finding that a Continue post already reaches the frontend's document-saving path. Follow {{action=continue}} through the dispatcher at lines 255-279 — if it reaches {{postAdd}}, or reads {{payload.file}}, {{payload.accompanyingDocumentReference}} or {{payload.accompanyingDocumentDateOfIssue}} before redirecting, this increment is wrong and should be closed.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

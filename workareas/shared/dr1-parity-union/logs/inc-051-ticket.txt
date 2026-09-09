@@ -1,0 +1,21 @@
+h2. Increment
+
+{{inc-051}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Acceptance criteria
+
+* The CPH number page collects the number as three inputs — County, Parish and Holding number — sized {{govuk-input--width-2}}, {{govuk-input--width-3}} and {{govuk-input--width-4}}, with maxlengths of 2, 3 and 4 and a numeric input mode, under one *CPH number* legend.
+* Each part keeps its own visible label — County, Parish, Holding number. DR1's own labels are clipped out of sight by its stylesheet; take the labels, not the picture, because three unlabelled boxes under one legend would be worse than the single field they replace.
+* The controller joins the three parts so the stored value stays the nine bare digits the backend already receives. The wire contract does not move.
+* The existing nine-digit check is kept. DR1 validates nothing on this page, so the frontend's check is the stricter behaviour and must not be copied away.
+* Each part is validated for its own length, so the error names the part that is wrong.
+* The hint teaches the real 2/3/4 grouping: {{For example 12/345/6789}} replaces {{For example, 123456789 or 123/456/789.}} in {{src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js}}. The unslashed alternative is kept only if it is consistent with that grouping.
+* Unit tests cover the three-part parse, the join to nine digits, and the per-part error messages.
+* The E2E specs and visual baselines in the tests repo are updated for the new page.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Frontend: {{src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk}} lines 11-23
+Prototype: {{app/views/partials/cph-number-input.html}} lines 17-53

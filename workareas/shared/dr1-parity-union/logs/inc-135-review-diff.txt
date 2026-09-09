@@ -1,0 +1,142 @@
+diff --git a/src/server/app/model/obligations/evaluator.test.js b/src/server/app/model/obligations/evaluator.test.js
+index 79a0f2c4..48f466c9 100644
+--- a/src/server/app/model/obligations/evaluator.test.js
++++ b/src/server/app/model/obligations/evaluator.test.js
+@@ -1020,7 +1020,7 @@ describe('V4 — mixed lines drive per-line identifier gating', () => {
+ })
+ 
+ // ---------------------------------------------------------------------------
+-// Accompanying Documents — 0..10 user-driven indexed group. The four
++// Accompanying Documents — 0..15 user-driven indexed group. The four
+ // document metadata fields are plain `status: 'mandatory'` within the
+ // group; the upload-return fields are optional. The cap rides
+ // `requires.maxEntries` via `groupInvariantErrors`.
+@@ -1188,22 +1188,22 @@ describe('V4 — accompanying documents: a partial document keeps every field ow
+   })
+ })
+ 
+-describe('V4 — accompanying documents: the 0..10 cap', () => {
++describe('V4 — accompanying documents: the 0..15 cap', () => {
+   const documentsOf = (count) =>
+     Object.fromEntries(
+       Array.from({ length: count }, (_, i) => [`d${i}`, 'ITAHC'])
+     )
+ 
+-  it('ten inferred upload-only document instances raise no invariant error', () => {
++  it('fifteen inferred upload-only document instances raise no invariant error', () => {
+     const state = evaluator.evaluate({
+-      [documentUploadId.id]: documentsOf(10)
++      [documentUploadId.id]: documentsOf(15)
+     })
+     expect(groupInvariantErrors(documents, state)).toEqual([])
+   })
+ 
+-  it('an eleventh inferred upload-only document instance trips MAX_ENTRIES', () => {
++  it('a sixteenth inferred upload-only document instance trips MAX_ENTRIES', () => {
+     const state = evaluator.evaluate({
+-      [documentUploadId.id]: documentsOf(11)
++      [documentUploadId.id]: documentsOf(16)
+     })
+     expect(groupInvariantErrors(documents, state)).toEqual([
+       {
+@@ -1211,8 +1211,8 @@ describe('V4 — accompanying documents: the 0..10 cap', () => {
+         groupId: documents.id,
+         groupName: 'documents',
+         errorCode: 'obligation.accompanyingDocument.tooMany',
+-        maxEntries: 10,
+-        actual: 11
++        maxEntries: 15,
++        actual: 16
+       }
+     ])
+   })
+diff --git a/src/server/app/sets/live-animals/docs/limits.md b/src/server/app/sets/live-animals/docs/limits.md
+index d1746b86..e2f5519e 100644
+--- a/src/server/app/sets/live-animals/docs/limits.md
++++ b/src/server/app/sets/live-animals/docs/limits.md
+@@ -1,9 +1,9 @@
+ # Live-animals limits and edges
+ 
+-## Accompanying documents are capped at ten
++## Accompanying documents are capped at fifteen
+ 
+-The document collection has a maximum of ten entries. The set manifest declares the
+-cardinality and the documents feature enforces it on its write path.
++The document collection has a maximum of fifteen entries. The set manifest declares
++the cardinality and the documents feature enforces it on its write path.
+ 
+ ## Commodity rules are set data
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+index 5fd03660..ba4c9efa 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+@@ -406,12 +406,12 @@ describe('documents — listing, scanning and removing', () => {
+     expect(prefetched.statusCode).toBe(404)
+   })
+ 
+-  it('Should refuse an eleventh document with the maximum message and append nothing', async () => {
+-    const tenDocuments = Array.from({ length: MAX_DOCUMENTS }, () =>
++  it('Should refuse a document past the cap with the maximum message and append nothing', async () => {
++    const documentsAtCapacity = Array.from({ length: MAX_DOCUMENTS }, () =>
+       storedDocument()
+     )
+     const result = await driveHandler(post, {
+-      seed: { documents: tenDocuments },
++      seed: { documents: documentsAtCapacity },
+       payload: { action: 'add', ...validDocument, file: pdfFile() }
+     })
+     expect(result.response.statusCode).toBe(400)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
+index 838158c6..6ecfd63c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
+@@ -397,14 +397,14 @@ describe('statusOf — the documents MAX_ENTRIES cap', () => {
+   })
+ 
+   it('Should fulfil the documents part at the cap', () => {
+-    const answers = completeDocuments(10)
++    const answers = completeDocuments(15)
+     expect(
+       statusOf(['documents'], answers, inScope, evaluateAnswers(answers))
+     ).toBe(FULFILLED)
+   })
+ 
+   it('Should block the documents part beyond the cap', () => {
+-    const answers = completeDocuments(11)
++    const answers = completeDocuments(16)
+     expect(
+       statusOf(['documents'], answers, inScope, evaluateAnswers(answers))
+     ).toBe(IN_PROGRESS)
+diff --git a/src/server/app/sets/live-animals/obligations/sections/documents.js b/src/server/app/sets/live-animals/obligations/sections/documents.js
+index ea4bc61d..9d099830 100644
+--- a/src/server/app/sets/live-animals/obligations/sections/documents.js
++++ b/src/server/app/sets/live-animals/obligations/sections/documents.js
+@@ -1,15 +1,15 @@
+ // -----------------------------------------------------------------------------
+-// Accompanying Documents — user-driven indexed group (0..10 documents
++// Accompanying Documents — user-driven indexed group (0..15 documents
+ // per notification).
+ //
+-// Spec source: traders can attach between 0 and 10 accompanying
++// Spec source: traders can attach between 0 and 15 accompanying
+ // documents to a notification; each document carries its own type /
+ // attachment / reference / date-of-issue. Confluence page 6497338582
+ // still reads as if there is at most one document — the model is the
+ // source of truth until the page is amended.
+ //
+ // Per-document mandatoriness is expressed at the field level
+-// (`status: 'mandatory'` within the group). `requires.maxEntries: 10`
++// (`status: 'mandatory'` within the group). `requires.maxEntries: 15`
+ // caps the collection; the documents feature also caps the Add
+ // affordance but the invariant is authoritative for after-the-fact
+ // defence (e.g. a redeploy lowering the cap after the user saved
+@@ -22,7 +22,7 @@ export const documents = {
+   // No applyTo — top-level user-driven indexed group, always in scope.
+   // Instance ids are session-scoped counter values (`doc1`, `doc2`, …).
+   requires: {
+-    maxEntries: 10,
++    maxEntries: 15,
+     maxEntriesErrorCode: 'obligation.accompanyingDocument.tooMany'
+   }
+ }

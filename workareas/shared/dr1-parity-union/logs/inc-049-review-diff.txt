@@ -1,0 +1,174 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index b7922077..2b94a51e 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -329,11 +329,11 @@ export const answerRolesAndAddresses = async (page) => {
+ 
+ export const answerCphNumber = async (page) => {
+   await expect(
+-    page.getByRole('heading', { name: 'County Parish Holding (CPH)' })
++    page.getByRole('heading', {
++      name: 'Add the county parish holding number (CPH)'
++    })
+   ).toBeVisible()
+-  await page
+-    .getByLabel('County Parish Holding (CPH)')
+-    .fill(values.countyParishHoldingCph)
++  await page.getByLabel('CPH number').fill(values.countyParishHoldingCph)
+   await save(page)
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js
+index 81678c60..c2a4a671 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js
+@@ -28,7 +28,7 @@ const rowsFor = async (seed, query = {}) =>
+   driveHandler(getAddresses, { seed, query })
+ const cphRowOf = (rows) =>
+   rows.find((row) =>
+-    row.key.html.includes('County Parish Holding number (CPH)')
++    row.key.html.includes('County parish holding (CPH) number')
+   )
+ const CONSIGNOR_TITLE = 'Consignor or exporter'
+ const CONSIGNOR_SELECT_SLUG = 'consignors/select'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+index 4e776968..bfb01cf3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js
+@@ -7,8 +7,8 @@ export const copy = {
+     change: 'Newid',
+     add: 'Ychwanegu',
+     cph: {
+-      title: 'Rhif Daliad Plwyf Sirol (CPH)',
+-      hint: 'Mae’r rhif Daliad Plwyf Sirol (CPH) yn adnabod y daliad lle bydd yr anifeiliaid yn cael eu cadw.'
++      title: 'Rhif daliad plwyf sirol (CPH)',
++      hint: 'Mae’r rhif daliad plwyf sirol (CPH) yn adnabod y daliad lle bydd yr anifeiliaid yn cael eu cadw.'
+     }
+   },
+   parties: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+index e5da9cbe..ebf31957 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js
+@@ -6,8 +6,8 @@ export const copy = {
+     change: 'Change',
+     add: 'Add',
+     cph: {
+-      title: 'County Parish Holding number (CPH)',
+-      hint: 'The County Parish Holding (CPH) number identifies the holding where the animals will be kept.'
++      title: 'County parish holding (CPH) number',
++      hint: 'The county parish holding (CPH) number identifies the holding where the animals will be kept.'
+     }
+   },
+   parties: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 4282e11d..c0b8c198 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -88,7 +88,7 @@ const COUNTRY_OF_ORIGIN_KEY = 'Country of origin'
+ const PURPOSE_IN_MARKET_KEY = 'Purpose in the market'
+ const REGION_CODE_KEY = 'Region of origin code'
+ const UNWEANED_KEY = 'Includes unweaned animals'
+-const CPH_KEY = 'County Parish Holding number (CPH)'
++const CPH_KEY = 'County parish holding (CPH) number'
+ const TRANSITED_COUNTRIES_KEY =
+   'Countries that the consignment will travel through'
+ const PACKAGES_KEY = 'Number of packages'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index f81443d8..bf951e31 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -83,7 +83,7 @@ export const copy = {
+     consignee: 'Derbynnydd',
+     importer: 'Mewnforiwr',
+     placeOfDestination: 'Man cyrchfan',
+-    cph: 'Rhif Daliad Plwyf Sirol (CPH)',
++    cph: 'Rhif daliad plwyf sirol (CPH)',
+     documentReference: 'Cyfeirnod y ddogfen',
+     documentType: 'Math o ddogfen',
+     dateOfIssue: 'Dyddiad cyhoeddi',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index ca54321e..c7dc1c5b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -82,7 +82,7 @@ export const copy = {
+     consignee: 'Consignee',
+     importer: 'Importer',
+     placeOfDestination: 'Place of destination',
+-    cph: 'County Parish Holding number (CPH)',
++    cph: 'County parish holding (CPH) number',
+     documentReference: 'Document reference',
+     documentType: 'Document type',
+     dateOfIssue: 'Date of issue',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
+index db6f8a32..5c6e99ea 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.cy.js
+@@ -1,8 +1,8 @@
+ // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+ export const copy = {
+-  title: 'Rhif Daliad Plwyf Sirol (CPH)',
++  title: 'Ychwanegu rhif daliad plwyf sirol (CPH)',
+   cph: {
+-    label: 'Rhif Daliad Plwyf Sirol (CPH)',
++    label: 'Rhif CPH',
+     hint: 'Er enghraifft, 123456789 neu 123/456/789.'
+   },
+   errors: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
+index b9538ae6..0645750e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/copy/copy.en.js
+@@ -1,7 +1,7 @@
+ export const copy = {
+-  title: 'County Parish Holding (CPH)',
++  title: 'Add the county parish holding number (CPH)',
+   cph: {
+-    label: 'County Parish Holding (CPH)',
++    label: 'CPH number',
+     hint: 'For example, 123456789 or 123/456/789.'
+   },
+   errors: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+index 71b73511..911f97ba 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js
+@@ -38,6 +38,12 @@ test.describe('cph-number feature', () => {
+   })
+ 
+   test('renders the CPH copy', async ({ page }) => {
++    // The page heading is an instruction in its own right, directly under the
++    // caption — the field beneath it carries the shorter label, so the two are
++    // separate strings rather than one label doubling as the heading.
++    await expect(
++      page.locator('span.govuk-caption-l + h1.govuk-heading-l')
++    ).toHaveText(copy.title)
+     await expect(page.getByLabel(copy.cph.label)).toHaveAccessibleDescription(
+       copy.cph.hint
+     )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+index 621f9406..3561752e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk
+@@ -7,6 +7,8 @@
+   {% include "shared/error-summary.njk" %}
+ 
+   {{ sectionCaption(caption) }}
++  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
++
+   <form method="post" novalidate>
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+@@ -14,11 +16,7 @@
+     {{ govukInput({
+       id: "countyParishHoldingCph",
+       name: "countyParishHoldingCph",
+-      label: {
+-        text: copy.cph.label,
+-        isPageHeading: true,
+-        classes: "govuk-label--l"
+-      },
++      label: { text: copy.cph.label, classes: "govuk-label--s" },
+       hint: { text: copy.cph.hint },
+       classes: "govuk-input--width-10",
+       value: values.countyParishHoldingCph,

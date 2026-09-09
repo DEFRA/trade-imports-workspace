@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-137}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 lets a trader drag a document onto a dashed-outline drop zone and tells them on the page which file is chosen. The frontend renders a bare file input, so the trader gets whatever the browser draws — a small grey "Choose File" button with "No file chosen" beside it, in the browser's own type, with no drop target and nothing announced to a screen reader.
+
+The fix is to turn on the JavaScript-enhanced file upload that govuk-frontend 6.3 already ships, not to rebuild the prototype's bespoke markup.
+
+h2. Acceptance criteria
+
+* The file control on the documents page is rendered with the govuk-frontend file upload component's JavaScript enhancement enabled, changing the {{govukFileUpload}} call at {{src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk}} lines 51-58.
+* The component's JavaScript is initialised in the page's client bundle at {{src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js}}.
+* The rendered page shows a styled "Choose file" button beside the words "or drop file", inside a drop zone that spans the control.
+* The page carries a live region, marked {{aria-live="polite"}}, that reads "No file chosen" until a file is picked and then names the chosen file, so the choice is announced to a screen reader.
+* A trader can drag a document from their desktop onto the zone to attach it.
+* When the attachment fails validation the drop zone takes the component's own error style.
+* The unenhanced file input remains behind the enhancement as the fallback for a trader whose JavaScript does not run.
+* No bespoke drop-zone markup, classes or hand-rolled component is added — the design-system component satisfies the requirement.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Screens: {{fe-documents}} against {{dr1-upload-documents}}. Prototype evidence: {{app/views/upload-documents.html}} lines 172-179.

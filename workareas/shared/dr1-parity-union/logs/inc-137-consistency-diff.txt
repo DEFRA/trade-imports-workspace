@@ -1,0 +1,503 @@
+diff --git a/eslint.config.js b/eslint.config.js
+index 1d21899c..a7599282 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -12,7 +12,11 @@ export default [
+     // page.evaluate callbacks in Playwright specs run in the browser
+     files: ['**/*.fit.spec.js'],
+     languageOptions: {
+-      globals: { Option: 'readonly', getComputedStyle: 'readonly' }
++      globals: {
++        DataTransfer: 'readonly',
++        Option: 'readonly',
++        getComputedStyle: 'readonly'
++      }
+     }
+   },
+   {
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index b0f9237e..c84e64c2 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -214,8 +214,10 @@ export const unlockSections = async (page) => {
+   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+ }
+ 
++// The enhanced file upload hides the input behind a drop-zone button, so the
++// file goes to the input itself rather than to the labelled control.
+ const setUploadFile = (page, filename, bytes) =>
+-  page.getByLabel('Upload a file').setInputFiles({
++  page.locator('input[type="file"]').setInputFiles({
+     name: filename,
+     mimeType: 'application/pdf',
+     buffer: bytes ?? Buffer.from('%PDF-1.4 test upload')
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js
+index 2c60390c..dafd6c7b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/index.js
+@@ -1,5 +1,11 @@
++import { createAll, FileUpload } from 'govuk-frontend'
++
+ import { initUploadForm } from './oversize-validation/submit.js'
+ import { startPolling } from './scan-status/poll.js'
+ 
++// Enhance the file input into a drop zone before anything else reads the DOM:
++// the component renames the input and puts a button in front of it.
++createAll(FileUpload)
++
+ startPolling()
+ initUploadForm()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/control.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/control.js
+new file mode 100644
+index 00000000..beaa3f3c
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/control.js
+@@ -0,0 +1,17 @@
++const WRAPPER = '.govuk-file-upload-wrapper'
++const BUTTON = '.govuk-file-upload-button'
++const INPUT = 'input[type="file"]'
++
++// The enhanced file upload hides the input inside a wrapper and puts a button
++// in front of it that takes over the field's id. An error therefore has to
++// point at, and describe, the button — while the error class and the file
++// itself still belong to the input. Unenhanced, the two are the same element.
++
++export const uploadControl = (input) =>
++  input.closest(WRAPPER)?.querySelector(BUTTON) ?? input
++
++export const uploadInput = (control) =>
++  control.closest(WRAPPER)?.querySelector(INPUT) ?? control
++
++// The error message goes above the whole drop zone, not inside it.
++export const uploadAnchor = (input) => input.closest(WRAPPER) ?? input
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/field-error.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/field-error.js
+index 3eeea9e6..89b60e9f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/field-error.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/field-error.js
+@@ -1,4 +1,5 @@
+ import { createEl } from '../dom.js'
++import { uploadAnchor, uploadControl } from './control.js'
+ import { ARIA_DESCRIBEDBY, CLIENT_ERROR_MARKER } from './markers.js'
+ 
+ const buildErrorMessageEl = (id, message, hiddenPrefix) => {
+@@ -20,14 +21,14 @@ const buildErrorMessageEl = (id, message, hiddenPrefix) => {
+ // Strip the error id token: any server-rendered error element with the same
+ // id was removed above, so keeping the token would duplicate the join and
+ // leave a dangling idref once the client error clears.
+-const applyInputErrorState = (input, errorId) => {
+-  const previousDescribedby = (input.getAttribute(ARIA_DESCRIBEDBY) ?? '')
++const applyControlErrorState = (input, control, errorId) => {
++  const previousDescribedby = (control.getAttribute(ARIA_DESCRIBEDBY) ?? '')
+     .split(/\s+/)
+     .filter((token) => token && token !== errorId)
+     .join(' ')
+-  input.dataset.clientErrorPrevDescribedby = previousDescribedby
+-  input.dataset.clientError = `${CLIENT_ERROR_MARKER}-input`
+-  input.setAttribute(
++  control.dataset.clientErrorPrevDescribedby = previousDescribedby
++  control.dataset.clientError = `${CLIENT_ERROR_MARKER}-input`
++  control.setAttribute(
+     ARIA_DESCRIBEDBY,
+     [previousDescribedby, errorId].filter(Boolean).join(' ')
+   )
+@@ -39,14 +40,16 @@ export const renderFieldError = (input, message, hiddenPrefix) => {
+   if (!group) {
+     return
+   }
++  const control = uploadControl(input)
+   group.classList.add('govuk-form-group--error')
+   group.dataset.clientError = `${CLIENT_ERROR_MARKER}-group`
+-  group.querySelector(`#${input.id}-error`)?.remove()
++  group.querySelector(`#${control.id}-error`)?.remove()
+   const errorMessage = buildErrorMessageEl(
+-    `${input.id}-error`,
++    `${control.id}-error`,
+     message,
+     hiddenPrefix
+   )
+-  input.parentNode.insertBefore(errorMessage, input)
+-  applyInputErrorState(input, errorMessage.id)
++  const anchor = uploadAnchor(input)
++  anchor.parentNode.insertBefore(errorMessage, anchor)
++  applyControlErrorState(input, control, errorMessage.id)
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/submit.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/submit.js
+index 088cc5b0..0b552896 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/submit.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/client/oversize-validation/submit.js
+@@ -1,4 +1,5 @@
+ import { exceedsMaxFileSize } from '../../upload-config.js'
++import { uploadControl, uploadInput } from './control.js'
+ import { getOrCreateSummary } from './error-summary.js'
+ import { renderFieldError } from './field-error.js'
+ import { ARIA_DESCRIBEDBY, CLIENT_ERROR_MARKER } from './markers.js'
+@@ -6,16 +7,16 @@ import { ARIA_DESCRIBEDBY, CLIENT_ERROR_MARKER } from './markers.js'
+ const clientErrorSelector = (suffix) =>
+   `[data-client-error="${CLIENT_ERROR_MARKER}-${suffix}"]`
+ 
+-const restoreInputState = (input) => {
+-  input.classList.remove('govuk-file-upload--error')
+-  const previous = input.dataset.clientErrorPrevDescribedby ?? ''
++const restoreControlState = (control) => {
++  uploadInput(control).classList.remove('govuk-file-upload--error')
++  const previous = control.dataset.clientErrorPrevDescribedby ?? ''
+   if (previous) {
+-    input.setAttribute(ARIA_DESCRIBEDBY, previous)
++    control.setAttribute(ARIA_DESCRIBEDBY, previous)
+   } else {
+-    input.removeAttribute(ARIA_DESCRIBEDBY)
++    control.removeAttribute(ARIA_DESCRIBEDBY)
+   }
+-  delete input.dataset.clientError
+-  delete input.dataset.clientErrorPrevDescribedby
++  delete control.dataset.clientError
++  delete control.dataset.clientErrorPrevDescribedby
+ }
+ 
+ const clearGroupError = (group) => {
+@@ -31,7 +32,9 @@ const clearPreviousClientErrors = (form) => {
+     .querySelectorAll(clientErrorSelector('message'))
+     .forEach((message) => message.remove())
+   form.querySelectorAll(clientErrorSelector('group')).forEach(clearGroupError)
+-  form.querySelectorAll(clientErrorSelector('input')).forEach(restoreInputState)
++  form
++    .querySelectorAll(clientErrorSelector('input'))
++    .forEach(restoreControlState)
+ }
+ 
+ const focusSummaryTitle = (summary) => {
+@@ -51,7 +54,11 @@ const onUploadSubmit = (form, container, maxFileSize) => (event) => {
+   }
+   event.preventDefault()
+   const message = form.dataset.oversizeError
+-  const summary = getOrCreateSummary(container, message, fileInput.id)
++  const summary = getOrCreateSummary(
++    container,
++    message,
++    uploadControl(fileInput).id
++  )
+   renderFieldError(fileInput, message, container.dataset.errorPrefix)
+   focusSummaryTitle(summary)
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+index cba2254a..4f619252 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+@@ -54,7 +54,12 @@ export const copy = {
+     label: 'Uwchlwytho ffeil',
+     mustBe: 'Rhaid i’ch ffeil fod:',
+     smallerThan: 'yn llai na',
+-    a: 'yn'
++    a: 'yn',
++    chooseButton: 'Dewiswch ffeil',
++    dropInstruction: 'neu ollwng ffeil',
++    noFileChosen: 'Dim ffeil wedi’i dewis',
++    enteredDropZone: 'Wedi mynd i mewn i’r parth gollwng',
++    leftDropZone: 'Wedi gadael y parth gollwng'
+   },
+   addAnother: 'Cadw ac ychwanegu un arall',
+   table: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index a65b6f82..22b977c4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -49,7 +49,15 @@ export const copy = {
+     label: 'Upload a file',
+     mustBe: 'Your file must be:',
+     smallerThan: 'smaller than',
+-    a: 'a'
++    a: 'a',
++    // Wording for the JavaScript-enhanced drop zone. These match the design
++    // system's own defaults so the control reads the way traders meet it
++    // elsewhere on GOV.UK.
++    chooseButton: 'Choose file',
++    dropInstruction: 'or drop file',
++    noFileChosen: 'No file chosen',
++    enteredDropZone: 'Entered drop zone',
++    leftDropZone: 'Left drop zone'
+   },
+   addAnother: 'Save and add another',
+   table: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+index 7daa1f22..da078977 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+@@ -76,6 +76,16 @@ describe('#copy', () => {
+     )
+   })
+ 
++  it('Should word the drop zone the way the design system does', () => {
++    // The template hands these to govukFileUpload, so a drift here silently
++    // reworded a control traders meet elsewhere on GOV.UK.
++    expect(copy.file.chooseButton).toBe('Choose file')
++    expect(copy.file.dropInstruction).toBe('or drop file')
++    expect(copy.file.noFileChosen).toBe('No file chosen')
++    expect(copy.file.enteredDropZone).toBe('Entered drop zone')
++    expect(copy.file.leftDropZone).toBe('Left drop zone')
++  })
++
+   it('Should build the upload-config messages from the copy templates', () => {
+     expect(FILE_TYPE_MESSAGE).toBe(
+       copy.errors.fileType(ALLOWED_FILE_TYPES_HINT)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js
+new file mode 100644
+index 00000000..44f821ff
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js
+@@ -0,0 +1,134 @@
++import AxeBuilder from '@axe-core/playwright'
++import { expect, test } from '@playwright/test'
++import {
++  signIn,
++  startNotification,
++  unlockSections
++} from '../../../../../../../../../../fit/live-animals-journey.js'
++import { copy } from '../copy/copy.en.js'
++
++const DROPPED_FILENAME = 'dropped-itahc.pdf'
++const CHOSEN_FILENAME = 'chosen-itahc.pdf'
++
++const dropZone = (page) => page.locator('.govuk-file-upload-wrapper')
++
++const dropZoneButton = (page) =>
++  page.getByRole('button', { name: copy.file.label })
++
++const chosenFileStatus = (page) =>
++  page.locator('.govuk-file-upload-button__status')
++
++// The status line only exists once the page's bundle has enhanced the input,
++// so waiting for it is what tells the test the drop zone is listening.
++const openDocuments = async (page) => {
++  await startNotification(page)
++  await unlockSections(page)
++  await page.getByRole('link', { name: 'Uploaded documents' }).click()
++  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
++  await expect(chosenFileStatus(page)).toHaveText(copy.file.noFileChosen)
++}
++
++const fileInput = (page) => page.locator('input[type="file"]')
++
++const chooseFile = (page, filename) =>
++  fileInput(page).setInputFiles({
++    name: filename,
++    mimeType: 'application/pdf',
++    buffer: Buffer.from('%PDF-1.4 drop zone test')
++  })
++
++// The only way to prove a drop target: hand the button a real DataTransfer
++// carrying a file, the way a browser does when a trader lets go of one.
++const dropFile = async (page, filename) => {
++  const dataTransfer = await page.evaluateHandle((name) => {
++    const transfer = new DataTransfer()
++    transfer.items.add(
++      new File(['%PDF-1.4 dropped'], name, { type: 'application/pdf' })
++    )
++    return transfer
++  }, filename)
++  await dropZoneButton(page).dispatchEvent('drop', { dataTransfer })
++}
++
++test.describe('document upload drop zone', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await openDocuments(page)
++  })
++
++  test('offers a drop zone with the service’s own choose-file button and drop instruction', async ({
++    page
++  }) => {
++    await expect(dropZone(page)).toBeVisible()
++    const zone = dropZoneButton(page)
++    await expect(zone).toBeVisible()
++    await expect(zone).toContainText(copy.file.chooseButton)
++    await expect(zone).toContainText(copy.file.dropInstruction)
++  })
++
++  test('says no file is chosen, in a live region, until one is', async ({
++    page
++  }) => {
++    const status = chosenFileStatus(page)
++    await expect(status).toHaveText(copy.file.noFileChosen)
++    await expect(status).toHaveAttribute('aria-live', 'polite')
++
++    await chooseFile(page, CHOSEN_FILENAME)
++
++    await expect(status).toHaveText(CHOSEN_FILENAME)
++  })
++
++  test('takes a file dropped onto the zone and names it', async ({ page }) => {
++    await dropFile(page, DROPPED_FILENAME)
++
++    await expect(chosenFileStatus(page)).toHaveText(DROPPED_FILENAME)
++    // The file has to reach the input, not just the status line — that is what
++    // the form posts.
++    await expect
++      .poll(() =>
++        fileInput(page).evaluate((input) => input.files[0]?.name ?? null)
++      )
++      .toBe(DROPPED_FILENAME)
++  })
++
++  test('keeps the plain input behind the zone as the no-JavaScript fallback', async ({
++    page
++  }) => {
++    await expect(fileInput(page)).toHaveCount(1)
++    await expect(fileInput(page)).toHaveAttribute('name', 'file')
++  })
++
++  test('draws the failed attachment on the zone itself', async ({ page }) => {
++    await page.getByRole('button', { name: copy.addAnother }).click()
++
++    await expect(page.locator('#file-error')).toContainText(
++      copy.errors.fileRequired
++    )
++    // The red border is the form group's error state reaching the drop zone,
++    // so the failure is drawn on the control the trader has to go back to.
++    await expect(
++      page.locator('.govuk-form-group--error .govuk-file-upload-wrapper')
++    ).toHaveCount(1)
++    await expect(dropZoneButton(page)).toHaveAccessibleDescription(
++      new RegExp(copy.errors.fileRequired)
++    )
++  })
++
++  test('the chosen-file drop zone has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await chooseFile(page, CHOSEN_FILENAME)
++    await expect(chosenFileStatus(page)).toHaveText(CHOSEN_FILENAME)
++
++    const results = await new AxeBuilder({ page })
++      .withTags(['wcag2a', 'wcag2aa'])
++      .analyze()
++    const seriousOrCritical = results.violations.filter(({ impact }) =>
++      ['serious', 'critical'].includes(impact)
++    )
++    expect(
++      seriousOrCritical,
++      `Document upload drop zone has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++    ).toEqual([])
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+index a5127bce..f64479d4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+@@ -41,7 +41,9 @@ const uploadDocument = async (page, document) => {
+   await page
+     .getByLabel(copy.dateOfIssue.label)
+     .fill(`${issued.day}/${issued.month}/${issued.year}`)
+-  await page.getByLabel(copy.file.label).setInputFiles({
++  // The enhanced upload hides the input behind a drop-zone button, so the file
++  // goes to the input itself rather than to the labelled control.
++  await page.locator('input[type="file"]').setInputFiles({
+     name: document.filename,
+     mimeType: 'application/pdf',
+     buffer: Buffer.from('%PDF-1.4 scan status test')
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+index e276d785..89d6b03c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+@@ -34,8 +34,16 @@ const errorLink = (page, message) =>
+ const rowFor = (scope, reference) =>
+   scope.locator('.govuk-table__row', { hasText: reference })
+ 
++// The enhanced upload hides the input inside a drop zone and puts a button in
++// front of it carrying the field's id, so the element that takes the file and
++// the control the trader reaches are two different elements.
++const fileInput = (page) => page.locator('input[type="file"]')
++
++const uploadControl = (page) =>
++  page.getByRole('button', { name: copy.file.label })
++
+ const setUploadFile = (page, filename, bytes, mimeType = 'application/pdf') =>
+-  page.getByLabel(copy.file.label).setInputFiles({
++  fileInput(page).setInputFiles({
+     name: filename,
+     mimeType,
+     buffer: bytes ?? Buffer.from('%PDF-1.4 test upload')
+@@ -114,10 +122,7 @@ test.describe('document upload page', () => {
+       page.getByLabel(copy.dateOfIssue.label)
+     ).toHaveAccessibleDescription(copy.dateOfIssue.hint)
+     await expect(page.getByLabel(copy.documentType.label)).toHaveValue('')
+-    await expect(page.getByLabel(copy.file.label)).toHaveAttribute(
+-      'accept',
+-      ACCEPT_ATTRIBUTE
+-    )
++    await expect(fileInput(page)).toHaveAttribute('accept', ACCEPT_ATTRIBUTE)
+     await expect(page.getByText(copy.file.mustBe)).toBeVisible()
+     await expect(
+       page.getByText(`${copy.file.smallerThan} ${MAX_FILE_SIZE_LABEL}`)
+@@ -187,7 +192,9 @@ test.describe('document upload page', () => {
+     await expect(fileUpload.getByLabel(copy.reference.label)).toBeVisible()
+     await expect(fileUpload.getByLabel(copy.documentType.label)).toBeVisible()
+     await expect(fileUpload.getByLabel(copy.dateOfIssue.label)).toBeVisible()
+-    await expect(fileUpload.getByLabel(copy.file.label)).toBeVisible()
++    await expect(
++      fileUpload.getByRole('button', { name: copy.file.label })
++    ).toBeVisible()
+     await expect(
+       fileUpload.getByRole('button', { name: copy.addAnother })
+     ).toBeVisible()
+@@ -357,7 +364,7 @@ test.describe('document upload file validation', () => {
+     const link = errorLink(page, copy.errors.fileRequired)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.getByLabel(copy.file.label)).toBeFocused()
++    await expect(uploadControl(page)).toBeFocused()
+     await expectPreservedMetadata(page)
+   })
+ 
+@@ -376,7 +383,7 @@ test.describe('document upload file validation', () => {
+     const link = errorLink(page, FILE_TYPE_MESSAGE)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.getByLabel(copy.file.label)).toBeFocused()
++    await expect(uploadControl(page)).toBeFocused()
+     await expectPreservedMetadata(page)
+   })
+ })
+@@ -403,7 +410,7 @@ test.describe('document upload oversize validation', () => {
+       page.locator('li[data-client-error="file-size-summary"]')
+     ).toContainText(OVERSIZE_FILE_MESSAGE)
+     await expect(page.locator('.govuk-error-summary__title')).toBeFocused()
+-    await expect(page.getByLabel(copy.file.label)).toHaveAttribute(
++    await expect(uploadControl(page)).toHaveAttribute(
+       'aria-describedby',
+       /file-error/
+     )
+@@ -427,7 +434,7 @@ test.describe('document upload oversize validation', () => {
+     const link = errorLink(page, OVERSIZE_FILE_MESSAGE)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.getByLabel(copy.file.label)).toBeFocused()
++    await expect(uploadControl(page)).toBeFocused()
+     await expect(page.getByText(copy.empty)).toBeVisible()
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+index 4980fd50..763d5354 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+@@ -104,12 +104,21 @@
+           </ul>
+         {%- endset -%}
+ 
++        {# javascript: true asks for the enhanced control — a drop zone with a
++           live region naming the chosen file (design release 1). The plain
++           input stays behind it for a trader whose JavaScript does not run. #}
+         {{ govukFileUpload({
+           id: "file",
+           name: "file",
+           label: { text: copy.file.label, classes: "govuk-label--s" },
+           hint: { html: fileHintHtml },
+           attributes: { accept: acceptAttribute },
++          javascript: true,
++          chooseFilesButtonText: copy.file.chooseButton,
++          dropInstructionText: copy.file.dropInstruction,
++          noFileChosenText: copy.file.noFileChosen,
++          enteredDropZoneText: copy.file.enteredDropZone,
++          leftDropZoneText: copy.file.leftDropZone,
+           errorMessage: errors.file and { text: errors.file }
+         }) }}
+ 

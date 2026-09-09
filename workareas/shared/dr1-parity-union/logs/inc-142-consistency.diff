@@ -1,0 +1,412 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index 6e03a131..75c0960f 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -162,7 +162,7 @@ test.describe('live-animals journey glue', () => {
+       page.locator('.govuk-table__row', {
+         hasText: document.accompanyingDocumentReference
+       })
+-    ).toContainText('Safe')
++    ).toContainText('Check completed')
+     await page.getByRole('button', { name: 'Save and continue' }).click()
+ 
+     await page.getByRole('link', { name: 'Check and submit' }).click()
+@@ -207,7 +207,7 @@ test.describe('live-animals journey glue', () => {
+       page.locator('.govuk-table__row', {
+         hasText: secondDocument.accompanyingDocumentReference
+       })
+-    ).toContainText('Safe')
++    ).toContainText('Check completed')
+     await expect(page).toHaveURL(
+       /\/accompanying-documents\?change=1(?:&attempt=\d+)?$/
+     )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+index 7f305040..c1676505 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js
+@@ -46,6 +46,11 @@ const pdfFile = (filename = 'itahc-certificate.pdf', size = 8) => ({
+ })
+ 
+ const DATE_OF_ISSUE_TEXT = '12/12/2025'
++// The wording design release 1 gives the Status column. Pinned as literals
++// here rather than read from copy.en.js so a reworded tag fails a test rather
++// than following the copy silently; copy.test.js pins the same two words.
++const TAG_SCANNING = 'Scanning for virus'
++const TAG_COMPLETE = 'Check completed'
+ const VIRUS_NOTES_FILENAME = 'virus-notes.pdf'
+ // The one member of the service enum design release 1 keeps to itself.
+ const EXCLUDED_TYPE = 'HEALTH_CERTIFICATE'
+@@ -270,27 +275,59 @@ describe('documents — listing, scanning and removing', () => {
+     expect(row[0].text).toBe('GBHC1234567890')
+     expect(row[1].text).toBe('Veterinary health certificate')
+     expect(row[2].text).toBe(DATE_OF_ISSUE_TEXT)
+-    expect(row[3].html).toContain('Safe')
++    expect(row[3].html).toContain(TAG_COMPLETE)
+     expect(row[4].html).toContain('<button type="submit"')
+     expect(row[4].html).toContain('name="action" value="remove:0"')
+     expect(row[4].html).not.toContain('href')
+   })
+ 
+-  it('Should show Checking on every render of a fresh upload until a refresh-link GET settles it to Safe', async () => {
++  it('Should precede the status tag with a hidden label naming the document', async () => {
++    // The tag itself is two or three words with no context, so the hidden
++    // label is the only thing telling a screen-reader user which row's check
++    // it reports. It sits outside the tag, which the client rewrites in place
++    // on a poll, so it survives every status change.
++    const result = await driveHandler(get, {
++      seed: { documents: [storedDocument()] }
++    })
++    expect(result.view.context.rows[0][3].html).toBe(
++      '<span class="govuk-visually-hidden">Virus check status for GBHC1234567890</span>' +
++        '<strong class="govuk-tag govuk-tag--green">Check completed</strong>'
++    )
++  })
++
++  it('Should escape a document reference before putting it in the hidden label', async () => {
++    // The cell is built as HTML, so Nunjucks does not escape it for us and a
++    // reference is whatever the trader typed.
++    const result = await driveHandler(get, {
++      seed: {
++        documents: [
++          storedDocument({
++            accompanyingDocumentReference: '<script>alert("x")</script>'
++          })
++        ]
++      }
++    })
++    expect(result.view.context.rows[0][3].html).toContain(
++      '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;'
++    )
++    expect(result.view.context.rows[0][3].html).not.toContain('<script>')
++  })
++
++  it('Should show Scanning for virus on every render of a fresh upload until a refresh-link GET settles it to Check completed', async () => {
+     const uploadId = await documentUploads.upload({ filename: 'itahc.pdf' })
+     const seed = {
+       documents: [storedDocument({ uploadId, filename: 'itahc.pdf' })]
+     }
+     const first = await driveHandler(get, { seed })
+-    expect(first.view.context.rows[0][3].html).toContain('Checking')
++    expect(first.view.context.rows[0][3].html).toContain(TAG_SCANNING)
+     expect(first.view.context.anyPending).toBe(true)
+     expect(first.view.context.refreshHref).toContain('attempt=1')
+ 
+     const stillPending = await driveHandler(get, { seed })
+-    expect(stillPending.view.context.rows[0][3].html).toContain('Checking')
++    expect(stillPending.view.context.rows[0][3].html).toContain(TAG_SCANNING)
+ 
+     const refreshed = await driveHandler(get, { seed, query: { attempt: '1' } })
+-    expect(refreshed.view.context.rows[0][3].html).toContain('Safe')
++    expect(refreshed.view.context.rows[0][3].html).toContain(TAG_COMPLETE)
+     expect(refreshed.view.context.anyPending).toBe(false)
+ 
+     const settled = await driveHandler(post, {
+@@ -543,7 +580,7 @@ describe('documents — scan-status poll and view context', () => {
+       documents: [storedDocument({ uploadId, filename: 'itahc.pdf' })]
+     }
+     const beforePoll = await driveHandler(get, { seed })
+-    expect(beforePoll.view.context.rows[0][3].html).toContain('Checking')
++    expect(beforePoll.view.context.rows[0][3].html).toContain(TAG_SCANNING)
+ 
+     const polled = await driveHandler(statusRoute.handler, { seed })
+     expect(polled.response.payload.documents).toEqual([
+@@ -551,7 +588,7 @@ describe('documents — scan-status poll and view context', () => {
+     ])
+ 
+     const afterPoll = await driveHandler(get, { seed })
+-    expect(afterPoll.view.context.rows[0][3].html).toContain('Safe')
++    expect(afterPoll.view.context.rows[0][3].html).toContain(TAG_COMPLETE)
+   })
+ 
+   it('Should report a rejected scan so the client can rewrite the tag', async () => {
+@@ -603,7 +640,7 @@ describe('documents — scan-status poll and view context', () => {
+     expect(result.view.context.oversizeFileMessage).toBe(OVERSIZE_FILE_MESSAGE)
+     expect(JSON.parse(result.view.context.scanCopyJson)).toEqual({
+       COMPLETE: {
+-        text: 'Safe',
++        text: TAG_COMPLETE,
+         classes: 'govuk-tag--green',
+         announcement: 'Document scan complete: the file is safe to use'
+       },
+@@ -613,7 +650,7 @@ describe('documents — scan-status poll and view context', () => {
+         announcement:
+           'Document scan failed: a virus was found. Remove the file and try again.'
+       },
+-      PENDING: { text: 'Checking', classes: 'govuk-tag--blue' },
++      PENDING: { text: TAG_SCANNING, classes: 'govuk-tag--blue' },
+       UNKNOWN: { text: 'Unknown', classes: 'govuk-tag--grey' }
+     })
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+index ba3da417..2e0a44cd 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.cy.js
+@@ -98,11 +98,12 @@ export const copy = {
+   empty: 'Nid ydych wedi ychwanegu unrhyw ddogfennau eto.',
+   notProvided: 'Heb ei ddarparu',
+   scanTags: {
+-    safe: 'Diogel',
++    complete: 'Gwiriad wedi’i gwblhau',
+     virusFound: 'Firws wedi’i ganfod',
+-    checking: 'Yn gwirio',
++    scanning: 'Yn sganio am firws',
+     unknown: 'Anhysbys'
+   },
++  scanStatusHidden: (reference) => `Statws gwirio firws ar gyfer ${reference}`,
+   announce: {
+     safe: 'Sgan y ddogfen wedi’i gwblhau: mae’r ffeil yn ddiogel i’w defnyddio',
+     virusFound:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index c77fce94..aac34844 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -98,12 +98,20 @@ export const copy = {
+   stillChecking: 'Still checking some documents. Refresh again in a moment.',
+   empty: 'You have not added any documents yet.',
+   notProvided: 'Not provided',
++  // The Status column reports the virus check, not a verdict on the file
++  // (design release 1): "Scanning for virus" while it runs, "Check completed"
++  // once it has. Virus found and Unknown have no design release 1 counterpart
++  // and keep the wording this service already uses.
+   scanTags: {
+-    safe: 'Safe',
++    complete: 'Check completed',
+     virusFound: 'Virus found',
+-    checking: 'Checking',
++    scanning: 'Scanning for virus',
+     unknown: 'Unknown'
+   },
++  // Read out ahead of the tag so the status names the document it belongs to.
++  // The tag carries no other text, so without this a screen reader hears
++  // "Check completed" with nothing saying what was checked.
++  scanStatusHidden: (reference) => `Virus check status for ${reference}`,
+   announce: {
+     safe: 'Document scan complete: the file is safe to use',
+     virusFound:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+index 88569418..5233fbaa 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+@@ -114,6 +114,35 @@ describe('#copy', () => {
+     expect(copy.file.leftDropZone).toBe('Left drop zone')
+   })
+ 
++  it('Should name the virus check in the status tags rather than judge the file', () => {
++    // Design release 1 words the Status column as a report on the check: what
++    // is running, then that it has finished. "Safe" was a verdict about the
++    // file and "Checking" never said what was being checked.
++    expect(copy.scanTags.scanning).toBe('Scanning for virus')
++    expect(copy.scanTags.complete).toBe('Check completed')
++    // The other two states are ours, not design release 1's, and stand.
++    expect(copy.scanTags.virusFound).toBe('Virus found')
++    expect(copy.scanTags.unknown).toBe('Unknown')
++  })
++
++  it('Should name the document the status belongs to for a screen reader', () => {
++    // The tag carries no other text, so the hidden label is the only thing
++    // tying "Check completed" to the row it sits in. The reference is an
++    // argument, never a literal, in both decks.
++    expect(copy.scanStatusHidden('GBHC1234567890')).toBe(
++      'Virus check status for GBHC1234567890'
++    )
++    expect(copy.scanStatusHidden('ITAHC-000123')).toBe(
++      'Virus check status for ITAHC-000123'
++    )
++    // Asserted on the interpolation rather than the whole sentence: the Welsh
++    // wording is machine-draft awaiting a translator, the reference is what
++    // must survive that review.
++    expect(copyCy.scanStatusHidden('GBHC1234567890')).toContain(
++      'GBHC1234567890'
++    )
++  })
++
+   it('Should build the upload-config messages from the copy templates', () => {
+     expect(FILE_TYPE_MESSAGE).toBe(
+       copy.errors.fileType(ALLOWED_FILE_TYPES_HINT)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+index 09b9a486..10afb228 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js
+@@ -60,7 +60,7 @@ test.describe('document scan-status rendering', () => {
+     await openDocuments(page)
+   })
+ 
+-  test('blocks continue while checking, then renders Safe and allows the journey to continue', async ({
++  test('blocks continue while the scan runs, then renders Check completed and allows the journey to continue', async ({
+     page
+   }) => {
+     test.slow()
+@@ -72,7 +72,12 @@ test.describe('document scan-status rendering', () => {
+       'data-scan-status',
+       SCAN_STATUS.PENDING
+     )
+-    await expect(row).toContainText(copy.scanTags.checking)
++    await expect(row).toContainText(copy.scanTags.scanning)
++    // The hidden label sits outside the tag the client rewrites, so it names
++    // the document for the pending state and for the settled one after it.
++    await expect(statusCell).toContainText(
++      copy.scanStatusHidden(document.accompanyingDocumentReference)
++    )
+ 
+     await page
+       .getByRole('button', {
+@@ -84,11 +89,14 @@ test.describe('document scan-status rendering', () => {
+       errorSummaryLink(page, copy.errors.cannotContinue)
+     ).toBeVisible()
+ 
+-    await expect(row).toContainText(copy.scanTags.safe)
++    await expect(row).toContainText(copy.scanTags.complete)
+     await expect(statusCell).toHaveAttribute(
+       'data-scan-status',
+       SCAN_STATUS.COMPLETE
+     )
++    await expect(statusCell).toContainText(
++      copy.scanStatusHidden(document.accompanyingDocumentReference)
++    )
+     await page
+       .getByRole('button', {
+         name: sharedCopy.saveActions.saveAndContinue,
+@@ -105,7 +113,7 @@ test.describe('document scan-status rendering', () => {
+     const document = documentNamed('SCAN-VIRUS-0001', 'virus-invoice.pdf')
+     await uploadDocument(page, document)
+     const row = rowFor(page, document.accompanyingDocumentReference)
+-    await expect(row).toContainText(copy.scanTags.checking)
++    await expect(row).toContainText(copy.scanTags.scanning)
+     await expect(row).toContainText(copy.scanTags.virusFound)
+     await expect(
+       errorSummaryLink(page, copy.errors.virusFound(document.filename))
+@@ -155,9 +163,9 @@ test.describe('document scan-status polling', () => {
+ 
+     const settlingRow = rowFor(page, settling.accompanyingDocumentReference)
+     const stuckRow = rowFor(page, stuck.accompanyingDocumentReference)
+-    await expect(settlingRow).toContainText(copy.scanTags.checking)
+-    await expect(settlingRow).toContainText(copy.scanTags.safe)
+-    await expect(stuckRow).toContainText(copy.scanTags.checking)
++    await expect(settlingRow).toContainText(copy.scanTags.scanning)
++    await expect(settlingRow).toContainText(copy.scanTags.complete)
++    await expect(stuckRow).toContainText(copy.scanTags.scanning)
+     await expect(
+       settlingRow.getByRole('link', {
+         name: `${copy.viewFile} ${copy.viewFileHidden(1)}`
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+index cd3eed9e..51f64d5d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js
+@@ -520,7 +520,7 @@ test.describe('document upload continue', () => {
+ 
+     const row = rowFor(page, validDocument.accompanyingDocumentReference)
+     await expect(row).toContainText(copy.types.ITAHC)
+-    await expect(row).toContainText(copy.scanTags.safe)
++    await expect(row).toContainText(copy.scanTags.complete)
+ 
+     await submitContinue(page)
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+@@ -574,9 +574,9 @@ test.describe('document upload saved rows', () => {
+     await expect(row).toContainText(
+       `${issued.day}/${issued.month}/${issued.year}`
+     )
+-    await expect(row).toContainText(copy.scanTags.checking)
++    await expect(row).toContainText(copy.scanTags.scanning)
+     await expect(page.getByLabel(copy.reference.label)).toHaveValue('')
+-    await expect(row).toContainText(copy.scanTags.safe)
++    await expect(row).toContainText(copy.scanTags.complete)
+   })
+ 
+   test('keeps the saved row inside the file upload group and the page actions outside it', async ({
+@@ -626,7 +626,7 @@ test.describe('document upload saved rows', () => {
+     test.slow()
+     await uploadDocument(page)
+     const row = rowFor(page, validDocument.accompanyingDocumentReference)
+-    await expect(row).toContainText(copy.scanTags.safe)
++    await expect(row).toContainText(copy.scanTags.complete)
+     const viewFile = row.getByRole('link', {
+       name: `${copy.viewFile} ${copy.viewFileHidden(1)}`
+     })
+@@ -721,7 +721,7 @@ test.describe('document upload capacity and accessibility', () => {
+     await uploadDocument(page)
+     await expect(
+       rowFor(page, validDocument.accompanyingDocumentReference)
+-    ).toContainText(copy.scanTags.safe)
++    ).toContainText(copy.scanTags.complete)
+     await expectNoSeriousAxeViolations(page, 'Populated document upload page')
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js
+index 63b5aeb2..b1adb239 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js
+@@ -1,12 +1,13 @@
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
++import { escapeHtml } from './text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+ export const SCAN_STATUS_TAGS = {
+   COMPLETE: {
+-    text: copy.scanTags.safe,
++    text: copy.scanTags.complete,
+     classes: 'govuk-tag--green',
+     announcement: copy.announce.safe
+   },
+@@ -15,7 +16,7 @@ export const SCAN_STATUS_TAGS = {
+     classes: 'govuk-tag--red',
+     announcement: copy.announce.virusFound
+   },
+-  PENDING: { text: copy.scanTags.checking, classes: 'govuk-tag--blue' }
++  PENDING: { text: copy.scanTags.scanning, classes: 'govuk-tag--blue' }
+ }
+ 
+ export const UNKNOWN_TAG = {
+@@ -28,7 +29,12 @@ export const scanCopyJson = JSON.stringify({
+   UNKNOWN: UNKNOWN_TAG
+ })
+ 
+-export const statusTagHtml = (scanStatus) => {
++// The hidden label sits outside the tag the client rewrites in place, so it
++// survives a polled status change and names the document for every state.
++export const statusTagHtml = (scanStatus, reference) => {
+   const tag = SCAN_STATUS_TAGS[scanStatus] ?? UNKNOWN_TAG
+-  return `<strong class="govuk-tag ${tag.classes}">${tag.text}</strong>`
++  return (
++    `<span class="govuk-visually-hidden">${escapeHtml(copy.scanStatusHidden(reference))}</span>` +
++    `<strong class="govuk-tag ${tag.classes}">${tag.text}</strong>`
++  )
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/text.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/text.js
+index c99dbd38..4f3985f8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/text.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/text.js
+@@ -11,3 +11,15 @@ export const cellText = (value) => (value ?? '').trim() || NOT_PROVIDED
+ 
+ export const dateText = (value) =>
+   isBlank(value) ? NOT_PROVIDED : `${value.day}/${value.month}/${value.year}`
++
++// Table cells built as HTML lose Nunjucks' auto-escaping, so anything the
++// trader typed — a document reference, say — is escaped here before it is
++// interpolated into a cell's markup.
++export const escapeHtml = (value) =>
++  value
++    .toString()
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&#39;')
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js
+index ce9c3ab6..b577220b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/rows.js
+@@ -37,7 +37,10 @@ export const actionsCell = ({ entry, index, scanStatus, journeyId }) => ({
+ // The scan-status cell carries the polling contract: the client rewrites the
+ // tag it holds in place, keyed by upload id.
+ export const statusCell = (entry, scanStatus) => ({
+-  html: statusTagHtml(scanStatus),
++  html: statusTagHtml(
++    scanStatus,
++    cellText(entry.accompanyingDocumentReference)
++  ),
+   attributes: entry.uploadId
+     ? { 'data-upload-id': entry.uploadId, 'data-scan-status': scanStatus }
+     : undefined

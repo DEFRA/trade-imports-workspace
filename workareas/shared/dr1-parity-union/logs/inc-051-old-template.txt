@@ -1,0 +1,43 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "shared/save-actions.njk" import saveActions %}
+{% from "shared/section-caption.njk" import sectionCaption %}
+
+{% block journeyContent %}
+  {% include "shared/error-summary.njk" %}
+
+  {{ sectionCaption(caption) }}
+  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+
+  {# Collapsed above the field, so it costs a trader who already knows nothing
+     and gives one who does not a definition and where to look. #}
+  {% set cphHelpHtml %}
+    <p class="govuk-body">{{ copy.help.definition }}</p>
+    <p class="govuk-body">{{ copy.help.whereToFind }}</p>
+  {% endset %}
+
+  {{ govukDetails({
+    summaryText: copy.help.summary,
+    html: cphHelpHtml
+  }) }}
+
+  <form method="post" novalidate>
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+
+    {{ govukInput({
+      id: "countyParishHoldingCph",
+      name: "countyParishHoldingCph",
+      label: { text: copy.cph.label, classes: "govuk-label--s" },
+      hint: { text: copy.cph.hint },
+      classes: "govuk-input--width-10",
+      value: values.countyParishHoldingCph,
+      errorMessage: errors.countyParishHoldingCph and { text: errors.countyParishHoldingCph }
+    }) }}
+
+    {# Second page of the addresses row — reached from the hub's addresses
+       page, not from the hub, so it ends with the primary alone. #}
+    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+  </form>
+{% endblock %}

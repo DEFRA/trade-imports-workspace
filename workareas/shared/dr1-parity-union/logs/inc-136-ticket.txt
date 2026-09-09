@@ -1,0 +1,20 @@
+h2. Increment
+
+{{inc-136}} from the {{shared/dr1-parity-union}} backlog.
+
+DR1 asks the user to choose a document type from a list of thirteen before saving a document. The frontend never asks: the upload form offers only a document reference, a date of issue and a file, and the controller guesses the type by token-matching the uploaded filename against the document-types enum, falling back to OTHER. A user who uploads {{scan001.pdf}} gets OTHER; the same file renamed {{itahc.pdf}} gets ITAHC. Nothing shows the guess before it is saved and nothing lets the user put it right afterwards. The obligation model already declares {{accompanyingDocumentType}} mandatory for every document, so a field the model requires has no surface at all.
+
+h2. Acceptance criteria
+
+* The documents upload form shows a *Document type* select between *Document reference* and *Date of issue*, bound to the existing {{accompanyingDocumentType}} obligation declared in {{src/server/app/sets/live-animals/obligations/sections/documents.js}}.
+* The select opens on the placeholder "Select one" and offers DR1's thirteen options in DR1's order: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other.
+* Saving a row with no type chosen fails validation with the message "Select a document type", linked from the error summary to the select.
+* The saved documents table shows the type the user chose, not a type derived from the filename.
+* The ITAHC option reads "Intra Trade Animal Health Certificate (ITAHC)" in full, not the bare acronym, in both the select and the saved table.
+* {{HEALTH_CERTIFICATE}} is not offered as an option to a design-release user.
+* {{deriveDocumentTypeFromFilename}} and its unit test are retired once the field is bound, and nothing else calls it.
+* The existing unit and E2E coverage for the documents feature is updated for the new field and passes.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

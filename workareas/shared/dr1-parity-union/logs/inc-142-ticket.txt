@@ -1,0 +1,30 @@
+h2. Increment
+
+{{inc-142}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+The Status column of the saved-documents table shows a tag per document. While the virus scan runs the frontend shows a blue tag reading "Checking"; once it clears, a green tag reading "Safe". Design release 1 uses the same column and the same two colours but different words: "Scanning for virus" while the check runs and "Check completed" once it has ({{app/routes.js:9082-9083}}).
+
+Neither frontend label says what Design release 1's says. "Checking" does not name what is being checked, and "Safe" is a verdict about the file where Design release 1's is a statement about the check. The frontend tag also carries no other text, so a screen-reader user hears "Safe" with nothing saying what is safe or what was checked. Design release 1 precedes each tag with visually hidden text naming the document — "Virus check status for ITAHC-000123" ({{app/views/upload-documents.html:217-224}}).
+
+h2. Acceptance criteria
+
+* The PENDING scan-status tag reads "Scanning for virus" instead of "Checking", changed in {{src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js}} at lines 52-57.
+* The COMPLETE scan-status tag reads "Check completed" instead of "Safe", changed in the same copy file.
+* The Welsh copy file alongside {{copy.en.js}} is updated to match.
+* Each scan-status tag is preceded by visually hidden text reading "Virus check status for \{reference}", where the reference is the document that row belongs to, matching Design release 1.
+* Tag colours are unchanged: blue for PENDING, green for COMPLETE.
+* The live-updating tag shows the new wording. The client-side polling payload is generated from the same copy at {{src/server/app/sets/live-animals/journeys/linear/features/documents/view-model/fragments/status.js:26-29}}, so it should change with the copy file and need no separate edit. Confirm it does.
+* The two frontend-only states, "Virus found" and "Unknown", are left exactly as they are. They have no counterpart in Design release 1.
+* E2E specs and visual baselines in the tests repo are updated for the new wording.
+
+h2. Verification
+
+Searching the captured DOM of {{fe-documents-scanning}} finds "Scanning for virus" and "Check completed", and no longer finds "Checking" or "Safe" in the two scan-status cells or in the {{data-scan-copy}} payload on the same page.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Screens: {{fe-documents-populated}}, {{fe-documents-scanning}}, {{dr1-upload-documents-populated}}, {{dr1-upload-documents-scanning}}

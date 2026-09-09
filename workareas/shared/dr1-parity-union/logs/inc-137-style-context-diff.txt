@@ -1,0 +1,68 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+index a65b6f82..22b977c4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.en.js
+@@ -49,7 +49,15 @@ export const copy = {
+     label: 'Upload a file',
+     mustBe: 'Your file must be:',
+     smallerThan: 'smaller than',
+-    a: 'a'
++    a: 'a',
++    // Wording for the JavaScript-enhanced drop zone. These match the design
++    // system's own defaults so the control reads the way traders meet it
++    // elsewhere on GOV.UK.
++    chooseButton: 'Choose file',
++    dropInstruction: 'or drop file',
++    noFileChosen: 'No file chosen',
++    enteredDropZone: 'Entered drop zone',
++    leftDropZone: 'Left drop zone'
+   },
+   addAnother: 'Save and add another',
+   table: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+index 7daa1f22..da078977 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js
+@@ -76,6 +76,16 @@ describe('#copy', () => {
+     )
+   })
+ 
++  it('Should word the drop zone the way the design system does', () => {
++    // The template hands these to govukFileUpload, so a drift here silently
++    // reworded a control traders meet elsewhere on GOV.UK.
++    expect(copy.file.chooseButton).toBe('Choose file')
++    expect(copy.file.dropInstruction).toBe('or drop file')
++    expect(copy.file.noFileChosen).toBe('No file chosen')
++    expect(copy.file.enteredDropZone).toBe('Entered drop zone')
++    expect(copy.file.leftDropZone).toBe('Left drop zone')
++  })
++
+   it('Should build the upload-config messages from the copy templates', () => {
+     expect(FILE_TYPE_MESSAGE).toBe(
+       copy.errors.fileType(ALLOWED_FILE_TYPES_HINT)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+index 4980fd50..763d5354 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/documents/template.njk
+@@ -104,12 +104,21 @@
+           </ul>
+         {%- endset -%}
+ 
++        {# javascript: true asks for the enhanced control — a drop zone with a
++           live region naming the chosen file (design release 1). The plain
++           input stays behind it for a trader whose JavaScript does not run. #}
+         {{ govukFileUpload({
+           id: "file",
+           name: "file",
+           label: { text: copy.file.label, classes: "govuk-label--s" },
+           hint: { html: fileHintHtml },
+           attributes: { accept: acceptAttribute },
++          javascript: true,
++          chooseFilesButtonText: copy.file.chooseButton,
++          dropInstructionText: copy.file.dropInstruction,
++          noFileChosenText: copy.file.noFileChosen,
++          enteredDropZoneText: copy.file.enteredDropZone,
++          leftDropZoneText: copy.file.leftDropZone,
+           errorMessage: errors.file and { text: errors.file }
+         }) }}
+ 

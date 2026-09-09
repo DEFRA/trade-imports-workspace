@@ -52,7 +52,7 @@ describe('tim workspace test CLI', () => {
     seedNodeRepo('trade-imports-animals-admin', {
       test: 'node -e "process.exit(3)"'
     })
-    seedNodeRepo('trade-imports-animals-tests', {
+    seedNodeRepo('trade-imports-ins-frontend', {
       test: 'node -e "process.exit(0)"'
     })
     const { stdout, exitCode } = await execa(
@@ -64,12 +64,26 @@ describe('tim workspace test CLI', () => {
     const payload = JSON.parse(stdout.trim())
     const byRepo = Object.fromEntries(payload.result.map((r) => [r.repo, r]))
     expect(byRepo['trade-imports-animals-admin'].ok).toBe(false)
-    // tests still ran after admin failed — serial, not short-circuit
-    expect(byRepo['trade-imports-animals-tests'].ok).toBe(true)
+    // ins-frontend still ran after admin failed — serial, not short-circuit
+    expect(byRepo['trade-imports-ins-frontend'].ok).toBe(true)
   }, 30_000)
 
   test('skips Node repos with no test script', async () => {
     seedNodeRepo('trade-imports-animals-frontend', { build: 'echo' })
+    const { stdout, exitCode } = await execa(
+      'node',
+      [cliPath, 'workspace', 'test', '--workspace', workspace, '--json'],
+      { reject: false }
+    )
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.result).toHaveLength(0)
+  }, 30_000)
+
+  test('skips trade-imports-animals-tests even when it has a test script', async () => {
+    seedNodeRepo('trade-imports-animals-tests', {
+      test: 'node -e "process.exit(3)"'
+    })
     const { stdout, exitCode } = await execa(
       'node',
       [cliPath, 'workspace', 'test', '--workspace', workspace, '--json'],

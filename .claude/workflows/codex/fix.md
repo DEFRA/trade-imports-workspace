@@ -22,6 +22,11 @@ Workspace root `<workspace>`; plan of record `<backlog>`; logs
 
 - **Apply the ruled fixes only.** If you spot something else, put it in `notes` — do not fix it. The
   scope fence is the whole point of this step.
+- **But finish every fix you start.** The fence stops you taking on other people's work; it never excuses
+  leaving your own half-applied. A fix that needs a test updated, a caller repointed or a second file
+  touched to be correct is not finished until those are done. If in doubt, do it. Where you genuinely
+  leave something out, write it in `notes` as \`DEFERRED: <what>\` on its own line so the orchestrator can
+  find it and confirm it is tracked — deferred work buried in prose gets lost.
 - **A ruling overrides the finding's own suggested fix.** Where the prompt says the judge overruled the
   reviewer, follow the judge.
 - If a fix turns out to be **wrong or impossible** — it breaks a test that is pinning correct behaviour,

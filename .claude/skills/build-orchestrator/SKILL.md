@@ -236,6 +236,30 @@ Under `lifecycle: full`, landed means merged. The loop writes `ticket`, `branch`
 and `prs` as soon as each exists, so a retry later resumes rather than raising a
 second ticket.
 
+### 3b. Catch anything the increment deferred
+
+The workflow's return value carries what its stages left undone. Stages are told to
+finish their own work and to mark anything they genuinely left out as
+`DEFERRED: <what>` on its own line. **Read the result for those, and for a CI fixer's
+"out of scope" or "not done" wording** — a CI fixer works after every reviewer has
+finished, so what it defers is the least-seen work in the whole pipeline.
+
+For each one, check it against `backlog.json` before you move on:
+
+```bash
+jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key // "-") + "  " + (.detail // "")' workareas/<workarea>/backlog.json | grep -i '<keyword>'
+```
+
+- **Already covered** by a `todo` increment → nothing to do. Say which one in your
+  per-increment line. Do NOT raise a second increment for it: two increments doing the
+  same work collide when the second finds the first has done it.
+- **Not covered** → add an increment for it. Append it with a fresh id (never renumber),
+  `dependsOn` the increment that surfaced it, and a `notes` line saying which increment
+  and stage it came from. Then it is tracked, and the run continues.
+
+Work that exists only in a stage's prose is work that will be lost. This step is what
+stops that, and it costs one query.
+
 ### 4. Report one line, then go again
 
 Per increment, to the user:

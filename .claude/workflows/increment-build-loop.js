@@ -1128,6 +1128,11 @@ HOW TO BUILD IT — route on the increment's "repo" field:
 RULES:
 - Implement EXACTLY the increment's scope. Do not fix adjacent things you notice — report them in notes instead;
   a later increment or the judge will deal with them.
+- **Work that belongs to THIS increment gets DONE, never deferred.** The scope fence stops you wandering into
+  other people's increments; it is not a licence to leave your own half-finished. If something is in scope and
+  you are unsure whether to do it, DO IT — an increment that lands incomplete is worse than one that lands wide.
+  Where you genuinely leave something out, say so in notes as \`DEFERRED: <what>\`, on its own line, so the
+  orchestrator can find it and check it is tracked. Deferred work that exists only in prose gets lost.
 - Every user-facing string goes in copy.en.js AND copy.cy.js with identical structure. NO display logic in
   obligations or the model.
 - Write the specs the increment lists (co-located Playwright spec, axe test) — they are part of the increment,

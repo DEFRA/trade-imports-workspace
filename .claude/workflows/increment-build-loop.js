@@ -1400,8 +1400,19 @@ ${GUARDRAILS}
 ${readIncrement(id)}
 TASK — run the increment's "verification" array IN ORDER, each to its own log under ${WORKAREA_TILDE}/logs/ named
 \`${id}-<step>.log\`, reading each log ONCE. Every step must be green before you run the next.
-- If a step is red, you get at most 3 repair attempts across the whole ladder. A repair fixes the CODE — never
-  weaken, skip or delete a test to get green, and never mark a step green that was not.
+- If a step is red, you get at most 3 repair attempts across the whole ladder. A repair normally fixes the CODE —
+  never weaken, skip or delete a test to get green, and never mark a step green that was not.
+- **The one exception: an assertion that is wrong about the framework, not about the application.** A test can
+  itself be the defect — most often an exact-text assertion against a component that renders more than the text
+  it was given, such as a GDS macro that prepends visually-hidden fallback text. Correcting such an assertion is
+  NOT weakening it, and you may do it, but ONLY when all four hold: the application renders the right thing and
+  you can cite the evidence (the accessible-tree snapshot in \`test-results/*/error-context.md\`, or the rendered
+  markup); the assertion could never have passed against correct output; other consumers of the same component
+  in this repo do not assert it that way either; and the corrected assertion still pins the same behaviour, in
+  the same place, as tightly. Then say plainly in your summary which assertion you corrected and why it was
+  unpassable. If any of the four does not hold, the test is catching a real defect — fix the code instead.
+  This matters because a browser suite is run by nobody else: the implementor cannot run it, so an assertion
+  authored wrongly against a browser-only component reaches you and stops here unless you can correct it.
 - Where the verification names more than one leg — a platform change that must leave every consumer still working —
   run every leg, not just the one your increment was aimed at.
 - If the ladder includes an E2E leg, read \`test-results/*/error-context.md\` for any failure rather than grepping

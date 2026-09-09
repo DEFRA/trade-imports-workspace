@@ -3221,9 +3221,24 @@
       "dependsOn": [
         "inc-042"
       ],
-      "status": "todo",
-      "commit": null,
-      "failure_reason": null
+      "status": "done",
+      "commit": "dc71bca",
+      "failure_reason": null,
+      "ticket": "EUDPA-529",
+      "branch": "feat/EUDPA-529-reinstate-the-answers-read-sanitiser-for",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/49",
+          "number": 49,
+          "merged": true,
+          "sha": "9bad1cf69bfa09e6d37f4e96a3e0f3d3db7663ba"
+        }
+      ],
+      "openQuestions": [
+        "The increment detail asks for \"Tests in the set plus a fit case\", and no fit spec was added. The fit suite runs with STUB_MODE=true (playwright.config.js:65) against the static STUB_BOOK (services/address-book/stub/index.js:14-28), whose every record is minted with deleted:false (stub/from-row.js:14) and which has no write path; the picker only commits an id that already resolves (features/place-of-destination/controller.js:148-158). A dangling or soft-deleted reference is therefore unproducible through the browser today, so the fit case is dropped as unreachable rather than silently unmet. The rendered-page proof (\"a deleted record renders Not provided on CYA\") is already scheduled downstream in the e2e-destination-section extra (sets/high-risk-plants/spec/backlog-extras.json, anchored after key:restore-answers-read-sanitiser), which runs against the real address book where deletion is producible. Confirm that is where it lands, or raise a separate increment to give stub mode a deletion affordance (a deleted:true STUB_BOOK record plus searchStub filtering it out, and a way to reach it from an already-committed answer) if a frontend-local fit case is wanted.",
+        "Placement constraint for any future fit case here: playwright.config.js:47-49 scopes the features project testDir to journeys/linear/features, and vitest.config.js:17 excludes *.fit.spec.js only under features/**. A fit spec placed under journeys/linear/parties/ would be skipped by Playwright and collected — and fail — by vitest. It must go under features/place-of-destination/."
+      ]
     },
     {
       "type": "e2e",

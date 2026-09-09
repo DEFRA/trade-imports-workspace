@@ -37,9 +37,19 @@ Read the personas that define the house standard and apply all three:
 - `<skills>/review/references/CONSISTENCY_REVIEWER.md` — the cross-file lens
 - `<skills>/code-style/references/STYLE_FILE_REVIEWER.md` — style and conventions
 
-And the tech-specific rules for whichever language the change is in:
-`<workspace>/docs/best-practices/java/` (incl. `testing/unit.md`, `testing/integration.md`),
-`<workspace>/docs/best-practices/node/`, `<workspace>/docs/best-practices/playwright/`.
+**Then look at the change (Step 2) before you load any tech-specific rules**, and load only the ones the
+change actually needs:
+
+- Java in the diff → `<workspace>/docs/best-practices/java/` (incl. `testing/unit.md`,
+  `testing/integration.md`)
+- Node or Nunjucks in the diff → `<workspace>/docs/best-practices/node/`
+- Playwright specs in the diff → `<workspace>/docs/best-practices/playwright/`
+
+A language absent from the diff needs none of its rules. **Read each file at most once.** These documents
+run to thousands of lines between them; re-reading one you have already read is how a review runs out of
+room before it reports, and a review that never reports is worse than a thin one. If you find yourself
+about to re-open a document, write the finding instead. Budget your reading for the diff, which is the
+only thing here nobody else has looked at.
 
 ## Step 1b — the programme's own concerns
 
@@ -105,3 +115,9 @@ defect.
 
 Your final message must satisfy the JSON schema given via `--output-schema`. Findings only — no fixes
 applied, nothing committed, no file written.
+
+**Always report, even if you did not finish.** Reporting is not the last thing you do if there is room
+left — it is the thing you must not run out of room for. If you are running low, stop reading, stop
+hunting, and emit what you have, saying in the summary which files or concerns you did not reach. A
+partial review that reports is useful; a thorough one that never emits a final message is worth nothing
+and halts the whole increment, because a stage that produces no result can never be read as approval.

@@ -3393,12 +3393,33 @@
       "dependsOn": [
         "inc-047"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "a6c073a 45546b3",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/53",
+          "number": 53,
+          "merged": true,
+          "sha": "e9cd4d4478e0b0eb16fa277e41269d6a9a421ed7"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/189",
+          "number": 189,
+          "merged": true,
+          "sha": "1c2939e9f4e149a871a4fe54e276772e506a7443"
+        }
+      ],
       "failure_reason": null,
       "title": null,
+      "ticket": "EUDPA-540",
+      "branch": "feat/EUDPA-540-add-the-consignment-contact-select-page",
       "e2e": "tests/e2e/features/plants/contact.spec.ts with a page object for consignment-contact-select: radios list every address-book record with name and address hint; save with nothing selected returns to the hub with the row In progress; picking a record completes the row. Evidence: behaviours lenient-page-validation, address-book-picker.",
-      "notes": "MERGED-IN (2026-09-09): absorbed inc-049 (e2e-contact-section), whose spec covers this increment own page. This increment now delivers the page AND its tests-repo E2E spec on one branch across both repos, so the local ladder proves them together instead of a later increment discovering the mismatch in CI. The absorbed spec is in the e2e field. The repo field is deliberately absent, which the loop reads as frontend and tests.\n\nCYA ASSERTION MOVED OUT (2026-09-09): the absorbed inc-049 spec required the Check your answers Contact card to show the record name, address, telephone number and email address. Check your answers is not built until inc-050, which comes after this increment, so that assertion is carried forward in inc-055 instead."
+      "notes": "MERGED-IN (2026-09-09): absorbed inc-049 (e2e-contact-section), whose spec covers this increment own page. This increment now delivers the page AND its tests-repo E2E spec on one branch across both repos, so the local ladder proves them together instead of a later increment discovering the mismatch in CI. The absorbed spec is in the e2e field. The repo field is deliberately absent, which the loop reads as frontend and tests.\n\nCYA ASSERTION MOVED OUT (2026-09-09): the absorbed inc-049 spec required the Check your answers Contact card to show the record name, address, telephone number and email address. Check your answers is not built until inc-050, which comes after this increment, so that assertion is carried forward in inc-055 instead.",
+      "openQuestions": [
+        "JUDGE inc-048 (2026-09-09): the acceptance criterion \"save with nothing selected returns to the hub with the row In progress\" is NOT delivered. A blank save leaves the Contact row \"Not yet started\", and both new test layers assert that (consignment-contact-select.fit.spec.js \"blank contact permits ... and leaves the task incomplete\"; trade-imports-animals-tests tests/e2e/features/plants/contact.spec.ts:64-65). Why it cannot be fixed inside this increment: bridge/status/classification/index.js partStarted derives \"started\" from isAnswered(answers.contactAddress), and bridge/status/completeness judges fulfilment with the same !isBlankValue predicate, so for the single-part \"contact\" row (journeys/linear/flow/task-rows.js) started implies FULFILLED. IN_PROGRESS is unreachable. isBlankValue({}) is true, so no sentinel answer can separate the two without writing a non-blank fake address that would leak into Check your answers and the backend mapper. Delivering \"In progress\" therefore needs a new visited-page signal threaded into bridge/status/index.js statusOf, a persistence home for it, purge semantics, and consistent application to every other lenient page (origin, consignor, arrival, identification numbers) - a status-model extension plus a product decision, not an add-page change. Note also that the cited source behaviour does not support the AC: live-animals import-reason/controller.js commits a blank string on a blank save and likewise leaves its row \"Not yet started\", so the journey-spec.json lenient-page-validation sentence \"Save and return with the row still In progress\" over-claims against its own source. DECIDE one of: (a) amend this AC, the absorbed inc-049 e2e wording and the journey-spec lenient-page-validation sentence to say the row is left incomplete / Not yet started; or (b) raise a separate increment for a visited-page status extension applied across all lenient pages."
+      ]
     },
     {
       "type": "e2e",
@@ -3696,6 +3717,19 @@
       ],
       "recipe": "docs/best-practices/node/code-style.md; repos/trade-imports-plants-frontend/src/server/app/docs/README.md; repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/README.md",
       "notes": "Added by the orchestrator on 2026-09-07 at Sam's request ('add something to the end of the increment backlog which will be to diff against animals repo for the common areas — there's been refactoring in animals this will need to sync up with'). Not in the spec's backlog-extras.json; if the backlog is ever regenerated from the spec this increment must be re-added or the extra written into backlog-extras.json first.\n\nPORT BASE: plants commit dba9c35 says it ported animals origin/main @2ed89aef. On 2026-09-07 the animals checkout's main is still at 2ed89aef, so the drift is on animals origin or on branches not yet merged; the increment measures the range when it runs, not now. Engine files already differ in 80 places between the two checkouts (5,862 differing lines outside sets/), but most of that is the shape commit's deliberate journey-neutral rewrite of the engine tests, not animals refactoring — the classification step exists to keep those apart.\n\nDELIBERATE DIVERGENCES the sync must not undo (from dba9c35's own message): the engine tests run against a synthetic fixture manifest under test/fixtures/ with structural names (scalarField, statusToggle, branchSelector, compositeBlockOne, itemCollection, nestedCollection); the commodity-reference seam (commodityCodeFor, speciesLabel, typeTextForId) was removed; the repo names no journey domain outside the tests-repo reference and the recipes' guard rails. Animals-only folders today that stay out: services/certification-purposes, services/document-types, services/document-uploads, notification-mapper/mapper-a, notification-mapper/shared, notification-mapper/commodity-reference.js, and the mapper-a contract tests. Document uploads are also parked per the epic (PROGRAMME-NOTES.md standing rulings).\n\nORDER: dependsOn inc-058, the last unblocked increment, so it runs once every plants feature has landed and the engine is synced exactly once against a finished set. It deliberately does not depend on the three gated extras (inc-059 to inc-061): they are born blocked awaiting Sam's rulings, and a sync that waited on a ruling would never run. If one of them lands first and touches engine files, this increment absorbs the diff.\n\nSIZE: L is a guess. The range is unmeasured; a handful of engine commits is an M, a rewrite of the obligation helpers (EUDPA-360 shape) is an L, and if animals has moved the persistence contract it may need to be split by layer. The implementor should say which in the PR description rather than force one PR."
+    },
+    {
+      "id": "inc-063",
+      "type": "fix",
+      "key": "single-part-row-in-progress",
+      "repo": "frontend",
+      "title": "Rule and fix: a blank save on a single-part row can never show In progress",
+      "detail": "journey-spec.json behaviour lenient-page-validation (spec/journey-spec.json:129-133) says a trader who saves a page blank returns to the hub with the row still In progress. The engine cannot express that for a row with exactly one part. bridge/status/status/classification/index.js partStarted derives started from isAnswered(answers.<field>), and bridge/status/completeness judges fulfilment with the same !isBlankValue predicate, so for a one-part row started implies requiredSatisfied implies FULFILLED and IN_PROGRESS is structurally unreachable. The obvious escape hatch is closed: model/obligations/is-blank-value.js recurses through objects and arrays with every, so isBlankValue({}), isBlankValue({addressId: null}) and isBlankValue({name: string-empty}) are all true. Three rows in journeys/linear/flow/task-rows.js have a single part and are affected, all address pickers: destination (place-of-destination, landed in inc-042), consignor (consignor-select, landed in inc-045) and contact (consignment-contact-select, landed in inc-048). NEEDS A RULING BEFORE ANY CODE CHANGES, because the two ways out are opposite. Either the engine gains a way for a single-part row to be started without being fulfilled, which is a change to shared status classification affecting every set including live-animals, or decision lenient-page-validation is superseded for single-part rows via tools/journey-builder/spec-add-decision.sh --supersedes, and the spec is brought into line with the delivered behaviour. Whichever way it goes, the tests that currently pin the delivered behaviour must be corrected in the same increment: inc-048 landed unit, fit and journey-level assertions that all assert the row is Not yet started after a blank save, so the contradiction is now held in place by passing tests in both repos.",
+      "milestone": "M1",
+      "dependsOn": [],
+      "status": "blocked",
+      "gate": "sam",
+      "notes": "RAISED 2026-09-09 from inc-048 (EUDPA-540). The code reviewer raised it, adversarial verification could not refute it and corrected it in its favour by finding the requirement in journey-spec.json as well as the increment AC, and the judge ruled defer-to-open-question because no contained fix exists at the page level. Born blocked with gate sam under the programme rule that a decision needing a human halts rather than guesses. It blocks nothing else, so the run continues past it."
     }
   ]
 }

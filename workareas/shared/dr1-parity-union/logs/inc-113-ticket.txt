@@ -1,0 +1,17 @@
+h2. Increment
+
+{{inc-113}} from the {{shared/dr1-parity-union}} backlog.
+
+Under "Arrival date at port of entry" the frontend hint reads "The expected date of arrival at the port of entry. Enter a date between \{earliest\} and \{latest\}." — the second sentence names both ends of the accepted window, computed from today. Design release 1's hint reads "The expected date of arrival at the port of entry. For example, 27/3/2026" — a worked example of the date format instead. The window itself is the same on both sides; what differs is what the second sentence is for.
+
+h2. Acceptance criteria
+
+* The arrival date hint under "Arrival date at port of entry" ends with a worked example of the date format, matching Design release 1's wording — "The expected date of arrival at the port of entry. For example, 27/3/2026".
+* The earliest-and-latest range sentence is removed from the hint in {{src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js}} (lines 6-7), together with any range interpolation left unused in {{src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js}} (lines 97-101).
+* The accepted window is unchanged: the date picker still derives the same seven-days-back, six-months-forward bounds from the clock, and the out-of-range error message in {{copy.en.js}} (lines 34-35) still fires for a typed date outside it.
+* A decision is taken and implemented on whether the example date is a fixed string or generated from the clock, so the hint does not go stale within the year.
+* Unit tests and the E2E specs and visual baselines that assert the old hint text are updated to the new copy, and the suites pass.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

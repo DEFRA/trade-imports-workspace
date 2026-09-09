@@ -3549,14 +3549,35 @@
       "obligations": [],
       "milestone": "M1",
       "id": "inc-053",
+      "ticket": "EUDPA-547",
+      "branch": "feat/EUDPA-547-add-confirmation-page-review-section",
       "dependsOn": [
         "inc-052"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "9fd24db eb1b934",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/57",
+          "number": 57,
+          "merged": true,
+          "sha": "2ee32f9ee51f6cba7a761ba3a0030f095bee8a5d"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/193",
+          "number": 193,
+          "merged": true,
+          "sha": "a1c363e1e19e68b0ffe2f352008115e6e17e5fa5"
+        }
+      ],
       "failure_reason": null,
       "title": null,
-      "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update."
+      "notes": "SPANS FRONTEND AND TESTS (2026-09-09): the repo field is deliberately absent, which the loop reads as frontend and tests. Adding this page shifts what the preceding page continues to, so the tests-repo spec covering the page before it must be updated on this same branch. Every add-page increment on this run so far has needed that and none carried it, so it landed as an unplanned tests PR each time (#162, #164, #168, #172, #177, #185, #186). Branch parity means the local ladder proves the frontend and the specs together. The section-level spec for the review section stays with inc-055; what belongs here is only the preceding-page navigation update.",
+      "openQuestions": [
+        "Lighthouse does not audit the confirmation page. The page renders only on a SUBMITTED notification (features/confirmation/controller.js get: redirects to check-answers unless journey.status === SUBMITTED), and no SEED_SHAPES entry in scripts/lighthouse/seed-notification.js completes the journey far enough for submitJourney to return ok — engine/write/submit.js gates on scope.readyForCheckYourAnswers, which flow/section-status.js rolls up from all seven task rows (commodities, origin, arrival, destination, consignor, identificationNumbers, contact). inc-053 therefore adds the route to SKIPPED with a reason rather than to FILLED_BY. This settles the third open question left on inc-001 (\"Whether the plants audit needs a submitted shape of its own\") only provisionally: it does need one. Build it as its own increment — a sixth SEED_SHAPES entry carrying submit: true and steps that fill origin, arrival-details, destinations/select, consignors/select, identification-numbers and consignment/contact/select (the three pickers can read their option value off the rendered page through the fields(page) form and journey-client cheerio handle), then move confirmation from SKIPPED to FILLED_BY. It is deferred out of inc-053 because a seed step with a wrong field name makes seed-audit-targets.js throw, which loses the Lighthouse audit for every page rather than just this one, and nothing on this increment ladder can prove the seed without the full stack running. Prefer to do it alongside inc-058, which moves the shapes into journeys/linear/flow/fixtures/happy-path.json."
+      ]
     },
     {
       "type": "chore",

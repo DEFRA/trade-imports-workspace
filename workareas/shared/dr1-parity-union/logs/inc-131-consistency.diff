@@ -1,0 +1,197 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index cfc677bf..9e773e1c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -200,6 +200,7 @@ export const copy = {
+     title: 'Ychwanegu cludwr preifat',
+     intro:
+       'Rhowch enw a chyfeiriad y cludwr preifat sy’n symud yr anifeiliaid.',
++    contactHeading: 'Rhowch fanylion cyswllt',
+     fields: {
+       nameOrOrganisationName: 'Enw neu enw’r sefydliad',
+       addressLine1: 'Llinell gyfeiriad 1',
+@@ -208,8 +209,8 @@ export const copy = {
+       county: 'Sir (dewisol)',
+       postalOrZipCode: 'Cod post neu god zip',
+       country: 'Gwlad',
+-      telephoneNumber: 'Rhif ffôn',
+-      emailAddress: 'Cyfeiriad e-bost'
++      emailAddress: 'Cyfeiriad e-bost',
++      telephoneNumber: 'Rhif ffôn'
+     },
+     countryPlaceholder: 'Dewiswch wlad',
+     errors: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index e0712b3b..89afe724 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -233,6 +233,10 @@ export const copy = {
+     title: 'Add private transporter',
+     intro:
+       'Enter the name and address of the private transporter moving the animals.',
++    // Design release 1 closes the address at the country and heads the last two
++    // questions as the contact details they are — the same split, and the same
++    // heading, as the commercial form above.
++    contactHeading: 'Enter contact details',
+     fields: {
+       nameOrOrganisationName: 'Name or organisation name',
+       addressLine1: 'Address line 1',
+@@ -241,8 +245,8 @@ export const copy = {
+       county: 'County (optional)',
+       postalOrZipCode: 'Postal or zip code',
+       country: 'Country',
+-      telephoneNumber: 'Telephone number',
+-      emailAddress: 'Email address'
++      emailAddress: 'Email address',
++      telephoneNumber: 'Telephone number'
+     },
+     countryPlaceholder: 'Select a country',
+     errors: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+index 0be9c6a7..bbaee2ef 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+@@ -188,6 +188,19 @@ describe('transport copy module', () => {
+     )
+   })
+ 
++  // Design release 1 closes the address at the country and heads the last two
++  // questions as contact details, exactly as the commercial form does. Copy
++  // parity only checks that a Welsh leaf differs from its English counterpart,
++  // so both headings are pinned here.
++  test('Should head the private form’s contact details in both languages', () => {
++    expect(copy.privateTransporterDetails.contactHeading).toBe(
++      'Enter contact details'
++    )
++    expect(copyCy.privateTransporterDetails.contactHeading).toBe(
++      'Rhowch fanylion cyswllt'
++    )
++  })
++
+   // Design release 1 heads the commercial form as the addition it is, asks the
+   // authorisation number first and fixes the country to Northern Ireland.
+   test('Should head the commercial form as an addition and fix its country', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index 18e2b0c4..98061212 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -775,6 +775,33 @@ test.describe('private transporter rendering and optionality', () => {
+     }
+   })
+ 
++  // Design release 1 closes the address at the country and heads the last two
++  // questions as contact details, email before phone.
++  test('private transporter page heads the contact details after the address, email first', async ({
++    page
++  }) => {
++    await openPrivate(page)
++
++    await expect(
++      page.getByRole('heading', {
++        name: copy.privateTransporterDetails.contactHeading
++      })
++    ).toBeVisible()
++    const orderedIds = await page
++      .locator(
++        'form #country, form h2, form #emailAddress, form #telephoneNumber'
++      )
++      .evaluateAll((nodes) =>
++        nodes.map((node) => node.id || node.tagName.toLowerCase())
++      )
++    expect(orderedIds).toEqual([
++      'country',
++      'h2',
++      'emailAddress',
++      'telephoneNumber'
++    ])
++  })
++
+   test('a completely blank private transporter record is optional', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
+index e0b2b822..fb1ed78d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
+@@ -33,10 +33,13 @@ const MANDATORY_MESSAGES = {
+   townOrCity: copy.errors.townOrCityRequired,
+   postalOrZipCode: copy.errors.postalOrZipCodeRequired,
+   country: copy.errors.countryRequired,
+-  telephoneNumber: copy.errors.telephoneRequired,
+-  emailAddress: copy.errors.emailRequired
++  emailAddress: copy.errors.emailRequired,
++  telephoneNumber: copy.errors.telephoneRequired
+ }
+ 
++/** The fields the page shows, in the order it asks for them — the order the
++ * error summary lists them in too. The contact details close the form, email
++ * before phone, as design release 1 asks them. */
+ const FIELD_ORDER = [
+   'nameOrOrganisationName',
+   'addressLine1',
+@@ -45,8 +48,8 @@ const FIELD_ORDER = [
+   'county',
+   'postalOrZipCode',
+   'country',
+-  'telephoneNumber',
+-  'emailAddress'
++  'emailAddress',
++  'telephoneNumber'
+ ]
+ 
+ const MAX_NAME_LENGTH = 255
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js
+index 92a8ffdd..21f5d6eb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js
+@@ -131,8 +131,8 @@ describe('/transporters/add/private', () => {
+       'townOrCity',
+       'postalOrZipCode',
+       'country',
+-      'telephoneNumber',
+-      'emailAddress'
++      'emailAddress',
++      'telephoneNumber'
+     ])
+     expect(result.after.privateTransporter).toBeUndefined()
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
+index c3ce0a7c..f77c8dc5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
+@@ -73,15 +73,9 @@
+       errorMessage: errors.country and { text: errors.country }
+     }) }}
+ 
+-    {{ govukInput({
+-      id: "telephoneNumber", name: "telephoneNumber",
+-      label: { text: copy.fields.telephoneNumber },
+-      type: "tel",
+-      classes: "govuk-input--width-20",
+-      autocomplete: "tel",
+-      value: values.telephoneNumber,
+-      errorMessage: errors.telephoneNumber and { text: errors.telephoneNumber }
+-    }) }}
++    {# Design release 1 closes the address at the country and heads the contact
++       details separately, email first — as the commercial form already does. #}
++    <h2 class="govuk-heading-m">{{ copy.contactHeading }}</h2>
+ 
+     {{ govukInput({
+       id: "emailAddress", name: "emailAddress",
+@@ -92,6 +86,16 @@
+       errorMessage: errors.emailAddress and { text: errors.emailAddress }
+     }) }}
+ 
++    {{ govukInput({
++      id: "telephoneNumber", name: "telephoneNumber",
++      label: { text: copy.fields.telephoneNumber },
++      type: "tel",
++      classes: "govuk-input--width-20",
++      autocomplete: "tel",
++      value: values.telephoneNumber,
++      errorMessage: errors.telephoneNumber and { text: errors.telephoneNumber }
++    }) }}
++
+     {# The private arm of the add route — reached from the type chooser, not
+        from the hub, so it ends with the primary alone. #}
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}

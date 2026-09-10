@@ -1,0 +1,23 @@
+h2. Increment
+
+{{inc-116}} from the {{shared/dr1-parity-union}} backlog.
+
+The private transporter form labels its phone field "Telephone number" and carries no hint at all ({{copy.en.js:110}}, rendered at {{private-transporter-details.njk:73-81}}). Nothing on the page tells the user what to do about a transporter based outside the UK, which is the common case here — the country field on the same form offers thirty-one countries besides the United Kingdom.
+
+Design release 1 labels the field "Phone number" and hints it "For international numbers include the country code" ({{app/views/partials/transporter-add-private-fields.html:100-103}}). Design release 1 uses the same label and the same hint on its commercial transporter form, so it is a consistent rule rather than a one-off.
+
+h2. Acceptance criteria
+
+* The private transporter phone field is labelled "Phone number" instead of "Telephone number", changed in {{src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js}} at the {{telephoneNumber}} key.
+* A GOV.UK hint reading "For international numbers include the country code" sits beneath that label, wired to the input through {{aria-describedby}} in {{src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk}}.
+* The validation error text that names the field follows the new label: "Enter a telephone number" becomes the phone-number wording, and {{telephoneMaxLength}} ("Telephone number must be 20 characters or less") becomes "Phone number must be 20 characters or less".
+* No other behaviour changes — the 20-character limit and the field's name and value stay as they are.
+* Unit tests and E2E specs that assert the old label or the old error text are updated, and any visual baselines for the private transporter page are refreshed.
+
+h2. Verification
+
+Falsified by finding a hint about international dialling codes anywhere on the frontend's private transporter form in the captured rendered DOM of {{fe-transporter-private}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

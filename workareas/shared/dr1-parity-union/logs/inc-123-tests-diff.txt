@@ -1,0 +1,459 @@
+diff --git a/domain/fixtures/seeded-journey.ts b/domain/fixtures/seeded-journey.ts
+index 158c760..98fdc9b 100644
+--- a/domain/fixtures/seeded-journey.ts
++++ b/domain/fixtures/seeded-journey.ts
+@@ -83,8 +83,9 @@ const transportSteps: SeedStep[] = [
+   // Countries are added one at a time and saved in the order they were added,
+   // so the seed matches the order the browser journey adds them: France, then Belgium.
+   { slug: 'transit-countries', form: { transitedCountries: ['FR', 'BE'] } },
+-  { slug: 'transporters', form: { transporterType: 'Commercial' } },
+-  { slug: 'transporters/select', form: { commercialTransporter: 'garcia-livestock-transport' } },
++  // The list carries both kinds, so the pick settles the transporter type too
++  // and there is no separate type post.
++  { slug: 'transporters', form: { transporter: 'garcia-livestock-transport' } },
+ ];
+ 
+ const contactStep = (parties: PartyIds): SeedStep => ({
+diff --git a/flows/journey.ts b/flows/journey.ts
+index f9af539..c3e3256 100644
+--- a/flows/journey.ts
++++ b/flows/journey.ts
+@@ -170,7 +170,7 @@ export class Journey {
+     await this.pages.arrivalDetails.transportDocumentReference.fill('CMR-2026-884721');
+   }
+ 
+-  // Re-navigate from the hub to the transporter-type page within an already
++  // Re-navigate from the hub to the transporter list page within an already
+   // unlocked journey. The page itself saves through unfilled; it is filled
+   // because a road vehicle keeps transited countries in scope, which is
+   // answered on the way.
+@@ -194,11 +194,8 @@ export class Journey {
+     await this.pages.transitedCountries.addCountry('Belgium');
+     await this.pages.transitedCountries.saveAndContinue.click();
+     await this.pages.transporter.heading.waitFor();
+-    await this.pages.transporter.transporterType('Commercial').check();
++    await this.pages.transporter.transporter('García Livestock Transport SL').check();
+     await this.pages.transporter.saveAndContinue.click();
+-    await this.pages.transporterSelection.heading.waitFor();
+-    await this.pages.transporterSelection.transporter('García Livestock Transport SL').check();
+-    await this.pages.transporterSelection.saveAndContinue.click();
+     await this.pages.overview.heading.waitFor();
+   }
+ 
+@@ -286,10 +283,14 @@ export class Journey {
+     await this.pages.transporter.heading.waitFor();
+   }
+ 
++  // The register sits behind the add route now: the list first, then the type
++  // question, and only then the approved commercial register.
+   async toTransporterSelection(): Promise<void> {
+     await this.toTransporter();
+-    await this.pages.transporter.transporterType('Commercial').check();
+-    await this.pages.transporter.saveAndContinue.click();
++    await this.pages.transporter.addTransporter.click();
++    await this.pages.transporterAdd.heading.waitFor();
++    await this.pages.transporterAdd.transporterType('Commercial').check();
++    await this.pages.transporterAdd.saveAndContinue.click();
+     await this.pages.transporterSelection.heading.waitFor();
+   }
+ 
+diff --git a/page-objects/factory.ts b/page-objects/factory.ts
+index c180f57..1f6d888 100644
+--- a/page-objects/factory.ts
++++ b/page-objects/factory.ts
+@@ -19,6 +19,7 @@ import { OverviewPage } from './notification/overview-page';
+ import { PrivateTransporterPage } from './notification/private-transporter-page';
+ import { PartyPickerPage } from './notification/party-picker-page';
+ import { TransitedCountriesPage } from './notification/transited-countries-page';
++import { TransporterAddPage } from './notification/transporter-add-page';
+ import { TransporterPage } from './notification/transporter-page';
+ import { TransporterSelectionPage } from './notification/transporter-selection-page';
+ import { AdminDashboardPage } from './admin/admin-dashboard-page';
+@@ -68,6 +69,7 @@ export function createPageObjects(page: Page) {
+     arrivalDetails: new ArrivalDetailsPage(page),
+     transitedCountries: new TransitedCountriesPage(page),
+     transporter: new TransporterPage(page),
++    transporterAdd: new TransporterAddPage(page),
+     transporterSelection: new TransporterSelectionPage(page),
+     privateTransporter: new PrivateTransporterPage(page),
+     contactAddress: new ContactAddressPage(page),
+diff --git a/page-objects/notification/private-transporter-page.ts b/page-objects/notification/private-transporter-page.ts
+index cd63e68..7b9c3ab 100644
+--- a/page-objects/notification/private-transporter-page.ts
++++ b/page-objects/notification/private-transporter-page.ts
+@@ -14,7 +14,7 @@ export type PrivateTransporterDetails = {
+ /** Keyed-in transporter details, owed only when the transporter type is Private. */
+ export class PrivateTransporterPage extends NotificationPage {
+   constructor(page: Page) {
+-    super(page, 'transporters/private');
++    super(page, 'transporters/add/private');
+   }
+ 
+   get heading(): Locator {
+diff --git a/page-objects/notification/transporter-add-page.ts b/page-objects/notification/transporter-add-page.ts
+new file mode 100644
+index 0000000..4823c08
+--- /dev/null
++++ b/page-objects/notification/transporter-add-page.ts
+@@ -0,0 +1,25 @@
++import { type Locator, type Page } from '@playwright/test';
++import { NotificationPage } from '@page-objects/base/base-page';
++
++/** The type question — asked only of a trader who could not find their
++ * transporter on the list, as the first step of adding one. */
++export class TransporterAddPage extends NotificationPage {
++  constructor(page: Page) {
++    super(page, 'transporters/add');
++  }
++
++  get heading(): Locator {
++    return this.page.getByRole('heading', {
++      level: 1,
++      name: 'What type of transporter will move the animals?',
++    });
++  }
++
++  transporterType(name: 'Commercial' | 'Private'): Locator {
++    return this.page.getByRole('radio', { name, exact: true });
++  }
++
++  get saveAndContinue(): Locator {
++    return this.page.getByRole('button', { name: 'Save and continue' });
++  }
++}
+diff --git a/page-objects/notification/transporter-page.ts b/page-objects/notification/transporter-page.ts
+index 5a6ff44..29d3cc5 100644
+--- a/page-objects/notification/transporter-page.ts
++++ b/page-objects/notification/transporter-page.ts
+@@ -1,22 +1,26 @@
+ import { type Locator, type Page } from '@playwright/test';
+ import { NotificationPage } from '@page-objects/base/base-page';
+ 
++/** The transporter list — every transporter the trader can use, commercial and
++ * private together. Adding one that is not listed is a route off this page. */
+ export class TransporterPage extends NotificationPage {
+   constructor(page: Page) {
+     super(page, 'transporters');
+   }
+ 
+   get heading(): Locator {
+-    return this.page.getByRole('heading', {
+-      level: 1,
+-      name: 'What type of transporter will move the animals?',
+-    });
++    return this.page.getByRole('heading', { level: 1, name: 'Transporter details' });
+   }
+ 
+-  transporterType(name: 'Commercial' | 'Private'): Locator {
++  transporter(name: string): Locator {
+     return this.page.getByRole('radio', { name, exact: true });
+   }
+ 
++  /** The govuk button macro renders the href as role=button. */
++  get addTransporter(): Locator {
++    return this.page.getByRole('button', { name: 'Add a transporter' });
++  }
++
+   get saveAndContinue(): Locator {
+     return this.page.getByRole('button', { name: 'Save and continue' });
+   }
+diff --git a/tests/a11y/notification-journey-error-state.spec.ts b/tests/a11y/notification-journey-error-state.spec.ts
+index 68a2f20..3c1fc3f 100644
+--- a/tests/a11y/notification-journey-error-state.spec.ts
++++ b/tests/a11y/notification-journey-error-state.spec.ts
+@@ -64,8 +64,10 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+ 
+     await test.step('Continue to declaration', async () => {
+       await pages.transporter.heading.waitFor();
+-      await pages.transporter.transporterType('Commercial').check();
+-      await pages.transporter.saveAndContinue.click();
++      await pages.transporter.addTransporter.click();
++      await pages.transporterAdd.heading.waitFor();
++      await pages.transporterAdd.transporterType('Commercial').check();
++      await pages.transporterAdd.saveAndContinue.click();
+       await pages.transporterSelection.heading.waitFor();
+       await pages.transporterSelection.transporter('García Livestock Transport SL').check();
+       await pages.transporterSelection.saveAndContinue.click();
+diff --git a/tests/a11y/notification-journey-filled-state.spec.ts b/tests/a11y/notification-journey-filled-state.spec.ts
+index c5dbf8a..8406ce5 100644
+--- a/tests/a11y/notification-journey-filled-state.spec.ts
++++ b/tests/a11y/notification-journey-filled-state.spec.ts
+@@ -131,11 +131,18 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+       await pages.transitedCountries.saveAndContinue.click();
+     });
+ 
+-    await test.step('Transporter', async () => {
++    await test.step('Transporter list', async () => {
+       await pages.transporter.heading.waitFor();
+-      await pages.transporter.transporterType('Commercial').check();
++      await pages.transporter.transporter('García Livestock Transport SL').check();
+       await runA11yScan();
+-      await pages.transporter.saveAndContinue.click();
++      await pages.transporter.addTransporter.click();
++    });
++
++    await test.step('Transporter type', async () => {
++      await pages.transporterAdd.heading.waitFor();
++      await pages.transporterAdd.transporterType('Commercial').check();
++      await runA11yScan();
++      await pages.transporterAdd.saveAndContinue.click();
+     });
+ 
+     await test.step('Transporter selection', async () => {
+diff --git a/tests/a11y/notification-journey-initial-state.spec.ts b/tests/a11y/notification-journey-initial-state.spec.ts
+index 24c6b60..749d46b 100644
+--- a/tests/a11y/notification-journey-initial-state.spec.ts
++++ b/tests/a11y/notification-journey-initial-state.spec.ts
+@@ -146,11 +146,17 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+       await pages.transitedCountries.saveAndContinue.click();
+     });
+ 
+-    await test.step('Transporter', async () => {
++    await test.step('Transporter list', async () => {
+       await pages.transporter.heading.waitFor();
+       await runA11yScan();
+-      await pages.transporter.transporterType('Commercial').check();
+-      await pages.transporter.saveAndContinue.click();
++      await pages.transporter.addTransporter.click();
++    });
++
++    await test.step('Transporter type', async () => {
++      await pages.transporterAdd.heading.waitFor();
++      await runA11yScan();
++      await pages.transporterAdd.transporterType('Commercial').check();
++      await pages.transporterAdd.saveAndContinue.click();
+     });
+ 
+     await test.step('Transporter selection', async () => {
+diff --git a/tests/e2e/features/commercial-transporter-scope.spec.ts b/tests/e2e/features/commercial-transporter-scope.spec.ts
+index f522932..745a1d8 100644
+--- a/tests/e2e/features/commercial-transporter-scope.spec.ts
++++ b/tests/e2e/features/commercial-transporter-scope.spec.ts
+@@ -9,30 +9,38 @@ test.describe('Commercial transporter scope', { tag: ['@integration', '@duplicat
+ 
+     const openTransporters = () => journey.reachTransporterFromHub();
+ 
++    // The type question sits behind "Add a transporter" now, so every branch is
++    // reached through the add route rather than off the list itself.
++    const chooseType = async (type: 'Commercial' | 'Private') => {
++      await pages.transporter.addTransporter.click();
++      await pages.transporterAdd.heading.waitFor();
++      await pages.transporterAdd.transporterType(type).check();
++      await pages.transporterAdd.saveAndContinue.click();
++    };
++
+     // Commercial transporter: the select page opens; choosing a transporter
+     // copies its name, address and approval number into the answer.
+     await openTransporters();
+-    await pages.transporter.transporterType('Commercial').check();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Commercial');
+     await expect(pages.transporterSelection.heading).toBeVisible();
+     await pages.transporterSelection.transporter(COMMERCIAL_TRANSPORTER).check();
+     await pages.transporterSelection.saveAndContinue.click();
+     await expect(pages.overview.heading).toBeVisible();
+ 
+     // The copy persists: walking back in re-derives the checked option from the
+-    // copied name.
++    // copied name, on the list and on the register alike.
+     await openTransporters();
+-    await pages.transporter.saveAndContinue.click();
++    await expect(pages.transporter.transporter(COMMERCIAL_TRANSPORTER)).toBeChecked();
++    await chooseType('Commercial');
+     await expect(pages.transporterSelection.heading).toBeVisible();
+     await expect(pages.transporterSelection.transporter(COMMERCIAL_TRANSPORTER)).toBeChecked();
+     await pages.transporterSelection.saveAndContinue.click();
+ 
+-    // Private transporter: the select page is no longer owed — saving the type
+-    // skips it and walks on to the private details page; a blank save there
++    // Private transporter: the select page is no longer owed — choosing the
++    // private type walks on to the private details page; a blank save there
+     // returns to the hub.
+     await openTransporters();
+-    await pages.transporter.transporterType('Private').check();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Private');
+     await expect(pages.page.getByRole('heading', { name: 'Private transporter details' })).toBeVisible();
+     await pages.page.getByRole('button', { name: 'Save and continue' }).click();
+     await expect(pages.overview.heading).toBeVisible();
+@@ -40,8 +48,7 @@ test.describe('Commercial transporter scope', { tag: ['@integration', '@duplicat
+     // Back to commercial: leaving scope wiped the saved transporter — no radio
+     // is pre-selected on the select page.
+     await openTransporters();
+-    await pages.transporter.transporterType('Commercial').check();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Commercial');
+     await expect(pages.transporterSelection.heading).toBeVisible();
+     await expect(pages.page.getByRole('radio', { checked: true })).toHaveCount(0);
+   });
+diff --git a/tests/e2e/features/port-of-entry-select.spec.ts b/tests/e2e/features/port-of-entry-select.spec.ts
+index 4ed8998..b62b19c 100644
+--- a/tests/e2e/features/port-of-entry-select.spec.ts
++++ b/tests/e2e/features/port-of-entry-select.spec.ts
+@@ -28,7 +28,7 @@ test.describe('Port of entry type-ahead', { tag: ['@integration', '@duplicated-i
+     await expect(combobox).toHaveValue(PORT_OPTION);
+     await pages.arrivalDetails.fillArrivalDate(getRelativeDatePickerValue({ monthOffset: 1 }));
+     await pages.arrivalDetails.saveAndContinue.click();
+-    await expect(pages.page.getByRole('heading', { name: 'What type of transporter will move the animals?' })).toBeVisible();
++    await expect(pages.transporter.heading).toBeVisible();
+ 
+     await pages.arrivalDetails.open(journeyId);
+     await expect(pages.arrivalDetails.portOfEntryValue).toHaveValue(PORT_CODE);
+diff --git a/tests/e2e/features/private-transporter-scope.spec.ts b/tests/e2e/features/private-transporter-scope.spec.ts
+index 3944dff..335703c 100644
+--- a/tests/e2e/features/private-transporter-scope.spec.ts
++++ b/tests/e2e/features/private-transporter-scope.spec.ts
+@@ -26,12 +26,20 @@ test.describe('Private transporter scope', { tag: ['@integration', '@duplicated-
+       name: 'Private transporter details',
+     });
+ 
++    // The type question sits behind "Add a transporter" now, so every branch is
++    // reached through the add route rather than off the list itself.
++    const chooseType = async (type: 'Commercial' | 'Private') => {
++      await pages.transporter.addTransporter.click();
++      await pages.transporterAdd.heading.waitFor();
++      await pages.transporterAdd.transporterType(type).check();
++      await pages.transporterAdd.saveAndContinue.click();
++    };
++
+     // Private transporter: the details page opens. A PARTIAL fill blocks the
+     // save — the fieldGroup's mandates apply once the record is provided —
+     // naming the missing mandatory fields.
+     await openTransporters();
+-    await pages.transporter.transporterType('Private').check();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Private');
+     await expect(detailsHeading).toBeVisible();
+     await pages.page.getByLabel('Name or organisation name').fill(transporter.name);
+     await pages.page.getByRole('button', { name: 'Save and continue' }).click();
+@@ -52,7 +60,7 @@ test.describe('Private transporter scope', { tag: ['@integration', '@duplicated-
+     // The record persists: walking back in flattens the saved object into
+     // the form fields.
+     await openTransporters();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Private');
+     await expect(detailsHeading).toBeVisible();
+     await expect(pages.page.getByLabel('Name or organisation name')).toHaveValue(transporter.name);
+     await expect(pages.page.getByLabel('Country')).toHaveValue(transporter.address.country);
+@@ -62,8 +70,7 @@ test.describe('Private transporter scope', { tag: ['@integration', '@duplicated-
+     // type walks to the commercial select page instead; a blank save there
+     // returns to the hub.
+     await openTransporters();
+-    await pages.transporter.transporterType('Commercial').check();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Commercial');
+     await expect(pages.transporterSelection.heading).toBeVisible();
+     await pages.transporterSelection.saveAndContinue.click();
+     await expect(pages.overview.heading).toBeVisible();
+@@ -71,8 +78,7 @@ test.describe('Private transporter scope', { tag: ['@integration', '@duplicated-
+     // Back to private: leaving scope wiped the saved details — the form
+     // renders empty.
+     await openTransporters();
+-    await pages.transporter.transporterType('Private').check();
+-    await pages.transporter.saveAndContinue.click();
++    await chooseType('Private');
+     await expect(detailsHeading).toBeVisible();
+     await expect(pages.page.getByLabel('Name or organisation name')).toHaveValue('');
+     await expect(pages.page.getByLabel('Country')).toHaveValue('');
+diff --git a/tests/e2e/pages/transporter-add.spec.ts b/tests/e2e/pages/transporter-add.spec.ts
+new file mode 100644
+index 0000000..4ea850d
+--- /dev/null
++++ b/tests/e2e/pages/transporter-add.spec.ts
+@@ -0,0 +1,30 @@
++import { test, expect } from '@fixtures';
++
++// The type question is asked only of a trader who could not find their
++// transporter on the list, so it is reached through "Add a transporter".
++test.describe('Transporter type page', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
++  test.beforeEach(async ({ journey, pages }) => {
++    await journey.toTransporter();
++    await pages.transporter.addTransporter.click();
++    await pages.transporterAdd.heading.waitFor();
++  });
++
++  test('renders the page controls', async ({ pages }) => {
++    await expect(pages.transporterAdd.heading).toBeVisible();
++    await expect(pages.transporterAdd.transporterType('Commercial')).toBeVisible();
++    await expect(pages.transporterAdd.transporterType('Private')).toBeVisible();
++    await expect(pages.transporterAdd.saveAndContinue).toBeVisible();
++  });
++
++  test('leaves the transporter type unchecked on load', async ({ pages }) => {
++    await expect(pages.transporterAdd.transporterType('Commercial')).not.toBeChecked();
++  });
++
++  test('accepts a valid transporter type', async ({ pages }) => {
++    await pages.transporterAdd.transporterType('Commercial').check();
++    await pages.transporterAdd.saveAndContinue.click();
++
++    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
++    await expect(pages.transporterSelection.heading).toBeVisible();
++  });
++});
+diff --git a/tests/e2e/pages/transporter.spec.ts b/tests/e2e/pages/transporter.spec.ts
+index 2ec242e..c3946cc 100644
+--- a/tests/e2e/pages/transporter.spec.ts
++++ b/tests/e2e/pages/transporter.spec.ts
+@@ -1,24 +1,33 @@
+ import { test, expect } from '@fixtures';
+ 
+-test.describe('Transporter page', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
++test.describe('Transporter list page', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+   test.beforeEach(async ({ journey }) => {
+     await journey.toTransporter();
+   });
+ 
+   test('renders the page controls', async ({ pages }) => {
+     await expect(pages.transporter.heading).toBeVisible();
+-    await expect(pages.transporter.transporterType('Commercial')).toBeVisible();
++    await expect(pages.transporter.addTransporter).toBeVisible();
+     await expect(pages.transporter.saveAndContinue).toBeVisible();
+   });
+ 
+-  test('leaves the transporter type unchecked on load', async ({ pages }) => {
+-    await expect(pages.transporter.transporterType('Commercial')).not.toBeChecked();
++  // Both kinds on the one list is the point of the page: a trader whose
++  // transporter is private has a row to pick rather than a form to fill.
++  test('lists both a commercial and a private transporter', async ({ pages }) => {
++    await expect(pages.transporter.transporter('García Livestock Transport SL')).toBeVisible();
++    await expect(pages.transporter.transporter('Aberdeen Livestock Ltd')).toBeVisible();
+   });
+ 
+-  test('accepts a valid transporter type', async ({ pages }) => {
+-    await pages.transporter.transporterType('Commercial').check();
++  test('leaves every transporter unchecked on load', async ({ pages }) => {
++    await expect(pages.transporter.transporter('García Livestock Transport SL')).not.toBeChecked();
++    await expect(pages.transporter.transporter('Aberdeen Livestock Ltd')).not.toBeChecked();
++  });
++
++  test('accepts a transporter picked from the list', async ({ pages }) => {
++    await pages.transporter.transporter('García Livestock Transport SL').check();
+     await pages.transporter.saveAndContinue.click();
+ 
+     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
++    await expect(pages.overview.heading).toBeVisible();
+   });
+ });
+diff --git a/tests/security/frontend-conditional-pages.spec.ts b/tests/security/frontend-conditional-pages.spec.ts
+index eaa5ab6..cd27936 100644
+--- a/tests/security/frontend-conditional-pages.spec.ts
++++ b/tests/security/frontend-conditional-pages.spec.ts
+@@ -39,11 +39,13 @@ test.describe('Security scan (frontend, conditional pages)', { tag: '@active' },
+     await pages.additionalDetails.saveAndContinue.click();
+     await pages.overview.heading.waitFor();
+ 
+-    // The private branch of the transporter question; the submission journey
+-    // only ever takes the commercial one.
++    // The private branch of the add route; the submission journey only ever
++    // takes the commercial one.
+     await journey.reachTransporterFromHub();
+-    await pages.transporter.transporterType('Private').check();
+-    await pages.transporter.saveAndContinue.click();
++    await pages.transporter.addTransporter.click();
++    await pages.transporterAdd.heading.waitFor();
++    await pages.transporterAdd.transporterType('Private').check();
++    await pages.transporterAdd.saveAndContinue.click();
+ 
+     await expect(pages.privateTransporter.heading).toBeVisible();
+     await pages.privateTransporter.fill(PRIVATE_TRANSPORTER);

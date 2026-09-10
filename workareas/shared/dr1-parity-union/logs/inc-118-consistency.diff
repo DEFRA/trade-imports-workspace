@@ -1,0 +1,1138 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 7e0bd163..cbd998eb 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -359,9 +359,26 @@ export const answerArrivalDetails = async (page) => {
+   await save(page)
+ }
+ 
++// Transit countries are added one at a time through a type-ahead, each one
++// landing in the list before the next is searched for. Mirrors
++// `addTransitCountry` in
++// src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js.
++export const addTransitCountry = async (page, name) => {
++  await page.waitForLoadState('domcontentloaded')
++  const field = page.getByLabel('Enter a country', { exact: true })
++  if ((await field.evaluate((el) => el.tagName)) === 'SELECT') {
++    await field.selectOption({ label: name })
++  } else {
++    await field.click()
++    await field.fill(name)
++    await page.getByRole('option', { name, exact: true }).click()
++  }
++  await page.getByRole('button', { name: 'Add country', exact: true }).click()
++}
++
+ export const answerTransitCountries = async (page) => {
+-  await page.getByRole('checkbox', { name: 'France' }).check()
+-  await page.getByRole('checkbox', { name: 'Belgium' }).check()
++  await addTransitCountry(page, 'France')
++  await addTransitCountry(page, 'Belgium')
+   await save(page)
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index 1464c338..7d7e00df 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -54,15 +54,32 @@ export const copy = {
+     betweenCountries:
+       'Gwledydd y bydd y llwyth yn teithio drwyddynt yw’r gwledydd rhwng y wlad tarddiad a’r wlad gyrchfan.',
+     excludesUk: 'Nid yw hyn yn cynnwys y Deyrnas Unedig.',
+-    countries: {
+-      label: 'Dewiswch bob gwlad y bydd y llwyth yn teithio drwyddi',
+-      hint: 'Dewiswch hyd at 12 gwlad'
++    country: {
++      label: 'Rhowch wlad',
++      hint: 'Rhowch bob gwlad y bydd y llwyth yn teithio drwyddi',
++      placeholder: 'Chwiliwch am wlad',
++      noResults: 'Dim gwledydd wedi’u canfod'
+     },
++    add: 'Ychwanegu gwlad',
++    table: {
++      caption: 'Gwledydd rydych wedi’u hychwanegu',
++      country: 'Gwlad',
++      actionsHidden: 'Camau'
++    },
++    remove: 'Dileu',
++    removeHidden: (country) => country,
++    empty: 'Nid ydych wedi ychwanegu unrhyw wledydd eto.',
++    added: (country) => `${country} wedi’i ychwanegu.`,
++    removed: (country) => `${country} wedi’i ddileu.`,
++    limitReached: (max) =>
++      `Uchafswm o ${max} gwlad wedi’i gyrraedd. Dilëwch wlad i ychwanegu un arall.`,
+     errors: {
+       fromList: 'Dewiswch wledydd o’r rhestr',
+       maxCountries: (max) => `Dewiswch hyd at ${max} gwlad`,
+       selectAtLeastOne:
+-        'Dewiswch o leiaf un wlad y bydd y llwyth yn teithio drwyddi'
++        'Dewiswch o leiaf un wlad y bydd y llwyth yn teithio drwyddi',
++      chooseCountry: 'Rhowch wlad i’w hychwanegu',
++      alreadyAdded: (country) => `Rydych eisoes wedi ychwanegu ${country}`
+     }
+   },
+   transporters: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index efcca47d..22028201 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -60,15 +60,34 @@ export const copy = {
+     betweenCountries:
+       'Countries the consignment will travel through are countries between the country of origin and the destination country.',
+     excludesUk: 'This does not include the United Kingdom.',
+-    countries: {
+-      label: 'Select all countries the consignment will travel through',
+-      hint: 'Select up to 12 countries'
++    country: {
++      label: 'Enter a country',
++      hint: 'Enter each country that the consignment will travel through',
++      placeholder: 'Search for a country',
++      noResults: 'No countries found'
+     },
++    add: 'Add country',
++    table: {
++      caption: 'Countries you have added',
++      country: 'Country',
++      actionsHidden: 'Actions'
++    },
++    remove: 'Remove',
++    removeHidden: (country) => country,
++    empty: 'You have not added any countries yet.',
++    added: (country) => `${country} added.`,
++    removed: (country) => `${country} removed.`,
++    // The cap is not stated before the trader meets it (design release 1): the
++    // search goes when the last country is added and this says why.
++    limitReached: (max) =>
++      `Maximum of ${max} countries reached. Remove a country to add another.`,
+     errors: {
+       fromList: 'Select countries from the list',
+       maxCountries: (max) => `Select up to ${max} countries`,
+       selectAtLeastOne:
+-        'Select at least one country the consignment will travel through'
++        'Select at least one country the consignment will travel through',
++      chooseCountry: 'Enter a country to add',
++      alreadyAdded: (country) => `You have already added ${country}`
+     }
+   },
+   transporters: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+index 1f3a5dd7..19703e8d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+@@ -40,6 +40,20 @@ describe('transport copy module', () => {
+     )
+   })
+ 
++  test('Should interpolate transitCountries.limitReached with the cap', () => {
++    expect(copy.transitCountries.limitReached(12)).toBe(
++      'Maximum of 12 countries reached. Remove a country to add another.'
++    )
++  })
++
++  test('Should interpolate transitCountries.added, removed and alreadyAdded with the country', () => {
++    expect(copy.transitCountries.added('France')).toBe('France added.')
++    expect(copy.transitCountries.removed('France')).toBe('France removed.')
++    expect(copy.transitCountries.errors.alreadyAdded('France')).toBe(
++      'You have already added France'
++    )
++  })
++
+   test('Should interpolate portOfEntry.arrivalDate.hint with the worked example', () => {
+     expect(copy.portOfEntry.arrivalDate.hint('27/3/2026')).toBe(
+       'The expected date of arrival at the port of entry. For example, 27/3/2026'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+index f661acf2..1ffb3f03 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+@@ -28,8 +28,17 @@ const portInput = 'input#portOfEntry'
+ const portHidden = 'select#portOfEntry-select'
+ const meansSelect = 'select#meansOfTransport'
+ const identificationHint = 'div#transportIdentification-hint'
+-const transitedCountriesInputs = 'input[name="transitedCountries"]'
+-const transitedCountriesChecked = `${transitedCountriesInputs}:checked`
++// Transit countries is a type-ahead over the same native <select> contract:
++// the visible combobox input keeps the original id and holds the country name,
++// and the native select is hidden and renamed with a "-select" suffix.
++const transitCountryInput = 'input#transitedCountry'
++const transitCountryHidden = 'select#transitedCountry-select'
++// The countries added so far ride with the page as hidden inputs until the
++// trader saves.
++const transitedCountriesInputs =
++  'input[type="hidden"][name="transitedCountries"]'
++const transitStatus = '#transit-countries-status'
++const transitLimit = '#transit-countries-limit'
+ const MAX_TRANSPORT_FIELD_LENGTH = 58
+ const DOVER_OPTION = 'Port of Dover (GB DVR)'
+ const PORT_OF_ENTRY_PAGE = 'port-of-entry'
+@@ -115,8 +124,10 @@ const computedStyle = (locator, property) =>
+     property
+   )
+ 
++const ERROR_SUMMARY = '.govuk-error-summary'
++
+ const errorLink = (page, message) =>
+-  page.locator('.govuk-error-summary').getByRole('link', { name: message })
++  page.locator(ERROR_SUMMARY).getByRole('link', { name: message })
+ 
+ const seriousOrCritical = (violations) =>
+   violations
+@@ -167,6 +178,55 @@ const openTransit = async (page) => {
+   ).toBeVisible()
+ }
+ 
++const transitField = (page) =>
++  page.getByLabel(copy.transitCountries.country.label, { exact: true })
++
++// Add a transit country the way a user does: type part of the name to filter,
++// pick the match, then press the button that adds it to the list. Without
++// JavaScript the field is still the native select, chosen by option label.
++const addTransitCountry = async (page, name) => {
++  const field = transitField(page)
++  if ((await field.evaluate((el) => el.tagName)) === 'SELECT') {
++    await field.selectOption({ label: name })
++  } else {
++    await field.click()
++    await field.fill(name)
++    await page.getByRole('option', { name, exact: true }).click()
++  }
++  await page
++    .getByRole('button', { name: copy.transitCountries.add, exact: true })
++    .click()
++}
++
++const addedCountries = (page) =>
++  page
++    .locator(transitedCountriesInputs)
++    .evaluateAll((items) => items.map((item) => item.value))
++
++// Put codes into the form the page could not have put there itself. The tamper
++// tests are the only way to reach the guards that hold against a submitted list
++// no rendering of the page produces.
++const forceTransitedCountries = (page, codes) =>
++  page.evaluate(
++    ({ wanted, selector }) => {
++      const form = document.querySelector('form')
++      for (const input of form.querySelectorAll(selector)) {
++        input.remove()
++      }
++      for (const code of wanted) {
++        const input = document.createElement('input')
++        input.type = 'hidden'
++        input.name = 'transitedCountries'
++        input.value = code
++        form.appendChild(input)
++      }
++    },
++    { wanted: codes, selector: transitedCountriesInputs }
++  )
++
++const removeControl = (page, name) =>
++  page.getByRole('button', { name: `Remove ${name}` })
++
+ test.describe('arrival details rendering', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+@@ -451,7 +511,7 @@ test.describe('arrival details validation', () => {
+     await expect(
+       page.getByRole('heading', { name: copy.transitCountries.title })
+     ).toBeVisible()
+-    await expect(page.locator('.govuk-error-summary')).toHaveCount(0)
++    await expect(page.locator(ERROR_SUMMARY)).toHaveCount(0)
+ 
+     await page.goto(journeyUrl(page, PORT_OF_ENTRY_PAGE))
+     await expect(
+@@ -655,7 +715,7 @@ test.describe('transit countries rendering and validation', () => {
+     await signIn(page)
+   })
+ 
+-  test('transit page renders captured country options and feature copy', async ({
++  test('transit page asks for one country at a time and starts with an empty list', async ({
+     page
+   }) => {
+     await openTransit(page)
+@@ -664,16 +724,64 @@ test.describe('transit countries rendering and validation', () => {
+       page.getByText(copy.transitCountries.betweenCountries)
+     ).toBeVisible()
+     await expect(page.getByText(copy.transitCountries.excludesUk)).toBeVisible()
++    await expect(transitField(page)).toBeVisible()
++    await expect(
++      page.getByText(copy.transitCountries.country.hint)
++    ).toBeVisible()
++    await expect(
++      page.getByRole('button', { name: copy.transitCountries.add, exact: true })
++    ).toBeVisible()
++    // Nothing added yet, so there is no table to read back — just the sentence
++    // that says so, and no cap stated up front.
++    await expect(page.getByText(copy.transitCountries.empty)).toBeVisible()
++    await expect(page.getByRole('table')).toHaveCount(0)
++    await expect(
++      page.getByText(
++        copy.transitCountries.limitReached(MAX_TRANSITED_COUNTRIES)
++      )
++    ).toHaveCount(0)
++  })
++
++  test('the transit type-ahead offers every captured country behind a search placeholder', async ({
++    page
++  }) => {
++    await openTransit(page)
++
++    const options = await page
++      .locator(`${transitCountryHidden} option`)
++      .evaluateAll((items) =>
++        items.map((option) => ({
++          code: option.value,
++          label: option.textContent.trim()
++        }))
++      )
++    expect(options[0]).toEqual({
++      code: '',
++      label: copy.transitCountries.country.placeholder
++    })
++    expect(options.slice(1)).toEqual(
++      countriesOrigin.map(({ code, name }) => ({ code, label: name }))
++    )
++  })
++
++  test('filters the country list by what the user types (AC1)', async ({
++    page
++  }) => {
++    await openTransit(page)
++    const field = transitField(page)
++
++    await field.fill('fran')
++    await expect(
++      page.getByRole('option', { name: 'France', exact: true })
++    ).toBeVisible()
++
++    await field.fill('zzzzzz')
+     await expect(
+-      page.getByText(copy.transitCountries.countries.hint)
++      page.getByText(copy.transitCountries.country.noResults)
+     ).toBeVisible()
+-    const countryCodes = await page
+-      .locator(transitedCountriesInputs)
+-      .evaluateAll((items) => items.map((item) => item.value))
+-    expect(countryCodes).toEqual(countriesOrigin.map(({ code }) => code))
+   })
+ 
+-  test('transit validation: no countries links to and focuses the empty checkbox group', async ({
++  test('transit validation: no countries links to and focuses the search box', async ({
+     page
+   }) => {
+     await openTransit(page)
+@@ -682,57 +790,137 @@ test.describe('transit countries rendering and validation', () => {
+     const link = errorLink(page, copy.transitCountries.errors.selectAtLeastOne)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.locator(transitedCountriesInputs).first()).toBeFocused()
+-    await expect(page.locator(transitedCountriesChecked)).toHaveCount(0)
++    await expect(page.locator(transitCountryInput)).toBeFocused()
++    expect(await addedCountries(page)).toEqual([])
+   })
+ 
+-  test('transit validation: out-of-list country links to and focuses the cleared checkbox group', async ({
++  test('transit validation: pressing Add with nothing chosen links to and focuses the search box', async ({
+     page
+   }) => {
+     await openTransit(page)
+     await page
+-      .getByRole('checkbox', { name: 'France' })
+-      .evaluate((checkbox) => {
+-        checkbox.value = 'INVALID'
+-        checkbox.checked = true
+-      })
++      .getByRole('button', { name: copy.transitCountries.add, exact: true })
++      .click()
++
++    const link = errorLink(page, copy.transitCountries.errors.chooseCountry)
++    await expect(link).toBeVisible()
++    await link.click()
++    await expect(page.locator(transitCountryInput)).toBeFocused()
++  })
++
++  test('transit validation: a country already added is refused by name', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await addTransitCountry(page, 'France')
++    await addTransitCountry(page, 'France')
++
++    await expect(
++      errorLink(page, copy.transitCountries.errors.alreadyAdded('France'))
++    ).toBeVisible()
++    expect(await addedCountries(page)).toEqual(['FR'])
++  })
++
++  test('transit validation: out-of-list country links to and focuses the search box', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await forceTransitedCountries(page, ['INVALID'])
+     await submit(page)
+ 
+     const link = errorLink(page, copy.transitCountries.errors.fromList)
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.locator(transitedCountriesInputs).first()).toBeFocused()
+-    await expect(page.locator(transitedCountriesChecked)).toHaveCount(0)
++    await expect(page.locator(transitCountryInput)).toBeFocused()
+   })
+ })
+ 
+-test.describe('transit countries limits and persistence', () => {
++test.describe('transit countries list, limits and persistence', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+   })
+ 
+-  test('transit validation: more than 12 countries links to the focused group and preserves selections', async ({
++  test('adding a country lists it with its own Remove control and announces it (AC2)', async ({
+     page
+   }) => {
+     await openTransit(page)
+-    const tooMany = countriesOrigin
+-      .slice(0, MAX_TRANSITED_COUNTRIES + 1)
+-      .map(({ code }) => code)
+-    await page.evaluate(
+-      ({ codes, selector }) => {
+-        const form = document.querySelector('form')
+-        for (const checkbox of form.querySelectorAll(selector)) {
+-          checkbox.removeAttribute('name')
+-        }
+-        for (const code of codes) {
+-          const input = document.createElement('input')
+-          input.type = 'hidden'
+-          input.name = 'transitedCountries'
+-          input.value = code
+-          form.appendChild(input)
+-        }
+-      },
+-      { codes: tooMany, selector: transitedCountriesInputs }
++    await addTransitCountry(page, 'France')
++
++    await expect(
++      page.getByRole('columnheader', {
++        name: copy.transitCountries.table.country
++      })
++    ).toBeVisible()
++    await expect(
++      page.getByRole('cell', { name: 'France', exact: true })
++    ).toBeVisible()
++    await expect(removeControl(page, 'France')).toBeVisible()
++    await expect(page.locator(transitStatus)).toHaveText(
++      copy.transitCountries.added('France')
++    )
++    // The search box is cleared and ready for the next one.
++    await expect(page.locator(transitCountryInput)).toHaveValue('')
++    expect(await addedCountries(page)).toEqual(['FR'])
++  })
++
++  test('removing a country takes its row away and announces it', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await addTransitCountry(page, 'France')
++    await addTransitCountry(page, 'Belgium')
++    await removeControl(page, 'France').click()
++
++    await expect(
++      page.getByRole('cell', { name: 'France', exact: true })
++    ).toHaveCount(0)
++    await expect(
++      page.getByRole('cell', { name: 'Belgium', exact: true })
++    ).toBeVisible()
++    await expect(page.locator(transitStatus)).toHaveText(
++      copy.transitCountries.removed('France')
++    )
++    expect(await addedCountries(page)).toEqual(['BE'])
++  })
++
++  test('the twelfth country takes the search away and announces the limit (AC3)', async ({
++    page
++  }) => {
++    await openTransit(page)
++    const before = countriesOrigin.slice(0, MAX_TRANSITED_COUNTRIES - 1)
++    const last = countriesOrigin[MAX_TRANSITED_COUNTRIES - 1]
++    await forceTransitedCountries(
++      page,
++      before.map(({ code }) => code)
++    )
++    await addTransitCountry(page, last.name)
++
++    expect(await addedCountries(page)).toHaveLength(MAX_TRANSITED_COUNTRIES)
++    await expect(page.locator(transitCountryInput)).toHaveCount(0)
++    await expect(
++      page.getByRole('button', { name: copy.transitCountries.add, exact: true })
++    ).toHaveCount(0)
++    const limit = copy.transitCountries.limitReached(MAX_TRANSITED_COUNTRIES)
++    // On the page for anyone reading it, and in the live region for anyone
++    // who will not see it appear.
++    await expect(page.locator(transitLimit)).toHaveText(limit)
++    await expect(page.locator(transitStatus)).toContainText(limit)
++
++    // Removing one brings the search back, so a thirteenth is never offered
++    // and a swap is always possible.
++    await removeControl(page, last.name).click()
++    await expect(transitField(page)).toBeVisible()
++  })
++
++  test('transit validation: more than 12 countries links to and focuses the search box', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await forceTransitedCountries(
++      page,
++      countriesOrigin
++        .slice(0, MAX_TRANSITED_COUNTRIES + 1)
++        .map(({ code }) => code)
+     )
+     await submit(page)
+ 
+@@ -742,24 +930,48 @@ test.describe('transit countries limits and persistence', () => {
+     )
+     await expect(link).toBeVisible()
+     await link.click()
+-    await expect(page.locator(transitedCountriesInputs).first()).toBeFocused()
+-    await expect(page.locator(transitedCountriesChecked)).toHaveCount(
+-      MAX_TRANSITED_COUNTRIES + 1
+-    )
++    await expect(page.locator(transitCountryInput)).toBeFocused()
++    expect(await addedCountries(page)).toHaveLength(MAX_TRANSITED_COUNTRIES + 1)
+   })
+ 
+-  test('saves and persists selected transit countries', async ({ page }) => {
++  test('saves and persists the countries that were added', async ({ page }) => {
+     await openTransit(page)
+-    await page.getByRole('checkbox', { name: 'France' }).check()
+-    await page.getByRole('checkbox', { name: 'Belgium' }).check()
++    await addTransitCountry(page, 'France')
++    await addTransitCountry(page, 'Belgium')
+     await submit(page)
+     await expect(
+       page.getByRole('heading', { name: copy.transporters.legend })
+     ).toBeVisible()
+ 
+     await page.goto(journeyUrl(page, 'transit-countries'))
+-    await expect(page.getByRole('checkbox', { name: 'France' })).toBeChecked()
+-    await expect(page.getByRole('checkbox', { name: 'Belgium' })).toBeChecked()
++    await expect(
++      page.getByRole('cell', { name: 'France', exact: true })
++    ).toBeVisible()
++    await expect(
++      page.getByRole('cell', { name: 'Belgium', exact: true })
++    ).toBeVisible()
++    // Nothing is announced on a fresh load — the live region only speaks for a
++    // change the trader has just made.
++    await expect(page.locator(transitStatus)).toHaveText('')
++  })
++})
++
++test.describe('transit countries without JavaScript', () => {
++  test.use({ javaScriptEnabled: false })
++
++  test('the native select adds a country and the list still reads back', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await addTransitCountry(page, 'France')
++
++    await expect(
++      page.getByRole('cell', { name: 'France', exact: true })
++    ).toBeVisible()
++    await submit(page)
++    await expect(
++      page.getByRole('heading', { name: copy.transporters.legend })
++    ).toBeVisible()
+   })
+ })
+ 
+@@ -783,4 +995,22 @@ test.describe('arrival and transit accessibility', () => {
+     await openTransit(page)
+     await expectAxeClean(page, 'Transit countries')
+   })
++
++  test('transit page with a country added has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await addTransitCountry(page, 'France')
++    await expect(removeControl(page, 'France')).toBeVisible()
++    await expectAxeClean(page, 'Transit countries with a country added')
++  })
++
++  test('transit page in its error state has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openTransit(page)
++    await submit(page)
++    await expect(page.locator(ERROR_SUMMARY)).toBeVisible()
++    await expectAxeClean(page, 'Transit countries with a validation error')
++  })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/remove-action.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/remove-action.js
+new file mode 100644
+index 00000000..d803f139
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/remove-action.js
+@@ -0,0 +1,22 @@
++import { copyFor } from '../../../../../../../shared/copy.js'
++import { copy as en } from '../copy/copy.en.js'
++import { copy as cy } from '../copy/copy.cy.js'
++
++const copy = copyFor({ en, cy }).transitCountries
++
++export const ADD_ACTION = 'add'
++export const REMOVE_ACTION_PREFIX = 'remove:'
++
++/** Removing a country changes what the page will save, so it submits the page
++ * form — the crumb travels with it and no GET can trigger it. The country code
++ * rides in the button value, so the row a trader presses is the row that goes
++ * however the list has been reordered since the page rendered. */
++export const removeButton = (code, label) =>
++  `<button type="submit" class="govuk-link app-link-button" name="action" value="${REMOVE_ACTION_PREFIX}${code}">` +
++  `${copy.remove}<span class="govuk-visually-hidden"> ${copy.removeHidden(label)}</span></button>`
++
++export const isRemoveAction = (action) =>
++  action.startsWith(REMOVE_ACTION_PREFIX)
++
++export const removeCodeOf = (action) =>
++  action.slice(REMOVE_ACTION_PREFIX.length)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/rows.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/rows.js
+new file mode 100644
+index 00000000..cd47ee97
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/rows.js
+@@ -0,0 +1,10 @@
++import { removeButton } from './remove-action.js'
++
++/** One row per country the trader has added, in the order they added them, each
++ * with its own Remove control (design release 1). The list read back is the
++ * whole record of the answer, so it names the country rather than its code. */
++export const countryRows = (selected, labelOf) =>
++  selected.map((code) => [
++    { text: labelOf(code) ?? code },
++    { html: removeButton(code, labelOf(code) ?? code) }
++  ])
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js
+index 98fb557b..20744e42 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js
+@@ -11,32 +11,45 @@ import * as countries from '../../../../../../../services/countries/index.js'
+ import { transitCountriesPage as page } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
++import { ADD_ACTION, isRemoveAction, removeCodeOf } from './remove-action.js'
++import { countryRows } from './rows.js'
+ 
+ export const meta = { ...page, collects: ['transitedCountries'] }
+ const view = `${TEMPLATES}/features/transport/transit-countries/transit-countries`
+ 
+ export const MAX_TRANSITED_COUNTRIES = 12
+ 
++/** The one error key on this page. The trader adds and removes through the
++ * search box, so every message this page can show is a message about that
++ * control — which is where the error summary has to send them. */
++export const COUNTRY_FIELD = 'transitedCountry'
++
+ const copy = copyFor({ en, cy }).transitCountries
+ 
+-const countryItems = (selected) =>
+-  countries.originCountries().map(({ value, text }) => ({
+-    value,
+-    text,
+-    checked: selected.includes(value)
+-  }))
++// The list feeds a type-ahead that enhances this select, so it carries only the
++// placeholder and the real countries. Countries already added stay in the list:
++// the server refuses a repeat by name, which says more than a country quietly
++// missing from the search would.
++const countryItems = () => [
++  { value: '', text: copy.country.placeholder },
++  ...countries.originCountries()
++]
++
++const labelOf = (code) => countries.originLabel(code)
+ 
++// The saved answer, not the page: these are the guards against a submitted list
++// that no rendering of this page could have produced.
+ const transitedCountriesErrors = (selected) => {
+-  if (selected.some((code) => countries.originLabel(code) === undefined)) {
+-    return { transitedCountries: copy.errors.fromList }
++  if (selected.some((code) => labelOf(code) === undefined)) {
++    return { [COUNTRY_FIELD]: copy.errors.fromList }
+   }
+   if (selected.length > MAX_TRANSITED_COUNTRIES) {
+     return {
+-      transitedCountries: copy.errors.maxCountries(MAX_TRANSITED_COUNTRIES)
++      [COUNTRY_FIELD]: copy.errors.maxCountries(MAX_TRANSITED_COUNTRIES)
+     }
+   }
+   if (selected.length === 0) {
+-    return { transitedCountries: copy.errors.selectAtLeastOne }
++    return { [COUNTRY_FIELD]: copy.errors.selectAtLeastOne }
+   }
+   return {}
+ }
+@@ -45,7 +58,7 @@ const render = (
+   h,
+   journey,
+   selected,
+-  { errors = {}, recoverableError = false } = {}
++  { errors = {}, status = '', chosen = '', recoverableError = false } = {}
+ ) =>
+   h.view(view, {
+     ...kit.base(copy.title, {
+@@ -57,23 +70,84 @@ const render = (
+     copy,
+     errors,
+     errorSummary: kit.errorSummary(errors),
+-    countryItems: countryItems(selected)
++    countryItems: countryItems(),
++    selectedCountries: selected,
++    countryRows: countryRows(selected, labelOf),
++    hasCountries: selected.length > 0,
++    // At the cap the search goes and the limit message takes its place, so a
++    // thirteenth country cannot be offered at all. An error state keeps the
++    // search on screen whatever the count, or the summary link would point at
++    // a control that is not there.
++    showCountryField:
++      Object.keys(errors).length > 0 ||
++      selected.length < MAX_TRANSITED_COUNTRIES,
++    atLimit: selected.length >= MAX_TRANSITED_COUNTRIES,
++    limitMessage: copy.limitReached(MAX_TRANSITED_COUNTRIES),
++    // A refused country goes back into the search box the trader typed it
++    // into: the native select holds the code, the enhanced input the name.
++    chosenValue: chosen,
++    chosenLabel: labelOf(chosen) ?? '',
++    status
+   })
+ 
++// The page carries its own working list in hidden inputs: nothing is saved
++// until the trader continues, so adding and removing costs no write and a
++// trader who leaves without saving leaves the answer as they found it.
+ const selectedFrom = (payload) => [
+   ...new Set(
+     [payload.transitedCountries ?? []].flat().filter((code) => code !== '')
+   )
+ ]
+ 
+-const get = async (request, h) => {
+-  const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, [answers.transitedCountries ?? []].flat())
++// Announced as it happens, on top of the row appearing (design release 1).
++// Reaching the cap is said in the same breath as the country that reached it.
++const statusFor = (message, selected) =>
++  selected.length >= MAX_TRANSITED_COUNTRIES
++    ? `${message} ${copy.limitReached(MAX_TRANSITED_COUNTRIES)}`
++    : message
++
++const addErrors = (chosen, selected) => {
++  if (chosen === '') {
++    return { [COUNTRY_FIELD]: copy.errors.chooseCountry }
++  }
++  if (labelOf(chosen) === undefined) {
++    return { [COUNTRY_FIELD]: copy.errors.fromList }
++  }
++  if (selected.includes(chosen)) {
++    return { [COUNTRY_FIELD]: copy.errors.alreadyAdded(labelOf(chosen)) }
++  }
++  if (selected.length >= MAX_TRANSITED_COUNTRIES) {
++    return {
++      [COUNTRY_FIELD]: copy.errors.maxCountries(MAX_TRANSITED_COUNTRIES)
++    }
++  }
++  return {}
+ }
+ 
+-const post = async (request, h) => {
+-  const payload = request.payload ?? {}
+-  const selected = selectedFrom(payload)
++const postAdd = async (request, h, selected) => {
++  const chosen = String(request.payload?.[COUNTRY_FIELD] ?? '').trim()
++  const { journey } = await state.get(request, h)
++  const errors = addErrors(chosen, selected)
++  if (Object.keys(errors).length > 0) {
++    return render(h, journey, selected, { errors, chosen }).code(
++      HTTP_STATUS_BAD_REQUEST
++    )
++  }
++  const added = [...selected, chosen]
++  return render(h, journey, added, {
++    status: statusFor(copy.added(labelOf(chosen)), added)
++  })
++}
++
++const postRemove = async (request, h, selected, code) => {
++  const { journey } = await state.get(request, h)
++  const remaining = selected.filter((entry) => entry !== code)
++  return render(h, journey, remaining, {
++    status: copy.removed(labelOf(code) ?? code)
++  })
++}
++
++const postContinue = async (request, h, selected) => {
+   const errors = transitedCountriesErrors(selected)
+   if (Object.keys(errors).length > 0) {
+     const { journey } = await state.get(request, h)
+@@ -103,4 +177,22 @@ const post = async (request, h) => {
+   return h.redirect(await kit.nextTarget(request, page, committed.scope))
+ }
+ 
++const get = async (request, h) => {
++  const { journey, answers } = await state.get(request, h)
++  return render(h, journey, [answers.transitedCountries ?? []].flat())
++}
++
++const post = async (request, h) => {
++  const payload = request.payload ?? {}
++  const action = String(payload.action ?? '')
++  const selected = selectedFrom(payload)
++  if (action === ADD_ACTION) {
++    return postAdd(request, h, selected)
++  }
++  if (isRemoveAction(action)) {
++    return postRemove(request, h, selected, removeCodeOf(action))
++  }
++  return postContinue(request, h, selected)
++}
++
+ export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js
+index 9e99368e..ca5203c5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js
+@@ -14,23 +14,159 @@ import { dispatchPages } from '../../index.js'
+ import * as countries from '../../../../../../../services/countries/index.js'
+ 
+ import * as transitCountries from './transit-countries.controller.js'
+-import { MAX_TRANSITED_COUNTRIES } from './transit-countries.controller.js'
++import {
++  COUNTRY_FIELD,
++  MAX_TRANSITED_COUNTRIES
++} from './transit-countries.controller.js'
++import { REMOVE_ACTION_PREFIX } from './remove-action.js'
+ 
+ const get = transitCountries.routes.find(
+   (route) => route.method === 'GET'
+ ).handler
+ const post = postHandlerOf(transitCountries)
+-const tooManyCodes = countries
+-  .originCountries()
+-  .slice(0, MAX_TRANSITED_COUNTRIES + 1)
+-  .map((country) => country.value)
+-
+-describe('POST transit-countries', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
++
++const codes = countries.originCountries().map((country) => country.value)
++const atCapacity = codes.slice(0, MAX_TRANSITED_COUNTRIES)
++const tooManyCodes = codes.slice(0, MAX_TRANSITED_COUNTRIES + 1)
++const seed = { meansOfTransport: 'ROAD_VEHICLE' }
++
++const configure = () => {
++  configureRecords(recordsStub)
++  configureSession(sessionStub)
++  buildDispatch(dispatchPages)
++}
++
++describe('POST transit-countries — adding a country', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  const refusals = [
++    {
++      name: 'nothing chosen in the search box',
++      payload: { action: 'add', transitedCountries: ['FR'] },
++      message: 'Enter a country to add'
++    },
++    {
++      name: 'a country that is not in the list',
++      payload: { action: 'add', transitedCountry: 'ZZ' },
++      message: 'Select countries from the list'
++    },
++    {
++      name: 'a country that has already been added',
++      payload: {
++        action: 'add',
++        transitedCountry: 'FR',
++        transitedCountries: ['FR']
++      },
++      message: 'You have already added France'
++    },
++    {
++      name: 'a thirteenth country',
++      payload: {
++        action: 'add',
++        transitedCountry: codes[MAX_TRANSITED_COUNTRIES],
++        transitedCountries: atCapacity
++      },
++      message: `Select up to ${MAX_TRANSITED_COUNTRIES} countries`
++    }
++  ]
++
++  it.each(refusals)(
++    'Should refuse $name, keep the search box on the page and commit nothing',
++    async ({ payload, message }) => {
++      const result = await driveHandler(post, { seed, payload })
++      expect(result.response.statusCode).toBe(400)
++      expect(result.view.context.errors[COUNTRY_FIELD]).toBe(message)
++      expect(result.view.context.showCountryField).toBe(true)
++      expect(result.after).toEqual(result.before)
++    }
++  )
++
++  it('Should put a refused country back into the search box', async () => {
++    const result = await driveHandler(post, {
++      seed,
++      payload: {
++        action: 'add',
++        transitedCountry: 'FR',
++        transitedCountries: ['FR']
++      }
++    })
++    expect(result.view.context.chosenValue).toBe('FR')
++    expect(result.view.context.chosenLabel).toBe('France')
++  })
++
++  it('Should add the country to the working list, announce it and commit nothing', async () => {
++    const result = await driveHandler(post, {
++      seed,
++      payload: {
++        action: 'add',
++        transitedCountry: 'BE',
++        transitedCountries: ['FR']
++      }
++    })
++    expect(result.response.statusCode).toBe(200)
++    expect(result.view.context.selectedCountries).toEqual(['FR', 'BE'])
++    expect(result.view.context.countryRows.map((row) => row[0].text)).toEqual([
++      'France',
++      'Belgium'
++    ])
++    expect(result.view.context.status).toBe('Belgium added.')
++    expect(result.after).toEqual(result.before)
+   })
++
++  it('Should take the search box away and announce the limit on the twelfth country', async () => {
++    const result = await driveHandler(post, {
++      seed,
++      payload: {
++        action: 'add',
++        transitedCountry: atCapacity[MAX_TRANSITED_COUNTRIES - 1],
++        transitedCountries: atCapacity.slice(0, MAX_TRANSITED_COUNTRIES - 1)
++      }
++    })
++    expect(result.view.context.selectedCountries).toHaveLength(
++      MAX_TRANSITED_COUNTRIES
++    )
++    expect(result.view.context.atLimit).toBe(true)
++    expect(result.view.context.showCountryField).toBe(false)
++    expect(result.view.context.status).toContain(
++      `Maximum of ${MAX_TRANSITED_COUNTRIES} countries reached. Remove a country to add another.`
++    )
++  })
++})
++
++describe('POST transit-countries — removing a country', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should drop the named country, announce it and commit nothing', async () => {
++    const result = await driveHandler(post, {
++      seed,
++      payload: {
++        action: `${REMOVE_ACTION_PREFIX}FR`,
++        transitedCountries: ['FR', 'BE']
++      }
++    })
++    expect(result.response.statusCode).toBe(200)
++    expect(result.view.context.selectedCountries).toEqual(['BE'])
++    expect(result.view.context.status).toBe('France removed.')
++    expect(result.after).toEqual(result.before)
++  })
++
++  it('Should bring the search box back when a removal drops below the limit', async () => {
++    const result = await driveHandler(post, {
++      seed,
++      payload: {
++        action: `${REMOVE_ACTION_PREFIX}${atCapacity[0]}`,
++        transitedCountries: atCapacity
++      }
++    })
++    expect(result.view.context.atLimit).toBe(false)
++    expect(result.view.context.showCountryField).toBe(true)
++  })
++})
++
++describe('POST transit-countries — continuing', () => {
++  beforeAll(configure)
+   beforeEach(() => store.clear())
+ 
+   const cases = [
+@@ -52,21 +188,26 @@ describe('POST transit-countries', () => {
+   ]
+ 
+   it.each(cases)(
+-    'Should re-render with the transitedCountries message for $name and commit nothing',
++    'Should re-render with the transitedCountry message for $name and commit nothing',
+     async ({ payload, message }) => {
+-      const result = await driveHandler(post, {
+-        seed: { meansOfTransport: 'ROAD_VEHICLE' },
+-        payload
+-      })
++      const result = await driveHandler(post, { seed, payload })
+       expect(result.response.statusCode).toBe(400)
+-      expect(result.view.context.errors.transitedCountries).toBe(message)
++      expect(result.view.context.errors[COUNTRY_FIELD]).toBe(message)
+       expect(result.after).toEqual(result.before)
+     }
+   )
+ 
+-  it('Should deduplicate and commit the checked country codes', async () => {
++  it('Should keep the search box on the page when the list is over the limit', async () => {
++    const result = await driveHandler(post, {
++      seed,
++      payload: { transitedCountries: tooManyCodes }
++    })
++    expect(result.view.context.showCountryField).toBe(true)
++  })
++
++  it('Should deduplicate and commit the added country codes', async () => {
+     const result = await driveHandler(post, {
+-      seed: { meansOfTransport: 'ROAD_VEHICLE' },
++      seed,
+       payload: { transitedCountries: ['FR', 'BE', 'FR'] }
+     })
+     expect(result.after.transitedCountries).toEqual(['FR', 'BE'])
+@@ -75,27 +216,32 @@ describe('POST transit-countries', () => {
+ })
+ 
+ describe('GET transit-countries', () => {
+-  beforeAll(() => {
+-    configureRecords(recordsStub)
+-    configureSession(sessionStub)
+-    buildDispatch(dispatchPages)
+-  })
++  beforeAll(configure)
+   beforeEach(() => store.clear())
+ 
+-  it('Should render the full country checklist with stored values checked', async () => {
+-    const result = await driveHandler(get, {
+-      seed: {
+-        meansOfTransport: 'ROAD_VEHICLE',
+-        transitedCountries: ['FR', 'BE']
+-      }
+-    })
++  it('Should offer every country in the search list behind a placeholder', async () => {
++    const result = await driveHandler(get, { seed })
+     const items = result.view.context.countryItems
+-    expect(items).toHaveLength(countries.originCountries().length)
+-    expect(items.find((item) => item.value === 'FR')).toEqual({
+-      value: 'FR',
+-      text: 'France',
+-      checked: true
++    expect(items[0]).toEqual({ value: '', text: 'Search for a country' })
++    expect(items.slice(1)).toEqual(countries.originCountries())
++  })
++
++  it('Should read the stored countries back as rows, with nothing announced', async () => {
++    const result = await driveHandler(get, {
++      seed: { ...seed, transitedCountries: ['FR', 'BE'] }
+     })
+-    expect(items.find((item) => item.value === 'DE').checked).toBe(false)
++    expect(result.view.context.selectedCountries).toEqual(['FR', 'BE'])
++    expect(result.view.context.countryRows.map((row) => row[0].text)).toEqual([
++      'France',
++      'Belgium'
++    ])
++    expect(result.view.context.hasCountries).toBe(true)
++    expect(result.view.context.status).toBe('')
++  })
++
++  it('Should say the list is empty when nothing has been added', async () => {
++    const result = await driveHandler(get, { seed })
++    expect(result.view.context.hasCountries).toBe(false)
++    expect(result.view.context.countryRows).toEqual([])
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk
+index aef667f8..9bcd6dfc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk
+@@ -1,5 +1,7 @@
+ {% extends "shared/layout.njk" %}
+-{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
++{% from "accessible-autocomplete/macro.njk" import appAccessibleAutocomplete %}
++{% from "govuk/components/button/macro.njk" import govukButton %}
++{% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+ 
+@@ -16,14 +18,55 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+-    {{ govukCheckboxes({
+-      name: "transitedCountries",
+-      classes: "govuk-checkboxes--small",
+-      fieldset: { legend: { text: copy.countries.label, classes: "govuk-fieldset__legend--s" } },
+-      hint: { text: copy.countries.hint },
+-      errorMessage: errors.transitedCountries and { text: errors.transitedCountries },
+-      items: countryItems
+-    }) }}
++    {# The working list travels with the page. Add and Remove rebuild it and
++       render it back; only Save and continue writes it. #}
++    {% for code in selectedCountries %}
++      <input type="hidden" name="transitedCountries" value="{{ code }}" />
++    {% endfor %}
++
++    {% if showCountryField %}
++      {{ appAccessibleAutocomplete({
++        id: "transitedCountry",
++        name: "transitedCountry",
++        label: { text: copy.country.label, classes: "govuk-label--s" },
++        hint: { text: copy.country.hint },
++        value: chosenValue,
++        errorMessage: errors.transitedCountry and { text: errors.transitedCountry },
++        items: countryItems,
++        autocomplete: { showAllValues: true, noResults: copy.country.noResults, defaultValue: chosenLabel }
++      }) }}
++
++      {{ govukButton({
++        text: copy.add,
++        classes: "govuk-button--secondary",
++        name: "action",
++        value: "add"
++      }) }}
++    {% endif %}
++
++    {% if atLimit %}
++      <p class="govuk-body" id="transit-countries-limit">{{ limitMessage }}</p>
++    {% endif %}
++
++    {# The record of the answer, read back as a short list rather than as ticks
++       down a long one (design release 1). #}
++    {% if hasCountries %}
++      {{ govukTable({
++        caption: copy.table.caption,
++        captionClasses: "govuk-visually-hidden",
++        head: [
++          { text: copy.table.country },
++          { html: '<span class="govuk-visually-hidden">' + copy.table.actionsHidden + '</span>' }
++        ],
++        rows: countryRows
++      }) }}
++    {% else %}
++      <p class="govuk-body">{{ copy.empty }}</p>
++    {% endif %}
++
++    {# Each addition and removal is announced as it happens, not left to be
++       found in the table (design release 1). #}
++    <div id="transit-countries-status" class="govuk-visually-hidden" role="status" aria-live="polite" aria-atomic="true">{{ status }}</div>
+ 
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+   </form>

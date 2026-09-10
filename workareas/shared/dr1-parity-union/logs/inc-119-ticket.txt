@@ -1,0 +1,17 @@
+h2. Increment
+
+{{inc-119}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Acceptance criteria
+
+* The transit countries question is still asked of the same traders: {{transitedCountries}} stays in scope whenever the means of transport is rail or a road vehicle, and is still purged for every other means of transport.
+* In {{src/server/app/sets/live-animals/obligations/sections/transport.js}} (lines 92-105) the in-scope branch keeps {{inScope: true}} and its reason, and drops {{status: 'mandatory'}}.
+* Pressing Save and continue on the transit countries page with no country chosen saves an empty list and moves the trader on, with no "There is a problem" summary and no error message on the checkbox list.
+* The message "Select at least one country the consignment will travel through" is removed from {{src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js}} (line 55), together with the error state of the page, because nothing fires it any more.
+* An empty transit country list no longer holds the transit countries task row out of fulfilled, and no longer blocks submission: a road or rail consignment can reach the declaration with no transit country recorded.
+* Scope note: this changes whether the question must be answered, not how it is asked. Replacing the checkbox list with a search-and-add control is a separate increment ({{inc-118}}), and that work should carry the optional rule rather than the mandatory one.
+* Existing unit and E2E coverage for the transport section is updated so no test still asserts the removed validation, and the visual baselines for the transit countries page are refreshed.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

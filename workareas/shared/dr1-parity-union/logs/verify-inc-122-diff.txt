@@ -1,0 +1,134 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index 86baaec0..9735937e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -105,9 +105,19 @@ export const copy = {
+       Commercial: 'Masnachol',
+       Private: 'Preifat'
+     },
+-    optionHint: (type, address) => `${type} — ${address}`,
+-    optionHintApproved: (type, address, approvalNumber) =>
+-      `${type} — ${address} — rhif cymeradwyo ${approvalNumber}`,
++    statuses: {
++      Approved: 'Cymeradwywyd',
++      New: 'Newydd'
++    },
++    table: {
++      selectHidden: 'Dewis',
++      name: 'Enw',
++      address: 'Cyfeiriad',
++      approvalNumber: 'Rhif cymeradwyo',
++      type: 'Math',
++      status: 'Statws'
++    },
++    selectRowPrefix: 'Dewiswch',
+     add: 'Ychwanegu cludwr',
+     errors: {
+       transporterRequired: 'Dewiswch gludwr o’r rhestr'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index 9f1c7d6d..8a76cc4f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -118,9 +118,24 @@ export const copy = {
+       Commercial: 'Commercial',
+       Private: 'Private'
+     },
+-    optionHint: (type, address) => `${type} — ${address}`,
+-    optionHintApproved: (type, address, approvalNumber) =>
+-      `${type} — ${address} — approval number ${approvalNumber}`,
++    // Whether the transporter has been approved yet. Design release 1 shows
++    // this as a tag so a trader can tell approved from newly added at a
++    // glance; the tag colour is presentation and lives with the view model.
++    statuses: {
++      Approved: 'Approved',
++      New: 'New'
++    },
++    // Design release 1 aligns the transporters into headed columns rather than
++    // running each one's facts together in a hint.
++    table: {
++      selectHidden: 'Select',
++      name: 'Name',
++      address: 'Address',
++      approvalNumber: 'Approval number',
++      type: 'Type',
++      status: 'Status'
++    },
++    selectRowPrefix: 'Select',
+     add: 'Add a transporter',
+     errors: {
+       transporterRequired: 'Select a transporter from the list'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+index 1758eda3..6608dc12 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+@@ -92,41 +92,40 @@ describe('transport copy module', () => {
+     ).toBe('1 Farm Lane, Kent — approval number GB-01')
+   })
+ 
+-  test('Should interpolate transporters.optionHint', () => {
+-    expect(copy.transporters.optionHint('Commercial', SAMPLE_ADDRESS)).toBe(
+-      'Commercial — 1 Farm Lane, Kent'
++  // Design release 1 heads the transporter list's columns rather than running
++  // each transporter's facts together in one hint.
++  test('Should head every column Design release 1 shows on the transporter list', () => {
++    expect(copy.transporters.table).toEqual({
++      selectHidden: 'Select',
++      name: 'Name',
++      address: 'Address',
++      approvalNumber: 'Approval number',
++      type: 'Type',
++      status: 'Status'
++    })
++    expect(Object.keys(copyCy.transporters.table)).toEqual(
++      Object.keys(copy.transporters.table)
+     )
+   })
+ 
+-  test('Should interpolate transporters.optionHintApproved', () => {
+-    expect(
+-      copy.transporters.optionHintApproved(
+-        'Commercial',
+-        SAMPLE_ADDRESS,
+-        SAMPLE_APPROVAL_NUMBER
+-      )
+-    ).toBe('Commercial — 1 Farm Lane, Kent — approval number GB-01')
+-  })
+-
+-  // Both list hints take the same arguments in Welsh, and copy parity only
+-  // checks a function leaf's arity, so the Welsh sentences are asserted here
+-  // beside the English ones.
+-  test('Should interpolate the Welsh transporters.optionHint', () => {
+-    expect(
+-      copyCy.transporters.optionHint('Preifat', '12 Harbour Road, Aberdeen')
+-    ).toBe('Preifat — 12 Harbour Road, Aberdeen')
++  test('Should drop the run-on radio hint the columns replace', () => {
++    expect(copy.transporters.optionHint).toBeUndefined()
++    expect(copy.transporters.optionHintApproved).toBeUndefined()
++    expect(copyCy.transporters.optionHint).toBeUndefined()
++    expect(copyCy.transporters.optionHintApproved).toBeUndefined()
+   })
+ 
+-  test('Should interpolate the Welsh transporters.optionHintApproved', () => {
+-    expect(
+-      copyCy.transporters.optionHintApproved(
+-        'Masnachol',
+-        'Rue de la Loi 200, Brussels',
+-        'UK/BURY/T2/00104115'
+-      )
+-    ).toBe(
+-      'Masnachol — Rue de la Loi 200, Brussels — rhif cymeradwyo UK/BURY/T2/00104115'
+-    )
++  // Copy parity only checks that a Welsh leaf differs from its English one, so
++  // the Welsh status words are asserted here beside the English ones.
++  test('Should name both approval statuses in both languages', () => {
++    expect(copy.transporters.statuses).toEqual({
++      Approved: 'Approved',
++      New: 'New'
++    })
++    expect(copyCy.transporters.statuses).toEqual({
++      Approved: 'Cymeradwywyd',
++      New: 'Newydd'
++    })
+   })
+ 
+   // Design release 1 heads the type question with the choice, warns that

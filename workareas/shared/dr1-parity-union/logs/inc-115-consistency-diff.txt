@@ -1,0 +1,1522 @@
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index 81e91c7b..18803b71 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -40,6 +40,7 @@ import * as transitCountries from './sets/live-animals/journeys/linear/features/
+ import * as transporters from './sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js'
+ import * as transporterAdd from './sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js'
+ import * as transportersSelect from './sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js'
++import * as commercialTransporterDetails from './sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.js'
+ import * as privateTransporterDetails from './sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js'
+ import * as contactSelect from './sets/live-animals/journeys/linear/features/contact/controller.js'
+ import * as declaration from './sets/live-animals/journeys/linear/features/declaration/controller.js'
+@@ -426,6 +427,35 @@ describe('transporter commit contract — the list and its add spokes', () => {
+     })
+     expect(committedIds(register)).toEqual(['commercialTransporter'])
+ 
++    // The commercial arm of the add route types a transporter that is on no
++    // register, so it carries its own approval number and the Northern Ireland
++    // country the page fixes.
++    const typedInCommercial = await drive(
++      postHandlerOf(commercialTransporterDetails),
++      {
++        seed: { transporterType: 'Commercial' },
++        payload: {
++          approvalNumber: 'UK/BELF/T2/00104115',
++          nameOrOrganisationName: 'Lough Neagh Livestock Ltd',
++          addressLine1: '4 Quay Road',
++          addressLine2: '',
++          townOrCity: 'Belfast',
++          county: 'County Antrim',
++          postalOrZipCode: 'BT1 3LG',
++          country: 'Northern Ireland',
++          emailAddress: 'movements@lough-neagh.example.com',
++          telephoneNumber: '+44 28 9000 0111'
++        }
++      }
++    )
++    expect(committedIds(typedInCommercial)).toEqual(['commercialTransporter'])
++    expect(typedInCommercial.after.commercialTransporter.approvalNumber).toBe(
++      'UK/BELF/T2/00104115'
++    )
++    expect(typedInCommercial.after.commercialTransporter.address.country).toBe(
++      'Northern Ireland'
++    )
++
+     const typedIn = await drive(postHandlerOf(privateTransporterDetails), {
+       seed: { transporterType: 'Private' },
+       payload: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/index.js b/src/server/app/sets/live-animals/journeys/linear/features/index.js
+index 9f9d29e4..cc9913f3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/index.js
+@@ -15,6 +15,7 @@ import * as transitCountries from './transport/transit-countries/transit-countri
+ import * as transporters from './transport/transporters/transporters.controller.js'
+ import * as transporterAdd from './transport/transporter-add/transporter-add.controller.js'
+ import * as transportersSelect from './transport/transporters-select/transporters-select.controller.js'
++import * as commercialTransporterDetails from './transport/commercial-transporter-details/commercial-transporter-details.controller.js'
+ import * as privateTransporterDetails from './transport/private-transporter-details/private-transporter-details.controller.js'
+ import * as contactSelect from './contact/controller.js'
+ import * as cya from './check-answers/controller.js'
+@@ -60,6 +61,7 @@ export const allRoutes = [
+   ...transporters.routes,
+   ...transporterAdd.routes,
+   ...transportersSelect.routes,
++  ...commercialTransporterDetails.routes,
+   ...privateTransporterDetails.routes,
+   ...contactSelect.routes,
+   ...cya.routes,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+index 635009b7..d68e652c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+@@ -25,6 +25,7 @@ import * as transitCountries from './transport/transit-countries/transit-countri
+ import * as transporters from './transport/transporters/transporters.controller.js'
+ import * as transporterAdd from './transport/transporter-add/transporter-add.controller.js'
+ import * as transportersSelect from './transport/transporters-select/transporters-select.controller.js'
++import * as commercialTransporterDetails from './transport/commercial-transporter-details/commercial-transporter-details.controller.js'
+ import * as privateTransporterDetails from './transport/private-transporter-details/private-transporter-details.controller.js'
+ import * as contact from './contact/controller.js'
+ import * as declaration from './declaration/controller.js'
+@@ -98,7 +99,12 @@ const scalarPages = [
+   ['transporter list', transporters, parityFixture],
+   ['transporter list on a private pick', transporters, privateTransportFixture],
+   ['transporter type', transporterAdd, parityFixture],
+-  ['commercial transporter', transportersSelect, parityFixture],
++  ['commercial transporter register', transportersSelect, parityFixture],
++  [
++    'commercial transporter details',
++    commercialTransporterDetails,
++    parityFixture
++  ],
+   ['private transporter', privateTransporterDetails, privateTransportFixture],
+   ['contact', contact, parityFixture],
+   ['declaration', declaration, parityFixture]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
+index 31600ff0..a6203bbe 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
+@@ -28,6 +28,7 @@ import { routes as portOfEntryRoutes } from './transport/port-of-entry/port-of-e
+ import { routes as transportersRoutes } from './transport/transporters/transporters.controller.js'
+ import { routes as transporterAddRoutes } from './transport/transporter-add/transporter-add.controller.js'
+ import { routes as transportersSelectRoutes } from './transport/transporters-select/transporters-select.controller.js'
++import { routes as commercialTransporterDetailsRoutes } from './transport/commercial-transporter-details/commercial-transporter-details.controller.js'
+ import { routes as privateTransporterDetailsRoutes } from './transport/private-transporter-details/private-transporter-details.controller.js'
+ import { routes as documentsRoutes } from './documents/controller.js'
+ import { routes as hubRoutes } from './hub/controller.js'
+@@ -128,6 +129,12 @@ const CAPTIONED_PAGES = [
+     transportersSelectRoutes,
+     parityFixture
+   ],
++  [
++    'commercial transporter details',
++    NEW_TRANSPORTER,
++    commercialTransporterDetailsRoutes,
++    parityFixture
++  ],
+   [
+     'private transporter details',
+     NEW_TRANSPORTER,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.js
+new file mode 100644
+index 00000000..f6c249ce
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.js
+@@ -0,0 +1,237 @@
++import { pagePath } from '../../../../../../../shared/paths.js'
++import { TEMPLATES } from '../../../config.js'
++import * as state from '../../../../../../../engine/index.js'
++import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../../lib/http-status.js'
++import {
++  compose,
++  maxText,
++  oneOf,
++  validate
++} from '../../../../../../../lib/validate/index.js'
++import * as kit from '../../../../../../../shared/kit.js'
++import { copyFor } from '../../../../../../../shared/copy.js'
++import {
++  commercialTransporterDetailsPage as page,
++  transporterAddPage,
++  transportersPage
++} from '../page.js'
++import { copy as en } from '../copy/copy.en.js'
++import { copy as cy } from '../copy/copy.cy.js'
++
++/** The commercial arm of the add route.
++ *
++ * A spoke off the type chooser rather than a step in the journey: the
++ * `commercialTransporter` it writes is declared by the transporter list, which
++ * is where a trader normally answers it by picking a row. This is the way out
++ * for a trader whose commercial transporter is not on that list — they give
++ * its authorisation number, name, address and contact details by hand
++ * (design release 1). */
++const view = `${TEMPLATES}/features/transport/commercial-transporter-details/commercial-transporter-details`
++
++const bundle = copyFor({ en, cy })
++
++const copy = bundle.commercialTransporterDetails
++
++/** The authorisation rules the transporter list states, repeated at the top of
++ * this form as design release 1 repeats them: one set of sentences shown in
++ * two places rather than two copies of the same rules to keep in step. */
++const guidance = bundle.transporters.guidance
++
++/** The country of a hand-added commercial transporter, which design release 1
++ * fixes rather than asks: the restriction the type chooser states on the
++ * Commercial option. Stored in English whatever the page is read in, because
++ * it is an answer on the notification and not display text. */
++const NORTHERN_IRELAND = 'Northern Ireland'
++
++const MANDATORY_MESSAGES = {
++  approvalNumber: copy.errors.approvalNumberRequired,
++  nameOrOrganisationName: copy.errors.nameRequired,
++  addressLine1: copy.errors.addressLine1Required,
++  townOrCity: copy.errors.townOrCityRequired,
++  postalOrZipCode: copy.errors.postalOrZipCodeRequired,
++  emailAddress: copy.errors.emailRequired,
++  telephoneNumber: copy.errors.telephoneRequired
++}
++
++/** The fields a trader types, in the order the page asks for them. The country
++ * is not among them — it is fixed — so it carries its own place in
++ * `ERROR_ORDER` alone. */
++const ENTERED_FIELDS = [
++  'approvalNumber',
++  'nameOrOrganisationName',
++  'addressLine1',
++  'addressLine2',
++  'townOrCity',
++  'county',
++  'postalOrZipCode',
++  'emailAddress',
++  'telephoneNumber'
++]
++
++const ERROR_ORDER = [
++  'approvalNumber',
++  'nameOrOrganisationName',
++  'addressLine1',
++  'addressLine2',
++  'townOrCity',
++  'county',
++  'postalOrZipCode',
++  'country',
++  'emailAddress',
++  'telephoneNumber'
++]
++
++const MAX_APPROVAL_NUMBER_LENGTH = 50
++const MAX_NAME_LENGTH = 255
++const MAX_TOWN_LENGTH = 100
++const MAX_POSTCODE_LENGTH = 12
++const MAX_PHONE_LENGTH = 20
++const MAX_EMAIL_LENGTH = 254
++
++const fields = compose(
++  maxText(
++    'approvalNumber',
++    MAX_APPROVAL_NUMBER_LENGTH,
++    copy.errors.approvalNumberMaxLength
++  ),
++  maxText('nameOrOrganisationName', MAX_NAME_LENGTH, copy.errors.nameMaxLength),
++  maxText('addressLine1', MAX_NAME_LENGTH, copy.errors.addressLine1MaxLength),
++  maxText('addressLine2', MAX_NAME_LENGTH, copy.errors.addressLine2MaxLength),
++  maxText('townOrCity', MAX_TOWN_LENGTH, copy.errors.townOrCityMaxLength),
++  maxText('county', MAX_TOWN_LENGTH, copy.errors.countyMaxLength),
++  maxText(
++    'postalOrZipCode',
++    MAX_POSTCODE_LENGTH,
++    copy.errors.postalOrZipCodeMaxLength
++  ),
++  // The form posts the fixed country back in a hidden field, so a value that
++  // is not Northern Ireland has been tampered with: refuse it rather than
++  // quietly correcting it.
++  oneOf('country', [NORTHERN_IRELAND], copy.errors.countryFixed),
++  maxText('emailAddress', MAX_EMAIL_LENGTH, copy.errors.emailMaxLength),
++  maxText('telephoneNumber', MAX_PHONE_LENGTH, copy.errors.telephoneMaxLength)
++)
++
++const recordProvided = (values) =>
++  ENTERED_FIELDS.some((field) => values[field] !== '')
++
++const missingMandatoryErrors = (values) => {
++  if (!recordProvided(values)) {
++    return {}
++  }
++  return Object.fromEntries(
++    Object.entries(MANDATORY_MESSAGES).filter(([field]) => values[field] === '')
++  )
++}
++
++const render = (
++  request,
++  h,
++  journey,
++  values,
++  { errors = {}, recoverableError = false } = {}
++) =>
++  h.view(view, {
++    ...kit.base(copy.title, {
++      backLink: kit.withChangeContext(
++        request,
++        pagePath(journey.journeyId, transporterAddPage.slug)
++      ),
++      journey,
++      page,
++      recoverableError
++    }),
++    copy,
++    guidance,
++    country: NORTHERN_IRELAND,
++    values,
++    errors,
++    errorSummary: kit.errorSummary(errors)
++  })
++
++const get = async (request, h) => {
++  const { journey, answers } = await state.get(request, h)
++  const saved = answers.commercialTransporter
++  return render(request, h, journey, {
++    approvalNumber: saved?.approvalNumber ?? '',
++    nameOrOrganisationName: saved?.name ?? '',
++    addressLine1: saved?.address?.addressLine1 ?? '',
++    addressLine2: saved?.address?.addressLine2 ?? '',
++    townOrCity: saved?.address?.townOrCity ?? '',
++    county: saved?.address?.county ?? '',
++    postalOrZipCode: saved?.address?.postalOrZipCode ?? '',
++    emailAddress: saved?.address?.emailAddress ?? '',
++    telephoneNumber: saved?.address?.telephoneNumber ?? ''
++  })
++}
++
++const trimmedValues = (payload) =>
++  Object.fromEntries(
++    ENTERED_FIELDS.map((field) => [field, (payload[field] ?? '').trim()])
++  )
++
++const formErrors = (payload, values) => {
++  const { errors } = validate(fields, payload)
++  const merged = { ...missingMandatoryErrors(values), ...errors }
++  return Object.fromEntries(
++    ERROR_ORDER.filter((field) => merged[field]).map((field) => [
++      field,
++      merged[field]
++    ])
++  )
++}
++
++const commercialTransporterRecord = (values) => ({
++  commercialTransporter: {
++    name: values.nameOrOrganisationName,
++    address: {
++      addressLine1: values.addressLine1,
++      addressLine2: values.addressLine2,
++      townOrCity: values.townOrCity,
++      county: values.county,
++      postalOrZipCode: values.postalOrZipCode,
++      country: NORTHERN_IRELAND,
++      telephoneNumber: values.telephoneNumber,
++      emailAddress: values.emailAddress
++    },
++    approvalNumber: values.approvalNumber
++  }
++})
++
++const commitOrSkip = (request, h, values) =>
++  recordProvided(values)
++    ? state.commit(request, h, commercialTransporterRecord(values))
++    : state.get(request, h)
++
++const post = async (request, h) => {
++  const payload = request.payload ?? {}
++  const values = trimmedValues(payload)
++  const allErrors = formErrors(payload, values)
++  if (Object.keys(allErrors).length > 0) {
++    const { journey } = await state.get(request, h)
++    return render(request, h, journey, values, { errors: allErrors })
++  }
++
++  let committed
++  const { failure } = await kit.recoverableSave(
++    async () => {
++      committed = await commitOrSkip(request, h, values)
++    },
++    async () => {
++      const { journey } = await state.get(request, h)
++      return render(request, h, journey, values, {
++        recoverableError: true
++      }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
++    }
++  )
++  if (failure) {
++    return failure
++  }
++
++  // Adding a transporter finishes the transporter step, so the journey carries
++  // on from the list rather than from this spoke.
++  const { scope } = committed
++  return h.redirect(await kit.nextTarget(request, transportersPage, scope))
++}
++
++export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js
+new file mode 100644
+index 00000000..4e538b94
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js
+@@ -0,0 +1,234 @@
++import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
++
++import { buildDispatch } from '../../../../../../../flow/dispatch.js'
++import { store } from '../../../../../../../engine/store.js'
++import { configureRecords } from '../../../../../../../engine/persistence/records.js'
++import { configureSession } from '../../../../../../../engine/persistence/session.js'
++import { records as recordsStub } from '../../../../../../../services/persistence/records/stub/index.js'
++import { BackendRequestError } from '../../../../../../../services/persistence/records/errors.js'
++import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
++import {
++  driveHandler,
++  journeyRequest,
++  stubH
++} from '../../../../../../../engine/test-support.js'
++import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../../lib/http-status.js'
++import { COMMERCIAL } from '../../../../../../../services/transporters/index.js'
++import { pagePath } from '../../../../../../../shared/paths.js'
++import { dispatchPages } from '../../index.js'
++import { copy } from '../copy/copy.en.js'
++
++import * as commercialTransporterDetails from './commercial-transporter-details.controller.js'
++
++const ADD_SLUG = 'transporters/add'
++const NORTHERN_IRELAND = 'Northern Ireland'
++
++const RECORD = {
++  approvalNumber: 'UK/BELF/T2/00104115',
++  nameOrOrganisationName: 'Lough Neagh Livestock Ltd',
++  addressLine1: '4 Quay Road',
++  addressLine2: '',
++  townOrCity: 'Belfast',
++  county: 'County Antrim',
++  postalOrZipCode: 'BT1 3LG',
++  emailAddress: 'movements@lough-neagh.example.com',
++  telephoneNumber: '+44 28 9000 0111'
++}
++
++const handlerFor = (method) =>
++  commercialTransporterDetails.routes.find((route) => route.method === method)
++    .handler
++
++const getHandler = handlerFor('GET')
++const postHandler = handlerFor('POST')
++
++const configure = () => {
++  configureRecords(recordsStub)
++  configureSession(sessionStub)
++  buildDispatch(dispatchPages)
++}
++
++/** Drive a POST whose save fails the way a backend outage fails it: recoverably,
++ * so the form comes back with the banner rather than throwing. */
++const driveSaveFailure = async (payload) => {
++  const journey = await store.create()
++  await store.seedAnswers(journey.journeyId, { transporterType: COMMERCIAL })
++  const h = stubH()
++  configureRecords({
++    ...recordsStub,
++    replaceFulfilment: () => {
++      throw new BackendRequestError('save the transporter', {
++        status: 503,
++        statusText: 'Service Unavailable'
++      })
++    }
++  })
++  try {
++    return await postHandler(journeyRequest(journey.journeyId, { payload }), h)
++  } finally {
++    configureRecords(recordsStub)
++  }
++}
++
++// The commercial form is a spoke off the type question, so Back points at that
++// question and a save hands the journey on from the list the add route began at.
++describe('/transporters/add/commercial', () => {
++  beforeAll(configure)
++  beforeEach(() => store.clear())
++
++  it('Should point Back at the type question', async () => {
++    const result = await driveHandler(getHandler, {
++      seed: { transporterType: COMMERCIAL }
++    })
++
++    expect(result.view.context.backLink).toBe(
++      pagePath(result.journeyId, ADD_SLUG)
++    )
++  })
++
++  it('Should keep the change context on Back when the trader is changing an answer', async () => {
++    const result = await driveHandler(getHandler, {
++      seed: { transporterType: COMMERCIAL },
++      query: { change: '1' }
++    })
++
++    expect(result.view.context.backLink).toBe(
++      `${pagePath(result.journeyId, ADD_SLUG)}?change=1`
++    )
++  })
++
++  // The authorisation rules are the transporter list's own sentences, shown
++  // again here rather than written out a second time.
++  it('Should carry the transporter-authorisation guidance and the fixed country', async () => {
++    const result = await driveHandler(getHandler, {
++      seed: { transporterType: COMMERCIAL }
++    })
++
++    expect(result.view.context.guidance).toBe(copy.transporters.guidance)
++    expect(result.view.context.country).toBe(NORTHERN_IRELAND)
++  })
++
++  it('Should flatten the saved record back into the form fields', async () => {
++    const result = await driveHandler(getHandler, {
++      seed: {
++        transporterType: COMMERCIAL,
++        commercialTransporter: {
++          name: RECORD.nameOrOrganisationName,
++          address: {
++            addressLine1: RECORD.addressLine1,
++            addressLine2: RECORD.addressLine2,
++            townOrCity: RECORD.townOrCity,
++            county: RECORD.county,
++            postalOrZipCode: RECORD.postalOrZipCode,
++            country: NORTHERN_IRELAND,
++            telephoneNumber: RECORD.telephoneNumber,
++            emailAddress: RECORD.emailAddress
++          },
++          approvalNumber: RECORD.approvalNumber
++        }
++      }
++    })
++
++    expect(result.view.context.values).toEqual(RECORD)
++  })
++
++  // The mandates apply once any of the record is given, so a part-filled form
++  // names what is still missing rather than saving half a transporter.
++  it('Should name the missing mandatory fields on a part-filled record', async () => {
++    const result = await driveHandler(postHandler, {
++      seed: { transporterType: COMMERCIAL },
++      payload: {
++        nameOrOrganisationName: RECORD.nameOrOrganisationName,
++        country: NORTHERN_IRELAND
++      }
++    })
++
++    expect(Object.keys(result.view.context.errors)).toEqual([
++      'approvalNumber',
++      'addressLine1',
++      'townOrCity',
++      'postalOrZipCode',
++      'emailAddress',
++      'telephoneNumber'
++    ])
++    expect(result.after.commercialTransporter).toBeUndefined()
++  })
++
++  it('Should hold the authorisation number to its length', async () => {
++    const result = await driveHandler(postHandler, {
++      seed: { transporterType: COMMERCIAL },
++      payload: {
++        ...RECORD,
++        approvalNumber: 'A'.repeat(51),
++        country: NORTHERN_IRELAND
++      }
++    })
++
++    expect(result.view.context.errors.approvalNumber).toBe(
++      copy.commercialTransporterDetails.errors.approvalNumberMaxLength
++    )
++    expect(result.after.commercialTransporter).toBeUndefined()
++  })
++
++  // The country is fixed rather than asked, so anything but Northern Ireland
++  // has been tampered with on its way back.
++  it('Should refuse a country the page did not offer', async () => {
++    const result = await driveHandler(postHandler, {
++      seed: { transporterType: COMMERCIAL },
++      payload: { ...RECORD, country: 'Switzerland' }
++    })
++
++    expect(result.view.context.errors.country).toBe(
++      copy.commercialTransporterDetails.errors.countryFixed
++    )
++    expect(result.after.commercialTransporter).toBeUndefined()
++  })
++
++  it('Should save a hand-entered transporter in Northern Ireland and hand it on from the list', async () => {
++    const result = await driveHandler(postHandler, {
++      seed: { transporterType: COMMERCIAL },
++      payload: { ...RECORD, country: NORTHERN_IRELAND }
++    })
++
++    expect(result.after.commercialTransporter).toEqual({
++      name: RECORD.nameOrOrganisationName,
++      address: {
++        addressLine1: RECORD.addressLine1,
++        addressLine2: RECORD.addressLine2,
++        townOrCity: RECORD.townOrCity,
++        county: RECORD.county,
++        postalOrZipCode: RECORD.postalOrZipCode,
++        country: NORTHERN_IRELAND,
++        telephoneNumber: RECORD.telephoneNumber,
++        emailAddress: RECORD.emailAddress
++      },
++      approvalNumber: RECORD.approvalNumber
++    })
++    expect(result.response.redirect).toBeTruthy()
++    expect(result.response.redirect).not.toContain(ADD_SLUG)
++  })
++
++  // The mandates only bite once some of the record is given, so an untouched
++  // form saves through unfilled rather than blocking the trader.
++  it('Should walk on without saving when the form is left blank', async () => {
++    const result = await driveHandler(postHandler, {
++      seed: { transporterType: COMMERCIAL },
++      payload: { country: NORTHERN_IRELAND }
++    })
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.commercialTransporter).toBeUndefined()
++    expect(result.response.redirect).toBeTruthy()
++  })
++
++  it('Should re-render the form at 500 with the answers kept after a recoverable save failure', async () => {
++    const response = await driveSaveFailure({
++      ...RECORD,
++      country: NORTHERN_IRELAND
++    })
++
++    expect(response.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR)
++    expect(response.context.recoverableError).toBe(true)
++    expect(response.context.values).toEqual(RECORD)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.njk
+new file mode 100644
+index 00000000..10aacaae
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.njk
+@@ -0,0 +1,134 @@
++{% extends "shared/layout.njk" %}
++{% from "govuk/components/input/macro.njk" import govukInput %}
++{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
++{% from "govuk/components/select/macro.njk" import govukSelect %}
++{% from "shared/save-actions.njk" import saveActions %}
++{% from "shared/section-caption.njk" import sectionCaption %}
++
++{% block journeyContent %}
++  {% include "shared/error-summary.njk" %}
++
++  {{ sectionCaption(caption) }}
++  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
++
++  {# Design release 1 opens the form with the authorisation rules, so a trader
++     typing a transporter in by hand meets the conditions the list states
++     before giving the authorisation number. #}
++  {% call govukNotificationBanner({ titleText: copy.guidanceTitle }) %}
++    <p class="govuk-body">{{ guidance.authorisationLead }}</p>
++    <ul class="govuk-list govuk-list--bullet">
++      {% for condition in guidance.authorisationConditions %}
++        <li>{{ condition }}</li>
++      {% endfor %}
++    </ul>
++    <p class="govuk-body">
++      <a href="{{ guidance.linkHref }}" class="govuk-link" rel="noreferrer noopener" target="_blank">{{ guidance.linkText }}</a>
++    </p>
++    <p class="govuk-body">{{ guidance.daeraValid }}</p>
++    <p class="govuk-body">{{ guidance.euNotValid }}</p>
++  {% endcall %}
++
++  <form method="post" novalidate>
++    <input type="hidden" name="crumb" value="{{ crumb }}" />
++    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
++
++    {# The authorisation number comes first, as Design release 1 asks it: it is
++       what makes the transporter a commercial one. #}
++    {{ govukInput({
++      id: "approvalNumber", name: "approvalNumber",
++      label: { text: copy.fields.approvalNumber },
++      classes: "govuk-!-width-two-thirds",
++      value: values.approvalNumber,
++      errorMessage: errors.approvalNumber and { text: errors.approvalNumber }
++    }) }}
++
++    {{ govukInput({
++      id: "nameOrOrganisationName", name: "nameOrOrganisationName",
++      label: { text: copy.fields.nameOrOrganisationName },
++      autocomplete: "name",
++      value: values.nameOrOrganisationName,
++      errorMessage: errors.nameOrOrganisationName and { text: errors.nameOrOrganisationName }
++    }) }}
++
++    {{ govukInput({
++      id: "addressLine1", name: "addressLine1",
++      label: { text: copy.fields.addressLine1 },
++      autocomplete: "address-line1",
++      value: values.addressLine1,
++      errorMessage: errors.addressLine1 and { text: errors.addressLine1 }
++    }) }}
++
++    {{ govukInput({
++      id: "addressLine2", name: "addressLine2",
++      label: { text: copy.fields.addressLine2 },
++      autocomplete: "address-line2",
++      value: values.addressLine2,
++      errorMessage: errors.addressLine2 and { text: errors.addressLine2 }
++    }) }}
++
++    {{ govukInput({
++      id: "townOrCity", name: "townOrCity",
++      label: { text: copy.fields.townOrCity },
++      classes: "govuk-!-width-two-thirds",
++      autocomplete: "address-level2",
++      value: values.townOrCity,
++      errorMessage: errors.townOrCity and { text: errors.townOrCity }
++    }) }}
++
++    {{ govukInput({
++      id: "county", name: "county",
++      label: { text: copy.fields.county },
++      classes: "govuk-!-width-two-thirds",
++      value: values.county,
++      errorMessage: errors.county and { text: errors.county }
++    }) }}
++
++    {{ govukInput({
++      id: "postalOrZipCode", name: "postalOrZipCode",
++      label: { text: copy.fields.postalOrZipCode },
++      classes: "govuk-input--width-10",
++      autocomplete: "postal-code",
++      value: values.postalOrZipCode,
++      errorMessage: errors.postalOrZipCode and { text: errors.postalOrZipCode }
++    }) }}
++
++    {# A commercial transporter added by hand can only be a Northern Irish one,
++       so the country is shown and cannot be changed (Design release 1). The
++       disabled control carries no value to the server, so the hidden field
++       beside it posts the one the page fixed. #}
++    {{ govukSelect({
++      id: "country", name: "country",
++      label: { text: copy.fields.country },
++      items: [{ value: country, text: copy.country, selected: true }],
++      disabled: true,
++      errorMessage: errors.country and { text: errors.country }
++    }) }}
++    <input type="hidden" name="country" value="{{ country }}" />
++
++    <h2 class="govuk-heading-m">{{ copy.contactHeading }}</h2>
++
++    {{ govukInput({
++      id: "emailAddress", name: "emailAddress",
++      label: { text: copy.fields.emailAddress },
++      type: "email",
++      autocomplete: "email",
++      value: values.emailAddress,
++      errorMessage: errors.emailAddress and { text: errors.emailAddress }
++    }) }}
++
++    {{ govukInput({
++      id: "telephoneNumber", name: "telephoneNumber",
++      label: { text: copy.fields.telephoneNumber },
++      hint: { text: copy.telephoneHint },
++      type: "tel",
++      classes: "govuk-input--width-20",
++      autocomplete: "tel",
++      value: values.telephoneNumber,
++      errorMessage: errors.telephoneNumber and { text: errors.telephoneNumber }
++    }) }}
++
++    {# The commercial arm of the add route — reached from the type question, not
++       from the hub, so it ends with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
++  </form>
++{% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index c970bf59..86baaec0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -137,6 +137,49 @@ export const copy = {
+       transporterRequired: 'Dewiswch gludwr o’r rhestr'
+     }
+   },
++  commercialTransporterDetails: {
++    title: 'Ychwanegu cludwr masnachol',
++    guidanceTitle: 'Help gydag awdurdodiad cludwr',
++    contactHeading: 'Rhowch fanylion cyswllt',
++    fields: {
++      approvalNumber: 'Rhif awdurdodiad y cludwr',
++      nameOrOrganisationName: 'Enw neu enw’r sefydliad',
++      addressLine1: 'Llinell gyfeiriad 1',
++      addressLine2: 'Llinell gyfeiriad 2 (dewisol)',
++      townOrCity: 'Tref neu ddinas',
++      county: 'Sir (dewisol)',
++      postalOrZipCode: 'Cod post neu god zip',
++      country: 'Gwlad',
++      emailAddress: 'Cyfeiriad e-bost',
++      telephoneNumber: 'Rhif ffôn'
++    },
++    telephoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
++    country: 'Gogledd Iwerddon',
++    errors: {
++      approvalNumberRequired: 'Rhowch rif awdurdodiad y cludwr',
++      nameRequired: 'Rhowch enw neu enw sefydliad',
++      addressLine1Required: 'Rhowch linell gyfeiriad 1',
++      townOrCityRequired: 'Rhowch dref neu ddinas',
++      postalOrZipCodeRequired: 'Rhowch god post neu god zip',
++      emailRequired: 'Rhowch gyfeiriad e-bost',
++      telephoneRequired: 'Rhowch rif ffôn',
++      approvalNumberMaxLength:
++        'Rhaid i rif awdurdodiad y cludwr fod yn 50 nod neu lai',
++      nameMaxLength: 'Rhaid i’r enw neu enw’r sefydliad fod yn 255 nod neu lai',
++      addressLine1MaxLength:
++        'Rhaid i linell gyfeiriad 1 fod yn 255 nod neu lai',
++      addressLine2MaxLength:
++        'Rhaid i linell gyfeiriad 2 fod yn 255 nod neu lai',
++      townOrCityMaxLength: 'Rhaid i’r dref neu ddinas fod yn 100 nod neu lai',
++      countyMaxLength: 'Rhaid i’r sir fod yn 100 nod neu lai',
++      postalOrZipCodeMaxLength:
++        'Rhaid i’r cod post neu’r cod zip fod yn 12 nod neu lai',
++      emailMaxLength: 'Rhaid i’r cyfeiriad e-bost fod yn 254 nod neu lai',
++      telephoneMaxLength: 'Rhaid i’r rhif ffôn fod yn 20 nod neu lai',
++      countryFixed:
++        'Rhaid i gludwr masnachol rydych chi’n ei ychwanegu fod yng Ngogledd Iwerddon'
++    }
++  },
+   privateTransporterDetails: {
+     title: 'Ychwanegu cludwr preifat',
+     intro:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index 0a85aa3c..9f1c7d6d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -158,6 +158,53 @@ export const copy = {
+       transporterRequired: 'Select a transporter from the list'
+     }
+   },
++  commercialTransporterDetails: {
++    title: 'Add commercial transporter',
++    // Design release 1 opens the form with the authorisation rules the list
++    // already carries, so a trader typing a transporter in by hand meets the
++    // same conditions before they give its authorisation number. The sentences
++    // are the list's own — one statement of the rules, shown twice.
++    guidanceTitle: 'Help with transporter authorisation',
++    contactHeading: 'Enter contact details',
++    fields: {
++      approvalNumber: 'Transporter authorisation number',
++      nameOrOrganisationName: 'Name or organisation name',
++      addressLine1: 'Address line 1',
++      addressLine2: 'Address line 2 (optional)',
++      townOrCity: 'Town or city',
++      county: 'County (optional)',
++      postalOrZipCode: 'Postcode or zip code',
++      country: 'Country',
++      emailAddress: 'Email address',
++      telephoneNumber: 'Phone number'
++    },
++    telephoneHint: 'For international numbers include the country code',
++    // A commercial transporter a trader adds by hand can only be a Northern
++    // Irish one (design release 1), so the country is shown rather than asked.
++    country: 'Northern Ireland',
++    errors: {
++      approvalNumberRequired: 'Enter the transporter authorisation number',
++      nameRequired: 'Enter a name or organisation name',
++      addressLine1Required: 'Enter address line 1',
++      townOrCityRequired: 'Enter a town or city',
++      postalOrZipCodeRequired: 'Enter a postcode or zip code',
++      emailRequired: 'Enter an email address',
++      telephoneRequired: 'Enter a phone number',
++      approvalNumberMaxLength:
++        'Transporter authorisation number must be 50 characters or less',
++      nameMaxLength: 'Name or organisation name must be 255 characters or less',
++      addressLine1MaxLength: 'Address line 1 must be 255 characters or less',
++      addressLine2MaxLength: 'Address line 2 must be 255 characters or less',
++      townOrCityMaxLength: 'Town or city must be 100 characters or less',
++      countyMaxLength: 'County must be 100 characters or less',
++      postalOrZipCodeMaxLength:
++        'Postcode or zip code must be 12 characters or less',
++      emailMaxLength: 'Email address must be 254 characters or less',
++      telephoneMaxLength: 'Phone number must be 20 characters or less',
++      countryFixed:
++        'A commercial transporter you add must be in Northern Ireland'
++    }
++  },
+   privateTransporterDetails: {
+     title: 'Add private transporter',
+     intro:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+index 7dcb41aa..1758eda3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+@@ -157,6 +157,36 @@ describe('transport copy module', () => {
+     )
+   })
+ 
++  // Design release 1 heads the commercial form as the addition it is, asks the
++  // authorisation number first and fixes the country to Northern Ireland.
++  test('Should head the commercial form as an addition and fix its country', () => {
++    expect(copy.commercialTransporterDetails.title).toBe(
++      'Add commercial transporter'
++    )
++    expect(copyCy.commercialTransporterDetails.title).toBe(
++      'Ychwanegu cludwr masnachol'
++    )
++    expect(copy.commercialTransporterDetails.fields.approvalNumber).toBe(
++      'Transporter authorisation number'
++    )
++    expect(copy.commercialTransporterDetails.country).toBe('Northern Ireland')
++    expect(copyCy.commercialTransporterDetails.country).toBe('Gogledd Iwerddon')
++  })
++
++  // The banner repeats the authorisation rules the list states, and the phone
++  // number carries the international hint (design release 1).
++  test('Should head the commercial form guidance banner and hint the phone number', () => {
++    expect(copy.commercialTransporterDetails.guidanceTitle).toBe(
++      'Help with transporter authorisation'
++    )
++    expect(copy.commercialTransporterDetails.contactHeading).toBe(
++      'Enter contact details'
++    )
++    expect(copy.commercialTransporterDetails.telephoneHint).toBe(
++      'For international numbers include the country code'
++    )
++  })
++
+   // Both languages must send the trader to the same guidance section — a
+   // divergent href here is a broken translation, not a wording choice.
+   test('Should link the same guidance section in Welsh as in English', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js
+new file mode 100644
+index 00000000..415bcf66
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js
+@@ -0,0 +1,361 @@
++import AxeBuilder from '@axe-core/playwright'
++import { expect, test } from '@playwright/test'
++import {
++  expectPageEndsWithPrimaryAlone,
++  journeyUrl,
++  signIn,
++  startNotification,
++  unlockSections
++} from '../../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sectionCaptionsCopy } from '../../../flow/section-captions/copy/copy.en.js'
++import { copy } from '../copy/copy.en.js'
++
++const form = copy.commercialTransporterDetails
++const COMMERCIAL_SLUG = 'transporters/add/commercial'
++const NORTHERN_IRELAND = 'Northern Ireland'
++const BACK_LINK = '.govuk-back-link'
++const approvalNumberInput = '#approvalNumber'
++
++const submit = (page) =>
++  page.getByRole('button', { name: 'Save and continue' }).click()
++
++const openCommercialForm = async (page) => {
++  await startNotification(page)
++  await unlockSections(page)
++  await page.getByRole('link', { name: copy.portOfEntry.title }).click()
++  await submit(page)
++  // The govuk button macro renders an href as a link with role="button".
++  await page.getByRole('button', { name: copy.transporters.add }).click()
++  await page
++    .getByRole('radio', { name: copy.transporterAdd.options.Commercial.text })
++    .check()
++  await submit(page)
++  await expect(page.getByRole('heading', { name: form.title })).toBeVisible()
++}
++
++const errorLink = (page, message) =>
++  page.locator('.govuk-error-summary').getByRole('link', { name: message })
++
++const expectAxeClean = async (page, name) => {
++  const results = await new AxeBuilder({ page })
++    .withTags(['wcag2a', 'wcag2aa'])
++    .analyze()
++  const seriousOrCritical = results.violations.filter(({ impact }) =>
++    ['serious', 'critical'].includes(impact)
++  )
++  expect(
++    seriousOrCritical,
++    `${name} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++  ).toEqual([])
++}
++
++// Not on the transporter list, so it can only have come from this form.
++const validTransporter = {
++  approvalNumber: 'UK/BELF/T2/00104115',
++  nameOrOrganisationName: 'Lough Neagh Livestock Ltd',
++  addressLine1: '4 Quay Road',
++  addressLine2: 'Unit 3',
++  townOrCity: 'Belfast',
++  county: 'County Antrim',
++  postalOrZipCode: 'BT1 3LG',
++  emailAddress: 'movements@lough-neagh.example.com',
++  telephoneNumber: '+44 28 9000 0111'
++}
++
++const fillTransporter = async (page, transporter = validTransporter) => {
++  for (const [field, value] of Object.entries(transporter)) {
++    await page.locator(`#${field}`).fill(value)
++  }
++}
++
++const requiredValidations = [
++  [
++    'transporter authorisation number',
++    'approvalNumber',
++    'approvalNumberRequired'
++  ],
++  ['name or organisation name', 'nameOrOrganisationName', 'nameRequired'],
++  ['address line 1', 'addressLine1', 'addressLine1Required'],
++  ['town or city', 'townOrCity', 'townOrCityRequired'],
++  ['postcode or zip code', 'postalOrZipCode', 'postalOrZipCodeRequired'],
++  ['email address', 'emailAddress', 'emailRequired'],
++  ['phone number', 'telephoneNumber', 'telephoneRequired']
++]
++
++const MAX_APPROVAL_NUMBER_LENGTH = 50
++const MAX_NAME_OR_ADDRESS_LINE_LENGTH = 255
++const MAX_TOWN_OR_COUNTY_LENGTH = 100
++const MAX_POSTAL_OR_ZIP_CODE_LENGTH = 12
++const MAX_TELEPHONE_LENGTH = 20
++const MAX_EMAIL_LENGTH = 254
++const exampleEmailDomain = '@example.com'
++
++const formatValidations = [
++  [
++    'authorisation number over 50 characters',
++    'approvalNumber',
++    'A'.repeat(MAX_APPROVAL_NUMBER_LENGTH + 1),
++    'approvalNumberMaxLength'
++  ],
++  [
++    'name or organisation name over 255 characters',
++    'nameOrOrganisationName',
++    'N'.repeat(MAX_NAME_OR_ADDRESS_LINE_LENGTH + 1),
++    'nameMaxLength'
++  ],
++  [
++    'address line 1 over 255 characters',
++    'addressLine1',
++    'A'.repeat(MAX_NAME_OR_ADDRESS_LINE_LENGTH + 1),
++    'addressLine1MaxLength'
++  ],
++  [
++    'address line 2 over 255 characters',
++    'addressLine2',
++    'B'.repeat(MAX_NAME_OR_ADDRESS_LINE_LENGTH + 1),
++    'addressLine2MaxLength'
++  ],
++  [
++    'town or city over 100 characters',
++    'townOrCity',
++    'T'.repeat(MAX_TOWN_OR_COUNTY_LENGTH + 1),
++    'townOrCityMaxLength'
++  ],
++  [
++    'county over 100 characters',
++    'county',
++    'C'.repeat(MAX_TOWN_OR_COUNTY_LENGTH + 1),
++    'countyMaxLength'
++  ],
++  [
++    'postcode or zip code over 12 characters',
++    'postalOrZipCode',
++    'P'.repeat(MAX_POSTAL_OR_ZIP_CODE_LENGTH + 1),
++    'postalOrZipCodeMaxLength'
++  ],
++  [
++    'email address over 254 characters',
++    'emailAddress',
++    `${'e'.repeat(MAX_EMAIL_LENGTH + 1 - exampleEmailDomain.length)}${exampleEmailDomain}`,
++    'emailMaxLength'
++  ],
++  [
++    'phone number over 20 characters',
++    'telephoneNumber',
++    '1'.repeat(MAX_TELEPHONE_LENGTH + 1),
++    'telephoneMaxLength'
++  ]
++]
++
++test.describe('adding a commercial transporter that is not on the list', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('the commercial branch of the add route opens the form, under the new-transporter caption', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++
++    await expect(page).toHaveURL(/\/transporters\/add\/commercial$/)
++    await expect(
++      page.locator('span.govuk-caption-l + h1.govuk-heading-l')
++    ).toHaveText(form.title)
++    await expect(page.locator('span.govuk-caption-l')).toHaveText(
++      sectionCaptionsCopy.sections.newTransporter
++    )
++  })
++
++  test('opens with the transporter-authorisation guidance the list states', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++
++    const banner = page.locator('.govuk-notification-banner')
++    await expect(banner).toContainText(form.guidanceTitle)
++    await expect(banner).toContainText(
++      copy.transporters.guidance.authorisationLead
++    )
++    for (const condition of copy.transporters.guidance
++      .authorisationConditions) {
++      await expect(banner).toContainText(condition)
++    }
++    await expect(banner).toContainText(copy.transporters.guidance.daeraValid)
++    await expect(banner).toContainText(copy.transporters.guidance.euNotValid)
++    await expect(
++      banner.getByRole('link', { name: copy.transporters.guidance.linkText })
++    ).toHaveAttribute('href', copy.transporters.guidance.linkHref)
++  })
++
++  test('asks for the authorisation number, the name, the address and the contact details', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++
++    for (const label of Object.values(form.fields)) {
++      await expect(page.getByLabel(label)).toBeVisible()
++    }
++    await expect(
++      page.getByRole('heading', { name: form.contactHeading })
++    ).toBeVisible()
++    await expect(
++      page.getByLabel(form.fields.telephoneNumber)
++    ).toHaveAccessibleDescription(form.telephoneHint)
++  })
++
++  test('fixes the country to Northern Ireland and does not let the trader change it', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++
++    const country = page.locator('#country')
++    await expect(country).toBeDisabled()
++    await expect(country).toHaveValue(NORTHERN_IRELAND)
++    await expect(country.locator('option')).toHaveCount(1)
++    // The disabled control posts nothing, so the value reaches the server on
++    // the hidden field beside it.
++    await expect(
++      page.locator('input[type="hidden"][name="country"]')
++    ).toHaveValue(NORTHERN_IRELAND)
++  })
++
++  test('the form goes back to the type question', async ({ page }) => {
++    await openCommercialForm(page)
++    await page.locator(BACK_LINK).click()
++
++    await expect(
++      page.getByRole('heading', { name: copy.transporterAdd.title })
++    ).toBeVisible()
++  })
++
++  test('ends with the primary alone, being reached from the type question', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++
++    await expectPageEndsWithPrimaryAlone(page)
++  })
++
++  test('saves a hand-entered commercial transporter and persists every value', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++    await fillTransporter(page)
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    await page.goto(journeyUrl(page, COMMERCIAL_SLUG))
++    for (const [field, value] of Object.entries(validTransporter)) {
++      await expect(page.locator(`#${field}`)).toHaveValue(value)
++    }
++    await expect(page.locator('#country')).toHaveValue(NORTHERN_IRELAND)
++  })
++
++  test('shows a hand-entered transporter on the transporter list as no pick, leaving it alone', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++    await fillTransporter(page)
++    await submit(page)
++
++    await page.goto(journeyUrl(page, 'transporters'))
++    // A hand-typed record is not on the list, so nothing is checked and the
++    // save has no pick to commit.
++    await expect(page.locator('input[name="transporter"]:checked')).toHaveCount(
++      0
++    )
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    await page.goto(journeyUrl(page, COMMERCIAL_SLUG))
++    await expect(page.locator(approvalNumberInput)).toHaveValue(
++      validTransporter.approvalNumber
++    )
++  })
++
++  test('a completely blank commercial transporter record is optional', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++    await submit(page)
++
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++  })
++})
++
++test.describe('commercial transporter required validations', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  for (const [name, field, error] of requiredValidations) {
++    test(`commercial transporter validation: empty ${name} links to and focuses the preserved field`, async ({
++      page
++    }) => {
++      await openCommercialForm(page)
++      await fillTransporter(page)
++      await page.locator(`#${field}`).fill('')
++      await submit(page)
++
++      const link = errorLink(page, form.errors[error])
++      await expect(link).toBeVisible()
++      await link.click()
++      await expect(page.locator(`#${field}`)).toBeFocused()
++      await expect(page.locator(`#${field}`)).toHaveValue('')
++      await expect(page.locator(approvalNumberInput)).toHaveValue(
++        field === 'approvalNumber' ? '' : validTransporter.approvalNumber
++      )
++    })
++  }
++})
++
++test.describe('commercial transporter format validations', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  for (const [name, field, invalid, error] of formatValidations) {
++    test(`commercial transporter validation: ${name} links to and focuses the preserved value`, async ({
++      page
++    }) => {
++      await openCommercialForm(page)
++      await fillTransporter(page, { ...validTransporter, [field]: invalid })
++      await submit(page)
++
++      const link = errorLink(page, form.errors[error])
++      await expect(link).toBeVisible()
++      await link.click()
++      await expect(page.locator(`#${field}`)).toBeFocused()
++      await expect(page.locator(`#${field}`)).toHaveValue(invalid)
++      await expect(page.locator(approvalNumberInput)).toHaveValue(
++        field === 'approvalNumber' ? invalid : validTransporter.approvalNumber
++      )
++    })
++  }
++})
++
++test.describe('commercial transporter form accessibility', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('the form has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++
++    await expectAxeClean(page, 'Add commercial transporter')
++  })
++
++  test('the form in its error state has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openCommercialForm(page)
++    await fillTransporter(page)
++    await page.locator(approvalNumberInput).fill('')
++    await submit(page)
++
++    await expect(page.locator('.govuk-error-summary')).toBeVisible()
++    await expectAxeClean(page, 'Add commercial transporter in error')
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index e5f3e165..8d7ca7fa 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -21,6 +21,7 @@ import { addressSummary } from '../transporters/transporter-record.js'
+ const addressLine1Input = '#addressLine1'
+ const invalidCountry = 'Invalid country'
+ const PRIVATE_ADD_SLUG = 'transporters/add/private'
++const REGISTER_SLUG = 'transporters/select'
+ const BACK_LINK = '.govuk-back-link'
+ 
+ const transporterRecords = parties()
+@@ -53,12 +54,26 @@ const openTransporterType = async (page) => {
+   ).toBeVisible()
+ }
+ 
+-const openCommercial = async (page) => {
++const openCommercialAdd = async (page) => {
+   await openTransporterType(page)
+   await page
+     .getByRole('radio', { name: copy.transporterAdd.options.Commercial.text })
+     .check()
+   await submit(page)
++  await expect(
++    page.getByRole('heading', {
++      name: copy.commercialTransporterDetails.title
++    })
++  ).toBeVisible()
++}
++
++/** The approved commercial register, which nothing links to now that the add
++ * route's commercial arm is the add-commercial form. Reached through that arm
++ * so the transporter type is answered, which is what puts the commercial
++ * answer the register writes in scope. */
++const openCommercialRegister = async (page) => {
++  await openCommercialAdd(page)
++  await page.goto(journeyUrl(page, REGISTER_SLUG))
+   await expect(
+     page.getByRole('heading', { name: copy.transportersSelect.title })
+   ).toBeVisible()
+@@ -321,7 +336,7 @@ test.describe('transporter list page', () => {
+       page.getByRole('radio', { name: commercialRecord.name })
+     ).toBeChecked()
+     // The pick lands on the commercial answer, so the register shows it too.
+-    await page.goto(journeyUrl(page, 'transporters/select'))
++    await page.goto(journeyUrl(page, REGISTER_SLUG))
+     await expect(
+       page.getByRole('radio', { name: commercialRecord.name })
+     ).toBeChecked()
+@@ -512,12 +527,12 @@ test.describe('adding a transporter that is not on the list', () => {
+     ).toBeChecked()
+   })
+ 
+-  test('commercial branch routes to the approved commercial register', async ({
++  test('commercial branch routes to the add-commercial form', async ({
+     page
+   }) => {
+-    await openCommercial(page)
++    await openCommercialAdd(page)
+ 
+-    await expect(page).toHaveURL(/\/transporters\/select$/)
++    await expect(page).toHaveURL(/\/transporters\/add\/commercial$/)
+   })
+ })
+ 
+@@ -529,7 +544,7 @@ test.describe('commercial transporter page', () => {
+   test('commercial transporter page renders address and approval details', async ({
+     page
+   }) => {
+-    await openCommercial(page)
++    await openCommercialRegister(page)
+     await expect(page.getByText(copy.transportersSelect.hint)).toBeVisible()
+ 
+     const selected = values.commercialTransporter
+@@ -545,7 +560,7 @@ test.describe('commercial transporter page', () => {
+   test('commercial transporter validation: out-of-list value links to and focuses the cleared group', async ({
+     page
+   }) => {
+-    await openCommercial(page)
++    await openCommercialRegister(page)
+     const selected = values.commercialTransporter
+     await page.getByRole('radio', { name: selected.name }).evaluate((radio) => {
+       radio.value = 'invalid-transporter'
+@@ -570,12 +585,12 @@ test.describe('commercial transporter page', () => {
+   test('commercial transporter selection saves and persists', async ({
+     page
+   }) => {
+-    await openCommercial(page)
++    await openCommercialRegister(page)
+     const selected = values.commercialTransporter
+     await page.getByRole('radio', { name: selected.name }).check()
+     await submit(page)
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+-    await page.goto(journeyUrl(page, 'transporters/select'))
++    await page.goto(journeyUrl(page, REGISTER_SLUG))
+     await expect(page.getByRole('radio', { name: selected.name })).toBeChecked()
+   })
+ })
+@@ -761,7 +776,7 @@ test.describe('transporter pages accessibility', () => {
+   test('commercial transporter page has no serious or critical axe violations', async ({
+     page
+   }) => {
+-    await openCommercial(page)
++    await openCommercialRegister(page)
+     await expectAxeClean(page, 'Commercial transporter')
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js
+index d7beaaa3..d50a717b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js
+@@ -29,6 +29,16 @@ export const transportersSelectPage = {
+   slug: 'transporters/select'
+ }
+ 
++/** Off the linear journey: the commercial arm of the add route. The form a
++ * trader fills in for a commercial transporter that is not on the list, giving
++ * its authorisation number, name, address and contact details (design release
++ * 1). Its country is fixed to Northern Ireland, which is the restriction the
++ * type chooser states on the Commercial option. */
++export const commercialTransporterDetailsPage = {
++  id: 'commercial-transporter-details',
++  slug: 'transporters/add/commercial'
++}
++
+ export const privateTransporterDetailsPage = {
+   id: 'private-transporter-details',
+   slug: 'transporters/add/private'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js
+index cf8944ed..4c24e4eb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js
+@@ -12,10 +12,10 @@ import { copyFor } from '../../../../../../../shared/copy.js'
+ import * as transportReference from '../../../../../../../services/transport-reference/index.js'
+ import { COMMERCIAL } from '../../../../../../../services/transporters/index.js'
+ import {
++  commercialTransporterDetailsPage,
+   privateTransporterDetailsPage,
+   transporterAddPage as page,
+-  transportersPage,
+-  transportersSelectPage
++  transportersPage
+ } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+@@ -66,13 +66,13 @@ const get = async (request, h) => {
+ 
+ /** Where the chosen type takes the trader.
+  *
+- * Commercial reaches the approved commercial register, which is the only way
+- * to record a commercial transporter until the add-commercial form lands. An
+- * unanswered question adds nothing, so it goes back to the list — the same
+- * tolerance the question carried as a journey step. */
++ * Each arm is a form for entering the transporter that could not be found on
++ * the list — commercial or private (design release 1). An unanswered question
++ * adds nothing, so it goes back to the list — the same tolerance the question
++ * carried as a journey step. */
+ const branchSlug = (transporterType) => {
+   if (transporterType === COMMERCIAL) {
+-    return transportersSelectPage.slug
++    return commercialTransporterDetailsPage.slug
+   }
+   return transporterType === ''
+     ? transportersPage.slug
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js
+index b09b85e1..c8d55b38 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js
+@@ -23,7 +23,7 @@ import { dispatchPages } from '../../index.js'
+ import * as transporterAdd from './transporter-add.controller.js'
+ 
+ const LIST_SLUG = 'transporters'
+-const SELECT_SLUG = 'transporters/select'
++const COMMERCIAL_SLUG = 'transporters/add/commercial'
+ const PRIVATE_SLUG = 'transporters/add/private'
+ 
+ const handlerFor = (method) =>
+@@ -96,14 +96,14 @@ describe('/transporters/add', () => {
+     expect(result.view.context.values.transporterType).toBe(COMMERCIAL)
+   })
+ 
+-  it('Should send a commercial transporter to the approved register', async () => {
++  it('Should send a commercial transporter to the details form', async () => {
+     const result = await driveHandler(postHandler, {
+       payload: { transporterType: COMMERCIAL }
+     })
+ 
+     expect(result.after.transporterType).toBe(COMMERCIAL)
+     expect(result.response).toEqual({
+-      redirect: pagePath(result.journeyId, SELECT_SLUG)
++      redirect: pagePath(result.journeyId, COMMERCIAL_SLUG)
+     })
+   })
+ 
+@@ -135,7 +135,7 @@ describe('/transporters/add', () => {
+     })
+ 
+     expect(result.response).toEqual({
+-      redirect: `${pagePath(result.journeyId, SELECT_SLUG)}?change=1`
++      redirect: `${pagePath(result.journeyId, COMMERCIAL_SLUG)}?change=1`
+     })
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js
+index 12c8c98c..9c4ba8c2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js
+@@ -19,13 +19,14 @@ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+ import { addressSummary } from '../transporters/transporter-record.js'
+ 
+-/** The approved commercial register — the commercial arm of the add route.
++/** The approved commercial register.
+  *
+- * A spoke off the type chooser, and the only way to record a commercial
+- * transporter until the add-commercial form lands: it picks from the register
+- * rather than letting a trader enter one. The `commercialTransporter` it
+- * writes is declared by the transporter list, which is where the answer is
+- * normally given. */
++ * A second way of picking a commercial transporter the service already knows
++ * about, kept from the flow that asked the type before the list. Nothing links
++ * to it now that the add route's commercial arm is the add-commercial form and
++ * the transporter list carries the register's rows itself. The
++ * `commercialTransporter` it writes is declared by the transporter list, which
++ * is where the answer is normally given. */
+ const view = `${TEMPLATES}/features/transport/transporters-select/transporters-select`
+ 
+ const copy = copyFor({ en, cy }).transportersSelect
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
+index 5c6fb25f..7a385a39 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
+@@ -13,6 +13,7 @@ import { additionalDetailsPage } from '../../features/additional-details/page.js
+ import { addressesPage } from '../../features/addresses/page.js'
+ import { cphNumberPage } from '../../features/cph-number/page.js'
+ import {
++  commercialTransporterDetailsPage,
+   portOfEntryPage,
+   privateTransporterDetailsPage,
+   transitCountriesPage,
+@@ -65,6 +66,7 @@ export const captionSections = [
+     pages: [
+       transporterAddPage,
+       transportersSelectPage,
++      commercialTransporterDetailsPage,
+       privateTransporterDetailsPage
+     ]
+   },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js
+index 578eac9f..a8cddc70 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/section-captions.test.js
+@@ -25,6 +25,7 @@ const CAPTIONED = [
+   ['port-of-entry', TRANSPORT_AND_ARRIVAL],
+   ['transporters', TRANSPORT_AND_ARRIVAL],
+   ['transporters-select', NEW_TRANSPORTER],
++  ['commercial-transporter-details', NEW_TRANSPORTER],
+   ['private-transporter-details', NEW_TRANSPORTER],
+   ['accompanying-documents', 'Documents']
+ ]

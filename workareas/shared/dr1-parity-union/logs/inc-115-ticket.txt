@@ -1,0 +1,37 @@
+h2. Increment
+
+{{inc-115}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+The commercial transporter branch is select-only. {{transporters-select.njk}} renders a radio group of the two shipped transporters and nothing else, there is no add link, button or route anywhere in {{src/server}}, and the validator at {{transporters-select.controller.js:22-28}} is a oneOf over the shipped ids, so any other answer is rejected. The private branch is not an escape: it takes a name, an address and contact details but no transporter authorisation number. A user whose commercial transporter is not one of the two can still finish the notification by going back and declaring the same firm as a private transporter, but the notification then carries the wrong transporter type and no approval number.
+
+Design release 1 puts an add route on the transporter list, leading to a form headed "Add commercial transporter" under the caption "Add a new transporter".
+
+h2. Acceptance criteria
+
+* A user can reach a new "Add commercial transporter" page from the transporter list, not from the transporter type question.
+* The page opens with a notification banner headed "Help with transporter authorisation" restating the DAERA and APHA rules.
+* The page asks for a transporter authorisation number first, then name or organisation name.
+* The page then asks for the six address fields: address line 1, address line 2 (optional), town or city, county (optional), postcode or Zip code, and country.
+* Country is fixed to Northern Ireland and the user cannot change it.
+* Under a sub-heading "Enter contact details" the page asks for an email address and a phone number, the phone number hinted "For international numbers include the country code".
+* The transporter type chooser's Commercial option carries the hint "This can only be a commercial transporter from Northern Ireland."
+* A transporter added this way joins the list on {{transporters-select}} and can then be selected.
+* A selected hand-entered transporter is stored in the answer shape that already exists — name, address and approval number — so no contract outside the frontend changes.
+* Unit tests cover the new page's validation, including the locked country and the required authorisation number.
+* The E2E specs and their visual baselines are updated for the new page and the changed list.
+
+h2. Notes
+
+The Northern Ireland restriction is stated twice in Design release 1 and both statements sit on the add route, so it governs a transporter a user creates by hand, not the pre-approved register. Design release 1's own register holds four non-Northern-Irish commercial records; those do not falsify the rule, and the frontend's own Swiss and Belgian fixture records are not a finding.
+
+Travels with {{inc-123}} — the transporter list gaining an add route is the flow change raised beside this page.
+
+h2. Falsified by
+
+Finding any link, button or route in the frontend that lets a user enter a commercial transporter that is not in {{src/server/app/services/commercial-transporters/records.js}}.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

@@ -1,0 +1,2076 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index c2d9faeb..92bd300d 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -386,11 +386,9 @@ export const answerTransitCountries = async (page) => {
+   await save(page)
+ }
+ 
++// One step: the transporter list carries both kinds, so the pick settles the
++// type too and there is no question in front of it.
+ export const answerTransporter = async (page) => {
+-  await page
+-    .getByRole('radio', { name: values.transporterType, exact: true })
+-    .check()
+-  await save(page)
+   await page
+     .getByRole('radio', { name: values.commercialTransporter.name })
+     .check()
+diff --git a/scripts/lighthouse/audit-targets.js b/scripts/lighthouse/audit-targets.js
+index 982db1b8..4c724fa2 100644
+--- a/scripts/lighthouse/audit-targets.js
++++ b/scripts/lighthouse/audit-targets.js
+@@ -39,7 +39,7 @@ export const SKIPPED = new Map([
+  * Everything else is audited on the draft. */
+ export const FILLED_BY = new Map([
+   ['/notifications/{journeyId}/confirmation', 'submitted'],
+-  ['/notifications/{journeyId}/transporters/private', 'transit']
++  ['/notifications/{journeyId}/transporters/add/private', 'transit']
+ ])
+ 
+ /** Query strings a route needs before it will render rather than redirect.
+diff --git a/scripts/lighthouse/audit-targets.test.js b/scripts/lighthouse/audit-targets.test.js
+index 977a86d1..f9739803 100644
+--- a/scripts/lighthouse/audit-targets.test.js
++++ b/scripts/lighthouse/audit-targets.test.js
+@@ -39,7 +39,7 @@ describe('#auditPaths', () => {
+       [`/notifications/${journeyIds.submitted}/confirmation`]
+     )
+     expect(paths.filter((path) => path.includes(journeyIds.transit))).toEqual([
+-      `/notifications/${journeyIds.transit}/transporters/private`
++      `/notifications/${journeyIds.transit}/transporters/add/private`
+     ])
+     expect(
+       paths.filter((path) => path.includes(journeyIds.draft))
+diff --git a/scripts/lighthouse/seed-notification.js b/scripts/lighthouse/seed-notification.js
+index dbff277c..bfc163fc 100644
+--- a/scripts/lighthouse/seed-notification.js
++++ b/scripts/lighthouse/seed-notification.js
+@@ -175,7 +175,7 @@ const TRANSPORTER_STEPS = new Map([
+     'Private',
+     [
+       {
+-        slug: 'transporters/private',
++        slug: 'transporters/add/private',
+         fields: {
+           nameOrOrganisationName: privateTransporter.name,
+           addressLine1: privateTransporter.address.addressLine1,
+@@ -231,7 +231,8 @@ export const seedSteps = ({ reasonForImport, transporterType }) => [
+   ...BEFORE_REASON,
+   reasonStep(reasonForImport),
+   ...AFTER_REASON,
+-  { slug: 'transporters', fields: { transporterType } },
++  // The type question sits on the add route now, not in front of the list.
++  { slug: 'transporters/add', fields: { transporterType } },
+   ...branchFor(TRANSPORTER_STEPS, transporterType, 'transporter type'),
+   CONTACT_STEP
+ ]
+diff --git a/src/server/app/contract.test.js b/src/server/app/contract.test.js
+index 836bbcc8..18040ae5 100644
+--- a/src/server/app/contract.test.js
++++ b/src/server/app/contract.test.js
+@@ -37,6 +37,7 @@ import * as cphNumber from './sets/live-animals/journeys/linear/features/cph-num
+ import * as portOfEntry from './sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js'
+ import * as transitCountries from './sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js'
+ import * as transporters from './sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js'
++import * as transporterAdd from './sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js'
+ import * as transportersSelect from './sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js'
+ import * as privateTransporterDetails from './sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js'
+ import * as contactSelect from './sets/live-animals/journeys/linear/features/contact/controller.js'
+@@ -112,36 +113,6 @@ const cases = [
+     seed: { meansOfTransport: 'ROAD_VEHICLE' },
+     payload: { transitedCountries: ['FR', 'BE'] }
+   },
+-  {
+-    id: 'transporters',
+-    collects: transporters.meta.collects,
+-    handler: postHandlerOf(transporters),
+-    payload: { transporterType: 'Commercial' }
+-  },
+-  {
+-    id: 'transporters-select',
+-    collects: transportersSelect.meta.collects,
+-    handler: postHandlerOf(transportersSelect),
+-    seed: { transporterType: 'Commercial' },
+-    payload: { commercialTransporter: 'garcia-livestock-transport' }
+-  },
+-  {
+-    id: 'private-transporter-details',
+-    collects: privateTransporterDetails.meta.collects,
+-    handler: postHandlerOf(privateTransporterDetails),
+-    seed: { transporterType: 'Private' },
+-    payload: {
+-      nameOrOrganisationName: 'Jean Dupont',
+-      addressLine1: '12 Rue des Fermes',
+-      addressLine2: '',
+-      townOrCity: 'Amiens',
+-      county: '',
+-      postalOrZipCode: '80000',
+-      country: 'France',
+-      telephoneNumber: '+33 3 22 55 01 44',
+-      emailAddress: 'jean.dupont@example.fr'
+-    }
+-  },
+   {
+     id: 'consignment-contact-select',
+     collects: contactSelect.meta.collects,
+@@ -390,3 +361,70 @@ describe('controller <-> model commit contract', () => {
+     )
+   })
+ })
++
++// The transporter list declares all three transporter answers and the add
++// spokes write them without declaring them, so the contract is a union across
++// the pick and the spokes rather than one POST per page.
++describe('transporter commit contract — the list and its add spokes', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it('Should commit the transporter and its type from the one list page, whichever kind the pick is', async () => {
++    expect(transporters.meta.collects).toEqual([
++      'transporterType',
++      'commercialTransporter',
++      'privateTransporter'
++    ])
++
++    const picks = [
++      ['garcia-livestock-transport', 'commercialTransporter'],
++      ['aberdeen-livestock', 'privateTransporter']
++    ]
++    const committed = []
++    for (const [transporter, expected] of picks) {
++      const result = await drive(postHandlerOf(transporters), {
++        payload: { transporter }
++      })
++      expect(new Set(committedIds(result))).toEqual(
++        new Set(['transporterType', expected])
++      )
++      committed.push(...committedIds(result))
++    }
++    expect(new Set(committed)).toEqual(
++      new Set(committableCollects(transporters.meta.collects))
++    )
++  })
++
++  it('Should commit the same transporter answers from the add spokes the list declares them for', async () => {
++    const chooser = await drive(postHandlerOf(transporterAdd), {
++      payload: { transporterType: 'Private' }
++    })
++    expect(committedIds(chooser)).toEqual(['transporterType'])
++
++    const register = await drive(postHandlerOf(transportersSelect), {
++      seed: { transporterType: 'Commercial' },
++      payload: { commercialTransporter: 'garcia-livestock-transport' }
++    })
++    expect(committedIds(register)).toEqual(['commercialTransporter'])
++
++    const typedIn = await drive(postHandlerOf(privateTransporterDetails), {
++      seed: { transporterType: 'Private' },
++      payload: {
++        nameOrOrganisationName: 'Jean Dupont',
++        addressLine1: '12 Rue des Fermes',
++        addressLine2: '',
++        townOrCity: 'Amiens',
++        county: '',
++        postalOrZipCode: '80000',
++        country: 'France',
++        telephoneNumber: '+33 3 22 55 01 44',
++        emailAddress: 'jean.dupont@example.fr'
++      }
++    })
++    expect(committedIds(typedIn)).toEqual(['privateTransporter'])
++  })
++})
+diff --git a/src/server/app/services/commercial-transporters/commercial-transporters.test.js b/src/server/app/services/commercial-transporters/commercial-transporters.test.js
+deleted file mode 100644
+index 8b868670..00000000
+--- a/src/server/app/services/commercial-transporters/commercial-transporters.test.js
++++ /dev/null
+@@ -1,54 +0,0 @@
+-import { describe, expect, test } from 'vitest'
+-
+-import * as commercialTransporters from './index.js'
+-import * as addressBook from '../address-book/index.js'
+-
+-describe('#parties', () => {
+-  test('Should return every transporter with a stable id', () => {
+-    const records = commercialTransporters.parties()
+-
+-    expect(records.length).toBeGreaterThan(0)
+-
+-    const ids = records.map((record) => record.id)
+-    expect(ids.every((id) => id && typeof id === 'string')).toBe(true)
+-    expect(new Set(ids).size).toBe(records.length)
+-  })
+-
+-  test('Should carry the approval number the address book cannot represent', () => {
+-    for (const record of commercialTransporters.parties()) {
+-      expect(record.approvalNumber).toBeTruthy()
+-    }
+-  })
+-
+-  test('Should resolve synchronously, so the picker can validate at module load', () => {
+-    expect(commercialTransporters.parties()).not.toBeInstanceOf(Promise)
+-  })
+-})
+-
+-describe('#party', () => {
+-  test('Should look a transporter up by its id', () => {
+-    const first = commercialTransporters.parties()[0]
+-
+-    expect(commercialTransporters.party(first.id).name).toBe(first.name)
+-  })
+-
+-  test('Should return undefined for an id that is not a transporter', () => {
+-    expect(commercialTransporters.party('not-a-transporter')).toBeUndefined()
+-  })
+-})
+-
+-describe('separation from the address book', () => {
+-  test('Should not be reachable through the address book', async () => {
+-    // The suite already runs in stub mode, which is where both books are canned.
+-    const book = await addressBook.all('5900001')
+-
+-    const transporterIds = commercialTransporters
+-      .parties()
+-      .map((record) => record.id)
+-
+-    expect(book.some((record) => transporterIds.includes(record.id))).toBe(
+-      false
+-    )
+-    expect(book.some((record) => record.approvalNumber)).toBe(false)
+-  })
+-})
+diff --git a/src/server/app/services/commercial-transporters/index.js b/src/server/app/services/commercial-transporters/index.js
+deleted file mode 100644
+index b985ad93..00000000
+--- a/src/server/app/services/commercial-transporters/index.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-import { COMMERCIAL_TRANSPORTER_OPTIONS } from './records.js'
+-
+-/** Commercial transporters for the transporter picker.
+- *
+- * Deliberately **synchronous**: `transporters-select.controller.js` builds its
+- * `oneOf` validation from `parties()` at module load, so this must resolve
+- * without awaiting. The address book became async when it moved onto the API
+- * (EUDPA-294) — keeping transporters here is what lets that happen without
+- * breaking this page. */
+-export const parties = () => COMMERCIAL_TRANSPORTER_OPTIONS
+-
+-export const party = (id) => parties().find((record) => record.id === id)
+diff --git a/src/server/app/services/commercial-transporters/records.js b/src/server/app/services/commercial-transporters/records.js
+deleted file mode 100644
+index 4839f32f..00000000
+--- a/src/server/app/services/commercial-transporters/records.js
++++ /dev/null
+@@ -1,29 +0,0 @@
+-/** The fixed commercial-transporter list.
+- *
+- * Not address-book data. A transporter carries an `approvalNumber` and the
+- * address book has no field for one (EUDPA-294, D13 scopes that ticket to the
+- * consignment party), so this list stays local until a ticket extends the
+- * address-book contract to represent transporters. */
+-export const COMMERCIAL_TRANSPORTER_OPTIONS = [
+-  {
+-    id: 'garcia-livestock-transport',
+-    name: 'García Livestock Transport SL',
+-    approvalNumber: 'ES-T2-45001294',
+-    address: {
+-      addressLine1: '43 East Hague Extension',
+-      addressLine2: 'Delectus sitodio p. Laborum Odio tempor',
+-      addressLine3: 'Quasoccaecat ut ear, 30055',
+-      country: 'Switzerland'
+-    }
+-  },
+-  {
+-    id: 'j-and-g-campbell',
+-    name: 'J & G Campbell LTD',
+-    approvalNumber: 'UK/BURY/T2/00104115',
+-    address: {
+-      addressLine1: 'Rue de la Loi 200',
+-      addressLine2: '1040 Brussels',
+-      country: 'Belgium'
+-    }
+-  }
+-]
+diff --git a/src/server/app/services/transporters/index.js b/src/server/app/services/transporters/index.js
+new file mode 100644
+index 00000000..83b3de2c
+--- /dev/null
++++ b/src/server/app/services/transporters/index.js
+@@ -0,0 +1,19 @@
++import { COMMERCIAL, PRIVATE, TRANSPORTER_OPTIONS } from './records.js'
++
++export { COMMERCIAL, PRIVATE }
++
++/** Every transporter the trader can pick, commercial and private together.
++ *
++ * Deliberately **synchronous**: the transporter list and the commercial
++ * register both build their `oneOf` validation from these ids at module load,
++ * so this must resolve without awaiting. The address book became async when it
++ * moved onto the API (EUDPA-294) — keeping transporters here is what lets that
++ * happen without breaking these pages. */
++export const parties = () => TRANSPORTER_OPTIONS
++
++export const party = (id) => parties().find((record) => record.id === id)
++
++/** The approved commercial register alone — the one list a trader adding a
++ * commercial transporter can choose from today. */
++export const commercialParties = () =>
++  parties().filter((record) => record.type === COMMERCIAL)
+diff --git a/src/server/app/services/transporters/records.js b/src/server/app/services/transporters/records.js
+new file mode 100644
+index 00000000..f645dce0
+--- /dev/null
++++ b/src/server/app/services/transporters/records.js
+@@ -0,0 +1,105 @@
++/** The transporters a trader can pick from — one list, both kinds.
++ *
++ * Not address-book data. A transporter carries an `approvalNumber` and the
++ * address book has no field for one (EUDPA-294, D13 scopes that ticket to the
++ * consignment party), so this list stays local until a ticket extends the
++ * address-book contract to represent transporters.
++ *
++ * `type` is what a pick means: a Commercial record answers
++ * `commercialTransporter`, a Private one answers `privateTransporter`, and the
++ * transporter type is read off the record rather than asked before the list
++ * (design release 1). The two shapes differ because the two answers differ —
++ * a commercial record carries the register's address lines and its approval
++ * number, a private one carries the address the private-transporter form
++ * collects.
++ *
++ * A transporter a trader types in by hand does not join this list: it lives on
++ * the notification it was entered into and nowhere else. */
++export const COMMERCIAL = 'Commercial'
++export const PRIVATE = 'Private'
++
++export const TRANSPORTER_OPTIONS = [
++  {
++    id: 'garcia-livestock-transport',
++    type: COMMERCIAL,
++    name: 'García Livestock Transport SL',
++    approvalNumber: 'ES-T2-45001294',
++    address: {
++      addressLine1: '43 East Hague Extension',
++      addressLine2: 'Delectus sitodio p. Laborum Odio tempor',
++      addressLine3: 'Quasoccaecat ut ear, 30055',
++      country: 'Switzerland'
++    }
++  },
++  {
++    id: 'j-and-g-campbell',
++    type: COMMERCIAL,
++    name: 'J & G Campbell LTD',
++    approvalNumber: 'UK/BURY/T2/00104115',
++    address: {
++      addressLine1: 'Rue de la Loi 200',
++      addressLine2: '1040 Brussels',
++      country: 'Belgium'
++    }
++  },
++  {
++    id: 'aberdeen-livestock',
++    type: PRIVATE,
++    name: 'Aberdeen Livestock Ltd',
++    address: {
++      addressLine1: '12 Harbour Road',
++      addressLine2: '',
++      townOrCity: 'Aberdeen',
++      county: 'Aberdeenshire',
++      postalOrZipCode: 'AB11 5DQ',
++      country: 'United Kingdom',
++      telephoneNumber: '+44 1224 000 111',
++      emailAddress: 'movements@aberdeen-livestock.example.com'
++    }
++  },
++  {
++    id: 'romanian-agri-exports',
++    type: PRIVATE,
++    name: 'Romanian Agri Exports SRL',
++    address: {
++      addressLine1: 'Strada Agricultorilor 8',
++      addressLine2: '',
++      townOrCity: 'Cluj-Napoca',
++      county: '',
++      postalOrZipCode: '400000',
++      country: 'Romania',
++      telephoneNumber: '+40 264 000 222',
++      emailAddress: 'transport@romanian-agri.example.com'
++    }
++  },
++  {
++    id: 'slovak-farm-export',
++    type: PRIVATE,
++    name: 'Slovak Farm Export',
++    address: {
++      addressLine1: 'Hlavná 45',
++      addressLine2: '',
++      townOrCity: 'Košice',
++      county: '',
++      postalOrZipCode: '040 01',
++      country: 'Slovakia',
++      telephoneNumber: '+421 55 000 333',
++      emailAddress: 'export@slovak-farm.example.com'
++    }
++  },
++  {
++    id: 'finnish-livestock-oy',
++    type: PRIVATE,
++    name: 'Finnish Livestock Oy',
++    address: {
++      addressLine1: 'Satamakatu 3',
++      addressLine2: '',
++      townOrCity: 'Turku',
++      county: '',
++      postalOrZipCode: '20100',
++      country: 'Finland',
++      telephoneNumber: '+358 2 000 444',
++      emailAddress: 'kuljetus@finnish-livestock.example.com'
++    }
++  }
++]
+diff --git a/src/server/app/services/transporters/transporters.test.js b/src/server/app/services/transporters/transporters.test.js
+new file mode 100644
+index 00000000..462b07db
+--- /dev/null
++++ b/src/server/app/services/transporters/transporters.test.js
+@@ -0,0 +1,81 @@
++import { describe, expect, test } from 'vitest'
++
++import * as transporters from './index.js'
++import * as addressBook from '../address-book/index.js'
++import * as transportReference from '../transport-reference/index.js'
++
++describe('#parties', () => {
++  test('Should return every transporter with a stable id', () => {
++    const records = transporters.parties()
++
++    expect(records.length).toBeGreaterThan(0)
++
++    const ids = records.map((record) => record.id)
++    expect(ids.every((id) => id && typeof id === 'string')).toBe(true)
++    expect(new Set(ids).size).toBe(records.length)
++  })
++
++  test('Should type every transporter as one the journey can ask for', () => {
++    const types = transportReference.transporterTypes()
++
++    for (const record of transporters.parties()) {
++      expect(types).toContain(record.type)
++    }
++  })
++
++  test('Should hold both kinds of transporter on the one list', () => {
++    const types = new Set(transporters.parties().map((record) => record.type))
++
++    expect(types).toEqual(
++      new Set([transporters.COMMERCIAL, transporters.PRIVATE])
++    )
++  })
++
++  test('Should carry the approval number the address book cannot represent on every commercial record', () => {
++    for (const record of transporters.commercialParties()) {
++      expect(record.approvalNumber).toBeTruthy()
++    }
++  })
++
++  test('Should resolve synchronously, so the pickers can validate at module load', () => {
++    expect(transporters.parties()).not.toBeInstanceOf(Promise)
++  })
++})
++
++describe('#commercialParties', () => {
++  test('Should narrow the list to the approved commercial register', () => {
++    const commercial = transporters.commercialParties()
++
++    expect(commercial.length).toBeGreaterThan(0)
++    expect(commercial.length).toBeLessThan(transporters.parties().length)
++    expect(
++      commercial.every((record) => record.type === transporters.COMMERCIAL)
++    ).toBe(true)
++  })
++})
++
++describe('#party', () => {
++  test('Should look a transporter up by its id', () => {
++    const first = transporters.parties()[0]
++
++    expect(transporters.party(first.id).name).toBe(first.name)
++  })
++
++  test('Should return undefined for an id that is not a transporter', () => {
++    expect(transporters.party('not-a-transporter')).toBeUndefined()
++  })
++})
++
++describe('separation from the address book', () => {
++  test('Should not be reachable through the address book', async () => {
++    // The suite already runs in stub mode, which is where both books are canned.
++    const book = await addressBook.all('5900001')
++
++    const transporterIds = transporters.parties().map((record) => record.id)
++
++    expect(book.some((record) => transporterIds.includes(record.id))).toBe(
++      false
++    )
++    expect(book.some((record) => record.approvalNumber)).toBe(false)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index c0b8c198..ec566844 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -366,9 +366,7 @@ describe(`${SUITE} — fully-populated notification`, () => {
+     expect(changeHrefOf(rows, TRANSITED_COUNTRIES_KEY)).toMatch(
+       /\/transit-countries\?change=1$/
+     )
+-    expect(changeHrefOf(rows, 'Name')).toMatch(
+-      /\/transporters\/select\?change=1$/
+-    )
++    expect(changeHrefOf(rows, 'Name')).toMatch(/\/transporters\?change=1$/)
+   })
+ 
+   it('Should point the species-card Change actions at the commodities pages with a change flag', async () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/index.js b/src/server/app/sets/live-animals/journeys/linear/features/index.js
+index a3f49364..9f9d29e4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/index.js
+@@ -13,6 +13,7 @@ import * as cphNumber from './cph-number/controller.js'
+ import * as portOfEntry from './transport/port-of-entry/port-of-entry.controller.js'
+ import * as transitCountries from './transport/transit-countries/transit-countries.controller.js'
+ import * as transporters from './transport/transporters/transporters.controller.js'
++import * as transporterAdd from './transport/transporter-add/transporter-add.controller.js'
+ import * as transportersSelect from './transport/transporters-select/transporters-select.controller.js'
+ import * as privateTransporterDetails from './transport/private-transporter-details/private-transporter-details.controller.js'
+ import * as contactSelect from './contact/controller.js'
+@@ -37,8 +38,6 @@ export const dispatchPages = [
+   portOfEntry.meta,
+   transitCountries.meta,
+   transporters.meta,
+-  transportersSelect.meta,
+-  privateTransporterDetails.meta,
+   contactSelect.meta,
+   declaration.meta
+ ]
+@@ -59,6 +58,7 @@ export const allRoutes = [
+   ...portOfEntry.routes,
+   ...transitCountries.routes,
+   ...transporters.routes,
++  ...transporterAdd.routes,
+   ...transportersSelect.routes,
+   ...privateTransporterDetails.routes,
+   ...contactSelect.routes,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+index 1e579a5f..635009b7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/request-view.parity.test.js
+@@ -23,6 +23,7 @@ import * as cphNumber from './cph-number/controller.js'
+ import * as portOfEntry from './transport/port-of-entry/port-of-entry.controller.js'
+ import * as transitCountries from './transport/transit-countries/transit-countries.controller.js'
+ import * as transporters from './transport/transporters/transporters.controller.js'
++import * as transporterAdd from './transport/transporter-add/transporter-add.controller.js'
+ import * as transportersSelect from './transport/transporters-select/transporters-select.controller.js'
+ import * as privateTransporterDetails from './transport/private-transporter-details/private-transporter-details.controller.js'
+ import * as contact from './contact/controller.js'
+@@ -94,7 +95,9 @@ const scalarPages = [
+   ['CPH number', cphNumber, parityFixture],
+   ['port of entry', portOfEntry, parityFixture],
+   ['transit countries', transitCountries, parityFixture],
+-  ['transporter type', transporters, parityFixture],
++  ['transporter list', transporters, parityFixture],
++  ['transporter list on a private pick', transporters, privateTransportFixture],
++  ['transporter type', transporterAdd, parityFixture],
+   ['commercial transporter', transportersSelect, parityFixture],
+   ['private transporter', privateTransporterDetails, privateTransportFixture],
+   ['contact', contact, parityFixture],
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
+index 3d0de540..31600ff0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/section-caption.test.js
+@@ -26,6 +26,7 @@ import { routes as cphNumberRoutes } from './cph-number/controller.js'
+ import { routes as transitCountriesRoutes } from './transport/transit-countries/transit-countries.controller.js'
+ import { routes as portOfEntryRoutes } from './transport/port-of-entry/port-of-entry.controller.js'
+ import { routes as transportersRoutes } from './transport/transporters/transporters.controller.js'
++import { routes as transporterAddRoutes } from './transport/transporter-add/transporter-add.controller.js'
+ import { routes as transportersSelectRoutes } from './transport/transporters-select/transporters-select.controller.js'
+ import { routes as privateTransporterDetailsRoutes } from './transport/private-transporter-details/private-transporter-details.controller.js'
+ import { routes as documentsRoutes } from './documents/controller.js'
+@@ -120,6 +121,7 @@ const CAPTIONED_PAGES = [
+   ['transit countries', 'Movement', transitCountriesRoutes, parityFixture],
+   ['port of entry', TRANSPORT_AND_ARRIVAL, portOfEntryRoutes, parityFixture],
+   ['transporters', TRANSPORT_AND_ARRIVAL, transportersRoutes, parityFixture],
++  ['transporter add', NEW_TRANSPORTER, transporterAddRoutes, parityFixture],
+   [
+     'transporters select',
+     NEW_TRANSPORTER,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index e52228a3..1c3c8a94 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -81,9 +81,9 @@ export const copy = {
+     }
+   },
+   transporters: {
+-    title: 'Cludwr',
+-    legend: 'Pa fath o gludwr fydd yn symud yr anifeiliaid?',
+-    hint: 'Byddwn yn gofyn am fanylion y cludwr nesaf.',
++    title: 'Manylion y cludwr',
++    intro: 'Dyma’r person neu’r cwmni sy’n gyfrifol am gludo’r llwyth.',
++    legend: 'Dewiswch gludwr',
+     guidance: {
+       authorisationLead:
+         'Rhaid i’ch cludwr feddu ar awdurdodiad cludo dilys, a roddwyd gan DAERA neu APHA yn y DU os ydynt yn:',
+@@ -101,6 +101,22 @@ export const copy = {
+       euNotValid:
+         'Nid yw dogfennau a roddwyd mewn unrhyw Aelod-wladwriaeth yr UE yn ddilys i’w defnyddio yn GB.'
+     },
++    types: {
++      Commercial: 'Masnachol',
++      Private: 'Preifat'
++    },
++    optionHint: (type, address) => `${type} — ${address}`,
++    optionHintApproved: (type, address, approvalNumber) =>
++      `${type} — ${address} — rhif cymeradwyo ${approvalNumber}`,
++    add: 'Ychwanegu cludwr',
++    errors: {
++      transporterRequired: 'Dewiswch gludwr o’r rhestr'
++    }
++  },
++  transporterAdd: {
++    title: 'Cludwr',
++    legend: 'Pa fath o gludwr fydd yn symud yr anifeiliaid?',
++    hint: 'Byddwn yn gofyn am fanylion y cludwr nesaf.',
+     options: {
+       Commercial: {
+         text: 'Masnachol',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index 70d7ba94..f1f96288 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -89,9 +89,10 @@ export const copy = {
+     }
+   },
+   transporters: {
+-    title: 'Transporter',
+-    legend: 'What type of transporter will move the animals?',
+-    hint: "We will ask for the transporter's details next.",
++    title: 'Transporter details',
++    intro:
++      'This is the person or company responsible for transporting the consignment.',
++    legend: 'Select a transporter',
+     guidance: {
+       authorisationLead:
+         'Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:',
+@@ -108,6 +109,24 @@ export const copy = {
+       euNotValid:
+         'Documents issued in any EU Member State are not valid for use in GB.'
+     },
++    // The list carries both kinds of transporter, so each row says which it
++    // is. A private transporter has no approval number to show.
++    types: {
++      Commercial: 'Commercial',
++      Private: 'Private'
++    },
++    optionHint: (type, address) => `${type} — ${address}`,
++    optionHintApproved: (type, address, approvalNumber) =>
++      `${type} — ${address} — approval number ${approvalNumber}`,
++    add: 'Add a transporter',
++    errors: {
++      transporterRequired: 'Select a transporter from the list'
++    }
++  },
++  transporterAdd: {
++    title: 'Transporter',
++    legend: 'What type of transporter will move the animals?',
++    hint: "We will ask for the transporter's details next.",
+     options: {
+       Commercial: {
+         text: 'Commercial',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+index 4a43fea5..735e7441 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+@@ -794,7 +794,7 @@ test.describe('transit countries rendering and validation', () => {
+     await submit(page)
+ 
+     await expect(
+-      page.getByRole('heading', { name: copy.transporters.legend })
++      page.getByRole('heading', { name: copy.transporters.title })
+     ).toBeVisible()
+     await expect(page.locator(ERROR_SUMMARY)).toHaveCount(0)
+ 
+@@ -986,7 +986,7 @@ test.describe('transit countries list, limits and persistence', () => {
+     await addTransitCountry(page, 'Belgium')
+     await submit(page)
+     await expect(
+-      page.getByRole('heading', { name: copy.transporters.legend })
++      page.getByRole('heading', { name: copy.transporters.title })
+     ).toBeVisible()
+ 
+     await page.goto(journeyUrl(page, 'transit-countries'))
+@@ -1016,7 +1016,7 @@ test.describe('transit countries without JavaScript', () => {
+     ).toBeVisible()
+     await submit(page)
+     await expect(
+-      page.getByRole('heading', { name: copy.transporters.legend })
++      page.getByRole('heading', { name: copy.transporters.title })
+     ).toBeVisible()
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index 2b90a81a..6178fac2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -9,28 +9,50 @@ import {
+   values
+ } from '../../../../../../../../../../fit/live-animals-journey.js'
+ import { validatorDefaults } from '../../../../../../../shared/copy.en.js'
++import {
++  COMMERCIAL,
++  PRIVATE,
++  parties
++} from '../../../../../../../services/transporters/index.js'
+ import { copy } from '../copy/copy.en.js'
+ 
+ const addressLine1Input = '#addressLine1'
+ const invalidCountry = 'Invalid country'
+ 
++const transporterRecords = parties()
++const privateRecord = transporterRecords.find(
++  (record) => record.type === PRIVATE
++)
++const commercialRecord = transporterRecords.find(
++  (record) => record.type === COMMERCIAL
++)
++
+ const submit = (page) =>
+   page.getByRole('button', { name: 'Save and continue' }).click()
+ 
+-const openTransporterType = async (page) => {
++const openTransporterList = async (page) => {
+   await startNotification(page)
+   await unlockSections(page)
+   await page.getByRole('link', { name: copy.portOfEntry.title }).click()
+   await submit(page)
+   await expect(
+-    page.getByRole('heading', { name: copy.transporters.legend })
++    page.getByRole('heading', { name: copy.transporters.title })
++  ).toBeVisible()
++}
++
++const openTransporterType = async (page) => {
++  await openTransporterList(page)
++  // The govuk button macro renders an href as a link with role="button".
++  await page.getByRole('button', { name: copy.transporters.add }).click()
++  await expect(
++    page.getByRole('heading', { name: copy.transporterAdd.legend })
+   ).toBeVisible()
+ }
+ 
+ const openCommercial = async (page) => {
+   await openTransporterType(page)
+   await page
+-    .getByRole('radio', { name: copy.transporters.options.Commercial.text })
++    .getByRole('radio', { name: copy.transporterAdd.options.Commercial.text })
+     .check()
+   await submit(page)
+   await expect(
+@@ -41,7 +63,7 @@ const openCommercial = async (page) => {
+ const openPrivate = async (page) => {
+   await openTransporterType(page)
+   await page
+-    .getByRole('radio', { name: copy.transporters.options.Private.text })
++    .getByRole('radio', { name: copy.transporterAdd.options.Private.text })
+     .check()
+   await submit(page)
+   await expect(
+@@ -193,22 +215,141 @@ const expectTransporterGuidance = async (page) => {
+ }
+ 
+ const expectBranchOptions = async (page) => {
+-  for (const option of Object.values(copy.transporters.options)) {
++  for (const option of Object.values(copy.transporterAdd.options)) {
+     await expect(page.getByRole('radio', { name: option.text })).toBeVisible()
+     await expect(page.getByText(option.hint)).toBeVisible()
+   }
+ }
+ 
+-test.describe('transporter type page', () => {
++test.describe('transporter list page', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+   })
+ 
+-  test('renders transporter guidance and branch options', async ({ page }) => {
+-    await openTransporterType(page)
++  test('opens the transporter task on the list, carrying the introduction and the authorisation guidance', async ({
++    page
++  }) => {
++    await openTransporterList(page)
+ 
++    await expect(page.getByText(copy.transporters.intro)).toBeVisible()
+     await expectTransporterGuidance(page)
++    await expect(
++      page.getByRole('group', { name: copy.transporters.legend })
++    ).toBeVisible()
++  })
++
++  test('lists every transporter the service knows about, commercial and private, each showing its type', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++
++    const group = page.getByRole('group', { name: copy.transporters.legend })
++    for (const record of transporterRecords) {
++      await expect(page.getByRole('radio', { name: record.name })).toBeVisible()
++      await expect(group).toContainText(copy.transporters.types[record.type])
++    }
++  })
++
++  test('does not ask the transporter type before the list', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++
++    await expect(
++      page.getByRole('heading', { name: copy.transporterAdd.legend })
++    ).toHaveCount(0)
++  })
++
++  test('picking a commercial transporter saves it with its type and persists', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await page.getByRole('radio', { name: commercialRecord.name }).check()
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    await page.goto(journeyUrl(page, 'transporters'))
++    await expect(
++      page.getByRole('radio', { name: commercialRecord.name })
++    ).toBeChecked()
++    // The pick lands on the commercial answer, so the register shows it too.
++    await page.goto(journeyUrl(page, 'transporters/select'))
++    await expect(
++      page.getByRole('radio', { name: commercialRecord.name })
++    ).toBeChecked()
++  })
++
++  test('picking a private transporter saves it with its type and persists — the branch the old flow had no list for', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await page.getByRole('radio', { name: privateRecord.name }).check()
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    await page.goto(journeyUrl(page, 'transporters'))
++    await expect(
++      page.getByRole('radio', { name: privateRecord.name })
++    ).toBeChecked()
++    // The pick lands on the private answer, address and all, so nothing has to
++    // be typed in again.
++    await page.goto(journeyUrl(page, 'transporters/add/private'))
++    await expect(
++      page.getByLabel(
++        copy.privateTransporterDetails.fields.nameOrOrganisationName
++      )
++    ).toHaveValue(privateRecord.name)
++    await expect(
++      page.getByLabel(copy.privateTransporterDetails.fields.townOrCity)
++    ).toHaveValue(privateRecord.address.townOrCity)
++  })
++
++  test('transporter validation: out-of-list value links to and focuses the cleared group', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await page
++      .getByRole('radio', { name: commercialRecord.name })
++      .evaluate((radio) => {
++        radio.value = 'invalid-transporter'
++        radio.checked = true
++      })
++    await submit(page)
++
++    const link = errorLink(page, copy.transporters.errors.transporterRequired)
++    await expect(link).toBeVisible()
++    await link.click()
++    await expect(
++      page.locator('input[name="transporter"]').first()
++    ).toBeFocused()
++    await expect(page.locator('input[name="transporter"]:checked')).toHaveCount(
++      0
++    )
++  })
++})
++
++test.describe('adding a transporter that is not on the list', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('reaches the type question from the list, not before it', async ({
++    page
++  }) => {
++    await openTransporterType(page)
++
++    await expect(page).toHaveURL(/\/transporters\/add$/)
+     await expectBranchOptions(page)
++    await expectPageEndsWithPrimaryAlone(page)
++  })
++
++  test('the type question goes back to the list', async ({ page }) => {
++    await openTransporterType(page)
++    await page.locator('.govuk-back-link').click()
++
++    await expect(
++      page.getByRole('heading', { name: copy.transporters.title })
++    ).toBeVisible()
+   })
+ 
+   test('transporter type validation: out-of-list value links to and focuses the cleared group', async ({
+@@ -216,7 +357,7 @@ test.describe('transporter type page', () => {
+   }) => {
+     await openTransporterType(page)
+     await page
+-      .getByRole('radio', { name: copy.transporters.options.Commercial.text })
++      .getByRole('radio', { name: copy.transporterAdd.options.Commercial.text })
+       .evaluate((radio) => {
+         radio.value = 'Invalid transporter type'
+         radio.checked = true
+@@ -234,36 +375,26 @@ test.describe('transporter type page', () => {
+     ).toHaveCount(0)
+   })
+ 
+-  test('private branch selection routes to its details page and persists on back', async ({
++  test('private branch routes to its details page and persists on back', async ({
+     page
+   }) => {
+-    await openTransporterType(page)
+-    await page
+-      .getByRole('radio', { name: copy.transporters.options.Private.text })
+-      .check()
+-    await submit(page)
++    await openPrivate(page)
+ 
+-    await expect(
+-      page.getByRole('heading', { name: copy.privateTransporterDetails.title })
+-    ).toBeVisible()
++    await expect(page).toHaveURL(/\/transporters\/add\/private$/)
+     await page.locator('.govuk-back-link').click()
+     await expect(
+-      page.getByRole('radio', { name: copy.transporters.options.Private.text })
++      page.getByRole('radio', {
++        name: copy.transporterAdd.options.Private.text
++      })
+     ).toBeChecked()
+   })
+ 
+-  test('commercial branch selection routes to its address-book page', async ({
++  test('commercial branch routes to the approved commercial register', async ({
+     page
+   }) => {
+-    await openTransporterType(page)
+-    await page
+-      .getByRole('radio', { name: copy.transporters.options.Commercial.text })
+-      .check()
+-    await submit(page)
++    await openCommercial(page)
+ 
+-    await expect(
+-      page.getByRole('heading', { name: copy.transportersSelect.title })
+-    ).toBeVisible()
++    await expect(page).toHaveURL(/\/transporters\/select$/)
+   })
+ })
+ 
+@@ -352,7 +483,7 @@ test.describe('private transporter rendering and optionality', () => {
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+   })
+ 
+-  test('private transporter page ends with the primary alone, being reached from the transporter type page', async ({
++  test('private transporter page ends with the primary alone, being reached from the type question', async ({
+     page
+   }) => {
+     await openPrivate(page)
+@@ -470,7 +601,7 @@ test.describe('private transporter persistence', () => {
+     await submit(page)
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+ 
+-    await page.goto(journeyUrl(page, 'transporters/private'))
++    await page.goto(journeyUrl(page, 'transporters/add/private'))
+     await expect(
+       page.getByLabel(
+         copy.privateTransporterDetails.fields.nameOrOrganisationName
+@@ -490,6 +621,13 @@ test.describe('transporter pages accessibility', () => {
+     await signIn(page)
+   })
+ 
++  test('transporter list page has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await expectAxeClean(page, 'Transporter list')
++  })
++
+   test('transporter type page has no serious or critical axe violations', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js
+index c127b70a..d7beaaa3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/page.js
+@@ -8,11 +8,22 @@ export const transitCountriesPage = {
+   slug: 'transit-countries'
+ }
+ 
++/** The transporter list — the journey's one transporter step. Every
++ * transporter the trader can use is on it, commercial and private together,
++ * and the pick carries the type with it (design release 1). */
+ export const transportersPage = {
+   id: 'transporters',
+   slug: 'transporters'
+ }
+ 
++/** Off the linear journey: the first step of adding a transporter that is not
++ * on the list. Asked only of a trader who could not find theirs, which is why
++ * it is reached from the list rather than sitting in front of it. */
++export const transporterAddPage = {
++  id: 'transporter-add',
++  slug: 'transporters/add'
++}
++
+ export const transportersSelectPage = {
+   id: 'transporters-select',
+   slug: 'transporters/select'
+@@ -20,5 +31,5 @@ export const transportersSelectPage = {
+ 
+ export const privateTransporterDetailsPage = {
+   id: 'private-transporter-details',
+-  slug: 'transporters/private'
++  slug: 'transporters/add/private'
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
+index 0a081ed2..cdcc4f5b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
+@@ -11,11 +11,19 @@ import {
+ import * as kit from '../../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+ import * as countries from '../../../../../../../services/countries/index.js'
+-import { privateTransporterDetailsPage as page } from '../page.js'
++import {
++  privateTransporterDetailsPage as page,
++  transporterAddPage,
++  transportersPage
++} from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+ 
+-export const meta = { ...page, collects: ['privateTransporter'] }
++/** The private arm of the add route.
++ *
++ * A spoke off the type chooser rather than a step in the journey: the
++ * `privateTransporter` it writes is declared by the transporter list, which is
++ * where a trader normally answers it by picking a row. */
+ const view = `${TEMPLATES}/features/transport/private-transporter-details/private-transporter-details`
+ 
+ const copy = copyFor({ en, cy }).privateTransporterDetails
+@@ -87,6 +95,7 @@ const countryItems = (selected) => [
+ ]
+ 
+ const render = (
++  request,
+   h,
+   journey,
+   values,
+@@ -94,7 +103,10 @@ const render = (
+ ) =>
+   h.view(view, {
+     ...kit.base(copy.title, {
+-      backLink: pagePath(journey.journeyId, 'transporters'),
++      backLink: kit.withChangeContext(
++        request,
++        pagePath(journey.journeyId, transporterAddPage.slug)
++      ),
+       journey,
+       page,
+       recoverableError
+@@ -109,7 +121,7 @@ const render = (
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+   const saved = answers.privateTransporter
+-  return render(h, journey, {
++  return render(request, h, journey, {
+     nameOrOrganisationName: saved?.name ?? '',
+     addressLine1: saved?.address?.addressLine1 ?? '',
+     addressLine2: saved?.address?.addressLine2 ?? '',
+@@ -165,7 +177,7 @@ const post = async (request, h) => {
+   const allErrors = formErrors(payload, values)
+   if (Object.keys(allErrors).length > 0) {
+     const { journey } = await state.get(request, h)
+-    return render(h, journey, values, { errors: allErrors })
++    return render(request, h, journey, values, { errors: allErrors })
+   }
+ 
+   let committed
+@@ -175,17 +187,19 @@ const post = async (request, h) => {
+     },
+     async () => {
+       const { journey } = await state.get(request, h)
+-      return render(h, journey, values, { recoverableError: true }).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
++      return render(request, h, journey, values, {
++        recoverableError: true
++      }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+     }
+   )
+   if (failure) {
+     return failure
+   }
+ 
++  // Adding a transporter finishes the transporter step, so the journey carries
++  // on from the list rather than from this spoke.
+   const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
++  return h.redirect(await kit.nextTarget(request, transportersPage, scope))
+ }
+ 
+ export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
+index eed0e8de..c3ce0a7c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.njk
+@@ -92,8 +92,8 @@
+       errorMessage: errors.emailAddress and { text: errors.emailAddress }
+     }) }}
+ 
+-    {# Third page of the transporter row — reached from the transporter type
+-       page, not from the hub, so it ends with the primary alone. #}
++    {# The private arm of the add route — reached from the type chooser, not
++       from the hub, so it ends with the primary alone. #}
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js
+new file mode 100644
+index 00000000..dba97657
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.js
+@@ -0,0 +1,108 @@
++import { pagePath } from '../../../../../../../shared/paths.js'
++import { TEMPLATES } from '../../../config.js'
++import * as state from '../../../../../../../engine/index.js'
++import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../../lib/http-status.js'
++import {
++  compose,
++  oneOf,
++  validate
++} from '../../../../../../../lib/validate/index.js'
++import * as kit from '../../../../../../../shared/kit.js'
++import { copyFor } from '../../../../../../../shared/copy.js'
++import * as transportReference from '../../../../../../../services/transport-reference/index.js'
++import { COMMERCIAL } from '../../../../../../../services/transporters/index.js'
++import {
++  privateTransporterDetailsPage,
++  transporterAddPage as page,
++  transportersPage,
++  transportersSelectPage
++} from '../page.js'
++import { copy as en } from '../copy/copy.en.js'
++import { copy as cy } from '../copy/copy.cy.js'
++
++/** The first step of adding a transporter that is not on the list.
++ *
++ * A spoke off the transporter list rather than a step in the journey: the
++ * `transporterType` it writes is declared by the list page, which is where a
++ * trader answers it by picking a transporter (design release 1 asks the type
++ * only of someone who could not find theirs). */
++const view = `${TEMPLATES}/features/transport/transporter-add/transporter-add`
++
++const copy = copyFor({ en, cy }).transporterAdd
++
++const fields = compose(
++  oneOf('transporterType', transportReference.transporterTypes())
++)
++
++const render = (
++  h,
++  journey,
++  values,
++  { errors = {}, recoverableError = false } = {}
++) =>
++  h.view(view, {
++    ...kit.base(copy.title, {
++      backLink: pagePath(journey.journeyId, transportersPage.slug),
++      journey,
++      page,
++      recoverableError
++    }),
++    copy,
++    values,
++    errors,
++    errorSummary: kit.errorSummary(errors)
++  })
++
++const get = async (request, h) => {
++  const { journey, answers } = await state.get(request, h)
++  return render(h, journey, { transporterType: answers.transporterType ?? '' })
++}
++
++/** Where the chosen type takes the trader.
++ *
++ * Commercial reaches the approved commercial register, which is the only way
++ * to record a commercial transporter until the add-commercial form lands. An
++ * unanswered question adds nothing, so it goes back to the list — the same
++ * tolerance the question carried as a journey step. */
++const branchSlug = (transporterType) => {
++  if (transporterType === COMMERCIAL) {
++    return transportersSelectPage.slug
++  }
++  return transporterType === ''
++    ? transportersPage.slug
++    : privateTransporterDetailsPage.slug
++}
++
++const post = async (request, h) => {
++  const payload = request.payload ?? {}
++  const values = { transporterType: payload.transporterType ?? '' }
++  const { errors } = validate(fields, payload)
++  if (errors) {
++    const { journey } = await state.get(request, h)
++    return render(h, journey, values, { errors })
++  }
++
++  const { failure } = await kit.recoverableSave(
++    async () => {
++      await state.commit(request, h, values)
++    },
++    async () => {
++      const { journey } = await state.get(request, h)
++      return render(h, journey, values, { recoverableError: true }).code(
++        HTTP_STATUS_INTERNAL_SERVER_ERROR
++      )
++    }
++  )
++  if (failure) {
++    return failure
++  }
++
++  return h.redirect(
++    kit.withChangeContext(
++      request,
++      pagePath(request.params.journeyId, branchSlug(values.transporterType))
++    )
++  )
++}
++
++export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.njk
+new file mode 100644
+index 00000000..947c1b4e
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.njk
+@@ -0,0 +1,45 @@
++{% extends "shared/layout.njk" %}
++{% from "govuk/components/radios/macro.njk" import govukRadios %}
++{% from "shared/save-actions.njk" import saveActions %}
++{% from "shared/section-caption.njk" import sectionCaption %}
++
++{% block journeyContent %}
++  {% include "shared/error-summary.njk" %}
++
++  {{ sectionCaption(caption) }}
++  <form method="post" novalidate>
++    <input type="hidden" name="crumb" value="{{ crumb }}" />
++    <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
++
++    {{ govukRadios({
++      name: "transporterType",
++      fieldset: {
++        legend: {
++          text: copy.legend,
++          isPageHeading: true,
++          classes: "govuk-fieldset__legend--l"
++        }
++      },
++      hint: { text: copy.hint },
++      errorMessage: errors.transporterType and { text: errors.transporterType },
++      items: [
++        {
++          value: "Commercial",
++          text: copy.options["Commercial"].text,
++          hint: { text: copy.options["Commercial"].hint },
++          checked: values.transporterType == "Commercial"
++        },
++        {
++          value: "Private",
++          text: copy.options["Private"].text,
++          hint: { text: copy.options["Private"].hint },
++          checked: values.transporterType == "Private"
++        }
++      ]
++    }) }}
++
++    {# Reached from the transporter list rather than from the hub, so it ends
++       with the primary alone. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
++  </form>
++{% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js
+index 7072ba68..12c8c98c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js
+@@ -9,12 +9,23 @@ import {
+ } from '../../../../../../../lib/validate/index.js'
+ import * as kit from '../../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+-import * as commercialTransporters from '../../../../../../../services/commercial-transporters/index.js'
+-import { transportersSelectPage as page } from '../page.js'
++import * as transporters from '../../../../../../../services/transporters/index.js'
++import {
++  transporterAddPage,
++  transportersPage,
++  transportersSelectPage as page
++} from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
++import { addressSummary } from '../transporters/transporter-record.js'
+ 
+-export const meta = { ...page, collects: ['commercialTransporter'] }
++/** The approved commercial register — the commercial arm of the add route.
++ *
++ * A spoke off the type chooser, and the only way to record a commercial
++ * transporter until the add-commercial form lands: it picks from the register
++ * rather than letting a trader enter one. The `commercialTransporter` it
++ * writes is declared by the transporter list, which is where the answer is
++ * normally given. */
+ const view = `${TEMPLATES}/features/transport/transporters-select/transporters-select`
+ 
+ const copy = copyFor({ en, cy }).transportersSelect
+@@ -22,22 +33,13 @@ const copy = copyFor({ en, cy }).transportersSelect
+ const fields = compose(
+   oneOf(
+     'commercialTransporter',
+-    commercialTransporters.parties().map((option) => option.id),
++    transporters.commercialParties().map((option) => option.id),
+     copy.errors.transporterRequired
+   )
+ )
+ 
+-const addressSummary = (address) =>
+-  [
+-    address.addressLine1,
+-    address.addressLine2,
+-    address.addressLine3,
+-    address.country
+-  ]
+-    .filter(Boolean)
+-    .join(', ')
+-
+ const render = (
++  request,
+   h,
+   journey,
+   values,
+@@ -45,7 +47,10 @@ const render = (
+ ) =>
+   h.view(view, {
+     ...kit.base(copy.title, {
+-      backLink: pagePath(journey.journeyId, 'transporters'),
++      backLink: kit.withChangeContext(
++        request,
++        pagePath(journey.journeyId, transporterAddPage.slug)
++      ),
+       journey,
+       page,
+       recoverableError
+@@ -53,7 +58,7 @@ const render = (
+     copy,
+     errors,
+     errorSummary: kit.errorSummary(errors),
+-    transporterOptions: commercialTransporters.parties().map((option) => ({
++    transporterOptions: transporters.commercialParties().map((option) => ({
+       value: option.id,
+       text: option.name,
+       hint: {
+@@ -68,7 +73,7 @@ const render = (
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, {
++  return render(request, h, journey, {
+     selectedName: answers.commercialTransporter?.name
+   })
+ }
+@@ -91,10 +96,10 @@ const post = async (request, h) => {
+   const { errors } = validate(fields, payload)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+-    return render(h, journey, {}, { errors })
++    return render(request, h, journey, {}, { errors })
+   }
+ 
+-  const chosen = commercialTransporters.party(payload.commercialTransporter)
++  const chosen = transporters.party(payload.commercialTransporter)
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+@@ -103,6 +108,7 @@ const post = async (request, h) => {
+     async () => {
+       const { journey } = await state.get(request, h)
+       return render(
++        request,
+         h,
+         journey,
+         { selectedName: chosen?.name },
+@@ -114,8 +120,10 @@ const post = async (request, h) => {
+     return failure
+   }
+ 
++  // Adding a transporter finishes the transporter step, so the journey carries
++  // on from the list rather than from this spoke.
+   const { scope } = committed
+-  return h.redirect(await kit.nextTarget(request, page, scope))
++  return h.redirect(await kit.nextTarget(request, transportersPage, scope))
+ }
+ 
+ export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk
+index d76f5c69..7c21004b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk
+@@ -25,8 +25,8 @@
+       items: transporterOptions
+     }) }}
+ 
+-    {# Second page of the transporter row — reached from the transporter type
+-       page, not from the hub, so it ends with the primary alone. #}
++    {# The commercial arm of the add route — reached from the type chooser,
++       not from the hub, so it ends with the primary alone. #}
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporter-record.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporter-record.js
+new file mode 100644
+index 00000000..9d44b549
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporter-record.js
+@@ -0,0 +1,45 @@
++import {
++  COMMERCIAL,
++  PRIVATE
++} from '../../../../../../../services/transporters/index.js'
++
++/** Address lines in reading order, whichever of the two shapes a record has:
++ * the register's numbered lines, or the private form's town, county and
++ * postal code. Blank parts drop out. */
++const ADDRESS_ORDER = [
++  'addressLine1',
++  'addressLine2',
++  'addressLine3',
++  'townOrCity',
++  'county',
++  'postalOrZipCode',
++  'country'
++]
++
++export const addressSummary = (address = {}) =>
++  ADDRESS_ORDER.map((part) => address[part])
++    .filter(Boolean)
++    .join(', ')
++
++/** What picking a transporter commits.
++ *
++ * The record's own type settles `transporterType`, and the answer it fills is
++ * the one that type puts in scope — the other is purged by the obligation
++ * model, not by this. */
++export const transporterAnswer = (chosen) =>
++  chosen.type === PRIVATE
++    ? {
++        transporterType: PRIVATE,
++        privateTransporter: {
++          name: chosen.name,
++          address: { ...chosen.address }
++        }
++      }
++    : {
++        transporterType: COMMERCIAL,
++        commercialTransporter: {
++          name: chosen.name,
++          address: { ...chosen.address },
++          approvalNumber: chosen.approvalNumber
++        }
++      }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+index fb0b584c..bdbc4b63 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+@@ -1,4 +1,4 @@
+-import { hubPath } from '../../../../../../../shared/paths.js'
++import { hubPath, pagePath } from '../../../../../../../shared/paths.js'
+ import { TEMPLATES } from '../../../config.js'
+ import * as state from '../../../../../../../engine/index.js'
+ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../../lib/http-status.js'
+@@ -9,21 +9,45 @@ import {
+ } from '../../../../../../../lib/validate/index.js'
+ import * as kit from '../../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+-import * as transportReference from '../../../../../../../services/transport-reference/index.js'
+-import { transportersPage as page } from '../page.js'
++import * as transporters from '../../../../../../../services/transporters/index.js'
++import { transporterAddPage, transportersPage as page } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
++import { addressSummary, transporterAnswer } from './transporter-record.js'
+ 
+-export const meta = { ...page, collects: ['transporterType'] }
++/** The transporter list — the journey's one transporter step.
++ *
++ * It declares all three transporter answers because picking a row settles all
++ * of them: the record carries its own type, so the type is read off the pick
++ * rather than asked in front of the list. The add spokes behind
++ * "Add a transporter" write the same answers without declaring them, the way
++ * the address pickers write the parties the addresses page declares. */
++export const meta = {
++  ...page,
++  collects: ['transporterType', 'commercialTransporter', 'privateTransporter']
++}
+ const view = `${TEMPLATES}/features/transport/transporters/transporters`
+ 
+ const copy = copyFor({ en, cy }).transporters
+ 
+ const fields = compose(
+-  oneOf('transporterType', transportReference.transporterTypes())
++  oneOf(
++    'transporter',
++    transporters.parties().map((option) => option.id),
++    copy.errors.transporterRequired
++  )
+ )
+ 
++const optionHint = (option) => {
++  const type = copy.types[option.type]
++  const address = addressSummary(option.address)
++  return option.approvalNumber
++    ? copy.optionHintApproved(type, address, option.approvalNumber)
++    : copy.optionHint(type, address)
++}
++
+ const render = (
++  request,
+   h,
+   journey,
+   values,
+@@ -37,35 +61,64 @@ const render = (
+       recoverableError
+     }),
+     copy,
+-    values,
+     errors,
+-    errorSummary: kit.errorSummary(errors)
++    errorSummary: kit.errorSummary(errors),
++    // Reached from a Change link, the add route has to keep the context or
++    // the trader is dropped into the journey instead of the summary.
++    addHref: kit.withChangeContext(
++      request,
++      pagePath(journey.journeyId, transporterAddPage.slug)
++    ),
++    transporterOptions: transporters.parties().map((option) => ({
++      value: option.id,
++      text: option.name,
++      hint: { text: optionHint(option) },
++      checked: option.id === values.selectedId
++    }))
+   })
+ 
++/** The record behind the answers already on the notification, so a returning
++ * trader sees their pick still checked. Matched on name: the notification
++ * stores the transporter's details, not the id of the row it came from. */
++const selectedIdFor = (answers) => {
++  const chosenName =
++    answers.commercialTransporter?.name ?? answers.privateTransporter?.name
++  return transporters.parties().find((option) => option.name === chosenName)?.id
++}
++
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(h, journey, { transporterType: answers.transporterType ?? '' })
++  return render(request, h, journey, { selectedId: selectedIdFor(answers) })
+ }
+ 
++const commitOrSkip = (request, h, chosen) =>
++  chosen
++    ? state.commit(request, h, transporterAnswer(chosen))
++    : state.get(request, h)
++
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
+-  const values = { transporterType: payload.transporterType ?? '' }
+   const { errors } = validate(fields, payload)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+-    return render(h, journey, values, { errors })
++    return render(request, h, journey, {}, { errors })
+   }
+ 
++  const chosen = transporters.party(payload.transporter)
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+-      committed = await state.commit(request, h, values)
++      committed = await commitOrSkip(request, h, chosen)
+     },
+     async () => {
+       const { journey } = await state.get(request, h)
+-      return render(h, journey, values, { recoverableError: true }).code(
+-        HTTP_STATUS_INTERNAL_SERVER_ERROR
+-      )
++      return render(
++        request,
++        h,
++        journey,
++        { selectedId: chosen?.id },
++        { recoverableError: true }
++      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+     }
+   )
+   if (failure) {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
+index 18776daf..93be23f8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
+@@ -1,4 +1,5 @@
+ {% extends "shared/layout.njk" %}
++{% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "govuk/components/radios/macro.njk" import govukRadios %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+@@ -6,6 +7,11 @@
+ {% block journeyContent %}
+   {% include "shared/error-summary.njk" %}
+ 
++  {{ sectionCaption(caption) }}
++  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
++
++  <p class="govuk-body">{{ copy.intro }}</p>
++
+   <p class="govuk-body">{{ copy.guidance.authorisationLead }}</p>
+   <ul class="govuk-list govuk-list--bullet govuk-list--spaced">
+     {% for condition in copy.guidance.authorisationConditions %}
+@@ -18,36 +24,27 @@
+   <p class="govuk-body">{{ copy.guidance.daeraValid }}</p>
+   <p class="govuk-body">{{ copy.guidance.euNotValid }}</p>
+ 
+-  {{ sectionCaption(caption) }}
+   <form method="post" novalidate>
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+     {{ govukRadios({
+-      name: "transporterType",
++      name: "transporter",
+       fieldset: {
+         legend: {
+           text: copy.legend,
+-          isPageHeading: true,
+-          classes: "govuk-fieldset__legend--l"
++          classes: "govuk-fieldset__legend--m"
+         }
+       },
+-      hint: { text: copy.hint },
+-      errorMessage: errors.transporterType and { text: errors.transporterType },
+-      items: [
+-        {
+-          value: "Commercial",
+-          text: copy.options["Commercial"].text,
+-          hint: { text: copy.options["Commercial"].hint },
+-          checked: values.transporterType == "Commercial"
+-        },
+-        {
+-          value: "Private",
+-          text: copy.options["Private"].text,
+-          hint: { text: copy.options["Private"].hint },
+-          checked: values.transporterType == "Private"
+-        }
+-      ]
++      errorMessage: errors.transporter and { text: errors.transporter },
++      items: transporterOptions
++    }) }}
++
++    {# The way out of the list for a trader whose transporter is not on it. #}
++    {{ govukButton({
++      text: copy.add,
++      href: addHref,
++      classes: "govuk-button--secondary"
+     }) }}
+ 
+     {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js
+index 0bc920d2..7e01f532 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js
+@@ -100,9 +100,8 @@ describe('#buildDispatch', () => {
+   })
+ 
+   it('Should resolve pageOfObligation for a gated obligation', () => {
+-    expect(pageOfObligation('commercialTransporter')).toBe(
+-      'transporters-select'
+-    )
++    expect(pageOfObligation('commercialTransporter')).toBe('transporters')
++    expect(pageOfObligation('privateTransporter')).toBe('transporters')
+   })
+ 
+   it('Should list collectsOf for a page', () => {
+@@ -182,7 +181,7 @@ describe('#buildDispatch', () => {
+     expect(pageOfObligation('commodityLines[0]')).toBe('commodities')
+   })
+ 
+-  it('Should walk the transport section, skipping the spokes the type gates out', () => {
++  it('Should end the transport section at the transporter list, whatever type the answers reach', () => {
+     const answered = () => true
+     const scopeNoType = { inScope: makeScope({}).inScope, answered }
+     const scopeCommercial = {
+@@ -193,18 +192,27 @@ describe('#buildDispatch', () => {
+       inScope: makeScope({ transporterType: 'Private' }).inScope,
+       answered
+     }
+-    expect(nextInSection('transporters', scopeCommercial, 'journey-1')).toMatch(
+-      /\/transporters\/select$/
+-    )
+-    expect(nextInSection('transporters', scopePrivate, 'journey-1')).toMatch(
+-      /\/transporters\/private$/
+-    )
+-    expect(nextInSection('transporters', scopeNoType, 'journey-1')).toMatch(
+-      /\/notifications\/journey-1$/
+-    )
+-    expect(
+-      nextInSection('private-transporter-details', scopePrivate, 'journey-1')
+-    ).toMatch(/\/notifications\/journey-1$/)
++    for (const scope of [scopeNoType, scopeCommercial, scopePrivate]) {
++      expect(nextInSection('transporters', scope, 'journey-1')).toMatch(
++        /\/notifications\/journey-1$/
++      )
++    }
++  })
++
++  it('Should keep the add spokes off the journey — they belong to no section', () => {
++    const scope = {
++      inScope: makeScope({ transporterType: 'Private' }).inScope,
++      answered: () => true
++    }
++    for (const spoke of [
++      'transporter-add',
++      'transporters-select',
++      'private-transporter-details'
++    ]) {
++      expect(nextInSection(spoke, scope, 'journey-1')).toMatch(
++        /\/notifications\/journey-1$/
++      )
++    }
+   })
+ 
+   it('Should enter a section at its first gated-in page', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/flow.js b/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
+index 0477f842..8611d117 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/flow.js
+@@ -12,10 +12,8 @@ import { addressesPage } from '../features/addresses/page.js'
+ import { cphNumberPage } from '../features/cph-number/page.js'
+ import {
+   portOfEntryPage,
+-  privateTransporterDetailsPage,
+   transitCountriesPage,
+-  transportersPage,
+-  transportersSelectPage
++  transportersPage
+ } from '../features/transport/page.js'
+ import { consignmentContactSelectPage } from '../features/contact/page.js'
+ import { notificationViewPage } from '../features/check-answers/page.js'
+@@ -55,13 +53,9 @@ export const sections = [
+   },
+   {
+     id: 'transport',
+-    pages: [
+-      portOfEntryPage,
+-      transitCountriesPage,
+-      transportersPage,
+-      transportersSelectPage,
+-      privateTransporterDetailsPage
+-    ]
++    // One transporter step: the list. Adding a transporter that is not on it
++    // is a detour off that page, not a leg of the journey (design release 1).
++    pages: [portOfEntryPage, transitCountriesPage, transportersPage]
+   },
+   {
+     id: 'contact',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js
+index 386ff9d2..af483b07 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js
+@@ -1,7 +1,7 @@
+ import { beforeAll, describe, expect, it } from 'vitest'
+ 
+ import { dispatchPages } from '../features/index.js'
+-import { transportersSelectPage } from '../features/transport/page.js'
++import { transitCountriesPage } from '../features/transport/page.js'
+ import { notificationViewPage } from '../features/check-answers/page.js'
+ import { makeScope } from '../../../../../engine/index.js'
+ import { enumerateScopeStates } from './reachability-fixtures/scope-states.js'
+@@ -25,7 +25,7 @@ describe('#pageGatePasses / #sectionGatePasses', () => {
+     expect(() => sectionGatePasses(derivedSection, scope)).toThrow(
+       /buildDispatch/
+     )
+-    expect(() => pageGatePasses(transportersSelectPage, scope)).toThrow(
++    expect(() => pageGatePasses(transitCountriesPage, scope)).toThrow(
+       /buildDispatch/
+     )
+   })
+@@ -59,13 +59,13 @@ describe('#pageGatePasses / #sectionGatePasses', () => {
+       buildDispatch(dispatchPages)
+     })
+ 
+-    it('Should pass the derived transporter-select page gate exactly when the commercial transporter is owed, in every scope state', () => {
++    it('Should pass the derived transit-countries page gate exactly when the transited countries are owed, in every scope state', () => {
+       const answered = () => true
+       for (const answers of enumerateScopeStates()) {
+         const { inScope } = makeScope(answers)
+         expect(
+-          pageGatePasses(transportersSelectPage, { inScope, answered })
+-        ).toBe(inScope.has('commercialTransporter'))
++          pageGatePasses(transitCountriesPage, { inScope, answered })
++        ).toBe(inScope.has('transitedCountries'))
+       }
+     })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+index 7ab968bc..1601eecb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.js
+@@ -9,10 +9,8 @@ import { importReasonPage } from '../features/import-reason/page.js'
+ import { additionalDetailsPage } from '../features/additional-details/page.js'
+ import {
+   portOfEntryPage,
+-  privateTransporterDetailsPage,
+   transitCountriesPage,
+-  transportersPage,
+-  transportersSelectPage
++  transportersPage
+ } from '../features/transport/page.js'
+ import { documentsPage } from '../features/documents/page.js'
+ import { addressesPage } from '../features/addresses/page.js'
+@@ -44,9 +42,10 @@ const reviewTarget = (scope, journeyId) =>
+  * details page (whose derived gate holds until a line exists). The
+  * identification step is a single card-per-species surface, gated like every
+  * other flow page (its RULE 1 prerequisite holds it until a line exists). The
+- * transporter leg lists both of its branch pages and the addresses leg both of
+- * its pages; the derived gates pick the one the answers reach, so the run does
+- * not need to know which branch it is on. */
++ * transporter leg is one step, the list; the add spokes behind it are a
++ * detour, and they hand the run back at the list's step when they save. The
++ * addresses leg lists both of its pages; the derived gates pick the one the
++ * answers reach, so the run does not need to know which branch it is on. */
+ export const RUN_STEPS = [
+   { id: originPage.id, target: flowPageTarget(originPage) },
+   { id: commoditiesPage.id, target: flowPageTarget(commoditiesPage) },
+@@ -66,14 +65,6 @@ export const RUN_STEPS = [
+   { id: portOfEntryPage.id, target: flowPageTarget(portOfEntryPage) },
+   { id: transitCountriesPage.id, target: flowPageTarget(transitCountriesPage) },
+   { id: transportersPage.id, target: flowPageTarget(transportersPage) },
+-  {
+-    id: transportersSelectPage.id,
+-    target: flowPageTarget(transportersSelectPage)
+-  },
+-  {
+-    id: privateTransporterDetailsPage.id,
+-    target: flowPageTarget(privateTransporterDetailsPage)
+-  },
+   { id: documentsPage.id, target: flowPageTarget(documentsPage) },
+   { id: addressesPage.id, target: flowPageTarget(addressesPage) },
+   { id: cphNumberPage.id, target: flowPageTarget(cphNumberPage) },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+index aebae748..4bf0b6f8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/run.test.js
+@@ -14,6 +14,7 @@ import {
+   portOfEntryPage,
+   privateTransporterDetailsPage,
+   transitCountriesPage,
++  transporterAddPage,
+   transportersPage,
+   transportersSelectPage
+ } from '../features/transport/page.js'
+@@ -136,30 +137,29 @@ describe('#nextRunTarget — the run past the arrival details', () => {
+     ).toBe(pagePath(JOURNEY_ID, transitCountriesPage.slug))
+   })
+ 
+-  it('Should send the transit countries on to the transporter question', () => {
++  it('Should send the transit countries on to the transporter list', () => {
+     expect(step(transitCountriesPage.id)).toBe(
+       pagePath(JOURNEY_ID, transportersPage.slug)
+     )
+   })
+ 
+-  it('Should take the transporter branch the answers reach and skip the other', () => {
++  it('Should send the transporter list on to the documents, whichever type the pick carries', () => {
+     expect(step(transportersPage.id)).toBe(
+-      pagePath(JOURNEY_ID, transportersSelectPage.slug)
+-    )
+-    expect(step(transportersSelectPage.id)).toBe(
+       pagePath(JOURNEY_ID, documentsPage.slug)
+     )
+     expect(
+       next(transportersPage.id, { ...completeSeed, transporterType: 'Private' })
+-    ).toBe(pagePath(JOURNEY_ID, privateTransporterDetailsPage.slug))
+-    expect(
+-      next(privateTransporterDetailsPage.id, {
+-        ...completeSeed,
+-        transporterType: 'Private'
+-      })
+     ).toBe(pagePath(JOURNEY_ID, documentsPage.slug))
+   })
+ 
++  it('Should hand the run back at the list step when an add spoke saves', () => {
++    // The spokes are off the run, so they carry no step of their own — they
++    // continue from the list, which is the step they hang off.
++    expect(next(transporterAddPage.id, completeSeed)).toBeNull()
++    expect(next(transportersSelectPage.id, completeSeed)).toBeNull()
++    expect(next(privateTransporterDetailsPage.id, completeSeed)).toBeNull()
++  })
++
+   it('Should send the documents on to the roles and addresses', () => {
+     expect(step(documentsPage.id)).toBe(
+       pagePath(JOURNEY_ID, addressesPage.slug)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
+index f0153a3b..5c6fb25f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js
+@@ -16,6 +16,7 @@ import {
+   portOfEntryPage,
+   privateTransporterDetailsPage,
+   transitCountriesPage,
++  transporterAddPage,
+   transportersPage,
+   transportersSelectPage
+ } from '../../features/transport/page.js'
+@@ -61,7 +62,11 @@ export const captionSections = [
+   { id: 'transportAndArrival', pages: [portOfEntryPage, transportersPage] },
+   {
+     id: 'newTransporter',
+-    pages: [transportersSelectPage, privateTransporterDetailsPage]
++    pages: [
++      transporterAddPage,
++      transportersSelectPage,
++      privateTransporterDetailsPage
++    ]
+   },
+   { id: 'documents', pages: [documentsPage] }
+ ]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/simulate.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/simulate.test.js
+index 26d96010..1d48a174 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/simulate.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/simulate.test.js
+@@ -4,7 +4,13 @@ import { buildDispatch } from '../../../../../flow/dispatch.js'
+ import { dispatchPages } from '../features/index.js'
+ import { simulateJourney } from '../../../../../analysis/simulate.js'
+ 
+-const TRANSPORTERS_SELECT_PAGE = 'transporters-select'
++// The add spokes hang off the transporter list rather than sitting in the
++// journey, so no set of answers walks the simulator through them.
++const ADD_SPOKE_PAGES = [
++  'transporter-add',
++  'transporters-select',
++  'private-transporter-details'
++]
+ 
+ describe('#simulateJourney', () => {
+   beforeAll(() => {
+@@ -20,8 +26,6 @@ describe('#simulateJourney', () => {
+     const pages = simulateJourney(prereqs)
+     expect(pages).toContain('port-of-entry')
+     expect(pages).toContain('transporters')
+-    expect(pages).not.toContain(TRANSPORTERS_SELECT_PAGE)
+-    expect(pages).not.toContain('private-transporter-details')
+     expect(pages.indexOf('port-of-entry')).toBeLessThan(
+       pages.indexOf('transporters')
+     )
+@@ -30,15 +34,14 @@ describe('#simulateJourney', () => {
+     )
+   })
+ 
+-  it('Should insert the gated transporter spoke exactly for the chosen type', () => {
+-    const pages = simulateJourney({
+-      ...prereqs,
+-      transporterType: 'Commercial'
+-    })
+-    expect(pages).toContain(TRANSPORTERS_SELECT_PAGE)
+-    expect(pages).not.toContain('private-transporter-details')
+-    expect(pages.indexOf('transporters')).toBeLessThan(
+-      pages.indexOf(TRANSPORTERS_SELECT_PAGE)
+-    )
+-  })
++  it.each(['', 'Commercial', 'Private'])(
++    'Should keep the add spokes off the journey when the transporter type is "%s"',
++    (transporterType) => {
++      const pages = simulateJourney({ ...prereqs, transporterType })
++      expect(pages).toContain('transporters')
++      for (const spoke of ADD_SPOKE_PAGES) {
++        expect(pages).not.toContain(spoke)
++      }
++    }
++  )
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+index 1fd1f5ad..98643039 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+@@ -13,10 +13,8 @@ import { addressesPage } from '../features/addresses/page.js'
+ import { cphNumberPage } from '../features/cph-number/page.js'
+ import {
+   portOfEntryPage,
+-  privateTransporterDetailsPage,
+   transitCountriesPage,
+-  transportersPage,
+-  transportersSelectPage
++  transportersPage
+ } from '../features/transport/page.js'
+ import { consignmentContactSelectPage } from '../features/contact/page.js'
+ 
+@@ -36,14 +34,9 @@ export const taskRows = [
+   },
+   { id: 'arrivalDetails', pages: [portOfEntryPage] },
+   { id: 'transitCountries', pages: [transitCountriesPage], conditional: true },
+-  {
+-    id: 'transporter',
+-    pages: [
+-      transportersPage,
+-      transportersSelectPage,
+-      privateTransporterDetailsPage
+-    ]
+-  },
++  // The list declares all three transporter answers, so the row still spans
++  // the type and both address blocks from the one page.
++  { id: 'transporter', pages: [transportersPage] },
+   { id: 'addresses', pages: [addressesPage, cphNumberPage] },
+   { id: 'contact', pages: [consignmentContactSelectPage] },
+   { id: 'documents', pages: [documentsPage] }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+index 0b461385..7eb71ed2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+@@ -105,7 +105,7 @@ describe('#rowStatus — one status per hub task row', () => {
+     ).toBe(FULFILLED)
+   })
+ 
+-  it('Should aggregate the transporter row over its three pages, following the type into scope', () => {
++  it('Should aggregate the transporter row over the three answers the list declares, following the type into scope', () => {
+     expect(statusIn('transporter', unlocked)).toBe(NOT_STARTED)
+     expect(
+       statusIn('transporter', { ...unlocked, transporterType: 'Commercial' })

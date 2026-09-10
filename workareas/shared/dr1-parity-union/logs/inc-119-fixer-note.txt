@@ -1,0 +1,17 @@
+inc-119 fixer — behavioural proof for the tests-repo changes
+
+The compose behavioural runs (test:docker-compose --grep 'Transited countries page'
+and test:docker-compose:a11y) were NOT run. The workspace stack is up, but it carries
+no trade-imports-animals-frontend container and nothing is listening on port 3000, so
+there is no frontend built from feat/EUDPA-548-frontend-refuses-to-leave-the-transit-co
+for the E2E/a11y suites to drive. Claiming a pass would be false.
+
+Evidence of record instead:
+- tests repo typecheck clean  (logs/inc-119-tests-typecheck.log)
+- tests repo eslint clean     (logs/inc-119-tests-lint.log)
+- frontend mirror test green: arrival-transit.fit.spec.js
+  'transit countries are optional: continuing with none saves and goes on'
+  and 'transit page with an empty Add attempt has no serious or critical axe
+  violations' — 39/39 passed (logs/inc-119-fix-fit-spec.log)
+- frontend unit: transit-countries.controller.test.js 21/21 passed
+  (logs/inc-119-fix-controller-test.log)

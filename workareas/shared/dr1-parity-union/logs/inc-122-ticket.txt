@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-122}} from the {{shared/dr1-parity-union}} backlog.
+
+Today the frontend lists each commercial transporter as a single radio whose label is the transporter's name and whose hint joins the address lines with commas and appends the approval number after an em dash. Name, address and approval number are the only facts shown, they are not aligned into columns, and nothing tells the user whether a transporter is approved. Design release 1 lists the same transporters in a table with headed columns that also carry the transporter's type and its approval status.
+
+h2. Acceptance criteria
+
+* The commercial transporter list renders as a table with a selection radio in a leading column and headed columns for Name, Address, Approval number, Type and Status, replacing the run-on radio hint built at {{src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js}} lines 55-65 and {{src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js}} lines 92-93.
+* Each record in {{src/server/app/services/commercial-transporters/records.js}} gains a type and an approval status alongside its existing id, name, approval number and address. This is a change inside the frontend's own fixture, not a new service — Design release 1 hardcodes its statuses the same way, so no API or contract has to land first.
+* The Type column reads Commercial or Private.
+* The Status column renders as a GOV.UK tag — green for Approved, pink for New, matching Design release 1.
+* The status recorded against each shipped fixture record is the one the owner of the commercial register confirms. Do not label an existing record Approved on assumption; that asserts something nothing has verified.
+* Design release 1's "View details" link is out of scope and is not added. Where that link would go is the address-book slice's question, so build the columns and leave the link out until it is settled.
+* Selecting a transporter and continuing still works, and the selected transporter still reaches the journey state unchanged.
+* Unit coverage for the transporter-select page is updated to the table markup, and the E2E specs and visual baselines in the tests repo are updated to match.
+
+h2. Notes
+
+The Type column only distinguishes anything once the list carries both commercial and private transporters, which is {{inc-123}}. This increment builds the column; {{inc-123}} gives it something to say.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+Screens: {{fe-transporter-commercial}} and {{dr1-transporter}}
+Design release 1 evidence: {{app/views/transporter.html}} lines 117-152

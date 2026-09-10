@@ -1,0 +1,588 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index 40ff1d35..cfc677bf 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -118,6 +118,12 @@ export const copy = {
+       status: 'Statws'
+     },
+     selectRowPrefix: 'Dewis',
++    search: {
++      label: 'Chwilio',
++      hint: 'Enw, cyfeiriad neu rif cymeradwyo',
++      button: 'Chwilio'
++    },
++    noMatches: 'Nid oes unrhyw gludwyr yn cyfateb i’ch chwiliad.',
+     add: 'Ychwanegu cludwr',
+     errors: {
+       transporterRequired: 'Dewiswch gludwr o’r rhestr'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index 8a76cc4f..e0712b3b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -136,6 +136,15 @@ export const copy = {
+       status: 'Status'
+     },
+     selectRowPrefix: 'Select',
++    // Design release 1 searches the list over the three facts a trader would
++    // recognise a transporter by. The hint names them so the trader knows what
++    // the box will match before they type into it.
++    search: {
++      label: 'Search',
++      hint: 'Name, address or approval number',
++      button: 'Search'
++    },
++    noMatches: 'No transporters match your search.',
+     add: 'Add a transporter',
+     errors: {
+       transporterRequired: 'Select a transporter from the list'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index 45f52a48..18e2b0c4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -25,6 +25,7 @@ const invalidCountry = 'Invalid country'
+ const PRIVATE_ADD_SLUG = 'transporters/add/private'
+ const REGISTER_SLUG = 'transporters/select'
+ const BACK_LINK = '.govuk-back-link'
++const ERROR_SUMMARY = '.govuk-error-summary'
+ 
+ const transporterRecords = parties()
+ const privateRecord = transporterRecords.find(
+@@ -59,6 +60,17 @@ const openTransporterList = async (page) => {
+   ).toBeVisible()
+ }
+ 
++/** Search the list the way a trader does: type a term and submit. The search
++ * is a submit on the page's own form, so nothing here depends on client JS. */
++const searchTransporters = async (page, term) => {
++  await page
++    .getByLabel(copy.transporters.search.label, { exact: true })
++    .fill(term)
++  await page
++    .getByRole('button', { name: copy.transporters.search.button, exact: true })
++    .click()
++}
++
+ const openTransporterType = async (page) => {
+   await openTransporterList(page)
+   // The govuk button macro renders an href as a link with role="button".
+@@ -105,7 +117,7 @@ const openPrivate = async (page) => {
+ }
+ 
+ const errorLink = (page, message) =>
+-  page.locator('.govuk-error-summary').getByRole('link', { name: message })
++  page.locator(ERROR_SUMMARY).getByRole('link', { name: message })
+ 
+ const seriousOrCritical = (violations) =>
+   violations
+@@ -430,7 +442,7 @@ test.describe('transporter list page', () => {
+     await submit(page)
+ 
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+-    await expect(page.locator('.govuk-error-summary')).toHaveCount(0)
++    await expect(page.locator(ERROR_SUMMARY)).toHaveCount(0)
+ 
+     await page.goto(journeyUrl(page, PRIVATE_ADD_SLUG))
+     await expect(
+@@ -464,6 +476,113 @@ test.describe('transporter list page', () => {
+   })
+ })
+ 
++// Design release 1 puts a search over the list — the register is longer than a
++// screenful and grows. It is a submit on the page's own form, so the filtering
++// is the server's and a trader without JavaScript searches the same way.
++test.describe('searching the transporter list', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('carries a labelled search, hinted with what it matches, above the list', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++
++    const search = page.getByLabel(copy.transporters.search.label, {
++      exact: true
++    })
++    await expect(search).toBeVisible()
++    await expect(page.getByText(copy.transporters.search.hint)).toBeVisible()
++    await expect(
++      page.getByRole('button', {
++        name: copy.transporters.search.button,
++        exact: true
++      })
++    ).toBeVisible()
++
++    // Above the list, not below it: a search a trader meets after the rows is
++    // a search they have already scrolled past.
++    const searchPrecedesTable = await page.evaluate(() => {
++      const input = document.querySelector('#search')
++      const table = document.querySelector('.govuk-table')
++      // Neither element contains the other, so the comparison is the plain
++      // "comes after" flag — DOCUMENT_POSITION_FOLLOWING, 4 — rather than a
++      // mask of several. The constant is spelled out because this callback
++      // runs in the browser, where the linter cannot see `Node`.
++      const following = 4
++      return (
++        Boolean(input) &&
++        Boolean(table) &&
++        input.compareDocumentPosition(table) === following
++      )
++    })
++    expect(searchPrecedesTable).toBe(true)
++  })
++
++  test('searching by name leaves only the matching transporter on the list', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await searchTransporters(page, privateRecord.name)
++
++    await expect(transporterRow(page, privateRecord.name)).toHaveCount(1)
++    await expect(transporterRow(page, commercialRecord.name)).toHaveCount(0)
++  })
++
++  test('searching by approval number finds the transporter it belongs to', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await searchTransporters(page, commercialRecord.approvalNumber)
++
++    await expect(transporterRow(page, commercialRecord.name)).toHaveCount(1)
++    await expect(transporterRow(page, privateRecord.name)).toHaveCount(0)
++  })
++
++  test('searching by address finds the transporter at it', async ({ page }) => {
++    await openTransporterList(page)
++    await searchTransporters(page, privateRecord.address.postalOrZipCode)
++
++    await expect(transporterRow(page, privateRecord.name)).toHaveCount(1)
++    await expect(transporterRow(page, commercialRecord.name)).toHaveCount(0)
++  })
++
++  test('keeps the term in the box and stays on the list, saving nothing', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await searchTransporters(page, privateRecord.name)
++
++    await expect(
++      page.getByLabel(copy.transporters.search.label, { exact: true })
++    ).toHaveValue(privateRecord.name)
++    await expect(
++      page.getByRole('heading', { name: copy.transporters.title })
++    ).toBeVisible()
++    await expect(page.locator(ERROR_SUMMARY)).toHaveCount(0)
++  })
++
++  test('says so when nothing matches, rather than showing an empty table', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await searchTransporters(page, 'no such transporter')
++
++    await expect(page.getByText(copy.transporters.noMatches)).toBeVisible()
++    await expect(page.locator('.govuk-table')).toHaveCount(0)
++  })
++
++  test('a searched list has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++    await searchTransporters(page, privateRecord.name)
++
++    await expectAxeClean(page, 'Transporter list search results')
++  })
++})
++
+ test.describe('adding a transporter that is not on the list', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js
+index c445b5bc..f17051f3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js
+@@ -21,6 +21,36 @@ const STATUS_CLASSES = {
+   [NEW]: 'govuk-tag--magenta'
+ }
+ 
++/** The one string a search term is matched against.
++ *
++ * Design release 1 searches over the three facts its list shows — the name,
++ * the address and the approval number — joined so a term spanning two of them
++ * still finds its row. Folded to lower case and stripped of accents because a
++ * trader types "Garcia" for "García" and an approval number in whichever case
++ * they happen to have it. A private transporter has no approval number, so
++ * that part of its haystack is empty. */
++const searchableText = (record) =>
++  [record.name, addressSummary(record.address), record.approvalNumber ?? '']
++    .join(' ')
++    .normalize('NFD')
++    .replace(/\p{Diacritic}/gu, '')
++    .toLowerCase()
++
++/** The transporters a search term leaves on the list.
++ *
++ * An empty term is not a search: the whole list stands, which is what a trader
++ * arriving at the page sees. */
++export const matchingTransporters = (records, query) => {
++  const term = (query ?? '')
++    .trim()
++    .normalize('NFD')
++    .replace(/\p{Diacritic}/gu, '')
++    .toLowerCase()
++  return term
++    ? records.filter((record) => searchableText(record).includes(term))
++    : records
++}
++
+ /** One table row per transporter — the facts Design release 1 aligns into
+  * columns, plus the radio that picks the row.
+  *
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js
+new file mode 100644
+index 00000000..24db6273
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js
+@@ -0,0 +1,92 @@
++import { describe, expect, it } from 'vitest'
++
++import {
++  APPROVED,
++  COMMERCIAL,
++  PRIVATE
++} from '../../../../../../../services/transporters/index.js'
++import { matchingTransporters } from './rows.js'
++
++const commercial = {
++  id: 'garcia-livestock-transport',
++  type: COMMERCIAL,
++  status: APPROVED,
++  name: 'García Livestock Transport SL',
++  approvalNumber: 'ES-T2-45001294',
++  address: {
++    addressLine1: '43 East Hague Extension',
++    country: 'Switzerland'
++  }
++}
++
++const privateRecord = {
++  id: 'aberdeen-livestock',
++  type: PRIVATE,
++  status: APPROVED,
++  name: 'Aberdeen Livestock Ltd',
++  address: {
++    addressLine1: '12 Harbour Road',
++    townOrCity: 'Aberdeen',
++    postalOrZipCode: 'AB11 5DQ',
++    country: 'United Kingdom'
++  }
++}
++
++const records = [commercial, privateRecord]
++
++const names = (matches) => matches.map((record) => record.name)
++
++describe('#matchingTransporters', () => {
++  it('Should leave the whole list standing when nothing has been searched for', () => {
++    expect(matchingTransporters(records, '')).toEqual(records)
++    expect(matchingTransporters(records, undefined)).toEqual(records)
++    expect(matchingTransporters(records, '   ')).toEqual(records)
++  })
++
++  it('Should match on the name, whatever case the trader types', () => {
++    expect(names(matchingTransporters(records, 'aberdeen livestock'))).toEqual([
++      privateRecord.name
++    ])
++    expect(names(matchingTransporters(records, 'ABERDEEN'))).toEqual([
++      privateRecord.name
++    ])
++  })
++
++  it('Should match on the address', () => {
++    expect(names(matchingTransporters(records, 'Switzerland'))).toEqual([
++      commercial.name
++    ])
++    expect(names(matchingTransporters(records, 'AB11 5DQ'))).toEqual([
++      privateRecord.name
++    ])
++  })
++
++  it('Should match on the approval number', () => {
++    expect(names(matchingTransporters(records, 'es-t2-45001294'))).toEqual([
++      commercial.name
++    ])
++  })
++
++  // A trader typing the plain letters they have on a keyboard has to find the
++  // accented record — the register carries names the trader cannot easily type.
++  it('Should ignore accents on both sides of the match', () => {
++    expect(names(matchingTransporters(records, 'garcia'))).toEqual([
++      commercial.name
++    ])
++    expect(names(matchingTransporters(records, 'García'))).toEqual([
++      commercial.name
++    ])
++  })
++
++  it('Should return nothing when no transporter matches', () => {
++    expect(matchingTransporters(records, 'no such transporter')).toEqual([])
++  })
++
++  // A private transporter has no approval number, so its haystack must not
++  // fall over on the missing field.
++  it('Should search a record that has no approval number', () => {
++    expect(names(matchingTransporters(records, 'Harbour Road'))).toEqual([
++      privateRecord.name
++    ])
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+index 0b3356cc..3c08eea9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+@@ -14,7 +14,7 @@ import { transporterAddPage, transportersPage as page } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+ import { transporterAnswer } from './transporter-record.js'
+-import { transporterRows } from './rows.js'
++import { matchingTransporters, transporterRows } from './rows.js'
+ 
+ /** The transporter list — the journey's one transporter step.
+  *
+@@ -39,14 +39,19 @@ const fields = compose(
+   )
+ )
+ 
++/** The search button and the page's own submits share the one form, told apart
++ * by their `action` value — the address picker's shape. */
++const isSearchAction = (payload) => payload.action === 'search'
++
+ const render = (
+   request,
+   h,
+   journey,
+   values,
+   { errors = {}, recoverableError = false } = {}
+-) =>
+-  h.view(view, {
++) => {
++  const query = values.query ?? ''
++  return h.view(view, {
+     ...kit.base(copy.title, {
+       backLink: hubPath(journey.journeyId),
+       journey,
+@@ -62,10 +67,13 @@ const render = (
+       request,
+       pagePath(journey.journeyId, transporterAddPage.slug)
+     ),
+-    transporterRows: transporterRows(transporters.parties(), {
+-      selectedId: values.selectedId
+-    })
++    query,
++    transporterRows: transporterRows(
++      matchingTransporters(transporters.parties(), query),
++      { selectedId: values.selectedId }
++    )
+   })
++}
+ 
+ /** The record behind the answers already on the notification, so a returning
+  * trader sees their pick still checked. Matched on name: the notification
+@@ -88,10 +96,23 @@ const commitOrSkip = (request, h, chosen) =>
+ 
+ const post = async (request, h) => {
+   const payload = request.payload ?? {}
++  const query = payload.search ?? ''
++
++  // Searching filters the list in place: nothing is validated and nothing is
++  // committed, and the row the trader had picked stays picked if the search
++  // leaves it on the list.
++  if (isSearchAction(payload)) {
++    const { journey, answers } = await state.get(request, h)
++    return render(request, h, journey, {
++      query,
++      selectedId: payload.transporter || selectedIdFor(answers)
++    })
++  }
++
+   const { errors } = validate(fields, payload)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+-    return render(request, h, journey, {}, { errors })
++    return render(request, h, journey, { query }, { errors })
+   }
+ 
+   const chosen = transporters.party(payload.transporter)
+@@ -106,7 +127,7 @@ const post = async (request, h) => {
+         request,
+         h,
+         journey,
+-        { selectedId: chosen?.id },
++        { selectedId: chosen?.id, query },
+         { recoverableError: true }
+       ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
+index 86114971..2bf12abb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
+@@ -192,6 +192,72 @@ describe('/transporters', () => {
+     expect(result.response.redirect).toBeTruthy()
+   })
+ 
++  // Design release 1 puts a search over the list. It is a submit on the same
++  // form, so the filtering happens on the server and a trader without
++  // JavaScript searches the same way.
++  it('Should filter the list to the transporters matching the search', async () => {
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'search', search: 'aberdeen' }
++    })
++
++    expect(result.view.context.transporterRows.map((row) => row.id)).toEqual([
++      ABERDEEN_ID
++    ])
++    expect(result.view.context.query).toBe('aberdeen')
++    expect(result.response.redirect).toBeFalsy()
++  })
++
++  it('Should commit nothing when the list is searched', async () => {
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'search', search: 'aberdeen', transporter: GARCIA_ID }
++    })
++
++    expect(result.after.transporterType).toBeUndefined()
++    expect(result.after.privateTransporter).toBeUndefined()
++  })
++
++  it('Should keep the row the trader had picked checked when the search leaves it on the list', async () => {
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'search', search: 'garcia', transporter: GARCIA_ID }
++    })
++
++    expect(rowFor(result.view.context, GARCIA_ID).checked).toBe(true)
++  })
++
++  // The first row carries the field's own id so the error summary link lands
++  // on it — that has to hold for the filtered list too, not just the whole one.
++  it('Should give the first matching row the field id', async () => {
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'search', search: 'aberdeen' }
++    })
++
++    expect(result.view.context.transporterRows[0].idPrefix).toBe('transporter')
++  })
++
++  it('Should leave no rows when nothing matches the search', async () => {
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'search', search: 'no such transporter' }
++    })
++
++    expect(result.view.context.transporterRows).toEqual([])
++  })
++
++  it('Should keep the search on the page when the pick fails validation', async () => {
++    const result = await driveHandler(postHandler, {
++      payload: { search: 'aberdeen', transporter: 'not-a-transporter' }
++    })
++
++    expect(result.view.context.errors.transporter).toBeTruthy()
++    expect(result.view.context.query).toBe('aberdeen')
++  })
++
++  it('Should show the whole list before anything is searched for', async () => {
++    const result = await driveHandler(getHandler)
++
++    expect(result.view.context.query).toBe('')
++    expect(result.view.context.transporterRows.length).toBeGreaterThan(1)
++  })
++
+   it('Should re-render the list at 500 with the pick kept after a recoverable save failure', async () => {
+     const response = await driveSaveFailure({ transporter: GARCIA_ID })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
+index 16de82f5..856fa965 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
+@@ -2,6 +2,7 @@
+ {% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "govuk/components/error-message/macro.njk" import govukErrorMessage %}
+ {% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
++{% from "govuk/components/input/macro.njk" import govukInput %}
+ {% from "govuk/components/radios/macro.njk" import govukRadios %}
+ {% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "govuk/components/tag/macro.njk" import govukTag %}
+@@ -32,6 +33,27 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
++    {# Design release 1 searches the list over name, address and approval
++       number, above the table. The whole page is one form: the search button
++       and the endings are all submits, told apart by their `action` value, and
++       the filtering happens on the server — so a trader without JavaScript
++       searches the same list the same way. #}
++    {{ govukInput({
++      id: "search",
++      name: "search",
++      classes: "govuk-!-width-two-thirds",
++      label: { text: copy.search.label, classes: "govuk-label--s" },
++      hint: { text: copy.search.hint },
++      value: query
++    }) }}
++
++    {{ govukButton({
++      text: copy.search.button,
++      classes: "govuk-button--secondary",
++      name: "action",
++      value: "search"
++    }) }}
++
+     {# Design release 1 aligns the transporters into headed columns rather than
+        running each one's facts together in a radio hint, with the radio that
+        picks a row in the leading column — the same shape as the address
+@@ -69,17 +91,21 @@
+         {{ govukErrorMessage({ id: "transporter-error", text: errors.transporter }) }}
+       {% endif %}
+ 
+-      {{ govukTable({
+-        head: [
+-          { html: '<span class="govuk-visually-hidden">' + copy.table.selectHidden + '</span>' },
+-          { text: copy.table.name },
+-          { text: copy.table.address },
+-          { text: copy.table.approvalNumber },
+-          { text: copy.table.type },
+-          { text: copy.table.status }
+-        ],
+-        rows: transporterTableRows
+-      }) }}
++      {% if transporterTableRows.length %}
++        {{ govukTable({
++          head: [
++            { html: '<span class="govuk-visually-hidden">' + copy.table.selectHidden + '</span>' },
++            { text: copy.table.name },
++            { text: copy.table.address },
++            { text: copy.table.approvalNumber },
++            { text: copy.table.type },
++            { text: copy.table.status }
++          ],
++          rows: transporterTableRows
++        }) }}
++      {% else %}
++        <p class="govuk-body">{{ copy.noMatches }}</p>
++      {% endif %}
+     {% endset %}
+ 
+     <div class="govuk-form-group{{ ' govuk-form-group--error' if errors.transporter }}">
+@@ -100,6 +126,12 @@
+       classes: "govuk-button--secondary"
+     }) }}
+ 
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
++    {# The primary keeps its own `action` value so the form can tell it from
++       the search submit above. #}
++    {{ saveActions(
++      hubHref,
++      { text: sharedCopy.saveActions.saveAndContinue, name: "action", value: "save" },
++      sharedCopy.saveActions
++    ) }}
+   </form>
+ {% endblock %}

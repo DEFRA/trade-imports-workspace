@@ -1,0 +1,236 @@
+diff --git a/domain/fixtures/seeded-journey.ts b/domain/fixtures/seeded-journey.ts
+index 7ad2d18..158c760 100644
+--- a/domain/fixtures/seeded-journey.ts
++++ b/domain/fixtures/seeded-journey.ts
+@@ -80,8 +80,9 @@ const arrivalStep: SeedStep = {
+ 
+ // Only in scope because arrivalStep posts ROAD_VEHICLE — transitedCountries applies to land transport only.
+ const transportSteps: SeedStep[] = [
+-  // A checkbox group posts in the order the page lists its boxes, not the order they were ticked.
+-  { slug: 'transit-countries', form: { transitedCountries: ['BE', 'FR'] } },
++  // Countries are added one at a time and saved in the order they were added,
++  // so the seed matches the order the browser journey adds them: France, then Belgium.
++  { slug: 'transit-countries', form: { transitedCountries: ['FR', 'BE'] } },
+   { slug: 'transporters', form: { transporterType: 'Commercial' } },
+   { slug: 'transporters/select', form: { commercialTransporter: 'garcia-livestock-transport' } },
+ ];
+diff --git a/flows/journey.ts b/flows/journey.ts
+index 6da5f0e..f9af539 100644
+--- a/flows/journey.ts
++++ b/flows/journey.ts
+@@ -180,7 +180,7 @@ export class Journey {
+     await this.fillArrivalDetails();
+     await this.pages.arrivalDetails.saveAndContinue.click();
+     await this.pages.transitedCountries.heading.waitFor();
+-    await this.pages.transitedCountries.selectCountry('France');
++    await this.pages.transitedCountries.addCountry('France');
+     await this.pages.transitedCountries.saveAndContinue.click();
+     await this.pages.transporter.heading.waitFor();
+   }
+@@ -190,8 +190,8 @@ export class Journey {
+     await this.fillArrivalDetails();
+     await this.pages.arrivalDetails.saveAndContinue.click();
+     await this.pages.transitedCountries.heading.waitFor();
+-    await this.pages.transitedCountries.selectCountry('France');
+-    await this.pages.transitedCountries.selectCountry('Belgium');
++    await this.pages.transitedCountries.addCountry('France');
++    await this.pages.transitedCountries.addCountry('Belgium');
+     await this.pages.transitedCountries.saveAndContinue.click();
+     await this.pages.transporter.heading.waitFor();
+     await this.pages.transporter.transporterType('Commercial').check();
+@@ -281,7 +281,7 @@ export class Journey {
+ 
+   async toTransporter(): Promise<void> {
+     await this.toTransitedCountries();
+-    await this.pages.transitedCountries.selectCountry('France');
++    await this.pages.transitedCountries.addCountry('France');
+     await this.pages.transitedCountries.saveAndContinue.click();
+     await this.pages.transporter.heading.waitFor();
+   }
+diff --git a/page-objects/notification/transited-countries-page.ts b/page-objects/notification/transited-countries-page.ts
+index 8219747..d2dac3c 100644
+--- a/page-objects/notification/transited-countries-page.ts
++++ b/page-objects/notification/transited-countries-page.ts
+@@ -1,4 +1,4 @@
+-import { type Locator, type Page } from '@playwright/test';
++import { expect, type Locator, type Page } from '@playwright/test';
+ import { NotificationPage } from '@page-objects/base/base-page';
+ 
+ export class TransitedCountriesPage extends NotificationPage {
+@@ -13,16 +13,39 @@ export class TransitedCountriesPage extends NotificationPage {
+     });
+   }
+ 
+-  country(name: string): Locator {
+-    return this.page.getByRole('checkbox', { name, exact: true });
++  get countryField(): Locator {
++    return this.page.getByLabel('Enter a country', { exact: true });
+   }
+ 
+-  async selectCountry(name: string): Promise<void> {
+-    await this.country(name).check();
++  get addCountryButton(): Locator {
++    return this.page.getByRole('button', { name: 'Add country', exact: true });
+   }
+ 
+-  get countries(): Locator {
+-    return this.page.locator('input[name="transitedCountries"]');
++  // The type-ahead enhances a native select. Without JavaScript the field is
++  // still the select, chosen by option label.
++  async addCountry(name: string): Promise<void> {
++    const field = this.countryField;
++    if ((await field.evaluate((el) => el.tagName)) === 'SELECT') {
++      await field.selectOption({ label: name });
++    } else {
++      await field.click();
++      await field.fill(name);
++      await this.page.getByRole('option', { name, exact: true }).click();
++    }
++    await this.addCountryButton.click();
++    await expect(this.row(name)).toBeVisible();
++  }
++
++  row(name: string): Locator {
++    return this.page.getByRole('cell', { name, exact: true });
++  }
++
++  removeCountry(name: string): Locator {
++    return this.page.getByRole('button', { name: `Remove ${name}` });
++  }
++
++  get addedCountries(): Locator {
++    return this.page.getByRole('row').filter({ has: this.page.getByRole('button', { name: /^Remove / }) });
+   }
+ 
+   get saveAndContinue(): Locator {
+diff --git a/tests/a11y/notification-journey-error-state.spec.ts b/tests/a11y/notification-journey-error-state.spec.ts
+index 183f555..32dff09 100644
+--- a/tests/a11y/notification-journey-error-state.spec.ts
++++ b/tests/a11y/notification-journey-error-state.spec.ts
+@@ -58,7 +58,7 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+       await pages.transitedCountries.saveAndContinue.click();
+       await expect(errorSummaryHeading).toBeVisible();
+       await runA11yScan();
+-      await pages.transitedCountries.selectCountry('France');
++      await pages.transitedCountries.addCountry('France');
+       await pages.transitedCountries.saveAndContinue.click();
+     });
+ 
+diff --git a/tests/a11y/notification-journey-filled-state.spec.ts b/tests/a11y/notification-journey-filled-state.spec.ts
+index f64ceca..c5dbf8a 100644
+--- a/tests/a11y/notification-journey-filled-state.spec.ts
++++ b/tests/a11y/notification-journey-filled-state.spec.ts
+@@ -126,7 +126,7 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+ 
+     await test.step('Transited countries with a country added', async () => {
+       await pages.transitedCountries.heading.waitFor();
+-      await pages.transitedCountries.selectCountry('France');
++      await pages.transitedCountries.addCountry('France');
+       await runA11yScan();
+       await pages.transitedCountries.saveAndContinue.click();
+     });
+diff --git a/tests/a11y/notification-journey-initial-state.spec.ts b/tests/a11y/notification-journey-initial-state.spec.ts
+index dbd3b48..24c6b60 100644
+--- a/tests/a11y/notification-journey-initial-state.spec.ts
++++ b/tests/a11y/notification-journey-initial-state.spec.ts
+@@ -142,7 +142,7 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+     await test.step('Transited countries', async () => {
+       await pages.transitedCountries.heading.waitFor();
+       await runA11yScan();
+-      await pages.transitedCountries.selectCountry('France');
++      await pages.transitedCountries.addCountry('France');
+       await pages.transitedCountries.saveAndContinue.click();
+     });
+ 
+diff --git a/tests/e2e/features/hub-groups-and-cya-rows.spec.ts b/tests/e2e/features/hub-groups-and-cya-rows.spec.ts
+index e34d6da..a6fd719 100644
+--- a/tests/e2e/features/hub-groups-and-cya-rows.spec.ts
++++ b/tests/e2e/features/hub-groups-and-cya-rows.spec.ts
+@@ -80,7 +80,8 @@ test.describe('Hub groups and check-your-answers rows', { tag: ['@integration',
+     await expect(value(arrivalDetails, 'Port of entry')).toHaveText('Aberdeen Harbour (GB ABD)');
+     await expect(value(arrivalDetails, 'Arrival date at port of entry')).toHaveText(ARRIVAL_DATE);
+     await expect(value(arrivalDetails, 'Means of transport')).toHaveText('Road Vehicle');
+-    await expect(value(arrivalDetails, 'Countries that the consignment will travel through')).toHaveText('Belgium, France');
++    // Read back in the order they were added, not alphabetically.
++    await expect(value(arrivalDetails, 'Countries that the consignment will travel through')).toHaveText('France, Belgium');
+     await expect(value(arrivalDetails, 'Transport identification')).toHaveText('FR-892-LK');
+     await expect(value(arrivalDetails, 'Transport document reference')).toHaveText('CMR-2026-884721');
+ 
+diff --git a/tests/e2e/features/transit-means-scope.spec.ts b/tests/e2e/features/transit-means-scope.spec.ts
+index 2a44b14..a487310 100644
+--- a/tests/e2e/features/transit-means-scope.spec.ts
++++ b/tests/e2e/features/transit-means-scope.spec.ts
+@@ -36,8 +36,8 @@ test.describe('Transit countries scope', { tag: ['@integration', '@duplicated-in
+     // and the hub row reads Completed.
+     await saveArrivalWithMeans('Road Vehicle');
+     await expect(pages.transitedCountries.heading).toBeVisible();
+-    await pages.transitedCountries.selectCountry('France');
+-    await pages.transitedCountries.selectCountry('Belgium');
++    await pages.transitedCountries.addCountry('France');
++    await pages.transitedCountries.addCountry('Belgium');
+     await pages.transitedCountries.saveAndContinue.click();
+     await saveThroughTransporters();
+     await expect(transitRow).toContainText('Completed');
+@@ -49,10 +49,10 @@ test.describe('Transit countries scope', { tag: ['@integration', '@duplicated-in
+     await expect(transitRow).toHaveCount(0);
+ 
+     // Back to a road vehicle: leaving scope wiped the saved countries — the page
+-    // returns with every checkbox cleared.
++    // returns with an empty list.
+     await saveArrivalWithMeans('Road Vehicle');
+     await expect(pages.transitedCountries.heading).toBeVisible();
+-    await expect(pages.transitedCountries.country('France')).not.toBeChecked();
+-    await expect(pages.transitedCountries.country('Belgium')).not.toBeChecked();
++    await expect(pages.transitedCountries.row('France')).toHaveCount(0);
++    await expect(pages.transitedCountries.row('Belgium')).toHaveCount(0);
+   });
+ });
+diff --git a/tests/e2e/pages/transited-countries.spec.ts b/tests/e2e/pages/transited-countries.spec.ts
+index d0cc780..18330e4 100644
+--- a/tests/e2e/pages/transited-countries.spec.ts
++++ b/tests/e2e/pages/transited-countries.spec.ts
+@@ -5,28 +5,32 @@ test.describe('Transited countries page', { tag: ['@integration', '@duplicated-i
+     await journey.toTransitedCountries();
+   });
+ 
+-  test('renders one 31-country checkbox group', async ({ pages }) => {
++  test('renders the country search and an empty list', async ({ pages }) => {
+     await expect(pages.transitedCountries.heading).toBeVisible();
+-    await expect(
+-      pages.page.getByRole('group', {
+-        name: 'Select all countries the consignment will travel through',
+-      }),
+-    ).toBeVisible();
+-    await expect(pages.transitedCountries.countries).toHaveCount(31);
+-    await expect(pages.transitedCountries.country('France')).toBeVisible();
++    await expect(pages.transitedCountries.countryField).toBeVisible();
++    await expect(pages.transitedCountries.addCountryButton).toBeVisible();
+     await expect(pages.transitedCountries.saveAndContinue).toBeVisible();
+   });
+ 
+   test('accepts and persists multiple transited countries', async ({ pages }) => {
+     const journeyId = pages.transitedCountries.journeyIdFromUrl();
+-    await pages.transitedCountries.selectCountry('France');
+-    await pages.transitedCountries.selectCountry('Belgium');
++    await pages.transitedCountries.addCountry('France');
++    await pages.transitedCountries.addCountry('Belgium');
+     await pages.transitedCountries.saveAndContinue.click();
+     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
+ 
+     await pages.transitedCountries.open(journeyId);
+-    await expect(pages.transitedCountries.country('France')).toBeChecked();
+-    await expect(pages.transitedCountries.country('Belgium')).toBeChecked();
++    await expect(pages.transitedCountries.row('France')).toBeVisible();
++    await expect(pages.transitedCountries.row('Belgium')).toBeVisible();
++  });
++
++  test('removes a country from the list, leaving the others', async ({ pages }) => {
++    await pages.transitedCountries.addCountry('France');
++    await pages.transitedCountries.addCountry('Belgium');
++    await pages.transitedCountries.removeCountry('France').click();
++
++    await expect(pages.transitedCountries.row('France')).toHaveCount(0);
++    await expect(pages.transitedCountries.row('Belgium')).toBeVisible();
+   });
+ 
+   test('shows an error summary when submitted empty', async ({ pages }) => {

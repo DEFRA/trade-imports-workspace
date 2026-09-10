@@ -1,0 +1,33 @@
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 7e0bd163..cbd998eb 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -359,9 +359,26 @@ export const answerArrivalDetails = async (page) => {
+   await save(page)
+ }
+ 
++// Transit countries are added one at a time through a type-ahead, each one
++// landing in the list before the next is searched for. Mirrors
++// `addTransitCountry` in
++// src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js.
++export const addTransitCountry = async (page, name) => {
++  await page.waitForLoadState('domcontentloaded')
++  const field = page.getByLabel('Enter a country', { exact: true })
++  if ((await field.evaluate((el) => el.tagName)) === 'SELECT') {
++    await field.selectOption({ label: name })
++  } else {
++    await field.click()
++    await field.fill(name)
++    await page.getByRole('option', { name, exact: true }).click()
++  }
++  await page.getByRole('button', { name: 'Add country', exact: true }).click()
++}
++
+ export const answerTransitCountries = async (page) => {
+-  await page.getByRole('checkbox', { name: 'France' }).check()
+-  await page.getByRole('checkbox', { name: 'Belgium' }).check()
++  await addTransitCountry(page, 'France')
++  await addTransitCountry(page, 'Belgium')
+   await save(page)
+ }
+ 

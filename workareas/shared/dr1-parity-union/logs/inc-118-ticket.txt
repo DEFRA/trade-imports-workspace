@@ -1,0 +1,35 @@
+h2. Increment
+
+{{inc-118}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+The transit-countries page renders every country in the list as a checkbox — thirty-one of them, Austria through Switzerland — under the legend "Select all countries the consignment will travel through" and the hint "Select up to 12 countries" ({{src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk}} lines 18-24). A user scrolls the whole list to find each country, and the only record of what was chosen is the ticks themselves, scattered down the page.
+
+Design release 1 asks "Enter a country", hinted "Enter each country that the consignment will travel through", with a single search box placeholdered "Search for a country" ({{app/views/transit-countries.html}} lines 56-110). Choosing a match adds the country to a summary table headed Country, one row each with a Remove link, and clears the search ready for the next.
+
+Both sides cap the list at twelve — {{MAX_COUNTRIES}} in {{app/assets/javascripts/transit-country-search.js}} line 6, and {{MAX_TRANSITED_COUNTRIES}} in {{transit-countries.controller.js}} line 19 — so the cap is not the difference. The control is, and so is how the cap is expressed.
+
+h2. Acceptance criteria
+
+* The transit-countries page offers a type-ahead search over the same country list the page uses today, in place of the thirty-one checkboxes. The list source is unchanged — the frontend still reads {{countries.originCountries()}}.
+* Choosing a match adds that country to a summary table headed Country, one row per country, each row carrying a Remove link. The search box clears ready for the next country.
+* Removing a row removes that country from the selection and frees a slot against the cap.
+* The twelve-country cap is kept. It is reached rather than announced up front: the search box and its add button are disabled once the twelfth country is added.
+* On reaching the cap an assistive-technology message says "Maximum of 12 countries reached. Remove a country to add another."
+* Each addition is announced to assistive technology as it happens, through a live region, not only by the new visible row.
+* The page keeps its existing h1 "Which countries will the consignment travel through?" and its two intro paragraphs unchanged.
+* The page stays gated on rail or road transport exactly as it is today — this increment changes the control, not when the question is asked.
+* The E2E specs and any visual baselines covering the transit-countries page are updated to the new control.
+
+h2. Out of scope
+
+The country list itself. Thirty-one countries against Design release 1's forty-one is a separate list difference already tracked as {{origin-and-reason--country-list-omits-regions-and-territories}}.
+
+h2. Falsified by
+
+Finding a search or filter control already on the frontend's transit-countries page, or finding that Design release 1 lets a user add a thirteenth country.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

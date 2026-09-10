@@ -19591,8 +19591,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "e4951309",
       "failure_reason": null,
       "finding": {
         "frontend": "The page renders every country in the list as a small checkbox — thirty-one of them, Austria through Switzerland — under the legend \"Select all countries the consignment will travel through\" and the hint \"Select up to 12 countries\" (src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk:18-24). A user scrolls the whole list to find each country, and once boxes are ticked the only record of what was chosen is the ticks themselves, scattered down the page. The twelve-country cap is enforced on submit, so a user who ticks thirteen finds out after submitting.",
@@ -19752,10 +19752,33 @@
         "note": "Transit countries as 31 checkboxes vs DR1's type-ahead plus a removable list. Same ask, near-identical prose. A is marginally better evidenced on the twelve-country cap: it cites DR1's JavaScript (search box and button disabled at twelve, screen-reader message \"Maximum of 12 countries reached...\") with the file and line numbers, so the cap's new behaviour is specified rather than described. C gets the live-region requirement but not the disabling.",
         "better": "A",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-545",
+      "branch": "feat/EUDPA-545-dr1-builds-the-transit-country-list-one",
+      "openQuestions": [
+        "At the twelve-country cap the implementation REMOVES the search box and the Add button from the DOM (showCountryField in transit-countries.controller.js:81-83, guarded by {% if showCountryField %} in transit-countries.njk:27-45, pinned by arrival-transit.fit.spec.js:899-902 with toHaveCount(0)). The EUDPA-545 acceptance criterion and Design release 1 both say they are DISABLED once the twelfth country is added (DR1: app/assets/javascripts/transit-country-search.js:6,160-172 sets disabled on the input and the button and leaves both on the page). Deferred rather than fixed because disabling the control means changing the shared appAccessibleAutocomplete macro (src/server/common/components/accessible-autocomplete/macro.njk has no disabled param) and the shared client component (accessible-autocomplete replaces the native select with a generated input that would not inherit disabled), which touches every autocomplete page in the service — outside this increment. DECISION NEEDED: either (a) implement disabled-but-present and change the fit assertions at arrival-transit.fit.spec.js:899-902 to toBeDisabled(), or (b) agree removal as a deliberate improvement on DR1 and record it so the parity finding dr1-transit-countries closes against the agreed behaviour instead of being re-raised on the next capture. Until one is chosen, a parity re-capture at the cap will show a disabled-but-present search on the DR1 side against no control at all on the frontend side."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/304",
+          "number": 304,
+          "merged": true,
+          "sha": "4787c1634ffb82f6c0dffef7a5c64a36b075d4ab"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/192",
+          "number": 192,
+          "merged": true,
+          "sha": "dd2a13b548f918694ded1220984581318e6e8eea"
+        }
+      ]
     },
     {
       "id": "inc-119",
+      "ticket": "EUDPA-548",
+      "branch": "feat/EUDPA-548-frontend-refuses-to-leave-the-transit-co",
       "type": "obligation-change",
       "milestone": null,
       "domain": "transport",
@@ -19774,8 +19797,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "b24ab82a",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/305",
+          "number": 305,
+          "merged": true,
+          "sha": "405ad3ad52b77a27a62a2e6c04d738b4aa31803a"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/194",
+          "number": 194,
+          "merged": true,
+          "sha": "becef5017b65b1dcaccbb55b919ac4b7b14a0312"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The question is compulsory once it applies. `transitedCountries` is in scope and mandatory whenever the means of transport is rail or a road vehicle (src/server/app/sets/live-animals/obligations/sections/transport.js:92-105), so a trader who presses Save and continue without ticking a box gets the page back with \"There is a problem\" and the message \"Select at least one country the consignment will travel through\", both in the error summary and above the checkbox list (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:55). The notification cannot be submitted until a country is chosen, because the transit-countries task row has to be fulfilled like every other in-scope row.",
@@ -19920,6 +19959,24 @@
     },
     {
       "id": "inc-123",
+      "ticket": "EUDPA-551",
+      "branch": "feat/EUDPA-551-frontend-asks-which-type-of-transporter",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/306",
+          "number": 306,
+          "merged": true,
+          "sha": "dc669de448ec71ea2e3a91b9501f582639226c3e"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/197",
+          "number": 197,
+          "merged": true,
+          "sha": "10acb54362c13a113a8298bf5a8f9e910d0a79a2"
+        }
+      ],
       "type": "flow-change",
       "milestone": null,
       "domain": "transport",
@@ -19940,8 +19997,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "415044ca",
       "failure_reason": null,
       "finding": {
         "frontend": "The transporter section opens on a page that begins with the DAERA and APHA authorisation guidance and only then asks the question. Below that guidance sits the heading \"What type of transporter will move the animals?\", hinted \"We will ask for the transporter's details next.\", with two radios, Commercial (\"A business approved to transport animals — you will choose one from a list\") and Private (\"You or another individual moving the animals — you will give their address\"). The answer forks the journey: Commercial goes to a list of approved commercial transporters to pick one from, Private goes to a blank name-and-address form. The two branches never meet, so a user whose transporter is already known to the service but is a private one has no list to pick it from and types the whole address again. The order and the fork are declared as three consecutive pages in one section at src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67-76, and the copy at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:60-61.",
@@ -20146,6 +20203,8 @@
     },
     {
       "id": "inc-130",
+      "ticket": "EUDPA-556",
+      "branch": "feat/EUDPA-556-frontend-s-transporter-authorisation-gui",
       "type": "copy-change",
       "milestone": null,
       "domain": "transport",
@@ -20163,8 +20222,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "d71b0dba",
       "failure_reason": null,
       "finding": {
         "frontend": "The transporter authorisation guidance opens the transporter type page: the lead sentence about DAERA and APHA, three bullets, a guidance link, and two closing sentences. The link reads \"Find out how to transport animals in connection with an economic activity (opens in new tab)\" and goes to https://www.gov.uk/guidance/transporting-animals-in-great-britain, which is the general page on transporting animals in Great Britain. The last sentence reads \"Documents issued in any EU Member State are not valid for use in GB.\" The whole block is one copy object at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:62-77, rendered at src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk:8-18.",
@@ -20278,10 +20337,21 @@
         "note": "Genuine A catch missed. A knows the guidance block exists — inc-122 notes DR1 \"repeats the transporter-authorisation guidance in an Important panel\" and inc-133 lists it at the top of DR1's page — but A never compares the two blocks line by line. C does, and finds the lead sentence and all three bullets match word for word while the link points somewhere else entirely (transporting-animals-in-great-britain vs the anchored animal-welfare-in-transport section) and the closing sentence differs in case (\"EU Member State\" vs \"EU member state\"). C also has the discipline to strip DR1's Google Analytics linker parameters out of the href it recommends.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/307",
+          "number": 307,
+          "merged": true,
+          "sha": "84030a29ebe48374960f91eec36f5f79458db1ce"
+        }
+      ]
     },
     {
       "id": "inc-124",
+      "ticket": "EUDPA-558",
+      "branch": "feat/EUDPA-558-frontend-s-transporter-type-question-is",
       "type": "copy-change",
       "milestone": null,
       "domain": "transport",
@@ -20301,8 +20371,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "c18605b7",
       "failure_reason": null,
       "finding": {
         "frontend": "The type question is headed \"What type of transporter will move the animals?\" as the page's h1 inside the fieldset legend, hinted \"We will ask for the transporter's details next.\", with no caption above it and no warning. It offers two radios in this order: Commercial, hinted \"A business approved to transport animals — you will choose one from a list\", then Private, hinted \"You or another individual moving the animals — you will give their address\". The copy is at src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:60-61 and the captured DOM of fe-transporter-type carries all of it verbatim. The page a trader reaches by answering Private is headed \"Private transporter details\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:99), again with no caption.",
@@ -20453,10 +20523,28 @@
         "note": "Partly inside A's inc-133 — A says the type page should lose its journey-describing hints and should carry DR1's \"please ensure you have already searched for it first\" warning. But A never notices that DR1 heads the question \"Choose a transporter type\" rather than \"What type of transporter will move the animals?\", that DR1 puts Private first, that DR1 labels it \"Private transporter\", or that only Commercial keeps a hint. C's real contribution is separating the copy from the flow so it can land on the pages as they stand today, where A's version cannot be built until the whole task is reordered.",
         "better": "C",
         "judged": "The matcher filed run C's inc-125 as a run A hole, on four claims that run A had noticed none of the chooser's copy. The judge overturned it: two of the four claims are false and roughly two thirds of the diff is already inside run A's inc-133. Run A's inc-133 difference slot asks for two of run C's edits outright — \"The type question keeps its two options but loses the journey-describing hints\" and \"Carry the 'Before you add this transporter, please ensure you have already searched for it first' warning onto the moved page\" — and its correction slot names the other two the matcher said run A never noticed, that Design release 1 lists \"Private transporter\" then \"Commercial\" where the frontend lists \"Commercial\" then \"Private\", adding that it is too thin for a finding of its own but is work on the page that finding moves. What run A genuinely lacks is only the three renames: the h1 to \"Choose a transporter type\", the \"Add a new transporter\" caption, and the private form's heading to \"Add private transporter\". The remaining difference is packaging — run A asks for the copy as a rider on the flow rewrite, run C makes it independently schedulable — so this is a partial match against run A's inc-133, not a run A hole, and telling a BA that run A missed the type-chooser copy would send them looking for a gap that is mostly not there. Run A's inc-133 is the parent flow rewrite, built as the flow-change increment cross-referenced from this one's relatedTo, and it is deliberately spined from run C so that none of these copy edits appear in both places."
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/308",
+          "number": 308,
+          "merged": true,
+          "sha": "b4e0304fe1ecbef7efd672b64b8cda3d2080c303"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/198",
+          "number": 198,
+          "merged": true,
+          "sha": "98f12c85ce00a9aa49769415208b97ffbb3bd49a"
+        }
+      ]
     },
     {
       "id": "inc-115",
+      "ticket": "EUDPA-560",
+      "branch": "feat/EUDPA-560-a-frontend-user-whose-commercial-transpo",
       "type": "add-page",
       "milestone": null,
       "domain": "transport",
@@ -20474,8 +20562,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "cd591391",
       "failure_reason": null,
       "finding": {
         "frontend": "The commercial branch is select-only. The page is a radio group and nothing else: two transporters, a Save and continue button, a Save and return to hub button and a Cancel link (src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23). There is no add link, no add button and no add route — nothing in src/server matches a transporter add path — and the validator rejects any answer that is not one of the listed ids (src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js:22-28). The private branch is not an escape either: it collects a name, an address and contact details but no transporter authorisation number, so it cannot stand in for a commercial transporter. A user whose commercial transporter is not one of the two is left with no way to record it. They are not stopped — they can go back to the type question and declare the same firm as a private transporter, typing its name and address by hand — but the notification then carries the wrong transporter type and no approval number at all.",
@@ -20702,7 +20790,23 @@
         "note": "No route to record a commercial transporter that is not one of the two shipped records. Both enumerate DR1's add-commercial field set identically. C is better on two counts: it names the workaround a trader actually has today (go back and declare the same firm as private, which lands a wrong type and no approval number on the notification), and it resolves the Northern Ireland restriction inside the finding — Country locked to NI, hint stated on the chooser — rather than parking it. A instead splits NI out into a disputed sibling (inc-123) and leaves this finding blocked on two unsettled decisions.",
         "better": "C",
         "judged": "Run A's inc-123 — \"DR1 restricts a commercial transporter to Northern Ireland and holds the form to it; the frontend states no such restriction\" — was filed by the matcher as a run C hole, on the grounds that only run A raised Design release 1's apparent self-contradiction as an open question and that run C was over-confident in treating the Northern Ireland lock as a requirement to carry across. The judge overturned that on the record. Run A's own correction slot falsifies run A's inference: Design release 1's approved-transporter register holds four Commercial records and not one is in Northern Ireland, so the restriction governs a transporter a user creates rather than the register, and run A closes by saying what survives is that Design release 1 fixes the Country of a newly added commercial transporter to Northern Ireland, which belongs to the add-commercial page. Run C had not assumed it either — its inc-113 verification slot runs the identical check, finds the rule stated exactly twice and both times on the add route, and reaches the identical conclusion, adding that the frontend's own Swiss and Belgian records make the geography of either list fixture data rather than a finding. Both runs saw the contradiction, checked it the same way and answered it the same way; run A parked it as a disputed question and then answered it in its own correction, run C answered it inline and built the answer into the ask. That is an adjudication-packaging difference, not a gap for a BA to chase. Run A's inc-123 therefore has no increment of its own: what survives of it now sits here, in the difference slot with run A's citations appended, and in the type-chooser copy carried by the transporter-type-copy increment beside it."
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/309",
+          "number": 309,
+          "merged": true,
+          "sha": "2f4a3338a23d7a61bf12c0765ccf251a60281611"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/199",
+          "number": 199,
+          "merged": true,
+          "sha": "408692dedfa8b118106dcccceb556a8dfc306312"
+        }
+      ]
     },
     {
       "id": "inc-122",
@@ -20723,9 +20827,25 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "e4335831",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/310",
+          "number": 310,
+          "merged": true,
+          "sha": "17dbba53673434fd7d37d9e6c963c8b2dd9a99fc"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/201",
+          "number": 201,
+          "merged": true,
+          "sha": "8eec7327f46ecce12bd024e110bdd5ab2b913764"
+        }
+      ],
       "finding": {
         "frontend": "Each transporter is one radio. Its label is the transporter's name and its hint is a single sentence built by joining the address lines with commas and appending the approval number after an em dash — \"43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland — approval number ES-T2-45001294\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:92-93, built at src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.controller.js:55-65). Name, address and approval number are the only three facts shown, they are not aligned into columns, and nothing tells the user whether a transporter is approved. The underlying records carry nothing else to show: each holds an id, a name, an approval number and an address, and no type and no status (src/server/app/services/commercial-transporters/records.js:7-29).",
         "prototype": "Each transporter is a table row under headed columns — Name, Address, Approval number, Type and Status — with the selection radio in a leading column and a \"View details\" link in a trailing one (app/views/transporter.html:117-152). Type reads Commercial or Private. Status is a coloured tag: a green \"Approved\" on six of the eight rows and a pink \"New\" on Romanian Agri Exports SRL and Finnish Livestock Oy, which tells a user at a glance that a transporter has been added but not yet approved.",
@@ -20856,10 +20976,17 @@
         "note": "A raises only the missing Approved/New status tag. C raises the whole list rendering — radio-with-run-on-hint vs DR1's table with Name, Address, Approval number, Type and Status columns plus a View details link — so C's is the finding that actually changes the page, and it correctly defers the View details link to the address-book question. A keeps one point C misses and it is a good one: marking the two existing records \"Approved\" asserts something nothing verified, so someone has to own the list before the column can be filled.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-562",
+      "branch": "feat/EUDPA-562-frontend-lists-each-transporter-as-a-rad",
+      "openQuestions": [
+        "What approval status may the two commercial transporter fixtures honestly carry? This increment added a Status column and set status: APPROVED on both commercial records — García Livestock Transport SL (src/server/app/services/transporters/records.js:66) and J & G Campbell LTD (records.js:79) — but neither name appears in Design release 1's transporter list. DR1 holds eight rows and the captured DOM's per-row data-search-text (workareas/shared/dr21-parity/harness/capture/html/dr21-transporter.html) gives them as Yusen Logistics (Romania) SRL, Roadtrain Ltd, Aberdeen Livestock Ltd, Danish Meat Export ApS, Portuguese Livestock Lda, Romanian Agri Exports SRL, Slovak Farm Export and Finnish Livestock Oy. The four PRIVATE records the frontend ships match DR1 exactly by name and status (Aberdeen approved, Romanian new, Slovak approved, Finnish new), so those four statuses are genuinely copied; the two commercial ones were judged here. The page now renders a green Approved tag against both, telling a trader choosing a transporter for a live-animal movement that a register has approved them when nothing has. This is the precondition the increment states in its own difference slot: 'labelling the two records the frontend already ships as Approved would assert something nothing has verified, so whoever owns the commercial register has to say what each record may honestly be labelled before the column goes in'. ACTION FOR THE SERVICE TEAM: whoever owns the commercial transporter register must rule what status each of the two commercial fixtures may carry, and that ruling replaces the values at records.js:66 and records.js:79. Deferred rather than fixed in this increment because code cannot settle it — there is no evidenced value to substitute, and DR1 offers no counterpart row to copy. The false provenance claim in the doc comment at records.js:19-24 IS fixed in this increment; only the values themselves are held open. Nothing in the code breaks when the ruling lands: the fit spec derives its exemplars with transporterRecords.find((record) => record.status === APPROVED / NEW) rather than naming a record, and services/transporters/transporters.test.js only asserts that every record carries one of the two statuses and that both statuses appear on the list."
+      ]
     },
     {
       "id": "inc-121",
+      "ticket": "EUDPA-563",
+      "branch": "feat/EUDPA-563-the-frontend-s-transporter-page-is-heade",
       "type": "add-field",
       "milestone": null,
       "domain": "transport",
@@ -20877,8 +21004,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "c0483d6a",
       "failure_reason": null,
       "finding": {
         "frontend": "`/transporters/select` carries the h1 \"Search for an approved commercial transporter\" and, below it, one line of guidance — \"Selecting a transporter copies their name, address and approval number into this notification.\" — and then two radios, the whole commercial-transporter list rendered at once, each option labelled with the transporter's name and hinted with its address and approval number (src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select/transporters-select.njk:11-23, src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:90-93). There is no text input, no search button and no filtering of any kind. The page promises a search and does not have one, and the promise gets less true as the list grows: today two records fit on a screen, and the same page would render two hundred the same way.",
@@ -21001,7 +21128,16 @@
         "note": "Page headed \"Search for an approved commercial transporter\" with nothing to search. A is better on mechanism: it records that DR1's filter is JavaScript-only — the search button is type=\"button\" and the form post reads the search field then ignores it — so a no-JS user gets no filtering, which is a real requirement decision for a GOV.UK service. C says the box \"filters the list as the user types\", which glosses over both the button and the progressive-enhancement gap.",
         "better": "A",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/311",
+          "number": 311,
+          "merged": true,
+          "sha": "4e559fab67ec63526cc278af11df5edaa6d24a1a"
+        }
+      ]
     },
     {
       "id": "inc-131",

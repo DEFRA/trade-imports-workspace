@@ -1,0 +1,661 @@
+diff --git a/src/server/app/services/transporters/index.js b/src/server/app/services/transporters/index.js
+index d79e1720..c18af6c5 100644
+--- a/src/server/app/services/transporters/index.js
++++ b/src/server/app/services/transporters/index.js
+@@ -1,6 +1,12 @@
+-import { COMMERCIAL, PRIVATE, TRANSPORTER_OPTIONS } from './records.js'
++import {
++  APPROVED,
++  COMMERCIAL,
++  NEW,
++  PRIVATE,
++  TRANSPORTER_OPTIONS
++} from './records.js'
+ 
+-export { COMMERCIAL, PRIVATE }
++export { APPROVED, COMMERCIAL, NEW, PRIVATE }
+ 
+ /** Every transporter the trader can pick, commercial and private together.
+  *
+diff --git a/src/server/app/services/transporters/records.js b/src/server/app/services/transporters/records.js
+index 4ae28eb6..60f28d5a 100644
+--- a/src/server/app/services/transporters/records.js
++++ b/src/server/app/services/transporters/records.js
+@@ -14,16 +14,27 @@
+  * collects.
+  *
+  * A transporter a trader types in by hand does not join this list: it lives on
+- * the notification it was entered into and nowhere else. */
++ * the notification it was entered into and nowhere else.
++ *
++ * `status` is whether the transporter has been approved yet, which the list
++ * shows so a trader can tell at a glance. Like `type` it is a fact about the
++ * record, held here because nothing serves it: design release 1 hardcodes the
++ * same statuses against the same names, and these values are copied from it
++ * rather than judged here — when the register moves behind a service the
++ * status travels with it and this fixture goes. */
+ export const COMMERCIAL = 'Commercial'
+ export const PRIVATE = 'Private'
+ 
++export const APPROVED = 'Approved'
++export const NEW = 'New'
++
+ /** One private record. Every private transporter carries the same address
+  * shape — the fields the private-transporter form collects — so the shape is
+  * written once here and each record lists only what differs. */
+ const privateRecord = ({
+   id,
+   name,
++  status,
+   addressLine1,
+   townOrCity,
+   county = '',
+@@ -34,6 +45,7 @@ const privateRecord = ({
+ }) => ({
+   id,
+   type: PRIVATE,
++  status,
+   name,
+   address: {
+     addressLine1,
+@@ -51,6 +63,7 @@ export const TRANSPORTER_OPTIONS = [
+   {
+     id: 'garcia-livestock-transport',
+     type: COMMERCIAL,
++    status: APPROVED,
+     name: 'García Livestock Transport SL',
+     approvalNumber: 'ES-T2-45001294',
+     address: {
+@@ -63,6 +76,7 @@ export const TRANSPORTER_OPTIONS = [
+   {
+     id: 'j-and-g-campbell',
+     type: COMMERCIAL,
++    status: APPROVED,
+     name: 'J & G Campbell LTD',
+     approvalNumber: 'UK/BURY/T2/00104115',
+     address: {
+@@ -74,6 +88,7 @@ export const TRANSPORTER_OPTIONS = [
+   privateRecord({
+     id: 'aberdeen-livestock',
+     name: 'Aberdeen Livestock Ltd',
++    status: APPROVED,
+     addressLine1: '12 Harbour Road',
+     townOrCity: 'Aberdeen',
+     county: 'Aberdeenshire',
+@@ -85,6 +100,7 @@ export const TRANSPORTER_OPTIONS = [
+   privateRecord({
+     id: 'romanian-agri-exports',
+     name: 'Romanian Agri Exports SRL',
++    status: NEW,
+     addressLine1: 'Strada Agricultorilor 8',
+     townOrCity: 'Cluj-Napoca',
+     postalOrZipCode: '400000',
+@@ -95,6 +111,7 @@ export const TRANSPORTER_OPTIONS = [
+   privateRecord({
+     id: 'slovak-farm-export',
+     name: 'Slovak Farm Export',
++    status: APPROVED,
+     addressLine1: 'Hlavná 45',
+     townOrCity: 'Košice',
+     postalOrZipCode: '040 01',
+@@ -105,6 +122,7 @@ export const TRANSPORTER_OPTIONS = [
+   privateRecord({
+     id: 'finnish-livestock-oy',
+     name: 'Finnish Livestock Oy',
++    status: NEW,
+     addressLine1: 'Satamakatu 3',
+     townOrCity: 'Turku',
+     postalOrZipCode: '20100',
+diff --git a/src/server/app/services/transporters/transporters.test.js b/src/server/app/services/transporters/transporters.test.js
+index 8498d33f..c405482a 100644
+--- a/src/server/app/services/transporters/transporters.test.js
++++ b/src/server/app/services/transporters/transporters.test.js
+@@ -32,6 +32,24 @@ describe('#parties', () => {
+     )
+   })
+ 
++  // The list shows the status as a tag, so a record without one would render a
++  // blank tag rather than say nothing.
++  test('Should say of every transporter whether it is approved yet', () => {
++    for (const record of transporters.parties()) {
++      expect([transporters.APPROVED, transporters.NEW], record.id).toContain(
++        record.status
++      )
++    }
++  })
++
++  test('Should hold both approval statuses, so the list distinguishes them', () => {
++    const statuses = new Set(
++      transporters.parties().map((record) => record.status)
++    )
++
++    expect(statuses).toEqual(new Set([transporters.APPROVED, transporters.NEW]))
++  })
++
+   test('Should carry the approval number the address book cannot represent on every commercial record', () => {
+     for (const record of transporters.commercialParties()) {
+       expect(record.approvalNumber).toBeTruthy()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index 86baaec0..9735937e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -105,9 +105,19 @@ export const copy = {
+       Commercial: 'Masnachol',
+       Private: 'Preifat'
+     },
+-    optionHint: (type, address) => `${type} — ${address}`,
+-    optionHintApproved: (type, address, approvalNumber) =>
+-      `${type} — ${address} — rhif cymeradwyo ${approvalNumber}`,
++    statuses: {
++      Approved: 'Cymeradwywyd',
++      New: 'Newydd'
++    },
++    table: {
++      selectHidden: 'Dewis',
++      name: 'Enw',
++      address: 'Cyfeiriad',
++      approvalNumber: 'Rhif cymeradwyo',
++      type: 'Math',
++      status: 'Statws'
++    },
++    selectRowPrefix: 'Dewiswch',
+     add: 'Ychwanegu cludwr',
+     errors: {
+       transporterRequired: 'Dewiswch gludwr o’r rhestr'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index 9f1c7d6d..8a76cc4f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -118,9 +118,24 @@ export const copy = {
+       Commercial: 'Commercial',
+       Private: 'Private'
+     },
+-    optionHint: (type, address) => `${type} — ${address}`,
+-    optionHintApproved: (type, address, approvalNumber) =>
+-      `${type} — ${address} — approval number ${approvalNumber}`,
++    // Whether the transporter has been approved yet. Design release 1 shows
++    // this as a tag so a trader can tell approved from newly added at a
++    // glance; the tag colour is presentation and lives with the view model.
++    statuses: {
++      Approved: 'Approved',
++      New: 'New'
++    },
++    // Design release 1 aligns the transporters into headed columns rather than
++    // running each one's facts together in a hint.
++    table: {
++      selectHidden: 'Select',
++      name: 'Name',
++      address: 'Address',
++      approvalNumber: 'Approval number',
++      type: 'Type',
++      status: 'Status'
++    },
++    selectRowPrefix: 'Select',
+     add: 'Add a transporter',
+     errors: {
+       transporterRequired: 'Select a transporter from the list'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+index 1758eda3..6608dc12 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js
+@@ -92,41 +92,40 @@ describe('transport copy module', () => {
+     ).toBe('1 Farm Lane, Kent — approval number GB-01')
+   })
+ 
+-  test('Should interpolate transporters.optionHint', () => {
+-    expect(copy.transporters.optionHint('Commercial', SAMPLE_ADDRESS)).toBe(
+-      'Commercial — 1 Farm Lane, Kent'
++  // Design release 1 heads the transporter list's columns rather than running
++  // each transporter's facts together in one hint.
++  test('Should head every column Design release 1 shows on the transporter list', () => {
++    expect(copy.transporters.table).toEqual({
++      selectHidden: 'Select',
++      name: 'Name',
++      address: 'Address',
++      approvalNumber: 'Approval number',
++      type: 'Type',
++      status: 'Status'
++    })
++    expect(Object.keys(copyCy.transporters.table)).toEqual(
++      Object.keys(copy.transporters.table)
+     )
+   })
+ 
+-  test('Should interpolate transporters.optionHintApproved', () => {
+-    expect(
+-      copy.transporters.optionHintApproved(
+-        'Commercial',
+-        SAMPLE_ADDRESS,
+-        SAMPLE_APPROVAL_NUMBER
+-      )
+-    ).toBe('Commercial — 1 Farm Lane, Kent — approval number GB-01')
+-  })
+-
+-  // Both list hints take the same arguments in Welsh, and copy parity only
+-  // checks a function leaf's arity, so the Welsh sentences are asserted here
+-  // beside the English ones.
+-  test('Should interpolate the Welsh transporters.optionHint', () => {
+-    expect(
+-      copyCy.transporters.optionHint('Preifat', '12 Harbour Road, Aberdeen')
+-    ).toBe('Preifat — 12 Harbour Road, Aberdeen')
++  test('Should drop the run-on radio hint the columns replace', () => {
++    expect(copy.transporters.optionHint).toBeUndefined()
++    expect(copy.transporters.optionHintApproved).toBeUndefined()
++    expect(copyCy.transporters.optionHint).toBeUndefined()
++    expect(copyCy.transporters.optionHintApproved).toBeUndefined()
+   })
+ 
+-  test('Should interpolate the Welsh transporters.optionHintApproved', () => {
+-    expect(
+-      copyCy.transporters.optionHintApproved(
+-        'Masnachol',
+-        'Rue de la Loi 200, Brussels',
+-        'UK/BURY/T2/00104115'
+-      )
+-    ).toBe(
+-      'Masnachol — Rue de la Loi 200, Brussels — rhif cymeradwyo UK/BURY/T2/00104115'
+-    )
++  // Copy parity only checks that a Welsh leaf differs from its English one, so
++  // the Welsh status words are asserted here beside the English ones.
++  test('Should name both approval statuses in both languages', () => {
++    expect(copy.transporters.statuses).toEqual({
++      Approved: 'Approved',
++      New: 'New'
++    })
++    expect(copyCy.transporters.statuses).toEqual({
++      Approved: 'Cymeradwywyd',
++      New: 'Newydd'
++    })
+   })
+ 
+   // Design release 1 heads the type question with the choice, warns that
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index 8d7ca7fa..0de6fac4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -10,7 +10,9 @@ import {
+ } from '../../../../../../../../../../fit/live-animals-journey.js'
+ import { validatorDefaults } from '../../../../../../../shared/copy.en.js'
+ import {
++  APPROVED,
+   COMMERCIAL,
++  NEW,
+   PRIVATE,
+   parties
+ } from '../../../../../../../services/transporters/index.js'
+@@ -31,6 +33,15 @@ const privateRecord = transporterRecords.find(
+ const commercialRecord = transporterRecords.find(
+   (record) => record.type === COMMERCIAL
+ )
++const approvedRecord = transporterRecords.find(
++  (record) => record.status === APPROVED
++)
++const newRecord = transporterRecords.find((record) => record.status === NEW)
++
++/** The one table row a transporter owns. Names are unique on the list, so the
++ * name picks the row out on its own. */
++const transporterRow = (page, name) =>
++  page.getByRole('row').filter({ hasText: name })
+ 
+ const submit = (page) =>
+   page.getByRole('button', { name: 'Save and continue' }).click()
+@@ -290,29 +301,47 @@ test.describe('transporter list page', () => {
+     ).toBeVisible()
+   })
+ 
+-  test('lists every transporter the service knows about, commercial and private, each showing its type', async ({
++  // Design release 1 aligns the transporters into headed columns rather than
++  // running each one's facts together in a radio hint.
++  test('lists every transporter the service knows about in headed columns, each row showing its address, approval number and type', async ({
+     page
+   }) => {
+     await openTransporterList(page)
+ 
+-    for (const record of transporterRecords) {
+-      const type = copy.transporters.types[record.type]
+-      const address = addressSummary(record.address)
+-      const expectedHint = record.approvalNumber
+-        ? copy.transporters.optionHintApproved(
+-            type,
+-            address,
+-            record.approvalNumber
+-          )
+-        : copy.transporters.optionHint(type, address)
+-
+-      await expect(page.getByRole('radio', { name: record.name })).toBeVisible()
++    for (const heading of Object.values(copy.transporters.table)) {
+       await expect(
+-        page.getByRole('radio', { name: record.name })
+-      ).toHaveAccessibleDescription(expectedHint)
++        page.getByRole('columnheader', { name: heading, exact: true })
++      ).toHaveCount(1)
++    }
++
++    for (const record of transporterRecords) {
++      const row = transporterRow(page, record.name)
++      await expect(row).toHaveCount(1)
++      await expect(row.getByRole('radio')).toBeVisible()
++      await expect(row).toContainText(addressSummary(record.address))
++      await expect(row).toContainText(copy.transporters.types[record.type])
++      // A private transporter has no approval number, so its cell stays blank.
++      if (record.approvalNumber) {
++        await expect(row).toContainText(record.approvalNumber)
++      }
+     }
+   })
+ 
++  // The tag is what tells a trader at a glance that a transporter has been
++  // added but not approved yet.
++  test('tags an approved transporter green and a newly added one pink', async ({
++    page
++  }) => {
++    await openTransporterList(page)
++
++    await expect(
++      transporterRow(page, approvedRecord.name).locator('.govuk-tag--green')
++    ).toHaveText(copy.transporters.statuses.Approved)
++    await expect(
++      transporterRow(page, newRecord.name).locator('.govuk-tag--pink')
++    ).toHaveText(copy.transporters.statuses.New)
++  })
++
+   test('does not ask the transporter type before the list', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js
+new file mode 100644
+index 00000000..60246188
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js
+@@ -0,0 +1,37 @@
++import {
++  APPROVED,
++  NEW
++} from '../../../../../../../services/transporters/index.js'
++import { addressSummary } from './transporter-record.js'
++
++/** The tag colour each approval status wears.
++ *
++ * Colour is presentation, not copy, so it lives beside the view model the way
++ * the hub's task tags and the document rows' scan tags do. Design release 1
++ * tags an approved transporter green and a newly added one pink. */
++const STATUS_CLASSES = {
++  [APPROVED]: 'govuk-tag--green',
++  [NEW]: 'govuk-tag--pink'
++}
++
++/** One table row per transporter — the facts Design release 1 aligns into
++ * columns, plus the radio that picks the row.
++ *
++ * `idPrefix` gives the FIRST radio the field's own id, so the error summary
++ * link lands on it; the rest are numbered from two, as the address picker's
++ * results table does it. A private transporter has no approval number, so that
++ * column is blank on its row rather than carrying a placeholder. */
++export const transporterRows = (records, { selectedId }, copy) =>
++  records.map((record, index) => ({
++    id: record.id,
++    idPrefix: index === 0 ? 'transporter' : `transporter-${index + 1}`,
++    name: record.name,
++    addressText: addressSummary(record.address),
++    approvalNumber: record.approvalNumber ?? '',
++    type: copy.types[record.type],
++    status: {
++      text: copy.statuses[record.status],
++      classes: STATUS_CLASSES[record.status]
++    },
++    checked: record.id === selectedId
++  }))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+index bdbc4b63..a09e483d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+@@ -13,7 +13,8 @@ import * as transporters from '../../../../../../../services/transporters/index.
+ import { transporterAddPage, transportersPage as page } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+-import { addressSummary, transporterAnswer } from './transporter-record.js'
++import { transporterAnswer } from './transporter-record.js'
++import { transporterRows } from './rows.js'
+ 
+ /** The transporter list — the journey's one transporter step.
+  *
+@@ -38,14 +39,6 @@ const fields = compose(
+   )
+ )
+ 
+-const optionHint = (option) => {
+-  const type = copy.types[option.type]
+-  const address = addressSummary(option.address)
+-  return option.approvalNumber
+-    ? copy.optionHintApproved(type, address, option.approvalNumber)
+-    : copy.optionHint(type, address)
+-}
+-
+ const render = (
+   request,
+   h,
+@@ -69,12 +62,11 @@ const render = (
+       request,
+       pagePath(journey.journeyId, transporterAddPage.slug)
+     ),
+-    transporterOptions: transporters.parties().map((option) => ({
+-      value: option.id,
+-      text: option.name,
+-      hint: { text: optionHint(option) },
+-      checked: option.id === values.selectedId
+-    }))
++    transporterRows: transporterRows(
++      transporters.parties(),
++      { selectedId: values.selectedId },
++      copy
++    )
+   })
+ 
+ /** The record behind the answers already on the notification, so a returning
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
+index f5c8e41a..aac92453 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
+@@ -25,6 +25,8 @@ const GARCIA_ID = 'garcia-livestock-transport'
+ const GARCIA_NAME = 'García Livestock Transport SL'
+ const ABERDEEN_ID = 'aberdeen-livestock'
+ const ABERDEEN_NAME = 'Aberdeen Livestock Ltd'
++// The one record design release 1 shows as added but not yet approved.
++const ROMANIAN_ID = 'romanian-agri-exports'
+ 
+ const handlerFor = (method) =>
+   transporters.routes.find((route) => route.method === method).handler
+@@ -38,8 +40,8 @@ const configure = () => {
+   buildDispatch(dispatchPages)
+ }
+ 
+-const optionFor = (context, value) =>
+-  context.transporterOptions.find((option) => option.value === value)
++const rowFor = (context, id) =>
++  context.transporterRows.find((row) => row.id === id)
+ 
+ /** Drive a POST whose save fails the way a backend outage fails it: recoverably,
+  * so the page comes back with the banner rather than throwing. */
+@@ -71,20 +73,58 @@ describe('/transporters', () => {
+   it('Should offer both kinds of transporter on the one list, each row saying which it is', async () => {
+     const result = await driveHandler(getHandler)
+ 
+-    const garcia = optionFor(result.view.context, GARCIA_ID)
+-    const aberdeen = optionFor(result.view.context, ABERDEEN_ID)
+-    expect(garcia.text).toBe(GARCIA_NAME)
+-    expect(garcia.hint.text).toContain(COMMERCIAL)
+-    expect(garcia.hint.text).toContain('ES-T2-45001294')
+-    expect(aberdeen.text).toBe(ABERDEEN_NAME)
+-    expect(aberdeen.hint.text).toContain(PRIVATE)
++    const garcia = rowFor(result.view.context, GARCIA_ID)
++    const aberdeen = rowFor(result.view.context, ABERDEEN_ID)
++    expect(garcia.name).toBe(GARCIA_NAME)
++    expect(garcia.type).toBe(COMMERCIAL)
++    expect(garcia.approvalNumber).toBe('ES-T2-45001294')
++    expect(aberdeen.name).toBe(ABERDEEN_NAME)
++    expect(aberdeen.type).toBe(PRIVATE)
++  })
++
++  // Design release 1 gives every transporter its own column of facts rather
++  // than one run-on hint, so the address stands on its own and a private
++  // transporter's blank approval number leaves an empty cell.
++  it('Should give every row a column for each fact the list shows', async () => {
++    const result = await driveHandler(getHandler)
++
++    const garcia = rowFor(result.view.context, GARCIA_ID)
++    expect(garcia.addressText).toBe(
++      '43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland'
++    )
++    expect(rowFor(result.view.context, ABERDEEN_ID).approvalNumber).toBe('')
++  })
++
++  it('Should tag an approved transporter green and a newly added one pink', async () => {
++    const result = await driveHandler(getHandler)
++
++    expect(rowFor(result.view.context, GARCIA_ID).status).toEqual({
++      text: 'Approved',
++      classes: 'govuk-tag--green'
++    })
++    expect(rowFor(result.view.context, ROMANIAN_ID).status).toEqual({
++      text: 'New',
++      classes: 'govuk-tag--pink'
++    })
++  })
++
++  // The error summary links to the field's own id, so the first radio has to
++  // carry it and the rest have to differ.
++  it('Should give the first row the field id and every other row a unique one', async () => {
++    const result = await driveHandler(getHandler)
++
++    const prefixes = result.view.context.transporterRows.map(
++      (row) => row.idPrefix
++    )
++    expect(prefixes[0]).toBe('transporter')
++    expect(new Set(prefixes).size).toBe(prefixes.length)
+   })
+ 
+   it('Should leave every transporter unchecked before one is picked', async () => {
+     const result = await driveHandler(getHandler)
+ 
+     expect(
+-      result.view.context.transporterOptions.every((option) => !option.checked)
++      result.view.context.transporterRows.every((row) => !row.checked)
+     ).toBe(true)
+   })
+ 
+@@ -96,7 +136,7 @@ describe('/transporters', () => {
+       }
+     })
+ 
+-    expect(optionFor(result.view.context, GARCIA_ID).checked).toBe(true)
++    expect(rowFor(result.view.context, GARCIA_ID).checked).toBe(true)
+   })
+ 
+   it('Should re-check the private transporter already on the notification', async () => {
+@@ -107,7 +147,7 @@ describe('/transporters', () => {
+       }
+     })
+ 
+-    expect(optionFor(result.view.context, ABERDEEN_ID).checked).toBe(true)
++    expect(rowFor(result.view.context, ABERDEEN_ID).checked).toBe(true)
+   })
+ 
+   it('Should reject a transporter that is not on the list', async () => {
+@@ -157,6 +197,6 @@ describe('/transporters', () => {
+ 
+     expect(response.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+     expect(response.context.recoverableError).toBe(true)
+-    expect(optionFor(response.context, GARCIA_ID).checked).toBe(true)
++    expect(rowFor(response.context, GARCIA_ID).checked).toBe(true)
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
+index 93be23f8..16de82f5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.njk
+@@ -1,6 +1,10 @@
+ {% extends "shared/layout.njk" %}
+ {% from "govuk/components/button/macro.njk" import govukButton %}
++{% from "govuk/components/error-message/macro.njk" import govukErrorMessage %}
++{% from "govuk/components/fieldset/macro.njk" import govukFieldset %}
+ {% from "govuk/components/radios/macro.njk" import govukRadios %}
++{% from "govuk/components/table/macro.njk" import govukTable %}
++{% from "govuk/components/tag/macro.njk" import govukTag %}
+ {% from "shared/save-actions.njk" import saveActions %}
+ {% from "shared/section-caption.njk" import sectionCaption %}
+ 
+@@ -28,17 +32,66 @@
+     <input type="hidden" name="crumb" value="{{ crumb }}" />
+     <input type="hidden" name="concurrencyToken" value="{{ concurrencyToken }}" />
+ 
+-    {{ govukRadios({
+-      name: "transporter",
+-      fieldset: {
++    {# Design release 1 aligns the transporters into headed columns rather than
++       running each one's facts together in a radio hint, with the radio that
++       picks a row in the leading column — the same shape as the address
++       picker's results table. Names are escaped into the hidden label because
++       a transporter name may carry an ampersand. #}
++    {% set transporterTableRows = [] %}
++    {% for row in transporterRows %}
++      {% set selectCell %}
++        {{ govukRadios({
++          idPrefix: row.idPrefix,
++          name: "transporter",
++          classes: "govuk-radios--small",
++          items: [{
++            value: row.id,
++            html: '<span class="govuk-visually-hidden">' + copy.selectRowPrefix + " " + (row.name | escape) + '</span>',
++            checked: row.checked
++          }]
++        }) }}
++      {% endset %}
++      {% set statusCell %}
++        {{ govukTag({ text: row.status.text, classes: row.status.classes }) }}
++      {% endset %}
++      {% set ignored = transporterTableRows.push([
++        { html: selectCell },
++        { text: row.name },
++        { text: row.addressText },
++        { text: row.approvalNumber },
++        { text: row.type },
++        { html: statusCell }
++      ]) %}
++    {% endfor %}
++
++    {% set transporterListHtml %}
++      {% if errors.transporter %}
++        {{ govukErrorMessage({ id: "transporter-error", text: errors.transporter }) }}
++      {% endif %}
++
++      {{ govukTable({
++        head: [
++          { html: '<span class="govuk-visually-hidden">' + copy.table.selectHidden + '</span>' },
++          { text: copy.table.name },
++          { text: copy.table.address },
++          { text: copy.table.approvalNumber },
++          { text: copy.table.type },
++          { text: copy.table.status }
++        ],
++        rows: transporterTableRows
++      }) }}
++    {% endset %}
++
++    <div class="govuk-form-group{{ ' govuk-form-group--error' if errors.transporter }}">
++      {{ govukFieldset({
+         legend: {
+           text: copy.legend,
+           classes: "govuk-fieldset__legend--m"
+-        }
+-      },
+-      errorMessage: errors.transporter and { text: errors.transporter },
+-      items: transporterOptions
+-    }) }}
++        },
++        describedBy: "transporter-error" if errors.transporter else "",
++        html: transporterListHtml
++      }) }}
++    </div>
+ 
+     {# The way out of the list for a trader whose transporter is not on it. #}
+     {{ govukButton({

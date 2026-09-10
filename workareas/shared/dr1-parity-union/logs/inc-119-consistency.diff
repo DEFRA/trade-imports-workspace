@@ -1,0 +1,294 @@
+diff --git a/src/server/app/bridge/fulfilments/fulfilments.test.js b/src/server/app/bridge/fulfilments/fulfilments.test.js
+index e240eadb..8e2c06f0 100644
+--- a/src/server/app/bridge/fulfilments/fulfilments.test.js
++++ b/src/server/app/bridge/fulfilments/fulfilments.test.js
+@@ -433,7 +433,10 @@ describe('#fulfilments — evaluator smoke — a happy path produces real implic
+     expect(result.obligations[purposeInInternalMarket.id].status).toBe(
+       'mandatory'
+     )
+-    expect(result.obligations[transitedCountries.id].status).toBe('mandatory')
++    // The land-transport gate brings transited countries INTO scope; the
++    // answer itself is optional there.
++    expect(result.obligations[transitedCountries.id].inScope).toBe(true)
++    expect(result.obligations[transitedCountries.id].status).toBe('optional')
+   })
+ 
+   it('Should resolve the mutually-exclusive transporter gate (commercial in, private out)', () => {
+diff --git a/src/server/app/model/analysis/reachability/reachability.test.js b/src/server/app/model/analysis/reachability/reachability.test.js
+index 55e59b27..e3db4b84 100644
+--- a/src/server/app/model/analysis/reachability/reachability.test.js
++++ b/src/server/app/model/analysis/reachability/reachability.test.js
+@@ -659,7 +659,8 @@ describe('migration fidelity — 9 sites round-trip', () => {
+     ['purposeInInternalMarket', 'mandatory'],
+     ['commercialTransporter', 'mandatory'],
+     ['privateTransporter', 'mandatory'],
+-    ['transitedCountries', 'mandatory']
++    // In scope on rail or road, but never compulsory there.
++    ['transitedCountries', 'optional']
+   ])(
+     '%s: witness opens the migrated closure with status=%s',
+     (name, status) => {
+diff --git a/src/server/app/model/obligations/evaluator.test.js b/src/server/app/model/obligations/evaluator.test.js
+index 48f466c9..b9fdeb0b 100644
+--- a/src/server/app/model/obligations/evaluator.test.js
++++ b/src/server/app/model/obligations/evaluator.test.js
+@@ -380,24 +380,24 @@ describe('V4 — transitedCountries conditional gate', () => {
+     expect(result.obligations[transitedCountries.id]).toEqual(outOfScope)
+   })
+ 
+-  it('is mandatory in-scope when meansOfTransport is ROAD_VEHICLE', () => {
++  it('is optional in-scope when meansOfTransport is ROAD_VEHICLE', () => {
+     const result = evaluator.evaluate({
+       [meansOfTransport.id]: 'ROAD_VEHICLE'
+     })
+     expect(result.obligations[transitedCountries.id]).toEqual({
+       inScope: true,
+-      status: 'mandatory',
++      status: 'optional',
+       reasons: [transitedCountriesReason]
+     })
+   })
+ 
+-  it('is mandatory in-scope when meansOfTransport is RAILWAY', () => {
++  it('is optional in-scope when meansOfTransport is RAILWAY', () => {
+     const result = evaluator.evaluate({
+       [meansOfTransport.id]: 'RAILWAY'
+     })
+     expect(result.obligations[transitedCountries.id]).toEqual({
+       inScope: true,
+-      status: 'mandatory',
++      status: 'optional',
+       reasons: [transitedCountriesReason]
+     })
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index 864a53f4..8b7174e0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -236,7 +236,9 @@ describe('#hubHandler', () => {
+     expect(transitRow.href).toBe(
+       pagePath(byRoad.journeyId, 'transit-countries')
+     )
+-    expect(transitRow.status).toEqual(NOT_YET_STARTED_STATUS)
++    // Asked overland, but the answer is optional, so an untouched row reads
++    // Optional rather than Not yet started.
++    expect(transitRow.status).toEqual({ text: 'Optional' })
+   })
+ 
+   it('Should render the optional documents row as an Optional status', async () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+index c59df605..e52228a3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js
+@@ -76,8 +76,6 @@ export const copy = {
+     errors: {
+       fromList: 'Dewiswch wledydd o’r rhestr',
+       maxCountries: (max) => `Dewiswch hyd at ${max} gwlad`,
+-      selectAtLeastOne:
+-        'Dewiswch o leiaf un wlad y bydd y llwyth yn teithio drwyddi',
+       chooseCountry: 'Rhowch wlad i’w hychwanegu',
+       alreadyAdded: (country) => `Rydych eisoes wedi ychwanegu ${country}`
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+index 22028201..70d7ba94 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js
+@@ -84,8 +84,6 @@ export const copy = {
+     errors: {
+       fromList: 'Select countries from the list',
+       maxCountries: (max) => `Select up to ${max} countries`,
+-      selectAtLeastOne:
+-        'Select at least one country the consignment will travel through',
+       chooseCountry: 'Enter a country to add',
+       alreadyAdded: (country) => `You have already added ${country}`
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+index e1f601e5..026398ad 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js
+@@ -785,16 +785,21 @@ test.describe('transit countries rendering and validation', () => {
+     ).toBeVisible()
+   })
+ 
+-  test('transit validation: no countries links to and focuses the search box', async ({
++  // The question is asked overland but never compulsory, so an empty list is
++  // an answer: continuing without adding a country saves it and moves on.
++  test('transit countries are optional: continuing with none saves and goes on', async ({
+     page
+   }) => {
+     await openTransit(page)
+     await submit(page)
+ 
+-    const link = errorLink(page, copy.transitCountries.errors.selectAtLeastOne)
+-    await expect(link).toBeVisible()
+-    await link.click()
+-    await expect(page.locator(transitCountryInput)).toBeFocused()
++    await expect(
++      page.getByRole('heading', { name: copy.transporters.legend })
++    ).toBeVisible()
++    await expect(page.locator(ERROR_SUMMARY)).toHaveCount(0)
++
++    await page.goto(journeyUrl(page, 'transit-countries'))
++    await expect(page.getByText(copy.transitCountries.empty)).toBeVisible()
+     expect(await addedCountries(page)).toEqual([])
+   })
+ 
+@@ -1046,11 +1051,15 @@ test.describe('arrival and transit accessibility', () => {
+     await expectAxeClean(page, 'Transit countries with a country added')
+   })
+ 
++  // Continuing with an empty list is no longer an error, so the error state
++  // this page can still reach is pressing Add with nothing chosen.
+   test('transit page in its error state has no serious or critical axe violations', async ({
+     page
+   }) => {
+     await openTransit(page)
+-    await submit(page)
++    await page
++      .getByRole('button', { name: copy.transitCountries.add, exact: true })
++      .click()
+     await expect(page.locator(ERROR_SUMMARY)).toBeVisible()
+     await expectAxeClean(page, 'Transit countries with a validation error')
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js
+index f4fdd8f7..fae1c269 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js
+@@ -44,7 +44,9 @@ const isOffered = (code) =>
+   countries.originCountries().some((country) => country.value === code)
+ 
+ // The saved answer, not the page: these are the guards against a submitted list
+-// that no rendering of this page could have produced.
++// that no rendering of this page could have produced. An EMPTY list is not one
++// of them — the question is optional (design release 1), so continuing without
++// adding a country saves the empty list and moves on.
+ const transitedCountriesErrors = (selected) => {
+   if (selected.some((code) => !isOffered(code))) {
+     return { [COUNTRY_FIELD]: copy.errors.fromList }
+@@ -54,9 +56,6 @@ const transitedCountriesErrors = (selected) => {
+       [COUNTRY_FIELD]: copy.errors.maxCountries(MAX_TRANSITED_COUNTRIES)
+     }
+   }
+-  if (selected.length === 0) {
+-    return { [COUNTRY_FIELD]: copy.errors.selectAtLeastOne }
+-  }
+   return {}
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js
+index f061c287..65882166 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js
+@@ -198,11 +198,6 @@ describe('POST transit-countries — continuing', () => {
+       payload: { transitedCountries: tooManyCodes },
+       message: `Select up to ${MAX_TRANSITED_COUNTRIES} countries`
+     },
+-    {
+-      name: 'no transited countries on continue',
+-      payload: {},
+-      message: 'Select at least one country the consignment will travel through'
+-    },
+     {
+       // GB has a label but is not on the offered list, so a commit of it is
+       // refused the same way an unknown code is.
+@@ -256,6 +251,15 @@ describe('POST transit-countries — continuing', () => {
+     expect(result.view.context.showCountryField).toBe(true)
+   })
+ 
++  // The question is optional, so an empty list is an answer: it saves and the
++  // trader carries on rather than being sent back to the page.
++  it('Should commit an empty list and continue when no country was added', async () => {
++    const result = await driveHandler(post, { seed, payload: {} })
++    expect(result.after.transitedCountries).toEqual([])
++    expect(result.response.redirect).toBeTypeOf('string')
++    expect(result.response.redirect).not.toContain('transit-countries')
++  })
++
+   it('Should deduplicate and commit the added country codes', async () => {
+     const result = await driveHandler(post, {
+       seed,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+index 4e98bfd3..2c61ffea 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+@@ -409,7 +409,7 @@
+         },
+         "78b9c0d1-e2f3-4a4e-8bfa-7c8d9e0f1a2b": {
+           "inScope": true,
+-          "status": "mandatory",
++          "status": "optional",
+           "reasons": [
+             {
+               "code": "obligation.transitedCountries.applicable.becauseLandTransport",
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+index b5e3be19..0b461385 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+@@ -239,14 +239,14 @@ describe('#rowStatus — the conditional transit-countries row', () => {
+     ).toBe(NA)
+   })
+ 
+-  it('Should appear as Not yet started for each overland means and complete once countries are added', () => {
++  it('Should appear as Optional for each overland means and complete once countries are added', () => {
+     for (const means of ['RAILWAY', 'ROAD_VEHICLE']) {
+       expect(
+         statusIn('transitCountries', {
+           ...unlocked,
+           meansOfTransport: means
+         })
+-      ).toBe(NOT_STARTED)
++      ).toBe(OPTIONAL)
+     }
+     expect(
+       statusIn('transitCountries', {
+@@ -305,14 +305,16 @@ describe('submit-readiness equivalence — the row roll-up admits exactly the jo
+       ...happyPath,
+       transporterType: 'Private',
+       commercialTransporter: null
++    },
++    // The transit row is in scope overland but optional, so an empty list
++    // reads Optional and does not hold submission up.
++    'the happy path leaving transit countries empty': {
++      ...happyPath,
++      transitedCountries: []
+     }
+   }
+ 
+   const notSubmittable = {
+-    'the happy path leaving transit countries empty': {
+-      ...happyPath,
+-      transitedCountries: []
+-    },
+     'a blank journey': {},
+     'an origin-only journey': { countryOfOrigin: 'FR' },
+     'an unlocked skeleton journey': unlocked,
+diff --git a/src/server/app/sets/live-animals/obligations/sections/transport.js b/src/server/app/sets/live-animals/obligations/sections/transport.js
+index 8e24db4d..469d156d 100644
+--- a/src/server/app/sets/live-animals/obligations/sections/transport.js
++++ b/src/server/app/sets/live-animals/obligations/sections/transport.js
+@@ -84,9 +84,15 @@ export const transportDocumentReference = {
+   status: 'mandatory'
+ }
+ 
+-// Conditional in-scope-mandatory multi-select — stored as an array of
++// Conditional in-scope-OPTIONAL multi-select — stored as an array of
+ // country strings. Out of scope (and purged) when means-of-transport
+ // is not RAILWAY or ROAD_VEHICLE.
++//
++// Asked of rail and road consignments, but never compulsory (design
++// release 1): a trader who travels through nowhere they can name leaves
++// the list empty, the row reads Optional and submission is not held up.
++// `status` must say 'optional' outright — `effectiveStatus` falls back to
++// 'mandatory' for an implication that carries none.
+ const LAND_TRANSPORT_MODES = ['RAILWAY', 'ROAD_VEHICLE']
+ 
+ export const transitedCountries = {
+@@ -97,7 +103,7 @@ export const transitedCountries = {
+     LAND_TRANSPORT_MODES,
+     {
+       inScope: true,
+-      status: 'mandatory',
++      status: 'optional',
+       reasons: [transitedCountriesReason]
+     },
+     { inScope: false }

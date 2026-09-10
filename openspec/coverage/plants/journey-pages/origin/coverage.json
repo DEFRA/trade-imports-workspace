@@ -1,0 +1,219 @@
+{
+  "capability": "plants/journey-pages/origin",
+  "areaCode": "PLANTS-ORIGIN",
+  "specFile": "openspec/specs/plants/journey-pages/origin/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-ORIGIN-001",
+      "name": "The page asks for the country of origin",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-001-A",
+          "name": "The page presents its question and controls unanswered",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "renders the caption, the heading, the label and the hint", "strength": "full", "notes": "does not explicitly assert the field is empty on first open; cancel-without-saving later proves empty state after abandon" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-002",
+      "name": "The country field is a searchable list that filters as the user types",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-002-A",
+          "name": "Typing part of a country's name offers the matching country",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a country picked from the type-ahead is saved and shown again on return", "strength": "partial", "notes": "exercises selectCountry type-ahead path; does not assert intermediate filter options" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-002-B",
+          "name": "Opening the country field offers the full list",
+          "coverage": "none",
+          "tests": [],
+          "notes": "template sets showAllValues; no fit/e2e asserts full list on focus"
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-002-C",
+          "name": "The chosen country's name is shown again on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a country picked from the type-ahead is saved and shown again on return", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "saves a country, reaches the arrival details and shows it again on return", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-003",
+      "name": "The country field offers a placeholder and every origin country the service primes, and submits a country code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-003-A",
+          "name": "The country list holds a placeholder ahead of the primed origin countries",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "offers a placeholder ahead of every country the service primes", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-003-B",
+          "name": "Choosing a country submits and keeps its code",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should commit exactly the chosen country", "strength": "full", "notes": "stores countryOfOrigin as ISO code (e.g. FR)" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should accept a country every constraint on the consignment allows", "strength": "full", "notes": "ware-potato path commits SPAIN='ES'" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-004",
+      "name": "A search matching no country says so",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-004-A",
+          "name": "A country search with no matches shows a no-results message",
+          "coverage": "none",
+          "tests": [],
+          "notes": "copy.country.noResults exists; no fit/e2e asserts the message"
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-005",
+      "name": "The country field works without client-side JavaScript",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-005-A",
+          "name": "An ordinary country list remains available beneath the searchable field",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "offers a placeholder ahead of every country the service primes", "strength": "partial", "notes": "reads the underlying select options; does not assert noscript usability explicitly" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-006",
+      "name": "A complete origin answer is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-006-A",
+          "name": "Choosing a country saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "saves a country, reaches the arrival details and shows it again on return", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a country picked from the type-ahead is saved and shown again on return", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-007",
+      "name": "Saving without a country is refused, focusing the field",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-007-A",
+          "name": "Saving with nothing chosen shows the error and focuses the field",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "continuing with nothing chosen shows the error and focuses the field", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "the required error names the consignment, not the animal", "strength": "full", "notes": "asserts required error text; does not re-check focus" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "recovers from the error once a country is chosen", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-008",
+      "name": "A ware-potato consignment shows its origin-scope guidance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-008-A",
+          "name": "Ware-potato guidance is shown for a ware-potato consignment",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the ware-potato scope guidance and refuses a country outside the four", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a ware-potato consignment is narrowed to Poland, Portugal, Romania or Spain", "strength": "full", "notes": "asserts guidance text" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-008-B",
+          "name": "Ware-potato guidance is withheld when the lines do not call for it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a seed-potato consignment may name any country in the origin block", "strength": "full", "notes": "asserts guidance count 0" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "refuses a country outside the EU for a wood consignment", "strength": "full", "notes": "asserts ware-potato guidance count 0 on wood" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-009",
+      "name": "The page offers a full set of save controls and is reachable from Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-009-A",
+          "name": "The page is reachable from the Overview origin row",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "is reachable from the overview origin task row", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-009-B",
+          "name": "Save and return to overview saves the country without continuing the journey",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "Save and return to overview saves the country and reaches the overview", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-009-C",
+          "name": "Cancel and return to overview reaches Overview without saving",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "Cancel and return to overview reaches the overview without saving", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-010",
+      "name": "The back link depends on whether the journey already has an answer",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-010-A",
+          "name": "The back link opens the dashboard before any answer is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the dashboard while nothing is committed", "strength": "full", "notes": "asserts backLink is '/'" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-010-B",
+          "name": "The back link opens Overview once an answer is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "sends Back to the overview once the notification has an answer", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview once the notification has an answer", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

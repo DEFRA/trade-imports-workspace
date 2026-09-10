@@ -1,0 +1,296 @@
+{
+  "capability": "plants/notification-dashboard",
+  "areaCode": "PLANTS-DASH",
+  "specFile": "openspec/specs/plants/notification-dashboard/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-DASH-001",
+      "name": "The dashboard is where the service opens, and where a new notification starts",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-001-A",
+          "name": "A signed-in user lands on the notification dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the dashboard renders after signing in", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the service heading, the intro body and the start button", "strength": "full", "notes": "goto / after sign-in" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-001-B",
+          "name": "Starting a new notification opens the journey's entry page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "starting a notification opens the run on the commodity-type page", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "starts a notification and lands on its first question", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should start a notification, begin its opening run and land on its first question", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-001-C",
+          "name": "A newly started notification is listed as a draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the new draft is listed on the dashboard and Resume reopens it", "strength": "partial", "notes": "Draft + Resume; does not assert Delete on the card in this test" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders a draft card with its rows and its available actions", "strength": "full", "notes": "Draft status with resume and delete; view/amend absent" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give a draft a Draft tag, its created date and Resume plus Delete", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-002",
+      "name": "The dashboard lists notifications as cards with a result count",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-002-A",
+          "name": "The list shows a result count alongside the matching cards",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should trim a reference search, pass it to the list and preserve the sort", "strength": "full", "notes": "resultsLabel singular + exactly one notificationRows entry for the searched reference" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "searching a reference keeps that card and preserves the sort", "strength": "partial", "notes": "exactly one matching card; does not assert the results-count label text" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-003",
+      "name": "A notification card shows the notification's key details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-003-A",
+          "name": "A draft notification's card shows its details",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders a draft card with its rows and its available actions", "strength": "full", "notes": "reference heading; commodity/origin/arrival/consignor/status/created/submitted labels; Draft; no Consignee" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders a dated Date created row and an empty Date submitted row on a draft", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.test.js", "test": "Should leave the plants row without a consignee cell", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-004",
+      "name": "The actions offered on a card depend on the notification's status",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-004-A",
+          "name": "A draft notification's card offers resume and delete",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders a draft card with its rows and its available actions", "strength": "full", "notes": "resume + delete; no view/amend" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "offers no Copy as new action", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give a draft a Draft tag, its created date and Resume plus Delete", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should offer no Copy as new action on any status", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-004-B",
+          "name": "A submitted notification's card offers view, amend and delete",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give a submitted notification View, an Amend POST and Delete", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "asserts Submitted on the searched card; does not click View/Amend/Delete" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-004-C",
+          "name": "A notification being amended offers resume and cancel-amendment",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give an amending notification Resume, Cancel amendment and Delete", "strength": "full", "notes": "Amending tag + resume/cancel-amend/delete" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "partial", "notes": "Amending status and Cancel amendment link on the card before confirm" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-005",
+      "name": "The notification list is paged twenty at a time",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-005-A",
+          "name": "A list longer than one page is paged and reports its range",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should page at the twenty-row boundary and preserve the sort in both links", "strength": "full", "notes": "page 1 resultsLabel 1–20 of N with next; page 2 range starting at 21 with previous" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.test.js", "test": "Should offer only next on the first page", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.test.js", "test": "Should offer only previous on the last page", "strength": "full", "notes": "" }
+          ],
+          "notes": "No fit/e2e seeds >20 notifications against the live UI; unit drives the twenty-row boundary"
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-006",
+      "name": "A user can search the dashboard by reference number",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-006-A",
+          "name": "Search form is available on the dashboard",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should render the display surface with the page copy and the caption key", "strength": "partial", "notes": "supplies copy including search.heading \"Filter notifications\", label and button — does not assert the form is rendered in HTML" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "searching a reference keeps that card and preserves the sort", "strength": "partial", "notes": "uses Keyword or reference input and Search button; does not assert Filter notifications heading" }
+          ],
+          "notes": "GAP: no test asserts the \"Filter notifications\" heading on first load"
+        },
+        {
+          "id": "SCN-PLANTS-DASH-006-B",
+          "name": "Searching by a complete reference number returns the matching notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "searching a reference keeps that card and preserves the sort", "strength": "full", "notes": "URL carries referenceNumber; only that card shown" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the new draft is listed on the dashboard and Resume reopens it", "strength": "partial", "notes": "searchForReference then card visible; does not assert query string" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should trim a reference search, pass it to the list and preserve the sort", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-006-C",
+          "name": "An unmatched reference number shows no results",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "a search that matches nothing keeps the term and says so", "strength": "full", "notes": "No notifications found; no cards" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should swap in the no-results label when a search matches nothing", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-007",
+      "name": "A reference-number search survives sorting",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-007-A",
+          "name": "Changing sort order keeps the active reference-number search",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.test.js", "test": "Should carry only the values that differ from the default", "strength": "partial", "notes": "query builder can emit both sort and referenceNumber together" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.test.js", "test": "Should preserve the sort and the search term in both links", "strength": "partial", "notes": "pagination links keep referenceNumber when sort is set — not a sort-control post after search" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "searching a reference keeps that card and preserves the sort", "strength": "partial", "notes": "sets sort then searches (opposite order to the scenario); proves both query params coexist" }
+          ],
+          "notes": "GAP: no product test that searches first, then changes sort, and asserts referenceNumber remains in the URL and input"
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-008",
+      "name": "The notification list can be ordered four ways, newest arrival first by default",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-008-A",
+          "name": "Default sort order is arrival date, newest first",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the empty state and the default sort", "strength": "full", "notes": "sort select value arrivalDate,desc" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.test.js", "test": "Should fall back to arrival newest-first for anything else", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should default an unrecognised sort and an out-of-range page", "strength": "full", "notes": "sort falls back to arrivalDate,desc" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-008-B",
+          "name": "Sort dropdown offers all four expected orderings",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should mark the selected sort option so the select renders it", "strength": "full", "notes": "sortOptions lists all four value/text pairs in the scenario order" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.test.js", "test": "Should carry sort values only, leaving every label to the copy pair", "strength": "full", "notes": "four values in the same order" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-008-C",
+          "name": "Selecting a sort option resubmits the list without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "changing the sort round-trips through the query string", "strength": "full", "notes": "URL carries sort; heading still shown" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "orders the cards by the chosen sort", "strength": "full", "notes": "exercises createdAt asc and desc" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-009",
+      "name": "Deleting a notification asks for confirmation, and removes it from the dashboard once confirmed",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-009-A",
+          "name": "Declining the delete confirmation leaves the notification untouched",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "No, return to dashboard leaves the notification untouched", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "No returns to the dashboard and keeps the notification", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-009-B",
+          "name": "Confirming deletion shows a confirmation message",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "Yes, delete notification soft-deletes it and drops it from the listing", "strength": "full", "notes": "deleted banner copy" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "confirmation removes the notification and shows the success banner", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the deleted banner after a delete redirect", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-DASH-009-C",
+          "name": "A deleted notification no longer appears in a dashboard search",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "Yes, delete notification soft-deletes it and drops it from the listing", "strength": "full", "notes": "search after delete shows no card" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should keep deleted journeys absent from the list", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-010",
+      "name": "An empty dashboard explains that no notifications exist yet",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-010-A",
+          "name": "A user with no notifications sees an empty state",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the empty state and the default sort", "strength": "full", "notes": "emptyText + no-results pagination label" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "renders the service heading, the intro body and the start button", "strength": "full", "notes": "intro body about the service" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should show the empty state when the session knows no journeys", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-011",
+      "name": "The service tells the user it is in an alpha phase, and offers a route to feedback",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-011-A",
+          "name": "The dashboard carries the alpha banner",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should tag the service as alpha in grey and offer the feedback link", "strength": "partial", "notes": "shared layout renders Alpha + mailto feedback; not a dashboard-page fit/e2e witness" }
+          ],
+          "notes": "GAP: no dashboard fit/e2e asserts the Alpha tag or feedback link on /"
+        },
+        {
+          "id": "SCN-PLANTS-DASH-011-B",
+          "name": "The alpha banner follows onto a notification's pages",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should place the banner above the back link", "strength": "partial", "notes": "layout always includes the banner when a back link is present — not a journey-page product assertion" }
+          ],
+          "notes": "GAP: no fit/e2e on a notification page asserts Alpha + feedback still shown"
+        }
+      ]
+    }
+  ]
+}

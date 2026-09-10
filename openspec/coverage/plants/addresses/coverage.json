@@ -1,0 +1,173 @@
+{
+  "capability": "plants/addresses",
+  "areaCode": "PLANTS-ADDR",
+  "specFile": "openspec/specs/plants/addresses/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-ADDR-001",
+      "name": "The chosen address resolves live from the address book on every read",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-001-A",
+          "name": "Editing the address book record changes what the notification shows",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Controller and parties/index.js document store-id-only live resolution; no fit/e2e yet edits a book record mid-journey and asserts the notification updates. Deletion (SCN-007-A) proves the complementary clear-on-unresolve path."
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-002",
+      "name": "The picker offers a search of the whole organisation address book, reporting how many matched",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-002-A",
+          "name": "The picker shows the first page with its count",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "opens on FULL_BOOK_CAPTION (Showing 5 of N)" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-002-B",
+          "name": "Searching narrows the list to the matching term",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "narrows the results to the search term", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "Showing 2 of 2 for token match" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-002-C",
+          "name": "A search matching nothing says so, rather than showing an empty table",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "says so rather than showing an empty table when nothing matches", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "noMatches visible; resultsCaption count 0" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-002-D",
+          "name": "Clearing the search restores the whole book",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "search narrows the organisation address book, and a term nothing matches says so", "strength": "full", "notes": "searchFor('') restores FULL_BOOK_CAPTION" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-003",
+      "name": "A row checked before searching or paging stays checked",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-003-A",
+          "name": "A checked row survives a further search",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "keeps a ticked row while the search narrows the results", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-003-B",
+          "name": "A saved choice is carried through the paging links",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "carries a saved address through the paging links", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "full", "notes": "reopen shows selected inset while target row absent from page one" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-004",
+      "name": "Choosing a replacement address replaces the one already saved",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-004-A",
+          "name": "Saving a new choice replaces the old one",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "replaces the address already saved rather than keeping both", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-005",
+      "name": "Saving with nothing chosen, or a value not on the list, is refused and focuses the first row",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-005-A",
+          "name": "Saving with nothing chosen shows the error and focuses the first row",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "continuing with nothing chosen shows the error and focuses the first row", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "an address must be chosen before the notification moves on", "strength": "partial", "notes": "error summary only; no focus assert" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-005-B",
+          "name": "A deleted or missing address-book id is rejected and the search preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "rejects a missing address-book id and preserves the search", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-006",
+      "name": "Results are paged, and a choice made on any page is the one saved",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-006-A",
+          "name": "A record found on a later page is chosen and saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "full", "notes": "page 2 select; Overview destination Completed; reopen inset" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-007",
+      "name": "Deleting a linked address clears it while the notification still resolves live",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-007-A",
+          "name": "Deleting a linked address clears it from the notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/destination.spec.ts", "test": "deleting the chosen address takes the answer off the notification", "strength": "full", "notes": "hub Not yet started; selected inset gone" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/parties/parties.test.js", "test": "Should drop a reference to a record the organisation has deleted", "strength": "partial", "notes": "sanitiser mechanism for REFERENCE_PARTIES" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "partial", "notes": "CYA display/block half; hub clear is destination.spec" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-008",
+      "name": "An address book that cannot be reached is not treated as a deletion",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-008-A",
+          "name": "An address book outage is not mistaken for a deletion",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/parties/parties.test.js", "test": "Should let an outage propagate rather than read it as a deletion", "strength": "full", "notes": "unit-only — mechanism confidence, not product observation" }
+          ]
+        }
+      ]
+    }
+  ]
+}

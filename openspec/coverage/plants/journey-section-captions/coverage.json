@@ -1,0 +1,88 @@
+{
+  "capability": "plants/journey-section-captions",
+  "areaCode": "PLANTS-CAPTIONS",
+  "specFile": "openspec/specs/plants/journey-section-captions/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-CAPTIONS-001",
+      "name": "A question page names the part of the notification it belongs to, above its heading",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CAPTIONS-001-A",
+          "name": "A question page is captioned with the part it belongs to",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption commodity-type \"About the consignment\"", "strength": "full", "notes": "one of CAPTIONED it.each cases; map also covers other About-the-consignment pages" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption arrival-details \"Arrival\"", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption place-of-destination \"Destination\"", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js", "test": "renders the caption, the heading and the three save controls", "strength": "partial", "notes": "asserts Arrival caption on the details page; placement above heading is unit/fit dashboard pattern elsewhere" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "renders the caption, the heading, the description and the search box", "strength": "full", "notes": "Consignment parties caption on consignor — closes the parties-part gap left by CAPTIONED it.each" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CAPTIONS-001-B",
+          "name": "Every page of a part carries the same caption",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption arrival-status \"Arrival\"", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption arrival-details \"Arrival\"", "strength": "full", "notes": "same Arrival caption as arrival-status" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption commodity-type \"About the consignment\"", "strength": "full", "notes": "with commodities / commodity-details / origin also About the consignment in CAPTIONED" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CAPTIONS-002",
+      "name": "The dashboard carries its own caption, unlike Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CAPTIONS-002-A",
+          "name": "The dashboard is captioned, where Overview is not",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js", "test": "names the dashboard above its heading", "strength": "full", "notes": "pins caption as span.govuk-caption-xl immediately above h1" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption dashboard \"Dashboard\"", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js", "test": "Should render no breadcrumbs, no progress line and no section caption", "strength": "full", "notes": "Overview view context.caption is undefined" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CAPTIONS-003",
+      "name": "The parts named in the caption are not the same grouping as the Overview sections",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CAPTIONS-003-A",
+          "name": "A page's caption does not name the Overview section its task sits under",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should caption arrival-details \"Arrival\"", "strength": "full", "notes": "caption is Arrival, not the Overview group name" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "full", "notes": "lists Arrival details under \"2. Arrival and destination\" — diverges from the Arrival caption" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.test.js", "test": "Should name the four numbered groups in the design order", "strength": "full", "notes": "pins \"2. Arrival and destination\" as the Overview grouping" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CAPTIONS-004",
+      "name": "A page that is not part of the journey's questioning carries no caption",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CAPTIONS-004-A",
+          "name": "A page outside the questioning opens straight into its heading",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js", "test": "Should render no breadcrumbs, no progress line and no section caption", "strength": "partial", "notes": "Overview bare" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/section-captions.test.js", "test": "Should leave every page the journey rules bare uncaptioned", "strength": "partial", "notes": "BARE covers confirmation, declaration, consignment-contact-select, notification-view — Overview is not in BARE yet (commented as still landing)" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "partial", "notes": "cancel-amend interruption has no caption; scenario names Overview/CYA/contact/declaration/confirmation" }
+          ],
+          "notes": "GAP: no fit that opens Overview / CYA / contact / declaration / confirmation and asserts caption absence in the DOM; coverage is unit map + hub controller + cancel-amend bare heading"
+        }
+      ]
+    }
+  ]
+}

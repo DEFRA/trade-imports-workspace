@@ -1,0 +1,127 @@
+{
+  "capability": "plants/journey-pages/commodity-type",
+  "areaCode": "PLANTS-COMMODITY-TYPE",
+  "specFile": "openspec/specs/plants/journey-pages/commodity-type/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-COMMODITY-TYPE-001",
+      "name": "The page asks the commodity type, offering the three service types with a timing hint each",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-001-A",
+          "name": "The page presents all three types with their own timing hint, none preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "offers the three service commodity types, each with its timing hint", "strength": "full", "notes": "asserts renderedValues equals commodityTypes() in order, and each type's own hint text" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should check nothing and show no error on a notification with no answer", "strength": "full", "notes": "values.commodityType is '' and every typeOption.checked is false — witnesses the none-preselected clause the fit suite does not re-assert on first load" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITY-TYPE-002",
+      "name": "A chosen commodity type is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-002-A",
+          "name": "Choosing a type saves without error and is shown again on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "saves a choice, goes on to the commodities and shows it again on return", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "starting a notification opens the run on the commodity-type page", "strength": "partial", "notes": "confirms the page opens; does not itself re-verify the round-trip" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITY-TYPE-003",
+      "name": "A value the service does not offer is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-003-A",
+          "name": "An out-of-list value is rejected and nothing is left checked",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "rejects a value the service does not offer and checks nothing", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITY-TYPE-004",
+      "name": "Saving with no type chosen is refused, focusing the first option",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-004-A",
+          "name": "Saving with nothing chosen shows the error and focuses the first option",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "continuing with nothing chosen shows the error and focuses the first radio", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "recovers from the error once a choice is made", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITY-TYPE-005",
+      "name": "The page offers a full set of save controls, being reached directly from Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-005-A",
+          "name": "The page is reachable from the Overview commodities row",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "is also reachable from the overview commodities task row", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "partial", "notes": "asserts the What are you importing? task row links to commodity-type; does not click through" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-005-B",
+          "name": "Save and return to overview saves the choice without continuing the journey",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "Save and return to overview saves the choice and reaches the overview", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "offers the three save controls", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-005-C",
+          "name": "Cancel and return to overview reaches Overview without saving",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "Cancel and return to overview reaches the overview without saving", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITY-TYPE-006",
+      "name": "The back link depends on whether the journey already has an answer",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-006-A",
+          "name": "The back link opens the dashboard before any answer is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "sends Back to the dashboard while the notification has no answer", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "starting a notification opens the run on the commodity-type page", "strength": "full", "notes": "asserts linkBack href is / while nothing is committed" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-006-B",
+          "name": "The back link opens Overview once an answer is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "sends Back to the overview once an answer is saved", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "capability": "plants/journey-pages/confirmation",
+  "areaCode": "PLANTS-CONFIRMATION",
+  "specFile": "openspec/specs/plants/journey-pages/confirmation/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-CONFIRMATION-001",
+      "name": "The page confirms the submission and shows the notification's reference number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-001-A",
+          "name": "Submitting a notification shows its reference number on confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "panel contains reference; notificationDate visible; Date of notification asserted" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "shows an accessible submitted receipt, survives reload and links to the notification and dashboard", "strength": "full", "notes": "title, reference text, body, zero Back links" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should show the submitted reference and exit links without changing saved state on reload", "strength": "full", "notes": "reference, backLink undefined; twice without mutating state" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONFIRMATION-002",
+      "name": "The confirmation page is not shown for a notification that has not yet been submitted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-002-A",
+          "name": "Requesting confirmation for an unsubmitted notification redirects to check-your-answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "returns a draft to check answers instead of showing a receipt", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should return %s to check answers without claiming submission", "strength": "full", "notes": "DRAFT and AMEND both redirect to notification-view" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONFIRMATION-003",
+      "name": "The page offers routes to view the notification and return to the dashboard",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-003-A",
+          "name": "View notification and return to dashboard are offered",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "shows an accessible submitted receipt, survives reload and links to the notification and dashboard", "strength": "full", "notes": "View your notification → notification-view; Return to dashboard → /" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "viewNotification → assertReadOnly; does not follow Return to dashboard" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONFIRMATION-004",
+      "name": "A late submission shows the late banner; an on-time submission does not",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-004-A",
+          "name": "A late submission carries the late banner on confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "Potatoes (seed or ware): late notifications are accepted and highlighted", "strength": "full", "notes": "confirmation lateBanner + potato rule text" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "Plants for planting: late notifications are accepted and highlighted", "strength": "full", "notes": "confirmation lateBanner + plants-and-wood rule" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Portugal notified late: sign in, submit and view the saved notification", "strength": "full", "notes": "confirmation lateBanner count 1" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should date the receipt and read the $indicator banner from the stored indicator", "strength": "full", "notes": "indicator late → late true with potato rule" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should quote the plants and wood window for a plants consignment", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-004-B",
+          "name": "An on-time submission shows no late banner on confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "confirmation lateBanner count 0" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "full", "notes": "lateBanner count 0" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should date the receipt and read the $indicator banner from the stored indicator", "strength": "full", "notes": "indicator on-time → late false" }
+          ]
+        }
+      ]
+    }
+  ]
+}

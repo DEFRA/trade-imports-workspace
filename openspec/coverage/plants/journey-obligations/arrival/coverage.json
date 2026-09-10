@@ -1,0 +1,130 @@
+{
+  "capability": "plants/journey-obligations/arrival",
+  "areaCode": "PLANTS-OB-ARRIVAL",
+  "specFile": "openspec/specs/plants/journey-obligations/arrival/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OB-ARRIVAL-001",
+      "name": "Plants for planting and wood ask whether the consignment has arrived; potatoes do not",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-001-A",
+          "name": "A plants-for-planting or wood notification is asked whether it has arrived",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "the arrival-status question offers both branches, and the post-arrival one quotes the window", "strength": "full", "notes": "plants-for-planting journey reaches arrival-status" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "offers both statuses, already arrived first, each with its timing hint", "strength": "full", "notes": "wood journey" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js", "test": "Should admit only plants for planting and wood and cut trees", "strength": "partial", "notes": "gate vocabulary only" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-001-B",
+          "name": "A potatoes notification is not asked whether it has arrived",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "a potato notification is never asked the question and opens the arrival row on the details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "sends a potato notification from origin past the question to the details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "opens the arrival row on the overview at the details page for a potato notification", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ARRIVAL-002",
+      "name": "Every notification owes an arrival date",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-002-A",
+          "name": "An arrival date is owed whatever the commodity type",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "the arrival date must be given before the notification moves on", "strength": "full", "notes": "plants-for-planting" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "a potato notification is asked the time and the place of landing as well as the date", "strength": "full", "notes": "potato blank page names the date among the three required answers" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js", "test": "asks for the expected date of arrival, the time and the place of landing", "strength": "full", "notes": "potato date present" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ARRIVAL-003",
+      "name": "Only potatoes ask for the expected time and the proposed place of landing",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-003-A",
+          "name": "A potatoes notification is asked for time and place of landing as well as the date",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "a potato notification is asked the time and the place of landing as well as the date", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js", "test": "asks for the expected date of arrival, the time and the place of landing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/obligations/whitelists.test.js", "test": "Should admit potatoes and nothing else", "strength": "partial", "notes": "gate vocabulary for arrivalTime and proposedPlaceOfLanding" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-003-B",
+          "name": "A plants or wood notification is asked for the date alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "the arrival date is asked under the sentence the arrival status chose", "strength": "full", "notes": "asserts time and place-of-landing controls absent" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js", "test": "asks for no time and no place of landing", "strength": "full", "notes": "wood / not-yet-arrived" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ARRIVAL-004",
+      "name": "Changing the arrival-status answer keeps the arrival date",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-004-A",
+          "name": "Switching between arrived and not-yet-arrived keeps the date",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "changing the answer from arrived to not arrived re-labels the question and keeps the date", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js", "test": "keeps the date when the status switches, because the date is always asked", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ARRIVAL-005",
+      "name": "A late arrival date is accepted rather than refused",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-005-A",
+          "name": "A date long past the four-day window is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "a date long past the four-day window is saved, shown again on return, and completes the arrival task row", "strength": "full", "notes": "30 days past; late flagging asserted elsewhere in review.spec.ts" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js", "test": "accepts a past date, because a late notification is recorded not refused", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ARRIVAL-006",
+      "name": "Changing commodity type clears the arrival answers that leave scope",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-006-A",
+          "name": "Changing to potatoes clears the arrival-status answer",
+          "coverage": "none",
+          "tests": [],
+          "notes": "applyTo gate and source comments say the engine purges; no fit/e2e/unit body asserts the wipe after a commodity-type change"
+        },
+        {
+          "id": "SCN-PLANTS-OB-ARRIVAL-006-B",
+          "name": "Changing away from potatoes clears the time and place of landing",
+          "coverage": "none",
+          "tests": [],
+          "notes": "same as 006-A — gate documented, purge not product-observed in tests"
+        }
+      ]
+    }
+  ]
+}

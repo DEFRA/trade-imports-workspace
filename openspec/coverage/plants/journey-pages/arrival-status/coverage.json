@@ -1,0 +1,126 @@
+{
+  "capability": "plants/journey-pages/arrival-status",
+  "areaCode": "PLANTS-ARRIVAL-STATUS",
+  "specFile": "openspec/specs/plants/journey-pages/arrival-status/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-ARRIVAL-STATUS-001",
+      "name": "The page asks whether the consignment has arrived, offering both answers with timing hints",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-001-A",
+          "name": "The page presents both statuses with their timing hints, none preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "the arrival-status question offers both branches, and the post-arrival one quotes the window", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "offers both statuses, already arrived first, each with its timing hint", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-STATUS-002",
+      "name": "The heading names Great Britain, not England",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-002-A",
+          "name": "The heading says Great Britain rather than England",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "asks about Great Britain rather than England", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-STATUS-003",
+      "name": "A chosen arrival status is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-003-A",
+          "name": "Choosing a status saves without error and is shown again on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "the answer is saved, shown again on return, and carries on to the arrival details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "saves a choice, reaches the arrival details and shows it again on return", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-STATUS-004",
+      "name": "A value the service does not offer is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-004-A",
+          "name": "An out-of-list value is rejected and nothing is left checked",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "rejects a status the page does not offer and checks nothing", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-STATUS-005",
+      "name": "Saving with no status chosen is refused, focusing the first option",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-005-A",
+          "name": "Saving with nothing chosen shows the error and focuses the first option",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "continuing with nothing chosen shows the error and focuses the first radio", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/arrival.spec.ts", "test": "the question must be answered before the notification moves on", "strength": "partial", "notes": "asserts error text; does not re-check focus" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "recovers from the error once a choice is made", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ARRIVAL-STATUS-006",
+      "name": "The page offers a full set of save controls and is reachable from Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-006-A",
+          "name": "The page is reachable from the Overview arrival row",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "is reachable from the overview arrival task row", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "opens the arrival row on the overview for a wood notification", "strength": "full", "notes": "href points at arrival-status" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-006-B",
+          "name": "Save and return to overview saves the choice without continuing the journey",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "Save and return to overview saves the choice and reaches the overview", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-006-C",
+          "name": "Cancel and return to overview reaches Overview without saving",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "Cancel and return to overview reaches the overview without saving", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ARRIVAL-STATUS-006-D",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js", "test": "offers the three save controls and sends Back to the overview", "strength": "full", "notes": "asserts Back href to hub" }
+          ]
+        }
+      ]
+    }
+  ]
+}

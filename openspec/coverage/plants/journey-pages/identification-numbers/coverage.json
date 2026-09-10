@@ -1,0 +1,129 @@
+{
+  "capability": "plants/journey-pages/identification-numbers",
+  "areaCode": "PLANTS-IDENT-NUMBERS",
+  "specFile": "openspec/specs/plants/journey-pages/identification-numbers/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-IDENT-NUMBERS-001",
+      "name": "The page shows only the identification fields in scope for the commodity type",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-001-A",
+          "name": "Plants for planting shows supplier and consignment only",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "plants-for-planting describe: supplier + consignment visible; producer/crop absent" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Plants for planting: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-001-B",
+          "name": "Potatoes shows producer, crop and consignment only",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "potatoes describe" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-001-C",
+          "name": "Wood and cut trees shows only the optional consignment number",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "wood-and-cut-trees describe: only consignmentNumber" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Wood and cut trees: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-IDENT-NUMBERS-002",
+      "name": "Entered values are saved, trimmed, and shown again on return",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-002-A",
+          "name": "Valid values save, complete the Overview task, and persist on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "fills ' ID_123 ', asserts trimmed ID_123 after reload; hub Completed" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "supplier and consignment numbers enforce length and consignment syntax", "strength": "full", "notes": "58-char values persist; hub Completed" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "full", "notes": "producer/crop at 58 chars persist; hub Completed" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-002-B",
+          "name": "Wood may leave the consignment number blank and Overview labels it Optional",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "wood can leave the optional reference blank and the overview labels it Optional", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Wood and cut trees: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "blank save → Optional; clearing after fill returns to Optional" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-IDENT-NUMBERS-003",
+      "name": "Mandatory fields, length and consignment syntax are enforced",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-003-A",
+          "name": "A blank mandatory field is refused and its error focuses the field",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "rejects supplierIdentificationNumber required and focuses its error link", "strength": "full", "notes": "plants-for-planting describe" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "rejects producerIdentificationNumber required and focuses its error link", "strength": "full", "notes": "potatoes describe" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "rejects cropIdentificationNumber required and focuses its error link", "strength": "full", "notes": "potatoes describe" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "partial", "notes": "error summary text; no focus assert" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "supplier and consignment numbers enforce length and consignment syntax", "strength": "partial", "notes": "blank supplier refused; no focus assert" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-003-B",
+          "name": "A value longer than 58 characters is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "rejects supplierIdentificationNumber maxLength and focuses its error link", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "rejects consignmentNumber maxLength and focuses its error link", "strength": "full", "notes": "wood/plants/potatoes describes each generate this" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "supplier and consignment numbers enforce length and consignment syntax", "strength": "full", "notes": "59-char supplier and consignment refused" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "full", "notes": "59-char producer/crop refused; 58 accepted" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-003-C",
+          "name": "A consignment number with disallowed characters is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "rejects consignmentNumber pattern and focuses its error link", "strength": "full", "notes": "bad-reference" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "supplier and consignment numbers enforce length and consignment syntax", "strength": "full", "notes": "SHIP-2027! refused" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-IDENT-NUMBERS-004",
+      "name": "Save-and-return saves; cancel discards later edits; back returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-004-A",
+          "name": "Save and return to overview keeps the values; cancel discards later edits",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "saves to overview and cancels without saving subsequent changes", "strength": "full", "notes": "run under each commodity-type describe" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-IDENT-NUMBERS-004-B",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "saves to overview and cancels without saving subsequent changes", "strength": "full", "notes": "same test ends by following Back to hub" }
+          ]
+        }
+      ]
+    }
+  ]
+}

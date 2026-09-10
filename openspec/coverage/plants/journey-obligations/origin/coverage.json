@@ -1,0 +1,87 @@
+{
+  "capability": "plants/journey-obligations/origin",
+  "areaCode": "PLANTS-OB-ORIGIN",
+  "specFile": "openspec/specs/plants/journey-obligations/origin/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OB-ORIGIN-001",
+      "name": "A notification carries one country of origin, mandatory regardless of how many commodity lines it holds",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ORIGIN-001-A",
+          "name": "A single origin answer covers every commodity line",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a country picked from the type-ahead is saved and shown again on return", "strength": "full", "notes": "one notification-level origin answer on a multi-step potato journey; not asked per line" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "the narrowing is enforced at Continue, so a saved country is refused once a ware-potato line joins it", "strength": "partial", "notes": "same origin answer still held after a second commodity line is added" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ORIGIN-002",
+      "name": "The countries a notification may name narrow to the strictest scope any of its commodity lines carries",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ORIGIN-002-A",
+          "name": "A seed-potato consignment may name any country in the origin block",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a seed-potato consignment may name any country in the origin block", "strength": "full", "notes": "Norway accepted; also asserts no narrowing guidance is shown" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ORIGIN-003",
+      "name": "Each non-seed commodity category carries a fixed origin country scope",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ORIGIN-003-A",
+          "name": "A ware-potato consignment is narrowed to Poland, Portugal, Romania or Spain",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a ware-potato consignment is narrowed to Poland, Portugal, Romania or Spain", "strength": "full", "notes": "France rejected, Spain accepted" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the ware-potato scope guidance and refuses a country outside the four", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "accepts one of the four ware-potato countries", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-ORIGIN-003-B",
+          "name": "A conifer-wood-without-bark line is narrowed to Italy, France, Portugal or Spain",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a conifer-wood-without-bark line is narrowed to Italy, France, Portugal or Spain", "strength": "full", "notes": "Germany rejected (proving the scope is narrower than EU membership), Italy accepted" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-ORIGIN-003-C",
+          "name": "A plants-for-planting line is narrowed to the EU member States",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "a plants-for-planting line is narrowed to the EU member States", "strength": "full", "notes": "Norway rejected, Germany accepted" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "refuses a country outside the EU for a wood consignment", "strength": "full", "notes": "confirms the same EU-member-state scope applies to a wood category, not only plants-for-planting" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-ORIGIN-004",
+      "name": "Adding a more restrictive commodity line re-validates an already-saved country",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-ORIGIN-004-A",
+          "name": "A saved country is refused once a stricter commodity line joins it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/origin.spec.ts", "test": "the narrowing is enforced at Continue, so a saved country is refused once a ware-potato line joins it", "strength": "full", "notes": "France saved under seed-potatoes-only, then a ware-potato line is added; re-saving origin without changing the country is refused" }
+          ]
+        }
+      ]
+    }
+  ]
+}

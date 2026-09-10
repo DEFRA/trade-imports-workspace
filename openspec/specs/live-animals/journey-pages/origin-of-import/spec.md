@@ -88,19 +88,20 @@ The system MUST accept an origin answer that names a country and answers whether
 - **WHEN** they choose a country and answer that no origin code is required, then save and continue
 - **THEN** the answer is saved and no error summary is shown
 
-### Requirement: Saving without a country is rejected
+### Requirement: Saving without a country is accepted, but leaves the origin task outstanding
 **ID**: REQ-ORIGIN-008
-The system MUST refuse to save the origin page when no country has been chosen, showing an error summary.
+The system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row outstanding on Overview until a country is chosen.
 
-#### Scenario: Saving with no country chosen shows an error summary
+#### Scenario: Saving with no country chosen succeeds and moves on
 **ID**: SCN-ORIGIN-008-A
-- **GIVEN** the user is on the origin of the import page with nothing answered
+- **GIVEN** the user is on the origin of the import page with no country chosen
 - **WHEN** they save and continue
-- **THEN** an error summary headed "There is a problem" is shown
+- **THEN** the page saves without an error summary, and the user moves to the next step
+- **AND** the origin task row on Overview shows as outstanding
 
-### Requirement: The page also asks for an optional internal reference, capped at 58 characters and restricted to a fixed pattern
+### Requirement: The page also asks for an optional internal reference, capped at 58 characters
 **ID**: REQ-ORIGIN-009
-The system MUST let the user give an optional internal reference for the notification, MUST reject one longer than 58 characters or containing characters outside the allowed pattern, and MUST preserve the value typed so it can be corrected.
+The system MUST let the user give an optional internal reference for the notification, MUST reject one longer than 58 characters, and MUST preserve the value typed so it can be corrected. The reference MUST accept whatever punctuation the user's own records use, including hyphens, slashes, spaces and full stops.
 
 #### Scenario: An over-length internal reference is rejected with the value preserved
 **ID**: SCN-ORIGIN-009-A
@@ -109,12 +110,12 @@ The system MUST let the user give an optional internal reference for the notific
 - **THEN** an error names the internal reference and its limit
 - **AND** the field is focused, still holding the value typed
 
-#### Scenario: An internal reference with disallowed characters is rejected with the value preserved
+#### Scenario: A punctuated internal reference is saved and shown as entered
 **ID**: SCN-ORIGIN-009-B
 - **GIVEN** the user is on the origin of the import page
-- **WHEN** they type an internal reference containing a character outside the allowed pattern and save and continue
-- **THEN** an error explains the internal reference's allowed format
-- **AND** the field is focused, still holding the value typed
+- **WHEN** they type an internal reference containing hyphens, slashes, spaces and full stops, and save and continue
+- **THEN** the reference is saved
+- **AND** returning to the page shows it exactly as typed
 
 ### Requirement: The region of origin code has a maximum length of five characters
 **ID**: REQ-ORIGIN-010
@@ -170,3 +171,14 @@ The system MUST return the user to the notification dashboard when they follow t
 - **GIVEN** the user has saved at least one answer on the notification
 - **WHEN** they return to the origin of the import page and follow the back link
 - **THEN** Overview is shown
+
+### Requirement: A country not in the offered list is rejected
+**ID**: REQ-ORIGIN-014
+The system MUST refuse to save the origin page when the country entered is not one of the offered options, clearing the field and linking the error to it.
+
+#### Scenario: An out-of-list country is rejected and the field is cleared
+**ID**: SCN-ORIGIN-014-A
+- **GIVEN** the user has typed a country not in the offered list
+- **WHEN** they save and continue
+- **THEN** an error is shown, linking to and focusing the country field
+- **AND** the field is cleared rather than preserving the invalid entry

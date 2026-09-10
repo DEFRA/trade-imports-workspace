@@ -24,13 +24,19 @@ The system MUST ask the notification for a County Parish Holding number, as a ma
 
 ### Requirement: A commodity that requires unweaned-animal tracking brings that question into play for the whole notification
 **ID**: REQ-OB-COMMODITY-002
-The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries an equine, cattle, pig, sheep or goat commodity, and MUST NOT ask it otherwise.
+The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries a cattle commodity, and MUST NOT ask it for any other commodity, including equine, sheep and goat.
 
 #### Scenario: Adding a commodity requiring unweaned tracking brings the question into play
 **ID**: SCN-OB-COMMODITY-002-A
 - **GIVEN** a notification whose commodity lines carry no commodity requiring unweaned-animal tracking
-- **WHEN** the user adds a line carrying an equine, cattle, pig, sheep or goat commodity
+- **WHEN** the user adds a line carrying a cattle commodity
 - **THEN** the notification is asked whether it contains unweaned animals, as a mandatory answer
+
+#### Scenario: A horse-only consignment is not asked about unweaned animals
+**ID**: SCN-OB-COMMODITY-002-B
+- **GIVEN** a notification whose only commodity line carries an equine commodity
+- **WHEN** the user works through the journey
+- **THEN** the notification is not asked whether it contains unweaned animals
 
 ### Requirement: Only a commodity that is counted in packages is asked for a number of packages
 **ID**: REQ-OB-COMMODITY-003
@@ -49,9 +55,9 @@ The system MUST ask each animal on a commodity line only for the identifiers its
 #### Scenario: A commodity calling for particular identifiers asks only for those
 **ID**: SCN-OB-COMMODITY-004-A
 - **GIVEN** the user is entering identification details for an animal on a commodity line
-- **WHEN** that line's commodity calls for a passport, a tattoo and an ear tag, but not a microchip
-- **THEN** the passport, tattoo and ear tag are all asked for
-- **AND** the microchip is not asked for
+- **WHEN** that line's commodity calls for a microchip, a passport and a tattoo, but not an ear tag
+- **THEN** the microchip, passport and tattoo are all asked for
+- **AND** the ear tag is not asked for
 
 #### Scenario: A commodity calling for two identifiers asks for both together
 **ID**: SCN-OB-COMMODITY-004-B
@@ -59,21 +65,15 @@ The system MUST ask each animal on a commodity line only for the identifiers its
 - **WHEN** that line's commodity calls for both a microchip and a horse name
 - **THEN** both are asked for together
 
-### Requirement: A commodity with no identifier of its own asks for a free-text description instead
+### Requirement: A commodity with no identifier of its own is asked for no identifier at all
 **ID**: REQ-OB-COMMODITY-005
-The system MUST ask for identification details and a description, each as an optional answer, for an animal whose commodity calls for none of the microchip, passport, tattoo, ear tag or horse name, and MUST NOT ask for those free-text answers where the commodity calls for a specific identifier.
+The system MUST NOT ask for any identifier — typed or free-text — for an animal whose commodity calls for none of the microchip, passport, tattoo, ear tag or horse name. There is no free-text fallback.
 
-#### Scenario: A commodity with no specific identifier asks for the free-text answers
+#### Scenario: A commodity with no specific identifier is asked for nothing
 **ID**: SCN-OB-COMMODITY-005-A
 - **GIVEN** the user is entering identification details for an animal on a commodity line
 - **WHEN** that line's commodity calls for none of the specific identifiers
-- **THEN** identification details and a description are asked for instead
-
-#### Scenario: A commodity with a specific identifier does not ask for the free-text answers
-**ID**: SCN-OB-COMMODITY-005-B
-- **GIVEN** the user is entering identification details for an animal on a commodity line
-- **WHEN** that line's commodity calls for a specific identifier
-- **THEN** the free-text identification details and description are not asked for
+- **THEN** no identifier of any kind is asked for that animal
 
 ### Requirement: A commodity that requires a permanent address asks for one per animal
 **ID**: REQ-OB-COMMODITY-006

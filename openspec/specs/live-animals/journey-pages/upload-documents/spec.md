@@ -26,18 +26,18 @@ The system MUST offer a back link from the upload documents page that returns th
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-### Requirement: A notification can hold at most ten accompanying documents
+### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003
-The system MUST accept up to ten documents per notification and MUST reject an eleventh with an error that links to the documents-added list, preserving the reference value entered and returning the user to the list already added, without discarding the ten already added.
+The system MUST accept up to fifteen documents per notification and MUST reject a sixteenth with an error that links to the documents-added list, preserving the reference value entered and returning the user to the list already added, without discarding the fifteen already added.
 
-#### Scenario: A tenth document is accepted and an eleventh is rejected
+#### Scenario: A fifteenth document is accepted and a sixteenth is rejected
 **ID**: SCN-DOCS-003-A
-- **GIVEN** a notification already has nine accompanying documents added
-- **WHEN** the user adds a tenth document
-- **THEN** it is accepted and the list shows ten documents
-- **WHEN** the user then tries to add an eleventh document
-- **THEN** an error explains that a maximum of ten documents can be added, links to the documents-added list, and preserves the reference value entered
-- **AND** the list still shows only the original ten documents
+- **GIVEN** a notification already has fourteen accompanying documents added
+- **WHEN** the user adds a fifteenth document
+- **THEN** it is accepted and the list shows fifteen documents
+- **WHEN** the user then tries to add a sixteenth document
+- **THEN** an error explains that a maximum of fifteen documents can be added, links to the documents-added list, and preserves the reference value entered
+- **AND** the list still shows only the original fifteen documents
 
 ### Requirement: Each accompanying document has a maximum file size
 **ID**: REQ-DOCS-004
@@ -119,34 +119,34 @@ The system MUST require a reference and a valid date of issue for each document,
 
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Checking" immediately after upload, and MUST resolve it to either "Safe" with a way to view it, or "Virus found" with an error and no way to view it.
+The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or "Virus found" with an error and no way to view it.
 
-#### Scenario: A clean upload becomes Safe and viewable
+#### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
 - **GIVEN** the user has uploaded a document
 - **WHEN** it is first added
-- **THEN** its row shows "Checking", and there is no way to view it yet
+- **THEN** its row shows "Scanning for virus", and there is no way to view it yet
 - **WHEN** the virus scan completes and the file is clean
-- **THEN** its row shows "Safe" and a link to view the file appears
+- **THEN** its row shows "Check completed" and a link to view the file appears
 
 #### Scenario: An infected upload is flagged and blocked
 **ID**: SCN-DOCS-007-B
 - **GIVEN** the user has uploaded a document
 - **WHEN** it is first added
-- **THEN** its row shows "Checking"
+- **THEN** its row shows "Scanning for virus"
 - **WHEN** the virus scan completes and finds a virus
 - **THEN** its row shows "Virus found", an error explains the file contains a virus and must be removed, and there is no way to view the file
 
 ### Requirement: The user cannot continue while a document is still being scanned or is infected
 **ID**: REQ-DOCS-008
-The system MUST refuse to let the user continue past the page while any document's scan is still "Checking" or has come back "Virus found", showing an error explaining why, and MUST let them continue once every document has resolved to "Safe" or the infected one has been removed.
+The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Virus found", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the infected one has been removed.
 
-#### Scenario: Continuing is blocked while a scan is still checking
+#### Scenario: Continuing is blocked while a scan is still running
 **ID**: SCN-DOCS-008-A
-- **GIVEN** a document on the page is still "Checking"
+- **GIVEN** a document on the page is still "Scanning for virus"
 - **WHEN** the user tries to continue
 - **THEN** an error explains they cannot continue yet
-- **WHEN** the scan resolves to "Safe"
+- **WHEN** the scan resolves to "Check completed"
 - **THEN** continuing takes them onward
 
 #### Scenario: Continuing is blocked while an infected document remains
@@ -163,21 +163,21 @@ The system MUST update a document's row once its own scan resolves without waiti
 
 #### Scenario: One document settles while another stays pending
 **ID**: SCN-DOCS-009-A
-- **GIVEN** two documents have been uploaded and both are still "Checking"
-- **WHEN** one of them resolves to "Safe"
-- **THEN** its row updates to "Safe" with a link to view it, and completion is announced
-- **AND** the other document's row still shows "Checking"
+- **GIVEN** two documents have been uploaded and both are still "Scanning for virus"
+- **WHEN** one of them resolves to "Check completed"
+- **THEN** its row updates to "Check completed" with a link to view it, and completion is announced
+- **AND** the other document's row still shows "Scanning for virus"
 
 ### Requirement: Scan progress can be followed without client-side JavaScript
 **ID**: REQ-DOCS-010
 The system MUST let a user without JavaScript manually refresh a document's scan status until it resolves, rather than requiring an automatic client-side update.
 
-#### Scenario: A manual refresh reflects scan progress until the file is Safe
+#### Scenario: A manual refresh reflects scan progress until the file is checked
 **ID**: SCN-DOCS-010-A
-- **GIVEN** a user without JavaScript has uploaded a document that is still "Checking"
+- **GIVEN** a user without JavaScript has uploaded a document that is still "Scanning for virus"
 - **WHEN** they use the manual refresh option, repeating it if the scan has not yet finished
 - **THEN** each refresh reflects the current scan status
-- **AND** once the scan completes, the row shows "Safe", the refresh option is no longer shown, and a link to view the file appears
+- **AND** once the scan completes, the row shows "Check completed", the refresh option is no longer shown, and a link to view the file appears
 
 ### Requirement: An uploaded document can be viewed and removed
 **ID**: REQ-DOCS-011
@@ -208,3 +208,42 @@ The system MUST keep an uploaded document's file and details once it has been sc
 - **THEN** it carries the same reference, the uploaded file's exact content and type, and a completed scan status
 - **WHEN** the user reloads the accompanying-documents page
 - **THEN** the document is still shown in the list
+
+### Requirement: Each document also asks for its type, chosen from a fixed list, positioned between the reference and the date of issue
+**ID**: REQ-DOCS-013
+The system MUST ask for a document type as a mandatory answer, offering a placeholder plus thirteen document types, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
+
+#### Scenario: The type question offers thirteen types behind a placeholder, in position
+**ID**: SCN-DOCS-013-A
+- **GIVEN** the user is adding a document
+- **WHEN** the page loads
+- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and thirteen document types
+
+#### Scenario: Leaving the type on its placeholder is rejected
+**ID**: SCN-DOCS-013-B
+- **GIVEN** the user has filled in every other field but left the document type on its placeholder
+- **WHEN** they try to add the document
+- **THEN** an error links to and focuses the type field, preserving every other answer given
+
+#### Scenario: The saved row reports the chosen type
+**ID**: SCN-DOCS-013-C
+- **GIVEN** the user has added a document, choosing a document type
+- **WHEN** the saved row is shown
+- **THEN** it reports the type chosen, regardless of the uploaded file's own name
+
+### Requirement: The file can be chosen from a drop zone, not only the browser's own file picker
+**ID**: REQ-DOCS-014
+The system MUST offer a drop zone carrying the service's own choose-file button and a drop instruction, MUST accept a file dropped onto the zone and name it in a status announced to assistive technology, and MUST draw a file-required validation failure on the zone itself.
+
+#### Scenario: The drop zone offers a choose-file button and accepts a dropped file
+**ID**: SCN-DOCS-014-A
+- **GIVEN** the user is adding a document
+- **WHEN** they drop a file onto the drop zone rather than using the choose-file button
+- **THEN** the zone names the dropped file in a status region
+- **AND** that file is what the form submits
+
+#### Scenario: No file chosen draws its error on the drop zone itself
+**ID**: SCN-DOCS-014-B
+- **GIVEN** the user tries to add a document without choosing a file
+- **WHEN** the error is shown
+- **THEN** the drop zone itself carries the error state, not a separate control

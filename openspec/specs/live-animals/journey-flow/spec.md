@@ -16,11 +16,12 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 - **WHEN** its sections are followed from the start
 - **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; consignment addresses and County Parish Holding; the transport pages; contact address; and finally check your answers, declaration and confirmation
 
-#### Scenario: The transport section sequences its five pages in order
+#### Scenario: The transport section sequences its pages in order
 **ID**: SCN-FLOW-001-B
 - **GIVEN** a user is working through the transport section
 - **WHEN** they continue from each page in turn
-- **THEN** they are offered arrival details, transited countries, transporter type, the approved transporter search and private transporter details, in that order, skipping any that is not in scope
+- **THEN** they are offered arrival details, transited countries and the combined transporter list, in that order, skipping any that is not in scope
+- **AND** the transporter type question and the two type-specific forms are not offered as steps of this section — they are reached only via "Add a transporter" from the combined list
 
 ### Requirement: These flow sections are not the same grouping as the Overview task rows
 **ID**: REQ-FLOW-002
@@ -48,9 +49,9 @@ The system MUST take the user, on continuing from a page, to the next page in th
 - **WHEN** they save and continue
 - **THEN** they return to Overview rather than continuing into another section
 
-### Requirement: A task page offers both a discard-and-exit and a save-and-exit route back to Overview
+### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-The system MUST let the user leave a task page either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way.
+The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -90,25 +91,26 @@ The system MUST withhold the review section — check your answers, the declarat
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created in this session runs an opening sequence of six steps
+### Requirement: A notification created in this session runs an opening sequence covering the whole journey, ending on review
 **ID**: REQ-FLOW-007
-The system MUST walk a newly created notification through an opening sequence — origin of the import, what are you importing, commodity details, import reason, identification details, then additional details — skipping any step not yet in scope, and MUST deliver the user to Overview after the last step. This order is the opening sequence's own and MUST NOT be assumed to match the order of the flow sections.
+The system MUST walk a newly created notification through an opening sequence covering every section of the journey, skipping any step not in scope, and MUST deliver the user to the review section once every step is done, or to Overview if a task remains outstanding. This order is the opening sequence's own and MUST NOT be assumed to match the order of the flow sections stated in REQ-FLOW-001.
 
-#### Scenario: A newly created notification is walked through the opening sequence
+#### Scenario: A newly created notification is walked through the whole opening sequence to review
 **ID**: SCN-FLOW-007-A
 - **GIVEN** the user has just created a notification from the dashboard
-- **WHEN** they save each page in turn
-- **THEN** they are taken through origin of the import, what are you importing, commodity details, import reason, identification details and additional details, in that order
+- **WHEN** they save each page in turn, answering every step
+- **THEN** they are taken through every section of the journey in turn
+- **AND** they arrive at check your answers once the last step is saved, without returning to Overview partway through
 
 #### Scenario: An opening-sequence step not yet in scope is skipped
 **ID**: SCN-FLOW-007-B
 - **GIVEN** the user is in the opening sequence and the next step is not yet in scope
 - **WHEN** they save the page they are on
-- **THEN** they are taken to the next step that is in scope, or to Overview if none remains
+- **THEN** they are taken to the next step that is in scope
 
 #### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it
 **ID**: SCN-FLOW-007-C
-- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview
+- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or review
 - **WHEN** they open one of the opening sequence's own pages again and save it
 - **THEN** they return to Overview, not to whatever would be the next step of the sequence
 
@@ -167,3 +169,13 @@ The system MUST NOT resume the opening sequence for a journey the user was redir
 - **GIVEN** the user was sent to the origin of the import page because the journey had no opening sequence in this session
 - **WHEN** they save that page
 - **THEN** they arrive at Overview, not the next step of the opening sequence
+
+### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action
+**ID**: REQ-FLOW-012
+The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.
+
+#### Scenario: A page reached via a detour offers only its primary action
+**ID**: SCN-FLOW-012-A
+- **GIVEN** the user has reached a page by following a link or action on another page, rather than a hub row
+- **WHEN** the page is shown
+- **THEN** only its primary save-and-continue action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control

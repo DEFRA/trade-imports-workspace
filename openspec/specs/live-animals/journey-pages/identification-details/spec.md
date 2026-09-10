@@ -63,23 +63,22 @@ The system MUST accept an identifier record once a valid identifier has been ent
 - **WHEN** they enter a valid identifier and save and finish
 - **THEN** the record is saved and no error summary is shown
 
-### Requirement: The identifier fields offered for an animal depend on its commodity
+### Requirement: The identifier fields offered for an animal depend on its commodity, and a commodity with none of its own gets no panel
 **ID**: REQ-IDENT-006
-The system MUST show only the identifier fields that a given commodity supports, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST fall back to free-text identification fields, either of which alone is sufficient, for a commodity with no typed identifiers of its own.
+The system MUST show only the identifier fields that a given commodity supports, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
 
 #### Scenario: A commodity with typed identifiers shows only its own identifier fields
 **ID**: SCN-IDENT-006-A
 - **GIVEN** the user is entering identifier details for a commodity with its own typed identifiers and a permanent-address requirement (for example, cats)
 - **WHEN** they view the entry form
 - **THEN** only that commodity's identifier fields are shown, along with a permanent-address field with no country field
-- **AND** identifier fields belonging to other commodities, and the free-text fallback fields, are not shown
+- **AND** identifier fields belonging to other commodities are not shown
 
-#### Scenario: A commodity with no typed identifiers shows only the free-text fallback
+#### Scenario: A commodity with no identifier of its own earns no panel
 **ID**: SCN-IDENT-006-B
-- **GIVEN** the user is entering identifier details for a commodity with no typed identifiers of its own (for example, fish)
-- **WHEN** they view the entry form
-- **THEN** only the free-text identification-details and animal-description fields are shown, and no typed identifier fields are shown
-- **AND** filling in either of the free-text fields alone is enough to save the record
+- **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, fish)
+- **WHEN** the user views the identification details page
+- **THEN** that line has no identification card at all — no typed fields and no free-text fields
 
 ### Requirement: Identifier records for a commodity line are capped at its declared animal count
 **ID**: REQ-IDENT-007

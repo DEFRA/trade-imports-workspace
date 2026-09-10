@@ -35,16 +35,16 @@
     },
     {
       "id": "REQ-DOCS-003",
-      "name": "A notification can hold at most ten accompanying documents",
+      "name": "A notification can hold at most fifteen accompanying documents",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-003-A",
-          "name": "A tenth document is accepted and an eleventh is rejected",
+          "name": "A fifteenth document is accepted and a sixteenth is rejected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-limits.spec.ts", "test": "accepts a tenth document and rejects an eleventh with the maximum-documents error", "strength": "full", "notes": "ten Safe rows, eleventh error link, list stays at ten" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "rejects another upload after the maximum document capacity is reached", "strength": "full", "notes": "uploads ten then eleventh; error links to #documents-added and preserves the typed reference" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-limits.spec.ts", "test": "accepts a fifteenth document and rejects a sixteenth with the maximum-documents error", "strength": "full", "notes": "fifteen Check-completed rows, sixteenth error link, list stays at fifteen" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "rejects another upload after the maximum document capacity is reached", "strength": "full", "notes": "uploads MAX_DOCUMENTS (15) then one more; error links to #documents-added and preserves the typed reference" }
           ]
         }
       ]
@@ -150,12 +150,12 @@
       "scenarios": [
         {
           "id": "SCN-DOCS-007-A",
-          "name": "A clean upload becomes Safe and viewable",
+          "name": "A clean upload becomes checked and viewable",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: shows Checking with no view link, then Safe with a view link", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Checking then Safe on the row — does not assert view-link absence while Checking" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while checking, then renders Safe and allows the journey to continue", "strength": "partial", "notes": "Checking then Safe; continue gate — view-link transition covered better by E2E" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: shows Scanning for virus with no view link, then Check completed with a view link", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Scanning for virus then Check completed on the row — does not assert view-link absence while scanning" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "partial", "notes": "scanning then Check completed; continue gate — view-link transition covered better by E2E" }
           ]
         },
         {
@@ -163,8 +163,8 @@
           "name": "An infected upload is flagged and blocked",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted with Checking, then Virus found with error summary and no view link", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders Virus found and its per-file error until the document is removed", "strength": "full", "notes": "Checking → Virus found, error, zero view links" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-scan-lifecycle.spec.ts", "test": "infected upload: accepted while scanning, then Virus found with error summary and no view link", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "renders Virus found and its per-file error until the document is removed", "strength": "full", "notes": "scanning → Virus found, error, zero view links" }
           ]
         }
       ]
@@ -176,10 +176,10 @@
       "scenarios": [
         {
           "id": "SCN-DOCS-008-A",
-          "name": "Continuing is blocked while a scan is still checking",
+          "name": "Continuing is blocked while a scan is still running",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while checking, then renders Safe and allows the journey to continue", "strength": "full", "notes": "cannotContinue error while Checking; after Safe, Continue reaches Overview" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "blocks continue while the scan runs, then renders Check completed and allows the journey to continue", "strength": "full", "notes": "cannotContinue error while scanning; after Check completed, Continue reaches Overview" }
           ]
         },
         {
@@ -202,7 +202,7 @@
           "name": "One document settles while another stays pending",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "updates one settled row in place, announces it and leaves a still-pending row alone", "strength": "full", "notes": "Safe + view link + announcer; stuck row still Checking" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "updates one settled row in place, announces it and leaves a still-pending row alone", "strength": "full", "notes": "Check completed + view link + announcer; stuck row still Scanning for virus" }
           ]
         }
       ]
@@ -214,10 +214,10 @@
       "scenarios": [
         {
           "id": "SCN-DOCS-010-A",
-          "name": "A manual refresh reflects scan progress until the file is Safe",
+          "name": "A manual refresh reflects scan progress until the file is checked",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-refresh-no-js.spec.ts", "test": "the refresh fallback reflects scan progress without client JavaScript", "strength": "full", "notes": "javaScriptEnabled: false; refresh until Safe; refresh gone; view link present" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/documents-refresh-no-js.spec.ts", "test": "the refresh fallback reflects scan progress without client JavaScript", "strength": "full", "notes": "javaScriptEnabled: false; refresh until Check completed; refresh gone; view link present" }
           ]
         }
       ]
@@ -256,6 +256,62 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/journeys/persistence/persistence-accompanying-document.spec.ts", "test": "uploads a document that persists to Mongo and reloads", "strength": "full", "notes": "Mongo projection: reference, content type/length, COMPLETE scan; row still listed after reopen" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-013",
+      "name": "Each document also asks for its type, chosen from a fixed list, positioned between the reference and the date of issue",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-013-A",
+          "name": "The type question offers thirteen types behind a placeholder, in position",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "offers the thirteen document types behind a placeholder, between the reference and the date", "strength": "full", "notes": "asserts option list (13 visible types, HEALTH_CERTIFICATE excluded — kept for internal testing) and DOM order of the three fields" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-013-B",
+          "name": "Leaving the type on its placeholder is rejected",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "type validation: leaving the placeholder links to and focuses the select, preserving the other answers", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-013-C",
+          "name": "The saved row reports the chosen type",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "the chosen type is what the saved row reports, whatever the file is called", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DOCS-014",
+      "name": "The file can be chosen from a drop zone, not only the browser's own file picker",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DOCS-014-A",
+          "name": "The drop zone offers a choose-file button and accepts a dropped file",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js", "test": "offers a drop zone with the service's own choose-file button and drop instruction", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js", "test": "takes a file dropped onto the zone and names it", "strength": "full", "notes": "confirms the dropped file reaches the actual file input, not just the status text" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js", "test": "says no file is chosen, in a live region, until one is", "strength": "full", "notes": "aria-live polite status region" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-014-B",
+          "name": "No file chosen draws its error on the drop zone itself",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/drop-zone.fit.spec.js", "test": "draws the failed attachment on the zone itself", "strength": "full", "notes": "error-state class reaches the drop zone wrapper, not a separate element" }
           ]
         }
       ]

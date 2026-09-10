@@ -5,64 +5,100 @@
   "requirements": [
     {
       "id": "REQ-TRANSIT-COUNTRIES-001",
-      "name": "The page asks which countries the consignment travels through, as one list of all thirty-one",
+      "name": "The page asks for transited countries one at a time by search, starting with an empty list",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-001-A",
-          "name": "The page presents one group of all thirty-one countries",
+          "name": "The page presents an empty list with a search field and no cap stated",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "renders one 31-country checkbox group", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit page renders captured country options and feature copy", "strength": "full", "notes": "asserts checkbox values equal the captured origin-country codes" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit page asks for one country at a time and starts with an empty list", "strength": "full", "notes": "asserts search field, hint, Add button, empty-state text, no table, no limit message" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the transit type-ahead offers every captured country behind a search placeholder", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "filters the country list by what the user types (AC1)", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "renders the country search and an empty list", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSIT-COUNTRIES-002",
-      "name": "Several transited countries can be chosen together and are kept",
+      "name": "Each added country is listed with its own Remove control, and the list persists",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-002-A",
-          "name": "Two chosen countries are saved and shown again on return",
+          "name": "Adding a country lists it with a Remove control and announces it",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "accepts and persists multiple transited countries", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists selected transit countries", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "saves France and Belgium as part of the scope walk; main subject is means-based wipe, not persistence alone" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "adding a country lists it with its own Remove control and announces it (AC2)", "strength": "full", "notes": "checks the live-region role/aria-live/aria-atomic mechanism, not just its text" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-002-B",
+          "name": "Removing a country takes only that row away and announces it",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "removing a country takes its row away and announces it", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "removes a country from the list, leaving the others", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-002-C",
+          "name": "Saved countries are shown again on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists the countries that were added", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "accepts and persists multiple transited countries", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSIT-COUNTRIES-003",
-      "name": "Saving without choosing a country is rejected, focusing the empty group",
+      "name": "Saving with no countries added is accepted",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-003-A",
-          "name": "Saving with nothing chosen shows an error summary and focuses the group",
+          "name": "Continuing with nothing added succeeds",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "shows an error summary when submitted empty", "strength": "partial", "notes": "asserts the error summary heading only — not focus on the group" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: no countries links to and focuses the empty checkbox group", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit countries are optional: continuing with none saves and goes on", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "transit countries are optional: continuing with none saves and goes on", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSIT-COUNTRIES-004",
-      "name": "An invalid country submitted clears every chosen country",
+      "name": "Adding a country is refused when the entry is blank, not offered, already added, or the cap is reached",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-004-A",
-          "name": "An out-of-list country clears the whole selection",
+          "name": "Pressing Add with nothing chosen is refused",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: out-of-list country links to and focuses the cleared checkbox group", "strength": "full", "notes": "not covered in E2E" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: pressing Add with nothing chosen links to and focuses the search box", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transited-countries.spec.ts", "test": "shows an error summary when Add country is pressed with no country chosen", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-004-B",
+          "name": "A country already added is refused by name",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: a country already added is refused by name", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-004-C",
+          "name": "An out-of-list or tampered entry is refused and never rendered back",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: out-of-list country links to and focuses the search box", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: a tampered country code is never reflected as markup", "strength": "full", "notes": "XSS-shaped payload; confirms no injection as well as the fromList rejection" }
           ]
         }
       ]
@@ -74,10 +110,26 @@
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-005-A",
-          "name": "Choosing thirteen countries is rejected, keeping every selection",
+          "name": "Reaching twelve removes the search and states the limit",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: more than 12 countries links to the focused group and preserves selections", "strength": "full", "notes": "injects thirteen hidden inputs; asserts error naming the limit and thirteen still checked" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the twelfth country takes the search away and announces the limit (AC3)", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-005-B",
+          "name": "Removing a country at the limit brings the search back",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the twelfth country takes the search away and announces the limit (AC3)", "strength": "full", "notes": "same test, second half: removing the 12th brings the field back" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-005-C",
+          "name": "A save carrying more than twelve countries is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: more than 12 countries links to and focuses the search box", "strength": "full", "notes": "defense-in-depth path — a submission the UI itself cannot produce, forced via a test helper" }
           ]
         }
       ]

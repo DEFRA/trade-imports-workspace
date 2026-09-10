@@ -11,6 +11,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | admin/outbox-events | ADMIN-OUTBOX |
 | ins/address-book | INS-ADDR |
 | ins/authentication | INS-AUTH |
+| ins/notification-dashboard | INS-DASH |
 | ins/notification-tracking | INS-TRACK |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
@@ -24,6 +25,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | live-animals/journey-pages/additional-details | ADDL-DETAILS |
 | live-animals/journey-pages/arrival-details | ARRIVAL |
 | live-animals/journey-pages/check-your-answers | CYA |
+| live-animals/journey-pages/commercial-transporter-details | COMMERCIAL-TRANS |
 | live-animals/journey-pages/commodity-details | COMMODITY-DETAILS |
 | live-animals/journey-pages/commodity-selection | COMMODITY-SELECT |
 | live-animals/journey-pages/confirmation | CONFIRM |
@@ -38,7 +40,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | live-animals/journey-pages/private-transporter-details | PRIVATE-TRANS |
 | live-animals/journey-pages/transited-countries | TRANSIT-COUNTRIES |
 | live-animals/journey-pages/transporter | TRANSPORTER |
-| live-animals/journey-pages/transporter-selection | TRANSPORTER-SELECT |
+| live-animals/journey-pages/transporter-type | TRANSPORTER-TYPE |
 | live-animals/journey-pages/upload-documents | DOCS |
 | live-animals/journey-section-captions | CAPTIONS |
 | live-animals/notification-dashboard | DASH |

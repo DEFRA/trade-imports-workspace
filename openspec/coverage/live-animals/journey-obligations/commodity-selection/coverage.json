@@ -43,12 +43,18 @@
           "name": "Adding a commodity requiring unweaned tracking brings the question into play",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/additional-details-scope.spec.ts", "test": "the unweaned-animals question shows only when a triggering commodity line exists", "strength": "full", "notes": "Felis catus hides the group; then Bos taurus makes it visible. That cats-hide leg is the MUST-NOT half of the requirement — there is no dedicated negative scenario (spec stays at 9 scns)." },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "renders service-backed certification options and conditional copy", "strength": "partial", "notes": "startAtAdditionalDetails always selects Bos taurus, so unweaned is always shown — never asserts a non-triggering commodity hides it" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should gate packages/unweaned/CPH for $commodity", "strength": "full", "notes": "Cow/Horse unweaned:true; Cat/Dog/Fish unweaned:false — CYA row presence, not the additional-details page" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply an anyAllowListed obligation per its commodity list", "strength": "partial", "notes": "appliesForCommodity('containsUnweanedAnimals', 'Cow') === true" }
-          ],
-          "notes": "FIT-NEGATIVE GAP (verified): additional-details.fit always seeds cattle. Evaluator.test.js comments that containsUnweanedAnimals is 'Covered separately below' but no dedicated in/out-of-scope cases follow — unlike cph. whitelists.test.js also has no unweaned list. Page-level hide for a non-triggering commodity is E2E-only."
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/additional-details-scope.spec.ts", "test": "the unweaned-animals question shows only when a triggering commodity line exists", "strength": "full", "notes": "Felis catus hides the group; then Bos taurus makes it visible" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should gate packages/unweaned/CPH for $commodity", "strength": "partial", "notes": "carried over from before the narrowing to cattle-only (UNWEANED_ANIMAL_COMMODITIES) — this row's Cow/Horse unweaned:true expectation needs re-checking against the current whitelist before trusting it still passes as written" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-002-B",
+          "name": "A horse-only consignment is not asked about unweaned animals",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "does not ask a horses-only consignment about unweaned animals", "strength": "full", "notes": "new test proving the narrowed trigger list (cattle only) — direct evidence for the EUDPA-509 change" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves a horses-only consignment without an unweaned answer", "strength": "full", "notes": "confirms the page saves through with the question absent, not just hidden" }
+          ]
         }
       ]
     },
@@ -73,16 +79,16 @@
     {
       "id": "REQ-OB-COMMODITY-004",
       "name": "A line's commodity decides which identifiers its animals are asked for, and a commodity can call for more than one",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-OB-COMMODITY-004-A",
           "name": "A commodity calling for particular identifiers asks only for those",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "Cow line: passport + tattoo + ear tag visible; microchip count 0" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "partial", "notes": "Cats: passport + tattoo on, ear tag + horse name off — different commodity than the scenario's passport/tattoo/ear-tag example" }
-          ]
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "partial", "notes": "confirms Cat: microchip + passport + tattoo on, ear tag off (matches the current spec wording), but doesn't assert all three together as a combined THEN in one place — a fit-level read of the identification page for Cat would close this" }
+          ],
+          "notes": "spec text changed to the microchip+passport+tattoo example (Cat/Dog) since no current commodity produces the old passport+tattoo+ear-tag combination (see spec-refresh-evidence-2026-09-10.md). identification.fit.spec.js's 'shows the identifier fields that apply to each commodity' test only exercises Cow/Horse/Fish, not Cat — no direct fit citation for the new example yet."
         },
         {
           "id": "SCN-OB-COMMODITY-004-B",
@@ -97,25 +103,16 @@
     },
     {
       "id": "REQ-OB-COMMODITY-005",
-      "name": "A commodity with no identifier of its own asks for a free-text description instead",
+      "name": "A commodity with no identifier of its own is asked for no identifier at all",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OB-COMMODITY-005-A",
-          "name": "A commodity with no specific identifier asks for the free-text answers",
+          "name": "A commodity with no specific identifier is asked for nothing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no typed identifier shows only the free-text fallbacks, and one satisfies the group", "strength": "full", "notes": "Salmo salar: Identification details + Animal description; typed identifiers hidden" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "Fish card shows identification details + description fields" }
-          ]
-        },
-        {
-          "id": "SCN-OB-COMMODITY-005-B",
-          "name": "A commodity with a specific identifier does not ask for the free-text answers",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "Identification details and Animal description hidden for Felis catus" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should invert for notInUnionOf obligations — free-text identifiers apply only outside the specific-identifier union", "strength": "full", "notes": "animalIdentifierIdentificationDetails false for Cow" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no panel, while the lines that have one keep theirs", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "fish card asserted absent (#identification-card-2 count 0), not merely stripped of typed fields" }
           ]
         }
       ]

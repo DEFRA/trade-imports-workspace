@@ -3781,11 +3781,22 @@
       "dependsOn": [
         "inc-058"
       ],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "f013aab",
       "failure_reason": null,
       "kind": "chore",
       "sizeGuess": "L",
+      "ticket": "EUDPA-555",
+      "branch": "chore/EUDPA-555-sync-the-ported-engine-and-platform-with",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/62",
+          "number": 62,
+          "merged": true,
+          "sha": "2f59a27d08c28aae4a97b18568f51a3af494a78e"
+        }
+      ],
       "filesToTouch": [
         {
           "path": "src/server/app/engine/",
@@ -3847,7 +3858,8 @@
         "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose -- --project=plants"
       ],
       "openQuestions": [
-        "Whether this sync should recur — one increment at the end of the build catches the drift up to that day, but animals will keep moving. If Sam wants it repeatable, the 'Engine sync' README note is the base for a follow-on chore extra; a shared package is ruled out by the no-sharing rule."
+        "Whether this sync should recur — one increment at the end of the build catches the drift up to that day, but animals will keep moving. If Sam wants it repeatable, the 'Engine sync' README note is the base for a follow-on chore extra; a shared package is ruled out by the no-sharing rule.",
+        "Real-port party names on a submitted plants notification. The ported freeze-at-submit guard also landed in `src/server/app/services/persistence/records/real/marshal/list-item.js` (`if (consignmentParty.addressId && status !== SUBMITTED)`), so a SUBMITTED notification whose consignor comes back from the backend as a bare `{ addressId }` with no frozen name would render no name on the dashboard. It is unreachable today: `records/notification-mapper/index.js` omits consignor content from the envelope entirely (its own test asserts the projection is `{ referenceNumber }` alone), so the real list DTO carries no consignor for plants at all. If plants ever starts dual-writing party content, the real marshal needs the same treatment the stub marshal got in this increment, or it needs plants to freeze the name at submit the way live-animals does in `sets/live-animals/journeys/linear/features/addresses/reinflate-party-answers.js`. Deferred because it is a product decision about what the plants envelope carries, not a defect in today's behaviour."
       ],
       "recipe": "docs/best-practices/node/code-style.md; repos/trade-imports-plants-frontend/src/server/app/docs/README.md; repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/README.md",
       "notes": "Added by the orchestrator on 2026-09-07 at Sam's request ('add something to the end of the increment backlog which will be to diff against animals repo for the common areas — there's been refactoring in animals this will need to sync up with'). Not in the spec's backlog-extras.json; if the backlog is ever regenerated from the spec this increment must be re-added or the extra written into backlog-extras.json first.\n\nPORT BASE: plants commit dba9c35 says it ported animals origin/main @2ed89aef. On 2026-09-07 the animals checkout's main is still at 2ed89aef, so the drift is on animals origin or on branches not yet merged; the increment measures the range when it runs, not now. Engine files already differ in 80 places between the two checkouts (5,862 differing lines outside sets/), but most of that is the shape commit's deliberate journey-neutral rewrite of the engine tests, not animals refactoring — the classification step exists to keep those apart.\n\nDELIBERATE DIVERGENCES the sync must not undo (from dba9c35's own message): the engine tests run against a synthetic fixture manifest under test/fixtures/ with structural names (scalarField, statusToggle, branchSelector, compositeBlockOne, itemCollection, nestedCollection); the commodity-reference seam (commodityCodeFor, speciesLabel, typeTextForId) was removed; the repo names no journey domain outside the tests-repo reference and the recipes' guard rails. Animals-only folders today that stay out: services/certification-purposes, services/document-types, services/document-uploads, notification-mapper/mapper-a, notification-mapper/shared, notification-mapper/commodity-reference.js, and the mapper-a contract tests. Document uploads are also parked per the epic (PROGRAMME-NOTES.md standing rulings).\n\nORDER: dependsOn inc-058, the last unblocked increment, so it runs once every plants feature has landed and the engine is synced exactly once against a finished set. It deliberately does not depend on the three gated extras (inc-059 to inc-061): they are born blocked awaiting Sam's rulings, and a sync that waited on a ruling would never run. If one of them lands first and touches engine files, this increment absorbs the diff.\n\nSIZE: L is a guess. The range is unmeasured; a handful of engine commits is an M, a rewrite of the obligation helpers (EUDPA-360 shape) is an L, and if animals has moved the persistence contract it may need to be split by layer. The implementor should say which in the PR description rather than force one PR."
@@ -3863,6 +3875,20 @@
       "dependsOn": [],
       "status": "todo",
       "notes": "RAISED 2026-09-09 from inc-048 (EUDPA-540). The code reviewer raised it, adversarial verification could not refute it and corrected it in its favour by finding the requirement in journey-spec.json as well as the increment AC, and the judge ruled defer-to-open-question because no contained fix exists at the page level. Born blocked with gate sam under the programme rule that a decision needing a human halts rather than guesses. It blocks nothing else, so the run continues past it.\n\nRULED 2026-09-09 by Sam: engine wins, supersede the spec. Unblocked and un-gated on that ruling. The test-correction work named when this was raised is withdrawn — the delivered behaviour is now the correct one, so the tests that pin it are right as they stand. It sits last in array order and blocks nothing, so it is built after the remaining journey work unless it is moved."
+    },
+    {
+      "id": "inc-064",
+      "key": "real-marshal-submitted-address-name",
+      "type": "fix",
+      "repo": "frontend",
+      "milestone": "M1",
+      "status": "todo",
+      "dependsOn": [
+        "inc-062"
+      ],
+      "title": "Real marshal: a submitted bare { addressId } list item must still render its address name",
+      "detail": "src/server/app/.../real/marshal/list-item.js carries the same freeze-at-submit guard that inc-062 fixed in the stub marshal: for a SUBMITTED notification it takes the frozen name off the item and does not fall back to resolving addressId, so a plants consignor/consignee saved as a bare { addressId } renders with no name once the notification is submitted. Plants does not freeze the name at submit, so the guard is wrong for this port. Apply the same correction as the stub side (inc-062, plants-frontend #62) to the real marshal and cover it with a unit test for the submitted bare-addressId case.",
+      "notes": "Appended by the orchestrator on 2026-09-10 from inc-062's judge stage, which raised it as defer-to-open-question while confirming the stub-side finding. Not in the spec's backlog-extras.json; if the backlog is ever regenerated from the spec this increment must be re-added or the extra written into backlog-extras.json first."
     }
   ]
 }

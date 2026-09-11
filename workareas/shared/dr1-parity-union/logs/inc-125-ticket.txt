@@ -1,0 +1,29 @@
+h2. Increment
+
+{{inc-125}} from the {{shared/dr1-parity-union}} backlog.
+
+A private transporter added in DR1 joins the transporter list and can be picked again on the next notification. The frontend keeps it on the one notification it was typed into, so a repeat user retypes the same nine fields every time.
+
+Today {{/transporters/private}} collects the transporter's name, five address lines, country, telephone number and email address and commits them onto the notification under {{privateTransporter}} ({{src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js}}). Nothing else reads them, and there is nowhere in the service that lists transporters a user has entered before.
+
+DR1 unshifts the new record onto the user's own transporter records and builds the list page by concatenating those with the eight the service ships ({{app/routes.js}} lines 2903-2905 and 3310-3345). DR1's store is prototype session storage, so it shows the intent rather than the mechanism; the shape of the real store is ours to decide.
+
+h2. Acceptance criteria
+
+* A private transporter added through {{/transporters/private}} is written to a store that outlives the notification it was entered on, not only to the notification's own answers under {{privateTransporter}}.
+* The store is per organisation — either a new transporter collection, or an extension of the address book that can carry a transporter's approval number, which the frontend's own note in {{src/server/app/services/commercial-transporters/records.js}} says the address book cannot represent today.
+* The transporter list page shows the records the organisation has added alongside the transporters the service ships, each with its own type and status.
+* On a later notification the user can pick a previously added transporter instead of retyping {{nameOrOrganisationName}}, {{addressLine1}}, {{addressLine2}}, {{townOrCity}}, {{county}}, {{postalOrZipCode}}, {{country}}, {{telephoneNumber}} and {{emailAddress}}.
+* The private transporter form becomes an add-to-the-list step rather than a fill-in-the-blanks step, and still commits the chosen transporter onto the notification so downstream readers are unchanged.
+* Notifications that already carry a {{privateTransporter}} keep working.
+* Backend tests cover persisting and reading back an organisation's transporter records, and the end-to-end suite covers adding a transporter on one notification and picking it on the next.
+
+h2. Notes
+
+Depends on the transporter list page existing — {{inc-123}} and {{inc-124}} in the same backlog. Reuse has no surface before then.
+
+Band is {{needs-backend}}: the frontend has no per-organisation collection to write to and the notification is the only thing that persists today.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

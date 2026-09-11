@@ -1,0 +1,92 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index d09bec61..d78fdc06 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -423,7 +423,7 @@ test.describe('transporter list page', () => {
+     ).toHaveValue(privateRecord.address.townOrCity)
+   })
+ 
+-  test('saving the list with nothing picked skips the commit and leaves a hand-typed transporter alone', async ({
++  test('a transporter the trader added is on the list, checked, and saving the list again leaves it alone', async ({
+     page
+   }) => {
+     // Through the add route, which is the only way a trader reaches the form —
+@@ -434,11 +434,13 @@ test.describe('transporter list page', () => {
+     await submit(page)
+ 
+     await page.goto(journeyUrl(page, 'transporters'))
+-    // A hand-typed record is not on the list, so nothing is checked and the
+-    // save has no pick to commit.
+-    await expect(page.locator('input[name="transporter"]:checked')).toHaveCount(
+-      0
+-    )
++    // The transporter joined the list on the way through, so it is the row the
++    // notification already names and the one that comes back checked.
++    await expect(
++      page.getByRole('radio', {
++        name: handTypedTransporter.nameOrOrganisationName
++      })
++    ).toBeChecked()
+     await submit(page)
+ 
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+@@ -697,6 +699,59 @@ test.describe('adding a transporter that is not on the list', () => {
+ 
+     await expect(page).toHaveURL(/\/transporters\/add\/commercial$/)
+   })
++
++  // The point of adding one: a haulier moving the same animals every week types
++  // the nine fields once rather than once per notification.
++  test('a transporter added on one notification is on the list of the next one, ready to pick', async ({
++    page
++  }) => {
++    const repeatCustomer = {
++      ...handTypedTransporter,
++      nameOrOrganisationName: 'Dupont Transport SARL'
++    }
++    await openPrivate(page)
++    await fillPrivateTransporter(page, repeatCustomer)
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    // A second notification, started from nothing. The transporter is on its
++    // list, carrying the address and the type it was added with.
++    await openTransporterList(page)
++    const row = transporterRow(page, repeatCustomer.nameOrOrganisationName)
++    await expect(row).toHaveCount(1)
++    await expect(row.getByRole('cell').nth(2)).toHaveText(
++      addressSummary({
++        addressLine1: repeatCustomer.addressLine1,
++        townOrCity: repeatCustomer.townOrCity,
++        postalOrZipCode: repeatCustomer.postalOrZipCode,
++        country: repeatCustomer.country
++      })
++    )
++    await expect(row.getByRole('cell').nth(4)).toHaveText(
++      copy.transporters.types[PRIVATE]
++    )
++    await expect(row.getByRole('cell').nth(5)).toHaveText(
++      copy.transporters.statuses[NEW]
++    )
++
++    // Picking it fills the record in, which is the retyping this saves.
++    await row.getByRole('radio').check()
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    await page.goto(journeyUrl(page, PRIVATE_ADD_SLUG))
++    await expect(
++      page.getByLabel(
++        copy.privateTransporterDetails.fields.nameOrOrganisationName
++      )
++    ).toHaveValue(repeatCustomer.nameOrOrganisationName)
++    await expect(
++      page.getByLabel(copy.privateTransporterDetails.fields.townOrCity)
++    ).toHaveValue(repeatCustomer.townOrCity)
++    await expect(
++      page.getByLabel(copy.privateTransporterDetails.fields.emailAddress)
++    ).toHaveValue(repeatCustomer.emailAddress)
++  })
+ })
+ 
+ test.describe('commercial transporter page', () => {

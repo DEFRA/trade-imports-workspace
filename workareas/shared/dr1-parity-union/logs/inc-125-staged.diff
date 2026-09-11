@@ -1,0 +1,811 @@
+diff --git a/src/server/app/services/transporters/index.js b/src/server/app/services/transporters/index.js
+index c18af6c5..3f0b33c2 100644
+--- a/src/server/app/services/transporters/index.js
++++ b/src/server/app/services/transporters/index.js
+@@ -5,20 +5,34 @@ import {
+   PRIVATE,
+   TRANSPORTER_OPTIONS
+ } from './records.js'
++import { addedParties } from './register.js'
+ 
+ export { APPROVED, COMMERCIAL, NEW, PRIVATE }
++export { forgetAddedTransporters, rememberTransporter } from './register.js'
+ 
+-/** Every transporter the trader can pick, commercial and private together.
++/** Every transporter the service ships, commercial and private together.
+  *
+- * Deliberately synchronous: the transporter list and the commercial
+- * register both build their `oneOf` validation from these ids at module load,
+- * so this must resolve without awaiting. The address book became async when it
+- * moved onto the API (EUDPA-294) — keeping transporters here is what lets that
+- * happen without breaking these pages. */
++ * Deliberately synchronous: the commercial register builds its `oneOf`
++ * validation from these ids at module load, so this must resolve without
++ * awaiting. The address book became async when it moved onto the API
++ * (EUDPA-294) — keeping transporters here is what lets that happen without
++ * breaking these pages. */
+ export const parties = () => TRANSPORTER_OPTIONS
+ 
+ export const party = (id) => parties().find((record) => record.id === id)
+ 
++/** Every transporter this organisation can pick: the ones it has added for
++ * itself, then the ones the service ships.
++ *
++ * The transporter list asks for this rather than `parties`, so a transporter a
++ * trader added on an earlier notification is there to be picked on the next
++ * one. It is per-organisation and so per-request, which is why the list
++ * validates the ids it is rendering rather than a set fixed at module load. */
++export const partiesFor = (orgId) => [...addedParties(orgId), ...parties()]
++
++export const partyFor = (orgId, id) =>
++  partiesFor(orgId).find((record) => record.id === id)
++
+ /** The approved commercial register alone — the one list a trader adding a
+  * commercial transporter can choose from today. */
+ export const commercialParties = () =>
+diff --git a/src/server/app/services/transporters/records.js b/src/server/app/services/transporters/records.js
+index 3084bc69..e9ec4c6c 100644
+--- a/src/server/app/services/transporters/records.js
++++ b/src/server/app/services/transporters/records.js
+@@ -13,8 +13,10 @@
+  * number, a private one carries the address the private-transporter form
+  * collects.
+  *
+- * A transporter a trader types in by hand does not join this list: it lives on
+- * the notification it was entered into and nowhere else.
++ * These are the records the service ships. A transporter a trader types in for
++ * themselves joins the list too, from the organisation's own store in
++ * [`register.js`](./register.js) — same shape, filed under the organisation
++ * rather than written here.
+  *
+  * `status` is whether the transporter has been approved yet, which the list
+  * shows so a trader can tell at a glance. Like `type` it is a fact about the
+diff --git a/src/server/app/services/transporters/register.js b/src/server/app/services/transporters/register.js
+new file mode 100644
+index 00000000..4fe0dbb3
+--- /dev/null
++++ b/src/server/app/services/transporters/register.js
+@@ -0,0 +1,72 @@
++import { randomUUID } from 'node:crypto'
++
++/** The transporters an organisation has added for itself.
++ *
++ * Somewhere for a transporter to live other than the notification it was typed
++ * into. Without this the nine fields the private-transporter form asks for are
++ * retyped on every notification, because nothing else in the service reads
++ * them — design release 1 puts a transporter a trader has just added straight
++ * onto the transporter list, beside the ones the service ships, and offers it
++ * again next time.
++ *
++ * Held here rather than in a service because there is no transporter register
++ * behind one: the address book cannot represent a transporter (see the note in
++ * records.js) and is read-only from this frontend, so the added records sit
++ * beside the shipped ones, which are a local fixture themselves. When the
++ * register moves behind a service this module is what it replaces — the pages
++ * only ever ask for `partiesFor` and `rememberTransporter`.
++ *
++ * Process-local, so a record does not outlive a restart and is not shared
++ * between instances. That is the cost of having no register service yet, stated
++ * rather than hidden: durable storage is the backend work this change is
++ * waiting on, and nothing here has to change when it arrives.
++ *
++ * Scoped on the organisation and never on the user or the session: a
++ * transporter an organisation has used belongs to the organisation, the way its
++ * address book does.
++ */
++const addedByOrganisation = new Map()
++
++/** Two records are the same transporter when they carry the same name, however
++ * it happens to be typed. Re-entering a transporter corrects the record the
++ * organisation already has rather than putting a second row beside it. */
++const nameKey = (name) => name.trim().replace(/\s+/gu, ' ').toLowerCase()
++
++/** Every transporter this organisation has added, newest first — design
++ * release 1 shows the record a trader has just added at the top of the list.
++ *
++ * Deliberately synchronous, like the shipped register beside it: the list page
++ * builds a row and a validation option per record while rendering. */
++export const addedParties = (orgId) => {
++  const records = addedByOrganisation.get(orgId)
++  return records ? [...records.values()].reverse() : []
++}
++
++/** Keep a transporter for the organisation, so the next notification can pick
++ * it instead of asking for it again.
++ *
++ * Ignores a record with no organisation to file it under — `organisationIdOf`
++ * resolves to undefined on an unauthenticated request, and a guess would file
++ * one organisation's transporter under another's. The notification still holds
++ * the answer, so nothing the trader typed is lost.
++ *
++ * @param {string} orgId the organisation the signed-in user is acting for
++ * @param {object} record the transporter, as the list renders it
++ * @returns {object|undefined} the kept record, with the id the list picks it by
++ */
++export const rememberTransporter = (orgId, record) => {
++  if (!orgId || !record?.name?.trim()) {
++    return undefined
++  }
++
++  const records = addedByOrganisation.get(orgId) ?? new Map()
++  const key = nameKey(record.name)
++  const kept = { ...record, id: records.get(key)?.id ?? randomUUID() }
++  records.set(key, kept)
++  addedByOrganisation.set(orgId, records)
++  return kept
++}
++
++/** Empty the store. For tests, which share one module instance and would
++ * otherwise read each other's transporters. */
++export const forgetAddedTransporters = () => addedByOrganisation.clear()
+diff --git a/src/server/app/services/transporters/transporters.test.js b/src/server/app/services/transporters/transporters.test.js
+index c405482a..3d407373 100644
+--- a/src/server/app/services/transporters/transporters.test.js
++++ b/src/server/app/services/transporters/transporters.test.js
+@@ -1,4 +1,4 @@
+-import { describe, expect, test } from 'vitest'
++import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+ 
+ import * as transporters from './index.js'
+ import * as addressBook from '../address-book/index.js'
+@@ -124,3 +124,122 @@ describe('separation from the address book', () => {
+     expect(book.some((record) => record.approvalNumber)).toBe(false)
+   })
+ })
++
++// A transporter a trader types in has to live somewhere other than the
++// notification, or the same nine fields are retyped on the next one.
++describe('the transporters an organisation has added for itself', () => {
++  const ORG = '5900001'
++  const ANOTHER_ORG = '5900002'
++  const HAULIER_NAME = 'Jean Dupont'
++
++  const haulier = (overrides = {}) => ({
++    type: transporters.PRIVATE,
++    status: transporters.NEW,
++    name: HAULIER_NAME,
++    address: {
++      addressLine1: '10 Rue de la Ferme',
++      addressLine2: '',
++      townOrCity: 'Calais',
++      county: 'Pas-de-Calais',
++      postalOrZipCode: '62100',
++      country: 'France',
++      telephoneNumber: '+33 3 21 00 00 00',
++      emailAddress: 'jean.dupont@example.fr'
++    },
++    ...overrides
++  })
++
++  beforeEach(() => transporters.forgetAddedTransporters())
++  afterEach(() => transporters.forgetAddedTransporters())
++
++  test('Should offer only the shipped register to an organisation that has added nothing', () => {
++    expect(transporters.partiesFor(ORG)).toEqual(transporters.parties())
++  })
++
++  test('Should put a transporter it has added ahead of the ones the service ships', () => {
++    transporters.rememberTransporter(ORG, haulier())
++
++    const [first, ...rest] = transporters.partiesFor(ORG)
++    expect(first.name).toBe(HAULIER_NAME)
++    expect(first.type).toBe(transporters.PRIVATE)
++    expect(first.status).toBe(transporters.NEW)
++    expect(rest).toEqual(transporters.parties())
++  })
++
++  test('Should give an added transporter an id of its own, so the list can pick it', () => {
++    const kept = transporters.rememberTransporter(ORG, haulier())
++
++    expect(kept.id).toBeTruthy()
++    expect(transporters.parties().map((record) => record.id)).not.toContain(
++      kept.id
++    )
++    expect(transporters.partyFor(ORG, kept.id).name).toBe(HAULIER_NAME)
++  })
++
++  test('Should keep the newest addition at the top, the way design release 1 shows it', () => {
++    transporters.rememberTransporter(ORG, haulier())
++    transporters.rememberTransporter(ORG, haulier({ name: 'Marie Leclerc' }))
++
++    expect(
++      transporters
++        .partiesFor(ORG)
++        .slice(0, 2)
++        .map((record) => record.name)
++    ).toEqual(['Marie Leclerc', HAULIER_NAME])
++  })
++
++  // Otherwise a trader correcting a typo ends up with two rows for the one
++  // haulier and no way to tell them apart.
++  test('Should correct a transporter entered again rather than add a second row for it', () => {
++    const first = transporters.rememberTransporter(ORG, haulier())
++    const corrected = transporters.rememberTransporter(
++      ORG,
++      // The same haulier, typed with the casing and spacing of a second go.
++      haulier({
++        name: '  jean   dupont  ',
++        address: { ...haulier().address, townOrCity: 'Dunkerque' }
++      })
++    )
++
++    expect(corrected.id).toBe(first.id)
++    expect(transporters.partiesFor(ORG)).toHaveLength(
++      transporters.parties().length + 1
++    )
++    expect(transporters.partyFor(ORG, first.id).address.townOrCity).toBe(
++      'Dunkerque'
++    )
++  })
++
++  test('Should keep the transporters one organisation added off every other list', () => {
++    const kept = transporters.rememberTransporter(ORG, haulier())
++
++    expect(transporters.partiesFor(ANOTHER_ORG)).toEqual(transporters.parties())
++    expect(transporters.partyFor(ANOTHER_ORG, kept.id)).toBeUndefined()
++  })
++
++  // organisationIdOf resolves to undefined on an unauthenticated request, and
++  // filing the record under a guess would hand it to the wrong organisation.
++  test('Should keep nothing when there is no organisation to file it under', () => {
++    expect(
++      transporters.rememberTransporter(undefined, haulier())
++    ).toBeUndefined()
++    expect(transporters.partiesFor(undefined)).toEqual(transporters.parties())
++  })
++
++  test('Should keep nothing when the transporter has no name to be found by', () => {
++    expect(
++      transporters.rememberTransporter(ORG, haulier({ name: '   ' }))
++    ).toBeUndefined()
++    expect(transporters.partiesFor(ORG)).toEqual(transporters.parties())
++  })
++
++  test('Should return undefined for an id that is on no list', () => {
++    expect(transporters.partyFor(ORG, 'not-a-transporter')).toBeUndefined()
++  })
++
++  test('Should resolve synchronously, so the list can validate what it renders', () => {
++    transporters.rememberTransporter(ORG, haulier())
++
++    expect(transporters.partiesFor(ORG)).not.toBeInstanceOf(Promise)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+index d09bec61..d78fdc06 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js
+@@ -423,7 +423,7 @@ test.describe('transporter list page', () => {
+     ).toHaveValue(privateRecord.address.townOrCity)
+   })
+ 
+-  test('saving the list with nothing picked skips the commit and leaves a hand-typed transporter alone', async ({
++  test('a transporter the trader added is on the list, checked, and saving the list again leaves it alone', async ({
+     page
+   }) => {
+     // Through the add route, which is the only way a trader reaches the form —
+@@ -434,11 +434,13 @@ test.describe('transporter list page', () => {
+     await submit(page)
+ 
+     await page.goto(journeyUrl(page, 'transporters'))
+-    // A hand-typed record is not on the list, so nothing is checked and the
+-    // save has no pick to commit.
+-    await expect(page.locator('input[name="transporter"]:checked')).toHaveCount(
+-      0
+-    )
++    // The transporter joined the list on the way through, so it is the row the
++    // notification already names and the one that comes back checked.
++    await expect(
++      page.getByRole('radio', {
++        name: handTypedTransporter.nameOrOrganisationName
++      })
++    ).toBeChecked()
+     await submit(page)
+ 
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+@@ -697,6 +699,59 @@ test.describe('adding a transporter that is not on the list', () => {
+ 
+     await expect(page).toHaveURL(/\/transporters\/add\/commercial$/)
+   })
++
++  // The point of adding one: a haulier moving the same animals every week types
++  // the nine fields once rather than once per notification.
++  test('a transporter added on one notification is on the list of the next one, ready to pick', async ({
++    page
++  }) => {
++    const repeatCustomer = {
++      ...handTypedTransporter,
++      nameOrOrganisationName: 'Dupont Transport SARL'
++    }
++    await openPrivate(page)
++    await fillPrivateTransporter(page, repeatCustomer)
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    // A second notification, started from nothing. The transporter is on its
++    // list, carrying the address and the type it was added with.
++    await openTransporterList(page)
++    const row = transporterRow(page, repeatCustomer.nameOrOrganisationName)
++    await expect(row).toHaveCount(1)
++    await expect(row.getByRole('cell').nth(2)).toHaveText(
++      addressSummary({
++        addressLine1: repeatCustomer.addressLine1,
++        townOrCity: repeatCustomer.townOrCity,
++        postalOrZipCode: repeatCustomer.postalOrZipCode,
++        country: repeatCustomer.country
++      })
++    )
++    await expect(row.getByRole('cell').nth(4)).toHaveText(
++      copy.transporters.types[PRIVATE]
++    )
++    await expect(row.getByRole('cell').nth(5)).toHaveText(
++      copy.transporters.statuses[NEW]
++    )
++
++    // Picking it fills the record in, which is the retyping this saves.
++    await row.getByRole('radio').check()
++    await submit(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    await page.goto(journeyUrl(page, PRIVATE_ADD_SLUG))
++    await expect(
++      page.getByLabel(
++        copy.privateTransporterDetails.fields.nameOrOrganisationName
++      )
++    ).toHaveValue(repeatCustomer.nameOrOrganisationName)
++    await expect(
++      page.getByLabel(copy.privateTransporterDetails.fields.townOrCity)
++    ).toHaveValue(repeatCustomer.townOrCity)
++    await expect(
++      page.getByLabel(copy.privateTransporterDetails.fields.emailAddress)
++    ).toHaveValue(repeatCustomer.emailAddress)
++  })
+ })
+ 
+ test.describe('commercial transporter page', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
+index 42ad401f..bbbe0ed9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js
+@@ -10,6 +10,12 @@ import {
+ import * as kit from '../../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+ import * as countries from '../../../../../../../services/countries/index.js'
++import {
++  NEW,
++  PRIVATE,
++  rememberTransporter
++} from '../../../../../../../services/transporters/index.js'
++import { organisationIdOf } from '../../../../../../../../common/helpers/organisation-id.js'
+ import {
+   privateTransporterDetailsPage as page,
+   transporterAddPage
+@@ -152,28 +158,45 @@ const formErrors = (payload, values) => {
+   )
+ }
+ 
+-const privateTransporterRecord = (values) => ({
+-  privateTransporter: {
+-    name: values.nameOrOrganisationName,
+-    address: {
+-      addressLine1: values.addressLine1,
+-      addressLine2: values.addressLine2,
+-      townOrCity: values.townOrCity,
+-      county: values.county,
+-      postalOrZipCode: values.postalOrZipCode,
+-      country: values.country,
+-      telephoneNumber: values.telephoneNumber,
+-      emailAddress: values.emailAddress
+-    }
++const privateTransporter = (values) => ({
++  name: values.nameOrOrganisationName,
++  address: {
++    addressLine1: values.addressLine1,
++    addressLine2: values.addressLine2,
++    townOrCity: values.townOrCity,
++    county: values.county,
++    postalOrZipCode: values.postalOrZipCode,
++    country: values.country,
++    telephoneNumber: values.telephoneNumber,
++    emailAddress: values.emailAddress
+   }
+ })
+ 
++const privateTransporterRecord = (values) => ({
++  privateTransporter: privateTransporter(values)
++})
++
++/** Keep the transporter for the organisation as well as for the notification.
++ *
++ * A transporter that lives only on the notification it was typed into is typed
++ * again on the next one, so the same record joins the organisation's own list
++ * and the transporter list offers it from then on (design release 1). It goes
++ * on as a private transporter that has not been approved yet, which is what the
++ * organisation knows about it: nothing here has approved anything. */
++const remember = (request, values) =>
++  rememberTransporter(organisationIdOf(request), {
++    ...privateTransporter(values),
++    type: PRIVATE,
++    status: NEW
++  })
++
+ const post = saveTransporterDetails({
+   trimmedValues,
+   formErrors,
+   recordProvided,
+   record: privateTransporterRecord,
+-  render
++  render,
++  remember
+ })
+ 
+ export const routes = kit.pageRoutes(page, { get, post })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js
+index 21f5d6eb..5f200cc7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js
+@@ -1,4 +1,4 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
++import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+ 
+ import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+ import { store } from '../../../../../../../engine/store.js'
+@@ -8,12 +8,19 @@ import { records as recordsStub } from '../../../../../../../services/persistenc
+ import { BackendRequestError } from '../../../../../../../services/persistence/records/errors.js'
+ import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+ import {
++  authenticatedCredentials,
+   driveHandler,
+   journeyRequest,
+   stubH
+ } from '../../../../../../../engine/test-support.js'
+ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../../lib/http-status.js'
+-import { PRIVATE } from '../../../../../../../services/transporters/index.js'
++import {
++  NEW,
++  PRIVATE,
++  forgetAddedTransporters,
++  parties,
++  partiesFor
++} from '../../../../../../../services/transporters/index.js'
+ import { pagePath } from '../../../../../../../shared/paths.js'
+ import { dispatchPages } from '../../index.js'
+ 
+@@ -174,3 +181,56 @@ describe('/transporters/add/private', () => {
+     expect(response.context.values).toEqual(RECORD)
+   })
+ })
++
++// Saving has to leave the transporter somewhere other than the notification, or
++// the same nine fields are typed again on the next one.
++describe('/transporters/add/private keeps the transporter for the organisation', () => {
++  const ORG = authenticatedCredentials.organisationId
++
++  // Not a name the service ships, so a row under it can only have been added.
++  const HAULIER = { ...RECORD, nameOrOrganisationName: 'Dupont Transport SARL' }
++
++  const added = () =>
++    partiesFor(ORG).filter(
++      (record) => !parties().some((shipped) => shipped.id === record.id)
++    )
++
++  beforeAll(configure)
++  beforeEach(() => {
++    store.clear()
++    forgetAddedTransporters()
++  })
++  afterEach(forgetAddedTransporters)
++
++  it('Should put a saved transporter on the organisation list, private and not yet approved', async () => {
++    await driveHandler(postHandler, {
++      seed: { transporterType: PRIVATE },
++      payload: HAULIER
++    })
++
++    expect(added()).toHaveLength(1)
++    const [kept] = added()
++    expect(kept.name).toBe(HAULIER.nameOrOrganisationName)
++    expect(kept.type).toBe(PRIVATE)
++    expect(kept.status).toBe(NEW)
++    expect(kept.address.postalOrZipCode).toBe(HAULIER.postalOrZipCode)
++    expect(kept.address.emailAddress).toBe(HAULIER.emailAddress)
++  })
++
++  it('Should keep nothing when the form is left blank, there being no transporter to keep', async () => {
++    await driveHandler(postHandler, {
++      seed: { transporterType: PRIVATE },
++      payload: {}
++    })
++
++    expect(added()).toHaveLength(0)
++  })
++
++  // A transporter kept after a failed save would be on the list without being
++  // on the notification the trader thought they had saved it to.
++  it('Should keep nothing when the notification refuses the save', async () => {
++    await driveSaveFailure(HAULIER)
++
++    expect(added()).toHaveLength(0)
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js
+index cf80773a..cf5b9ae1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js
+@@ -13,16 +13,23 @@ import { transportersPage } from './page.js'
+  * fields and the record they build differ between the two arms, so those are
+  * handed in and the sequence is written once.
+  *
++ * An arm may also keep what it saved somewhere the next notification can find
++ * it, which is what stops a trader retyping the same transporter every week.
++ * That happens only after the notification itself has taken the answer, so a
++ * failed save never leaves a transporter on the list that no notification
++ * names.
++ *
+  * @param {object} arm the parts that differ between the two arms
+  * @param {Function} arm.trimmedValues the entered values, trimmed, from the payload
+  * @param {Function} arm.formErrors the errors to show, in the order the page asks the fields
+  * @param {Function} arm.recordProvided whether the trader has begun a record
+  * @param {Function} arm.record the answer to commit, built from the values
+  * @param {Function} arm.render the arm's own view
++ * @param {Function} [arm.remember] keeps the saved transporter for the organisation
+  * @returns {Function} the arm's POST handler
+  */
+ export const saveTransporterDetails =
+-  ({ trimmedValues, formErrors, recordProvided, record, render }) =>
++  ({ trimmedValues, formErrors, recordProvided, record, render, remember }) =>
+   async (request, h) => {
+     const payload = request.payload ?? {}
+     const values = trimmedValues(payload)
+@@ -35,9 +42,12 @@ export const saveTransporterDetails =
+     let committed
+     const { failure } = await kit.recoverableSave(
+       async () => {
+-        committed = recordProvided(values)
+-          ? await state.commit(request, h, record(values))
+-          : await state.get(request, h)
++        if (!recordProvided(values)) {
++          committed = await state.get(request, h)
++          return
++        }
++        committed = await state.commit(request, h, record(values))
++        remember?.(request, values)
+       },
+       async () => {
+         const { journey } = await state.get(request, h)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+index 41cf683f..5cf0b930 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.js
+@@ -10,6 +10,7 @@ import {
+ import * as kit from '../../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../../shared/copy.js'
+ import * as transporters from '../../../../../../../services/transporters/index.js'
++import { organisationIdOf } from '../../../../../../../../common/helpers/organisation-id.js'
+ import { transporterAddPage, transportersPage as page } from '../page.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
+@@ -31,13 +32,23 @@ const view = `${TEMPLATES}/features/transport/transporters/transporters`
+ 
+ const copy = copyFor({ en, cy }).transporters
+ 
+-const fields = compose(
+-  oneOf(
+-    'transporter',
+-    transporters.parties().map((option) => option.id),
+-    copy.errors.transporterRequired
++/** The transporters this organisation can pick — the ones it has added for
++ * itself as well as the ones the service ships. Per-organisation, so it is read
++ * per request rather than held at module load. */
++const availableTransporters = (request) =>
++  transporters.partiesFor(organisationIdOf(request))
++
++/** A pick is valid when it is a row the page just rendered, which is why the
++ * options are built from the list in hand rather than from a fixed set: a
++ * transporter the organisation added is as pickable as one the service ships. */
++const fieldsFor = (records) =>
++  compose(
++    oneOf(
++      'transporter',
++      records.map((option) => option.id),
++      copy.errors.transporterRequired
++    )
+   )
+-)
+ 
+ /** The search button and the page's own submits share the one form, told apart
+  * by their `action` value — the address picker's shape. */
+@@ -52,7 +63,7 @@ const render = (
+ ) => {
+   const query = String(values.query ?? '')
+   const rows = transporterRows(
+-    matchingTransporters(transporters.parties(), query),
++    matchingTransporters(availableTransporters(request), query),
+     { selectedId: values.selectedId }
+   )
+   return h.view(view, {
+@@ -86,15 +97,19 @@ const render = (
+ /** The record behind the answers already on the notification, so a returning
+  * trader sees their pick still checked. Matched on name: the notification
+  * stores the transporter's details, not the id of the row it came from. */
+-const selectedIdFor = (answers) => {
++const selectedIdFor = (request, answers) => {
+   const chosenName =
+     answers.commercialTransporter?.name ?? answers.privateTransporter?.name
+-  return transporters.parties().find((option) => option.name === chosenName)?.id
++  return availableTransporters(request).find(
++    (option) => option.name === chosenName
++  )?.id
+ }
+ 
+ const get = async (request, h) => {
+   const { journey, answers } = await state.get(request, h)
+-  return render(request, h, journey, { selectedId: selectedIdFor(answers) })
++  return render(request, h, journey, {
++    selectedId: selectedIdFor(request, answers)
++  })
+ }
+ 
+ const commitOrSkip = (request, h, chosen) =>
+@@ -114,17 +129,20 @@ const post = async (request, h) => {
+     return render(request, h, journey, {
+       query,
+       selectedId:
+-        payload.transporter || payload.selected || selectedIdFor(answers)
++        payload.transporter ||
++        payload.selected ||
++        selectedIdFor(request, answers)
+     })
+   }
+ 
+-  const { errors } = validate(fields, payload)
++  const records = availableTransporters(request)
++  const { errors } = validate(fieldsFor(records), payload)
+   if (errors) {
+     const { journey } = await state.get(request, h)
+     return render(request, h, journey, { query }, { errors })
+   }
+ 
+-  const chosen = transporters.party(payload.transporter)
++  const chosen = records.find((record) => record.id === payload.transporter)
+   let committed
+   const { failure } = await kit.recoverableSave(
+     async () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
+index 7c62bc91..3f4b5b7d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js
+@@ -1,4 +1,4 @@
+-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
++import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+ 
+ import { buildDispatch } from '../../../../../../../flow/dispatch.js'
+ import { store } from '../../../../../../../engine/store.js'
+@@ -8,6 +8,7 @@ import { records as recordsStub } from '../../../../../../../services/persistenc
+ import { BackendRequestError } from '../../../../../../../services/persistence/records/errors.js'
+ import { session as sessionStub } from '../../../../../../../services/persistence/session/stub.js'
+ import {
++  authenticatedCredentials,
+   driveHandler,
+   journeyRequest,
+   stubH
+@@ -15,7 +16,10 @@ import {
+ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../../../../../lib/http-status.js'
+ import {
+   COMMERCIAL,
+-  PRIVATE
++  NEW,
++  PRIVATE,
++  forgetAddedTransporters,
++  rememberTransporter
+ } from '../../../../../../../services/transporters/index.js'
+ import { dispatchPages } from '../../index.js'
+ 
+@@ -356,3 +360,107 @@ describe('/transporters — searching the list', () => {
+     expect(result.view.context.transporterRows.length).toBeGreaterThan(1)
+   })
+ })
++
++// A transporter the organisation has added for itself is on the list beside the
++// ones the service ships, so it is picked rather than typed again.
++describe('/transporters with a transporter the organisation added', () => {
++  const ORG = authenticatedCredentials.organisationId
++  const HAULIER_NAME = 'Dupont Transport SARL'
++
++  const haulier = () => ({
++    type: PRIVATE,
++    status: NEW,
++    name: HAULIER_NAME,
++    address: {
++      addressLine1: '10 Rue de la Ferme',
++      addressLine2: '',
++      townOrCity: 'Calais',
++      county: 'Pas-de-Calais',
++      postalOrZipCode: '62100',
++      country: 'France',
++      telephoneNumber: '+33 3 21 00 00 00',
++      emailAddress: 'transport@dupont.example.fr'
++    }
++  })
++
++  beforeAll(configure)
++  beforeEach(() => {
++    store.clear()
++    forgetAddedTransporters()
++  })
++  afterEach(forgetAddedTransporters)
++
++  it('Should show it at the top of the list, typed and tagged like any other row', async () => {
++    const kept = rememberTransporter(ORG, haulier())
++
++    const result = await driveHandler(getHandler)
++
++    const [first] = result.view.context.transporterRows
++    expect(first.id).toBe(kept.id)
++    expect(first.name).toBe(HAULIER_NAME)
++    expect(first.type).toBe('Private')
++    expect(first.status).toEqual({ text: 'New', classes: 'govuk-tag--magenta' })
++    expect(first.approvalNumber).toBe('')
++  })
++
++  it('Should leave the shipped register on the list behind it', async () => {
++    rememberTransporter(ORG, haulier())
++
++    const result = await driveHandler(getHandler)
++
++    expect(rowFor(result.view.context, GARCIA_ID).name).toBe(GARCIA_NAME)
++    expect(rowFor(result.view.context, ABERDEEN_ID).name).toBe(ABERDEEN_NAME)
++  })
++
++  it('Should accept a pick of it and save it the way it saves any private transporter', async () => {
++    const kept = rememberTransporter(ORG, haulier())
++
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'save', transporter: kept.id }
++    })
++
++    expect(result.view).toBeUndefined()
++    expect(result.after.transporterType).toBe(PRIVATE)
++    expect(result.after.privateTransporter.name).toBe(HAULIER_NAME)
++    expect(result.after.privateTransporter.address.townOrCity).toBe('Calais')
++    expect(result.response.redirect).toBeTruthy()
++  })
++
++  it('Should re-check it on a notification that already names it', async () => {
++    const kept = rememberTransporter(ORG, haulier())
++
++    const result = await driveHandler(getHandler, {
++      seed: {
++        transporterType: PRIVATE,
++        privateTransporter: { name: HAULIER_NAME }
++      }
++    })
++
++    expect(rowFor(result.view.context, kept.id).checked).toBe(true)
++  })
++
++  it('Should find it by name when the list is searched', async () => {
++    const kept = rememberTransporter(ORG, haulier())
++
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'search', search: 'dupont' }
++    })
++
++    expect(result.view.context.transporterRows.map((row) => row.id)).toEqual([
++      kept.id
++    ])
++  })
++
++  // Another organisation must not be offered it, and must not be able to pick
++  // it by guessing its id either.
++  it('Should refuse a pick of a transporter another organisation added', async () => {
++    const kept = rememberTransporter('5900002', haulier())
++
++    const result = await driveHandler(postHandler, {
++      payload: { action: 'save', transporter: kept.id }
++    })
++
++    expect(result.view.context.errors.transporter).toBeTruthy()
++    expect(result.after.transporterType).toBeUndefined()
++  })
++})

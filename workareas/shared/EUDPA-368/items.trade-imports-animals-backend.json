@@ -10,9 +10,9 @@
       "issue": "AnimalIdentifier is missing identificationDetails and description — the ticket's AC lists 5 per-unit fields (tattoo, horse name, identification details, description, permanent address) but only 3 of those plus microchip/earTag/passport/tattoo/horseName/permanentAddress are modelled; identificationDetails and description have no slot at all, so those two fields will silently drop just like before the fix",
       "fix": "Add 'private String identificationDetails;' and 'private String description;' to AnimalIdentifier, and wire them through NotificationService/NotificationCopyMapper and the frontend mapper alongside the other per-unit fields",
       "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "Won't Fix — these fields were removed as part of EUDPA-500, so it looks like the ticket hadn't caught up with that change."
     },
     {
       "id": 2,
@@ -22,9 +22,9 @@
       "issue": "PR adds Origin.regionOfOriginCode (AC1) but every Origin(...) call updated by this diff, including the comprehensive post_shouldMapAllFieldsToNotificationAndSave test, passes null for it, and assertNotificationMappedFields() never asserts Origin::getRegionOfOriginCode — so the AC that a submitted region code reaches notification.origin.regionOfOriginCode has no integration coverage",
       "fix": "Pass a real region-code value (e.g. \"UKZZ\") in the Origin(...) built for post_shouldMapAllFieldsToNotificationAndSave and add Origin::getRegionOfOriginCode to the extracting()/containsExactly() assertion in assertNotificationMappedFields",
       "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "c0b4587 — GB-ENG set and asserted on created and persisted in-test; mvn verify green"
     },
     {
       "id": 3,
@@ -34,9 +34,9 @@
       "issue": "deepClone_shouldRoundTripContentFields updates the Origin constructor call for the new regionOfOriginCode field but passes null for it, so the test never exercises deepClone actually round-tripping a non-null region code — the one behaviour this ticket adds to Origin",
       "fix": "Pass a non-null value, e.g. new Origin(\"GB\", \"true\", \"REF-1\", \"UKZZ\"), and assert clone.getOrigin().getRegionOfOriginCode() equals it (or rely on the existing isEqualTo(source.getOrigin()) with a populated value)",
       "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapperTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "c0b4587 — GB-ENG in the Origin; existing isEqualTo covers it"
     },
     {
       "id": 4,
@@ -46,9 +46,9 @@
       "issue": "saveNotification_shouldUpdateNotificationFieldsAndWriteEditedEvent_whenDraft was rewritten to add pass-through coverage for purposeInInternalMarket, destinationCountry, portOfExit and exitDate, but every Origin(...) call in this file (including this one) was mechanically padded with a null 4th arg for the new regionOfOriginCode field rather than exercising a real value — so the field that is AC #1 and that forced the Origin constructor signature change everywhere in this file has no non-null assertion at the NotificationService pass-through layer, the exact layer this PR strengthened for its sibling fields.",
       "fix": "In this same test, set origin's regionOfOriginCode to a non-null value (e.g. new Origin(\"FR\", \"false\", \"REF456\", \"FR-75\")) and assert it flows through on result.getNotification().getOrigin().getRegionOfOriginCode(), matching the treatment already given to the other new fields in this test.",
       "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "c0b4587 — FR-75 in the Origin; existing recursive comparison covers it"
     }
   ]
 }

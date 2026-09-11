@@ -1,0 +1,606 @@
+{
+  "capability": "plants/journey-flow",
+  "areaCode": "PLANTS-FLOW",
+  "specFile": "openspec/specs/plants/journey-flow/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-FLOW-001",
+      "name": "The journey is ordered as nine sections, each a sequence of pages",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-001-A",
+          "name": "The journey's sections run in a fixed order",
+          "coverage": "none",
+          "tests": [],
+          "notes": "GAP: flow.js encodes nine sections (start\u2192commodity\u2192commodityDetails\u2192origin\u2192arrival\u2192destination\u2192parties\u2192contact\u2192review) but no E2E, FIT or unit asserts that product-facing order end to end. Checked journey.spec.ts (happy path walk, not section naming), run.test.js (opening RUN_STEPS, a different list), hub-groups (Overview's four groups)."
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-001-B",
+          "name": "The arrival section sequences its pages in order",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should send arrival status on to the arrival details",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js",
+              "test": "saves a choice, reaches the arrival details and shows it again on return",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/arrival.spec.ts",
+              "test": "the answer is saved, shown again on return, and carries on to the arrival details",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-002",
+      "name": "These flow sections are not the same grouping as the Overview task rows",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-002-A",
+          "name": "A single task row spans pages from more than one flow position",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.test.js",
+              "test": "Should take the commodities row parts from the pages it holds",
+              "strength": "full",
+              "notes": "commodities row holds commodity-type, list and details pages across flow positions"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/start.spec.ts",
+              "test": "the Overview carries the journey strip and the task rows landed so far",
+              "strength": "partial",
+              "notes": "single What are you importing? row; does not open across type/list/details"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-003",
+      "name": "Continuing from any page moves to the next still in scope, and finishing a section returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-003-A",
+          "name": "Continuing skips a page that is not in scope",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should send origin past arrival status to the details for a potato notification",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js",
+              "test": "sends a potato notification from origin past the question to the details",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/arrival.spec.ts",
+              "test": "a potato notification is never asked the question and opens the arrival row on the details",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-B",
+          "name": "Finishing the last page of a section returns to Overview",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should fall through to the overview after the run's last step",
+              "strength": "full",
+              "notes": "outside mid-run, section end \u2192 hub"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
+              "test": "saves a country, reaches the arrival details and shows it again on return",
+              "strength": "partial",
+              "notes": "during opening run continues; Save and return / post-run section finish covered by unit + place-of-destination Fit Save and return"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js",
+              "test": "Should redirect to the overview, the page after the run\u2019s last step",
+              "strength": "full",
+              "notes": "outside active run, origin Continue \u2192 hub"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-004",
+      "name": "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-004-A",
+          "name": "Cancel and return to overview discards unsaved input",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js",
+              "test": "Cancel and return to overview reaches the overview without saving",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
+              "test": "Cancel and return to overview reaches the overview without saving",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-004-B",
+          "name": "Save and return to overview commits the input and returns to Overview",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js",
+              "test": "Save and return to overview saves the choice and reaches the overview",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
+              "test": "Save and return to overview saves the country and reaches the overview",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-005",
+      "name": "A page is offered only once its prerequisites are answered and what it asks for is in scope",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-005-A",
+          "name": "A page whose prerequisites are unanswered is passed over",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should skip the arrival-status page while the origin is unanswered",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should skip the arrival-details page while the origin is unanswered",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should skip the place of destination while the origin is unanswered",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-005-B",
+          "name": "Arrival status is passed over for a potato notification",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should skip the arrival-status page for a potato notification",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/arrival-status.fit.spec.js",
+              "test": "sends a potato notification from origin past the question to the details",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/arrival.spec.ts",
+              "test": "a potato notification is never asked the question and opens the arrival row on the details",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-006",
+      "name": "Check your answers, the declaration and the confirmation are reachable only once every task row is ready",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-006-A",
+          "name": "The review section is withheld while a task row is outstanding",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/review.spec.ts",
+              "test": "review stays blocked until the final required row is complete",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/start.spec.ts",
+              "test": "the Overview carries the journey strip and the task rows landed so far",
+              "strength": "partial",
+              "notes": "Check and submit Cannot start yet with no link on a fresh notification"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-006-B",
+          "name": "The review section opens once every row is fulfilled, not applicable or optional",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/review.spec.ts",
+              "test": "review stays blocked until the final required row is complete",
+              "strength": "full",
+              "notes": "after final row, openReview reaches CYA"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/review.spec.ts",
+              "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card",
+              "strength": "full",
+              "notes": "CYA \u2192 declaration \u2192 confirmation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-007",
+      "name": "A notification created in this session runs an opening sequence ending on Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-007-A",
+          "name": "A newly created notification is walked through the opening sequence to Overview",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should open on commodity-type, then commodities, origin, arrival status, arrival details and the destination",
+              "strength": "full",
+              "notes": "opening spine; parties/contact continuation covered separately"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should send every commodity type from identification numbers to contact",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
+              "test": "renders accessible confirmation copy, actions and a bare heading",
+              "strength": "partial",
+              "notes": "completeNotification helper walks opening run to hub before review \u2014 witness via setup, not the named assertion"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/journey.spec.ts",
+              "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification",
+              "strength": "partial",
+              "notes": "full happy path includes opening sequence then review; does not stop to assert hub as sequence end alone"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-007-B",
+          "name": "An opening-sequence step not yet in scope is skipped",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should skip a step whose gate fails",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should skip the arrival-status page for a potato notification",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-007-C",
+          "name": "Revisiting an opening-sequence page after the run has finished does not resume it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js",
+              "test": "Should complete an active opening run on GET",
+              "strength": "full",
+              "notes": "hub GET completes run so later saves do not resume sequence"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js",
+              "test": "Should redirect to the overview, the page after the run\u2019s last step",
+              "strength": "full",
+              "notes": "post-run Continue \u2192 hub"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js",
+              "test": "Save and return to overview saves the choice and reaches the overview",
+              "strength": "partial",
+              "notes": "after answers exist, exit lands on hub rather than next run step"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-008",
+      "name": "A journey opened out of context is sent to its entry page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-008-A",
+          "name": "A deep link to an unknown journey lands on the entry page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js",
+              "test": "Should redirect a journey with neither a run record nor answers to the entry page",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js",
+              "test": "Should redirect a deep link to a page beyond the entry page",
+              "strength": "full",
+              "notes": ""
+            }
+          ],
+          "notes": "entry-guard unit suite; confirm routes still wire the guard \u2014 backlog has historically noted an inert export"
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-008-B",
+          "name": "A journey carrying answers the user entered opens where it was asked for",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js",
+              "test": "Should admit a journey holding a committed user answer",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-009",
+      "name": "Only answers the user entered count as starting a journey",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-009-A",
+          "name": "A journey holding only system-populated values is treated as unstarted",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js",
+              "test": "Should ignore a flow-only key, which resolves to no obligation",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js",
+              "test": "Should treat a journey whose only answer is a flow-only key as fresh",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-010",
+      "name": "A collection page reached by changing an answer stays in that context until its own finishing action",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-010-A",
+          "name": "Changing a commodity line while changing stays on the collection until finishing",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/review.spec.ts",
+              "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers",
+              "strength": "full",
+              "notes": "Change commodity \u2192 details \u2192 list Save and continue \u2192 CYA with updated quantity"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+              "test": "renders saved answers, scoped cards and accessible Change links that return to review",
+              "strength": "partial",
+              "notes": "Change returns to review; collection intermediate less explicit than e2e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-011",
+      "name": "A journey reached out of context continues from the entry page through the next step",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-011-A",
+          "name": "Saving the entry page after a redirect continues through the section",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js",
+              "test": "bounces a deep link from a session that never created the notification, and saving carries on through the section",
+              "strength": "full",
+              "notes": "hub deep-link \u2192 commodity-type; save continues into the commodity section"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-012",
+      "name": "A page reached from another page, not from the hub directly, ends with only its primary action",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-012-A",
+          "name": "A page reached via a detour offers only its primary action",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js",
+              "test": "ends with the primary control alone",
+              "strength": "full",
+              "notes": "commodities list hides Save/Cancel return-to-overview"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js",
+              "test": "renders the caption, the heading and the category question",
+              "strength": "partial",
+              "notes": "entry sub-page offers Continue / write actions, not hub three-control set \u2014 template comment matches scenario"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-013",
+      "name": "The opening sequence is not the same order as the flow sections, and omits commodity-details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-013-A",
+          "name": "The opening sequence does not treat commodity-details as a step",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should open on commodity-type, then commodities, origin, arrival status, arrival details and the destination",
+              "strength": "full",
+              "notes": "RUN_STEPS id list has commodities then origin \u2014 no commodity-details page id"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

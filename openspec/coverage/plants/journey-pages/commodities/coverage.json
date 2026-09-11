@@ -1,0 +1,134 @@
+{
+  "capability": "plants/journey-pages/commodities",
+  "areaCode": "PLANTS-COMMODITIES",
+  "specFile": "openspec/specs/plants/journey-pages/commodities/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-COMMODITIES-001",
+      "name": "The page lists every saved line, showing its category, genus or variety, and quantity",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-001-A",
+          "name": "Every saved line is shown with its key facts",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "renders the caption, the heading and every saved line", "strength": "full", "notes": "two potato lines: category, variety and quantity on each row" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "a potato line is asked for its variety, quantity and intended use", "strength": "partial", "notes": "asserts one list row carries category, variety and quantity after save" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "a plants-for-planting line names its genus, species and codes", "strength": "partial", "notes": "list row shows category, genus label and quantity" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITIES-002",
+      "name": "A consignment with no line at all is sent straight to the entry sub-page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-002-A",
+          "name": "Opening the list with no line saved opens the entry sub-page instead",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "sends a consignment with no line straight to the entry page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITIES-003",
+      "name": "Change opens the entry sub-page pre-filled for that line",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-003-A",
+          "name": "Change reopens a line's saved values",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "sends Change to the entry page for that line", "strength": "full", "notes": "Variety prefilled Maris Piper" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "Change reopens a saved line and Remove drops it", "strength": "full", "notes": "Change on first of two lines; Variety value asserted" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITIES-004",
+      "name": "Remove takes the named line off the list, and removing the last line reopens the entry sub-page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-004-A",
+          "name": "Removing one of several lines leaves the others intact",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "removes the line the Remove button names", "strength": "full", "notes": "Maris Piper gone, King Edward kept" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "Change reopens a saved line and Remove drops it", "strength": "full", "notes": "after Remove, one row remains and table no longer contains Maris Piper" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITIES-004-B",
+          "name": "Removing the only line reopens the entry sub-page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "sends a trader who removed the last line back to the entry page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITIES-005",
+      "name": "A change of commodity type that removes lines is reported on this page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-005-A",
+          "name": "The list reports what a type change removed",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "reports what a change of type removed, and offers a fresh start", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "changing the commodity type removes the lines the new type cannot hold", "strength": "full", "notes": "removed banner, empty state, table count 0" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITIES-006",
+      "name": "The page ends with its primary action alone, and continuing leaves the section for origin",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-006-A",
+          "name": "The page offers only its primary action",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "ends with the primary control alone", "strength": "full", "notes": "save-and-continue visible; save-and-return and cancel-and-return hidden" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITIES-006-B",
+          "name": "Continuing with at least one line leaves the section for origin",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "leaves the section for the origin page on Save and continue", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "the commodities task row reads Completed once the section is answered", "strength": "full", "notes": "continue from list lands on /origin; Overview commodities row then Completed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-COMMODITIES-007",
+      "name": "The back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITIES-007-A",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should send Back to the overview", "strength": "full", "notes": "asserts backLink is the hub path; no fit/e2e follows the link in the browser" }
+          ]
+        }
+      ]
+    }
+  ]
+}

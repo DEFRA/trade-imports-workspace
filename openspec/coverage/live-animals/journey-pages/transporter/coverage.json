@@ -5,49 +5,49 @@
   "requirements": [
     {
       "id": "REQ-TRANSPORTER-001",
-      "name": "The page asks the transporter type, with nothing chosen in advance",
-      "coverage": "partial",
+      "name": "The list shows every known transporter in headed columns, with a status tag",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-001-A",
-          "name": "The page presents its question with no type preselected",
-          "coverage": "partial",
+          "name": "The list shows every transporter's key facts under the right column",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts heading, Commercial option and save — does not assert the Private option" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter.spec.ts", "test": "leaves the transporter type unchecked on load", "strength": "partial", "notes": "only asserts Commercial is unchecked, not every type" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "renders transporter guidance and branch options", "strength": "partial", "notes": "asserts every type radio and hint; does not assert none are checked on first open" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "lists every transporter the service knows about in headed columns, each row showing its address, approval number and type", "strength": "full", "notes": "asserts column order by position (select, Name, Address, Approval number, Type, Status) and a private transporter's blank approval-number cell" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-001-B",
+          "name": "An approved transporter is tagged green, a newly added one magenta",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "tags an approved transporter green and a newly added one pink", "strength": "full", "notes": "test title says 'pink', asserted class is govuk-tag--magenta — same tag, spec uses the CSS/GDS colour name" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSPORTER-002",
-      "name": "A chosen transporter type is accepted",
+      "name": "The list can be searched by name, approval number or address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-002-A",
-          "name": "Choosing a transporter type saves without error",
+          "name": "Searching narrows the list by name, approval number, or address",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter.spec.ts", "test": "accepts a valid transporter type", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial branch selection routes to its address-book page", "strength": "full", "notes": "commercial save succeeds and lands on transporter selection" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch selection routes to its details page and persists on back", "strength": "full", "notes": "private save succeeds and lands on private transporter details" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by name leaves only the matching transporter on the list", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by approval number finds the transporter it belongs to", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "searching by address finds the transporter at it", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "carries a labelled search, hinted with what it matches, above the list", "strength": "full", "notes": "" }
           ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-TRANSPORTER-003",
-      "name": "The page explains that only a DAERA-authorised transporter is valid, not an EU-authorised one",
-      "coverage": "full",
-      "scenarios": [
+        },
         {
-          "id": "SCN-TRANSPORTER-003-A",
-          "name": "The page carries the authorisation guidance and a link to more detail",
+          "id": "SCN-TRANSPORTER-002-B",
+          "name": "A search matching nothing says so, rather than showing an empty table",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "renders transporter guidance and branch options", "strength": "full", "notes": "asserts DAERA-valid and EU-not-valid copy plus the guidance link href and target=_blank; not covered in E2E" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "says so when nothing matches, rather than showing an empty table", "strength": "full", "notes": "" }
           ]
         }
       ]

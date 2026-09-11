@@ -5,55 +5,83 @@
   "requirements": [
     {
       "id": "REQ-OB-TRANSPORTER-001",
-      "name": "The transporter type decides which transporter record applies",
+      "name": "A transporter is chosen from one combined list, not asked for by type first",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OB-TRANSPORTER-001-A",
-          "name": "Choosing Commercial asks for a commercial transporter only",
+          "name": "The transporter list offers commercial and private transporters together",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "Commercial → select page; Private skips select and opens private details" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial branch selection routes to its address-book page", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "commercial in-scope, private out-of-scope when type is Commercial", "strength": "full", "notes": "" }
-          ]
-        },
-        {
-          "id": "SCN-OB-TRANSPORTER-001-B",
-          "name": "Choosing Private asks for private transporter details only",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "Private → details page; Commercial walks to select instead" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch selection routes to its details page and persists on back", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should walk the transport section, skipping the spokes the type gates out", "strength": "full", "notes": "Private → /transporters/private; Commercial → /transporters/select" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "lists every transporter the service knows about in headed columns, each row showing its address, approval number and type", "strength": "full", "notes": "both commercial and private records rendered in the one table" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter.spec.ts", "test": "lists both a commercial and a private transporter", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-OB-TRANSPORTER-002",
-      "name": "Changing the transporter type discards the record the previous type called for",
+      "name": "Adding a transporter not on the list asks its type first, to decide which form to show",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OB-TRANSPORTER-002-A",
-          "name": "Returning to Commercial shows no transporter selected",
+          "name": "Adding a commercial transporter asks its type, then the commercial form",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "Commercial → save transporter → Private → Commercial: no radio checked on select" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "purges a stored commercialTransporter address when type flips to Private", "strength": "full", "notes": "" }
-          ],
-          "notes": "No FIT wipe round-trip."
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial branch routes to the add-commercial form", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "" }
+          ]
         },
         {
           "id": "SCN-OB-TRANSPORTER-002-B",
-          "name": "Returning to Private shows an empty details form",
+          "name": "Adding a private transporter asks its type, then the private form",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "Private → save details → Commercial → Private: name and country empty" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "purges a stored privateTransporter address when type flips to Commercial", "strength": "full", "notes": "" }
-          ],
-          "notes": "No FIT wipe round-trip."
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch routes to its details page and persists on back", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OB-TRANSPORTER-002-C",
+          "name": "Completing an add returns to Overview, and the record does not join the list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "shows a hand-entered transporter on the transporter list as no pick, leaving it alone", "strength": "full", "notes": "adds a commercial transporter, reopens /transporters, asserts zero checked inputs, then confirms the add-commercial form still holds the saved values on a further visit — resolves what was previously a gap in the opposite direction than assumed" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "partial", "notes": "confirms the Overview redirect half only" }
+          ]
+        },
+        {
+          "id": "SCN-OB-TRANSPORTER-002-D",
+          "name": "The type question returns to the list rather than forward",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "the type question goes back to the list", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-TRANSPORTER-003",
+      "name": "Changing the add-detour's type discards the record the previous type held",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-TRANSPORTER-003-A",
+          "name": "Returning to Commercial after adding as Private shows an empty commercial form",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "adds Commercial, switches to Private, switches back to Commercial and asserts the form is empty" }
+          ]
+        },
+        {
+          "id": "SCN-OB-TRANSPORTER-003-B",
+          "name": "Returning to Private after adding as Commercial shows an empty private form",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "adds Private, switches to Commercial, switches back to Private and asserts the form is empty" }
+          ]
         }
       ]
     }

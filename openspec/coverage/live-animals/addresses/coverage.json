@@ -36,36 +36,51 @@
     },
     {
       "id": "REQ-ADDR-002",
-      "name": "Four roles stay linked to the address book, and two hold a copy",
+      "name": "Every role resolves live from the address book while a notification is not yet submitted",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDR-002-A",
-          "name": "Editing a linked address changes what the draft notification shows",
+          "name": "Editing a linked address changes what a draft notification shows",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "editing a linked address in the address book changes what the draft notification shows", "strength": "full", "notes": "asserts hub row name and check-your-answers town/postcode after an address-book edit" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "editing a linked address in the address book changes what the draft notification shows", "strength": "full", "notes": "asserts hub row name and check-your-answers town/postcode after an address-book edit (consignor)" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "editing a linked place of origin in the address book changes what the draft notification shows", "strength": "full", "notes": "confirms place of origin now live-links the same as consignor, since the status-based freeze model replaced the old role-based linked/copied split" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-013",
+      "name": "A submitted notification freezes its addresses, and resumes live resolution once amended",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-013-A",
+          "name": "A submitted notification's address is unaffected by a later edit to the record",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit does not change the submitted view, then shows live on amend", "strength": "full", "notes": "submits with a chosen place-of-origin address, renames the book record, and confirms the submitted view still shows the original name/town" }
           ]
         },
         {
-          "id": "SCN-ADDR-002-B",
-          "name": "Editing the record behind a copied role leaves the notification unchanged",
-          "coverage": "partial",
+          "id": "SCN-ADDR-013-B",
+          "name": "Amending a submitted notification returns its addresses to live resolution",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.test.js", "test": "Should pass an inline party through without reading the book (D24, D26)", "strength": "partial", "notes": "proves place of origin and contact are never re-read from the book, so an edit cannot propagate — no E2E edits a copied role's source record and re-checks the notification" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/journeys/persistence/persistence-notification.spec.ts", "test": "submitted notification persists the journey answers and reloads read-only", "strength": "partial", "notes": "asserts placeOfOrigin and consignment are stored as copies without addressId; does not edit the book afterwards" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit does not change the submitted view, then shows live on amend", "strength": "full", "notes": "same test continues past the freeze assertion — starting amend shows the renamed address, cancelling the amendment reverts to the frozen original" }
           ]
         }
       ]
     },
     {
       "id": "REQ-ADDR-003",
-      "name": "Deleting an address clears the roles linked to it and leaves the roles that copied it",
+      "name": "Deleting an address behind a role clears it while the notification is not yet submitted, but leaves a submitted notification unaffected",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDR-003-A",
-          "name": "Deleting a linked address clears it from the notification and hides it from the picker",
+          "name": "Deleting a linked address clears it from a draft notification and hides it from the picker",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-live-link.spec.ts", "test": "deleting a linked address treats it as never entered and hides it from the picker", "strength": "full", "notes": "" }
@@ -73,10 +88,10 @@
         },
         {
           "id": "SCN-ADDR-003-B",
-          "name": "Deleting the record behind a copied role leaves that role intact",
-          "coverage": "partial",
+          "name": "Deleting the record behind a submitted notification's role leaves it unaffected",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.test.js", "test": "Should keep an inline party whose source address has been deleted", "strength": "partial", "notes": "proves withoutUnresolvedPartyRefs keeps the inline copy when the book no longer holds the source — no E2E deletes the source behind place of origin or contact and re-checks the hub" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/addresses-submit-freeze.spec.ts", "test": "deleting the book record after submit does not change the submitted view or error", "strength": "full", "notes": "submits with a chosen place-of-origin address, deletes the book record, and confirms the submitted view is unaffected with no error summary shown" }
           ]
         }
       ]

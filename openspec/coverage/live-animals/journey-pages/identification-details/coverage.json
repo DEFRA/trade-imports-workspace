@@ -94,7 +94,7 @@
     },
     {
       "id": "REQ-IDENT-006",
-      "name": "The identifier fields offered for an animal depend on its commodity",
+      "name": "The identifier fields offered for an animal depend on its commodity, and a commodity with none of its own gets no panel",
       "coverage": "full",
       "scenarios": [
         {
@@ -102,18 +102,18 @@
           "name": "A commodity with typed identifiers shows only its own identifier fields",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "cats: passport/tattoo/address on; ear tag/horse/free-text off; no Country" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "cats: passport/tattoo/address on; ear tag/horse off; no Country" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "cow/horse/fish matrix including permanent-address absent on cattle" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should show only the commodity-gated fields per card — typed for Cats with the address, no fallbacks", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-IDENT-006-B",
-          "name": "A commodity with no typed identifiers shows only the free-text fallback",
+          "name": "A commodity with no identifier of its own earns no panel",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no typed identifier shows only the free-text fallbacks, and one satisfies the group", "strength": "full", "notes": "fish: only free-text; identification details alone saves" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "partial", "notes": "shows fish free-text fields — does not prove either alone is enough to save" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no panel, while the lines that have one keep theirs", "strength": "full", "notes": "corrected citation — test renamed from the old free-text-fallback title; mixed Cow+Fish consignment, Fish line has no card while Cow's still shows" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "asserts #identification-card-2 (fish) has count 0 — no panel at all, not a free-text one" }
           ]
         }
       ]

@@ -5,81 +5,126 @@
   "requirements": [
     {
       "id": "REQ-CPH-001",
-      "name": "The page asks for the CPH number, starting empty",
+      "name": "The page asks for the CPH number as three labelled, sized boxes, starting empty",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CPH-001-A",
-          "name": "The page presents its question with the field empty",
+          "name": "The page presents three labelled, sized boxes with nothing entered",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/cph-number.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts heading, field and save — not the empty-on-load claim" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/cph-number.spec.ts", "test": "leaves the CPH number empty on load", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "asserts label and hint only" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "takes the number in three boxes sized to its parts", "strength": "full", "notes": "asserts width/maxlength classes and visible on-screen labels for all three boxes" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/cph-number.spec.ts", "test": "leaves the CPH number empty on load", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-001-B",
+          "name": "The group carries one hint describing the whole number",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "describes the whole number once, in the real 2/3/4 grouping", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CPH-002",
-      "name": "A valid CPH number is accepted with its separators stripped",
+      "name": "A CPH number entered across the three boxes is accepted, saved as nine digits, and split back on return",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CPH-002-A",
-          "name": "Entering a valid CPH number saves without error",
+          "name": "Entering a complete CPH number saves without error",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/cph-number.spec.ts", "test": "accepts a valid CPH number", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "strips slashes, saves a valid CPH number, redirects and persists it", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, continues the run and comes back split", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CPH-002-B",
-          "name": "Slashes typed in the CPH number are stripped before it is held",
+          "name": "Returning to the page splits the saved number back into its three boxes",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "strips slashes, saves a valid CPH number, redirects and persists it", "strength": "full", "notes": "fills 123/456/789 and asserts the field holds 123456789 on return" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "scope/obligation half belongs under journey-obligations; the slash-strip assertion (hub row shows 123456789 after typing 12/345/6789) is page behaviour used here" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, continues the run and comes back split", "strength": "full", "notes": "fills 12/345/6789, saves, revisits the page and asserts each box holds its own part" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CPH-003",
-      "name": "Saving without a CPH number is rejected",
+      "name": "Submitting the page untouched asks the whole question again, at the first box",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CPH-003-A",
-          "name": "Saving with the field empty shows an error summary",
+          "name": "Submitting with every box empty names the whole question once",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/cph-number.spec.ts", "test": "shows an error summary when submitted empty", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: when empty, links to and focuses the preserved empty input", "strength": "full", "notes": "stronger than the E2E: names focus and preserved empty value" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/cph-number.spec.ts", "test": "shows an error summary when submitted empty", "strength": "partial", "notes": "confirms an error summary appears; does not assert the single-error/county-focus specifics" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: an untouched page asks the whole question at the first box", "strength": "full", "notes": "asserts the single cphRequired error, county box focused and still empty" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CPH-004",
-      "name": "An incorrectly formatted CPH number is rejected with its own error, preserving what was typed",
+      "name": "Each box is validated on its own length and digits, and every wrong box is named at once",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CPH-004-A",
-          "name": "A CPH number of the wrong length is rejected, keeping what was typed",
+          "name": "A box of the wrong length is named, keeping every value typed",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: when not 9 digits, links to and focuses the preserved raw value", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: a short part names that part and keeps every value", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CPH-004-B",
-          "name": "A CPH number containing non-digit characters is rejected, keeping what was typed",
+          "name": "A box left blank while others are filled is named specifically",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: when containing non-digits, links to and focuses the preserved raw value", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: a missing part names that part rather than the whole number", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-004-C",
+          "name": "A box containing a non-digit character is named, keeping what was typed",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: a non-digit part names that part and keeps what was typed", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-004-D",
+          "name": "Every wrong box is named at once, not one at a time",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: every wrong part is named at once", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-004-E",
+          "name": "The error marks the group, not the individual boxes",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "CPH validation: the error marks the whole question, not the individual boxes", "strength": "full", "notes": "one govuk-form-group--error, no per-box error messages, all three boxes carry govuk-input--error" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CPH-005",
+      "name": "Help explaining what a CPH number is stays collapsed until opened",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CPH-005-A",
+          "name": "The help text stays hidden until the expander is opened",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "keeps the CPH help collapsed above the field until it is opened", "strength": "full", "notes": "" }
           ]
         }
       ]

@@ -1,0 +1,119 @@
+{
+  "capability": "plants/journey-obligations/parties",
+  "areaCode": "PLANTS-OB-PARTIES",
+  "specFile": "openspec/specs/plants/journey-obligations/parties/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OB-PARTIES-001",
+      "name": "Plants for planting and wood and cut trees require a consignor; potatoes do not",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-001-A",
+          "name": "A plants-for-planting or wood-and-cut-trees notification is asked for a consignor",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Plants for planting: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "lands on consignor URL; blank save refused; Overview consignor Completed" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Wood and cut trees: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "same path for wood" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "shows consignor only for plants and wood notifications", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-001-B",
+          "name": "A potatoes notification is not asked for a consignor",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "full", "notes": "opening run lands on identification-numbers; Overview has no consignor row" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "hides the row and rejects a deep link after switching to potatoes", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "shows consignor only for plants and wood notifications", "strength": "partial", "notes": "also asserts potatoes hide the row" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-PARTIES-002",
+      "name": "Plants for planting asks for a supplier identification number; potatoes ask for producer and crop numbers instead",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-002-A",
+          "name": "Plants for planting asks for the supplier number only",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Plants for planting: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "supplier visible; producer/crop count 0" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "plants-for-planting branch of the per-type describe" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-002-B",
+          "name": "Potatoes asks for producer and crop numbers, not supplier",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "full", "notes": "producer and crop visible and required; supplier count 0" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "potatoes branch of the per-type describe" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-002-C",
+          "name": "Wood and cut trees asks for none of the three numbers",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Wood and cut trees: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "producer/crop/supplier absent; only optional consignment" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "renders only applicable fields, saves and reloads them and completes the hub row", "strength": "full", "notes": "wood-and-cut-trees branch shows only consignmentNumber" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-PARTIES-003",
+      "name": "A consignment number is optional for every commodity type",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-003-A",
+          "name": "The consignment number is offered whatever the commodity type",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Plants for planting: consignor is required, saves, and continues to scoped identification numbers", "strength": "full", "notes": "consignment visible; blank save allowed then later filled" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "full", "notes": "consignment visible alongside producer/crop" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "wood can leave the optional reference blank and the overview labels it Optional", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-PARTIES-004",
+      "name": "Changing commodity type clears the answers that leave scope, but keeps the consignment number",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-004-A",
+          "name": "Changing from a consignor-requiring type clears the consignor",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "changing type clears parties answers that leave scope and retains the consignment reference", "strength": "full", "notes": "after potatoes→plants, consignor Not yet started and not checked" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "hides the row and rejects a deep link after switching to potatoes", "strength": "full", "notes": "after switch back to wood, previously saved consignor is not checked" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-004-B",
+          "name": "Changing identification-number scope clears the numbers that no longer apply",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "changing type clears parties answers that leave scope and retains the consignment reference", "strength": "full", "notes": "supplier empty after potatoes→plants; producer/crop empty after plants→potatoes" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "changing commodity type purges the supplier number and preserves the common reference", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-PARTIES-004-C",
+          "name": "The consignment number survives a commodity-type change",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "changing type clears parties answers that leave scope and retains the consignment reference", "strength": "full", "notes": "SHIP_2027 retained across plants↔potatoes" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js", "test": "changing commodity type purges the supplier number and preserves the common reference", "strength": "full", "notes": "REF retained" }
+          ]
+        }
+      ]
+    }
+  ]
+}

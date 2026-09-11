@@ -1,0 +1,89 @@
+{
+  "capability": "plants/journey-pages/declaration",
+  "areaCode": "PLANTS-DECLARATION",
+  "specFile": "openspec/specs/plants/journey-pages/declaration/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-DECLARATION-001",
+      "name": "The page asks the user to confirm the declaration, having told them what they are agreeing to",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DECLARATION-001-A",
+          "name": "The page presents the declaration's statements, the date, and its confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "renders the plants declaration and Back navigation with no serious accessibility violations", "strength": "full", "notes": "title, every body statement, unchecked checkbox, date of declaration" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js", "test": "Should render the London date, plants statements, Back link and saved checkbox", "strength": "partial", "notes": "asserts pageTitle, submissionDate, copy and backLink — does not assert statement text in the rendered body" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DECLARATION-002",
+      "name": "Continuing without confirming the declaration is rejected, focusing the confirmation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DECLARATION-002-A",
+          "name": "Continuing with the declaration unconfirmed shows an error summary that focuses the confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "asserts error summary text and stays on declaration — does not follow the link or assert focus" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "requires confirmation, focuses the checkbox from the summary and has an accessible error state", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js", "test": "Should refuse invalid declaration %j without writing and preserve the input", "strength": "partial", "notes": "400 + errorSummary href #declaration; does not assert focus" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DECLARATION-003",
+      "name": "The page offers a route back to check your answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DECLARATION-003-A",
+          "name": "The back link opens check your answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "linkBack from declaration returns to CYA heading" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "renders the plants declaration and Back navigation with no serious accessibility violations", "strength": "full", "notes": "Back click lands on notification-view" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DECLARATION-004",
+      "name": "The declaration page is not shown once the notification has been submitted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DECLARATION-004-A",
+          "name": "Requesting the declaration page for a submitted notification redirects to confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "accepts a late notification and shows the stored late banner on the read-only view", "strength": "full", "notes": "after submit, goto declaration URL lands on confirmation" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js", "test": "Should redirect submitted GET and POST without changing the original flag", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DECLARATION-005",
+      "name": "Confirming the declaration submits the notification and opens confirmation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DECLARATION-005-A",
+          "name": "Confirming and continuing opens confirmation for an on-time notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "submit → confirmation URL with reference; lateBanner count 0" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "submits an on-time notification without a late banner", "strength": "full", "notes": "confirmation title then read-only CYA with no late heading" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "full", "notes": "happy-path submit through declaration to confirmation" }
+          ]
+        }
+      ]
+    }
+  ]
+}

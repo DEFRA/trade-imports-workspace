@@ -1,0 +1,148 @@
+{
+  "capability": "plants/journey-obligations/commodity-selection",
+  "areaCode": "PLANTS-OB-COMMODITY",
+  "specFile": "openspec/specs/plants/journey-obligations/commodity-selection/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OB-COMMODITY-001",
+      "name": "A notification declares one commodity type, which decides the categories on offer",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-001-A",
+          "name": "Potatoes narrows a line to the two potato categories",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "offers only the categories the chosen commodity type allows", "strength": "full", "notes": "asserts exactly seed-potatoes and ware-potatoes radios, count 2" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "each commodity type offers only the categories that belong to it", "strength": "full", "notes": "potatoes branch: seed and ware visible, categoryRadios count 2" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-001-B",
+          "name": "Plants for planting narrows a line to the two planting categories",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "each commodity type offers only the categories that belong to it", "strength": "full", "notes": "plants-for-planting branch: plants for planting and trees for planting visible, count 2" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "hints the two plants categories that need explaining", "strength": "partial", "notes": "asserts both plants category hints are shown; does not re-assert radio count 2" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-001-C",
+          "name": "Wood and cut trees narrows a line to the five wood categories",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "offers the five wood categories with the preservative guidance", "strength": "full", "notes": "asserts count 5 and the wood-specific category hint" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "each commodity type offers only the categories that belong to it", "strength": "full", "notes": "wood branch: cut coniferous trees visible, categoryRadios count 5" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-COMMODITY-002",
+      "name": "A notification must hold at least one commodity line",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-002-A",
+          "name": "A notification with no line at all is rejected at continue",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "holds an emptied consignment at the collection floor", "strength": "full", "notes": "changes type to empty the list, then continue is refused naming commodityLines, focus on #commodityLines" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "an emptied consignment is held at the at-least-one error", "strength": "full", "notes": "error summary contains Add at least one commodity" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-COMMODITY-003",
+      "name": "Every commodity line declares a category and a quantity",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-003-A",
+          "name": "A line cannot be saved without a category",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "continuing with no category shows the error and focuses the first radio", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-003-B",
+          "name": "A line cannot be saved without a valid quantity",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "refuses a quantity that is not a whole number above zero", "strength": "full", "notes": "quantity '0' rejected" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "keeps what was typed when a required field is left blank", "strength": "full", "notes": "blank quantity rejected, variety preserved" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-COMMODITY-004",
+      "name": "A line's category decides which further fields it is asked for",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-004-A",
+          "name": "A potato line asks for variety and intended use, not genus or commodity code",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "asks a potato line for its variety, quantity and intended use", "strength": "full", "notes": "also asserts genus and commodityCode fields have count 0" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "a potato line is asked for its variety, quantity and intended use", "strength": "partial", "notes": "saves a potato line and asserts list row; does not assert genus/commodity-code absence on the details page" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-004-B",
+          "name": "A trees-for-planting line asks for a size as well as genus, species and commodity code",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "asks a trees-for-planting line for its size as well", "strength": "full", "notes": "asserts species, eppoCode and sizeOfTree all visible; genus/commodity-code implied by the category's field set" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-004-C",
+          "name": "A conifer-wood line asks for phytosanitary treatments, not a genus",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "asks a conifer wood line for treatments and no genus", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "a wood line is asked for its treatments, and a cut-tree line for their size", "strength": "full", "notes": "cut coniferous trees: treatments and size visible, genus count 0" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-004-D",
+          "name": "A hardwood line's genus is narrowed to the three hardwood genera",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/details.fit.spec.js", "test": "narrows the genus type-ahead to the hardwood genera", "strength": "full", "notes": "hardwood-chips: Castanea offered, Picea (full-list-only genus) absent" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-COMMODITY-005",
+      "name": "Changing the commodity type discards lines that no longer match",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-005-A",
+          "name": "Changing type warns before any line is removed",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "warns before a change that would remove saved lines", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "changing the commodity type removes the lines the new type cannot hold", "strength": "partial", "notes": "asserts linesWarning visible before saving the new type" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "renders the caption, the legend as the page heading and the hint", "strength": "partial", "notes": "asserts the warning is hidden when no lines exist yet — the positive show-when-lines-exist case is the list.fit test above" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-COMMODITY-005-B",
+          "name": "Confirming a changed type reports what was removed",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js", "test": "reports what a change of type removed, and offers a fresh start", "strength": "full", "notes": "1 potato line removed, wood type named, empty-state and Add another shown" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/commodities.spec.ts", "test": "changing the commodity type removes the lines the new type cannot hold", "strength": "full", "notes": "removed banner names wood type; empty state; table count 0" }
+          ]
+        }
+      ]
+    }
+  ]
+}

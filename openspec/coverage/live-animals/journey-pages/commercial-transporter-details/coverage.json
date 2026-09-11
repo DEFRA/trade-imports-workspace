@@ -1,0 +1,102 @@
+{
+  "capability": "live-animals/journey-pages/commercial-transporter-details",
+  "areaCode": "COMMERCIAL-TRANS",
+  "specFile": "openspec/specs/live-animals/journey-pages/commercial-transporter-details/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-COMMERCIAL-TRANS-001",
+      "name": "The page asks for the transporter's name, authorisation number and address, showing the country fixed to Northern Ireland",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-001-A",
+          "name": "The page presents its questions with the country fixed",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "asks for the authorisation number, the name, the address and the contact details", "strength": "full", "notes": "asserts every field label from copy.commercialTransporterDetails.fields is visible" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "fixes the country to Northern Ireland and does not let the trader change it", "strength": "full", "notes": "confirms the country select is disabled, holds one option, and a hidden input carries the value to the server" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "the commercial branch of the add route opens the form, under the new-transporter caption", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-002",
+      "name": "A complete set of commercial transporter details is saved as one record and reloads into the form",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-002-A",
+          "name": "Completing the details saves them and returns to Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter and persists every value", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMERCIAL-TRANS-002-B",
+          "name": "Returning to the page shows the saved details in the form",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter and persists every value", "strength": "full", "notes": "reopens the page directly and confirms every field, including the fixed country, still holds its saved value" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "re-enters via the add route and confirms approvalNumber and nameOrOrganisationName are pre-filled" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-003",
+      "name": "The page repeats the transporter list's authorisation guidance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-003-A",
+          "name": "The page carries the same authorisation guidance as the list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "opens with the transporter-authorisation guidance the list states", "strength": "full", "notes": "asserts the same copy.transporters.guidance content (lead, conditions, DAERA-valid, EU-not-valid, link) inside this page's own notification banner" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-004",
+      "name": "A blank mandatory field or an over-length one is rejected, preserving every other field entered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-004-A",
+          "name": "A blank mandatory field blocks the save without losing the rest of the details",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty {field} links to and focuses the preserved field", "strength": "full", "notes": "parametrised across all 7 mandatory fields (approval number, name, address line 1, town/city, postcode, email, phone); each run confirms the other fields, including approval number, keep their values" }
+          ]
+        },
+        {
+          "id": "SCN-COMMERCIAL-TRANS-004-B",
+          "name": "An over-length field blocks the save with its value preserved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: {field} over {N} characters links to and focuses the preserved value", "strength": "full", "notes": "parametrised across all 9 length-capped fields (approval number 50, name/address lines 255, town/county 100, postcode 12, email 254, phone 20)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-005",
+      "name": "A completely blank commercial transporter record is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-005-A",
+          "name": "Saving the page with nothing entered succeeds",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "a completely blank commercial transporter record is optional", "strength": "full", "notes": "note for whoever next reviews live-animals/addresses: private-transporter-details has the identical 'a completely blank ... record is optional' fit test and behaviour, but no equivalent requirement documenting it either — same gap, out of scope for this pass" }
+          ]
+        }
+      ]
+    }
+  ]
+}

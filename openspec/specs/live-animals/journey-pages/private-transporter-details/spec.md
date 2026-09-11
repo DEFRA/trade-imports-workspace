@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks for the name and address of a private transporter, keyed in by hand rather than chosen from the address book. The address itself is governed by `live-animals/addresses`. The page is titled "Private transporter details".
+Asks for the name and address of a private transporter, keyed in by hand rather than chosen from the address book. Reached only via "Add a transporter" from the transporter list, after choosing "Private" on the type question — not as a mandatory branch of the transport section itself. The address itself is governed by `live-animals/addresses`. The page is titled "Add private transporter".
 
 ## Requirements
 
@@ -54,3 +54,13 @@ The system MUST reject a blank mandatory field, a field over its maximum length,
 - **GIVEN** the user has entered a country not in the offered list for the private transporter's address, alongside valid values in every other field
 - **WHEN** they try to save
 - **THEN** the save is blocked, the country field is cleared to empty, and every other field still shows what was entered
+
+### Requirement: A completely blank private transporter record is accepted
+**ID**: REQ-PRIVATE-TRANS-004
+The system MUST accept the page being saved with every field left blank, without error, since adding a private transporter this way is itself optional until the trader starts filling it in.
+
+#### Scenario: Saving the page with nothing entered succeeds
+**ID**: SCN-PRIVATE-TRANS-004-A
+- **GIVEN** the user is on the private transporter details page with every field blank
+- **WHEN** they save and continue
+- **THEN** the save succeeds without an error summary

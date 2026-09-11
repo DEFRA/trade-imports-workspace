@@ -1,0 +1,484 @@
+{
+  "capability": "plants/journey-pages/place-of-destination",
+  "areaCode": "PLANTS-PLACE-OF-DESTINATION",
+  "specFile": "openspec/specs/plants/journey-pages/place-of-destination/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-001",
+      "name": "The page asks its destination question under the heading and description the notification's state chooses",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-001-A",
+          "name": "A not-yet-arrived plants or wood notification is asked for the intended destination",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should ask a consignment on its way for the intended destination",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "the question is asked in the state the arrival answer put the notification in",
+              "strength": "full",
+              "notes": "pre-arrival wording"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "renders the caption, the heading, the description and the search box",
+              "strength": "partial",
+              "notes": "potato/pre-arrival intended destination chrome"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-001-B",
+          "name": "An already-arrived plants or wood notification is asked where the consignment is now",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "asks a consignment already in Great Britain where it is now",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should ask a consignment already here where it is now",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "the question is asked in the state the arrival answer put the notification in",
+              "strength": "full",
+              "notes": "post-arrival wording half"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-001-C",
+          "name": "Changing the arrival answer re-asks the destination under the new sentence",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "the question is asked in the state the arrival answer put the notification in",
+              "strength": "full",
+              "notes": "flips arrival then reopens destination"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/arrival.spec.ts",
+              "test": "changing the answer from arrived to not arrived re-labels the question and keeps the date",
+              "strength": "partial",
+              "notes": "arrival re-label; destination re-ask covered in destination.spec"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-001-D",
+          "name": "A potatoes notification is asked for the intended destination",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should ask potatoes for the intended destination",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "a potato notification is asked for the intended destination",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-002",
+      "name": "The page offers search of the organisation address book with a count of results",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-002-A",
+          "name": "The picker opens on the first page of the whole book with its count",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "shows the first page of the organisation address book with its count",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should show the first page of the organisation book, counted against the whole",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-002-B",
+          "name": "Searching narrows the list to matching addresses",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "narrows the results to the search term",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "search narrows the organisation address book, and a term nothing matches says so",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-002-C",
+          "name": "A search matching nothing says so, and clearing restores the book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "says so rather than showing an empty table when nothing matches",
+              "strength": "full",
+              "notes": "nothing-matched half"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should start a new search at the first page",
+              "strength": "partial",
+              "notes": "clear/re-search resets page; restoring whole book also in e2e search flow"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "search narrows the organisation address book, and a term nothing matches says so",
+              "strength": "full",
+              "notes": "includes clear restoring the book"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-003",
+      "name": "Results are paged five at a time, and a selection survives paging and search",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-003-A",
+          "name": "A checked row survives a further search",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "keeps a ticked row while the search narrows the results",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should keep a row already ticked while the results change",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-003-B",
+          "name": "A row ticked on a later page is the one that saves",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "carries a saved address through the paging links",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "results are paged five at a time, and a row ticked on a later page is the one that saves",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-004",
+      "name": "A chosen address is accepted and replaces any previously saved one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-004-A",
+          "name": "Choosing an address saves without error and is shown again on return",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "saves the chosen address, continues to identification numbers and shows it again on return",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-004-B",
+          "name": "Saving a new choice replaces the old one",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "replaces the address already saved rather than keeping both",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should replace an address already referenced rather than keeping both",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-005",
+      "name": "Saving with nothing chosen is refused",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-005-A",
+          "name": "Saving with nothing chosen focuses the first row",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "continuing with nothing chosen shows the error and focuses the first row",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "an address must be chosen before the notification moves on",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-005-B",
+          "name": "Saving with nothing found focuses the search box",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "continuing with nothing found focuses the search box",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should point a refusal at the search box when the search found nothing",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-006",
+      "name": "Deleting the chosen address takes the answer off the notification",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-006-A",
+          "name": "Deleting the chosen record clears the destination on Overview and the page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-animals-tests",
+              "file": "tests/e2e/features/plants/destination.spec.ts",
+              "test": "deleting the chosen address takes the answer off the notification",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+              "test": "Should show no selection for a destination deleted since it was chosen",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-007",
+      "name": "The page offers a full set of save controls and is reachable from Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-007-A",
+          "name": "The page is reachable from the Overview destination row",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "is reachable from the overview destination task row",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-007-B",
+          "name": "Save and return to overview saves the address without continuing the journey",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "Save and return to overview saves the address and reaches the overview",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-007-C",
+          "name": "Cancel and return to overview reaches Overview without saving",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "Cancel and return to overview reaches the overview without saving",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-007-D",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js",
+              "test": "sends Back to the overview",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PLACE-OF-DESTINATION-008",
+      "name": "Completing the destination completes the destination task row",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PLACE-OF-DESTINATION-008-A",
+          "name": "Saving an address completes the destination row",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js",
+              "test": "Should complete the row once an address has been picked",
+              "strength": "full",
+              "notes": "destination hub row Completed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.test.js",
+              "test": "Should complete the destination row once an address is referenced",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

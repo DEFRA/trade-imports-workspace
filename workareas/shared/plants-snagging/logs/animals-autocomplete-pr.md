@@ -13,7 +13,7 @@ shared component in the animals frontend.
 ## Related PRs
 
 - Plants implementation: [DEFRA/trade-imports-plants-frontend #67](https://github.com/DEFRA/trade-imports-plants-frontend/pull/67)
-- Shared E2E visual baselines: [DEFRA/trade-imports-animals-tests #205](https://github.com/DEFRA/trade-imports-animals-tests/pull/205)
+- Matching E2E visual baselines: [DEFRA/trade-imports-animals-tests #210](https://github.com/DEFRA/trade-imports-animals-tests/pull/210)
 
 Merge the coordinated autocomplete PRs together.
 

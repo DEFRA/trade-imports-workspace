@@ -61,8 +61,8 @@ for review; none was merged.
 | snag-002 — place-of-destination heading | frontend `da80c84`; tests `48f1a0e` | plants-frontend [#65](https://github.com/DEFRA/trade-imports-plants-frontend/pull/65); tests [#202](https://github.com/DEFRA/trade-imports-animals-tests/pull/202) |
 | snag-003 — searchable, paged contact picker, deliberately bare | frontend `b4249cf`; tests `6e266b7` | plants-frontend [#66](https://github.com/DEFRA/trade-imports-plants-frontend/pull/66); tests [#203](https://github.com/DEFRA/trade-imports-animals-tests/pull/203) |
 | snag-001 — autocomplete typography and arrow | frontend `832df71`; paired tests `df62507` | plants-frontend [#67](https://github.com/DEFRA/trade-imports-plants-frontend/pull/67); tests [#205](https://github.com/DEFRA/trade-imports-animals-tests/pull/205) |
-| animals autocomplete port | frontend `518d5e94`; Darwin snapshot `5d74378`; Linux snapshot `48e6cbc` | animals-frontend [#314](https://github.com/DEFRA/trade-imports-animals-frontend/pull/314); snapshots are coordinated through tests [#205](https://github.com/DEFRA/trade-imports-animals-tests/pull/205) and published from the matching tests branch |
-| local-lifecycle and configurable commit-trailer workflow fix, plus this workarea | this workspace branch | the workspace PR containing this note |
+| animals autocomplete port | frontend `518d5e94`; Darwin snapshot `5d74378`; Linux snapshot `48e6cbc` | animals-frontend [#314](https://github.com/DEFRA/trade-imports-animals-frontend/pull/314); matching tests [#210](https://github.com/DEFRA/trade-imports-animals-tests/pull/210) |
+| local-lifecycle and configurable commit-trailer workflow fix, plus this workarea | workspace `5271d04` plus the final record update | workspace [#44](https://github.com/DEFRA/trade-imports-workspace/pull/44) |
 
 The per-increment verification ladders and each source-mounted E2E rung passed.
 The final snag-001 cross-service run finished with 257 passed and 1 skipped;
@@ -76,5 +76,5 @@ One product question is deferred in `backlog.json`: the contact picker permits
 a blank save while the destination and consignor pickers require a choice. The
 increment preserves the existing, explicitly tested blank-save behaviour.
 
-Nothing else was left incomplete. The PRs are intentionally unmerged, and the
+Nothing else was left incomplete. All nine PRs are intentionally unmerged, and the
 two plants-frontend files owned by the parallel session were left untouched.

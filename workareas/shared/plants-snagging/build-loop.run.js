@@ -70,9 +70,6 @@ export const meta = {
 //                   path and its GitHub owner/name slug. The animals repos are
 //                   the default; a programme in another repo family (the plants
 //                   frontend and backend, say) overrides the table here
-//   commitTrailer   the attribution trailer lines (newline-separated) the land
-//                   stage appends to every commit — the launching session's
-//                   Co-Authored-By and Claude-Session lines
 //   models          optional model per tier. heavy = implement, the reviewers,
 //                   the adversarial verifiers, judge, fix and CI fix; light = the
 //                   lifecycle and plumbing stages (ticket, branch, baseline,
@@ -91,11 +88,11 @@ export const meta = {
 // id is missing rather than quietly leaving every ticket in the backlog.
 // ---------------------------------------------------------------------------
 const FALLBACK = {
-  workarea: 'shared/plant-products-ched-pp',
+  workarea: 'shared/plants-snagging',
   branch: 'main',
-  scope: 'plant-products',
+  scope: 'high-risk-plants',
   executor: 'claude',
-  lifecycle: 'full',
+  lifecycle: 'local',
   jiraProject: 'EUDPA',
   epic: '',
   jiraInProgressStatus: 'In Progress',
@@ -103,14 +100,26 @@ const FALLBACK = {
   jiraBoard: 13780,
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
+  requireApproval: false,
   repos: {
-    frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
-    backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
+    frontend: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
+    backend: { path: 'repos/trade-imports-plants-backend', github: 'DEFRA/trade-imports-plants-backend' },
     tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
   },
-  models: {},
-  increments: ['pp-053']
+  models: { light: 'sonnet' },
+  commitTrailer:
+    'Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01P7Y2kmdQkQSMgHSAcqLmWs',
+  increments: ['snag-003']
 }
+
+// A parallel interactive session holds an uncommitted spike in the plants
+// frontend working tree (package.json + scripts/obligation-graph.js). This run
+// must neither count it as dirt nor stage, stash or revert it.
+const PARALLEL_SESSION_PATHS = ['package.json', 'scripts/obligation-graph.js']
+const PARALLEL_SESSION_RULE = `PARALLEL SESSION FILES: in the frontend repo the two entries \` M package.json\` and
+\`?? scripts/obligation-graph.js\` are another session's uncommitted work and are NOT this increment's dirt.
+A status that shows only those is CLEAN. Never edit, stage, stash, revert or delete them — a stash must name
+the increment's own paths explicitly (\`git stash push -u -- <paths>\`) rather than sweep the whole tree.`
 const CFG = typeof args === 'object' && args && args.increments ? args : FALLBACK
 
 const WORKAREA_REL = String(CFG.workarea ?? '').replace(/^\/+|\/+$/g, '')
@@ -404,9 +413,13 @@ ${REPO_RULE}
 EVIDENCE: ${evidence}
 TASK:
 1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
-2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for EACH of them — NEVER \`reset --hard\`,
-   NEVER \`clean -fd\`. The stash is recoverable and that is the point.
-3. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
+   This increment also edits the tests repo (${TILDE}/${REPO_PATH.tests}); treat it as one of them.
+2. ${PARALLEL_SESSION_RULE}
+   So list the increment's own changed and untracked paths first (\`git -C ${TILDE}/<repoPath> status --short\`,
+   minus the two parallel-session entries) and stash exactly those:
+   \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}" -- <path> <path> ...\` for EACH repo — NEVER
+   \`reset --hard\`, NEVER \`clean -fd\`. The stash is recoverable and that is the point.
+3. Confirm each tree shows nothing but the two parallel-session entries: \`git -C ${TILDE}/<repoPath> status --short\`.
 4. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG} recording what went red and the
    stash ref, so the next attempt starts informed. Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
 Report the stash refs so the work can be recovered. Note that a stash is machine-local — it does not travel.
@@ -1078,6 +1091,8 @@ TASK:
 1. Determine the increment's repo(s) from its "repo" field and confirm each one is clean:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
+   ${PARALLEL_SESSION_RULE}
+   Also check the tests repo (${TILDE}/${REPO_PATH.tests}) the same way — this increment edits it too.
 2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
    in your summary. Do not switch branches — ${LIFECYCLE === 'full' ? 'an earlier stage owns that' : 'the orchestrator put the repo on the branch it wants built on'}.
 ${LIFECYCLE === 'full'
@@ -1483,6 +1498,11 @@ ${LIFECYCLE === 'full'
    straight onto a default branch.`}
 3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+   ${PARALLEL_SESSION_RULE} If either of those two paths is staged, unstage it (\`git -C ... restore --staged <path>\`)
+   before committing.
+   The tests repo (${TILDE}/${REPO_PATH.tests}) also carries this increment's edits: stage them there too, but
+   commit ONLY the frontend repo — the orchestrator commits the tests repo with the same subject. Say in your
+   summary which tests-repo files are staged.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
    naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and these trailer lines verbatim:
 ${COMMIT_TRAILER}

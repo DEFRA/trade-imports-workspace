@@ -1,0 +1,408 @@
+{
+  "run_id": "plants-snagging",
+  "schema_version": 1,
+  "target": "high-risk-plants-frontend",
+  "notes": "Snagging pass over the first cut of the high-risk plants frontend (2026-09-10). No Jira, no per-increment PR from the loop: each increment is built with `lifecycle: local` on a `fix/NO_JIRA-plants-<slug>` branch the orchestrator cuts in BOTH the plants frontend and the tests repo, the loop implements + reviews + verifies + commits, then the orchestrator runs the full E2E suite, pushes and raises the PRs. Order: snag-002, snag-003, snag-001.",
+  "increments": [
+    {
+      "id": "snag-002",
+      "kind": "fix",
+      "type": "copy",
+      "repo": "frontend",
+      "milestone": "snagging",
+      "gate": null,
+      "dependsOn": [],
+      "status": "done",
+      "sizeGuess": "S",
+      "branch": "fix/NO_JIRA-plants-place-of-destination-heading",
+      "title": "Call the destination page Place of destination, as the task list does",
+      "detail": "The hub task row, the page title and the Welsh title all say 'Place of destination' (features/hub/copy/copy.en.js rows.destination.title; features/place-of-destination/copy/copy.en.js title), but the h1 the page renders for potatoes and for a consignment that has not arrived yet says 'Intended destination' (copy.en.js headings.potatoes and headings['not-yet-arrived']; cy 'Cyrchfan arfaethedig'). The trader clicks one name and lands on another. Make the pre-arrival heading 'Place of destination' / 'Man cyrchfan'. The already-arrived heading 'Where is the consignment now?' is a different question and stays. The check-answers card takes its title from the same headings (features/check-answers/view-model/index.js:185 destinationCopy.headings[arrivalState]), so the CYA card renames with it — update the E2E specs that assert the card by name.",
+      "filesToTouch": [
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js",
+          "action": "edit",
+          "what": "headings.potatoes and headings['not-yet-arrived'] become 'Place of destination'; headings['already-arrived'] and every description unchanged (the prose 'still on its way to its intended destination' describes the concept and stays). Update the AWAITING THE COPY PASS comment so it no longer claims the heading is the spec's wording."
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.cy.js",
+          "action": "edit",
+          "what": "headings.potatoes and headings['not-yet-arrived'] become 'Man cyrchfan' (the Welsh the bundle already uses for `title`); already-arrived unchanged"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.test.js",
+          "action": "edit",
+          "what": "the 'Should ask for the intended destination until the consignment is here' case pins 'Place of destination' / 'Man cyrchfan' for potatoes and not-yet-arrived and is renamed to say so; add an assertion that the pre-arrival heading equals copy.title (en and cy) so the page and the task row cannot drift apart again"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js",
+          "action": "edit",
+          "what": "rename the two cases that say 'for the intended destination' (around lines 153 and 160) to 'for the place of destination' — the assertions already go through copy.headings and need no change"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/spec/journey-spec.json",
+          "action": "edit",
+          "what": "pages[place-of-destination] headingByState (find it with grep -n headingByState): potatoes and not-yet-arrived become 'Place of destination' so the in-repo spec agrees with the shipped copy; leave every other key alone"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/destination.spec.ts",
+          "action": "edit",
+          "what": "INTENDED_DESTINATION_HEADING becomes 'Place of destination' and is renamed PRE_ARRIVAL_DESTINATION_HEADING; the test title 'a potato notification is asked for the intended destination' becomes '... for the place of destination'; the description constants are unchanged"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/arrival.spec.ts",
+          "action": "edit",
+          "what": "the INTENDED_DESTINATION_HEADING constant (line ~37) becomes 'Place of destination' (rename as above); the pre-arrival hint constant on line ~64 is prose copy the arrival-status page still renders and is unchanged"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/review.spec.ts",
+          "action": "edit",
+          "what": "card('Intended destination') (line ~248) becomes card('Place of destination')"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/journey.spec.ts",
+          "action": "edit",
+          "what": "card('Intended destination') (line ~134) becomes card('Place of destination')"
+        },
+        {
+          "repo": "tests",
+          "path": "page-objects/plants/plants-place-of-destination-page.ts",
+          "action": "edit",
+          "what": "the class docblock says potatoes and a consignment still on its way are asked for the place of destination"
+        }
+      ],
+      "acceptanceCriteria": [
+        "GET destinations/select for a potato notification renders an h1 reading exactly 'Place of destination', and the same for plants or wood whose arrival status is not-yet-arrived (or unanswered); the Welsh h1 is 'Man cyrchfan'",
+        "GET destinations/select for plants or wood already arrived still renders 'Where is the consignment now?' / 'Ble mae’r llwyth nawr?' with its existing description",
+        "The hub task row 'Place of destination', the page title and the pre-arrival h1 are the same string, and copy.test.js pins that equality in both languages",
+        "The check-answers destination card is titled 'Place of destination' for a pre-arrival notification and 'Where is the consignment now?' for an arrived one — no code change there, only the E2E assertions move",
+        "No file in either repo still asserts an h1 or a card named 'Intended destination' (grep -rn 'Intended destination' over both repos' src, tests and page-objects returns only prose inside descriptions and hints)",
+        "journey-spec.json headingByState for the two pre-arrival states reads 'Place of destination'",
+        "Every test in the verification ladder is green, including the plants E2E project against the running dev stack"
+      ],
+      "recipe": "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/features.md (copy conventions: copy.en.js + copy.cy.js structure-identical, copy tests pin the strings)",
+      "notes": "TESTS REPO: this increment edits the tests repo (repos/trade-imports-animals-tests) as well as the frontend. Both repos are ALREADY on branch fix/NO_JIRA-plants-place-of-destination-heading — edit and `git -C ... add` in both; the land stage commits the frontend and the orchestrator commits the tests repo with the same subject. Do not touch `main` in either repo.\n\nSCOPE FENCE: copy + tests only. No controller, view-model or template change is needed; the heading is selected per state by controller.js destinationStateOf and that stays.\n\nWHY NOT RENAME EVERYTHING: 'intended destination' in lower case inside hints and descriptions (place-of-destination descriptions, arrival-status valueHints) is prose describing the concept, not a page name, and stays. Only the h1 strings and the assertions on them change.\n\nE2E: the tests repo's plants project runs against the workspace dev stack on :3003, which bind-mounts this working tree, so the specs see the edited copy as soon as nodemon restarts. Run it as the last ladder rung, to a log, and read the log once.",
+      "verification": [
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run format:check",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run lint",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run typecheck",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run lint",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run format:check",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose -- --project=plants"
+      ],
+      "openQuestions": [],
+      "ticket": null,
+      "commit": "da80c84",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/65",
+          "number": 65,
+          "merged": false
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/202",
+          "number": 202,
+          "merged": false
+        }
+      ],
+      "testsCommit": "48f1a0e"
+    },
+    {
+      "id": "snag-003",
+      "kind": "fix",
+      "type": "change-page",
+      "repo": "frontend",
+      "milestone": "snagging",
+      "gate": null,
+      "dependsOn": [],
+      "status": "done",
+      "sizeGuess": "M",
+      "branch": "fix/NO_JIRA-plants-contact-address-picker",
+      "title": "Pick the consignment contact address from the searchable, paged address-book table the place-of-destination page uses",
+      "detail": "The consignment-contact-select page (slug consignment/contact/select) renders EVERY address in the organisation's book as one flat govukRadios list: controller.js calls addressBook.all(orgId), which pages through the whole book, and template.njk hands the lot to govukRadios. An organisation with 4,000 addresses gets 4,000 radios. The two sibling party pages — place-of-destination and consignor-select — already render a search box, a five-row results table with a radio per row, 'Selected address' inset, govukPagination and a 'No addresses match your search.' sentence, through the shared picker in features/address-book-picker (render.js renderPicker + chosenFor, view-model.js pickerViewModelFor, pagination.js paginationFor/resultsHrefFor). Rebuild the contact page on that picker, mirroring consignor-select file for file. Two things about the contact page are deliberately different from its siblings and MUST survive: (1) a blank save is allowed — Save and continue / Save and return with no row ticked commits nothing and redirects on via kit.nextTarget, leaving the hub row Not yet started (contact.spec.ts and parties.spec.ts pin this); (2) the committed answer is a COPY `{ addressId, name, address: {...} }`, not a bare `{ addressId }` reference (check-answers, the hub and the happy-path fixtures read it that way; parties/index.js REFERENCE_PARTIES must NOT gain contactAddress). An id that is not in the book, or whose record is soft-deleted, is still refused with a 400 and the page's error.",
+      "filesToTouch": [
+        {
+          "repo": "frontend",
+          "path": "src/client/javascripts/application.js",
+          "action": "edit",
+          "what": "register the address-book picker progressive enhancement"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/client/javascripts/components/address-book-picker.js",
+          "action": "create",
+          "what": "when a result radio changes, add its value to every GET pagination link as selected so an unsaved tick survives paging"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/client/javascripts/components/address-book-picker.test.js",
+          "action": "create",
+          "what": "pin the selected query parameter while preserving the existing search term and page"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk",
+          "action": "rewrite",
+          "what": "copy consignor-select/template.njk verbatim; radio name and error id become contactAddress; h1 is {{ heading }}, description {{ description }}"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/fields.js",
+          "action": "create",
+          "what": "export const CONTACT_ADDRESS = 'contactAddress' (mirror consignor-select/fields.js)"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js",
+          "action": "rewrite",
+          "what": "mirror consignor-select/controller.js: renderPicker/chosenFor from ../address-book-picker/render.js, search action, page and selected params, pickerViewModel; heading copy.title, description copy.description. KEEP the contact-specific behaviour: when the save has no selectedId commit nothing and redirect via kit.nextTarget (no error); commit `{ addressId: chosen.id, name: chosen.name, address: { ...chosen.address } }`; a selectedId that chosenFor cannot resolve (missing or deleted) re-renders 400 with copy.errors.contactAddress. Drop the oneOf validation and the addressBook.all call. Keep meta.collects ['contactAddress'] and the existing page.js slug"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/index.js",
+          "action": "create",
+          "what": "mirror consignor-select/view-model/index.js with CONTACT_ADDRESS"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/pagination.js",
+          "action": "create",
+          "what": "mirror consignor-select/view-model/pagination.js bound to consignmentContactSelectPage.slug"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/view-model.test.js",
+          "action": "create",
+          "what": "mirror consignor-select/view-model/view-model.test.js for the contact slug and field name"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js",
+          "action": "rewrite",
+          "what": "title 'Contact address for consignment' stays; drop legend; description takes the current hint sentence 'Selecting a contact copies their name and address into this notification.' (no new copy invented); add the picker chrome keys exactly as consignor-select/copy/copy.en.js has them (search, selectedAddressPrefix, errorPrefix, noMatches, resultsCaption, pagination, table, selectRowPrefix, viewDetails, viewDetailsFor); errors.contactAddress = 'Select a contact address from the list'"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.cy.js",
+          "action": "rewrite",
+          "what": "structure-identical Welsh: keep the existing title and hint Welsh (hint becomes description), picker chrome Welsh copied from consignor-select/copy/copy.cy.js, errors.contactAddress 'Dewiswch gyfeiriad cyswllt o’r rhestr'; keep the MACHINE-DRAFT header line"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.test.js",
+          "action": "rewrite",
+          "what": "mirror consignor-select/copy/copy.test.js (leaf check in both languages, picker chrome, pagination labels, resultsCaption, error sentence) plus the existing GET case proving the copy bundle and shared chrome reach the view"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js",
+          "action": "rewrite",
+          "what": "mirror consignor-select/controller.test.js (search renders page one of the filtered book; paging carries the selection; GET pre-ticks the committed id; out-of-book and deleted ids 400 and commit nothing; save failures 500 with the banner; programming errors escape) PLUS the contact-specific cases the current file has: blank save commits nothing and redirects to the hub; a dangling stored addressId renders with nothing ticked; the committed answer carries addressId, name and address"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js",
+          "action": "rewrite",
+          "what": "mirror consignor-select.fit.spec.js against the 13-record STUB_BOOK while preserving this page's deliberate absence of a section caption: heading/description/search box render; search narrows and a no-match term shows the sentence; five rows a page with govukPagination; an unsaved tick survives paging; a row ticked on page two saves and the hub row reads Completed; re-entering shows 'Selected address:' inset; blank Save and continue returns to the hub with the row Not yet started; axe clean"
+        },
+        {
+          "repo": "frontend",
+          "path": "fit/journey-smoke.fit.spec.js",
+          "action": "edit",
+          "what": "fillSteps['consignment/contact/select'] ticks `Select ${shape.partyName}` like the two sibling pickers (Tech Imports Ltd is on page one of the stub book)"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
+          "action": "edit",
+          "what": "the shared journey setup selects the contact radio by its new accessible name `Select ${contactName}`"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+          "action": "edit",
+          "what": "the shared journey setup selects the contact radio by its new accessible name `Select ${contactName}`"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js",
+          "action": "edit",
+          "what": "the shared journey setup selects the contact radio by its new accessible name `Select ${contactName}`"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js",
+          "action": "edit",
+          "what": "the shared journey setup selects the contact radio by its new accessible name `Select ${contactName}`"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/services/address-book/index.js",
+          "action": "edit",
+          "what": "delete `all()` — its only caller was the flat radio list — and any test of it in address-book.test.js; keep search() and party()"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js",
+          "action": "edit",
+          "what": "the docblock sentence 'This journey has no such answer yet' is stale: contactAddress holds a copy. Say so. Do NOT add contactAddress to REFERENCE_PARTIES"
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/docs/README.md",
+          "action": "edit",
+          "what": "where the set docs describe the contact page as a flat list of addresses (grep -rn -i 'contact' docs/), say it is an address-book picker like the destination and consignor pages"
+        },
+        {
+          "repo": "tests",
+          "path": "page-objects/plants/plants-consignment-contact-select-page.ts",
+          "action": "rewrite",
+          "what": "mirror plants-place-of-destination-page.ts: address(name) targets the radio named `Select ${name}`; add search, btnSearch, searchFor(), resultsCaption, noMatches, selectedAddress(name), selectedAddressInset, pageLink(n), errorSummary; keep heading, btnSaveAndContinue and btnSaveAndReturn"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/contact.spec.ts",
+          "action": "rewrite",
+          "what": "first test becomes the picker behaviour over six minted records: search by the token shows 'Showing 5 of 6 addresses', page 2 holds the sixth, ticking it on page 2 and saving marks the row Completed, re-entering shows the Selected address inset; second test adds searchFor(address.name) before ticking; the two blank-save tests keep their assertions but prove 'nothing selected' through the absence of the Selected address inset and of any checked radio"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/journey.spec.ts",
+          "action": "edit",
+          "what": "searchFor(address.name) before plantsConsignmentContactSelect.address(address.name).check() (line ~103) — the shared book is never wiped, so the minted record is not guaranteed to sit on page one"
+        },
+        {
+          "repo": "tests",
+          "path": "tests/e2e/features/plants/review.spec.ts",
+          "action": "edit",
+          "what": "searchFor(address.name) before each plantsConsignmentContactSelect.address(...).check() (lines ~71 and ~114)"
+        }
+      ],
+      "acceptanceCriteria": [
+        "GET consignment/contact/select remains deliberately bare (no section caption) and renders an h1 'Contact address for consignment', the description, a Search input with hint 'Name, address or country', a Search button, and a table captioned 'Showing N of M addresses' with at most five rows, each row a radio whose accessible name is 'Select {name}' and a 'View details' disclosure — the same picker surface as destinations/select",
+        "The page never calls addressBook.all; it calls addressBook.search(orgId, { query, page }) once per render and addressBook.party only for the ticked id",
+        "Search is a POST with action=search that re-renders page one of the matches; paging is a GET link carrying q, page and selected; a row ticked on one page is still the selection after paging and is shown as 'Selected address: {name}' when its row is not on screen",
+        "Saving with a ticked row commits { addressId, name, address } (a copy, identical shape to today) and redirects via kit.nextTarget; the hub row reads Completed and check-answers shows the contact card unchanged",
+        "Saving with NO row ticked commits nothing and redirects via kit.nextTarget exactly as today — the hub row stays Not yet started and no error is shown (contact.spec.ts blank-save tests and parties.spec.ts stay green without weakening)",
+        "Saving an id that is not in the book, or whose record is deleted, answers 400 with the error summary and 'Select a contact address from the list', and commits nothing",
+        "copy.en.js and copy.cy.js are structure-identical and copy.test.js pins the picker chrome in both languages",
+        "The 'Selecting a contact copies their name and address into this notification.' sentence is still shown (as the description under the h1)",
+        "parties/index.js REFERENCE_PARTIES still lists only placeOfDestination and consignor",
+        "addressBook.all no longer exists and nothing imports it",
+        "The journey smoke (fit/journey-smoke.fit.spec.js) reaches confirmation for every happy-path shape",
+        "Every test in the verification ladder is green, including the plants E2E project against the running dev stack"
+      ],
+      "recipe": "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/features.md; the EXEMPLAR to copy is repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/ (every file) plus the shared picker in features/address-book-picker/",
+      "notes": "PAUSED 2026-09-10 (usage budget): the loop was stopped by the orchestrator during the IMPLEMENT stage of run wf_0082e82a-bd1 (baseline had passed green). The implementor had already rewritten every frontend file in filesToTouch (template, controller, copy en/cy/test, controller.test, fit spec, view-model/, fields.js, journey-smoke, address-book index/test, parties/index.js docs README) and the four tests-repo files; NOTHING is staged or committed and NO review, ladder or E2E has run over it. The edits sit uncommitted in the working trees of both repos on branch fix/NO_JIRA-plants-contact-address-picker (alongside the parallel session's package.json + scripts/obligation-graph.js, which are not ours). To resume: put both repos back on that branch, read the diff, then either (a) keep it and re-launch the run copy with increments [\"snag-003\"] — the fresh implementor finishes on top and the review/ladder/land stages run as normal — or (b) if it looks wrong, stash ONLY the increment's own paths (git stash push -u -- <paths>) and re-launch from clean. Then run the full E2E, commit the tests repo, push both, raise the PR pair.\n\nTESTS REPO: this increment edits the tests repo (repos/trade-imports-animals-tests) as well as the frontend. Both repos are ALREADY on branch fix/NO_JIRA-plants-contact-address-picker — edit and `git -C ... add` in both; the land stage commits the frontend and the orchestrator commits the tests repo with the same subject. Do not touch `main` in either repo.\n\nMIRROR, DON'T EXTRACT: the picker shell is already shared (features/address-book-picker); the per-page files (template, controller, copy, view-model bindings, tests) are duplicated per feature by design in this codebase. Copy consignor-select's files and adjust; do not invent a further abstraction.\n\nDO NOT CHANGE THE ANSWER SHAPE. contactAddress is stored as a copy ({ addressId, name, address }). check-answers/controller.js and view-model, flow/fixtures/happy-path.json and the hub read it; changing it to a bare reference is a different increment with a model and CYA ripple.\n\nBLANK SAVE IS ALLOWED on this page and not on its siblings. Keep it. Record the asymmetry in openQuestions rather than 'fixing' it.\n\nSTUB BOOK: STUB_BOOK has 13 records, five a page, so pagination is exercisable in the fit suite without any seeding (consignor-select.fit.spec.js shows how).\n\nE2E: the plants project runs against the workspace dev stack on :3003, which bind-mounts this working tree. The address book there is real (address-book service) and shared across workers and never wiped, so every E2E that counts rows mints its own token (see destination.spec.ts). Run E2E as the last ladder rung, to a log, and read the log once.",
+      "verification": [
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run format:check",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run lint",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run typecheck",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run lint",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run format:check",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose -- --project=plants"
+      ],
+      "openQuestions": [
+        "The contact page allows a blank save (hub row stays Not yet started) while destinations/select and consignors/select refuse one with an error. Kept as-is in this increment because contact.spec.ts, parties.spec.ts and review.spec.ts pin the blank save; a product call is needed on whether the three pickers should agree."
+      ],
+      "ticket": null,
+      "commit": "b4249cf",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/66",
+          "number": 66,
+          "merged": false
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/203",
+          "number": 203,
+          "merged": false
+        }
+      ],
+      "testsCommit": "6e266b7"
+    },
+    {
+      "id": "snag-001",
+      "kind": "fix",
+      "type": "styles",
+      "repo": "frontend",
+      "milestone": "snagging",
+      "gate": null,
+      "dependsOn": [],
+      "status": "done",
+      "sizeGuess": "S",
+      "branch": "fix/NO_JIRA-plants-autocomplete-styles",
+      "title": "Give the accessible-autocomplete type-ahead the GOV.UK font and a visible dropdown arrow",
+      "detail": "The country-of-origin type-ahead (and every other appAccessibleAutocomplete on the service: place of landing, genus) renders its results menu in the browser's default serif — every option is Times New Roman while the input beside it is GDS Transport/Arial — and its dropdown arrow never paints. Evidence: workareas/shared/plants-snagging/evidence/autocomplete/plants-formgroup-open-before.png (menu open, 'France' in a serif) and plants-formgroup-initial-before.png (no arrow at the right of the input). Cause: src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss is a bare `@use \"accessible-autocomplete/src/autocomplete.css\"` and nothing applies the service font to the component — upstream autocomplete.css sets sizes on .autocomplete__input/.autocomplete__option but no font-family, so the menu (a ul outside any .govuk-* element) inherits the browser default; and upstream gives .autocomplete__dropdown-arrow-down `z-index: -1` while .autocomplete__wrapper is `position: relative` with no z-index, so the wrapper forms no stacking context and the arrow paints beneath the page background. HMRC Frontend (the source this component was vendored from) fixes both in its own SCSS: govuk-font on the wrapper, and a stacking context so the arrow sits under the transparent input but over the page. The live-animals frontend ships the identical component and has the identical defect (animals-formgroup-open-before.png is byte-identical to the plants one), so the 'spot the difference' premise does not hold; fix it here, and the orchestrator ports the same two files to animals afterwards.",
+      "filesToTouch": [
+        {
+          "repo": "frontend",
+          "path": "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss",
+          "action": "edit",
+          "what": "keep the @use of the upstream css; add the correctly resolved govuk-frontend @use (the relative idiom src/client/stylesheets/components/_date-picker.scss uses) and the service's overrides: `.autocomplete__wrapper { @include govuk-font($size: 19); position: relative; z-index: 0; }` (govuk-font puts GDS Transport with the Arial fallback, the 19px scale and the GOV.UK line-height on the wrapper; inputs do not inherit font-family, so also `.autocomplete__input, .autocomplete__hint, .autocomplete__option { @include govuk-font($size: 19); }` or `font-family: inherit` on the input — pick the one that leaves the computed font-family of input, hint and options equal to that of .govuk-input); the error state mirrors the current govuk-input--error using `$govuk-error-colour` and `$govuk-border-width-form-element` (this govuk-frontend version has no `$govuk-border-width-form-element-error` token). Stay inside the govuk-frontend toolbox — mixins and tokens only, no hard-coded font names or hex colours."
+        },
+        {
+          "repo": "frontend",
+          "path": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
+          "action": "edit",
+          "what": "add binary cases: (1) with 'Fr' typed and the option visible, the option's computed font-family equals the input's and starts with 'GDS Transport' (page.evaluate over getComputedStyle; a regex toHaveCSS on font-family is fine) — never a pixel or tolerance assertion; (2) with the field untouched, a hit-stack check at the centre of `.autocomplete__dropdown-arrow-down` proves the arrow participates in the stack, the wrapper has z-index 0, and the transparent input remains the top interactive hit target; (3) focus retains the upstream outline and inset shadow; (4) after submitting with no country, the enhanced input carries the same error border colour and width as a govuk-input--error reference."
+        }
+      ],
+      "acceptanceCriteria": [
+        "On the origin page with 'Fr' typed, `.autocomplete__option` and `input#countryOfOrigin` report the same computed font-family as `.govuk-input`, beginning 'GDS Transport' (Arial fallback), at the 19px scale",
+        "The dropdown arrow paints beneath the transparent input: its centre participates in the document hit stack, the wrapper owns a z-index 0 stacking context, and the input remains the top interactive hit target with its upstream right padding unchanged",
+        "Focus styling is unchanged: the yellow 3px outline and inset shadow the upstream css gives `.autocomplete__input--focused` still show",
+        "After a POST with no country the enhanced input shows the current GOV.UK error border (colour of $govuk-error-colour and width $govuk-border-width-form-element), matching what .govuk-input--error gives a plain input in the installed govuk-frontend version",
+        "No hard-coded font names, sizes in px or hex colours in the SCSS — govuk-frontend mixins and tokens only; stylelint (npm run lint:scss inside npm run lint) is green",
+        "The same component on the arrival-details place-of-landing field and the commodity-details genus field renders identically (it is the same class set; no per-page CSS)",
+        "Every test in the verification ladder is green"
+      ],
+      "recipe": "repos/trade-imports-plants-frontend/src/client/stylesheets/components/_date-picker.scss (the govuk-frontend @use idiom and the tone of the comments); repos/trade-imports-plants-frontend/node_modules/accessible-autocomplete/src/autocomplete.css (the upstream rules being overridden); ~/git/defra/trade-imports-workspace/docs/best-practices/gds/ (stay in the govuk-frontend toolbox)",
+      "notes": "SCOPE: one SCSS file plus the fit-spec tripwires. No template, macro or client-JS change — the enhancement itself works; only its styling is missing. Do not touch package.json (a parallel session has an uncommitted edit there).\n\nWHY BOTH FRONTENDS: the component is byte-identical in repos/trade-imports-animals-frontend; the orchestrator copies the finished SCSS there on a sibling branch after this lands. Do not edit the animals repo in this increment.\n\nDEV STACK: the plants container runs webpack --watch over the bind-mounted src/, so the E2E rung sees the new CSS; the fit rung builds its own production bundle.",
+      "verification": [
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend test",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run format:check",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run lint",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:fit:ci",
+        "npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose -- --project=plants"
+      ],
+      "openQuestions": [],
+      "ticket": null,
+      "commit": "832df71",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/67",
+          "number": 67,
+          "merged": false
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/205",
+          "number": 205,
+          "merged": false
+        }
+      ],
+      "testsCommit": "df62507"
+    }
+  ]
+}

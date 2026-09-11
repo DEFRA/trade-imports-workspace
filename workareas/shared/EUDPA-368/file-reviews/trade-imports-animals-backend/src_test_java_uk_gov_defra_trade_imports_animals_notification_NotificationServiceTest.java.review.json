@@ -1,0 +1,21 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "308ec55fcdece46f671e2717e4b7b1fe818082ce",
+  "pr": 94,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-11T08:52:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Test updates correctly cover the four new pass-through fields but omit any non-null assertion for regionOfOriginCode, the field that is AC #1 and drove the Origin constructor signature change across this whole file.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 243,
+      "severity": "Major",
+      "category": "missing-test",
+      "issue": "saveNotification_shouldUpdateNotificationFieldsAndWriteEditedEvent_whenDraft was rewritten to add pass-through coverage for purposeInInternalMarket, destinationCountry, portOfExit and exitDate, but every Origin(...) call in this file (including this one) was mechanically padded with a null 4th arg for the new regionOfOriginCode field rather than exercising a real value — so the field that is AC #1 and that forced the Origin constructor signature change everywhere in this file has no non-null assertion at the NotificationService pass-through layer, the exact layer this PR strengthened for its sibling fields.",
+      "fix": "In this same test, set origin's regionOfOriginCode to a non-null value (e.g. new Origin(\"FR\", \"false\", \"REF456\", \"FR-75\")) and assert it flows through on result.getNotification().getOrigin().getRegionOfOriginCode(), matching the treatment already given to the other new fields in this test."
+    }
+  ],
+  "reconciled_at": "2026-09-11T09:01:51Z"
+}

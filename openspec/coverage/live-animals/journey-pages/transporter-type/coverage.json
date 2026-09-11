@@ -1,0 +1,70 @@
+{
+  "capability": "live-animals/journey-pages/transporter-type",
+  "areaCode": "TRANSPORTER-TYPE",
+  "specFile": "openspec/specs/live-animals/journey-pages/transporter-type/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-TRANSPORTER-TYPE-001",
+      "name": "The page asks the transporter type, private listed first and unhinted, with nothing chosen in advance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-TYPE-001-A",
+          "name": "The page presents its question with no type preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "asserts exactly two radios in order Private, Commercial, neither pre-checked, Private carrying no accessible description" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter-add.spec.ts", "test": "leaves the transporter type unchecked on load", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-TYPE-002",
+      "name": "A chosen transporter type is accepted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-TYPE-002-A",
+          "name": "Choosing a transporter type saves without error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/transporter-add.spec.ts", "test": "accepts a valid transporter type", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial branch routes to the add-commercial form", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch routes to its details page and persists on back", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-TYPE-003",
+      "name": "The commercial option warns it can only be a Northern Ireland transporter",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-TYPE-003-A",
+          "name": "The commercial option carries the Northern Ireland condition",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "asserts the Commercial radio's accessible description equals 'This can only be a commercial transporter from Northern Ireland.'" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-TYPE-004",
+      "name": "The page warns the trader to search the list first, under a new-transporter caption",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-TYPE-004-A",
+          "name": "The page carries the new-transporter caption and search-first warning",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "heads the type question with the choice it asks for, under the new-transporter caption, and warns the trader to search first", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

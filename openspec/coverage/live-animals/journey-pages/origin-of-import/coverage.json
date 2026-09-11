@@ -132,23 +132,38 @@
     },
     {
       "id": "REQ-ORIGIN-008",
-      "name": "Saving without a country is rejected",
+      "name": "Saving without a country is accepted, but leaves the origin task outstanding",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-008-A",
-          "name": "Saving with no country chosen shows an error summary",
+          "name": "Saving with no country chosen succeeds and moves on",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/pages/origin.spec.ts", "test": "shows an error summary when submitted without a country", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: when no country is chosen, links to and focuses the empty field", "strength": "full", "notes": "more precise than the E2E test: names the focus behaviour" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country: an unanswered country saves the rest of the page and moves on", "strength": "full", "notes": "new test for the EUDPA-476 save-what-you-have change" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country: an unanswered country leaves the origin task unfinished", "strength": "full", "notes": "confirms the Overview task row stays outstanding" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-014",
+      "name": "A country not in the offered list is rejected",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-014-A",
+          "name": "An out-of-list country is rejected and the field is cleared",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: an out-of-list country links to and focuses the cleared field", "strength": "full", "notes": "this test now covers what REQ-ORIGIN-008's old 'when no country is chosen' test used to claim to cover — the empty-country case moved to REQ-ORIGIN-008 above (now accepted, not rejected); this one is specifically the off-list-value case" }
           ]
         }
       ]
     },
     {
       "id": "REQ-ORIGIN-009",
-      "name": "The page also asks for an optional internal reference, capped at 58 characters and restricted to a fixed pattern",
+      "name": "The page also asks for an optional internal reference, capped at 58 characters",
       "coverage": "full",
       "scenarios": [
         {
@@ -161,11 +176,10 @@
         },
         {
           "id": "SCN-ORIGIN-009-B",
-          "name": "An internal reference with disallowed characters is rejected with the value preserved",
+          "name": "A punctuated internal reference is saved and shown as entered",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "internal reference validation: when characters are invalid, links to and focuses the preserved value", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should accept and save an internal reference containing an underscore", "strength": "partial", "notes": "proves the converse (a valid character is accepted), not the rejection this scenario claims" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "internal reference validation: saves a reference punctuated the way the user holds it", "strength": "full", "notes": "new test replacing the retired disallowed-characters rejection test — proves hyphens/slashes/spaces/full stops now round-trip unchanged" }
           ]
         }
       ]

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The rules holding for every address a notification uses: how a consignment role's address is chosen from the address book, whether a role stays linked to that book or keeps a copy, and what a hand-keyed address must contain.
+The rules holding for every address a notification uses: how a consignment role's address is chosen from the address book, whether it stays linked to that book or is frozen, and what a hand-keyed address must contain.
 
 ## Requirements
 
@@ -28,39 +28,51 @@ The system MUST NOT let a user add, edit, or remove an address book record from 
 - **WHEN** the user navigates directly to that journey's create-address URL
 - **THEN** the page responds with a 404, not a create-address form
 
-### Requirement: Four roles stay linked to the address book, and two hold a copy
+### Requirement: Every role resolves live from the address book while a notification is not yet submitted
 **ID**: REQ-ADDR-002
-The system MUST resolve the consignor, consignee, importer and place of destination from the address book each time they are shown, so a later edit to that record reaches the notification without it being re-selected. The system MUST instead hold the place of origin and the consignment contact address as a copy taken when it was chosen, so a later edit to the record behind them does not reach the notification.
+The system MUST resolve every consignment role — consignor, consignee, importer, place of destination, place of origin, and the consignment contact — from the address book each time it is shown, for as long as the notification is DRAFT or being amended, so a later edit to that record reaches the notification without it being re-selected.
 
-#### Scenario: Editing a linked address changes what the draft notification shows
+#### Scenario: Editing a linked address changes what a draft notification shows
 **ID**: SCN-ADDR-002-A
-- **GIVEN** a consignor has been selected for a notification from the address book
+- **GIVEN** a role's address has been selected for a draft notification from the address book
 - **WHEN** that address record is edited in the address book
-- **THEN** the notification's summary row for the consignor shows the updated name
+- **THEN** the notification's summary row for that role shows the updated name
 - **AND** the notification's full address details (shown on the check-your-answers view) show the updated town, postcode and other fields, not the values that were current when it was selected
 
-#### Scenario: Editing the record behind a copied role leaves the notification unchanged
-**ID**: SCN-ADDR-002-B
-- **GIVEN** a place of origin or a consignment contact address has been chosen from the address book
+### Requirement: A submitted notification freezes its addresses, and resumes live resolution once amended
+**ID**: REQ-ADDR-013
+Once a notification is SUBMITTED, the system MUST show the address details stored on the notification at submit time instead of the address book's current record, and MUST stop following the address book for every role until the notification is amended again, at which point it MUST resume live resolution.
+
+#### Scenario: A submitted notification's address is unaffected by a later edit to the record
+**ID**: SCN-ADDR-013-A
+- **GIVEN** a notification has been submitted with a role's address chosen from the address book
 - **WHEN** that address record is later edited in the address book
-- **THEN** the notification still shows the details as they were when the address was chosen
+- **THEN** the submitted notification still shows the details as they were at the moment of submission
 
-### Requirement: Deleting an address clears the roles linked to it and leaves the roles that copied it
+#### Scenario: Amending a submitted notification returns its addresses to live resolution
+**ID**: SCN-ADDR-013-B
+- **GIVEN** a submitted notification's address record has since been edited in the address book
+- **WHEN** the user starts amending that notification
+- **THEN** the role's details update to match the address book's current record
+- **WHEN** the user cancels the amendment
+- **THEN** the role's details revert to what was frozen at the original submission
+
+### Requirement: Deleting an address behind a role clears it while the notification is not yet submitted, but leaves a submitted notification unaffected
 **ID**: REQ-ADDR-003
-The system MUST show a linked role whose address has been deleted as if no address had been selected for it, and MUST exclude that deleted address from the picker. A role holding a copy MUST keep its details when the record it was taken from is deleted.
+While a notification is DRAFT or being amended, the system MUST show a role whose address has been deleted as if no address had been selected for it, and MUST exclude that deleted address from the picker. Once a notification is SUBMITTED, the system MUST leave every role's stored address details unaffected by a later deletion of the address book record behind it, and MUST NOT show an error.
 
-#### Scenario: Deleting a linked address clears it from the notification and hides it from the picker
+#### Scenario: Deleting a linked address clears it from a draft notification and hides it from the picker
 **ID**: SCN-ADDR-003-A
-- **GIVEN** a consignor has been selected for a notification from the address book
+- **GIVEN** a role's address has been selected for a draft notification from the address book
 - **WHEN** that address record is deleted from the address book
-- **THEN** the consignor's row shows "Not added yet" and an option to add an address, instead of the deleted address's name
+- **THEN** that role's row shows "Not added yet" and an option to add an address, instead of the deleted address's name
 - **AND** the deleted address no longer appears when searching the picker
 
-#### Scenario: Deleting the record behind a copied role leaves that role intact
+#### Scenario: Deleting the record behind a submitted notification's role leaves it unaffected
 **ID**: SCN-ADDR-003-B
-- **GIVEN** a place of origin or a consignment contact address has been chosen from the address book
-- **WHEN** that address record is deleted from the address book
-- **THEN** the notification still shows that role's details
+- **GIVEN** a notification has been submitted with a role's address chosen from the address book
+- **WHEN** that address record is later deleted from the address book
+- **THEN** the submitted notification still shows that role's details in full, and no error is shown
 
 ### Requirement: An address book record that is unavailable is not treated as deleted
 **ID**: REQ-ADDR-004

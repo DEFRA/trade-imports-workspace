@@ -1,0 +1,177 @@
+{
+  "capability": "plants/notification-lifecycle",
+  "areaCode": "PLANTS-LIFECYCLE",
+  "specFile": "openspec/specs/plants/notification-lifecycle/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-001",
+      "name": "A notification moves through a fixed lifecycle as the user acts on it",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-001-A",
+          "name": "A full lifecycle walk moves the notification through each status in turn",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the new draft is listed on the dashboard and Resume reopens it", "strength": "partial", "notes": "Draft after create" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "Draft → Submitted" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "partial", "notes": "Submitted → Amending → Submitted again after cancel" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a submitted notification can be deleted from CYA", "strength": "partial", "notes": "Submitted → Deleted (soft-delete from listing)" }
+          ],
+          "notes": "GAP: no single plants test walks Draft → Submitted → Amend → Submitted → Deleted end to end; transitions are covered across separate e2e cases. User-facing label is \"Amending\" while recorded state is Amend."
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-002",
+      "name": "A draft notification's answers are recorded as they are saved, and survive being reopened",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-002-A",
+          "name": "An unfinished notification is recorded as a draft under its own reference number",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the new draft is listed on the dashboard and Resume reopens it", "strength": "full", "notes": "same reference, Draft, Resume returns to Overview" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "partial", "notes": "answers survive through submit; proves persistence under the minted reference rather than mid-draft reopen alone" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "saves a choice, goes on to the commodities and shows it again on return", "strength": "partial", "notes": "one section's answers survive reopen within the draft" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-003",
+      "name": "A submitted notification keeps every answer entered, and reopens showing them unchanged",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-003-A",
+          "name": "A submitted notification's answers are all kept and shown again on reopening",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "confirmation → viewNotification → Submitted with answers still shown read-only" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "full", "notes": "full happy path submit then view" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-004",
+      "name": "A submitted notification is read-only until an amendment is started",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-004-A",
+          "name": "A submitted notification shows no change controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "assertReadOnly: Submitted, zero Change links, no Continue" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "Cancel amendment absent while Submitted" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-005",
+      "name": "Amending a submitted notification re-enters it at Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-005-A",
+          "name": "Starting an amendment opens Overview with editing enabled",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "amend() lands on Overview with Amending tag" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should unfreeze a known submitted notification and land on its hub", "strength": "full", "notes": "amend POST redirects to hub path" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "partial", "notes": "also starts amendment from dashboard; focuses late-flag rather than Overview landing" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-006",
+      "name": "Resubmitting an amendment keeps the edited answers and returns the notification to Submitted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-006-A",
+          "name": "An edited answer survives resubmission",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "full", "notes": "change arrival date while amending, resubmit, read-only CYA shows amended date and no Change links" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original late flag", "strength": "full", "notes": "same amend→resubmit path with late starting point" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-007",
+      "name": "An in-progress amendment can be cancelled, discarding its edits",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-A",
+          "name": "A Cancel amendment option is offered while amending",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amendment on dashboard card while Amending" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amendment link on CYA" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give an amending notification Resume, Cancel amendment and Delete", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-B",
+          "name": "Choosing to cancel asks for confirmation before discarding anything",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel this amendment? confirmation page before Yes" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "full", "notes": "confirm and reject actions" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-C",
+          "name": "Declining the confirmation keeps the amendment in progress",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "No preserves the amendment and its changes after reload", "strength": "full", "notes": "still Amending; DiscardMe99 intact" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-D",
+          "name": "Confirming the cancellation restores the submitted answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Submitted again; edit reverted; no Change links; cancelled banner" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and an accessible success view", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-008",
+      "name": "A draft or submitted notification can be deleted after confirmation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-008-A",
+          "name": "Deleting a draft removes it from the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "Yes, delete notification soft-deletes it and drops it from the listing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "confirmation removes the notification and shows the success banner", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-008-B",
+          "name": "Deleting a submitted notification removes it from the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a submitted notification can be deleted from CYA", "strength": "full", "notes": "delete from CYA → dashboard banner → search shows no card" }
+          ]
+        }
+      ]
+    }
+  ]
+}

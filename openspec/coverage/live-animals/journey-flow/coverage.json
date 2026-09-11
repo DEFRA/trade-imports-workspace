@@ -6,7 +6,7 @@
     {
       "id": "REQ-FLOW-001",
       "name": "The journey is ordered as ten sections, each a sequence of pages",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-FLOW-001-A",
@@ -17,14 +17,13 @@
         },
         {
           "id": "SCN-FLOW-001-B",
-          "name": "The transport section sequences its five pages in order",
-          "coverage": "full",
+          "name": "The transport section sequences its pages in order",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should walk the transport section, skipping the spokes the type gates out", "strength": "full", "notes": "transporters → select or private → hub; entry at port-of-entry" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "full", "notes": "transport enters at /port-of-entry" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/simulate.test.js", "test": "Should insert the gated transporter spoke exactly for the chosen type", "strength": "full", "notes": "transporters before transporters-select for Commercial" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "arrival → transit (road) or arrival → transporter type (air) — not the full five-page order in one walk" }
-          ]
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "full", "notes": "proves the type question is not offered before the combined list" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "partial", "notes": "carried over — transport enters at /port-of-entry; not re-verified this pass, and the transport section's own step list has since changed (arrival, transit, transporters only) so this test's full body needs re-reading before trusting it still matches" }
+          ],
+          "notes": "STALE CITATIONS REMOVED: dispatch.test.js's 'skipping the spokes the type gates out' and simulate.test.js's 'insert the gated transporter spoke exactly for the chosen type' both asserted the retired type-branches-the-section model (transporters → select/private) and no longer support this scenario's current text — not re-cited, not confirmed deleted from the suite either. No test found that walks arrival → transit → transporter-list as one sequence and asserts that specific three-step order end to end; the fit citation above only proves the type-before-list half."
         }
       ]
     },
@@ -142,17 +141,15 @@
     },
     {
       "id": "REQ-FLOW-007",
-      "name": "A notification created in this session runs an opening sequence of six steps",
+      "name": "A notification created in this session runs an opening sequence covering the whole journey, ending on review",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-007-A",
-          "name": "A newly created notification is walked through the opening sequence",
+          "name": "A newly created notification is walked through the whole opening sequence to review",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification to the hub", "strength": "full", "notes": "origin → commodities → consignment details → import reason → identification → additional details → Overview" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send origin to the commodity search page once the country is answered", "strength": "partial", "notes": "step-by-step next() targets; not one end-to-end walk" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should sequence a created notification on from origin to the commodities page rather than the hub", "strength": "partial", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" }
           ]
         },
         {
@@ -160,18 +157,16 @@
           "name": "An opening-sequence step not yet in scope is skipped",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should pass identification through to additional details with zero identifier records", "strength": "partial", "notes": "passes through with empty collection rather than skipping the page" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "partial", "notes": "carried over, not re-verified against the now-longer run this pass" }
           ],
-          "notes": "No FIT/E2E that deliberately leaves an opening-spine step out of scope mid-run and asserts the skip."
+          "notes": "No FIT/E2E that deliberately leaves an opening-spine step out of scope mid-run and asserts the skip, against the current whole-journey run shape."
         },
         {
           "id": "SCN-FLOW-007-C",
           "name": "Revisiting an opening-sequence page after the run has finished does not resume it",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification to the hub", "strength": "full", "notes": "after Overview, origin save returns to Overview" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should fall back to the section flow once the run is complete (change=1 and plain saves unaffected)", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification on past the additional details", "strength": "full", "notes": "navigates to Overview mid-run, then re-saves origin and confirms it returns to Overview rather than resuming the run" }
           ]
         }
       ]
@@ -253,6 +248,23 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send a journey with no run record to the hub after origin, not into the opening run — origin is an ordinary page now", "strength": "full", "notes": "" }
           ],
           "notes": "No FIT that saves origin after the stranger-session redirect; journey-smoke stranger test only asserts the redirect to /origin."
+        }
+      ]
+    },
+    {
+      "id": "REQ-FLOW-012",
+      "name": "A page reached from another page, not from the hub directly, ends with only its primary action",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-FLOW-012-A",
+          "name": "A page reached via a detour offers only its primary action",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page ends with the primary alone, being reached from the type question", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "calls the shared expectPageEndsWithPrimaryAlone helper against the type question page itself" }
+          ],
+          "notes": "GAP: mechanism confirmed generically by the shared saveActions macro's own doc comment (showReturnControls flag) and demonstrated on two of the three add-detour pages — commercial-transporter-details has no test at all exercising this (see its own coverage.json), and no other feature area's detour pages (e.g. documents, identification cards) have been checked against this rule."
         }
       ]
     }

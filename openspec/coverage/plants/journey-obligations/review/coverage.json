@@ -1,0 +1,122 @@
+{
+  "capability": "plants/journey-obligations/review",
+  "areaCode": "PLANTS-OB-REVIEW",
+  "specFile": "openspec/specs/plants/journey-obligations/review/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OB-REVIEW-001",
+      "name": "Check and submit stays blocked until every prerequisite task is complete",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-001-A",
+          "name": "Check and submit stays blocked until the final required row is complete",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "Cannot start yet with zero links until contact is saved; then Check and submit opens CYA" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should gate the review hub entry on complete tasks without changing Contact Continue", "strength": "partial", "notes": "proves the section gate fails on empty scope and passes on COMPLETE_NOTIFICATION; does not assert Overview copy" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-REVIEW-002",
+      "name": "Continuing from check-your-answers while a task is still outstanding returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-002-A",
+          "name": "Continuing an incomplete notification returns to Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should return an incomplete notification to Overview", "strength": "full", "notes": "POST with only commodityType + countryOfOrigin redirects to hub" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-REVIEW-003",
+      "name": "An origin that commodity lines no longer allow blocks continue, with a correction into origin",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-003-A",
+          "name": "A saved country that a new ware-potato line disallows blocks continue with a link to origin",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a saved French origin becomes invalid when a ware-potato line is added and prevents submission", "strength": "full", "notes": "stays on CYA Draft; Poland correction href to origin?change=1" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "rechecks a saved origin after a commodity change and exposes an accessible correction link", "strength": "full", "notes": "changes Commodity 1 to ware potatoes; Continue stays on CYA; Poland link to origin?change=1" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should recheck origin after a commodity change and refuse Continue with a link to origin", "strength": "full", "notes": "GET and POST both surface Poland error with change-context origin href" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-REVIEW-004",
+      "name": "A previously selected party whose address no longer resolves blocks continue",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-004-A",
+          "name": "A deleted place of destination blocks continue",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "full", "notes": "Continue stays on CYA; error summary Select an address for the place of destination" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue for a removed address-book reference", "strength": "full", "notes": "POST 400 with placeOfDestination party error" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-REVIEW-005",
+      "name": "A late notification is still accepted, judged against the commodity type's timing window",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-005-A",
+          "name": "A potato notification inside the two-day window is accepted as late",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "Potatoes (seed or ware): late notifications are accepted and highlighted", "strength": "full", "notes": "days:0 potato rule; late banner on confirmation and read-only CYA" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "accepts a late notification and shows the stored late banner on the read-only view", "strength": "full", "notes": "potato draft late warning then submit; late heading on read-only CYA" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.test.js", "test": "Should classify %s at %s for %j as %s", "strength": "partial", "notes": "calendar-day potato late/on-time table; mechanism only" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-005-B",
+          "name": "A plants-for-planting notification more than four days after arrival is accepted as late",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "Plants for planting: late notifications are accepted and highlighted", "strength": "full", "notes": "days:-7 plants-and-wood rule; late banner on confirmation and read-only CYA" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/review/lateness.test.js", "test": "Should classify %s at %s for %j as %s", "strength": "partial", "notes": "plants-for-planting and wood-and-cut-trees late/on-time rows" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-REVIEW-006",
+      "name": "The late-or-on-time flag is recorded at first submission and kept across amendment",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-006-A",
+          "name": "An originally late notification stays marked late after the arrival date is amended on time",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original late flag", "strength": "full", "notes": "initiallyLate true; after amend to +7 days still late banners; amended date on CYA" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js", "test": "Should preserve first-submission lateness when finalising an amendment", "strength": "partial", "notes": "preserves on-time through amend finalise; does not cover the late→on-time arrival-date edit path" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-REVIEW-006-B",
+          "name": "An originally on-time notification stays unmarked after the arrival date is amended late",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "full", "notes": "initiallyLate false; after amend to days:0 still zero late banners" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js", "test": "Should preserve first-submission lateness when finalising an amendment", "strength": "full", "notes": "on-time seed, amend, finalise with future clock — flag stays on-time" }
+          ]
+        }
+      ]
+    }
+  ]
+}

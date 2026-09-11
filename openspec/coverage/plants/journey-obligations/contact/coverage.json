@@ -1,0 +1,51 @@
+{
+  "capability": "plants/journey-obligations/contact",
+  "areaCode": "PLANTS-OB-CONTACT",
+  "specFile": "openspec/specs/plants/journey-obligations/contact/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OB-CONTACT-001",
+      "name": "A consignment contact address is mandatory for every commodity type",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-CONTACT-001-A",
+          "name": "A potatoes notification is asked for a consignment contact",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "lists address records beyond one picker page with name and address hints and persists a selection", "strength": "full", "notes": "openContact walks a potatoes notification to the Contact address for consignment task" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "potatoes skip consignor and require producer and crop numbers", "strength": "partial", "notes": "opening run continues to consignment-contact-select after identification numbers" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OB-CONTACT-001-B",
+          "name": "A plants-for-planting or wood-and-cut-trees notification is asked for a consignment contact",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "startAtContact uses wood-and-cut-trees; hub contact row Completes" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Plants for planting: consignor is required, saves, and continues to scoped identification numbers", "strength": "partial", "notes": "continues to consignment-contact-select after identification numbers" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/parties.spec.ts", "test": "Wood and cut trees: consignor is required, saves, and continues to scoped identification numbers", "strength": "partial", "notes": "same for wood" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OB-CONTACT-002",
+      "name": "An unanswered contact leaves the obligation unfulfilled",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OB-CONTACT-002-A",
+          "name": "Saving with nothing chosen does not fulfil the contact obligation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and continue and leaves the row incomplete", "strength": "full", "notes": "Overview contact remains Not yet started" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and return and leaves the row incomplete", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and continue and leaves the task incomplete", "strength": "full", "notes": "exact button label from sharedCopy.saveActions.saveAndContinue" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and return to overview and leaves the task incomplete", "strength": "full", "notes": "exact button label from sharedCopy.saveActions.saveAndReturnToHub" }
+          ]
+        }
+      ]
+    }
+  ]
+}

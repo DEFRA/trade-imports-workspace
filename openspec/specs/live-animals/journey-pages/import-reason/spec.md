@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks why the consignment is being imported, and — for the internal market reason — what it is for. The page is titled "What is the main reason for importing the animals?".
+Asks why the consignment is being imported, and — for the internal market reason — what it is for. The page is titled "Main reason for import", asking "What is the main reason for importing the animals?" as its (visually hidden) question.
 
 ## Requirements
 

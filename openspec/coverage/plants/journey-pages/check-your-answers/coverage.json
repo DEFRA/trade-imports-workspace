@@ -1,0 +1,243 @@
+{
+  "capability": "plants/journey-pages/check-your-answers",
+  "areaCode": "PLANTS-CYA",
+  "specFile": "openspec/specs/plants/journey-pages/check-your-answers/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-CYA-001",
+      "name": "Check-your-answers numbers three sections over the answers it renders",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-001-A",
+          "name": "Check-your-answers shows the three numbered sections",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "asserts 1. About / 2. Arrival and destination / 3. Consignment parties" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "asserts every copy.sections heading" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-001-B",
+          "name": "A fully answered notification's check-your-answers reflects entered values",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "full", "notes": "after submit+reload asserts Import details country, Commodity 1 fields, Arrival details date, Intended destination, Identification numbers, Contact" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "seed potatoes from the Netherlands: sign in, submit and view the saved notification", "strength": "full", "notes": "same card assertions for a second potato happy path" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "partial", "notes": "asserts variety and contact email; not every section card" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-002",
+      "name": "Cards that do not apply to the commodity type are omitted",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-002-A",
+          "name": "A potatoes notification omits the consignor card",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "Consignor or exporter card count 0" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "consignor heading count 0 on potato seed path" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "cards titles not to contain consignor" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-002-B",
+          "name": "A plants-for-planting notification shows the consignor card",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "spruce from Germany with species and EPPO code: sign in, submit and view the saved notification", "strength": "full", "notes": "Consignor or exporter contains address name" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should omit potato-only fields and show the consignor for plants", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-003",
+      "name": "The contact card shows the selected party's details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-003-A",
+          "name": "Contact details appear on the Contact card",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "name, address, phone, email on Contact card" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows name/address/phone/email" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-004",
+      "name": "Anything not yet answered, or whose address no longer resolves, is shown as \"Not provided\"",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-004-A",
+          "name": "An unanswered destination reads Not provided, with no error shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render an unanswered destination without a party error", "strength": "full", "notes": "every destination row Not provided; errorSummary null" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-004-B",
+          "name": "A deleted destination reads Not provided on every row",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "full", "notes": "four Not provided rows; removed name absent — display half of the test" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render Not provided for a removed address-book reference", "strength": "full", "notes": "also asserts the party error is present — display clause is every row Not provided" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-005",
+      "name": "A Change link returns to check-your-answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-005-A",
+          "name": "Editing an answer via Change returns to check-your-answers with the new value",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "origin → Germany and commodity quantity → 300 both return to CYA" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "origin and commodity Change round-trips; quantity 300 after reload" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-006",
+      "name": "A draft notification invites submission and withholds post-submission actions",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-006-A",
+          "name": "The draft view invites submission and withholds delete and cancel-amendment",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "partial", "notes": "completeNotification asserts Now submit heading and body; does not assert delete/cancelAmend absent" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "partial", "notes": "submitted and amending branches prove delete vs cancelAmend; draft withhold is implied by readOnly false → deleteHref null in controller, not asserted on a draft GET" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-007",
+      "name": "Continuing from a ready draft moves on to the declaration",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-007-A",
+          "name": "Continuing opens the declaration",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "Continue from CYA lands on declaration URL" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "Continue → /declaration" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should continue through the registered review flow and honour the overview exit without writing", "strength": "full", "notes": "POST redirects to /declaration" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-008",
+      "name": "A submitted notification is read-only and offers delete",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-008-A",
+          "name": "The submitted view is read-only and offers delete",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "assertReadOnly — Submitted, zero Change, zero Continue; delete offer covered by sibling delete test and unit" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "readOnly true; no card/row actions" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref set; cancelAmendHref null" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-008-B",
+          "name": "A submitted notification can be deleted from check-your-answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "a submitted notification can be deleted from CYA", "strength": "full", "notes": "Delete → confirm → dashboard deleted banner; card gone — outcome also owned by lifecycle" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-009",
+      "name": "An amending notification offers cancel-amendment instead of delete",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-009-A",
+          "name": "Cancel amendment is offered only while amending",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: cancelAmendHref set, deleteHref null" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-009-B",
+          "name": "Cancelling an amendment from check-your-answers restores the submitted answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "full", "notes": "success alert; P123 restored; DiscardMe99 gone; read-only after cancel — outcome also owned by lifecycle" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and an accessible success view", "strength": "full", "notes": "lands on notification-view?cancelled=1; Submitted; P123; no Change links" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "partial", "notes": "same restore outcome started from dashboard Cancel amendment link rather than CYA" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-010",
+      "name": "A back link and a save-and-return action open Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-010-A",
+          "name": "Back and save-and-return open Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Back, Save and return, and Cancel to Overview", "strength": "full", "notes": "back and cancel hrefs to hub; Save and return click lands on hub" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-011",
+      "name": "A draft that would be late shows a warning; a submitted late notification shows a banner",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-011-A",
+          "name": "A draft that would be late shows the pre-submit warning",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "Potatoes (seed or ware): late notifications are accepted and highlighted", "strength": "full", "notes": "pre-submit warning text on CYA before submit" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "accepts a late notification and shows the stored late banner on the read-only view", "strength": "partial", "notes": "asserts draft late warning text before Continue; focus of test is post-submit banner" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should warn using the request clock without writing lateness on draft GET", "strength": "full", "notes": "lateWarning true without writing lateNotificationIndicator" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-011-B",
+          "name": "A submitted late notification shows the late banner on the read-only view",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "on-time path — asserts lateBanner count 0 on confirmation and read-only CYA" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "Potatoes (seed or ware): late notifications are accepted and highlighted", "strength": "full", "notes": "lateBanner visible on read-only CYA after submit" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "accepts a late notification and shows the stored late banner on the read-only view", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "submits an on-time notification without a late banner", "strength": "full", "notes": "late heading count 0 on read-only CYA" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render submitted lateness only from the stored %s value", "strength": "full", "notes": "late and on-time; clock must not recompute" }
+          ]
+        }
+      ]
+    }
+  ]
+}

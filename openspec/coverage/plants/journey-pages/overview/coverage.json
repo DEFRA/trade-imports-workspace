@@ -1,0 +1,81 @@
+{
+  "capability": "plants/journey-pages/overview",
+  "areaCode": "PLANTS-OVERVIEW",
+  "specFile": "openspec/specs/plants/journey-pages/overview/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-OVERVIEW-001",
+      "name": "Overview groups the notification's tasks under four fixed, numbered sections",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OVERVIEW-001-A",
+          "name": "A fresh notification's Overview lists its always-present tasks under the four sections",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "full", "notes": "four group headings; commodities link; consignor absent while NA" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "renders the first group and its commodities row, linked to the page", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.test.js", "test": "Should name the four numbered groups in the design order", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OVERVIEW-002",
+      "name": "Each task row shows its own status, and an unready review task offers no link",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OVERVIEW-002-A",
+          "name": "A fresh notification shows later tasks as not yet started or blocked",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "full", "notes": "commodities Not yet started; arrival/ident/review Cannot start yet without links" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "renders the origin row blocked while the entry question is unanswered", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "renders the arrival group and its row, blocked while the entry question is unanswered", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-OVERVIEW-002-B",
+          "name": "Completing every task unlocks a link into the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "contact completion unlocks Check and submit" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "full", "notes": "Check and submit link after full walk" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OVERVIEW-003",
+      "name": "Overview offers a route back to the dashboard",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OVERVIEW-003-A",
+          "name": "Both the back link and the return action lead to the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "offers Return to dashboard and a Back link, both to the dashboard", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "partial", "notes": "asserts href=/ on both controls; does not click through" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-OVERVIEW-004",
+      "name": "Overview does not show commodity running totals",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-OVERVIEW-004-A",
+          "name": "Overview carries no commodity totals panel",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js", "test": "Should carry no commodity totals — the animals panel is not copied", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

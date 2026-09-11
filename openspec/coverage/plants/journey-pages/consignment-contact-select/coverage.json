@@ -1,0 +1,95 @@
+{
+  "capability": "plants/journey-pages/consignment-contact-select",
+  "areaCode": "PLANTS-CONTACT-SELECT",
+  "specFile": "openspec/specs/plants/journey-pages/consignment-contact-select/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-001",
+      "name": "The page offers every address as a plain list with name and address hint, none chosen in advance",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-001-A",
+          "name": "The page lists every record with name and address, none preselected",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "radio count equals STUB_BOOK.length; each has accessible description with postcode; copy hint asserted" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "lists address records beyond one picker page with name and address hints and persists a selection", "strength": "full", "notes": "six records all visible without paging — proves plain full list, not the five-per-page searchable picker" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-002",
+      "name": "A chosen contact is accepted, completes the Overview task, and persists",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-002-A",
+          "name": "Choosing a contact saves, completes the task, and persists on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "hub Completed; radio still checked after reload" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "lists address records beyond one picker page with name and address hints and persists a selection", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-003",
+      "name": "Saving with nothing chosen is allowed and leaves the task incomplete",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-003-A",
+          "name": "A blank save returns to Overview with the task not yet started",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and continue and leaves the row incomplete", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and return and leaves the row incomplete", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and continue and leaves the task incomplete", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and return to overview and leaves the task incomplete", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-004",
+      "name": "An invalid submitted option is refused without preserving it as chosen",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-004-A",
+          "name": "An invalid selection is rejected and focuses the first option",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "initial and invalid selection states have no serious accessibility violations", "strength": "full", "notes": "mutates radio value to not-in-this-book; error link focuses first radio" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-005",
+      "name": "Cancel discards a new choice; the back link returns to Overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-005-A",
+          "name": "Cancel keeps the previously saved choice",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "after save, checks second radio then cancel; reopen still has first checked" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-005-B",
+          "name": "The back link opens Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "same test ends by following Back to hub" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+h2. Increment
+
+{{inc-149}} from the {{shared/dr1-parity-union}} backlog.
+
+Check your answers drops the whole Documents section when nothing has been uploaded, so a trader with no documents has no route to the upload page from the review. Design release 1 always shows the section with a Change link.
+
+The documents card returns nothing when the collection is empty ({{src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js:35-37}}) and the section that would hold it is then dropped from the page altogether ({{src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js:9-12}}, and {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:16-21}} appends it only when it exists). Documents are optional for submission, so this is the ordinary case rather than an edge one.
+
+Design release 1 gives documents a permanent numbered section of its own, "4. Documents", with the subsection heading "Upload documents" and an "Uploaded documents" card carrying a Change link to {{/upload-documents}} ({{app/views/review-notification.html:160-165}}). The section is not conditional.
+
+h2. Acceptance criteria
+
+* The Documents section renders on Check your answers whether or not any documents have been uploaded.
+* The "Uploaded documents" card renders in an empty state when the documents collection is empty, rather than being suppressed.
+* The empty "Uploaded documents" card carries a Change link to the upload documents page.
+* The two early returns that suppress the card and the section are removed from {{cards/documents.js}} and {{sections/documents.js}}, and {{view-model/index.js}} no longer appends the section conditionally.
+* The change is contained to the check-answers view-model and template — no new answers and no obligation change.
+* Unit tests cover the empty-collection case rendering the section, the card and the Change link.
+* E2E specs and visual baselines in the tests repo are updated for the new section on Check your answers.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

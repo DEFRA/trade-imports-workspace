@@ -1,0 +1,29 @@
+h2. Increment
+
+{{inc-150}} from the {{shared/dr1-parity-union}} backlog.
+
+Check your answers gives no sign that a notification is incomplete. Every unanswered row reads "Not provided" in ordinary black text, no card is marked, there is no error summary, and the page still ends with "Now submit your notification" and a live Continue button. Pressing Continue is not refused: the POST redirects on to the declaration, and only after the trader ticks the box and presses Continue again does the submit fail its readiness check and bounce back to Check your answers with no message at all.
+
+Design release 1 heads the review page with a red-bordered "There is a problem" summary carrying one link per unfinished card, marks each unfinished card with its own inline message, blanks the unanswered values rather than filling them, and re-renders the same page rather than moving on.
+
+h2. Acceptance criteria
+
+* On GET of Check your answers, when the notification is not ready, an error summary headed "There is a problem" is shown above the page heading, carrying one "Complete <card name>" link per unfinished card, each anchored to the card it names.
+* The number of entries in the summary follows how far the notification got — one per unfinished card, no more and no fewer.
+* Every unfinished card carries its own inline error message above its own rows, repeating the same "Complete <card name>" wording.
+* A row with no answer keeps its label and shows an empty value instead of the "Not provided" placeholder, with the empty value marked as missing to a screen reader.
+* Cards that are complete are unchanged — same rows, same values, same Change link as on a complete notification.
+* On POST of Check your answers, when the notification is not ready, the same page is re-rendered with the same error summary; the trader is not sent on to the declaration.
+* When the notification is ready, the page and its Continue behave exactly as they do today — no error summary, no card marking, straight on to the declaration.
+* The readiness signal is the existing {{scope.readyForCheckYourAnswers}}; the per-card breakdown comes from the same task-row statuses the hub already uses ({{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js}}).
+* Unit tests cover the incomplete render, the complete render and both POST branches; the E2E specs and their visual baselines are updated to match.
+
+h2. Evidence
+
+* Frontend: {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114}}, {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:96-99}}, {{src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:86-88}}, {{src/server/app/engine/write/submit.js:9-15}}
+* Design release 1: {{app/views/review-notification.html:29-36}}, {{app/routes.js:4473-4482}}, {{app/routes.js:4520-4527}}, {{app/routes.js:10068-10075}}
+* Screens: {{fe-check-answers-incomplete}}, {{dr1-review-notification-incomplete}}
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

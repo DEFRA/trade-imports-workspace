@@ -1,0 +1,27 @@
+h2. Increment
+
+{{inc-100}} from the {{shared/dr1-parity-union}} backlog.
+
+Frontend will not accept a notification until every animal has been identified. Design release 1 accepts one with no identifiers at all and asks for them after submission.
+
+Today the animal-identifier group carries a count rule as well as a content rule: each unit record must hold at least one of the six identifiers, and the number of unit records on a commodity line must equal the number of animals declared for that line ({{recordCountEquals}} against {{numberOfAnimals}}, in {{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js}} lines 98-101). That group is the whole of the {{animalIdentification}} task row, and readiness demands every task row be fulfilled, not applicable or optional. Readiness gates both the review section and the submit itself. So a trader declaring two hundred salmon must enter two hundred records before the service will show them their own notification.
+
+Design release 1's own stated rule is "Documents remain optional. Animal identifiers are optional unless multiple species are selected, in which case at least one identifier is required per species" ({{app/routes.js}} lines 4562-4566).
+
+h2. Acceptance criteria
+
+* A single-species notification with no animal identifier records saved can reach the review section and be submitted.
+* {{recordCountEquals}} against {{numberOfAnimals}} is dropped from the {{requires}} of the unit-record obligation in {{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js}}, so an under-identified commodity line no longer holds the {{animalIdentification}} task row out of FULFILLED.
+* The per-record rule is kept: a saved animal record must still carry at least one of the six identifiers.
+* Identifiers are required for submission only where more than one commodity line carries a typed identifier set, and then only one complete record per line, never one per animal.
+* The identifier count is still shown on the hub and on Check your answers as progress. It must not stop a submission.
+* No backend or contract change is made. The animals backend's submit transition rejects on status only, never on content.
+* The tests repo's end-to-end specs and visual baselines are updated for the new submit gate.
+
+h2. Falsified by
+
+An animal-identifier entry in Design release 1's review-page error summary on a single-species notification with no identifiers saved. The captured {{dr1-review-notification-incomplete}} lists exactly four problems — Complete arrival details, Complete transport details, Complete roles and addresses, Complete contact address for this consignment — and no identifier among them, on a notification that had saved none.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

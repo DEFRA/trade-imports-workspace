@@ -1,0 +1,21 @@
+h2. Increment
+
+{{inc-152}} from the {{shared/dr1-parity-union}} backlog.
+
+Check your answers prints "Not provided" for every empty value — both for a question that genuinely does not apply and for an answer that is still owed. On the complete notification "Region of origin code", "Internal reference number" and "Number of packages" all read "Not provided"; on the unfinished notification the mandatory "Port of entry" reads the same. The two states are typeset identically, so a trader cannot tell finished business from work still to do.
+
+Design release 1 uses two treatments, and decides *per card*, not per row. {{formatReviewValueOrNa}} ({{app/routes.js:4065-4071}}) returns "Not applicable" for every empty value in a card that is complete. In a card that carries an error, {{applyMissingFieldDisplayToErrorCard}} ({{app/routes.js:4096-4098}}) and {{mapReviewRowsForErrorCard}} ({{app/routes.js:4083-4093}}) blank every empty row and draw it in the missing style with only a visually hidden "Missing" ({{app/views/partials/review-summary-row.html:15-21}}) — whether that row was required or optional.
+
+h2. Acceptance criteria
+
+* In a complete card on Check your answers, every empty value reads "Not applicable" instead of "Not provided".
+* The new string is added to both the English and the Welsh check-answers copy files, replacing the single {{notProvided}} string at {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3}}.
+* In an unfinished card, no placeholder text is printed at all: every empty row is drawn in the missing style with only a visually hidden "Missing" for a screen reader.
+* The choice between the two treatments is made per card, from the task-row status the card already carries — not per row, and not from whether the individual field is required.
+* An optional unanswered row inside an unfinished card is blank with the missing marker, not "Not applicable".
+* The change is confined to the check-answers view-model rendering ({{src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:7-19}}) and its copy files; nothing else has to land first.
+* Unit tests cover both treatments, and the E2E specs and visual baselines in the tests repo are updated for the new Check your answers output.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

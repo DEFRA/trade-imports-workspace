@@ -1,0 +1,1202 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index 0ffc3e69..64a24b2c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -105,6 +105,56 @@ test.describe('check-answers feature summary rows', () => {
+   })
+ })
+ 
++// Design release 1 lays the review out as six numbered sections mirroring the
++// task list, with a subsection heading above every card. A brand-new
++// notification shows the sections that always stand: the commodity group waits
++// on a line and the transit-countries group on an overland arrival.
++test.describe('check-answers feature section structure', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('numbers the six sections in order', async ({ page }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    // Numbered, so the section headings are the level-2 headings that open
++    // with a number — the error summary, the submit heading and the footer's
++    // own level-2 headings are not part of the spine.
++    await expect(
++      page.getByRole('heading', { level: 2 }).filter({ hasText: /^\d\.\s/ })
++    ).toHaveText([
++      copy.sections.aboutTheConsignment,
++      copy.sections.descriptionOfTheGoods,
++      copy.sections.transportAndArrival,
++      copy.sections.documents,
++      copy.sections.consignmentParties,
++      copy.sections.contactAddress
++    ])
++  })
++
++  test('heads every card with its own subsection heading', async ({ page }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    // Every group carries a heading, so each card title drops to level 4 and
++    // the level-3 headings are exactly the subsection headings.
++    await expect(page.getByRole('heading', { level: 3 })).toHaveText([
++      copy.groups.whereFrom,
++      copy.groups.mainReasonForImport,
++      copy.groups.additionalDetails,
++      copy.groups.arrivalDetails,
++      copy.groups.transportDetails,
++      copy.groups.uploadDocuments,
++      copy.groups.rolesAndAddresses,
++      copy.groups.contactAddress
++    ])
++    await expect(page.getByRole('heading', { level: 4 })).toHaveCount(
++      await page.locator('.govuk-summary-card').count()
++    )
++  })
++})
++
+ test.describe('check-answers feature documents section', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+@@ -177,24 +227,22 @@ test.describe('check-answers feature exit answers', () => {
+       page.getByText(copy.rows.exitDate, { exact: true })
+     ).toHaveCount(0)
+ 
+-    // The exit answers sit in the Additional animal details card, and that card
+-    // — not the row — carries the one Change link. That link opens the
+-    // additional-details page, which does not collect these two answers: the
+-    // destination country and the port of exit come from the reason-for-import
+-    // page, so they cannot be changed from the review at all. Tracked as an
+-    // open question on inc-146.
++    // The exit answers sit in the Reason for import card, and that card — not
++    // the row — carries the one Change link. Every row on the card comes from
++    // the reason-for-import page, so the link reaches all of them.
+     await expect(
+       rowFor(page, copy.rows.destinationCountry).getByRole('link')
+     ).toHaveCount(0)
+ 
+-    const changeLink = cardChangeLink(
+-      page,
+-      copy.hidden.cards.additionalAnimalDetails
+-    )
++    const changeLink = cardChangeLink(page, copy.hidden.cards.reasonForImport)
+     await expect(changeLink).toHaveAttribute(
+       'href',
+-      /\/notifications\/[^/]+\/additional-details\?change=1$/
++      /\/notifications\/[^/]+\/import-reason\?change=1$/
+     )
++
++    await changeLink.click()
++
++    await expect(page).toHaveURL(/\/import-reason\?change=1$/)
+   })
+ 
+   test('shows the exit date and port of exit a temporary admission collected', async ({
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 5e979091..997c6b3d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -93,8 +93,10 @@ const CONSIGNOR_NAME = 'Astra Rosales'
+ const CONSIGNOR_ADDRESS_ID = 'astra-rosales'
+ const COW_CARD_TITLE = 'Cow (0102) — Bos taurus'
+ const IMPORT_DETAILS_CARD = 'Import details'
++const REASON_FOR_IMPORT_CARD = 'Reason for import'
+ const ADDITIONAL_ANIMAL_DETAILS_CARD = 'Additional animal details'
+ const ARRIVAL_DETAILS_CARD = 'Arrival details'
++const TRANSIT_COUNTRIES_CARD = 'Transit countries'
+ const TRANSPORT_DETAILS_CARD = 'Transport details'
+ const ROLES_AND_ADDRESSES_CARD = 'Roles and addresses'
+ const CONTACT_ADDRESS_CARD = 'Contact address for this consignment'
+@@ -243,19 +245,65 @@ describe(`${SUITE} — journey lifecycle editability`, () => {
+   })
+ })
+ 
+-describe(`${SUITE} — fully-populated notification`, () => {
++// Design release 1 lays the review out as six numbered sections mirroring the
++// task list, with a subsection heading above every card. The numbers are part
++// of the heading copy, so the order here and the numbering there have to agree.
++describe(`${SUITE} — section and subsection headings`, () => {
+   setupCheckAnswersEngine()
+ 
+   it('Should render the numbered design sections in order', async () => {
+     const sections = await sectionsFor(fullSeed)
+     expect(sections.map((section) => section.heading)).toEqual([
+       '1. About the consignment',
+-      '2. Movement',
+-      '3. Addresses',
+-      '4. Documents'
++      '2. Description of the goods',
++      '3. Transport and arrival',
++      '4. Documents',
++      '5. Consignment parties',
++      '6. Contact address'
+     ])
+   })
+ 
++  // No group reaches the template without a heading — a null one would silently
++  // drop its cards straight under the numbered heading, which is what design
++  // release 1 does not do.
++  it('Should head every group with a subsection heading', async () => {
++    const groups = (await sectionsFor(fullSeed)).flatMap(
++      (section) => section.groups
++    )
++
++    expect(groups.length).toBeGreaterThan(0)
++    for (const group of groups) {
++      expect(typeof group.heading, JSON.stringify(group.heading)).toBe('string')
++    }
++  })
++
++  // Four of the ten subsection headings are the name of the card beneath them,
++  // so they are asserted through the card constants rather than restated.
++  it('Should name the subsection headings design release 1 gives each card', async () => {
++    const sections = await sectionsFor(fullSeed)
++
++    expect(
++      sections.flatMap((section) =>
++        section.groups.map((group) => group.heading)
++      )
++    ).toEqual([
++      'Where is this consignment coming from?',
++      'Main reason for import',
++      'Commodity details',
++      'Additional details',
++      ARRIVAL_DETAILS_CARD,
++      TRANSIT_COUNTRIES_CARD,
++      TRANSPORT_DETAILS_CARD,
++      'Upload documents',
++      ROLES_AND_ADDRESSES_CARD,
++      CONTACT_ADDRESS_CARD
++    ])
++  })
++})
++
++describe(`${SUITE} — fully-populated notification`, () => {
++  setupCheckAnswersEngine()
++
+   it('Should resolve service-backed labels for coded answers', async () => {
+     const rows = rowsOf(await sectionsFor(fullSeed))
+     expect(valueOf(rows, COUNTRY_OF_ORIGIN_KEY)).toBe('France')
+@@ -455,33 +503,98 @@ describe(`${SUITE} — fully-populated notification`, () => {
+   })
+ })
+ 
+-// The arrival-details card's rows span two pages, so its heading carries a
+-// second Change link while the transited-countries row stands — the card is
+-// marked incomplete for a missing transited-countries answer, and the trader
+-// has to be able to reach the page that collects it.
+-describe(`${SUITE} — arrival-details change links`, () => {
++// Design release 1 gives the countries a consignment travels through their own
++// headed card rather than a row inside arrival details. They are collected on
++// their own page and asked for only on an overland arrival, so the card stands
++// exactly while the answer is in scope and carries the link to that page.
++describe(`${SUITE} — transit countries`, () => {
+   setupCheckAnswersEngine()
+ 
+-  it('Should give the arrival-details card a Change link to the transit-countries page when transited countries apply', async () => {
++  it('Should build the transit-countries card under its own heading when transited countries apply', async () => {
+     const sections = await sectionsFor(fullSeed)
+-    const items = cardByTitle(sections, ARRIVAL_DETAILS_CARD).actions.items
++    const transport = sections.find(
++      (section) => section.anchor === 'transport-and-arrival'
++    )
++
++    expect(transport.groups.map((group) => group.heading)).toEqual([
++      ARRIVAL_DETAILS_CARD,
++      TRANSIT_COUNTRIES_CARD,
++      TRANSPORT_DETAILS_CARD
++    ])
++    expect(
++      valueOf(
++        cardByTitle(sections, TRANSIT_COUNTRIES_CARD).rows,
++        TRANSITED_COUNTRIES_KEY
++      )
++    ).toBe('France, Belgium')
++  })
+ 
+-    expect(items).toHaveLength(2)
+-    expect(items[0].href).toMatch(/\/port-of-entry\?change=1$/)
+-    expect(items[1].href).toMatch(/\/transit-countries\?change=1$/)
+-    expect(items[1].visuallyHiddenText).toBe(
++  it('Should give the transit-countries card its own Change link to the page that collects it', async () => {
++    const items = cardByTitle(
++      await sectionsFor(fullSeed),
++      TRANSIT_COUNTRIES_CARD
++    ).actions.items
++
++    expect(items).toHaveLength(1)
++    expect(items[0].href).toMatch(/\/transit-countries\?change=1$/)
++    expect(items[0].visuallyHiddenText).toBe(
+       copyEn.hidden.cards.transitCountries
+     )
+   })
+ 
+-  it('Should give the arrival-details card a single Change link when transited countries do not apply', async () => {
++  it('Should leave the arrival-details card one Change link and no transited-countries row', async () => {
++    const card = cardByTitle(await sectionsFor(fullSeed), ARRIVAL_DETAILS_CARD)
++
++    expect(card.actions.items).toHaveLength(1)
++    expect(card.actions.items[0].href).toMatch(/\/port-of-entry\?change=1$/)
++    expect(keysOf(card.rows)).not.toContain(TRANSITED_COUNTRIES_KEY)
++  })
++
++  it('Should drop the transit-countries card and its heading when transited countries do not apply', async () => {
+     const sections = await sectionsFor({
+       ...fullSeed,
+       meansOfTransport: 'AIRPLANE'
+     })
+-    const card = cardByTitle(sections, ARRIVAL_DETAILS_CARD)
++    const transport = sections.find(
++      (section) => section.anchor === 'transport-and-arrival'
++    )
++
++    expect(transport.groups.map((group) => group.heading)).toEqual([
++      ARRIVAL_DETAILS_CARD,
++      TRANSPORT_DETAILS_CARD
++    ])
++    expect(keysOf(rowsOf(sections))).not.toContain(TRANSITED_COUNTRIES_KEY)
++  })
++})
+ 
++// Design release 1 gives the reason for import a card of its own rather than
++// folding it in among the animal details, and every row on it comes from the
++// reason-for-import page — so unlike the card that used to hold them, this one
++// can offer a Change link that reaches them all.
++describe(`${SUITE} — reason-for-import card`, () => {
++  setupCheckAnswersEngine()
++
++  it('Should carry the reason and the purpose, and link to the page that collects them', async () => {
++    const card = cardByTitle(
++      await sectionsFor(fullSeed),
++      REASON_FOR_IMPORT_CARD
++    )
++
++    expect(valueOf(card.rows, copyEn.rows.reasonForImport)).toBe(
++      'Internal market'
++    )
++    expect(valueOf(card.rows, PURPOSE_IN_MARKET_KEY)).toBe('Breeding')
+     expect(card.actions.items).toHaveLength(1)
++    expect(card.actions.items[0].href).toMatch(/\/import-reason\?change=1$/)
++  })
++
++  it('Should leave the additional-animal-details card only the answers its own page collects', async () => {
++    const card = cardByTitle(
++      await sectionsFor(fullSeed),
++      ADDITIONAL_ANIMAL_DETAILS_CARD
++    )
++
++    expect(keysOf(card.rows)).toEqual([copyEn.rows.certifiedFor, UNWEANED_KEY])
+   })
+ })
+ 
+@@ -1042,8 +1155,9 @@ describe(`${SUITE} — the unfinished notification`, () => {
+   it('Should head a brand-new draft with one entry per unfinished card, in page order', async () => {
+     expect(await textsFor({})).toEqual([
+       'Complete import details',
+-      'Complete additional animal details',
++      'Complete reason for import',
+       SPECIES_INCOMPLETE,
++      'Complete additional animal details',
+       'Complete arrival details',
+       'Complete transport details',
+       'Complete roles and addresses',
+@@ -1118,10 +1232,10 @@ describe(`${SUITE} — the unfinished notification`, () => {
+       (item) => item.text === SPECIES_INCOMPLETE
+     )
+ 
+-    expect(entry.href).toBe('#about-the-consignment')
++    expect(entry.href).toBe('#description-of-the-goods')
+     expect(
+       view.context.sections.some(
+-        (section) => section.anchor === 'about-the-consignment'
++        (section) => section.anchor === 'description-of-the-goods'
+       )
+     ).toBe(true)
+   })
+@@ -1153,7 +1267,9 @@ describe(`${SUITE} — the unfinished notification`, () => {
+   // still emit "Complete <card>" with an href pointing at nothing. `species` is
+   // the deliberate exception — it anchors to a section heading, not a card.
+   it('Should build a card for every REVIEW_CARDS entry that anchors to one', async () => {
+-    const sections = await sectionsFor({})
++    // A fully-populated seed rather than an empty draft: transit countries are
++    // the one card built conditionally, and they apply to an overland arrival.
++    const sections = await sectionsFor(fullSeed)
+     const builtIds = cardsOf(sections).map((card) => card.id)
+     const anchoredIds = REVIEW_CARDS.filter(
+       (card) => card.id !== 'species'
+@@ -1161,6 +1277,25 @@ describe(`${SUITE} — the unfinished notification`, () => {
+ 
+     expect(builtIds).toEqual(expect.arrayContaining(anchoredIds))
+   })
++
++  // The transit-countries card stands only while the answer is in scope, so a
++  // summary entry for it on a draft that never asked the question would point
++  // at an anchor the page does not carry. Its task row is NA out of scope,
++  // which is what keeps the two in step.
++  it('Should anchor every summary entry to an id the page carries', async () => {
++    const summary = await summaryFor({})
++    const sections = await sectionsFor({})
++    const ids = [
++      ...sections.map((section) => section.anchor),
++      ...cardsOf(sections)
++        .map((card) => card.anchor)
++        .filter(Boolean)
++    ]
++
++    for (const entry of summary.errorList) {
++      expect(ids, entry.text).toContain(entry.href.slice(1))
++    }
++  })
+ })
+ 
+ // The POST refuses on `scope.readyForCheckYourAnswers`, and the summary is
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index 0b0b33ff..766e969e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -35,19 +35,30 @@ export const copy = {
+   },
+   sections: {
+     aboutTheConsignment: '1. Am y llwyth',
+-    movement: '2. Symudiad',
+-    addresses: '3. Cyfeiriadau',
+-    documents: '4. Dogfennau'
++    descriptionOfTheGoods: '2. Disgrifiad o’r nwyddau',
++    transportAndArrival: '3. Cludiant a chyrraedd',
++    documents: '4. Dogfennau',
++    consignmentParties: '5. Partïon y llwyth',
++    contactAddress: '6. Cyfeiriad cyswllt'
+   },
+   groups: {
+-    consignmentDetails: 'Manylion y llwyth',
++    whereFrom: 'O ble mae’r llwyth hwn yn dod?',
++    mainReasonForImport: 'Prif reswm dros fewnforio',
+     commodityDetails: 'Manylion y nwyddau',
+-    species: 'Rhywogaeth'
++    additionalDetails: 'Manylion ychwanegol',
++    arrivalDetails: 'Manylion cyrraedd',
++    transitCountries: 'Gwledydd tramwy',
++    transportDetails: 'Manylion cludo',
++    uploadDocuments: 'Uwchlwytho dogfennau',
++    rolesAndAddresses: 'Rolau a chyfeiriadau',
++    contactAddress: 'Cyfeiriad cyswllt ar gyfer y llwyth hwn'
+   },
+   cards: {
+     importDetails: 'Manylion mewnforio',
++    reasonForImport: 'Rheswm dros fewnforio',
+     additionalAnimalDetails: 'Manylion ychwanegol am yr anifeiliaid',
+     arrivalDetails: 'Manylion cyrraedd',
++    transitCountries: 'Gwledydd tramwy',
+     transportDetails: 'Manylion cludo',
+     rolesAndAddresses: 'Rolau a chyfeiriadau',
+     contactAddress: 'Cyfeiriad cyswllt ar gyfer y llwyth hwn',
+@@ -103,6 +114,7 @@ export const copy = {
+   hidden: {
+     cards: {
+       importDetails: 'manylion mewnforio',
++      reasonForImport: 'rheswm dros fewnforio',
+       additionalAnimalDetails: 'manylion ychwanegol am yr anifeiliaid',
+       arrivalDetails: 'manylion cyrraedd',
+       transitCountries: 'gwledydd y bydd y llwyth yn teithio drwyddynt',
+@@ -122,10 +134,12 @@ export const copy = {
+     prefix: 'Gwall:',
+     cards: {
+       importDetails: 'Cwblhewch y manylion mewnforio',
++      reasonForImport: 'Cwblhewch y rheswm dros fewnforio',
+       additionalAnimalDetails:
+         'Cwblhewch y manylion ychwanegol am yr anifeiliaid',
+       species: 'Cwblhewch fanylion y rhywogaeth',
+       arrivalDetails: 'Cwblhewch y manylion cyrraedd',
++      transitCountries: 'Cwblhewch y gwledydd tramwy',
+       transportDetails: 'Cwblhewch y manylion cludo',
+       rolesAndAddresses: 'Cwblhewch y rolau a’r cyfeiriadau',
+       contactAddress: 'Cwblhewch y cyfeiriad cyswllt ar gyfer y llwyth hwn',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index 38c358d1..fa1b55fa 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -32,21 +32,35 @@ export const copy = {
+     successBody:
+       'The amendment has been cancelled and the submitted version restored.'
+   },
++  // The six numbered sections of design release 1, in its order. The number is
++  // part of the heading, so renumbering means editing these strings.
+   sections: {
+     aboutTheConsignment: '1. About the consignment',
+-    movement: '2. Movement',
+-    addresses: '3. Addresses',
+-    documents: '4. Documents'
++    descriptionOfTheGoods: '2. Description of the goods',
++    transportAndArrival: '3. Transport and arrival',
++    documents: '4. Documents',
++    consignmentParties: '5. Consignment parties',
++    contactAddress: '6. Contact address'
+   },
++  // The subsection heading that stands above each card. Every card has one.
+   groups: {
+-    consignmentDetails: 'Consignment details',
++    whereFrom: 'Where is this consignment coming from?',
++    mainReasonForImport: 'Main reason for import',
+     commodityDetails: 'Commodity details',
+-    species: 'Species'
++    additionalDetails: 'Additional details',
++    arrivalDetails: 'Arrival details',
++    transitCountries: 'Transit countries',
++    transportDetails: 'Transport details',
++    uploadDocuments: 'Upload documents',
++    rolesAndAddresses: 'Roles and addresses',
++    contactAddress: 'Contact address for this consignment'
+   },
+   cards: {
+     importDetails: 'Import details',
++    reasonForImport: 'Reason for import',
+     additionalAnimalDetails: 'Additional animal details',
+     arrivalDetails: 'Arrival details',
++    transitCountries: 'Transit countries',
+     transportDetails: 'Transport details',
+     rolesAndAddresses: 'Roles and addresses',
+     contactAddress: 'Contact address for this consignment',
+@@ -107,6 +121,7 @@ export const copy = {
+   hidden: {
+     cards: {
+       importDetails: 'import details',
++      reasonForImport: 'reason for import',
+       additionalAnimalDetails: 'additional animal details',
+       arrivalDetails: 'arrival details',
+       transitCountries: 'countries the consignment will travel through',
+@@ -129,9 +144,11 @@ export const copy = {
+     // a trader reading either sees the same words.
+     cards: {
+       importDetails: 'Complete import details',
++      reasonForImport: 'Complete reason for import',
+       additionalAnimalDetails: 'Complete additional animal details',
+       species: 'Complete species details',
+       arrivalDetails: 'Complete arrival details',
++      transitCountries: 'Complete transit countries',
+       transportDetails: 'Complete transport details',
+       rolesAndAddresses: 'Complete roles and addresses',
+       contactAddress: 'Complete contact address for this consignment',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+index 8ec7a561..b77f2aa7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+@@ -1,65 +1,21 @@
+-import * as importReasonPurpose from '../../../../../../../../../services/import-reason-purpose/index.js'
+ import * as certification from '../../../../../../../../../services/certification-purposes/index.js'
+-import * as countries from '../../../../../../../../../services/countries/index.js'
+-import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
+ import { additionalDetailsPage } from '../../../../additional-details/page.js'
+-import {
+-  destinationCountryApplies,
+-  exitDateApplies,
+-  portOfExitApplies,
+-  purposeApplies,
+-  unweanedApplies
+-} from '../../applicability.js'
++import { unweanedApplies } from '../../applicability.js'
+ import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+-import { dateText } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-// The exit answers the chosen reason for import asks for. Each row stands only
+-// while its obligation is in scope. They are collected on the reason-for-import
+-// page rather than this card's own, so the card's one Change link does not
+-// reach them — see the note on the card itself.
+-const exitRows = (answers, scope) => [
+-  ...(destinationCountryApplies(answers, scope)
+-    ? [
+-        row(
+-          copy.rows.destinationCountry,
+-          countries.originLabel(answers.destinationCountry) ??
+-            answers.destinationCountry
+-        )
+-      ]
+-    : []),
+-  ...(exitDateApplies(answers, scope)
+-    ? [row(copy.rows.exitDate, dateText(answers.exitDate))]
+-    : []),
+-  ...(portOfExitApplies(answers, scope)
+-    ? [
+-        row(
+-          copy.rows.portOfExit,
+-          ports.label(answers.portOfExit) ?? answers.portOfExit
+-        )
+-      ]
+-    : [])
+-]
+-
+ /**
+- * The card's rows span two pages: this card's namesake collects what the
+- * animals are certified for and whether any are unweaned, and the
+- * reason-for-import page collects the reason, the purpose and the exit answers.
+- * The one Change link goes to the page the card is named for, which is also the
+- * page the trader would expect "Change additional animal details" to open. The
+- * reason-for-import page stays reachable from its own task row on the hub.
++ * What the animals are certified for, and whether any of them are unweaned.
++ * Both come from the page the card is named for, so its one Change link
++ * reaches every row. The reason for import used to sit here too and now has a
++ * card of its own, under design release 1's "Main reason for import".
+  */
+-export const additionalAnimalDetailsCard = (
+-  journeyId,
+-  answers,
+-  scope,
+-  readOnly
+-) => ({
++export const additionalAnimalDetailsCard = (journeyId, answers, readOnly) => ({
+   id: 'additionalAnimalDetails',
+   title: copy.cards.additionalAnimalDetails,
+   ...editableActions(
+@@ -82,20 +38,6 @@ export const additionalAnimalDetailsCard = (
+             copy.yesNo[answers.containsUnweanedAnimals] ?? ''
+           )
+         ]
+-      : []),
+-    row(
+-      copy.rows.reasonForImport,
+-      importReasonPurpose.reasonLabel(answers.reasonForImport) ?? ''
+-    ),
+-    ...(purposeApplies(answers, scope)
+-      ? [
+-          row(
+-            copy.rows.purpose,
+-            importReasonPurpose.purposeLabel(answers.purposeInInternalMarket) ??
+-              ''
+-          )
+-        ]
+-      : []),
+-    ...exitRows(answers, scope)
++      : [])
+   ]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/reason-for-import.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/reason-for-import.js
+new file mode 100644
+index 00000000..9d645d16
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/reason-for-import.js
+@@ -0,0 +1,79 @@
++import * as countries from '../../../../../../../../../services/countries/index.js'
++import * as importReasonPurpose from '../../../../../../../../../services/import-reason-purpose/index.js'
++import * as ports from '../../../../../../../../../services/ports/index.js'
++import { copyFor } from '../../../../../../../../../shared/copy.js'
++import { copy as en } from '../../../copy/copy.en.js'
++import { copy as cy } from '../../../copy/copy.cy.js'
++import { importReasonPage } from '../../../../import-reason/page.js'
++import {
++  destinationCountryApplies,
++  exitDateApplies,
++  portOfExitApplies,
++  purposeApplies
++} from '../../applicability.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
++import { row } from '../../rows/summary-row.js'
++import { dateText } from '../../rows/value-text.js'
++
++const copy = copyFor({ en, cy })
++
++// The exit answers the chosen reason for import asks for. Each row stands only
++// while its obligation is in scope, so the review shows an exit answer exactly
++// when one was asked for.
++const exitRows = (answers, scope) => [
++  ...(destinationCountryApplies(answers, scope)
++    ? [
++        row(
++          copy.rows.destinationCountry,
++          countries.originLabel(answers.destinationCountry) ??
++            answers.destinationCountry
++        )
++      ]
++    : []),
++  ...(exitDateApplies(answers, scope)
++    ? [row(copy.rows.exitDate, dateText(answers.exitDate))]
++    : []),
++  ...(portOfExitApplies(answers, scope)
++    ? [
++        row(
++          copy.rows.portOfExit,
++          ports.label(answers.portOfExit) ?? answers.portOfExit
++        )
++      ]
++    : [])
++]
++
++/**
++ * Design release 1 gives the reason for import a card of its own rather than
++ * folding it in among the animal details. Every row here comes from the
++ * reason-for-import page, so the card's one Change link reaches all of them —
++ * which the Additional animal details card could not do while it held them.
++ */
++export const reasonForImportCard = (journeyId, answers, scope, readOnly) => ({
++  id: 'reasonForImport',
++  title: copy.cards.reasonForImport,
++  ...editableActions(
++    readOnly,
++    cardAction(
++      journeyId,
++      importReasonPage.slug,
++      copy.hidden.cards.reasonForImport
++    )
++  ),
++  rows: [
++    row(
++      copy.rows.reasonForImport,
++      importReasonPurpose.reasonLabel(answers.reasonForImport) ?? ''
++    ),
++    ...(purposeApplies(answers, scope)
++      ? [
++          row(
++            copy.rows.purpose,
++            importReasonPurpose.purposeLabel(answers.purposeInInternalMarket) ??
++              ''
++          )
++        ]
++      : []),
++    ...exitRows(answers, scope)
++  ]
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
+index bd911d85..1f193404 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
+@@ -1,51 +1,32 @@
+-import * as countries from '../../../../../../../../../services/countries/index.js'
+ import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
+-import {
+-  portOfEntryPage,
+-  transitCountriesPage
+-} from '../../../../transport/page.js'
+-import { transitedCountriesApplies } from '../../applicability.js'
++import { portOfEntryPage } from '../../../../transport/page.js'
+ import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+-import { dateText, toArray } from '../../rows/value-text.js'
++import { dateText } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-/** The heading's links, gated on the same predicate as the rows they serve. */
+-const arrivalActions = (journeyId, answers, scope) => ({
+-  items: [
+-    ...cardAction(
+-      journeyId,
+-      portOfEntryPage.slug,
+-      copy.hidden.cards.arrivalDetails
+-    ).items,
+-    ...(transitedCountriesApplies(answers, scope)
+-      ? cardAction(
+-          journeyId,
+-          transitCountriesPage.slug,
+-          copy.hidden.cards.transitCountries
+-        ).items
+-      : [])
+-  ]
+-})
+-
+ /**
+- * The transited countries are collected on their own page, so this card's rows
+- * span two — and so does its heading. The first Change link goes to the
+- * port-of-entry page, the page the hub's arrival-details task row leads with
+- * and the page the other five rows come from. When the transited-countries row
+- * stands, the heading carries a second link, to the transit-countries page:
+- * incomplete-cards.js marks this card incomplete for a missing
+- * transited-countries answer, so a trader who meets that error has to be able
+- * to reach the page that collects it.
++ * Where and when the consignment lands, and what it arrives on. Every row here
++ * comes from the port-of-entry page, so the card carries the one Change link
++ * that page needs. The countries the consignment travels through used to be a
++ * row here, reached from a second link; design release 1 gives them their own
++ * card, which now carries the link to the page that collects them.
+  */
+-export const arrivalDetailsCard = (journeyId, answers, scope, readOnly) => ({
++export const arrivalDetailsCard = (journeyId, answers, readOnly) => ({
+   id: 'arrivalDetails',
+   title: copy.cards.arrivalDetails,
+-  ...editableActions(readOnly, arrivalActions(journeyId, answers, scope)),
++  ...editableActions(
++    readOnly,
++    cardAction(
++      journeyId,
++      portOfEntryPage.slug,
++      copy.hidden.cards.arrivalDetails
++    )
++  ),
+   rows: [
+     row(
+       copy.rows.portOfEntry,
+@@ -53,16 +34,6 @@ export const arrivalDetailsCard = (journeyId, answers, scope, readOnly) => ({
+     ),
+     row(copy.rows.arrivalDate, dateText(answers.arrivalDateAtPort)),
+     row(copy.rows.meansOfTransport, copy.means[answers.meansOfTransport] ?? ''),
+-    ...(transitedCountriesApplies(answers, scope)
+-      ? [
+-          row(
+-            copy.rows.transitedCountries,
+-            toArray(answers.transitedCountries)
+-              .map((code) => countries.originLabel(code) ?? code)
+-              .join(', ')
+-          )
+-        ]
+-      : []),
+     row(copy.rows.transportIdentification, answers.transportIdentification),
+     row(
+       copy.rows.transportDocumentReference,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transit-countries.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transit-countries.js
+new file mode 100644
+index 00000000..e700675c
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transit-countries.js
+@@ -0,0 +1,37 @@
++import * as countries from '../../../../../../../../../services/countries/index.js'
++import { copyFor } from '../../../../../../../../../shared/copy.js'
++import { copy as en } from '../../../copy/copy.en.js'
++import { copy as cy } from '../../../copy/copy.cy.js'
++import { transitCountriesPage } from '../../../../transport/page.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
++import { row } from '../../rows/summary-row.js'
++import { toArray } from '../../rows/value-text.js'
++
++const copy = copyFor({ en, cy })
++
++/**
++ * The countries the consignment travels through, collected on their own page
++ * and asked for only when the means of transport is overland. Design release 1
++ * gives them their own card under their own heading, so the card stands only
++ * while the answer is in scope — the section builder makes that call.
++ */
++export const transitCountriesCard = (journeyId, answers, readOnly) => ({
++  id: 'transitCountries',
++  title: copy.cards.transitCountries,
++  ...editableActions(
++    readOnly,
++    cardAction(
++      journeyId,
++      transitCountriesPage.slug,
++      copy.hidden.cards.transitCountries
++    )
++  ),
++  rows: [
++    row(
++      copy.rows.transitedCountries,
++      toArray(answers.transitedCountries)
++        .map((code) => countries.originLabel(code) ?? code)
++        .join(', ')
++    )
++  ]
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+index 72703749..92bdbf95 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+@@ -27,36 +27,51 @@ const copy = copyFor({ en, cy })
+  * anchors to the heading of the section those answers live in, which always
+  * stands. Whether a short species card should be marked in its own right is an
+  * open question on inc-150.
++ *
++ * The transit-countries card is the one entry whose card is conditional: it is
++ * built only while the answer is in scope, and while it is out of scope its
++ * task row is NA, so `incompleteCardErrors` never names a card that is not on
++ * the page.
+  */
+ export const REVIEW_CARDS = [
+   { id: 'importDetails', anchor: 'import-details', rows: ['origin'] },
+   {
+-    id: 'additionalAnimalDetails',
+-    anchor: 'additional-animal-details',
+-    rows: ['importReason', 'additionalDetails']
++    id: 'reasonForImport',
++    anchor: 'reason-for-import',
++    rows: ['importReason']
+   },
+   {
+     id: 'species',
+-    anchor: 'about-the-consignment',
++    anchor: 'description-of-the-goods',
+     rows: ['commodities', 'animalIdentification']
+   },
++  {
++    id: 'additionalAnimalDetails',
++    anchor: 'additional-animal-details',
++    rows: ['additionalDetails']
++  },
+   {
+     id: 'arrivalDetails',
+     anchor: 'arrival-details',
+-    rows: ['arrivalDetails', 'transitCountries']
++    rows: ['arrivalDetails']
++  },
++  {
++    id: 'transitCountries',
++    anchor: 'transit-countries',
++    rows: ['transitCountries']
+   },
+   {
+     id: 'transportDetails',
+     anchor: 'transport-details',
+     rows: ['transporter']
+   },
++  { id: 'documents', anchor: 'documents', rows: ['documents'] },
+   {
+     id: 'rolesAndAddresses',
+     anchor: 'roles-and-addresses',
+     rows: ['addresses']
+   },
+-  { id: 'contactAddress', anchor: 'contact-address', rows: ['contact'] },
+-  { id: 'documents', anchor: 'documents', rows: ['documents'] }
++  { id: 'contactAddress', anchor: 'contact-address', rows: ['contact'] }
+ ]
+ 
+ const cardById = new Map(REVIEW_CARDS.map((card) => [card.id, card]))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js
+index 481b1fda..1e48f80d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js
+@@ -1,8 +1,13 @@
+ import { aboutConsignmentSection } from './sections/about-consignment.js'
+-import { addressesSection } from './sections/addresses.js'
++import { consignmentPartiesSection } from './sections/consignment-parties.js'
++import { contactAddressSection } from './sections/contact-address.js'
++import { descriptionOfGoodsSection } from './sections/description-of-goods.js'
+ import { documentsSection } from './sections/documents.js'
+-import { movementSection } from './sections/movement.js'
++import { transportAndArrivalSection } from './sections/transport-and-arrival.js'
+ 
++// Design release 1's six numbered sections, in its order. The numbers are part
++// of each section's heading copy, so the order here and the numbering there
++// have to agree.
+ export const buildSections = (
+   answers,
+   scope,
+@@ -12,8 +17,10 @@ export const buildSections = (
+   parties = answers,
+   partyErrors = {}
+ ) => [
+-  aboutConsignmentSection(journeyId, answers, scope, evaluation, readOnly),
+-  movementSection(journeyId, answers, scope, readOnly),
+-  addressesSection(journeyId, answers, readOnly, parties, partyErrors),
+-  documentsSection(journeyId, answers, evaluation, readOnly)
++  aboutConsignmentSection(journeyId, answers, scope, readOnly),
++  descriptionOfGoodsSection(journeyId, answers, evaluation, readOnly),
++  transportAndArrivalSection(journeyId, answers, scope, readOnly),
++  documentsSection(journeyId, answers, evaluation, readOnly),
++  consignmentPartiesSection(journeyId, answers, readOnly, parties, partyErrors),
++  contactAddressSection(journeyId, answers, readOnly, parties)
+ ]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js
+index 35bd4cbe..32ac46a6 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js
+@@ -1,37 +1,30 @@
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+-import { additionalAnimalDetailsCard } from '../cards/consignment/additional-animal-details.js'
+ import { importDetailsCard } from '../cards/consignment/import-details.js'
+-import { speciesCards } from '../cards/consignment/species/species-cards.js'
++import { reasonForImportCard } from '../cards/consignment/reason-for-import.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
++// Design release 1's first numbered section: where the consignment comes from,
++// and why it is being imported. What is being imported is the next section's
++// subject, so the commodity and animal answers are no longer here.
+ export const aboutConsignmentSection = (
+   journeyId,
+   answers,
+   scope,
+-  evaluation,
+   readOnly
+-) => {
+-  const species = speciesCards(journeyId, answers, evaluation, readOnly)
+-  return {
+-    anchor: 'about-the-consignment',
+-    heading: copy.sections.aboutTheConsignment,
+-    groups: [
+-      {
+-        heading: copy.groups.consignmentDetails,
+-        cards: [importDetailsCard(journeyId, answers, scope, readOnly)]
+-      },
+-      {
+-        heading: copy.groups.commodityDetails,
+-        cards: [
+-          additionalAnimalDetailsCard(journeyId, answers, scope, readOnly)
+-        ]
+-      },
+-      ...(species.length
+-        ? [{ heading: copy.groups.species, cards: species }]
+-        : [])
+-    ]
+-  }
+-}
++) => ({
++  anchor: 'about-the-consignment',
++  heading: copy.sections.aboutTheConsignment,
++  groups: [
++    {
++      heading: copy.groups.whereFrom,
++      cards: [importDetailsCard(journeyId, answers, scope, readOnly)]
++    },
++    {
++      heading: copy.groups.mainReasonForImport,
++      cards: [reasonForImportCard(journeyId, answers, scope, readOnly)]
++    }
++  ]
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js
+deleted file mode 100644
+index 813e2300..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js
++++ /dev/null
+@@ -1,35 +0,0 @@
+-import { copyFor } from '../../../../../../../../shared/copy.js'
+-import { copy as en } from '../../copy/copy.en.js'
+-import { copy as cy } from '../../copy/copy.cy.js'
+-import { contactAddressCard } from '../cards/addresses/contact-address.js'
+-import { rolesAndAddressesCard } from '../cards/addresses/roles-and-addresses.js'
+-
+-const copy = copyFor({ en, cy })
+-
+-export const addressesSection = (
+-  journeyId,
+-  answers,
+-  readOnly,
+-  parties = answers,
+-  partyErrors = {}
+-) => {
+-  return {
+-    anchor: 'addresses',
+-    heading: copy.sections.addresses,
+-    groups: [
+-      {
+-        heading: null,
+-        cards: [
+-          rolesAndAddressesCard(
+-            journeyId,
+-            answers,
+-            readOnly,
+-            parties,
+-            partyErrors
+-          ),
+-          contactAddressCard(journeyId, answers, readOnly, parties)
+-        ]
+-      }
+-    ]
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/consignment-parties.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/consignment-parties.js
+new file mode 100644
+index 00000000..0b12ec1f
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/consignment-parties.js
+@@ -0,0 +1,34 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { rolesAndAddressesCard } from '../cards/addresses/roles-and-addresses.js'
++
++const copy = copyFor({ en, cy })
++
++// Design release 1's fifth numbered section: the businesses and places the
++// consignment passes between. The address to contact about the consignment is
++// not one of them, so it has a numbered section of its own after this one.
++export const consignmentPartiesSection = (
++  journeyId,
++  answers,
++  readOnly,
++  parties = answers,
++  partyErrors = {}
++) => ({
++  anchor: 'consignment-parties',
++  heading: copy.sections.consignmentParties,
++  groups: [
++    {
++      heading: copy.groups.rolesAndAddresses,
++      cards: [
++        rolesAndAddressesCard(
++          journeyId,
++          answers,
++          readOnly,
++          parties,
++          partyErrors
++        )
++      ]
++    }
++  ]
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/contact-address.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/contact-address.js
+new file mode 100644
+index 00000000..e43a4000
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/contact-address.js
+@@ -0,0 +1,28 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { contactAddressCard } from '../cards/addresses/contact-address.js'
++
++// Design release 1's sixth and last numbered section: who to contact about
++// this consignment, lifted out of the parties section so the one address the
++// trader is asked for on their own behalf is not read as another role.
++const copy = copyFor({ en, cy })
++
++export const contactAddressSection = (
++  journeyId,
++  answers,
++  readOnly,
++  parties = answers
++) => ({
++  // Suffixed, like the documents section and for the same reason: the contact
++  // address CARD already owns the `contact-address` id, which is what the error
++  // summary's "Complete contact address for this consignment" link anchors to.
++  anchor: 'contact-address-section',
++  heading: copy.sections.contactAddress,
++  groups: [
++    {
++      heading: copy.groups.contactAddress,
++      cards: [contactAddressCard(journeyId, answers, readOnly, parties)]
++    }
++  ]
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/description-of-goods.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/description-of-goods.js
+new file mode 100644
+index 00000000..fc3c28ba
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/description-of-goods.js
+@@ -0,0 +1,38 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { additionalAnimalDetailsCard } from '../cards/consignment/additional-animal-details.js'
++import { speciesCards } from '../cards/consignment/species/species-cards.js'
++
++const copy = copyFor({ en, cy })
++
++/**
++ * Design release 1's second numbered section: what is in the consignment. The
++ * commodity lines lead, each as its own card under one heading, and the
++ * answers that apply across the whole consignment follow.
++ *
++ * The commodity group stands only while there are lines to show, but the
++ * section heading always does — the error summary's species entry anchors to
++ * it, and a trader with no lines yet still has to land somewhere.
++ */
++export const descriptionOfGoodsSection = (
++  journeyId,
++  answers,
++  evaluation,
++  readOnly
++) => {
++  const species = speciesCards(journeyId, answers, evaluation, readOnly)
++  return {
++    anchor: 'description-of-the-goods',
++    heading: copy.sections.descriptionOfTheGoods,
++    groups: [
++      ...(species.length
++        ? [{ heading: copy.groups.commodityDetails, cards: species }]
++        : []),
++      {
++        heading: copy.groups.additionalDetails,
++        cards: [additionalAnimalDetailsCard(journeyId, answers, readOnly)]
++      }
++    ]
++  }
++}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js
+index dfd60b68..5550e4c6 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js
+@@ -17,7 +17,7 @@ export const documentsSection = (journeyId, answers, evaluation, readOnly) => ({
+   heading: copy.sections.documents,
+   groups: [
+     {
+-      heading: null,
++      heading: copy.groups.uploadDocuments,
+       cards: [documentsCard(journeyId, answers, evaluation, readOnly)]
+     }
+   ]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js
+deleted file mode 100644
+index 6a0149db..00000000
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js
++++ /dev/null
+@@ -1,23 +0,0 @@
+-import { copyFor } from '../../../../../../../../shared/copy.js'
+-import { copy as en } from '../../copy/copy.en.js'
+-import { copy as cy } from '../../copy/copy.cy.js'
+-import { arrivalDetailsCard } from '../cards/movement/arrival-details.js'
+-import { transportDetailsCard } from '../cards/movement/transport-details.js'
+-
+-const copy = copyFor({ en, cy })
+-
+-export const movementSection = (journeyId, answers, scope, readOnly) => {
+-  return {
+-    anchor: 'movement',
+-    heading: copy.sections.movement,
+-    groups: [
+-      {
+-        heading: null,
+-        cards: [
+-          arrivalDetailsCard(journeyId, answers, scope, readOnly),
+-          transportDetailsCard(journeyId, answers, scope, readOnly)
+-        ]
+-      }
+-    ]
+-  }
+-}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/transport-and-arrival.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/transport-and-arrival.js
+new file mode 100644
+index 00000000..ecf87276
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/transport-and-arrival.js
+@@ -0,0 +1,43 @@
++import { copyFor } from '../../../../../../../../shared/copy.js'
++import { copy as en } from '../../copy/copy.en.js'
++import { copy as cy } from '../../copy/copy.cy.js'
++import { transitedCountriesApplies } from '../applicability.js'
++import { arrivalDetailsCard } from '../cards/movement/arrival-details.js'
++import { transitCountriesCard } from '../cards/movement/transit-countries.js'
++import { transportDetailsCard } from '../cards/movement/transport-details.js'
++
++const copy = copyFor({ en, cy })
++
++/**
++ * Design release 1's third numbered section: how the consignment gets here and
++ * when it lands. The transit countries are collected on their own page and
++ * apply only to an overland arrival, so they stand as their own headed card
++ * rather than as a row inside arrival details.
++ */
++export const transportAndArrivalSection = (
++  journeyId,
++  answers,
++  scope,
++  readOnly
++) => ({
++  anchor: 'transport-and-arrival',
++  heading: copy.sections.transportAndArrival,
++  groups: [
++    {
++      heading: copy.groups.arrivalDetails,
++      cards: [arrivalDetailsCard(journeyId, answers, readOnly)]
++    },
++    ...(transitedCountriesApplies(answers, scope)
++      ? [
++          {
++            heading: copy.groups.transitCountries,
++            cards: [transitCountriesCard(journeyId, answers, readOnly)]
++          }
++        ]
++      : []),
++    {
++      heading: copy.groups.transportDetails,
++      cards: [transportDetailsCard(journeyId, answers, scope, readOnly)]
++    }
++  ]
++})

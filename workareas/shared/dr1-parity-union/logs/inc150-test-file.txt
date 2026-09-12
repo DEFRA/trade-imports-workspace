@@ -1,0 +1,1060 @@
+     1	import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+     2	
+     3	import { buildDispatch } from '../../../../../../flow/dispatch.js'
+     4	import { commodityCodeFor } from '../../../../services/commodities/index.js'
+     5	import { store } from '../../../../../../engine/store.js'
+     6	import {
+     7	  AMEND,
+     8	  configureRecords,
+     9	  DRAFT,
+    10	  records,
+    11	  SUBMITTED
+    12	} from '../../../../../../engine/persistence/records.js'
+    13	import { configureSession } from '../../../../../../engine/persistence/session.js'
+    14	import { records as recordsStub } from '../../../../../../services/persistence/records/stub/index.js'
+    15	import { session as sessionStub } from '../../../../../../services/persistence/session/stub.js'
+    16	import {
+    17	  driveHandler,
+    18	  journeyRequest,
+    19	  stubH
+    20	} from '../../../../../../engine/test-support.js'
+    21	import { configureAnswersForRead } from '../../../../../../engine/read.js'
+    22	import { withoutUnresolvedPartyRefs } from '../addresses/resolve-parties.js'
+    23	import { taskRows } from '../../flow/task-rows.js'
+    24	import { dispatchPages } from '../index.js'
+    25	import { routes } from './controller.js'
+    26	import { buildSections } from './view-model/index.js'
+    27	import { REVIEW_CARDS } from './view-model/incomplete-cards.js'
+    28	import { copy as copyEn } from './copy/copy.en.js'
+    29	
+    30	const getHandler = routes.find((route) => route.method === 'GET').handler
+    31	const postHandler = routes.find((route) => route.method === 'POST').handler
+    32	
+    33	const sectionsFor = async (seed) =>
+    34	  (await driveHandler(getHandler, { seed })).view.context.sections
+    35	
+    36	const viewForStatus = async (status, seed = fullSeed, query = {}) => {
+    37	  const journey = await store.create()
+    38	  await store.seedAnswers(journey.journeyId, seed)
+    39	  if (status === SUBMITTED || status === AMEND) {
+    40	    await store.submit(journey.journeyId)
+    41	  }
+    42	  if (status === AMEND) {
+    43	    await records.amend(journey.journeyId)
+    44	  }
+    45	  const h = stubH()
+    46	  await getHandler(journeyRequest(journey.journeyId, { query }), h)
+    47	  return h.captured.view
+    48	}
+    49	
+    50	const cardsOf = (sections) =>
+    51	  sections.flatMap((section) => section.groups.flatMap((group) => group.cards))
+    52	
+    53	const cardByTitle = (sections, title) =>
+    54	  cardsOf(sections).find((card) => card.title === title)
+    55	
+    56	const rowsOf = (sections) =>
+    57	  cardsOf(sections).flatMap((card) => [
+    58	    ...(card.rows ?? []),
+    59	    ...(card.documents ?? []).flatMap((document) => document.rows)
+    60	  ])
+    61	
+    62	const rowByKey = (rows, key) => rows.find((row) => row.key.text === key)
+    63	const valueOf = (rows, key) => rowByKey(rows, key)?.value.text
+    64	const htmlOf = (rows, key) => rowByKey(rows, key)?.value.html
+    65	const changeHrefOf = (rows, key) => rowByKey(rows, key)?.actions.items[0].href
+    66	const keysOf = (rows) => rows.map((row) => row.key.text)
+    67	const changeHrefsOf = (sections) =>
+    68	  cardsOf(sections).flatMap((card) => [
+    69	    ...(card.actions?.items ?? []).map((action) => action.href),
+    70	    ...(card.rows ?? []).flatMap((entry) =>
+    71	      (entry.actions?.items ?? []).map((action) => action.href)
+    72	    )
+    73	  ])
+    74	
+    75	const NOT_PROVIDED = 'Not provided'
+    76	const CONSIGNOR_ERROR = 'Select an address for the consignor'
+    77	const ADDRESSES_INCOMPLETE = 'Complete roles and addresses'
+    78	
+    79	const withoutParty = (seed, partyId) => {
+    80	  const next = { ...seed }
+    81	  delete next[partyId]
+    82	  return next
+    83	}
+    84	const ADDRESS_LINE_1 = '43 East Hague Extension'
+    85	const CONSIGNOR_NAME = 'Astra Rosales'
+    86	const CONSIGNOR_ADDRESS_ID = 'astra-rosales'
+    87	const COW_CARD_TITLE = 'Cow (0102) — Bos taurus'
+    88	const ROLES_AND_ADDRESSES_CARD = 'Roles and addresses'
+    89	const UPLOADED_DOCUMENTS_CARD = 'Uploaded documents'
+    90	const COUNTRY_OF_ORIGIN_KEY = 'Country of origin'
+    91	const PURPOSE_IN_MARKET_KEY = 'Purpose in the market'
+    92	const REGION_CODE_KEY = 'Region of origin code'
+    93	const UNWEANED_KEY = 'Includes unweaned animals'
+    94	const CPH_KEY = 'County parish holding (CPH) number'
+    95	const TRANSITED_COUNTRIES_KEY =
+    96	  'Countries that the consignment will travel through'
+    97	const PACKAGES_KEY = 'Number of packages'
+    98	const DESTINATION_COUNTRY_KEY = 'Destination country'
+    99	const EXIT_DATE_KEY = 'Exit date'
+   100	const PORT_OF_EXIT_KEY = 'Port of exit'
+   101	
+   102	const fullSeed = {
+   103	  countryOfOrigin: 'FR',
+   104	  regionOfOriginCodeRequirement: 'yes',
+   105	  regionOfOriginCode: 'FR-75',
+   106	  internalReferenceNumber: 'Imports456GB',
+   107	  commodityLines: [
+   108	    {
+   109	      commoditySelection: 'Cow',
+   110	      speciesSelection: '1148346',
+   111	      commodityType: '16',
+   112	      numberOfAnimalsQuantity: '25',
+   113	      numberOfPackages: '5',
+   114	      animalIdentifiers: [
+   115	        {
+   116	          animalIdentifierEarTag: 'UK1',
+   117	          animalIdentifierPassport: 'UK123456789',
+   118	          permanentAddress: { name: 'Pet Owner' }
+   119	        }
+   120	      ]
+   121	    }
+   122	  ],
+   123	  reasonForImport: 'internalMarket',
+   124	  purposeInInternalMarket: 'breeding',
+   125	  animalsCertifiedFor: 'slaughter',
+   126	  containsUnweanedAnimals: 'no',
+   127	  documents: [
+   128	    {
+   129	      accompanyingDocumentType: 'VETERINARY_HEALTH_CERTIFICATE',
+   130	      accompanyingDocumentAttachmentType: 'PDF',
+   131	      accompanyingDocumentReference: 'GBHC1234567890',
+   132	      accompanyingDocumentDateOfIssue: { day: '12', month: '12', year: '2025' }
+   133	    }
+   134	  ],
+   135	  placeOfOrigin: { addressId: 'origin-farm' },
+   136	  consignor: { addressId: CONSIGNOR_ADDRESS_ID },
+   137	  consignee: { addressId: 'british-livestock-ltd' },
+   138	  importer: { addressId: 'import-co-uk' },
+   139	  placeOfDestination: { addressId: 'tech-imports-ltd' },
+   140	  countyParishHoldingCph: '123456789',
+   141	  portOfEntry: 'GB ABD',
+   142	  arrivalDateAtPort: { day: '12', month: '12', year: '2026' },
+   143	  meansOfTransport: 'ROAD_VEHICLE',
+   144	  transportIdentification: 'FR-892-LK',
+   145	  transportDocumentReference: 'CMR-2026-884721',
+   146	  transitedCountries: ['FR', 'BE'],
+   147	  transporterType: 'Commercial',
+   148	  commercialTransporter: {
+   149	    name: 'García Livestock Transport SL',
+   150	    approvalNumber: 'ES-T2-45001294',
+   151	    address: {
+   152	      addressLine1: ADDRESS_LINE_1,
+   153	      country: 'Switzerland'
+   154	    }
+   155	  },
+   156	  contactAddress: { addressId: 'animal-and-plant-health-agency' }
+   157	}
+   158	
+   159	const SUITE = `#${buildSections.name} (check-answers GET)`
+   160	
+   161	const setupCheckAnswersEngine = () => {
+   162	  beforeAll(() => {
+   163	    configureRecords(recordsStub)
+   164	    configureSession(sessionStub)
+   165	    buildDispatch(dispatchPages)
+   166	  })
+   167	  beforeEach(() => store.clear())
+   168	}
+   169	
+   170	describe(`${SUITE} — journey lifecycle editability`, () => {
+   171	  setupCheckAnswersEngine()
+   172	
+   173	  it('Should omit every Change href for a submitted journey', async () => {
+   174	    const view = await viewForStatus(SUBMITTED)
+   175	
+   176	    expect(view.context.readOnly).toBe(true)
+   177	    expect(changeHrefsOf(view.context.sections)).toEqual([])
+   178	    expect(view.context.cancelAmendHref).toBeNull()
+   179	    expect(view.context.copyAction).toEqual({
+   180	      href: expect.stringMatching(/\/copy$/)
+   181	    })
+   182	    expect(view.context.deleteHref).toMatch(/\/delete$/)
+   183	  })
+   184	
+   185	  it.each([DRAFT, AMEND])(
+   186	    'Should retain Change hrefs for an editable %s journey',
+   187	    async (status) => {
+   188	      const view = await viewForStatus(status)
+   189	      const hrefs = changeHrefsOf(view.context.sections)
+   190	
+   191	      expect(view.context.readOnly).toBe(false)
+   192	      expect(view.context.copyAction).toBeNull()
+   193	      expect(view.context.deleteHref).toBeNull()
+   194	      expect(hrefs).not.toHaveLength(0)
+   195	      expect(hrefs).toEqual(
+   196	        expect.arrayContaining([expect.stringMatching(/\/origin\?change=1$/)])
+   197	      )
+   198	    }
+   199	  )
+   200	
+   201	  // A submitted journey has no Change links at all, so an empty documents card
+   202	  // would otherwise stand with nothing inside it.
+   203	  it('Should keep the documents card readable on a submitted journey with nothing uploaded', async () => {
+   204	    const seed = { ...fullSeed }
+   205	    delete seed.documents
+   206	    const view = await viewForStatus(SUBMITTED, seed)
+   207	    const card = cardByTitle(view.context.sections, UPLOADED_DOCUMENTS_CARD)
+   208	
+   209	    expect(card.actions).toBeUndefined()
+   210	    expect(card.emptyText).toBe('You have not added any documents yet.')
+   211	  })
+   212	
+   213	  it('Should expose Cancel amendment only on an amending CYA', async () => {
+   214	    const draft = await viewForStatus(DRAFT)
+   215	    const submitted = await viewForStatus(SUBMITTED)
+   216	    const amend = await viewForStatus(AMEND)
+   217	
+   218	    expect(draft.context.cancelAmendHref).toBeNull()
+   219	    expect(submitted.context.cancelAmendHref).toBeNull()
+   220	    expect(amend.context.cancelAmendHref).toMatch(/\/cancel-amend$/)
+   221	  })
+   222	
+   223	  it('Should show the cancel success indication only on the restored submitted view', async () => {
+   224	    const submitted = await viewForStatus(SUBMITTED, fullSeed, {
+   225	      cancelled: '1'
+   226	    })
+   227	    const draft = await viewForStatus(DRAFT, fullSeed, { cancelled: '1' })
+   228	
+   229	    expect(submitted.context.amendmentCancelled).toBe(true)
+   230	    expect(draft.context.amendmentCancelled).toBe(false)
+   231	  })
+   232	})
+   233	
+   234	describe(`${SUITE} — fully-populated notification`, () => {
+   235	  setupCheckAnswersEngine()
+   236	
+   237	  it('Should render the numbered design sections in order', async () => {
+   238	    const sections = await sectionsFor(fullSeed)
+   239	    expect(sections.map((section) => section.heading)).toEqual([
+   240	      '1. About the consignment',
+   241	      '2. Movement',
+   242	      '3. Addresses',
+   243	      '4. Documents'
+   244	    ])
+   245	  })
+   246	
+   247	  it('Should resolve service-backed labels for coded answers', async () => {
+   248	    const rows = rowsOf(await sectionsFor(fullSeed))
+   249	    expect(valueOf(rows, COUNTRY_OF_ORIGIN_KEY)).toBe('France')
+   250	    expect(valueOf(rows, 'Reason for import')).toBe('Internal market')
+   251	    expect(valueOf(rows, PURPOSE_IN_MARKET_KEY)).toBe('Breeding')
+   252	    expect(valueOf(rows, 'Certified for')).toBe('Slaughter')
+   253	  })
+   254	
+   255	  it('Should map yes/no coded answers to Yes/No labels', async () => {
+   256	    const rows = rowsOf(await sectionsFor(fullSeed))
+   257	    expect(valueOf(rows, 'Region of origin code required')).toBe('Yes')
+   258	    expect(valueOf(rows, UNWEANED_KEY)).toBe('No')
+   259	  })
+   260	
+   261	  it('Should map the means-of-transport enum to its display label', async () => {
+   262	    const rows = rowsOf(await sectionsFor(fullSeed))
+   263	    expect(valueOf(rows, 'Means of transport')).toBe('Road Vehicle')
+   264	  })
+   265	
+   266	  it('Should include the region-of-origin-code row when the requirement is yes', async () => {
+   267	    const rows = rowsOf(await sectionsFor(fullSeed))
+   268	    expect(valueOf(rows, REGION_CODE_KEY)).toBe('FR-75')
+   269	  })
+   270	
+   271	  it('Should include the unweaned row when a line is an unweaned-eligible commodity', async () => {
+   272	    expect(keysOf(rowsOf(await sectionsFor(fullSeed)))).toContain(UNWEANED_KEY)
+   273	  })
+   274	
+   275	  it('Should include the CPH row in the roles-and-addresses card when a line is a CPH-eligible commodity', async () => {
+   276	    const card = cardByTitle(
+   277	      await sectionsFor(fullSeed),
+   278	      ROLES_AND_ADDRESSES_CARD
+   279	    )
+   280	    expect(valueOf(card.rows, CPH_KEY)).toBe('123456789')
+   281	  })
+   282	
+   283	  it('Should include the transited-countries row for an overland means of transport, labelling each code', async () => {
+   284	    const rows = rowsOf(await sectionsFor(fullSeed))
+   285	    expect(valueOf(rows, TRANSITED_COUNTRIES_KEY)).toBe('France, Belgium')
+   286	  })
+   287	
+   288	  it('Should expand the commercial transporter in the transport-details card when the type is commercial', async () => {
+   289	    const card = cardByTitle(await sectionsFor(fullSeed), 'Transport details')
+   290	    expect(valueOf(card.rows, 'Name')).toBe('García Livestock Transport SL')
+   291	    expect(htmlOf(card.rows, 'Address')).toBe(ADDRESS_LINE_1)
+   292	    expect(valueOf(card.rows, 'Country')).toBe('Switzerland')
+   293	    expect(valueOf(card.rows, 'Approval number')).toBe('ES-T2-45001294')
+   294	    expect(valueOf(card.rows, 'Type')).toBe('Commercial')
+   295	  })
+   296	
+   297	  it('Should render one species card per commodity line with the design rows', async () => {
+   298	    const card = cardByTitle(await sectionsFor(fullSeed), COW_CARD_TITLE)
+   299	    expect(valueOf(card.rows, 'Commodity code')).toBe('0102')
+   300	    expect(valueOf(card.rows, 'Common name')).toBe('Cow')
+   301	    expect(valueOf(card.rows, 'Species')).toBe('Bos taurus')
+   302	    expect(valueOf(card.rows, 'Number of animals')).toBe('25')
+   303	    expect(valueOf(card.rows, PACKAGES_KEY)).toBe('5')
+   304	  })
+   305	
+   306	  it('Should render a read-only identifier table inside the species card', async () => {
+   307	    const card = cardByTitle(await sectionsFor(fullSeed), COW_CARD_TITLE)
+   308	    expect(card.identifierTable.head.map((cell) => cell.text)).toEqual([
+   309	      'Animal',
+   310	      'Ear tag',
+   311	      'Passport'
+   312	    ])
+   313	    expect(card.identifierTable.rows).toEqual([
+   314	      [{ text: 'Animal 1' }, { text: 'UK1' }, { text: 'UK123456789' }]
+   315	    ])
+   316	  })
+   317	
+   318	  it('Should render a document group with the design rows inside the uploaded-documents card', async () => {
+   319	    const card = cardByTitle(
+   320	      await sectionsFor(fullSeed),
+   321	      UPLOADED_DOCUMENTS_CARD
+   322	    )
+   323	    expect(card.documents).toHaveLength(1)
+   324	    expect(card.emptyText).toBeNull()
+   325	    const [document] = card.documents
+   326	    expect(document.heading).toBe('Document 1')
+   327	    expect(valueOf(document.rows, 'Document reference')).toBe('GBHC1234567890')
+   328	    expect(valueOf(document.rows, 'Document type')).toBe(
+   329	      'Veterinary health certificate'
+   330	    )
+   331	    expect(valueOf(document.rows, 'Date of issue')).toBe('12/12/2025')
+   332	    expect(valueOf(document.rows, 'Attachment type')).toBe('PDF')
+   333	  })
+   334	
+   335	  it('Should name an ITAHC document with the same label the documents page uses', async () => {
+   336	    const seed = {
+   337	      ...fullSeed,
+   338	      documents: [
+   339	        { ...fullSeed.documents[0], accompanyingDocumentType: 'ITAHC' }
+   340	      ]
+   341	    }
+   342	    const card = cardByTitle(await sectionsFor(seed), UPLOADED_DOCUMENTS_CARD)
+   343	    const [document] = card.documents
+   344	    expect(valueOf(document.rows, 'Document type')).toBe(
+   345	      'Intra Trade Animal Health Certificate (ITAHC)'
+   346	    )
+   347	  })
+   348	
+   349	  it('Should format the arrival date as day/month/year', async () => {
+   350	    expect(
+   351	      valueOf(
+   352	        rowsOf(await sectionsFor(fullSeed)),
+   353	        'Arrival date at port of entry'
+   354	      )
+   355	    ).toBe('12/12/2026')
+   356	  })
+   357	
+   358	  it('Should expand party rows to the stored name plus address lines', async () => {
+   359	    const card = cardByTitle(
+   360	      await sectionsFor(fullSeed),
+   361	      ROLES_AND_ADDRESSES_CARD
+   362	    )
+   363	    expect(htmlOf(card.rows, 'Consignor')).toBe(
+   364	      `<strong>${CONSIGNOR_NAME}</strong><br>${ADDRESS_LINE_1}<br>Bern<br>30055<br>Switzerland`
+   365	    )
+   366	    expect(htmlOf(card.rows, 'Place of destination')).toBe(
+   367	      '<strong>Tech Imports Ltd</strong><br>18 Dockside Road<br>London<br>E14 9GE<br>United Kingdom'
+   368	    )
+   369	    const contact = cardByTitle(
+   370	      await sectionsFor(fullSeed),
+   371	      'Contact address for this consignment'
+   372	    )
+   373	    expect(htmlOf(contact.rows, 'Address')).toBe(
+   374	      '<strong>Animal and Plant Health Agency</strong><br>Woodham Lane<br>Addlestone<br>KT15 3NB<br>United Kingdom'
+   375	    )
+   376	  })
+   377	
+   378	  it('Should point each Change link at the owning page slug with a change flag', async () => {
+   379	    const rows = rowsOf(await sectionsFor(fullSeed))
+   380	    expect(changeHrefOf(rows, COUNTRY_OF_ORIGIN_KEY)).toMatch(
+   381	      /\/origin\?change=1$/
+   382	    )
+   383	    expect(changeHrefOf(rows, PURPOSE_IN_MARKET_KEY)).toMatch(
+   384	      /\/import-reason\?change=1$/
+   385	    )
+   386	    expect(changeHrefOf(rows, TRANSITED_COUNTRIES_KEY)).toMatch(
+   387	      /\/transit-countries\?change=1$/
+   388	    )
+   389	    expect(changeHrefOf(rows, 'Name')).toMatch(/\/transporters\?change=1$/)
+   390	  })
+   391	
+   392	  it('Should point the species-card Change actions at the commodities pages with a change flag', async () => {
+   393	    const card = cardByTitle(await sectionsFor(fullSeed), COW_CARD_TITLE)
+   394	    const [commodityAction, identifiersAction] = card.actions.items
+   395	    expect(commodityAction.href).toMatch(/\/consignment-details\?change=1$/)
+   396	    expect(identifiersAction.href).toMatch(
+   397	      /\/commodities\/identification\?change=1#identification-card-0$/
+   398	    )
+   399	  })
+   400	
+   401	  it('Should point the uploaded-documents card Change action at the documents page with a change flag', async () => {
+   402	    const card = cardByTitle(
+   403	      await sectionsFor(fullSeed),
+   404	      UPLOADED_DOCUMENTS_CARD
+   405	    )
+   406	    expect(card.actions.items[0].href).toMatch(
+   407	      /\/accompanying-documents\?change=1$/
+   408	    )
+   409	  })
+   410	})
+   411	
+   412	describe(`${SUITE} — gated-off answers and blanks`, () => {
+   413	  setupCheckAnswersEngine()
+   414	
+   415	  const gatedOffSeed = {
+   416	    regionOfOriginCodeRequirement: 'no',
+   417	    reasonForImport: 'transit',
+   418	    commodityLines: [{ commoditySelection: 'Fish' }],
+   419	    meansOfTransport: 'AIRPLANE',
+   420	    transporterType: 'Private',
+   421	    privateTransporter: { name: 'Jean Dupont' }
+   422	  }
+   423	
+   424	  it('Should keep the region-of-origin-code row when the requirement is no', async () => {
+   425	    expect(keysOf(rowsOf(await sectionsFor(gatedOffSeed)))).toContain(
+   426	      REGION_CODE_KEY
+   427	    )
+   428	  })
+   429	
+   430	  it('Should retain a stored region-of-origin code across a requirement flip to no', async () => {
+   431	    const rows = rowsOf(
+   432	      await sectionsFor({ ...gatedOffSeed, regionOfOriginCode: 'FR-75' })
+   433	    )
+   434	    expect(valueOf(rows, REGION_CODE_KEY)).toBe('FR-75')
+   435	  })
+   436	
+   437	  it('Should omit the internal-market purpose row when the reason is not internalMarket', async () => {
+   438	    expect(keysOf(rowsOf(await sectionsFor(gatedOffSeed)))).not.toContain(
+   439	      PURPOSE_IN_MARKET_KEY
+   440	    )
+   441	  })
+   442	
+   443	  it('Should omit the unweaned and CPH rows when no line is an eligible commodity', async () => {
+   444	    const keys = keysOf(rowsOf(await sectionsFor(gatedOffSeed)))
+   445	    expect(keys).not.toContain(UNWEANED_KEY)
+   446	    expect(keys).not.toContain(CPH_KEY)
+   447	  })
+   448	
+   449	  it('Should omit the packages row when the commodity is off the package-count list', async () => {
+   450	    const card = cardByTitle(await sectionsFor(gatedOffSeed), 'Fish (0301)')
+   451	    expect(keysOf(card.rows)).not.toContain(PACKAGES_KEY)
+   452	  })
+   453	
+   454	  it('Should omit the transited-countries row for a non-overland means of transport', async () => {
+   455	    expect(keysOf(rowsOf(await sectionsFor(gatedOffSeed)))).not.toContain(
+   456	      TRANSITED_COUNTRIES_KEY
+   457	    )
+   458	  })
+   459	
+   460	  it('Should expand the private transporter and omit the approval-number row when the type is private', async () => {
+   461	    const card = cardByTitle(
+   462	      await sectionsFor(gatedOffSeed),
+   463	      'Transport details'
+   464	    )
+   465	    expect(valueOf(card.rows, 'Name')).toBe('Jean Dupont')
+   466	    expect(valueOf(card.rows, 'Type')).toBe('Private')
+   467	    expect(keysOf(card.rows)).not.toContain('Approval number')
+   468	  })
+   469	
+   470	  it('Should omit the identifier table when the commodity holds no entry', async () => {
+   471	    const sections = await sectionsFor(gatedOffSeed)
+   472	    expect(cardByTitle(sections, 'Fish (0301)').identifierTable).toBeNull()
+   473	  })
+   474	
+   475	  // Documents are optional, so an empty collection is the ordinary case. The
+   476	  // section and its card stand anyway, or the review never mentions documents
+   477	  // and the trader has no route to the upload page from it.
+   478	  it('Should keep the documents section and its card when nothing has been uploaded', async () => {
+   479	    const sections = await sectionsFor(gatedOffSeed)
+   480	    expect(sections.map((section) => section.heading)).toContain('4. Documents')
+   481	    const card = cardByTitle(sections, UPLOADED_DOCUMENTS_CARD)
+   482	    expect(card.documents).toEqual([])
+   483	    expect(card.emptyText).toBe('You have not added any documents yet.')
+   484	  })
+   485	
+   486	  it('Should still offer the Change route to the documents page when nothing has been uploaded', async () => {
+   487	    const card = cardByTitle(
+   488	      await sectionsFor(gatedOffSeed),
+   489	      UPLOADED_DOCUMENTS_CARD
+   490	    )
+   491	    expect(card.actions.items[0].href).toMatch(
+   492	      /\/accompanying-documents\?change=1$/
+   493	    )
+   494	  })
+   495	
+   496	  it('Should render Not provided for a blank plain answer', async () => {
+   497	    const rows = rowsOf(await sectionsFor(gatedOffSeed))
+   498	    expect(valueOf(rows, 'Internal reference number')).toBe(NOT_PROVIDED)
+   499	    expect(valueOf(rows, 'Port of entry')).toBe(NOT_PROVIDED)
+   500	  })
+   501	
+   502	  it('Should render Not provided when a coded answer has no matching label', async () => {
+   503	    expect(
+   504	      valueOf(rowsOf(await sectionsFor(gatedOffSeed)), COUNTRY_OF_ORIGIN_KEY)
+   505	    ).toBe(NOT_PROVIDED)
+   506	  })
+   507	
+   508	  it('Should render Not provided for a blank date', async () => {
+   509	    expect(
+   510	      valueOf(
+   511	        rowsOf(await sectionsFor(gatedOffSeed)),
+   512	        'Arrival date at port of entry'
+   513	      )
+   514	    ).toBe(NOT_PROVIDED)
+   515	  })
+   516	
+   517	  it('Should render Not provided for an unset party', async () => {
+   518	    const card = cardByTitle(
+   519	      await sectionsFor(gatedOffSeed),
+   520	      ROLES_AND_ADDRESSES_CARD
+   521	    )
+   522	    expect(valueOf(card.rows, 'Place of origin')).toBe(NOT_PROVIDED)
+   523	  })
+   524	})
+   525	
+   526	// The reason for import asks up to three further questions — the destination
+   527	// country, the exit date and the port of exit. A trader who answered one has
+   528	// to be able to read it back and change it from the review.
+   529	describe(`${SUITE} — reason-for-import exit answers`, () => {
+   530	  setupCheckAnswersEngine()
+   531	
+   532	  const reasonSeed = (answers) => ({
+   533	    commodityLines: [{ commoditySelection: 'Fish' }],
+   534	    ...answers
+   535	  })
+   536	
+   537	  it('Should show the destination country and port of exit for a transit, labelling both codes', async () => {
+   538	    const rows = rowsOf(
+   539	      await sectionsFor(
+   540	        reasonSeed({
+   541	          reasonForImport: 'transit',
+   542	          destinationCountry: 'IE',
+   543	          portOfExit: 'GB DVR'
+   544	        })
+   545	      )
+   546	    )
+   547	
+   548	    expect(valueOf(rows, DESTINATION_COUNTRY_KEY)).toBe('Ireland')
+   549	    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe('Port of Dover (GB DVR)')
+   550	    expect(keysOf(rows)).not.toContain(EXIT_DATE_KEY)
+   551	    expect(changeHrefOf(rows, DESTINATION_COUNTRY_KEY)).toMatch(
+   552	      /\/import-reason\?change=1$/
+   553	    )
+   554	  })
+   555	
+   556	  it('Should show the destination country alone for a transhipment', async () => {
+   557	    const rows = rowsOf(
+   558	      await sectionsFor(
+   559	        reasonSeed({
+   560	          reasonForImport: 'transhipmentOrOnwardTravel',
+   561	          destinationCountry: 'IE'
+   562	        })
+   563	      )
+   564	    )
+   565	
+   566	    expect(valueOf(rows, DESTINATION_COUNTRY_KEY)).toBe('Ireland')
+   567	    expect(keysOf(rows)).not.toContain(EXIT_DATE_KEY)
+   568	    expect(keysOf(rows)).not.toContain(PORT_OF_EXIT_KEY)
+   569	  })
+   570	
+   571	  it('Should show the exit date and port of exit for a temporary admission of horses', async () => {
+   572	    const rows = rowsOf(
+   573	      await sectionsFor(
+   574	        reasonSeed({
+   575	          reasonForImport: 'temporaryAdmissionHorses',
+   576	          exitDate: { day: '27', month: '3', year: '2026' },
+   577	          portOfExit: 'GB DVR'
+   578	        })
+   579	      )
+   580	    )
+   581	
+   582	    expect(valueOf(rows, EXIT_DATE_KEY)).toBe('27/3/2026')
+   583	    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe('Port of Dover (GB DVR)')
+   584	    expect(keysOf(rows)).not.toContain(DESTINATION_COUNTRY_KEY)
+   585	  })
+   586	
+   587	  it('Should omit all three rows for a reason that asks none of them', async () => {
+   588	    const keys = keysOf(
+   589	      rowsOf(await sectionsFor(reasonSeed({ reasonForImport: 'reEntry' })))
+   590	    )
+   591	
+   592	    expect(keys).not.toContain(DESTINATION_COUNTRY_KEY)
+   593	    expect(keys).not.toContain(EXIT_DATE_KEY)
+   594	    expect(keys).not.toContain(PORT_OF_EXIT_KEY)
+   595	  })
+   596	
+   597	  it('Should render Not provided for an in-scope exit answer left blank', async () => {
+   598	    const rows = rowsOf(
+   599	      await sectionsFor(
+   600	        reasonSeed({ reasonForImport: 'temporaryAdmissionHorses' })
+   601	      )
+   602	    )
+   603	
+   604	    expect(valueOf(rows, EXIT_DATE_KEY)).toBe(NOT_PROVIDED)
+   605	    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe(NOT_PROVIDED)
+   606	  })
+   607	
+   608	  it('Should point every exit row Change link at the reason-for-import page', async () => {
+   609	    const rows = rowsOf(
+   610	      await sectionsFor(
+   611	        reasonSeed({
+   612	          reasonForImport: 'temporaryAdmissionHorses',
+   613	          exitDate: { day: '27', month: '3', year: '2026' },
+   614	          portOfExit: 'GB DVR'
+   615	        })
+   616	      )
+   617	    )
+   618	
+   619	    expect(changeHrefOf(rows, EXIT_DATE_KEY)).toMatch(
+   620	      /\/import-reason\?change=1$/
+   621	    )
+   622	    expect(changeHrefOf(rows, PORT_OF_EXIT_KEY)).toMatch(
+   623	      /\/import-reason\?change=1$/
+   624	    )
+   625	  })
+   626	})
+   627	
+   628	describe(`${SUITE} — address-book party references`, () => {
+   629	  setupCheckAnswersEngine()
+   630	
+   631	  it('Should render the address book name and address for an addressId reference', async () => {
+   632	    const card = cardByTitle(
+   633	      await sectionsFor({
+   634	        consignor: { addressId: CONSIGNOR_ADDRESS_ID }
+   635	      }),
+   636	      ROLES_AND_ADDRESSES_CARD
+   637	    )
+   638	
+   639	    expect(htmlOf(card.rows, 'Consignor')).toContain(CONSIGNOR_NAME)
+   640	    expect(htmlOf(card.rows, 'Consignor')).toContain(ADDRESS_LINE_1)
+   641	  })
+   642	
+   643	  it('Should render a message against the role when the referenced address is gone', async () => {
+   644	    const card = cardByTitle(
+   645	      await sectionsFor({
+   646	        consignor: { addressId: 'gone' }
+   647	      }),
+   648	      ROLES_AND_ADDRESSES_CARD
+   649	    )
+   650	
+   651	    expect(htmlOf(card.rows, 'Consignor')).toContain(CONSIGNOR_ERROR)
+   652	    expect(htmlOf(card.rows, 'Consignor')).toContain('govuk-error-message')
+   653	  })
+   654	})
+   655	
+   656	describe(`${SUITE} — submitted inline vs live amend`, () => {
+   657	  setupCheckAnswersEngine()
+   658	
+   659	  const FROZEN_CONSIGNOR = 'Frozen Consignor Ltd'
+   660	
+   661	  it('Should render stored inline details on a submitted notification, not the live book name', async () => {
+   662	    const { context } = await viewForStatus(SUBMITTED, {
+   663	      ...fullSeed,
+   664	      consignor: {
+   665	        addressId: CONSIGNOR_ADDRESS_ID,
+   666	        name: FROZEN_CONSIGNOR,
+   667	        address: { addressLine1: 'Old Lane', countryCode: 'GB' }
+   668	      }
+   669	    })
+   670	    const card = cardByTitle(context.sections, ROLES_AND_ADDRESSES_CARD)
+   671	    expect(htmlOf(card.rows, 'Consignor')).toContain(FROZEN_CONSIGNOR)
+   672	    expect(htmlOf(card.rows, 'Consignor')).not.toContain(CONSIGNOR_NAME)
+   673	  })
+   674	
+   675	  it('Should resolve live on an amendment from the address book', async () => {
+   676	    const { context } = await viewForStatus(AMEND, {
+   677	      ...fullSeed,
+   678	      consignor: { addressId: CONSIGNOR_ADDRESS_ID }
+   679	    })
+   680	    const card = cardByTitle(context.sections, ROLES_AND_ADDRESSES_CARD)
+   681	    expect(htmlOf(card.rows, 'Consignor')).toContain(CONSIGNOR_NAME)
+   682	    expect(htmlOf(card.rows, 'Consignor')).not.toContain(FROZEN_CONSIGNOR)
+   683	  })
+   684	})
+   685	
+   686	describe(`${SUITE} — outstanding referenced roles`, () => {
+   687	  setupCheckAnswersEngine()
+   688	
+   689	  const summaryFor = async (seed) =>
+   690	    (await driveHandler(getHandler, { seed })).view.context.errorSummary
+   691	
+   692	  it('Should list every outstanding role in the error summary', async () => {
+   693	    const summary = await summaryFor({
+   694	      ...fullSeed,
+   695	      consignor: { addressId: 'gone' },
+   696	      importer: { addressId: 'gone' }
+   697	    })
+   698	
+   699	    expect(summary.errorList.map((entry) => entry.text)).toEqual([
+   700	      CONSIGNOR_ERROR,
+   701	      'Select an address for the importer'
+   702	    ])
+   703	  })
+   704	
+   705	  // A role never answered raises no role error — there is nothing broken to
+   706	  // name. It leaves its card unfinished, which the card entry says instead.
+   707	  it('Should not raise a role error for a role that has never been answered', async () => {
+   708	    const summary = await summaryFor(withoutParty(fullSeed, 'importer'))
+   709	
+   710	    expect(summary.errorList.map((entry) => entry.text)).toEqual([
+   711	      ADDRESSES_INCOMPLETE
+   712	    ])
+   713	  })
+   714	
+   715	  it('Should not raise a role error on a brand-new draft', async () => {
+   716	    const texts = (await summaryFor({})).errorList.map((entry) => entry.text)
+   717	
+   718	    expect(texts).not.toContain(CONSIGNOR_ERROR)
+   719	    expect(texts).toContain(ADDRESSES_INCOMPLETE)
+   720	  })
+   721	
+   722	  it('Should render Not provided for a role that has never been answered', async () => {
+   723	    const card = cardByTitle(
+   724	      await sectionsFor(withoutParty(fullSeed, 'importer')),
+   725	      ROLES_AND_ADDRESSES_CARD
+   726	    )
+   727	    expect(valueOf(card.rows, 'Importer')).toBe(NOT_PROVIDED)
+   728	  })
+   729	
+   730	  it('Should link each summary entry where that role is changed', async () => {
+   731	    const { view } = await driveHandler(getHandler, {
+   732	      seed: { ...fullSeed, consignor: { addressId: 'gone' } }
+   733	    })
+   734	    const { errorSummary, sections } = view.context
+   735	    const card = cardByTitle(sections, ROLES_AND_ADDRESSES_CARD)
+   736	
+   737	    expect(errorSummary.errorList[0].href).toMatch(/\/addresses\?change=1$/)
+   738	    expect(errorSummary.errorList[0].href).toBe(
+   739	      changeHrefOf(card.rows, 'Consignor')
+   740	    )
+   741	  })
+   742	
+   743	  it('Should leave focus where it is when the page is merely visited', async () => {
+   744	    const summary = await summaryFor({
+   745	      ...fullSeed,
+   746	      consignor: { addressId: 'gone' }
+   747	    })
+   748	
+   749	    expect(summary.disableAutoFocus).toBe(true)
+   750	  })
+   751	
+   752	  it('Should carry no error summary once every referenced role resolves', async () => {
+   753	    expect(await summaryFor(fullSeed)).toBeNull()
+   754	  })
+   755	
+   756	  it('Should carry no error summary for a reference the address book still holds', async () => {
+   757	    const summary = await summaryFor({
+   758	      ...fullSeed,
+   759	      consignor: { addressId: CONSIGNOR_ADDRESS_ID }
+   760	    })
+   761	
+   762	    expect(summary).toBeNull()
+   763	  })
+   764	
+   765	  it('Should flag a gone place of origin like any other role', async () => {
+   766	    const summary = await summaryFor({
+   767	      ...fullSeed,
+   768	      placeOfOrigin: { addressId: 'gone' }
+   769	    })
+   770	
+   771	    expect(summary.errorList.map((entry) => entry.text)).toContain(
+   772	      'Select an address for the place of origin'
+   773	    )
+   774	  })
+   775	
+   776	  it('Should not flag a submitted notification', async () => {
+   777	    const { context } = await viewForStatus(SUBMITTED, {
+   778	      ...fullSeed,
+   779	      consignor: { addressId: 'gone' }
+   780	    })
+   781	    expect(context.errorSummary).toBeNull()
+   782	  })
+   783	
+   784	  it('Should flag an amend, which is still being worked on', async () => {
+   785	    const { context } = await viewForStatus(AMEND, {
+   786	      ...fullSeed,
+   787	      consignor: { addressId: 'gone' }
+   788	    })
+   789	    expect(context.errorSummary.errorList[0].text).toBe(CONSIGNOR_ERROR)
+   790	  })
+   791	})
+   792	
+   793	// The rest of this file drives the handler directly, which skips the plugin
+   794	// registration that installs the read-path sanitiser — so those tests never see
+   795	// the answers the sanitiser strips. The server always has it installed, and it
+   796	// deletes a party whose reference no longer resolves: exactly the answer this
+   797	// page has to name. These cases wire the real sanitiser so the page is asserted
+   798	// against the state a trader can actually reach.
+   799	describe(`${SUITE} — outstanding roles behind the read-path sanitiser`, () => {
+   800	  setupCheckAnswersEngine()
+   801	
+   802	  beforeAll(() => configureAnswersForRead(withoutUnresolvedPartyRefs))
+   803	  afterAll(() => configureAnswersForRead((_request, answers) => answers))
+   804	
+   805	  it('Should still name a deleted address the sanitiser has stripped', async () => {
+   806	    const { view } = await driveHandler(getHandler, {
+   807	      seed: { ...fullSeed, consignor: { addressId: 'gone' } }
+   808	    })
+   809	    const card = cardByTitle(view.context.sections, ROLES_AND_ADDRESSES_CARD)
+   810	
+   811	    expect(view.context.errorSummary.errorList[0].text).toBe(CONSIGNOR_ERROR)
+   812	    expect(htmlOf(card.rows, 'Consignor')).toContain('govuk-error-message')
+   813	    expect(valueOf(card.rows, 'Consignor')).not.toBe(NOT_PROVIDED)
+   814	  })
+   815	
+   816	  it('Should still refuse Continue while that deleted address stands', async () => {
+   817	    const { response } = await driveHandler(postHandler, {
+   818	      seed: { ...fullSeed, consignor: { addressId: 'gone' } }
+   819	    })
+   820	
+   821	    expect(response.redirect).toBeUndefined()
+   822	    expect(response.statusCode).toBe(400)
+   823	  })
+   824	
+   825	  it('Should leave a role that was never answered as Not provided', async () => {
+   826	    const { view } = await driveHandler(getHandler, {
+   827	      seed: withoutParty(fullSeed, 'importer')
+   828	    })
+   829	    const card = cardByTitle(view.context.sections, ROLES_AND_ADDRESSES_CARD)
+   830	
+   831	    expect(
+   832	      view.context.errorSummary.errorList.map((e) => e.text)
+   833	    ).not.toContain('Select an address for the importer')
+   834	    expect(valueOf(card.rows, 'Importer')).toBe(NOT_PROVIDED)
+   835	  })
+   836	})
+   837	
+   838	// The CYA commodity gates (packages / unweaned / CPH) read the obligation
+   839	// `.metadata.values` (CN codes), normalising the stored commodity name to a
+   840	// code. This matrix pins the gate outcome per selectable species
+   841	// (Cow/Horse/Cat/Dog/Fish).
+   842	describe(`${SUITE} — commodity-gate render matrix — model metadata per selectable species`, () => {
+   843	  setupCheckAnswersEngine()
+   844	
+   845	  const gatesFor = async (commodity) => {
+   846	    const sections = await sectionsFor({
+   847	      commodityLines: [{ commoditySelection: commodity }]
+   848	    })
+   849	    const allKeys = keysOf(rowsOf(sections))
+   850	    const speciesCard = cardByTitle(
+   851	      sections,
+   852	      `${commodity} (${commodityCodeFor(commodity)})`
+   853	    )
+   854	    return {
+   855	      packages: keysOf(speciesCard.rows).includes(PACKAGES_KEY),
+   856	      unweaned: allKeys.includes(UNWEANED_KEY),
+   857	      cph: allKeys.includes(CPH_KEY)
+   858	    }
+   859	  }
+   860	
+   861	  const MATRIX = [
+   862	    { commodity: 'Cow', packages: true, unweaned: true, cph: true },
+   863	    // Design release 1 asks the unweaned-animals question only of a commodity
+   864	    // carrying unweaned options, and a horse carries none.
+   865	    { commodity: 'Horse', packages: true, unweaned: false, cph: false },
+   866	    { commodity: 'Cat', packages: true, unweaned: false, cph: false },
+   867	    { commodity: 'Dog', packages: true, unweaned: false, cph: false },
+   868	    { commodity: 'Fish', packages: false, unweaned: false, cph: false }
+   869	  ]
+   870	
+   871	  it.each(MATRIX)(
+   872	    'Should gate packages/unweaned/CPH for $commodity',
+   873	    async ({ commodity, packages, unweaned, cph }) => {
+   874	      expect(await gatesFor(commodity)).toEqual({ packages, unweaned, cph })
+   875	    }
+   876	  )
+   877	})
+   878	
+   879	describe(`${SUITE} — POST navigation`, () => {
+   880	  setupCheckAnswersEngine()
+   881	
+   882	  const withParties = (seed) => ({
+   883	    ...seed,
+   884	    consignor: fullSeed.consignor,
+   885	    consignee: fullSeed.consignee,
+   886	    importer: fullSeed.importer,
+   887	    placeOfDestination: fullSeed.placeOfDestination
+   888	  })
+   889	
+   890	  // Continue used to carry an unfinished notification through to the
+   891	  // declaration, where the submit failed its readiness check and bounced the
+   892	  // trader back here saying nothing. It is refused on this page instead.
+   893	  it('Should refuse Continue while the notification is unfinished', async () => {
+   894	    const { response } = await driveHandler(postHandler, {
+   895	      seed: withParties({})
+   896	    })
+   897	
+   898	    expect(response.redirect).toBeUndefined()
+   899	    expect(response.statusCode).toBe(400)
+   900	  })
+   901	
+   902	  it('Should redirect to the declaration once the notification is complete', async () => {
+   903	    const { response } = await driveHandler(postHandler, { seed: fullSeed })
+   904	
+   905	    expect(response.redirect).toMatch(/\/declaration$/)
+   906	  })
+   907	
+   908	  it('Should refuse Continue while a referenced role is outstanding', async () => {
+   909	    const { response } = await driveHandler(postHandler, {
+   910	      seed: { ...fullSeed, consignor: { addressId: 'gone' } }
+   911	    })
+   912	
+   913	    expect(response.redirect).toBeUndefined()
+   914	    expect(response.statusCode).toBe(400)
+   915	  })
+   916	
+   917	  it('Should refuse Continue on a brand-new draft, naming what is outstanding', async () => {
+   918	    const { response, view } = await driveHandler(postHandler, { seed: {} })
+   919	
+   920	    expect(response.statusCode).toBe(400)
+   921	    expect(view.context.errorSummary.errorList.length).toBeGreaterThan(0)
+   922	  })
+   923	
+   924	  it('Should re-render the page with the summary when Continue is refused', async () => {
+   925	    const { view } = await driveHandler(postHandler, {
+   926	      seed: { ...fullSeed, consignor: { addressId: 'gone' } }
+   927	    })
+   928	
+   929	    expect(view.context.errorSummary.errorList[0].text).toBe(CONSIGNOR_ERROR)
+   930	  })
+   931	
+   932	  it('Should move focus to the summary when Continue is refused', async () => {
+   933	    const { view } = await driveHandler(postHandler, {
+   934	      seed: { ...fullSeed, consignor: { addressId: 'gone' } }
+   935	    })
+   936	
+   937	    expect(view.context.errorSummary.disableAutoFocus).toBe(false)
+   938	  })
+   939	
+   940	  it('Should not refuse a submitted notification carrying a deleted address', async () => {
+   941	    const journey = await store.create()
+   942	    await store.seedAnswers(journey.journeyId, {
+   943	      ...fullSeed,
+   944	      consignor: { addressId: 'gone' }
+   945	    })
+   946	    await store.submit(journey.journeyId)
+   947	
+   948	    const response = await postHandler(
+   949	      journeyRequest(journey.journeyId),
+   950	      stubH()
+   951	    )
+   952	
+   953	    expect(response.statusCode).not.toBe(400)
+   954	    expect(response.redirect).toBeDefined()
+   955	  })
+   956	})
+   957	
+   958	// Design release 1 heads the review page of an unfinished notification with
+   959	// "There is a problem", names each unfinished card, marks the card itself, and
+   960	// refuses to go on. Before this, the page looked finished: no summary, no
+   961	// marking, and a live Continue that carried the trader to the declaration only
+   962	// to bounce them back here with nothing said.
+   963	describe(`${SUITE} — the unfinished notification`, () => {
+   964	  setupCheckAnswersEngine()
+   965	
+   966	  const summaryFor = async (seed) =>
+   967	    (await driveHandler(getHandler, { seed })).view.context.errorSummary
+   968	
+   969	  const textsFor = async (seed) =>
+   970	    (await summaryFor(seed)).errorList.map((entry) => entry.text)
+   971	
+   972	  const cardById = (sections, id) => cardsOf(sections).find((c) => c.id === id)
+   973	
+   974	  it('Should head a brand-new draft with one entry per unfinished card, in page order', async () => {
+   975	    expect(await textsFor({})).toEqual([
+   976	      'Complete import details',
+   977	      'Complete species details',
+   978	      'Complete additional animal details',
+   979	      'Complete arrival details',
+   980	      'Complete transport details',
+   981	      'Complete roles and addresses',
+   982	      'Complete contact address for this consignment'
+   983	    ])
+   984	  })
+   985	
+   986	  it('Should name only the cards still outstanding as the trader gets further', async () => {
+   987	    const texts = await textsFor({
+   988	      countryOfOrigin: 'FR',
+   989	      regionOfOriginCodeRequirement: 'no',
+   990	      portOfEntry: 'GB ABD',
+   991	      arrivalDateAtPort: { day: '12', month: '12', year: '2026' },
+   992	      meansOfTransport: 'ROAD_VEHICLE',
+   993	      transportIdentification: 'FR-892-LK',
+   994	      transportDocumentReference: 'CMR-2026-884721'
+   995	    })
+   996	
+   997	    expect(texts).not.toContain('Complete import details')
+   998	    expect(texts).not.toContain('Complete arrival details')
+   999	    expect(texts).toContain('Complete transport details')
+  1000	  })
+  1001	
+  1002	  it('Should anchor each entry to the card it names', async () => {
+  1003	    const summary = await summaryFor(withoutParty(fullSeed, 'importer'))
+  1004	
+  1005	    expect(summary.errorList).toEqual([
+  1006	      { text: ADDRESSES_INCOMPLETE, href: '#roles-and-addresses' }
+  1007	    ])
+  1008	  })
+  1009	
+  1010	  it('Should title the summary There is a problem', async () => {
+  1011	    expect((await summaryFor({})).titleText).toBe('There is a problem')
+  1012	  })
+  1013	
+  1014	  it('Should repeat the message inside the card it names', async () => {
+  1015	    const sections = await sectionsFor(withoutParty(fullSeed, 'importer'))
+  1016	
+  1017	    expect(cardById(sections, 'rolesAndAddresses').error).toBe(
+  1018	      ADDRESSES_INCOMPLETE
+  1019	    )
+  1020	  })
+  1021	
+  1022	  it('Should leave a finished card unmarked', async () => {
+  1023	    const sections = await sectionsFor(withoutParty(fullSeed, 'importer'))
+  1024	
+  1025	    expect(cardById(sections, 'arrivalDetails').error).toBeNull()
+  1026	    expect(cardById(sections, 'arrivalDetails').anchor).toBe('arrival-details')
+  1027	  })
+  1028	
+  1029	  it('Should say nothing is outstanding on a complete notification', async () => {
+  1030	    expect(await summaryFor(fullSeed)).toBeNull()
+  1031	  })
+  1032	
+  1033	  it('Should say nothing is outstanding on a submitted notification', async () => {
+  1034	    const { context } = await viewForStatus(
+  1035	      SUBMITTED,
+  1036	      withoutParty(fullSeed, 'importer')
+  1037	    )
+  1038	
+  1039	    expect(context.errorSummary).toBeNull()
+  1040	    expect(cardById(context.sections, 'rolesAndAddresses').error).toBeNull()
+  1041	  })
+  1042	})
+  1043	
+  1044	// The POST refuses on `scope.readyForCheckYourAnswers`, and the summary is
+  1045	// built from REVIEW_CARDS. The two agree only while every task row is covered
+  1046	// exactly once — otherwise a refusal could arrive with nothing named, or a card
+  1047	// could be flagged for a row the hub does not count.
+  1048	describe('#REVIEW_CARDS — the cards cover the task rows exactly', () => {
+  1049	  it('Should map every task row to exactly one card', () => {
+  1050	    const covered = REVIEW_CARDS.flatMap((card) => card.rows)
+  1051	
+  1052	    expect([...covered].sort()).toEqual(taskRows.map((row) => row.id).sort())
+  1053	  })
+  1054	
+  1055	  it('Should carry a message for every card', () => {
+  1056	    for (const card of REVIEW_CARDS) {
+  1057	      expect(typeof copyEn.errors.cards[card.id]).toBe('string')
+  1058	    }
+  1059	  })
+  1060	})

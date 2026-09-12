@@ -1,0 +1,209 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index 0a62976c..7b3dcf08 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -1,7 +1,8 @@
+ // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+ export const copy = {
+   title: 'Gwiriwch eich atebion',
+-  notProvided: 'Heb ei ddarparu',
++  notApplicable: 'Amherthnasol',
++  missing: 'Ar goll',
+   yesNo: { yes: 'Iawn', no: 'Na' },
+   means: {
+     AIRPLANE: 'Awyren',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index 2358f5e5..0a64ee30 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -1,6 +1,12 @@
+ export const copy = {
+   title: 'Check your answers',
+-  notProvided: 'Not provided',
++  // An empty value inside a card that is finished. Nothing more is owed on
++  // that card, so the blank is a settled answer rather than a gap.
++  notApplicable: 'Not applicable',
++  // An empty value inside a card that still has answers outstanding gets no
++  // text at all — the row is drawn in the missing style, and this is what a
++  // screen reader is told in its place.
++  missing: 'Missing',
+   yesNo: { yes: 'Yes', no: 'No' },
+   means: {
+     AIRPLANE: 'Airplane',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js
+index eefddb7c..6eee67cc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js
+@@ -6,14 +6,14 @@ import { speciesText } from './species-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
++const NOT_APPLICABLE = copy.notApplicable
+ 
+ // One card per commodity line = one per species; the title carries
+ // both the commodity and the species so same-commodity cards stay distinct.
+ export const speciesCardTitle = (entry) => {
+   const name = (entry.commoditySelection ?? '').trim()
+   if (!name) {
+-    return NOT_PROVIDED
++    return NOT_APPLICABLE
+   }
+   const code = commodities.commodityCodeFor(name)
+   const commodity = code ? `${name} (${code})` : name
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+index f8e84c9e..41d88e9c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+@@ -10,7 +10,7 @@ import { escapeHtml } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
++const NOT_APPLICABLE = copy.notApplicable
+ 
+ export const activeTransporter = (answers, scope) => {
+   if (scope.has('commercialTransporter')) {
+@@ -26,7 +26,9 @@ export const transporterAddressRow = (party) => {
+   const lines = addressLines(party?.address).map(escapeHtml)
+   return {
+     key: { text: copy.rows.address },
+-    value: lines.length ? { html: lines.join('<br>') } : { text: NOT_PROVIDED }
++    value: lines.length
++      ? { html: lines.join('<br>') }
++      : { text: NOT_APPLICABLE }
+   }
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+index 92bdbf95..c635d23e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+@@ -3,6 +3,7 @@ import { copyFor } from '../../../../../../../shared/copy.js'
+ import { rowStatus, taskRowById } from '../../../flow/task-rows.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
++import { missingCell, NOT_APPLICABLE } from './rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+@@ -106,12 +107,46 @@ export const cardAnchorHref = (key) => {
+   return card ? `#${card.anchor}` : undefined
+ }
+ 
++/** An empty row is one whose value is the "Not applicable" placeholder —
++ * `valueText` puts it there and nothing else does, so the placeholder is the
++ * only mark an empty row carries by the time the card is built. */
++const isEmptyRow = (row) => row.value?.text === NOT_APPLICABLE
++
++const blankEmptyRows = (rows) =>
++  Array.isArray(rows)
++    ? rows.map((row) =>
++        isEmptyRow(row) ? { ...row, value: missingCell() } : row
++      )
++    : rows
++
++/** Every empty row inside an unfinished card loses its placeholder, whether the
++ * answer was required or optional. Design release 1 decides this per card, not
++ * per row: on a card that is still owed something the whole card reads as
++ * unfinished, so an optional blank in it is not settled business either. */
++const blankEmptyValues = (card) => ({
++  ...card,
++  rows: blankEmptyRows(card.rows),
++  ...(Array.isArray(card.documents)
++    ? {
++        documents: card.documents.map((document) => ({
++          ...document,
++          rows: blankEmptyRows(document.rows)
++        }))
++      }
++    : {})
++})
++
+ const decorateCard = (card, cardErrors) => {
+   const known = cardById.get(card.id)
+   if (!known) {
+     return card
+   }
+-  return { ...card, anchor: known.anchor, error: cardErrors[card.id] ?? null }
++  const decorated = {
++    ...card,
++    anchor: known.anchor,
++    error: cardErrors[card.id] ?? null
++  }
++  return decorated.error ? blankEmptyValues(decorated) : decorated
+ }
+ 
+ /** Give every card its anchor, and the unfinished ones their own message. The
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
+index d14f0b6f..f9312594 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
+@@ -6,7 +6,7 @@ import { escapeHtml } from './value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
++const NOT_APPLICABLE = copy.notApplicable
+ 
+ export const addressLines = (address = {}) =>
+   [
+@@ -48,7 +48,7 @@ const valueCell = (lines, errorText) => {
+   if (lines) {
+     return { html: lines.join('<br>') }
+   }
+-  return errorText ? errorCell(errorText) : { text: NOT_PROVIDED }
++  return errorText ? errorCell(errorText) : { text: NOT_APPLICABLE }
+ }
+ 
+ /** A key and a value with no Change link of its own, like an ordinary row — the
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js
+index 153e11d2..08a8f381 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js
+@@ -5,13 +5,19 @@ import { copy as cy } from '../../copy/copy.cy.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
++/** Every empty value is written out as "Not applicable" here, whatever the
++ * state of the card around it — the same one placeholder Design release 1
++ * writes. A card that still has answers outstanding then blanks the rows
++ * carrying it, which is `blankEmptyValues` in `incomplete-cards.js`: the
++ * placeholder is the mark that says "this row is empty", and the card decides
++ * whether an empty row reads as settled or as owed. */
++export const NOT_APPLICABLE = copy.notApplicable
+ 
+ export const toArray = (value) => [value ?? []].flat()
+ 
+ export const valueText = (value) => {
+   if (isBlank(value)) {
+-    return NOT_PROVIDED
++    return NOT_APPLICABLE
+   }
+   if (typeof value === 'number') {
+     return value.toString()
+@@ -20,7 +26,7 @@ export const valueText = (value) => {
+ }
+ 
+ export const dateText = (value) =>
+-  isBlank(value) ? NOT_PROVIDED : `${value.day}/${value.month}/${value.year}`
++  isBlank(value) ? NOT_APPLICABLE : `${value.day}/${value.month}/${value.year}`
+ 
+ export const escapeHtml = (value) =>
+   value
+@@ -30,3 +36,14 @@ export const escapeHtml = (value) =>
+     .replaceAll('>', '&gt;')
+     .replaceAll('"', '&quot;')
+     .replaceAll("'", '&#39;')
++
++/** The value cell of an empty row inside a card that still has answers
++ * outstanding. Design release 1 gives it no text at all: the cell is drawn in
++ * the missing style and only a screen reader is told the answer is missing, so
++ * a trader can see which rows are still owed without reading a word. */
++export const missingCell = () => ({
++  html:
++    '<span class="app-summary-list__value--missing">' +
++    `<span class="govuk-visually-hidden">${escapeHtml(copy.missing)}</span>` +
++    '</span>'
++})

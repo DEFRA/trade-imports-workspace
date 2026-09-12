@@ -1,0 +1,389 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index 03607cab..c8afecec 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -117,6 +117,135 @@ test.describe('check-answers feature documents section', () => {
+   })
+ })
+ 
++// The reason for import asks up to three further questions as conditional
++// reveals. Each answer has to read back on the review with a Change route to
++// the page that collected it.
++test.describe('check-answers feature exit answers', () => {
++  const IMPORT_REASON_SLUG = 'import-reason'
++  const EXIT_PORT_CODE = 'GB DVR'
++  const EXIT_PORT_LABEL = 'Port of Dover (GB DVR)'
++  const DESTINATION_COUNTRY_CODE = 'IE'
++  const DESTINATION_COUNTRY_NAME = 'Ireland'
++
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('shows the destination country and port of exit a transit collected, and changes them from the review', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, IMPORT_REASON_SLUG))
++    await page.locator('input[name="reasonForImport"][value="transit"]').check()
++    await page.locator('#transitPortOfExit').selectOption(EXIT_PORT_CODE)
++    await page
++      .locator('#transitDestinationCountry')
++      .selectOption(DESTINATION_COUNTRY_CODE)
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    await expect(rowFor(page, copy.rows.destinationCountry)).toContainText(
++      DESTINATION_COUNTRY_NAME
++    )
++    await expect(rowFor(page, copy.rows.portOfExit)).toContainText(
++      EXIT_PORT_LABEL
++    )
++    await expect(
++      page.getByText(copy.rows.exitDate, { exact: true })
++    ).toHaveCount(0)
++
++    const changeLink = rowFor(page, copy.rows.destinationCountry).getByRole(
++      'link',
++      { name: `${copy.change} destination country` }
++    )
++    await expect(changeLink).toHaveAttribute(
++      'href',
++      /\/notifications\/[^/]+\/import-reason\?change=1$/
++    )
++
++    await changeLink.click()
++
++    await expect(page).toHaveURL(/\/import-reason\?change=1$/)
++  })
++
++  test('shows the exit date and port of exit a temporary admission collected', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, IMPORT_REASON_SLUG))
++    await page
++      .locator(
++        'input[name="reasonForImport"][value="temporaryAdmissionHorses"]'
++      )
++      .check()
++    await page.locator('#temporaryAdmissionExitDate').fill('27/3/2026')
++    await page
++      .locator('#temporaryAdmissionPortOfExit')
++      .selectOption(EXIT_PORT_CODE)
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    await expect(rowFor(page, copy.rows.exitDate)).toContainText('27/3/2026')
++    await expect(rowFor(page, copy.rows.portOfExit)).toContainText(
++      EXIT_PORT_LABEL
++    )
++    await expect(
++      page.getByText(copy.rows.destinationCountry, { exact: true })
++    ).toHaveCount(0)
++  })
++
++  test('leaves all three rows off the review for a reason that asks none of them', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, IMPORT_REASON_SLUG))
++    await page.locator('input[name="reasonForImport"][value="reEntry"]').check()
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    for (const label of [
++      copy.rows.destinationCountry,
++      copy.rows.exitDate,
++      copy.rows.portOfExit
++    ]) {
++      await expect(page.getByText(label, { exact: true })).toHaveCount(0)
++    }
++  })
++
++  test('review carrying the exit rows has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, IMPORT_REASON_SLUG))
++    await page.locator('input[name="reasonForImport"][value="transit"]').check()
++    await page.locator('#transitPortOfExit').selectOption(EXIT_PORT_CODE)
++    await page
++      .locator('#transitDestinationCountry')
++      .selectOption(DESTINATION_COUNTRY_CODE)
++    await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    await expect(rowFor(page, copy.rows.portOfExit)).toContainText(
++      EXIT_PORT_LABEL
++    )
++
++    const results = await new AxeBuilder({ page })
++      .withTags(['wcag2a', 'wcag2aa'])
++      .analyze()
++    const seriousOrCritical = results.violations.filter(({ impact }) =>
++      ['serious', 'critical'].includes(impact)
++    )
++
++    expect(
++      seriousOrCritical,
++      `Check answers with the exit rows has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++    ).toEqual([])
++  })
++})
++
+ test.describe('check-answers feature change links', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 23565bff..41800c47 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -92,6 +92,9 @@ const CPH_KEY = 'County parish holding (CPH) number'
+ const TRANSITED_COUNTRIES_KEY =
+   'Countries that the consignment will travel through'
+ const PACKAGES_KEY = 'Number of packages'
++const DESTINATION_COUNTRY_KEY = 'Destination country'
++const EXIT_DATE_KEY = 'Exit date'
++const PORT_OF_EXIT_KEY = 'Port of exit'
+ 
+ const fullSeed = {
+   countryOfOrigin: 'FR',
+@@ -516,6 +519,108 @@ describe(`${SUITE} — gated-off answers and blanks`, () => {
+   })
+ })
+ 
++// The reason for import asks up to three further questions — the destination
++// country, the exit date and the port of exit. A trader who answered one has
++// to be able to read it back and change it from the review.
++describe(`${SUITE} — reason-for-import exit answers`, () => {
++  setupCheckAnswersEngine()
++
++  const reasonSeed = (answers) => ({
++    commodityLines: [{ commoditySelection: 'Fish' }],
++    ...answers
++  })
++
++  it('Should show the destination country and port of exit for a transit, labelling both codes', async () => {
++    const rows = rowsOf(
++      await sectionsFor(
++        reasonSeed({
++          reasonForImport: 'transit',
++          destinationCountry: 'IE',
++          portOfExit: 'GB DVR'
++        })
++      )
++    )
++
++    expect(valueOf(rows, DESTINATION_COUNTRY_KEY)).toBe('Ireland')
++    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe('Port of Dover (GB DVR)')
++    expect(keysOf(rows)).not.toContain(EXIT_DATE_KEY)
++    expect(changeHrefOf(rows, DESTINATION_COUNTRY_KEY)).toMatch(
++      /\/import-reason\?change=1$/
++    )
++  })
++
++  it('Should show the destination country alone for a transhipment', async () => {
++    const rows = rowsOf(
++      await sectionsFor(
++        reasonSeed({
++          reasonForImport: 'transhipmentOrOnwardTravel',
++          destinationCountry: 'IE'
++        })
++      )
++    )
++
++    expect(valueOf(rows, DESTINATION_COUNTRY_KEY)).toBe('Ireland')
++    expect(keysOf(rows)).not.toContain(EXIT_DATE_KEY)
++    expect(keysOf(rows)).not.toContain(PORT_OF_EXIT_KEY)
++  })
++
++  it('Should show the exit date and port of exit for a temporary admission of horses', async () => {
++    const rows = rowsOf(
++      await sectionsFor(
++        reasonSeed({
++          reasonForImport: 'temporaryAdmissionHorses',
++          exitDate: { day: '27', month: '3', year: '2026' },
++          portOfExit: 'GB DVR'
++        })
++      )
++    )
++
++    expect(valueOf(rows, EXIT_DATE_KEY)).toBe('27/3/2026')
++    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe('Port of Dover (GB DVR)')
++    expect(keysOf(rows)).not.toContain(DESTINATION_COUNTRY_KEY)
++  })
++
++  it('Should omit all three rows for a reason that asks none of them', async () => {
++    const keys = keysOf(
++      rowsOf(await sectionsFor(reasonSeed({ reasonForImport: 'reEntry' })))
++    )
++
++    expect(keys).not.toContain(DESTINATION_COUNTRY_KEY)
++    expect(keys).not.toContain(EXIT_DATE_KEY)
++    expect(keys).not.toContain(PORT_OF_EXIT_KEY)
++  })
++
++  it('Should render Not provided for an in-scope exit answer left blank', async () => {
++    const rows = rowsOf(
++      await sectionsFor(
++        reasonSeed({ reasonForImport: 'temporaryAdmissionHorses' })
++      )
++    )
++
++    expect(valueOf(rows, EXIT_DATE_KEY)).toBe(NOT_PROVIDED)
++    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe(NOT_PROVIDED)
++  })
++
++  it('Should point every exit row Change link at the reason-for-import page', async () => {
++    const rows = rowsOf(
++      await sectionsFor(
++        reasonSeed({
++          reasonForImport: 'temporaryAdmissionHorses',
++          exitDate: { day: '27', month: '3', year: '2026' },
++          portOfExit: 'GB DVR'
++        })
++      )
++    )
++
++    expect(changeHrefOf(rows, EXIT_DATE_KEY)).toMatch(
++      /\/import-reason\?change=1$/
++    )
++    expect(changeHrefOf(rows, PORT_OF_EXIT_KEY)).toMatch(
++      /\/import-reason\?change=1$/
++    )
++  })
++})
++
+ describe(`${SUITE} — address-book party references`, () => {
+   setupCheckAnswersEngine()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index d9fdb4b3..375e6f4d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -62,6 +62,9 @@ export const copy = {
+     unweaned: 'Yn cynnwys anifeiliaid heb eu diddyfnu',
+     reasonForImport: 'Rheswm dros fewnforio',
+     purpose: 'Diben yn y farchnad',
++    destinationCountry: 'Gwlad gyrchfan',
++    exitDate: 'Dyddiad ymadael',
++    portOfExit: 'Porthladd ymadael',
+     commodityCode: 'Cod nwyddau',
+     commonName: 'Enw cyffredin',
+     species: 'Rhywogaeth',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index 33a30ab0..d83a992a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -61,6 +61,9 @@ export const copy = {
+     unweaned: 'Includes unweaned animals',
+     reasonForImport: 'Reason for import',
+     purpose: 'Purpose in the market',
++    destinationCountry: 'Destination country',
++    exitDate: 'Exit date',
++    portOfExit: 'Port of exit',
+     commodityCode: 'Commodity code',
+     commonName: 'Common name',
+     species: 'Species',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js
+index f9389467..0d297eb3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js
+@@ -12,6 +12,16 @@ export const regionCodeApplies = (_answers, scope) =>
+ export const purposeApplies = (_answers, scope) =>
+   scope.has('purposeInInternalMarket')
+ 
++// The three answers the reason for import reveals beyond the purpose. Each
++// row stands on the same scope entry that puts its question to the trader, so
++// the review shows an exit answer exactly when one was asked for.
++export const destinationCountryApplies = (_answers, scope) =>
++  scope.has('destinationCountry')
++
++export const exitDateApplies = (_answers, scope) => scope.has('exitDate')
++
++export const portOfExitApplies = (_answers, scope) => scope.has('portOfExit')
++
+ export const transitedCountriesApplies = (_answers, scope) =>
+   scope.has('transitedCountries')
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+index 5006e5e8..05dada2e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+@@ -1,13 +1,62 @@
+ import * as importReasonPurpose from '../../../../../../../../../services/import-reason-purpose/index.js'
+ import * as certification from '../../../../../../../../../services/certification-purposes/index.js'
++import * as countries from '../../../../../../../../../services/countries/index.js'
++import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
+-import { purposeApplies, unweanedApplies } from '../../applicability.js'
++import {
++  destinationCountryApplies,
++  exitDateApplies,
++  portOfExitApplies,
++  purposeApplies,
++  unweanedApplies
++} from '../../applicability.js'
+ import { row } from '../../rows/summary-row.js'
++import { dateText } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
++// The exit answers the chosen reason for import asks for. Each row stands only
++// while its obligation is in scope, and its Change link resolves through the
++// obligation to the reason-for-import page that collects it.
++const exitRows = (journeyId, answers, scope, readOnly) => [
++  ...(destinationCountryApplies(answers, scope)
++    ? [
++        row(
++          journeyId,
++          readOnly,
++          copy.rows.destinationCountry,
++          countries.originLabel(answers.destinationCountry) ??
++            answers.destinationCountry,
++          'destinationCountry'
++        )
++      ]
++    : []),
++  ...(exitDateApplies(answers, scope)
++    ? [
++        row(
++          journeyId,
++          readOnly,
++          copy.rows.exitDate,
++          dateText(answers.exitDate),
++          'exitDate'
++        )
++      ]
++    : []),
++  ...(portOfExitApplies(answers, scope)
++    ? [
++        row(
++          journeyId,
++          readOnly,
++          copy.rows.portOfExit,
++          ports.label(answers.portOfExit) ?? answers.portOfExit,
++          'portOfExit'
++        )
++      ]
++    : [])
++]
++
+ export const additionalAnimalDetailsCard = (
+   journeyId,
+   answers,
+@@ -52,6 +101,7 @@ export const additionalAnimalDetailsCard = (
+             'purposeInInternalMarket'
+           )
+         ]
+-      : [])
++      : []),
++    ...exitRows(journeyId, answers, scope, readOnly)
+   ]
+ })

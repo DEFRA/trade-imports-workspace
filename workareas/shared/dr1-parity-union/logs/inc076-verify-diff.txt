@@ -1,0 +1,98 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js
+index f9389467..0d297eb3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js
+@@ -12,6 +12,16 @@ export const regionCodeApplies = (_answers, scope) =>
+ export const purposeApplies = (_answers, scope) =>
+   scope.has('purposeInInternalMarket')
+ 
++// The three answers the reason for import reveals beyond the purpose. Each
++// row stands on the same scope entry that puts its question to the trader, so
++// the review shows an exit answer exactly when one was asked for.
++export const destinationCountryApplies = (_answers, scope) =>
++  scope.has('destinationCountry')
++
++export const exitDateApplies = (_answers, scope) => scope.has('exitDate')
++
++export const portOfExitApplies = (_answers, scope) => scope.has('portOfExit')
++
+ export const transitedCountriesApplies = (_answers, scope) =>
+   scope.has('transitedCountries')
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+index 5006e5e8..05dada2e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+@@ -1,13 +1,62 @@
+ import * as importReasonPurpose from '../../../../../../../../../services/import-reason-purpose/index.js'
+ import * as certification from '../../../../../../../../../services/certification-purposes/index.js'
++import * as countries from '../../../../../../../../../services/countries/index.js'
++import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
+-import { purposeApplies, unweanedApplies } from '../../applicability.js'
++import {
++  destinationCountryApplies,
++  exitDateApplies,
++  portOfExitApplies,
++  purposeApplies,
++  unweanedApplies
++} from '../../applicability.js'
+ import { row } from '../../rows/summary-row.js'
++import { dateText } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
++// The exit answers the chosen reason for import asks for. Each row stands only
++// while its obligation is in scope, and its Change link resolves through the
++// obligation to the reason-for-import page that collects it.
++const exitRows = (journeyId, answers, scope, readOnly) => [
++  ...(destinationCountryApplies(answers, scope)
++    ? [
++        row(
++          journeyId,
++          readOnly,
++          copy.rows.destinationCountry,
++          countries.originLabel(answers.destinationCountry) ??
++            answers.destinationCountry,
++          'destinationCountry'
++        )
++      ]
++    : []),
++  ...(exitDateApplies(answers, scope)
++    ? [
++        row(
++          journeyId,
++          readOnly,
++          copy.rows.exitDate,
++          dateText(answers.exitDate),
++          'exitDate'
++        )
++      ]
++    : []),
++  ...(portOfExitApplies(answers, scope)
++    ? [
++        row(
++          journeyId,
++          readOnly,
++          copy.rows.portOfExit,
++          ports.label(answers.portOfExit) ?? answers.portOfExit,
++          'portOfExit'
++        )
++      ]
++    : [])
++]
++
+ export const additionalAnimalDetailsCard = (
+   journeyId,
+   answers,
+@@ -52,6 +101,7 @@ export const additionalAnimalDetailsCard = (
+             'purposeInInternalMarket'
+           )
+         ]
+-      : [])
++      : []),
++    ...exitRows(journeyId, answers, scope, readOnly)
+   ]
+ })

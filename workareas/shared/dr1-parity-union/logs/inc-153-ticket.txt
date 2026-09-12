@@ -1,0 +1,26 @@
+h2. Increment
+
+{{inc-153}} from the {{shared/dr1-parity-union}} backlog.
+
+After submitting, the frontend never tells the trader what is still outstanding. Design release 1 heads the submitted page with "Before the consignment is imported" and lists the documents and identifiers still owed.
+
+The confirmation page goes straight from the green panel to "Transporting the consignment" ({{src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:4-13}}). The documents group carries neither a minimum entry count nor a required-one-of rule ({{src/server/app/sets/live-animals/obligations/sections/documents.js:19-27}}), so a trader can submit with no health certificate attached, reach a page headed "Import notification submitted", and be told nothing about it.
+
+h2. Acceptance criteria
+
+* The confirmation page renders a new section between the green panel and "Transporting the consignment" whenever at least one item is outstanding: a heading "Before the consignment is imported", the line "You still need to:", and a bulleted list of the outstanding items.
+* The section is not rendered at all when nothing is outstanding.
+* The list carries the bullet "upload the health certificate and any other required documents" whenever no document has been uploaded. Documents are optional for submission, so the frontend can reach this page with an empty documents collection and already knows that at submit time.
+* The identifier bullet is OUT OF SCOPE for this increment. The submit gate sets {{recordCountEquals}} against {{numberOfAnimals}} ({{src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:88-102}}) and readiness demands every task row be fulfilled ({{src/server/app/flow/section-status.js:11-15}}), so a notification with animals still to identify never reaches the confirmation page. Build that bullet once the open question in {{identification--identifier-completeness}} is settled.
+* Unit tests cover both states: the section rendered with the documents bullet, and the section absent when nothing is outstanding.
+* E2E specs and visual baselines in the tests repo are updated for the new section.
+
+h2. Verification
+
+Design release 1 reference: {{app/views/notification-submitted.html:27-36}} is the {{isIncompleteSubmission}} block; {{app/routes.js:5674-5692}} is {{getConditionalSubmissionItems}} with the two items and their conditions.
+
+Falsified by: finding any list of outstanding work on {{fe-confirmation}} today. The captured DOM's only headings after the panel are "Transporting the consignment", "How to view or amend this notification" and "Getting help", and the notification behind that capture had no documents uploaded.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

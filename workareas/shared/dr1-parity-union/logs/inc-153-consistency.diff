@@ -1,0 +1,204 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
+index d2a05986..8f7043c1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
+@@ -21,6 +21,19 @@ const expectPanelCopy = async (page) => {
+   ).toBeVisible()
+ }
+ 
++// The journey these tests submit uploads no documents, and documents are
++// optional at submission, so the outstanding-work section is the one this page
++// has to carry.
++const expectOutstandingCopy = async (page) => {
++  await expect(
++    page.getByRole('heading', { name: copy.outstanding.heading })
++  ).toBeVisible()
++  await expect(page.getByText(copy.outstanding.intro)).toBeVisible()
++  await expect(
++    page.getByText(copy.outstanding.documents, { exact: true })
++  ).toBeVisible()
++}
++
+ const expectTransportingCopy = async (page) => {
+   await expect(
+     page.getByRole('heading', { name: copy.transporting.heading })
+@@ -98,6 +111,7 @@ test.describe('submitted confirmation feature', () => {
+     page
+   }) => {
+     await expectPanelCopy(page)
++    await expectOutstandingCopy(page)
+     await expectTransportingCopy(page)
+     await expectViewOrAmendCopy(page)
+     await expectHelpCopy(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js
+index fe349d3e..0d755ca8 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js
+@@ -10,6 +10,7 @@ import { copyFor } from '../../../../../../shared/copy.js'
+ import { confirmationPage as page } from './page.js'
+ import { copy as en } from './copy/copy.en.js'
+ import { copy as cy } from './copy/copy.cy.js'
++import { outstandingItems } from './outstanding.js'
+ 
+ const view = `${TEMPLATES}/features/confirmation/template`
+ 
+@@ -23,7 +24,7 @@ const dateText = (value) =>
+   })
+ 
+ const get = async (request, h) => {
+-  const { journey } = await state.get(request, h)
++  const { journey, answers, evaluation } = await state.get(request, h)
+   if (journey.status !== state.SUBMITTED) {
+     return h.redirect(hubPath(journey.journeyId))
+   }
+@@ -32,6 +33,7 @@ const get = async (request, h) => {
+     copy,
+     referenceNumber: journey.journeyId,
+     submissionDate: dateText(journey.submittedAt),
++    outstandingItems: outstandingItems(answers, evaluation),
+     dashboardHref: dashboardPath()
+   })
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js
+index cc42e315..1376ac31 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js
+@@ -11,9 +11,28 @@ import { journeyRequest, stubH } from '../../../../../../engine/test-support.js'
+ import { dispatchPages } from '../index.js'
+ 
+ import * as confirmation from './controller.js'
++import { copy } from './copy/copy.en.js'
+ 
+ const get = confirmation.routes.find((route) => route.method === 'GET').handler
+ 
++const DOCUMENT = {
++  accompanyingDocumentType: 'VETERINARY_HEALTH_CERTIFICATE',
++  accompanyingDocumentAttachmentType: 'PDF',
++  accompanyingDocumentReference: 'GBHC1234567890',
++  accompanyingDocumentDateOfIssue: { day: '12', month: '12', year: '2025' }
++}
++
++const submittedView = async (seed) => {
++  const { journeyId } = await store.create()
++  if (seed) {
++    await store.seedAnswers(journeyId, seed)
++  }
++  await store.submit(journeyId)
++  const h = stubH()
++  await get(journeyRequest(journeyId), h)
++  return h.captured.view
++}
++
+ describe('GET /confirmation', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+@@ -38,6 +57,21 @@ describe('GET /confirmation', () => {
+     )
+   })
+ 
++  // Documents are optional at submission, so the trader can land here with the
++  // health certificate still to come — the submitted page is the last place the
++  // service can say so.
++  it('Should list the outstanding documents when nothing has been uploaded', async () => {
++    const view = await submittedView()
++
++    expect(view.context.outstandingItems).toEqual([copy.outstanding.documents])
++  })
++
++  it('Should list nothing outstanding when a document has been uploaded', async () => {
++    const view = await submittedView({ documents: [DOCUMENT] })
++
++    expect(view.context.outstandingItems).toEqual([])
++  })
++
+   it('Should redirect a notification that is not submitted to the hub', async () => {
+     const { journeyId } = await store.create()
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js
+index 8878af34..30f675e0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js
+@@ -6,6 +6,12 @@ export const copy = {
+     referencePrefix: 'Eich cyfeirnod'
+   },
+   dateOfDeclaration: 'Dyddiad y datganiad:',
++  outstanding: {
++    heading: 'Cyn i’r llwyth gael ei fewnforio',
++    intro: 'Mae angen i chi o hyd:',
++    documents:
++      'uwchlwytho’r dystysgrif iechyd ac unrhyw ddogfennau gofynnol eraill'
++  },
+   transporting: {
+     heading: 'Cludo’r llwyth',
+     direct:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js
+index 43ec222b..073b3e44 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js
+@@ -5,6 +5,11 @@ export const copy = {
+     referencePrefix: 'Your reference number'
+   },
+   dateOfDeclaration: 'Date of declaration:',
++  outstanding: {
++    heading: 'Before the consignment is imported',
++    intro: 'You still need to:',
++    documents: 'upload the health certificate and any other required documents'
++  },
+   transporting: {
+     heading: 'Transporting the consignment',
+     direct:
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/outstanding.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/outstanding.js
+new file mode 100644
+index 00000000..321781d2
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/outstanding.js
+@@ -0,0 +1,28 @@
++import * as state from '../../../../../../engine/index.js'
++import { copyFor } from '../../../../../../shared/copy.js'
++import { copy as en } from './copy/copy.en.js'
++import { copy as cy } from './copy/copy.cy.js'
++
++const copy = copyFor({ en, cy })
++
++// What the trader still owes once the notification is in (design release 1).
++// Submission does not require documents — the documents group carries only a
++// cap, no floor and no required-one-of (obligations/sections/documents.js) — so
++// a notification can be submitted with the health certificate still to come.
++// The submitted page is the last place the service can say so, and saying
++// nothing leaves the trader believing the notification is finished.
++//
++// Only what the service actually lets through belongs here. Everything else is
++// mandatory before submit, so it can never be outstanding on this page, and the
++// section disappears when the list is empty.
++//
++// Design release 1 carries a second bullet, for animal identifiers, which this
++// journey cannot yet reach: its submit gate requires one identifier record per
++// animal (obligations/sections/commodities/identifiers.js) and readiness
++// demands every task row be fulfilled (flow/section-status.js), so an
++// under-identified notification never reaches this page. That bullet waits on
++// the identifier-completeness decision.
++export const outstandingItems = (answers, evaluation) => {
++  const documents = state.collectionView(answers, ['documents'], evaluation)
++  return documents.length === 0 ? [copy.outstanding.documents] : []
++}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk
+index 3c4607e7..3ca0120b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk
+@@ -10,6 +10,16 @@
+ 
+   <p class="govuk-body">{{ copy.dateOfDeclaration }} {{ submissionDate }}</p>
+ 
++  {% if outstandingItems.length %}
++    <h2 class="govuk-heading-m">{{ copy.outstanding.heading }}</h2>
++    <p class="govuk-body">{{ copy.outstanding.intro }}</p>
++    <ul class="govuk-list govuk-list--bullet">
++      {% for item in outstandingItems %}
++        <li>{{ item }}</li>
++      {% endfor %}
++    </ul>
++  {% endif %}
++
+   <h2 class="govuk-heading-m">{{ copy.transporting.heading }}</h2>
+   <p class="govuk-body">{{ copy.transporting.direct }}</p>
+   <p class="govuk-body">{{ copy.transporting.inspection }}</p>

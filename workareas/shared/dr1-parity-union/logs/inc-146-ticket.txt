@@ -1,0 +1,35 @@
+h2. Increment
+
+{{inc-146}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Context
+
+Check your answers puts a Change link on every row of every card, so a finished notification offers twenty-four of them — twenty-two on rows, plus two in the heading of the Species card. An unfinished notification shows eighteen, all on rows. Design release 1 puts one Change link in each card's heading bar, level with the card title, and none on any row; both the finished and the unfinished review page carry exactly eleven, one per card.
+
+Every row in a card already resolves to the same destination page, so moving the link to the card heading loses no route.
+
+h2. Acceptance criteria
+
+* Each card in the check-answers view model carries one card-level action, pointing at the page that collects that card's answers.
+* No individual row on check your answers carries a change action — {{summary-row.js}} no longer calls {{changeAction}}.
+* The Species card collapses from two heading links to one.
+* The visually hidden text moves with the link, naming the card rather than the row.
+* Every card-level Change link keeps the {{change=1}} flag, so the trader is returned to the review afterwards.
+* The finished and the unfinished check-answers page each show one Change link per card, and none on a row.
+
+h2. Falsified by
+
+Finding a Change link on a row of any card in the captured {{dr1-review-notification}}, or a card whose rows carry no Change link in the captured {{fe-check-answers}}.
+
+h2. Evidence
+
+* Frontend: {{src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js}} lines 14-21, building the action at {{.../rows/change-link.js}} lines 12-25, rendered through {{govukSummaryList}} at {{.../check-answers/template.njk}} lines 96-102.
+* Design release 1: {{app/views/partials/review-summary-card.html}} lines 23-28 renders the single title link from the card's own {{changeHref}}; {{app/views/partials/review-summary-row.html}} lines 14-24 renders a row as a key and a value with no action at all.
+
+h2. Related
+
+Travels with {{inc-147}} — both are changes to how the review page's cards are drawn, and moving the change links is the same pass over the card builders as regrouping them into six sections.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

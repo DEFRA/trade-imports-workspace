@@ -1,0 +1,113 @@
+{
+  "id": "inc-076",
+  "ticket": "EUDPA-578",
+  "branch": "feat/EUDPA-578-check-your-answers-never-shows-the-exit",
+  "type": "add-field",
+  "milestone": null,
+  "domain": "review",
+  "title": "Check your answers never shows the exit answers — destination country, exit date and port of exit — so a trader cannot see or change them from the review page; Design release 1 lists each of them under the reason for import",
+  "detail": "The frontend asks three further questions once a reason for import has been chosen — the destination country for a transit or transhipment consignment, and the exit date and port of exit for a temporary admission — each on a page of its own (fe-destination-country, fe-exit-date, fe-port-of-exit). None of the three ever reaches Check your answers. The card that holds the reason for import carries exactly four possible rows: Certified for, Includes unweaned animals, Reason for import and Purpose in the market (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-54), and the check-answers copy file has no key for a destination country, an exit date or a port of exit at all. So a trader who answered them has no way to see what they answered, and no Change link back to any of the three pages, from the page they are asked to check before submitting.\n\nDesign release 1 adds a row per exit answer to its \"Main reason for import\" card, chosen by the reason: \"Destination country\" for a transhipment or a transit, and \"Exit date\" and \"Port of exit\" for a temporary admission of horses (app/routes.js:4640-4669). The card's Change link goes back to the reason-for-import page, where Design release 1 asks all of them as conditional reveals.\n\nAdd the three rows to the reason-for-import content on Check your answers, each shown on the same condition that puts its page in scope, each with a Change link to the page that collects it: destination country when the reason is transit or transhipment or onward travel, and exit date and port of exit when it is temporary admission of horses. The obligations already carry those conditions (src/server/app/sets/live-animals/obligations/sections/import-reason.js), so this is a view-model and copy change in the check-answers feature with nothing to land first. Design release 1 also shows an \"Exit border control post\" row for a transit; the frontend collects no such answer anywhere, which is a missing field on the reason-for-import page rather than a missing row here, and is not part of this finding. Confidence is medium rather than high because the captured notification used the reason Re-entry on both sides, which puts all three questions out of scope, so neither side's picture shows the rows and both halves of the claim are read from source. The state that would settle it by observation is a review page captured with the reason set to Transit, for the destination country, and to Temporary admission of horses, for the exit date and the port of exit.\n\nFALSIFIED BY: Finding a destination country, exit date or port of exit row on a captured frontend Check your answers page, or a key for one in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js. The copy file's `rows` block has none of the three, and no card builder in the check-answers view-model reads `destinationCountry`, `exitDate` or `portOfExit`.",
+  "screens": [
+    "fe-check-answers",
+    "dr1-review-notification"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-54",
+    "prototype": "app/routes.js:4640-4669"
+  },
+  "confidence": "medium",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "The frontend asks three further questions once a reason for import has been chosen — the destination country for a transit or transhipment consignment, and the exit date and port of exit for a temporary admission — each on a page of its own (fe-destination-country, fe-exit-date, fe-port-of-exit). None of the three ever reaches Check your answers. The card that holds the reason for import carries exactly four possible rows: Certified for, Includes unweaned animals, Reason for import and Purpose in the market (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-54), and the check-answers copy file has no key for a destination country, an exit date or a port of exit at all. So a trader who answered them has no way to see what they answered, and no Change link back to any of the three pages, from the page they are asked to check before submitting.",
+    "prototype": "Design release 1 adds a row per exit answer to its \"Main reason for import\" card, chosen by the reason: \"Destination country\" for a transhipment or a transit, and \"Exit date\" and \"Port of exit\" for a temporary admission of horses (app/routes.js:4640-4669). The card's Change link goes back to the reason-for-import page, where Design release 1 asks all of them as conditional reveals.",
+    "difference": "Add the three rows to the reason-for-import content on Check your answers, each shown on the same condition that puts its page in scope, each with a Change link to the page that collects it: destination country when the reason is transit or transhipment or onward travel, and exit date and port of exit when it is temporary admission of horses. The obligations already carry those conditions (src/server/app/sets/live-animals/obligations/sections/import-reason.js), so this is a view-model and copy change in the check-answers feature with nothing to land first. Design release 1 also shows an \"Exit border control post\" row for a transit; the frontend collects no such answer anywhere, which is a missing field on the reason-for-import page rather than a missing row here, and is not part of this finding. Confidence is medium rather than high because the captured notification used the reason Re-entry on both sides, which puts all three questions out of scope, so neither side's picture shows the rows and both halves of the claim are read from source. The state that would settle it by observation is a review page captured with the reason set to Transit, for the destination country, and to Temporary admission of horses, for the exit date and the port of exit.",
+    "correction": "CLAIMED: the import-reason obligations at src/server/app/sets/live-animals/journeys/linear/obligations/sections/import-reason.js. TRUE: no such file exists — the obligations live one level up, at src/server/app/sets/live-animals/obligations/sections/import-reason.js, beside the documents obligations another finding in this slice cites correctly. HOW CHECKED: find over sets/live-animals for import-reason.js under an obligations path, then a file-existence test over every frontend citation in this slice, which flagged this one and no other. The path has been corrected in place; the substance of the claim is unaffected.",
+    "falsifiedBy": "Finding a destination country, exit date or port of exit row on a captured frontend Check your answers page, or a key for one in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js. The copy file's `rows` block has none of the three, and no card builder in the check-answers view-model reads `destinationCountry`, `exitDate` or `portOfExit`.",
+    "verification": "Ran the falsifier both ways. Read the whole of src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js — the rows block runs from countryOfOrigin to attachmentType and carries no key for a destination country, an exit date or a port of exit — and grepped the entire check-answers feature for destinationCountry, exitDate and portOfExit, which returns nothing. Read the card the finding names: view-model/cards/consignment/additional-animal-details.js:18-55 builds exactly the four rows claimed, two of them conditional. On the requirements side read app/routes.js:4641-4668, which pushes Destination country for Transhipment or onward travel and for Transit, and Exit date plus Port of exit for Temporary admission horses — the finding's exclusion of the Transit-only Exit border control post row is right, and I confirmed the frontend collects no such answer by grepping sets/live-animals for borderControlPost, which returns nothing. Confidence medium is the honest band: both captures used Re-entry, so neither picture shows these rows and both halves are read from source. One broken citation was corrected — see correction. Otherwise CORRECT.",
+    "relatedTo": [
+      {
+        "id": "inc-147",
+        "relation": "travels-with",
+        "why": "Design release 1 puts these rows in a \"Main reason for import\" card of its own, which is part of the same section restructure."
+      }
+    ]
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js",
+      "lines": {
+        "start": 18,
+        "end": 54
+      },
+      "ranges": [
+        {
+          "start": 18,
+          "end": 54
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-54",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/routes.js",
+      "lines": {
+        "start": 4640,
+        "end": 4669
+      },
+      "ranges": [
+        {
+          "start": 4640,
+          "end": 4669
+        }
+      ],
+      "asWritten": "app/routes.js:4640-4669",
+      "anchors": [
+        "Main reason for import",
+        "Destination country",
+        "Exit date",
+        "Port of exit"
+      ],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    }
+  ],
+  "corpus": "dr1c",
+  "slice": "review",
+  "source": "review--exit-details-missing-from-check-answers.json",
+  "controls": [
+    "Destination country",
+    "Exit date",
+    "Port of exit"
+  ],
+  "provenance": {
+    "sourceA": null,
+    "sourceC": "inc-084",
+    "origin": "c-only",
+    "note": "A genuine miss by run A. A has fifteen review findings and none of them notices the omission; grepping A's backlog for 'destination country', 'port of exit' or 'exit date' returns only origin- and hub-domain findings, nothing in review. C proves it from source both ways: the reason-for-import card builds exactly four possible rows (additional-animal-details.js:18-54) and the check-answers copy file has no key for any of the three, while DR1 adds a row per exit answer to its Main reason for import card (routes.js:4640-4669). C is honest that its confidence is medium — both runs captured the review page with the reason set to Re-entry, which puts all three questions out of scope, so neither side's screenshot shows the rows and both halves are read from code. That is almost certainly why A missed it: A worked from the same picture and the picture shows nothing. One caveat for the BA — C's aside that DR1 also has a separate 'Exit border control post' row looks like a misreading of DR1's own field name transitExitBorderControlPost, which is the transit reveal's port-of-exit field, not a sixth question; C excludes it from the finding anyway.",
+    "better": null,
+    "judged": null
+  }
+}

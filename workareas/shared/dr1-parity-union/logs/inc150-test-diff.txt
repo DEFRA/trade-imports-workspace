@@ -1,0 +1,229 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 41800c47..18ace2e3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -20,10 +20,12 @@ import {
+ } from '../../../../../../engine/test-support.js'
+ import { configureAnswersForRead } from '../../../../../../engine/read.js'
+ import { withoutUnresolvedPartyRefs } from '../addresses/resolve-parties.js'
+-import { hubPath } from '../../../../../../shared/paths.js'
++import { taskRows } from '../../flow/task-rows.js'
+ import { dispatchPages } from '../index.js'
+ import { routes } from './controller.js'
+ import { buildSections } from './view-model/index.js'
++import { REVIEW_CARDS } from './view-model/incomplete-cards.js'
++import { copy as copyEn } from './copy/copy.en.js'
+ 
+ const getHandler = routes.find((route) => route.method === 'GET').handler
+ const postHandler = routes.find((route) => route.method === 'POST').handler
+@@ -72,6 +74,7 @@ const changeHrefsOf = (sections) =>
+ 
+ const NOT_PROVIDED = 'Not provided'
+ const CONSIGNOR_ERROR = 'Select an address for the consignor'
++const ADDRESSES_INCOMPLETE = 'Complete roles and addresses'
+ 
+ const withoutParty = (seed, partyId) => {
+   const next = { ...seed }
+@@ -105,6 +108,7 @@ const fullSeed = {
+     {
+       commoditySelection: 'Cow',
+       speciesSelection: '1148346',
++      commodityType: '16',
+       numberOfAnimalsQuantity: '25',
+       numberOfPackages: '5',
+       animalIdentifiers: [
+@@ -698,12 +702,21 @@ describe(`${SUITE} — outstanding referenced roles`, () => {
+     ])
+   })
+ 
+-  it('Should not flag a role that has never been answered', async () => {
+-    expect(await summaryFor(withoutParty(fullSeed, 'importer'))).toBeNull()
++  // A role never answered raises no role error — there is nothing broken to
++  // name. It leaves its card unfinished, which the card entry says instead.
++  it('Should not raise a role error for a role that has never been answered', async () => {
++    const summary = await summaryFor(withoutParty(fullSeed, 'importer'))
++
++    expect(summary.errorList.map((entry) => entry.text)).toEqual([
++      ADDRESSES_INCOMPLETE
++    ])
+   })
+ 
+-  it('Should not flag anything on a brand-new draft', async () => {
+-    expect(await summaryFor({})).toBeNull()
++  it('Should not raise a role error on a brand-new draft', async () => {
++    const texts = (await summaryFor({})).errorList.map((entry) => entry.text)
++
++    expect(texts).not.toContain(CONSIGNOR_ERROR)
++    expect(texts).toContain(ADDRESSES_INCOMPLETE)
+   })
+ 
+   it('Should render Not provided for a role that has never been answered', async () => {
+@@ -815,7 +828,9 @@ describe(`${SUITE} — outstanding roles behind the read-path sanitiser`, () =>
+     })
+     const card = cardByTitle(view.context.sections, ROLES_AND_ADDRESSES_CARD)
+ 
+-    expect(view.context.errorSummary).toBeNull()
++    expect(
++      view.context.errorSummary.errorList.map((e) => e.text)
++    ).not.toContain('Select an address for the importer')
+     expect(valueOf(card.rows, 'Importer')).toBe(NOT_PROVIDED)
+   })
+ })
+@@ -872,20 +887,21 @@ describe(`${SUITE} — POST navigation`, () => {
+     placeOfDestination: fullSeed.placeOfDestination
+   })
+ 
+-  it('Should redirect to the hub when the next review page is not yet reachable', async () => {
+-    const { journeyId, response } = await driveHandler(postHandler, {
++  // Continue used to carry an unfinished notification through to the
++  // declaration, where the submit failed its readiness check and bounced the
++  // trader back here saying nothing. It is refused on this page instead.
++  it('Should refuse Continue while the notification is unfinished', async () => {
++    const { response } = await driveHandler(postHandler, {
+       seed: withParties({})
+     })
+-    expect(response.redirect).toBe(hubPath(journeyId))
++
++    expect(response.redirect).toBeUndefined()
++    expect(response.statusCode).toBe(400)
+   })
+ 
+-  it('Should redirect to the declaration once its prerequisites are answered', async () => {
+-    const { response } = await driveHandler(postHandler, {
+-      seed: withParties({
+-        countryOfOrigin: 'FR',
+-        commodityLines: [{ commoditySelection: 'Cow' }]
+-      })
+-    })
++  it('Should redirect to the declaration once the notification is complete', async () => {
++    const { response } = await driveHandler(postHandler, { seed: fullSeed })
++
+     expect(response.redirect).toMatch(/\/declaration$/)
+   })
+ 
+@@ -898,13 +914,11 @@ describe(`${SUITE} — POST navigation`, () => {
+     expect(response.statusCode).toBe(400)
+   })
+ 
+-  it('Should not refuse Continue for a role that has never been answered', async () => {
+-    const { journeyId, response } = await driveHandler(postHandler, {
+-      seed: {}
+-    })
++  it('Should refuse Continue on a brand-new draft, naming what is outstanding', async () => {
++    const { response, view } = await driveHandler(postHandler, { seed: {} })
+ 
+-    expect(response.statusCode).not.toBe(400)
+-    expect(response.redirect).toBe(hubPath(journeyId))
++    expect(response.statusCode).toBe(400)
++    expect(view.context.errorSummary.errorList.length).toBeGreaterThan(0)
+   })
+ 
+   it('Should re-render the page with the summary when Continue is refused', async () => {
+@@ -940,3 +954,107 @@ describe(`${SUITE} — POST navigation`, () => {
+     expect(response.redirect).toBeDefined()
+   })
+ })
++
++// Design release 1 heads the review page of an unfinished notification with
++// "There is a problem", names each unfinished card, marks the card itself, and
++// refuses to go on. Before this, the page looked finished: no summary, no
++// marking, and a live Continue that carried the trader to the declaration only
++// to bounce them back here with nothing said.
++describe(`${SUITE} — the unfinished notification`, () => {
++  setupCheckAnswersEngine()
++
++  const summaryFor = async (seed) =>
++    (await driveHandler(getHandler, { seed })).view.context.errorSummary
++
++  const textsFor = async (seed) =>
++    (await summaryFor(seed)).errorList.map((entry) => entry.text)
++
++  const cardById = (sections, id) => cardsOf(sections).find((c) => c.id === id)
++
++  it('Should head a brand-new draft with one entry per unfinished card, in page order', async () => {
++    expect(await textsFor({})).toEqual([
++      'Complete import details',
++      'Complete species details',
++      'Complete additional animal details',
++      'Complete arrival details',
++      'Complete transport details',
++      'Complete roles and addresses',
++      'Complete contact address for this consignment'
++    ])
++  })
++
++  it('Should name only the cards still outstanding as the trader gets further', async () => {
++    const texts = await textsFor({
++      countryOfOrigin: 'FR',
++      regionOfOriginCodeRequirement: 'no',
++      portOfEntry: 'GB ABD',
++      arrivalDateAtPort: { day: '12', month: '12', year: '2026' },
++      meansOfTransport: 'ROAD_VEHICLE',
++      transportIdentification: 'FR-892-LK',
++      transportDocumentReference: 'CMR-2026-884721'
++    })
++
++    expect(texts).not.toContain('Complete import details')
++    expect(texts).not.toContain('Complete arrival details')
++    expect(texts).toContain('Complete transport details')
++  })
++
++  it('Should anchor each entry to the card it names', async () => {
++    const summary = await summaryFor(withoutParty(fullSeed, 'importer'))
++
++    expect(summary.errorList).toEqual([
++      { text: ADDRESSES_INCOMPLETE, href: '#roles-and-addresses' }
++    ])
++  })
++
++  it('Should title the summary There is a problem', async () => {
++    expect((await summaryFor({})).titleText).toBe('There is a problem')
++  })
++
++  it('Should repeat the message inside the card it names', async () => {
++    const sections = await sectionsFor(withoutParty(fullSeed, 'importer'))
++
++    expect(cardById(sections, 'rolesAndAddresses').error).toBe(
++      ADDRESSES_INCOMPLETE
++    )
++  })
++
++  it('Should leave a finished card unmarked', async () => {
++    const sections = await sectionsFor(withoutParty(fullSeed, 'importer'))
++
++    expect(cardById(sections, 'arrivalDetails').error).toBeNull()
++    expect(cardById(sections, 'arrivalDetails').anchor).toBe('arrival-details')
++  })
++
++  it('Should say nothing is outstanding on a complete notification', async () => {
++    expect(await summaryFor(fullSeed)).toBeNull()
++  })
++
++  it('Should say nothing is outstanding on a submitted notification', async () => {
++    const { context } = await viewForStatus(
++      SUBMITTED,
++      withoutParty(fullSeed, 'importer')
++    )
++
++    expect(context.errorSummary).toBeNull()
++    expect(cardById(context.sections, 'rolesAndAddresses').error).toBeNull()
++  })
++})
++
++// The POST refuses on `scope.readyForCheckYourAnswers`, and the summary is
++// built from REVIEW_CARDS. The two agree only while every task row is covered
++// exactly once — otherwise a refusal could arrive with nothing named, or a card
++// could be flagged for a row the hub does not count.
++describe('#REVIEW_CARDS — the cards cover the task rows exactly', () => {
++  it('Should map every task row to exactly one card', () => {
++    const covered = REVIEW_CARDS.flatMap((card) => card.rows)
++
++    expect([...covered].sort()).toEqual(taskRows.map((row) => row.id).sort())
++  })
++
++  it('Should carry a message for every card', () => {
++    for (const card of REVIEW_CARDS) {
++      expect(typeof copyEn.errors.cards[card.id]).toBe('string')
++    }
++  })
++})

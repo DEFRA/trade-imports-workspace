@@ -1,0 +1,832 @@
+diff --git a/src/client/stylesheets/components/_index.scss b/src/client/stylesheets/components/_index.scss
+index 65ef849f..30b58a7e 100644
+--- a/src/client/stylesheets/components/_index.scss
++++ b/src/client/stylesheets/components/_index.scss
+@@ -4,4 +4,5 @@
+ @use "date-picker";
+ @use "notification-list";
+ @use "notifications-pagination";
++@use "summary-card-error";
+ @use "task-list";
+diff --git a/src/client/stylesheets/components/_summary-card-error.scss b/src/client/stylesheets/components/_summary-card-error.scss
+new file mode 100644
+index 00000000..17c30c33
+--- /dev/null
++++ b/src/client/stylesheets/components/_summary-card-error.scss
+@@ -0,0 +1,9 @@
++@use "../../../../node_modules/govuk-frontend" as *;
++
++// A summary card with answers still outstanding. govuk-frontend has no error
++// state for the component, so the card borrows the error colour and the left
++// bar the error summary and form groups already use — the same signal, in the
++// same red, one level up from a field.
++.app-summary-card--error {
++  border-left: $govuk-border-width-form-group-error solid $govuk-error-colour;
++}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index e76ac5b8..3cc5c7ec 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -6,6 +6,7 @@ import {
+   signIn,
+   startNotification
+ } from '../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../../shared/copy.en.js'
+ import { copy } from './copy/copy.en.js'
+ 
+ const INTERNAL_REFERENCE_LABEL =
+@@ -291,7 +292,6 @@ test.describe('check-answers feature navigation and submission', () => {
+     page
+   }) => {
+     await startNotification(page)
+-    const hubUrl = journeyUrl(page)
+     await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
+ 
+     await expect(rowFor(page, copy.rows.consignor)).toContainText(
+@@ -300,11 +300,69 @@ test.describe('check-answers feature navigation and submission', () => {
+     await expect(
+       page.getByRole('link', { name: copy.errors.parties.consignor })
+     ).toBeHidden()
++  })
++})
++
++// Design release 1 heads the review page of an unfinished notification with
++// "There is a problem", names each unfinished card, marks the card itself, and
++// refuses to go on until the notification is complete.
++test.describe('check-answers feature unfinished notification', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('names every unfinished card and marks the card it names', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    await expect(
++      page.getByRole('heading', { name: sharedCopy.errorSummary.title })
++    ).toBeVisible()
++    const entry = page.getByRole('link', {
++      name: copy.errors.cards.arrivalDetails
++    })
++    await expect(entry).toHaveAttribute('href', '#arrival-details')
++    await expect(
++      page
++        .locator('#arrival-details')
++        .getByText(copy.errors.cards.arrivalDetails)
++    ).toBeVisible()
++  })
++
++  test('refuses Continue and keeps the trader on the review page', async ({
++    page
++  }) => {
++    await startNotification(page)
++    const reviewUrl = journeyUrl(page, NOTIFICATION_VIEW_SLUG)
++    await page.goto(reviewUrl)
+ 
+     await page.getByRole('button', { name: copy.submit.button }).click()
+ 
+-    // Continue is not refused, so it leaves the review page: the incomplete
+-    // journey sends it back to the hub rather than on to the declaration.
+-    await expect(page).toHaveURL(hubUrl)
++    await expect(page).toHaveURL(reviewUrl)
++    await expect(
++      page.getByRole('heading', { name: sharedCopy.errorSummary.title })
++    ).toBeVisible()
++  })
++
++  test('unfinished review has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++    await page.getByRole('button', { name: copy.submit.button }).click()
++
++    const results = await new AxeBuilder({ page })
++      .withTags(['wcag2a', 'wcag2aa'])
++      .analyze()
++    const seriousOrCritical = results.violations.filter(({ impact }) =>
++      ['serious', 'critical'].includes(impact)
++    )
++
++    expect(
++      seriousOrCritical,
++      `Unfinished check answers has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++    ).toEqual([])
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 41800c47..18ace2e3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -20,10 +20,12 @@ import {
+ } from '../../../../../../engine/test-support.js'
+ import { configureAnswersForRead } from '../../../../../../engine/read.js'
+ import { withoutUnresolvedPartyRefs } from '../addresses/resolve-parties.js'
+-import { hubPath } from '../../../../../../shared/paths.js'
++import { taskRows } from '../../flow/task-rows.js'
+ import { dispatchPages } from '../index.js'
+ import { routes } from './controller.js'
+ import { buildSections } from './view-model/index.js'
++import { REVIEW_CARDS } from './view-model/incomplete-cards.js'
++import { copy as copyEn } from './copy/copy.en.js'
+ 
+ const getHandler = routes.find((route) => route.method === 'GET').handler
+ const postHandler = routes.find((route) => route.method === 'POST').handler
+@@ -72,6 +74,7 @@ const changeHrefsOf = (sections) =>
+ 
+ const NOT_PROVIDED = 'Not provided'
+ const CONSIGNOR_ERROR = 'Select an address for the consignor'
++const ADDRESSES_INCOMPLETE = 'Complete roles and addresses'
+ 
+ const withoutParty = (seed, partyId) => {
+   const next = { ...seed }
+@@ -105,6 +108,7 @@ const fullSeed = {
+     {
+       commoditySelection: 'Cow',
+       speciesSelection: '1148346',
++      commodityType: '16',
+       numberOfAnimalsQuantity: '25',
+       numberOfPackages: '5',
+       animalIdentifiers: [
+@@ -698,12 +702,21 @@ describe(`${SUITE} — outstanding referenced roles`, () => {
+     ])
+   })
+ 
+-  it('Should not flag a role that has never been answered', async () => {
+-    expect(await summaryFor(withoutParty(fullSeed, 'importer'))).toBeNull()
++  // A role never answered raises no role error — there is nothing broken to
++  // name. It leaves its card unfinished, which the card entry says instead.
++  it('Should not raise a role error for a role that has never been answered', async () => {
++    const summary = await summaryFor(withoutParty(fullSeed, 'importer'))
++
++    expect(summary.errorList.map((entry) => entry.text)).toEqual([
++      ADDRESSES_INCOMPLETE
++    ])
+   })
+ 
+-  it('Should not flag anything on a brand-new draft', async () => {
+-    expect(await summaryFor({})).toBeNull()
++  it('Should not raise a role error on a brand-new draft', async () => {
++    const texts = (await summaryFor({})).errorList.map((entry) => entry.text)
++
++    expect(texts).not.toContain(CONSIGNOR_ERROR)
++    expect(texts).toContain(ADDRESSES_INCOMPLETE)
+   })
+ 
+   it('Should render Not provided for a role that has never been answered', async () => {
+@@ -815,7 +828,9 @@ describe(`${SUITE} — outstanding roles behind the read-path sanitiser`, () =>
+     })
+     const card = cardByTitle(view.context.sections, ROLES_AND_ADDRESSES_CARD)
+ 
+-    expect(view.context.errorSummary).toBeNull()
++    expect(
++      view.context.errorSummary.errorList.map((e) => e.text)
++    ).not.toContain('Select an address for the importer')
+     expect(valueOf(card.rows, 'Importer')).toBe(NOT_PROVIDED)
+   })
+ })
+@@ -872,20 +887,21 @@ describe(`${SUITE} — POST navigation`, () => {
+     placeOfDestination: fullSeed.placeOfDestination
+   })
+ 
+-  it('Should redirect to the hub when the next review page is not yet reachable', async () => {
+-    const { journeyId, response } = await driveHandler(postHandler, {
++  // Continue used to carry an unfinished notification through to the
++  // declaration, where the submit failed its readiness check and bounced the
++  // trader back here saying nothing. It is refused on this page instead.
++  it('Should refuse Continue while the notification is unfinished', async () => {
++    const { response } = await driveHandler(postHandler, {
+       seed: withParties({})
+     })
+-    expect(response.redirect).toBe(hubPath(journeyId))
++
++    expect(response.redirect).toBeUndefined()
++    expect(response.statusCode).toBe(400)
+   })
+ 
+-  it('Should redirect to the declaration once its prerequisites are answered', async () => {
+-    const { response } = await driveHandler(postHandler, {
+-      seed: withParties({
+-        countryOfOrigin: 'FR',
+-        commodityLines: [{ commoditySelection: 'Cow' }]
+-      })
+-    })
++  it('Should redirect to the declaration once the notification is complete', async () => {
++    const { response } = await driveHandler(postHandler, { seed: fullSeed })
++
+     expect(response.redirect).toMatch(/\/declaration$/)
+   })
+ 
+@@ -898,13 +914,11 @@ describe(`${SUITE} — POST navigation`, () => {
+     expect(response.statusCode).toBe(400)
+   })
+ 
+-  it('Should not refuse Continue for a role that has never been answered', async () => {
+-    const { journeyId, response } = await driveHandler(postHandler, {
+-      seed: {}
+-    })
++  it('Should refuse Continue on a brand-new draft, naming what is outstanding', async () => {
++    const { response, view } = await driveHandler(postHandler, { seed: {} })
+ 
+-    expect(response.statusCode).not.toBe(400)
+-    expect(response.redirect).toBe(hubPath(journeyId))
++    expect(response.statusCode).toBe(400)
++    expect(view.context.errorSummary.errorList.length).toBeGreaterThan(0)
+   })
+ 
+   it('Should re-render the page with the summary when Continue is refused', async () => {
+@@ -940,3 +954,107 @@ describe(`${SUITE} — POST navigation`, () => {
+     expect(response.redirect).toBeDefined()
+   })
+ })
++
++// Design release 1 heads the review page of an unfinished notification with
++// "There is a problem", names each unfinished card, marks the card itself, and
++// refuses to go on. Before this, the page looked finished: no summary, no
++// marking, and a live Continue that carried the trader to the declaration only
++// to bounce them back here with nothing said.
++describe(`${SUITE} — the unfinished notification`, () => {
++  setupCheckAnswersEngine()
++
++  const summaryFor = async (seed) =>
++    (await driveHandler(getHandler, { seed })).view.context.errorSummary
++
++  const textsFor = async (seed) =>
++    (await summaryFor(seed)).errorList.map((entry) => entry.text)
++
++  const cardById = (sections, id) => cardsOf(sections).find((c) => c.id === id)
++
++  it('Should head a brand-new draft with one entry per unfinished card, in page order', async () => {
++    expect(await textsFor({})).toEqual([
++      'Complete import details',
++      'Complete species details',
++      'Complete additional animal details',
++      'Complete arrival details',
++      'Complete transport details',
++      'Complete roles and addresses',
++      'Complete contact address for this consignment'
++    ])
++  })
++
++  it('Should name only the cards still outstanding as the trader gets further', async () => {
++    const texts = await textsFor({
++      countryOfOrigin: 'FR',
++      regionOfOriginCodeRequirement: 'no',
++      portOfEntry: 'GB ABD',
++      arrivalDateAtPort: { day: '12', month: '12', year: '2026' },
++      meansOfTransport: 'ROAD_VEHICLE',
++      transportIdentification: 'FR-892-LK',
++      transportDocumentReference: 'CMR-2026-884721'
++    })
++
++    expect(texts).not.toContain('Complete import details')
++    expect(texts).not.toContain('Complete arrival details')
++    expect(texts).toContain('Complete transport details')
++  })
++
++  it('Should anchor each entry to the card it names', async () => {
++    const summary = await summaryFor(withoutParty(fullSeed, 'importer'))
++
++    expect(summary.errorList).toEqual([
++      { text: ADDRESSES_INCOMPLETE, href: '#roles-and-addresses' }
++    ])
++  })
++
++  it('Should title the summary There is a problem', async () => {
++    expect((await summaryFor({})).titleText).toBe('There is a problem')
++  })
++
++  it('Should repeat the message inside the card it names', async () => {
++    const sections = await sectionsFor(withoutParty(fullSeed, 'importer'))
++
++    expect(cardById(sections, 'rolesAndAddresses').error).toBe(
++      ADDRESSES_INCOMPLETE
++    )
++  })
++
++  it('Should leave a finished card unmarked', async () => {
++    const sections = await sectionsFor(withoutParty(fullSeed, 'importer'))
++
++    expect(cardById(sections, 'arrivalDetails').error).toBeNull()
++    expect(cardById(sections, 'arrivalDetails').anchor).toBe('arrival-details')
++  })
++
++  it('Should say nothing is outstanding on a complete notification', async () => {
++    expect(await summaryFor(fullSeed)).toBeNull()
++  })
++
++  it('Should say nothing is outstanding on a submitted notification', async () => {
++    const { context } = await viewForStatus(
++      SUBMITTED,
++      withoutParty(fullSeed, 'importer')
++    )
++
++    expect(context.errorSummary).toBeNull()
++    expect(cardById(context.sections, 'rolesAndAddresses').error).toBeNull()
++  })
++})
++
++// The POST refuses on `scope.readyForCheckYourAnswers`, and the summary is
++// built from REVIEW_CARDS. The two agree only while every task row is covered
++// exactly once — otherwise a refusal could arrive with nothing named, or a card
++// could be flagged for a row the hub does not count.
++describe('#REVIEW_CARDS — the cards cover the task rows exactly', () => {
++  it('Should map every task row to exactly one card', () => {
++    const covered = REVIEW_CARDS.flatMap((card) => card.rows)
++
++    expect([...covered].sort()).toEqual(taskRows.map((row) => row.id).sort())
++  })
++
++  it('Should carry a message for every card', () => {
++    for (const card of REVIEW_CARDS) {
++      expect(typeof copyEn.errors.cards[card.id]).toBe('string')
++    }
++  })
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js
+index f20a8e03..f20c5592 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js
+@@ -16,6 +16,11 @@ import { copy as sharedCy } from '../../../../../../shared/copy.cy.js'
+ import { buildSections } from './view-model/index.js'
+ import { changeHref } from './view-model/rows/change-link.js'
+ import { outstandingPartyErrors } from './view-model/outstanding-parties.js'
++import {
++  cardAnchorHref,
++  incompleteCardErrors,
++  withCardErrors
++} from './view-model/incomplete-cards.js'
+ import { partiesForRender } from '../addresses/parties-for-render.js'
+ import { HTTP_STATUS_BAD_REQUEST } from '../../../../../../lib/http-status.js'
+ 
+@@ -24,14 +29,30 @@ const view = `${TEMPLATES}/features/check-answers/template`
+ const copy = copyFor({ en, cy })
+ const sharedCopy = copyFor({ en: sharedEn, cy: sharedCy })
+ 
+-// The entries link back to the party's own page rather than to an anchor on
+-// this one. Focus is only moved to the summary when the user has just been
+-// refused, so a plain visit does not yank the caret out of the page heading.
+-const partyErrorSummary = (journeyId, partyErrors, disableAutoFocus) =>
+-  errorSummary(partyErrors, {
+-    href: (partyId) => changeHref(journeyId, partyId),
+-    disableAutoFocus
+-  })
++/** One summary over both kinds of refusal: first the roles whose saved address
++ * no longer resolves, then the cards with answers still outstanding. A role
++ * that broke is a more particular statement than "complete this card", so it
++ * leads; the cards follow in page order. An unfinished card is somewhere on
++ * this page, so its entry is an anchor; a party's entry links back to the
++ * party's own page, because that is where the answer is given.
++ * `cardAnchorHref` tells the two apart — the keys never collide, card ids and
++ * party ids being drawn from different lists.
++ *
++ * Focus is only moved to the summary when the user has just been refused, so a
++ * plain visit does not yank the caret out of the page heading. */
++const reviewErrorSummary = (
++  journeyId,
++  cardErrors,
++  partyErrors,
++  disableAutoFocus
++) =>
++  errorSummary(
++    { ...partyErrors, ...cardErrors },
++    {
++      href: (key) => cardAnchorHref(key) ?? changeHref(journeyId, key),
++      disableAutoFocus
++    }
++  )
+ 
+ const renderCya = (
+   h,
+@@ -45,6 +66,7 @@ const renderCya = (
+     recoverableError = false,
+     parties = answers,
+     partyErrors = {},
++    cardErrors = {},
+     disableAutoFocus = true
+   }
+ ) =>
+@@ -55,19 +77,23 @@ const renderCya = (
+     sharedCopy,
+     concurrencyToken: journey.concurrencyToken,
+     journeyStrip: journeyStrip(journey),
+-    errorSummary: partyErrorSummary(
++    errorSummary: reviewErrorSummary(
+       journey.journeyId,
++      cardErrors,
+       partyErrors,
+       disableAutoFocus
+     ),
+-    sections: buildSections(
+-      answers,
+-      scope,
+-      evaluation,
+-      journey.journeyId,
+-      readOnly,
+-      parties,
+-      partyErrors
++    sections: withCardErrors(
++      buildSections(
++        answers,
++        scope,
++        evaluation,
++        journey.journeyId,
++        readOnly,
++        parties,
++        partyErrors
++      ),
++      cardErrors
+     ),
+     readOnly,
+     amendmentCancelled,
+@@ -107,6 +133,11 @@ export const renderNotificationView = async (
+     recoverableError,
+     parties,
+     partyErrors: readOnly ? {} : outstandingPartyErrors(source, parties),
++    // A submitted notification is a record of what was sent, so nothing on it
++    // is outstanding however its answers now read.
++    cardErrors: readOnly
++      ? {}
++      : incompleteCardErrors(answers, scope, evaluation),
+     disableAutoFocus
+   })
+ }
+@@ -118,13 +149,19 @@ const post = async (request, h) => {
+   // Same source as the GET, or the refusal and the page would disagree.
+   const source = storedAnswers ?? answers
+   const parties = await partiesForRender(request, journey, source)
+-  // A submitted notification is read-only: the GET zeroes its party errors, so
+-  // the POST must not refuse it either.
++  // A submitted notification is read-only: the GET zeroes its errors, so the
++  // POST must not refuse it either.
+   const readOnly = journey.status === state.SUBMITTED
+-  if (
++  // An unfinished notification is refused here rather than three pages later at
++  // the declaration's submit, where the same readiness test used to bounce the
++  // trader back to this page saying nothing. `readyForCheckYourAnswers` is the
++  // roll-up of the very task rows `incompleteCardErrors` reads, so a refusal
++  // always arrives with a summary naming what is left.
++  const refused =
+     !readOnly &&
+-    Object.keys(outstandingPartyErrors(source, parties)).length > 0
+-  ) {
++    (!scope.readyForCheckYourAnswers ||
++      Object.keys(outstandingPartyErrors(source, parties)).length > 0)
++  if (refused) {
+     const rendered = await renderNotificationView(request, h, {
+       disableAutoFocus: false
+     })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index 375e6f4d..39d49dd4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -118,6 +118,17 @@ export const copy = {
+   },
+   errors: {
+     prefix: 'Gwall:',
++    cards: {
++      importDetails: 'Cwblhewch y manylion mewnforio',
++      additionalAnimalDetails:
++        'Cwblhewch y manylion ychwanegol am yr anifeiliaid',
++      species: 'Cwblhewch fanylion y rhywogaeth',
++      arrivalDetails: 'Cwblhewch y manylion cyrraedd',
++      transportDetails: 'Cwblhewch y manylion cludo',
++      rolesAndAddresses: 'Cwblhewch y rolau a’r cyfeiriadau',
++      contactAddress: 'Cwblhewch y cyfeiriad cyswllt ar gyfer y llwyth hwn',
++      documents: 'Cwblhewch y dogfennau'
++    },
+     parties: {
+       placeOfOrigin: 'Dewiswch gyfeiriad ar gyfer y man tarddiad',
+       consignor: 'Dewiswch gyfeiriad ar gyfer yr anfonwr',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index d83a992a..6a912062 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -119,6 +119,19 @@ export const copy = {
+   },
+   errors: {
+     prefix: 'Error:',
++    // One line per review card that still has answers outstanding. The same
++    // line carries the error summary entry and the message inside the card, so
++    // a trader reading either sees the same words.
++    cards: {
++      importDetails: 'Complete import details',
++      additionalAnimalDetails: 'Complete additional animal details',
++      species: 'Complete species details',
++      arrivalDetails: 'Complete arrival details',
++      transportDetails: 'Complete transport details',
++      rolesAndAddresses: 'Complete roles and addresses',
++      contactAddress: 'Complete contact address for this consignment',
++      documents: 'Complete documents'
++    },
+     parties: {
+       placeOfOrigin: 'Select an address for the place of origin',
+       consignor: 'Select an address for the consignor',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
+index 906c50bf..b14965f3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
+@@ -4,6 +4,14 @@
+ {% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+ 
++{% macro cardError(text) %}
++  {% if text %}
++    <p class="govuk-error-message">
++      <span class="govuk-visually-hidden">{{ copy.errors.prefix }}</span> {{ text }}
++    </p>
++  {% endif %}
++{% endmacro %}
++
+ {% macro cardActions(actions) %}
+   {% if actions and actions.items.length %}
+     <ul class="govuk-summary-card__actions">
+@@ -63,7 +71,7 @@
+     {% if not loop.first %}
+       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+     {% endif %}
+-    <h2 class="govuk-heading-m">{{ section.heading }}</h2>
++    <h2 class="govuk-heading-m" id="{{ section.anchor }}">{{ section.heading }}</h2>
+     {% for group in section.groups %}
+       {% if group.heading %}
+         <h3 class="govuk-heading-s">{{ group.heading }}</h3>
+@@ -71,13 +79,14 @@
+       {% set cardHeadingLevel = 4 if group.heading else 3 %}
+       {% set innerHeadingLevel = cardHeadingLevel + 1 %}
+       {% for card in group.cards %}
+-        {% if card.identifierTable or card.documents or card.emptyText %}
+-          <div class="govuk-summary-card">
++        {% if card.identifierTable or card.documents or card.emptyText or card.error %}
++          <div class="govuk-summary-card{% if card.error %} app-summary-card--error{% endif %}"{% if card.anchor %} id="{{ card.anchor }}"{% endif %}>
+             <div class="govuk-summary-card__title-wrapper">
+               <h{{ cardHeadingLevel }} class="govuk-summary-card__title">{{ card.title }}</h{{ cardHeadingLevel }}>
+               {{ cardActions(card.actions) }}
+             </div>
+             <div class="govuk-summary-card__content">
++              {{ cardError(card.error) }}
+               {% if card.rows.length %}
+                 {{ govukSummaryList({ rows: card.rows }) }}
+               {% endif %}
+@@ -101,7 +110,8 @@
+           {{ govukSummaryList({
+             card: {
+               title: { text: card.title, headingLevel: cardHeadingLevel },
+-              actions: card.actions
++              actions: card.actions,
++              attributes: { id: card.anchor } if card.anchor else null
+             },
+             rows: card.rows
+           }) }}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js
+index 7d1467aa..86a758d7 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js
+@@ -11,6 +11,7 @@ export const contactAddressCard = (
+   readOnly,
+   parties = answers
+ ) => ({
++  id: 'contactAddress',
+   title: copy.cards.contactAddress,
+   rows: [
+     partyRow(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js
+index 577f379b..bd53fd5b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js
+@@ -19,6 +19,7 @@ export const rolesAndAddressesCard = (
+   parties = answers,
+   partyErrors = {}
+ ) => ({
++  id: 'rolesAndAddresses',
+   title: copy.cards.rolesAndAddresses,
+   rows: [
+     partyRow(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+index 05dada2e..9d0a657b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+@@ -63,6 +63,7 @@ export const additionalAnimalDetailsCard = (
+   scope,
+   readOnly
+ ) => ({
++  id: 'additionalAnimalDetails',
+   title: copy.cards.additionalAnimalDetails,
+   rows: [
+     row(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js
+index 9e0896be..71856496 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js
+@@ -8,6 +8,7 @@ import { row } from '../../rows/summary-row.js'
+ const copy = copyFor({ en, cy })
+ 
+ export const importDetailsCard = (journeyId, answers, scope, readOnly) => ({
++  id: 'importDetails',
+   title: copy.cards.importDetails,
+   rows: [
+     row(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js
+index 19769e97..ff4a9c21 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js
+@@ -38,6 +38,7 @@ export const documentsCard = (journeyId, answers, evaluation, readOnly) => {
+       ]
+     }))
+   return {
++    id: 'documents',
+     title: copy.cards.documents,
+     ...editableActions(readOnly, {
+       items: [
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
+index 54eb284d..a36454a1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
+@@ -10,6 +10,7 @@ import { dateText, toArray } from '../../rows/value-text.js'
+ const copy = copyFor({ en, cy })
+ 
+ export const arrivalDetailsCard = (journeyId, answers, scope, readOnly) => ({
++  id: 'arrivalDetails',
+   title: copy.cards.arrivalDetails,
+   rows: [
+     row(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+index d99e018c..c6033b74 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+@@ -77,6 +77,7 @@ export const activeTransporterRows = (journeyId, active, readOnly) =>
+ export const transportDetailsCard = (journeyId, answers, scope, readOnly) => {
+   const active = activeTransporter(answers, scope)
+   return {
++    id: 'transportDetails',
+     title: copy.cards.transportDetails,
+     rows: [
+       ...activeTransporterRows(journeyId, active, readOnly),
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+new file mode 100644
+index 00000000..ddcf24de
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+@@ -0,0 +1,113 @@
++import {
++  FULFILLED,
++  NA,
++  OPTIONAL
++} from '../../../../../../../bridge/status/index.js'
++import { copyFor } from '../../../../../../../shared/copy.js'
++import { rowStatus, taskRowById } from '../../../flow/task-rows.js'
++import { copy as en } from '../copy/copy.en.js'
++import { copy as cy } from '../copy/copy.cy.js'
++
++const copy = copyFor({ en, cy })
++
++/** The three statuses that leave nothing for the trader to do. They are the
++ * same three `readyForCheckYourAnswers` accepts, so a notification with no
++ * unfinished card is exactly a notification that is ready to submit. */
++const READY = new Set([FULFILLED, NA, OPTIONAL])
++
++/**
++ * The review page's cards in page order, each with the task rows whose answers
++ * it shows and the id the error summary links to.
++ *
++ * Every task row appears exactly once — `review-cards.test.js` pins that — so
++ * "no unfinished card" and `scope.readyForCheckYourAnswers` are the same
++ * verdict, and the POST can refuse on the latter knowing the page will name
++ * something.
++ *
++ * The species row pair is the one entry whose anchor is not a card. Species
++ * cards are drawn one per commodity line, and a line the trader has not added
++ * yet has no card to point at, so the pair anchors to the heading of the
++ * section those answers live in — which always stands.
++ */
++export const REVIEW_CARDS = [
++  { id: 'importDetails', anchor: 'import-details', rows: ['origin'] },
++  {
++    id: 'species',
++    anchor: 'about-the-consignment',
++    rows: ['commodities', 'animalIdentification']
++  },
++  {
++    id: 'additionalAnimalDetails',
++    anchor: 'additional-animal-details',
++    rows: ['importReason', 'additionalDetails']
++  },
++  {
++    id: 'arrivalDetails',
++    anchor: 'arrival-details',
++    rows: ['arrivalDetails', 'transitCountries']
++  },
++  {
++    id: 'transportDetails',
++    anchor: 'transport-details',
++    rows: ['transporter']
++  },
++  {
++    id: 'rolesAndAddresses',
++    anchor: 'roles-and-addresses',
++    rows: ['addresses']
++  },
++  { id: 'contactAddress', anchor: 'contact-address', rows: ['contact'] },
++  { id: 'documents', anchor: 'documents', rows: ['documents'] }
++]
++
++const cardById = new Map(REVIEW_CARDS.map((card) => [card.id, card]))
++
++const cardUnfinished = (card, answers, scope, evaluation) =>
++  card.rows.some(
++    (rowId) =>
++      !READY.has(
++        rowStatus(taskRowById(rowId), answers, scope.inScope, evaluation)
++      )
++  )
++
++/**
++ * The cards that still have answers outstanding, in page order.
++ *
++ * @param {object} answers - the nested answer POJO.
++ * @param {object} scope - the request scope (`inScope` is the pathKey Set).
++ * @param {object} evaluation - the request-level evaluator result.
++ * @returns {object} map of card id to message. Empty means nothing is missing.
++ */
++export const incompleteCardErrors = (answers, scope, evaluation) =>
++  Object.fromEntries(
++    REVIEW_CARDS.filter((card) =>
++      cardUnfinished(card, answers, scope, evaluation)
++    ).map((card) => [card.id, copy.errors.cards[card.id]])
++  )
++
++/** The in-page target for a card error, or undefined for a key that is not a
++ * card — which is how the error summary tells the two kinds of entry apart. */
++export const cardAnchorHref = (key) => {
++  const card = cardById.get(key)
++  return card ? `#${card.anchor}` : undefined
++}
++
++const decorateCard = (card, cardErrors) => {
++  const known = cardById.get(card.id)
++  if (!known) {
++    return card
++  }
++  return { ...card, anchor: known.anchor, error: cardErrors[card.id] ?? null }
++}
++
++/** Give every card its anchor, and the unfinished ones their own message. The
++ * decoration is a pass over the built sections rather than another argument
++ * threaded through every card factory. */
++export const withCardErrors = (sections, cardErrors = {}) =>
++  sections.map((section) => ({
++    ...section,
++    groups: section.groups.map((group) => ({
++      ...group,
++      cards: group.cards.map((card) => decorateCard(card, cardErrors))
++    }))
++  }))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js
+index 83868952..35bd4cbe 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js
+@@ -16,6 +16,7 @@ export const aboutConsignmentSection = (
+ ) => {
+   const species = speciesCards(journeyId, answers, evaluation, readOnly)
+   return {
++    anchor: 'about-the-consignment',
+     heading: copy.sections.aboutTheConsignment,
+     groups: [
+       {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js
+index 2173bb05..813e2300 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js
+@@ -14,6 +14,7 @@ export const addressesSection = (
+   partyErrors = {}
+ ) => {
+   return {
++    anchor: 'addresses',
+     heading: copy.sections.addresses,
+     groups: [
+       {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js
+index 8865ae0c..120f8462 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/documents.js
+@@ -9,6 +9,7 @@ const copy = copyFor({ en, cy })
+ // been uploaded, so a trader with no documents still sees them named and still
+ // has a link to the upload page.
+ export const documentsSection = (journeyId, answers, evaluation, readOnly) => ({
++  anchor: 'documents-section',
+   heading: copy.sections.documents,
+   groups: [
+     {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js
+index b6391bff..6a0149db 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js
+@@ -8,6 +8,7 @@ const copy = copyFor({ en, cy })
+ 
+ export const movementSection = (journeyId, answers, scope, readOnly) => {
+   return {
++    anchor: 'movement',
+     heading: copy.sections.movement,
+     groups: [
+       {

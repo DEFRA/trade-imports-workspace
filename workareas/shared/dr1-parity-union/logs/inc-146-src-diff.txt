@@ -1,0 +1,237 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index 6a912062..f1fcf608 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -101,16 +101,20 @@ export const copy = {
+   // Shown inside the uploaded-documents card when nothing has been uploaded.
+   // The card itself always stands, so it needs a line rather than an empty box.
+   documentsEmpty: 'You have not added any documents yet.',
++  // What each Change link names once a screen reader reaches it. Cards carry
++  // the only Change links on the page, so a card's entry here reads as the rest
++  // of "Change ..." — lower case, and the card's own title in words.
+   hidden: {
+-    transporterName: 'transporter name',
+-    transporterAddress: 'transporter address',
+-    transporterCountry: 'transporter country',
+-    transporterApprovalNumber: 'transporter approval number',
+-    transporterType: 'transporter type',
+-    contactAddress: 'contact address',
+-    documents: 'documents',
+-    commodity: (n) => `commodity ${n}`,
+-    identifiersForCommodity: (n) => `animal identifiers for commodity ${n}`
++    cards: {
++      importDetails: 'import details',
++      additionalAnimalDetails: 'additional animal details',
++      arrivalDetails: 'arrival details',
++      transportDetails: 'transport details',
++      rolesAndAddresses: 'roles and addresses',
++      contactAddress: 'contact address for this consignment',
++      documents: 'documents'
++    },
++    commodity: (n) => `commodity ${n}`
+   },
+   submit: {
+     heading: 'Now submit your notification',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+index 9d0a657b..8ec7a561 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+@@ -5,6 +5,7 @@ import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { additionalDetailsPage } from '../../../../additional-details/page.js'
+ import {
+   destinationCountryApplies,
+   exitDateApplies,
+@@ -12,51 +13,47 @@ import {
+   purposeApplies,
+   unweanedApplies
+ } from '../../applicability.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+ import { dateText } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+ // The exit answers the chosen reason for import asks for. Each row stands only
+-// while its obligation is in scope, and its Change link resolves through the
+-// obligation to the reason-for-import page that collects it.
+-const exitRows = (journeyId, answers, scope, readOnly) => [
++// while its obligation is in scope. They are collected on the reason-for-import
++// page rather than this card's own, so the card's one Change link does not
++// reach them — see the note on the card itself.
++const exitRows = (answers, scope) => [
+   ...(destinationCountryApplies(answers, scope)
+     ? [
+         row(
+-          journeyId,
+-          readOnly,
+           copy.rows.destinationCountry,
+           countries.originLabel(answers.destinationCountry) ??
+-            answers.destinationCountry,
+-          'destinationCountry'
++            answers.destinationCountry
+         )
+       ]
+     : []),
+   ...(exitDateApplies(answers, scope)
+-    ? [
+-        row(
+-          journeyId,
+-          readOnly,
+-          copy.rows.exitDate,
+-          dateText(answers.exitDate),
+-          'exitDate'
+-        )
+-      ]
++    ? [row(copy.rows.exitDate, dateText(answers.exitDate))]
+     : []),
+   ...(portOfExitApplies(answers, scope)
+     ? [
+         row(
+-          journeyId,
+-          readOnly,
+           copy.rows.portOfExit,
+-          ports.label(answers.portOfExit) ?? answers.portOfExit,
+-          'portOfExit'
++          ports.label(answers.portOfExit) ?? answers.portOfExit
+         )
+       ]
+     : [])
+ ]
+ 
++/**
++ * The card's rows span two pages: this card's namesake collects what the
++ * animals are certified for and whether any are unweaned, and the
++ * reason-for-import page collects the reason, the purpose and the exit answers.
++ * The one Change link goes to the page the card is named for, which is also the
++ * page the trader would expect "Change additional animal details" to open. The
++ * reason-for-import page stays reachable from its own task row on the hub.
++ */
+ export const additionalAnimalDetailsCard = (
+   journeyId,
+   answers,
+@@ -65,44 +62,40 @@ export const additionalAnimalDetailsCard = (
+ ) => ({
+   id: 'additionalAnimalDetails',
+   title: copy.cards.additionalAnimalDetails,
++  ...editableActions(
++    readOnly,
++    cardAction(
++      journeyId,
++      additionalDetailsPage.slug,
++      copy.hidden.cards.additionalAnimalDetails
++    )
++  ),
+   rows: [
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.certifiedFor,
+-      certification.certificationLabel(answers.animalsCertifiedFor) ?? '',
+-      'animalsCertifiedFor'
++      certification.certificationLabel(answers.animalsCertifiedFor) ?? ''
+     ),
+     ...(unweanedApplies(answers)
+       ? [
+           row(
+-            journeyId,
+-            readOnly,
+             copy.rows.unweaned,
+-            copy.yesNo[answers.containsUnweanedAnimals] ?? '',
+-            'containsUnweanedAnimals'
++            copy.yesNo[answers.containsUnweanedAnimals] ?? ''
+           )
+         ]
+       : []),
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.reasonForImport,
+-      importReasonPurpose.reasonLabel(answers.reasonForImport) ?? '',
+-      'reasonForImport'
++      importReasonPurpose.reasonLabel(answers.reasonForImport) ?? ''
+     ),
+     ...(purposeApplies(answers, scope)
+       ? [
+           row(
+-            journeyId,
+-            readOnly,
+             copy.rows.purpose,
+             importReasonPurpose.purposeLabel(answers.purposeInInternalMarket) ??
+-              '',
+-            'purposeInInternalMarket'
++              ''
+           )
+         ]
+       : []),
+-    ...exitRows(journeyId, answers, scope, readOnly)
++    ...exitRows(answers, scope)
+   ]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js
+index ebcc3150..5a978da2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js
+@@ -14,10 +14,21 @@ export const withChange = (href) => `${href}?change=1`
+ export const changeHref = (journeyId, obligationId) =>
+   withChange(pagePath(journeyId, slugOfPage(pageOfObligation(obligationId))))
+ 
+-export const changeAction = (journeyId, obligationId, visuallyHiddenText) => ({
++/**
++ * The one Change link a card carries, level with its title (design release 1).
++ * Rows carry none: a card is a page's worth of answers, so the card says once
++ * where they are changed.
++ *
++ * The card names its page rather than deriving it from a row, because a card's
++ * rows can span two pages — arrival details shows the transit countries the
++ * transit-countries page collects, and roles and addresses shows the CPH number
++ * the CPH page collects. One card has one destination, so the card has to say
++ * which one, and it says the page the hub's own task row leads with.
++ */
++export const cardAction = (journeyId, slug, visuallyHiddenText) => ({
+   items: [
+     {
+-      href: changeHref(journeyId, obligationId),
++      href: withChange(pagePath(journeyId, slug)),
+       text: copy.change,
+       visuallyHiddenText
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
+index 97ea315f..f0195108 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
+@@ -1,27 +1,10 @@
+-import { changeAction, editableActions } from './change-link.js'
+ import { valueText } from './value-text.js'
+ 
+-export const row = (
+-  journeyId,
+-  readOnly,
+-  key,
+-  value,
+-  obligationId,
+-  visuallyHiddenText = null
+-) => ({
+-  key: { text: key },
+-  value: { text: valueText(value) },
+-  ...editableActions(
+-    readOnly,
+-    changeAction(
+-      journeyId,
+-      obligationId,
+-      visuallyHiddenText ?? key.toLowerCase()
+-    )
+-  )
+-})
+-
+-export const readOnlyRow = (key, value) => ({
++/** A row is a key and a value, and nothing else. Design release 1 puts no
++ * Change link on a row — the card heading carries the one link that changes
++ * every answer inside it, so the page offers one link per card rather than one
++ * per answer. */
++export const row = (key, value) => ({
+   key: { text: key },
+   value: { text: valueText(value) }
+ })

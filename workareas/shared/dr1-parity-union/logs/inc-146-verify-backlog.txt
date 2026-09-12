@@ -1,0 +1,177 @@
+{
+  "id": "inc-146",
+  "type": "flow-change",
+  "milestone": null,
+  "domain": "review",
+  "title": "Check your answers puts a Change link on every row, so a finished notification offers twenty-four of them; Design release 1 puts one Change link in each card's heading and none on the rows",
+  "detail": "Every row of every card carries its own Change link on the right-hand side, with visually hidden text naming the row and its card — \"Change country of origin (Import details)\", \"Change transporter approval number (Transport details)\" and so on. A finished notification shows twenty-four of them — twenty-two on rows, plus two in the heading of the Species card, which is the only card on the page with card-level actions. An unfinished notification shows eighteen, all on rows; the exact count tracks how many answers the notification carries rather than anything about the page's shape. Each link goes to the page that collects that one answer, with a `change=1` flag so the trader is returned to the review afterwards (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21, building the action at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:12-25 and rendering it through govukSummaryList at src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:96-102). So the page repeats the same destination link once per row: five rows in the Arrival details card all lead to the arrival details page, five in Roles and addresses all lead to the roles and addresses page.\n\nDesign release 1 puts one Change link in each card's heading bar, level with the card title, and no link on any row (app/views/partials/review-summary-card.html:23-28 renders the single title link from the card's own changeHref, and app/views/partials/review-summary-row.html:14-24 renders a row as a key and a value with no action at all). Both the finished and the unfinished review page carry exactly eleven Change links, one per card, each going to the page that collects that card's answers. Eleven is the count for these captures rather than a fixed number: Design release 1's Transit countries card is conditional (app/views/review-notification.html:151-153) and absent from both, so a notification that named transit countries would show twelve — one per card still.\n\nMove the Change link from the row to the card. Give each card in the check-answers view-model one action, pointing at the page that collects that card's answers, and stop attaching a change action to individual rows — that is `summary-row.js` dropping its call to `changeAction`, and each card builder gaining the card-level action the Species card already has, with the Species card itself collapsing from two heading links to one. The visually hidden text moves with it, from naming the row to naming the card. Nothing has to land first, and the destinations do not change: every row in a card already resolves to the same page, so no route is lost. `controls` is deliberately empty for two reasons: the finding is the arrangement of the whole page rather than any one field, and \"Change\" lands twenty-four times on the frontend page, so naming it would get the crop refused and fall back to the whole-page shot anyway.\n\nFALSIFIED BY: Finding a Change link on a row of any card in the captured dr1-review-notification, or a card whose rows carry no Change link in the captured fe-check-answers. Design release 1's row macro has no action branch at all, and the frontend's row builder attaches one to every row it makes.",
+  "screens": [
+    "fe-check-answers",
+    "fe-check-answers-incomplete",
+    "dr1-review-notification",
+    "dr1-review-notification-incomplete"
+  ],
+  "evidence": {
+    "frontend": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21",
+    "prototype": "app/views/partials/review-summary-card.html:23-28"
+  },
+  "confidence": "high",
+  "band": "frontend-work",
+  "gate": null,
+  "dependsOn": [],
+  "status": "todo",
+  "commit": null,
+  "failure_reason": null,
+  "finding": {
+    "frontend": "Every row of every card carries its own Change link on the right-hand side, with visually hidden text naming the row and its card — \"Change country of origin (Import details)\", \"Change transporter approval number (Transport details)\" and so on. A finished notification shows twenty-four of them — twenty-two on rows, plus two in the heading of the Species card, which is the only card on the page with card-level actions. An unfinished notification shows eighteen, all on rows; the exact count tracks how many answers the notification carries rather than anything about the page's shape. Each link goes to the page that collects that one answer, with a `change=1` flag so the trader is returned to the review afterwards (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21, building the action at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:12-25 and rendering it through govukSummaryList at src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:96-102). So the page repeats the same destination link once per row: five rows in the Arrival details card all lead to the arrival details page, five in Roles and addresses all lead to the roles and addresses page.",
+    "prototype": "Design release 1 puts one Change link in each card's heading bar, level with the card title, and no link on any row (app/views/partials/review-summary-card.html:23-28 renders the single title link from the card's own changeHref, and app/views/partials/review-summary-row.html:14-24 renders a row as a key and a value with no action at all). Both the finished and the unfinished review page carry exactly eleven Change links, one per card, each going to the page that collects that card's answers. Eleven is the count for these captures rather than a fixed number: Design release 1's Transit countries card is conditional (app/views/review-notification.html:151-153) and absent from both, so a notification that named transit countries would show twelve — one per card still.",
+    "difference": "Move the Change link from the row to the card. Give each card in the check-answers view-model one action, pointing at the page that collects that card's answers, and stop attaching a change action to individual rows — that is `summary-row.js` dropping its call to `changeAction`, and each card builder gaining the card-level action the Species card already has, with the Species card itself collapsing from two heading links to one. The visually hidden text moves with it, from naming the row to naming the card. Nothing has to land first, and the destinations do not change: every row in a card already resolves to the same page, so no route is lost. `controls` is deliberately empty for two reasons: the finding is the arrangement of the whole page rather than any one field, and \"Change\" lands twenty-four times on the frontend page, so naming it would get the crop refused and fall back to the whole-page shot anyway.",
+    "falsifiedBy": "Finding a Change link on a row of any card in the captured dr1-review-notification, or a card whose rows carry no Change link in the captured fe-check-answers. Design release 1's row macro has no action branch at all, and the frontend's row builder attaches one to every row it makes.",
+    "verification": "Written and verified by the verifier, not by the slice's author, so a reader should weigh it accordingly — but the counts are mechanical and both sides were read in the captured DOM before the claim was made. capture/html/frontend/fe-check-answers.html holds 24 occurrences of \">Change<\", of which 22 sit in a govuk-summary-list__actions container and 2 in the single govuk-summary-card__actions list; fe-check-answers-incomplete.html holds 18, all on rows. capture/html/prototype/dr1-review-notification.html and dr1-review-notification-incomplete.html each hold exactly 11 app-review-card__title-link anchors and no row-level action, pointing at /origin-of-the-import, /what-are-you-importing, /reason-for-import, /consignment-details, /animal-identification-details, /additional-animal-details, /arrival-details, /transporter, /upload-documents, /roles-and-addresses and /contact-address-for-consignment. Confirmed by eye in evidence/frontend@76a864ba/page/fe-check-answers.png, where a Change sits at the right of every row, against evidence/prototype@491b3926/page/dr1-review-notification.png, where one Change sits in each grey card heading. Read the four source files named above. Checked this is not a difference whose substance is the code: the number of links a trader meets on the page, and where they sit, is what changes. Checked it is not already carried by review--check-answers-section-structure, which is about section headings and card grouping and says nothing about the change links.",
+    "relatedTo": [
+      {
+        "id": "inc-147",
+        "relation": "travels-with",
+        "why": "Both are changes to how the review page's cards are drawn, and moving the change links is the same pass over the card builders as regrouping them into six sections."
+      }
+    ]
+  },
+  "citations": [
+    {
+      "ref": "c1",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js",
+      "lines": {
+        "start": 14,
+        "end": 21
+      },
+      "ranges": [
+        {
+          "start": 14,
+          "end": 21
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.frontend"
+      ]
+    },
+    {
+      "ref": "c2",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js",
+      "lines": {
+        "start": 12,
+        "end": 25
+      },
+      "ranges": [
+        {
+          "start": 12,
+          "end": 25
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:12-25",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c3",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/views/partials/review-summary-card.html",
+      "lines": {
+        "start": 23,
+        "end": 28
+      },
+      "ranges": [
+        {
+          "start": 23,
+          "end": 28
+        }
+      ],
+      "asWritten": "app/views/partials/review-summary-card.html:23-28",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail",
+        "evidence.prototype"
+      ]
+    },
+    {
+      "ref": "c4",
+      "kind": "code",
+      "side": null,
+      "repo": "prototype",
+      "path": "app/views/partials/review-summary-row.html",
+      "lines": {
+        "start": 14,
+        "end": 24
+      },
+      "ranges": [
+        {
+          "start": 14,
+          "end": 24
+        }
+      ],
+      "asWritten": "app/views/partials/review-summary-row.html:14-24",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    },
+    {
+      "ref": "c5",
+      "kind": "code",
+      "side": null,
+      "repo": "frontend",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+      "lines": {
+        "start": 96,
+        "end": 102
+      },
+      "ranges": [
+        {
+          "start": 96,
+          "end": 102
+        }
+      ],
+      "asWritten": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:96-102",
+      "anchors": [],
+      "resolution": "explicit",
+      "field": "detail",
+      "fields": [
+        "detail"
+      ]
+    }
+  ],
+  "corpus": "dr1c",
+  "slice": "review",
+  "source": "review--change-links-on-every-row-not-per-card.json",
+  "controls": [],
+  "provenance": {
+    "sourceA": "inc-096",
+    "sourceC": "inc-077",
+    "origin": "both",
+    "note": "Change link on every summary row vs one per card heading. Identical diff — drop the row action, add a card action. A counts 28 links on its capture, C counts 24 (22 rows + 2 in the Species card heading) and 18 on the incomplete page; the counts differ because the two runs captured different notifications, not because the finding differs. C is marginally better for separating row links from card-heading links and for covering both page states.",
+    "better": "C",
+    "judged": null
+  },
+  "ticket": "EUDPA-581",
+  "branch": "feat/EUDPA-581-check-your-answers-puts-a-change-link-on"
+}

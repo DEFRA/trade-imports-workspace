@@ -1,0 +1,79 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index d83a992a..6a912062 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -119,6 +119,19 @@ export const copy = {
+   },
+   errors: {
+     prefix: 'Error:',
++    // One line per review card that still has answers outstanding. The same
++    // line carries the error summary entry and the message inside the card, so
++    // a trader reading either sees the same words.
++    cards: {
++      importDetails: 'Complete import details',
++      additionalAnimalDetails: 'Complete additional animal details',
++      species: 'Complete species details',
++      arrivalDetails: 'Complete arrival details',
++      transportDetails: 'Complete transport details',
++      rolesAndAddresses: 'Complete roles and addresses',
++      contactAddress: 'Complete contact address for this consignment',
++      documents: 'Complete documents'
++    },
+     parties: {
+       placeOfOrigin: 'Select an address for the place of origin',
+       consignor: 'Select an address for the consignor',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
+index 906c50bf..b14965f3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
+@@ -4,6 +4,14 @@
+ {% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+ 
++{% macro cardError(text) %}
++  {% if text %}
++    <p class="govuk-error-message">
++      <span class="govuk-visually-hidden">{{ copy.errors.prefix }}</span> {{ text }}
++    </p>
++  {% endif %}
++{% endmacro %}
++
+ {% macro cardActions(actions) %}
+   {% if actions and actions.items.length %}
+     <ul class="govuk-summary-card__actions">
+@@ -63,7 +71,7 @@
+     {% if not loop.first %}
+       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+     {% endif %}
+-    <h2 class="govuk-heading-m">{{ section.heading }}</h2>
++    <h2 class="govuk-heading-m" id="{{ section.anchor }}">{{ section.heading }}</h2>
+     {% for group in section.groups %}
+       {% if group.heading %}
+         <h3 class="govuk-heading-s">{{ group.heading }}</h3>
+@@ -71,13 +79,14 @@
+       {% set cardHeadingLevel = 4 if group.heading else 3 %}
+       {% set innerHeadingLevel = cardHeadingLevel + 1 %}
+       {% for card in group.cards %}
+-        {% if card.identifierTable or card.documents or card.emptyText %}
+-          <div class="govuk-summary-card">
++        {% if card.identifierTable or card.documents or card.emptyText or card.error %}
++          <div class="govuk-summary-card{% if card.error %} app-summary-card--error{% endif %}"{% if card.anchor %} id="{{ card.anchor }}"{% endif %}>
+             <div class="govuk-summary-card__title-wrapper">
+               <h{{ cardHeadingLevel }} class="govuk-summary-card__title">{{ card.title }}</h{{ cardHeadingLevel }}>
+               {{ cardActions(card.actions) }}
+             </div>
+             <div class="govuk-summary-card__content">
++              {{ cardError(card.error) }}
+               {% if card.rows.length %}
+                 {{ govukSummaryList({ rows: card.rows }) }}
+               {% endif %}
+@@ -101,7 +110,8 @@
+           {{ govukSummaryList({
+             card: {
+               title: { text: card.title, headingLevel: cardHeadingLevel },
+-              actions: card.actions
++              actions: card.actions,
++              attributes: { id: card.anchor } if card.anchor else null
+             },
+             rows: card.rows
+           }) }}

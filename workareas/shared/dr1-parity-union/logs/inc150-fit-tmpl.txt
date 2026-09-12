@@ -1,0 +1,148 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index e76ac5b8..3cc5c7ec 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -6,6 +6,7 @@ import {
+   signIn,
+   startNotification
+ } from '../../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../../shared/copy.en.js'
+ import { copy } from './copy/copy.en.js'
+ 
+ const INTERNAL_REFERENCE_LABEL =
+@@ -291,7 +292,6 @@ test.describe('check-answers feature navigation and submission', () => {
+     page
+   }) => {
+     await startNotification(page)
+-    const hubUrl = journeyUrl(page)
+     await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
+ 
+     await expect(rowFor(page, copy.rows.consignor)).toContainText(
+@@ -300,11 +300,69 @@ test.describe('check-answers feature navigation and submission', () => {
+     await expect(
+       page.getByRole('link', { name: copy.errors.parties.consignor })
+     ).toBeHidden()
++  })
++})
++
++// Design release 1 heads the review page of an unfinished notification with
++// "There is a problem", names each unfinished card, marks the card itself, and
++// refuses to go on until the notification is complete.
++test.describe('check-answers feature unfinished notification', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('names every unfinished card and marks the card it names', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    await expect(
++      page.getByRole('heading', { name: sharedCopy.errorSummary.title })
++    ).toBeVisible()
++    const entry = page.getByRole('link', {
++      name: copy.errors.cards.arrivalDetails
++    })
++    await expect(entry).toHaveAttribute('href', '#arrival-details')
++    await expect(
++      page
++        .locator('#arrival-details')
++        .getByText(copy.errors.cards.arrivalDetails)
++    ).toBeVisible()
++  })
++
++  test('refuses Continue and keeps the trader on the review page', async ({
++    page
++  }) => {
++    await startNotification(page)
++    const reviewUrl = journeyUrl(page, NOTIFICATION_VIEW_SLUG)
++    await page.goto(reviewUrl)
+ 
+     await page.getByRole('button', { name: copy.submit.button }).click()
+ 
+-    // Continue is not refused, so it leaves the review page: the incomplete
+-    // journey sends it back to the hub rather than on to the declaration.
+-    await expect(page).toHaveURL(hubUrl)
++    await expect(page).toHaveURL(reviewUrl)
++    await expect(
++      page.getByRole('heading', { name: sharedCopy.errorSummary.title })
++    ).toBeVisible()
++  })
++
++  test('unfinished review has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++    await page.getByRole('button', { name: copy.submit.button }).click()
++
++    const results = await new AxeBuilder({ page })
++      .withTags(['wcag2a', 'wcag2aa'])
++      .analyze()
++    const seriousOrCritical = results.violations.filter(({ impact }) =>
++      ['serious', 'critical'].includes(impact)
++    )
++
++    expect(
++      seriousOrCritical,
++      `Unfinished check answers has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
++    ).toEqual([])
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
+index 906c50bf..b14965f3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk
+@@ -4,6 +4,14 @@
+ {% from "govuk/components/button/macro.njk" import govukButton %}
+ {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+ 
++{% macro cardError(text) %}
++  {% if text %}
++    <p class="govuk-error-message">
++      <span class="govuk-visually-hidden">{{ copy.errors.prefix }}</span> {{ text }}
++    </p>
++  {% endif %}
++{% endmacro %}
++
+ {% macro cardActions(actions) %}
+   {% if actions and actions.items.length %}
+     <ul class="govuk-summary-card__actions">
+@@ -63,7 +71,7 @@
+     {% if not loop.first %}
+       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+     {% endif %}
+-    <h2 class="govuk-heading-m">{{ section.heading }}</h2>
++    <h2 class="govuk-heading-m" id="{{ section.anchor }}">{{ section.heading }}</h2>
+     {% for group in section.groups %}
+       {% if group.heading %}
+         <h3 class="govuk-heading-s">{{ group.heading }}</h3>
+@@ -71,13 +79,14 @@
+       {% set cardHeadingLevel = 4 if group.heading else 3 %}
+       {% set innerHeadingLevel = cardHeadingLevel + 1 %}
+       {% for card in group.cards %}
+-        {% if card.identifierTable or card.documents or card.emptyText %}
+-          <div class="govuk-summary-card">
++        {% if card.identifierTable or card.documents or card.emptyText or card.error %}
++          <div class="govuk-summary-card{% if card.error %} app-summary-card--error{% endif %}"{% if card.anchor %} id="{{ card.anchor }}"{% endif %}>
+             <div class="govuk-summary-card__title-wrapper">
+               <h{{ cardHeadingLevel }} class="govuk-summary-card__title">{{ card.title }}</h{{ cardHeadingLevel }}>
+               {{ cardActions(card.actions) }}
+             </div>
+             <div class="govuk-summary-card__content">
++              {{ cardError(card.error) }}
+               {% if card.rows.length %}
+                 {{ govukSummaryList({ rows: card.rows }) }}
+               {% endif %}
+@@ -101,7 +110,8 @@
+           {{ govukSummaryList({
+             card: {
+               title: { text: card.title, headingLevel: cardHeadingLevel },
+-              actions: card.actions
++              actions: card.actions,
++              attributes: { id: card.anchor } if card.anchor else null
+             },
+             rows: card.rows
+           }) }}

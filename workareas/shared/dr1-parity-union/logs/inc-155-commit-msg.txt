@@ -1,0 +1,26 @@
+fix(parity-dr1): The read-only view of an already-submitted notification still ends with "Now submit your notification" and a Continue button; Design release 1 renders no form once a notification is submitted
+
+The review page is already redrawn read-only once a notification is
+submitted: the status tag turns green, every Change link is dropped, and
+"Copy as new" and "Delete" appear at the top. The block at the foot of the
+page was left outside that condition, so the page still carried the heading
+"Now submit your notification", the sentence below it and a live Continue
+button — offering the one action the read-only page had otherwise taken
+away. Pressing it reached the declaration, which redirects a submitted
+journey to the confirmation page, landing the trader on a confirmation for
+a notification they did not just submit.
+
+Wrap the heading, sentence and submitting form in `{% if not readOnly %}`,
+so the read-only review ends with the last card and presents a submitted
+notification as a record with no action on it. This matches Design release
+1, which guards the whole form with the same read-only test.
+
+Adds a fit spec covering the submitted review: it asserts the page is the
+read-only one, that the submit heading, body and Continue button are all
+absent, and that the submitted review has no serious or critical axe
+violations.
+
+Increment: inc-155
+Ticket: EUDPA-582
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>

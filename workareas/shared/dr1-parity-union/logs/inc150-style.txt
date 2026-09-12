@@ -1,0 +1,182 @@
+263:## 10. Module exports
+264-
+265-Prefer named exports. Default exports make refactoring harder and IDE support weaker.
+266-
+267-```js
+268-// bad
+269-export default function formatDate(date) { ... }
+270-
+271-// good
+272-export const formatDate = (date) => ...
+273-```
+274-
+275-Group related utilities in a single module rather than scattering single-function files:
+276-
+277-```js
+278-// src/utils/date.js
+279-export const formatDate = (date) => ...
+280-export const parseDate = (str) => ...
+281-export const isExpired = (date) => ...
+282-```
+283-
+284----
+285-
+286:## 11. `const` over `let`, never `var`
+287-
+288-Default to `const`. Only reach for `let` when you genuinely need to reassign. Never use `var`.
+289-
+290-```js
+291-// bad
+292-var count = 0
+293-let name = 'Alice'  // never reassigned
+294-
+295-// good
+296-const name = 'Alice'
+297-
+298-// let is justified here
+299-let retries = 0
+300-while (retries < 3) {
+301-  retries++
+302-}
+303-```
+304-
+305-If you find yourself needing `let` for a value built up over time, that is usually a sign to use `map`, `filter`, or `reduce` instead.
+306-
+307----
+308-
+309:## 12. Optional chaining and nullish coalescing
+310-
+311-Use `?.` and `??` to handle absent values without verbose null checks.
+312-
+313-```js
+314-// bad
+315-const city = user && user.address && user.address.city
+316-const label = value !== null && value !== undefined ? value : 'unknown'
+317-
+318-// good
+319-const city = user?.address?.city
+320-const label = value ?? 'unknown'
+321-```
+322-
+323-Prefer `??` over `||` for defaults — `||` triggers on any falsy value (`0`, `''`, `false`), which is rarely what you want:
+324-
+325-```js
+326-// bad — treats 0 and '' as missing
+327-const count = total || 0
+328-const title = input || 'Untitled'
+329-
+330-// good — only falls back when null or undefined
+331-const count = total ?? 0
+332-const title = input ?? 'Untitled'
+333-```
+334-
+335----
+336-
+337:## 13. No magic numbers or strings
+338-
+339-Extract bare literals that carry meaning into named constants. The name documents the intent; the constant makes it easy to change.
+340-
+341-```js
+342-// bad
+343-if (user.role === 3) { ... }
+344-setTimeout(sync, 86400000)
+345-if (password.length < 8) { ... }
+346-
+347-// good
+348-const ROLE_ADMIN = 3
+349-const ONE_DAY_MS = 24 * 60 * 60 * 1000
+350-const MIN_PASSWORD_LENGTH = 8
+351-
+352-if (user.role === ROLE_ADMIN) { ... }
+353-setTimeout(sync, ONE_DAY_MS)
+354-if (password.length < MIN_PASSWORD_LENGTH) { ... }
+355-```
+356-
+357----
+358-
+359:## 14. Prefer `async`/`await`
+360-
+361-Use `async`/`await` over `.then()` chains. It reads sequentially, handles errors uniformly with `try`/`catch`, and is easier to debug.
+362-
+363-```js
+364-// bad
+365-const loadDashboard = (userId) =>
+366-  fetchUser(userId)
+367-    .then((user) => fetchPermissions(user.role))
+368-    .then((permissions) => fetchWidgets(permissions))
+369-    .catch((err) => logger.error(err))
+370-
+371-// good
+372-const loadDashboard = async (userId) => {
+373-  const user = await fetchUser(userId)
+374-  const permissions = await fetchPermissions(user.role)
+375-  return fetchWidgets(permissions)
+376-}
+377-```
+378-
+379-Exception: short single-expression pipelines where `.then()` reads cleanly as a transformation are fine:
+380-
+381-```js
+382-const fetchUser = (id) => fetch(`/users/${id}`).then((res) => res.json())
+383-```
+384-
+385----
+386-
+387:## 15. Self-documenting code — prefer no comments
+388-
+389-Write code that explains itself through naming and structure. Comments drift out of sync with code; names do not.
+390-
+391-When you feel the urge to write a comment, try renaming or extracting a function first:
+392-
+393-```js
+394-// bad — comment compensating for a poor name
+395-// multiply by 1.2 to add VAT
+396-const total = subtotal * 1.2
+397-
+398-// bad — comment describing what the code does
+399-// filter out inactive users and get their IDs
+400-const result = users.filter((user) => user.active).map((user) => user.id)
+401-
+402-// good — the code reads as its own explanation
+403-const VAT_MULTIPLIER = 1.2
+404-const totalWithVat = subtotal * VAT_MULTIPLIER
+405-
+406-const activeUserIds = users.filter((user) => user.active).map((user) => user.id)
+407-```
+408-
+409-Comments are appropriate for **why**, not **what** — when there is a non-obvious constraint, a known gotcha, or a deliberate workaround:
+410-
+411-```js
+412-// Hapi validates the full payload before route handlers run,
+413-// so by the time we reach here the token is guaranteed present.
+414-const { token } = request.payload
+415-```
+416-
+417----
+--
+419:## 16. Modern array and object methods
+420-
+421-Prefer built-in methods over manual implementations. They are more readable and signal intent clearly.
+422-
+423-```js
+424-// last element — no need to compute length
+425-const last = items.at(-1)
+426-
+427-// searching from the end
+428-const lastError = events.findLast((event) => event.type === 'error')
+429-
+430-// check a condition holds for every item
+431-const allApproved = items.every((item) => item.approved)
+432-
+433-// check at least one item matches
+434-const hasErrors = items.some((item) => item.type === 'error')
+435-
+436-// flatten one level and map in one pass
+437-const tags = posts.flatMap((post) => post.tags)
+438-
+439-// group into an object by a key (Node 22+)
+440-const byStatus = Object.groupBy(orders, (order) => order.status)
+441-
+442-// build an object from entries
+443-const index = Object.fromEntries(users.map((user) => [user.id, user]))
+444-```

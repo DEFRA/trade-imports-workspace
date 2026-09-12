@@ -23396,6 +23396,8 @@
     },
     {
       "id": "inc-076",
+      "ticket": "EUDPA-578",
+      "branch": "feat/EUDPA-578-check-your-answers-never-shows-the-exit",
       "type": "add-field",
       "milestone": null,
       "domain": "review",
@@ -23413,8 +23415,17 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "aabaf77b",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/319",
+          "number": 319,
+          "merged": true,
+          "sha": "6fd2f3fc46f3f5058de7188b81092d4184dd4cec"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The frontend asks three further questions once a reason for import has been chosen — the destination country for a transit or transhipment consignment, and the exit date and port of exit for a temporary admission — each on a page of its own (fe-destination-country, fe-exit-date, fe-port-of-exit). None of the three ever reaches Check your answers. The card that holds the reason for import carries exactly four possible rows: Certified for, Includes unweaned animals, Reason for import and Purpose in the market (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js:18-54), and the check-answers copy file has no key for a destination country, an exit date or a port of exit at all. So a trader who answered them has no way to see what they answered, and no Change link back to any of the three pages, from the page they are asked to check before submitting.",
@@ -23507,6 +23518,8 @@
     },
     {
       "id": "inc-100",
+      "ticket": "EUDPA-579",
+      "branch": "feat/EUDPA-579-frontend-will-not-accept-a-notification",
       "type": "obligation-change",
       "milestone": null,
       "domain": "review",
@@ -23526,8 +23539,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "cbf2506d",
       "failure_reason": null,
       "finding": {
         "frontend": "A trader cannot submit until every animal on every commodity line has an identifier record. The animal-identifier group carries a count rule as well as a content rule: each unit record must hold at least one of the six identifiers, and the number of unit records on a commodity line must equal the number of animals declared for that line (src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:98-101, `recordCountEquals` against `numberOfAnimals`). That group is the whole of the `animalIdentification` task row (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45), and readiness demands every task row be fulfilled, not applicable or optional (src/server/app/flow/section-status.js:11-15). Readiness is the gate on both the review section (src/server/app/sets/live-animals/journeys/linear/flow/flow.js:81-85) and the submit itself, which returns `ok: false` and goes nowhere without it (src/server/app/engine/write/submit.js:9-15). So a trader who declares twenty animals must fill in twenty identifier cards before the service will take the notification, and a trader bringing in two hundred salmon must enter two hundred records before the service will show them their own notification. Documents are the one thing Frontend does let through: the documents group carries no minimum, so an empty collection is not a bar.",
@@ -23803,10 +23816,21 @@
         "note": "Identifiers must stop gating submit. Note C filed this under `review`, not `identification` — match on substance, not domain. C is better: it quotes DR1's own stated rule (\"Animal identifiers are optional unless multiple species are selected\"), names the precise obligation edit (drop `recordCountEquals`), and confirms the animals backend rejects on status not content so no contract change is needed. One flag for the BA: the two runs disagree on the DR1 incomplete-review capture — A lists five error-summary entries (including additional details), C lists exactly four. One of the two mis-read its own screenshot, or the captures were taken at different moments. The same pair was also matched under \"Check answers, declaration, submission\", where the matcher marked A better and noted: A is better on the prescription — it follows DR1's actual rule, that identifiers are required for submit only when more than one species carries an identifier set, and then one record per species — where C simply asks to drop `recordCountEquals` and let the row roll up optional, which loses DR1's multi-species requirement altogether. C is better on one point A does not check: the animals backend's submit transition rejects only on status, never on content, so no contract change is needed. Both notes are folded into the increment.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/320",
+          "number": 320,
+          "merged": true,
+          "sha": "d8b4a619c98b2fd9fd05473270fe64c4e54f347f"
+        }
+      ]
     },
     {
       "id": "inc-150",
+      "ticket": "EUDPA-580",
+      "branch": "feat/EUDPA-580-check-your-answers-gives-no-sign-that-a",
       "type": "flow-change",
       "milestone": null,
       "domain": "review",
@@ -23824,8 +23848,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "c379d32b",
       "failure_reason": null,
       "finding": {
         "frontend": "A trader who reaches Check your answers before the notification is finished sees a page that looks finished. Every unanswered row reads \"Not provided\" in ordinary black text, no card is marked, there is no error summary, and the page still ends with the heading \"Now submit your notification\", the sentence \"Continue to the declaration to submit your notification.\" and a green Continue button (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114). Nothing on the page says what is outstanding or where to go to finish it. Pressing Continue is not refused either: the POST handler redirects straight on to the declaration (src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:96-99), the declaration renders, and only after the trader ticks the box and presses Continue again does the submit fail its readiness check and bounce back to Check your answers with no message at all (src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:86-88, src/server/app/engine/write/submit.js:9-15). The trader ends up back where they started having been told nothing.",
@@ -24088,7 +24112,27 @@
         "note": "The biggest divergence in the area, and it is factual. A says the frontend refuses to open the review page at all until every task is complete, so 'an incomplete notification has no review page'. C captured that exact state (fe-check-answers-incomplete) and shows the page does render — it just looks finished: no error summary, 'Not provided' 16 times, live Continue — and the block comes later and silently, at the declaration's submit, which bounces the trader back with no message. C is materially better: it has the picture A never took, and it traces the real failure path. A's DR1 half is slightly fuller (five 'Complete …' entries and the blanked-value treatment); the frontend half of A is wrong.",
         "better": "C",
         "judged": null
-      }
+      },
+      "openQuestions": [
+        "When a saved address no longer resolves, the review page names the same fix twice. renderNotificationView reads partyErrors from `source` (storedAnswers, where the dangling reference survives) but incompleteCardErrors from the sanitised `answers`, from which withoutUnresolvedPartyRefs (features/addresses/resolve-parties.js:59-71) has already deleted the party — so the `addresses` task row goes non-READY and REVIEW_CARDS emits `rolesAndAddresses` as well. Concrete: a trader picks a consignor, an admin deletes that address-book record, the trader opens Check your answers, and the summary carries both 'Select an address for the consignor' (linking to the consignor page) and 'Complete roles and addresses' (linking to #roles-and-addresses), while the card itself also carries the inline 'Complete roles and addresses' message above a row that already shows the specific deleted-address error. Design release 1 shows one entry per problem but has no deleted-address case, so this needs a design ruling rather than a code fix. DEFERRED rather than fixed because the obvious fix — suppress cardErrors.rolesAndAddresses whenever partyErrors is non-empty — would also hide a genuinely unanswered second role in the same card (e.g. consignor deleted AND importer never answered), trading a duplicate message for a missing one. ACTION: decide whether a party error suppresses the card entry for the card that contains it, whether the card entry should instead be reworded, or whether both entries are acceptable; then pin the chosen behaviour with a test on the sanitiser-wired describe in check-answers.test.js asserting the FULL errorList texts for a deleted consignor (today check-answers.test.js:805-816 asserts errorList[0].text only, so the second entry is invisible to the suite). Evidence: features/check-answers/controller.js:135 (partyErrors from source) vs :138-140 (cardErrors from answers); features/addresses/controller.js:15-21 (the five party ids the `addresses` row collects).",
+        "An unfinished species / animal-identification state is named in the error summary as 'Complete species details' but no card on the page is ever marked for it, even when species cards exist. speciesCards (features/check-answers/view-model/cards/consignment/species/species-cards.js:9-23) returns cards with no `id`, and decorateCard (view-model/incomplete-cards.js:95-101) looks each card up by `card.id` and returns it untouched on a miss — so a species card never gets an `anchor`, never gets an `error`, and template.njk:83 never draws the red left bar on it. The REVIEW_CARDS doc comment (incomplete-cards.js:27-30) justifies only the zero-lines case (no card to point at), not the case where lines exist. Concrete: a trader with two commodity lines, one missing its animal identifiers, sees 'Complete species details' in the summary, follows the link to the About the consignment heading, and finds no marked card — they must guess which species card is short. This sits against the increment's own AC, 'mark each unfinished card with its own inline error message'. DEFERRED rather than fixed because marking species needs decisions code cannot settle: which species card counts as unfinished when the `commodities` and `animalIdentification` rows are journey-wide rather than per-line, what to mark when no line has been added at all, and whether the summary should then carry one entry per short line or stay as a single entry anchored to the section heading. ACTION: rule on the above with design, then either give each species card a stable id (e.g. `species-<index>`) and anchor the entry to the first incomplete one, or record the section-anchor behaviour as deliberate. In the meantime inc-150 documents the exception in incomplete-cards.js and pins it with a test, so the choice is visible rather than forgotten."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/321",
+          "number": 321,
+          "merged": true,
+          "sha": "d1e6e1cac1ce4a20d678a8ba2e9b26a8a780018e"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/213",
+          "number": 213,
+          "merged": true,
+          "sha": "56bfad95ace15c6d1cd3da3ded97f8e30dc6f389"
+        }
+      ]
     },
     {
       "id": "inc-146",
@@ -24111,8 +24155,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "b9922bd0 dd53142e",
       "failure_reason": null,
       "finding": {
         "frontend": "Every row of every card carries its own Change link on the right-hand side, with visually hidden text naming the row and its card — \"Change country of origin (Import details)\", \"Change transporter approval number (Transport details)\" and so on. A finished notification shows twenty-four of them — twenty-two on rows, plus two in the heading of the Species card, which is the only card on the page with card-level actions. An unfinished notification shows eighteen, all on rows; the exact count tracks how many answers the notification carries rather than anything about the page's shape. Each link goes to the page that collects that one answer, with a `change=1` flag so the trader is returned to the review afterwards (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js:14-21, building the action at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js:12-25 and rendering it through govukSummaryList at src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:96-102). So the page repeats the same destination link once per row: five rows in the Arrival details card all lead to the arrival details page, five in Roles and addresses all lead to the roles and addresses page.",
@@ -24263,10 +24307,33 @@
         "note": "Change link on every summary row vs one per card heading. Identical diff — drop the row action, add a card action. A counts 28 links on its capture, C counts 24 (22 rows + 2 in the Species card heading) and 18 on the incomplete page; the counts differ because the two runs captured different notifications, not because the finding differs. C is marginally better for separating row links from card-heading links and for covering both page states.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-581",
+      "branch": "feat/EUDPA-581-check-your-answers-puts-a-change-link-on",
+      "openQuestions": [
+        "How should a trader reach, from the review, an answer whose card's one Change link does not go to the page that collects it? Moving the link from the row to the card assumed 'every row in a card already resolves to the same page, so no route is lost'. That premise holds for eight of the eleven cards but not for three, because the frontend groups more than one page's answers into a card while Design release 1 runs one card per page (its eleven card links point at /origin-of-the-import, /what-are-you-importing, /reason-for-import, /consignment-details, /animal-identification-details, /additional-animal-details, /arrival-details, /transporter, /upload-documents, /roles-and-addresses, /contact-address-for-consignment, plus a conditional Transit countries card). The three: (1) Roles and addresses shows the CPH number, which cph-number/controller.js collects, while the card's only link goes to /addresses?change=1. The addresses hub deliberately builds its CPH row without change context — src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js:47-65 sets the href to pagePath(journeyId, 'cph-number?return=addresses') under a comment saying CPH 'is a different obligation reached by its own route', which is precisely the route this increment deleted — and cph-number/controller.js:96-98,156-161 redirects back to /addresses with no change flag, so the addresses Continue then falls through kit.nextTarget to the next page of the linear section (flow/flow.js:51-52 makes it [addressesPage, cphNumberPage]) instead of kit.exitTarget returning the trader to check-your-answers. A trader who changes their CPH from the review is pushed onward through the journey rather than handed back to the review. (2) Additional animal details shows destination country, exit date and port of exit, which the reason-for-import page collects, while the card's only link goes to /additional-details?change=1 — those three answers are not changeable from the review at all, only from the hub's own task row. (3) Arrival details shows the transited countries the transit-countries page collects; that one is patched in this increment by giving the card a second, conditional Change link, because incomplete-cards.js:43-47 also marks the card for a missing transit-countries answer and the single port-of-entry link left the trader looping back to the same unresolvable error. DEFERRED rather than fixed here because the coherent resolution is a product/design decision this increment cannot settle: either adopt Design release 1's one-card-per-page structure on the review (which would supersede the conditional second link added for transit countries, and overlaps the card-and-section regrouping inc-147 owns), or keep the frontend's grouped cards and thread change context through the hub sub-routes (addresses -> cph-number -> addresses, which means editing two journey controllers outside the check-answers feature and deciding what 'return to the review' means for a hub that also sits in the linear flow). ACTION: decide with design which of the two shapes the review takes; if the change-context route is chosen, build the CPH row href as 'cph-number?return=addresses&change=1' when kit.changeContext(request) is true (note kit.withChangeContext appends '?change=1' blindly and would emit a second '?' on this slug), make hubEntryReturn in cph-number/controller.js return '/addresses?change=1' under the same flag, give Additional animal details a route to the reason-for-import page, and add a controller test that follows check-answers -> addresses -> cph-number -> addresses -> Continue and asserts the final redirect is the check-answers path."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/322",
+          "number": 322,
+          "merged": true,
+          "sha": "d478253fb063b58d2a6223aed97c5043331d47b3"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/214",
+          "number": 214,
+          "merged": true,
+          "sha": "ca7024cca09367557f12a815bb9d4d03c77f4a7d"
+        }
+      ]
     },
     {
       "id": "inc-155",
+      "ticket": "EUDPA-582",
+      "branch": "feat/EUDPA-582-the-read-only-view-of-an-already-submitt",
       "type": "flow-change",
       "milestone": null,
       "domain": "review",
@@ -24284,8 +24351,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "996ee248",
       "failure_reason": null,
       "finding": {
         "frontend": "When a notification has been submitted and the trader opens it through the View link on the dashboard, the review page is redrawn read-only: the status tag turns green and reads \"Submitted\", every Change link is removed, and \"Copy as new\" and \"Delete\" buttons appear at the top. The flag doing that is set from the journey status (src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:81). But the foot of the page is unchanged. It still carries the heading \"Now submit your notification\", the sentence \"Continue to the declaration to submit your notification.\" and a green Continue button (src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk:108-114, which is outside every read-only branch on the page). So a page that has just told the trader the notification is submitted, and that has removed every other way of changing it, invites them to submit it again — and pressing Continue goes to the declaration, which redirects a submitted journey straight to the confirmation page (src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.js:49-54), so the trader lands on a confirmation for a notification they did not just submit.",
@@ -24449,7 +24516,16 @@
         "note": "An already-submitted notification still ends with 'Now submit your notification' and a live Continue button; DR1 wraps the whole form in its readOnly test. Same one-condition fix on template.njk:108-114. C is better on evidence honesty: it states that DR1 captured no submitted review, so that half is read from the view, and names the `submitted` query parameter that would capture it. A asserts the DR1 behaviour without flagging the gap.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/323",
+          "number": 323,
+          "merged": true,
+          "sha": "b9bfa741019fa6e418236e5aefc7e90cd05e103c"
+        }
+      ]
     },
     {
       "id": "inc-147",
@@ -24472,8 +24548,24 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "190df370 b79d5604",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/324",
+          "number": 324,
+          "merged": true,
+          "sha": "1615cf5a83d31b12bae1d7f1756327112cdcb09d"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/215",
+          "number": 215,
+          "merged": true,
+          "sha": "c2475eec3ec1df718aad10bd97a21ae9efedf1e7"
+        }
+      ],
       "failure_reason": null,
       "finding": {
         "frontend": "The page has three numbered sections — \"1. About the consignment\", \"2. Movement\", \"3. Addresses\" — plus a \"4. Documents\" that only appears when a document has been uploaded (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:35-40), the four of them assembled in src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/index.js:6-22. Section 1 carries three subheadings, \"Consignment details\", \"Commodity details\" and \"Species\" (named at src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:41-45 and attached at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/about-consignment.js:20-34); sections 2 and 3 carry none at all, passing a null group heading (src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/movement.js:12-19, src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/addresses.js:16-25), so their cards sit directly under the numbered heading. The grouping does not follow the task list either: commodity and animal details sit under \"About the consignment\" rather than in a section about the goods, roles and the contact address share one \"Addresses\" section, and the countries a consignment travels through is a row inside the Arrival details card rather than a heading of its own.",
@@ -24719,10 +24811,17 @@
         "note": "Review page laid out as DR1's six numbered sections with a subheading above every card. Same restructure, same section names, same file targets. C goes further in two places A does not: lift transit countries out of the Arrival details card into its own headed card, and move the reason for import out of Additional animal details into its own 'Main reason for import' card. C also states the frontend's Documents section is conditional (three sections plus a fourth that only appears when something is uploaded) where A calls it four flat.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-583",
+      "branch": "feat/EUDPA-583-check-your-answers-groups-the-notificati",
+      "openQuestions": [
+        "Five subsection headings now repeat the card title immediately beneath them, so the page prints the same sentence twice in a row at h3 then h4 — most starkly under \"6. Contact address\", where copy.groups.contactAddress and copy.cards.contactAddress are both \"Contact address for this consignment\" (copy.en.js), and likewise for rolesAndAddresses, arrivalDetails, transitCountries and transportDetails. Design release 1 shows both a subheading and a summary card per group, so removing either is a design call rather than a code one: decide page-wide whether a card whose subsection heading already names it should drop its own title, or whether the group heading should take a shorter phrasing. Deferred from inc-147 review (nit) because the remedy has to be applied to all five pairs at once and would widen this increment beyond the section restructure."
+      ]
     },
     {
       "id": "inc-152",
+      "ticket": "EUDPA-584",
+      "branch": "feat/EUDPA-584-check-your-answers-prints-not-provided-b",
       "type": "copy-change",
       "milestone": null,
       "domain": "review",
@@ -24742,8 +24841,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "84bf4607",
       "failure_reason": null,
       "finding": {
         "frontend": "One string stands in for every empty value. On the complete notification, \"Region of origin code\", \"Internal reference number\" and \"Number of packages\" all read \"Not provided\" — and they are questions that genuinely do not apply, because the trader answered No to the region-code question and the internal reference is optional. On the unfinished notification, \"Port of entry\" also reads \"Not provided\" — and that one is required before the notification can be submitted. The two states are typeset identically, so a trader reading the page cannot tell which rows are finished business and which are work still to do. The single string comes from `notProvided` in src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:3, applied to every blank value at src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js:11-13.",
@@ -24905,7 +25004,16 @@
         "note": "The single 'Not provided' placeholder. A asks only for the string swap to 'Not applicable' and hands the blanking of unanswered rows off to its incomplete-review finding. C keeps DR1's two mechanisms in one finding: 'Not applicable' on a complete card, no text at all plus a visually hidden 'Missing' on an unfinished one, decided per card as DR1 decides it. C is the more faithful and the more actionable of the two.",
         "better": "C",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/325",
+          "number": 325,
+          "merged": true,
+          "sha": "0ecfab33ccc8c5b75695b48db9ee8b54668be001"
+        }
+      ]
     },
     {
       "id": "inc-145",
@@ -25126,6 +25234,8 @@
     },
     {
       "id": "inc-159",
+      "ticket": "EUDPA-585",
+      "branch": "feat/EUDPA-585-the-review-page-is-called-check-your-ans",
       "type": "copy-change",
       "milestone": null,
       "domain": "review",
@@ -25145,9 +25255,25 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "2b4a8b2c",
       "failure_reason": null,
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/326",
+          "number": 326,
+          "merged": true,
+          "sha": "a0ea591de35886f9d3d64d5c959fb90b71be6ea7"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/216",
+          "number": 216,
+          "merged": true,
+          "sha": "1914bbe73a9522ae8e5919f10769e80234ce960f"
+        }
+      ],
       "finding": {
         "frontend": "The page is headed \"Check your answers\" and carries the same words in its browser title and in its breadcrumb trail, on all three captured states of the page. The one string does all three jobs (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:2, used as both `pageTitle` and `heading` at src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js:40-41). The wording asks the trader to check a form; the page is in fact a summary of a whole notification, including sections nobody typed answers into.",
         "prototype": "Design release 1 heads the page \"Review your notification\" and sets the same words as its page name for the browser title (app/views/review-notification.html:3 and :36). The wording matches what the hub calls the step and what the page does.",
@@ -25285,6 +25411,8 @@
     },
     {
       "id": "inc-151",
+      "ticket": "EUDPA-586",
+      "branch": "feat/EUDPA-586-the-review-page-shortens-means-of-transp",
       "type": "copy-change",
       "milestone": null,
       "domain": "review",
@@ -25302,8 +25430,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "1f7fe825 8607ee23",
       "failure_reason": null,
       "finding": {
         "frontend": "The Arrival details card on Check your answers labels the row \"Means of transport\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:71). The question that collected the answer is labelled in full — \"Means of transport to the port of entry\" (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:16) — so the summary drops the part of the label that says which leg of the journey the answer is about, on the one page where a trader is checking answers out of the context of the question that asked for them.",
@@ -25416,10 +25544,28 @@
         "note": "Review row shortened to 'Means of transport' where both DR1 and the frontend's own question page say 'Means of transport to the port of entry'. Same single string, same copy file and line (copy.en.js:71). Identical.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/327",
+          "number": 327,
+          "merged": true,
+          "sha": "b295695575de2fb503aaa33a585d970e198b8f21"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/217",
+          "number": 217,
+          "merged": true,
+          "sha": "ca13383961fed779c59743b95c080f8a158da15b"
+        }
+      ]
     },
     {
       "id": "inc-160",
+      "ticket": "EUDPA-587",
+      "branch": "feat/EUDPA-587-submitting-the-declaration-without-ticki",
       "type": "copy-change",
       "milestone": null,
       "domain": "review",
@@ -25437,8 +25583,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "071326b3",
       "failure_reason": null,
       "finding": {
         "frontend": "The error summary link and the inline message under the checkbox both read \"Confirm that the information is true and correct before submitting\" (src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:23-26). The sentence points at the accuracy of the answers rather than at the declaration the box actually confirms.",
@@ -25524,10 +25670,21 @@
         "note": "An evidence gap rather than a judgement. Run A captured no declaration error state at all — 'fe-declaration-error' appears nowhere in its backlog — so it had nothing to compare and never read the validation copy at source either. C captured the state and the whole rest of the error treatment matches, which is what isolates the one string.",
         "better": null,
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/328",
+          "number": 328,
+          "merged": true,
+          "sha": "b2fa2e3a29b75a21a49aef7f8c56c9876c3f3b2c"
+        }
+      ]
     },
     {
       "id": "inc-148",
+      "ticket": "EUDPA-588",
+      "branch": "feat/EUDPA-588-the-declaration-states-three-bare-headin",
       "type": "copy-change",
       "milestone": null,
       "domain": "review",
@@ -25545,8 +25702,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "c42846bb",
       "failure_reason": null,
       "finding": {
         "frontend": "The page is three headings, a four-item list and two closing sentences, with no supporting text under any heading (src/server/app/sets/live-animals/journeys/linear/features/declaration/copy/copy.en.js:3-18). The first heading, \"I am the contact for the authorities and located in the UK.\", stands alone. The second is a single long heading, \"I confirm I am responsible for this consignment until it has cleared border control checks or reached the place of destination.\" The accountability list reads \"payments for border control checks\", \"re-dispatch of the consignment\", \"quarantine or isolation of the animals\", \"the costs of destruction and disposal\". So a trader ticking the box is agreeing to four compressed phrases with no statement of when the responsibility starts or which regulation it sits under.",
@@ -25625,7 +25782,16 @@
         "note": "Declaration body copy: the Regulation (EU) 2017/625 sentence, the shortened responsibility heading with its start-of-responsibility sentence and two bullets, and DR1's four wider accountability items. Word-for-word the same finding, same citations (declaration.html:40-64), same prescription. A frames the stake better ('the frontend commits the user to less than DR1 asks for'); C names the template change the copy change needs. Nothing to choose between them.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/329",
+          "number": 329,
+          "merged": true,
+          "sha": "6957b433456c534f1fbb685494c9b8e9222bea3a"
+        }
+      ]
     },
     {
       "id": "inc-153",
@@ -25646,8 +25812,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "0764aac3",
       "failure_reason": null,
       "finding": {
         "frontend": "The confirmation page goes straight from the green panel to \"Transporting the consignment\" (src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:4-13). There is no section about work still to do, and nothing in the confirmation copy or controller that could produce one. This matters because the frontend does accept a submission with no documents at all: the documents group carries neither a minimum entry count nor a required-one-of rule (src/server/app/sets/live-animals/obligations/sections/documents.js:19-27), so an untouched documents collection rolls up as optional and the readiness check passes without it. A trader can therefore submit a notification with no health certificate attached, reach a page headed \"Import notification submitted\", and be told nothing about the certificate.",
@@ -25838,7 +26004,21 @@
         "note": "'Before the consignment is imported' / 'You still need to:' section on the submitted page. Same section, same two bullets, same citations (notification-submitted.html:27-36, routes.js:5674-5692). Both note the documents bullet can be built today. C is slightly better for saying plainly why the identifier bullet cannot fire yet — the frontend's submit gate never lets an under-identified notification reach the confirmation page — and for linking that to the identifier-gate finding.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-589",
+      "branch": "feat/EUDPA-589-after-submitting-the-frontend-never-tell",
+      "openQuestions": [
+        "Should the identifier bullet (\"complete the animal identifier information in the notification\") be added to the submitted page's outstanding-work section now, and on what condition? This increment's own difference slot defers it on the premise that \"the frontend's submit gate requires one animal-identifier record per animal (obligations/sections/commodities/identifiers.js:88-102 sets recordCountEquals against numberOfAnimals) ... so a notification with animals still to identify never reaches the confirmation page at all\". That premise is dead. inc-100 landed as d8b4a619 and removed recordCountEquals from the unit-record obligation (grep -rn recordCountEquals over src returns nothing); identifiers.js now carries requires.floorAppliesToParent: moreThanOne(allowListed(commodityCode, identifiedCommodities, null)), and its own comment at identifiers.js:86-103 states the opposite rule outright: \"Animal identifiers are optional unless multiple species are selected ... a consignment carrying one identified species can be submitted with no identifier saved at all\" and \"it no longer gates the submission\". Because floorAskedOfParent returns false when that moreThanOne gate stands down, emptyCollectionSatisfiesFloor returns true (bridge/status/completeness/invariants.js:58-92), the animalIdentification task row is ready, readiness passes and submit succeeds. Concretely: a trader declares 200 salmon on one commodity line, saves no identifier record, submits, and lands on the submitted page — Design release 1 lists \"complete the animal identifier information in the notification\" and this page lists nothing. hub.fit.spec.js:126-147 is a landed test proving that state is reachable. inc-100's own detail names this increment as the one its change \"unparks\". NOT FIXED IN THIS INCREMENT because the remaining stated condition still stands on its own: the difference slot says the identifier bullet \"should not be built until the identifier question is settled\", and that question — inc-103, \"Frontend counts an animal as identified once one identifier is filled in; Design release 1 does not count it until every identifier for that commodity is filled in\" — is status \"deferred\", band \"disputed\", awaiting a design-authority ruling that code cannot settle. Building the bullet also means new evaluation plumbing (per-commodity-line \"declares animals and has no complete animalIdentifiers record\"), which expands this increment's blast radius well past the documents bullet it was scoped to. ACTION FOR THE SERVICE TEAM: rule on inc-103, then decide whether the zero-record case (no identifier saved at all on a single-identified-species consignment) should fire the bullet immediately — it is unambiguous under either answer to inc-103 — or whether both cases land together. The extension point is ready: outstandingItems (features/confirmation/outstanding.js) returns a list and template.njk:13-21 iterates it, so the work is one copy key in copy.en.js/copy.cy.js plus one condition. The stale reachability rationale in outstanding.js has been rewritten in this increment to name this open question instead, so the next reader is not told the state is unreachable."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/330",
+          "number": 330,
+          "merged": true,
+          "sha": "e5cf4fb3b888c2c183e7d23ef7ba48afcad722f7"
+        }
+      ]
     },
     {
       "id": "inc-154",
@@ -25859,8 +26039,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "2738dd2b",
       "failure_reason": null,
       "finding": {
         "frontend": "Under \"How to view or amend this notification\" the confirmation page carries one link, \"Return to your dashboard\" (src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:23-27, wording at src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js:19-23). A trader who has just submitted one consignment and has another to notify has to go back to the dashboard and find the start button there.",
@@ -25965,7 +26145,18 @@
         "note": "Confirmation page offers only 'Return to your dashboard'; DR1 also offers 'Create a new notification'. Same block, same fix, same note that the route already exists. Identical.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-590",
+      "branch": "feat/EUDPA-590-the-confirmation-page-offers-only-return",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/331",
+          "number": 331,
+          "merged": true,
+          "sha": "f3ff89f7e04a8462203ba7752e313c0116a060ca"
+        }
+      ]
     },
     {
       "id": "inc-061",

@@ -1,0 +1,648 @@
+diff --git a/src/client/stylesheets/components/_index.scss b/src/client/stylesheets/components/_index.scss
+index 30b58a7e..8da38186 100644
+--- a/src/client/stylesheets/components/_index.scss
++++ b/src/client/stylesheets/components/_index.scss
+@@ -5,4 +5,5 @@
+ @use "notification-list";
+ @use "notifications-pagination";
+ @use "summary-card-error";
++@use "summary-list-missing";
+ @use "task-list";
+diff --git a/src/client/stylesheets/components/_summary-list-missing.scss b/src/client/stylesheets/components/_summary-list-missing.scss
+new file mode 100644
+index 00000000..e50f1005
+--- /dev/null
++++ b/src/client/stylesheets/components/_summary-list-missing.scss
+@@ -0,0 +1,13 @@
++@use "../../../../node_modules/govuk-frontend" as *;
++
++// An empty answer inside a summary card that still has answers outstanding.
++// The row carries no text at all — only a visually hidden "Missing" — so the
++// value cell needs a mark of its own, or the row would read as a blank the
++// trader has already dealt with. It borrows the error colour and the bar
++// weight the card around it already uses, one level down from the card.
++.app-summary-list__value--missing {
++  display: inline-block;
++  width: 100%;
++  max-width: govuk-spacing(9);
++  border-bottom: $govuk-border-width-form-group-error solid $govuk-error-colour;
++}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index 64a24b2c..1031becc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -24,6 +24,11 @@ const rowFor = (page, label) =>
+     .filter({ has: page.getByText(label, { exact: true }) })
+     .locator('..')
+ 
++/** The mark an empty row carries inside a card that still has answers
++ * outstanding: no text, and a visually hidden "Missing" in place of one. */
++const missingMarker = (page, label) =>
++  rowFor(page, label).locator('.app-summary-list__value--missing')
++
+ /** The one Change link a card carries in its heading, named the way a screen
+  * reader reads it — "Change import details". */
+ const cardChangeLink = (page, hiddenText) =>
+@@ -85,22 +90,32 @@ test.describe('check-answers feature summary rows', () => {
+     await expect(rowFor(page, copy.rows.internalReference)).toContainText(
+       'ReviewRef1'
+     )
+-    await expect(rowFor(page, copy.rows.arrivalDate)).toContainText(
+-      copy.notProvided
++    await expect(missingMarker(page, copy.rows.arrivalDate)).toHaveText(
++      copy.missing
+     )
+   })
+ 
+-  test('journey with only the entry page answered renders Not provided for the blank rows', async ({
++  // Design release 1 gives an empty value two different treatments, and the
++  // difference is the card around it, not whether that particular answer was
++  // required. The entry page finishes import details, so the optional internal
++  // reference it left blank is settled business and written out; arrival
++  // details is still outstanding, so its blank row is given no text at all and
++  // marked instead. A trader can then see which rows are still owed without
++  // reading a word.
++  test('journey with only the entry page answered writes the settled blanks out and marks the outstanding ones', async ({
+     page
+   }) => {
+     await startNotification(page)
+     await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
+ 
+     await expect(rowFor(page, copy.rows.internalReference)).toContainText(
+-      copy.notProvided
++      copy.notApplicable
++    )
++    await expect(missingMarker(page, copy.rows.arrivalDate)).toHaveText(
++      copy.missing
+     )
+-    await expect(rowFor(page, copy.rows.arrivalDate)).toContainText(
+-      copy.notProvided
++    await expect(rowFor(page, copy.rows.arrivalDate)).not.toContainText(
++      copy.notApplicable
+     )
+   })
+ })
+@@ -321,7 +336,7 @@ test.describe('check-answers feature change links', () => {
+ 
+     await expect(page).toHaveURL(/\/notifications\/[^/]+\/notification-view$/)
+     await expect(rowFor(page, copy.rows.internalReference)).toContainText(
+-      copy.notProvided
++      copy.notApplicable
+     )
+   })
+ 
+@@ -380,8 +395,8 @@ test.describe('check-answers feature navigation and submission', () => {
+     await startNotification(page)
+     await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
+ 
+-    await expect(rowFor(page, copy.rows.consignor)).toContainText(
+-      copy.notProvided
++    await expect(missingMarker(page, copy.rows.consignor)).toHaveText(
++      copy.missing
+     )
+     await expect(
+       page.getByRole('link', { name: copy.errors.parties.consignor })
+@@ -397,6 +412,22 @@ test.describe('check-answers feature unfinished notification', () => {
+     await signIn(page)
+   })
+ 
++  // The decision is per card, so every blank row inside a marked card loses its
++  // placeholder — the required arrival date and anything optional beside it
++  // alike. Only a screen reader is told the answer is missing.
++  test('gives every blank row in a marked card no text and a hidden Missing', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    const card = page.locator(ARRIVAL_DETAILS_ANCHOR)
++    const markers = card.locator('.app-summary-list__value--missing')
++
++    await expect(card.getByText(copy.notApplicable)).toHaveCount(0)
++    await expect(markers.first()).toHaveText(copy.missing)
++  })
++
+   test('names every unfinished card and marks the card it names', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 4f8d5f82..a91808f2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -78,10 +78,19 @@ const changeHrefsOf = (sections) =>
+ const rowActionsOf = (sections) =>
+   rowsOf(sections).flatMap((entry) => entry.actions?.items ?? [])
+ 
+-const NOT_PROVIDED = 'Not provided'
++// The two treatments an empty value gets. A card that is finished writes the
++// blank out; a card that still has answers outstanding gives it no text at all
++// and marks the cell instead, so the eye can separate the two.
++const NOT_APPLICABLE = 'Not applicable'
++const MISSING_HTML =
++  '<span class="app-summary-list__value--missing">' +
++  '<span class="govuk-visually-hidden">Missing</span>' +
++  '</span>'
+ const CONSIGNOR_ERROR = 'Select an address for the consignor'
++const IMPORT_DETAILS_INCOMPLETE = 'Complete import details'
+ const ADDRESSES_INCOMPLETE = 'Complete roles and addresses'
+ const SPECIES_INCOMPLETE = 'Complete species details'
++const DOCUMENTS_INCOMPLETE = 'Complete documents'
+ 
+ const withoutParty = (seed, partyId) => {
+   const next = { ...seed }
+@@ -105,11 +114,13 @@ const TRANSPORT_AND_ARRIVAL_ANCHOR = 'transport-and-arrival'
+ const COUNTRY_OF_ORIGIN_KEY = 'Country of origin'
+ const PURPOSE_IN_MARKET_KEY = 'Purpose in the market'
+ const REGION_CODE_KEY = 'Region of origin code'
++const INTERNAL_REFERENCE_KEY = 'Internal reference number'
+ const UNWEANED_KEY = 'Includes unweaned animals'
+ const CPH_KEY = 'County parish holding (CPH) number'
+ const TRANSITED_COUNTRIES_KEY =
+   'Countries that the consignment will travel through'
+ const PACKAGES_KEY = 'Number of packages'
++const DOCUMENT_TYPE_KEY = 'Document type'
+ const DESTINATION_COUNTRY_KEY = 'Destination country'
+ const EXIT_DATE_KEY = 'Exit date'
+ const PORT_OF_EXIT_KEY = 'Port of exit'
+@@ -413,7 +424,7 @@ describe(`${SUITE} — fully-populated notification`, () => {
+     const [document] = card.documents
+     expect(document.heading).toBe('Document 1')
+     expect(valueOf(document.rows, 'Document reference')).toBe('GBHC1234567890')
+-    expect(valueOf(document.rows, 'Document type')).toBe(
++    expect(valueOf(document.rows, DOCUMENT_TYPE_KEY)).toBe(
+       'Veterinary health certificate'
+     )
+     expect(valueOf(document.rows, 'Date of issue')).toBe('12/12/2025')
+@@ -429,7 +440,7 @@ describe(`${SUITE} — fully-populated notification`, () => {
+     }
+     const card = cardByTitle(await sectionsFor(seed), UPLOADED_DOCUMENTS_CARD)
+     const [document] = card.documents
+-    expect(valueOf(document.rows, 'Document type')).toBe(
++    expect(valueOf(document.rows, DOCUMENT_TYPE_KEY)).toBe(
+       'Intra Trade Animal Health Certificate (ITAHC)'
+     )
+   })
+@@ -707,33 +718,128 @@ describe(`${SUITE} — gated-off answers and blanks`, () => {
+     )
+   })
+ 
+-  it('Should render Not provided for a blank plain answer', async () => {
++  // Every card on this seed still has answers outstanding, so every blank row
++  // in it is marked missing rather than written out.
++  it('Should mark a blank plain answer missing', async () => {
+     const rows = rowsOf(await sectionsFor(gatedOffSeed))
+-    expect(valueOf(rows, 'Internal reference number')).toBe(NOT_PROVIDED)
+-    expect(valueOf(rows, 'Port of entry')).toBe(NOT_PROVIDED)
++    expect(htmlOf(rows, INTERNAL_REFERENCE_KEY)).toBe(MISSING_HTML)
++    expect(htmlOf(rows, 'Port of entry')).toBe(MISSING_HTML)
+   })
+ 
+-  it('Should render Not provided when a coded answer has no matching label', async () => {
++  it('Should mark a coded answer with no matching label missing', async () => {
+     expect(
+-      valueOf(rowsOf(await sectionsFor(gatedOffSeed)), COUNTRY_OF_ORIGIN_KEY)
+-    ).toBe(NOT_PROVIDED)
++      htmlOf(rowsOf(await sectionsFor(gatedOffSeed)), COUNTRY_OF_ORIGIN_KEY)
++    ).toBe(MISSING_HTML)
+   })
+ 
+-  it('Should render Not provided for a blank date', async () => {
++  it('Should mark a blank date missing', async () => {
+     expect(
+-      valueOf(
++      htmlOf(
+         rowsOf(await sectionsFor(gatedOffSeed)),
+         'Arrival date at port of entry'
+       )
+-    ).toBe(NOT_PROVIDED)
++    ).toBe(MISSING_HTML)
+   })
+ 
+-  it('Should render Not provided for an unset party', async () => {
++  it('Should mark an unset party missing', async () => {
+     const card = cardByTitle(
+       await sectionsFor(gatedOffSeed),
+       ROLES_AND_ADDRESSES_CARD
+     )
+-    expect(valueOf(card.rows, 'Place of origin')).toBe(NOT_PROVIDED)
++    expect(htmlOf(card.rows, 'Place of origin')).toBe(MISSING_HTML)
++  })
++})
++
++// Design release 1 writes an empty value out as "Not applicable" while the card
++// around it is finished, and gives it no text at all while the card still has
++// answers outstanding. The decision is per card, not per row: an optional blank
++// inside an unfinished card is marked missing along with the rest.
++describe(`${SUITE} — empty values on a finished and an unfinished card`, () => {
++  setupCheckAnswersEngine()
++
++  const without = (seed, ...keys) => {
++    const next = { ...seed }
++    for (const key of keys) {
++      delete next[key]
++    }
++    return next
++  }
++  const withoutInternalReference = () =>
++    without(fullSeed, 'internalReferenceNumber')
++
++  it('Should write an unanswered optional row out as Not applicable on a finished card', async () => {
++    const sections = await sectionsFor(withoutInternalReference())
++    const card = cardByTitle(sections, IMPORT_DETAILS_CARD)
++
++    expect(card.error).toBeNull()
++    expect(valueOf(card.rows, INTERNAL_REFERENCE_KEY)).toBe(NOT_APPLICABLE)
++  })
++
++  it('Should give the same optional row no text at all on an unfinished card', async () => {
++    const sections = await sectionsFor(
++      without(fullSeed, 'internalReferenceNumber', 'countryOfOrigin')
++    )
++    const card = cardByTitle(sections, IMPORT_DETAILS_CARD)
++    const reference = rowByKey(card.rows, INTERNAL_REFERENCE_KEY)
++
++    expect(card.error).toBe(IMPORT_DETAILS_INCOMPLETE)
++    expect(reference.value.text).toBeUndefined()
++    expect(reference.value.html).toBe(MISSING_HTML)
++  })
++
++  it('Should leave an answered row alone inside an unfinished card', async () => {
++    const sections = await sectionsFor(without(fullSeed, 'countryOfOrigin'))
++    const card = cardByTitle(sections, IMPORT_DETAILS_CARD)
++
++    expect(card.error).toBe(IMPORT_DETAILS_INCOMPLETE)
++    expect(valueOf(card.rows, INTERNAL_REFERENCE_KEY)).toBe('Imports456GB')
++  })
++
++  // The placeholder is a rendered string, not a signal. A trader who types it
++  // into a free-text answer has given an answer, and an unfinished card must
++  // not swallow it.
++  it('Should keep a typed answer that reads Not applicable on an unfinished card', async () => {
++    const sections = await sectionsFor({
++      ...without(fullSeed, 'countryOfOrigin'),
++      internalReferenceNumber: NOT_APPLICABLE
++    })
++    const card = cardByTitle(sections, IMPORT_DETAILS_CARD)
++    const reference = rowByKey(card.rows, INTERNAL_REFERENCE_KEY)
++
++    expect(card.error).toBe(IMPORT_DETAILS_INCOMPLETE)
++    expect(reference.value.text).toBe(NOT_APPLICABLE)
++    expect(reference.value.html).toBeUndefined()
++  })
++
++  // The uploaded-documents card is the only card whose rows are nested inside
++  // document groups, so it is the only card that exercises the nested half of
++  // the blanking pass. A part-filled document leaves the documents task row
++  // in progress, which is what marks the card.
++  it('Should mark the blank rows inside an unfinished documents card missing', async () => {
++    const sections = await sectionsFor({
++      ...fullSeed,
++      documents: [{ accompanyingDocumentType: 'VETERINARY_HEALTH_CERTIFICATE' }]
++    })
++    const card = cardByTitle(sections, UPLOADED_DOCUMENTS_CARD)
++    const [document] = card.documents
++
++    expect(card.error).toBe(DOCUMENTS_INCOMPLETE)
++    expect(htmlOf(document.rows, 'Document reference')).toBe(MISSING_HTML)
++    expect(htmlOf(document.rows, 'Date of issue')).toBe(MISSING_HTML)
++    expect(htmlOf(document.rows, 'Attachment type')).toBe(MISSING_HTML)
++    expect(valueOf(document.rows, DOCUMENT_TYPE_KEY)).toBe(
++      'Veterinary health certificate'
++    )
++  })
++
++  it('Should write every empty value out on a submitted notification', async () => {
++    const { context } = await viewForStatus(
++      SUBMITTED,
++      withoutInternalReference()
++    )
++    const card = cardByTitle(context.sections, IMPORT_DETAILS_CARD)
++
++    expect(valueOf(card.rows, INTERNAL_REFERENCE_KEY)).toBe(NOT_APPLICABLE)
+   })
+ })
+ 
+@@ -805,15 +911,15 @@ describe(`${SUITE} — reason-for-import exit answers`, () => {
+     expect(keys).not.toContain(PORT_OF_EXIT_KEY)
+   })
+ 
+-  it('Should render Not provided for an in-scope exit answer left blank', async () => {
++  it('Should mark an in-scope exit answer left blank missing', async () => {
+     const rows = rowsOf(
+       await sectionsFor(
+         reasonSeed({ reasonForImport: 'temporaryAdmissionHorses' })
+       )
+     )
+ 
+-    expect(valueOf(rows, EXIT_DATE_KEY)).toBe(NOT_PROVIDED)
+-    expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe(NOT_PROVIDED)
++    expect(htmlOf(rows, EXIT_DATE_KEY)).toBe(MISSING_HTML)
++    expect(htmlOf(rows, PORT_OF_EXIT_KEY)).toBe(MISSING_HTML)
+   })
+ 
+   // The exit answers sit on the reason-for-import card, the card whose one
+@@ -930,12 +1036,12 @@ describe(`${SUITE} — outstanding referenced roles`, () => {
+     expect(texts).toContain(ADDRESSES_INCOMPLETE)
+   })
+ 
+-  it('Should render Not provided for a role that has never been answered', async () => {
++  it('Should mark a role that has never been answered missing', async () => {
+     const card = cardByTitle(
+       await sectionsFor(withoutParty(fullSeed, 'importer')),
+       ROLES_AND_ADDRESSES_CARD
+     )
+-    expect(valueOf(card.rows, 'Importer')).toBe(NOT_PROVIDED)
++    expect(htmlOf(card.rows, 'Importer')).toBe(MISSING_HTML)
+   })
+ 
+   it('Should link each summary entry where that role is changed', async () => {
+@@ -1019,7 +1125,7 @@ describe(`${SUITE} — outstanding roles behind the read-path sanitiser`, () =>
+ 
+     expect(view.context.errorSummary.errorList[0].text).toBe(CONSIGNOR_ERROR)
+     expect(htmlOf(card.rows, 'Consignor')).toContain('govuk-error-message')
+-    expect(valueOf(card.rows, 'Consignor')).not.toBe(NOT_PROVIDED)
++    expect(valueOf(card.rows, 'Consignor')).not.toBe(NOT_APPLICABLE)
+   })
+ 
+   it('Should still refuse Continue while that deleted address stands', async () => {
+@@ -1031,7 +1137,7 @@ describe(`${SUITE} — outstanding roles behind the read-path sanitiser`, () =>
+     expect(response.statusCode).toBe(400)
+   })
+ 
+-  it('Should leave a role that was never answered as Not provided', async () => {
++  it('Should leave a role that was never answered marked missing', async () => {
+     const { view } = await driveHandler(getHandler, {
+       seed: withoutParty(fullSeed, 'importer')
+     })
+@@ -1040,7 +1146,7 @@ describe(`${SUITE} — outstanding roles behind the read-path sanitiser`, () =>
+     expect(
+       view.context.errorSummary.errorList.map((entry) => entry.text)
+     ).not.toContain('Select an address for the importer')
+-    expect(valueOf(card.rows, 'Importer')).toBe(NOT_PROVIDED)
++    expect(htmlOf(card.rows, 'Importer')).toBe(MISSING_HTML)
+   })
+ })
+ 
+@@ -1180,7 +1286,7 @@ describe(`${SUITE} — the unfinished notification`, () => {
+ 
+   it('Should head a brand-new draft with one entry per unfinished card, in page order', async () => {
+     expect(await textsFor({})).toEqual([
+-      'Complete import details',
++      IMPORT_DETAILS_INCOMPLETE,
+       'Complete reason for import',
+       SPECIES_INCOMPLETE,
+       'Complete additional animal details',
+@@ -1202,7 +1308,7 @@ describe(`${SUITE} — the unfinished notification`, () => {
+       transportDocumentReference: 'CMR-2026-884721'
+     })
+ 
+-    expect(texts).not.toContain('Complete import details')
++    expect(texts).not.toContain(IMPORT_DETAILS_INCOMPLETE)
+     expect(texts).not.toContain('Complete arrival details')
+     expect(texts).toContain('Complete transport details')
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index 0a62976c..7b3dcf08 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -1,7 +1,8 @@
+ // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+ export const copy = {
+   title: 'Gwiriwch eich atebion',
+-  notProvided: 'Heb ei ddarparu',
++  notApplicable: 'Amherthnasol',
++  missing: 'Ar goll',
+   yesNo: { yes: 'Iawn', no: 'Na' },
+   means: {
+     AIRPLANE: 'Awyren',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index 2358f5e5..0a64ee30 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -1,6 +1,12 @@
+ export const copy = {
+   title: 'Check your answers',
+-  notProvided: 'Not provided',
++  // An empty value inside a card that is finished. Nothing more is owed on
++  // that card, so the blank is a settled answer rather than a gap.
++  notApplicable: 'Not applicable',
++  // An empty value inside a card that still has answers outstanding gets no
++  // text at all — the row is drawn in the missing style, and this is what a
++  // screen reader is told in its place.
++  missing: 'Missing',
+   yesNo: { yes: 'Yes', no: 'No' },
+   means: {
+     AIRPLANE: 'Airplane',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js
+index eefddb7c..6eee67cc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-title.js
+@@ -6,14 +6,14 @@ import { speciesText } from './species-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
++const NOT_APPLICABLE = copy.notApplicable
+ 
+ // One card per commodity line = one per species; the title carries
+ // both the commodity and the species so same-commodity cards stay distinct.
+ export const speciesCardTitle = (entry) => {
+   const name = (entry.commoditySelection ?? '').trim()
+   if (!name) {
+-    return NOT_PROVIDED
++    return NOT_APPLICABLE
+   }
+   const code = commodities.commodityCodeFor(name)
+   const commodity = code ? `${name} (${code})` : name
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+index f8e84c9e..5cfc1630 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+@@ -6,12 +6,10 @@ import { transportersPage } from '../../../../transport/page.js'
+ import { addressLines } from '../../rows/party-row.js'
+ import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+-import { escapeHtml } from '../../rows/value-text.js'
++import { escapeHtml, notApplicableCell } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
+-
+ export const activeTransporter = (answers, scope) => {
+   if (scope.has('commercialTransporter')) {
+     return answers.commercialTransporter
+@@ -26,7 +24,7 @@ export const transporterAddressRow = (party) => {
+   const lines = addressLines(party?.address).map(escapeHtml)
+   return {
+     key: { text: copy.rows.address },
+-    value: lines.length ? { html: lines.join('<br>') } : { text: NOT_PROVIDED }
++    value: lines.length ? { html: lines.join('<br>') } : notApplicableCell()
+   }
+ }
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+index 92bdbf95..0878badb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+@@ -3,6 +3,7 @@ import { copyFor } from '../../../../../../../shared/copy.js'
+ import { rowStatus, taskRowById } from '../../../flow/task-rows.js'
+ import { copy as en } from '../copy/copy.en.js'
+ import { copy as cy } from '../copy/copy.cy.js'
++import { missingCell } from './rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+@@ -106,12 +107,47 @@ export const cardAnchorHref = (key) => {
+   return card ? `#${card.anchor}` : undefined
+ }
+ 
++/** An empty row is one whose value cell was built by `notApplicableCell`, which
++ * stamps `empty: true` — whichever row builder produced it. The flag is the
++ * mark, not the rendered text: a trader can type "Not applicable" into a
++ * free-text answer, and that answer must survive the blanking pass. */
++const isEmptyRow = (row) => row.value?.empty === true
++
++const blankEmptyRows = (rows) =>
++  Array.isArray(rows)
++    ? rows.map((row) =>
++        isEmptyRow(row) ? { ...row, value: missingCell() } : row
++      )
++    : rows
++
++/** Every empty row inside an unfinished card loses its placeholder, whether the
++ * answer was required or optional. Design release 1 decides this per card, not
++ * per row: on a card that is still owed something the whole card reads as
++ * unfinished, so an optional blank in it is not settled business either. */
++const blankEmptyValues = (card) => ({
++  ...card,
++  rows: blankEmptyRows(card.rows),
++  ...(Array.isArray(card.documents)
++    ? {
++        documents: card.documents.map((document) => ({
++          ...document,
++          rows: blankEmptyRows(document.rows)
++        }))
++      }
++    : {})
++})
++
+ const decorateCard = (card, cardErrors) => {
+   const known = cardById.get(card.id)
+   if (!known) {
+     return card
+   }
+-  return { ...card, anchor: known.anchor, error: cardErrors[card.id] ?? null }
++  const decorated = {
++    ...card,
++    anchor: known.anchor,
++    error: cardErrors[card.id] ?? null
++  }
++  return decorated.error ? blankEmptyValues(decorated) : decorated
+ }
+ 
+ /** Give every card its anchor, and the unfinished ones their own message. The
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
+index d14f0b6f..81017947 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
+@@ -2,12 +2,10 @@ import { isBlank } from '../../../../../../../../lib/answered.js'
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+-import { escapeHtml } from './value-text.js'
++import { escapeHtml, notApplicableCell } from './value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
+-
+ export const addressLines = (address = {}) =>
+   [
+     address.addressLine1,
+@@ -48,7 +46,7 @@ const valueCell = (lines, errorText) => {
+   if (lines) {
+     return { html: lines.join('<br>') }
+   }
+-  return errorText ? errorCell(errorText) : { text: NOT_PROVIDED }
++  return errorText ? errorCell(errorText) : notApplicableCell()
+ }
+ 
+ /** A key and a value with no Change link of its own, like an ordinary row — the
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
+index f0195108..9c3a8ae2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
+@@ -1,4 +1,5 @@
+-import { valueText } from './value-text.js'
++import { isBlank } from '../../../../../../../../lib/answered.js'
++import { notApplicableCell, valueText } from './value-text.js'
+ 
+ /** A row is a key and a value, and nothing else. Design release 1 puts no
+  * Change link on a row — the card heading carries the one link that changes
+@@ -6,5 +7,5 @@ import { valueText } from './value-text.js'
+  * per answer. */
+ export const row = (key, value) => ({
+   key: { text: key },
+-  value: { text: valueText(value) }
++  value: isBlank(value) ? notApplicableCell() : { text: valueText(value) }
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js
+index 153e11d2..6f033c6a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/value-text.js
+@@ -5,13 +5,17 @@ import { copy as cy } from '../../copy/copy.cy.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const NOT_PROVIDED = copy.notProvided
++/** The one placeholder Design release 1 writes against an empty value on a
++ * finished card. Several row builders produce it, so it is not a signal on its
++ * own: a trader can type it into a free-text answer. `notApplicableCell` marks
++ * emptiness structurally instead. */
++const NOT_APPLICABLE = copy.notApplicable
+ 
+ export const toArray = (value) => [value ?? []].flat()
+ 
+ export const valueText = (value) => {
+   if (isBlank(value)) {
+-    return NOT_PROVIDED
++    return NOT_APPLICABLE
+   }
+   if (typeof value === 'number') {
+     return value.toString()
+@@ -19,8 +23,12 @@ export const valueText = (value) => {
+   return value
+ }
+ 
++/** A blank date comes back blank, not as the placeholder: every call site hands
++ * the result straight to `row`, and writing the placeholder here would leave
++ * `row` seeing a non-blank value and the empty date unmarked. Placing the
++ * placeholder is `row`'s job. */
+ export const dateText = (value) =>
+-  isBlank(value) ? NOT_PROVIDED : `${value.day}/${value.month}/${value.year}`
++  isBlank(value) ? null : `${value.day}/${value.month}/${value.year}`
+ 
+ export const escapeHtml = (value) =>
+   value
+@@ -30,3 +38,20 @@ export const escapeHtml = (value) =>
+     .replaceAll('>', '&gt;')
+     .replaceAll('"', '&quot;')
+     .replaceAll("'", '&#39;')
++
++/** The value cell of an empty row on a card that is finished: the placeholder,
++ * plus `empty: true` as the mark that the row is empty. `blankEmptyValues` in
++ * `incomplete-cards.js` keys on that flag rather than on the rendered text, so
++ * a trader who types "Not applicable" into a free-text answer keeps it. */
++export const notApplicableCell = () => ({ text: NOT_APPLICABLE, empty: true })
++
++/** The value cell of an empty row inside a card that still has answers
++ * outstanding. Design release 1 gives it no text at all: the cell is drawn in
++ * the missing style and only a screen reader is told the answer is missing, so
++ * a trader can see which rows are still owed without reading a word. */
++export const missingCell = () => ({
++  html:
++    '<span class="app-summary-list__value--missing">' +
++    `<span class="govuk-visually-hidden">${escapeHtml(copy.missing)}</span>` +
++    '</span>'
++})

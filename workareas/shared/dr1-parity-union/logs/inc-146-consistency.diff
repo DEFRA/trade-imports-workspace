@@ -1,0 +1,1204 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index 75c0960f..bddb1189 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -167,9 +167,12 @@ test.describe('live-animals journey glue', () => {
+ 
+     await page.getByRole('link', { name: 'Check and submit' }).click()
+ 
+-    await page
+-      .getByRole('link', { name: 'Change animal identifiers for commodity 1' })
+-      .click()
++    // The review offers one Change link per card (design release 1), and the
++    // Species card's goes to the consignment details. The animal identifiers
++    // are still changed under change context, reached from their own task row.
++    await page.goto(
++      `${journeyUrl(page, 'commodities/identification')}?change=1`
++    )
+     await expect(page).toHaveURL(
+       /\/identification\?change=1(?:#identification-card-0)?$/
+     )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index becb1208..01d9513a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -21,6 +21,11 @@ const rowFor = (page, label) =>
+     .filter({ has: page.getByText(label, { exact: true }) })
+     .locator('..')
+ 
++/** The one Change link a card carries in its heading, named the way a screen
++ * reader reads it — "Change import details". */
++const cardChangeLink = (page, hiddenText) =>
++  page.getByRole('link', { name: `${copy.change} ${hiddenText}` })
++
+ const expectNoSeriousOrCriticalAxeViolations = async (page, pageName) => {
+   const results = await new AxeBuilder({ page })
+     .withTags(['wcag2a', 'wcag2aa'])
+@@ -119,9 +124,7 @@ test.describe('check-answers feature documents section', () => {
+     ).toBeVisible()
+     await expect(page.getByText(copy.documentsEmpty)).toBeVisible()
+ 
+-    const changeLink = page.getByRole('link', {
+-      name: `${copy.change} ${copy.hidden.documents}`
+-    })
++    const changeLink = cardChangeLink(page, copy.hidden.cards.documents)
+     await expect(changeLink).toHaveAttribute(
+       'href',
+       /\/notifications\/[^/]+\/accompanying-documents\?change=1$/
+@@ -171,18 +174,24 @@ test.describe('check-answers feature exit answers', () => {
+       page.getByText(copy.rows.exitDate, { exact: true })
+     ).toHaveCount(0)
+ 
+-    const changeLink = rowFor(page, copy.rows.destinationCountry).getByRole(
+-      'link',
+-      { name: `${copy.change} destination country` }
++    // The exit answers sit in the Additional animal details card, and that card
++    // — not the row — carries the one Change link.
++    await expect(
++      rowFor(page, copy.rows.destinationCountry).getByRole('link')
++    ).toHaveCount(0)
++
++    const changeLink = cardChangeLink(
++      page,
++      copy.hidden.cards.additionalAnimalDetails
+     )
+     await expect(changeLink).toHaveAttribute(
+       'href',
+-      /\/notifications\/[^/]+\/import-reason\?change=1$/
++      /\/notifications\/[^/]+\/additional-details\?change=1$/
+     )
+ 
+     await changeLink.click()
+ 
+-    await expect(page).toHaveURL(/\/import-reason\?change=1$/)
++    await expect(page).toHaveURL(/\/additional-details\?change=1$/)
+   })
+ 
+   test('shows the exit date and port of exit a temporary admission collected', async ({
+@@ -247,10 +256,7 @@ test.describe('check-answers feature change links', () => {
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+     await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
+ 
+-    const changeLink = rowFor(page, copy.rows.internalReference).getByRole(
+-      'link',
+-      { name: `${copy.change} internal reference number` }
+-    )
++    const changeLink = cardChangeLink(page, copy.hidden.cards.importDetails)
+     await expect(changeLink).toHaveAttribute(
+       'href',
+       /\/notifications\/[^/]+\/origin\?change=1$/
+@@ -267,6 +273,30 @@ test.describe('check-answers feature change links', () => {
+       copy.notProvided
+     )
+   })
++
++  // Design release 1 puts one Change link in each card's heading bar and none
++  // on a row, so the trader meets one link per card rather than one per answer.
++  test('every Change link sits in a card heading and no summary row carries one', async ({
++    page
++  }) => {
++    await startNotification(page)
++    await page.goto(journeyUrl(page, NOTIFICATION_VIEW_SLUG))
++
++    const cards = page.locator('.govuk-summary-card')
++    const cardCount = await cards.count()
++
++    expect(cardCount).toBeGreaterThan(0)
++    await expect(page.getByRole('link', { name: copy.change })).toHaveCount(
++      cardCount
++    )
++    await expect(page.locator('.govuk-summary-list__actions')).toHaveCount(0)
++
++    for (let index = 0; index < cardCount; index += 1) {
++      await expect(
++        cards.nth(index).locator('.govuk-summary-card__actions a')
++      ).toHaveCount(1)
++    }
++  })
+ })
+ 
+ test.describe('check-answers feature navigation and submission', () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 75b2c1d7..1c5465f4 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -65,8 +65,9 @@ const rowsOf = (sections) =>
+ const rowByKey = (rows, key) => rows.find((row) => row.key.text === key)
+ const valueOf = (rows, key) => rowByKey(rows, key)?.value.text
+ const htmlOf = (rows, key) => rowByKey(rows, key)?.value.html
+-const changeHrefOf = (rows, key) => rowByKey(rows, key)?.actions.items[0].href
+ const keysOf = (rows) => rows.map((row) => row.key.text)
++const cardChangeHrefOf = (sections, title) =>
++  cardByTitle(sections, title)?.actions?.items[0].href
+ const changeHrefsOf = (sections) =>
+   cardsOf(sections).flatMap((card) => [
+     ...(card.actions?.items ?? []).map((action) => action.href),
+@@ -74,6 +75,8 @@ const changeHrefsOf = (sections) =>
+       (entry.actions?.items ?? []).map((action) => action.href)
+     )
+   ])
++const rowActionsOf = (sections) =>
++  rowsOf(sections).flatMap((entry) => entry.actions?.items ?? [])
+ 
+ const NOT_PROVIDED = 'Not provided'
+ const CONSIGNOR_ERROR = 'Select an address for the consignor'
+@@ -89,7 +92,12 @@ const ADDRESS_LINE_1 = '43 East Hague Extension'
+ const CONSIGNOR_NAME = 'Astra Rosales'
+ const CONSIGNOR_ADDRESS_ID = 'astra-rosales'
+ const COW_CARD_TITLE = 'Cow (0102) — Bos taurus'
++const IMPORT_DETAILS_CARD = 'Import details'
++const ADDITIONAL_ANIMAL_DETAILS_CARD = 'Additional animal details'
++const ARRIVAL_DETAILS_CARD = 'Arrival details'
++const TRANSPORT_DETAILS_CARD = 'Transport details'
+ const ROLES_AND_ADDRESSES_CARD = 'Roles and addresses'
++const CONTACT_ADDRESS_CARD = 'Contact address for this consignment'
+ const UPLOADED_DOCUMENTS_CARD = 'Uploaded documents'
+ const COUNTRY_OF_ORIGIN_KEY = 'Country of origin'
+ const PURPOSE_IN_MARKET_KEY = 'Purpose in the market'
+@@ -290,7 +298,10 @@ describe(`${SUITE} — fully-populated notification`, () => {
+   })
+ 
+   it('Should expand the commercial transporter in the transport-details card when the type is commercial', async () => {
+-    const card = cardByTitle(await sectionsFor(fullSeed), 'Transport details')
++    const card = cardByTitle(
++      await sectionsFor(fullSeed),
++      TRANSPORT_DETAILS_CARD
++    )
+     expect(valueOf(card.rows, 'Name')).toBe('García Livestock Transport SL')
+     expect(htmlOf(card.rows, 'Address')).toBe(ADDRESS_LINE_1)
+     expect(valueOf(card.rows, 'Country')).toBe('Switzerland')
+@@ -379,26 +390,55 @@ describe(`${SUITE} — fully-populated notification`, () => {
+     )
+   })
+ 
+-  it('Should point each Change link at the owning page slug with a change flag', async () => {
+-    const rows = rowsOf(await sectionsFor(fullSeed))
+-    expect(changeHrefOf(rows, COUNTRY_OF_ORIGIN_KEY)).toMatch(
++  // Design release 1 puts one Change link in each card's heading and none on a
++  // row, so the page offers one link per card rather than one per answer.
++  it('Should give every card exactly one Change action and no row any action', async () => {
++    const sections = await sectionsFor(fullSeed)
++
++    for (const card of cardsOf(sections)) {
++      expect(card.actions.items, card.title).toHaveLength(1)
++    }
++    expect(rowActionsOf(sections)).toEqual([])
++  })
++
++  it('Should point each card Change link at the page that collects its answers with a change flag', async () => {
++    const sections = await sectionsFor(fullSeed)
++
++    expect(cardChangeHrefOf(sections, IMPORT_DETAILS_CARD)).toMatch(
+       /\/origin\?change=1$/
+     )
+-    expect(changeHrefOf(rows, PURPOSE_IN_MARKET_KEY)).toMatch(
+-      /\/import-reason\?change=1$/
++    expect(cardChangeHrefOf(sections, ADDITIONAL_ANIMAL_DETAILS_CARD)).toMatch(
++      /\/additional-details\?change=1$/
++    )
++    expect(cardChangeHrefOf(sections, ARRIVAL_DETAILS_CARD)).toMatch(
++      /\/port-of-entry\?change=1$/
+     )
+-    expect(changeHrefOf(rows, TRANSITED_COUNTRIES_KEY)).toMatch(
+-      /\/transit-countries\?change=1$/
++    expect(cardChangeHrefOf(sections, TRANSPORT_DETAILS_CARD)).toMatch(
++      /\/transporters\?change=1$/
+     )
+-    expect(changeHrefOf(rows, 'Name')).toMatch(/\/transporters\?change=1$/)
++    expect(cardChangeHrefOf(sections, ROLES_AND_ADDRESSES_CARD)).toMatch(
++      /\/addresses\?change=1$/
++    )
++    expect(cardChangeHrefOf(sections, CONTACT_ADDRESS_CARD)).toMatch(
++      /\/consignment\/contact\/select\?change=1$/
++    )
++  })
++
++  it('Should name the card, not the row, in each Change link visually hidden text', async () => {
++    const sections = await sectionsFor(fullSeed)
++    const hiddenTextOf = (title) =>
++      cardByTitle(sections, title).actions.items[0].visuallyHiddenText
++
++    expect(hiddenTextOf(IMPORT_DETAILS_CARD)).toBe('import details')
++    expect(hiddenTextOf(TRANSPORT_DETAILS_CARD)).toBe('transport details')
++    expect(hiddenTextOf(COW_CARD_TITLE)).toBe('commodity 1')
+   })
+ 
+-  it('Should point the species-card Change actions at the commodities pages with a change flag', async () => {
++  it('Should point the species-card Change action at the consignment-details page with a change flag', async () => {
+     const card = cardByTitle(await sectionsFor(fullSeed), COW_CARD_TITLE)
+-    const [commodityAction, identifiersAction] = card.actions.items
+-    expect(commodityAction.href).toMatch(/\/consignment-details\?change=1$/)
+-    expect(identifiersAction.href).toMatch(
+-      /\/commodities\/identification\?change=1#identification-card-0$/
++    expect(card.actions.items).toHaveLength(1)
++    expect(card.actions.items[0].href).toMatch(
++      /\/consignment-details\?change=1$/
+     )
+   })
+ 
+@@ -464,7 +504,7 @@ describe(`${SUITE} — gated-off answers and blanks`, () => {
+   it('Should expand the private transporter and omit the approval-number row when the type is private', async () => {
+     const card = cardByTitle(
+       await sectionsFor(gatedOffSeed),
+-      'Transport details'
++      TRANSPORT_DETAILS_CARD
+     )
+     expect(valueOf(card.rows, 'Name')).toBe('Jean Dupont')
+     expect(valueOf(card.rows, 'Type')).toBe('Private')
+@@ -552,9 +592,6 @@ describe(`${SUITE} — reason-for-import exit answers`, () => {
+     expect(valueOf(rows, DESTINATION_COUNTRY_KEY)).toBe('Ireland')
+     expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe('Port of Dover (GB DVR)')
+     expect(keysOf(rows)).not.toContain(EXIT_DATE_KEY)
+-    expect(changeHrefOf(rows, DESTINATION_COUNTRY_KEY)).toMatch(
+-      /\/import-reason\?change=1$/
+-    )
+   })
+ 
+   it('Should show the destination country alone for a transhipment', async () => {
+@@ -609,22 +646,24 @@ describe(`${SUITE} — reason-for-import exit answers`, () => {
+     expect(valueOf(rows, PORT_OF_EXIT_KEY)).toBe(NOT_PROVIDED)
+   })
+ 
+-  it('Should point every exit row Change link at the reason-for-import page', async () => {
+-    const rows = rowsOf(
+-      await sectionsFor(
+-        reasonSeed({
+-          reasonForImport: 'temporaryAdmissionHorses',
+-          exitDate: { day: '27', month: '3', year: '2026' },
+-          portOfExit: 'GB DVR'
+-        })
+-      )
++  // The exit answers are collected on the reason-for-import page, but they are
++  // shown inside the Additional animal details card, whose one Change link goes
++  // to the page it is named for. No row carries a link of its own.
++  it('Should leave every exit row without a Change link of its own', async () => {
++    const sections = await sectionsFor(
++      reasonSeed({
++        reasonForImport: 'temporaryAdmissionHorses',
++        exitDate: { day: '27', month: '3', year: '2026' },
++        portOfExit: 'GB DVR'
++      })
+     )
++    const rows = rowsOf(sections)
+ 
+-    expect(changeHrefOf(rows, EXIT_DATE_KEY)).toMatch(
+-      /\/import-reason\?change=1$/
+-    )
+-    expect(changeHrefOf(rows, PORT_OF_EXIT_KEY)).toMatch(
+-      /\/import-reason\?change=1$/
++    expect(keysOf(rows)).toContain(EXIT_DATE_KEY)
++    expect(keysOf(rows)).toContain(PORT_OF_EXIT_KEY)
++    expect(rowActionsOf(sections)).toEqual([])
++    expect(cardChangeHrefOf(sections, ADDITIONAL_ANIMAL_DETAILS_CARD)).toMatch(
++      /\/additional-details\?change=1$/
+     )
+   })
+ })
+@@ -736,9 +775,7 @@ describe(`${SUITE} — outstanding referenced roles`, () => {
+     const card = cardByTitle(sections, ROLES_AND_ADDRESSES_CARD)
+ 
+     expect(errorSummary.errorList[0].href).toMatch(/\/addresses\?change=1$/)
+-    expect(errorSummary.errorList[0].href).toBe(
+-      changeHrefOf(card.rows, 'Consignor')
+-    )
++    expect(errorSummary.errorList[0].href).toBe(card.actions.items[0].href)
+   })
+ 
+   it('Should leave focus where it is when the page is merely visited', async () => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+index 39d49dd4..20698f10 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.cy.js
+@@ -101,15 +101,16 @@ export const copy = {
+   documentN: (n) => `Dogfen ${n}`,
+   documentsEmpty: 'Nid ydych wedi ychwanegu unrhyw ddogfennau eto.',
+   hidden: {
+-    transporterName: 'enw’r cludwr',
+-    transporterAddress: 'cyfeiriad y cludwr',
+-    transporterCountry: 'gwlad y cludwr',
+-    transporterApprovalNumber: 'rhif cymeradwyo’r cludwr',
+-    transporterType: 'math y cludwr',
+-    contactAddress: 'cyfeiriad cyswllt',
+-    documents: 'dogfennau',
+-    commodity: (n) => `nwydd ${n}`,
+-    identifiersForCommodity: (n) => `dynodwyr anifeiliaid ar gyfer nwydd ${n}`
++    cards: {
++      importDetails: 'manylion mewnforio',
++      additionalAnimalDetails: 'manylion ychwanegol am yr anifeiliaid',
++      arrivalDetails: 'manylion cyrraedd',
++      transportDetails: 'manylion cludo',
++      rolesAndAddresses: 'rolau a chyfeiriadau',
++      contactAddress: 'cyfeiriad cyswllt ar gyfer y llwyth hwn',
++      documents: 'dogfennau'
++    },
++    commodity: (n) => `nwydd ${n}`
+   },
+   submit: {
+     heading: 'Nawr cyflwynwch eich hysbysiad',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+index 6a912062..f1fcf608 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js
+@@ -101,16 +101,20 @@ export const copy = {
+   // Shown inside the uploaded-documents card when nothing has been uploaded.
+   // The card itself always stands, so it needs a line rather than an empty box.
+   documentsEmpty: 'You have not added any documents yet.',
++  // What each Change link names once a screen reader reaches it. Cards carry
++  // the only Change links on the page, so a card's entry here reads as the rest
++  // of "Change ..." — lower case, and the card's own title in words.
+   hidden: {
+-    transporterName: 'transporter name',
+-    transporterAddress: 'transporter address',
+-    transporterCountry: 'transporter country',
+-    transporterApprovalNumber: 'transporter approval number',
+-    transporterType: 'transporter type',
+-    contactAddress: 'contact address',
+-    documents: 'documents',
+-    commodity: (n) => `commodity ${n}`,
+-    identifiersForCommodity: (n) => `animal identifiers for commodity ${n}`
++    cards: {
++      importDetails: 'import details',
++      additionalAnimalDetails: 'additional animal details',
++      arrivalDetails: 'arrival details',
++      transportDetails: 'transport details',
++      rolesAndAddresses: 'roles and addresses',
++      contactAddress: 'contact address for this consignment',
++      documents: 'documents'
++    },
++    commodity: (n) => `commodity ${n}`
+   },
+   submit: {
+     heading: 'Now submit your notification',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.test.js
+index abed4d38..602f7ef3 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.test.js
+@@ -27,9 +27,6 @@ describe('#copy', () => {
+     expect(copy.identifierTable.animalN(2)).toBe('Animal 2')
+     expect(copy.documentN(1)).toBe('Document 1')
+     expect(copy.hidden.commodity(3)).toBe('commodity 3')
+-    expect(copy.hidden.identifiersForCommodity(3)).toBe(
+-      'animal identifiers for commodity 3'
+-    )
+   })
+ })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js
+index 86a758d7..e46ea9b9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/contact-address.js
+@@ -1,6 +1,8 @@
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { consignmentContactSelectPage } from '../../../../contact/page.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { partyRow } from '../../rows/party-row.js'
+ 
+ const copy = copyFor({ en, cy })
+@@ -13,14 +15,13 @@ export const contactAddressCard = (
+ ) => ({
+   id: 'contactAddress',
+   title: copy.cards.contactAddress,
+-  rows: [
+-    partyRow(
++  ...editableActions(
++    readOnly,
++    cardAction(
+       journeyId,
+-      readOnly,
+-      copy.rows.address,
+-      parties.contactAddress,
+-      'contactAddress',
+-      { visuallyHiddenText: copy.hidden.contactAddress }
++      consignmentContactSelectPage.slug,
++      copy.hidden.cards.contactAddress
+     )
+-  ]
++  ),
++  rows: [partyRow(copy.rows.address, parties.contactAddress)]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js
+index bd53fd5b..8b3d8342 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js
+@@ -1,7 +1,9 @@
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { addressesPage } from '../../../../addresses/page.js'
+ import { cphApplies } from '../../applicability.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { partyRow } from '../../rows/party-row.js'
+ import { row } from '../../rows/summary-row.js'
+ 
+@@ -11,7 +13,11 @@ const copy = copyFor({ en, cy })
+  * current details, or the submit freeze when the controller passes
+  * {@link partiesFromStoredAnswers} output. `partyErrors` is computed once by the
+  * controller and threaded down, so the rows and the error summary always agree
+- * on which roles are outstanding. */
++ * on which roles are outstanding.
++ *
++ * The CPH number is collected on its own page, so this card's rows span two.
++ * The one Change link goes to the addresses page — the page the hub's addresses
++ * task row leads with, and the page the five roles come from. */
+ export const rolesAndAddressesCard = (
+   journeyId,
+   answers,
+@@ -21,57 +27,32 @@ export const rolesAndAddressesCard = (
+ ) => ({
+   id: 'rolesAndAddresses',
+   title: copy.cards.rolesAndAddresses,
+-  rows: [
+-    partyRow(
+-      journeyId,
+-      readOnly,
+-      copy.rows.placeOfOrigin,
+-      parties.placeOfOrigin,
+-      'placeOfOrigin',
+-      { errorText: partyErrors.placeOfOrigin }
+-    ),
+-    partyRow(
+-      journeyId,
+-      readOnly,
+-      copy.rows.consignor,
+-      parties.consignor,
+-      'consignor',
+-      { errorText: partyErrors.consignor }
+-    ),
+-    partyRow(
++  ...editableActions(
++    readOnly,
++    cardAction(
+       journeyId,
+-      readOnly,
+-      copy.rows.consignee,
+-      parties.consignee,
+-      'consignee',
+-      { errorText: partyErrors.consignee }
+-    ),
+-    partyRow(
+-      journeyId,
+-      readOnly,
+-      copy.rows.importer,
+-      parties.importer,
+-      'importer',
+-      { errorText: partyErrors.importer }
+-    ),
+-    partyRow(
+-      journeyId,
+-      readOnly,
+-      copy.rows.placeOfDestination,
+-      parties.placeOfDestination,
+-      'placeOfDestination',
+-      { errorText: partyErrors.placeOfDestination }
+-    ),
++      addressesPage.slug,
++      copy.hidden.cards.rolesAndAddresses
++    )
++  ),
++  rows: [
++    partyRow(copy.rows.placeOfOrigin, parties.placeOfOrigin, {
++      errorText: partyErrors.placeOfOrigin
++    }),
++    partyRow(copy.rows.consignor, parties.consignor, {
++      errorText: partyErrors.consignor
++    }),
++    partyRow(copy.rows.consignee, parties.consignee, {
++      errorText: partyErrors.consignee
++    }),
++    partyRow(copy.rows.importer, parties.importer, {
++      errorText: partyErrors.importer
++    }),
++    partyRow(copy.rows.placeOfDestination, parties.placeOfDestination, {
++      errorText: partyErrors.placeOfDestination
++    }),
+     ...(cphApplies(answers)
+-      ? [
+-          row(
+-            journeyId,
+-            readOnly,
+-            copy.rows.cph,
+-            answers.countyParishHoldingCph,
+-            'countyParishHoldingCph'
+-          )
+-        ]
++      ? [row(copy.rows.cph, answers.countyParishHoldingCph)]
+       : [])
+   ]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+index 9d0a657b..8ec7a561 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/additional-animal-details.js
+@@ -5,6 +5,7 @@ import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { additionalDetailsPage } from '../../../../additional-details/page.js'
+ import {
+   destinationCountryApplies,
+   exitDateApplies,
+@@ -12,51 +13,47 @@ import {
+   purposeApplies,
+   unweanedApplies
+ } from '../../applicability.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+ import { dateText } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+ // The exit answers the chosen reason for import asks for. Each row stands only
+-// while its obligation is in scope, and its Change link resolves through the
+-// obligation to the reason-for-import page that collects it.
+-const exitRows = (journeyId, answers, scope, readOnly) => [
++// while its obligation is in scope. They are collected on the reason-for-import
++// page rather than this card's own, so the card's one Change link does not
++// reach them — see the note on the card itself.
++const exitRows = (answers, scope) => [
+   ...(destinationCountryApplies(answers, scope)
+     ? [
+         row(
+-          journeyId,
+-          readOnly,
+           copy.rows.destinationCountry,
+           countries.originLabel(answers.destinationCountry) ??
+-            answers.destinationCountry,
+-          'destinationCountry'
++            answers.destinationCountry
+         )
+       ]
+     : []),
+   ...(exitDateApplies(answers, scope)
+-    ? [
+-        row(
+-          journeyId,
+-          readOnly,
+-          copy.rows.exitDate,
+-          dateText(answers.exitDate),
+-          'exitDate'
+-        )
+-      ]
++    ? [row(copy.rows.exitDate, dateText(answers.exitDate))]
+     : []),
+   ...(portOfExitApplies(answers, scope)
+     ? [
+         row(
+-          journeyId,
+-          readOnly,
+           copy.rows.portOfExit,
+-          ports.label(answers.portOfExit) ?? answers.portOfExit,
+-          'portOfExit'
++          ports.label(answers.portOfExit) ?? answers.portOfExit
+         )
+       ]
+     : [])
+ ]
+ 
++/**
++ * The card's rows span two pages: this card's namesake collects what the
++ * animals are certified for and whether any are unweaned, and the
++ * reason-for-import page collects the reason, the purpose and the exit answers.
++ * The one Change link goes to the page the card is named for, which is also the
++ * page the trader would expect "Change additional animal details" to open. The
++ * reason-for-import page stays reachable from its own task row on the hub.
++ */
+ export const additionalAnimalDetailsCard = (
+   journeyId,
+   answers,
+@@ -65,44 +62,40 @@ export const additionalAnimalDetailsCard = (
+ ) => ({
+   id: 'additionalAnimalDetails',
+   title: copy.cards.additionalAnimalDetails,
++  ...editableActions(
++    readOnly,
++    cardAction(
++      journeyId,
++      additionalDetailsPage.slug,
++      copy.hidden.cards.additionalAnimalDetails
++    )
++  ),
+   rows: [
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.certifiedFor,
+-      certification.certificationLabel(answers.animalsCertifiedFor) ?? '',
+-      'animalsCertifiedFor'
++      certification.certificationLabel(answers.animalsCertifiedFor) ?? ''
+     ),
+     ...(unweanedApplies(answers)
+       ? [
+           row(
+-            journeyId,
+-            readOnly,
+             copy.rows.unweaned,
+-            copy.yesNo[answers.containsUnweanedAnimals] ?? '',
+-            'containsUnweanedAnimals'
++            copy.yesNo[answers.containsUnweanedAnimals] ?? ''
+           )
+         ]
+       : []),
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.reasonForImport,
+-      importReasonPurpose.reasonLabel(answers.reasonForImport) ?? '',
+-      'reasonForImport'
++      importReasonPurpose.reasonLabel(answers.reasonForImport) ?? ''
+     ),
+     ...(purposeApplies(answers, scope)
+       ? [
+           row(
+-            journeyId,
+-            readOnly,
+             copy.rows.purpose,
+             importReasonPurpose.purposeLabel(answers.purposeInInternalMarket) ??
+-              '',
+-            'purposeInInternalMarket'
++              ''
+           )
+         ]
+       : []),
+-    ...exitRows(journeyId, answers, scope, readOnly)
++    ...exitRows(answers, scope)
+   ]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js
+index 71856496..59dd4bcb 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js
+@@ -2,7 +2,9 @@ import * as countries from '../../../../../../../../../services/countries/index.
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { originPage } from '../../../../origin/page.js'
+ import { regionCodeApplies } from '../../applicability.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+ 
+ const copy = copyFor({ en, cy })
+@@ -10,38 +12,22 @@ const copy = copyFor({ en, cy })
+ export const importDetailsCard = (journeyId, answers, scope, readOnly) => ({
+   id: 'importDetails',
+   title: copy.cards.importDetails,
++  ...editableActions(
++    readOnly,
++    cardAction(journeyId, originPage.slug, copy.hidden.cards.importDetails)
++  ),
+   rows: [
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.countryOfOrigin,
+-      countries.originLabel(answers.countryOfOrigin) ?? '',
+-      'countryOfOrigin'
++      countries.originLabel(answers.countryOfOrigin) ?? ''
+     ),
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.regionCodeRequired,
+-      copy.yesNo[answers.regionOfOriginCodeRequirement] ?? '',
+-      'regionOfOriginCodeRequirement'
++      copy.yesNo[answers.regionOfOriginCodeRequirement] ?? ''
+     ),
+     ...(regionCodeApplies(answers, scope)
+-      ? [
+-          row(
+-            journeyId,
+-            readOnly,
+-            copy.rows.regionCode,
+-            answers.regionOfOriginCode,
+-            'regionOfOriginCode'
+-          )
+-        ]
++      ? [row(copy.rows.regionCode, answers.regionOfOriginCode)]
+       : []),
+-    row(
+-      journeyId,
+-      readOnly,
+-      copy.rows.internalReference,
+-      answers.internalReferenceNumber,
+-      'internalReferenceNumber'
+-    )
++    row(copy.rows.internalReference, answers.internalReferenceNumber)
+   ]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-actions.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-actions.js
+index a2c5e5c0..a2aada3f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-actions.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-actions.js
+@@ -1,32 +1,18 @@
+-import { pagePath } from '../../../../../../../../../../shared/paths.js'
+-import {
+-  animalIdentificationPage,
+-  consignmentDetailsPage
+-} from '../../../../../commodities/page.js'
++import { consignmentDetailsPage } from '../../../../../commodities/page.js'
+ import { copyFor } from '../../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../../copy/copy.en.js'
+ import { copy as cy } from '../../../../copy/copy.cy.js'
+-import { withChange } from '../../../rows/change-link.js'
++import { cardAction } from '../../../rows/change-link.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+-export const speciesCardActions = (journeyId, index, units) => ({
+-  items: [
+-    {
+-      href: withChange(pagePath(journeyId, consignmentDetailsPage.slug)),
+-      text: copy.change,
+-      visuallyHiddenText: copy.hidden.commodity(index + 1)
+-    },
+-    ...(units.length
+-      ? [
+-          {
+-            href: `${withChange(
+-              pagePath(journeyId, animalIdentificationPage.slug)
+-            )}#identification-card-${index}`,
+-            text: copy.change,
+-            visuallyHiddenText: copy.hidden.identifiersForCommodity(index + 1)
+-          }
+-        ]
+-      : [])
+-  ]
+-})
++/** One link, like every other card on the review (design release 1). It goes to
++ * the consignment-details page, which collects the commodity line itself; the
++ * animal identifiers the card also shows are collected on their own page, which
++ * keeps its own task row on the hub. */
++export const speciesCardActions = (journeyId, index) =>
++  cardAction(
++    journeyId,
++    consignmentDetailsPage.slug,
++    copy.hidden.commodity(index + 1)
++  )
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-rows.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-rows.js
+index af62b47b..67256a5e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-card-rows.js
+@@ -3,20 +3,20 @@ import { copyFor } from '../../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../../copy/copy.en.js'
+ import { copy as cy } from '../../../../copy/copy.cy.js'
+ import { packagesApply } from '../../../applicability.js'
+-import { readOnlyRow } from '../../../rows/summary-row.js'
++import { row } from '../../../rows/summary-row.js'
+ import { speciesText } from './species-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
+ export const speciesCardRows = (entry) => [
+-  readOnlyRow(
++  row(
+     copy.rows.commodityCode,
+     commodities.commodityCodeFor(entry.commoditySelection)
+   ),
+-  readOnlyRow(copy.rows.commonName, entry.commoditySelection),
+-  readOnlyRow(copy.rows.species, speciesText(entry)),
+-  readOnlyRow(copy.rows.numberOfAnimals, entry.numberOfAnimalsQuantity),
++  row(copy.rows.commonName, entry.commoditySelection),
++  row(copy.rows.species, speciesText(entry)),
++  row(copy.rows.numberOfAnimals, entry.numberOfAnimalsQuantity),
+   ...(packagesApply(entry.commoditySelection)
+-    ? [readOnlyRow(copy.rows.numberOfPackages, entry.numberOfPackages)]
++    ? [row(copy.rows.numberOfPackages, entry.numberOfPackages)]
+     : [])
+ ]
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-cards.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-cards.js
+index 3bc9d554..f7cb66e5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-cards.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/species/species-cards.js
+@@ -9,15 +9,12 @@ import { unitsForCommodityLine } from './units-for-commodity-line.js'
+ export const speciesCards = (journeyId, answers, evaluation, readOnly) =>
+   state
+     .collectionView(answers, ['commodityLines'], evaluation)
+-    .map(({ index, entry }) => {
+-      const units = unitsForCommodityLine(answers, evaluation, index)
+-      return {
+-        title: speciesCardTitle(entry),
+-        ...editableActions(
+-          readOnly,
+-          speciesCardActions(journeyId, index, units)
+-        ),
+-        rows: speciesCardRows(entry),
+-        identifierTable: identifierTable(units, entry.commoditySelection)
+-      }
+-    })
++    .map(({ index, entry }) => ({
++      title: speciesCardTitle(entry),
++      ...editableActions(readOnly, speciesCardActions(journeyId, index)),
++      rows: speciesCardRows(entry),
++      identifierTable: identifierTable(
++        unitsForCommodityLine(answers, evaluation, index),
++        entry.commoditySelection
++      )
++    }))
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js
+index ff4a9c21..450a4b8d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/documents.js
+@@ -2,8 +2,9 @@ import * as state from '../../../../../../../../engine/index.js'
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+-import { changeHref, editableActions } from '../rows/change-link.js'
+-import { readOnlyRow } from '../rows/summary-row.js'
++import { documentsPage } from '../../../documents/page.js'
++import { cardAction, editableActions } from '../rows/change-link.js'
++import { row } from '../rows/summary-row.js'
+ import { dateText } from '../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+@@ -19,36 +20,25 @@ export const documentsCard = (journeyId, answers, evaluation, readOnly) => {
+     .map(({ index, entry }) => ({
+       heading: copy.documentN(index + 1),
+       rows: [
+-        readOnlyRow(
+-          copy.rows.documentReference,
+-          entry.accompanyingDocumentReference
+-        ),
+-        readOnlyRow(
++        row(copy.rows.documentReference, entry.accompanyingDocumentReference),
++        row(
+           copy.rows.documentType,
+           copy.documentTypes[entry.accompanyingDocumentType]
+         ),
+-        {
+-          key: { text: copy.rows.dateOfIssue },
+-          value: { text: dateText(entry.accompanyingDocumentDateOfIssue) }
+-        },
+-        readOnlyRow(
+-          copy.rows.attachmentType,
+-          entry.accompanyingDocumentAttachmentType
+-        )
++        row(
++          copy.rows.dateOfIssue,
++          dateText(entry.accompanyingDocumentDateOfIssue)
++        ),
++        row(copy.rows.attachmentType, entry.accompanyingDocumentAttachmentType)
+       ]
+     }))
+   return {
+     id: 'documents',
+     title: copy.cards.documents,
+-    ...editableActions(readOnly, {
+-      items: [
+-        {
+-          href: changeHref(journeyId, 'documents'),
+-          text: copy.change,
+-          visuallyHiddenText: copy.hidden.documents
+-        }
+-      ]
+-    }),
++    ...editableActions(
++      readOnly,
++      cardAction(journeyId, documentsPage.slug, copy.hidden.cards.documents)
++    ),
+     emptyText: documents.length === 0 ? copy.documentsEmpty : null,
+     documents
+   }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
+index a36454a1..3c1c382d 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js
+@@ -3,63 +3,52 @@ import * as ports from '../../../../../../../../../services/ports/index.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { portOfEntryPage } from '../../../../transport/page.js'
+ import { transitedCountriesApplies } from '../../applicability.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+ import { dateText, toArray } from '../../rows/value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+ 
++/**
++ * The transited countries are collected on their own page, so this card's rows
++ * span two. The one Change link goes to the port-of-entry page — the page the
++ * hub's arrival-details task row leads with, and the page the other five rows
++ * come from. The transit-countries page keeps its own task row on the hub.
++ */
+ export const arrivalDetailsCard = (journeyId, answers, scope, readOnly) => ({
+   id: 'arrivalDetails',
+   title: copy.cards.arrivalDetails,
++  ...editableActions(
++    readOnly,
++    cardAction(
++      journeyId,
++      portOfEntryPage.slug,
++      copy.hidden.cards.arrivalDetails
++    )
++  ),
+   rows: [
+     row(
+-      journeyId,
+-      readOnly,
+       copy.rows.portOfEntry,
+-      ports.label(answers.portOfEntry) ?? answers.portOfEntry,
+-      'portOfEntry'
+-    ),
+-    row(
+-      journeyId,
+-      readOnly,
+-      copy.rows.arrivalDate,
+-      dateText(answers.arrivalDateAtPort),
+-      'arrivalDateAtPort'
+-    ),
+-    row(
+-      journeyId,
+-      readOnly,
+-      copy.rows.meansOfTransport,
+-      copy.means[answers.meansOfTransport] ?? '',
+-      'meansOfTransport'
++      ports.label(answers.portOfEntry) ?? answers.portOfEntry
+     ),
++    row(copy.rows.arrivalDate, dateText(answers.arrivalDateAtPort)),
++    row(copy.rows.meansOfTransport, copy.means[answers.meansOfTransport] ?? ''),
+     ...(transitedCountriesApplies(answers, scope)
+       ? [
+           row(
+-            journeyId,
+-            readOnly,
+             copy.rows.transitedCountries,
+             toArray(answers.transitedCountries)
+               .map((code) => countries.originLabel(code) ?? code)
+-              .join(', '),
+-            'transitedCountries'
++              .join(', ')
+           )
+         ]
+       : []),
++    row(copy.rows.transportIdentification, answers.transportIdentification),
+     row(
+-      journeyId,
+-      readOnly,
+-      copy.rows.transportIdentification,
+-      answers.transportIdentification,
+-      'transportIdentification'
+-    ),
+-    row(
+-      journeyId,
+-      readOnly,
+       copy.rows.transportDocumentReference,
+-      answers.transportDocumentReference,
+-      'transportDocumentReference'
++      answers.transportDocumentReference
+     )
+   ]
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+index c6033b74..85d19f17 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transport-details.js
+@@ -2,8 +2,9 @@ import { isBlank } from '../../../../../../../../../lib/answered.js'
+ import { copyFor } from '../../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../../copy/copy.en.js'
+ import { copy as cy } from '../../../copy/copy.cy.js'
++import { transportersPage } from '../../../../transport/page.js'
+ import { addressLines } from '../../rows/party-row.js'
+-import { changeAction, editableActions } from '../../rows/change-link.js'
++import { cardAction, editableActions } from '../../rows/change-link.js'
+ import { row } from '../../rows/summary-row.js'
+ import { escapeHtml } from '../../rows/value-text.js'
+ 
+@@ -24,53 +25,26 @@ export const activeTransporter = (answers, scope) => {
+   return null
+ }
+ 
+-export const transporterAddressRow = (journeyId, party, id, readOnly) => {
++export const transporterAddressRow = (party) => {
+   const lines = addressLines(party?.address).map(escapeHtml)
+   return {
+     key: { text: copy.rows.address },
+-    value: lines.length ? { html: lines.join('<br>') } : { text: NOT_PROVIDED },
+-    ...editableActions(
+-      readOnly,
+-      changeAction(journeyId, id, copy.hidden.transporterAddress)
+-    )
++    value: lines.length ? { html: lines.join('<br>') } : { text: NOT_PROVIDED }
+   }
+ }
+ 
+-export const approvalNumberRow = (journeyId, active, readOnly) =>
++export const approvalNumberRow = (active) =>
+   isBlank(active.party?.approvalNumber)
+     ? []
+-    : [
+-        row(
+-          journeyId,
+-          readOnly,
+-          copy.rows.approvalNumber,
+-          active.party.approvalNumber,
+-          active.id,
+-          copy.hidden.transporterApprovalNumber
+-        )
+-      ]
++    : [row(copy.rows.approvalNumber, active.party.approvalNumber)]
+ 
+-export const activeTransporterRows = (journeyId, active, readOnly) =>
++export const activeTransporterRows = (active) =>
+   active
+     ? [
+-        row(
+-          journeyId,
+-          readOnly,
+-          copy.rows.name,
+-          active.party?.name,
+-          active.id,
+-          copy.hidden.transporterName
+-        ),
+-        transporterAddressRow(journeyId, active.party, active.id, readOnly),
+-        row(
+-          journeyId,
+-          readOnly,
+-          copy.rows.country,
+-          active.party?.address?.country,
+-          active.id,
+-          copy.hidden.transporterCountry
+-        ),
+-        ...approvalNumberRow(journeyId, active, readOnly)
++        row(copy.rows.name, active.party?.name),
++        transporterAddressRow(active.party),
++        row(copy.rows.country, active.party?.address?.country),
++        ...approvalNumberRow(active)
+       ]
+     : []
+ 
+@@ -79,16 +53,17 @@ export const transportDetailsCard = (journeyId, answers, scope, readOnly) => {
+   return {
+     id: 'transportDetails',
+     title: copy.cards.transportDetails,
+-    rows: [
+-      ...activeTransporterRows(journeyId, active, readOnly),
+-      row(
++    ...editableActions(
++      readOnly,
++      cardAction(
+         journeyId,
+-        readOnly,
+-        copy.rows.type,
+-        answers.transporterType,
+-        'transporterType',
+-        copy.hidden.transporterType
++        transportersPage.slug,
++        copy.hidden.cards.transportDetails
+       )
++    ),
++    rows: [
++      ...activeTransporterRows(active),
++      row(copy.rows.type, answers.transporterType)
+     ]
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js
+index ebcc3150..5a978da2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js
+@@ -14,10 +14,21 @@ export const withChange = (href) => `${href}?change=1`
+ export const changeHref = (journeyId, obligationId) =>
+   withChange(pagePath(journeyId, slugOfPage(pageOfObligation(obligationId))))
+ 
+-export const changeAction = (journeyId, obligationId, visuallyHiddenText) => ({
++/**
++ * The one Change link a card carries, level with its title (design release 1).
++ * Rows carry none: a card is a page's worth of answers, so the card says once
++ * where they are changed.
++ *
++ * The card names its page rather than deriving it from a row, because a card's
++ * rows can span two pages — arrival details shows the transit countries the
++ * transit-countries page collects, and roles and addresses shows the CPH number
++ * the CPH page collects. One card has one destination, so the card has to say
++ * which one, and it says the page the hub's own task row leads with.
++ */
++export const cardAction = (journeyId, slug, visuallyHiddenText) => ({
+   items: [
+     {
+-      href: changeHref(journeyId, obligationId),
++      href: withChange(pagePath(journeyId, slug)),
+       text: copy.change,
+       visuallyHiddenText
+     }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
+index 9d9773a5..d14f0b6f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js
+@@ -2,7 +2,6 @@ import { isBlank } from '../../../../../../../../lib/answered.js'
+ import { copyFor } from '../../../../../../../../shared/copy.js'
+ import { copy as en } from '../../copy/copy.en.js'
+ import { copy as cy } from '../../copy/copy.cy.js'
+-import { changeAction, editableActions } from './change-link.js'
+ import { escapeHtml } from './value-text.js'
+ 
+ const copy = copyFor({ en, cy })
+@@ -52,25 +51,9 @@ const valueCell = (lines, errorText) => {
+   return errorText ? errorCell(errorText) : { text: NOT_PROVIDED }
+ }
+ 
+-export const partyRow = (
+-  journeyId,
+-  readOnly,
+-  key,
+-  party,
+-  obligationId,
+-  { visuallyHiddenText = null, errorText = null } = {}
+-) => {
+-  const lines = partyLines(party)
+-  return {
+-    key: { text: key },
+-    value: valueCell(lines, errorText),
+-    ...editableActions(
+-      readOnly,
+-      changeAction(
+-        journeyId,
+-        obligationId,
+-        visuallyHiddenText ?? key.toLowerCase()
+-      )
+-    )
+-  }
+-}
++/** A key and a value with no Change link of its own, like an ordinary row — the
++ * card that holds the role carries the one link to the page that collects it. */
++export const partyRow = (key, party, { errorText = null } = {}) => ({
++  key: { text: key },
++  value: valueCell(partyLines(party), errorText)
++})
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
+index 97ea315f..f0195108 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/summary-row.js
+@@ -1,27 +1,10 @@
+-import { changeAction, editableActions } from './change-link.js'
+ import { valueText } from './value-text.js'
+ 
+-export const row = (
+-  journeyId,
+-  readOnly,
+-  key,
+-  value,
+-  obligationId,
+-  visuallyHiddenText = null
+-) => ({
+-  key: { text: key },
+-  value: { text: valueText(value) },
+-  ...editableActions(
+-    readOnly,
+-    changeAction(
+-      journeyId,
+-      obligationId,
+-      visuallyHiddenText ?? key.toLowerCase()
+-    )
+-  )
+-})
+-
+-export const readOnlyRow = (key, value) => ({
++/** A row is a key and a value, and nothing else. Design release 1 puts no
++ * Change link on a row — the card heading carries the one link that changes
++ * every answer inside it, so the page offers one link per card rather than one
++ * per answer. */
++export const row = (key, value) => ({
+   key: { text: key },
+   value: { text: valueText(value) }
+ })

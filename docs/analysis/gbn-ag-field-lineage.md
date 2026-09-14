@@ -19,6 +19,20 @@ Cross-checked against the Confluence page
 (v18, updated 2026-08-25), which independently confirms several of the gaps below
 from the PIMS side.
 
+**Living document.** This audit fed three follow-up tickets, one per hop — EUDPA-368
+(§1), EUDPA-369 (§2) and EUDPA-370 (§3). As each ticket lands, its PR decisions, any
+findings that weren't in the original pass, and any corrections get folded back into
+the relevant section below (marked with the date and source), so the tables track
+current status rather than staying frozen at the 2026-09-02 snapshot. Only re-run the
+full audit from scratch (ask an agent to repeat it) if the codebases have moved on in
+ways these three tickets don't cover — e.g. ahead of a v3 pass.
+
+| Ticket | Hop | Status | PRs |
+|---|---|---|---|
+| [EUDPA-368](https://eaflood.atlassian.net/browse/EUDPA-368) | §1 frontend → aggregate | IN QA | frontend#300, backend#94, tests#187 (closed) |
+| [EUDPA-369](https://eaflood.atlassian.net/browse/EUDPA-369) | §2 aggregate → generic GBN-AG | Deskcheck | backend#96, dynamics-gateway#20, tests#212 (open) |
+| [EUDPA-370](https://eaflood.atlassian.net/browse/EUDPA-370) | §3 generic → PIMS | Ready for Dev | not started |
+
 A fuller, table-formatted version of this analysis (colour-coded mapped/gap/derived
 pills, collapsible full field inventories per hop) was published as a Claude
 Artifact during the original investigation: *GBN-AG Field Lineage*. That artifact
@@ -70,6 +84,15 @@ cross even if someone wired the frontend mapper up.
 | `animalIdentifierDescription` (per-unit) | Same group. | `identifiers.js:187-198` |
 | `permanentAddress` (per-unit, mandatory for some commodities) | No mapper reference; no backend field anywhere in `Species.java`/`CommodityComplement.java`. This is the field an owner's post-import address lives on. | `identifiers.js:200-208` |
 
+**Status (EUDPA-368, IN QA):** eight of the ten rows above are now wired — new
+`Origin`/`NotificationBase` scalars for the top five, and a new
+`Species.animalIdentifiers` list (tattoo, horse name, permanent address) for the
+per-unit fields — landed in frontend PR #300 and backend PR #94 (both closed, pending
+QA sign-off). The remaining two, `animalIdentifierIdentificationDetails` and
+`animalIdentifierDescription`, weren't fixed — they were removed from scope entirely:
+EUDPA-500 dropped both fields from the any-of-six identifier group, so there's nothing
+left to map.
+
 ### Fields the backend already has a home for — pure mapper omissions
 
 The backend `Transport.java` model already has these fields; `transportFromFulfilment`
@@ -82,6 +105,9 @@ just never reads them. Cheapest gaps to close.
 | `transportDocumentReference` | Same; `evaluation.js:29-32` |
 | `transitedCountries` | Same; `evaluation.js:33` |
 
+**Status (EUDPA-368, IN QA):** all four fixed, same PRs as above (frontend #300,
+backend #94).
+
 ### Cardinality loss (not a missing field)
 
 `species-entry.js:10,16-17` reads `line.animalIdentifiers?.[0]` only — **ear tag and
@@ -91,12 +117,50 @@ Confirmed intentional-but-lossy by
 `notification-mapper.test.js:301-329` ("Should intentionally keep ear tag and
 passport from only the first unit").
 
+**Status (EUDPA-368, IN QA):** fixed — `species-entry.js` now maps every
+animal-identifier unit on a line via the new `animalIdentifiers` list, not just the
+first (frontend PR #300).
+
 ### Not gaps, on inspection
 
 - `documents` (accompanying-document metadata) — reaches the backend via a separate
   `DocumentController`/aggregate, correctly out of scope for the `notification`
   subnode (`NotificationService.java:48`).
 - `declaration` — a submission consent checkbox, no domain data.
+
+### New findings from EUDPA-368 planning (2026-09-02, Ian Griffiths — not in the original audit)
+
+Checked against the frontend code and the Confluence
+[Live Animals Data Fields – V4](https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6497338582)
+page, including its own "Out of Scope Data Elements" table, while scoping EUDPA-368:
+
+- **Weight (KG) and Transporter Status** — confirmed genuinely missing from *both* the
+  frontend and the V4 page, not just unmapped downstream. See §4 point 3, which already
+  flags these as needing a new schema slot; this confirms there's no frontend
+  collection to build against yet either. New scope — not yet raised with Monica/Judith.
+- **Species Family Name / Species Class Name / Species Type Name** (domestic vs game) —
+  absent from both the frontend and the V4 page. The PIMS mapping page itself marks
+  these tentative ("TBC"/"may also be required"), not confirmed. "Domestic"/"game"
+  wording does appear on the V4 page, but only inside commodity-code list entries (e.g.
+  "Pig (Domestic)", "Game Birds") — may already be derivable from the commodity code the
+  trader picks, the same way scientific/common name are resolved from the CN code
+  rather than typed in.
+- **Microchip and Leg Ring** identifier types — PIMS lists 7 animal-identifier types;
+  the frontend implements 6 (Passport, Tattoo, Ear Tag, Horse Name, plus free-text
+  Identification Details/Description as a fallback — now removed by EUDPA-500, see
+  above). Not silent gaps: Microchip never appears on the V4 page at all, and Leg
+  Ring's close cousin "Animal Identifier – Wing Ring" was explicitly considered and
+  de-scoped by Monica Rivera on 2026-05-29 (V4 page's own "Out of Scope" table) — PIMS
+  may be expecting something design already deliberately cut.
+- **`exchangedDocument.issuer` / "Person Responsible for Load"** — refines the §2
+  correction below: this field *is* on the V4 page, explicitly marked "Consumed on
+  authentication" / sourced from "gov identity." By design it should come from the
+  notifier's authenticated Defra ID/organisation record, not a journey page — so "no
+  frontend source field" (as originally written in §2) is only true in the narrow
+  sense of no journey page collecting it. The real gap may be that this identity data
+  isn't yet threaded from sign-in into the outbound notification payload, not that no
+  source exists. Worth confirming before scoping the Responsible-Person-for-Load
+  follow-up ticket.
 
 ---
 
@@ -122,6 +186,29 @@ anomaly A3/B1/B4` — this audit's independent trace matches those tags exactly.
 | `transport.transportDocumentReference` | `transportContractRelatedReferencedDocument` hardcoded null | candidate anomaly B1; `LogisticsTransportMovement.java:33` |
 | `transport.transitedCountries` | Hardcoded null | `SpecifiedConsignment.java:41` |
 
+**Status (EUDPA-369, Deskcheck — PRs open, not yet merged):**
+`origin.requiresRegionCode`, `commodity.name`, all four per-species fields, the
+`consignment` party slot, and both `transport.*` fields above are addressed in backend
+PR #96 (+ gateway PR #20, tests PR #212). `cphNumber` is only partially addressed: it
+now reaches `finalDestinationLocation.identifier`, but the schema-mandated address
+alongside it is deliberately not sent — no agreed source for which address to use (see
+open question below; not blocking EUDPA-369).
+
+Two further gaps surfaced during EUDPA-369 planning (Amir Naveed, 2026-09-11), not
+present in the original pass:
+
+- **Species id** — each species line has an id (e.g. `1148346` for Bos taurus) that has
+  no GBN-AG schema slot at all and isn't sent. Whether one is needed is an open
+  question, not scheduled against any ticket yet.
+- **CPH number's address** — as above: `finalDestinationLocation.identifier` is sent,
+  the schema-mandated accompanying address is not. Flagged as an open question for
+  whoever owns the schema/Confluence mapping to resolve; not scoped into any ticket yet.
+- **`TradeLineItem.commonName`** — still sends the commodity name (e.g. "Cow") rather
+  than the species' everyday name (e.g. "Cattle") that the schema and PIMS mapping doc
+  call for; `ins-backend` already displays the commodity-name value on notification
+  cards. A proper fix spans frontend, backend and ins-backend — flagged as needing a
+  follow-up ticket, not yet raised.
+
 ### Disputed / likely intentional
 
 - **`*.addressId`** (all party roles) — the address-book reference id is resolved
@@ -136,7 +223,7 @@ anomaly A3/B1/B4` — this audit's independent trace matches those tags exactly.
 
 | Field | Kind | Evidence |
 |---|---|---|
-| `exchangedDocument.issuer` | Hardcoded null — **Confluence confirms this should carry "Person Responsible for Load"** | gap G1; `ExchangedDocument.java:33` |
+| `exchangedDocument.issuer` | Hardcoded null. Two distinct sub-mappings target this one slot — see correction below | gap G1; `ExchangedDocument.java:33` |
 | `exchangedDocument.referenceDocument` | Hardcoded null | gap G3; `ExchangedDocument.java:34` |
 | `exchangedDocument.notificationStatusCode` | From `NotificationAggregate.status`, not the `notification` subnode | — |
 | `exchangedDocument.issueDateTime` | Computed from `NotificationAggregate.updated` | — |
@@ -147,6 +234,34 @@ anomaly A3/B1/B4` — this audit's independent trace matches those tags exactly.
 | `specifiedLineTradeDelivery[].productUnitQuantity.unitCode` | Always null, though schema requires it (`H87`/`KGM`) | — |
 | `TradeLineItem.description/scientificName/commonName/typeCode/urlId` | Always null — schema intends these resolved from CN-code reference data downstream, not sourced from the notification | gap G18 |
 | `individualTradeProductInstance` | One instance per species **line**, not per individual animal; `name`/`permanentLocation` always null | gap G19/G20 |
+
+**Correction (2026-09-14), `exchangedDocument.issuer`:** the original pass above only
+considered the "Person Responsible for Load" framing (Confluence-confirmed; organisation
+name/address/contact — no frontend source field, correctly deferred to a follow-up
+ticket). It missed a second, separate sub-mapping documented at
+`trade-imports-schemas/schemas/profiles/imports/gb/pims-data-mapping.md:344`
+("Contact Address"): the signed-in user's own preferred postal address, sourced from
+their gov.uk identity (the user picks one when their profile carries more than one).
+That address *does* have a real frontend source, and the mapping doc is explicit it
+lands on `issuer.postalAddress` — "the schema does not carry a separate contact-address
+slot distinct from the responsible-person slot." Found by Amir Naveed while planning
+EUDPA-369 (see the ticket's comment thread), not by this audit.
+
+Decision (EUDPA-369, 2026-09-14): **defer** wiring the contact-address postal address
+into `issuer.postalAddress` for now, rather than populate it ahead of the
+Responsible-Person-for-Load follow-up ticket. Both target the same `issuer` object;
+sending the postal address alone would leave `issuer` populated with an address but no
+name/company/contact, which only makes sense to ship as one coherent object once the
+Responsible-Person-for-Load frontend field exists. Revisit both together in that
+follow-up ticket.
+
+Related refinement (from EUDPA-368 planning, 2026-09-02 — see §1's "New findings"): the
+Responsible-Person-for-Load half of `issuer` may not be a pure "no frontend source"
+gap either. The V4 Data Fields page marks it "Consumed on authentication" / sourced
+from "gov identity," so by design it should come from the notifier's authenticated
+Defra ID/organisation record rather than a journey page. Worth checking whether that
+identity data is already captured at sign-in — and just not yet threaded into the
+outbound payload — before scoping the follow-up ticket as a data-entry problem.
 
 ---
 
@@ -181,6 +296,11 @@ for what was intentionally omitted. **21 leaf fields have no PIMS destination.**
 generated to mirror this Java model exactly (states so in its own description), so
 every field dropped here is also absent from that schema by construction.
 
+**Status:** this hop's ticket, EUDPA-370, is **Ready for Dev** — not started. Its plan
+(mint `gbn-ag-pims-v0.2.0.schema.json` describing the target shape first, get it
+confirmed by the PIMS team, only then fix the 21 fields above in the mappers) matches
+recommendation 4 in §4 below.
+
 ---
 
 ## 4. Does the `trade-imports-schemas` modelling make sense?
@@ -207,7 +327,16 @@ are worth raising as tickets:
    Confluence-confirmed PIMS needs (Weight: needed for germinals, open question on
    net/gross/aggregation; Transporter Status: alongside Transporter Approval
    Number, which *does* flow correctly). **Need a new schema slot before any Java
-   model or frontend work can carry them.**
+   model or frontend work can carry them.** Confirmed absent from the frontend and the
+   V4 Data Fields page too while scoping EUDPA-368 (2026-09-02) — genuinely new scope,
+   not yet raised with Monica/Judith. Two more items surfaced in the same pass, also
+   absent from both frontend and the V4 page: **Species Family Name / Species Class
+   Name / Species Type Name** (domestic vs game — PIMS marks these tentative/TBC, may
+   be derivable from the commodity code rather than needing a new field), and
+   **Microchip** / **Leg Ring** animal-identifier types (PIMS lists 7 identifier types,
+   the frontend implements 6; Leg Ring's close cousin "Wing Ring" was explicitly
+   de-scoped by Monica Rivera on 2026-05-29, so this one may already be a deliberate
+   cut rather than a gap — Microchip has no such precedent and still needs a decision).
 4. **The PIMS schema is a mirror, not a contract — which hides its own gaps.**
    `gbn-ag-pims-v0.1.0.schema.json`'s own description says it's "a point-in-time
    description of what the backend currently serialises," not derived from the

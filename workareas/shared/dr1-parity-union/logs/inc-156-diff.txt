@@ -1,0 +1,172 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
+index ae10fd37..1a4166da 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
+@@ -16,9 +16,13 @@ const expectPanelCopy = async (page) => {
+   ).toBeVisible()
+   await expect(page.getByText(copy.panel.referencePrefix)).toBeVisible()
+   await expect(page.getByText(reference, { exact: true })).toBeVisible()
+-  await expect(
+-    page.getByText(new RegExp(`^${copy.dateOfDeclaration}`))
+-  ).toBeVisible()
++}
++
++// The declaration date is shown once, on the declaration page. Design release 1
++// takes the submitted page from the reference panel straight to what the trader
++// still has to do, so the date is not repeated here.
++const expectNoDeclarationDate = async (page) => {
++  await expect(page.getByText(/date of declaration/i)).toHaveCount(0)
+ }
+ 
+ // The journey these tests submit uploads no documents, and documents are
+@@ -110,10 +114,11 @@ test.describe('submitted confirmation feature', () => {
+     await expect(page).toHaveURL(/\/notifications\/[^/]+\/confirmation$/)
+   })
+ 
+-  test('renders the notification reference, all feature copy and no back link', async ({
++  test('renders the notification reference and all feature copy, with no declaration date and no back link', async ({
+     page
+   }) => {
+     await expectPanelCopy(page)
++    await expectNoDeclarationDate(page)
+     await expectOutstandingCopy(page)
+     await expectTransportingCopy(page)
+     await expectViewOrAmendCopy(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js
+index 631f690b..65be7f03 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.js
+@@ -17,13 +17,6 @@ const view = `${TEMPLATES}/features/confirmation/template`
+ 
+ const copy = copyFor({ en, cy })
+ 
+-const dateText = (value) =>
+-  new Date(value).toLocaleDateString('en-GB', {
+-    day: 'numeric',
+-    month: 'long',
+-    year: 'numeric'
+-  })
+-
+ const get = async (request, h) => {
+   const { journey, answers, evaluation } = await state.get(request, h)
+   if (journey.status !== state.SUBMITTED) {
+@@ -33,7 +26,6 @@ const get = async (request, h) => {
+     ...base(copy.title, { journeyId: journey.journeyId }),
+     copy,
+     referenceNumber: journey.journeyId,
+-    submissionDate: dateText(journey.submittedAt),
+     outstandingItems: outstandingItems(answers, evaluation),
+     dashboardHref: dashboardPath(),
+     createAction: createPath()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js
+index b8648f4a..6b7764b2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js
+@@ -41,7 +41,7 @@ describe('GET /confirmation', () => {
+   })
+   beforeEach(() => store.clear())
+ 
+-  it('Should render the confirmation panel with the reference and submission date for a submitted notification', async () => {
++  it('Should render the confirmation panel with the reference for a submitted notification', async () => {
+     const { journeyId } = await store.create()
+     await store.submit(journeyId)
+     const h = stubH()
+@@ -52,9 +52,15 @@ describe('GET /confirmation', () => {
+       'Import notification submitted'
+     )
+     expect(h.captured.view.context.referenceNumber).toBe(journeyId)
+-    expect(h.captured.view.context.submissionDate).toMatch(
+-      /^\d{1,2} \w+ \d{4}$/
+-    )
++  })
++
++  // The declaration date belongs to the declaration page. Design release 1
++  // takes the submitted page straight from the reference panel to what the
++  // trader still has to do, so the date is not repeated here.
++  it('Should not supply a submission date to the submitted page', async () => {
++    const view = await submittedView()
++
++    expect(view.context).not.toHaveProperty('submissionDate')
+   })
+ 
+   // Documents are optional at submission, so the trader can land here with the
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js
+index ecaf0a1a..f70ab116 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.cy.js
+@@ -5,7 +5,6 @@ export const copy = {
+     title: 'Hysbysiad mewnforio wedi’i gyflwyno',
+     referencePrefix: 'Eich cyfeirnod'
+   },
+-  dateOfDeclaration: 'Dyddiad y datganiad:',
+   outstanding: {
+     heading: 'Cyn i’r llwyth gael ei fewnforio',
+     intro: 'Mae angen i chi o hyd:',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js
+index ab9ef6ab..91ed8749 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/copy/copy.en.js
+@@ -4,7 +4,6 @@ export const copy = {
+     title: 'Import notification submitted',
+     referencePrefix: 'Your reference number'
+   },
+-  dateOfDeclaration: 'Date of declaration:',
+   outstanding: {
+     heading: 'Before the consignment is imported',
+     intro: 'You still need to:',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk
+index b5872ed5..33c60854 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk
+@@ -8,8 +8,6 @@
+     html: referencePanelHtml
+   }) }}
+ 
+-  <p class="govuk-body">{{ copy.dateOfDeclaration }} {{ submissionDate }}</p>
+-
+   {% if outstandingItems.length %}
+     <h2 class="govuk-heading-m">{{ copy.outstanding.heading }}</h2>
+     <p class="govuk-body">{{ copy.outstanding.intro }}</p>
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js
+index c9751e03..64749b3b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js
+@@ -17,7 +17,6 @@ const render = (outstandingItems) =>
+       userSession: { isAuthenticated: true, displayName: 'Sam Example' },
+       getAssetPath: (asset) => `/assets/${asset}`,
+       referenceNumber: 'ABC-123',
+-      submissionDate: '12 December 2025',
+       outstandingItems,
+       dashboardHref: '/',
+       createAction: '/notifications',
+@@ -25,6 +24,30 @@ const render = (outstandingItems) =>
+     }
+   )
+ 
++// Design release 1 goes from the reference panel straight into what the trader
++// has to do. Nothing — the declaration date least of all — sits in between.
++describe('confirmation template panel', () => {
++  it('Should follow the panel with what the trader still has to do', () => {
++    const $ = load(render([copy.outstanding.documents]))
++    const afterPanel = $('.govuk-panel').nextAll().first()
++
++    expect(afterPanel.is('h2')).toBe(true)
++    expect(afterPanel.text().trim()).toBe(copy.outstanding.heading)
++  })
++
++  it('Should follow the panel with the transport guidance when nothing is outstanding', () => {
++    const $ = load(render([]))
++    const afterPanel = $('.govuk-panel').nextAll().first()
++
++    expect(afterPanel.is('h2')).toBe(true)
++    expect(afterPanel.text().trim()).toBe(copy.transporting.heading)
++  })
++
++  it('Should not print a date of declaration', () => {
++    expect(load(render([])).text()).not.toMatch(/date of declaration/i)
++  })
++})
++
+ describe('confirmation template outstanding-work section', () => {
+   it('Should list what the trader still owes when something is outstanding', () => {
+     const $ = load(render([copy.outstanding.documents]))

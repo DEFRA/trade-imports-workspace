@@ -1,0 +1,238 @@
+diff --git a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+index 1a90e1fa..6d336ce2 100644
+--- a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
++++ b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+@@ -23,6 +23,16 @@ Most row status comes from the union of each page's `collects`. `parts` narrows
+ row to a collection facet. `conditional: true` lets the hub hide a row that is not
+ applicable. Every row contributes to `readyForCheckYourAnswers`.
+ 
++`applies` is the escape hatch for a row whose parts cannot express its
++applicability. `rowStatus` calls it with the answers and reads Not applicable when
++it answers no, whatever the parts would have rolled up to. The animal
++identification row needs it: its part is the `commodityLines` collection, a
++structural group in scope from the moment the notification exists, so the roll-up
++never reaches Not applicable and `conditional: true` on its own would leave the row
++drawn. Reach for `applies` only when a scope condition genuinely cannot carry the
++rule — the transit-countries row needs no `applies`, because its answer leaves
++scope on its own.
++
+ The hub's `GROUPS` array in
+ [`features/hub/controller.js`](../journeys/linear/features/hub/controller.js) places
+ task-row ids under visible headings and supplies their presentation order.
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+index 3542ef31..58263b29 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js
+@@ -2,14 +2,17 @@ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ import {
+   answerCountryOfOrigin,
++  journeyUrl,
+   selectSpecies,
+   signIn,
+   startNotification
+ } from '../../../../../../../../../../fit/live-animals-journey.js'
++import { animalIdentificationPage } from '../page.js'
+ import { copy } from '../copy/copy.en.js'
+ import { copy as hubCopy } from '../../hub/copy/copy.en.js'
+ 
+ const SAVE_AND_CONTINUE = 'Save and continue'
++const IDENTIFICATION_SLUG = animalIdentificationPage.slug
+ const PASSPORT_FIELD = '#animalIdentifierPassport-0'
+ const MICROCHIP_FIELD = '#animalIdentifierMicrochip-0'
+ const EAR_TAG_FIELD = '#animalIdentifierEarTag-0'
+@@ -466,9 +469,12 @@ test.describe('animal identification', () => {
+   }) => {
+     await addLines(page, [['Fish', [SALMO_SALAR]]], ['3'])
+     await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+-    await page
+-      .getByRole('link', { name: hubCopy.rows.animalIdentification.title })
+-      .click()
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++
++    // The hub leaves the task off a consignment with nothing to identify, so
++    // the page is reached the only way left to reach it — by its own address,
++    // as a bookmark or a back-button would.
++    await page.goto(journeyUrl(page, IDENTIFICATION_SLUG))
+ 
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+     await expect(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+index 4ab035d0..16c0f111 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+@@ -96,6 +96,36 @@ test.describe('hub feature', () => {
+     ).toHaveCount(0)
+   })
+ 
++  // Design release 1 inserts the identification task only once the chosen
++  // commodities need identifiers, so before anything is chosen the hub has
++  // nothing to say about identification and leaves the row off.
++  test('overview: when no commodity is chosen, the animal identification row is absent', async ({
++    page
++  }) => {
++    await startNotification(page)
++
++    await expect(
++      taskRow(page, copy.rows.animalIdentification.title)
++    ).toHaveCount(0)
++    await expect(
++      page.getByRole('heading', { name: copy.groups['commodity-details'] })
++    ).toBeVisible()
++  })
++
++  test('overview: when a commodity carrying identifiers is chosen, the animal identification row appears', async ({
++    page
++  }) => {
++    await openHubWithCommodityTotals(page)
++
++    const identification = taskRow(page, copy.rows.animalIdentification.title)
++    await expect(identification).toHaveCount(1)
++    await expect(
++      identification.getByRole('link', {
++        name: copy.rows.animalIdentification.title
++      })
++    ).toBeVisible()
++  })
++
+   test('back link and return button navigate to the dashboard', async ({
+     page
+   }) => {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+index 98643039..322b6e54 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+@@ -1,5 +1,6 @@
+-import { statusOf } from '../../../../../bridge/status/index.js'
++import { NA, statusOf } from '../../../../../bridge/status/index.js'
+ import { collectsOf } from '../../../../../flow/dispatch.js'
++import { identifiedCommodities } from '../../../services/commodities/index.js'
+ import { originPage } from '../features/origin/page.js'
+ import {
+   animalIdentificationPage,
+@@ -18,6 +19,23 @@ import {
+ } from '../features/transport/page.js'
+ import { consignmentContactSelectPage } from '../features/contact/page.js'
+ 
++// Design release 1 puts the identification task on the hub only once a chosen
++// commodity carries an identifier of its own, and leaves it off the page
++// entirely until then: on a notification with nothing chosen there is nothing
++// to identify, so an empty locked row would be an instruction the trader
++// cannot act on.
++//
++// The row cannot read this off its status roll-up. Its part is the
++// `commodityLines` collection, a structural group that is in scope from the
++// moment the notification exists, so `statusOf` never reaches Not applicable
++// and `conditional: true` alone would leave the row drawn. It carries its own
++// applicability test instead — the same question the identification page asks
++// before it redirects a trader straight past itself.
++const identifiesAnAnimal = (answers) =>
++  (Array.isArray(answers?.commodityLines) ? answers.commodityLines : []).some(
++    (line) => identifiedCommodities().includes(line?.commoditySelection)
++  )
++
+ export const taskRows = [
+   { id: 'origin', pages: [originPage] },
+   {
+@@ -30,7 +48,9 @@ export const taskRows = [
+   {
+     id: 'animalIdentification',
+     pages: [animalIdentificationPage],
+-    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }]
++    parts: [{ collection: 'commodityLines', only: ['animalIdentifiers'] }],
++    conditional: true,
++    applies: identifiesAnAnimal
+   },
+   { id: 'arrivalDetails', pages: [portOfEntryPage] },
+   { id: 'transitCountries', pages: [transitCountriesPage], conditional: true },
+@@ -47,5 +67,12 @@ export const taskRowById = (id) => taskRows.find((row) => row.id === id)
+ export const rowParts = (row) =>
+   row.parts ?? row.pages.flatMap((page) => collectsOf(page.id))
+ 
++// A row with no `applies` test is always applicable; one that answers no is
++// Not applicable however its parts roll up, which is what lets a `conditional`
++// row leave the hub and stand down as submit-readiness work.
++const rowApplies = (row, answers) => row.applies?.(answers) ?? true
++
+ export const rowStatus = (row, answers, inScope, evaluation) =>
+-  statusOf(rowParts(row), answers, inScope, evaluation)
++  rowApplies(row, answers)
++    ? statusOf(rowParts(row), answers, inScope, evaluation)
++    : NA
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+index 177a5f7c..8fdbaf57 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+@@ -143,9 +143,8 @@ describe('#rowStatus — one status per hub task row', () => {
+   })
+ 
+   describe('the commodities/identification facet split of commodityLines', () => {
+-    it('Should read Not yet started on both rows while no line exists', () => {
++    it('Should read Not yet started on the commodities row while no line exists', () => {
+       expect(statusIn('commodities', {})).toBe(NOT_STARTED)
+-      expect(statusIn('animalIdentification', {})).toBe(NOT_STARTED)
+     })
+ 
+     it('Should complete the commodities row on line data alone, owing no identifier on a single species', () => {
+@@ -254,6 +253,41 @@ describe('#rowStatus — one status per hub task row', () => {
+   })
+ })
+ 
++// Design release 1 inserts the identification task between the commodity rows
++// only once a chosen commodity carries an identifier of its own. Until then
++// the row is absent from the hub rather than shown and locked.
++describe('#rowStatus — the conditional animal-identification row', () => {
++  it('Should be Not applicable (absent) on a notification with no commodity', () => {
++    expect(statusIn('animalIdentification', {})).toBe(NA)
++    expect(statusIn('animalIdentification', { countryOfOrigin: 'FR' })).toBe(NA)
++  })
++
++  it('Should be Not applicable (absent) while no chosen commodity carries an identifier', () => {
++    expect(
++      statusIn('animalIdentification', {
++        countryOfOrigin: 'FR',
++        commodityLines: [{ commoditySelection: 'Fish' }]
++      })
++    ).toBe(NA)
++  })
++
++  it('Should appear as soon as one chosen commodity carries an identifier', () => {
++    expect(
++      statusIn('animalIdentification', {
++        countryOfOrigin: 'FR',
++        commodityLines: [
++          { commoditySelection: 'Fish' },
++          { commoditySelection: 'Cow' }
++        ]
++      })
++    ).toBe(FULFILLED)
++  })
++
++  it('Should be marked conditional so the hub drops it while it is Not applicable', () => {
++    expect(taskRowById('animalIdentification').conditional).toBe(true)
++  })
++})
++
+ describe('#rowStatus — the conditional transit-countries row', () => {
+   it('Should be Not applicable (absent) while the means of transport is not overland', () => {
+     expect(statusIn('transitCountries', unlocked)).toBe(NA)
+@@ -292,9 +326,17 @@ describe('#rowGatePasses / #rowEntry — a row is gated exactly as its first pag
+     }
+   })
+ 
+-  it('Should unlock every unconditional row once the origin and a commodity line are answered', () => {
++  // Every row the hub still draws, which is every row bar the conditional
++  // ones this state leaves Not applicable — the Cat line keeps the
++  // identification row in, so it is checked here rather than skipped.
++  const shownRows = (answers) =>
++    taskRows.filter((row) => statusIn(row.id, answers) !== NA)
++
++  it('Should unlock every row the hub shows once the origin and a commodity line are answered', () => {
+     const scope = makeScope(unlocked)
+-    for (const row of taskRows.filter((taskRow) => !taskRow.conditional)) {
++    const shown = shownRows(unlocked)
++    expect(shown.map((row) => row.id)).toContain('animalIdentification')
++    for (const row of shown) {
+       expect(rowGatePasses(row, scope)).toBe(true)
+     }
+   })

@@ -1,0 +1,23 @@
+h2. Increment
+
+{{inc-034}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 shows the "Your commodities" summary directly under the hub page heading on every visit, with two grey panels reading zero before anything has been entered. The frontend builds the same two panels but suppresses the whole block while the notification holds no commodity lines, so a user only ever meets it once a commodity line has been added.
+
+h2. Acceptance criteria
+
+* The hub renders the "Your commodities" summary on every visit, including on a notification that holds no commodity lines.
+* With no commodity lines both panels read {{0}} — "Animals" and "Packages/boxes" — keeping the existing captions "Total number of animals in this consignment" and "Total number of packages in this consignment".
+* With commodity lines present the panels read the real totals, unchanged from today.
+* {{buildCommodityTotals}} in {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js}} no longer returns {{null}} for an empty commodity collection, and the guard around the block in {{src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk}} no longer suppresses it.
+* The hub container is widened from {{govuk-grid-column-two-thirds}} to {{govuk-grid-column-full}}, so the pair of half-width panels is as wide as Design release 1 draws them. This layout consequence travels with the change and is handled here rather than raised twice.
+* Unit tests cover the hub view model returning zero totals for an empty commodity collection.
+* The E2E specs and visual baselines in the tests repo are updated for the summary now appearing on a fresh notification.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}
+
+Evidence — frontend: {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-151}}
+
+Evidence — Design release 1: {{app/views/notification-hub.html:26-50}}

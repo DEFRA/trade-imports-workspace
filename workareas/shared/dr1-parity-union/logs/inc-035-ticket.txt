@@ -1,0 +1,20 @@
+h2. Increment
+
+{{inc-035}} from the {{shared/dr1-parity-union}} backlog.
+
+The hub lists an animal identification task on a notification with no commodities. Design release 1 adds that task only once a chosen commodity needs animal identifiers, so the task appears when it becomes relevant and is invisible until then.
+
+h2. Acceptance criteria
+
+* On a hub for a notification with no commodity lines, no animal identification task row is rendered at all — the row is absent, not present and locked with "Cannot start yet".
+* Once the chosen commodities require animal identifiers, the identification task row appears on the hub in the "Description of the goods" section, between the commodity details row and the additional details row.
+* The row's applicability is decided by whether any chosen commodity requires animal identifiers — the question Design release 1 asks at {{app/routes.js:5778}} — either by giving the row its own applicability test or by giving the identification obligations a scope condition that makes the roll-up not-applicable when there are no commodity lines.
+* Marking the row conditional at {{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45}} alone is not sufficient and must not be the whole change: {{isHiddenRow}} at {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93}} needs both the conditional flag and a not-applicable status, and the row rolls up over the {{commodityLines}} collection, which is declared always in scope at {{src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:18-32}}.
+* No other hub task row changes its visibility — in particular the exit-details and transit-countries rows keep their existing conditional behaviour.
+* This increment decides whether the row is shown; it does not unlock a shown row, which is inc-032.
+* Unit tests cover both states: the row absent with no commodity lines, and the row present once a commodity requiring identifiers is chosen.
+* The end-to-end suite and its visual baselines are updated for the changed hub.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

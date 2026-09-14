@@ -1,0 +1,24 @@
+h2. Increment
+
+{{inc-033}} from the {{shared/dr1-parity-union}} backlog.
+
+Design release 1 gives the consignment details their own hub task with their own status; the frontend folds them into the "What are you importing?" row.
+
+On the frontend hub there is no task row for the consignment details. The words "Commodity details" do appear, but as the heading of the second section — "2. Commodity details" — over two rows about additional details and animal identification, not as a task of their own. The consignment-details page hangs off the "What are you importing?" row instead: that row covers the commodity search and the consignment-details page together ({{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js}} lines 29-33) and carries one status for both, so a user reading the hub cannot tell whether the numbers, packages and net weight have been entered — only whether the row as a whole is finished.
+
+Design release 1 lists "Commodity details" as the first task under "2. Description of the goods", linking to {{/consignment-details}} and carrying its own "To do" or "Complete" tag independently of "What are you importing?" ({{app/routes.js}} lines 5770-5777).
+
+h2. Acceptance criteria
+
+* The hub shows a task row labelled "Commodity details" that links to {{/consignment-details}}.
+* That row is the first task in the section Design release 1 calls "2. Description of the goods".
+* The "Commodity details" row carries its own status tag, derived only from the consignment-details answers, independently of the "What are you importing?" row.
+* The "What are you importing?" row covers the commodity selection only, and its status no longer depends on the consignment-details answers.
+* The split of obligations between the two rows is settled and recorded — each obligation the {{commodityLines}} collection carries belongs to exactly one of the two rows.
+* A new entry exists in {{src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js}} for the consignment-details page and the parts of the commodity-lines collection that page collects.
+* On a partly answered notification a user can see at a glance that the commodity selection and the commodity details are complete while the identification details are still to do.
+* Frontend unit tests and the end-to-end specs cover the two rows and their independent statuses, and the visual baselines are updated.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

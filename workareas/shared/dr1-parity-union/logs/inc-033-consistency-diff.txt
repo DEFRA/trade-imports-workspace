@@ -1,0 +1,742 @@
+diff --git a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+index 1a90e1fa..b4b8372d 100644
+--- a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
++++ b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+@@ -16,11 +16,14 @@ store rather than canonical obligation fulfilment.
+ 
+ ## Task rows
+ 
+-[`task-rows.js`](../journeys/linear/flow/task-rows.js) exports eleven `taskRows`. A
++[`task-rows.js`](../journeys/linear/flow/task-rows.js) exports twelve `taskRows`. A
+ task row is a hub item and a submit-readiness unit; it is not a flow section.
+ 
+ Most row status comes from the union of each page's `collects`. `parts` narrows a
+-row to a collection facet. `conditional: true` lets the hub hide a row that is not
++row to a collection facet. The commodity line is split three ways — the selection
++on the commodities row, the numbers on the commodity-details row, the identifiers
++on the identification row — so each of the three pages over that one collection
++carries a status of its own. `conditional: true` lets the hub hide a row that is not
+ applicable. Every row contributes to `readyForCheckYourAnswers`.
+ 
+ The hub's `GROUPS` array in
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+index 0878badb..18fa6ecc 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js
+@@ -21,7 +21,7 @@ const copy = copyFor({ en, cy })
+  * `scope.readyForCheckYourAnswers` are the same verdict, and the POST can
+  * refuse on the latter knowing the page will name something.
+  *
+- * The species row pair is the one entry whose anchor is not a card, and the one
++ * The species entry is the one entry whose anchor is not a card, and the one
+  * entry that marks no card at all. Species cards are built one per commodity
+  * line and carry no `id`, so `decorateCard` never reaches them: even when lines
+  * exist the entry names the outstanding work without marking a card, and it
+@@ -44,7 +44,9 @@ export const REVIEW_CARDS = [
+   {
+     id: 'species',
+     anchor: 'description-of-the-goods',
+-    rows: ['commodities', 'animalIdentification']
++    // The hub splits the commodity answers across three rows; the review shows
++    // them under one heading, so the entry names all three.
++    rows: ['commodities', 'consignmentDetails', 'animalIdentification']
+   },
+   {
+     id: 'additionalAnimalDetails',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+index 89be0c3d..414d696e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.njk
+@@ -32,8 +32,9 @@
+       {{ speciesQuantityGroup(group, copy) }}
+     {% endfor %}
+ 
+-    {# Second page of the commodities row — reached from the commodity search
+-       page, not from the hub, so it ends with the primary alone. #}
+-    {{ saveActions(hubHref, copy = sharedCopy.saveActions, showReturnControls = false) }}
++    {# The hub links straight to this page — it is the "Commodity details" task
++       — so it ends with all three controls and a trader can stop and leave
++       from where the hub sent them. #}
++    {{ saveActions(hubHref, copy = sharedCopy.saveActions) }}
+   </form>
+ {% endblock %}
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index c71a8d1e..9084844a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -37,7 +37,10 @@ const GROUPS = [
+   },
+   {
+     id: 'commodity-details',
+-    rows: ['additionalDetails', 'animalIdentification']
++    // Design release 1 opens this section with the commodity details, so the
++    // consignment-details page leads the group rather than hanging off the
++    // "What are you importing?" row in the section above.
++    rows: ['consignmentDetails', 'additionalDetails', 'animalIdentification']
+   },
+   {
+     id: 'movement',
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+index 6dfefba1..f8dd9c56 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+@@ -31,12 +31,16 @@ export const copy = {
+     },
+     commodities: {
+       title: 'Beth ydych chi’n ei fewnforio?',
+-      hint: 'Y nwyddau, y rhywogaethau a nifer yr anifeiliaid rydych chi’n eu mewnforio'
++      hint: 'Y nwyddau a’r rhywogaethau rydych chi’n eu mewnforio'
+     },
+     importReason: {
+       title: 'Prif reswm dros fewnforio',
+       hint: 'Pam rydych chi’n mewnforio’r anifeiliaid a’u diben yn y farchnad fewnol'
+     },
++    consignmentDetails: {
++      title: 'Manylion y nwyddau',
++      hint: 'Faint o anifeiliaid a phecynnau sydd ar gyfer pob nwydd'
++    },
+     additionalDetails: {
+       title: 'Manylion ychwanegol am y nwyddau',
+       hint: 'Ar gyfer beth mae’r anifeiliaid wedi’u hardystio ac a oes unrhyw rai heb eu diddyfnu'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+index 6ebc4104..c595a71a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+@@ -30,12 +30,16 @@ export const copy = {
+     },
+     commodities: {
+       title: 'What are you importing?',
+-      hint: 'The commodities, species and numbers of animals you are importing'
++      hint: 'The commodities and species you are importing'
+     },
+     importReason: {
+       title: 'Main reason for importing',
+       hint: 'Why you are importing the animals and their purpose in the internal market'
+     },
++    consignmentDetails: {
++      title: 'Commodity details',
++      hint: 'How many animals and packages there are for each commodity'
++    },
+     additionalDetails: {
+       title: 'Additional commodity details',
+       hint: 'What the animals are certified for and whether any are unweaned'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index e1276180..5ada0a87 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -39,6 +39,7 @@ const unlockedSeed = {
+ 
+ const ORIGIN_ROW_TITLE = 'Where is this consignment coming from?'
+ const COMMODITIES_ROW_TITLE = 'What are you importing?'
++const CONSIGNMENT_DETAILS_ROW_TITLE = 'Commodity details'
+ const IMPORT_REASON_ROW_TITLE = 'Main reason for importing'
+ const TRANSIT_ROW_TITLE = 'Transit countries'
+ const NOT_YET_STARTED_STATUS = {
+@@ -124,13 +125,17 @@ describe('#hubHandler', () => {
+     ])
+   })
+ 
+-  it('Should render the ten page-level rows in their groups on an unlocked journey (transit stays absent)', async () => {
++  it('Should render the eleven page-level rows in their groups on an unlocked journey (transit stays absent)', async () => {
+     const { groups } = await renderHub(unlockedSeed)
+     expect(
+       groups.map((group) => group.items.map((item) => item.title.text))
+     ).toEqual([
+       [ORIGIN_ROW_TITLE, COMMODITIES_ROW_TITLE, IMPORT_REASON_ROW_TITLE],
+-      ['Additional commodity details', 'Animal identification details'],
++      [
++        CONSIGNMENT_DETAILS_ROW_TITLE,
++        'Additional commodity details',
++        'Animal identification details'
++      ],
+       ['Arrival details', 'Transporter'],
+       ['Roles and addresses', 'Contact address'],
+       ['Uploaded documents'],
+@@ -272,6 +277,27 @@ describe('#hubHandler', () => {
+     )
+   })
+ 
++  it('Should lock the Check and submit row until the journey is submit-ready (RULE 2)', async () => {
++    const reviewRow = rowByTitle(await renderHub(), 'Check and submit')
++    expect(reviewRow.hint.text).toBe(
++      'Check your answers before you submit the notification'
++    )
++    expect(reviewRow.href).toBeUndefined()
++    expect(reviewRow.status).toEqual({
++      text: 'Cannot start yet',
++      classes: 'govuk-task-list__status--cannot-start-yet'
++    })
++  })
++})
++
++describe('#hubHandler — the commodity totals', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
+   it('Should read both commodity totals as 0 on a journey with no commodity lines', async () => {
+     expect((await renderHub()).commodityTotals).toEqual({
+       animals: 0,
+@@ -301,16 +327,59 @@ describe('#hubHandler', () => {
+     })
+     expect(commodityTotals).toEqual({ animals: 28, packages: 7 })
+   })
++})
+ 
+-  it('Should lock the Check and submit row until the journey is submit-ready (RULE 2)', async () => {
+-    const reviewRow = rowByTitle(await renderHub(), 'Check and submit')
+-    expect(reviewRow.hint.text).toBe(
+-      'Check your answers before you submit the notification'
++// Design release 1 gives the commodity details a task of their own, first
++// under the second section, so a reader can tell whether the numbers and
++// packages have been entered without opening the page.
++describe('#hubHandler — the Commodity details row', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  it('Should lead the second group with a Commodity details row linking to the consignment-details page', async () => {
++    const context = await renderHub({
++      countryOfOrigin: 'FR',
++      commodityLines: [{ commoditySelection: 'Cow' }]
++    })
++    const [firstItem] = context.groups[1].items
++
++    expect(firstItem.title.text).toBe(CONSIGNMENT_DETAILS_ROW_TITLE)
++    expect(firstItem.href).toBe(
++      pagePath(context.journeyId, 'consignment-details')
+     )
+-    expect(reviewRow.href).toBeUndefined()
+-    expect(reviewRow.status).toEqual({
+-      text: 'Cannot start yet',
+-      classes: 'govuk-task-list__status--cannot-start-yet'
++    expect(firstItem.status).toEqual(NOT_YET_STARTED_STATUS)
++  })
++
++  it('Should carry a status the commodities row does not answer for', async () => {
++    const seedLine = (entry) => ({
++      countryOfOrigin: 'FR',
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          speciesSelection: '1148346',
++          commodityType: '16',
++          ...entry
++        }
++      ]
+     })
++
++    const owingTheNumbers = await renderHub(seedLine({}))
++    expect(rowByTitle(owingTheNumbers, COMMODITIES_ROW_TITLE).status).toEqual(
++      COMPLETED_STATUS
++    )
++    expect(
++      rowByTitle(owingTheNumbers, CONSIGNMENT_DETAILS_ROW_TITLE).status
++    ).toEqual(NOT_YET_STARTED_STATUS)
++
++    const answered = await renderHub(
++      seedLine({ numberOfPackages: '5', numberOfAnimalsQuantity: '25' })
++    )
++    expect(rowByTitle(answered, CONSIGNMENT_DETAILS_ROW_TITLE).status).toEqual(
++      COMPLETED_STATUS
++    )
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+index 4ab035d0..7d43641e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+@@ -31,20 +31,36 @@ const expectAxeClean = async (page, name) => {
+ const ANIMALS = '25'
+ const PACKAGES = '5'
+ const TOTAL_BOX = '.app-commodity-total'
++const SAVE_AND_CONTINUE = 'Save and continue'
+ 
+-const openHubWithCommodityTotals = async (page) => {
++const selectCommodityAndOpenDetails = async (page) => {
+   await startNotification(page)
+   await answerCountryOfOrigin(page)
+   await page.getByRole('link', { name: copy.rows.commodities.title }).click()
+   await selectSpecies(page, ['Bos taurus'])
+-  await page.getByRole('button', { name: 'Save and continue' }).click()
++  await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
+   await expect(
+-    page.getByRole('heading', { name: 'Commodity details' })
++    page.getByRole('heading', { name: copy.rows.consignmentDetails.title })
+   ).toBeVisible()
++}
++
++const expectHub = (page) =>
++  expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
++
++const openHubWithCommodityTotals = async (page) => {
++  await selectCommodityAndOpenDetails(page)
+   await page.getByLabel('Number of animals').fill(ANIMALS)
+   await page.getByLabel('Number of packages (when required)').fill(PACKAGES)
+-  await page.getByRole('button', { name: 'Save and continue' }).click()
+-  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
++  await page.getByRole('button', { name: SAVE_AND_CONTINUE }).click()
++  await expectHub(page)
++}
++
++// The commodity is chosen but its numbers are not entered: the hub state the
++// "Commodity details" row exists to report.
++const openHubOwingTheCommodityNumbers = async (page) => {
++  await selectCommodityAndOpenDetails(page)
++  await page.getByRole('link', { name: 'Cancel and return to overview' }).click()
++  await expectHub(page)
+ }
+ 
+ const expectTotalBoxes = async (page, animals, packages) => {
+@@ -114,6 +130,63 @@ test.describe('hub feature', () => {
+   })
+ })
+ 
++// Design release 1 gives the commodity details a task of their own, first
++// under the second section, so the hub says whether the numbers have been
++// entered rather than folding them into "What are you importing?".
++test.describe('hub feature — the Commodity details row', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('stands as its own task, linking to the consignment-details page', async ({
++    page
++  }) => {
++    // The hub links straight to the details page now, so that page carries
++    // the return controls a trader needs to stop and leave.
++    await openHubOwingTheCommodityNumbers(page)
++
++    const details = taskRow(page, copy.rows.consignmentDetails.title)
++    await expect(
++      details.getByRole('link', { name: copy.rows.consignmentDetails.title })
++    ).toHaveAttribute('href', /\/consignment-details$/)
++    await expect(details).toContainText(copy.statuses.notYetStarted)
++    await expect(taskRow(page, copy.rows.commodities.title)).toContainText(
++      copy.statuses.completed
++    )
++  })
++
++  test('reads Completed once the numbers are saved, leaving the other rows alone', async ({
++    page
++  }) => {
++    await openHubWithCommodityTotals(page)
++
++    await expect(
++      taskRow(page, copy.rows.consignmentDetails.title)
++    ).toContainText(copy.statuses.completed)
++    await expect(taskRow(page, copy.rows.commodities.title)).toContainText(
++      copy.statuses.completed
++    )
++    await expect(
++      taskRow(page, copy.rows.additionalDetails.title)
++    ).toContainText(copy.statuses.notYetStarted)
++  })
++
++  // The partly-complete hub is the state the row exists for — one commodity
++  // task done and the next still outstanding — and it mixes the green and
++  // blue tags the earlier axe runs never show side by side.
++  test('partly-complete hub has no serious or critical axe violations', async ({
++    page
++  }) => {
++    await openHubOwingTheCommodityNumbers(page)
++
++    await expect(
++      taskRow(page, copy.rows.consignmentDetails.title)
++    ).toContainText(copy.statuses.notYetStarted)
++
++    await expectAxeClean(page, 'Partly-complete hub')
++  })
++})
++
+ test.describe('hub feature — review readiness', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
+index edc316e1..d84d7239 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/status.test.js
+@@ -41,6 +41,7 @@ const cases = {
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
++      NOT_STARTED,
+       NA,
+       NOT_STARTED,
+       NOT_STARTED,
+@@ -69,6 +70,7 @@ const cases = {
+       NOT_STARTED,
+       NOT_STARTED,
+       NOT_STARTED,
++      NOT_STARTED,
+       NA,
+       NOT_STARTED,
+       NOT_STARTED,
+@@ -101,6 +103,7 @@ const cases = {
+       IN_PROGRESS,
+       NOT_STARTED,
+       NOT_STARTED,
++      NOT_STARTED,
+       FULFILLED,
+       NOT_STARTED,
+       NA,
+@@ -137,6 +140,7 @@ const cases = {
+     rows: [
+       IN_PROGRESS,
+       FULFILLED,
++      FULFILLED,
+       NOT_STARTED,
+       NOT_STARTED,
+       FULFILLED,
+@@ -173,6 +177,7 @@ const cases = {
+       FULFILLED,
+       FULFILLED,
+       FULFILLED,
++      FULFILLED,
+       FULFILLED
+     ],
+     sections: [
+@@ -193,6 +198,7 @@ const cases = {
+     rows: [
+       FULFILLED,
+       NOT_STARTED,
++      NOT_STARTED,
+       FULFILLED,
+       FULFILLED,
+       NOT_STARTED,
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+index 98643039..ee85c02c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js
+@@ -20,10 +20,35 @@ import { consignmentContactSelectPage } from '../features/contact/page.js'
+ 
+ export const taskRows = [
+   { id: 'origin', pages: [originPage] },
++  // Design release 1 gives the commodity selection and the commodity details
++  // a task each, so the one collection carries three facets rather than two.
++  // The search page seeds the commodity, its species and that species' type;
++  // the consignment-details page collects the numbers. `except` keeps the
++  // search row the default home of any member the other two do not claim, so
++  // a new answer on the line cannot fall out of every row unnoticed.
+   {
+     id: 'commodities',
+-    pages: [commoditiesPage, consignmentDetailsPage],
+-    parts: [{ collection: 'commodityLines', except: ['animalIdentifiers'] }]
++    pages: [commoditiesPage],
++    parts: [
++      {
++        collection: 'commodityLines',
++        except: [
++          'animalIdentifiers',
++          'numberOfAnimalsQuantity',
++          'numberOfPackages'
++        ]
++      }
++    ]
++  },
++  {
++    id: 'consignmentDetails',
++    pages: [consignmentDetailsPage],
++    parts: [
++      {
++        collection: 'commodityLines',
++        only: ['numberOfAnimalsQuantity', 'numberOfPackages']
++      }
++    ]
+   },
+   { id: 'importReason', pages: [importReasonPage] },
+   { id: 'additionalDetails', pages: [additionalDetailsPage] },
+diff --git a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+index 177a5f7c..0e1ab8c2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js
+@@ -141,116 +141,168 @@ describe('#rowStatus — one status per hub task row', () => {
+       statusIn('documents', { ...unlocked, documents: happyPath.documents })
+     ).toBe(FULFILLED)
+   })
++})
+ 
+-  describe('the commodities/identification facet split of commodityLines', () => {
+-    it('Should read Not yet started on both rows while no line exists', () => {
+-      expect(statusIn('commodities', {})).toBe(NOT_STARTED)
+-      expect(statusIn('animalIdentification', {})).toBe(NOT_STARTED)
+-    })
++describe('#rowStatus — the commodities/details/identification facet split of commodityLines', () => {
++  it('Should read Not yet started on all three rows while no line exists', () => {
++    expect(statusIn('commodities', {})).toBe(NOT_STARTED)
++    expect(statusIn('consignmentDetails', {})).toBe(NOT_STARTED)
++    expect(statusIn('animalIdentification', {})).toBe(NOT_STARTED)
++  })
+ 
+-    it('Should complete the commodities row on line data alone, owing no identifier on a single species', () => {
+-      const answers = {
+-        commodityLines: [
+-          {
+-            commoditySelection: 'Cow',
+-            speciesSelection: '1148346',
+-            commodityType: '16',
+-            numberOfPackages: '5',
+-            numberOfAnimalsQuantity: '25'
+-          }
+-        ]
+-      }
+-      expect(statusIn('commodities', answers)).toBe(FULFILLED)
+-      // Design release 1 asks for identifiers only once a consignment
+-      // carries more than one identified species, so a twenty-five-animal
+-      // single-species line owes none of them.
+-      expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
+-    })
++  // Design release 1 gives the commodity details a task of their own, so a
++  // reader can tell the selection apart from the numbers on the hub.
++  it('Should complete the commodities row on the selection while the details row still owes the numbers', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          speciesSelection: '1148346',
++          commodityType: '16'
++        }
++      ]
++    }
++    expect(statusIn('commodities', answers)).toBe(FULFILLED)
++    expect(statusIn('consignmentDetails', answers)).toBe(NOT_STARTED)
++  })
+ 
+-    it('Should leave the identification row Not yet started while a second species owes its first identifier', () => {
+-      const answers = {
+-        commodityLines: [
+-          {
+-            commoditySelection: 'Cow',
+-            speciesSelection: '1148346',
+-            commodityType: '16',
+-            numberOfPackages: '5',
+-            numberOfAnimalsQuantity: '25'
+-          },
+-          {
+-            commoditySelection: 'Horse',
+-            speciesSelection: '822332',
+-            commodityType: '2',
+-            numberOfPackages: '3',
+-            numberOfAnimalsQuantity: '4'
+-          }
+-        ]
+-      }
+-      expect(statusIn('commodities', answers)).toBe(FULFILLED)
+-      expect(statusIn('animalIdentification', answers)).toBe(NOT_STARTED)
+-    })
++  it('Should complete the details row on the numbers alone, leaving the commodities row In progress', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          numberOfPackages: '5',
++          numberOfAnimalsQuantity: '25'
++        }
++      ]
++    }
++    expect(statusIn('consignmentDetails', answers)).toBe(FULFILLED)
++    expect(statusIn('commodities', answers)).toBe(IN_PROGRESS)
++  })
+ 
+-    it('Should complete the identification row on identifiers alone, leaving commodities In progress', () => {
+-      const answers = {
+-        commodityLines: [
+-          {
+-            commoditySelection: 'Cow',
+-            animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
+-          }
+-        ]
+-      }
+-      expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
+-      expect(statusIn('commodities', answers)).toBe(IN_PROGRESS)
+-    })
++  it('Should hold the details row In progress while a second line still owes its animal count', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          speciesSelection: '1148346',
++          commodityType: '16',
++          numberOfAnimalsQuantity: '25'
++        },
++        {
++          commoditySelection: 'Horse',
++          speciesSelection: '822332',
++          commodityType: '2'
++        }
++      ]
++    }
++    expect(statusIn('commodities', answers)).toBe(FULFILLED)
++    expect(statusIn('consignmentDetails', answers)).toBe(IN_PROGRESS)
++  })
+ 
+-    it('Should hold the identification row In progress while any line still owes its at-least-one identifier', () => {
+-      const answers = {
+-        commodityLines: [
+-          {
+-            commoditySelection: 'Cow',
+-            animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
+-          },
+-          { commoditySelection: 'Horse' }
+-        ]
+-      }
+-      expect(statusIn('animalIdentification', answers)).toBe(IN_PROGRESS)
+-    })
++  it('Should complete the commodities and details rows on line data alone, owing no identifier on a single species', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          speciesSelection: '1148346',
++          commodityType: '16',
++          numberOfPackages: '5',
++          numberOfAnimalsQuantity: '25'
++        }
++      ]
++    }
++    expect(statusIn('commodities', answers)).toBe(FULFILLED)
++    expect(statusIn('consignmentDetails', answers)).toBe(FULFILLED)
++    // Design release 1 asks for identifiers only once a consignment
++    // carries more than one identified species, so a twenty-five-animal
++    // single-species line owes none of them.
++    expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
++  })
+ 
+-    it('Should ask no animal records of a line whose commodity carries no identifier of its own', () => {
+-      const answers = {
+-        commodityLines: [
+-          {
+-            commoditySelection: 'Cow',
+-            animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
+-          },
+-          { commoditySelection: 'Fish' }
+-        ]
+-      }
+-      expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
+-    })
++  it('Should leave the identification row Not yet started while a second species owes its first identifier', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          speciesSelection: '1148346',
++          commodityType: '16',
++          numberOfPackages: '5',
++          numberOfAnimalsQuantity: '25'
++        },
++        {
++          commoditySelection: 'Horse',
++          speciesSelection: '822332',
++          commodityType: '2',
++          numberOfPackages: '3',
++          numberOfAnimalsQuantity: '4'
++        }
++      ]
++    }
++    expect(statusIn('commodities', answers)).toBe(FULFILLED)
++    expect(statusIn('animalIdentification', answers)).toBe(NOT_STARTED)
++  })
+ 
+-    it('Should resolve the enclosing-commodity activations through the facet (a Cat identifier owes its permanent address)', () => {
+-      const catLine = (identifier) => ({
+-        commodityLines: [
+-          { commoditySelection: 'Cat', animalIdentifiers: [identifier] }
+-        ]
+-      })
+-      expect(
+-        statusIn(
+-          'animalIdentification',
+-          catLine({ animalIdentifierPassport: 'UK123456789' })
+-        )
+-      ).toBe(IN_PROGRESS)
+-      expect(
+-        statusIn(
+-          'animalIdentification',
+-          catLine({
+-            animalIdentifierPassport: 'UK123456789',
+-            permanentAddress: { name: 'Pet Owner' }
+-          })
+-        )
+-      ).toBe(FULFILLED)
++  it('Should complete the identification row on identifiers alone, leaving commodities In progress', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
++        }
++      ]
++    }
++    expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
++    expect(statusIn('commodities', answers)).toBe(IN_PROGRESS)
++  })
++
++  it('Should hold the identification row In progress while any line still owes its at-least-one identifier', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
++        },
++        { commoditySelection: 'Horse' }
++      ]
++    }
++    expect(statusIn('animalIdentification', answers)).toBe(IN_PROGRESS)
++  })
++
++  it('Should ask no animal records of a line whose commodity carries no identifier of its own', () => {
++    const answers = {
++      commodityLines: [
++        {
++          commoditySelection: 'Cow',
++          animalIdentifiers: [{ animalIdentifierEarTag: 'UK123456789012' }]
++        },
++        { commoditySelection: 'Fish' }
++      ]
++    }
++    expect(statusIn('animalIdentification', answers)).toBe(FULFILLED)
++  })
++
++  it('Should resolve the enclosing-commodity activations through the facet (a Cat identifier owes its permanent address)', () => {
++    const catLine = (identifier) => ({
++      commodityLines: [
++        { commoditySelection: 'Cat', animalIdentifiers: [identifier] }
++      ]
+     })
++    expect(
++      statusIn(
++        'animalIdentification',
++        catLine({ animalIdentifierPassport: 'UK123456789' })
++      )
++    ).toBe(IN_PROGRESS)
++    expect(
++      statusIn(
++        'animalIdentification',
++        catLine({
++          animalIdentifierPassport: 'UK123456789',
++          permanentAddress: { name: 'Pet Owner' }
++        })
++      )
++    ).toBe(FULFILLED)
+   })
+ })
+ 
+@@ -301,6 +353,12 @@ describe('#rowGatePasses / #rowEntry — a row is gated exactly as its first pag
+ 
+   it('Should enter a row at its first gate-passing page', () => {
+     const scope = makeScope(unlocked)
++    expect(rowEntry(taskRowById('commodities'), scope, 'journey-1')).toMatch(
++      /\/commodities$/
++    )
++    expect(
++      rowEntry(taskRowById('consignmentDetails'), scope, 'journey-1')
++    ).toMatch(/\/consignment-details$/)
+     expect(rowEntry(taskRowById('arrivalDetails'), scope, 'journey-1')).toMatch(
+       /\/port-of-entry$/
+     )

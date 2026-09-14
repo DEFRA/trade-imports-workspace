@@ -27517,7 +27517,7 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
+      "status": "done",
       "commit": "a05614e8",
       "failure_reason": null,
       "finding": {
@@ -27763,7 +27763,9 @@
         {
           "repo": "frontend",
           "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/338",
-          "number": 338
+          "number": 338,
+          "merged": true,
+          "sha": "fb0255c1300e10114b7e62162ab157b5af787e6b"
         }
       ]
     },
@@ -28003,8 +28005,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "cf717f34",
       "failure_reason": null,
       "finding": {
         "frontend": "On a notification with no commodities the hub goes straight from the \"Overview\" heading to the first task section. There is no \"Your commodities\" heading and no summary of what the notification contains — the words appear in no captured frontend screen in this corpus. The frontend does build the same two summary panels, headed \"Your commodities\" with the labels \"Animals\" and \"Packages/boxes\" and the same captions (src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:3-9, rendered at src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:8-26), but the whole block is behind a truthiness test and the view model returns null while the commodity collection is empty (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:142-151), so a user only ever meets it once they have added a commodity line.",
@@ -28183,7 +28185,18 @@
         "note": "Both: 'Your commodities' totals suppressed until a commodity exists; DR1 shows the panels reading 0 from the first visit. Identical code citations and fix. C additionally carries the layout consequence that travels with it — DR1 gives the hub the full grid width while the frontend confines the panels to a two-thirds column — and says so explicitly to avoid raising it twice.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-596",
+      "branch": "feat/EUDPA-596-the-hub-hides-the-animal-and-package-tot",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/340",
+          "number": 340,
+          "merged": true,
+          "sha": "f643198b3738ddd5c63370fec6f6e30ef115753e"
+        }
+      ]
     },
     {
       "id": "inc-035",
@@ -28206,8 +28219,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "bbef0dcd",
       "failure_reason": null,
       "finding": {
         "frontend": "\"Animal identification details\" is on the hub from the moment the notification is created, before any commodity has been chosen and therefore before it is known whether any animal needs an identifier at all. It shows on both captured hub states, locked with the status \"Cannot start yet\". The frontend does know how to leave a row out — its exit-details and transit-countries rows are marked conditional and are absent from both captures (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:35-47, with the hiding at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:93-118) — but the identification row is not marked that way (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:41-45), so it always appears.",
@@ -28438,10 +28451,30 @@
         "note": "Both: the identification row is unconditional, so it shows on a notification with no commodity; DR1 inserts it only when a chosen species has identifiers. C is materially better and A is wrong on effort: A says 'the hub already has the machinery for this', C proves it does not — commodityLines is a structural group in scope from creation, so the row's status roll-up never reaches not-applicable and marking the row conditional alone leaves it drawn. C names the two ways out.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-597",
+      "branch": "feat/EUDPA-597-the-hub-lists-an-animal-identification-t",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/341",
+          "number": 341,
+          "merged": true,
+          "sha": "b2ff4aa024cd5380bf0f985c01c4c10bd2cc220b"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/224",
+          "number": 224,
+          "merged": true,
+          "sha": "a7a3d43de53094d1458731bea8f620ec9e03cc95"
+        }
+      ]
     },
     {
       "id": "inc-033",
+      "ticket": "EUDPA-598",
+      "branch": "feat/EUDPA-598-design-release-1-gives-the-consignment-d",
       "type": "flow-change",
       "milestone": null,
       "domain": "hub",
@@ -28462,7 +28495,7 @@
       "gate": null,
       "dependsOn": [],
       "status": "todo",
-      "commit": null,
+      "commit": "f2a1933a",
       "failure_reason": null,
       "finding": {
         "frontend": "There is no task row for the consignment details on the frontend's hub. The words \"Commodity details\" do appear on fe-hub, but as the heading of the second section — \"2. Commodity details\" — over two rows about additional details and animal identification, not as a task of their own. The consignment-details page hangs off the \"What are you importing?\" row instead: that row covers the commodity search and the consignment-details page together (src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:29-33) and carries one status for both, so a user reading the hub cannot tell whether the numbers, packages and net weight have been entered — only whether the row as a whole is finished.",
@@ -28554,7 +28587,17 @@
         "note": "Both: consignment-details has no hub row of its own, folded into 'What are you importing?'; DR1 lists 'Commodity details' first under 'Description of the goods'. Both spot the same trap — the frontend does show the words 'Commodity details' on the hub, but as a section heading, not a row. Same code citation, same fix, same caveat that the two rows' obligations must be split.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "openQuestions": [
+        "Should the new \"Commodity details\" row be gated until a commodity line exists? consignmentDetailsPage carries no entry gate (features/commodities/page.js), so on a brand-new notification the hub renders a live \"Not yet started\" \"Commodity details\" row whose href is /notifications/{id}/consignment-details, and a GET there redirects to the commodity search page when there are no lines (consignment-details.controller.js, `lines.length === 0`). A trader therefore sees two hub rows — \"What are you importing?\" and \"Commodity details\" — that both land on \"What are you importing?\", with no explanation. Design release 1 shows the row with a \"To do\" tag from the start (app/routes.js:5770-5777), so whether the frontend should match that (row live, silent redirect), gate the row to \"Cannot start yet\" until a commodity is selected, or keep it live but explain the redirect on the search page, is a product/design call rather than a code one. Deferred from the inc-033 review because every option beyond the status quo adds a gate and changes the hub's row statuses for a fresh notification, widening this increment past the row split it exists for."
+      ],
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/342",
+          "number": 342
+        }
+      ]
     },
     {
       "id": "inc-032",

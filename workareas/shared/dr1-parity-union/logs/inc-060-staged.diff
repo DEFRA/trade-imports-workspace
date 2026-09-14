@@ -1,0 +1,259 @@
+diff --git a/src/server/app/bridge/applicability.test.js b/src/server/app/bridge/applicability.test.js
+index 3e8e4107..3064a612 100644
+--- a/src/server/app/bridge/applicability.test.js
++++ b/src/server/app/bridge/applicability.test.js
+@@ -13,9 +13,14 @@ describe('#appliesForCommodity', () => {
+     expect(appliesForCommodity('permanentAddress', 'Cow')).toBe(false)
+   })
+ 
++  // The CPH list is derived by exemption rather than by inclusion — design
++  // release 1 asks every consignment for a CPH number and lets off two
++  // commodity codes — so Horse (0101) is the value outside it and Fish, on no
++  // other list at all, is inside.
+   it('Should apply an anyAllowListed obligation per its commodity list', () => {
+     expect(appliesForCommodity('containsUnweanedAnimals', 'Cow')).toBe(true)
+-    expect(appliesForCommodity('countyParishHoldingCph', 'Fish')).toBe(false)
++    expect(appliesForCommodity('countyParishHoldingCph', 'Fish')).toBe(true)
++    expect(appliesForCommodity('countyParishHoldingCph', 'Horse')).toBe(false)
+   })
+ 
+   // Design release 1 asks for identification only where the commodity has an
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+index 323b2533..b4ae8b2e 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+@@ -1,7 +1,9 @@
+ import AxeBuilder from '@axe-core/playwright'
+ import { expect, test } from '@playwright/test'
+ import {
++  answerCountryOfOrigin,
+   partyPickerName,
++  selectSpecies,
+   signIn,
+   startNotification,
+   unlockSections,
+@@ -136,6 +138,61 @@ test.describe('addresses hub', () => {
+   })
+ })
+ 
++// Design release 1 asks every consignment for a CPH number and names the
++// commodity codes that escape the question, so the row is the default and its
++// absence is the exception. Ornamental fish is the sharpest case: it is on no
++// other commodity list at all, so if the rule were an allow-list of the
++// commodities somebody remembered, fish would be let off.
++test.describe('addresses hub — who is asked for a CPH number', () => {
++  // The hub's own beforeEach starts a cat consignment; these two need a
++  // commodity of their own, so they walk the same unlock steps with it.
++  const openAddressesImporting = async (page, species) => {
++    await startNotification(page)
++    await answerCountryOfOrigin(page)
++    await page.getByRole('link', { name: 'What are you importing?' }).click()
++    await selectSpecies(page, [species])
++    await saveAndContinue(page)
++    await expect(
++      page.getByRole('heading', { name: 'Commodity details' })
++    ).toBeVisible()
++    await page.getByLabel('Number of animals').fill('1')
++    await saveAndContinue(page)
++    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
++    await page.getByRole('link', { name: 'Roles and addresses' }).click()
++    await expect(
++      page.getByRole('heading', { name: copy.hub.title })
++    ).toBeVisible()
++  }
++
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++  })
++
++  test('asks a consignment of ornamental fish for a CPH number', async ({
++    page
++  }) => {
++    await openAddressesImporting(page, 'Salmo salar')
++
++    const row = rowFor(page, copy.hub.cph.title)
++    await expect(row).toContainText(copy.hub.cph.hint)
++    await expect(row).toContainText(copy.hub.notAddedYet)
++    await expect(
++      row.getByRole('link', {
++        name: `${copy.hub.add} ${copy.hub.cph.title.toLowerCase()}`
++      })
++    ).toBeVisible()
++  })
++
++  // Commodity code 0101 is one of the two design release 1 lets off.
++  test('does not ask a consignment of horses for a CPH number', async ({
++    page
++  }) => {
++    await openAddressesImporting(page, 'Equus caballus')
++
++    await expect(rowFor(page, copy.hub.cph.title)).toHaveCount(0)
++  })
++})
++
+ test.describe('party picker per role', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+index 121b98b7..dad0aa49 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js
+@@ -682,9 +682,23 @@ describe(`${SUITE} — gated-off answers and blanks`, () => {
+     )
+   })
+ 
+-  it('Should omit the unweaned and CPH rows when no line is an eligible commodity', async () => {
++  it('Should omit the unweaned row when no line is an eligible commodity', async () => {
+     const keys = keysOf(rowsOf(await sectionsFor(gatedOffSeed)))
+     expect(keys).not.toContain(UNWEANED_KEY)
++  })
++
++  // CPH is the opposite shape: design release 1 asks every consignment for one
++  // and exempts named commodity codes, so the row goes only on an exempt line
++  // — 0101 here. This block's own Fish line is asked for a CPH number.
++  it('Should omit the CPH row for an exempt commodity', async () => {
++    const keys = keysOf(
++      rowsOf(
++        await sectionsFor({
++          ...gatedOffSeed,
++          commodityLines: [{ commoditySelection: 'Horse' }]
++        })
++      )
++    )
+     expect(keys).not.toContain(CPH_KEY)
+   })
+ 
+@@ -1190,6 +1204,10 @@ describe(`${SUITE} — commodity-gate render matrix — model metadata per selec
+     }
+   }
+ 
++  // CPH runs the other way round from the other two gates: design release 1
++  // asks every consignment for a CPH number and exempts named commodity codes,
++  // so the false rows below are the exemptions — 0101 for Horse and 01061900
++  // for Cat and Dog, which is asked for a permanent address instead.
+   const MATRIX = [
+     { commodity: 'Cow', packages: true, unweaned: true, cph: true },
+     // Design release 1 asks the unweaned-animals question only of a commodity
+@@ -1197,7 +1215,7 @@ describe(`${SUITE} — commodity-gate render matrix — model metadata per selec
+     { commodity: 'Horse', packages: true, unweaned: false, cph: false },
+     { commodity: 'Cat', packages: true, unweaned: false, cph: false },
+     { commodity: 'Dog', packages: true, unweaned: false, cph: false },
+-    { commodity: 'Fish', packages: false, unweaned: false, cph: false }
++    { commodity: 'Fish', packages: false, unweaned: false, cph: true }
+   ]
+ 
+   it.each(MATRIX)(
+diff --git a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+index b6a06400..4e62a624 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
++++ b/src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json
+@@ -1816,7 +1816,14 @@
+           "inScope": false
+         },
+         "263b4c5d-6e7f-4c93-8012-6cd3e4f50618": {
+-          "inScope": false
++          "inScope": true,
++          "status": "mandatory",
++          "reasons": [
++            {
++              "code": "obligation.cph.applicable.becauseCphCommodity",
++              "explanation": "CPH applies when any commodity line has a CPH-required commodityCode"
++            }
++          ]
+         },
+         "385d6e7f-8091-4eb5-8234-8ef506172940": {
+           "inScope": true,
+diff --git a/src/server/app/sets/live-animals/obligations/whitelists.test.js b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+index 2e4734d9..90154756 100644
+--- a/src/server/app/sets/live-animals/obligations/whitelists.test.js
++++ b/src/server/app/sets/live-animals/obligations/whitelists.test.js
+@@ -96,6 +96,13 @@ describe('package-count list → numberOfPackages (line-scoped)', () => {
+ // `cph` is a top-level singleton with
+ // `applyTo: anyAllowListed(commodityCode, cphCommodities(), …)`.
+ // In scope iff ANY commodity line has a matching commodity.
++//
++// The list itself is derived the other way round from the ones above: design
++// release 1 asks every consignment for a CPH number and exempts named
++// commodity codes, so the list is every picker name outside
++// CPH_EXEMPT_COMMODITY_CODES. The named negatives below pin the two exempt
++// codes — the iteration above only walks the positive list, and the sentinel
++// only proves an unknown value is refused.
+ // ---------------------------------------------------------------------------
+ 
+ describe('CPH list → cph (top-level anyAllowListed)', () => {
+@@ -114,6 +121,36 @@ describe('CPH list → cph (top-level anyAllowListed)', () => {
+     })
+     expect(state.obligations[cph.id].inScope).toBe(false)
+   })
++
++  // Commodity code 0101. A horse is not kept on a county parish holding, so
++  // design release 1 exempts the code outright.
++  it('Should not put cph in scope for a horses-only consignment', () => {
++    const state = evaluate({
++      [commodityCode.id]: { line1: 'Horse' }
++    })
++    expect(state.obligations[cph.id].inScope).toBe(false)
++  })
++
++  // Commodity code 01061900 — cats, dogs and ferrets. Design release 1 asks
++  // this code for each animal's permanent address instead of a CPH number.
++  for (const name of ['Cat', 'Dog']) {
++    it(`Should not put cph in scope for a ${name.toLowerCase()}-only consignment`, () => {
++      const state = evaluate({
++        [commodityCode.id]: { line1: name }
++      })
++      expect(state.obligations[cph.id].inScope).toBe(false)
++    })
++  }
++
++  // The rule is an exemption list, so a commodity nobody thought about is
++  // asked rather than silently let off. Fish is today's instance of that:
++  // code 0301 is outside the two exempt codes, so it is asked.
++  it('Should put cph in scope for a consignment of ornamental fish', () => {
++    const state = evaluate({
++      [commodityCode.id]: { line1: 'Fish' }
++    })
++    expect(state.obligations[cph.id].inScope).toBe(true)
++  })
+ })
+ 
+ // ---------------------------------------------------------------------------
+@@ -222,7 +259,10 @@ for (const { name, names, gated } of UNIT_SCOPED_ALLOWLISTS) {
+ 
+ const EXPECTED = {
+   'storable package-count entries': ['Cat', 'Cow', 'Dog', 'Horse'],
+-  'CPH list': ['Cow'],
++  // Derived: every picker name whose commodity code is not CPH-exempt. Cat and
++  // Dog share the exempt 01061900 code and Horse is 0101, so today's catalogue
++  // leaves Cow and Fish.
++  'CPH list': ['Cow', 'Fish'],
+   'unweaned list': ['Cow'],
+   'microchip list': ['Horse', 'Cat', 'Dog'],
+   'passport list': ['Horse', 'Cow', 'Cat', 'Dog'],
+diff --git a/src/server/app/sets/live-animals/services/commodities/stub.js b/src/server/app/sets/live-animals/services/commodities/stub.js
+index 4a15c9eb..7f464665 100644
+--- a/src/server/app/sets/live-animals/services/commodities/stub.js
++++ b/src/server/app/sets/live-animals/services/commodities/stub.js
+@@ -184,4 +184,21 @@ export const PERMANENT_ADDRESS_COMMODITIES = ['Cat', 'Dog']
+ // obligations/whitelists.test.js.
+ export const UNWEANED_ANIMAL_COMMODITIES = ['Cow']
+ 
+-export const CPH_COMMODITIES = ['Cow']
++// Design release 1 asks for a CPH number on every consignment and names the
++// commodity codes that escape the question rather than the ones that need it:
++// a code has to be listed to be let off. Two live-animal codes are — 0101, the
++// horses and donkeys code, and 01061900, the cat, dog and ferret code, which is
++// asked for each animal's permanent address instead. Everything else in design
++// release 1's catalogue, from sheep and goats through poultry to ornamental
++// fish, falls to the default and is asked for a CPH number.
++//
++// Exempting by CODE rather than by picker name is what makes the rule hold as
++// the catalogue grows: ferrets join Cat and Dog under 01061900 and donkeys join
++// Horse under 0101 without a second edit here, and a commodity added under any
++// other code is asked the question rather than silently let off.
++export const CPH_EXEMPT_COMMODITY_CODES = ['0101', '01061900']
++
++// Derived, so the default is to ask. Pinned by obligations/whitelists.test.js.
++export const CPH_COMMODITIES = COMMODITY_OPTIONS.filter(
++  (name) => !CPH_EXEMPT_COMMODITY_CODES.includes(COMMODITY_CODES[name])
++)

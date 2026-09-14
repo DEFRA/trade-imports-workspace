@@ -1,0 +1,19 @@
+h2. Increment
+
+{{inc-060}} from the {{shared/dr1-parity-union}} backlog.
+
+DR1 asks for a County Parish Holding (CPH) number on every live-animal consignment except horses (0101) and the cat/dog/ferret group (01061900). The frontend asks only when a commodity line matches a one-entry allow-list, {{CPH_COMMODITIES = \['Cow'\]}}. A trader importing ornamental fish is asked for a CPH number in DR1 and is not asked in the frontend. Because the frontend rule is an allow-list, every commodity added to the catalogue from now on is silently exempt, which is the wrong default for a question DR1 treats as the norm.
+
+h2. Acceptance criteria
+
+* The CPH rule is inverted: a consignment is asked for a CPH number by default, and a commodity has to be exempt to escape the question.
+* The exempt list is horses (commodity code 0101) and the cat/dog/ferret group (commodity code 01061900). Cattle, pigs and every other live-animal commodity in the catalogue fall to the default and are asked.
+* Within today's five-entry catalogue this changes one commodity, fish: the CPH row appears on the addresses hub and the CPH page is reachable for a fish consignment.
+* Horses remain unasked, and the cat/dog/ferret group keeps its permanent-address treatment rather than a CPH question.
+* The hub row and the page guard use the same rule, so the row and the reachability of {{/cph-number}} cannot disagree: see {{src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js}} lines 50-52 and {{src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.js}} lines 27-30.
+* Unit tests cover an exempt commodity, a defaulted commodity and a mixed-commodity consignment.
+* The E2E specs and their visual baselines in the tests repo are updated for the new hub row and the newly reachable page.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

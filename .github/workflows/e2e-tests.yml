@@ -39,7 +39,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           requested="${{ inputs.branch || (github.event_name == 'pull_request' && github.head_ref || github.ref_name) }}"
-          if gh api "repos/${{ github.repository }}/git/ref/heads/${requested}" >/dev/null 2>&1; then
+          ref_enc=$(printf 'heads/%s' "$requested" | jq -sRr @uri)
+          if gh api "repos/${{ github.repository }}/git/ref/${ref_enc}" >/dev/null 2>&1; then
             echo "ref=${requested}" >> "$GITHUB_OUTPUT"
             echo "Workspace ref: ${requested}"
           else

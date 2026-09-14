@@ -1,0 +1,177 @@
+{
+  "$comment": "Draft surfaces manifest for the frontend-alignment drift check (report.md section 8). Paths are repo-relative. Rules: identical (byte-equal wherever present), identical-except (byte-equal after dropping lines matching any allow pattern), only-in (must exist only in the named repos), deliberate (differs by a recorded decision; reason names it).",
+  "repos": {
+    "ins": "repos/trade-imports-ins-frontend",
+    "animals": "repos/trade-imports-animals-frontend",
+    "plants": "repos/trade-imports-plants-frontend"
+  },
+  "chassisDirectories": [
+    "src/auth",
+    "src/plugins",
+    "src/server/auth",
+    "src/server/common",
+    "src/server/health",
+    "src/server/signout"
+  ],
+  "surfaces": [
+    { "path": "src/auth/get-oidc-config.js", "rule": "identical" },
+    { "path": "src/auth/get-oidc-config.test.js", "rule": "identical" },
+    { "path": "src/auth/get-oidc-config-with-retry.js", "rule": "identical" },
+    { "path": "src/auth/get-oidc-config-with-retry.test.js", "rule": "identical" },
+    { "path": "src/auth/get-permissions.js", "rule": "identical" },
+    { "path": "src/auth/get-permissions.test.js", "rule": "identical" },
+    { "path": "src/auth/get-safe-redirect.js", "rule": "identical" },
+    { "path": "src/auth/get-safe-redirect.test.js", "rule": "identical" },
+    { "path": "src/auth/get-sign-out-url.js", "rule": "identical" },
+    { "path": "src/auth/get-sign-out-url.test.js", "rule": "identical" },
+    { "path": "src/auth/refresh-tokens.js", "rule": "identical" },
+    { "path": "src/auth/refresh-tokens.test.js", "rule": "identical" },
+    { "path": "src/auth/state.js", "rule": "identical" },
+    { "path": "src/auth/state.test.js", "rule": "identical" },
+    { "path": "src/auth/verify-token.js", "rule": "identical" },
+    { "path": "src/auth/verify-token.test.js", "rule": "identical" },
+    { "path": "src/plugins/auth.js", "rule": "identical" },
+    {
+      "path": "src/plugins/auth.test.js",
+      "rule": "identical-except",
+      "allow": ["defraId\\.redirectUrl", "defraId\\.serviceId", "defraId\\.policy", "serviceId:", "p: '"]
+    },
+    { "path": "src/plugins/csrf.js", "rule": "identical" },
+    {
+      "path": "src/plugins/csrf.test.js",
+      "rule": "deliberate",
+      "reason": "s01 §8: ins boots the real server and posts without a crumb; plants unit-tests the options object. Settle in open question 24 of report.md."
+    },
+    { "path": "src/server/auth/index.js", "rule": "identical" },
+    {
+      "path": "src/server/auth/controller.js",
+      "rule": "identical-except",
+      "allow": ["crn: profile\\.crn", "\\{ profile \\}"]
+    },
+    {
+      "path": "src/server/auth/controller.test.js",
+      "rule": "deliberate",
+      "reason": "test shape: ins keeps four sign-in and sign-out route tests and mock-auth.js; the journeys assert through the copy module."
+    },
+    {
+      "path": "src/server/auth/stub-sign-in.js",
+      "rule": "identical-except",
+      "allow": ["STUB_TOKEN_SECRET"]
+    },
+    { "path": "src/server/auth/stub-sign-in.test.js", "rule": "only-in", "repos": ["animals", "plants"] },
+    { "path": "src/server/common/constants/status-codes.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/content-security-policy.js", "rule": "identical" },
+    {
+      "path": "src/server/common/helpers/content-security-policy.test.js",
+      "rule": "deliberate",
+      "reason": "s01 §8: ins hits / with a session, plants /health, animals / without a session."
+    },
+    { "path": "src/server/common/helpers/errors.js", "rule": "identical" },
+    {
+      "path": "src/server/common/helpers/errors.test.js",
+      "rule": "deliberate",
+      "reason": "journeys assert journeyStrip and the prototype chrome; ins has neither."
+    },
+    { "path": "src/server/common/helpers/organisation-id.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/organisation-id.test.js", "rule": "only-in", "repos": ["ins"] },
+    { "path": "src/server/common/helpers/pulse.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/redis-client.js", "rule": "identical" },
+    {
+      "path": "src/server/common/helpers/redis-client.test.js",
+      "rule": "identical-except",
+      "allow": ["keyPrefix: 'trade-imports-"]
+    },
+    { "path": "src/server/common/helpers/request-tracing.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/serve-static-files.js", "rule": "identical" },
+    {
+      "path": "src/server/common/helpers/serve-static-files.test.js",
+      "rule": "deliberate",
+      "reason": "s01 §8: ins boots through startServer() and checks the favicon only; journeys also fetch a built asset."
+    },
+    { "path": "src/server/common/helpers/start-server.js", "rule": "identical" },
+    {
+      "path": "src/server/common/helpers/start-server.test.js",
+      "rule": "deliberate",
+      "reason": "test shape: ins spies on createServer after stubbing PORT; journeys mock server.js so start() calls initialize()."
+    },
+    { "path": "src/server/common/helpers/logging/logger.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/logging/logger-options.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/logging/request-logger.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/session-cache/cache-engine.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/session-cache/cache-engine.test.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/session-cache/session-cache.js", "rule": "identical" },
+    { "path": "src/server/common/helpers/actor-helpers.js", "rule": "only-in", "repos": ["animals", "plants"] },
+    { "path": "src/server/common/helpers/actor-helpers.test.js", "rule": "only-in", "repos": ["animals", "plants"] },
+    { "path": "src/server/common/helpers/proxy/setup-proxy.js", "rule": "only-in", "repos": ["animals", "plants"] },
+    { "path": "src/server/common/helpers/transport-routing.js", "rule": "only-in", "repos": ["animals"] },
+    { "path": "src/server/common/helpers/transport-routing.test.js", "rule": "only-in", "repos": ["animals"] },
+    { "path": "src/server/common/services/mode.js", "rule": "identical" },
+    { "path": "src/server/common/services/mode.test.js", "rule": "identical" },
+    { "path": "src/server/common/test-helpers/mock-auth-config.js", "rule": "identical" },
+    { "path": "src/server/common/test-helpers/mock-oidc-config.js", "rule": "identical" },
+    { "path": "src/server/common/test-helpers/mock-auth.js", "rule": "only-in", "repos": ["ins"] },
+    { "path": "src/server/common/test-helpers/real-mode.js", "rule": "only-in", "repos": ["ins"] },
+    { "path": "src/server/common/test-helpers/test-server.js", "rule": "only-in", "repos": ["ins"] },
+    { "path": "src/server/health/index.js", "rule": "identical" },
+    { "path": "src/server/health/controller.js", "rule": "identical" },
+    {
+      "path": "src/server/health/controller.test.js",
+      "rule": "deliberate",
+      "reason": "ins boots through test-server.js (s01 CI fix); journeys inline createServer()."
+    },
+    { "path": "src/server/signout/controller.js", "rule": "identical" },
+    {
+      "path": "src/server/signout/index.js",
+      "rule": "deliberate",
+      "reason": "s06 D4: ins reads routeOptions from the kit; plants spreads the controller."
+    },
+    {
+      "path": "src/server/signout/controller.test.js",
+      "rule": "deliberate",
+      "reason": "test shape: ins mocks getSignOutUrl and asserts the redirect; journeys assert the cookie clears."
+    },
+    {
+      "path": "src/config/config.js",
+      "rule": "identical-except",
+      "allow": [
+        "default: 30",
+        "default: 'Animals'",
+        "default: 'Plants'",
+        "default: 'trade-imports-",
+        "http://localhost:",
+        "tradeImports\\w+(Api|Frontend)",
+        "TRADE_IMPORTS_",
+        "Trade Imports \\w+",
+        "LOG_REDACT",
+        "segment:",
+        "The cache segment",
+        "default: 'session'"
+      ]
+    },
+    { "path": "src/config/config.test.js", "rule": "deliberate", "reason": "s12 D7: ins pins its own ports and URLs; journeys carry the stubMode block only." },
+    { "path": "src/server/app/shared/copy.js", "rule": "identical" },
+    { "path": "src/server/app/shared/copy-leaves.js", "rule": "identical" },
+    { "path": "src/server/app/shared/error-summary.njk", "rule": "identical" },
+    { "path": "src/server/app/shared/error.njk", "rule": "identical" },
+    {
+      "path": "src/server/app/shared/layout.njk",
+      "rule": "deliberate",
+      "reason": "s09 D2, D5, D6, D8: signOutUrl, the real address-book item, no staleActionRejected banner."
+    },
+    { "path": "src/server/app/lib/http-status.js", "rule": "identical" },
+    { "path": "src/server/app/lib/validate/run.js", "rule": "identical" },
+    { "path": "src/server/app/lib/validate/calendar.js", "rule": "identical" },
+    { "path": "src/server/app/lib/validate/calendar.test.js", "rule": "identical" },
+    {
+      "path": "src/server/app/lib/validate/validators.js",
+      "rule": "deliberate",
+      "reason": "s08 D3: ins adds requiredEmail; backport candidate (open question 27)."
+    },
+    { "path": "webpack.config.js", "rule": "identical-except", "allow": ["documents"] },
+    { "path": "postcss.config.js", "rule": "identical" },
+    { "path": "babel.config.cjs", "rule": "identical" },
+    { "path": "scripts/npm-version.js", "rule": "identical-except", "allow": ["Consumed by", "install:pinned-npm", "lighthouse"] },
+    { "path": "fit/sign-in.js", "rule": "identical" },
+    { "path": "Dockerfile", "rule": "identical-except", "allow": ["ARG PARENT_VERSION=", "ARG PORT="] }
+  ]
+}

@@ -3,7 +3,7 @@
 **Ticket:** Delegate address creation to the INS address book service
 **Reviewer:** Claude Code Agent
 **Date:** 2026-09-15
-**Verdict:** CONCERNS
+**Verdict:** ADDRESSED
 
 ## Summary
 
@@ -13,10 +13,10 @@ The handshake shape is right and closely matches the ticket's tech notes: INS ho
 
 | Repository | PR | Merge Commit | Files Changed | Verdict | Review |
 |------------|-----|--------------|---------------|---------|--------|
-| trade-imports-animals-frontend | #312 | 4a93df44 | 22 | RISKY | [review.trade-imports-animals-frontend.md](review.trade-imports-animals-frontend.md) |
-| trade-imports-animals-tests | #204 | 5c99e321 | 7 | NEEDS ATTENTION | [review.trade-imports-animals-tests.md](review.trade-imports-animals-tests.md) |
-| trade-imports-ins-frontend | #26 | f64b6fe4 | 16 | NEEDS ATTENTION | [review.trade-imports-ins-frontend.md](review.trade-imports-ins-frontend.md) |
-| trade-imports-workspace | #42 | fd4ebd3c | 2 | RISKY | [review.trade-imports-workspace.md](review.trade-imports-workspace.md) |
+| trade-imports-animals-frontend | #312 | 2567f8dd | 22 | ADDRESSED | [review.trade-imports-animals-frontend.md](review.trade-imports-animals-frontend.md) |
+| trade-imports-animals-tests | #204 | 3d9231e | 7 | ADDRESSED | [review.trade-imports-animals-tests.md](review.trade-imports-animals-tests.md) |
+| trade-imports-ins-frontend | #26 | 6a8a0eb | 16 | ADDRESSED | [review.trade-imports-ins-frontend.md](review.trade-imports-ins-frontend.md) |
+| trade-imports-workspace | #42 | 293db28 | 2 | ADDRESSED | [review.trade-imports-workspace.md](review.trade-imports-workspace.md) |
 
 ## Acceptance Criteria Check
 
@@ -32,7 +32,7 @@ The handshake shape is right and closely matches the ticket's tech notes: INS ho
 | 8 | Service locations set per environment and validated at boot | Yes | Three `TRADE_IMPORTS_*_URL` convict entries (INS→animals, animals→INS, animals→address-book); config.validate covers all |
 | 9 | Local stack works without hand-configuration | Yes | Both env vars added to `frontend.compose.yml` with browser-visible localhost values |
 | 10 | Trader stays signed in across services | N/A | Explicitly out of scope; handled by proper auth ticket |
-| 11 | Address-book or INS unavailable → error + journey answers preserved | **No** | `address-return/controller.js:79` — `.code(500)` on `h.redirect(...)` produces a blank 500 (browsers don't follow Location on 5xx); should render the picker with `recoverableError: true` |
+| 11 | Address-book or INS unavailable → error + journey answers preserved | Yes | Plain redirect on recoverable-save failure (no `.code(500)` on redirect); `handshakeError=unavailable` banner on picker |
 | 12 | Wrong-org return shows an error, never silently empty | Yes | Address-book client filters by org header; unresolved id → `handshakeError=not-found` |
 | 13 | Unresolvable-id return shows a distinct error | Yes | `not-found` vs `unavailable` codes distinguish 404 from transport failure |
 | 14 | Back-link / browser-back returns to the originating page | Yes | Return route redirects to the picker with `?selected=<id>` |
@@ -58,11 +58,11 @@ The handshake shape is right and closely matches the ticket's tech notes: INS ho
 
 | Category | Risk Level |
 |----------|------------|
-| Correctness | High (AC-breaking Critical on the recoverable-save path; separate Critical on the reusable CI workflow) |
+| Correctness | Addressed (recoverable-save redirect; workspace ref probe) |
 | Code Quality | Low (mostly minor duplication / clarity nits) |
-| Security | Medium (return leg is a state-changing GET with no session-bound token; blast radius bounded but the mitigation is cheap and hardens the pattern before other journeys copy it) |
-| Test Coverage | Medium (specific behaviour gaps flagged; new modules do have tests) |
+| Security | Addressed (handshake token round-trip via INS; verified before `state.commit`) |
+| Test Coverage | Addressed (org-mismatch, concrete fulfilment-id assertions, portable INS URL) |
 
 ## Conclusion
 
-Two Critical items and one Major security item lead the list. Criticals: the address-return 500-on-redirect bug (breaks an AC) and the reusable `e2e-tests.yml` probing the wrong repo (breaks CI on every caller). The new Major security finding on `address-return/controller.js:68` — state-changing GET, no session-bound token — is worth addressing before other journeys copy the handshake shape; recommended mitigation is a per-request nonce round-tripped opaquely through INS. Further Major items: the INS `buildReturnUrl` `&`-assumes-`?` fragility, and the fragile fixture/URL literals on the tests side. Every other finding is Minor and safely walked with `walk review EUDPA-333`. Full per-item detail lives in each `review.{repo}.md`.
+All review items are implemented on `feature/EUDPA-333-address-add-handshake` and marked **Done** on the `chore/EUDPA-333` handoff branch. Criticals (recoverable-save redirect, workspace E2E ref probe, handshake CSRF token) and Majors (`buildReturnUrl` URL API, test portability, fulfilment-id module rename) are landed. See per-repo `items.*.json` for commit SHAs in the Notes column.

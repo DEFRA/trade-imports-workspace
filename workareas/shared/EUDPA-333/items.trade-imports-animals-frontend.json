@@ -8,24 +8,24 @@
       "severity": "Minor",
       "category": "clarity",
       "issue": "stubH().redirect uses Object.defineProperty to attach code() without a comment explaining why (making it non-enumerable so existing toEqual({ redirect: ... }) assertions keep matching); the sibling stubView on line 26 uses a plain method, and the divergence looks accidental at a glance.",
-      "fix": "Add a one-line comment above the defineProperty call — e.g. // Non-enumerable so tests that assert toEqual({ redirect: to }) still match after chaining .code(...) — or align with stubView's style if enumerability doesn't matter for callers.",
+      "fix": "Add a one-line comment above the defineProperty call \u2014 e.g. // Non-enumerable so tests that assert toEqual({ redirect: to }) still match after chaining .code(...) \u2014 or align with stubView's style if enumerability doesn't matter for callers.",
       "file": "src/server/app/engine/test-support.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 2,
       "line": 79,
       "severity": "Critical",
       "category": "correctness",
-      "issue": "recoverableSave failure branch calls .code(500) on an h.redirect(...), producing a 500 response with a Location header — browsers do not follow Location on 5xx, so the trader sees a blank 500 instead of the picker with the 'unavailable' banner (breaking the AC 'the Trader sees an error and their existing journey answers are preserved'). Sibling handlers (party-picker.controller.js commitSelection, delete-notification, contact) apply .code(500) to a rendered h.view(...) response, not to a redirect.",
-      "fix": "In the recoverableSave onRecoverableFailure callback, render the picker directly (mirroring party-picker's commitSelection — resolve the journey and answers via state.get, call the picker render function with recoverableError: true and .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)); OR return a plain redirect (2xx) without the 500 code so the browser follows it to the picker with handshakeError=unavailable.",
+      "issue": "recoverableSave failure branch calls .code(500) on an h.redirect(...), producing a 500 response with a Location header \u2014 browsers do not follow Location on 5xx, so the trader sees a blank 500 instead of the picker with the 'unavailable' banner (breaking the AC 'the Trader sees an error and their existing journey answers are preserved'). Sibling handlers (party-picker.controller.js commitSelection, delete-notification, contact) apply .code(500) to a rendered h.view(...) response, not to a redirect.",
+      "fix": "In the recoverableSave onRecoverableFailure callback, render the picker directly (mirroring party-picker's commitSelection \u2014 resolve the journey and answers via state.get, call the picker render function with recoverableError: true and .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)); OR return a plain redirect (2xx) without the 500 code so the browser follows it to the picker with handshakeError=unavailable.",
       "best_practice": "node/hapi.md",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 3,
@@ -35,9 +35,9 @@
       "issue": "No test asserts the AC-required behaviour for a returned addressId belonging to a different organisation than the current session; today it is only implicitly covered via the not-found path.",
       "fix": "Add a test that spies on addressBook.party to return a record from the wrong org (or use a distinct orgId in the request) and asserts a handshakeError=not-found redirect, so the AC is nailed down at the controller boundary and cannot regress if the address-book client stops filtering by org.",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 4,
@@ -48,9 +48,9 @@
       "fix": "Assert obligationIdForParty(party) === expected id per party (e.g. import the obligations and check obligationIdForParty(consignor-party) === consignor.id, or use expect.toBe for each) so the file's own suite catches a mis-wiring rather than relying on the sibling map test.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 5,
@@ -58,11 +58,11 @@
       "severity": "Major",
       "category": "test-fragility",
       "issue": "Four of the five party fulfilment IDs are hardcoded UUID literals that must stay in lockstep with obligations/sections/parties.js; only consignor.id is imported. If any of those obligation UUIDs is regenerated, this test fails with the confusing 'expected undefined to be placeOfOrigin' rather than pointing at the source of truth.",
-      "fix": "Import placeOfOrigin/consignee/importer/placeOfDestination/contactAddress from ../../../../obligations/index.js and use their .id — same as the existing consignor.id line — so the test cannot drift from the manifest.",
+      "fix": "Import placeOfOrigin/consignee/importer/placeOfDestination/contactAddress from ../../../../obligations/index.js and use their .id \u2014 same as the existing consignor.id line \u2014 so the test cannot drift from the manifest.",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 6,
@@ -72,45 +72,45 @@
       "issue": "Six independent mappings (five PARTIES + CONTACT_PARTY) are collapsed into one 'it' with a for-loop and a trailing separate assertion, so the first failure masks the rest and the contact case is not named in the test description.",
       "fix": "Use it.each over a small table (or split into two its) so each mapping is a distinct test case and the CONTACT_PARTY case is visible in the test name.",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 7,
       "line": 18,
       "severity": "Minor",
       "category": "assertion-diagnostics",
-      "issue": "'partyForFulfilmentId(fulfilmentId)?.id' collapses the two failure modes — 'lookup missed' vs 'wrong party returned' — into the same 'expected undefined to be <id>' message.",
+      "issue": "'partyForFulfilmentId(fulfilmentId)?.id' collapses the two failure modes \u2014 'lookup missed' vs 'wrong party returned' \u2014 into the same 'expected undefined to be <id>' message.",
       "fix": "Assert the returned party is defined first (or assert on the whole party object) so a lookup miss reports differently from a wrong-party mismatch.",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 8,
       "line": 37,
       "severity": "Minor",
       "category": "duplication",
-      "issue": "handshakeErrorMessage duplicates the identical helper in addresses/party-picker/party-picker.controller.js — same mapping of not-found/unavailable to copy strings",
+      "issue": "handshakeErrorMessage duplicates the identical helper in addresses/party-picker/party-picker.controller.js \u2014 same mapping of not-found/unavailable to copy strings",
       "fix": "Extract handshakeErrorMessage into ins-handshake.js (or a sibling module) and reuse it from both controllers so a new handshake error code only needs to be handled once",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 9,
       "line": 35,
       "severity": "Minor",
       "category": "coupling",
-      "issue": "Contact feature reaches into ../addresses/copy/copy.{en,cy}.js for handshakeErrors and addNewAddress strings — cross-feature copy dependency that ties two features' user-facing text together implicitly",
+      "issue": "Contact feature reaches into ../addresses/copy/copy.{en,cy}.js for handshakeErrors and addNewAddress strings \u2014 cross-feature copy dependency that ties two features' user-facing text together implicitly",
       "fix": "Hoist the shared handshake error strings and the 'Add a new address' label into shared/copy.<locale>.js (or a new addresses-handshake copy module) so both features import them from the same shared location instead of contact reaching into addresses",
       "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 10,
@@ -118,11 +118,11 @@
       "line": "68",
       "severity": "Major",
       "category": "security",
-      "issue": "GET handler calls state.commit(...) — state-changing GET with no session-bound token. Session cookie is Lax, so a third-party page can get a signed-in trader to click a crafted link (a href, top-level nav) that commits an arbitrary address to a specified party on a specified notification. Blast radius bounded by the org-scoped address-book lookup (attacker cannot inject foreign addresses) and by needing to know the victim's notification-id + fulfilment-id + one of their org's address-ids — but the pattern is a new anti-pattern this PR introduces and will calcify once other journeys copy the handshake shape.",
-      "fix": "When animals emits the outbound INS link (ins-handshake.js:buildInsAddAddressUrl), generate a random nonce, store it in the yar session keyed by fulfilment-id (or a broader handshake key), and add it to the URL as e.g. handshake-token=<value>. INS round-trips it opaquely as another hidden field (its registry treats these values as opaque already). address-return/controller.js verifies the token matches what the session stored, clears it, then commits. Any request without a matching token — including any third-party-triggered navigation — returns Boom.badRequest before state.commit runs.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "issue": "GET handler calls state.commit(...) \u2014 state-changing GET with no session-bound token. Session cookie is Lax, so a third-party page can get a signed-in trader to click a crafted link (a href, top-level nav) that commits an arbitrary address to a specified party on a specified notification. Blast radius bounded by the org-scoped address-book lookup (attacker cannot inject foreign addresses) and by needing to know the victim's notification-id + fulfilment-id + one of their org's address-ids \u2014 but the pattern is a new anti-pattern this PR introduces and will calcify once other journeys copy the handshake shape.",
+      "fix": "When animals emits the outbound INS link (ins-handshake.js:buildInsAddAddressUrl), generate a random nonce, store it in the yar session keyed by fulfilment-id (or a broader handshake key), and add it to the URL as e.g. handshake-token=<value>. INS round-trips it opaquely as another hidden field (its registry treats these values as opaque already). address-return/controller.js verifies the token matches what the session stored, clears it, then commits. Any request without a matching token \u2014 including any third-party-triggered navigation \u2014 returns Boom.badRequest before state.commit runs.",
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     },
     {
       "id": 11,
@@ -130,11 +130,11 @@
       "line": "12",
       "severity": "Minor",
       "category": "maintainability",
-      "issue": "Naming buries the invariant, and the invariant itself lacks a boot-time check. Module: obligation-party-map.js. Exports: (a) obligationPartyMap — a raw Map keyed by binding.obligation.id — and (b) partyForFulfilmentId(fulfilmentId), whose lookup only works because addScalar stores scalar answers under obligation.id (so fulfilmentId === obligation.id for scalars). Consumers: address-return/controller.js uses partyForFulfilmentId (fulfilment-id → party); ins-handshake.js iterates obligationPartyMap directly via a local obligationIdForParty helper (party → obligation.id, then USED as a fulfilment id when building the outbound URL) — the same equivalence, just in the reverse direction, and the local helper name is inconsistent with how its return value is consumed. The if kind !== scalar continue on line 12 silently drops non-scalar bindings, so a future grouped-party binding would surface as a mysterious 400 (Boom.badRequest Unknown fulfilment) rather than a boot-time signal. Deferring the write-side generalisation (answerFor + state.commit accepting nested paths) is a deliberate YAGNI call — no grouped-party requirement today and the change is wider than the map — but the current shape hides both the scope decision and the reverse-lookup coupling from anyone copy-pasting this pattern into another frontend, and the codebase already has an established boot-time coherence-check pattern this invariant should join.",
-      "fix": "Rename the module to name the API rather than the internal Map, consolidate both directions of the lookup so consumers do not see the raw Map, and enforce the scalar invariant at boot alongside the existing coherence checks (routes.js:64-65 already calls assertObligationPurity + assertFulfilmentBindingCoverage — the pattern is established). (1) Rename obligation-party-map.js → party-for-fulfilment-id.js (and its test file). (2) In the renamed module, export two functions and stop exporting the Map: partyForFulfilmentId(fulfilmentId) (unchanged) and fulfilmentIdForParty(party) — the latter is what ins-handshake.js needs, and its name matches how the caller consumes the value. (3) At the write site, name the equivalence explicitly: const nonIndexedFulfilmentId = binding.obligation.id; map.set(nonIndexedFulfilmentId, party). (4) Add a sibling assert alongside assertObligationPurity: assertPartyBindingsAreScalar() (new file under the addresses feature, e.g. addresses/assert-party-bindings.js). Iterates the same evaluation bindings the map uses, throws at boot if any binding is non-scalar with a message naming the offending binding, and gets called from routes.js next to the two existing asserts. This is what makes non-scalar bindings fail loudly at boot rather than as a browser 400 — moves the invariant into the coherence-check discipline the codebase already has instead of hiding it as a defensive skip inside the map builder. (5) With the assert in place, party-for-fulfilment-id.js can drop the kind !== scalar filter entirely (invariant enforced upstream); no need for defensive throws inside the module. (6) Add a JSDoc / comment on assertPartyBindingsAreScalar explaining the deferral — support for indexed/grouped parties is YAGNI today; generalising would require the write side (answerFor, state.commit) to accept a nested (obligation.id + fulfilment-index) path, and the wire format would need a documented composite serialisation (obligation.id + INDEX_DELIMITER + formatFulfilmentIndex output); point at this ticket comment thread for the reasoning. (7) In ins-handshake.js, import fulfilmentIdForParty from the renamed module and delete the local obligationIdForParty helper — one source of truth for the reverse lookup, no more raw-Map iteration outside the module.",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "issue": "Naming buries the invariant, and the invariant itself lacks a boot-time check. Module: obligation-party-map.js. Exports: (a) obligationPartyMap \u2014 a raw Map keyed by binding.obligation.id \u2014 and (b) partyForFulfilmentId(fulfilmentId), whose lookup only works because addScalar stores scalar answers under obligation.id (so fulfilmentId === obligation.id for scalars). Consumers: address-return/controller.js uses partyForFulfilmentId (fulfilment-id \u2192 party); ins-handshake.js iterates obligationPartyMap directly via a local obligationIdForParty helper (party \u2192 obligation.id, then USED as a fulfilment id when building the outbound URL) \u2014 the same equivalence, just in the reverse direction, and the local helper name is inconsistent with how its return value is consumed. The if kind !== scalar continue on line 12 silently drops non-scalar bindings, so a future grouped-party binding would surface as a mysterious 400 (Boom.badRequest Unknown fulfilment) rather than a boot-time signal. Deferring the write-side generalisation (answerFor + state.commit accepting nested paths) is a deliberate YAGNI call \u2014 no grouped-party requirement today and the change is wider than the map \u2014 but the current shape hides both the scope decision and the reverse-lookup coupling from anyone copy-pasting this pattern into another frontend, and the codebase already has an established boot-time coherence-check pattern this invariant should join.",
+      "fix": "Rename the module to name the API rather than the internal Map, consolidate both directions of the lookup so consumers do not see the raw Map, and enforce the scalar invariant at boot alongside the existing coherence checks (routes.js:64-65 already calls assertObligationPurity + assertFulfilmentBindingCoverage \u2014 the pattern is established). (1) Rename obligation-party-map.js \u2192 party-for-fulfilment-id.js (and its test file). (2) In the renamed module, export two functions and stop exporting the Map: partyForFulfilmentId(fulfilmentId) (unchanged) and fulfilmentIdForParty(party) \u2014 the latter is what ins-handshake.js needs, and its name matches how the caller consumes the value. (3) At the write site, name the equivalence explicitly: const nonIndexedFulfilmentId = binding.obligation.id; map.set(nonIndexedFulfilmentId, party). (4) Add a sibling assert alongside assertObligationPurity: assertPartyBindingsAreScalar() (new file under the addresses feature, e.g. addresses/assert-party-bindings.js). Iterates the same evaluation bindings the map uses, throws at boot if any binding is non-scalar with a message naming the offending binding, and gets called from routes.js next to the two existing asserts. This is what makes non-scalar bindings fail loudly at boot rather than as a browser 400 \u2014 moves the invariant into the coherence-check discipline the codebase already has instead of hiding it as a defensive skip inside the map builder. (5) With the assert in place, party-for-fulfilment-id.js can drop the kind !== scalar filter entirely (invariant enforced upstream); no need for defensive throws inside the module. (6) Add a JSDoc / comment on assertPartyBindingsAreScalar explaining the deferral \u2014 support for indexed/grouped parties is YAGNI today; generalising would require the write side (answerFor, state.commit) to accept a nested (obligation.id + fulfilment-index) path, and the wire format would need a documented composite serialisation (obligation.id + INDEX_DELIMITER + formatFulfilmentIndex output); point at this ticket comment thread for the reasoning. (7) In ins-handshake.js, import fulfilmentIdForParty from the renamed module and delete the local obligationIdForParty helper \u2014 one source of truth for the reverse lookup, no more raw-Map iteration outside the module.",
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "0e8a9950, 2567f8dd"
     }
   ]
 }

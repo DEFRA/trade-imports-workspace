@@ -924,3 +924,90 @@ to.
 English structurally equal inside one repo, and `.dependency-cruiser.cjs`
 keeps features apart inside one repo. Neither reaches across repos; the
 manifest is the cross-repo counterpart to both.
+
+
+## 9. After the report: rulings and additions on 15 September 2026
+
+The report above was written by stage s13 on 14 September. The following
+happened afterwards and is recorded here rather than folded into the
+sections above, so the team can see what the report said and what changed.
+
+### Rulings
+
+- **Stub sign-in shape (section 7, s03 and s12 questions).** Ruled: no
+  convergence stage now. Real authentication is still to be built, so
+  there is nothing to harden and no point rearranging the stub. The
+  direction is recorded for when authentication lands: converge on the
+  journeys' behaviour (register `/auth/sign-in` and `/auth/stub-sign-in`
+  from one handler, an unconditional encoded `redirectTo`, `contactId`
+  and `currentRelationshipId` on the session) and on ins's per-process
+  random secret in all three repos, and rewrite the `mode.js`
+  production-refusal comment in all three to give the reason that survives
+  any change to the key: stub mode hands a session to any caller with no
+  identity provider involved.
+- **Lighthouse (section 7, s10 question).** Ruled in. Built as stage
+  s14, below.
+- **Husky `postinstall` and the pinned-npm backport (s10 questions).**
+  Undecided; they stay open.
+- **cdp-app-config (s03 question).** Checked on 15 September: no
+  environment file for `trade-imports-ins-frontend` sets `INS_MODE`,
+  `AUTH_STUB_MODE` or `STUB_MODE`. Nothing is silently ignored after the
+  stub-mode collapse.
+
+### The tests repository joins the branch set
+
+`trade-imports-animals-tests` now carries `feat/NO_JIRA-frontend-alignment`
+too, as
+[DEFRA/trade-imports-animals-tests#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227),
+draft, never merged. One change: the ins security scan no longer visits
+`/about`, which the alignment deletes. Every other ins spec and page object
+was audited against the aligned templates, copy and paths and needed no
+change; the public URL surface, headings, labels, buttons and banner
+wording are unchanged by the alignment.
+
+Its first E2E run was red on two animals journey specs. Not the
+alignment: the tests repository had moved with animals main on 14 and 15
+September (the hub no longer lists an animal identification row; the
+consignment details have their own hub task) while the animals alignment
+branch was still on the main it was cut from. Merging main into the
+animals branch and re-running turned every check green on all four
+repositories.
+
+### Stage s14: Lighthouse for ins
+
+Landed on ins as its own commit, green in CI. The harness is the journeys'
+one adapted to a service with no journey: the URL list derives from the
+six registered routes, the seeder finds or creates one address through
+the app's own pages, and report names derive from route paths so the list
+and view pages no longer collide. Proven locally against the aligned ins
+in stub mode on 15 September:
+
+| Page | Performance | Accessibility | Best practices |
+|---|---|---|---|
+| `/` | 100 | 100 | 100 |
+| `/address-book` | 100 | 100 | 100 |
+| `/address-book/add` | 100 | 100 | 100 |
+| `/address-book/{id}` | 100 | 100 | 100 |
+| `/address-book/{id}/edit` | 100 | 100 | 100 |
+| `/address-book/{id}/delete` | 100 | 100 | 100 |
+
+The CI job cannot fire on this branch because `workflow_run` triggers read
+the default branch's workflow files. It fires once `lighthouse.yml` is on
+main. Two things a repository admin must do before its published report
+URL resolves: enable GitHub Pages from the `gh-pages` branch on the ins
+repository, and accept that the job starts the whole workspace stack, as
+the journeys' jobs do.
+
+One lesson for the workflow from this stage: the CI fixer found that the
+lockfile regenerated on macOS omitted `sass`, which npm on Linux installs
+as an optional peer of `sass-loader` and then demands from the lockfile.
+The local ladder cannot see that; the Docker build in CI can. It is now a
+real devDependency.
+
+### The workflow itself, preserved
+
+The run that built this proposal is recorded as a reference for
+consolidating the workspace's skills and workflows:
+[`docs/analysis/frontend-alignment-workflow-run.md`](../../../docs/analysis/frontend-alignment-workflow-run.md),
+with every agent's return value beside this report in
+`run-wf_a52aa0bf-91f.journal.jsonl`.

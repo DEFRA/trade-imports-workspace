@@ -33,15 +33,26 @@ jobs:
         shardTotal: [3]
 
     steps:
+      - name: Resolve workspace ref
+        id: workspace-ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          requested="${{ inputs.branch || (github.event_name == 'pull_request' && github.head_ref || github.ref_name) }}"
+          ref_enc=$(printf 'heads/%s' "$requested" | jq -sRr @uri)
+          if gh api "repos/DEFRA/trade-imports-workspace/git/ref/${ref_enc}" >/dev/null 2>&1; then
+            echo "ref=${requested}" >> "$GITHUB_OUTPUT"
+            echo "Workspace ref: ${requested}"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+            echo "Workspace ref: main (no branch ${requested})"
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           repository: DEFRA/trade-imports-workspace
-          # Workspace PRs and dispatches must exercise their own stack changes.
-          # A caller's event name surfaces here as its own (a frontend PR reads
-          # as pull_request), so branch is the discriminator instead: it is
-          # required on workflow_call and empty otherwise, and callers get main.
-          ref: ${{ inputs.branch && 'main' || (github.event_name == 'pull_request' && github.head_ref || github.ref_name) }}
+          ref: ${{ steps.workspace-ref.outputs.ref }}
 
       - name: Resolve branch tag
         id: branch-tag

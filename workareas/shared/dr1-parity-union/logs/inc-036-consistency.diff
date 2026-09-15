@@ -1,0 +1,723 @@
+diff --git a/fit/journey-smoke.fit.spec.js b/fit/journey-smoke.fit.spec.js
+index b60fbc40..3806207b 100644
+--- a/fit/journey-smoke.fit.spec.js
++++ b/fit/journey-smoke.fit.spec.js
+@@ -15,6 +15,7 @@ import {
+   chooseCountryOfOrigin,
+   completeAnswerSections,
+   journeyUrl,
++  openReviewFromHub,
+   selectSpecies,
+   signIn,
+   startNotification,
+@@ -165,7 +166,7 @@ test.describe('live-animals journey glue', () => {
+     ).toContainText('Check completed')
+     await page.getByRole('button', { name: 'Save and continue' }).click()
+ 
+-    await page.getByRole('link', { name: 'Check and submit' }).click()
++    await openReviewFromHub(page)
+ 
+     // The review offers one Change link per card (design release 1), and the
+     // Species card's goes to the consignment details. The review no longer
+diff --git a/fit/live-animals-journey.js b/fit/live-animals-journey.js
+index 38194725..e92d1305 100644
+--- a/fit/live-animals-journey.js
++++ b/fit/live-animals-journey.js
+@@ -449,6 +449,15 @@ export const completeAnswerSections = async (
+   await answerContactAddress(page)
+ }
+ 
++/**
++ * Design release 1 reaches the review from a primary button under the hub's
++ * task list rather than from a task row, and offers it whatever the
++ * notification still owes.
++ */
++export const openReviewFromHub = async (page) => {
++  await page.getByRole('button', { name: 'Review and submit' }).click()
++}
++
+ /**
+  * A page reached from another page ends with the primary alone: the shared
+  * saveActions macro emits no "Save and return to overview" button and no
+diff --git a/src/server/app/sets/live-animals/docs/add-a-section.md b/src/server/app/sets/live-animals/docs/add-a-section.md
+index 10d6eb78..87754956 100644
+--- a/src/server/app/sets/live-animals/docs/add-a-section.md
++++ b/src/server/app/sets/live-animals/docs/add-a-section.md
+@@ -235,8 +235,10 @@ Update:
+   visible task row, its link and its completed state
+ 
+ Every task row participates in `readyForCheckYourAnswers`. A mandatory new row
+-therefore blocks Check and submit until it is complete. Prove both the blocked
+-and complete states in `journeys/linear/flow/task-rows.test.js`.
++therefore holds the notification back from submission until it is complete —
++the hub still offers the review, and the check-answers POST is what refuses.
++Prove both the incomplete and complete states in
++`journeys/linear/flow/task-rows.test.js`.
+ 
+ ### Check the journey registration
+ 
+diff --git a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+index d98e49b8..0e49565a 100644
+--- a/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
++++ b/src/server/app/sets/live-animals/docs/journey-flow-and-gates.md
+@@ -44,12 +44,17 @@ The hub's `GROUPS` array in
+ task-row ids under visible headings and supplies their presentation order.
+ 
+ Design release 1 lets a trader start any task on the notification in any order.
+-The one row the hub still shows shut is Check and submit, which reads the review
+-section's authored gate on `readyForCheckYourAnswers` and is the only thing on
+-the page that ever says "Cannot start yet". Every other row is a link carrying a
+-real status from the moment the notification exists. A row that does not apply to
+-this consignment leaves the list instead (`conditional`, and `applies` where the
+-parts cannot express it).
++No row on the hub is ever shut: every row is a link carrying a real status from
++the moment the notification exists, and nothing on the page says "Cannot start
++yet". A row that does not apply to this consignment leaves the list instead
++(`conditional`, and `applies` where the parts cannot express it).
++
++The review is not a task row at all. Design release 1 reaches it from a primary
++"Review and submit" button under the task list, beside the secondary "Return to
++dashboard", and offers it whatever the notification still owes — the review page
++renders an unfinished notification and names what is outstanding. The review
++section's authored gate on `readyForCheckYourAnswers` still stands between that
++page and submitting: the check-answers POST refuses on the same verdict.
+ 
+ That puts the cost on the pages, not the hub: a page behind a row has to render
+ and save sensibly when nothing else has been answered. Where there is genuinely
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js
+index 4d041bbd..758332c1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js
+@@ -4,6 +4,7 @@ import {
+   chooseCountryOfOrigin,
+   completeAnswerSections,
+   journeyIdFromPage,
++  openReviewFromHub,
+   signIn,
+   startNotification,
+   values
+@@ -14,7 +15,7 @@ import { copy } from './copy/copy.en.js'
+ const submitNotification = async (page) => {
+   await startNotification(page)
+   await completeAnswerSections(page)
+-  await page.getByRole('link', { name: 'Check and submit' }).click()
++  await openReviewFromHub(page)
+   await page.getByRole('button', { name: 'Continue' }).click()
+   await page
+     .getByRole('checkbox', { name: /I confirm that I have reviewed/ })
+@@ -36,7 +37,7 @@ const amendAndOpenCancel = async (page, reference) => {
+     .getByLabel('Your internal reference for this consignment (optional)')
+     .fill('DiscardMe99')
+   await page.getByRole('button', { name: 'Save and continue' }).click()
+-  await page.getByRole('link', { name: 'Check and submit' }).click()
++  await openReviewFromHub(page)
+   await page
+     .getByRole('link', { name: checkAnswersCopy.cancelAmend.link })
+     .click()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+index 55f6d09c..a7672118 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js
+@@ -5,6 +5,7 @@ import {
+   completeAnswerSections,
+   journeyIdFromPage,
+   journeyUrl,
++  openReviewFromHub,
+   signIn,
+   startNotification
+ } from '../../../../../../../../../fit/live-animals-journey.js'
+@@ -521,7 +522,7 @@ test.describe('check-answers feature submitted notification', () => {
+     await signIn(page)
+     await startNotification(page)
+     await completeAnswerSections(page)
+-    await page.getByRole('link', { name: 'Check and submit' }).click()
++    await openReviewFromHub(page)
+     await page.getByRole('button', { name: copy.submit.button }).click()
+     await page
+       .getByRole('checkbox', { name: /I confirm that I have reviewed/ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
+index 1a4166da..2adbb993 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js
+@@ -4,6 +4,7 @@ import {
+   completeAnswerSections,
+   journeyIdFromPage,
+   journeyUrl,
++  openReviewFromHub,
+   signIn,
+   startNotification
+ } from '../../../../../../../../../fit/live-animals-journey.js'
+@@ -105,7 +106,7 @@ test.describe('submitted confirmation feature', () => {
+   test.beforeEach(async ({ page }) => {
+     await startNotification(page)
+     await completeAnswerSections(page)
+-    await page.getByRole('link', { name: 'Check and submit' }).click()
++    await openReviewFromHub(page)
+     await page.getByRole('button', { name: 'Continue' }).click()
+     await page
+       .getByRole('checkbox', { name: /I confirm that I have reviewed/ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js
+index 49bca8d6..9ac28ce2 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js
+@@ -4,6 +4,7 @@ import {
+   ARRIVAL_DATE_IN_WINDOW_DISPLAY,
+   completeAnswerSections,
+   journeyIdFromPage,
++  openReviewFromHub,
+   signIn,
+   startNotification,
+   values
+@@ -20,7 +21,7 @@ const DESKTOP_BREAKPOINT_WIDTH = 769
+ 
+ const submitNotification = async (page) => {
+   await completeAnswerSections(page)
+-  await page.getByRole('link', { name: 'Check and submit' }).click()
++  await openReviewFromHub(page)
+   await page.getByRole('button', { name: 'Continue' }).click()
+   await page
+     .getByRole('checkbox', { name: /I confirm that I have reviewed/ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js
+index c07ffeb8..8d8b43df 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js
+@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test'
+ import {
+   answerOriginEntry,
+   completeAnswerSections,
++  openReviewFromHub,
+   signIn,
+   startNotification
+ } from '../../../../../../../../../fit/live-animals-journey.js'
+@@ -124,7 +125,7 @@ test.describe('declaration submission', () => {
+   test.beforeEach(async ({ page }) => {
+     await startNotification(page)
+     await completeAnswerSections(page)
+-    await page.getByRole('link', { name: 'Check and submit' }).click()
++    await openReviewFromHub(page)
+     await page.getByRole('button', { name: 'Continue' }).click()
+     await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js
+index 364b92ed..a7e7fdd9 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js
+@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test'
+ import {
+   completeAnswerSections,
+   journeyIdFromPage,
++  openReviewFromHub,
+   signIn,
+   startNotification
+ } from '../../../../../../../../../fit/live-animals-journey.js'
+@@ -98,7 +99,7 @@ test.describe('delete-notification feature (submitted)', () => {
+     await signIn(page)
+     await startNotification(page)
+     await completeAnswerSections(page)
+-    await page.getByRole('link', { name: 'Check and submit' }).click()
++    await openReviewFromHub(page)
+     await page.getByRole('button', { name: 'Continue' }).click()
+     await page
+       .getByRole('checkbox', { name: /I confirm that I have reviewed/ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index fdd00e64..772d58ed 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -1,8 +1,10 @@
+-import { dashboardPath, hubRoutePath } from '../../../../../../shared/paths.js'
++import {
++  dashboardPath,
++  hubRoutePath,
++  pagePath
++} from '../../../../../../shared/paths.js'
+ import { TEMPLATES } from '../../config.js'
+-import { sections } from '../../flow/flow.js'
+-import { rowEntry, sectionEntry } from '../../../../../../flow/navigation.js'
+-import { sectionGatePasses } from '../../../../../../flow/gates.js'
++import { rowEntry } from '../../../../../../flow/navigation.js'
+ import * as state from '../../../../../../engine/index.js'
+ import {
+   FULFILLED,
+@@ -11,8 +13,8 @@ import {
+   NOT_STARTED,
+   OPTIONAL
+ } from '../../../../../../bridge/status/index.js'
+-import { sectionStatus } from '../../../../../../flow/section-status.js'
+ import { rowStatus, taskRowById } from '../../flow/task-rows.js'
++import { notificationViewPage } from '../check-answers/page.js'
+ import { completeOpeningRun } from '../../../../../../flow/run-state.js'
+ import { journeyStrip, routeOptions } from '../../../../../../shared/kit.js'
+ import { copyFor } from '../../../../../../shared/copy.js'
+@@ -51,12 +53,7 @@ const GROUPS = [
+   },
+   { id: 'documents', rows: ['documents'] },
+   { id: 'consignment-parties', rows: ['addresses'] },
+-  { id: 'contact-address', rows: ['contact'] },
+-  // Design release 1 has no section here: it reaches the review from a button
+-  // under the task list. Until that button exists the review row is the only
+-  // route to the check-your-answers page, so the section stays, unnumbered so
+-  // it cannot be read as a seventh section of the design's six.
+-  { id: 'check-and-submit', rows: ['review'] }
++  { id: 'contact-address', rows: ['contact'] }
+ ]
+ 
+ const STATUS_TAG = {
+@@ -73,36 +70,12 @@ const STATUS_TAG = {
+ }
+ const statusTag = (status) => STATUS_TAG[status] ?? STATUS_TAG[NOT_STARTED]
+ 
+-// The one task the hub still shuts is Check and submit, which holds its own
+-// authored gate on submit-readiness. Every other row is a link from the moment
+-// the notification exists, so no answer row reads this status.
+-const CANNOT_START_STATUS = {
+-  text: copy.statuses.cannotStartYet,
+-  classes: 'govuk-task-list__status--cannot-start-yet'
+-}
+-
+-const reviewSection = () => sections.find((section) => section.id === 'review')
+-
+-const buildReviewItem = (
+-  { title, hint },
+-  answers,
+-  scope,
+-  evaluation,
+-  journeyId
+-) => {
+-  const section = reviewSection()
+-  const base = { title: { text: title }, hint: { text: hint } }
+-  if (!sectionGatePasses(section, scope)) {
+-    return { ...base, status: CANNOT_START_STATUS }
+-  }
+-  return {
+-    ...base,
+-    href: sectionEntry('review', scope, journeyId),
+-    status: statusTag(
+-      sectionStatus(section, answers, scope.inScope, evaluation)
+-    )
+-  }
+-}
++// Design release 1 ends the hub with a primary "Review and submit" button, not
++// a task row: the review page is offered whatever else has been answered, so a
++// trader can read back what the notification holds at any point. The page
++// renders an unfinished notification, naming what is still outstanding, and the
++// review section's own gate still stands between that page and submitting.
++const reviewHref = (journeyId) => pagePath(journeyId, notificationViewPage.slug)
+ 
+ const isHiddenRow = (row, status) => row.conditional && status === NA
+ 
+@@ -118,15 +91,6 @@ const rowItem = (base, row, scope, status, journeyId) => ({
+ 
+ const buildRowItem = (id, answers, scope, evaluation, journeyId) => {
+   const { title, hint } = copy.rows[id]
+-  if (id === 'review') {
+-    return buildReviewItem(
+-      { title, hint },
+-      answers,
+-      scope,
+-      evaluation,
+-      journeyId
+-    )
+-  }
+   const row = taskRowById(id)
+   const status = rowStatus(row, answers, scope.inScope, evaluation)
+   if (isHiddenRow(row, status)) {
+@@ -176,6 +140,7 @@ const handler = async (request, h) => {
+     journeyStrip: journeyStrip(journey),
+     commodityTotals: buildCommodityTotals(answers, evaluation),
+     groups: buildGroups(answers, scope, evaluation, journeyId),
++    reviewHref: reviewHref(journeyId),
+     dashboardHref: dashboardPath(),
+     backLink: dashboardPath()
+   })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+index 805a7069..4bb6564c 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+@@ -8,13 +8,13 @@ export const copy = {
+     packagesLabel: 'Pecynnau/blychau',
+     packagesCaption: 'Cyfanswm nifer y pecynnau yn y llwyth hwn'
+   },
++  reviewAndSubmit: 'Adolygu a chyflwyno',
+   returnToDashboard: 'Dychwelyd i’r dangosfwrdd',
+   statuses: {
+     completed: 'Wedi’i gwblhau',
+     optional: 'Dewisol',
+     inProgress: 'Ar y gweill',
+-    notYetStarted: 'Heb ddechrau eto',
+-    cannotStartYet: 'Methu dechrau eto'
++    notYetStarted: 'Heb ddechrau eto'
+   },
+   taskListHeading: 'Rhestr dasgau’r hysbysiad',
+   groups: {
+@@ -23,8 +23,7 @@ export const copy = {
+     'transport-and-arrival': '3. Cludiant a chyrraedd',
+     documents: '4. Dogfennau',
+     'consignment-parties': '5. Partïon y llwyth',
+-    'contact-address': '6. Cyfeiriad cyswllt',
+-    'check-and-submit': 'Gwirio a chyflwyno'
++    'contact-address': '6. Cyfeiriad cyswllt'
+   },
+   rows: {
+     origin: {
+@@ -74,10 +73,6 @@ export const copy = {
+     documents: {
+       title: 'Dogfennau wedi’u huwchlwytho',
+       hint: 'Tystysgrifau, trwyddedau a dogfennau eraill ar gyfer y llwyth'
+-    },
+-    review: {
+-      title: 'Gwirio a chyflwyno',
+-      hint: 'Gwiriwch eich atebion cyn i chi gyflwyno’r hysbysiad'
+     }
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+index 81907a91..8919acc5 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+@@ -7,13 +7,13 @@ export const copy = {
+     packagesLabel: 'Packages/boxes',
+     packagesCaption: 'Total number of packages in this consignment'
+   },
++  reviewAndSubmit: 'Review and submit',
+   returnToDashboard: 'Return to dashboard',
+   statuses: {
+     completed: 'Completed',
+     optional: 'Optional',
+     inProgress: 'In progress',
+-    notYetStarted: 'Not yet started',
+-    cannotStartYet: 'Cannot start yet'
++    notYetStarted: 'Not yet started'
+   },
+   taskListHeading: 'Notification tasklist',
+   groups: {
+@@ -22,8 +22,7 @@ export const copy = {
+     'transport-and-arrival': '3. Transport and arrival',
+     documents: '4. Documents',
+     'consignment-parties': '5. Consignment parties',
+-    'contact-address': '6. Contact address',
+-    'check-and-submit': 'Check and submit'
++    'contact-address': '6. Contact address'
+   },
+   rows: {
+     origin: {
+@@ -73,10 +72,6 @@ export const copy = {
+     documents: {
+       title: 'Uploaded documents',
+       hint: 'Certificates, permits and other documents for the consignment'
+-    },
+-    review: {
+-      title: 'Check and submit',
+-      hint: 'Check your answers before you submit the notification'
+     }
+   }
+ }
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index 94036163..3f0ddc9b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -43,11 +43,7 @@ const CONSIGNMENT_DETAILS_ROW_TITLE = 'Commodity details'
+ const IMPORT_REASON_ROW_TITLE = 'Main reason for importing'
+ const TRANSIT_ROW_TITLE = 'Transit countries'
+ const ARRIVAL_ROW_TITLE = 'Arrival details'
+-const REVIEW_ROW_TITLE = 'Check and submit'
+-const CANNOT_START_STATUS = {
+-  text: 'Cannot start yet',
+-  classes: 'govuk-task-list__status--cannot-start-yet'
+-}
++const CANNOT_START_CLASS = 'govuk-task-list__status--cannot-start-yet'
+ const NOT_YET_STARTED_STATUS = {
+   tag: { text: 'Not yet started', classes: 'govuk-tag--blue' }
+ }
+@@ -123,7 +119,7 @@ describe('#hubHandler', () => {
+     expect(context.progressLine).toBeUndefined()
+   })
+ 
+-  it('Should render the six numbered design sections in order, with the unnumbered review section last', async () => {
++  it('Should render the six numbered design sections in order and nothing after them', async () => {
+     const { groups } = await renderHub()
+     expect(groups.map((group) => group.caption)).toEqual([
+       '1. About the consignment',
+@@ -131,9 +127,7 @@ describe('#hubHandler', () => {
+       '3. Transport and arrival',
+       '4. Documents',
+       '5. Consignment parties',
+-      '6. Contact address',
+-      // Unnumbered, and only until the review becomes a button under the list.
+-      'Check and submit'
++      '6. Contact address'
+     ])
+   })
+ 
+@@ -153,8 +147,7 @@ describe('#hubHandler', () => {
+       [ARRIVAL_ROW_TITLE, 'Transporter'],
+       ['Uploaded documents'],
+       ['Roles and addresses'],
+-      ['Contact address'],
+-      [REVIEW_ROW_TITLE]
++      ['Contact address']
+     ])
+   })
+ 
+@@ -204,21 +197,20 @@ describe('#hubHandler', () => {
+   })
+ 
+   // Design release 1 lets a trader start any task on the notification in any
+-  // order, so every answer task is a link with a real status from the moment
+-  // the notification exists. Nothing but Check and submit is ever shut.
+-  it('Should link every answer row on a brand new notification, none of them "Cannot start yet"', async () => {
++  // order, so every task the hub shows is a link with a real status from the
++  // moment the notification exists. With the review moved to a button, no row
++  // on the page is ever shut.
++  it('Should link every row on a brand new notification, none of them "Cannot start yet"', async () => {
+     const context = await renderHub()
+-    const answerRows = allItems(context).filter(
+-      (item) => item.title.text !== REVIEW_ROW_TITLE
+-    )
++    const rows = allItems(context)
+ 
+-    expect(answerRows).not.toHaveLength(0)
+-    for (const row of answerRows) {
++    expect(rows).not.toHaveLength(0)
++    for (const row of rows) {
+       expect(row.href, `${row.title.text} has no way in`).toMatch(
+         /^\/notifications\/[^/]+\/.+/
+       )
+-      expect(row.status, `${row.title.text} is shut`).not.toEqual(
+-        CANNOT_START_STATUS
++      expect(row.status.classes, `${row.title.text} is shut`).not.toBe(
++        CANNOT_START_CLASS
+       )
+     }
+   })
+@@ -320,13 +312,26 @@ describe('#hubHandler', () => {
+     )
+   })
+ 
+-  it('Should lock the Check and submit row until the journey is submit-ready (RULE 2)', async () => {
+-    const reviewRow = rowByTitle(await renderHub(), REVIEW_ROW_TITLE)
+-    expect(reviewRow.hint.text).toBe(
+-      'Check your answers before you submit the notification'
++  // Design release 1 reaches the review from a button under the task list, not
++  // from a task row, and offers it on a notification with nothing answered:
++  // the review page is where a trader reads back what they have entered so far.
++  it('Should offer the review as a button under the list, not as a task row', async () => {
++    const context = await renderHub()
++
++    expect(context.reviewHref).toBe(
++      pagePath(context.journeyId, 'notification-view')
++    )
++    expect(copy.reviewAndSubmit).toBe('Review and submit')
++    expect(rowByTitle(context, 'Check and submit')).toBeUndefined()
++    expect(copy.groups['check-and-submit']).toBeUndefined()
++  })
++
++  it('Should offer the same review button on a part-answered notification', async () => {
++    const context = await renderHub(unlockedSeed)
++
++    expect(context.reviewHref).toBe(
++      pagePath(context.journeyId, 'notification-view')
+     )
+-    expect(reviewRow.href).toBeUndefined()
+-    expect(reviewRow.status).toEqual(CANNOT_START_STATUS)
+   })
+ })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+index cd85158d..ec925f57 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+@@ -4,6 +4,7 @@ import {
+   answerArrivalDetails,
+   answerCountryOfOrigin,
+   completeAnswerSections,
++  openReviewFromHub,
+   selectSpecies,
+   signIn,
+   startNotification
+@@ -47,6 +48,10 @@ const PACKAGES = '5'
+ const TOTAL_BOX = '.app-commodity-total'
+ const SECTION_HEADING = 'h3.govuk-heading-m'
+ const SAVE_AND_CONTINUE = 'Save and continue'
++// The task row Design release 1 does not have: the review is a button now, so
++// nothing on the hub carries this title or the shut status it used to read.
++const RETIRED_REVIEW_ROW_TITLE = 'Check and submit'
++const CANNOT_START_STATUS = '.govuk-task-list__status--cannot-start-yet'
+ 
+ const selectCommodityAndOpenDetails = async (page) => {
+   await startNotification(page)
+@@ -135,20 +140,14 @@ test.describe('hub feature', () => {
+       })
+     ).toBeVisible()
+ 
+-    const review = taskRow(page, copy.rows.review.title)
+-    await expect(review).toContainText(copy.statuses.cannotStartYet)
+-    await expect(
+-      review.getByRole('link', { name: copy.rows.review.title })
+-    ).toHaveCount(0)
++    await expect(page.getByText(RETIRED_REVIEW_ROW_TITLE)).toHaveCount(0)
+   })
+ 
+   // Design release 1 heads the whole list "Notification tasklist" and divides
+   // the notification into six numbered sections under it: the documents come
+   // fourth, and the consignment parties and the contact address are sections
+-  // of their own. The six are followed by the unnumbered "Check and submit"
+-  // section, which survives only until the review becomes a button under the
+-  // list.
+-  test('the task list is headed "Notification tasklist" over the six numbered design sections in order, with the unnumbered review section last', async ({
++  // of their own. Nothing follows them — the review is a button under the list.
++  test('the task list is headed "Notification tasklist" over the six numbered design sections in order, with nothing after them', async ({
+     page
+   }) => {
+     await startNotification(page)
+@@ -171,13 +170,13 @@ test.describe('hub feature', () => {
+   // the journey's entry page and the entry guard holds a notification there
+   // until it is answered, so the earliest hub a trader reaches already has
+   // origin Completed; this is that hub.
+-  test('every task the hub shows but Check and submit opens before a commodity is chosen', async ({
++  test('every task the hub shows opens before a commodity is chosen', async ({
+     page
+   }) => {
+     await startNotification(page)
+ 
+-    // The eleventh row is Check and submit; identification and transit
+-    // countries do not apply to a notification with nothing chosen.
++    // Identification and transit countries do not apply to a notification with
++    // nothing chosen, so these ten are the whole list.
+     const openFromTheStart = [
+       copy.rows.origin,
+       copy.rows.commodities,
+@@ -198,7 +197,7 @@ test.describe('hub feature', () => {
+       ).toBeVisible()
+     }
+ 
+-    await expect(page.getByText(copy.statuses.cannotStartYet)).toHaveCount(1)
++    await expect(page.locator(CANNOT_START_STATUS)).toHaveCount(0)
+   })
+ 
+   test('a task with nothing before it opens and saves before a commodity is chosen', async ({
+@@ -358,25 +357,55 @@ test.describe('hub feature — the Commodity details row', () => {
+   })
+ })
+ 
+-test.describe('hub feature — review readiness', () => {
++// Design release 1 ends the hub with a primary "Review and submit" button and
++// the secondary "Return to dashboard" beside it, and offers the review whatever
++// the notification still owes: it is how a trader reads back what they have
++// entered so far. There is no review task row and no section holding one.
++test.describe('hub feature — the Review and submit button', () => {
+   test.beforeEach(async ({ page }) => {
+     await signIn(page)
+   })
+ 
+-  test('completed answers unlock Check and submit and open the review', async ({
++  test('opens the review from a notification with only the origin answered', async ({
+     page
+   }) => {
+-    test.slow()
+     await startNotification(page)
+-    await completeAnswerSections(page)
+ 
+-    const review = taskRow(page, copy.rows.review.title)
+-    await expect(review).not.toContainText(copy.statuses.cannotStartYet)
+     await expect(
+-      review.getByRole('link', { name: copy.rows.review.title })
++      page.getByRole('button', { name: copy.reviewAndSubmit })
+     ).toHaveAttribute('href', /\/notifications\/[^/]+\/notification-view$/)
+ 
+-    await review.getByRole('link', { name: copy.rows.review.title }).click()
++    await openReviewFromHub(page)
++
++    await expect(
++      page.getByRole('heading', { name: checkAnswersCopy.title })
++    ).toBeVisible()
++  })
++
++  test('leads the secondary Return to dashboard button, with no review task row above them', async ({
++    page
++  }) => {
++    await startNotification(page)
++
++    await expect(page.locator('.govuk-button-group .govuk-button')).toHaveText([
++      copy.reviewAndSubmit,
++      copy.returnToDashboard
++    ])
++    await expect(
++      page.getByRole('button', { name: copy.reviewAndSubmit })
++    ).not.toHaveClass(/govuk-button--secondary/)
++    await expect(page.getByText(RETIRED_REVIEW_ROW_TITLE)).toHaveCount(0)
++    await expect(page.locator(CANNOT_START_STATUS)).toHaveCount(0)
++  })
++
++  test('opens the review once every answer section is complete', async ({
++    page
++  }) => {
++    test.slow()
++    await startNotification(page)
++    await completeAnswerSections(page)
++
++    await openReviewFromHub(page)
+ 
+     await expect(
+       page.getByRole('heading', { name: checkAnswersCopy.title })
+@@ -386,7 +415,7 @@ test.describe('hub feature — review readiness', () => {
+   // Design release 1: "Animal identifiers are optional unless multiple species
+   // are selected." A single-species consignment reaches the review page with
+   // no identifier saved; what is outstanding is chased after submission.
+-  test('a single-species notification unlocks the review with no identifier saved', async ({
++  test('a single-species notification reaches the review with no identifier saved', async ({
+     page
+   }) => {
+     test.slow()
+@@ -396,23 +425,20 @@ test.describe('hub feature — review readiness', () => {
+     const identification = taskRow(page, copy.rows.animalIdentification.title)
+     await expect(identification).toContainText(copy.statuses.completed)
+ 
+-    const review = taskRow(page, copy.rows.review.title)
+-    await expect(review).not.toContainText(copy.statuses.cannotStartYet)
+-
+-    await review.getByRole('link', { name: copy.rows.review.title }).click()
++    await openReviewFromHub(page)
+ 
+     await expect(
+       page.getByRole('heading', { name: checkAnswersCopy.title })
+     ).toBeVisible()
+   })
+ 
+-  test('blocked review hub has no serious or critical axe violations', async ({
++  test('hub with nothing but the origin answered has no serious or critical axe violations', async ({
+     page
+   }) => {
+     await startNotification(page)
+ 
+     // The commodity summary shows from the first visit, so this run covers the
+-    // zero-total panels as well as the task list with Check and submit shut.
++    // zero-total panels as well as the two buttons under the task list.
+     await expect(
+       page.getByRole('heading', { name: copy.commodityTotals.heading })
+     ).toBeVisible()
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk
+index 12db9c07..c25e86dd 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk
+@@ -34,9 +34,16 @@
+     }) }}
+   {% endfor %}
+ 
+-  {{ govukButton({
+-    text: copy.returnToDashboard,
+-    href: dashboardHref,
+-    classes: "govuk-button--secondary"
+-  }) }}
++  <div class="govuk-button-group">
++    {{ govukButton({
++      text: copy.reviewAndSubmit,
++      href: reviewHref
++    }) }}
++
++    {{ govukButton({
++      text: copy.returnToDashboard,
++      href: dashboardHref,
++      classes: "govuk-button--secondary"
++    }) }}
++  </div>
+ {% endblock %}

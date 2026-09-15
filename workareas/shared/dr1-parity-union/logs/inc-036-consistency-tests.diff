@@ -1,0 +1,167 @@
+diff --git a/flows/journey.ts b/flows/journey.ts
+index 57ff183..280003a 100644
+--- a/flows/journey.ts
++++ b/flows/journey.ts
+@@ -314,14 +314,14 @@ export class Journey {
+   async toReview(): Promise<void> {
+     if (!this.context.journeyId) await this.startNotification();
+     await this.completeAnswerSections();
+-    await this.pages.overview.task('Check and submit').click();
++    await this.pages.overview.reviewAndSubmitButton.click();
+     await this.pages.notificationView.heading.waitFor(pageLoadWait);
+   }
+ 
+   async toDeclaration(): Promise<void> {
+     await this.startNotification();
+     await this.completeAnswerSections();
+-    await this.pages.overview.task('Check and submit').click();
++    await this.pages.overview.reviewAndSubmitButton.click();
+     await this.pages.notificationView.heading.waitFor(pageLoadWait);
+     await this.pages.notificationView.continueButton.click();
+     await this.pages.declaration.heading.waitFor(pageLoadWait);
+diff --git a/page-objects/notification/overview-page.ts b/page-objects/notification/overview-page.ts
+index 03702be..6d0f36f 100644
+--- a/page-objects/notification/overview-page.ts
++++ b/page-objects/notification/overview-page.ts
+@@ -14,6 +14,15 @@ export class OverviewPage extends NotificationPage {
+     return this.page.locator('.app-journey-strip');
+   }
+ 
++  /**
++   * Design release 1 reaches the review from a primary button under the task
++   * list rather than from a task row, and offers it whatever the notification
++   * still owes.
++   */
++  get reviewAndSubmitButton(): Locator {
++    return this.page.getByRole('button', { name: 'Review and submit' });
++  }
++
+   task(name: string): Locator {
+     return this.page.getByRole('link', { name, exact: true });
+   }
+diff --git a/tests/a11y/notification-journey-error-state.spec.ts b/tests/a11y/notification-journey-error-state.spec.ts
+index 1b41961..a37c257 100644
+--- a/tests/a11y/notification-journey-error-state.spec.ts
++++ b/tests/a11y/notification-journey-error-state.spec.ts
+@@ -83,7 +83,7 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+       await journey.answerAnimalIdentification();
+       await journey.answerReasonAndAdditionalDetails();
+       await journey.answerContact();
+-      await pages.overview.task('Check and submit').click();
++      await pages.overview.reviewAndSubmitButton.click();
+       await pages.notificationView.heading.waitFor();
+       await pages.notificationView.continueButton.click();
+       await pages.declaration.heading.waitFor();
+diff --git a/tests/a11y/notification-journey-filled-state.spec.ts b/tests/a11y/notification-journey-filled-state.spec.ts
+index 460a167..9dddd19 100644
+--- a/tests/a11y/notification-journey-filled-state.spec.ts
++++ b/tests/a11y/notification-journey-filled-state.spec.ts
+@@ -171,7 +171,7 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+     });
+ 
+     await test.step('Review your notification', async () => {
+-      await pages.overview.task('Check and submit').click();
++      await pages.overview.reviewAndSubmitButton.click();
+       await pages.notificationView.heading.waitFor();
+       await runA11yScan();
+       await pages.notificationView.continueButton.click();
+diff --git a/tests/a11y/notification-journey-initial-state.spec.ts b/tests/a11y/notification-journey-initial-state.spec.ts
+index d508c40..598492f 100644
+--- a/tests/a11y/notification-journey-initial-state.spec.ts
++++ b/tests/a11y/notification-journey-initial-state.spec.ts
+@@ -185,7 +185,7 @@ test.describe(`Accessibility ${WCAG_STANDARD.name}`, { tag: '@a11y' }, () => {
+     });
+ 
+     await test.step('Review your notification', async () => {
+-      await pages.overview.task('Check and submit').click();
++      await pages.overview.reviewAndSubmitButton.click();
+       await pages.notificationView.heading.waitFor();
+       await runA11yScan();
+       await pages.notificationView.continueButton.click();
+diff --git a/tests/e2e/features/addresses-live-link.spec.ts b/tests/e2e/features/addresses-live-link.spec.ts
+index 9f9bd23..5190122 100644
+--- a/tests/e2e/features/addresses-live-link.spec.ts
++++ b/tests/e2e/features/addresses-live-link.spec.ts
+@@ -60,8 +60,8 @@ test.describe('Addresses are linked, not copied', { tag: ['@integration'] }, ()
+ 
+     // The landing row only shows the name. Check-your-answers renders the full
+     // resolved block (party-row.js), so that is where AC4's "latest details"
+-    // for town/postcode are visible. Direct open — the hub's Check and submit
+-    // link stays gated until every section is answered.
++    // for town/postcode are visible. Opened directly rather than through the
++    // hub, so this leg does not depend on how the hub routes to the review.
+     const journeyId = pages.addresses.journeyIdFromUrl();
+     await pages.notificationView.open(journeyId);
+     const rolesAndAddresses = pages.notificationView.summaryCard('Roles and addresses');
+diff --git a/tests/e2e/features/addresses-submit-freeze.spec.ts b/tests/e2e/features/addresses-submit-freeze.spec.ts
+index e417293..7622132 100644
+--- a/tests/e2e/features/addresses-submit-freeze.spec.ts
++++ b/tests/e2e/features/addresses-submit-freeze.spec.ts
+@@ -60,7 +60,7 @@ test.describe('Submitted addresses are frozen', { tag: ['@integration'] }, () =>
+     await expect(originRow).not.toContainText('Penrith');
+ 
+     await notificationActions.amendNotification(referenceNumber);
+-    await pages.overview.task('Check and submit').click();
++    await pages.overview.reviewAndSubmitButton.click();
+     await expect(pages.notificationView.heading).toBeVisible();
+     await expect(pages.notificationView.journeyStrip).toContainText('Amending');
+     await expect(originRow).toContainText(renamed);
+diff --git a/tests/e2e/features/amend-resubmit.spec.ts b/tests/e2e/features/amend-resubmit.spec.ts
+index c83b031..ad84d32 100644
+--- a/tests/e2e/features/amend-resubmit.spec.ts
++++ b/tests/e2e/features/amend-resubmit.spec.ts
+@@ -25,7 +25,7 @@ test.describe('Amend resubmission', { tag: ['@integration'] }, () => {
+     await expect(pages.overview.journeyStrip).toContainText('Amending');
+ 
+     // Change the country of origin through the amending check your answers page.
+-    await pages.overview.task('Check and submit').click();
++    await pages.overview.reviewAndSubmitButton.click();
+     await expect(pages.notificationView.heading).toBeVisible();
+     await expect(pages.notificationView.changeLink('Change import details')).toBeVisible();
+     await expect(pages.notificationView.changeLink('Change commodity 1')).toBeVisible();
+diff --git a/tests/e2e/features/hub-groups-and-cya-rows.spec.ts b/tests/e2e/features/hub-groups-and-cya-rows.spec.ts
+index dc82b27..01b8531 100644
+--- a/tests/e2e/features/hub-groups-and-cya-rows.spec.ts
++++ b/tests/e2e/features/hub-groups-and-cya-rows.spec.ts
+@@ -3,10 +3,7 @@ import { test, expect } from '@fixtures';
+ import { ARRIVAL_DATE } from '@flows/journey';
+ 
+ test.describe('Hub groups and check-your-answers rows', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+-  test('the hub groups its tasks under the six numbered group headings, with the unnumbered review section last', async ({
+-    journey,
+-    pages,
+-  }) => {
++  test('the hub groups its tasks under the six numbered group headings, with nothing after them', async ({ journey, pages }) => {
+     await journey.startNotification();
+ 
+     // Design release 1 sits the whole list under its own heading, so the
+@@ -22,16 +19,18 @@ test.describe('Hub groups and check-your-answers rows', { tag: ['@integration',
+       '4. Documents',
+       '5. Consignment parties',
+       '6. Contact address',
+-      // Unnumbered, and only until the review becomes a button under the list.
+-      'Check and submit',
+     ]);
+ 
++    // Design release 1 ends the hub with the review as a primary button beside
++    // the secondary return, not as a seventh section holding a locked row.
++    await expect(pages.page.locator('.govuk-button-group .govuk-button')).toHaveText(['Review and submit', 'Return to dashboard']);
++
+     // One task list per group, in the same order as the headings. Conditional
+     // rows (exit details, transit countries, animal identification) are not
+     // owed on a fresh notification, so only the always-present tasks are
+     // pinned per group.
+     const taskLists = pages.page.locator('ul.app-task-list');
+-    await expect(taskLists).toHaveCount(7);
++    await expect(taskLists).toHaveCount(6);
+     const expectListedTasks = async (list: Locator, tasks: string[]) => {
+       for (const task of tasks) await expect(list).toContainText(task);
+     };
+@@ -48,7 +47,6 @@ test.describe('Hub groups and check-your-answers rows', { tag: ['@integration',
+     await expectListedTasks(taskLists.nth(3), ['Uploaded documents']);
+     await expectListedTasks(taskLists.nth(4), ['Roles and addresses']);
+     await expectListedTasks(taskLists.nth(5), ['Contact address']);
+-    await expectListedTasks(taskLists.nth(6), ['Check and submit']);
+   });
+ 
+   test('after completing every section the check-your-answers page renders the answered rows', async ({ journey, pages }) => {

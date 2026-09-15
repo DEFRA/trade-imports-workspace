@@ -111,6 +111,18 @@
       "disposition": null,
       "status": null,
       "notes": null
+    },
+    {
+      "id": 10,
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js",
+      "line": "68",
+      "severity": "Major",
+      "category": "security",
+      "issue": "GET handler calls state.commit(...) — state-changing GET with no session-bound token. Session cookie is Lax, so a third-party page can get a signed-in trader to click a crafted link (a href, top-level nav) that commits an arbitrary address to a specified party on a specified notification. Blast radius bounded by the org-scoped address-book lookup (attacker cannot inject foreign addresses) and by needing to know the victim's notification-id + fulfilment-id + one of their org's address-ids — but the pattern is a new anti-pattern this PR introduces and will calcify once other journeys copy the handshake shape.",
+      "fix": "When animals emits the outbound INS link (ins-handshake.js:buildInsAddAddressUrl), generate a random nonce, store it in the yar session keyed by fulfilment-id (or a broader handshake key), and add it to the URL as e.g. handshake-token=<value>. INS round-trips it opaquely as another hidden field (its registry treats these values as opaque already). address-return/controller.js verifies the token matches what the session stored, clears it, then commits. Any request without a matching token — including any third-party-triggered navigation — returns Boom.badRequest before state.commit runs.",
+      "disposition": null,
+      "status": null,
+      "notes": null
     }
   ]
 }

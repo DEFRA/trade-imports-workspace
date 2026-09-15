@@ -6,7 +6,7 @@
 
 ## Summary
 
-Animals-frontend side of the address-book handshake: adds the outbound link from party-picker and contact-address, the `/address-return` route that lands the trader back on the right picker with the newly-created address selected, the `obligation-party-map` that derives the reverse binding from the existing feature bindings (per the ticket's "no seventh party can be added without appearing here" rail), the `tradeImportsInsFrontend.baseUrl` and `tradeImportsAddressBookApi.baseUrl` convict entries that make the two service locations fail-fast, and a matching `stubH().redirect().code(...)` helper. Also picks up a latent auth-redirect encoding bug so query-string-carrying URLs (the new handshake link) survive a sign-in bounce.
+Animals-frontend side of the address-book handshake: adds the outbound link from party-picker and contact-address, the `/address-return` route that lands the trader back on the right picker with the newly-created address selected, the `obligation-party-map` that derives the reverse binding from the existing feature bindings (per the ticket's "no seventh party can be added without appearing here" rail), the `tradeImportsInsFrontend.baseUrl` and `tradeImportsAddressBookApi.baseUrl` convict entries that make the two service locations fail-fast, and a matching `stubH().redirect().code(...)` helper. Also picks up a latent auth-redirect encoding bug so query-string-carrying URLs (the new handshake link) survive a sign-in bounce. The `address-return` route is a state-changing GET without a session-bound token — the new-in-this-PR anti-pattern flagged below (item #10).
 
 ## File Analysis Summary
 
@@ -18,7 +18,7 @@ Animals-frontend side of the address-book handshake: adds the outbound link from
 | `src/plugins/auth.test.js` | SAFE | 0 | 0 | 0 |
 | `src/server/app/engine/test-support.js` | SAFE | 0 | 0 | 1 |
 | `src/server/app/services/address-book/client.js` | SAFE | 0 | 0 | 0 |
-| `src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js` | RISKY | 1 | 0 | 0 |
+| `src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js` | RISKY | 1 | 1 | 0 |
 | `src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js` | SAFE | 0 | 0 | 1 |
 | `src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.cy.js` | SAFE | 0 | 0 | 0 |
 | `src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js` | SAFE | 0 | 0 | 0 |
@@ -51,8 +51,8 @@ Animals-frontend side of the address-book handshake: adds the outbound link from
 
 ## Risk Assessment
 
-**Overall Risk:** Medium
-**Rationale:** One correctness bug — the `recoverableSave` failure branch in `address-return/controller.js` chains `.code(500)` onto an `h.redirect(...)`, and browsers do not follow `Location` on 5xx, so the trader sees a blank 500 instead of the picker with the "unavailable" banner. Directly contradicts the AC. Everything else is minor.
+**Overall Risk:** High
+**Rationale:** Two items on the same file. Correctness: the `recoverableSave` failure branch chains `.code(500)` onto an `h.redirect(...)`, and browsers do not follow `Location` on 5xx, so the trader sees a blank 500 instead of the picker with the "unavailable" banner — directly contradicts the AC. Security: the `address-return` GET calls `state.commit(...)` with no session-bound token, so a signed-in trader clicking a third-party link can be induced to commit an address to their own notification. Blast radius is bounded by the org-scoped address-book lookup and by needing to know the victim's notification/fulfilment/address ids, but the mitigation (per-request nonce round-tripped through INS) is cheap and hardens the pattern before other journeys copy it. Everything else is minor.
 
 ## Items
 
@@ -67,6 +67,7 @@ Animals-frontend side of the address-book handshake: adds the outbound link from
 | 7 | src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js | 18 | Minor | assertion-diagnostics | 'partyForFulfilmentId(fulfilmentId)?.id' collapses the two failure modes — 'lookup missed' vs 'wrong party returned' — into the same 'expected undefined to be <id>' message. | Assert the returned party is defined first (or assert on the whole party object) so a lookup miss reports differently from a wrong-party mismatch. |  |  |  |
 | 8 | src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js | 37 | Minor | duplication | handshakeErrorMessage duplicates the identical helper in addresses/party-picker/party-picker.controller.js — same mapping of not-found/unavailable to copy strings | Extract handshakeErrorMessage into ins-handshake.js (or a sibling module) and reuse it from both controllers so a new handshake error code only needs to be handled once |  |  |  |
 | 9 | src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js | 35 | Minor | coupling | Contact feature reaches into ../addresses/copy/copy.{en,cy}.js for handshakeErrors and addNewAddress strings — cross-feature copy dependency that ties two features' user-facing text together implicitly | Hoist the shared handshake error strings and the 'Add a new address' label into shared/copy.<locale>.js (or a new addresses-handshake copy module) so both features import them from the same shared location instead of contact reaching into addresses |  |  |  |
+| 10 | src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js | 68 | Major | security | GET handler calls state.commit(...) — state-changing GET with no session-bound token. Session cookie is Lax, so a third-party page can get a signed-in trader to click a crafted link (a href, top-level nav) that commits an arbitrary address to a specified party on a specified notification. Blast radius bounded by the org-scoped address-book lookup (attacker cannot inject foreign addresses) and by needing to know the victim's notification-id + fulfilment-id + one of their org's address-ids — but the pattern is a new anti-pattern this PR introduces and will calcify once other journeys copy the handshake shape. | When animals emits the outbound INS link (ins-handshake.js:buildInsAddAddressUrl), generate a random nonce, store it in the yar session keyed by fulfilment-id (or a broader handshake key), and add it to the URL as e.g. handshake-token=<value>. INS round-trips it opaquely as another hidden field (its registry treats these values as opaque already). address-return/controller.js verifies the token matches what the session stored, clears it, then commits. Any request without a matching token — including any third-party-triggered navigation — returns Boom.badRequest before state.commit runs. |  |  |  |
 
 ## Consistency
 
@@ -74,4 +75,4 @@ See `file-reviews/trade-imports-animals-frontend/_consistency-check.md`. Status:
 
 ## Repository Verdict
 
-**Status:** NEEDS ATTENTION
+**Status:** RISKY

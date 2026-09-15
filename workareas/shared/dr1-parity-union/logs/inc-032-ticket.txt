@@ -1,0 +1,18 @@
+h2. Increment
+
+{{inc-032}} from the {{shared/dr1-parity-union}} backlog.
+
+h2. Acceptance criteria
+
+* On a brand new notification every task row on the hub renders as a link. No row is plain text, and no row is missing a link because an earlier question is unanswered.
+* The "Cannot start yet" status is retired from the hub. No row shows that wording and no row carries the {{govuk-task-list__status--cannot-start-yet}} class.
+* Every task row carries a real status from the moment the notification exists, so an unstarted row reads as to do rather than as blocked.
+* The hub's row gate is removed: {{rowGatePasses}} in {{src/server/app/flow/navigation.js}} no longer decides whether a row is open, and the hub controller at {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js}} renders one row shape for every task.
+* Each page behind a newly unlocked row renders and saves sensibly when the pages that used to precede it have not been answered.
+* The deep-link entry guard at {{src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js}} is unchanged — it guards a journey this session never started, not page order.
+* A row that is out of scope is still left out of the list rather than shown locked.
+* Unit tests cover an unanswered hub showing every row as a link, and the E2E suite and its visual baselines are updated for the new hub.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

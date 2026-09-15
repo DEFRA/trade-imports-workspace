@@ -28494,7 +28494,7 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
+      "status": "done",
       "commit": "f2a1933a",
       "failure_reason": null,
       "finding": {
@@ -28595,7 +28595,16 @@
         {
           "repo": "frontend",
           "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/342",
-          "number": 342
+          "number": 342,
+          "merged": true,
+          "sha": "1c6c54258b95f6aa07d10243e3453836dc147d22"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/225",
+          "number": 225,
+          "merged": true,
+          "sha": "03bccf817f6e5165b47496f8e9967c5d43d59179"
         }
       ]
     },
@@ -28620,8 +28629,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "b3482d09",
       "failure_reason": null,
       "finding": {
         "frontend": "On a brand new notification the hub lists eleven tasks and exactly one of them can be opened. \"Where is this consignment coming from?\" is a link tagged \"Not yet started\"; the other ten rows are plain text with the grey status \"Cannot start yet\" and carry no link at all, so the hub offers no way into them. Answering the origin questions unlocks precisely one more row — on fe-hub-part-answered \"What are you importing?\" has become a link and every row below it still reads \"Cannot start yet\", including \"Arrival details\", \"Upload documents\" and \"Contact address\", none of which depends on the origin answers. Nine of the eleven rows on that page, from the reason for import through to check and submit, are plain black text with no way in, and the only two a user can open are the one they have already answered and the commodity picker itself. The hub decides this per row: src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:120-122 renders an open row or a blocked one according to whether the first page in the row passes its gate, and the gate is that page's prerequisites at src/server/app/flow/gates.js:23-32. Those prerequisites chain on two answers — country of origin and the commodity selection, the pair enforced at continue in src/server/app/bridge/obligation-source.js:30-33 — and every page that sits after them in the journey order demands them (src/server/app/flow/prerequisites.js:13-27), which is why one unanswered question closes most of the page. A conditional row whose questions are all out of scope behaves differently again: it is dropped from the list entirely rather than blocked (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:116-118), so \"Exit details\" is absent from such a hub rather than shown shut.",
@@ -28882,11 +28891,38 @@
         "note": "Same finding: rows locked behind earlier answers with 'Cannot start yet'; DR1 links every row unconditionally. A is broader on the user picture (nine of eleven rows dead on a part-answered notification) and traces the prerequisite chain to obligation-source; C is better for whoever does the work — it proves no route handler consults those prerequisites (only entry-guard.js), so the pages already admit direct visits and the real cost is making each page cope with unanswered predecessors. C also gives exact DOM counts (one govuk-task-list__link, ten cannot-start-yet) as its falsifier.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-599",
+      "branch": "feat/EUDPA-599-the-frontend-locks-all-but-one-hub-task",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/344",
+          "number": 344,
+          "merged": true,
+          "sha": "0033bcf6afa436e983c48430f2eaad03a0774a48"
+        }
+      ]
     },
     {
       "id": "inc-037",
       "type": "flow-change",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/345",
+          "number": 345,
+          "merged": true,
+          "sha": "ab5cf60ef78cb2639552dda3e362f9a6c4f6bdd1"
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/228",
+          "number": 228,
+          "merged": true,
+          "sha": "853c9acee8e6ef9d6b1df2b3f76d7e3e86c22275"
+        }
+      ],
       "milestone": null,
       "domain": "hub",
       "title": "The hub divides a notification into different sections from Design release 1, and names five of its six section headings differently",
@@ -28905,8 +28941,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "742cecb4",
       "failure_reason": null,
       "finding": {
         "frontend": "The hub's task list runs under six numbered headings: \"1. About the consignment\", \"2. Commodity details\", \"3. Movement\", \"4. Addresses\", \"5. Documents\", \"6. Check and submit\". Addresses and the consignment contact share one section; documents come fifth; and the last section exists only to hold the check-and-submit row. The headings and the rows under them are fixed in the hub's own view model at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:33-49, with the wording at src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js:18-25.",
@@ -29014,7 +29050,9 @@
         "note": "Both: six section headings named and ordered differently, documents demoted below the addresses, contact address sharing a section instead of having its own. Same fix. A folds two extras into this one finding that C splits or handles elsewhere — the within-section row order (C's inc-043) and the 'Notification tasklist' heading (A's inc-059). C states section membership row by row, which is the more usable form for a build.",
         "better": "neither",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-600",
+      "branch": "feat/EUDPA-600-the-hub-divides-a-notification-into-diff"
     },
     {
       "id": "inc-038",
@@ -29037,8 +29075,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "deb8cdbe",
       "failure_reason": null,
       "finding": {
         "frontend": "The second section of the hub lists \"Additional commodity details\" first and \"Animal identification details\" second, in that order on both captured hub states. The order comes from the group definition at src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:38-41.",
@@ -29125,7 +29163,18 @@
         "note": "Second half of the same ground: identification should sit before additional details inside section 2. A buries this as one clause of its group-structure finding; C raises it as a finding of its own with both captures cited. C's split is the better shape — it is a one-line swap that can land independently of the renaming and regrouping.",
         "better": "C",
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-602",
+      "branch": "feat/EUDPA-602-the-hub-lists-the-animal-identification",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/347",
+          "number": 347,
+          "merged": true,
+          "sha": "9591d58e52ad0280be1ec2facb7782c1eb3557a5"
+        }
+      ]
     },
     {
       "id": "inc-036",

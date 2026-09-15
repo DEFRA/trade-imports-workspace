@@ -1,0 +1,209 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index adc8a1be..fa733c1b 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -26,24 +26,33 @@ const view = `${TEMPLATES}/features/hub/template`
+ const copy = copyFor({ en, cy })
+ const sharedCopy = copyFor({ en: sharedEn, cy: sharedCy })
+ 
++// Design release 1 divides the notification into six numbered sections under a
++// "Notification tasklist" heading: the documents come fourth rather than after
++// the addresses, and the consignment parties and the contact address are
++// sections of their own rather than one shared "Addresses".
+ const GROUPS = [
+   {
+     id: 'about-the-consignment',
+     rows: ['origin', 'commodities', 'importReason']
+   },
+   {
+-    id: 'commodity-details',
++    id: 'description-of-the-goods',
+     // Design release 1 opens this section with the commodity details, so the
+     // consignment-details page leads the group rather than hanging off the
+     // "What are you importing?" row in the section above.
+     rows: ['consignmentDetails', 'additionalDetails', 'animalIdentification']
+   },
+   {
+-    id: 'movement',
++    id: 'transport-and-arrival',
+     rows: ['arrivalDetails', 'transitCountries', 'transporter']
+   },
+-  { id: 'addresses', rows: ['addresses', 'contact'] },
+   { id: 'documents', rows: ['documents'] },
++  { id: 'consignment-parties', rows: ['addresses'] },
++  { id: 'contact-address', rows: ['contact'] },
++  // Design release 1 has no section here: it reaches the review from a button
++  // under the task list. Until that button exists the review row is the only
++  // route to the check-your-answers page, so the section stays, unnumbered so
++  // it cannot be read as a seventh section of the design's six.
+   { id: 'check-and-submit', rows: ['review'] }
+ ]
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+index f8dd9c56..805a7069 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+@@ -16,13 +16,15 @@ export const copy = {
+     notYetStarted: 'Heb ddechrau eto',
+     cannotStartYet: 'Methu dechrau eto'
+   },
++  taskListHeading: 'Rhestr dasgau’r hysbysiad',
+   groups: {
+     'about-the-consignment': '1. Am y llwyth',
+-    'commodity-details': '2. Manylion y nwyddau',
+-    movement: '3. Symudiad',
+-    addresses: '4. Cyfeiriadau',
+-    documents: '5. Dogfennau',
+-    'check-and-submit': '6. Gwirio a chyflwyno'
++    'description-of-the-goods': '2. Disgrifiad o’r nwyddau',
++    'transport-and-arrival': '3. Cludiant a chyrraedd',
++    documents: '4. Dogfennau',
++    'consignment-parties': '5. Partïon y llwyth',
++    'contact-address': '6. Cyfeiriad cyswllt',
++    'check-and-submit': 'Gwirio a chyflwyno'
+   },
+   rows: {
+     origin: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+index c595a71a..81907a91 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+@@ -15,13 +15,15 @@ export const copy = {
+     notYetStarted: 'Not yet started',
+     cannotStartYet: 'Cannot start yet'
+   },
++  taskListHeading: 'Notification tasklist',
+   groups: {
+     'about-the-consignment': '1. About the consignment',
+-    'commodity-details': '2. Commodity details',
+-    movement: '3. Movement',
+-    addresses: '4. Addresses',
+-    documents: '5. Documents',
+-    'check-and-submit': '6. Check and submit'
++    'description-of-the-goods': '2. Description of the goods',
++    'transport-and-arrival': '3. Transport and arrival',
++    documents: '4. Documents',
++    'consignment-parties': '5. Consignment parties',
++    'contact-address': '6. Contact address',
++    'check-and-submit': 'Check and submit'
+   },
+   rows: {
+     origin: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index ff9ceb63..e41a4a95 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -74,6 +74,10 @@ describe('#copy', () => {
+       expect(isCopyLeaf(value), `${path} must be copy`).toBe(true)
+     }
+   })
++
++  test('Should head the whole task list "Notification tasklist"', () => {
++    expect(copy.taskListHeading).toBe('Notification tasklist')
++  })
+ })
+ 
+ describe('GET /hub', () => {
+@@ -119,15 +123,17 @@ describe('#hubHandler', () => {
+     expect(context.progressLine).toBeUndefined()
+   })
+ 
+-  it('Should render the six numbered groups in the design order', async () => {
++  it('Should render the six numbered design sections in order, with the unnumbered review section last', async () => {
+     const { groups } = await renderHub()
+     expect(groups.map((group) => group.caption)).toEqual([
+       '1. About the consignment',
+-      '2. Commodity details',
+-      '3. Movement',
+-      '4. Addresses',
+-      '5. Documents',
+-      '6. Check and submit'
++      '2. Description of the goods',
++      '3. Transport and arrival',
++      '4. Documents',
++      '5. Consignment parties',
++      '6. Contact address',
++      // Unnumbered, and only until the review becomes a button under the list.
++      'Check and submit'
+     ])
+   })
+ 
+@@ -143,9 +149,10 @@ describe('#hubHandler', () => {
+         'Animal identification details'
+       ],
+       [ARRIVAL_ROW_TITLE, 'Transporter'],
+-      ['Roles and addresses', 'Contact address'],
+       ['Uploaded documents'],
+-      ['Check and submit']
++      ['Roles and addresses'],
++      ['Contact address'],
++      [REVIEW_ROW_TITLE]
+     ])
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+index beb2be89..f063556a 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+@@ -35,6 +35,7 @@ const expectAxeClean = async (page, name) => {
+ const ANIMALS = '25'
+ const PACKAGES = '5'
+ const TOTAL_BOX = '.app-commodity-total'
++const SECTION_HEADING = 'h3.govuk-heading-m'
+ const SAVE_AND_CONTINUE = 'Save and continue'
+ 
+ const selectCommodityAndOpenDetails = async (page) => {
+@@ -131,6 +132,26 @@ test.describe('hub feature', () => {
+     ).toHaveCount(0)
+   })
+ 
++  // Design release 1 heads the whole list "Notification tasklist" and divides
++  // the notification into six numbered sections under it: the documents come
++  // fourth, and the consignment parties and the contact address are sections
++  // of their own.
++  test('the task list is headed "Notification tasklist" over the six numbered sections in the design order', async ({
++    page
++  }) => {
++    await startNotification(page)
++
++    await expect(
++      page.getByRole('heading', { level: 2, name: copy.taskListHeading })
++    ).toBeVisible()
++
++    // The commodity-total labels are h3s too, so the section headings are
++    // read off their own class rather than off the level alone.
++    await expect(page.locator(SECTION_HEADING)).toHaveText(
++      Object.values(copy.groups)
++    )
++  })
++
+   // Design release 1 lets a trader start any task on the notification in any
+   // order, so every task the hub shows is a link before a commodity is
+   // chosen — the arrival details, the documents and the contact address
+@@ -224,7 +245,9 @@ test.describe('hub feature', () => {
+       taskRow(page, copy.rows.animalIdentification.title)
+     ).toHaveCount(0)
+     await expect(
+-      page.getByRole('heading', { name: copy.groups['commodity-details'] })
++      page.getByRole('heading', {
++        name: copy.groups['description-of-the-goods']
++      })
+     ).toBeVisible()
+   })
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk b/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk
+index b94441f7..12db9c07 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk
+@@ -23,8 +23,10 @@
+     </div>
+   </div>
+ 
++  <h2 class="govuk-heading-l">{{ copy.taskListHeading }}</h2>
++
+   {% for group in groups %}
+-    <h2 class="govuk-heading-m">{{ group.caption }}</h2>
++    <h3 class="govuk-heading-m">{{ group.caption }}</h3>
+     {{ govukTaskList({
+       idPrefix: group.id,
+       items: group.items,

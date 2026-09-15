@@ -1,0 +1,183 @@
+diff --git a/src/server/app/flow/navigation.js b/src/server/app/flow/navigation.js
+index b48bb758..d0e0e45c 100644
+--- a/src/server/app/flow/navigation.js
++++ b/src/server/app/flow/navigation.js
+@@ -17,13 +17,19 @@ export const sectionEntry = (sectionId, scope, journeyId) => {
+   return page ? pagePath(journeyId, page.slug) : hubPath(journeyId)
+ }
+ 
++// A task row always has a way in. The hub links every row from the moment the
++// notification exists, so this never answers "nowhere": the gate still chooses
++// which of the row's pages opens, skipping one whose questions are out of
++// scope for this consignment, but when it rules them all out the row opens at
++// its first page. That page decides for itself what to show someone who has
++// answered nothing else yet.
+ export const rowEntry = (row, scope, journeyId) => {
+-  const page = row.pages.find((candidate) => pageGatePasses(candidate, scope))
+-  return page ? pagePath(journeyId, page.slug) : hubPath(journeyId)
++  const page =
++    row.pages.find((candidate) => pageGatePasses(candidate, scope)) ??
++    row.pages[0]
++  return pagePath(journeyId, page.slug)
+ }
+ 
+-export const rowGatePasses = (row, scope) => pageGatePasses(row.pages[0], scope)
+-
+ export const nextInSection = (pageId, scope, journeyId) => {
+   const section = sectionOfPage(pageId)
+   if (!section) {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index 9084844a..adc8a1be 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -1,11 +1,7 @@
+ import { dashboardPath, hubRoutePath } from '../../../../../../shared/paths.js'
+ import { TEMPLATES } from '../../config.js'
+ import { sections } from '../../flow/flow.js'
+-import {
+-  rowEntry,
+-  rowGatePasses,
+-  sectionEntry
+-} from '../../../../../../flow/navigation.js'
++import { rowEntry, sectionEntry } from '../../../../../../flow/navigation.js'
+ import { sectionGatePasses } from '../../../../../../flow/gates.js'
+ import * as state from '../../../../../../engine/index.js'
+ import {
+@@ -65,6 +61,9 @@ const STATUS_TAG = {
+ }
+ const statusTag = (status) => STATUS_TAG[status] ?? STATUS_TAG[NOT_STARTED]
+ 
++// The one task the hub still shuts is Check and submit, which holds its own
++// authored gate on submit-readiness. Every other row is a link from the moment
++// the notification exists, so no answer row reads this status.
+ const CANNOT_START_STATUS = {
+   text: copy.statuses.cannotStartYet,
+   classes: 'govuk-task-list__status--cannot-start-yet'
+@@ -95,9 +94,11 @@ const buildReviewItem = (
+ 
+ const isHiddenRow = (row, status) => row.conditional && status === NA
+ 
+-const blockedRowItem = (base) => ({ ...base, status: CANNOT_START_STATUS })
+-
+-const openRowItem = (base, row, scope, status, journeyId) => ({
++// Design release 1 lets a trader start any task on the notification in any
++// order, so a row is a link and carries a real status whatever else has been
++// answered. A row that does not apply to this consignment leaves the list
++// (`isHiddenRow`) rather than sitting on it shut.
++const rowItem = (base, row, scope, status, journeyId) => ({
+   ...base,
+   href: rowEntry(row, scope, journeyId),
+   status: statusTag(status)
+@@ -120,9 +121,7 @@ const buildRowItem = (id, answers, scope, evaluation, journeyId) => {
+     return null
+   }
+   const base = { title: { text: title }, hint: { text: hint } }
+-  return rowGatePasses(row, scope)
+-    ? openRowItem(base, row, scope, status, journeyId)
+-    : blockedRowItem(base)
++  return rowItem(base, row, scope, status, journeyId)
+ }
+ 
+ const buildGroups = (answers, scope, evaluation, journeyId) =>
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index 5ada0a87..ff9ceb63 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -42,6 +42,12 @@ const COMMODITIES_ROW_TITLE = 'What are you importing?'
+ const CONSIGNMENT_DETAILS_ROW_TITLE = 'Commodity details'
+ const IMPORT_REASON_ROW_TITLE = 'Main reason for importing'
+ const TRANSIT_ROW_TITLE = 'Transit countries'
++const ARRIVAL_ROW_TITLE = 'Arrival details'
++const REVIEW_ROW_TITLE = 'Check and submit'
++const CANNOT_START_STATUS = {
++  text: 'Cannot start yet',
++  classes: 'govuk-task-list__status--cannot-start-yet'
++}
+ const NOT_YET_STARTED_STATUS = {
+   tag: { text: 'Not yet started', classes: 'govuk-tag--blue' }
+ }
+@@ -136,7 +142,7 @@ describe('#hubHandler', () => {
+         'Additional commodity details',
+         'Animal identification details'
+       ],
+-      ['Arrival details', 'Transporter'],
++      [ARRIVAL_ROW_TITLE, 'Transporter'],
+       ['Roles and addresses', 'Contact address'],
+       ['Uploaded documents'],
+       ['Check and submit']
+@@ -188,13 +194,41 @@ describe('#hubHandler', () => {
+     expect(originRow.status).toEqual(COMPLETED_STATUS)
+   })
+ 
+-  it('Should render a gated row as "Cannot start yet" text with NO link', async () => {
+-    const commoditiesRow = rowByTitle(await renderHub(), COMMODITIES_ROW_TITLE)
+-    expect(commoditiesRow.href).toBeUndefined()
+-    expect(commoditiesRow.status).toEqual({
+-      text: 'Cannot start yet',
+-      classes: 'govuk-task-list__status--cannot-start-yet'
+-    })
++  // Design release 1 lets a trader start any task on the notification in any
++  // order, so every answer task is a link with a real status from the moment
++  // the notification exists. Nothing but Check and submit is ever shut.
++  it('Should link every answer row on a brand new notification, none of them "Cannot start yet"', async () => {
++    const context = await renderHub()
++    const answerRows = allItems(context).filter(
++      (item) => item.title.text !== REVIEW_ROW_TITLE
++    )
++
++    expect(answerRows).not.toHaveLength(0)
++    for (const row of answerRows) {
++      expect(row.href, `${row.title.text} has no way in`).toMatch(
++        /^\/notifications\/[^/]+\/.+/
++      )
++      expect(row.status, `${row.title.text} is shut`).not.toEqual(
++        CANNOT_START_STATUS
++      )
++    }
++  })
++
++  it('Should open each row at its own page before anything else is answered', async () => {
++    const context = await renderHub()
++
++    expect(rowByTitle(context, COMMODITIES_ROW_TITLE).href).toBe(
++      pagePath(context.journeyId, 'commodities')
++    )
++    expect(rowByTitle(context, CONSIGNMENT_DETAILS_ROW_TITLE).href).toBe(
++      pagePath(context.journeyId, 'consignment-details')
++    )
++    expect(rowByTitle(context, ARRIVAL_ROW_TITLE).href).toBe(
++      pagePath(context.journeyId, 'port-of-entry')
++    )
++    expect(rowByTitle(context, 'Contact address').href).toBe(
++      pagePath(context.journeyId, 'consignment/contact/select')
++    )
+   })
+ 
+   it('Should split the commodities and identification rows over one collection — line data completes one, identifiers the other', async () => {
+@@ -266,7 +300,7 @@ describe('#hubHandler', () => {
+ 
+   it('Should enter each movement row at its first page', async () => {
+     const context = await renderHub(unlockedSeed)
+-    expect(rowByTitle(context, 'Arrival details').href).toBe(
++    expect(rowByTitle(context, ARRIVAL_ROW_TITLE).href).toBe(
+       pagePath(context.journeyId, 'port-of-entry')
+     )
+     expect(rowByTitle(context, 'Transporter').href).toBe(
+@@ -278,15 +312,12 @@ describe('#hubHandler', () => {
+   })
+ 
+   it('Should lock the Check and submit row until the journey is submit-ready (RULE 2)', async () => {
+-    const reviewRow = rowByTitle(await renderHub(), 'Check and submit')
++    const reviewRow = rowByTitle(await renderHub(), REVIEW_ROW_TITLE)
+     expect(reviewRow.hint.text).toBe(
+       'Check your answers before you submit the notification'
+     )
+     expect(reviewRow.href).toBeUndefined()
+-    expect(reviewRow.status).toEqual({
+-      text: 'Cannot start yet',
+-      classes: 'govuk-task-list__status--cannot-start-yet'
+-    })
++    expect(reviewRow.status).toEqual(CANNOT_START_STATUS)
+   })
+ })
+ 

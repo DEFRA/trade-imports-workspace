@@ -322,9 +322,12 @@ const baseline = await agent(
 ${GUARDRAILS}
 1. Read the programme header: \`jq 'del(.stages)' ${STAGES_TILDE}\`. Note the branch and every repo path.
 2. List every stage with its status: \`jq -r '.stages[] | .id + " " + .status' ${STAGES_TILDE}\`.
-3. For EACH repo in the header: \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print the programme
-   branch, and \`git -C ${TILDE}/<repoPath> status --short\` must print nothing. A repo on another branch or with a
-   dirty tree is a problem — name it. Do not fix it.
+3. Work out which stages this run will build: ${Array.isArray(CFG.stages) && CFG.stages.length > 0 ? `exactly these, in this order — ${CFG.stages.join(', ')}` : 'every stage whose status is "todo", in file order'}.
+   Then for EACH repo named in the \`repos\` of THOSE stages (and only those — a repo no pending stage touches may
+   be on any branch, that is someone else's work): \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must
+   print the programme branch, and \`git -C ${TILDE}/<repoPath> status --short\` must print nothing. A repo on
+   another branch or with a dirty tree is a problem — name it. Do not fix it. The workspace repo (path ".") counts
+   as touched by every run because stages.json and plans/ are written there.
 4. Report done = every stage whose status is "done", todo = every stage whose status is "todo" in file order.
    A stage in any other status (ci-red, ladder-red, implement-failed) is a problem — name it in problems and leave
    it out of todo; the run must not build on it.

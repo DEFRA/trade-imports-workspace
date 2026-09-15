@@ -645,7 +645,7 @@
       "repos": [
         "workspace"
       ],
-      "brief": "Write workareas/shared/frontend-alignment/report.md: the proposal as built. Sections: why (drift in security-sensitive chassis code, three copies), what changed in ins stage by stage with the before and after trees, what was backported the other way, the decisions taken and which were two-against-one calls that the team can reverse (stub-mode collapse, import style, build tool, plugins location, client layout), residual drift after alignment measured by a normalised three-way diff of the chassis files, the Welsh copy caveat, the open questions collected from every stage, and how to keep the three aligned from here (the surfaces manifest and a drift check). Link every draft PR. Plain GitHub markdown.",
+      "brief": "Write workareas/shared/frontend-alignment/report.md: the proposal as built. (s14 was added after this report landed; its outcome is recorded in its own notes, not here.) Sections: why (drift in security-sensitive chassis code, three copies), what changed in ins stage by stage with the before and after trees, what was backported the other way, the decisions taken and which were two-against-one calls that the team can reverse (stub-mode collapse, import style, build tool, plugins location, client layout), residual drift after alignment measured by a normalised three-way diff of the chassis files, the Welsh copy caveat, the open questions collected from every stage, and how to keep the three aligned from here (the surfaces manifest and a drift check). Link every draft PR. Plain GitHub markdown.",
       "reference": [],
       "ladder": [],
       "status": "done",
@@ -665,6 +665,21 @@
         "The animals (#339) and plants (#69) PR bodies link to the report at github.com/DEFRA/trade-imports-animals-frontend/blob/feat/NO_JIRA-frontend-alignment and the plants equivalent, not at the workspace repo where report.md lives; the ins (#27) body links to the workspace. Correct the two journey PR bodies (tools/github/pr-ensure-draft.sh or a body edit) before the team reads them?",
         "Report section 8 proposes `tim workspace drift` over workareas/shared/frontend-alignment/surfaces.json. Does the manifest move to a tracked home (docs/reference/ or tim/) and the command get built, or does the proposal stay in the report until the team rules on the architecture?"
       ]
+    },
+    {
+      "id": "s14-lighthouse",
+      "title": "give ins the journeys' Lighthouse harness",
+      "repos": ["ins"],
+      "brief": "Sam ruled Lighthouse in (2026-09-15). Port the journeys' Lighthouse harness to ins with the same shape, adapted to a service with no journey: @lhci/cli and puppeteer as devDependencies; lighthouserc.cjs at the repo root asserting performance, accessibility and best-practices only (never SEO); scripts/lighthouse/{audit-targets.js, seed-audit-targets.js, run-audit.js} and tests/lighthouse/auth-setup.cjs, where audit-targets derives the URL list from the app's registered routes (dashboard, address-book list, add, view, edit, delete) and the seeder creates ONE address through the running app's own pages in stub mode so the {id} routes have a record to show, in place of the journeys' notification seeding; the lighthouse, lighthouse:targets and lighthouse:run npm scripts; .github/workflows/lighthouse.yml copied from animals with the service name and port changed, and .github/workflows/cleanup-e2e-reports.yml only if the animals lighthouse workflow depends on it; lighthouse-report/ in .gitignore; and src/server/app/docs/lighthouse.md in the voice of the plants lighthouse doc, saying what is audited, how to run it against a locally started app (npm run fit:start in one shell, npm run lighthouse in another), and that the CI workflow only fires once lighthouse.yml is on main because workflow_run triggers read the default branch. Do not run the browser audit in the ladder; the parent proves it after the stage lands. Record in notes anything about the workspace's report-lighthouse-status action or the stack's branch-image resolution that ins would need before the CI job can pass.",
+      "reference": ["repos/trade-imports-animals-frontend/lighthouserc.cjs", "repos/trade-imports-animals-frontend/scripts/lighthouse/", "repos/trade-imports-animals-frontend/tests/lighthouse/auth-setup.cjs", "repos/trade-imports-animals-frontend/.github/workflows/lighthouse.yml", "repos/trade-imports-animals-frontend/package.json", "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/lighthouse.md"],
+      "ladder": ["format:check", "lint", "test"],
+      "status": "todo",
+      "plan": null,
+      "commit": null,
+      "prs": [],
+      "ci": null,
+      "notes": [],
+      "openQuestions": []
     }
   ]
 }

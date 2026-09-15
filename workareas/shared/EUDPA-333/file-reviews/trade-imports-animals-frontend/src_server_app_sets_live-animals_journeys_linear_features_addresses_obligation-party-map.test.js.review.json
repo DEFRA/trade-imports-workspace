@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "4a93df44e8b5edf7ca01314ca12fe8288b0bf913",
+  "pr": 312,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:03:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Covers the mapping's headline behaviour, but the four hardcoded party UUIDs duplicate the obligations manifest and will fail confusingly if regenerated; smaller structural nits on assertion diagnostics and it.each layout.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "test-fragility",
+      "issue": "Four of the five party fulfilment IDs are hardcoded UUID literals that must stay in lockstep with obligations/sections/parties.js; only consignor.id is imported. If any of those obligation UUIDs is regenerated, this test fails with the confusing 'expected undefined to be placeOfOrigin' rather than pointing at the source of truth.",
+      "fix": "Import placeOfOrigin/consignee/importer/placeOfDestination/contactAddress from ../../../../obligations/index.js and use their .id — same as the existing consignor.id line — so the test cannot drift from the manifest."
+    },
+    {
+      "id": 2,
+      "line": 8,
+      "severity": "Minor",
+      "category": "test-structure",
+      "issue": "Six independent mappings (five PARTIES + CONTACT_PARTY) are collapsed into one 'it' with a for-loop and a trailing separate assertion, so the first failure masks the rest and the contact case is not named in the test description.",
+      "fix": "Use it.each over a small table (or split into two its) so each mapping is a distinct test case and the CONTACT_PARTY case is visible in the test name."
+    },
+    {
+      "id": 3,
+      "line": 18,
+      "severity": "Minor",
+      "category": "assertion-diagnostics",
+      "issue": "'partyForFulfilmentId(fulfilmentId)?.id' collapses the two failure modes — 'lookup missed' vs 'wrong party returned' — into the same 'expected undefined to be <id>' message.",
+      "fix": "Assert the returned party is defined first (or assert on the whole party object) so a lookup miss reports differently from a wrong-party mismatch."
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:18Z"
+}

@@ -1,0 +1,116 @@
+{
+  "ticket": "EUDPA-333",
+  "repo": "trade-imports-animals-frontend",
+  "items": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Minor",
+      "category": "clarity",
+      "issue": "stubH().redirect uses Object.defineProperty to attach code() without a comment explaining why (making it non-enumerable so existing toEqual({ redirect: ... }) assertions keep matching); the sibling stubView on line 26 uses a plain method, and the divergence looks accidental at a glance.",
+      "fix": "Add a one-line comment above the defineProperty call — e.g. // Non-enumerable so tests that assert toEqual({ redirect: to }) still match after chaining .code(...) — or align with stubView's style if enumerability doesn't matter for callers.",
+      "file": "src/server/app/engine/test-support.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 79,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "recoverableSave failure branch calls .code(500) on an h.redirect(...), producing a 500 response with a Location header — browsers do not follow Location on 5xx, so the trader sees a blank 500 instead of the picker with the 'unavailable' banner (breaking the AC 'the Trader sees an error and their existing journey answers are preserved'). Sibling handlers (party-picker.controller.js commitSelection, delete-notification, contact) apply .code(500) to a rendered h.view(...) response, not to a redirect.",
+      "fix": "In the recoverableSave onRecoverableFailure callback, render the picker directly (mirroring party-picker's commitSelection — resolve the journey and answers via state.get, call the picker render function with recoverableError: true and .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)); OR return a plain redirect (2xx) without the 500 code so the browser follows it to the picker with handshakeError=unavailable.",
+      "best_practice": "node/hapi.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 92,
+      "severity": "Minor",
+      "category": "coverage",
+      "issue": "No test asserts the AC-required behaviour for a returned addressId belonging to a different organisation than the current session; today it is only implicitly covered via the not-found path.",
+      "fix": "Add a test that spies on addressBook.party to return a record from the wrong org (or use a distinct orgId in the request) and asserts a handshakeError=not-found redirect, so the AC is nailed down at the controller boundary and cannot regress if the address-book client stops filtering by org.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 21,
+      "severity": "Minor",
+      "category": "weak-assertion",
+      "issue": "Test 'maps each party obligation to its fulfilment id' asserts only toBeTruthy() on each mapping, so a party swapped with the wrong obligation id (or CONTACT mapped to a party's id) would still pass; concrete-value coverage lives only in obligation-party-map.test.js.",
+      "fix": "Assert obligationIdForParty(party) === expected id per party (e.g. import the obligations and check obligationIdForParty(consignor-party) === consignor.id, or use expect.toBe for each) so the file's own suite catches a mis-wiring rather than relying on the sibling map test.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 10,
+      "severity": "Major",
+      "category": "test-fragility",
+      "issue": "Four of the five party fulfilment IDs are hardcoded UUID literals that must stay in lockstep with obligations/sections/parties.js; only consignor.id is imported. If any of those obligation UUIDs is regenerated, this test fails with the confusing 'expected undefined to be placeOfOrigin' rather than pointing at the source of truth.",
+      "fix": "Import placeOfOrigin/consignee/importer/placeOfDestination/contactAddress from ../../../../obligations/index.js and use their .id — same as the existing consignor.id line — so the test cannot drift from the manifest.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 8,
+      "severity": "Minor",
+      "category": "test-structure",
+      "issue": "Six independent mappings (five PARTIES + CONTACT_PARTY) are collapsed into one 'it' with a for-loop and a trailing separate assertion, so the first failure masks the rest and the contact case is not named in the test description.",
+      "fix": "Use it.each over a small table (or split into two its) so each mapping is a distinct test case and the CONTACT_PARTY case is visible in the test name.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "line": 18,
+      "severity": "Minor",
+      "category": "assertion-diagnostics",
+      "issue": "'partyForFulfilmentId(fulfilmentId)?.id' collapses the two failure modes — 'lookup missed' vs 'wrong party returned' — into the same 'expected undefined to be <id>' message.",
+      "fix": "Assert the returned party is defined first (or assert on the whole party object) so a lookup miss reports differently from a wrong-party mismatch.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/obligation-party-map.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "line": 37,
+      "severity": "Minor",
+      "category": "duplication",
+      "issue": "handshakeErrorMessage duplicates the identical helper in addresses/party-picker/party-picker.controller.js — same mapping of not-found/unavailable to copy strings",
+      "fix": "Extract handshakeErrorMessage into ins-handshake.js (or a sibling module) and reuse it from both controllers so a new handshake error code only needs to be handled once",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "line": 35,
+      "severity": "Minor",
+      "category": "coupling",
+      "issue": "Contact feature reaches into ../addresses/copy/copy.{en,cy}.js for handshakeErrors and addNewAddress strings — cross-feature copy dependency that ties two features' user-facing text together implicitly",
+      "fix": "Hoist the shared handshake error strings and the 'Add a new address' label into shared/copy.<locale>.js (or a new addresses-handshake copy module) so both features import them from the same shared location instead of contact reaching into addresses",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

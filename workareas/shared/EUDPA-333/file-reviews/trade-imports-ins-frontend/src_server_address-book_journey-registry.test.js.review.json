@@ -1,0 +1,22 @@
+{
+  "file": "src/server/address-book/journey-registry.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "f64b6fe4981cb2e886c10dfb5367c37be3c4edfb",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:04:49Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Clean, focused coverage of buildReturnUrl and isKnownJourneyType including happy path, cancel (no addressId), trailing-slash stripping, URI-encoding of reserved characters, and the unknown-journey-type rejection; one Minor about not restoring the mutated config value in afterEach/afterAll to match sibling tests.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Minor",
+      "category": "test-isolation",
+      "issue": "config.set('tradeImportsAnimalsFrontend.baseUrl', ...) is called inside four tests but never reset in an afterEach/afterAll. The sibling csrf.test.js and router.test.js in this repo restore the config in afterAll to keep the mutation local to the file, and the Node testing best-practices bundle explicitly calls out restoring mutated shared state (afterEach). Vitest's default file isolation masks the impact today, but the leak survives across tests within this file (e.g. the trailing-slash variant at line 48 is only cleared because line 62 re-sets it).",
+      "fix": "Extract the config.set into a beforeEach that seeds the canonical 'http://localhost:3000' value, keep the trailing-slash test as an in-body override, and add an afterAll that restores the config to its convict default ('http://localhost:3000').",
+      "best_practice": "node/hapi.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:20Z"
+}

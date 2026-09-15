@@ -1,0 +1,18 @@
+{
+  "ticket": "EUDPA-333",
+  "repo": "trade-imports-workspace",
+  "items": [
+    {
+      "id": 1,
+      "line": 43,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "Resolve workspace ref probes the caller's repository, not the workspace. In a reusable workflow the github context is the caller's, so github.repository is (for example) DEFRA/trade-imports-animals-frontend when invoked via workflow_call. The probe therefore asks the caller for the branch — which almost always exists there since it is what triggered the workflow_call — and then Checkout tries to fetch that same ref from DEFRA/trade-imports-workspace where it usually does not exist, failing the job. Also, the GITHUB_TOKEN issued to a caller repo cannot read a foreign repo's git refs, so even if the probe were retargeted to DEFRA/trade-imports-workspace with the same token it would 404 on auth and always fall back to main — losing the cross-repo branch parity this step is meant to enable.",
+      "fix": "Probe the workspace repo explicitly (repos/DEFRA/trade-imports-workspace/git/ref/heads/...) and use a token that can read it — either a PAT via secrets or, for the reusable path only, the GITHUB_API_URL against an unauthenticated public repo endpoint. Then keep the fallback to main.",
+      "file": ".github/workflows/e2e-tests.yml",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

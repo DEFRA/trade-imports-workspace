@@ -1,0 +1,22 @@
+{
+  "file": "src/server/plugins/content-security-policy.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "f64b6fe4981cb2e886c10dfb5367c37be3c4edfb",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:04:20Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Small, well-scoped CSP change with a helpful inline comment and a test asserting both 'self' and the animals-frontend origin appear in form-action; only a minor robustness nit around a bare new URL() at module load.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Minor",
+      "category": "robustness",
+      "issue": "Module-level new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin throws a raw TypeError: Invalid URL from Node internals if the env var is set to a malformed value, giving no hint that the CSP plugin or the animals-frontend config key is at fault.",
+      "fix": "Wrap and rethrow: try { animalsFrontendOrigin = new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin } catch (error) { throw new Error(`Invalid tradeImportsAnimalsFrontend.baseUrl: ${error.message}`, { cause: error }) } — or (preferred) change the config declaration in src/config/config.js to format: 'url' so convict rejects the value at boot with a readable message and this call is safe by construction.",
+      "best_practice": "node/hapi.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:20Z"
+}

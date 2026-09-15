@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "4a93df44e8b5edf7ca01314ca12fe8288b0bf913",
+  "pr": 312,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:06:19Z",
+  "verdict": "RISKY",
+  "verdict_reason": "The save-failure branch redirects with a 500 status (via .code(HTTP_STATUS_INTERNAL_SERVER_ERROR) on an h.redirect), which browsers do not follow — the trader sees a blank 500 instead of the picker with the unavailable banner, contradicting the AC that their journey answers are preserved and they see an error.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 79,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "recoverableSave failure branch calls .code(500) on an h.redirect(...), producing a 500 response with a Location header — browsers do not follow Location on 5xx, so the trader sees a blank 500 instead of the picker with the 'unavailable' banner (breaking the AC 'the Trader sees an error and their existing journey answers are preserved'). Sibling handlers (party-picker.controller.js commitSelection, delete-notification, contact) apply .code(500) to a rendered h.view(...) response, not to a redirect.",
+      "fix": "In the recoverableSave onRecoverableFailure callback, render the picker directly (mirroring party-picker's commitSelection — resolve the journey and answers via state.get, call the picker render function with recoverableError: true and .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)); OR return a plain redirect (2xx) without the 500 code so the browser follows it to the picker with handshakeError=unavailable.",
+      "best_practice": "node/hapi.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:18Z"
+}

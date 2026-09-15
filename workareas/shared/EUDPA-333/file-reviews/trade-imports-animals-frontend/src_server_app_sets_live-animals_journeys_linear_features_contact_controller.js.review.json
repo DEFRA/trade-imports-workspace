@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "4a93df44e8b5edf7ca01314ca12fe8288b0bf913",
+  "pr": 312,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:05:00Z",
+  "verdict": "SAFE",
+  "verdict_reason": "New handshake wiring is correct — INS link hidden in stub mode, handshake errors mapped from allowlisted codes to hard-coded copy (no XSS surface), tests cover stub-mode, both handshake error codes and the link URL; the two findings are minor duplication and cross-feature copy coupling",
+  "todos": [
+    {
+      "id": 1,
+      "line": 37,
+      "severity": "Minor",
+      "category": "duplication",
+      "issue": "handshakeErrorMessage duplicates the identical helper in addresses/party-picker/party-picker.controller.js — same mapping of not-found/unavailable to copy strings",
+      "fix": "Extract handshakeErrorMessage into ins-handshake.js (or a sibling module) and reuse it from both controllers so a new handshake error code only needs to be handled once"
+    },
+    {
+      "id": 2,
+      "line": 35,
+      "severity": "Minor",
+      "category": "coupling",
+      "issue": "Contact feature reaches into ../addresses/copy/copy.{en,cy}.js for handshakeErrors and addNewAddress strings — cross-feature copy dependency that ties two features' user-facing text together implicitly",
+      "fix": "Hoist the shared handshake error strings and the 'Add a new address' label into shared/copy.<locale>.js (or a new addresses-handshake copy module) so both features import them from the same shared location instead of contact reaching into addresses"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:18Z"
+}

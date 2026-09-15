@@ -1,0 +1,39 @@
+{
+  "file": "src/server/address-book/add/controller.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "f64b6fe4981cb2e886c10dfb5367c37be3c4edfb",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:05:36Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Refactor cleanly extracts the handshake-aware submit and cancel paths; only minor efficiency/style/logging nits, no correctness or security concerns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 170,
+      "severity": "Minor",
+      "category": "efficiency",
+      "issue": "On the API-400 error branch in submitAddress the countries fetched on line 117 are discarded and loadCountryItems re-fetches them, doubling the reference-data round trips on the error path.",
+      "fix": "Move the countries fetch out of the try's happy path so it can be reused when re-rendering after an API 400, or accept the pre-fetched countryItems into the render helper."
+    },
+    {
+      "id": 2,
+      "line": 111,
+      "severity": "Minor",
+      "category": "style",
+      "issue": "submitAddress is declared as an async function while the other new helpers in this diff (redirectAfterAdd, redirectAfterCancel, renderAddForm, loadCountryItems) are arrow functions — mixes the two forms within the same PR.",
+      "fix": "Rewrite submitAddress as a const arrow to match the sibling helpers, or convert the sibling helpers to function declarations for internal consistency.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 152,
+      "severity": "Minor",
+      "category": "logging",
+      "issue": "In the submitAddress error branch we use the module-level logger with a manual traceId/orgId payload instead of request.logger, which hapi-pino already binds with the trace ID and request context.",
+      "fix": "Take request as available and use request.logger.error({ err }, 'Failed to create address'); drop the manually threaded traceId in the payload.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:20Z"
+}

@@ -1,0 +1,40 @@
+{
+  "file": "src/server/address-book/handshake-context.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "f64b6fe4981cb2e886c10dfb5367c37be3c4edfb",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:04:22Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Solid coverage of the handshake context lifecycle; three minor gaps in resolve/sync behaviour-vs-implementation assertions and error-path propagation, no correctness or security concerns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 137,
+      "severity": "Minor",
+      "category": "test-coverage",
+      "issue": "resolveHandshakeContext test 'prefers handshake fields from the POST payload' uses an empty session, so it does not guard against a regression where session is read before payload; a swapped-order bug would still pass.",
+      "fix": "Add a test that seeds the session with a different context, sends a payload with the new context, and asserts the returned/stored value is the payload's (not the session's).",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 199,
+      "severity": "Minor",
+      "category": "test-coverage",
+      "issue": "syncHandshakeContext 'clears when GET query is absent' seeds an empty session, so the assertion that yar.clear was called does not prove a pre-existing handshake session would actually be wiped.",
+      "fix": "Seed the mock request with an existing handshake session, then call syncHandshakeContext with no query, and assert loadHandshakeContext(request) returns null (observable effect) rather than only that yar.clear was called.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 92,
+      "severity": "Minor",
+      "category": "test-coverage",
+      "issue": "resolveHandshakeContext has no test that a malformed POST payload (incomplete fields or unregistered journey type) propagates the Boom badRequest/notFound thrown by readHandshakePayload; a regression that swallowed the throw would go unnoticed.",
+      "fix": "Add two tests under 'resolveHandshakeContext' that pass a payload with only 'journey-type' (expect Boom.badRequest) and a payload with an unregistered journey type (expect Boom.notFound).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:20Z"
+}

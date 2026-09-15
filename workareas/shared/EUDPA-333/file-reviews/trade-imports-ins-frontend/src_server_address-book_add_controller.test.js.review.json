@@ -1,0 +1,31 @@
+{
+  "file": "src/server/address-book/add/controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "f64b6fe4981cb2e886c10dfb5367c37be3c4edfb",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:05:22Z",
+  "verdict": "SAFE",
+  "verdict_reason": "New handshake test coverage is comprehensive (recognised/unknown/incomplete query, hidden fields, save redirect, cancel redirect, error paths); two minor test-clarity nits (stray JOURNEY_TYPES assertion; misleading 'handshake' test name that doesn't include handshake payload).",
+  "todos": [
+    {
+      "id": 1,
+      "line": 273,
+      "severity": "Minor",
+      "category": "test-clarity",
+      "issue": "Test 'POST handshake save redirects to animals with the new address id' includes a stray assertion 'expect(JOURNEY_TYPES.GBN_AG).toBe(\"gbn-ag\")' that is unrelated to the redirect behaviour under test and only duplicates a check already made in journey-registry.test.js; it also forces an otherwise-unused import.",
+      "fix": "Remove the JOURNEY_TYPES assertion (and the unused import on line 12); the redirect URL itself already proves the journey-type mapping.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 301,
+      "severity": "Minor",
+      "category": "test-clarity",
+      "issue": "Test named 'POST handshake save still works when country reload fails after an API error' does not include handshake fields in its payload, so it does not actually exercise the handshake path — it duplicates the plain 'POST re-renders form when API returns 400 validation errors' test with an added countries reload failure, but the name implies handshake coverage that is missing.",
+      "fix": "Either spread ...handshakeFields into the payload so the test proves the handshake case still degrades gracefully, or rename the test to drop 'handshake' and describe what it actually asserts (validation errors re-rendered even when the countries reload fails).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:20Z"
+}

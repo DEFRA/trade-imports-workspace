@@ -1,0 +1,30 @@
+{
+  "file": "tests/e2e/features/addresses-add-handshake.spec.ts",
+  "repo": "trade-imports-animals-tests",
+  "commit": "5c99e321d4d464c276a9de696c8a3684d4699c31",
+  "pr": 204,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:05:04Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Test covers the save-and-cancel handshake paths well, but hardcodes localhost:3002 for the INS URL check (breaks on cdp-docker.test) and reaches for waitForURL where the rest of the suite uses the web-first expect().toHaveURL().",
+  "todos": [
+    {
+      "id": 1,
+      "line": 31,
+      "severity": "Major",
+      "category": "portability",
+      "issue": "The INS URL assertion is hardcoded to `localhost:3002`, but `isComposeEnvironment()` also returns true for the `cdp-docker.test` compose environment where INS is not on localhost — the test would fail there.",
+      "fix": "Assert against the configured INS base URL: build the regex from `process.env.TRADE_IMPORTS_INS_FRONTEND_BASE_URL` (the same value the base page's `navigateToInsFrontend` uses), so the spec follows the environment rather than pinning to a port only the local compose stack uses."
+    },
+    {
+      "id": 2,
+      "line": 36,
+      "severity": "Minor",
+      "category": "playwright-conventions",
+      "issue": "Uses `page.waitForURL(regex, { timeout: 15_000 })` where the rest of the test suite uses the web-first `await expect(page).toHaveURL(regex)`, which auto-retries against the default expect timeout. Both occurrences (lines 36 and 61) then assert the same URL again on the next line (lines 39 and 64), which is redundant.",
+      "fix": "Drop the `waitForURL` calls and rely on `await expect(pages.page).toHaveURL(/consignors\\/select/)` alone — matching the convention used elsewhere in `tests/e2e/features/` and BEST_PRACTICES.md's \"web-first assertions\" section. If a longer timeout is genuinely needed for the cross-service round-trip, pass `{ timeout: 15_000 }` on the `expect` instead.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:19Z"
+}

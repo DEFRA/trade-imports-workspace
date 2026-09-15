@@ -1,0 +1,30 @@
+{
+  "file": "src/server/address-book/journey-registry.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "f64b6fe4981cb2e886c10dfb5367c37be3c4edfb",
+  "pr": 26,
+  "mode": "FRESH",
+  "reviewed_at": "2026-09-14T14:04:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Registry design is sound and well-tested, but buildReturnUrl's '&addressId=' concatenation silently couples all future journey templates to a specific query-bearing shape and would produce a malformed URL for a template without a '?'.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "maintainability",
+      "issue": "buildReturnUrl appends '&addressId=...' assuming the registry template already contains a '?'. The ticket sells the registry as one-line onboarding for another journey, but a future entry whose returnPathTemplate has no query string would silently produce a malformed URL like '/foo&addressId=...'.",
+      "fix": "Append addressId via the URL API (const url = new URL(path, baseUrl); url.searchParams.set('addressId', addressId)) so the separator is correct regardless of the template's own query string, or declare the addressId placement in the registry entry itself.",
+      "best_practice": "node/hapi.md"
+    },
+    {
+      "id": 2,
+      "line": 30,
+      "severity": "Minor",
+      "category": "defensive-coding",
+      "issue": "buildReturnUrl does not validate that context.notificationId or context.fulfilmentId are present. encodeURIComponent(undefined) returns the literal string 'undefined', so a caller that forgets to gate on the handshake would build a URL containing '/notifications/undefined/address-return?fulfilment-id=undefined' rather than failing loudly.",
+      "fix": "Assert that notificationId and fulfilmentId are non-empty strings before substituting them (throw a clear error if not), mirroring the handshake-context checks so this helper is safe in isolation."
+    }
+  ],
+  "reconciled_at": "2026-09-15T08:38:20Z"
+}

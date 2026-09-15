@@ -1,0 +1,22 @@
+h2. Increment
+
+{{inc-039}} from the {{shared/dr1-parity-union}} backlog.
+
+Hub parity: every one of the eleven task rows on the frontend hub carries a sentence of hint text underneath it — "Country of origin, region of origin code, your internal reference" under the origin row, "Who transports the animals to their destination" under the transporter row, and so on for all eleven. The hints roughly double the height of the page.
+
+Design release 1 shows a hint on exactly one row. Nine of the ten rows it lists on a fresh notification are a bare link with a status tag beside it, and only "Roles and addresses" carries a sentence underneath: "Consignor or Exporter, Consignee, Importer and Place of Destination". Its hub is correspondingly compact — a screen of one-line rows.
+
+Note that the design's list names four parties where the frontend's names five, adding the place of origin, so the surviving hint is a change of content and not only of phrasing.
+
+h2. Acceptance criteria
+
+* Ten of the eleven hub task rows render with no hint text at all — the hint element is absent, not empty.
+* The "Roles and addresses" row keeps its hint, reworded to "Consignor or Exporter, Consignee, Importer and Place of Destination".
+* The hint keys are removed from {{src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js}} lines 26-79, leaving only the roles-and-addresses hint.
+* The hint slot the hub builds at {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js}} line 119 emits a hint only for a row that has one.
+* The rendered hub DOM contains exactly one element with class {{govuk-task-list__hint}}, on a fresh notification and on a part-answered one.
+* E2E specs and visual baselines covering the hub are updated for the shorter page.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

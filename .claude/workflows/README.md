@@ -10,6 +10,26 @@ and repeats — from the main session, because **a subagent cannot invoke `Workf
 is why the former two-tier `batch-orchestrator/` prompts were removed: their middle tier
 could never start the thing it existed to drive.
 
+## `frontend-alignment.js`
+
+Runs the stage backlog in `workareas/shared/frontend-alignment/stages.json`: brings
+`trade-imports-ins-frontend` into the shape of the two journey frontends, stage by stage,
+on one branch shared across every repo it touches, behind **draft PRs that are never
+merged**. It is a design demonstration: the team reads the report the last stage writes
+and decides whether this is the architecture they want.
+
+Every stage is: **plan** (Fable writes a file-level plan under `plans/`) → **implement**
+(Sonnet) → **review** (Sonnet per focus file, Fable across the change) → **verify findings**
+→ **judge** (Fable) → **fix** → **ladder** (the stage's npm scripts, to logs) → **land**
+(Haiku commits and pushes with the refspec form) → **draft PR** (reused for the whole
+programme, via `tools/github/pr-ensure-draft.sh`) → **CI** (Haiku blocks on
+`tools/github-actions/wait-for-pr-checks.sh`; Sonnet fixes red, twice at most). A red
+ladder or red CI stops the run and marks the stage, so nothing is built on a broken stage.
+Resume by relaunching: the baseline stage skips everything already `done`.
+
+Point the tool at the file: `Workflow({ scriptPath: ".claude/workflows/frontend-alignment.js" })`.
+Edit `FALLBACK.stages` to run a subset.
+
 ## `increment-build-loop.js`
 
 Builds increments from **any** `backlog.json` under `workareas/`, one at a time, with a

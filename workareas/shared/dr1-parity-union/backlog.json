@@ -30100,7 +30100,7 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
+      "status": "rejected",
       "commit": null,
       "failure_reason": null,
       "finding": {
@@ -30176,7 +30176,13 @@
         "better": null,
         "judged": null
       },
-      "notes": "ATTEMPT FAILED (2026-09-16) — nothing to preserve; no code was written and no wip commit exists. What went red: nothing. The implementor stopped at the increment's own FALSIFIED BY clause, which fires on both limbs against the pinned frontend tree. src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:26 already renders `<h2 class=\"govuk-heading-l\">{{ copy.taskListHeading }}</h2>` between the commodity-summary block and the first group, and copy/copy.en.js:20 sets taskListHeading to \"Notification tasklist\"; template.njk:29 already renders each group caption as `<h3 class=\"govuk-heading-m\">`. Frontend commit ab5cf60e (increment inc-037, EUDPA-600, PR #345, 2026-09-15) made exactly that change — the promotion of the tasklist heading to h2 and the demotion of the six group captions to h3 — so inc-043 is a duplicate of work already landed, not a red build step. Evidence citation template.njk:26-35 now contains the very heading the finding says is absent. Branch feat/EUDPA-609-dr1-introduces-the-tasks-under-a-notific was cut and is clean: `git log origin/main..HEAD` is empty in all three repos and `git status --short` is empty in all three, so there is no diff, no stash and no wip SHA to report. Decision (headless, recorded rather than asked): the branch was NOT pushed, because pushing a ref identical to origin/main preserves nothing and leaves a stray remote branch; no PR was raised. No `commit` field written — the increment is not built. Recommended disposition for a human: close inc-043 as a duplicate of inc-037 rather than re-attempting it, or re-derive the finding against the current tree if some part of the DR1 comparison is still unmet."
+      "notes": "ATTEMPT FAILED (2026-09-16) — nothing to preserve; no code was written and no wip commit exists. What went red: nothing. The implementor stopped at the increment's own FALSIFIED BY clause, which fires on both limbs against the pinned frontend tree. src/server/app/sets/live-animals/journeys/linear/features/hub/template.njk:26 already renders `<h2 class=\"govuk-heading-l\">{{ copy.taskListHeading }}</h2>` between the commodity-summary block and the first group, and copy/copy.en.js:20 sets taskListHeading to \"Notification tasklist\"; template.njk:29 already renders each group caption as `<h3 class=\"govuk-heading-m\">`. Frontend commit ab5cf60e (increment inc-037, EUDPA-600, PR #345, 2026-09-15) made exactly that change — the promotion of the tasklist heading to h2 and the demotion of the six group captions to h3 — so inc-043 is a duplicate of work already landed, not a red build step. Evidence citation template.njk:26-35 now contains the very heading the finding says is absent. Branch feat/EUDPA-609-dr1-introduces-the-tasks-under-a-notific was cut and is clean: `git log origin/main..HEAD` is empty in all three repos and `git status --short` is empty in all three, so there is no diff, no stash and no wip SHA to report. Decision (headless, recorded rather than asked): the branch was NOT pushed, because pushing a ref identical to origin/main preserves nothing and leaves a stray remote branch; no PR was raised. No `commit` field written — the increment is not built. Recommended disposition for a human: close inc-043 as a duplicate of inc-037 rather than re-attempting it, or re-derive the finding against the current tree if some part of the DR1 comparison is still unmet.",
+      "decision": {
+        "ruling": "falsified",
+        "by": "build-orchestrator",
+        "date": "2026-09-16",
+        "reason": "The finding own falsifiedBy condition is met: a \"Notification tasklist\" heading is already rendered on the frontend hub (copy.en.js taskListHeading, covered by copy.test.js and hub.fit.spec.js). Nothing to build. EUDPA-609 was raised and its branch cut before this was checked; both are unused and want closing."
+      }
     },
     {
       "id": "inc-062",
@@ -30644,8 +30650,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "67fd16ef",
       "failure_reason": null,
       "finding": {
         "frontend": "Each Number of animals input carries the hint 'For example, 1, 25 or 5000.' (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:27-30, rendered at src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/_species-quantities.njk:11-20). On a consignment with several species the hint repeats under every line.",
@@ -30752,7 +30758,18 @@
         "note": "A genuine C miss. C read the same template block closely enough to write a typography finding about its labels and hints (its inc-017, union inc-093) and quoted the packages hint verbatim in its inc-024, union inc-089, but never noticed the animals hint has no DR1 counterpart. Not an application change either: the string is still at copy.en.js:29 in the frontend today.",
         "better": null,
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-610",
+      "branch": "feat/EUDPA-610-the-frontend-puts-an-example-hint-under",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/355",
+          "number": 355,
+          "merged": true,
+          "sha": "d60d45206c949e3eb9e11441bc53e9719b9eb776"
+        }
+      ]
     },
     {
       "id": "inc-030",
@@ -31729,8 +31746,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "3d835f50",
       "failure_reason": null,
       "finding": {
         "frontend": "The overview page — the task list for a notification — carries a \"Back\" link pointing at the dashboard (src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:167). It is the only page in the service that renders no breadcrumb trail, so the back link is its sole route out, and it is labelled \"Back\" rather than naming where it goes.",
@@ -31844,7 +31861,18 @@
         "note": "A genuine C miss, and I verified it against C's OWN evidence: C's fe-hub capture (frontend@76a864ba) still shows a \"Back\" link above the Draft tag, so the difference is live at C's commit, not something that went away between runs. C's inc-092 walks right past it — it notes the overview is the one page that opts out of breadcrumbs, then rules back links out of scope with \"The Back link stays as it is; where it points is not in question here\". It asked where the back link points, never whether the page should have one. Nothing in C's 125 findings mentions it: a grep of the whole C backlog for back-link language returns only inc-054, inc-062 and inc-092, none of which is about the overview. A also gets the generalisation right — the six DR1 screens with no back link are all starting points rather than steps — and correctly sequences it behind the navigation work, because with no breadcrumb the back link is currently the overview's only route out.",
         "better": null,
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-611",
+      "branch": "feat/EUDPA-611-the-frontend-puts-a-back-link-on-the-not",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/356",
+          "number": 356,
+          "merged": true,
+          "sha": "80ae75f082faa534c80ceacc80c2c8138f819a95"
+        }
+      ]
     },
     {
       "id": "inc-011",
@@ -31865,8 +31893,8 @@
       "band": "frontend-work",
       "gate": null,
       "dependsOn": [],
-      "status": "todo",
-      "commit": null,
+      "status": "done",
+      "commit": "f1a2470b",
       "failure_reason": null,
       "finding": {
         "frontend": "The browser tab, the bookmark and the screen-reader announcement of every page read \"Origin of the import | Import notification service\" — page name, a pipe, service name, and nothing more. All 33 captured screens follow it, because it is composed once at src/server/app/shared/layout.njk:17. Nothing identifies the page as a GOV.UK service in the tab, and the pipe is not the separator the rest of GOV.UK uses. The one thing the frontend does that DR1 does not is prefix the title with \"Error: \" when the page is showing validation errors, which is the documented GOV.UK behaviour and should survive any change here.",
@@ -31941,7 +31969,18 @@
         "note": "C saw this and deliberately declined it. Its inc-099 quotes DR1's full title \"Dashboard - Import notification service - GOV.UK\" and then says in terms: \"The separator and the absence of a GOV.UK suffix are not in question; only the page name is.\" So this is a scoping disagreement, not a miss — and A argues the weaker side of it honestly: it flags that unlike the phase banner and the nav bar, the hyphen-and-GOV.UK format is the Prototype Kit's default composition rather than something DR1's designers wrote, so DR1 is thin evidence on its own. A justifies raising it on the separate ground that it is the GOV.UK Design System's documented convention and the pipe is not. Worth keeping for that reason, but a BA should read it as a Design System conformance item rather than a DR1 parity gap. A also records the one thing to preserve through any change: the frontend's \"Error: \" title prefix, which DR1 lacks and which is correct GOV.UK behaviour.",
         "better": null,
         "judged": null
-      }
+      },
+      "ticket": "EUDPA-612",
+      "branch": "feat/EUDPA-612-every-browser-tab-and-bookmark-in-dr1-re",
+      "prs": [
+        {
+          "repo": "frontend",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/357",
+          "number": 357,
+          "merged": true,
+          "sha": "fb9cb31714e38e1e7fbd49dfd0bc695f5dbf7235"
+        }
+      ]
     }
   ],
   "run_id": "EUDPA-328-DR1U",

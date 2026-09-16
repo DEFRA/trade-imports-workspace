@@ -1,0 +1,197 @@
+diff --git a/src/server/app/copy-parity.test.js b/src/server/app/copy-parity.test.js
+index b047fa18..9917ad26 100644
+--- a/src/server/app/copy-parity.test.js
++++ b/src/server/app/copy-parity.test.js
+@@ -39,7 +39,10 @@ const featuresWithCopy = readdirSync(FEATURES_DIR, { withFileTypes: true })
+ // - search.help.lookupHref is the Trade Tariff gov.uk URL, likewise.
+ // - documents.guidance.additional.linkHref is the IPAFFS guidance gov.uk URL,
+ //   likewise.
++// - layout.govukSuffix is the GOV.UK brand word that closes every page title;
++//   the Welsh GOV.UK carries the same name.
+ const IDENTICAL_ALLOWLIST = new Set([
++  'shared:layout.govukSuffix',
+   'documents:guidance.additional.linkHref',
+   'transport:transporters.guidance.linkHref',
+   'commodities:search.help.lookupHref'
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js
+new file mode 100644
+index 00000000..a8fe1c31
+--- /dev/null
++++ b/src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js
+@@ -0,0 +1,60 @@
++import { expect, test } from '@playwright/test'
++
++import {
++  chooseCountryOfOrigin,
++  signIn
++} from '../../../../../../../../fit/live-animals-journey.js'
++import { copy as sharedCopy } from '../../../../../shared/copy.en.js'
++import { copy as originCopy } from './origin/copy/copy.en.js'
++
++const { serviceName, govukSuffix, errorTitlePrefix } = sharedCopy.layout
++
++const SUBMIT_BUTTON_SELECTOR = 'form button[type="submit"]'
++
++// Origin is the journey's entry page, so it is the cheapest page to reach that
++// both carries a page name of its own and can be made to show errors.
++const startAtOrigin = async (page) => {
++  await page.goto('/')
++  await page
++    .locator('form[action="/notifications"]')
++    .getByRole('button')
++    .click()
++  await expect(page).toHaveURL(/\/notifications\/[^/]+\/origin$/)
++  await expect(
++    page.getByRole('heading', { name: originCopy.title })
++  ).toBeVisible()
++}
++
++test.describe('page title', () => {
++  test.beforeEach(async ({ page }) => {
++    await signIn(page)
++    await startAtOrigin(page)
++  })
++
++  test('reads page name, service name and GOV.UK, joined by hyphens', async ({
++    page
++  }) => {
++    await expect(page).toHaveTitle(
++      `${originCopy.title} - ${serviceName} - ${govukSuffix}`
++    )
++  })
++
++  test('puts the error prefix in front of the whole title when the page shows errors', async ({
++    page
++  }) => {
++    await chooseCountryOfOrigin(page)
++    await page
++      .getByRole('radio', { name: originCopy.regionRequirement.yes })
++      .check()
++    await page.locator(SUBMIT_BUTTON_SELECTOR).first().click()
++
++    await expect(
++      page
++        .getByRole('alert')
++        .getByRole('link', { name: originCopy.errors.regionCodeRequired })
++    ).toBeVisible()
++    await expect(page).toHaveTitle(
++      `${errorTitlePrefix}${originCopy.title} - ${serviceName} - ${govukSuffix}`
++    )
++  })
++})
+diff --git a/src/server/app/shared/copy.cy.js b/src/server/app/shared/copy.cy.js
+index acf33247..ce567b3d 100644
+--- a/src/server/app/shared/copy.cy.js
++++ b/src/server/app/shared/copy.cy.js
+@@ -3,6 +3,7 @@ export const copy = {
+   layout: {
+     serviceName: 'Gwasanaeth hysbysu mewnforio',
+     errorTitlePrefix: 'Gwall: ',
++    govukSuffix: 'GOV.UK',
+     back: 'Yn ôl',
+     phaseBanner: {
+       tag: 'Alffa',
+diff --git a/src/server/app/shared/copy.en.js b/src/server/app/shared/copy.en.js
+index feac8d96..f110b5c8 100644
+--- a/src/server/app/shared/copy.en.js
++++ b/src/server/app/shared/copy.en.js
+@@ -1,6 +1,6 @@
+ /**
+  * Shared chrome copy — the only copy that legitimately lives outside a
+- * feature folder: the layout (service name, service navigation,
++ * feature folder: the layout (service name, GOV.UK title suffix, service navigation,
+  * back link, error title prefix), error-summary title, save-actions
+  * buttons and journey-strip tags. Every view reaches it as `sharedCopy`
+  * (via `kit.base`, or passed directly by the controllers that build
+@@ -10,6 +10,9 @@ export const copy = {
+   layout: {
+     serviceName: 'Import notification service',
+     errorTitlePrefix: 'Error: ',
++    // The GOV.UK brand word that closes every page title. A brand name, not
++    // translated copy, so the Welsh pair carries the same value.
++    govukSuffix: 'GOV.UK',
+     back: 'Back',
+     phaseBanner: {
+       tag: 'Alpha',
+diff --git a/src/server/app/shared/layout.njk b/src/server/app/shared/layout.njk
+index 8ef93f5c..65131d51 100644
+--- a/src/server/app/shared/layout.njk
++++ b/src/server/app/shared/layout.njk
+@@ -23,7 +23,7 @@
+   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
+ {% endblock %}
+ 
+-{% block pageTitle %}{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}{{ pageTitle }} | {{ sharedCopy.layout.serviceName }}{% endblock %}
++{% block pageTitle %}{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}{{ pageTitle }} - {{ sharedCopy.layout.serviceName }} - {{ sharedCopy.layout.govukSuffix }}{% endblock %}
+ 
+ {% block govukHeader %}
+   {{ govukHeader({
+diff --git a/src/server/app/shared/layout.test.js b/src/server/app/shared/layout.test.js
+index e5cfa51d..be1ac562 100644
+--- a/src/server/app/shared/layout.test.js
++++ b/src/server/app/shared/layout.test.js
+@@ -184,3 +184,31 @@ describe('kit surfaces', () => {
+     )
+   })
+ })
++
++describe('page title', () => {
++  // The header's crown logo is an SVG carrying a title element of its own, so
++  // scope the read to the document title in the head.
++  const titleOf = (html) => load(html)('head title').text()
++  const { serviceName, govukSuffix, errorTitlePrefix } = sharedCopy.layout
++
++  it('Should join the page name, the service name and GOV.UK with hyphens', () => {
++    expect(titleOf(renderLayout({ isAuthenticated: true }))).toBe(
++      `Create an import notification - ${serviceName} - ${govukSuffix}`
++    )
++  })
++
++  it('Should keep the error prefix in front of the whole title', () => {
++    const html = renderLayout(
++      { isAuthenticated: true },
++      { errorSummary: [{ text: 'Enter a country', href: '#country' }] }
++    )
++
++    expect(titleOf(html)).toBe(
++      `${errorTitlePrefix}Create an import notification - ${serviceName} - ${govukSuffix}`
++    )
++  })
++
++  it('Should not separate the title with a pipe', () => {
++    expect(titleOf(renderLayout({ isAuthenticated: true }))).not.toContain('|')
++  })
++})
+diff --git a/src/server/common/helpers/errors.test.js b/src/server/common/helpers/errors.test.js
+index 8526c105..04cf96a2 100644
+--- a/src/server/common/helpers/errors.test.js
++++ b/src/server/common/helpers/errors.test.js
+@@ -49,7 +49,9 @@ describe('#errors', () => {
+     })
+ 
+     expect(result).toEqual(
+-      expect.stringContaining('Page not found | Import notification service')
++      expect.stringContaining(
++        'Page not found - Import notification service - GOV.UK'
++      )
+     )
+     expect(result).not.toEqual(expect.stringContaining('Prototype'))
+     expect(statusCode).toBe(statusCodes.notFound)
+@@ -64,7 +66,7 @@ describe('#errors', () => {
+     expect(statusCode).toBe(statusCodes.internalServerError)
+     expect(result).toEqual(
+       expect.stringContaining(
+-        'Something went wrong | Import notification service'
++        'Something went wrong - Import notification service - GOV.UK'
+       )
+     )
+     expect(result).toEqual(expect.stringContaining('>500</h1>'))
+@@ -90,7 +92,7 @@ describe('#errors', () => {
+       expect(statusCode).toBe(statusCodes.serviceUnavailable)
+       expect(result).toEqual(
+         expect.stringContaining(
+-          'Something went wrong | Import notification service'
++          'Something went wrong - Import notification service - GOV.UK'
+         )
+       )
+       expect(result).toEqual(expect.stringContaining('>503</h1>'))

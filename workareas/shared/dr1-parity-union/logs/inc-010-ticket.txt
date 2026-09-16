@@ -1,0 +1,28 @@
+h2. Increment
+
+{{inc-010}} from the {{shared/dr1-parity-union}} backlog.
+
+The frontend puts a back link on the notification overview page; in DR1 the overview is the top of the notification and has none.
+
+The overview page — the task list for a notification — carries a "Back" link pointing at the dashboard, set at {{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js:167}}. It is the only page in the service that renders no breadcrumb trail ({{breadcrumbs: false}} at line 168), so the back link is its sole route out, and it is labelled "Back" rather than naming where it goes.
+
+DR1's overview page has no back link — its {{beforeContent}} block at {{app/views/notification-hub.html:9-16}} renders the phase banner and nothing else, where every DR1 journey page adds a back link after it. The way out of it is the Dashboard item in the service navigation bar, which is on every page. Of DR1's 40 captured screens, the six without a back link are the four dashboard states, the overview and the confirmation page — every page that is a starting point rather than a step.
+
+h2. Acceptance criteria
+
+* The notification overview page renders no back link.
+* Every other page in the live-animals journey keeps the back link it has today.
+* The overview page still has a route out of it — the Dashboard item in the service navigation bar — so removing the back link does not strand the user.
+* The E2E specs and visual baselines that cover the overview page are updated to expect no back link.
+
+h2. Dependencies
+
+* Depends on {{inc-007}} — the navigation bar must carry a Dashboard item before the overview can lose its back link. The overview renders no breadcrumb, so the back link is currently its only route out short of the browser's own.
+
+h2. Falsified by
+
+Finding a back link rendered on DR1's {{notification-hub}} view or in its captured DOM.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

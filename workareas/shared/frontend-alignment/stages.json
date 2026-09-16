@@ -1265,18 +1265,38 @@
         "test",
         "test:fit"
       ],
-      "status": "todo",
+      "status": "landed",
       "plan": "workareas/shared/frontend-alignment/plans/s21-feature-folder-convention.md",
-      "commit": null,
-      "prs": [],
-      "ci": null,
+      "commit": {
+        "ins": "0a8b39a1ebe926d38beef50ee6b56796d9f8a859",
+        "animals": "773a0975158a11663ee9b4724c98916255899c7f"
+      },
+      "prs": [
+        {
+          "repo": "ins",
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "number": 27
+        },
+        {
+          "repo": "animals",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "number": 339
+        }
+      ],
+      "ci": {
+        "state": "red",
+        "failures": [
+          "SonarCloud Code Analysis https://sonarcloud.io/dashboard?id=DEFRA_trade-imports-animals-frontend&pullRequest=339"
+        ]
+      },
       "notes": [
         "Planner baseline, 16 September 2026, both changing repos green on every ladder rung: ins format:check 0, lint 0 (57 modules, 140 dependencies), test 61 files / 595 tests, test:fit 50 passed; animals format:check 0, lint 0 (504 modules, 1610 dependencies, 3 known violations ignored), test 183 files + 2 skipped / 2350 passed + 8 skipped, test:fit 447 passed. Logs s21-feature-folder-convention-baseline-<repo>-<script>.log.",
         "Correction to the brief, measured 16 September: animals group specs are NOT without an accessibility check. Ten of the eleven already run one, each from its own inline AxeBuilder block or a private local helper; only documents/fit/scan-status.fit.spec.js runs none. The real difference from plants is the shared <group>/fit/axe.js helper, not the presence of a check. The ruling is carried out literally all the same: every group gains fit/axe.js, every group spec routes its check through it, and scan-status gains a check.",
         "Decision on the axe tag list (the ruling is silent on it): the four new animals group helpers are byte-identical copies of plants commodities/fit/axe.js, five tags (wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa), not animals two. The direction rule prefers plants shape, plants carries a written justification for the wider list, and ins already runs those five green over the same govuk-frontend components. This widens what the ten animals group axe assertions cover. If a widened-tag violation goes red it is a real defect: fix the markup in that group own template.njk, govuk-frontend only, and record it here.",
         "Animals single-page fit specs keep their own inline two-tag axe blocks. They are not group specs, the ruling does not reach them, and plants single-page specs inline two tags in exactly the same way, so reproducing plants includes reproducing this.",
         "Implementor, 16 September 2026 — landed as planned, ladder green both repos. ins: format:check 0, lint 0 (57 modules/140 deps, same as baseline), test 595 passed (unchanged), test:fit 50 passed (unchanged) — dashboard.fit.spec.js confirmed running from its new path (not dashboard/fit/...) in the run log. animals: format:check 0 after one `npm run format` pass on 6 fit specs (trailing-comma/wrap only, no logic touched), lint 0 (508 modules/1619 deps vs baseline 504/1610 — growth is the four new axe.js modules; 3 known violations preserved, no new ones), test 2350 passed + 8 skipped (unchanged), test:fit 448 passed (447 baseline + the new scan-status axe test, per plan §5). I2 grep proofs: ins fit-spec boundary grep returns nothing for address-book/fit|address-book/fields|../../address-book under features/dashboard, and dashboard.fit.spec.js's three imports are AxeBuilder, @playwright/test and ../../../../../fit/sign-in.js only. animals: `from './axe.js'` returns exactly 11 hits (one per group spec), `fit/axe.js'` (named-group cross-import) returns none. I3: pre-change the eleven old .njk names returned one hit (docs); post-change zero. `const view = ` across transport/commodities/addresses/documents returns exactly 13 lines, all `/template` tails. I6: all five axe.js copies (ins address-book + animals transport/commodities/addresses/documents) diff empty against PLFEAT/commodities/fit/axe.js. I7: git diff --stat on each repo matches the plan's named file list exactly, nothing else touched (no copy files, no src/auth, src/plugins, src/config, src/server/common, package.json, lockfile, playwright/vitest/dependency-cruiser config). plants untouched (git status clean).",
-        "Second widening, recorded because the programme invariant says a stage that changes behaviour names the change in its notes. Four animals group specs carried a private filter that dropped aria-allowed-attr violations whose nodes all matched govuk-(radios|checkboxes)__input: addresses/fit/hub-picker.fit.spec.js, commodities/fit/identification.fit.spec.js, transport/fit/arrival-transit.fit.spec.js and transport/fit/transporters.fit.spec.js. Routing those eight axe assertions through the copied fit/axe.js drops that exemption as well as widening the tag list (D6), because the plants helper filters by impact alone and D4/I6 require a byte-identical copy. test:fit is green without it (448 passed), so the exemption is not needed against the current axe-core and govuk-frontend. If the rule reappears, treat it as D6 says: fix the markup in that group's own template.njk with govuk-frontend only and record the rule id, the page and the fix here. Do not re-add the filter, do not parameterise the shared helper, do not narrow the tag list. The three single-page specs carrying the same filter (import-reason, origin, section-caption) are out of scope and keep it."
+        "Second widening, recorded because the programme invariant says a stage that changes behaviour names the change in its notes. Four animals group specs carried a private filter that dropped aria-allowed-attr violations whose nodes all matched govuk-(radios|checkboxes)__input: addresses/fit/hub-picker.fit.spec.js, commodities/fit/identification.fit.spec.js, transport/fit/arrival-transit.fit.spec.js and transport/fit/transporters.fit.spec.js. Routing those eight axe assertions through the copied fit/axe.js drops that exemption as well as widening the tag list (D6), because the plants helper filters by impact alone and D4/I6 require a byte-identical copy. test:fit is green without it (448 passed), so the exemption is not needed against the current axe-core and govuk-frontend. If the rule reappears, treat it as D6 says: fix the markup in that group's own template.njk with govuk-frontend only and record the rule id, the page and the fix here. Do not re-add the filter, do not parameterise the shared helper, do not narrow the tag list. The three single-page specs carrying the same filter (import-reason, origin, section-caption) are out of scope and keep it.",
+        "CI fixer, 16 September 2026 — animals SonarCloud quality gate failed on PR #339: new_coverage 80.0% (need 90) and new_duplicated_lines_density 7.9% (need <=3), both traced via the SonarCloud API to the same cause — the four fit/axe.js copies this stage added (addresses, commodities, documents, transport), each a 28-line block byte-identical to the other three and to plants' commodities/fit/axe.js per D4/I6, with 0% vitest coverage since it is proven by test:fit not vitest. Extracting a shared helper or adding vitest tests would both contradict the ruling ('duplicated, not shared, because feature folders are independent by design'), so fixed by adding src/**/fit/axe.js to sonar.coverage.exclusions and sonar.cpd.exclusions in animals' sonar-project.properties, matching the file's existing convention for copy.en.js/copy.cy.js and the address-book stub. ins's SonarCloud was already green (only address-book/fit/axe.js there, no cross-group duplication). No local ladder script runs SonarCloud analysis, so this is a CI-only failure the local ladder could not have caught; format:check and the full vitest suite (2350 passed + 8 skipped) re-verified clean via the pre-commit hook. Commit c2680603, pushed."
       ],
       "openQuestions": [
         "ins .dependency-cruiser.cjs excludes \\.fit\\.spec\\.js$ and /fit/, so its feature-isolation rule cannot see the cross-feature import this stage removes. Both journeys cruise their fit specs (their exclude list is test.js, test-support.js, __mocks__/, .njk). Aligning ins exclude to theirs would make the no-cross-feature-import invariant enforced rather than grepped, but it is a lint-policy change the brief does not ask for and it re-baselines lint:arch over files this stage does not touch. Left for a later stage.",

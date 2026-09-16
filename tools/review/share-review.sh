@@ -1,29 +1,35 @@
 #!/bin/bash
-# Share a code review with the PR owner via a workspace handoff branch
-# plus a PR comment.
+# Post a code review to its PR(s) as a comment — optionally with a
+# workspace handoff branch so the PR owner can walk the review.
 #
 # Usage:
-#   share-review.sh EUDPA-XXXXX [--pr <number>] [--branch <name>] [--dry-run] [--json]
+#   share-review.sh EUDPA-XXXXX [--repo <name>] [--pr <number>] [--comment-only]
+#                   [--branch <name>] [--dry-run] [--json]
 #
 # What it does:
-#   1. Reads .review-meta.json for in-scope PRs (or one PR if --pr).
+#   1. Reads .review-meta.json for in-scope PRs (narrowed by --repo and/or
+#      --pr — PR numbers repeat across repos, so pass both to pin one PR).
 #   2. Rsyncs workareas/reviews/EUDPA-X/ → workareas/shared/EUDPA-X/,
 #      excluding heavy artefacts (repos/, .diffs/) so the handoff
 #      branch stays small.
-#   3. Creates / updates a chore/EUDPA-X-review-handoff branch on the
-#      workspace repo (default name; override with --branch).
+#   3. Creates / updates a chore/EUDPA-X branch on the workspace repo
+#      (default name; override with --branch).
 #   4. Commits the shared/ tree, pushes the branch.
 #   5. Renders one markdown comment body per PR in scope (verdict +
-#      that PR's repo items table + checkout instructions) and posts
-#      each via tools/github/pr-comment.sh.
+#      that PR's repo items table + next steps) and posts each via
+#      tools/github/pr-comment.sh.
 #   6. Emits a summary block on stdout (or JSON with --json).
+#
+# --comment-only skips steps 2-4: no shared/ tree, no branch, no push, and
+# no dirty-workspace check. Use it for PRs you authored — the review state
+# is already on your machine, so there is nobody to hand it off to.
 #
 # --dry-run skips git mutations and the comment POST; instead it renders
 # the comment bodies (one per PR) to /tmp and reports where they landed.
 #
 # Branch name is derived as: chore/EUDPA-X (no suffix). Other scripts
 # (BATCH_IMPLEMENTOR cleanup) MUST derive their branch shape from the
-# same convention — see HANDOFF_BRANCH below.
+# same convention.
 
 set -e
 
@@ -31,15 +37,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
 TICKET=""
+REPO_FILTER=""
 PR_FILTER=""
 BRANCH_OVERRIDE=""
+COMMENT_ONLY=0
 DRY_RUN=0
 JSON=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         EUDPA-*) TICKET="$1"; shift ;;
+        --repo) REPO_FILTER="$2"; shift 2 ;;
         --pr) PR_FILTER="$2"; shift 2 ;;
+        --comment-only) COMMENT_ONLY=1; shift ;;
         --branch) BRANCH_OVERRIDE="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --json) JSON=1; shift ;;
@@ -47,7 +57,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-[[ -z "$TICKET" ]] && { echo "Usage: $0 EUDPA-XXXXX [--pr N] [--branch B] [--dry-run] [--json]" >&2; exit 1; }
+[[ -z "$TICKET" ]] && { echo "Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--branch B] [--dry-run] [--json]" >&2; exit 1; }
 
 review_dir="$WORKSPACE/workareas/reviews/$TICKET"
 meta="$review_dir/.review-meta.json"
@@ -55,54 +65,69 @@ meta="$review_dir/.review-meta.json"
 
 BRANCH="${BRANCH_OVERRIDE:-chore/$TICKET}"
 
+if [[ "$COMMENT_ONLY" == "1" ]]; then
+    MODE="comment-only"
+else
+    MODE="handoff"
+fi
+
 # ---------- Step 1: determine PRs in scope ----------
 
 prs_json=$(jq -c '.prs' "$meta")
+if [[ -n "$REPO_FILTER" ]]; then
+    prs_json=$(echo "$prs_json" | jq --arg repo "$REPO_FILTER" '[.[] | select(.repo == $repo)]')
+fi
 if [[ -n "$PR_FILTER" ]]; then
     prs_json=$(echo "$prs_json" | jq --arg pr "$PR_FILTER" '[.[] | select(.pr == ($pr | tonumber))]')
-    if [[ "$(echo "$prs_json" | jq 'length')" == "0" ]]; then
-        echo "PR $PR_FILTER not in .review-meta.json prs[]" >&2
-        exit 1
-    fi
+fi
+if [[ "$(echo "$prs_json" | jq 'length')" == "0" ]]; then
+    echo "No PR matching${REPO_FILTER:+ repo $REPO_FILTER}${PR_FILTER:+ PR $PR_FILTER} in .review-meta.json prs[]" >&2
+    exit 1
 fi
 
-# ---------- Step 2: rsync shared/ tree ----------
+# ---------- Step 2: rsync shared/ tree (handoff only) ----------
 
 shared_dir="$WORKSPACE/workareas/shared/$TICKET"
-mkdir -p "$shared_dir"
 
-if command -v rsync > /dev/null 2>&1; then
-    rsync -a --delete \
-        --exclude 'repos/' \
-        --exclude '.diffs/' \
-        "$review_dir/" "$shared_dir/"
+if [[ "$COMMENT_ONLY" == "1" ]]; then
+    artefact_dir="$review_dir"
 else
-    # cp fallback (no rsync on the box)
-    rm -rf "$shared_dir"
+    artefact_dir="$shared_dir"
     mkdir -p "$shared_dir"
-    for entry in "$review_dir"/*; do
-        name=$(basename "$entry")
-        case "$name" in
-            repos|.diffs) continue ;;
-            *) cp -R "$entry" "$shared_dir/" ;;
-        esac
-    done
-    # also copy dotfiles like .review-meta.json
-    for entry in "$review_dir"/.[!.]*; do
-        [[ -e "$entry" ]] || continue
-        name=$(basename "$entry")
-        case "$name" in
-            .diffs) continue ;;
-            *) cp -R "$entry" "$shared_dir/" ;;
-        esac
-    done
+
+    if command -v rsync > /dev/null 2>&1; then
+        rsync -a --delete \
+            --exclude 'repos/' \
+            --exclude '.diffs/' \
+            "$review_dir/" "$shared_dir/"
+    else
+        # cp fallback (no rsync on the box)
+        rm -rf "$shared_dir"
+        mkdir -p "$shared_dir"
+        for entry in "$review_dir"/*; do
+            name=$(basename "$entry")
+            case "$name" in
+                repos|.diffs) continue ;;
+                *) cp -R "$entry" "$shared_dir/" ;;
+            esac
+        done
+        # also copy dotfiles like .review-meta.json
+        for entry in "$review_dir"/.[!.]*; do
+            [[ -e "$entry" ]] || continue
+            name=$(basename "$entry")
+            case "$name" in
+                .diffs) continue ;;
+                *) cp -R "$entry" "$shared_dir/" ;;
+            esac
+        done
+    fi
 fi
 
 # ---------- Step 3: render the comment bodies (one per PR) ----------
 
 verdict=""
-if [[ -f "$shared_dir/review-index.md" ]]; then
-    verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$shared_dir/review-index.md" | sed 's/^\*\*Verdict:\*\*[[:space:]]*//')
+if [[ -f "$artefact_dir/review-index.md" ]]; then
+    verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$artefact_dir/review-index.md" | sed 's/^\*\*Verdict:\*\*[[:space:]]*//')
 fi
 
 reviewer=$("$WORKSPACE/tools/github/whoami.sh" 2>/dev/null || echo "(unknown)")
@@ -115,19 +140,25 @@ while IFS=$'\t' read -r repo pr; do
     body_tmp=$(mktemp -t "share-review-$TICKET-pr$pr-XXXXXX.md")
 
     {
-        echo "# Code review handoff — $TICKET"
+        if [[ "$COMMENT_ONLY" == "1" ]]; then
+            echo "# Code review — $TICKET"
+        else
+            echo "# Code review handoff — $TICKET"
+        fi
         echo
         if [[ -n "$verdict" ]]; then
             echo "**Verdict:** $verdict"
         fi
         echo "**Reviewer:** @$reviewer"
-        echo "**Handoff branch:** \`$BRANCH\` (workspace repo)"
+        if [[ "$COMMENT_ONLY" == "0" ]]; then
+            echo "**Handoff branch:** \`$BRANCH\` (workspace repo)"
+        fi
         echo
 
         # This PR's repo items table (only renders if items.{repo}.json
         # exists, which it should after FRESH Step 5).
-        items_file="$shared_dir/items.${repo}.json"
-        review_md="$shared_dir/review.${repo}.md"
+        items_file="$artefact_dir/items.${repo}.json"
+        review_md="$artefact_dir/review.${repo}.md"
 
         echo "## Repository: \`$repo\`"
         echo
@@ -135,12 +166,33 @@ while IFS=$'\t' read -r repo pr; do
         if [[ -f "$items_file" ]]; then
             "$SCRIPT_DIR/render-items.sh" "$TICKET" --repo "$repo" 2>/dev/null || true
             echo
+        elif [[ -f "$review_md" && "$COMMENT_ONLY" == "1" ]]; then
+            echo "_See \`workareas/reviews/$TICKET/$(basename "$review_md")\` in the reviewer's workspace._"
+            echo
         elif [[ -f "$review_md" ]]; then
             echo "_See \`$(basename "$review_md")\` on the handoff branch._"
             echo
         fi
 
-        cat <<EOF
+        if [[ "$COMMENT_ONLY" == "1" ]]; then
+            cat <<EOF
+## Action this review
+
+The review state lives in \`workareas/reviews/$TICKET/\` in the
+reviewer's workspace. Triage and apply it from a Claude Code session
+opened there:
+
+\`\`\`
+walk review $TICKET
+implement review $TICKET
+\`\`\`
+
+---
+
+_Generated by the \`review\` skill ($TICKET)._
+EOF
+        else
+            cat <<EOF
 ## Action this review
 
 **Option A — walk it in Claude Code (recommended):**
@@ -172,6 +224,7 @@ each fix in your PR branch directly. No checkout needed.
 _Generated by the \`review\` skill ($TICKET). Branch lifecycle is owned
 by the implementor — it offers cleanup on completion._
 EOF
+        fi
     } > "$body_tmp"
 
     pr_repos+=("$repo")
@@ -188,20 +241,30 @@ for i in "${!pr_repos[@]}"; do
         '. + [{repo: $repo, pr: $pr, file: $file}]')
 done
 
+if [[ "$COMMENT_ONLY" == "1" ]]; then
+    branch_json="null"
+else
+    branch_json=$(jq -n --arg branch "$BRANCH" '$branch')
+fi
+
 # ---------- Step 4: git mutations + comment POST ----------
 
 if [[ "$DRY_RUN" == "1" ]]; then
     if [[ "$JSON" == "1" ]]; then
         jq -n \
             --arg ticket "$TICKET" \
-            --arg branch "$BRANCH" \
+            --arg mode "$MODE" \
+            --argjson branch "$branch_json" \
             --argjson body_files "$body_files_json" \
             --argjson prs "$prs_json" \
-            '{dry_run: true, ticket: $ticket, branch: $branch, body_files: $body_files, prs: $prs}'
+            '{dry_run: true, ticket: $ticket, mode: $mode, branch: $branch, body_files: $body_files, prs: $prs}'
     else
         echo "DRY RUN — no git mutations, no PR comment posted."
         echo "Ticket:        $TICKET"
-        echo "Handoff branch: $BRANCH"
+        echo "Mode:          $MODE"
+        if [[ "$COMMENT_ONLY" == "0" ]]; then
+            echo "Handoff branch: $BRANCH"
+        fi
         echo "PRs in scope:  $(echo "$prs_json" | jq -r '[.[] | "\(.repo)#\(.pr)"] | join(", ")')"
         echo "Reviewer:      $reviewer"
         echo "Rendered bodies:"
@@ -214,56 +277,57 @@ if [[ "$DRY_RUN" == "1" ]]; then
     exit 0
 fi
 
-# Stash any unrelated working changes so the checkout doesn't lose them.
-# We don't go that far here — just abort if the workspace is dirty
-# outside workareas/shared/.
-# -uall: without it, an entirely-untracked workareas/shared/ tree collapses
-# to a single "?? workareas/" line that the exclusion patterns can't match.
-dirty=$(git -C "$WORKSPACE" status --porcelain -uall | grep -v '^?? workareas/shared/' | grep -v '^.M workareas/shared/' | grep -v 'workareas/shared/' || true)
-if [[ -n "$dirty" ]]; then
-    echo "Workspace has uncommitted changes outside workareas/shared/:" >&2
-    echo "$dirty" >&2
-    echo "Commit or stash before running share-review.sh." >&2
-    exit 1
-fi
+if [[ "$COMMENT_ONLY" == "0" ]]; then
+    # Abort if the workspace is dirty outside workareas/shared/ so the
+    # branch checkout can't lose unrelated work.
+    # -uall: without it, an entirely-untracked workareas/shared/ tree collapses
+    # to a single "?? workareas/" line that the exclusion patterns can't match.
+    dirty=$(git -C "$WORKSPACE" status --porcelain -uall | grep -v '^?? workareas/shared/' | grep -v '^.M workareas/shared/' | grep -v 'workareas/shared/' || true)
+    if [[ -n "$dirty" ]]; then
+        echo "Workspace has uncommitted changes outside workareas/shared/:" >&2
+        echo "$dirty" >&2
+        echo "Commit or stash before running share-review.sh, or pass --comment-only to post without a handoff branch." >&2
+        exit 1
+    fi
 
-current_branch=$(git -C "$WORKSPACE" rev-parse --abbrev-ref HEAD)
+    current_branch=$(git -C "$WORKSPACE" rev-parse --abbrev-ref HEAD)
 
-# Branch may already exist (re-share). The freshly-rsynced shared tree is
-# untracked on the current branch but tracked on an existing handoff
-# branch, so a plain checkout refuses to overwrite it — park the payload,
-# switch, then restore it over the branch's older copy.
-shared_tmp=$(mktemp -d -t "share-review-$TICKET")
-mv "$shared_dir" "$shared_tmp/payload"
-if git -C "$WORKSPACE" show-ref --verify --quiet "refs/heads/$BRANCH"; then
-    git -C "$WORKSPACE" checkout "$BRANCH"
-elif git -C "$WORKSPACE" show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
-    # A colleague already shared this review. Branching from the current
-    # HEAD instead would diverge from their handoff branch, and the push
-    # below is not forced — it would be rejected after the artefacts are
-    # already committed, leaving the workspace on the handoff branch.
-    git -C "$WORKSPACE" checkout -b "$BRANCH" --track "origin/$BRANCH"
-else
-    git -C "$WORKSPACE" checkout -b "$BRANCH"
-fi
-rm -rf "$shared_dir"
-mv "$shared_tmp/payload" "$shared_dir"
-rmdir "$shared_tmp"
+    # Branch may already exist (re-share). The freshly-rsynced shared tree is
+    # untracked on the current branch but tracked on an existing handoff
+    # branch, so a plain checkout refuses to overwrite it — park the payload,
+    # switch, then restore it over the branch's older copy.
+    shared_tmp=$(mktemp -d -t "share-review-$TICKET")
+    mv "$shared_dir" "$shared_tmp/payload"
+    if git -C "$WORKSPACE" show-ref --verify --quiet "refs/heads/$BRANCH"; then
+        git -C "$WORKSPACE" checkout "$BRANCH"
+    elif git -C "$WORKSPACE" show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+        # A colleague already shared this review. Branching from the current
+        # HEAD instead would diverge from their handoff branch, and the push
+        # below is not forced — it would be rejected after the artefacts are
+        # already committed, leaving the workspace on the handoff branch.
+        git -C "$WORKSPACE" checkout -b "$BRANCH" --track "origin/$BRANCH"
+    else
+        git -C "$WORKSPACE" checkout -b "$BRANCH"
+    fi
+    rm -rf "$shared_dir"
+    mv "$shared_tmp/payload" "$shared_dir"
+    rmdir "$shared_tmp"
 
-git -C "$WORKSPACE" add "workareas/shared/$TICKET"
+    git -C "$WORKSPACE" add "workareas/shared/$TICKET"
 
-if git -C "$WORKSPACE" diff --cached --quiet; then
-    echo "No changes to commit on $BRANCH (artefacts already up to date)."
-else
-    git -C "$WORKSPACE" commit -m "review($TICKET): handoff artefacts
+    if git -C "$WORKSPACE" diff --cached --quiet; then
+        echo "No changes to commit on $BRANCH (artefacts already up to date)."
+    else
+        git -C "$WORKSPACE" commit -m "review($TICKET): handoff artefacts
 
 Posted by tools/review/share-review.sh."
+    fi
+
+    git -C "$WORKSPACE" push -u origin "$BRANCH"
+
+    # Return the workspace to wherever it was.
+    git -C "$WORKSPACE" checkout "$current_branch"
 fi
-
-git -C "$WORKSPACE" push -u origin "$BRANCH"
-
-# Return the workspace to wherever it was.
-git -C "$WORKSPACE" checkout "$current_branch"
 
 # Post each PR its own comment body.
 posted=()
@@ -275,15 +339,22 @@ done
 if [[ "$JSON" == "1" ]]; then
     jq -n \
         --arg ticket "$TICKET" \
-        --arg branch "$BRANCH" \
+        --arg mode "$MODE" \
+        --argjson branch "$branch_json" \
         --argjson prs "$prs_json" \
         --argjson body_files "$body_files_json" \
         --argjson posted "$(printf '%s\n' "${posted[@]}" | jq -R . | jq -s .)" \
-        '{dry_run: false, ticket: $ticket, branch: $branch, prs: $prs, posted: $posted, body_files: $body_files}'
+        '{dry_run: false, ticket: $ticket, mode: $mode, branch: $branch, prs: $prs, posted: $posted, body_files: $body_files}'
 else
-    echo "Handoff complete for $TICKET."
+    if [[ "$COMMENT_ONLY" == "1" ]]; then
+        echo "Review posted for $TICKET."
+    else
+        echo "Handoff complete for $TICKET."
+    fi
     echo
-    echo "Branch:        $BRANCH (pushed to origin)"
+    if [[ "$COMMENT_ONLY" == "0" ]]; then
+        echo "Branch:        $BRANCH (pushed to origin)"
+    fi
     echo "Reviewer:      $reviewer"
     echo "Comments posted:"
     for line in "${posted[@]}"; do

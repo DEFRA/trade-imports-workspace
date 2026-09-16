@@ -1145,6 +1145,15 @@ Return the structured output only.`,
 end on the local stack, built from the checkouts, with the tests repo's compose suite. You change no code.
 ${GUARDRAILS}
 ${PATH_RULE}
+FIRST, DECIDE WHETHER THIS RUN IS WORTH MAKING. Read the stage's \`commit\` from stages.json and run
+\`git -C ${ROOT_TILDE}/<repoPath> show --stat <sha>\` for each. If NOT ONE of those commits touches a file that the
+running services execute or serve — anything under \`src/\`, a Dockerfile, a compose file, a package.json dependency,
+or a file in the tests repo — then the stack cannot behave differently and this run proves nothing. Report
+green:true with summary "skipped: <what the stage changed> cannot change what the stack serves", record that same
+sentence as the stage's \`localE2e\` in stages.json, and STOP: do not start the stack. A stage that changes a
+workflow file, a README, or the programme's own state under workareas/ is exactly this case. Anything else, and
+anything you are unsure about, runs the full steps below.
+
 STEPS, each ONE Bash call, output to a log under ${LOGS_TILDE}/ that you read once:
 0. The stack is only as honest as the checkouts it builds. For EVERY directory under ${ROOT_TILDE}/repos/ that is
    on \`main\` with a clean tree (\`git -C <repo> status --short --branch\`: first line \`## main...origin/main\`,

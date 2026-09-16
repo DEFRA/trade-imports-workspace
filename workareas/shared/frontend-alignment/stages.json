@@ -1175,7 +1175,7 @@
         "lint",
         "test"
       ],
-      "status": "ci-retry",
+      "status": "done",
       "plan": "workareas/shared/frontend-alignment/plans/s20-tooling-convergence.md",
       "commit": {
         "ins": "1d3869c4f2acd3278f80bf05937cb49e13b5a044",
@@ -1200,11 +1200,13 @@
         }
       ],
       "ci": {
-        "state": "red",
-        "failures": [
-          "animals-frontend / Lighthouse CI https://github.com/DEFRA/trade-imports-animals-frontend/runs/104923851090",
-          "plants-frontend / Lighthouse CI https://github.com/DEFRA/trade-imports-plants-frontend/runs/104923888608"
-        ]
+        "state": "green",
+        "failures": []
+      },
+      "localE2e": {
+        "state": "green",
+        "failures": [],
+        "run": 1
       },
       "notes": [
         "PARENT evidence, 16 September 2026, before this stage ran: installing the animals and plants clones with the ambient npm 11.17.0 failed `npm ci` with 'Missing: sass@1.100.0, chokidar@5.0.0, readdirp@5.1.1 from lock file', the same failure ins hit in CI during the Lighthouse stage and fixed by pinning sass as a devDependency. Installing with the pinned npm@11.6.2 (the packageManager field) succeeded and left the lockfiles untouched. ins's lockfile, which carries the sass pin, installed under 11.17.0 without complaint. So the npm pin exists because a newer npm resolves sass-loader's optional peer into the tree and rejects a lockfile written without it; the journeys depend on the pin in CI (npm install --global from npm-version.js) and ins does not need it since the sass pin. The planner should weigh: pin sass in the journeys' lockfiles as ins did and drop the npm pin everywhere, or keep the pin and make every install route use it; one answer for all three.",
@@ -1225,11 +1227,15 @@
         "CI WATCHER, 16 September 2026: ins-frontend PR 27 green (all 7 checks: SonarCloud, publish Build arm64/amd64, Publish branch-tagged index, Run Pull Request Checks, Security audit, FIT Tests). animals-frontend PR 339 and plants-frontend PR 69 both red with Lighthouse CI failures only; all other checks (SonarCloud, E2E Tests, publish builds, Run Pull Request Checks, Security audit, FIT Tests) pass green in both animals and plants. Root cause: Lighthouse failures are expected when a branch is behind main (documented in memory as reference_lighthouse_red_on_branch_behind_main). All substantive checks pass; the stage is recorded as ci-red to reflect Lighthouse gate not passing, with remedy and next steps documented in s13 open questions.",
         "PARENT, 16 September 2026: the stage's only red was Lighthouse CI on animals and plants, and the run's fixer called it unfixable from this branch. That was wrong, and the log says why. lighthouse.yml is workflow_run-triggered, so GitHub runs MAIN's copy of the workflow file against this branch's checked-out code. Main's copy still has the step 'Align npm with the version pinned in package.json', which runs `node scripts/npm-version.js` — and this stage deleted that script. The job dies with 'Cannot find module .../frontend/scripts/npm-version.js' before it audits anything, and the publish job then cannot find the report artefact. Every other check is green because check-pull-request.yml, publish.yml and publish-hotfix.yml are pull_request-triggered, so the branch's own updated copies run.",
         "PARENT: fixed by restoring the two declarative pieces main's workflow reads — scripts/npm-version.js and package.json's packageManager field — in all three repos, byte-identical, while keeping the simplification itself: no per-job global npm install in any workflow, and sass declared so the lockfile installs under any recent npm. ins f9c9bce, animals 780ec235, plants bcc7166. The script's header says it stays only until this change reaches main. The rule this teaches, for the report: a branch cannot delete a file that main's workflow_run workflows call, because those workflows always run from the default branch.",
-        "PARENT: the stage's own decision on questions 17 and 18 stands and is the right one. The npm pin was a workaround; the real cause of the lockfile failure was a missing sass entry, which this stage fixes by declaring sass explicitly. That is proven on ins, whose pipeline is green on all seven checks with the pin's install steps gone."
+        "PARENT: the stage's own decision on questions 17 and 18 stands and is the right one. The npm pin was a workaround; the real cause of the lockfile failure was a missing sass entry, which this stage fixes by declaring sass explicitly. That is proven on ins, whose pipeline is green on all seven checks with the pin's install steps gone.",
+        "REPORT REFRESH, 16 September 2026: questions 17, 18, 21, 23 and 26 removed from the report's Open questions table (only 19 is left under Tooling and dependencies) and one entry added to Rulings applied, numbered 17, naming the three stage commits, the three lockfile/restore follow-ups and the workflow_run rule the restore taught. Re-measured before writing: publish-hotfix.yml, cleanup-e2e-reports.yml, eslint.config.js and .husky/pre-commit are byte-equal across the three; publish.yml differs only by image-name; check-pull-request.yml only by the docker build tag and the two Playwright project names in one comment; Dockerfile only by PARENT_VERSION and ARG PORT (ins 3002, plants 3003).",
+        "REPORT REFRESH: no Residual drift row changed. The journeys' stage commits touch no file under src/, and ins's 22 changed src files are all under src/server/app/ (features, lib, services, shared, copy-parity.test.js), none of which the drift tables list; every listed chassis file is untouched by this stage. Known caveats: the sass bullet was rewritten (all three now declare it, which is what let the pin go), the npm-audit-at-critical bullet was removed (security-audit runs at high in all three and passes), and the Lighthouse workflow_run bullet gained the sentence that a branch cannot delete a file main's workflow_run job calls.",
+        "REPORT REFRESH decisions taken headlessly: (1) the GitHub tools could not reach github.com from this session (tools/github/pr-details.sh returned 'error connecting to defra' twice), so the checks table rows were written from this stage's recorded ci.state green plus the CI watcher and PARENT notes above, dated at the landing commits f9c9bce / 780ec235 / bcc7166, 16 September 19:52; the animals and plants rows say Lighthouse was red between the convergence and the restore rather than hiding it. (2) The dependabot.yml open question below was left unraised in the report: the refresh brief allows removing the ruled question only, not adding new ones, so it waits for a later report rebuild or a ruling stage. (3) The branch-size sentence in What was built was re-measured with git diff --shortstat origin/main...HEAD, the method that reproduces its previous ins figure, and now reads ins 269 files (20,332 insertions, 9,864 deletions), animals 56, plants 47, tests 6; the stage-count line in Where everything is now reads twenty done, three waiting, nineteen plans."
       ],
       "openQuestions": [
         "PLANNER, out of this stage's scope but found while reading it: .github/dependabot.yml is converged between animals and plants (one rolling patch-and-minor group excluding govuk-frontend, daily, same policy for github-actions) and ins still carries the old CDP template version (five name-pattern groups, weekly, no github-actions grouping). That is a policy choice about update cadence and auto-merge posture, not a mechanical convergence, so it is left for a ruling rather than folded into Q17/18/21/23/26."
-      ]
+      ],
+      "reportRefreshed": true
     },
     {
       "id": "s21-feature-folder-convention",

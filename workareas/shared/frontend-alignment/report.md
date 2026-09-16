@@ -24,12 +24,7 @@ and what happens if nobody answers.
 
 | # | Question | Count | If nobody answers |
 | --- | --- | --- | --- |
-| 17 | Should ins take `postinstall: npm run setup:husky`, so the pre-commit hook (audit, format, lint, unit suite) runs on every clone? ins audits at `critical` where plants runs `high`; align that first. | two against one | the ins hook stays opt-in |
-| 18 | Backport `install:pinned-npm` (regenerates the lockfile under the pinned npm) to the journeys? | one against two | the journeys keep the documented `npx` route only |
 | 19 | Where does [`surfaces.json`](surfaces.json) live (`docs/reference/` or `tim/`), and is the proposed `tim workspace drift` command built to report every chassis file differing without a recorded reason? | workspace-only | the next cross-repo edit drifts by two lines, as the backport commit did before question 2 closed it, with nothing to say so |
-| 21 | Add `cleanup-e2e-reports.yml` to ins (the twelve-line `gh-pages` pruner animals and plants run)? The Lighthouse port left it out because the audit does not depend on it. | two against one | ins's `gh-pages` gains one `lighthouse/<branch>/` directory per branch |
-| 23 | Should ins take `eslint-plugin-sonarjs` and the journeys' fit-spec lint globals? | two against one | SonarCloud finds in CI what local lint finds first in the journeys |
-| 26 | ins housekeeping: `Dockerfile` says `ARG PORT=3000` while the service listens on 3002; `publish.yml` has `group: $${{ github.workflow }}` (a doubled dollar) and `queue: max`. | ins only | harmless today, confusing later |
 
 ### Cross-repo consequences
 
@@ -206,6 +201,60 @@ and what happens if nobody answers.
     `services/run-mode.test.js`. The tests repo took the same `main` merge
     (`29e9901`) for the ins session-cookie name the handshake work introduced.
 
+17. **Converged the tooling: the npm pin, the pre-commit hook, the audit
+    level, the lint plugin, the workflows and the ins housekeeping.** Ruled 16
+    September 2026: Q17 and Q18 together. A non-Node developer did these; not
+    convinced the solution was required, so step back, implement a nice
+    succinct minimal solution and make it consistent across them all. Watch the
+    ins pipeline and make sure it all works. Q21 yes, add the cleanup workflow.
+    Q23 yes, take the plugin. Q26 yes, do the housekeeping. Landed as
+    `1d3869c` on
+    [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27),
+    `1f619ab0` on
+    [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339)
+    and `e87afcc` on
+    [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69), each
+    with follow-ups described below. Questions 17, 18, 21, 23 and 26 closed
+    together. The npm pin was a workaround for one unstable lockfile: `sass` is
+    an optional peer of `sass-loader`, a newer npm resolves it into the tree,
+    and a lockfile written without a `node_modules/sass` entry is rejected with
+    `Missing: sass@1.100.0 … from lock file`, so `sass` is now a declared
+    devDependency in animals and plants as it already was in ins, both
+    lockfiles were regenerated (`ec3e1dee`, `8a043ea`, under the npm 11.6.2
+    their `.nvmrc` Node bundles), and every step that installed a pinned npm
+    globally is gone from `check-pull-request.yml`, `publish.yml`,
+    `publish-hotfix.yml`, `lighthouse.yml` and both `Dockerfile` install stages
+    in all three repos, leaving `engines` as the single statement about tool
+    versions. `scripts/npm-version.js` and `package.json`'s `packageManager`
+    field came back in a follow-up per repo (`f9c9bce`, `780ec235`,
+    `bcc7166`) because `lighthouse.yml` is `workflow_run`-triggered, so GitHub
+    runs `main`'s copy of it against this branch and `main`'s copy still calls
+    the script: a branch cannot delete a file a `workflow_run` workflow on the
+    default branch invokes, and the script's header says both go once this
+    change reaches `main`. ins's `git:pre-commit-hook` dropped the audit and
+    reads the journeys' `format:check && lint && test`, ins gained
+    `postinstall: npm run setup:husky`, and `security-audit` runs at `high` in
+    all three, ins reaching it with non-breaking `overrides`
+    (`brace-expansion` `^5.0.9`, `tmp` `0.2.7`, `uuid` `11.1.1`, `minimatch`
+    dropped) rather than an exclusion; ins also took animals'
+    `cleanup-e2e-reports.yml` byte-for-byte and the journeys' `eslint.config.js`
+    verbatim with `eslint-plugin-sonarjs`, whose 62 findings were fixed in 22
+    files under `src/server/app/` by extracting named constants, splitting two
+    oversized `describe` blocks and reading field lengths from `FIELD_RULES`,
+    with no `eslint-disable` added and no rule dropped. The tooling files are
+    now one shape, proven with `diff`: `publish-hotfix.yml`,
+    `cleanup-e2e-reports.yml`, `eslint.config.js` and `.husky/pre-commit` are
+    byte-equal, `publish.yml` differs only by `image-name`,
+    `check-pull-request.yml` only by the `docker build` tag and the two
+    Playwright project names in one comment, and the `Dockerfile` only by
+    `PARENT_VERSION` and `ARG PORT`. Behaviour: a clone of ins now installs the
+    pre-commit hook and that hook no longer runs `npm audit` against a live
+    advisory feed; ins's `Dockerfile` declares `ARG PORT=3002`, the port the
+    service listens on; ins's `gh-pages` gains the branch pruner; the Playwright
+    artefact is `frontend-playwright-report` in all three; and animals' PR smoke
+    build tags `trade-imports-animals-frontend` instead of the CDP template
+    name it inherited.
+
 27. **Pulled `main` into the alignment branch and analysed what moved.**
     Ruled 16 September 2026: main has moved under these repos since the
     alignment was built; analyse the changes that have gone into the three
@@ -291,14 +340,14 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs) at `a3dcb6d` (the countries lazy load `c44e554` plus the `main` merge that brought EUDPA-333), 16 September 16:52 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `7b0ce48f` (a `main` merge for EUDPA-333, on top of the chassis convergence `d6f15c56`), 16 September 17:39 |
-| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `b5b6577` (the chassis convergence `8c9e9f3` plus a `main` re-merge), 16 September 15:02; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all seven checks green (PR checks, security audit, FIT tests, SonarCloud, three publish jobs) at `f9c9bce` (the tooling convergence `1d3869c` plus the restored `npm-version.js`), 16 September 19:52 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `780ec235` (the tooling convergence `1f619ab0`, the lockfile regenerated under npm 11.6.2 `ec3e1dee`, and the restored `npm-version.js`), 16 September 19:52; Lighthouse was red between those commits, because `main`'s copy of the `workflow_run` job still calls the script the convergence had deleted |
+| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `bcc7166` (the tooling convergence `e87afcc`, the lockfile regenerated under npm 11.6.2 `8a043ea`, and the restored `npm-version.js`), 16 September 19:52; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
 | `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; four of five checks green at `29e9901` (the `main` merge that brought the ins session-cookie name), 16 September 17:32; E2E red, because the run started three minutes before the animals branch published the image carrying `main`'s handshake link the new specs look for |
 | `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E red on four runs while the branch images were mid-republish on 16 September, then green on [run 35123715596](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35123715596), the first to start after all four had published, 16 September 17:43 |
 
-The ins branch changes 265 files (21,114 insertions, 10,561 deletions, mostly
-the lockfile); animals 49; plants 41; tests 6. No shared package, no cross-repo
+The ins branch changes 269 files (20,332 insertions, 9,864 deletions, mostly
+the lockfile); animals 56; plants 47; tests 6. No shared package, no cross-repo
 import. ins's public URLs are unchanged except that `/about` and `/signout`
 are gone; sign-out is `/auth/sign-out`, as in the journeys.
 
@@ -391,11 +440,17 @@ stub mode on 15 September:
   on the branch only. Before its report URL resolves, a repository admin must
   enable GitHub Pages from `gh-pages` on `DEFRA/trade-imports-ins-frontend`
   and accept that the job starts the whole stack, as the journeys' jobs do.
-- **`sass` is pinned as a real devDependency in ins.** On Linux, npm installs
-  it as an optional peer of `sass-loader` but leaves it out of the lockfile,
-  so `npm ci --omit=dev` in the Docker build failed with `Missing:
-  sass@1.100.0`. A macOS `npm install` cannot see this and the local ladder
-  cannot catch it; only the Docker build in CI can. Neither journey needs it.
+  The same mechanism cuts the other way in animals and plants: because
+  `main`'s copy runs, a branch cannot delete a file a `workflow_run` workflow
+  calls, which is why `scripts/npm-version.js` and `packageManager` stay in all
+  three until this branch reaches `main`.
+- **`sass` is a declared devDependency in all three.** npm installs it as an
+  optional peer of `sass-loader` but leaves it out of the lockfile, so
+  `npm ci --omit=dev` in the Docker build failed with `Missing: sass@1.100.0`.
+  ins declared it during the Lighthouse stage; question 17's stage declared it
+  in animals and plants too and regenerated both lockfiles, which is what let
+  the npm pin go. A macOS `npm install` cannot see the failure and the local
+  ladder cannot catch it; only `npm ci` and the Docker build in CI can.
 - **SonarCloud is invisible to the local ladder.** ins runs Automatic
   Analysis, which reads `.sonarcloud.properties` (added on the branch,
   mirroring plants) and ignores `sonar-project.properties`. Nine ins CI fixes
@@ -408,9 +463,6 @@ stub mode on 15 September:
 - **The ins Playwright port collides with the running stack.** The fit suite
   and `serve-static-files.test.js` bind 3002, which the stack's ins container
   holds. Stop the stack or run it with `-e ins-frontend` first.
-- **`npm audit` on ins reports 27 non-critical findings** (17 high, 5
-  moderate, 5 low), pre-existing plus what `@lhci/cli` adds; `security-audit`
-  passes at `critical`. None fixes without `--force`.
 
 ## Residual drift
 
@@ -500,8 +552,8 @@ not built.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
-  commit, PRs, notes and open questions: nineteen done, four ruling stages
-  waiting); the eighteen plans under
+  commit, PRs, notes and open questions: twenty done, three ruling stages
+  waiting); the nineteen plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:

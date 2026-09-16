@@ -15,9 +15,10 @@ and what happens if nobody answers.
 
 | # | Question | Count | If nobody answers |
 | --- | --- | --- | --- |
-| 13 | Three shapes for countries and ports: animals `main` loads on first read (EUDPA-575, on the branch since the 16 September merge); plants primes at boot (`app/routes.js`); ins fetches per request. Which do plants and ins take? | three ways | a reference-data outage keeps stopping plants' start-up and ins keeps one fetch per request |
 | 14 | `controller.js` or `<page>.controller.js` in a multi-page group? | two against one for `controller.js` | plants' groups stay the odd one out |
 | 15 | One shared fit fixture with an axe helper (ins `address-book/fit/address-form.js`) or an `AxeBuilder` call per spec? | one against two | the dashboard spec keeps importing across a feature boundary |
+| 29 | Should ins take the journeys' full countries reader surface (`originLabel`, `originCountries`, `addressCountries`, `countryCodeOf`) and the `GBNAG_SPS_EX` block filter, so its countries service is byte-equal with plants'? Question 13 landed the lazy cache alone. It would narrow the address book from the full MDM list to the animal-products export block, stop the dashboard naming a `GB` origin, and drop the trace header from the reference-data call. | one against two | ins keeps the full MDM list, its own reader and its trace header, and the two countries services stay different files |
+| 30 | `content-security-policy.js` stopped being byte-equal when ins took `main`'s EUDPA-333 handshake: ins reads the animals-frontend base URL and widens `form-action` from `['self']` to `['self', animalsFrontendOrigin]`, because the browser blocks the cross-origin 302 the address-add handshake depends on. Does ins keep a documented exception, or do the journeys take ins's shape, which they need themselves for question 28? | ins only | a chassis file differs with nothing to say why |
 
 ### Tooling and dependencies
 
@@ -165,6 +166,46 @@ and what happens if nobody answers.
    ways (animals `main` joins with hyphens and a GOV.UK suffix, ins and
    plants with a pipe).
 
+13. **Loaded reference data on first read in ins, as the journeys do.** Ruled
+    16 September 2026: yes. ins takes animals `main`'s EUDPA-575 shape (commit
+    `fb3615e3`, load reference data on first read, not at startup); proposed
+    from the merge evidence and confirmed by Sam. Plants no longer needs the
+    port: its `main` merged the same change as PR #71 (`77a5aa7`) on 16
+    September and the alignment branch took it when `main` was merged in
+    again. Landed as `c44e554` on
+    [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27).
+    `src/server/app/services/countries/index.js` took plants' `ensureLoaded`
+    body: a module-scope list and `loaded` flag, a stub-mode short-circuit, a
+    failed load that leaves the flag false so the next read retries, and a
+    rejection with `Boom.serverUnavailable` carrying `dataset: 'countries'`,
+    which `catchAll` renders as the shared error page at 503. The reader stays
+    ins's own `getCountries()`, and `client.js` and `stub.js` are untouched, so
+    ins keeps its convict base URL, its trace header and the full MDM country
+    list; the full journey reader surface is question 29. The dashboard, list
+    and add controllers let a Boom through to `catchAll` as `edit` already did,
+    the three `.catch(() => [])` swallows went with `countryItemsOrNone`
+    renamed `loadCountryItems`, and `address-countries.js` rejects the same way
+    on an empty list. Tests mock at the network boundary with nock:
+    `services/run-mode.test.js` replaces `countries/countries.test.js` and pins
+    self-load on first read, fetch-once across readers, the retry after a
+    failed load, the Boom payload and the stub short-circuit, and a new
+    `features/reference-data-outage.test.js` proves the 503 page on the
+    dashboard, the address book, the add form and a stored address. Behaviour:
+    ins reads reference data once per process instead of once per request, so
+    an upstream change to the list is picked up only on a restart; a
+    reference-data outage now fails every page that reads countries as a 503
+    page, where before those pages rendered an empty country list or, on the
+    add page, a recoverable-error banner at 500; and an empty MDM list rejects
+    the same way, which the brief did not itself declare. While the stage was
+    in CI, ins `main` gained EUDPA-333 (the address-add handshake) and the
+    conflict stopped GitHub running any checks, so `main` was merged in and the
+    feature ported to the aligned tree (`1446fcc`, `ea2bfe6`, `a3dcb6d`); one
+    of `main`'s tests was dropped, an add-page inline error for countries that
+    fail to load, because that page now shows the 503 page and the failure
+    stays covered by `address-countries.test.js` and
+    `services/run-mode.test.js`. The tests repo took the same `main` merge
+    (`29e9901`) for the ins session-cookie name the handshake work introduced.
+
 27. **Pulled `main` into the alignment branch and analysed what moved.**
     Ruled 16 September 2026: main has moved under these repos since the
     alignment was built; analyse the changes that have gone into the three
@@ -250,13 +291,13 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs) at `ed31dee`, 16 September 14:26 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `8f5630b0` (the chassis convergence `d6f15c56` plus a `main` re-merge), 16 September 15:00 |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs) at `a3dcb6d` (the countries lazy load `c44e554` plus the `main` merge that brought EUDPA-333), 16 September 16:52 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `7b0ce48f` (a `main` merge for EUDPA-333, on top of the chassis convergence `d6f15c56`), 16 September 17:39 |
 | `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `b5b6577` (the chassis convergence `8c9e9f3` plus a `main` re-merge), 16 September 15:02; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
-| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all checks green, including E2E, at `849558a`, 16 September 11:33 |
-| `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E green on every run since the Floci fix reached the branch, latest completed [run 35073631134](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35073631134), 16 September 09:24; the run against the merged branch images, [35076469742](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35076469742), had two of three shards green and one still running when this was written |
+| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; four of five checks green at `29e9901` (the `main` merge that brought the ins session-cookie name), 16 September 17:32; E2E red, because the run started three minutes before the animals branch published the image carrying `main`'s handshake link the new specs look for |
+| `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E red on four runs while the branch images were mid-republish on 16 September, then green on [run 35123715596](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35123715596), the first to start after all four had published, 16 September 17:43 |
 
-The ins branch changes 260 files (20,125 insertions, 9,246 deletions, mostly
+The ins branch changes 265 files (21,114 insertions, 10,561 deletions, mostly
 the lockfile); animals 49; plants 41; tests 6. No shared package, no cross-repo
 import. ins's public URLs are unchanged except that `/about` and `/signout`
 are gone; sign-out is `/auth/sign-out`, as in the journeys.
@@ -285,7 +326,8 @@ src/server/
     features/dashboard/{controller.js, template.njk, copy/, view-model/, fit/}
     features/address-book/{list,add,edit,view,delete}/{controller.js, template.njk}
     features/address-book/{fields, address-countries, address-id-params, stored-address,
-                            success-banner}.js  {copy/, view-model/, fit/}
+                            success-banner, handshake-context, journey-registry}.js
+                           {copy/, view-model/, fit/}
   auth/  common/{constants/, helpers/, services/mode.js, test-helpers/}
   health/  router.js  server.js
 fit/{sign-in.js, smoke.fit.spec.js}  scripts/{npm-version, check-workspace-stack}.js
@@ -293,7 +335,7 @@ scripts/lighthouse/  tests/lighthouse/  lighthouserc.cjs  .sonarcloud.properties
 webpack.config.js  postcss.config.js  .dependency-cruiser.cjs
 ```
 
-Unit suite: 49 files and 242 tests before, 58 files and 553 tests after.
+Unit suite: 49 files and 242 tests before, 61 files and 595 tests after.
 Playwright: 49 specs before, 50 after (a smoke project plus the features).
 
 ### Backported to animals and plants
@@ -359,8 +401,10 @@ stub mode on 15 September:
   mirroring plants) and ignores `sonar-project.properties`. Nine ins CI fixes
   were Sonar findings the local ladder had passed.
 - **The workspace PR is not a draft.** PR 47 was raised as a normal pull
-  request; merging it approves nothing. Its E2E has been green since the
-  Floci healthcheck fix reached the branch (question 27, closed).
+  request; merging it approves nothing. Its E2E runs against the branch-tagged
+  images, so it goes red while a repo's image is mid-republish: four runs
+  failed that way on 16 September and the first run to start after all four
+  images had published was green.
 - **The ins Playwright port collides with the running stack.** The fit suite
   and `serve-static-files.test.js` bind 3002, which the stack's ins container
   holds. Stop the stack or run it with `-e ins-frontend` first.
@@ -372,11 +416,11 @@ stub mode on 15 September:
 
 Re-measured on 16 September with `diff -rq` over the checkouts under `repos/`
 (the programme's working checkouts again from question 2's stage), after the
-chassis convergence outside authentication landed and both journeys took a
-second `main` merge. Classes: identical;
+countries lazy load landed and ins, animals and the tests repo each took
+`main`'s EUDPA-333 address-add handshake. Classes: identical;
 import-path-only (none survive); deliberate (a
 recorded decision says why); unexplained (the question number says where it
-is settled).
+is settled, or the row says no question covers it yet).
 
 ### Animals against plants
 
@@ -391,10 +435,13 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | `src/server/auth/stub-sign-in.js` | none; the secret is generated per process | identical |
 | `src/server/common/constants/status-codes.js` | none; `serviceUnavailable: 503` is in all three | identical |
 | `src/server/common/helpers/content-security-policy.test.js` | none; both hit `/health` | identical |
-| `src/server/common/helpers/errors.test.js` | animals' page titles read `Page not found - Import notification service - GOV.UK` (animals `main`, `fb9cb317`, DR1 parity); plants adds a 503 test for a reference-data read that will not load, through `/test/refdata-missing` (plants `main`, EUDPA-575); the Boom 503 test is in both | unexplained: the 503 test is question 13; the title composition came from `main` and is a candidate for a later ruling |
+| `src/server/common/helpers/errors.test.js` | animals' page titles read `Page not found - Import notification service - GOV.UK` (animals `main`, `fb9cb317`, DR1 parity); plants adds a 503 test for a reference-data read that will not load, through `/test/refdata-missing` (plants `main`, EUDPA-575); the Boom 503 test is in both | unexplained, no question yet: animals proves the same rejection in `services/run-mode.test.js`, so only plants proves it at page level; the title composition came from `main` |
 | `src/server/common/helpers/redis-client.test.js` | key prefix names the repo | deliberate, service-specific |
 | `src/server/common/helpers/transport-routing.js`, `.test.js` | animals only | deliberate, journey-only |
 | `src/server/app/lib/validate/persists-cleaned-value.test.js` | animals' field is `transportDocumentReference`, plants' `textFieldTwo`; animals' vitest setup installs the live-animals obligation manifest, where a neutral name is not a recognised answer key | deliberate, test fixture |
+| `src/server/app/services/countries/` (`index.js`, `client.js`, `stub.js`) | none; both journeys carry EUDPA-575 | identical |
+| `src/server/app/services/run-mode.test.js` | three hunks: plants' client block-filter test uses a made-up `BLOCK_ONE` where animals uses the real `GBNAG_SPS_EX`; plants carries a two-line why-comment above the real-mode self-load test; plants' ports fetch-once test also calls `portOptions()` | unexplained, no question yet: plants is the tidier text in all three |
+| `src/server/app/services/ports/index.js` | plants extracts a `displayName` helper and adds a third reader, `portOptions()`, returning `{ value, text }` pairs; animals has neither | unexplained, no question yet: plants is the tidier fork; ins has no ports service |
 | `src/config/config.js` | nine hunks: port, service name, redirect URLs, key prefix, backend API block | deliberate, service-specific |
 | `src/config/nunjucks/context/context.test.js` | service name | deliberate, service-specific |
 
@@ -412,23 +459,29 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | `src/server/common/helpers/logging/request-logger.js`, `.test.js` | none; ins's `ignoreFunc` in all three | identical |
 | `src/server/common/helpers/pulse.js` | none; `shutdownTimeoutMs` in all three | identical |
 | `src/server/common/helpers/errors.js` | none; every message comes from `sharedCopy.errorPage` in all three | identical |
-| `src/server/common/helpers/{content-security-policy,serve-static-files,start-server}.test.js` | none; plants' shape in all three | identical |
+| `src/server/common/helpers/{serve-static-files,start-server}.test.js` | none; plants' shape in all three | identical |
+| `src/server/common/helpers/content-security-policy.js`, `.test.js` | ins reads `tradeImportsAnimalsFrontend.baseUrl` and widens `form-action` to `['self', animalsFrontendOrigin]`, and its test asserts both entries; the journeys keep `['self']` and assert only that the header is set. The two journeys are still byte-equal with each other | unexplained: question 30 |
 | `src/server/common/helpers/redis-client.test.js` | key prefix names the repo, two lines | deliberate, service-specific |
-| `src/server/common/helpers/errors.test.js` | against plants: plants adds the EUDPA-575 reference-data 503 test; against animals: animals' page titles carry `main`'s hyphen-and-GOV.UK composition | unexplained: the 503 test is question 13; the title composition is a candidate for a later ruling |
+| `src/server/common/helpers/errors.test.js` | against plants: plants adds the EUDPA-575 reference-data 503 test, which drives a reader ins does not have; against animals: animals' page titles carry `main`'s hyphen-and-GOV.UK composition. ins proves the same 503 page in `features/reference-data-outage.test.js` and a Boom 503 in the test all three share | unexplained: the reader the plants test drives is question 29; the title composition is a candidate for a later ruling |
 | `src/server/common/test-helpers/{mock-auth-config,mock-oidc-config,session-auth}.js` | none; `mock-auth.js` is gone from ins | identical |
 | `src/server/common/test-helpers/{real-mode,test-server}.js`, `helpers/organisation-id.test.js` | ins only | deliberate |
 | `src/server/common/{components/, helpers/actor-helpers.js, helpers/proxy/, helpers/transport-routing.js}` | journeys only | deliberate, journey-only |
-| `src/server/common/` other 13 shared files | none | identical |
+| `src/server/common/` other 12 shared files | none | identical |
 | `src/server/app/lib/validate/` | none; `persists-cleaned-value.test.js` is journey-only because it drives the engine | identical |
+| `src/server/app/services/countries/index.js` | the `ensureLoaded` mechanism is plants' text: module-scope cache, `loaded` flag, stub short-circuit, `Boom.serverUnavailable` with `dataset: 'countries'`. The readers differ: ins keeps `getCountries()` over the full MDM list; plants holds a label map filtered to `GBNAG_SPS_EX` and exports `originLabel`, `originCountries`, `addressCountries` and `countryCodeOf` | deliberate for now: question 29 |
+| `src/server/app/services/countries/{client.js,stub.js}` | ins resolves the base URL through convict and sends the `getTraceId()` trace header; the journeys read `process.env.TRADE_IMPORTS_REFERENCE_DATA_URL` and send no header, though their own `address-book/client.js` does. ins seeds a `COUNTRIES` list, plants a `COUNTRY_LABELS` map | deliberate: chassis hardening this programme backports the other way, and the stub seeds are each service's own |
 | `src/config/config.js` | service-specific hunks only: port, service name, `defraId.serviceId`, the two redirect URLs, key prefix, the backend API block, and ins's `tradeImportsInsBackendApi` and `tradeImportsAnimalsFrontend` blocks | deliberate, service-specific |
 | `src/config/config.test.js` | ins pins its own ports and URLs; the `stubMode` and env-backed boolean blocks are shared | deliberate, test shape |
 | `src/config/nunjucks/nunjucks.js` | ins registers `formatDate` and `formatCurrency` filters (`filters/` is ins only); journeys add the MoJ root and `app/sets` where ins has `app/features` | deliberate |
 | `src/config/nunjucks/context/context.js` | the session read is byte-equal; ins imports and marks the address-book navigation item and adds `dashboardUrl`, `addressBookUrl` and `crumb`; the journeys add `staleActionRejected` | deliberate, service-specific |
 
-One file differs for no recorded reason,
-`src/server/common/helpers/errors.test.js`: plants' reference-data 503 test
-is settled by question 13, and animals' page-title composition arrived from
-`main` and has no question yet. [`surfaces.json`](surfaces.json) names every shared chassis file
+Two chassis files differ for no recorded reason.
+`src/server/common/helpers/content-security-policy.js` and its test are
+question 30, raised when ins took `main`'s handshake.
+`src/server/common/helpers/errors.test.js` holds two differences: plants'
+reference-data 503 test drives a reader question 29 owns, and animals'
+page-title composition arrived from `main` and has no question yet.
+[`surfaces.json`](surfaces.json) names every shared chassis file
 with the rule it must satisfy (`identical`, `identical-except`, `only-in`,
 `deliberate` with a reason); a `tim workspace drift` command that applies it
 per branch and reports unlisted differences is proposed in question 19 and
@@ -447,8 +500,8 @@ not built.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
-  commit, PRs, notes and open questions: eighteen done, five ruling stages
-  waiting); the seventeen plans under
+  commit, PRs, notes and open questions: nineteen done, four ruling stages
+  waiting); the eighteen plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:

@@ -1343,7 +1343,7 @@
         "lint",
         "test"
       ],
-      "status": "landed",
+      "status": "done",
       "plan": "workareas/shared/frontend-alignment/plans/s22-address-book-links.md",
       "commit": {
         "ins": "c9c4fbf500edd5606b01bd30dcc3d8ac4ff143bd",
@@ -1382,13 +1382,20 @@
         "PLANNER decision D6: there is no README environment table in any of the three frontends. The env table each repo does have (or should) is src/server/app/docs/services.md; ins carries the canonical Configuration table and animals and plants get the same section with their own complete key list.",
         "PLANNER decision D8/D9: the new cross-service spec is tagged @compose because CDP has no TRADE_IMPORTS_INS_FRONTEND_URL for animals or plants until Sam applies the cdp-app-config entries by hand — a configuration gate, not a speed choice. Drop the tag once those land. The compose stack gives each service its own session cookie, so following the link lands on the target service sign-in; the spec absorbs that second sign-in rather than changing any session config.",
         "IMPLEMENTOR, 16 September 2026: plan followed verbatim. animals and plants layout.njk now source addressBookUrl from the view context (insAddressBookUrl() in context.js, config.tradeImportsInsFrontend.baseUrl with trailing-slash strip); the placeholder-comment stayed only for manageAccountUrl. plants gained the tradeImportsInsFrontend convict block, byte-identical to animals apart from values (D7). ins gained tradeImportsPlantsFrontend.baseUrl (format url, default :3003) consumed by content-security-policy.js formAction, now naming both journey origins (D5). All three docs/services.md gained/extended a Configuration section (D6). compose gained TRADE_IMPORTS_PLANTS_FRONTEND_URL on ins and TRADE_IMPORTS_INS_FRONTEND_URL on plants; AGENTS.md hostname table extended. New tests repo spec tests/e2e/features/address-book-navigation.spec.ts (@compose @integration, e2e project) drives animals dashboard -> Address book -> ins address book -> ins Dashboard -> back to animals, absorbing the second sign-in per D9; requireBaseUrl exported and two nav-link getters plus completeSignInIfRequested added to BasePage. Deviation from the plan: the new trailing-slash-stripping unit test in animals/plants context.test.js could not live inside describe(\"#context\") as literally written — vi.doMock there leaked into the sibling \"When webpack manifest file read fails\"/\"#context cache\" blocks via Vitest's shared module cache (beforeAll in those blocks re-imports context.js before the outer beforeEach's vi.resetModules() runs), causing two false failures. Moved it to its own top-level describe at file end, mirroring the pre-existing \"When auth.enabled is set to false\" pattern exactly — same isolation guarantee, same assertion. All invariants I1-I7 verified clean. Ladder green in all four repos, test counts at/above baseline: ins 596/595, animals 2351/2350, plants 1923/1921, tests typecheck/lint/format:check all exit 0. I9 (compose round trip) NOT run by this implementor — out of scope for the implementor role per the stage's ladder note (Playwright suite excluded; the ladder stage runs it). DEFERRED: nothing dropped from the plan scope; the CDP cdp-app-config entries listed in the plan Out-of-scope section remain for Sam to apply by hand and for the report.",
-        "PARENT, 16 September 2026: Sam ruled that the journeys take ins's shape for the two files the address handshake left uneven, and that it belongs with the address book work. The ruling arrived after this stage had already landed, so it is built as the stage that follows rather than folded in here. This stage did settle ins's half of the first one: its content-security-policy form-action now names both journey origins. The journeys' half of that, and the cookie-name convergence, are s24."
+        "PARENT, 16 September 2026: Sam ruled that the journeys take ins's shape for the two files the address handshake left uneven, and that it belongs with the address book work. The ruling arrived after this stage had already landed, so it is built as the stage that follows rather than folded in here. This stage did settle ins's half of the first one: its content-security-policy form-action now names both journey origins. The journeys' half of that, and the cookie-name convergence, are s24.",
+        "REPORT REFRESH, 16 September 2026: question 28 removed from Open questions and entry 28 added to Rulings applied, with the four cdp-app-config entries the brief requires recorded there as a table. Headless decisions taken rather than asked: (a) the now-empty '### Cross-repo consequences' subheading was removed with question 28, because question 28 was its only entry and an empty section reads worse than none; (b) question 30's cell was corrected in place, not rewritten, because this stage widened the very file it describes (form-action now names both journey origins, not animals' alone) and it must stay open for s24; (c) three counts outside the checks table were re-measured and corrected, since they are 'What was built' facts this stage moved: branch diffstats (ins 270 files / 20,422 / 9,894; animals 100; plants 52; tests 7), ins's unit count 595 to 596, and the Tests repository subsection from two changes to three. Residual drift re-measured with diff: animals vs plants context.js is now identical and added as a row; their config.js is still nine hunks, with plants' new tradeImportsInsFrontend block byte-equal to animals'; ins vs journeys context.js, config.js and content-security-policy rows rewritten to what diff shows. Checks re-read live from all five PRs: every one green, 7/7 ins, 9/9 animals, 9/9 plants, 5/5 tests (E2E now green, where the previous refresh recorded it red) and 5/5 workspace on run 35155686717. Known caveats re-read; none is falsified by this stage. Stage and plan counts in 'Where everything is' updated to twenty-four stages, twenty-two done, twenty-one plans."
       ],
       "openQuestions": [
         "Is a content-security-policy form-action entry the right home for ins tradeImportsPlantsFrontend.baseUrl while plants has no handshake? It is the only consumer this stage gives the key, and it is forward-looking. The alternative — adding the key with no consumer — is dead config; the other alternative, making ins dashboard links journey-aware, is a separate ticket (buildNotificationLink is explicitly single-journey).",
         "Plants journey spec drift: src/server/app/sets/high-risk-plants/spec/ (journey-spec.json:168, backlog-extras.json:513, decisions.json, conflicts.json) still records the Address book link as parked at # under the Sam-gated extra chrome-placeholders-and-service-name. Nothing asserts that text against the layout and those files belong to the journey-builder programme, so this stage leaves them. Someone should reconcile them once this lands.",
         "Does ins already have TRADE_IMPORTS_ANIMALS_FRONTEND_URL in cdp-app-config? Its dashboard row links need it today, so it may be set. Confirm before adding it alongside the three new entries."
-      ]
+      ],
+      "localE2e": {
+        "state": "green",
+        "failures": [],
+        "run": 1
+      },
+      "reportRefreshed": true
     },
     {
       "id": "s23-drop-drift-tooling",
@@ -1466,6 +1473,14 @@
       "state": "green",
       "failures": [],
       "run": 1
+    }
+  },
+  "s22": {
+    "address-book-links": {
+      "ci": {
+        "state": "green",
+        "failures": []
+      }
     }
   }
 }

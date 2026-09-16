@@ -10,8 +10,7 @@
     "src/plugins",
     "src/server/auth",
     "src/server/common",
-    "src/server/health",
-    "src/server/signout"
+    "src/server/health"
   ],
   "surfaces": [
     { "path": "src/auth/get-oidc-config.js", "rule": "identical" },
@@ -31,11 +30,7 @@
     { "path": "src/auth/verify-token.js", "rule": "identical" },
     { "path": "src/auth/verify-token.test.js", "rule": "identical" },
     { "path": "src/plugins/auth.js", "rule": "identical" },
-    {
-      "path": "src/plugins/auth.test.js",
-      "rule": "identical-except",
-      "allow": ["defraId\\.redirectUrl", "defraId\\.serviceId", "defraId\\.policy", "serviceId:", "p: '"]
-    },
+    { "path": "src/plugins/auth.test.js", "rule": "identical" },
     { "path": "src/plugins/csrf.js", "rule": "identical" },
     {
       "path": "src/plugins/csrf.test.js",
@@ -43,22 +38,11 @@
       "reason": "s01 §8: ins boots the real server and posts without a crumb; plants unit-tests the options object. Settle in open question 24 of report.md."
     },
     { "path": "src/server/auth/index.js", "rule": "identical" },
-    {
-      "path": "src/server/auth/controller.js",
-      "rule": "identical-except",
-      "allow": ["crn: profile\\.crn", "\\{ profile \\}"]
-    },
-    {
-      "path": "src/server/auth/controller.test.js",
-      "rule": "deliberate",
-      "reason": "test shape: ins keeps four sign-in and sign-out route tests and mock-auth.js; the journeys assert through the copy module."
-    },
-    {
-      "path": "src/server/auth/stub-sign-in.js",
-      "rule": "identical-except",
-      "allow": ["STUB_TOKEN_SECRET"]
-    },
-    { "path": "src/server/auth/stub-sign-in.test.js", "rule": "only-in", "repos": ["animals", "plants"] },
+    { "path": "src/server/auth/controller.js", "rule": "identical" },
+    { "path": "src/server/auth/controller.test.js", "rule": "identical" },
+    { "path": "src/server/auth/stub-sign-in.js", "rule": "identical" },
+    { "path": "src/server/auth/stub-sign-in.test.js", "rule": "identical" },
+    { "path": "src/server/router.js", "rule": "identical" },
     { "path": "src/server/common/constants/status-codes.js", "rule": "identical" },
     { "path": "src/server/common/helpers/content-security-policy.js", "rule": "identical" },
     {
@@ -109,7 +93,7 @@
     { "path": "src/server/common/services/mode.test.js", "rule": "identical" },
     { "path": "src/server/common/test-helpers/mock-auth-config.js", "rule": "identical" },
     { "path": "src/server/common/test-helpers/mock-oidc-config.js", "rule": "identical" },
-    { "path": "src/server/common/test-helpers/mock-auth.js", "rule": "only-in", "repos": ["ins"] },
+    { "path": "src/server/common/test-helpers/session-auth.js", "rule": "identical" },
     { "path": "src/server/common/test-helpers/real-mode.js", "rule": "only-in", "repos": ["ins"] },
     { "path": "src/server/common/test-helpers/test-server.js", "rule": "only-in", "repos": ["ins"] },
     { "path": "src/server/health/index.js", "rule": "identical" },
@@ -118,17 +102,6 @@
       "path": "src/server/health/controller.test.js",
       "rule": "deliberate",
       "reason": "ins boots through test-server.js (s01 CI fix); journeys inline createServer()."
-    },
-    { "path": "src/server/signout/controller.js", "rule": "identical" },
-    {
-      "path": "src/server/signout/index.js",
-      "rule": "deliberate",
-      "reason": "s06 D4: ins reads routeOptions from the kit; plants spreads the controller."
-    },
-    {
-      "path": "src/server/signout/controller.test.js",
-      "rule": "deliberate",
-      "reason": "test shape: ins mocks getSignOutUrl and asserts the redirect; journeys assert the cookie clears."
     },
     {
       "path": "src/config/config.js",
@@ -141,14 +114,10 @@
         "http://localhost:",
         "tradeImports\\w+(Api|Frontend)",
         "TRADE_IMPORTS_",
-        "Trade Imports \\w+",
-        "LOG_REDACT",
-        "segment:",
-        "The cache segment",
-        "default: 'session'"
+        "Trade Imports \\w+"
       ]
     },
-    { "path": "src/config/config.test.js", "rule": "deliberate", "reason": "s12 D7: ins pins its own ports and URLs; journeys carry the stubMode block only." },
+    { "path": "src/config/config.test.js", "rule": "deliberate", "reason": "s12 D7: ins pins its own ports and URLs; the stubMode and env-backed boolean blocks (s17) are shared." },
     { "path": "src/server/app/shared/copy.js", "rule": "identical" },
     { "path": "src/server/app/shared/copy-leaves.js", "rule": "identical" },
     { "path": "src/server/app/shared/error-summary.njk", "rule": "identical" },
@@ -156,7 +125,7 @@
     {
       "path": "src/server/app/shared/layout.njk",
       "rule": "deliberate",
-      "reason": "s09 D2, D5, D6, D8: signOutUrl, the real address-book item, no staleActionRejected banner."
+      "reason": "s09 D2, D5, D6, D8: the real dashboard and address-book items, no staleActionRejected banner; signOutUrl converged on /auth/sign-out in s17."
     },
     { "path": "src/server/app/lib/http-status.js", "rule": "identical" },
     { "path": "src/server/app/lib/validate/run.js", "rule": "identical" },

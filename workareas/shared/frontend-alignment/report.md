@@ -15,8 +15,6 @@ and what happens if nobody answers.
 
 | # | Question | Count | If nobody answers |
 | --- | --- | --- | --- |
-| 14 | `controller.js` or `<page>.controller.js` in a multi-page group? | two against one for `controller.js` | plants' groups stay the odd one out |
-| 15 | One shared fit fixture with an axe helper (ins `address-book/fit/address-form.js`) or an `AxeBuilder` call per spec? | one against two | the dashboard spec keeps importing across a feature boundary |
 | 29 | Should ins take the journeys' full countries reader surface (`originLabel`, `originCountries`, `addressCountries`, `countryCodeOf`) and the `GBNAG_SPS_EX` block filter, so its countries service is byte-equal with plants'? Question 13 landed the lazy cache alone. It would narrow the address book from the full MDM list to the animal-products export block, stop the dashboard naming a `GB` origin, and drop the trace header from the reference-data call. | one against two | ins keeps the full MDM list, its own reader and its trace header, and the two countries services stay different files |
 | 30 | `content-security-policy.js` stopped being byte-equal when ins took `main`'s EUDPA-333 handshake: ins reads the animals-frontend base URL and widens `form-action` from `['self']` to `['self', animalsFrontendOrigin]`, because the browser blocks the cross-origin 302 the address-add handshake depends on. Does ins keep a documented exception, or do the journeys take ins's shape, which they need themselves for question 28? | ins only | a chassis file differs with nothing to say why |
 
@@ -201,6 +199,46 @@ and what happens if nobody answers.
     `services/run-mode.test.js`. The tests repo took the same `main` merge
     (`29e9901`) for the ins session-cookie name the handshake work introduced.
 
+14. **Took the journeys' feature-folder convention into ins, and made every
+    feature folder self-contained with its own fit specs.** Ruled 16 September
+    2026: Q14 go with the journey convention, `page.controller.js`; the
+    journeys have a better approach to tests, especially the fit tests. Q15 the
+    feature folder should be self-contained with its associated fit tests. The
+    two journeys already agree on the convention, so the two-against-one count
+    this page carried for `controller.js` was wrong: ins was the odd one out.
+    Landed as `0a8b39a` on
+    [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) and
+    `773a0975` on
+    [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339),
+    with one SonarCloud follow-up in animals (`c2680603`); plants changed
+    nothing, because it is the reference. Questions 14 and 15 closed together:
+    ins's five address-book page folders now hold `<page>.controller.js` and
+    `<page>.controller.test.js` with `features/index.js` repointed and the five
+    `template.njk` files untouched, and the dashboard, a single-page feature,
+    keeps its spec beside its controller as
+    `features/dashboard/dashboard.fit.spec.js`, no longer reaching across the
+    feature boundary into `address-book/fit/address-form.js` but defining its
+    own axe helper inline, as plants' single-page specs do. The group's axe
+    helper left `address-form.js` for a new `address-book/fit/axe.js`, a
+    byte-identical copy of plants' `commodities/fit/axe.js`, and animals took
+    four more copies into `transport/`, `commodities/`, `addresses/` and
+    `documents/` so every group spec calls its own group's helper; animals also
+    renamed its eleven group page templates to `template.njk`, with the one
+    `const view` line in each controller following, and the recipe docs in both
+    repos (ins `architecture.md`, `features.md`, `testing.md`,
+    `add-a-page.md`; animals `add-a-section.md`) now describe the new shape.
+    Behaviour: the ten animals group axe assertions run plants' five WCAG tags
+    where they ran two, and lose the private exemption four of them carried for
+    `aria-allowed-attr` on govuk radios and checkboxes, which the suite is
+    green without; `documents/fit/scan-status.fit.spec.js` gains the axe test
+    it never had, so animals' fit count goes from 447 to 448, while ins keeps
+    its 50 specs and both unit suites are unchanged and ins's public URLs are
+    untouched. Animals' SonarCloud gate then failed on new-code coverage and
+    duplication over the four identical `axe.js` copies, which the ruling
+    requires to stay duplicated rather than extracted, so `src/**/fit/axe.js`
+    joined `sonar.coverage.exclusions` and `sonar.cpd.exclusions` alongside the
+    copy bundles already listed there.
+
 17. **Converged the tooling: the npm pin, the pre-commit hook, the audit
     level, the lint plugin, the workflows and the ins housekeeping.** Ruled 16
     September 2026: Q17 and Q18 together. A non-Node developer did these; not
@@ -340,14 +378,14 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all seven checks green (PR checks, security audit, FIT tests, SonarCloud, three publish jobs) at `f9c9bce` (the tooling convergence `1d3869c` plus the restored `npm-version.js`), 16 September 19:52 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `780ec235` (the tooling convergence `1f619ab0`, the lockfile regenerated under npm 11.6.2 `ec3e1dee`, and the restored `npm-version.js`), 16 September 19:52; Lighthouse was red between those commits, because `main`'s copy of the `workflow_run` job still calls the script the convergence had deleted |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all seven checks green (PR checks, security audit, FIT tests, SonarCloud, three publish jobs) at `0a8b39a` (the feature-folder convention), 16 September 21:16 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `c2680603` (the feature-folder convention `773a0975` plus the SonarCloud exclusions for the four duplicated `fit/axe.js` copies), 16 September 21:34; Lighthouse was red between the tooling convergence `1f619ab0` and the restored `npm-version.js` `780ec235`, because `main`'s copy of the `workflow_run` job still calls the script the convergence had deleted |
 | `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `bcc7166` (the tooling convergence `e87afcc`, the lockfile regenerated under npm 11.6.2 `8a043ea`, and the restored `npm-version.js`), 16 September 19:52; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
 | `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; four of five checks green at `29e9901` (the `main` merge that brought the ins session-cookie name), 16 September 17:32; E2E red, because the run started three minutes before the animals branch published the image carrying `main`'s handshake link the new specs look for |
 | `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E red on four runs while the branch images were mid-republish on 16 September, then green on [run 35123715596](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35123715596), the first to start after all four had published, 16 September 17:43 |
 
-The ins branch changes 269 files (20,332 insertions, 9,864 deletions, mostly
-the lockfile); animals 56; plants 47; tests 6. No shared package, no cross-repo
+The ins branch changes 270 files (20,399 insertions, 9,889 deletions, mostly
+the lockfile); animals 95; plants 47; tests 6. No shared package, no cross-repo
 import. ins's public URLs are unchanged except that `/about` and `/signout`
 are gone; sign-out is `/auth/sign-out`, as in the journeys.
 
@@ -372,8 +410,8 @@ src/server/
     services/{address-book, countries, ins-backend}/{index, client, stub}.js
     shared/{kit, paths, copy, copy-leaves, copy.en, copy.cy}.js  {layout, error, error-summary}.njk
     features/index.js
-    features/dashboard/{controller.js, template.njk, copy/, view-model/, fit/}
-    features/address-book/{list,add,edit,view,delete}/{controller.js, template.njk}
+    features/dashboard/{controller.js, template.njk, dashboard.fit.spec.js, copy/, view-model/}
+    features/address-book/{list,add,edit,view,delete}/{<page>.controller.js, template.njk}
     features/address-book/{fields, address-countries, address-id-params, stored-address,
                             success-banner, handshake-context, journey-registry}.js
                            {copy/, view-model/, fit/}
@@ -552,8 +590,8 @@ not built.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
-  commit, PRs, notes and open questions: twenty done, three ruling stages
-  waiting); the nineteen plans under
+  commit, PRs, notes and open questions: twenty-one done, two ruling stages
+  waiting); the twenty plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:

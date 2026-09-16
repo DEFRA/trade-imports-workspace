@@ -164,6 +164,11 @@ const BASELINE_SCHEMA = {
     ok: { type: 'boolean', description: 'Every repo a pending stage touches is on the programme branch with a clean tree' },
     done: { type: 'array', items: { type: 'string' }, description: 'Stage ids whose status is already done' },
     todo: { type: 'array', items: { type: 'string' }, description: 'Stage ids still to run, in file order' },
+    e2eRetry: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'The subset of todo whose status is "e2e-retry": landed and green on their PRs, needing only the local E2E rung and what follows it',
+    },
     branch: { type: 'string' },
     problems: { type: 'array', items: { type: 'string' } },
     summary: { type: 'string' },
@@ -491,7 +496,9 @@ ${PATH_RULE}
    logs/) are not a problem, and a modified workareas/${WORKAREA_REL}/stages.json, report.md or plans/ file is
    the programme's own state that the record step commits. Only a modified TRACKED file outside those is a
    problem there.
-4. Report done = every stage whose status is "done", todo = every stage whose status is "todo" in file order.
+4. Report done = every stage whose status is "done", todo = every stage whose status is "todo" or "e2e-retry" in
+   file order, and e2eRetry = the ones whose status is "e2e-retry" (they landed and are green on their PRs; a human
+   read their red local E2E, fixed the environment or the code, and set the status so the run resumes at that rung).
    A stage in any other status (ci-red, ladder-red, implement-failed, e2e-red) is a problem — name it in problems
    and leave it out of todo; the run must not build on it.
 Return the structured output only.`,
@@ -552,6 +559,24 @@ Return the structured output only.`,
       continue
     }
 
+    // -----------------------------------------------------------------------
+    // A stage marked e2e-retry has already landed and passed its own CI; a
+    // human fixed what made its local E2E red. Pick up its PRs and resume at
+    // that rung.
+    // -----------------------------------------------------------------------
+    const retryE2E = (baseline.e2eRetry ?? []).includes(id)
+    let prs = []
+    if (retryE2E) {
+      log(`${id}: resuming at the local E2E rung`)
+      const known = await agent(
+        `Stage ${id} resumes at its local E2E rung. Report the pull requests already recorded on it.
+${GUARDRAILS}
+Run \`jq '.stages[] | select(.id=="${id}") | .prs' ${STAGES_TILDE}\` and return exactly those entries as prs
+(repo, url, number), ok:true. Change nothing.`,
+        watcher({ label: `${id} prs`, phase: 'E2E', schema: PR_SCHEMA })
+      )
+      prs = known?.prs ?? []
+    } else {
     // -----------------------------------------------------------------------
     // Plan — Fable reads the brief, the reference files and the current state
     // of the target repo, and writes a file-level plan the implementor can
@@ -968,7 +993,7 @@ Return the structured output only.`,
       halted = true
       break
     }
-    const prs = pr.prs ?? []
+    prs = pr.prs ?? []
 
     // -----------------------------------------------------------------------
     // CI — Haiku watches the stage's own PRs, Sonnet fixes, bounded.
@@ -1003,6 +1028,7 @@ Return the structured output only.`,
     } else {
       log(`${id}: no PR-enabled repo touched — no repo CI to watch`)
     }
+    }
 
     // -----------------------------------------------------------------------
     // Local E2E — the proper end-to-end run: the tests repo's compose suite
@@ -1018,6 +1044,12 @@ end on the local stack, built from the checkouts, with the tests repo's compose 
 ${GUARDRAILS}
 ${PATH_RULE}
 STEPS, each ONE Bash call, output to a log under ${LOGS_TILDE}/ that you read once:
+0. The stack is only as honest as the checkouts it builds. For EVERY directory under ${ROOT_TILDE}/repos/ that is
+   on \`main\` with a clean tree (\`git -C <repo> status --short --branch\`: first line \`## main...origin/main\`,
+   nothing else printed, an untracked allure-results/ or .lighthouse/ excepted), run
+   \`git -C <repo> pull --ff-only origin main\` and note in your summary which moved. A repo on any other branch,
+   or with a modified tracked file, is somebody's work in progress: leave it alone and name it in the summary.
+   The programme's own repos are on the programme branch and are not touched here.
 1. Start the stack from local source: \`tim docker dev > ${LOGS_TILDE}/${id}-stack-up-${run}.log 2>&1\` with the
    tool's timeout parameter at 600000. It builds the repo-backed services from the checkouts under repos/ and
    waits for health. If the Bash call times out before the script returns, run the same command again (it is
@@ -1054,9 +1086,13 @@ Return the structured output only.`,
 checkouts under repos/. The runner's logs are ${LOGS_TILDE}/${id}-e2e-local-*.log and the failing specs' evidence is
 under ${ROOT_TILDE}/repos/trade-imports-animals-tests/test-results/. The stack is DOWN now; do not start it. Decide
 first whether the failure is caused by THIS stage's change (a page, URL, copy string or redirect the tests repo
-asserts) or is unrelated. A flake that survived a retry is still a flake if the evidence says a transient 500 or a
-seed race: report ok:true with summary "flake: <what the run showed>" and no commit. A real failure is fixed in THIS
-stage's repos, and in the tests repo only when the stage names it.`
+asserts) or is unrelated. "Pre-existing" and "another repo's problem" are not verdicts here: if the failing
+assertion belongs to a service this stage did not change, check that service's checkout is level with its origin
+main (\`git -C ${ROOT_TILDE}/repos/<service> log --oneline HEAD..origin/main\` after a fetch) and say so; a stale
+checkout is the first suspect and the runner's step 0 should have caught it. A flake that survived a retry is still a
+flake if the evidence says a transient 500 or a seed race: report ok:true with summary "flake: <what the run
+showed>" and no commit. A real failure is fixed in THIS stage's repos, and in the tests repo only when the stage
+names it.`
         )
         if (prs.length) {
           const again = await watchPrs(id, prs, 'ci', `${id} ci watch after local e2e fix ${localAttempt}`)

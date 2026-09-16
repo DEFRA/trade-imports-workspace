@@ -25,13 +25,13 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 
 ### Requirement: These flow sections are not the same grouping as the Overview task rows
 **ID**: REQ-FLOW-002
-The system MUST treat the journey's flow sections and the Overview page's task rows as separate groupings: there are ten flow sections against eleven task rows, and a task row MUST NOT be assumed to correspond to the section a page is reached through. Overview groups its eleven task rows under six numbered headings, which is a third grouping again.
+The system MUST treat the journey's flow sections and the Overview page's task rows as separate groupings: there are ten flow sections against twelve task rows, and a task row MUST NOT be assumed to correspond to the section a page is reached through. Overview groups its twelve task rows under six numbered headings, which is a third grouping again.
 
-#### Scenario: A single task row spans pages from more than one flow position
+#### Scenario: A single task row spans pages the flow never offers as steps of its own
 **ID**: SCN-FLOW-002-A
 - **GIVEN** the transporter task row on Overview
 - **WHEN** the user opens it
-- **THEN** it covers the transporter type, approved transporter search and private transporter details pages together, even though the flow offers each as its own step
+- **THEN** it covers the transporter type, the approved transporter search and the private transporter details together, though the flow offers none of the three as a step of its own — they are spokes off the transporter list, belonging to no section
 
 ### Requirement: Continuing from any page moves to the next still in scope, and finishing a section returns to Overview
 **ID**: REQ-FLOW-003

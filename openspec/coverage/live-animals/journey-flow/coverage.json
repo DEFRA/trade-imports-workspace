@@ -20,10 +20,12 @@
           "name": "The transport section sequences its pages in order",
           "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "full", "notes": "proves the type question is not offered before the combined list" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "partial", "notes": "carried over — transport enters at /port-of-entry; not re-verified this pass, and the transport section's own step list has since changed (arrival, transit, transporters only) so this test's full body needs re-reading before trusting it still matches" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "partial", "notes": "proves the scenario's AND clause — the type question is not offered before the combined list — but not the three-step order itself" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "partial", "notes": "re-read this pass: asserts sectionEntry('transport') resolves to /port-of-entry, so arrival details is the section's first step — the first of the three, not the order" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should end the transport section at the transporter list, whatever type the answers reach", "strength": "partial", "notes": "pins the list as the section's last step, whichever transporter type is answered — the third of the three" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and routes overland transport to transit countries", "strength": "partial", "notes": "pins the arrival → transit hop, the middle of the three" }
           ],
-          "notes": "STALE CITATIONS REMOVED: dispatch.test.js's 'skipping the spokes the type gates out' and simulate.test.js's 'insert the gated transporter spoke exactly for the chosen type' both asserted the retired type-branches-the-section model (transporters → select/private) and no longer support this scenario's current text — not re-cited, not confirmed deleted from the suite either. No test found that walks arrival → transit → transporter-list as one sequence and asserts that specific three-step order end to end; the fit citation above only proves the type-before-list half."
+          "notes": "Covered in pieces rather than end to end: first step (dispatch), arrival → transit (fit), last step (dispatch), and the type-not-before-list clause (fit). No single test walks arrival → transit → transporter-list as one sequence and asserts that three-step order, which is why every link is partial and the scenario stays partial."
         }
       ]
     },
@@ -34,11 +36,12 @@
       "scenarios": [
         {
           "id": "SCN-FLOW-002-A",
-          "name": "A single task row spans pages from more than one flow position",
+          "name": "A single task row spans pages the flow never offers as steps of its own",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should aggregate the transporter row over its three pages, following the type into scope", "strength": "full", "notes": "type + commercial/private fulfilment roll into one transporter row" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings", "strength": "partial", "notes": "lists a single Transporter task; does not open it across type/select/private pages" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should aggregate the transporter row over the three answers the list declares, following the type into scope", "strength": "full", "notes": "type + commercial/private fulfilment roll into one transporter row" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should keep the add spokes off the journey — they belong to no section", "strength": "full", "notes": "the other half of the scenario: the three pages the row spans are spokes, so the flow never offers them as steps" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings, with nothing after them", "strength": "partial", "notes": "lists a single Transport details task; does not open it across type/select/private pages" }
           ]
         }
       ]
@@ -55,7 +58,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "full", "notes": "Airplane arrival continues past transit to transporter type" },
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "Private type skips commercial select" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should walk the transport section, skipping the spokes the type gates out", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -72,7 +75,7 @@
     },
     {
       "id": "REQ-FLOW-004",
-      "name": "A task page offers both a discard-and-exit and a save-and-exit route back to Overview",
+      "name": "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview",
       "coverage": "full",
       "scenarios": [
         {
@@ -132,7 +135,7 @@
           "name": "The review section opens once every row is fulfilled, not applicable or optional",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "completed answers unlock Check and submit and open the review", "strength": "full", "notes": "opens Check your answers" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "opens the review once every answer section is complete", "strength": "full", "notes": "opens Check your answers" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should open the review section once every answer section is ready — even with the declaration unanswered (no deadlock)", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "journey.toReview reaches CYA; does not assert declaration/confirmation chain" }
           ]
@@ -157,9 +160,11 @@
           "name": "An opening-sequence step not yet in scope is skipped",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "partial", "notes": "carried over, not re-verified against the now-longer run this pass" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "partial", "notes": "re-read this pass: still present and still about a gated-out step, but it collapses the whole tail rather than stepping over one page" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should carry a consignment with nothing to identify on to additional details mid-run", "strength": "full", "notes": "the scenario exactly: identification is out of scope for this consignment, so the run steps over it to the next step that is in scope" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass a zero-record identification Save-and-finish through to additional details mid-run", "strength": "full", "notes": "the same skip reached by finishing the page with no records rather than by never being offered it" }
           ],
-          "notes": "No FIT/E2E that deliberately leaves an opening-spine step out of scope mid-run and asserts the skip, against the current whole-journey run shape."
+          "notes": "Unit-only: no FIT/E2E deliberately leaves an opening-sequence step out of scope mid-run and asserts the skip on the page itself."
         },
         {
           "id": "SCN-FLOW-007-C",
@@ -254,17 +259,19 @@
     {
       "id": "REQ-FLOW-012",
       "name": "A page reached from another page, not from the hub directly, ends with only its primary action",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-012-A",
           "name": "A page reached via a detour offers only its primary action",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page ends with the primary alone, being reached from the type question", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "calls the shared expectPageEndsWithPrimaryAlone helper against the type question page itself" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "calls the shared expectPageEndsWithPrimaryAlone helper against the type question page itself" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "ends with the primary alone, being reached from the type question", "strength": "full", "notes": "closes the gap this scenario's note used to record — the third add-detour page now asserts the rule too" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "ends with the primary alone, being reached from the addresses page", "strength": "full", "notes": "a detour page outside the transporter area, so the rule is shown to hold beyond that one feature" }
           ],
-          "notes": "GAP: mechanism confirmed generically by the shared saveActions macro's own doc comment (showReturnControls flag) and demonstrated on two of the three add-detour pages — commercial-transporter-details has no test at all exercising this (see its own coverage.json), and no other feature area's detour pages (e.g. documents, identification cards) have been checked against this rule."
+          "notes": "All three transporter add-detour pages now assert the rule, and cph-number shows it holding outside that feature area."
         }
       ]
     }

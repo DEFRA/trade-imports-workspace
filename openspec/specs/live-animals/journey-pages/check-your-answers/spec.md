@@ -2,26 +2,32 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Check your answers".
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
 
 ## Requirements
 
-### Requirement: Check-your-answers numbers its own sections over only what it renders, omitting anything unanswered
+### Requirement: The review draws the same six numbered sections as Overview, in order, whatever the notification holds
 **ID**: REQ-CYA-001
-The system MUST group the page under numbered section headings of its own, numbered in sequence across only the sections that have something to show, and MUST NOT render a heading for a section with nothing entered. This numbering is the page's own: it MUST NOT be assumed to match the Overview page's, which numbers all six sections whether or not they hold answers.
+The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST head every card with a subsection heading of its own. Which cards stand within a section MAY depend on the notification — the commodity group waits on a commodity line, the transit-countries group on an overland arrival — but the six numbered sections themselves MUST NOT be dropped.
 
-#### Scenario: Check-your-answers numbers only the sections it renders
+#### Scenario: The review draws all six numbered sections in order
 **ID**: SCN-CYA-001-A
-- **GIVEN** the user has answered every section of a notification except documents
-- **WHEN** they view check-your-answers
-- **THEN** the numbered section headings read "1. About the consignment", "2. Movement" and "3. Addresses", numbered in sequence over the sections shown rather than carrying the Overview page's numbers
-- **AND** no Documents heading is shown, since none were uploaded
+- **GIVEN** the user has just started a notification and answered nothing beyond the entry page
+- **WHEN** they view the review
+- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties" and "6. Contact address", in that order
 
 #### Scenario: Commodity and consignment detail appear within a section, not as numbered sections
 **ID**: SCN-CYA-001-B
-- **GIVEN** the user is viewing check-your-answers for a notification with commodities entered
+- **GIVEN** the user is viewing the review for a notification with commodities entered
 - **WHEN** they read down the page
 - **THEN** consignment details, commodity details and species appear as sub-headings inside a numbered section, not as numbered sections in their own right
+
+#### Scenario: The Documents section stands even when nothing has been uploaded
+**ID**: SCN-CYA-001-E
+- **GIVEN** a notification with no documents uploaded
+- **WHEN** the user views the review
+- **THEN** the Documents section and its card are still shown, saying no documents have been added yet
+- **AND** a Change route to the upload documents page is still offered
 
 #### Scenario: A fully answered notification's check-your-answers reflects every entered value
 **ID**: SCN-CYA-001-C
@@ -35,21 +41,23 @@ The system MUST group the page under numbered section headings of its own, numbe
 - **WHEN** they view check-your-answers
 - **THEN** the roles-and-addresses card lists all of them, each showing the selected party's name and country
 
-### Requirement: Anything not yet answered is shown as "Not provided", not as an error
+### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
-The system MUST show "Not provided" against any field, or any party role, that has not yet been answered, and MUST NOT show an error for it — an error is reserved for a role whose linked address no longer resolves, not for one nobody has reached yet.
+The system MUST decide how to draw a blank by the card it sits in, not the field itself: on a card with nothing further owed it MUST write the blank out as "Not applicable", a settled answer; on a card still holding outstanding answers it MUST give the row no text at all, drawing it in the missing style with "Missing" announced in its place for a screen reader. The decision MUST apply to every blank row in a marked card alike, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet — that error is reserved for a role whose linked address no longer resolves.
 
-#### Scenario: An unanswered optional field reads Not provided
+#### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
 **ID**: SCN-CYA-002-A
 - **GIVEN** the user has answered only the entry page of a notification
-- **WHEN** they view check-your-answers
-- **THEN** the fields nobody has reached yet each read "Not provided"
+- **WHEN** they view the review
+- **THEN** a blank row on a card with nothing further owed reads "Not applicable"
+- **AND** a blank row on a card still holding outstanding answers carries no text at all, with "Missing" announced in its place
+- **AND** every blank row in that marked card is drawn the same way, the optional ones included
 
-#### Scenario: An unanswered party role reads Not provided, with no error shown
+#### Scenario: An unanswered party role is marked missing, with no role error shown
 **ID**: SCN-CYA-002-B
 - **GIVEN** a new notification whose party roles have not yet been answered
-- **WHEN** the user views check-your-answers
-- **THEN** each unanswered role reads "Not provided", and no error is shown against it
+- **WHEN** the user views the review
+- **THEN** each unanswered role is marked missing, and no role error is raised against it
 
 ### Requirement: A back link returns to Overview
 **ID**: REQ-CYA-003
@@ -92,15 +100,22 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **WHEN** the user continues
 - **THEN** the declaration page opens
 
-### Requirement: Continuing from a notification that is not yet ready returns to Overview instead
+### Requirement: A notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
-The system MUST NOT show an error when the user continues from check-your-answers while a task is still outstanding, and MUST instead return them to Overview.
+The system MUST refuse to continue from the review while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card. Each summary entry MUST link to the card it names, and that card MUST itself be marked with the same words. The summary MUST stand as soon as the page is opened, not only once the user has tried to continue, and following a refused attempt MUST move focus to it.
 
-#### Scenario: Continuing an incomplete notification returns to Overview without an error
+#### Scenario: An unfinished review names every outstanding card and links to it
 **ID**: SCN-CYA-007-A
-- **GIVEN** a new notification is open on check-your-answers with a party role still unanswered
+- **GIVEN** a new notification is open on the review with cards still outstanding
+- **WHEN** the user views the page
+- **THEN** an error summary titled "There is a problem" names every unfinished card
+- **AND** each entry links to the card it names, which is itself marked with the same words
+
+#### Scenario: Continuing from an unfinished review is refused, keeping the user on the page
+**ID**: SCN-CYA-007-B
+- **GIVEN** a new notification is open on the review with cards still outstanding
 - **WHEN** the user continues
-- **THEN** they are returned to Overview, without an error being shown
+- **THEN** they remain on the review page, the error summary is shown, and focus moves to it
 
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008

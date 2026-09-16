@@ -534,10 +534,12 @@ ${PATH_RULE}
    logs/) are not a problem, and a modified workareas/${WORKAREA_REL}/stages.json, report.md or plans/ file is
    the programme's own state that the record step commits. Only a modified TRACKED file outside those is a
    problem there.
-4. Report done = every stage whose status is "done", todo = every stage whose status is "todo", "ci-retry" or
-   "e2e-retry" in file order, ciRetry = the ones whose status is "ci-retry" (landed and pushed; a human read their
-   red or missing CI, fixed what needed fixing, and set the status so the run resumes at the CI watch), and
-   e2eRetry = the ones whose status is "e2e-retry" (green on their PRs; the run resumes at the local E2E rung).
+4. Report done = every stage whose status is "done". \`todo\` is EVERY stage still to build, in file order — that
+   means status "todo" AND status "ci-retry" AND status "e2e-retry"; a retry stage belongs in \`todo\` as well as in
+   its own list, and leaving it out of \`todo\` is the one mistake that makes the run skip work it was asked to do.
+   Then ALSO report ciRetry = those of them whose status is "ci-retry" (landed and pushed; a human read their red or
+   missing CI, fixed what needed fixing, and set the status so the run resumes at the CI watch), and e2eRetry =
+   those whose status is "e2e-retry" (green on their PRs; the run resumes at the local E2E rung).
    A stage in any other status (ci-red, ladder-red, implement-failed, e2e-red, sync-blocked) is a problem — name it
    in problems and leave it out of todo; the run must not build on it.
 Return the structured output only.`,
@@ -549,7 +551,12 @@ Return the structured output only.`,
   }
   branchName = baseline.branch
 
-  const requested = explicitList ? CFG.stages : baseline.todo
+  // A retry stage is a subset of todo, but a baseline agent that reports it in
+  // ciRetry/e2eRetry only must not make the loop skip it. Union, retries first:
+  // they landed before anything still todo, so that is also file order.
+  const retries = [...(baseline.ciRetry ?? []), ...(baseline.e2eRetry ?? [])]
+  const fromBaseline = [...retries, ...(baseline.todo ?? []).filter((id) => !retries.includes(id))]
+  const requested = explicitList ? CFG.stages : fromBaseline
   const stageIds = requested.filter((id) => !baseline.done.includes(id) && !results.some((r) => r.id === id))
   if (stageIds.length === 0) {
     log(`round ${round}: nothing left to build — ${baseline.done.length} done`)

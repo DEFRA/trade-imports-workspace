@@ -44,6 +44,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | live-animals/journey-pages/upload-documents | DOCS |
 | live-animals/journey-section-captions | CAPTIONS |
 | live-animals/notification-dashboard | DASH |
+| live-animals/page-titles | PAGE-TITLE |
 | live-animals/notification-events | EVENTS |
 | live-animals/notification-lifecycle | LIFECYCLE |
 | live-animals/notification-status-and-reference | STATUS-REF |

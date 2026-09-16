@@ -1,0 +1,47 @@
+{
+  "capability": "live-animals/page-titles",
+  "areaCode": "PAGE-TITLE",
+  "specFile": "openspec/specs/live-animals/page-titles/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PAGE-TITLE-001",
+      "name": "Every page's title names the page, then the service, then GOV.UK, joined by hyphens",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PAGE-TITLE-001-A",
+          "name": "A page's title reads page name, service name, GOV.UK",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js", "test": "reads page name, service name and GOV.UK, joined by hyphens", "strength": "full", "notes": "asserts the rendered document title on the origin page, so the whole string is observed in the browser" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should join the page name, the service name and GOV.UK with hyphens", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PAGE-TITLE-001-B",
+          "name": "The parts are not separated by a pipe",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should not separate the title with a pipe", "strength": "full", "notes": "the negative that pins the separator; no fit equivalent, and none is needed above the unit assertion" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PAGE-TITLE-002",
+      "name": "A page showing errors opens its whole title with an error prefix",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PAGE-TITLE-002-A",
+          "name": "The error prefix opens the title while errors are shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/page-title.fit.spec.js", "test": "puts the error prefix in front of the whole title when the page shows errors", "strength": "full", "notes": "drives a real validation failure on the origin page, then asserts the prefixed document title" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should keep the error prefix in front of the whole title", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

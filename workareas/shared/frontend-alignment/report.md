@@ -11,23 +11,13 @@ re-checked against the code and the PRs on 16 September 2026.
 Each names what is in play, the options with the count of repos on each side,
 and what happens if nobody answers.
 
-### Security-sensitive chassis behaviour
-
-5. **Should the journeys take ins's request-logger `ignoreFunc`?** In play:
-   `src/server/common/helpers/logging/request-logger.js` in animals and
-   plants; ins skips `/public`, `/health` and `/favicon.ico`. One against two.
-   If nobody answers: health probes and static assets keep filling the
-   journey logs.
-
 ### Shape choices the direction rule made, now backport candidates
 
 | # | Question | Count | If nobody answers |
 | --- | --- | --- | --- |
-| 12 | Journeys move error-page messages into `sharedCopy.errorPage` (`helpers/errors.js`) and revisit `Bad Request` and `Unauthorized`? | one against two | non-GDS English stays hard-coded in two repos |
 | 13 | Three shapes for countries and ports: animals `main` loads on first read (EUDPA-575, on the branch since the 16 September merge); plants primes at boot (`app/routes.js`); ins fetches per request. Which do plants and ins take? | three ways | a reference-data outage keeps stopping plants' start-up and ins keeps one fetch per request |
 | 14 | `controller.js` or `<page>.controller.js` in a multi-page group? | two against one for `controller.js` | plants' groups stay the odd one out |
 | 15 | One shared fit fixture with an axe helper (ins `address-book/fit/address-form.js`) or an `AxeBuilder` call per spec? | one against two | the dashboard spec keeps importing across a feature boundary |
-| 16 | Backport `requiredEmail` (`lib/validate/validators.js`) to the journeys? | one against two | the validate lib differs by one primitive |
 
 ### Tooling and dependencies
 
@@ -36,11 +26,8 @@ and what happens if nobody answers.
 | 17 | Should ins take `postinstall: npm run setup:husky`, so the pre-commit hook (audit, format, lint, unit suite) runs on every clone? ins audits at `critical` where plants runs `high`; align that first. | two against one | the ins hook stays opt-in |
 | 18 | Backport `install:pinned-npm` (regenerates the lockfile under the pinned npm) to the journeys? | one against two | the journeys keep the documented `npx` route only |
 | 19 | Where does [`surfaces.json`](surfaces.json) live (`docs/reference/` or `tim/`), and is the proposed `tim workspace drift` command built to report every chassis file differing without a recorded reason? | workspace-only | the next cross-repo edit drifts by two lines, as the backport commit did before question 2 closed it, with nothing to say so |
-| 20 | Delete plants' dead `test-helpers/component-helpers.js`? ins deleted its copy with the two components it served; animals never had one; plants' has no importer and a dangling `#/` import. | plants only | dead code stays |
 | 21 | Add `cleanup-e2e-reports.yml` to ins (the twelve-line `gh-pages` pruner animals and plants run)? The Lighthouse port left it out because the audit does not depend on it. | two against one | ins's `gh-pages` gains one `lighthouse/<branch>/` directory per branch |
-| 22 | Declare `joi` (imported by `lib/validate/validators.js` and `address-id-params.js`, resolved through `@hapi/bell` and `@hapi/catbox-redis`) or accept the hoist? | three agree on the hoist | a phantom dependency until a hapi upgrade drops it |
 | 23 | Should ins take `eslint-plugin-sonarjs` and the journeys' fit-spec lint globals? | two against one | SonarCloud finds in CI what local lint finds first in the journeys |
-| 25 | Adopt the journeys' names in `status-codes.js` (`redirectFound`, `payloadTooLarge`) and `pulse.js` (`shutdownTimeoutMs`)? | two against one | naming drift only |
 | 26 | ins housekeeping: `Dockerfile` says `ARG PORT=3000` while the service listens on 3002; `publish.yml` has `group: $${{ github.workflow }}` (a doubled dollar) and `queue: max`. | ins only | harmless today, confusing later |
 
 ### Cross-repo consequences
@@ -125,6 +112,58 @@ and what happens if nobody answers.
    rather than `name` (plants' text verbatim); no layout renders it, so
    nothing visible changes, but real sessions carry `name`, not
    `displayName`, which is a candidate for a later ruling.
+
+5. **Converged the chassis outside authentication: request logging,
+   error-page copy, validators, names and the `joi` dependency.** Ruled 16
+   September 2026: Q5 yes, the journeys align with ins. Q12 all three
+   consistent and internationalisation handled one way. Q16 yes, validators
+   consistent across all three. Q20 remove the dead code. Q22 yes, declare
+   joi as a proper dependency. Q25 yes, adopt the journey names. Landed as
+   `ed31dee` on
+   [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27),
+   `d6f15c56` on
+   [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339)
+   and `8c9e9f3` on
+   [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69);
+   both journey `main` branches moved while the stage was in CI, so each
+   journey PR then took a second `main` merge (`8f5630b0`, `b5b6577`) before
+   its checks could run. Questions 5, 12, 16, 20, 22 and 25 closed together:
+   the journeys took ins's `ignoreFunc` in
+   `src/server/common/helpers/logging/request-logger.js`, narrowed in all
+   three to `/public`, `/public/*`, `/health` and `/favicon.ico` (ins's raw
+   prefix also matched `/publications`) and pinned by a new byte-equal
+   `request-logger.test.js`; ins's `helpers/errors.js` went to both journeys,
+   reading every message from `sharedCopy.errorPage` in `copy.en.js` and
+   `copy.cy.js` under the machine-draft Welsh header, and `errors.test.js`
+   became one text that renders the EUDPA-575 503 page from a Boom route;
+   `src/server/app/lib/validate/` took ins's text in both journeys
+   (`requiredEmail`, and for animals also `requiredTime`,
+   `requiredDateTextInRange`, the empty-allow-list guard in `requiredOneOf`,
+   the four-digit-year guard in `parseDateText` and the `dateWithinBounds`
+   name); ins took animals' `constants/status-codes.js` (`redirectFound`,
+   `payloadTooLarge`, `serviceUnavailable`, with `statusCodes.redirect`
+   renamed at seven test sites) and plants' `helpers/pulse.js`
+   (`shutdownTimeoutMs`); `joi` is declared in all three `package.json` files
+   at the version each lockfile already resolved (`17.13.8` in ins, `17.13.7`
+   in the journeys); and plants' dead `test-helpers/component-helpers.js` is
+   gone. The four test-shape files (`content-security-policy`,
+   `redis-client`, `serve-static-files` and `start-server` tests) converged on
+   plants' text, so `src/server/common/` is byte-equal across the three
+   except the service key prefix in `redis-client.test.js` and the two `main`
+   hunks in `errors.test.js` named under Residual drift, and `lib/validate/`
+   is byte-equal except the journey-only `persists-cleaned-value.test.js`,
+   proven with `diff -rq`. Behaviour: journey request logs no longer carry
+   health probes or static-asset requests; the 400 and 401 pages read "There
+   is a problem with your request" and "You need to sign in to view this
+   page" in all three, with Welsh drafted alongside; animals' validate lib
+   gains the primitives above, none yet used by a feature; ins's lockfile,
+   regenerated under the pinned npm, also lost about 26 unused
+   `@esbuild/<platform>` optional entries and its Docker builds were green
+   on the result. Left as the brief drew it and now candidates for a later
+   ruling: `errorPage.forbidden` still reads "Forbidden", `@hapi/boom` is
+   imported and undeclared in all three, and page titles are composed two
+   ways (animals `main` joins with hyphens and a GOV.UK suffix, ins and
+   plants with a pipe).
 
 27. **Pulled `main` into the alignment branch and analysed what moved.**
     Ruled 16 September 2026: main has moved under these repos since the
@@ -211,14 +250,14 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs) at `5648dd3`, 16 September 12:23 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all checks green, including E2E, Lighthouse CI and SonarCloud, at `f2f27246`, 16 September 12:24 |
-| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all ten checks green at `3747bfe`, 16 September 12:25; plants `main` has not moved since |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs) at `ed31dee`, 16 September 14:26 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `8f5630b0` (the chassis convergence `d6f15c56` plus a `main` re-merge), 16 September 15:00 |
+| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `b5b6577` (the chassis convergence `8c9e9f3` plus a `main` re-merge), 16 September 15:02; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
 | `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all checks green, including E2E, at `849558a`, 16 September 11:33 |
 | `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E green on every run since the Floci fix reached the branch, latest completed [run 35073631134](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35073631134), 16 September 09:24; the run against the merged branch images, [35076469742](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35076469742), had two of three shards green and one still running when this was written |
 
-The ins branch changes 258 files (23,213 insertions, 11,954 deletions, mostly
-the lockfile); animals 35; plants 26; tests 6. No shared package, no cross-repo
+The ins branch changes 260 files (20,125 insertions, 9,246 deletions, mostly
+the lockfile); animals 49; plants 41; tests 6. No shared package, no cross-repo
 import. ins's public URLs are unchanged except that `/about` and `/signout`
 are gone; sign-out is `/auth/sign-out`, as in the journeys.
 
@@ -254,7 +293,7 @@ scripts/lighthouse/  tests/lighthouse/  lighthouserc.cjs  .sonarcloud.properties
 webpack.config.js  postcss.config.js  .dependency-cruiser.cjs
 ```
 
-Unit suite: 49 files and 242 tests before, 57 files and 542 tests after.
+Unit suite: 49 files and 242 tests before, 58 files and 553 tests after.
 Playwright: 49 specs before, 50 after (a smoke project plus the features).
 
 ### Backported to animals and plants
@@ -328,13 +367,13 @@ stub mode on 15 September:
 - **`npm audit` on ins reports 27 non-critical findings** (17 high, 5
   moderate, 5 low), pre-existing plus what `@lhci/cli` adds; `security-audit`
   passes at `critical`. None fixes without `--force`.
-- **`joi` is imported and undeclared in all three repos** (question 22).
 
 ## Residual drift
 
 Re-measured on 16 September with `diff -rq` over the checkouts under `repos/`
 (the programme's working checkouts again from question 2's stage), after the
-authentication convergence landed. Classes: identical;
+chassis convergence outside authentication landed and both journeys took a
+second `main` merge. Classes: identical;
 import-path-only (none survive); deliberate (a
 recorded decision says why); unexplained (the question number says where it
 is settled).
@@ -343,16 +382,19 @@ is settled).
 
 Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 `src/server/auth` (5 files), `src/server/router.js` and its test,
-`src/server/common/services` and `src/server/common/test-helpers`.
+`src/server/common/constants`, `src/server/common/helpers/logging`,
+`src/server/common/services`, `src/server/common/test-helpers` and
+`src/server/app/lib/validate` except the one test named below.
 
 | File | Difference | Class |
 | --- | --- | --- |
 | `src/server/auth/stub-sign-in.js` | none; the secret is generated per process | identical |
-| `src/server/common/constants/status-codes.js` | animals has `serviceUnavailable: 503` from `main` (EUDPA-575) | unexplained, question 13 |
-| `src/server/common/helpers/content-security-policy.test.js` | animals hits `/`, plants `/health` | deliberate, plants is the tidier fork |
-| `src/server/common/helpers/errors.test.js` | animals proves the 503 page for a reference-data read that will not load | unexplained, question 13 |
+| `src/server/common/constants/status-codes.js` | none; `serviceUnavailable: 503` is in all three | identical |
+| `src/server/common/helpers/content-security-policy.test.js` | none; both hit `/health` | identical |
+| `src/server/common/helpers/errors.test.js` | animals' page titles read `Page not found - Import notification service - GOV.UK` (animals `main`, `fb9cb317`, DR1 parity); plants adds a 503 test for a reference-data read that will not load, through `/test/refdata-missing` (plants `main`, EUDPA-575); the Boom 503 test is in both | unexplained: the 503 test is question 13; the title composition came from `main` and is a candidate for a later ruling |
 | `src/server/common/helpers/redis-client.test.js` | key prefix names the repo | deliberate, service-specific |
 | `src/server/common/helpers/transport-routing.js`, `.test.js` | animals only | deliberate, journey-only |
+| `src/server/app/lib/validate/persists-cleaned-value.test.js` | animals' field is `transportDocumentReference`, plants' `textFieldTwo`; animals' vitest setup installs the live-animals obligation manifest, where a neutral name is not a recognised answer key | deliberate, test fixture |
 | `src/config/config.js` | nine hunks: port, service name, redirect URLs, key prefix, backend API block | deliberate, service-specific |
 | `src/config/nunjucks/context/context.test.js` | service name | deliberate, service-specific |
 
@@ -366,22 +408,27 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | `src/plugins/csrf.test.js` | ins boots the real server and posts without a crumb; plants unit-tests the options | deliberate, test shape |
 | `src/server/auth/` (`index.js`, `controller.js`, `stub-sign-in.js` and both tests) | none | identical |
 | `src/server/router.js` | none; `routes.js` exports `serviceRoutes` in all three | identical |
-| `src/server/common/constants/status-codes.js` | `redirect` against `redirectFound` plus `payloadTooLarge`; animals also has `serviceUnavailable` | unexplained, questions 25 and 13 |
-| `src/server/common/helpers/logging/request-logger.js` | ins passes `ignoreFunc` | unexplained, ins ahead, question 5 |
-| `src/server/common/helpers/pulse.js` | `tenSeconds` against `shutdownTimeoutMs` | unexplained, question 25 |
-| `src/server/common/helpers/errors.js` | ins reads messages from `sharedCopy.errorPage`; journeys hard-code English | deliberate, ins ahead, question 12 |
-| `src/server/common/helpers/{errors,content-security-policy,redis-client,serve-static-files,start-server}.test.js` | test shape | deliberate |
+| `src/server/common/constants/status-codes.js` | none; animals' text in all three | identical |
+| `src/server/common/helpers/logging/request-logger.js`, `.test.js` | none; ins's `ignoreFunc` in all three | identical |
+| `src/server/common/helpers/pulse.js` | none; `shutdownTimeoutMs` in all three | identical |
+| `src/server/common/helpers/errors.js` | none; every message comes from `sharedCopy.errorPage` in all three | identical |
+| `src/server/common/helpers/{content-security-policy,serve-static-files,start-server}.test.js` | none; plants' shape in all three | identical |
+| `src/server/common/helpers/redis-client.test.js` | key prefix names the repo, two lines | deliberate, service-specific |
+| `src/server/common/helpers/errors.test.js` | against plants: plants adds the EUDPA-575 reference-data 503 test; against animals: animals' page titles carry `main`'s hyphen-and-GOV.UK composition | unexplained: the 503 test is question 13; the title composition is a candidate for a later ruling |
 | `src/server/common/test-helpers/{mock-auth-config,mock-oidc-config,session-auth}.js` | none; `mock-auth.js` is gone from ins | identical |
 | `src/server/common/test-helpers/{real-mode,test-server}.js`, `helpers/organisation-id.test.js` | ins only | deliberate |
 | `src/server/common/{components/, helpers/actor-helpers.js, helpers/proxy/, helpers/transport-routing.js}` | journeys only | deliberate, journey-only |
 | `src/server/common/` other 13 shared files | none | identical |
+| `src/server/app/lib/validate/` | none; `persists-cleaned-value.test.js` is journey-only because it drives the engine | identical |
 | `src/config/config.js` | service-specific hunks only: port, service name, `defraId.serviceId`, the two redirect URLs, key prefix, the backend API block, and ins's `tradeImportsInsBackendApi` and `tradeImportsAnimalsFrontend` blocks | deliberate, service-specific |
 | `src/config/config.test.js` | ins pins its own ports and URLs; the `stubMode` and env-backed boolean blocks are shared | deliberate, test shape |
 | `src/config/nunjucks/nunjucks.js` | ins registers `formatDate` and `formatCurrency` filters (`filters/` is ins only); journeys add the MoJ root and `app/sets` where ins has `app/features` | deliberate |
 | `src/config/nunjucks/context/context.js` | the session read is byte-equal; ins imports and marks the address-book navigation item and adds `dashboardUrl`, `addressBookUrl` and `crumb`; the journeys add `staleActionRejected` | deliberate, service-specific |
 
-Four files differ for no recorded reason, all settled by questions 5, 13 and
-25. [`surfaces.json`](surfaces.json) names every shared chassis file
+One file differs for no recorded reason,
+`src/server/common/helpers/errors.test.js`: plants' reference-data 503 test
+is settled by question 13, and animals' page-title composition arrived from
+`main` and has no question yet. [`surfaces.json`](surfaces.json) names every shared chassis file
 with the rule it must satisfy (`identical`, `identical-except`, `only-in`,
 `deliberate` with a reason); a `tim workspace drift` command that applies it
 per branch and reports unlisted differences is proposed in question 19 and
@@ -400,8 +447,8 @@ not built.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
-  commit, PRs, notes and open questions: seventeen done, six ruling stages
-  waiting); the sixteen plans under
+  commit, PRs, notes and open questions: eighteen done, five ruling stages
+  waiting); the seventeen plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:

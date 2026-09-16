@@ -280,6 +280,28 @@ and what happens if nobody answers.
     build tags `trade-imports-animals-frontend` instead of the CDP template
     name it inherited.
 
+19. **Withdrew the drift manifest and the `tim workspace drift` proposal.**
+    Ruled 16 September 2026: no to the proposed tim workspace drift command and
+    the surfaces manifest; that was scope creep by the initial agent. This is a
+    one-shot get-the-frontends-in-sync piece of work; keeping things in line in
+    future is not what we are working on now. Landed as `8a79e5da` on
+    [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47).
+    `workareas/shared/frontend-alignment/surfaces.json`, the draft manifest that
+    named every shared chassis file and the rule it had to satisfy, is deleted;
+    the command was never built, so there was no code to remove. This report
+    lost question 19, the `### Tooling and dependencies` subsection it was the
+    only row of, the closing sentence of Residual drift that proposed the
+    command, and the manifest from the "Where everything is" bullet;
+    `HANDOVER.md` lost the manifest bullet and two sentences that stated the
+    drift check as the programme's goal and as the lesson of the s12 CI-fix
+    drift; and the bullet in
+    [`docs/analysis/frontend-alignment-workflow-run.md`](../../../docs/analysis/frontend-alignment-workflow-run.md)
+    now records that lesson without naming a remedy. Behaviour: none, because
+    no repo source changed and the only repository touched is the workspace.
+    The Residual drift tables below stay exactly as they were, because they are
+    the measurement this report is for rather than the tooling the ruling
+    withdrew.
+
 27. **Pulled `main` into the alignment branch and analysed what moved.**
     Ruled 16 September 2026: main has moved under these repos since the
     alignment was built; analyse the changes that have gone into the three
@@ -428,7 +450,7 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 | `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `affdce2d` (the address book links), 16 September 22:52; Lighthouse was red between the tooling convergence `1f619ab0` and the restored `npm-version.js` `780ec235`, because `main`'s copy of the `workflow_run` job still calls the script the convergence had deleted |
 | `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `acd27ad` (the address book links), 16 September 22:52; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
 | `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all five checks green, E2E among them, at `2a2326f` (the address book links), 16 September 22:53; the earlier E2E red at `29e9901` was a run that started three minutes before the animals branch published the image carrying `main`'s handshake link the new specs look for |
-| `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; all five checks green, the three sharded E2E jobs among them, at `5722cae2` (the address book links), 16 September 22:53, on [run 35155686717](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35155686717) |
+| `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; all five checks green, the three sharded E2E jobs among them, at `8a79e5da` (withdrawing the drift manifest), 16 September 23:43, on [run 35159104801](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35159104801) |
 
 The ins branch changes 270 files (20,422 insertions, 9,894 deletions, mostly
 the lockfile); animals 100; plants 52; tests 7. No shared package, no cross-repo
@@ -637,8 +659,8 @@ page-title composition arrived from `main` and has no question yet.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-four stages with status,
-  commit, PRs, notes and open questions: twenty-two done, two ruling stages
-  waiting); the twenty-one plans under
+  commit, PRs, notes and open questions: twenty-three done, one ruling stage
+  waiting); the twenty-two plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`.
 - The run record, for reuse of the workflow:

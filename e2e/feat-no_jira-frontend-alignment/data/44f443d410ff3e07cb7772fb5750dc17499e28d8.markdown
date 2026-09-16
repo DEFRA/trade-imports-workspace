@@ -1,0 +1,167 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/pages/contact-address.spec.ts >> Contact address page >> links to INS to add an address when the full stack is running
+- Location: tests/e2e/pages/contact-address.spec.ts:38:3
+
+# Error details
+
+```
+Error: expect(locator).toHaveAttribute(expected) failed
+
+Locator: getByRole('link', { name: /add.*address/i })
+Expected pattern: /\/address-book\/add\?journey-type=gbn-ag/
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toHaveAttribute" with timeout 5000ms
+  - waiting for getByRole('link', { name: /add.*address/i })
+
+```
+
+```yaml
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - link "GOV.UK":
+    - /url: https://www.gov.uk/
+    - img "GOV.UK"
+  - region "Service information":
+    - link "Import notification service":
+      - /url: /
+    - navigation "Menu":
+      - list:
+        - listitem:
+          - link "Dashboard":
+            - /url: /
+            - strong: Dashboard
+        - listitem:
+          - link "Address book":
+            - /url: "#"
+        - listitem:
+          - link "Manage account":
+            - /url: "#"
+        - listitem:
+          - link "Log out":
+            - /url: /auth/sign-out
+- paragraph:
+  - strong: Alpha
+  - text: This is a new service. Help us improve it and
+  - link "give your feedback by email":
+    - /url: mailto:APHAServiceDesk@apha.gov.uk
+  - text: .
+- link "Back":
+  - /url: /notifications/GBN-AG-26-H1HGE9
+- main:
+  - strong: Draft
+  - text: GBN-AG-26-H1HGE9
+  - group "Contact address for consignment":
+    - heading "Contact address for consignment" [level=1]
+    - text: Selecting a contact copies their name and address into this notification.
+    - radio "Import Co UK"
+    - text: Import Co UK 20 Trade Road, London, EC1A 1BB, United Kingdom
+    - radio "British Livestock Ltd"
+    - text: British Livestock Ltd 10 Market Street, Leeds, LS1 6HB, United Kingdom
+    - radio "Origin Farm"
+    - text: Origin Farm 1 Farm Lane, Ennis, V95 X7P2, Ireland
+    - radio "Tech Imports Ltd"
+    - text: Tech Imports Ltd 18 Dockside Road, London, E14 9GE, United Kingdom
+    - radio "Astra Rosales"
+    - text: Astra Rosales 43 East Hague Extension, Bern, 30055, Switzerland
+    - radio "Nordvik Seafood AS"
+    - text: Nordvik Seafood AS Havnegata 8, Alesund, 6002, Norway
+    - radio "Laiterie du Nord SARL"
+    - text: Laiterie du Nord SARL 12 Rue de la Gare, Lille, 59000, France
+    - radio "Jutland Swine ApS"
+    - text: Jutland Swine ApS Sondergade 4, Aarhus, 8000, Denmark
+    - radio "Danish Meat Export ApS"
+    - text: Danish Meat Export ApS Havnegade 21, Copenhagen, 1058, Denmark
+    - radio "Animal and Plant Health Agency"
+    - text: Animal and Plant Health Agency Woodham Lane, Addlestone, KT15 3NB, United Kingdom
+    - radio "Iberian Swine SA"
+    - text: Iberian Swine SA Calle Mayor 44, Huesca, 22001, Spain
+    - radio "Irish Beef Traders Ltd"
+    - text: Irish Beef Traders Ltd Castle Road 9, Kilkenny, R95 F2X8, Ireland
+    - radio "Alpine Dairy GmbH"
+    - text: Alpine Dairy GmbH Bahnhofstrasse 17, Innsbruck, 6020, Austria
+  - button "Save and continue"
+  - button "Save and return to overview"
+  - link "Cancel and return to overview":
+    - /url: /notifications/GBN-AG-26-H1HGE9
+- contentinfo:
+  - heading "Support links" [level=2]
+  - list:
+    - listitem:
+      - link "Privacy":
+        - /url: https://www.gov.uk/help/privacy-notice
+    - listitem:
+      - link "Cookies":
+        - /url: https://www.gov.uk/help/cookies
+    - listitem:
+      - link "Accessibility statement":
+        - /url: https://www.gov.uk/help/accessibility-statement
+  - text: All content is available under the
+  - link "Open Government Licence v3.0":
+    - /url: https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+  - text: ", except where otherwise stated"
+  - link "© Crown copyright":
+    - /url: https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '@fixtures';
+  2  | import { skipIfComposeEnvironment, skipUnlessComposeEnvironment } from '@utils/playwright/environment';
+  3  | 
+  4  | test.describe('Contact address page', { tag: ['@integration', '@duplicated-in-frontend'] }, () => {
+  5  |   test.beforeEach(async ({ journey }) => {
+  6  |     await journey.toContactAddress();
+  7  |   });
+  8  | 
+  9  |   test('renders the page controls', async ({ pages }) => {
+  10 |     await expect(pages.contactAddress.heading).toBeVisible();
+  11 |     await expect(pages.contactAddress.address('Animal and Plant Health Agency')).toBeVisible();
+  12 |     await expect(pages.contactAddress.saveAndContinue).toBeVisible();
+  13 |   });
+  14 | 
+  15 |   test('leaves the contact address unchecked on load', async ({ pages }) => {
+  16 |     await expect(pages.contactAddress.address('Animal and Plant Health Agency')).not.toBeChecked();
+  17 |   });
+  18 | 
+  19 |   test('accepts a valid contact address', async ({ pages }) => {
+  20 |     await pages.contactAddress.address('Animal and Plant Health Agency').check();
+  21 |     await pages.contactAddress.saveAndContinue.click();
+  22 | 
+  23 |     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
+  24 |   });
+  25 | 
+  26 |   test('saving with no contact address selected is allowed and exits to the hub', async ({ pages }) => {
+  27 |     await pages.contactAddress.saveAndContinue.click();
+  28 | 
+  29 |     await expect(pages.overview.heading).toBeVisible();
+  30 |     await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toHaveCount(0);
+  31 |   });
+  32 | 
+  33 |   test('offers no way to add an address in stub mode', async ({ pages }) => {
+  34 |     skipIfComposeEnvironment('the INS add link is shown when animals-frontend runs against the full stack');
+  35 |     await expect(pages.page.getByRole('link', { name: /add.*address/i })).toHaveCount(0);
+  36 |   });
+  37 | 
+  38 |   test('links to INS to add an address when the full stack is running', async ({ pages }) => {
+  39 |     skipUnlessComposeEnvironment('the handshake link is only rendered outside stub mode, which the compose stack uses');
+> 40 |     await expect(pages.page.getByRole('link', { name: /add.*address/i })).toHaveAttribute(
+     |                                                                           ^ Error: expect(locator).toHaveAttribute(expected) failed
+  41 |       'href',
+  42 |       /\/address-book\/add\?journey-type=gbn-ag/,
+  43 |     );
+  44 |   });
+  45 | });
+  46 | 
+```

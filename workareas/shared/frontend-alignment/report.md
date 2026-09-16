@@ -13,12 +13,6 @@ and what happens if nobody answers.
 
 ### Security-sensitive chassis behaviour
 
-1. **Should ins drop the local session at sign-out initiation, as the journeys
-   do?** In play: `src/server/auth/controller.js` in ins. Options: port the
-   journeys' session drop and their `/` redirect for an already-signed-out
-   request (two against one), or keep ins waiting for the provider callback.
-   If nobody answers: an ins session outlives a sign-out whenever Entra or the
-   CDP WAF reject an over-long `id_token_hint`.
 2. **Should the journeys verify the token's `aud` and `iss`, as ins does?** In
    play: `src/auth/verify-token.js` and its test in animals and plants. One
    against two for the checks. If nobody answers: a token minted for another
@@ -95,6 +89,27 @@ and what happens if nobody answers.
     `TRADE_IMPORTS_ANIMALS_FRONTEND_URL` for the reverse direction. Plants
     needs a browser-visible ins URL in `config.js`.
 
+## Rulings applied
+
+1. **Dropped the ins session at sign-out initiation, as the journeys do.**
+   Ruled 16 September 2026: yes. ins drops the local session at sign-out
+   initiation, as the journeys do. Landed as `da05f1f` on
+   [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27).
+   `src/server/auth/controller.js` in ins took plants' three hunks verbatim:
+   `signout` drops the cached session and clears the `sid` cookie before the
+   redirect to the provider, `signoutOidc` sends an already-signed-out request
+   to `/` instead of the provider, and `signin`'s unused parameter is
+   `_request`. The file now differs from plants and animals by the one
+   `{ profile }` log line that question 4 owns. Behaviour: an authenticated
+   `GET /auth/sign-out` no longer leaves a session behind when Entra or the CDP
+   WAF reject the provider round-trip, and an unauthenticated
+   `GET /auth/sign-out-oidc` lands on `/`; `GET /signout` is unchanged in both
+   states, because its required-mode session strategy redirects an
+   unauthenticated request to sign-in before the handler runs. Tests in
+   `src/server/auth/controller.test.js` and
+   `src/server/signout/controller.test.js` prove the drop by a cache
+   round-trip and the cookie by `set-cookie`, with no new module mock.
+
 ## Decisions you may want to reverse
 
 Each was taken by the direction rule (ins moves toward the journeys; plants
@@ -150,13 +165,13 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs), 15 September 12:29 |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs), 16 September 09:17 |
 | `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all ten checks green, including E2E and Lighthouse CI, 15 September 11:45 |
 | `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all ten checks green, 14 September 17:22; plants `main` has not moved since |
 | `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all five checks green, including E2E, 15 September 11:52 |
 | `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E red on every shard (Floci unhealthy, question 27): [run 34968787268](https://github.com/DEFRA/trade-imports-workspace/actions/runs/34968787268) |
 
-The ins branch changes 251 files (22,609 insertions, 11,597 deletions, mostly
+The ins branch changes 251 files (22,662 insertions, 11,602 deletions, mostly
 the lockfile); animals 16; plants 10; tests 1. No shared package, no cross-repo
 import. ins's public URLs are unchanged except that `/about` is gone.
 
@@ -192,7 +207,7 @@ scripts/lighthouse/  tests/lighthouse/  lighthouserc.cjs  .sonarcloud.properties
 webpack.config.js  postcss.config.js  .dependency-cruiser.cjs
 ```
 
-Unit suite: 49 files and 242 tests before, 57 files and 519 tests after.
+Unit suite: 49 files and 242 tests before, 57 files and 521 tests after.
 Playwright: 49 specs before, 50 after (a smoke project plus the features).
 
 ### Backported to animals and plants
@@ -299,7 +314,7 @@ Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
 | `src/plugins/auth.js`, `.test.js` | ins's `redirectTo` branches to `/auth/stub-sign-in` in stub mode, and its test; ins's real `redirectUrl` and `serviceId` values | deliberate, stub sign-in ruling |
 | `src/plugins/csrf.js` | plants carries a 12-line doc comment, ins one line | deliberate, comment policy |
 | `src/plugins/csrf.test.js` | ins boots the real server and posts without a crumb; plants unit-tests the options | deliberate, test shape |
-| `src/server/auth/controller.js` | journeys drop the session at sign-out initiation and send an already-signed-out request to `/`; ins logs `{ profile }`; `_request` name | unexplained, questions 1 and 4 |
+| `src/server/auth/controller.js` | ins logs `{ profile }` where the journeys log `{ crn }`, one line | unexplained, question 4 |
 | `src/server/auth/controller.test.js` | ins keeps four route tests and `mock-auth.js`; journeys assert through the copy module | deliberate, test shape |
 | `src/server/auth/stub-sign-in.js`, `.test.js` | per-process secret and one route (ins) against a committed key, two paths, `contactId` and `currentRelationshipId` | deliberate, stub sign-in ruling |
 | `src/server/common/constants/status-codes.js` | `redirect` against `redirectFound` plus `payloadTooLarge` | unexplained, question 25 |
@@ -316,7 +331,7 @@ Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
 | `src/config/nunjucks/nunjucks.js` | ins registers `formatDate` and `formatCurrency` filters (`filters/` is ins only); journeys add the MoJ root and `app/sets` where ins has `app/features` | deliberate |
 | `src/config/nunjucks/context/context.js` | synchronous session read; `dashboardUrl`, `addressBookUrl`, `crumb` in ins; `staleActionRejected` in the journeys | deliberate, question 11 |
 
-Six files differ for no recorded reason, all settled by questions 1 to 6 and
+Six files differ for no recorded reason, all settled by questions 2 to 6 and
 24 to 25. [`surfaces.json`](surfaces.json) names every shared chassis file
 with the rule it must satisfy (`identical`, `identical-except`, `only-in`,
 `deliberate` with a reason); a `tim workspace drift` command that applies it
@@ -335,8 +350,9 @@ not built.
   workspace [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47).
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
-- Stage state: [`stages.json`](stages.json) (fourteen stages with status,
-  commit, PRs, notes and open questions); the twelve plans under
+- Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
+  commit, PRs, notes and open questions: fifteen done, eight ruling stages
+  waiting); the fourteen plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:

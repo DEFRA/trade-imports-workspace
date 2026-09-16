@@ -1,0 +1,18 @@
+h2. Increment
+
+{{inc-042}} from the {{shared/dr1-parity-union}} backlog.
+
+A user who has chosen temporary admission of horses, answered port of exit and saved it, and then returned to the hub, finds the "Exit details" row as plain text with nothing to click and the words "Cannot start yet" beside it. The row stands for three pages in order — destination country, port of exit, exit date — and {{rowGatePasses}} decides whether the row is a link from the first page alone ({{row.pages\[0\]}}). Under this reason destination country is out of scope while port of exit and exit date are both in scope and mandatory, so the first page fails its gate and the whole row is shut. Two lines above, {{rowEntry}} already picks the first page whose gate passes. The user can still reach the questions going forwards, but once past them cannot return to change an answer.
+
+h2. Acceptance criteria
+
+* {{rowGatePasses}} in {{src/server/app/flow/navigation.js}} treats a row as enterable when *any* of its pages passes its gate, agreeing with {{rowEntry}} instead of testing {{row.pages\[0\]}} only.
+* With reason for import set to temporary admission of horses, the hub's "Exit details" row renders as a working link carrying {{govuk-task-list__item--with-link}}, and the link target is the first page in the row whose gate passes (port of exit).
+* The unblocked row shows its own status rather than the substituted "Cannot start yet" — a row with one of its two in-scope questions answered reads as in progress. {{blockedRowItem}} ({{src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js}}:95,122) is no longer reached for a row that has an enterable page.
+* A row whose pages all fail their gates still renders blocked, with no link and the cannot-start status, unchanged.
+* Unit tests cover the any-page-passes gate, including the case where only a later page passes and the case where none does.
+* E2E specs and visual baselines for the hub are updated where the row changes.
+
+h2. Source
+
+Backlog: {{workareas/shared/dr1-parity-union/backlog.json}}

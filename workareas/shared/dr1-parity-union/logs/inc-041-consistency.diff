@@ -1,0 +1,405 @@
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+index b420336c..b32344d1 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js
+@@ -110,7 +110,7 @@ test.describe('addresses hub', () => {
+     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+   })
+ 
+-  test('completing every party marks the hub task as completed', async ({
++  test('completing every party marks the hub task Complete', async ({
+     page
+   }) => {
+     for (const party of PARTIES) {
+@@ -127,7 +127,7 @@ test.describe('addresses hub', () => {
+       page.locator('.govuk-task-list__item', {
+         hasText: ROLES_AND_ADDRESSES
+       })
+-    ).toContainText('Completed')
++    ).toContainText('Complete')
+   })
+ 
+   test('hub page has no serious or critical axe violations', async ({
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+index dcd6666c..2dc98865 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/controller.js
+@@ -56,19 +56,27 @@ const GROUPS = [
+   { id: 'contact-address', rows: ['contact'] }
+ ]
+ 
++const COMPLETE_TAG = {
++  tag: { text: copy.statuses.complete, classes: 'govuk-tag--green' }
++}
++const TO_DO_TAG = {
++  tag: { text: copy.statuses.toDo, classes: 'govuk-tag--blue' }
++}
++
++// Design release 1 tells a trader one of two things about a task: it is
++// "Complete", or it is still "To do". It has no third state, so a task the
++// engine holds part-answered and one it holds optional both read "To do"
++// beside the untouched ones — the design never says on the hub that a task is
++// half-done, nor that it can be left out. The engine keeps those distinctions:
++// they still drive what the review page asks for and when the notification may
++// be submitted. Only the word on the hub stops drawing them.
+ const STATUS_TAG = {
+-  [FULFILLED]: {
+-    tag: { text: copy.statuses.completed, classes: 'govuk-tag--green' }
+-  },
+-  [OPTIONAL]: { text: copy.statuses.optional },
+-  [IN_PROGRESS]: {
+-    tag: { text: copy.statuses.inProgress, classes: 'govuk-tag--light-blue' }
+-  },
+-  [NOT_STARTED]: {
+-    tag: { text: copy.statuses.notYetStarted, classes: 'govuk-tag--blue' }
+-  }
++  [FULFILLED]: COMPLETE_TAG,
++  [OPTIONAL]: TO_DO_TAG,
++  [IN_PROGRESS]: TO_DO_TAG,
++  [NOT_STARTED]: TO_DO_TAG
+ }
+-const statusTag = (status) => STATUS_TAG[status] ?? STATUS_TAG[NOT_STARTED]
++const statusTag = (status) => STATUS_TAG[status] ?? TO_DO_TAG
+ 
+ // Design release 1 ends the hub with a primary "Review and submit" button, not
+ // a task row: the review page is offered whatever else has been answered, so a
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+index f2e64efc..78fc8f32 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.cy.js
+@@ -11,10 +11,8 @@ export const copy = {
+   reviewAndSubmit: 'Adolygu a chyflwyno',
+   returnToDashboard: 'Dychwelyd i’r dangosfwrdd',
+   statuses: {
+-    completed: 'Wedi’i gwblhau',
+-    optional: 'Dewisol',
+-    inProgress: 'Ar y gweill',
+-    notYetStarted: 'Heb ddechrau eto'
++    complete: 'Wedi’i gwblhau',
++    toDo: 'I’w wneud'
+   },
+   taskListHeading: 'Rhestr dasgau’r hysbysiad',
+   groups: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+index b7c0d66a..bc60798f 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.en.js
+@@ -9,11 +9,13 @@ export const copy = {
+   },
+   reviewAndSubmit: 'Review and submit',
+   returnToDashboard: 'Return to dashboard',
++  // Design release 1 tags a task with one of two words and no others:
++  // "Complete" when the task is finished, "To do" everywhere else. It draws no
++  // part-done state, and never tells a trader on the hub that a task is
++  // optional.
+   statuses: {
+-    completed: 'Completed',
+-    optional: 'Optional',
+-    inProgress: 'In progress',
+-    notYetStarted: 'Not yet started'
++    complete: 'Complete',
++    toDo: 'To do'
+   },
+   taskListHeading: 'Notification tasklist',
+   groups: {
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+index a49ea072..fb63d7de 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js
+@@ -51,15 +51,15 @@ const ADDRESSES_ROW_HINT =
+ const ADDRESSES_ROW_HINT_CY =
+   'Anfonwr neu allforiwr, derbynnydd, mewnforiwr a man cyrchfan'
+ const CANNOT_START_CLASS = 'govuk-task-list__status--cannot-start-yet'
+-const NOT_YET_STARTED_STATUS = {
+-  tag: { text: 'Not yet started', classes: 'govuk-tag--blue' }
++// Design release 1 has two task statuses and no more: "To do" in blue and
++// "Complete" in green.
++const TO_DO_STATUS = {
++  tag: { text: 'To do', classes: 'govuk-tag--blue' }
+ }
+-const IN_PROGRESS_STATUS = {
+-  tag: { text: 'In progress', classes: 'govuk-tag--light-blue' }
+-}
+-const COMPLETED_STATUS = {
+-  tag: { text: 'Completed', classes: 'govuk-tag--green' }
++const COMPLETE_STATUS = {
++  tag: { text: 'Complete', classes: 'govuk-tag--green' }
+ }
++const DESIGN_STATUSES = [TO_DO_STATUS, COMPLETE_STATUS]
+ 
+ // Temporary admission of horses is the one reason that opens both a port of
+ // exit and an exit date under it — the state the retired "Exit details" task
+@@ -218,28 +218,31 @@ describe('#hubHandler', () => {
+   })
+ 
+   it('Should carry the exit questions in the import-reason row status rather than a task of their own', async () => {
++    // Owing the exit date holds the row short of Complete. Design release 1
++    // draws that with the plain "To do" it gives an untouched task — the row
++    // is unfinished, and the hub says no more than that.
+     const owingTheExitDate = await renderHub(temporaryAdmissionSeed)
+     expect(
+       rowByTitle(owingTheExitDate, IMPORT_REASON_ROW_TITLE).status
+-    ).toEqual(IN_PROGRESS_STATUS)
++    ).toEqual(TO_DO_STATUS)
+ 
+     const answered = await renderHub({
+       ...temporaryAdmissionSeed,
+       exitDate: EXIT_DATE
+     })
+     expect(rowByTitle(answered, IMPORT_REASON_ROW_TITLE).status).toEqual(
+-      COMPLETED_STATUS
++      COMPLETE_STATUS
+     )
+   })
+ 
+-  it('Should render the always-open origin row as a blue "Not yet started" tag with a link', async () => {
++  it('Should render the always-open origin row as a blue "To do" tag with a link', async () => {
+     const context = await renderHub()
+     const originRow = rowByTitle(context, ORIGIN_ROW_TITLE)
+     expect(originRow.href).toBe(pagePath(context.journeyId, 'origin'))
+-    expect(originRow.status).toEqual(NOT_YET_STARTED_STATUS)
++    expect(originRow.status).toEqual(TO_DO_STATUS)
+   })
+ 
+-  it('Should render a completed row as a green "Completed" tag', async () => {
++  it('Should render a finished row as a green "Complete" tag', async () => {
+     const originRow = rowByTitle(
+       await renderHub({
+         countryOfOrigin: 'FR',
+@@ -247,7 +250,7 @@ describe('#hubHandler', () => {
+       }),
+       ORIGIN_ROW_TITLE
+     )
+-    expect(originRow.status).toEqual(COMPLETED_STATUS)
++    expect(originRow.status).toEqual(COMPLETE_STATUS)
+   })
+ 
+   // Design release 1 lets a trader start any task on the notification in any
+@@ -310,10 +313,10 @@ describe('#hubHandler', () => {
+       ]
+     })
+     expect(rowByTitle(context, COMMODITIES_ROW_TITLE).status).toEqual(
+-      COMPLETED_STATUS
++      COMPLETE_STATUS
+     )
+     const identificationRow = rowByTitle(context, 'Identification details')
+-    expect(identificationRow.status).toEqual(NOT_YET_STARTED_STATUS)
++    expect(identificationRow.status).toEqual(TO_DO_STATUS)
+     expect(identificationRow.href).toBe(
+       pagePath(context.journeyId, 'commodities/identification')
+     )
+@@ -337,17 +340,18 @@ describe('#hubHandler', () => {
+     expect(transitRow.href).toBe(
+       pagePath(byRoad.journeyId, 'transit-countries')
+     )
+-    // Asked overland, but the answer is optional, so an untouched row reads
+-    // Optional rather than Not yet started.
+-    expect(transitRow.status).toEqual({ text: 'Optional' })
++    // The answer is optional, but Design release 1 does not say so on the hub:
++    // an untouched optional row carries the same "To do" tag as any other
++    // untouched row.
++    expect(transitRow.status).toEqual(TO_DO_STATUS)
+   })
+ 
+-  it('Should render the optional documents row as an Optional status', async () => {
++  it('Should tag the optional documents row "To do" like any other unfinished row', async () => {
+     const documentsRow = rowByTitle(
+       await renderHub(unlockedSeed),
+       'Upload documents'
+     )
+-    expect(documentsRow.status).toEqual({ text: 'Optional' })
++    expect(documentsRow.status).toEqual(TO_DO_STATUS)
+   })
+ 
+   it('Should enter each movement row at its first page', async () => {
+@@ -386,6 +390,45 @@ describe('#hubHandler', () => {
+   })
+ })
+ 
++describe('#hubHandler — the task statuses', () => {
++  beforeAll(() => {
++    configureRecords(recordsStub)
++    configureSession(sessionStub)
++    buildDispatch(dispatchPages)
++  })
++  beforeEach(() => store.clear())
++
++  // Design release 1 gives a task one of two statuses and has no third. A row
++  // the engine holds part-answered, and one it holds optional, both read
++  // "To do": the hub never tells a trader a task is half-done, and never tells
++  // them on this page that a task can be left out.
++  it('Should tag every row with one of the two design statuses, whatever is answered', async () => {
++    const seeds = [
++      {},
++      unlockedSeed,
++      temporaryAdmissionSeed,
++      { ...temporaryAdmissionSeed, meansOfTransport: 'ROAD_VEHICLE' },
++      { countryOfOrigin: 'FR', regionOfOriginCodeRequirement: 'no' }
++    ]
++
++    for (const seed of seeds) {
++      const rows = allItems(await renderHub(seed))
++      expect(rows).not.toHaveLength(0)
++      for (const row of rows) {
++        expect(
++          DESIGN_STATUSES,
++          `${row.title.text} is tagged ${JSON.stringify(row.status)}`
++        ).toContainEqual(row.status)
++      }
++    }
++  })
++
++  it('Should hold the two design statuses in both locales', () => {
++    expect(copy.statuses).toEqual({ complete: 'Complete', toDo: 'To do' })
++    expect(Object.keys(copyCy.statuses)).toEqual(['complete', 'toDo'])
++  })
++})
++
+ describe('#hubHandler — the commodity totals', () => {
+   beforeAll(() => {
+     configureRecords(recordsStub)
+@@ -447,7 +490,7 @@ describe('#hubHandler — the Commodity details row', () => {
+     expect(firstItem.href).toBe(
+       pagePath(context.journeyId, 'consignment-details')
+     )
+-    expect(firstItem.status).toEqual(NOT_YET_STARTED_STATUS)
++    expect(firstItem.status).toEqual(TO_DO_STATUS)
+   })
+ 
+   it('Should carry a status the commodities row does not answer for', async () => {
+@@ -465,17 +508,17 @@ describe('#hubHandler — the Commodity details row', () => {
+ 
+     const owingTheNumbers = await renderHub(seedLine({}))
+     expect(rowByTitle(owingTheNumbers, COMMODITIES_ROW_TITLE).status).toEqual(
+-      COMPLETED_STATUS
++      COMPLETE_STATUS
+     )
+     expect(
+       rowByTitle(owingTheNumbers, CONSIGNMENT_DETAILS_ROW_TITLE).status
+-    ).toEqual(NOT_YET_STARTED_STATUS)
++    ).toEqual(TO_DO_STATUS)
+ 
+     const answered = await renderHub(
+       seedLine({ numberOfPackages: '5', numberOfAnimalsQuantity: '25' })
+     )
+     expect(rowByTitle(answered, CONSIGNMENT_DETAILS_ROW_TITLE).status).toEqual(
+-      COMPLETED_STATUS
++      COMPLETE_STATUS
+     )
+   })
+ })
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+index 0c348ced..6ba41413 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js
+@@ -122,10 +122,10 @@ test.describe('hub feature', () => {
+     await expect(
+       origin.getByRole('link', { name: copy.rows.origin.title })
+     ).toBeVisible()
+-    await expect(origin).toContainText(copy.statuses.completed)
++    await expect(origin).toContainText(copy.statuses.complete)
+ 
+     const commodities = taskRow(page, copy.rows.commodities.title)
+-    await expect(commodities).toContainText(copy.statuses.notYetStarted)
++    await expect(commodities).toContainText(copy.statuses.toDo)
+     await expect(
+       commodities.getByRole('link', { name: copy.rows.commodities.title })
+     ).toBeVisible()
+@@ -134,7 +134,7 @@ test.describe('hub feature', () => {
+     // a link: the details page sends the trader on to the commodity question
+     // rather than the hub refusing to open it.
+     const consignmentDetails = taskRow(page, copy.rows.consignmentDetails.title)
+-    await expect(consignmentDetails).toContainText(copy.statuses.notYetStarted)
++    await expect(consignmentDetails).toContainText(copy.statuses.toDo)
+     await expect(
+       consignmentDetails.getByRole('link', {
+         name: copy.rows.consignmentDetails.title
+@@ -170,7 +170,7 @@ test.describe('hub feature', () => {
+   // included, none of which wait on an answer given anywhere else. Origin is
+   // the journey's entry page and the entry guard holds a notification there
+   // until it is answered, so the earliest hub a trader reaches already has
+-  // origin Completed; this is that hub.
++  // origin Complete; this is that hub.
+   test('every task the hub shows opens before a commodity is chosen', async ({
+     page
+   }) => {
+@@ -351,28 +351,28 @@ test.describe('hub feature — the Commodity details row', () => {
+     await expect(
+       details.getByRole('link', { name: copy.rows.consignmentDetails.title })
+     ).toHaveAttribute('href', /\/consignment-details$/)
+-    await expect(details).toContainText(copy.statuses.notYetStarted)
++    await expect(details).toContainText(copy.statuses.toDo)
+     await expect(taskRow(page, copy.rows.commodities.title)).toContainText(
+-      copy.statuses.completed
++      copy.statuses.complete
+     )
+ 
+     await expectAxeClean(page, 'Partly-complete hub')
+   })
+ 
+-  test('reads Completed once the numbers are saved, leaving the other rows alone', async ({
++  test('reads Complete once the numbers are saved, leaving the other rows alone', async ({
+     page
+   }) => {
+     await openHubWithCommodityTotals(page)
+ 
+     await expect(
+       taskRow(page, copy.rows.consignmentDetails.title)
+-    ).toContainText(copy.statuses.completed)
++    ).toContainText(copy.statuses.complete)
+     await expect(taskRow(page, copy.rows.commodities.title)).toContainText(
+-      copy.statuses.completed
++      copy.statuses.complete
+     )
+     await expect(
+       taskRow(page, copy.rows.additionalDetails.title)
+-    ).toContainText(copy.statuses.notYetStarted)
++    ).toContainText(copy.statuses.toDo)
+   })
+ })
+ 
+@@ -442,7 +442,7 @@ test.describe('hub feature — the Review and submit button', () => {
+     await completeAnswerSections(page, { skipAnimalIdentification: true })
+ 
+     const identification = taskRow(page, copy.rows.animalIdentification.title)
+-    await expect(identification).toContainText(copy.statuses.completed)
++    await expect(identification).toContainText(copy.statuses.complete)
+ 
+     await openReviewFromHub(page)
+ 
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js
+index 3d2e31c8..c09882b0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js
+@@ -57,7 +57,7 @@ test.describe('notification-actions feature', () => {
+     const origin = page.getByRole('listitem').filter({
+       has: page.getByText(hubCopy.rows.origin.title, { exact: true })
+     })
+-    await expect(origin).toContainText(hubCopy.statuses.completed)
++    await expect(origin).toContainText(hubCopy.statuses.complete)
+     await origin.getByRole('link', { name: hubCopy.rows.origin.title }).click()
+     // The country picker is a type-ahead over a native select: the visible box
+     // holds the country name, the hidden select still carries the code.
+diff --git a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+index 8cd15d69..5c4bbbf0 100644
+--- a/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
++++ b/src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js
+@@ -526,6 +526,8 @@ test.describe('origin country and region validation', () => {
+ 
+   // The country is mandatory for completeness even though it does not block
+   // the save, so the gap is shown on the hub rather than enforced at the page.
++  // Design release 1 draws the gap with the same "To do" it gives an untouched
++  // task: it tells a trader the task is unfinished, not how far in they are.
+   test('country: an unanswered country leaves the origin task unfinished', async ({
+     page
+   }) => {
+@@ -535,7 +537,8 @@ test.describe('origin country and region validation', () => {
+     const originRow = page.getByRole('listitem').filter({
+       has: page.getByText(hubCopy.rows.origin.title, { exact: true })
+     })
+-    await expect(originRow).toContainText(hubCopy.statuses.inProgress)
++    await expect(originRow).toContainText(hubCopy.statuses.toDo)
++    await expect(originRow).not.toContainText(hubCopy.statuses.complete)
+   })
+ 
+   test('country validation: an out-of-list country links to and focuses the cleared field', async ({

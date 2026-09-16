@@ -128,7 +128,7 @@ within the same repo may affect shared files or tests).
 
 Before the final report, check whether this implementor session is
 running on a review-handoff branch (set up by `share-review.sh` during
-the reviewer's FRESH Step 5.5):
+the reviewer's FRESH Step 7 for a PR the reviewer didn't author):
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace rev-parse --abbrev-ref HEAD

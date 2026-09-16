@@ -113,12 +113,12 @@ The system MUST return the user to the commodity selection page once every chose
 - **WHEN** they reopen the commodity details page directly afterwards
 - **THEN** the commodity selection page is shown, since there is nothing left to ask about
 
-### Requirement: The back link returns to commodity selection
+### Requirement: The back link returns to Overview
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to the commodity selection page when they follow the back link from commodity details.
+The system MUST return the user to Overview when they follow the back link from commodity details, the page the hub task row links straight to.
 
-#### Scenario: The back link opens commodity selection
+#### Scenario: The back link opens Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A
 - **GIVEN** the user is on the commodity details page
 - **WHEN** they follow the back link
-- **THEN** the commodity selection page is shown
+- **THEN** Overview is shown

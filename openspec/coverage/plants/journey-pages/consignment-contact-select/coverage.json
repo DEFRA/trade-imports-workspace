@@ -5,16 +5,17 @@
   "requirements": [
     {
       "id": "REQ-PLANTS-CONTACT-SELECT-001",
-      "name": "The page offers every address as a plain list with name and address hint, none chosen in advance",
+      "name": "The page offers the address book as a paged table, none chosen in advance",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CONTACT-SELECT-001-A",
-          "name": "The page lists every record with name and address, none preselected",
+          "name": "The page shows the first page of the address book, none preselected",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "radio count equals STUB_BOOK.length; each has accessible description with postcode; copy hint asserted" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "lists address records beyond one picker page with name and address hints and persists a selection", "strength": "full", "notes": "six records all visible without paging — proves plain full list, not the five-per-page searchable picker" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "shows the first page of the organisation address book with its count", "strength": "full", "notes": "asserts the shown-of-total caption, that only one page of rows is offered, that a last-page record is absent, and that a next-page link stands" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "renders the heading, the description and the search box", "strength": "full", "notes": "the copy-on-select description and the search control" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "full", "notes": "same shape against the real address-book service rather than the stub" }
           ]
         }
       ]
@@ -29,8 +30,9 @@
           "name": "Choosing a contact saves, completes the task, and persists on return",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "hub Completed; radio still checked after reload" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "lists address records beyond one picker page with name and address hints and persists a selection", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "saves the chosen address, returns to the overview with the row complete and shows it again on return", "strength": "full", "notes": "all three clauses in one run" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "replaces the address already saved rather than keeping both", "strength": "full", "notes": "re-answering overwrites rather than accumulating" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -45,10 +47,10 @@
           "name": "A blank save returns to Overview with the task not yet started",
           "coverage": "full",
           "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and continue and leaves the task not yet started", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and return to overview and leaves the task not yet started", "strength": "full", "notes": "the other save control, which the requirement names explicitly" },
             { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and continue and leaves the row incomplete", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and return and leaves the row incomplete", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and continue and leaves the task incomplete", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "blank contact permits Save and return to overview and leaves the task incomplete", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "blank contact permits save and return and leaves the row incomplete", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -60,10 +62,11 @@
       "scenarios": [
         {
           "id": "SCN-PLANTS-CONTACT-SELECT-004-A",
-          "name": "An invalid selection is rejected and focuses the first option",
+          "name": "An invalid selection is rejected, focuses the first row and keeps the search",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "initial and invalid selection states have no serious accessibility violations", "strength": "full", "notes": "mutates radio value to not-in-this-book; error link focuses first radio" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "rejects an id the address book does not hold, focuses the first row and preserves the search", "strength": "full", "notes": "covers all three clauses, the retained search term included" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "recovers from the error once an address is chosen", "strength": "full", "notes": "the error does not stick once a valid row is ticked" }
           ]
         }
       ]
@@ -78,7 +81,7 @@
           "name": "Cancel keeps the previously saved choice",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "after save, checks second radio then cancel; reopen still has first checked" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "Cancel and return to overview reaches the overview without saving", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -86,7 +89,57 @@
           "name": "The back link opens Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "lists every record with its name and address hint and saves an inline contact", "strength": "full", "notes": "same test ends by following Back to hub" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "sends Back to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-006",
+      "name": "The list can be searched, and a search matching nothing says so",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-006-A",
+          "name": "Searching narrows the table to the matching addresses",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "narrows the results to the search term", "strength": "full", "notes": "asserts both halves: the match is offered and a non-match is gone" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-006-B",
+          "name": "A search matching nothing says so rather than showing an empty table",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "says so rather than showing an empty table when nothing matches", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CONTACT-SELECT-007",
+      "name": "A row ticked on one page of results is carried across searching and paging",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-007-A",
+          "name": "A ticked row is named after moving to another page of results",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "carries a newly ticked address through the paging links", "strength": "full", "notes": "asserts the selected-address inset stands while the ticked row itself is off the page" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "carries a saved address through the paging links", "strength": "full", "notes": "the already-saved arm of the same behaviour" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "keeps a ticked row while the search narrows the results", "strength": "full", "notes": "the searching arm, which the requirement names alongside paging" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONTACT-SELECT-007-B",
+          "name": "A row ticked on a later page is the one that saves",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js", "test": "a row ticked on the second page saves, and re-entering shows it as the selected address", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/plants/contact.spec.ts", "test": "searches the address book, pages the matches five at a time and persists a row ticked on a later page", "strength": "full", "notes": "same behaviour against the real address-book service" }
           ]
         }
       ]

@@ -8,14 +8,14 @@ The page shown once a notification has been submitted, confirming it and telling
 
 ### Requirement: The page confirms the submission and shows the notification's reference number
 **ID**: REQ-CONFIRM-001
-The system MUST confirm a completed submission on its own page, showing the reference number of the notification just submitted and the date it was declared, and MUST NOT offer a back link from it.
+The system MUST confirm a completed submission on its own page, showing the reference number of the notification just submitted, and MUST NOT repeat the date of declaration, which the declaration page has already shown, nor offer a back link from it.
 
 #### Scenario: Submitting a notification through the full journey shows its reference number on confirmation
 **ID**: SCN-CONFIRM-001-A
 - **GIVEN** the user has walked through every section of a notification and reached the declaration
 - **WHEN** they submit it
 - **THEN** the confirmation page shows "Import notification submitted", carrying that notification's own reference number
-- **AND** the date of declaration is shown
+- **AND** the date of declaration is not repeated here
 - **AND** no back link is offered
 
 ### Requirement: The confirmation page is not shown for a notification that has not yet been submitted

@@ -644,7 +644,7 @@ reason to its notes. Return the structured output only.`,
     }
 
     const changed = (impl.changedFiles ?? []).filter((f) => !f.endsWith('.log'))
-    const cap = 8
+    const cap = 12
     const focus = plan.reviewFocus.slice(0, cap)
     log(`${id}: implemented, ${changed.length} files changed — reviewing ${focus.length}`)
 
@@ -856,6 +856,8 @@ the next.
   a code failure and no repair can fix it: report it in failures[] as "could not run: port 3002 in use" with
   green:false, so the run stops and the port can be freed.
 - A step that cannot run at all goes in failures[] as "could not run: <reason>" with green:false.
+- A rung the repo's package.json does not define is not a failure: skip it and put "skipped: <script> not defined
+  in <repo>" in ran[]. Where the stage brief names a different rung list for a repo, the brief wins over the array.
 Anything you changed during repair must be left STAGED (\`git -C <repo> add -A\`).
 Report green:true ONLY if every step actually ran and actually passed in every repo.
 Return the structured output only.`,
@@ -895,8 +897,10 @@ ${COMMIT_TRAILER}
 ${readStage(id)}
 For EACH repo the stage names, in the order listed:
 1. Prove it is on the programme branch.
-2. \`git -C ${ROOT_TILDE}/<repoPath> status --short\` — if it prints nothing for this repo, the stage changed nothing
-   here; skip it and say so.
+2. \`git -C ${ROOT_TILDE}/<repoPath> status --short\` — if it prints nothing, check for commits the implementor already
+   made (a merge stage does that): \`git -C ${ROOT_TILDE}/<repoPath> log --oneline origin/<branch>..HEAD\`. Nothing
+   there either → the stage changed nothing here; skip it and say so. Commits there → skip to step 5, push them,
+   and record HEAD's SHA in step 6.
 3. Make sure nothing under logs/, coverage/, test-results/, playwright-report/ or .public/ is staged.
 4. Commit with subject \`<type>(alignment): ${id} — <the stage title from stages.json>\`, where <type> is \`fix\` when
    the stage carries a ruling or its behaviourChanges below are non-empty, and \`refactor\` otherwise. The body is

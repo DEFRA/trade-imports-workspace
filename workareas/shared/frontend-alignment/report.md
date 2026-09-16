@@ -13,49 +13,16 @@ and what happens if nobody answers.
 
 ### Security-sensitive chassis behaviour
 
-2. **Should the journeys verify the token's `aud` and `iss`, as ins does?** In
-   play: `src/auth/verify-token.js` and its test in animals and plants. One
-   against two for the checks. If nobody answers: a token minted for another
-   Defra ID client passes the journeys' signature-only check.
-3. **Should ins send `post_logout_redirect_uri` to the provider, as the
-   journeys do?** In play: `src/auth/get-sign-out-url.js` and its test in ins.
-   Two against one for sending it. If nobody answers: sign-out from ins ends
-   on the provider's page, not the service's.
-4. **Should ins log `{ crn }` rather than the whole Defra ID profile when a
-   sign-in has no organisation?** In play: `src/server/auth/controller.js`
-   line 38 in ins. Two against one for `{ crn }`. If nobody answers: name,
-   email and contact id land in the ins logs on every refused sign-in.
 5. **Should the journeys take ins's request-logger `ignoreFunc`?** In play:
    `src/server/common/helpers/logging/request-logger.js` in animals and
    plants; ins skips `/public`, `/health` and `/favicon.ico`. One against two.
    If nobody answers: health probes and static assets keep filling the
    journey logs.
-6. **Apply the two-line SonarCloud fix to ins, or keep it as the worked
-   example of drift?** In play: ins `src/auth/get-safe-redirect.js` lines 16
-   and 17 (`http://placeholder`; the journeys say `https://placeholder`) and
-   `src/config/config.js` line 32 (`new Error`; the journeys throw
-   `new TypeError`). Two against one for the fix, which the last backport
-   commit made in the journeys only. If nobody answers: the files the backport
-   proved byte-equal stay two lines apart, and ins's SonarCloud gate raises
-   the same two findings when they are next touched.
-7. **Should the strict-boolean convict format cover the other security
-   flags?** In play: `auth.enabled`, `session.cookie.secure`, `redis.useTLS`
-   and `isSecureContextEnabled` in all three `config.js` files; only
-   `stubMode` refuses a typo today. Three repos agree. If nobody answers: a
-   typo in those flags coerces to `true`, which fails safe.
-8. **`/signout` (ins) or `/auth/sign-out` (journeys) as the log-out URL in
-   the service navigation?** Two against one for `/auth/sign-out`, but
-   `/signout` is in ins's protected URL list and the journeys' route exists
-   only in real mode. If nobody answers: the three layouts differ by one URL
-   and the tests repo keeps two sign-out page objects.
 
 ### Shape choices the direction rule made, now backport candidates
 
 | # | Question | Count | If nobody answers |
 | --- | --- | --- | --- |
-| 9 | Keep ins's `auth.enabled` gate over every non-health route (`src/server/router.js`)? The journeys gate only sign-out. | one against two | `router.js` stays a deliberate difference; the gate is load-bearing for ins |
-| 10 | Explicit `auth: 'session'` on every route (`kit.routeOptions`, pinned by `routes.test.js`) or the server default? | one against two | ins keeps its defence in depth |
-| 11 | Journeys adopt ins's synchronous Nunjucks context read (`context.js`) instead of re-reading the session from Redis on every render? | one against two | one extra Redis hit per journey page |
 | 12 | Journeys move error-page messages into `sharedCopy.errorPage` (`helpers/errors.js`) and revisit `Bad Request` and `Unauthorized`? | one against two | non-GDS English stays hard-coded in two repos |
 | 13 | Three shapes for countries and ports: animals `main` loads on first read (EUDPA-575, on the branch since the 16 September merge); plants primes at boot (`app/routes.js`); ins fetches per request. Which do plants and ins take? | three ways | a reference-data outage keeps stopping plants' start-up and ins keeps one fetch per request |
 | 14 | `controller.js` or `<page>.controller.js` in a multi-page group? | two against one for `controller.js` | plants' groups stay the odd one out |
@@ -68,12 +35,11 @@ and what happens if nobody answers.
 | --- | --- | --- | --- |
 | 17 | Should ins take `postinstall: npm run setup:husky`, so the pre-commit hook (audit, format, lint, unit suite) runs on every clone? ins audits at `critical` where plants runs `high`; align that first. | two against one | the ins hook stays opt-in |
 | 18 | Backport `install:pinned-npm` (regenerates the lockfile under the pinned npm) to the journeys? | one against two | the journeys keep the documented `npx` route only |
-| 19 | Where does [`surfaces.json`](surfaces.json) live (`docs/reference/` or `tim/`), and is the proposed `tim workspace drift` command built to report every chassis file differing without a recorded reason? | workspace-only | the next cross-repo edit drifts as question 6 did, with nothing to say so |
+| 19 | Where does [`surfaces.json`](surfaces.json) live (`docs/reference/` or `tim/`), and is the proposed `tim workspace drift` command built to report every chassis file differing without a recorded reason? | workspace-only | the next cross-repo edit drifts by two lines, as the backport commit did before question 2 closed it, with nothing to say so |
 | 20 | Delete plants' dead `test-helpers/component-helpers.js`? ins deleted its copy with the two components it served; animals never had one; plants' has no importer and a dangling `#/` import. | plants only | dead code stays |
 | 21 | Add `cleanup-e2e-reports.yml` to ins (the twelve-line `gh-pages` pruner animals and plants run)? The Lighthouse port left it out because the audit does not depend on it. | two against one | ins's `gh-pages` gains one `lighthouse/<branch>/` directory per branch |
 | 22 | Declare `joi` (imported by `lib/validate/validators.js` and `address-id-params.js`, resolved through `@hapi/bell` and `@hapi/catbox-redis`) or accept the hoist? | three agree on the hoist | a phantom dependency until a hapi upgrade drops it |
 | 23 | Should ins take `eslint-plugin-sonarjs` and the journeys' fit-spec lint globals? | two against one | SonarCloud finds in CI what local lint finds first in the journeys |
-| 24 | Split `test-helpers/mock-auth.js` into the journeys' `mock-auth-config.js` and `mock-oidc-config.js`, and backport ins's `sessionAuth()`? The programme's target tree names the pair; no stage did it. | two against one | the test helpers stay three ways |
 | 25 | Adopt the journeys' names in `status-codes.js` (`redirectFound`, `payloadTooLarge`) and `pulse.js` (`shutdownTimeoutMs`)? | two against one | naming drift only |
 | 26 | ins housekeeping: `Dockerfile` says `ARG PORT=3000` while the service listens on 3002; `publish.yml` has `group: $${{ github.workflow }}` (a doubled dollar) and `queue: max`. | ins only | harmless today, confusing later |
 
@@ -104,6 +70,61 @@ and what happens if nobody answers.
    `src/server/auth/controller.test.js` and
    `src/server/signout/controller.test.js` prove the drop by a cache
    round-trip and the cookie by `set-cookie`, with no new module mock.
+
+2. **Converged authentication on one shape across the three frontends.**
+   Ruled 16 September 2026: one auth run: consistent authentication across
+   the three, not better authentication; do not build real auth. Line things
+   up so that when real auth is built there is one implementation to apply
+   three times. Q2 yes, the journeys verify the token as ins does. Q3 yes,
+   ins sends post_logout_redirect_uri as the journeys do. Q4 yes, ins logs
+   the CRN as the journeys do. Q6 yes, apply the two-line fix. Q7 yes, the
+   strict format for every flag across all three. Q8 no preference, make it
+   consistent. Q9 auth.enabled everywhere; a miss on the journeys. Q10 add
+   the explicit session option to the journeys. Q11 the journeys are right to
+   re-read the session from Redis; ins follows. Q24 a consistent, consolidated
+   approach. The stub sign-in shape converges now, reversing the 15 September
+   wait-for-real-auth ruling. Landed as `9e1ff60` on
+   [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27),
+   `828d7a55` on
+   [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339),
+   `791cfc0` on
+   [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) and
+   `849558a` on
+   [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227),
+   with two SonarCloud follow-ups per frontend (`5648dd3`, `f2f27246` and
+   `3747bfe` the last of each) that kept every shared file byte-equal.
+   Questions 2, 3, 4, 6, 7, 8, 9, 10, 11 and 24 and the stub sign-in shape
+   closed together: `src/auth/` (16 files), `src/plugins/auth.js` and its
+   test, `src/server/auth/` (`index.js`, `controller.js`, `stub-sign-in.js`
+   and both tests), `src/server/router.js`, `src/server/common/services/mode.js`
+   and its test, and the test helpers `mock-auth-config.js`,
+   `mock-oidc-config.js` and `session-auth.js` are byte-equal across ins,
+   animals and plants, proven with `diff -rq`; `config.js` differs only by
+   service-specific values and `context.js` only by the lines each service
+   owns. The journeys took ins's `aud` and `iss` checks, its `auth.enabled`
+   gate over every non-health route (with a new `router.test.js`) and
+   `auth: 'session'` on `kit.routeOptions` (six animals controller tests that
+   build a bare Hapi server gained `registerTestSessionAuth` in
+   `src/server/app/engine/test-support.js` so the strategy registers); ins
+   took the journeys' `post_logout_redirect_uri`, `{ crn }` log line,
+   `https://placeholder`, `new TypeError`, awaited session read in
+   `context.js` and split test helpers; all three took the strict-boolean
+   convict format on eleven env-backed booleans (a typo is refused, pinned in
+   `config.test.js`), one stub sign-in handler behind `/auth/sign-in` and
+   `/auth/stub-sign-in` with a per-process random secret and no committed
+   key, a stub-mode `GET /auth/sign-out`, and `routes.js` exporting
+   `serviceRoutes`. Behaviour: ins's public URL surface loses `/signout`,
+   `src/server/signout/` is deleted from all three, and `/auth/sign-out` is
+   the one sign-out URL in every layout in both modes (real mode through
+   `src/server/auth/controller.js`, stub mode through `stub-sign-in.js`,
+   which drops the session and lands on `/`); in the tests repo
+   `BasePage.linkSignOut` is the frontends' "Log out" link,
+   `AdminDashboardPage` keeps the admin portal's "Sign out" at `/signout`
+   and `SignOutPage.path` is `/auth/sign-out`, pinned by `auth.spec.ts`.
+   ins's `userSession.displayName` now derives from `displayName || email`
+   rather than `name` (plants' text verbatim); no layout renders it, so
+   nothing visible changes, but real sessions carry `name`, not
+   `displayName`, which is a candidate for a later ruling.
 
 27. **Pulled `main` into the alignment branch and analysed what moved.**
     Ruled 16 September 2026: main has moved under these repos since the
@@ -147,13 +168,16 @@ sets none of the three variables for ins, so no environment silently changed
 mode. To reverse: two flags in all three repos (`mode.js`, `config.js`, the
 auth plugin, the Playwright env).
 
-**Stub sign-in shape.** Ruled on 15 September: no convergence stage until real
-authentication is built. Direction for then: the journeys' behaviour (one
-handler behind `/auth/sign-in` and `/auth/stub-sign-in`, an unconditional
-encoded `redirectTo`, `contactId` and `currentRelationshipId` on the session)
-with ins's per-process random secret in all three, and the `mode.js`
+**Stub sign-in shape.** Ruled on 15 September to wait for real
+authentication; reversed on 16 September and built with question 2 (see
+Rulings applied): the journeys' behaviour (one handler behind `/auth/sign-in`
+and `/auth/stub-sign-in`, an unconditional encoded `redirectTo`, `contactId`
+and `currentRelationshipId` on the session) with ins's per-process random
+secret in all three, a stub-mode `GET /auth/sign-out`, and the `mode.js`
 production-refusal comment rewritten in all three to say stub mode hands a
-session to any caller with no identity provider involved.
+session to any caller with no identity provider involved. To reverse: restore
+the stub-mode `redirectTo` branch in `plugins/auth.js` and one `/auth/sign-in`
+route per service, in all three.
 
 **Relative imports** replaced the `#/` alias (`package.json` `imports`), two
 against one. The alias reads better in deep feature folders (controller tests
@@ -187,15 +211,16 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs), 16 September 09:17 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all checks green on the `main` merge, including E2E and Lighthouse CI, 16 September 09:43 |
-| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all ten checks green, 14 September 17:22; plants `main` has not moved since |
-| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all checks green on the `main` merge, including E2E, 16 September 09:43 |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs) at `5648dd3`, 16 September 12:23 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all checks green, including E2E, Lighthouse CI and SonarCloud, at `f2f27246`, 16 September 12:24 |
+| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all ten checks green at `3747bfe`, 16 September 12:25; plants `main` has not moved since |
+| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all checks green, including E2E, at `849558a`, 16 September 11:33 |
 | `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E green on every run since the Floci fix reached the branch, latest completed [run 35073631134](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35073631134), 16 September 09:24; the run against the merged branch images, [35076469742](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35076469742), had two of three shards green and one still running when this was written |
 
-The ins branch changes 251 files (22,662 insertions, 11,602 deletions, mostly
-the lockfile); animals 16; plants 10; tests 1. No shared package, no cross-repo
-import. ins's public URLs are unchanged except that `/about` is gone.
+The ins branch changes 258 files (23,213 insertions, 11,954 deletions, mostly
+the lockfile); animals 35; plants 26; tests 6. No shared package, no cross-repo
+import. ins's public URLs are unchanged except that `/about` and `/signout`
+are gone; sign-out is `/auth/sign-out`, as in the journeys.
 
 ### ins, before and after
 
@@ -223,13 +248,13 @@ src/server/
     features/address-book/{fields, address-countries, address-id-params, stored-address,
                             success-banner}.js  {copy/, view-model/, fit/}
   auth/  common/{constants/, helpers/, services/mode.js, test-helpers/}
-  health/  signout/  router.js  server.js
+  health/  router.js  server.js
 fit/{sign-in.js, smoke.fit.spec.js}  scripts/{npm-version, check-workspace-stack}.js
 scripts/lighthouse/  tests/lighthouse/  lighthouserc.cjs  .sonarcloud.properties
 webpack.config.js  postcss.config.js  .dependency-cruiser.cjs
 ```
 
-Unit suite: 49 files and 242 tests before, 57 files and 521 tests after.
+Unit suite: 49 files and 242 tests before, 57 files and 542 tests after.
 Playwright: 49 specs before, 50 after (a smoke project plus the features).
 
 ### Backported to animals and plants
@@ -248,9 +273,12 @@ also took plants' unauthorised page into `sharedCopy`, so
 
 ### Tests repository
 
-One change: the ins security scan no longer visits `/about`. Every other ins
-spec and page object was audited against the aligned templates, copy and
-paths and needed no change.
+Two changes: the ins security scan no longer visits `/about`, and sign-out
+follows the frontends' one URL (question 2): `BasePage.linkSignOut` is the
+"Log out" link, `AdminDashboardPage` keeps the admin portal's "Sign out" at
+`/signout`, and `SignOutPage.path` is `/auth/sign-out`, which `auth.spec.ts`
+pins on the link before clicking it. Every other ins spec and page object was
+audited against the aligned templates, copy and paths and needed no change.
 
 ### Lighthouse harness for ins
 
@@ -277,8 +305,6 @@ stub mode on 15 September:
   services, so every `copyFor({ en, cy })` call resolves `en` and the Welsh is
   unreachable. A translator's review and a locale seam come before any Welsh
   release.
-- **Two lines of drift were reintroduced by the last backport commit**
-  (question 6). The files are otherwise byte-equal.
 - **The Lighthouse CI job cannot fire on this branch.** `workflow_run`
   triggers read the default branch's workflow files; `lighthouse.yml` exists
   on the branch only. Before its report URL resolves, a repository admin must
@@ -306,20 +332,22 @@ stub mode on 15 September:
 
 ## Residual drift
 
-Re-measured on 16 September with `diff -rq` over the clones under
-`workareas/clones/`, after `main` was merged into the animals and tests
-branches (ins and plants `main` had not moved). Classes: identical;
+Re-measured on 16 September with `diff -rq` over the checkouts under `repos/`
+(the programme's working checkouts again from question 2's stage), after the
+authentication convergence landed. Classes: identical;
 import-path-only (none survive); deliberate (a
 recorded decision says why); unexplained (the question number says where it
 is settled).
 
 ### Animals against plants
 
-Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
+Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
+`src/server/auth` (5 files), `src/server/router.js` and its test,
+`src/server/common/services` and `src/server/common/test-helpers`.
 
 | File | Difference | Class |
 | --- | --- | --- |
-| `src/server/auth/stub-sign-in.js` | `STUB_TOKEN_SECRET` literal names the repo | deliberate, service-specific |
+| `src/server/auth/stub-sign-in.js` | none; the secret is generated per process | identical |
 | `src/server/common/constants/status-codes.js` | animals has `serviceUnavailable: 503` from `main` (EUDPA-575) | unexplained, question 13 |
 | `src/server/common/helpers/content-security-policy.test.js` | animals hits `/`, plants `/health` | deliberate, plants is the tidier fork |
 | `src/server/common/helpers/errors.test.js` | animals proves the 503 page for a reference-data read that will not load | unexplained, question 13 |
@@ -332,32 +360,28 @@ Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
 
 | File | Difference | Class |
 | --- | --- | --- |
-| `src/auth/get-safe-redirect.js` | `http://` against `https://placeholder`, two lines | unexplained, question 6 |
-| `src/auth/verify-token.js`, `.test.js` | ins checks `aud` and `iss` as well as the signature | unexplained, ins ahead, question 2 |
-| `src/auth/get-sign-out-url.js`, `.test.js` | journeys append `post_logout_redirect_uri` | unexplained, journeys ahead, question 3 |
-| `src/auth/` other 11 files | none | identical |
-| `src/plugins/auth.js`, `.test.js` | ins's `redirectTo` branches to `/auth/stub-sign-in` in stub mode, and its test; ins's real `redirectUrl` and `serviceId` values | deliberate, stub sign-in ruling |
+| `src/auth/` (16 files) | none | identical |
+| `src/plugins/auth.js`, `.test.js` | none | identical |
 | `src/plugins/csrf.js` | plants carries a 12-line doc comment, ins one line | deliberate, comment policy |
 | `src/plugins/csrf.test.js` | ins boots the real server and posts without a crumb; plants unit-tests the options | deliberate, test shape |
-| `src/server/auth/controller.js` | ins logs `{ profile }` where the journeys log `{ crn }`, one line | unexplained, question 4 |
-| `src/server/auth/controller.test.js` | ins keeps four route tests and `mock-auth.js`; journeys assert through the copy module | deliberate, test shape |
-| `src/server/auth/stub-sign-in.js`, `.test.js` | per-process secret and one route (ins) against a committed key, two paths, `contactId` and `currentRelationshipId` | deliberate, stub sign-in ruling |
+| `src/server/auth/` (`index.js`, `controller.js`, `stub-sign-in.js` and both tests) | none | identical |
+| `src/server/router.js` | none; `routes.js` exports `serviceRoutes` in all three | identical |
 | `src/server/common/constants/status-codes.js` | `redirect` against `redirectFound` plus `payloadTooLarge`; animals also has `serviceUnavailable` | unexplained, questions 25 and 13 |
 | `src/server/common/helpers/logging/request-logger.js` | ins passes `ignoreFunc` | unexplained, ins ahead, question 5 |
 | `src/server/common/helpers/pulse.js` | `tenSeconds` against `shutdownTimeoutMs` | unexplained, question 25 |
 | `src/server/common/helpers/errors.js` | ins reads messages from `sharedCopy.errorPage`; journeys hard-code English | deliberate, ins ahead, question 12 |
 | `src/server/common/helpers/{errors,content-security-policy,redis-client,serve-static-files,start-server}.test.js` | test shape | deliberate |
-| `src/server/common/test-helpers/mock-auth.js` | journeys split it as `mock-auth-config.js` and `mock-oidc-config.js` | unexplained, question 24 |
+| `src/server/common/test-helpers/{mock-auth-config,mock-oidc-config,session-auth}.js` | none; `mock-auth.js` is gone from ins | identical |
 | `src/server/common/test-helpers/{real-mode,test-server}.js`, `helpers/organisation-id.test.js` | ins only | deliberate |
 | `src/server/common/{components/, helpers/actor-helpers.js, helpers/proxy/, helpers/transport-routing.js}` | journeys only | deliberate, journey-only |
-| `src/server/common/` other 19 shared files | none | identical |
-| `src/config/config.js` | service-specific hunks; `new Error` against `new TypeError`; ins-only `LOG_REDACT` env hook; journeys-only `session.cache.segment`; cookie-password default and doc string | service-specific, except the one line in question 6 |
-| `src/config/config.test.js` | test shape | deliberate |
+| `src/server/common/` other 13 shared files | none | identical |
+| `src/config/config.js` | service-specific hunks only: port, service name, `defraId.serviceId`, the two redirect URLs, key prefix, the backend API block, and ins's `tradeImportsInsBackendApi` and `tradeImportsAnimalsFrontend` blocks | deliberate, service-specific |
+| `src/config/config.test.js` | ins pins its own ports and URLs; the `stubMode` and env-backed boolean blocks are shared | deliberate, test shape |
 | `src/config/nunjucks/nunjucks.js` | ins registers `formatDate` and `formatCurrency` filters (`filters/` is ins only); journeys add the MoJ root and `app/sets` where ins has `app/features` | deliberate |
-| `src/config/nunjucks/context/context.js` | synchronous session read; `dashboardUrl`, `addressBookUrl`, `crumb` in ins; `staleActionRejected` in the journeys | deliberate, question 11 |
+| `src/config/nunjucks/context/context.js` | the session read is byte-equal; ins imports and marks the address-book navigation item and adds `dashboardUrl`, `addressBookUrl` and `crumb`; the journeys add `staleActionRejected` | deliberate, service-specific |
 
-Six files differ for no recorded reason, all settled by questions 2 to 6, 13
-and 24 to 25. [`surfaces.json`](surfaces.json) names every shared chassis file
+Four files differ for no recorded reason, all settled by questions 5, 13 and
+25. [`surfaces.json`](surfaces.json) names every shared chassis file
 with the rule it must satisfy (`identical`, `identical-except`, `only-in`,
 `deliberate` with a reason); a `tim workspace drift` command that applies it
 per branch and reports unlisted differences is proposed in question 19 and
@@ -376,15 +400,15 @@ not built.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
-  commit, PRs, notes and open questions: sixteen done, seven ruling stages
-  waiting); the fifteen plans under
+  commit, PRs, notes and open questions: seventeen done, six ruling stages
+  waiting); the sixteen plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:
   [`docs/analysis/frontend-alignment-workflow-run.md`](../../../docs/analysis/frontend-alignment-workflow-run.md).
-- Working clones, all on the branch, under `workareas/clones/`: the workspace,
-  ins, animals, plants and tests repos. The checkouts under `repos/` are on
-  other branches.
+- Working checkouts, all on the branch, under `repos/`: ins, animals, plants
+  and tests, the programme's working checkouts again from question 2's stage.
+  The clones under `workareas/clones/` are retired.
 - A plants stash still waits on `main` in `repos/trade-imports-plants-frontend`:
   `stash@{0}: On main: pre-alignment: uncommitted obligation-graph script +
   package.json script`. Pop it before working on plants `main` there.

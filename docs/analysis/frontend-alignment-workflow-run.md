@@ -115,8 +115,10 @@ one `{"type":"result"}` line per agent.
   ins, say) cannot see it go green until it is on main. The stage has to prove
   it another way.
 - **A CI fix in two repos is a drift in the third.** The s12 Sonar fix moved
-  animals and plants together and left ins behind on two lines. A drift check
-  as a ladder rung is the fix; the report's section 8 specifies it.
+  animals and plants together and left ins behind on two lines, in files the
+  same stage had just proved byte-equal. Nothing in the run caught it until the
+  report stage diffed the three trees at the end, and a later stage closed it.
+  A cross-repo stage has to re-prove equality after any CI fix it makes.
 - **The baseline checked every repo in the header.** On a later run with
   other work in flight in animals, that would have refused to start. The
   baseline now checks only the repos the pending stages touch.

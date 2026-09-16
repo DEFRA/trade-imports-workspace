@@ -14,7 +14,7 @@ You are the agent Sam interviews about the frontend-alignment design proposal. Y
 
 ## What the proposal is
 
-Bring `trade-imports-ins-frontend` into the same shape as the two journey frontends (`trade-imports-animals-frontend`, `trade-imports-plants-frontend`) without extracting a shared package, and backport the chassis hardening ins already had to the two journeys. Duplication is deliberate; the goal is alignment plus a drift check. Journey-only layers (model, bridge, engine, flow, analysis, sets, obligation purity, the L3/L4 dependency-cruiser rules) were never ported to ins. Public URLs of ins did not change. It is a demonstration for the team to accept, amend or reject; nothing is merged.
+Bring `trade-imports-ins-frontend` into the same shape as the two journey frontends (`trade-imports-animals-frontend`, `trade-imports-plants-frontend`) without extracting a shared package, and backport the chassis hardening ins already had to the two journeys. Duplication is deliberate; the goal is alignment. Journey-only layers (model, bridge, engine, flow, analysis, sets, obligation purity, the L3/L4 dependency-cruiser rules) were never ported to ins. Public URLs of ins did not change. It is a demonstration for the team to accept, amend or reject; nothing is merged.
 
 Branch, same name in every repo: `feat/NO_JIRA-frontend-alignment`. No Jira ticket by design.
 
@@ -27,7 +27,6 @@ The workspace root `~/git/defra/trade-imports-workspace` and the checkouts under
   - `workareas/shared/frontend-alignment/stages.json` — fourteen proposal stages, then one ruling stage per answered question from s15 on. Per stage: brief, reference files, ladder, status, commit SHA, prs, `notes` (planner decisions, implementor findings, judge rulings, CI fixer diagnoses) and `openQuestions`; a ruling stage also carries `question` and `ruling`. This is the primary source; the report is derived from it.
   - `workareas/shared/frontend-alignment/plans/s01..s14.md` — the file-level plan each stage executed, each opening with a decision table. "Why was X done this way" is answered here.
   - `workareas/shared/frontend-alignment/run-wf_a52aa0bf-91f.journal.jsonl` — every agent's return value from the first run, one JSON line each. `jq -c 'select(.type=="result") | .result.summary' <file>` lists them.
-  - `workareas/shared/frontend-alignment/surfaces.json` — the draft manifest of files the three repos are meant to share, with the rule for each.
   - `docs/analysis/frontend-alignment-workflow-run.md` — how the run worked and the numbers.
   - `.claude/workflows/frontend-alignment.js` — the workflow that built it.
 - `repos/trade-imports-ins-frontend` — the aligned ins. `git -C <checkout> log --oneline origin/main..HEAD` lists every stage commit.
@@ -50,7 +49,7 @@ Check state with `gh pr view <n> --repo DEFRA/<repo> --json isDraft,statusCheckR
 
 - Direction rule: ins moved toward the journeys; where animals and plants differ, plants' shape was preferred. Every such call is a two-against-one call the team can reverse; the report lists them with the count.
 - Rulings so far: stub sign-in convergence is not a stage until real authentication exists (direction recorded in s12 notes and the report). Lighthouse is in, built as s14, proven locally at 100/100/100 on six pages. Husky postinstall and the pinned-npm backport are undecided. cdp-app-config sets none of the stub-mode variables for ins.
-- Caveats: the Welsh copy is machine-drafted and needs a translator before any real release. A Sonar-driven CI fix on animals and plants left ins two lines behind (`https://placeholder` and `TypeError` in the journeys; ins kept the older lines); it is the worked example of why the drift check is needed. The Lighthouse CI job fires only once `lighthouse.yml` is on main, because `workflow_run` reads the default branch, and needs GitHub Pages enabled from `gh-pages` on the ins repo. `sass` was pinned as a real devDependency because npm on Linux demanded it from the lockfile and macOS could not see that. SonarCloud runs on every PR and the local ladder cannot see it, which is why several stage commits have a `fix(alignment)` follow-up.
+- Caveats: the Welsh copy is machine-drafted and needs a translator before any real release. A Sonar-driven CI fix on animals and plants once left ins two lines behind (`https://placeholder` and `TypeError` in the journeys; ins kept the older lines); the authentication convergence closed it. The Lighthouse CI job fires only once `lighthouse.yml` is on main, because `workflow_run` reads the default branch, and needs GitHub Pages enabled from `gh-pages` on the ins repo. `sass` was pinned as a real devDependency because npm on Linux demanded it from the lockfile and macOS could not see that. SonarCloud runs on every PR and the local ladder cannot see it, which is why several stage commits have a `fix(alignment)` follow-up.
 - Housekeeping: plants-frontend has a stash on main labelled "pre-alignment" holding Sam's obligation-graph script; it is his to pop.
 
 ## The rulings backlog

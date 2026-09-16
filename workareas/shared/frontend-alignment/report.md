@@ -18,12 +18,6 @@ and what happens if nobody answers.
 | 29 | Should ins take the journeys' full countries reader surface (`originLabel`, `originCountries`, `addressCountries`, `countryCodeOf`) and the `GBNAG_SPS_EX` block filter, so its countries service is byte-equal with plants'? Question 13 landed the lazy cache alone. It would narrow the address book from the full MDM list to the animal-products export block, stop the dashboard naming a `GB` origin, and drop the trace header from the reference-data call. | one against two | ins keeps the full MDM list, its own reader and its trace header, and the two countries services stay different files |
 | 30 | `content-security-policy.js` stopped being byte-equal when ins took `main`'s EUDPA-333 handshake, and question 28 widened it again: ins reads both journey frontends' base URLs and widens `form-action` from `['self']` to `['self', ...journeyFrontendOrigins]`, because the browser blocks the cross-origin 302 the address-add handshake depends on. Does ins keep a documented exception, or do the journeys take ins's shape, which animals needs itself for the return leg of that handshake? | ins only | a chassis file differs with nothing to say why |
 
-### Tooling and dependencies
-
-| # | Question | Count | If nobody answers |
-| --- | --- | --- | --- |
-| 19 | Where does [`surfaces.json`](surfaces.json) live (`docs/reference/` or `tim/`), and is the proposed `tim workspace drift` command built to report every chassis file differing without a recorded reason? | workspace-only | the next cross-repo edit drifts by two lines, as the backport commit did before question 2 closed it, with nothing to say so |
-
 ## Rulings applied
 
 1. **Dropped the ins session at sign-out initiation, as the journeys do.**
@@ -629,11 +623,6 @@ question 28, which added the plants origin to the same `form-action` list.
 `src/server/common/helpers/errors.test.js` holds two differences: plants'
 reference-data 503 test drives a reader question 29 owns, and animals'
 page-title composition arrived from `main` and has no question yet.
-[`surfaces.json`](surfaces.json) names every shared chassis file
-with the rule it must satisfy (`identical`, `identical-except`, `only-in`,
-`deliberate` with a reason); a `tim workspace drift` command that applies it
-per branch and reports unlisted differences is proposed in question 19 and
-not built.
 
 ## Where everything is
 
@@ -651,7 +640,7 @@ not built.
   commit, PRs, notes and open questions: twenty-two done, two ruling stages
   waiting); the twenty-one plans under
   [`plans/`](plans/); every agent's return value in
-  `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
+  `run-wf_a52aa0bf-91f.journal.jsonl`.
 - The run record, for reuse of the workflow:
   [`docs/analysis/frontend-alignment-workflow-run.md`](../../../docs/analysis/frontend-alignment-workflow-run.md).
 - Working checkouts, all on the branch, under `repos/`: ins, animals, plants

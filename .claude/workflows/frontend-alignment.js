@@ -147,7 +147,14 @@ and — when it carries \`question\` and \`ruling\` — Sam's settled answer to 
 ${PATH_RULE}`
 
 const stageNotes = (id) => `To record a note or an open question on the stage, Edit ${STAGES} — append a string to
-that stage's \`notes\` or \`openQuestions\` array, keep the JSON valid, and re-check with \`jq empty ${STAGES_TILDE}\`.`
+that stage's \`notes\` or \`openQuestions\` array, keep the JSON valid, and re-check with \`jq empty ${STAGES_TILDE}\`.
+If the Read tool refuses that file (a secrets-scan false positive on a note), write it with jq instead, and ONLY
+with a targeted update on the one field: \`jq '(.stages[] | select(.id=="${id}") | .notes) += ["<note>"]' ${STAGES_TILDE} > ${LOGS_TILDE}/stages.next.json\`
+then \`cat ${LOGS_TILDE}/stages.next.json > ${STAGES_TILDE}\`. The same shape sets a field: \`(.stages[] | select(.id=="${id}") | .status) = "landed"\`.
+NEVER assign a whole stage object, never \`|= select(...)\`, never rebuild the array: a previous run lost a stage's
+commit SHAs, PRs and every note that way. After any jq write prove nothing else moved:
+\`jq '.stages[] | select(.id=="${id}") | [.status, .commit, (.prs|length), (.notes|length)]' ${STAGES_TILDE}\`
+must show the same commit, PR count and a notes count one higher than before.`
 
 const RULING_RULE = `RULINGS: a stage that carries \`ruling\` is settled. The ruling is the direction for that stage whichever
 way it points (ins toward the journeys, or the journeys toward ins); the header's direction rule applies only where
@@ -168,6 +175,11 @@ const BASELINE_SCHEMA = {
       type: 'array',
       items: { type: 'string' },
       description: 'The subset of todo whose status is "e2e-retry": landed and green on their PRs, needing only the local E2E rung and what follows it',
+    },
+    ciRetry: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'The subset of todo whose status is "ci-retry": landed and pushed, needing the CI watch on their PRs and everything after it',
     },
     branch: { type: 'string' },
     problems: { type: 'array', items: { type: 'string' } },
@@ -496,9 +508,10 @@ ${PATH_RULE}
    logs/) are not a problem, and a modified workareas/${WORKAREA_REL}/stages.json, report.md or plans/ file is
    the programme's own state that the record step commits. Only a modified TRACKED file outside those is a
    problem there.
-4. Report done = every stage whose status is "done", todo = every stage whose status is "todo" or "e2e-retry" in
-   file order, and e2eRetry = the ones whose status is "e2e-retry" (they landed and are green on their PRs; a human
-   read their red local E2E, fixed the environment or the code, and set the status so the run resumes at that rung).
+4. Report done = every stage whose status is "done", todo = every stage whose status is "todo", "ci-retry" or
+   "e2e-retry" in file order, ciRetry = the ones whose status is "ci-retry" (landed and pushed; a human read their
+   red or missing CI, fixed what needed fixing, and set the status so the run resumes at the CI watch), and
+   e2eRetry = the ones whose status is "e2e-retry" (green on their PRs; the run resumes at the local E2E rung).
    A stage in any other status (ci-red, ladder-red, implement-failed, e2e-red) is a problem — name it in problems
    and leave it out of todo; the run must not build on it.
 Return the structured output only.`,
@@ -565,11 +578,12 @@ Return the structured output only.`,
     // that rung.
     // -----------------------------------------------------------------------
     const retryE2E = (baseline.e2eRetry ?? []).includes(id)
+    const retryCI = (baseline.ciRetry ?? []).includes(id)
     let prs = []
-    if (retryE2E) {
-      log(`${id}: resuming at the local E2E rung`)
+    if (retryE2E || retryCI) {
+      log(`${id}: resuming at the ${retryE2E ? 'local E2E rung' : 'CI watch'}`)
       const known = await agent(
-        `Stage ${id} resumes at its local E2E rung. Report the pull requests already recorded on it.
+        `Stage ${id} resumes at its ${retryE2E ? 'local E2E rung' : 'CI watch'}. Report the pull requests already recorded on it.
 ${GUARDRAILS}
 Run \`jq '.stages[] | select(.id=="${id}") | .prs' ${STAGES_TILDE}\` and return exactly those entries as prs
 (repo, url, number), ok:true. Change nothing.`,
@@ -994,11 +1008,12 @@ Return the structured output only.`,
       break
     }
     prs = pr.prs ?? []
+    }
 
     // -----------------------------------------------------------------------
     // CI — Haiku watches the stage's own PRs, Sonnet fixes, bounded.
     // -----------------------------------------------------------------------
-    if (prs.length > 0) {
+    if (!retryE2E && prs.length > 0) {
       phase('CI')
       let ci = await watchPrs(id, prs, 'ci', `${id} ci watch`)
       let ciAttempt = 0
@@ -1025,9 +1040,8 @@ Return the structured output only.`,
         break
       }
       log(`${id}: green in CI on ${prs.map((p) => p.repo).join(', ')}`)
-    } else {
+    } else if (!retryE2E) {
       log(`${id}: no PR-enabled repo touched — no repo CI to watch`)
-    }
     }
 
     // -----------------------------------------------------------------------

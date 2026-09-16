@@ -1095,13 +1095,38 @@
         "test",
         "test:fit"
       ],
-      "status": "todo",
-      "plan": null,
-      "commit": null,
-      "prs": [],
-      "ci": null,
-      "notes": [],
-      "openQuestions": []
+      "status": "ci-red",
+      "plan": "workareas/shared/frontend-alignment/plans/s19-countries-lazy-load.md",
+      "commit": "c44e554",
+      "prs": [
+        {
+          "repo": "ins",
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "number": 27
+        }
+      ],
+      "ci": {
+        "state": "red",
+        "failures": [
+          "Cannot read checks for PR #27 in DEFRA/trade-imports-ins-frontend (5 consecutive failures from the GitHub API)",
+          "Cannot read checks for PR #27 in DEFRA/trade-imports-ins-frontend after 3 retry attempts"
+        ]
+      },
+      "notes": [
+        "Step one (planner, 16 Sep 2026): diff -rq of src/server/app/services/countries between plants and animals is EMPTY - index.js, client.js and stub.js are byte-equal across the two journeys.",
+        "Drift for the report table - services/run-mode.test.js differs in 3 places (< plants, > animals): L39/L41 the client block-filter test uses BLOCK_ONE in plants and the real GBNAG_SPS_EX in animals (plants is tidier: the client test proves forwarding, the service test pins the real block); L99-100 plants carries a two-line why-comment above the real-mode self-load test saying the block code is pinned to what countries/index.js asks for; L189 plants ports fetch-once test also calls ports.portOptions(). Not fixed here.",
+        "Drift for the report table - services/ports/index.js is NOT byte-equal between the journeys: plants extracts a displayName helper and adds a third reader portOptions() returning {value,text}; animals has neither. ins has no ports service, so nothing ports across.",
+        "Drift for the report table - both journeys countries/client.js reads process.env.TRADE_IMPORTS_REFERENCE_DATA_URL and sends no trace header, while their own address-book/client.js sends getTraceId(). The journeys are inconsistent with themselves; ins is consistent (convict base URL + trace header on every client).",
+        "ins has exactly one reference-data reader, countries. services/address-book reads tradeImportsAddressBookApi per organisation and services/ins-backend reads tradeImportsInsBackendApi per query - both request-scoped business data, neither cacheable at module scope. Planner grep for tradeImportsReferenceDataApi across src/ hits only config.js, countries/client.js and test-helpers/real-mode.js.",
+        "PLANNER DEVIATION from the brief end state: ins countries service is NOT made byte-equal with plants. The lazy-cache mechanism is ported verbatim (module-scope cache, loaded flag, stub short-circuit, Boom.serverUnavailable with dataset countries, failed load leaves the flag false), but the reader keeps ins shape - getCountries() returning [{code,name}] - and client.js and stub.js are untouched. Byte-equality would force three behaviour changes the brief does not declare: the address-book country list would narrow from the full MDM list to the GBNAG_SPS_EX animal-products export block; the dashboard would stop resolving a GB origin to a name because GB is not in that block; and ins would lose the trace header on its reference-data call. See openQuestions.",
+        "ins common/helpers/errors.test.js ALREADY carries the end-to-end 503 page test (a /test/service-unavailable route plus the shared-error-page assertion), ported in an earlier stage. Verified by the planner; no new test needed there.",
+        "Implementor, 16 September 2026: plan followed verbatim. All ladder green — format:check clean, lint clean (depcruise 135 deps, up from 133 baseline: the two new @hapi/boom edges in countries/index.js and address-countries.js), test 59 files/563 tests passed (matches plan arithmetic exactly), test:fit 50 passed. Every invariant in plan section 6 checked and holds: no fetch mocking, exactly the expected isBoom guard sites, no swallow left (the one remaining catch(() => ({})) in lib/http-client.js parses a JSON error body and predates this stage — unrelated to countries), no cross-repo import, no migration comments, no copy/.njk file touched.",
+        "JUDGE: behaviour changes named for invariant 2 — (1) reference data is read once per process rather than on every request: the countries service caches the MDM country list at module scope on the first read and serves it for the life of the process, so a list that changes upstream is only picked up on a restart; (2) a reference-data outage now renders the shared error page as a 503 on every page that reads countries — /, /address-book, /address-book/add, /address-book/{id} and /address-book/{id}/edit — where before those pages rendered an empty country list or, on the add page, the form with a recoverable-error banner at 500; (3) an empty MDM country list now rejects with Boom.serverUnavailable from features/address-book/address-countries.js and gets that same 503 page, where before it threw a bare Error rendered as a 500 banner — this third change is plan D8 and is the one the brief did not itself declare. Route surface unchanged; nothing a fit spec asserts changes.",
+        "CI FIXER (failed attempt 1): CI red after 0 fix attempts because GitHub API read of PR #27 checks failed 5 consecutive times, then failed after 3 retry attempts. Cannot proceed without a working GitHub API connection to read the check status and apply fixes."
+      ],
+      "openQuestions": [
+        "Should ins take the journeys full countries reader surface (originLabel, originCountries, addressCountries, countryCodeOf) and the GBNAG_SPS_EX block filter, making its countries service byte-equal with plants? The planner did NOT do this in s19 because it forces three behaviour changes the s19 brief does not declare: (a) the address-book country list narrows from the full MDM list to the SPS animal-products export block, which is a journey origin picker rather than an address book; (b) the dashboard stops resolving a GB origin to a name, because GB is not in that block; (c) ins would have to drop the convict base URL and the getTraceId trace header from countries/client.js, undoing chassis hardening this programme backports the other way. If Sam rules for the full port it needs its own stage with those three declared."
+      ]
     },
     {
       "id": "s20-tooling-convergence",

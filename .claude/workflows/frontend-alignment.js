@@ -6,17 +6,17 @@ export const meta = {
     'Running or resuming the stage backlog under workareas/shared/frontend-alignment/stages.json, including the ruling stages appended as Sam answers the report\'s open questions. One invocation drains every stage still todo, serially, in file order, re-reading the backlog after each so stages appended mid-run are picked up, and stops at the first red so nothing is built on a broken stage.',
   phases: [
     { title: 'Baseline', model: 'haiku' },
-    { title: 'Plan', model: 'fable' },
+    { title: 'Plan', model: 'opus' },
     { title: 'Implement', model: 'sonnet' },
     { title: 'Review' },
     { title: 'Verify findings', model: 'sonnet' },
-    { title: 'Judge', model: 'fable' },
+    { title: 'Judge', model: 'opus' },
     { title: 'Fix', model: 'sonnet' },
     { title: 'Ladder', model: 'sonnet' },
     { title: 'Land', model: 'haiku' },
     { title: 'Pull request', model: 'haiku' },
     { title: 'CI', model: 'haiku' },
-    { title: 'Report', model: 'fable' },
+    { title: 'Report', model: 'opus' },
     { title: 'Record', model: 'haiku' },
     { title: 'E2E', model: 'haiku' },
   ],
@@ -91,7 +91,7 @@ const TOOLS_TILDE = `${ROOT_TILDE}/tools`
 // ---------------------------------------------------------------------------
 // Models. Thinking on Fable, doing on Sonnet, watching on Haiku.
 // ---------------------------------------------------------------------------
-const think = (opts) => ({ ...opts, model: 'fable', effort: 'high' })
+const think = (opts) => ({ ...opts, model: 'opus', effort: 'high' })
 const doer = (opts) => ({ ...opts, model: 'sonnet' })
 const watcher = (opts) => ({ ...opts, model: 'haiku', effort: 'low' })
 

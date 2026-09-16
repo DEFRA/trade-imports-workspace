@@ -27,6 +27,26 @@ programme, via `tools/github/pr-ensure-draft.sh`) → **CI** (Haiku blocks on
 ladder or red CI stops the run and marks the stage, so nothing is built on a broken stage.
 Resume by relaunching: the baseline stage skips everything already `done`.
 
+**Rulings.** Once the report is out, Sam answers its numbered open questions one at a
+time. Each answer becomes a stage appended to `stages.json` with `question` and `ruling`
+fields and a brief derived from the answer; the ruling is the direction for that stage
+whichever way it points. The loop drains every `todo` stage in file order and re-reads
+the backlog after each, so a stage appended while an earlier one was building is picked
+up without a relaunch; when the backlog is empty the run ends and is relaunched when the
+next answer arrives. After a stage's own PR is green, three more steps run: **report**
+(Fable moves the answered question into a "Rulings applied" section of `report.md` and
+re-measures the drift rows it touched), **record** (Haiku commits `stages.json`, the plan
+and the report on the workspace repo and pushes) and **E2E** (Haiku watches the workspace
+PR, whose push re-runs the cross-repo suite on the branch-tagged images; a red is fixed in
+the stage's repos, re-proven on their PRs, then the workspace is pushed again).
+
+**Checkouts.** `FALLBACK.checkouts` is `'clones'`: the agents work in the clones under
+`workareas/clones/` named by each repo's `clonePath` in the header, so the checkouts
+under `repos/` are never switched. `'root'` is how stages s01 to s14 ran. Skills, docs
+and the helper scripts are always read from the root, because the permission allowlist
+names `tools/**` at the root path only. `FALLBACK.workspacePr` names the workspace PR to
+watch; `null` skips the E2E gate.
+
 Point the tool at the file: `Workflow({ scriptPath: ".claude/workflows/frontend-alignment.js" })`.
 Edit `FALLBACK.stages` to run a subset.
 

@@ -6,25 +6,42 @@
   "repos": {
     "ins": {
       "path": "repos/trade-imports-ins-frontend",
+      "clonePath": "workareas/clones/trade-imports-ins-frontend",
       "github": "DEFRA/trade-imports-ins-frontend",
       "pr": true
     },
     "animals": {
       "path": "repos/trade-imports-animals-frontend",
+      "clonePath": "workareas/clones/trade-imports-animals-frontend",
       "github": "DEFRA/trade-imports-animals-frontend",
       "pr": true
     },
     "plants": {
       "path": "repos/trade-imports-plants-frontend",
+      "clonePath": "workareas/clones/trade-imports-plants-frontend",
       "github": "DEFRA/trade-imports-plants-frontend",
+      "pr": true
+    },
+    "tests": {
+      "path": "repos/trade-imports-animals-tests",
+      "clonePath": "workareas/clones/trade-imports-animals-tests",
+      "github": "DEFRA/trade-imports-animals-tests",
       "pr": true
     },
     "workspace": {
       "path": ".",
+      "clonePath": "workareas/clones/trade-imports-workspace",
       "github": "DEFRA/trade-imports-workspace",
       "pr": false
     }
   },
+  "checkouts": "Stages s01 to s14 ran against each repo's `path` (the checkouts under repos/). Stages from s15 on run against `clonePath` (the clones under workareas/clones/, all on the programme branch) so Sam's live checkouts are never switched. The workflow's FALLBACK.checkouts selects which field the agents use.",
+  "workspacePr": {
+    "number": 47,
+    "url": "https://github.com/DEFRA/trade-imports-workspace/pull/47",
+    "note": "Not a draft. Every push of the workspace branch re-runs the cross-repo E2E suite against the branch-tagged images, so it is the last gate a ruling stage passes."
+  },
+  "rulings": "A stage that carries `question` and `ruling` implements Sam's answer to that numbered open question in report.md. The ruling is settled: the planner does not reopen it, and it is the direction for that stage whichever way it points. Rulings arrive one at a time and are appended here as todo stages; the workflow drains whatever is todo, in file order, and is relaunched when more arrive.",
   "direction": "ins moves toward animals/plants. Where animals and plants differ from each other, plants is the tidier fork; prefer its shape and say so. Journey-only layers (model, bridge, engine, flow, analysis, sets, obligation-purity, the L3/L4 dependency-cruiser rules) are never ported to ins.",
   "invariants": [
     "Public URL surface of ins does not change: /, /address-book, /address-book/add, /address-book/{id}, /address-book/{id}/edit, /address-book/{id}/delete, /auth/*, /signout, /health. Other services and the tests repo link to these.",
@@ -721,6 +738,37 @@
         "CI FIXER (attempt 1, commit 4f9a8d6): all three red checks (publish amd64, publish arm64, Run Pull Request Checks) were the same failure — the production Docker stage's `npm ci --omit=dev` rejected the lockfile with 'Missing: sass@1.100.0', 'Missing: chokidar@5.0.0', 'Missing: readdirp@5.1.1 from lock file'. This directly contradicts the JUDGE note above: dropping node_modules/sass from the lockfile was NOT safe. Root cause, proven by building `--target development` in Docker and running `npm why sass` inside the Linux container vs on macOS: on Linux, npm auto-installs vite's and sass-loader's optional peer 'sass' into node_modules but leaves it out of package-lock.json's packages map (marked extraneous) — a platform-dependent npm peer-resolution quirk that a macOS `npm install`/`npm why` cannot see ('no dependencies found matching sass' locally) and that the local ladder (format:check/lint/test) cannot catch, since none of those rungs touch dependency resolution. Ruled out as the cause, each disproved by rebuilding the Linux dev image and re-checking `npm why sass`: pinning vite+esbuild to animals/plants' 6.4.3/0.28.1 (still extraneous), bumping vitest+@vitest/coverage-v8 to animals/plants' 4.1.10 (still extraneous), and copying plants' full overrides block wholesale (still extraneous) — animals-frontend's near-identical tree simply never triggers this on Linux either, and no content difference found accounts for it. Fix: pinned 'sass': '1.100.0' as a real devDependency (matching sass-embedded's version) so it is an unconditional, platform-independent lockfile entry — eliminates the ambiguity regardless of the underlying npm quirk. Verified with `docker build --no-cache --target production` (the exact failing CI step, now exits 0 with no Missing errors) plus format:check/lint/test all green (519/519 tests, no port collision this run). Pushed to the programme branch; CI not yet re-observed by this session.",
         "PARENT PROOF 2026-09-15: npm run lighthouse against the aligned ins started in stub mode on 3002 (stack down). Six URLs audited, all assertions passed, every page scored 100 / 100 / 100 for performance, accessibility and best practices. Reports written with stable route-path names under lighthouse-report/. Logs: logs/s14-proof-{build,server,lighthouse}.log."
       ],
+      "openQuestions": []
+    },
+    {
+      "id": "s15-q01-signout-session-drop",
+      "title": "drop the ins session at sign-out initiation, as the journeys do",
+      "question": 1,
+      "ruling": "Sam, 16 September 2026: yes. ins drops the local session at sign-out initiation, as the journeys do.",
+      "repos": [
+        "ins"
+      ],
+      "brief": "Question 1 is ruled: ins takes the journeys' sign-out shape. Edit src/server/auth/controller.js in ins so it converges on plants' copy (animals is byte-equal to plants in this file; confirm with diff before you start). Three changes. (1) The signout handler: after the existing unauthenticated guard, drop the cached session (request.server.app.cache.drop(sessionId) when the credentials carry one) and clear the cookie (request.cookieAuth.clear()) BEFORE redirecting to the provider's sign-out URL. Copy plants' handler verbatim, its comment included: the drift check values byte-equality over the comment policy. (2) The signoutOidc handler: an unauthenticated request redirects to '/' instead of to the provider's sign-out URL. Copy plants' branch verbatim, comment included. (3) The signin handler's unused parameter is named _request as in plants. Leave the { profile } log line in signinOidc alone: that is question 4 and its own stage. After this stage the only difference between ins and plants in this file must be that one log line; prove it with diff and quote the output in your notes. Behaviour to declare: ins's /signout route (src/server/signout/controller.js) delegates to signoutOidc, so an unauthenticated GET /signout now lands on '/' rather than at the provider; an authenticated GET /signout is unchanged, it already dropped the session; an authenticated GET /auth/sign-out now drops the session before the provider round-trip, so a session no longer outlives a sign-out that Entra or the CDP WAF reject. Tests. In src/server/auth/controller.test.js: change 'GET /auth/sign-out-oidc redirects unauthenticated users to sign-out URL' to expect '/'; add a test that an authenticated GET /auth/sign-out redirects to the sign-out URL, drops the cached session (spy on server.app.cache.drop) and clears the session cookie (a sid= entry in set-cookie), following the cookie assertion already in src/server/signout/controller.test.js; keep 'GET /auth/sign-out-oidc clears authenticated session and redirects' and extend it with the same drop and cookie assertions. In src/server/signout/controller.test.js: keep the authenticated test and add an unauthenticated GET /signout expecting a redirect to '/'. Keep each test file's existing mocking shape (the getSignOutUrl and getOidcConfig module mocks are already there); add no new module mocks. Do not touch animals or plants, the router, the layout, the protected URL list or the tests repo. If a doc under src/server/app/docs/ describes the sign-out behaviour this stage changes, correct that sentence and say so in notes.",
+      "reference": [
+        "workareas/clones/trade-imports-plants-frontend/src/server/auth/controller.js",
+        "workareas/clones/trade-imports-plants-frontend/src/server/auth/controller.test.js",
+        "workareas/clones/trade-imports-animals-frontend/src/server/auth/controller.js",
+        "workareas/clones/trade-imports-ins-frontend/src/server/signout/controller.js",
+        "workareas/clones/trade-imports-ins-frontend/src/server/signout/controller.test.js",
+        "workareas/clones/trade-imports-ins-frontend/src/server/common/test-helpers/mock-auth.js"
+      ],
+      "ladder": [
+        "format:check",
+        "lint",
+        "test",
+        "test:fit"
+      ],
+      "status": "todo",
+      "plan": null,
+      "commit": null,
+      "prs": [],
+      "ci": null,
+      "notes": [],
       "openQuestions": []
     }
   ]

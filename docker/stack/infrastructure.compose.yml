@@ -41,11 +41,12 @@ services:
       interval: 5s
       retries: 6
       start_period: 10s
+      # The floci image ships bash but no curl, wget or grep, so the probe uses bash's /dev/tcp.
       test:
         - CMD
-        - curl
-        - '-f'
-        - http://localhost:4566/_floci/health
+        - bash
+        - '-c'
+        - 'exec 3<>/dev/tcp/127.0.0.1/4566 && printf "GET /_floci/health HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3 && read -r status <&3 && [[ "$$status" == *" 200"* ]]'
     # tracked: AC pins to floci/floci:latest — pin to a digest or semver tag once floci publishes stable releases
     image: floci/floci:latest
     ports:

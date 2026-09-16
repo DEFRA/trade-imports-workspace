@@ -165,7 +165,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 
 ## SonarCloud integration
 
-`trade-imports-animals-frontend`, `-admin`, `-backend`, and `-dynamics-gateway` each have a SonarCloud Claude Code integration committed to `.claude/` and `.mcp.json`. This provides:
+`trade-imports-animals-frontend`, `-admin`, `-backend`, `-dynamics-gateway`, `-address-book`, `-reference-data`, `-ins-backend`, and `-ins-frontend` each have a SonarCloud Claude Code integration committed to `.claude/` and `.mcp.json`. This provides:
 
 - **Secrets scanning** — `UserPromptSubmit` and `PreToolUse` hooks block prompts/reads containing API keys or tokens
 - **MCP server** — query SonarCloud issues and rules via the `sonarqube` MCP server

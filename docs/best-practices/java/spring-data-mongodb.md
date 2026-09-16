@@ -673,13 +673,90 @@ Criteria.where("_id").is(new ObjectId("507f1f77bcf86cd799439011"))
 private String id;  // Spring Data handles ObjectId ↔ String conversion
 ```
 
-**4. `LocalDateTime` timezone drift**
+**4. `LocalDateTime` / `LocalDate` timezone drift**
+
+MongoDB has one date type: a UTC instant (BSON `Date`). Every zone-less Java date is therefore
+resolved against `ZoneId.systemDefault()` on the way in, so the stored value depends on the host
+timezone. Under `Europe/London` during BST, `LocalDate 2026-07-21` persists as
+`2026-07-20T23:00:00Z` — an hour and a calendar day early (EUDPA-282).
+
+Use `Instant` for timestamps:
+
 ```java
-// Wrong — LocalDateTime has no timezone, stored as local time
+// Wrong — LocalDateTime has no timezone, stored as start-of-day in the JVM's default zone
 private LocalDateTime createdAt;
 
 // Correct — always use Instant (UTC)
 private Instant createdAt;
+```
+
+For date-only values, pick by whether the wire DTO and the persisted document are the same class.
+
+**(a) Distinct types — convert to `Instant` at the service boundary.** The request type carries
+`LocalDate`, the document carries `Instant`, and the mapper pins the zone explicitly. This is the
+clearer option when you control both types: the persisted type is honest about being an instant.
+
+```java
+// Document field — see AccompanyingDocument.dateOfIssue
+private Instant dateOfIssue;
+
+// Service boundary — see DocumentService
+.dateOfIssue(request.dateOfIssue().atStartOfDay(ZoneOffset.UTC).toInstant())
+```
+
+**(b) One shared class — register a UTC `LocalDate` converter pair.** When a single class serves
+as both the wire DTO and the Mongo document, the field must stay `LocalDate` to keep the JSON
+contract (`"2026-07-21"`), so pin the zone at the persistence boundary instead. Custom conversions
+are checked before Spring Data's built-in JSR-310 converters, and registering the pair covers
+every `LocalDate` field on every document rather than one field at a time.
+
+```java
+@WritingConverter
+public enum LocalDateToDateConverter implements Converter<LocalDate, Date> {
+    INSTANCE;
+
+    @Override
+    public Date convert(LocalDate source) {
+        return Date.from(source.atStartOfDay(ZoneOffset.UTC).toInstant());
+    }
+}
+
+// Register in MongoConfig — see UtcLocalDateConverters for the pair
+@Bean
+MongoCustomConversions mongoCustomConversions() {
+    return new MongoCustomConversions(List.of(
+        UtcLocalDateConverters.LocalDateToDateConverter.INSTANCE,
+        UtcLocalDateConverters.DateToLocalDateConverter.INSTANCE));
+}
+```
+
+**Don't reach for `ZonedDateTime` here.** It looks like the zone-safe choice, but Mongo has no
+zone-aware date type: a `ZonedDateTime` field still serialises to a plain BSON `Date` with the
+zone id discarded, and reads back through `ZoneId.systemDefault()` unless it *also* gets a custom
+UTC converter. It relocates this bug rather than fixing it. `Instant` is already unambiguously
+UTC and needs no converter, which is why it is this codebase's convention for persisted
+timestamps.
+
+**Harden the JVM's default zone as well, not instead.** Set `TZ=UTC` on each runtime Docker stage
+and `TimeZone.setDefault(TimeZone.getTimeZone("UTC"))` in a static initializer on the
+`@SpringBootApplication` class (a static initializer, so `@SpringBootTest` contexts get it too —
+they never call `main()`). That gives every zone-less API in the process a safe default, including
+code that has not had this scrutiny. It is a complement to (a)/(b), never a substitute: only the
+code-level conversion still holds when the env var is missing or the service runs outside its
+container.
+
+**Verify with a raw BSON read.** A repository round trip decodes with the same zone it encoded
+with, so the drift cancels out and the test passes either way. Assert on the stored value itself:
+
+```java
+Document stored = mongoTemplate.getCollection("notification")
+    .find(new Document("referenceNumber", referenceNumber))
+    .first();
+
+assertThat(stored.get("notification", Document.class)
+    .get("transport", Document.class)
+    .get("arrivalDate", Date.class)
+    .toInstant()).hasToString("2026-07-21T00:00:00Z");
 ```
 
 **5. Unbounded `findAll()` in production**

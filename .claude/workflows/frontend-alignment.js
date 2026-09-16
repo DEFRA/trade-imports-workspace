@@ -6,6 +6,7 @@ export const meta = {
     'Running or resuming the stage backlog under workareas/shared/frontend-alignment/stages.json, including the ruling stages appended as Sam answers the report\'s open questions. One invocation drains every stage still todo, serially, in file order, re-reading the backlog after each so stages appended mid-run are picked up, and stops at the first red so nothing is built on a broken stage.',
   phases: [
     { title: 'Baseline', model: 'haiku' },
+    { title: 'Sync', model: 'sonnet' },
     { title: 'Plan', model: 'opus' },
     { title: 'Implement', model: 'sonnet' },
     { title: 'Review' },
@@ -183,6 +184,31 @@ const BASELINE_SCHEMA = {
     },
     branch: { type: 'string' },
     problems: { type: 'array', items: { type: 'string' } },
+    summary: { type: 'string' },
+  },
+  additionalProperties: false,
+}
+
+const SYNC_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'Every repo is level with main, or was cleanly merged, laddered green and pushed' },
+    merged: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'state'],
+        properties: {
+          repo: { type: 'string' },
+          state: { type: 'string', description: 'level | merged' },
+          sha: { type: 'string' },
+          took: { type: 'array', items: { type: 'string' }, description: 'The main commits taken, one line each' },
+        },
+        additionalProperties: false,
+      },
+    },
+    conflicts: { type: 'array', items: { type: 'string' }, description: 'One line per repo that needs a judged port: the repo, then every conflicting path' },
     summary: { type: 'string' },
   },
   additionalProperties: false,
@@ -512,8 +538,8 @@ ${PATH_RULE}
    "e2e-retry" in file order, ciRetry = the ones whose status is "ci-retry" (landed and pushed; a human read their
    red or missing CI, fixed what needed fixing, and set the status so the run resumes at the CI watch), and
    e2eRetry = the ones whose status is "e2e-retry" (green on their PRs; the run resumes at the local E2E rung).
-   A stage in any other status (ci-red, ladder-red, implement-failed, e2e-red) is a problem — name it in problems
-   and leave it out of todo; the run must not build on it.
+   A stage in any other status (ci-red, ladder-red, implement-failed, e2e-red, sync-blocked) is a problem — name it
+   in problems and leave it out of todo; the run must not build on it.
 Return the structured output only.`,
     watcher({ label: `baseline ${round}`, phase: 'Baseline', schema: BASELINE_SCHEMA })
   )
@@ -571,6 +597,60 @@ Return the structured output only.`,
       }
       continue
     }
+
+    // -----------------------------------------------------------------------
+    // Sync — main moves under a long-lived branch, and GitHub runs no checks
+    // at all on a pull request that conflicts with its base, so a stage that
+    // starts behind main lands into silence. Take main first, every stage.
+    // -----------------------------------------------------------------------
+    phase('Sync')
+
+    const sync = await agent(
+      `You are the SYNC step for stage ${id}. Bring every repo this stage touches level with its \`main\` before the
+stage is planned, so the branch never lands into a conflicting pull request. You change no source file of your own.
+${GUARDRAILS}
+${PUSH_RULE}
+${COMMIT_TRAILER}
+${readStage(id)}
+WHY: GitHub creates no pull_request workflow runs at all for a PR whose merge with its base conflicts. Three stages
+have already landed into that silence and been read as an API failure. Merging main first is the fix.
+For EACH repo the stage names, and the workspace repo:
+1. \`git -C ${ROOT_TILDE}/<repoPath> fetch origin\`, then \`git -C ${ROOT_TILDE}/<repoPath> log --oneline HEAD..origin/main\`.
+   Nothing printed: the repo is level, record "level" and move on.
+2. Commits printed: try the merge. \`git -C ${ROOT_TILDE}/<repoPath> merge-tree --write-tree --name-only HEAD origin/main\`
+   first — it names any conflicting path without touching the tree.
+   - NO conflicts: write the message with the Write tool to ${WORKAREA}/logs/${id}-sync-<repo>.txt (subject
+     \`chore(alignment): merge main into the alignment branch (<repo>)\`, a body naming the main commits taken, then
+     the trailer) and run \`git -C <repo> merge --no-ff origin/main -F ${WORKAREA_TILDE}/logs/${id}-sync-<repo>.txt\`.
+     Then run the stage's ladder scripts in that repo, each to ${LOGS_TILDE}/${id}-sync-<repo>-<script>.log, read
+     once. All green: push with the refspec form and record the merge SHA. Any red: \`git -C <repo> merge --abort\`,
+     record the repo and what went red in conflicts[], and return ok:false.
+   - Conflicts: do NOT attempt them. A conflict here means main changed something this programme also changed, and
+     resolving it is a judged port, not a merge. Record the repo and every conflicting path in conflicts[] and
+     return ok:false so a human ports it.
+3. The workspace repo (${WS_TILDE}) has no ladder; a clean merge there just commits and pushes.
+Return ok:true only when every repo is level or cleanly merged, ladder green, and pushed.
+Return the structured output only.`,
+      doer({ label: `${id} sync`, phase: 'Sync', schema: SYNC_SCHEMA })
+    )
+
+    if (!sync || !sync.ok) {
+      const detail = sync ? (sync.conflicts ?? []).join(' | ') || sync.summary : 'sync agent died'
+      log(`${id}: SYNC BLOCKED — ${detail}`)
+      await agent(
+        `Stage ${id} could not start: a repo it touches is behind \`main\` and the merge needs a judged port, or its
+ladder went red after the merge. ${detail}
+${GUARDRAILS}
+Edit ${STAGES}: set this stage's status to "sync-blocked" and append the detail to its notes, naming each repo and
+each conflicting path. \`jq empty ${STAGES_TILDE}\`.
+Return the structured output only.`,
+        watcher({ label: `${id} record sync-blocked`, phase: 'Sync', schema: STAGE_SCHEMA })
+      )
+      results.push({ id, outcome: 'sync-blocked', detail })
+      halted = true
+      break
+    }
+    log(`${id}: in sync with main — ${sync.summary}`)
 
     // -----------------------------------------------------------------------
     // A stage marked e2e-retry has already landed and passed its own CI; a

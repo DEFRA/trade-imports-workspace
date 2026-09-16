@@ -47,6 +47,16 @@ instead, which is how the first two ruling stages ran while the `repos/` checkou
 on other work. Skills, docs and the helper scripts are always read from the root, because
 the permission allowlist names `tools/**` at the root path only.
 
+**Main moves under the branch.** Every stage now opens with a **sync** step, because
+GitHub runs no checks at all on a pull request that conflicts with its base: a stage that
+starts behind `main` lands into silence, which reads as an API failure rather than a
+merge problem. Sync fetches each repo the stage touches, merges `origin/main` when the
+merge is clean, runs the stage's ladder on the result and pushes. A conflict is not
+attempted: main changed something the programme also changed, so resolving it is a judged
+port. The stage is marked `sync-blocked`, naming every conflicting path, and the run stops
+for a human. Two other resume statuses exist for the same reason: `ci-retry` picks a
+landed stage up at its CI watch, `e2e-retry` at its local end-to-end run.
+
 **End to end.** `FALLBACK.localE2E: true` adds the proper end-to-end run after a stage's
 own CI is green: Sonnet starts the stack from the checkouts with `tim docker dev`, runs
 the tests repo's `npm run test:docker-compose` (once more on a red, because a fresh

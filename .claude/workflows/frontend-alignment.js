@@ -614,7 +614,8 @@ ${COMMIT_TRAILER}
 ${readStage(id)}
 WHY: GitHub creates no pull_request workflow runs at all for a PR whose merge with its base conflicts. Three stages
 have already landed into that silence and been read as an API failure. Merging main first is the fix.
-For EACH repo the stage names, and the workspace repo:
+WHICH REPOS: every repo the stage names, PLUS the workspace repo, PLUS${LOCAL_E2E ? ' the tests repo (key "tests"), because the end-to-end rung runs its suite against the stack whether or not the stage names it: a tests checkout behind main asserts against a service the stack no longer has,' : ''} any repo in the header whose service the stack builds. A repo the stage does not name is still merged and pushed here; it just gets no other work.
+For EACH of those repos:
 1. \`git -C ${ROOT_TILDE}/<repoPath> fetch origin\`, then \`git -C ${ROOT_TILDE}/<repoPath> log --oneline HEAD..origin/main\`.
    Nothing printed: the repo is level, record "level" and move on.
 2. Commits printed: try the merge. \`git -C ${ROOT_TILDE}/<repoPath> merge-tree --write-tree --name-only HEAD origin/main\`

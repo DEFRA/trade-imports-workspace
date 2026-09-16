@@ -35,7 +35,7 @@
       "pr": false
     }
   },
-  "checkouts": "Stages s01 to s14 ran against each repo's `path` (the checkouts under repos/). Stages from s15 on run against `clonePath` (the clones under workareas/clones/, all on the programme branch) so Sam's live checkouts are never switched. The workflow's FALLBACK.checkouts selects which field the agents use.",
+  "checkouts": "Stages s01 to s14 ran against `path` with the repos/ checkouts on the branch; s15 and s16 ran against `clonePath` (the clones under workareas/clones/) while those checkouts carried other work. From s17 on, by Sam's ruling on 16 September 2026, the checkouts under repos/ are the programme's working checkouts again, all on the branch, and the workflow's FALLBACK.checkouts is 'root'. The clones are retired.",
   "workspacePr": {
     "number": 47,
     "url": "https://github.com/DEFRA/trade-imports-workspace/pull/47",
@@ -851,6 +851,11 @@
         "state": "green",
         "failures": []
       },
+      "e2e": {
+        "state": "green",
+        "failures": [],
+        "note": "The watcher passed the repo key as the GitHub slug and could not read the checks; fetched by the parent on 16 September: run 35078331561 on 4d91131, three E2E shards, merge-reports and deploy-report all green."
+      },
       "notes": [
         "planner, 16 September: ins main not moved — origin/main 2c96cbcc is already an ancestor of branch HEAD da05f1f (git log HEAD..origin/main empty after fetch). plants main not moved — origin/main b6ac0e39 is already an ancestor of branch HEAD cf01b98a. The implementor re-runs fetch and log at implement time and records its own line for each.",
         "planner, 16 September: animals has ten main commits (0033bcf6..38d4cf59, 62 files) and tests has five (10c4379..864e246, 18 files). git merge-tree --write-tree HEAD origin/main printed only a tree OID in both clones — no CONFLICT — and the file sets are disjoint: none of the 16 files the animals alignment changed since the merge base (src/auth, src/config, src/plugins, src/server/auth, src/server/app/{auth,shared,copy-convention.test.js}) is among main's 62; the one tests file the alignment changed (tests/security/ins/address-book.spec.ts) is not among main's 18. The only chassis files main touched are animals src/server/common/constants/status-codes.js (+serviceUnavailable: 503) and src/server/common/helpers/errors.test.js (+a 503 page test), both in fb3615e3; everything else is journey, app-services or test code. Neither main brings a package.json or lockfile change, so no install follows the merge.",
@@ -883,33 +888,33 @@
       ],
       "brief": "Questions 2, 3, 4, 6, 7, 8, 9, 10, 11 and 24, the stub sign-in shape from 'Decisions you may want to reverse', and the s12 open question on the redirectTo stub branch are all ruled here and land together as one commit per repo. Direction per item, each carrying the tests the reference side has. (Q2) animals and plants take ins's src/auth/verify-token.js, checking aud and iss as well as the signature, and its test. (Q3) ins takes the journeys' src/auth/get-sign-out-url.js, sending post_logout_redirect_uri, and its test. (Q4) ins's signinOidc logs { crn: profile.crn }, not the profile. (Q6) ins takes the journeys' two lines: 'https://placeholder' in src/auth/get-safe-redirect.js and 'new TypeError' in the strict-boolean format in src/config/config.js. (Q7) the strict-boolean convict format covers every env-backed boolean in all three config.js files (auth.enabled, session.cookie.secure, redis.useTLS, isSecureContextEnabled, stubMode and any other the planner finds), with config.test.js pinning in all three that a typo is refused rather than coerced. (Q9) animals and plants take ins's src/server/router.js gate: when auth.enabled is on, every route except health requires the session strategy; the journeys' own plugin registrations move inside the gate. (Q10) animals and plants set kit.routeOptions to { auth: 'session' } as ins does, pinned by a routes.test.js in the shape of ins's, so every feature route declares its strategy explicitly. (Q11) ins takes the journeys' src/config/nunjucks/context/context.js session read, awaiting the session cache on every render instead of the synchronous read; ins keeps dashboardUrl, addressBookUrl and crumb, the journeys keep staleActionRejected, and the shared part is byte-equal. (Stub sign-in) one shape in all three: the journeys' handler registered behind both /auth/sign-in and /auth/stub-sign-in (SIGN_IN_PATHS), setting contactId and currentRelationshipId on the session; ins's per-process random signing secret in all three, no committed key; src/plugins/auth.js with an unconditional encoded redirectTo to /auth/sign-in and no stub-mode branch; the mode.js and mode.test.js comments rewritten in all three to say that stub mode hands a session to any unauthenticated caller with no identity provider involved; in stub mode a sign-out drops the session and lands on '/' in all three. (Q8) one sign-out URL: /auth/sign-out in all three layouts, working in both modes; ins's src/server/signout/ plugin and its /signout route are removed, so ins's public URL list loses /signout (declare it in behaviourChanges; the report refresh updates the invariant). In the tests repo, page-objects/auth/sign-out-page.ts, page-objects/factory.ts and page-objects/base/base-page.ts become the single sign-out page object at /auth/sign-out and every spec that used /signout follows; its ladder is typecheck, lint and format:check, never its test script. (Q24) test helpers consolidated: ins's src/server/common/test-helpers/mock-auth.js splits into mock-auth-config.js and mock-oidc-config.js as the journeys have; ins's sessionAuth() joins the journeys' helpers; every controller test in the three repos uses the same helpers with the same shape. End state, proven with diff -rq and quoted in notes: src/auth/ (every file and test), src/plugins/auth.js and its test, src/server/auth/ (controller, stub-sign-in and tests), src/server/router.js, src/server/common/services/mode.js and its test, and src/server/common/test-helpers/{mock-auth-config,mock-oidc-config}.js are byte-equal across the three; config.js differs only in service-specific values (port, service name, redirect URLs, key prefix, backend blocks). List every residual line in notes with its reason. The stage runs after the merge stage, so read the merged code, not the report's description of it. Out of scope: real Defra ID integration, countries loading, error-page copy, request logging, the address-book links, feature-folder naming.",
       "reference": [
-        "workareas/clones/trade-imports-ins-frontend/src/auth/verify-token.js",
-        "workareas/clones/trade-imports-ins-frontend/src/auth/verify-token.test.js",
-        "workareas/clones/trade-imports-plants-frontend/src/auth/get-sign-out-url.js",
-        "workareas/clones/trade-imports-plants-frontend/src/auth/get-sign-out-url.test.js",
-        "workareas/clones/trade-imports-plants-frontend/src/auth/get-safe-redirect.js",
-        "workareas/clones/trade-imports-ins-frontend/src/config/config.js",
-        "workareas/clones/trade-imports-plants-frontend/src/config/config.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/router.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/router.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/shared/kit.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/routes.test.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/app/shared/kit.js",
-        "workareas/clones/trade-imports-plants-frontend/src/config/nunjucks/context/context.js",
-        "workareas/clones/trade-imports-ins-frontend/src/config/nunjucks/context/context.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/auth/stub-sign-in.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/auth/stub-sign-in.js",
-        "workareas/clones/trade-imports-plants-frontend/src/plugins/auth.js",
-        "workareas/clones/trade-imports-ins-frontend/src/plugins/auth.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/common/services/mode.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/app/shared/layout.njk",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/shared/layout.njk",
-        "workareas/clones/trade-imports-ins-frontend/src/server/signout",
-        "workareas/clones/trade-imports-plants-frontend/src/server/common/test-helpers",
-        "workareas/clones/trade-imports-ins-frontend/src/server/common/test-helpers/mock-auth.js",
-        "workareas/clones/trade-imports-animals-tests/page-objects/auth/sign-out-page.ts",
-        "workareas/clones/trade-imports-animals-tests/page-objects/factory.ts",
-        "workareas/clones/trade-imports-animals-tests/page-objects/base/base-page.ts"
+        "repos/trade-imports-ins-frontend/src/auth/verify-token.js",
+        "repos/trade-imports-ins-frontend/src/auth/verify-token.test.js",
+        "repos/trade-imports-plants-frontend/src/auth/get-sign-out-url.js",
+        "repos/trade-imports-plants-frontend/src/auth/get-sign-out-url.test.js",
+        "repos/trade-imports-plants-frontend/src/auth/get-safe-redirect.js",
+        "repos/trade-imports-ins-frontend/src/config/config.js",
+        "repos/trade-imports-plants-frontend/src/config/config.js",
+        "repos/trade-imports-ins-frontend/src/server/router.js",
+        "repos/trade-imports-plants-frontend/src/server/router.js",
+        "repos/trade-imports-ins-frontend/src/server/app/shared/kit.js",
+        "repos/trade-imports-ins-frontend/src/server/app/routes.test.js",
+        "repos/trade-imports-plants-frontend/src/server/app/shared/kit.js",
+        "repos/trade-imports-plants-frontend/src/config/nunjucks/context/context.js",
+        "repos/trade-imports-ins-frontend/src/config/nunjucks/context/context.js",
+        "repos/trade-imports-plants-frontend/src/server/auth/stub-sign-in.js",
+        "repos/trade-imports-ins-frontend/src/server/auth/stub-sign-in.js",
+        "repos/trade-imports-plants-frontend/src/plugins/auth.js",
+        "repos/trade-imports-ins-frontend/src/plugins/auth.js",
+        "repos/trade-imports-plants-frontend/src/server/common/services/mode.js",
+        "repos/trade-imports-plants-frontend/src/server/app/shared/layout.njk",
+        "repos/trade-imports-ins-frontend/src/server/app/shared/layout.njk",
+        "repos/trade-imports-ins-frontend/src/server/signout",
+        "repos/trade-imports-plants-frontend/src/server/common/test-helpers",
+        "repos/trade-imports-ins-frontend/src/server/common/test-helpers/mock-auth.js",
+        "repos/trade-imports-animals-tests/page-objects/auth/sign-out-page.ts",
+        "repos/trade-imports-animals-tests/page-objects/factory.ts",
+        "repos/trade-imports-animals-tests/page-objects/base/base-page.ts"
       ],
       "ladder": [
         "format:check",
@@ -937,17 +942,17 @@
       ],
       "brief": "Questions 5, 12, 16, 20, 22 and 25 land together as one commit per repo. (Q5) animals and plants take ins's src/server/common/helpers/logging/request-logger.js ignoreFunc, skipping /public, /health and /favicon.ico, with ins's test. (Q12) animals and plants take ins's src/server/common/helpers/errors.js, reading every error-page message from sharedCopy.errorPage with entries in copy.en.js and copy.cy.js under the machine-draft Welsh header convention, so internationalisation is handled one way in all three; the messages for 400 and 401 become GDS plain English, the same words in all three, chosen by the planner and recorded in decisions; errors.test.js is the same in all three except for service names. Carry what animals main added in EUDPA-575 (the serviceUnavailable status and the 503 error-page test) to the other two. (Q16) animals and plants take ins's requiredEmail in src/server/app/lib/validate/validators.js with its test, so the validate lib is byte-equal in all three. (Q22) joi becomes a declared dependency in all three package.json files at the version each lockfile already resolves, and each lockfile is regenerated through the repo's sanctioned install route with nothing else changing in it; record in notes any lockfile diff beyond the joi entry. (Q25) ins adopts the journeys' names in src/server/common/constants/status-codes.js (redirectFound, payloadTooLarge, serviceUnavailable and the rest) and src/server/common/helpers/pulse.js (shutdownTimeoutMs), every importer following, so both files are byte-equal in all three. (Q20) plants' dead test-helpers/component-helpers.js is deleted with git rm. End state, proven with diff -rq and quoted in notes: src/server/common/ byte-equal across the three except the service-specific test values the report already classes as deliberate; src/server/app/lib/validate/ byte-equal. The stage runs after the auth stage; read the code as it is then. Out of scope: auth, countries loading, tooling and workflows, feature naming.",
       "reference": [
-        "workareas/clones/trade-imports-ins-frontend/src/server/common/helpers/logging/request-logger.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/common/helpers/errors.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/common/helpers/errors.test.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/shared/copy.en.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/shared/copy.cy.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/common/helpers/errors.test.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/lib/validate/validators.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/common/constants/status-codes.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/common/constants/status-codes.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/common/helpers/pulse.js",
-        "workareas/clones/trade-imports-plants-frontend/test-helpers/component-helpers.js"
+        "repos/trade-imports-ins-frontend/src/server/common/helpers/logging/request-logger.js",
+        "repos/trade-imports-ins-frontend/src/server/common/helpers/errors.js",
+        "repos/trade-imports-ins-frontend/src/server/common/helpers/errors.test.js",
+        "repos/trade-imports-ins-frontend/src/server/app/shared/copy.en.js",
+        "repos/trade-imports-ins-frontend/src/server/app/shared/copy.cy.js",
+        "repos/trade-imports-animals-frontend/src/server/common/helpers/errors.test.js",
+        "repos/trade-imports-ins-frontend/src/server/app/lib/validate/validators.js",
+        "repos/trade-imports-plants-frontend/src/server/common/constants/status-codes.js",
+        "repos/trade-imports-animals-frontend/src/server/common/constants/status-codes.js",
+        "repos/trade-imports-plants-frontend/src/server/common/helpers/pulse.js",
+        "repos/trade-imports-plants-frontend/test-helpers/component-helpers.js"
       ],
       "ladder": [
         "format:check",
@@ -973,13 +978,13 @@
       ],
       "brief": "Port animals' src/server/app/services/countries/index.js shape (as merged from main) to plants' countries service and to ins's countries service: every reader awaits an internal ensureLoaded; the first read fetches; later reads short-circuit on a module-scope loaded flag; a failed load leaves the flag false so the next read retries; ensureLoaded rejects with Boom.serverUnavailable, which catchAll renders as the shared error page with a 503; stub mode short-circuits with the seeded stub and no network call. Remove plants' countries.prime() at boot in src/server/app/routes.js as animals did; ins's per-request fetch becomes the same lazy cache. If plants or ins has a ports service or any other reference-data reader, treat it the same way and say so in notes. Tests mirror animals': the run-mode tests (self-load on first read, fetch-once across readers, retry after a failed load, the 503 rejection shape, the stub short-circuit) and the errors.test.js end-to-end 503 page, mocking at the network boundary. Behaviour to declare: a reference-data outage no longer stops plants starting, and only the pages that read countries fail, as a 503; ins stops calling reference data on every request. End state: the countries service byte-equal across the three except for the stub data each seeds. Out of scope: the address-book service, ins-backend, auth.",
       "reference": [
-        "workareas/clones/trade-imports-animals-frontend/src/server/app/services/countries/index.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/app/services/ports/index.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/app/services/run-mode.test.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/common/helpers/errors.test.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/app/routes.js",
-        "workareas/clones/trade-imports-plants-frontend/src/server/app/services/countries",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/services/countries"
+        "repos/trade-imports-animals-frontend/src/server/app/services/countries/index.js",
+        "repos/trade-imports-animals-frontend/src/server/app/services/ports/index.js",
+        "repos/trade-imports-animals-frontend/src/server/app/services/run-mode.test.js",
+        "repos/trade-imports-animals-frontend/src/server/common/helpers/errors.test.js",
+        "repos/trade-imports-animals-frontend/src/server/app/routes.js",
+        "repos/trade-imports-plants-frontend/src/server/app/services/countries",
+        "repos/trade-imports-ins-frontend/src/server/app/services/countries"
       ],
       "ladder": [
         "format:check",
@@ -999,7 +1004,7 @@
       "id": "s20-tooling-convergence",
       "title": "one tooling shape: npm pin, husky, audit level, lint plugins, workflows, housekeeping",
       "question": 17,
-      "ruling": "Sam, 16 September 2026: Q17 and Q18 together. The ins solution was built by someone outside the team and may be the wrong one; it feels overcomplicated and may have worked around a temporary issue. Take a step back: nothing has the right answer yet, so find the one consistent, right, succinct solution, align back with how the journeys do things, and prove it in the ins pipeline. Q21 yes, add the cleanup workflow. Q23 yes, take the plugin. Q26 yes, do the housekeeping.",
+      "ruling": "Sam, 16 September 2026: Q17 and Q18 together. A non-Node developer did these; not convinced the solution was required, so step back, implement a nice succinct minimal solution and make it consistent across them all. Watch the ins pipeline and make sure it all works. Q21 yes, add the cleanup workflow. Q23 yes, take the plugin. Q26 yes, do the housekeeping.",
       "repos": [
         "ins",
         "animals",
@@ -1007,18 +1012,18 @@
       ],
       "brief": "Questions 17, 18, 21, 23 and 26 land together as one commit per repo, with a step back on 17 and 18: neither ins's solution nor the journeys' is assumed right. (Q17 and Q18) Read every consumer of the npm pin before deciding: package.json packageManager in all three, scripts/npm-version.js (present in all three), ins's install:pinned-npm script, each repo's Dockerfile install stages, each repo's .github/workflows/{check-pull-request,publish,publish-branch,publish-hotfix}.yml, .husky/pre-commit, the postinstall and setup:husky scripts, and the security-audit level (critical in ins, high in the journeys). Answer in the plan's decision table: what problem the pin solves (the lockfile format the pinned npm writes against the runner's ambient npm), whether install:pinned-npm adds anything the journeys' documented npx route does not, whether the temporary issue it worked around still exists on the current Node and npm, and what the one simplest shape is. Then make the three identical: the same scripts entries for postinstall, setup:husky, security-audit and any install helper kept or removed; the same .husky/pre-commit; the same npm-version.js, Dockerfile and workflow install steps except for service names and ports; the same README wording for installing. security-audit runs at high in all three; where ins cannot pass at high, apply a non-breaking dependency fix if one exists, otherwise record each finding in notes with the package and why it cannot be fixed, and keep high. (Q21) ins takes animals' .github/workflows/cleanup-e2e-reports.yml with the service name changed. (Q23) ins takes eslint-plugin-sonarjs at the journeys' version and their eslint configuration for it, and the journeys' fit-spec lint globals; fix every finding it raises in ins rather than disabling a rule, and record in notes what it found. (Q26) ins housekeeping: Dockerfile ARG PORT=3002 to match the port the service listens on; publish.yml concurrency block matching the journeys' exactly. The ins pipeline is the proof: the stage is not done until check-pull-request, both publish builds and SonarCloud are green on the ins PR with these changes, and the CI watcher reports it. Ladder in every repo: build:frontend, format:check, lint, test. Out of scope: source under src/ except what a lint finding requires, auth, countries, feature naming.",
       "reference": [
-        "workareas/clones/trade-imports-ins-frontend/package.json",
-        "workareas/clones/trade-imports-animals-frontend/package.json",
-        "workareas/clones/trade-imports-plants-frontend/package.json",
-        "workareas/clones/trade-imports-ins-frontend/scripts/npm-version.js",
-        "workareas/clones/trade-imports-ins-frontend/Dockerfile",
-        "workareas/clones/trade-imports-animals-frontend/Dockerfile",
-        "workareas/clones/trade-imports-ins-frontend/.github/workflows",
-        "workareas/clones/trade-imports-animals-frontend/.github/workflows",
-        "workareas/clones/trade-imports-ins-frontend/.husky/pre-commit",
-        "workareas/clones/trade-imports-animals-frontend/.husky/pre-commit",
-        "workareas/clones/trade-imports-animals-frontend/eslint.config.js",
-        "workareas/clones/trade-imports-ins-frontend/eslint.config.js"
+        "repos/trade-imports-ins-frontend/package.json",
+        "repos/trade-imports-animals-frontend/package.json",
+        "repos/trade-imports-plants-frontend/package.json",
+        "repos/trade-imports-ins-frontend/scripts/npm-version.js",
+        "repos/trade-imports-ins-frontend/Dockerfile",
+        "repos/trade-imports-animals-frontend/Dockerfile",
+        "repos/trade-imports-ins-frontend/.github/workflows",
+        "repos/trade-imports-animals-frontend/.github/workflows",
+        "repos/trade-imports-ins-frontend/.husky/pre-commit",
+        "repos/trade-imports-animals-frontend/.husky/pre-commit",
+        "repos/trade-imports-animals-frontend/eslint.config.js",
+        "repos/trade-imports-ins-frontend/eslint.config.js"
       ],
       "ladder": [
         "build:frontend",
@@ -1047,12 +1052,12 @@
       ],
       "brief": "Questions 14 and 15 land together as one commit per repo. The journeys' shared convention, measured on 16 September: a single-page feature holds controller.js, template.njk, page.js where the journey needs one, controller.test.js and <feature>.fit.spec.js beside them; a multi-page group holds one folder per page named <page>/<page>.controller.js with <page>.controller.test.js, and the group's fit specs under <group>/fit/. They differ in two details, settled by the direction rule (plants is the tidier fork, and ins already matches plants on the first): inside a group plants names the template template.njk while animals names it <page>.njk, so template.njk wins two against one; plants runs the accessibility check in every group spec through one <group>/fit/axe.js helper while animals' group specs (transport, commodities, documents, addresses) run no accessibility check at all, so every group gains fit/axe.js and a check per spec. ins is the odd one out and moves: features/address-book is a multi-page group whose pages become list/list.controller.js, add/add.controller.js, edit/edit.controller.js, view/view.controller.js, delete/delete.controller.js with their tests renamed alongside; features/dashboard is single-page and its fit spec moves beside the controller as dashboard/dashboard.fit.spec.js; address-book/fit/ gains axe.js and its specs drop their per-spec AxeBuilder calls for it. Animals changes only in the two details: group templates renamed to template.njk with every render path following, and fit/axe.js plus a check per group spec. Plants changes nothing. Use git mv so history follows, every import, template path and route registration following, and the Playwright configuration's spec pattern matching both layouts. Each feature folder owns its fit specs and helpers: a helper two features need is duplicated, not shared, because feature folders are independent by design; ins's dashboard fit spec stops importing address-book/fit/address-form.js and gets its own. Prove: every fit spec still runs (test:fit green, with the count before and after in notes), no import crosses a feature boundary (the dependency-cruiser rules and one grep quoted in notes), the URL surface is unchanged. Out of scope: any behaviour, copy, auth or chassis change.",
       "reference": [
-        "workareas/clones/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features",
-        "workareas/clones/trade-imports-plants-frontend/playwright.config.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/features",
-        "workareas/clones/trade-imports-ins-frontend/playwright.config.js",
-        "workareas/clones/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features",
-        "workareas/clones/trade-imports-animals-frontend/playwright.config.js"
+        "repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features",
+        "repos/trade-imports-plants-frontend/playwright.config.js",
+        "repos/trade-imports-ins-frontend/src/server/app/features",
+        "repos/trade-imports-ins-frontend/playwright.config.js",
+        "repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features",
+        "repos/trade-imports-animals-frontend/playwright.config.js"
       ],
       "ladder": [
         "format:check",
@@ -1082,14 +1087,14 @@
       ],
       "brief": "Today animals' and plants' layouts point the Address book navigation item at '#'; ins holds TRADE_IMPORTS_ANIMALS_FRONTEND_URL for the reverse direction. First check what the merged main brought for linking between the frontends and the address book, and build on it rather than beside it. Then: animals and plants get a browser-visible ins URL in src/config/config.js under the same key in both (TRADE_IMPORTS_INS_FRONTEND_URL), and the layout's Address book item points at ins's address book list; ins's dashboard and layout link back to animals with the existing key and to plants with TRADE_IMPORTS_PLANTS_FRONTEND_URL added; every key documented in each repo's README environment table and defaulted so a service starts without it. In the workspace repo, docker/stack/frontend.compose.yml sets the keys on each frontend to the browser-visible localhost origins the stack already uses (3000 animals, 3002 ins, plants' port as the compose file maps it); never edit docker/stack/.staged/. Sign-in across the services is whatever each service does today: in stub mode a click lands on the target's stub sign-in and then the page; in real mode Defra ID's single sign-on. Prove in compose through the tests repo: one E2E spec that starts in animals, follows Address book to ins's list page, and follows the link back, tagged so it runs in the compose suite; the workspace PR's E2E run is the gate, and the tests repo's ladder is typecheck, lint and format:check. If an auth problem stops the round trip, record exactly what happened in notes and leave the links in place. For CDP, record in notes and in the report the exact cdp-app-config entries each environment needs (key, service, value) for Sam to apply by hand, because that repository is not written by agents. Out of scope: sharing a session between services, any change to the address-book API.",
       "reference": [
-        "workareas/clones/trade-imports-ins-frontend/src/config/config.js",
-        "workareas/clones/trade-imports-ins-frontend/src/config/nunjucks/context/context.js",
-        "workareas/clones/trade-imports-ins-frontend/src/server/app/shared/layout.njk",
-        "workareas/clones/trade-imports-animals-frontend/src/server/app/shared/layout.njk",
-        "workareas/clones/trade-imports-plants-frontend/src/server/app/shared/layout.njk",
+        "repos/trade-imports-ins-frontend/src/config/config.js",
+        "repos/trade-imports-ins-frontend/src/config/nunjucks/context/context.js",
+        "repos/trade-imports-ins-frontend/src/server/app/shared/layout.njk",
+        "repos/trade-imports-animals-frontend/src/server/app/shared/layout.njk",
+        "repos/trade-imports-plants-frontend/src/server/app/shared/layout.njk",
         "docker/stack/frontend.compose.yml",
-        "workareas/clones/trade-imports-animals-tests/tests/e2e/features/auth.spec.ts",
-        "workareas/clones/trade-imports-animals-tests/page-objects/factory.ts"
+        "repos/trade-imports-animals-tests/tests/e2e/features/auth.spec.ts",
+        "repos/trade-imports-animals-tests/page-objects/factory.ts"
       ],
       "ladder": [
         "format:check",
@@ -1114,10 +1119,10 @@
       ],
       "brief": "In the workspace repo only. git rm workareas/shared/frontend-alignment/surfaces.json. In report.md remove question 19 and every sentence that proposes the drift command or the manifest (the residual-drift section's closing paragraph and the 'Where everything is' mention), leaving the drift tables themselves as the measurement they are. In HANDOVER.md remove the surfaces.json line. In docs/analysis/frontend-alignment-workflow-run.md reword the 'A CI fix in two repos is a drift in the third' bullet so it records the lesson without proposing the tooling. Record the ruling in notes. No ladder; the workspace has no npm scripts for this. Out of scope: everything else.",
       "reference": [
-        "workareas/clones/trade-imports-workspace/workareas/shared/frontend-alignment/surfaces.json",
-        "workareas/clones/trade-imports-workspace/workareas/shared/frontend-alignment/report.md",
-        "workareas/clones/trade-imports-workspace/workareas/shared/frontend-alignment/HANDOVER.md",
-        "workareas/clones/trade-imports-workspace/docs/analysis/frontend-alignment-workflow-run.md"
+        "workareas/shared/frontend-alignment/surfaces.json",
+        "workareas/shared/frontend-alignment/report.md",
+        "workareas/shared/frontend-alignment/HANDOVER.md",
+        "docs/analysis/frontend-alignment-workflow-run.md"
       ],
       "ladder": [],
       "status": "todo",

@@ -40,12 +40,21 @@ and the report on the workspace repo and pushes) and **E2E** (Haiku watches the 
 PR, whose push re-runs the cross-repo suite on the branch-tagged images; a red is fixed in
 the stage's repos, re-proven on their PRs, then the workspace is pushed again).
 
-**Checkouts.** `FALLBACK.checkouts` is `'clones'`: the agents work in the clones under
-`workareas/clones/` named by each repo's `clonePath` in the header, so the checkouts
-under `repos/` are never switched. `'root'` is how stages s01 to s14 ran. Skills, docs
-and the helper scripts are always read from the root, because the permission allowlist
-names `tools/**` at the root path only. `FALLBACK.workspacePr` names the workspace PR to
-watch; `null` skips the E2E gate.
+**Checkouts.** `FALLBACK.checkouts` is `'root'`: the agents work in the workspace root
+and the checkouts under `repos/`, named by each repo's `path` in the header, all on the
+programme branch. `'clones'` uses the clones under `workareas/clones/` (`clonePath`)
+instead, which is how the first two ruling stages ran while the `repos/` checkouts were
+on other work. Skills, docs and the helper scripts are always read from the root, because
+the permission allowlist names `tools/**` at the root path only.
+
+**End to end.** `FALLBACK.localE2E: true` adds the proper end-to-end run after a stage's
+own CI is green: Sonnet starts the stack from the checkouts with `tim docker dev`, runs
+the tests repo's `npm run test:docker-compose` (once more on a red, because a fresh
+stack throws transient 500s), reads `test-results/*/error-context.md` for what failed,
+and always stops the stack; a red is fixed in the stage's repos, re-proven on their PRs
+and re-run, twice at most. `FALLBACK.workspacePr` names the workspace PR to watch after
+the record push, which re-runs the same suite in CI on the branch-tagged images; `null`
+skips that gate.
 
 Point the tool at the file: `Workflow({ scriptPath: ".claude/workflows/frontend-alignment.js" })`.
 Edit `FALLBACK.stages` to run a subset.

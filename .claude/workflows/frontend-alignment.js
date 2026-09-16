@@ -31,6 +31,10 @@ export const meta = {
 //                          (how stages s01 to s14 ran)
 //                'clones' — the clones under workareas/clones/, so Sam's live
 //                          checkouts are never switched (stages s15 on)
+//   localE2E     true runs the tests repo's compose suite against the local
+//                stack built from the checkouts (tim docker dev) after a
+//                stage's own CI is green, before the state is recorded; the
+//                proper end-to-end run, with a fixer that can reproduce a red
 //   workspacePr  the workspace repo's open PR, watched after every record push
 //                because its E2E job runs the whole stack on the branch-tagged
 //                images; null to skip that gate
@@ -41,7 +45,8 @@ export const meta = {
 const FALLBACK = {
   workarea: 'shared/frontend-alignment',
   stages: null,
-  checkouts: 'clones',
+  checkouts: 'root',
+  localE2E: true,
   workspacePr: {
     repo: 'workspace',
     slug: 'trade-imports-workspace',
@@ -55,6 +60,7 @@ const WORKAREA_REL = String(CFG.workarea).replace(/^\/+|\/+$/g, '')
 const CLONES = CFG.checkouts === 'clones'
 const PATH_FIELD = CLONES ? 'clonePath' : 'path'
 const WORKSPACE_PR = CFG.workspacePr && CFG.workspacePr.number ? CFG.workspacePr : null
+const LOCAL_E2E = CFG.localE2E === true
 
 // The canonical clone location is fixed by CLAUDE.md rule 1. Two spellings of
 // the same directory: TILDE for Bash (the guard hook denies /Users paths),
@@ -354,7 +360,8 @@ const CI_SCHEMA = {
 
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
-const prList = (prs) => prs.map((p) => `- ${p.repo}: ${p.url}`).join('\n')
+const slugOf = (url) => String(url).split('/').slice(3, 5).join('/')
+const prList = (prs) => prs.map((p) => `- ${p.repo}: ${p.url} (GitHub slug: ${slugOf(p.url)}, number: ${p.number ?? String(p.url).split('/').pop()})`).join('\n')
 
 const ciFixAttempts = 2
 
@@ -370,7 +377,8 @@ did. You change no code.
 ${GUARDRAILS}
 THE PULL REQUESTS:
 ${prList(prs)}
-For EACH pr (the GitHub slug is the repository name in the URL, without DEFRA/):
+For EACH pr, using EXACTLY the GitHub slug and number written beside it above (never the repo key — "workspace" is
+a key, "DEFRA/trade-imports-workspace" is the slug):
 1. Read the watch budget: \`jq -r '.ciWatchSeconds' ${STAGES_TILDE}\`.
 2. ONE Bash call with the tool's \`timeout\` parameter set to 600000:
    \`${TOOLS_TILDE}/github-actions/wait-for-pr-checks.sh <slug> <number> <ciWatchSeconds> > ${LOGS_TILDE}/${id}-${field}-<repo>.log 2>&1\`
@@ -389,7 +397,7 @@ For EACH pr (the GitHub slug is the repository name in the URL, without DEFRA/):
 5. Record the outcome: Edit ${STAGES} so this stage's \`${field}\` holds {"state": "green"|"red"|"unresolved", "failures": [...]}.
 blocked is ONLY for something no code fix can address. green:true ONLY if EVERY pr resolved green.
 Return the structured output only.`,
-    watcher({ label, phase: field === 'e2e' ? 'E2E' : 'CI', schema: CI_SCHEMA })
+    watcher({ label, phase: field === 'ci' ? 'CI' : 'E2E', schema: CI_SCHEMA })
   )
 
 const fixRed = (id, prs, ci, field, attempt, extra) =>
@@ -417,7 +425,7 @@ TASK:
    trailer, push with the refspec form.
 5. If the failure needs work outside this stage's scope, report ok:false saying exactly that.
 Return the structured output only.`,
-    doer({ label: `${id} ${field} fix ${attempt}`, phase: field === 'e2e' ? 'E2E' : 'CI', schema: STAGE_SCHEMA })
+    doer({ label: `${id} ${field} fix ${attempt}`, phase: field === 'ci' ? 'CI' : 'E2E', schema: STAGE_SCHEMA })
   )
 
 const recordState = (id, subject, allowEmpty) =>
@@ -479,9 +487,10 @@ ${PATH_RULE}
    must print the programme branch, and \`git -C ${ROOT_TILDE}/<${PATH_FIELD}> status --short\` must print nothing. A repo
    on another branch or with a dirty tree is a problem — name it. Do not fix it.
    The workspace repo (${WS_TILDE}) counts as touched by every run because stages.json and plans/ are written
-   there. Two exemptions for it and it alone: untracked files under workareas/${WORKAREA_REL}/logs/ are scratch,
-   and a modified workareas/${WORKAREA_REL}/stages.json, report.md or plans/ file is the programme's own state
-   that the record step commits; neither is a problem.
+   there. Two exemptions for it and it alone: untracked files anywhere in it (Sam's other workareas, scratch under
+   logs/) are not a problem, and a modified workareas/${WORKAREA_REL}/stages.json, report.md or plans/ file is
+   the programme's own state that the record step commits. Only a modified TRACKED file outside those is a
+   problem there.
 4. Report done = every stage whose status is "done", todo = every stage whose status is "todo" in file order.
    A stage in any other status (ci-red, ladder-red, implement-failed, e2e-red) is a problem — name it in problems
    and leave it out of todo; the run must not build on it.
@@ -995,8 +1004,90 @@ Return the structured output only.`,
       log(`${id}: no PR-enabled repo touched — no repo CI to watch`)
     }
 
+    // -----------------------------------------------------------------------
+    // Local E2E — the proper end-to-end run: the tests repo's compose suite
+    // against the stack built from the checkouts. Sonnet runs and diagnoses,
+    // Sonnet fixes in the stage's repos, bounded like CI.
+    // -----------------------------------------------------------------------
+    if (LOCAL_E2E) {
+      phase('E2E')
+      const runLocalE2E = (run) =>
+        agent(
+          `You are the LOCAL E2E RUNNER for stage ${id}, run ${run}. The stage's own CI is green; now prove it end to
+end on the local stack, built from the checkouts, with the tests repo's compose suite. You change no code.
+${GUARDRAILS}
+${PATH_RULE}
+STEPS, each ONE Bash call, output to a log under ${LOGS_TILDE}/ that you read once:
+1. Start the stack from local source: \`tim docker dev > ${LOGS_TILDE}/${id}-stack-up-${run}.log 2>&1\` with the
+   tool's timeout parameter at 600000. It builds the repo-backed services from the checkouts under repos/ and
+   waits for health. If the Bash call times out before the script returns, run the same command again (it is
+   idempotent), at most three calls in all, reading the log each time. A stack that will not come healthy is a
+   stop: put the reason in blocked, then go to step 4.
+2. Run the suite: \`npm --prefix ${ROOT_TILDE}/repos/trade-imports-animals-tests run test:docker-compose > ${LOGS_TILDE}/${id}-e2e-local-${run}.log 2>&1\`
+   with the timeout parameter at 600000. Read the log once. A fresh stack throws transient 500s that recover on
+   retry, so if specs failed run the suite ONCE more to \`${LOGS_TILDE}/${id}-e2e-local-${run}-retry.log\` and
+   judge on that run; a spec red in both runs is red. For each red spec read
+   \`${ROOT_TILDE}/repos/trade-imports-animals-tests/test-results/*/error-context.md\` (find them with \`find\`)
+   and put one line per failing spec in failures[]: spec file, test title, the assertion or error, and whether the
+   page it hit belongs to a repo this stage changed.
+3. Record: Edit ${STAGES} so this stage's \`localE2e\` holds {"state": "green"|"red", "failures": [...], "run": ${run}}.
+   \`jq empty ${STAGES_TILDE}\`.
+4. ALWAYS, last, whatever happened above: \`tim docker down > ${LOGS_TILDE}/${id}-stack-down-${run}.log 2>&1\`.
+   The next ladder binds the ports the stack holds, so a stack left up breaks the next stage.
+green:true ONLY if the suite passed on the run you judged. blocked is ONLY for a stack that would not start.
+Return the structured output only.`,
+          doer({ label: `${id} local e2e ${run}`, phase: 'E2E', schema: CI_SCHEMA })
+        )
+
+      let local = await runLocalE2E(1)
+      let localAttempt = 0
+      while ((!local || !local.green) && !hardStop(local) && localAttempt < ciFixAttempts) {
+        localAttempt += 1
+        log(`${id}: LOCAL E2E RED — fix attempt ${localAttempt} of ${ciFixAttempts}`)
+        await fixRed(
+          id,
+          prs,
+          local,
+          'localE2e',
+          localAttempt,
+          `THIS RED IS THE LOCAL E2E SUITE: the tests repo's compose suite run against the stack built from the
+checkouts under repos/. The runner's logs are ${LOGS_TILDE}/${id}-e2e-local-*.log and the failing specs' evidence is
+under ${ROOT_TILDE}/repos/trade-imports-animals-tests/test-results/. The stack is DOWN now; do not start it. Decide
+first whether the failure is caused by THIS stage's change (a page, URL, copy string or redirect the tests repo
+asserts) or is unrelated. A flake that survived a retry is still a flake if the evidence says a transient 500 or a
+seed race: report ok:true with summary "flake: <what the run showed>" and no commit. A real failure is fixed in THIS
+stage's repos, and in the tests repo only when the stage names it.`
+        )
+        if (prs.length) {
+          const again = await watchPrs(id, prs, 'ci', `${id} ci watch after local e2e fix ${localAttempt}`)
+          if (!again || !again.green) {
+            local = again
+            break
+          }
+        }
+        local = await runLocalE2E(localAttempt + 1)
+      }
+
+      if (!local || !local.green) {
+        const detail = local ? [local.blocked, ...(local.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'local e2e runner died'
+        log(`${id}: LOCAL E2E STILL RED after ${localAttempt} fix attempt(s) — stopping. ${detail}`)
+        await agent(
+          `Stage ${id} landed green on its own PR but the local E2E suite is red after ${localAttempt} fix attempt(s): ${detail}. Record it.
+${GUARDRAILS}
+Edit ${STAGES}: set this stage's status to "e2e-red" and append the failure detail to its notes. \`jq empty ${STAGES_TILDE}\`.
+Return the structured output only.`,
+          watcher({ label: `${id} record e2e-red`, phase: 'E2E', schema: STAGE_SCHEMA })
+        )
+        await recordState(id, `docs(alignment): record ${id} — local e2e red`, false)
+        results.push({ id, outcome: 'e2e-red', detail, prs: prs.map((p) => p.url) })
+        halted = true
+        break
+      }
+      log(`${id}: local E2E green`)
+    }
+
     await agent(
-      `Stage ${id} is green in CI. Record it.
+      `Stage ${id} is green in CI${LOCAL_E2E ? ' and on the local E2E suite' : ''}. Record it.
 ${GUARDRAILS}
 Edit ${STAGES}: set this stage's status to "done". \`jq empty ${STAGES_TILDE}\`.
 Return the structured output only.`,

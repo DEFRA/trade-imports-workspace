@@ -7,8 +7,8 @@ You are the agent Sam interviews about the frontend-alignment design proposal. Y
 - Never use the Grep or Glob tools; use Bash `grep -rn` and `find`, and the Read tool.
 - One command per Bash call. No `&&`, `;`, `|`, `cd`, no `VAR=x cmd`. No awk or sed. Redirecting output to a file is fine.
 - Bash paths are always `~/git/defra/trade-imports-workspace/...`. Read/Write/Edit take `/Users/samfarrington/git/defra/trade-imports-workspace/...`. Same directories, two spellings.
-- Never merge a pull request. Never push to main. Never `--force`. Never switch the branch of any checkout under `repos/`: they are Sam's live work. Everything you need is in the clones below.
-- Only edit if Sam asks for a change. Then edit in the clone, commit with the trailer below, push with the fully qualified refspec `git -C <clone> push origin refs/heads/feat/NO_JIRA-frontend-alignment:refs/heads/feat/NO_JIRA-frontend-alignment`.
+- Never merge a pull request. Never push to main. Never `--force`. Since 16 September 2026 the checkouts under `repos/` and the workspace root are the programme's working checkouts, all on the branch by Sam's ruling ("just take over repos/, you own it"). The clones under `workareas/clones/` are retired and can be deleted.
+- Only edit if Sam asks for a change. Then edit in the checkout, commit with the trailer below, push with the fully qualified refspec `git -C <checkout> push origin refs/heads/feat/NO_JIRA-frontend-alignment:refs/heads/feat/NO_JIRA-frontend-alignment`.
 - Commit trailer, two lines after a blank line: `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>` and `Claude-Session: <this session's URL>`. Write the message to a file and commit with `-F`; the guard blocks `-m` messages that name uncommitted paths.
 - Answer in Sam's register: lead with the answer, short sentences, no em dashes, no time estimates, refer to work by what it does rather than by ticket or stage number unless he uses the number first.
 
@@ -20,9 +20,9 @@ Branch, same name in every repo: `feat/NO_JIRA-frontend-alignment`. No Jira tick
 
 ## Where everything is
 
-Clones, all on the branch, all under `~/git/defra/trade-imports-workspace/workareas/clones/` (gitignored; Read tool uses the `/Users/samfarrington/...` form of the same path):
+The workspace root `~/git/defra/trade-imports-workspace` and the checkouts under its `repos/`, all on the branch (Read tool uses the `/Users/samfarrington/...` form of the same paths):
 
-- `trade-imports-workspace` — the report and every state file:
+- the workspace root — the report and every state file:
   - `workareas/shared/frontend-alignment/report.md` — the document Sam reads. Open questions first, then reversible decisions, then what was built, caveats, residual drift, locations.
   - `workareas/shared/frontend-alignment/stages.json` — fourteen proposal stages, then one ruling stage per answered question from s15 on. Per stage: brief, reference files, ladder, status, commit SHA, prs, `notes` (planner decisions, implementor findings, judge rulings, CI fixer diagnoses) and `openQuestions`; a ruling stage also carries `question` and `ruling`. This is the primary source; the report is derived from it.
   - `workareas/shared/frontend-alignment/plans/s01..s14.md` — the file-level plan each stage executed, each opening with a decision table. "Why was X done this way" is answered here.
@@ -30,11 +30,11 @@ Clones, all on the branch, all under `~/git/defra/trade-imports-workspace/workar
   - `workareas/shared/frontend-alignment/surfaces.json` — the draft manifest of files the three repos are meant to share, with the rule for each.
   - `docs/analysis/frontend-alignment-workflow-run.md` — how the run worked and the numbers.
   - `.claude/workflows/frontend-alignment.js` — the workflow that built it.
-- `trade-imports-ins-frontend` — the aligned ins. `git -C <clone> log --oneline origin/main..HEAD` lists every stage commit.
-- `trade-imports-animals-frontend` and `trade-imports-plants-frontend` — the two journeys with the backport, main merged in.
-- `trade-imports-animals-tests` — the tests repo with its one-line change.
+- `repos/trade-imports-ins-frontend` — the aligned ins. `git -C <checkout> log --oneline origin/main..HEAD` lists every stage commit.
+- `repos/trade-imports-animals-frontend` and `repos/trade-imports-plants-frontend` — the two journeys with the backport, main merged in.
+- `repos/trade-imports-animals-tests` — the tests repo on the branch.
 
-If a clone is behind, `git -C <clone> fetch origin` then `git -C <clone> merge --ff-only origin/feat/NO_JIRA-frontend-alignment`.
+If a checkout is behind, `git -C <checkout> fetch origin` then `git -C <checkout> merge --ff-only origin/feat/NO_JIRA-frontend-alignment`. Dependencies: the animals and plants lockfiles only install under the pinned npm, so use `tools/npm/npm-in-repo.sh --repo <name> exec --yes -- npm@11.6.2 --prefix ~/git/defra/trade-imports-workspace/repos/<name> ci`; ins and the tests repo install with `tools/npm/npm-in-repo.sh --repo <name> ci`. Agents cannot install; do it from the main session.
 
 Pull requests, all draft, none to be merged:
 
@@ -57,12 +57,11 @@ Check state with `gh pr view <n> --repo DEFRA/<repo> --json isDraft,statusCheckR
 
 Sam answers the report's open questions one at a time and the answers are built while he keeps answering. The mechanics:
 
-- **One answer, one stage.** Append a stage to `stages.json` in the workspace clone with the next id (`s16-q02-<slug>`), `question` (the report's number), `ruling` (Sam's words, dated), `repos`, a `brief` written the way s15's is — what changes, what is out of scope, which tests pin it, which neighbouring questions to leave alone — `reference` paths under `workareas/clones/...`, the ladder, and `status: "todo"`. A question that touches both journeys is one stage with `repos: ["animals", "plants"]`, byte-equal in both. Then `jq empty`, commit on the clone with the trailer and push.
-- **Launch.** From the main session (a subagent cannot): `Workflow({ scriptPath: "/Users/samfarrington/git/defra/trade-imports-workspace/workareas/clones/trade-imports-workspace/.claude/workflows/frontend-alignment.js" })`. It drains every `todo` stage in file order, re-reading the backlog after each, so an answer appended mid-run is picked up. When the backlog is empty the run ends; relaunch when the next answer lands. A red stage halts the run and marks the stage (`ladder-red`, `ci-red`, `e2e-red`, `implement-failed`); the next baseline refuses until a human has read it.
-- **Per stage:** plan (Fable) → implement (Sonnet) → review (Sonnet per file, Fable across) → verify findings → judge (Fable) → fix → ladder → land → PR → CI on the stage's repos → report refresh (Fable edits `report.md`: the question moves into "Rulings applied", drift rows re-measured) → record (Haiku commits `stages.json`, the plan and the report on the workspace clone and pushes) → E2E (Haiku watches workspace PR 47, whose push re-runs the cross-repo suite).
-- **Models:** thinking and design on Fable (`think`), code on Sonnet (`doer`), watching and record-keeping on Haiku (`watcher`). The script's `FALLBACK` holds `checkouts: 'clones'` and `workspacePr`.
-- **Do not start the workspace stack with ins in it while a run is on:** the ins unit suite and fit suite bind port 3002, and the ladder reports the collision as red rather than repairing it.
-- **Sam's root checkout** at `~/git/defra/trade-imports-workspace` is on the branch too; after a record push, `git -C ~/git/defra/trade-imports-workspace merge --ff-only origin/feat/NO_JIRA-frontend-alignment` brings his copy of the report level.
+- **One answer, one stage, right-sized.** Related answers land as one stage, not five (Sam, 16 September: "there is a cost for every backlog item"). Append a stage to `stages.json` with the next id, `question` (the report's number the stage leads with), `ruling` (Sam's words, dated), `repos`, a `brief` written the way s17's is — every question it settles, the direction per item, the end state to prove with diff, what is out of scope — `reference` paths under `repos/...`, the ladder, and `status: "todo"`. Then `jq empty`, commit with the trailer and push.
+- **Launch.** From the main session (a subagent cannot): `Workflow({ scriptPath: "/Users/samfarrington/git/defra/trade-imports-workspace/.claude/workflows/frontend-alignment.js" })`. It drains every `todo` stage in file order, re-reading the backlog after each, so an answer appended mid-run is picked up. When the backlog is empty the run ends; relaunch when the next answer lands. A red stage halts the run and marks the stage (`ladder-red`, `ci-red`, `e2e-red`, `implement-failed`); the next baseline refuses until a human has read it.
+- **Per stage:** plan (Fable) → implement (Sonnet) → review (Sonnet per file, Fable across) → verify findings → judge (Fable) → fix → ladder → land → PR → CI on the stage's repos → local E2E (Sonnet starts the stack from the checkouts with `tim docker dev`, runs the tests repo's `npm run test:docker-compose`, stops the stack; a red is fixed in the stage's repos and re-run) → report refresh (Fable edits `report.md`: the question moves into "Rulings applied", drift rows re-measured) → record (Haiku commits `stages.json`, the plan and the report on the workspace root and pushes) → E2E (Haiku watches workspace PR 47, whose push re-runs the same suite in CI on the branch-tagged images).
+- **Models:** thinking and design on Fable (`think`), code on Sonnet (`doer`), watching and record-keeping on Haiku (`watcher`). The script's `FALLBACK` holds `checkouts: 'root'`, `localE2E: true` and `workspacePr`.
+- **Do not start the stack by hand while a run is on:** the local E2E rung starts and stops it itself, and the unit and fit suites bind the frontends' ports; the ladder reports a collision as red rather than repairing it.
 
 ## How to answer the kinds of questions you will get
 

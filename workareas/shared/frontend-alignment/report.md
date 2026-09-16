@@ -57,7 +57,7 @@ and what happens if nobody answers.
 | 10 | Explicit `auth: 'session'` on every route (`kit.routeOptions`, pinned by `routes.test.js`) or the server default? | one against two | ins keeps its defence in depth |
 | 11 | Journeys adopt ins's synchronous Nunjucks context read (`context.js`) instead of re-reading the session from Redis on every render? | one against two | one extra Redis hit per journey page |
 | 12 | Journeys move error-page messages into `sharedCopy.errorPage` (`helpers/errors.js`) and revisit `Bad Request` and `Unauthorized`? | one against two | non-GDS English stays hard-coded in two repos |
-| 13 | Journeys prime countries at boot (`app/routes.js`), or fetch per request as ins does? | two against one for priming | a reference-data outage keeps stopping journey start-up |
+| 13 | Three shapes for countries and ports: animals `main` loads on first read (EUDPA-575, on the branch since the 16 September merge); plants primes at boot (`app/routes.js`); ins fetches per request. Which do plants and ins take? | three ways | a reference-data outage keeps stopping plants' start-up and ins keeps one fetch per request |
 | 14 | `controller.js` or `<page>.controller.js` in a multi-page group? | two against one for `controller.js` | plants' groups stay the odd one out |
 | 15 | One shared fit fixture with an axe helper (ins `address-book/fit/address-form.js`) or an `AxeBuilder` call per spec? | one against two | the dashboard spec keeps importing across a feature boundary |
 | 16 | Backport `requiredEmail` (`lib/validate/validators.js`) to the journeys? | one against two | the validate lib differs by one primitive |
@@ -79,11 +79,6 @@ and what happens if nobody answers.
 
 ### Cross-repo consequences
 
-27. **Merge workspace `main` into the alignment branch so PR 47 can go
-    green?** The branch is five commits behind `main` and lacks `79064207
-    fix(stack): probe floci's health without curl (#46)`; its E2E check fails
-    on all three shards with `container trade-imports-floci-1 is unhealthy`.
-    Not caused by the alignment. If nobody answers: PR 47 stays red.
 28. **When plants links to the address book, where does the ins URL come
     from?** Plants' navigation points its Address book item at `#`; ins holds
     `TRADE_IMPORTS_ANIMALS_FRONTEND_URL` for the reverse direction. Plants
@@ -109,6 +104,33 @@ and what happens if nobody answers.
    `src/server/auth/controller.test.js` and
    `src/server/signout/controller.test.js` prove the drop by a cache
    round-trip and the cookie by `set-cookie`, with no new module mock.
+
+27. **Pulled `main` into the alignment branch and analysed what moved.**
+    Ruled 16 September 2026: main has moved under these repos since the
+    alignment was built; analyse the changes that have gone into the three
+    frontends on main since the initial work and pull them in, as a dedicated
+    item at the front of the queue. Question 27 (the workspace branch behind
+    main) closes with it; question 13's countries evidence comes out of it.
+    Landed as `9666f2d` on
+    [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339)
+    and `a2b8d48` on
+    [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227).
+    Two `--no-ff` merges with no conflict: animals took ten `main` commits
+    (62 files, the DR1 hub rework and EUDPA-575), tests took five (18 files,
+    the DR1 hub specs and the EUDPA-369 GBN-AG event assertions); ins and
+    plants `main` had not moved, so nothing was merged there. The only
+    chassis files `main` touched are animals'
+    `src/server/common/constants/status-codes.js` (`serviceUnavailable: 503`)
+    and `src/server/common/helpers/errors.test.js` (the 503 page); none of
+    the sixteen alignment files in animals or the one in tests was among
+    them. Behaviour, all from `main` by merge: animals loads countries and
+    ports on first read instead of at boot, a failed load is a 503 page
+    instead of a stopped pod, address country is stored as the ISO code, and
+    the hub follows DR1 (sections, six relabelled rows, a locked review row,
+    two-state status), with the E2E suite following it. The workspace branch
+    was already level with its `main` and carried the Floci healthcheck fix,
+    so nothing was merged in the workspace repo; PR 47's E2E has been green
+    since that fix reached the branch.
 
 ## Decisions you may want to reverse
 
@@ -166,10 +188,10 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 | Repo | PR | Checks as of 16 September |
 | --- | --- | --- |
 | `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all six checks green (PR checks, FIT tests, SonarCloud, three publish jobs), 16 September 09:17 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all ten checks green, including E2E and Lighthouse CI, 15 September 11:45 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all checks green on the `main` merge, including E2E and Lighthouse CI, 16 September 09:43 |
 | `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all ten checks green, 14 September 17:22; plants `main` has not moved since |
-| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all five checks green, including E2E, 15 September 11:52 |
-| `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E red on every shard (Floci unhealthy, question 27): [run 34968787268](https://github.com/DEFRA/trade-imports-workspace/actions/runs/34968787268) |
+| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all checks green on the `main` merge, including E2E, 16 September 09:43 |
+| `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; E2E green on every run since the Floci fix reached the branch, latest completed [run 35073631134](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35073631134), 16 September 09:24; the run against the merged branch images, [35076469742](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35076469742), had two of three shards green and one still running when this was written |
 
 The ins branch changes 251 files (22,662 insertions, 11,602 deletions, mostly
 the lockfile); animals 16; plants 10; tests 1. No shared package, no cross-repo
@@ -271,9 +293,9 @@ stub mode on 15 September:
   Analysis, which reads `.sonarcloud.properties` (added on the branch,
   mirroring plants) and ignores `sonar-project.properties`. Nine ins CI fixes
   were Sonar findings the local ladder had passed.
-- **The workspace PR is not a draft and is red.** PR 47 was raised as a normal
-  pull request; its E2E failure is the Floci healthcheck fixed on `main` after
-  the branch was cut (question 27).
+- **The workspace PR is not a draft.** PR 47 was raised as a normal pull
+  request; merging it approves nothing. Its E2E has been green since the
+  Floci healthcheck fix reached the branch (question 27, closed).
 - **The ins Playwright port collides with the running stack.** The fit suite
   and `serve-static-files.test.js` bind 3002, which the stack's ins container
   holds. Stop the stack or run it with `-e ins-frontend` first.
@@ -285,8 +307,9 @@ stub mode on 15 September:
 ## Residual drift
 
 Re-measured on 16 September with `diff -rq` over the clones under
-`workareas/clones/`, after `main` was merged into the ins and animals
-branches. Classes: identical; import-path-only (none survive); deliberate (a
+`workareas/clones/`, after `main` was merged into the animals and tests
+branches (ins and plants `main` had not moved). Classes: identical;
+import-path-only (none survive); deliberate (a
 recorded decision says why); unexplained (the question number says where it
 is settled).
 
@@ -297,7 +320,9 @@ Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
 | File | Difference | Class |
 | --- | --- | --- |
 | `src/server/auth/stub-sign-in.js` | `STUB_TOKEN_SECRET` literal names the repo | deliberate, service-specific |
+| `src/server/common/constants/status-codes.js` | animals has `serviceUnavailable: 503` from `main` (EUDPA-575) | unexplained, question 13 |
 | `src/server/common/helpers/content-security-policy.test.js` | animals hits `/`, plants `/health` | deliberate, plants is the tidier fork |
+| `src/server/common/helpers/errors.test.js` | animals proves the 503 page for a reference-data read that will not load | unexplained, question 13 |
 | `src/server/common/helpers/redis-client.test.js` | key prefix names the repo | deliberate, service-specific |
 | `src/server/common/helpers/transport-routing.js`, `.test.js` | animals only | deliberate, journey-only |
 | `src/config/config.js` | nine hunks: port, service name, redirect URLs, key prefix, backend API block | deliberate, service-specific |
@@ -317,7 +342,7 @@ Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
 | `src/server/auth/controller.js` | ins logs `{ profile }` where the journeys log `{ crn }`, one line | unexplained, question 4 |
 | `src/server/auth/controller.test.js` | ins keeps four route tests and `mock-auth.js`; journeys assert through the copy module | deliberate, test shape |
 | `src/server/auth/stub-sign-in.js`, `.test.js` | per-process secret and one route (ins) against a committed key, two paths, `contactId` and `currentRelationshipId` | deliberate, stub sign-in ruling |
-| `src/server/common/constants/status-codes.js` | `redirect` against `redirectFound` plus `payloadTooLarge` | unexplained, question 25 |
+| `src/server/common/constants/status-codes.js` | `redirect` against `redirectFound` plus `payloadTooLarge`; animals also has `serviceUnavailable` | unexplained, questions 25 and 13 |
 | `src/server/common/helpers/logging/request-logger.js` | ins passes `ignoreFunc` | unexplained, ins ahead, question 5 |
 | `src/server/common/helpers/pulse.js` | `tenSeconds` against `shutdownTimeoutMs` | unexplained, question 25 |
 | `src/server/common/helpers/errors.js` | ins reads messages from `sharedCopy.errorPage`; journeys hard-code English | deliberate, ins ahead, question 12 |
@@ -331,8 +356,8 @@ Byte-equal across `src/auth` (16 files) and `src/plugins` (4 files).
 | `src/config/nunjucks/nunjucks.js` | ins registers `formatDate` and `formatCurrency` filters (`filters/` is ins only); journeys add the MoJ root and `app/sets` where ins has `app/features` | deliberate |
 | `src/config/nunjucks/context/context.js` | synchronous session read; `dashboardUrl`, `addressBookUrl`, `crumb` in ins; `staleActionRejected` in the journeys | deliberate, question 11 |
 
-Six files differ for no recorded reason, all settled by questions 2 to 6 and
-24 to 25. [`surfaces.json`](surfaces.json) names every shared chassis file
+Six files differ for no recorded reason, all settled by questions 2 to 6, 13
+and 24 to 25. [`surfaces.json`](surfaces.json) names every shared chassis file
 with the rule it must satisfy (`identical`, `identical-except`, `only-in`,
 `deliberate` with a reason); a `tim workspace drift` command that applies it
 per branch and reports unlisted differences is proposed in question 19 and
@@ -351,8 +376,8 @@ not built.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-three stages with status,
-  commit, PRs, notes and open questions: fifteen done, eight ruling stages
-  waiting); the fourteen plans under
+  commit, PRs, notes and open questions: sixteen done, seven ruling stages
+  waiting); the fifteen plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`; the manifest in `surfaces.json`.
 - The run record, for reuse of the workflow:

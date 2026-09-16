@@ -819,14 +819,38 @@
         "lint",
         "test"
       ],
-      "status": "landed",
+      "status": "done",
       "plan": null,
       "commit": {
         "animals": "9666f2dfe0979a7bfcfcd4df102ddc9420e29799",
         "tests": "a2b8d48345519a828b63c849b26c46e69d0a3c18"
       },
-      "prs": [],
-      "ci": null,
+      "prs": [
+        {
+          "repo": "ins",
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "number": 27
+        },
+        {
+          "repo": "animals",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "number": 339
+        },
+        {
+          "repo": "plants",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/69",
+          "number": 69
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/227",
+          "number": 227
+        }
+      ],
+      "ci": {
+        "state": "green",
+        "failures": []
+      },
       "notes": [
         "planner, 16 September: ins main not moved — origin/main 2c96cbcc is already an ancestor of branch HEAD da05f1f (git log HEAD..origin/main empty after fetch). plants main not moved — origin/main b6ac0e39 is already an ancestor of branch HEAD cf01b98a. The implementor re-runs fetch and log at implement time and records its own line for each.",
         "planner, 16 September: animals has ten main commits (0033bcf6..38d4cf59, 62 files) and tests has five (10c4379..864e246, 18 files). git merge-tree --write-tree HEAD origin/main printed only a tree OID in both clones — no CONFLICT — and the file sets are disjoint: none of the 16 files the animals alignment changed since the merge base (src/auth, src/config, src/plugins, src/server/auth, src/server/app/{auth,shared,copy-convention.test.js}) is among main's 62; the one tests file the alignment changed (tests/security/ins/address-book.spec.ts) is not among main's 18. The only chassis files main touched are animals src/server/common/constants/status-codes.js (+serviceUnavailable: 503) and src/server/common/helpers/errors.test.js (+a 503 page test), both in fb3615e3; everything else is journey, app-services or test code. Neither main brings a package.json or lockfile change, so no install follows the merge.",
@@ -840,9 +864,11 @@
         "implementor, 16 September, 6A/6B proved: animals `log -1 --format='%P'` prints `b9b2d6b1... 38d4cf59...`; tests prints `60692b89... 864e246a...`. `diff --name-only origin/main` on animals lists exactly the 16 alignment files (src/auth, src/config, src/plugins, src/server/auth, src/server/app/{auth,shared,copy-convention.test.js}) and nothing else; on tests lists exactly `tests/security/ins/address-book.spec.ts`. No `<<<<<<<` markers under animals/src or tests/tests. `status --short` empty on both after the merge — nothing hand-edited, D11's format run was not needed. ins HEAD stayed `da05f1fd...` and plants HEAD stayed `cf01b98a...`, both `status --short` empty — neither repo touched.",
         "Q13 evidence (post-merge, animals HEAD 9666f2dfe0979a7bfcfcd4df102ddc9420e29799): animals main (EUDPA-575, fb3615e3) — services/countries/index.js and services/ports/index.js each hold a module-scope `loaded` flag and export ensureLoaded(); every reader (originLabel, originCountries, addressCountries, countryCodeOf; ports list, label) is async and awaits ensureLoaded() before reading; ensureLoaded returns at once when isStubMode() or loaded, otherwise fetches (fetchCountries(['GBNAG_SPS_EX']) / fetchPortsOfEntry()), sets loaded = true on success, and on failure leaves loaded false so the next read retries and throws Boom.serverUnavailable('Reference data unavailable', { dataset, cause }), which catchAll renders as the shared error page with 503 (status-codes.js gained serviceUnavailable: 503; errors.test.js proves the page). app/routes.js no longer imports isStubMode, countries or ports and no longer primes at boot, so an MDM outage at boot no longer stops the pod. Proven by run-mode.test.js (self-load, fetch-once, retry, 503 shape, stub short-circuit) and address-book.test.js mocks the reader. plants (cf01b98a): services/countries/index.js exports prime() with synchronous readers; app/routes.js awaits countries.prime() and ports.prime() at plugin register inside if (!isStubMode()) — boot fails when MDM is down. ins (da05f1f): services/countries/index.js exports getCountries(blocks) = isStubMode() ? COUNTRIES : fetchCountries(blocks) — a fetch on every call, no cache, no Boom; readers are features/address-book/address-countries.js getAddressFormCountries() (throws 'Country reference data is unavailable' on an empty list) and features/dashboard/controller.js; nock-tested in countries.test.js through common/test-helpers/real-mode.js. The countries stage ports main's shape (ensureLoaded + loaded flag + Boom.serverUnavailable, no boot prime) to ins and plants; ins will also need serviceUnavailable: 503 in status-codes.js (question 25's file) and a nock-based equivalent of run-mode.test.js; @hapi/boom is undeclared in all three package.json files and hoists through @hapi/hapi (same class as joi, question 22).",
         "Q27: the workspace branch is level with origin/main (git log HEAD..origin/main empty on 16 September) and already carries 79064207 fix(stack): probe floci's health without curl (#46) via merge fb80f548 (git merge-base --is-ancestor 79064207 HEAD exits 0). PR 47's E2E is green on its last four runs (latest 35073631134, 2026-09-16T08:24:49Z; the two failures are pre-fix). No merge in the workspace repo; the report refresh closes question 27.",
-        "implementor, 16 September, ladder green post-merge: animals format:check clean; lint clean (eslint, stylelint, depcruise 499 modules/1577 dependencies, no violations, 3 known ignored); test 'Test Files 179 passed | 2 skipped (181)', 'Tests 2255 passed | 8 skipped (2263)' — 0 failed, exceeds the 2239 baseline as main adds tests in run-mode.test.js, errors.test.js, address-book.test.js, real.amend-list.test.js and hub copy.test.js. tests repo: typecheck clean (tsc --noEmit), lint clean (eslint .), format:check clean. All six logs under logs/s16-merge-main-{animals,tests}-*.log. Nothing staged beyond the two merge commits themselves; land pushes them."
+        "implementor, 16 September, ladder green post-merge: animals format:check clean; lint clean (eslint, stylelint, depcruise 499 modules/1577 dependencies, no violations, 3 known ignored); test 'Test Files 179 passed | 2 skipped (181)', 'Tests 2255 passed | 8 skipped (2263)' — 0 failed, exceeds the 2239 baseline as main adds tests in run-mode.test.js, errors.test.js, address-book.test.js, real.amend-list.test.js and hub copy.test.js. tests repo: typecheck clean (tsc --noEmit), lint clean (eslint .), format:check clean. All six logs under logs/s16-merge-main-{animals,tests}-*.log. Nothing staged beyond the two merge commits themselves; land pushes them.",
+        "report refresh, 16 September: the stage carries question 13 but the ruling settles question 27 and only supplies evidence for 13, and s19-countries-lazy-load (todo) carries question 13 with its own ruling; so question 27 was removed from Open questions and recorded as ruling 27 under Rulings applied, and question 13 stays open with its row reworded to the three shapes the merge evidence shows (animals main lazy load, plants boot prime, ins per-request fetch). Residual drift re-measured with diff: animals status-codes.js and errors.test.js now differ from plants by the EUDPA-575 lines from main (question 13); the ins status-codes.js row names questions 25 and 13. Checks table: animals and tests green at 16 September 09:43; workspace PR 47 E2E green on every completed run since the Floci fix (latest 35073631134); the run against the merged branch images (35076469742) had shards 2 and 3 green and shard 1 still running about sixteen minutes in, when this refresh checked it, logged in logs/s16-merge-main-report-workspace-run-35076469742.log. The known caveat on the red workspace PR is rewritten as closed."
       ],
-      "openQuestions": []
+      "openQuestions": [],
+      "reportRefreshed": true
     },
     {
       "id": "s17-auth-convergence",
@@ -940,7 +966,7 @@
       "id": "s19-countries-lazy-load",
       "title": "load reference data on first read in plants and ins, as animals main does",
       "question": 13,
-      "ruling": "Decided from the evidence the merge stage recorded, not by a direct answer from Sam: animals main's EUDPA-575 (commit fb3615e3, load reference data on first read, not at startup) is the newest deliberate design on this question, so plants and ins take its shape. Sam can reverse this by restoring plants' boot priming and ins's per-request read.",
+      "ruling": "Sam, 16 September 2026: yes. Plants and ins take animals main's EUDPA-575 shape (commit fb3615e3, load reference data on first read, not at startup), the newest deliberate design on this question; proposed from the merge evidence and confirmed by Sam.",
       "repos": [
         "ins",
         "plants"
@@ -1014,12 +1040,12 @@
       "id": "s21-feature-folder-convention",
       "title": "plants' feature-folder convention in ins and animals, fit tests self-contained",
       "question": 14,
-      "ruling": "Sam, 16 September 2026: Q14 go with the journey convention, page.controller.js; the journeys have a better approach to tests, especially the fit tests. Q15 the feature folder should be self-contained with its associated fit tests. Read as plants' convention, which the direction rule already names the tidier fork; flagged for Sam because the two journeys differ here.",
+      "ruling": "Sam, 16 September 2026: Q14 go with the journey convention, page.controller.js; the journeys have a better approach to tests, especially the fit tests. Q15 the feature folder should be self-contained with its associated fit tests. The two journeys already agree on the convention (the report's two-against-one count for controller.js was wrong: ins is the odd one out); they differ only in two details, settled below by the direction rule.",
       "repos": [
         "ins",
         "animals"
       ],
-      "brief": "Questions 14 and 15 land together as one commit per repo. Read plants' feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features/ and state the rule in the plan before renaming anything. On 16 September it is: a single-page feature holds controller.js, template.njk, page.js where the journey needs one, controller.test.js and <feature>.fit.spec.js beside them; a multi-page group holds one folder per page named <page>/<page>.controller.js with its template, and the group's fit specs plus its own fit/axe.js under <group>/fit/. Apply that rule to ins (features/address-book is a multi-page group: list, add, edit, view, delete; features/dashboard is single-page) and to animals (every feature under sets/live-animals/journeys/linear/features/, single-page or group as its shape dictates), with git mv so history follows, every import, template path and route registration following, and the Playwright configuration's spec pattern matching both layouts. Each feature folder owns its fit specs and helpers: a helper two features need is duplicated, not shared, because feature folders are independent by design; ins's dashboard fit spec stops importing address-book/fit/address-form.js and gets its own; the shared accessibility check becomes a per-group fit/axe.js as plants has, and ins's per-spec AxeBuilder calls go. Prove: every fit spec still runs (test:fit green, with the count before and after in notes), no import crosses a feature boundary (the dependency-cruiser rules and one grep quoted in notes), the URL surface is unchanged. Out of scope: any behaviour, copy, auth or chassis change; plants itself.",
+      "brief": "Questions 14 and 15 land together as one commit per repo. The journeys' shared convention, measured on 16 September: a single-page feature holds controller.js, template.njk, page.js where the journey needs one, controller.test.js and <feature>.fit.spec.js beside them; a multi-page group holds one folder per page named <page>/<page>.controller.js with <page>.controller.test.js, and the group's fit specs under <group>/fit/. They differ in two details, settled by the direction rule (plants is the tidier fork, and ins already matches plants on the first): inside a group plants names the template template.njk while animals names it <page>.njk, so template.njk wins two against one; plants runs the accessibility check in every group spec through one <group>/fit/axe.js helper while animals' group specs (transport, commodities, documents, addresses) run no accessibility check at all, so every group gains fit/axe.js and a check per spec. ins is the odd one out and moves: features/address-book is a multi-page group whose pages become list/list.controller.js, add/add.controller.js, edit/edit.controller.js, view/view.controller.js, delete/delete.controller.js with their tests renamed alongside; features/dashboard is single-page and its fit spec moves beside the controller as dashboard/dashboard.fit.spec.js; address-book/fit/ gains axe.js and its specs drop their per-spec AxeBuilder calls for it. Animals changes only in the two details: group templates renamed to template.njk with every render path following, and fit/axe.js plus a check per group spec. Plants changes nothing. Use git mv so history follows, every import, template path and route registration following, and the Playwright configuration's spec pattern matching both layouts. Each feature folder owns its fit specs and helpers: a helper two features need is duplicated, not shared, because feature folders are independent by design; ins's dashboard fit spec stops importing address-book/fit/address-form.js and gets its own. Prove: every fit spec still runs (test:fit green, with the count before and after in notes), no import crosses a feature boundary (the dependency-cruiser rules and one grep quoted in notes), the URL surface is unchanged. Out of scope: any behaviour, copy, auth or chassis change.",
       "reference": [
         "workareas/clones/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features",
         "workareas/clones/trade-imports-plants-frontend/playwright.config.js",

@@ -1469,7 +1469,7 @@
         "test",
         "test:fit"
       ],
-      "status": "ci-retry",
+      "status": "done",
       "plan": "workareas/shared/frontend-alignment/plans/s24-cross-service-shape.md",
       "commit": {
         "ins": "831a64e98a13ae7ddd924b457cc430fba329683f",
@@ -1516,8 +1516,10 @@
         "CI FIXER attempt 1 of 2 (new cycle), 17 September 2026: re-checked live CI rather than re-deriving from scratch. ins PR 27 is fully green (7/7). tests PR 227 now shows a GREEN E2E Tests check (fresh check-run) — the underlying shared workflow run trade-imports-animals-tests#35163743454 was rerun and completed success at 00:13-00:18 UTC on 17 September, well clear of the BST midnight boundary that caused the original 23:50 UTC failure. animals-frontend PR 339 and plants-frontend PR 69 still surface the ORIGINAL failing E2E Tests check (runs/105019936848, runs/105020006229) unrefreshed by that rerun — same failure signature as previously diagnosed: [plants] review.spec.ts:156 date-of-notification day-boundary race between the confirmation controller and the test clock across the Europe/London BST midnight. Reconfirmed zero file overlap between this stages commits (ins 831a64e, animals 76a4f556, plants 5c1ea18, tests b4f43be) and review.spec.ts or the plants confirmation feature — this stage only touches content-security-policy.js, auth.js/auth.test.js, config.js and fixtures/auth-state.ts. No code change made: this is the same pre-existing, out-of-scope timing defect already recorded as an open question for Sam (plants confirmation feature), not something s24s brief (form-action and auth.cookieName) can or should fix. Reported ok:false per the CI-fixer briefs point 5. The stale failing checks on PR 339 and PR 69 need the shared E2E workflow re-run against their SHAs to pick up the same clock-side fix the tests-repo check already shows — a CI operations action, not a code change, and outside a CI-fixers remit to invent.",
         "CI WATCHER run, 17 September 2026: re-checked live CI for all four PRs. ins PR 27: green (7/7). animals PR 339: red (E2E Tests Playwright failure, runs/105019936848). plants PR 69: red (E2E Tests Playwright failure, runs/105020006229). tests PR 227: green (5/5). The E2E failures remain the pre-existing day-boundary race in [plants] review.spec.ts:156 documented in prior CI fixer notes — unrelated to this stage scope (form-action and auth.cookieName).",
         "Stage recorded with ci-red status after 2 fix attempts. E2E failures: animals E2E Tests (Playwright) https://github.com/DEFRA/trade-imports-animals-frontend/runs/105019936848, plants E2E Tests (Playwright) https://github.com/DEFRA/trade-imports-plants-frontend/runs/105020006229. Root cause: day-boundary race in [plants] review.spec.ts:156 (pre-existing, out-of-scope for this stage).",
-        "PARENT, 17 September 2026: the suite itself is green. Workflow run 35163743454 passed on its second attempt at 00:18 (all three shards, merge-reports, deploy-report and report-status), and a fresh dispatched run passed again. Neither refreshed the badge: each repo posts its own E2E check run from its own workflow, which fires only when that repo Publish Branch Image completes for a pull request, so a re-run and a workflow_dispatch both leave the first attempt failure standing on the pull request. That is why the watcher kept reporting red on work that is green. Re-reported with an empty commit in each of the three repos that carry the check: animals 8cb65983, plants 5f35ac2, tests 5922fff."
+        "PARENT, 17 September 2026: the suite itself is green. Workflow run 35163743454 passed on its second attempt at 00:18 (all three shards, merge-reports, deploy-report and report-status), and a fresh dispatched run passed again. Neither refreshed the badge: each repo posts its own E2E check run from its own workflow, which fires only when that repo Publish Branch Image completes for a pull request, so a re-run and a workflow_dispatch both leave the first attempt failure standing on the pull request. That is why the watcher kept reporting red on work that is green. Re-reported with an empty commit in each of the three repos that carry the check: animals 8cb65983, plants 5f35ac2, tests 5922fff.",
+        "REPORT REFRESH decision, 17 September 2026: the stage's question field says 28, but 28 already sits in report.md's Rulings applied as the Address book navigation entry, and the numbered question actually open in the report for this stage's subject matter was 30 (content-security-policy form-action, ins only). So the refresh removed row 30 from Open questions and added the new Rulings applied entry as 30, keeping the number Sam refers to attached to the thing it names; the entry's own text records that the ruling completes question 28's work. Open questions now carries only row 29 (the countries reader surface). The two openQuestions above were not added to the report as new numbered questions: the first is a plan-declared out-of-scope note on a tests-repo fixture, the second is explicitly for Sam and not for this programme, and both are mentioned in prose instead. Drift rows re-measured with diff before changing any class: content-security-policy.js and .test.js are now byte-equal across ins, animals and plants (ins-vs-journeys row moved from unexplained/question 30 to identical, animals-vs-plants row extended to cover the helper as well as its test); src/plugins/auth.js and auth.test.js confirmed still identical; config.js rows updated for the auth.cookieName default and the siblingFrontendBaseUrls export (animals vs plants is eleven hunks). The closing paragraph under Residual drift now names one chassis file, errors.test.js, not two. No Known caveats bullet was falsified by this stage."
       ],
+      "reportRefreshed": true,
       "openQuestions": [
         "fixtures/auth-state.ts reads one shared process.env.AUTH_SESSION_COOKIE_NAME for both the ins and the plants target, so setting that variable in the Playwright runner environment would override both targets to the same cookie name. It is not set there today (only inside the ins container in docker/stack/frontend.compose.yml), and this stage mirrors the existing ins entry shape as the brief instructs, so the fixture is not redesigned here. Worth a per-target variable later.",
         "NEW, 17 September 2026, for Sam and not for this programme: does the plants confirmation page show the right date in the hour between 23:00 UTC and midnight during British Summer Time? A cross-repo end-to-end run at 23:50 UTC rendered the previous day's date where the test expected the London day. Worth an hour with the report artefact to say whether submittedAt is a full instant or a date-only value, because if it is date-only the page is wrong for that hour every night in summer, and the same formatting appears on the declaration page. Raised from the alignment programme, owned by the plants confirmation feature."
@@ -1555,5 +1557,16 @@
       "E2E Tests on DEFRA/trade-imports-animals-tests PR 227"
     ],
     "notes": "All failures are Playwright E2E Tests. See logs: s24-cross-service-shape-ci-fail-animals-frontend.log, s24-cross-service-shape-ci-fail-plants-frontend.log, s24-cross-service-shape-ci-fail-animals-tests.log"
+  },
+  "s24-cross-service-shape": {
+    "ci": {
+      "state": "green",
+      "failures": []
+    },
+    "localE2e": {
+      "state": "green",
+      "failures": [],
+      "run": 1
+    }
   }
 }

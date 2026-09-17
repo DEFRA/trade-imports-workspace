@@ -4,7 +4,7 @@ Three Node frontends (ins, animals, plants) were brought into one shape on one
 branch, `feat/NO_JIRA-frontend-alignment`, behind draft pull requests that are
 never merged; merging the workspace PR approves nothing. This page leads with
 what the team must decide, then the calls the team may reverse. Every fact was
-re-checked against the code and the PRs on 16 September 2026.
+re-checked against the code and the PRs on 17 September 2026.
 
 ## Open questions
 
@@ -16,7 +16,6 @@ and what happens if nobody answers.
 | # | Question | Count | If nobody answers |
 | --- | --- | --- | --- |
 | 29 | Should ins take the journeys' full countries reader surface (`originLabel`, `originCountries`, `addressCountries`, `countryCodeOf`) and the `GBNAG_SPS_EX` block filter, so its countries service is byte-equal with plants'? Question 13 landed the lazy cache alone. It would narrow the address book from the full MDM list to the animal-products export block, stop the dashboard naming a `GB` origin, and drop the trace header from the reference-data call. | one against two | ins keeps the full MDM list, its own reader and its trace header, and the two countries services stay different files |
-| 30 | `content-security-policy.js` stopped being byte-equal when ins took `main`'s EUDPA-333 handshake, and question 28 widened it again: ins reads both journey frontends' base URLs and widens `form-action` from `['self']` to `['self', ...journeyFrontendOrigins]`, because the browser blocks the cross-origin 302 the address-add handshake depends on. Does ins keep a documented exception, or do the journeys take ins's shape, which animals needs itself for the return leg of that handshake? | ins only | a chassis file differs with nothing to say why |
 
 ## Rulings applied
 
@@ -388,6 +387,47 @@ and what happens if nobody answers.
     These are the trader's browser following a link, so they are the public
     `cdp-int.defra.cloud` hostnames, not internal service names.
 
+30. **Gave the journeys ins's cross-service shape: `form-action` and the
+    session cookie name.** Ruled 16 September 2026: the journeys need the same
+    shape, and do it as part of the address book work. Raised as open questions
+    on the countries stage (`content-security-policy` `form-action`) and the
+    tooling stage (the auth plugin test and its cookie-name config); the ruling
+    landed after question 28 had built, so it completes that work rather than
+    deferring to a later question. Landed as `831a64e` on
+    [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27),
+    `76a4f556` on
+    [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339),
+    `5c1ea18` on
+    [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) and
+    `b4f43be` on
+    [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227).
+    Each `src/config/config.js` now exports `siblingFrontendBaseUrls`, the list
+    of sibling frontends that service can redirect to, and
+    `src/server/common/helpers/content-security-policy.js` maps it to origins
+    and spreads it into `form-action`, so the helper and its test are byte-equal
+    across the three and a service with no sibling falls out of the same code as
+    `['self']` alone; all three `config.js` files also gained the shared
+    `auth.cookieName` key with the `AUTH_SESSION_COOKIE_NAME` env override and an
+    identical doc string, `src/plugins/auth.js` reads it in all three, and
+    `src/plugins/auth.test.js` asserts the configured value through a named
+    constant instead of the `ins-sid` literal, which makes both plugin files
+    byte-equal too. The service literals the rewritten CSP test gave up moved
+    into each `src/config/config.test.js`, which is allowed to differ, and
+    `fixtures/auth-state.ts` in the tests repo gained a `cookieName` for the
+    plants target in the shape the ins entry already used. Behaviour: animals and
+    plants now accept a form submission that redirects to the configured ins
+    origin, where `form-action` was `['self']` alone and the browser blocked that
+    302; plants mints `plants-sid` in development so signing in to plants no
+    longer overwrites an animals session on localhost, while animals keeps `sid`
+    as the incumbent every fixture and page object assumes; and
+    `tradeImportsInsFrontend.baseUrl` became `format: 'url'` in both journeys, so
+    a malformed value is refused at startup with a readable message rather than a
+    bare `TypeError` at import. One finding came out of the cross-repo E2E and is
+    the plants confirmation feature's, not this programme's: a run at 23:50 UTC
+    rendered the previous day's date on the plants confirmation page where the
+    test expected the London day, which is worth an hour with the report artefact
+    to say whether `submittedAt` is a full instant or a date-only value.
+
 ## Decisions you may want to reverse
 
 Each was taken by the direction rule (ins moves toward the journeys; plants
@@ -444,12 +484,12 @@ restore the deletions and diverge from DR1, which the journeys already ship.
 
 ## What was built
 
-| Repo | PR | Checks as of 16 September |
+| Repo | PR | Checks as of 17 September |
 | --- | --- | --- |
-| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all seven checks green (PR checks, security audit, FIT tests, SonarCloud, three publish jobs) at `c9c4fbf` (the address book links), 16 September 22:52 |
-| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `affdce2d` (the address book links), 16 September 22:52; Lighthouse was red between the tooling convergence `1f619ab0` and the restored `npm-version.js` `780ec235`, because `main`'s copy of the `workflow_run` job still calls the script the convergence had deleted |
-| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `acd27ad` (the address book links), 16 September 22:52; plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
-| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all five checks green, E2E among them, at `2a2326f` (the address book links), 16 September 22:53; the earlier E2E red at `29e9901` was a run that started three minutes before the animals branch published the image carrying `main`'s handshake link the new specs look for |
+| `trade-imports-ins-frontend` | [#27](https://github.com/DEFRA/trade-imports-ins-frontend/pull/27) | draft, open; all seven checks green (PR checks, security audit, FIT tests, SonarCloud, three publish jobs) at `831a64e` (the cross-service shape), 17 September 00:42 |
+| `trade-imports-animals-frontend` | [#339](https://github.com/DEFRA/trade-imports-animals-frontend/pull/339) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `8cb65983`, 17 September 01:38, an empty commit that re-reported the cross-repo E2E against `76a4f556` (the cross-service shape, 17 September 00:42); the suite's first attempt failed on one plants date assertion at the British Summer Time midnight boundary and its re-run passed, but each repo posts its own E2E check from its own workflow, so only a fresh push refreshes the badge. Lighthouse was red between the tooling convergence `1f619ab0` and the restored `npm-version.js` `780ec235`, because `main`'s copy of the `workflow_run` job still calls the script the convergence had deleted |
+| `trade-imports-plants-frontend` | [#69](https://github.com/DEFRA/trade-imports-plants-frontend/pull/69) | draft, open; all nine checks green, including E2E, Lighthouse CI and SonarCloud, at `5f35ac2`, 17 September 01:38, the same empty commit re-reporting the E2E against `5c1ea18` (the cross-service shape, 17 September 00:42); plants `main` moved on 16 September (EUDPA-575, PR 71) and is merged in |
+| `trade-imports-animals-tests` | [#227](https://github.com/DEFRA/trade-imports-animals-tests/pull/227) | draft, open; all five checks green, E2E among them, at `5922fff`, 17 September 01:39, re-reporting the E2E against `b4f43be` (the cross-service shape, 17 September 00:42); the earlier E2E red at `29e9901` was a run that started three minutes before the animals branch published the image carrying `main`'s handshake link the new specs look for |
 | `trade-imports-workspace` | [#47](https://github.com/DEFRA/trade-imports-workspace/pull/47) | **not a draft**, open; all five checks green, the three sharded E2E jobs among them, at `8a79e5da` (withdrawing the drift manifest), 16 September 23:43, on [run 35159104801](https://github.com/DEFRA/trade-imports-workspace/actions/runs/35159104801) |
 
 The ins branch changes 270 files (20,422 insertions, 9,894 deletions, mostly
@@ -575,11 +615,12 @@ stub mode on 15 September:
 
 ## Residual drift
 
-Re-measured on 16 September with `diff -rq` over the checkouts under `repos/`
+Re-measured on 17 September with `diff -rq` over the checkouts under `repos/`
 (the programme's working checkouts again from question 2's stage), after the
 countries lazy load landed, ins, animals and the tests repo each took `main`'s
-EUDPA-333 address-add handshake, and question 28 made the Address book link
-work in every service. Classes: identical;
+EUDPA-333 address-add handshake, question 28 made the Address book link
+work in every service, and question 30 gave all three the same `form-action`
+helper and the same session-cookie-name key. Classes: identical;
 import-path-only (none survive); deliberate (a
 recorded decision says why); unexplained (the question number says where it
 is settled, or the row says no question covers it yet).
@@ -596,7 +637,7 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | --- | --- | --- |
 | `src/server/auth/stub-sign-in.js` | none; the secret is generated per process | identical |
 | `src/server/common/constants/status-codes.js` | none; `serviceUnavailable: 503` is in all three | identical |
-| `src/server/common/helpers/content-security-policy.test.js` | none; both hit `/health` | identical |
+| `src/server/common/helpers/content-security-policy.js`, `.test.js` | none; both map `siblingFrontendBaseUrls` into `form-action`, and both tests assert `'self'` plus every configured sibling origin | identical |
 | `src/server/common/helpers/errors.test.js` | animals' page titles read `Page not found - Import notification service - GOV.UK` (animals `main`, `fb9cb317`, DR1 parity); plants adds a 503 test for a reference-data read that will not load, through `/test/refdata-missing` (plants `main`, EUDPA-575); the Boom 503 test is in both | unexplained, no question yet: animals proves the same rejection in `services/run-mode.test.js`, so only plants proves it at page level; the title composition came from `main` |
 | `src/server/common/helpers/redis-client.test.js` | key prefix names the repo | deliberate, service-specific |
 | `src/server/common/helpers/transport-routing.js`, `.test.js` | animals only | deliberate, journey-only |
@@ -604,7 +645,7 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | `src/server/app/services/countries/` (`index.js`, `client.js`, `stub.js`) | none; both journeys carry EUDPA-575 | identical |
 | `src/server/app/services/run-mode.test.js` | three hunks: plants' client block-filter test uses a made-up `BLOCK_ONE` where animals uses the real `GBNAG_SPS_EX`; plants carries a two-line why-comment above the real-mode self-load test; plants' ports fetch-once test also calls `portOptions()` | unexplained, no question yet: plants is the tidier text in all three |
 | `src/server/app/services/ports/index.js` | plants extracts a `displayName` helper and adds a third reader, `portOptions()`, returning `{ value, text }` pairs; animals has neither | unexplained, no question yet: plants is the tidier fork; ins has no ports service |
-| `src/config/config.js` | nine hunks: port, service name, `defraId.serviceId`, the two redirect URLs, key prefix, the backend API block and animals' `tradeImportsAddressBookApi`; the `tradeImportsInsFrontend` block question 28 gave plants is byte-equal with animals' | deliberate, service-specific |
+| `src/config/config.js` | eleven hunks: port, service name, `defraId.serviceId`, the two redirect URLs, the `auth.cookieName` default (`'sid'` in animals, `isDevelopment ? 'plants-sid' : 'sid'` in plants), key prefix, the backend API block and animals' `tradeImportsAddressBookApi`; the `tradeImportsInsFrontend` block question 28 gave plants and the `siblingFrontendBaseUrls` export question 30 gave both are byte-equal with animals' | deliberate, service-specific |
 | `src/config/nunjucks/context/context.js` | none; both build `addressBookUrl` from `insAddressBookUrl()` over `tradeImportsInsFrontend.baseUrl` | identical |
 | `src/config/nunjucks/context/context.test.js` | service name | deliberate, service-specific |
 
@@ -613,7 +654,7 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | File | Difference | Class |
 | --- | --- | --- |
 | `src/auth/` (16 files) | none | identical |
-| `src/plugins/auth.js`, `.test.js` | none | identical |
+| `src/plugins/auth.js`, `.test.js` | none; all three read the cookie name from `auth.cookieName`, and the test asserts the configured value through a named constant rather than a service literal | identical |
 | `src/plugins/csrf.js` | plants carries a 12-line doc comment, ins one line | deliberate, comment policy |
 | `src/plugins/csrf.test.js` | ins boots the real server and posts without a crumb; plants unit-tests the options | deliberate, test shape |
 | `src/server/auth/` (`index.js`, `controller.js`, `stub-sign-in.js` and both tests) | none | identical |
@@ -623,7 +664,7 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | `src/server/common/helpers/pulse.js` | none; `shutdownTimeoutMs` in all three | identical |
 | `src/server/common/helpers/errors.js` | none; every message comes from `sharedCopy.errorPage` in all three | identical |
 | `src/server/common/helpers/{serve-static-files,start-server}.test.js` | none; plants' shape in all three | identical |
-| `src/server/common/helpers/content-security-policy.js`, `.test.js` | ins reads both journey base URLs and widens `form-action` to `['self', ...journeyFrontendOrigins]`, and its test asserts all three entries; the journeys keep `['self']` and assert only that the header is set. The two journeys are still byte-equal with each other | unexplained: question 30 |
+| `src/server/common/helpers/content-security-policy.js`, `.test.js` | none; all three map `siblingFrontendBaseUrls` to origins and spread them into `form-action`, and all three tests derive the expectation from the same export, so only the list of base URLs in `config.js` differs | identical |
 | `src/server/common/helpers/redis-client.test.js` | key prefix names the repo, two lines | deliberate, service-specific |
 | `src/server/common/helpers/errors.test.js` | against plants: plants adds the EUDPA-575 reference-data 503 test, which drives a reader ins does not have; against animals: animals' page titles carry `main`'s hyphen-and-GOV.UK composition. ins proves the same 503 page in `features/reference-data-outage.test.js` and a Boom 503 in the test all three share | unexplained: the reader the plants test drives is question 29; the title composition is a candidate for a later ruling |
 | `src/server/common/test-helpers/{mock-auth-config,mock-oidc-config,session-auth}.js` | none; `mock-auth.js` is gone from ins | identical |
@@ -633,18 +674,19 @@ Byte-equal across `src/auth` (16 files), `src/plugins` (4 files),
 | `src/server/app/lib/validate/` | none; `persists-cleaned-value.test.js` is journey-only because it drives the engine | identical |
 | `src/server/app/services/countries/index.js` | the `ensureLoaded` mechanism is plants' text: module-scope cache, `loaded` flag, stub short-circuit, `Boom.serverUnavailable` with `dataset: 'countries'`. The readers differ: ins keeps `getCountries()` over the full MDM list; plants holds a label map filtered to `GBNAG_SPS_EX` and exports `originLabel`, `originCountries`, `addressCountries` and `countryCodeOf` | deliberate for now: question 29 |
 | `src/server/app/services/countries/{client.js,stub.js}` | ins resolves the base URL through convict and sends the `getTraceId()` trace header; the journeys read `process.env.TRADE_IMPORTS_REFERENCE_DATA_URL` and send no header, though their own `address-book/client.js` does. ins seeds a `COUNTRIES` list, plants a `COUNTRY_LABELS` map | deliberate: chassis hardening this programme backports the other way, and the stub seeds are each service's own |
-| `src/config/config.js` | service-specific hunks only: port, service name, `defraId.serviceId`, the two redirect URLs, key prefix, the two localhost cookie-name overrides, the backend API block, and ins's `tradeImportsAddressBookApi`, `tradeImportsInsBackendApi`, `tradeImportsAnimalsFrontend` and `tradeImportsPlantsFrontend` blocks against the journeys' `tradeImportsInsFrontend` | deliberate, service-specific |
-| `src/config/config.test.js` | ins pins its own ports and URLs; the `stubMode` and env-backed boolean blocks are shared | deliberate, test shape |
+| `src/config/config.js` | service-specific values only: port, service name, `defraId.serviceId`, the two redirect URLs, key prefix, the two development cookie-name defaults (`auth.cookieName`, now the same key with the same doc string in all three and only the default differing, and `session.cookie.name`, where ins alone carries a two-line why-comment and an `ins-session` development default), the backend API block, ins's `tradeImportsAddressBookApi`, `tradeImportsInsBackendApi`, `tradeImportsAnimalsFrontend` and `tradeImportsPlantsFrontend` blocks against the journeys' `tradeImportsInsFrontend`, and the `siblingFrontendBaseUrls` export naming those blocks | deliberate, service-specific |
+| `src/config/config.test.js` | ins pins its own ports and URLs and its own sibling defaults; the `stubMode`, env-backed boolean and `auth.cookieName` blocks are shared in shape, with only the expected development cookie name differing per service | deliberate, test shape |
 | `src/config/nunjucks/nunjucks.js` | ins registers `formatDate` and `formatCurrency` filters (`filters/` is ins only); journeys add the MoJ root and `app/sets` where ins has `app/features` | deliberate |
 | `src/config/nunjucks/context/context.js` | the session read is byte-equal, and all three now set `addressBookUrl`: ins from its own `addressBookPath()`, the journeys from `insAddressBookUrl()` over `tradeImportsInsFrontend.baseUrl`, because for them the address book is another service. ins also marks the address-book navigation section and adds `dashboardUrl` and `crumb`; the journeys add `staleActionRejected` | deliberate, service-specific |
 
-Two chassis files differ for no recorded reason.
-`src/server/common/helpers/content-security-policy.js` and its test are
-question 30, raised when ins took `main`'s handshake and widened again by
-question 28, which added the plants origin to the same `form-action` list.
+One chassis file now differs for no recorded reason.
 `src/server/common/helpers/errors.test.js` holds two differences: plants'
 reference-data 503 test drives a reader question 29 owns, and animals'
 page-title composition arrived from `main` and has no question yet.
+`src/server/common/helpers/content-security-policy.js` and its test left this
+list with question 30: all three now read `siblingFrontendBaseUrls` from their
+own `config.js`, so the files are byte-equal and the only difference left is
+the list of sibling base URLs each service configures.
 
 ## Where everything is
 
@@ -659,8 +701,7 @@ page-title composition arrived from `main` and has no question yet.
 - This report: `workareas/shared/frontend-alignment/report.md` in the
   workspace repo, on the branch.
 - Stage state: [`stages.json`](stages.json) (twenty-four stages with status,
-  commit, PRs, notes and open questions: twenty-three done, one ruling stage
-  waiting); the twenty-two plans under
+  commit, PRs, notes and open questions, all done); the twenty-three plans under
   [`plans/`](plans/); every agent's return value in
   `run-wf_a52aa0bf-91f.journal.jsonl`.
 - The run record, for reuse of the workflow:

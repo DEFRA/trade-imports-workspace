@@ -229,6 +229,8 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 | frontend / admin | `DEFRA_ID_SIGN_OUT_REDIRECT_URL` | `…/auth/sign-out-oidc` (browser) |
 | frontend / admin | `DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED` | `true` (flips h.d.i. → localhost for browser-visible sign-out URL) |
 | defra-id-stub | `WELL_KNOWN_HOST_OVERRIDE` | `http://localhost:3007` (browser endpoints; token endpoint auto-rewrites to h.d.i.) |
+| animals / plants frontend | `TRADE_IMPORTS_INS_FRONTEND_URL` | `http://localhost:3002` (browser follows the Address book link) |
+| ins frontend | `TRADE_IMPORTS_{ANIMALS,PLANTS}_FRONTEND_URL` | `http://localhost:{3000,3003}` (browser follows the dashboard's journey links) |
 
 ## Files in this folder
 

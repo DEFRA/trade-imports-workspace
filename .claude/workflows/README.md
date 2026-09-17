@@ -10,6 +10,65 @@ and repeats — from the main session, because **a subagent cannot invoke `Workf
 is why the former two-tier `batch-orchestrator/` prompts were removed: their middle tier
 could never start the thing it existed to drive.
 
+## `frontend-alignment.js`
+
+Runs the stage backlog in `workareas/shared/frontend-alignment/stages.json`: brings
+`trade-imports-ins-frontend` into the shape of the two journey frontends, stage by stage,
+on one branch shared across every repo it touches, behind **draft PRs that are never
+merged**. It is a design demonstration: the team reads the report the last stage writes
+and decides whether this is the architecture they want.
+
+Every stage is: **plan** (Fable writes a file-level plan under `plans/`) → **implement**
+(Sonnet) → **review** (Sonnet per focus file, Fable across the change) → **verify findings**
+→ **judge** (Fable) → **fix** → **ladder** (the stage's npm scripts, to logs) → **land**
+(Haiku commits and pushes with the refspec form) → **draft PR** (reused for the whole
+programme, via `tools/github/pr-ensure-draft.sh`) → **CI** (Haiku blocks on
+`tools/github-actions/wait-for-pr-checks.sh`; Sonnet fixes red, twice at most). A red
+ladder or red CI stops the run and marks the stage, so nothing is built on a broken stage.
+Resume by relaunching: the baseline stage skips everything already `done`.
+
+**Rulings.** Once the report is out, Sam answers its numbered open questions one at a
+time. Each answer becomes a stage appended to `stages.json` with `question` and `ruling`
+fields and a brief derived from the answer; the ruling is the direction for that stage
+whichever way it points. The loop drains every `todo` stage in file order and re-reads
+the backlog after each, so a stage appended while an earlier one was building is picked
+up without a relaunch; when the backlog is empty the run ends and is relaunched when the
+next answer arrives. After a stage's own PR is green, three more steps run: **report**
+(Fable moves the answered question into a "Rulings applied" section of `report.md` and
+re-measures the drift rows it touched), **record** (Haiku commits `stages.json`, the plan
+and the report on the workspace repo and pushes) and **E2E** (Haiku watches the workspace
+PR, whose push re-runs the cross-repo suite on the branch-tagged images; a red is fixed in
+the stage's repos, re-proven on their PRs, then the workspace is pushed again).
+
+**Checkouts.** `FALLBACK.checkouts` is `'root'`: the agents work in the workspace root
+and the checkouts under `repos/`, named by each repo's `path` in the header, all on the
+programme branch. `'clones'` uses the clones under `workareas/clones/` (`clonePath`)
+instead, which is how the first two ruling stages ran while the `repos/` checkouts were
+on other work. Skills, docs and the helper scripts are always read from the root, because
+the permission allowlist names `tools/**` at the root path only.
+
+**Main moves under the branch.** Every stage now opens with a **sync** step, because
+GitHub runs no checks at all on a pull request that conflicts with its base: a stage that
+starts behind `main` lands into silence, which reads as an API failure rather than a
+merge problem. Sync fetches each repo the stage touches, merges `origin/main` when the
+merge is clean, runs the stage's ladder on the result and pushes. A conflict is not
+attempted: main changed something the programme also changed, so resolving it is a judged
+port. The stage is marked `sync-blocked`, naming every conflicting path, and the run stops
+for a human. Two other resume statuses exist for the same reason: `ci-retry` picks a
+landed stage up at its CI watch, `e2e-retry` at its local end-to-end run.
+
+**End to end.** `FALLBACK.localE2E: true` adds the proper end-to-end run after a stage's
+own CI is green: Sonnet starts the stack from the checkouts with `tim docker dev`, runs
+the tests repo's `npm run test:docker-compose` (once more on a red, because a fresh
+stack throws transient 500s), reads `test-results/*/error-context.md` for what failed,
+and always stops the stack; a red is fixed in the stage's repos, re-proven on their PRs
+and re-run, twice at most. `FALLBACK.workspacePr` names the workspace PR to watch after
+the record push, which re-runs the same suite in CI on the branch-tagged images; `null`
+skips that gate.
+
+Point the tool at the file: `Workflow({ scriptPath: ".claude/workflows/frontend-alignment.js" })`.
+Edit `FALLBACK.stages` to run a subset.
+
 ## `increment-build-loop.js`
 
 Builds increments from **any** `backlog.json` under `workareas/`, one at a time, with a

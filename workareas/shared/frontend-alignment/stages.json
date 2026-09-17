@@ -1469,7 +1469,7 @@
         "test",
         "test:fit"
       ],
-      "status": "landed",
+      "status": "ci-red",
       "plan": "workareas/shared/frontend-alignment/plans/s24-cross-service-shape.md",
       "commit": {
         "ins": "831a64e98a13ae7ddd924b457cc430fba329683f",
@@ -1477,8 +1477,36 @@
         "plants": "5c1ea18e011b408fc2ebdbb16451190c2848fcc6",
         "tests": "b4f43be581f31b4c3e55e23b34e095c2cf3aa1ea"
       },
-      "prs": [],
-      "ci": null,
+      "prs": [
+        {
+          "repo": "ins",
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "number": 27
+        },
+        {
+          "repo": "animals",
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "number": 339
+        },
+        {
+          "repo": "plants",
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/69",
+          "number": 69
+        },
+        {
+          "repo": "tests",
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/227",
+          "number": 227
+        }
+      ],
+      "ci": {
+        "state": "red",
+        "failures": [
+          "E2E Tests (Playwright, evidence in uploaded report artifact) - DEFRA/trade-imports-animals-frontend #339",
+          "E2E Tests (Playwright, evidence in uploaded report artifact) - DEFRA/trade-imports-plants-frontend #69",
+          "E2E Tests (Playwright, evidence in uploaded report artifact) - DEFRA/trade-imports-animals-tests #227"
+        ]
+      },
       "notes": [
         "Re-measured before planning (s22 already landed). content-security-policy.js: animals and plants are byte-identical; ins differs only by the journeyFrontendOrigins const, its import, and the formAction line. content-security-policy.test.js: animals and plants byte-identical; ins pins localhost:3000 and localhost:3003 literals. auth.js: animals and plants byte-identical; ins differs by the single line name: config.get(auth.cookieName). auth.test.js: animals and plants byte-identical; ins differs by the auth.cookieName mock-map entry and the test that pins the ins-sid literal.",
         "Planner decision: the byte-equal helper reads a new named export siblingFrontendBaseUrls from each config.js, rather than a new convict key. A convict key needs its own env var, and the per-sibling env vars are already wired in docker/stack/frontend.compose.yml and in CDP platform config, so a second variable for the same origin would have to be wired in lockstep or the cross-service redirect fails silently in a deployed environment. config.js is the file allowed to differ, so config.js assembles the per-service list and the helper maps base URLs to origins.",
@@ -1488,7 +1516,9 @@
         "I3 and I5 as literally specified in the plan are false positives against pre-existing, unrelated content and were not treated as failures. I3's grep for localhost:300 also matches the pre-existing defraId.redirectUrl literal http://localhost:3000/auth/sign-in-oidc in animals' and plants' auth.test.js (present before this stage, nothing to do with the sibling-origin or cookie-name literals the invariant is checking for); the actual target files (the three content-security-policy.test.js files) contain no localhost:300x/ins-sid/plants-sid literal. I5's grep for the three repo-name path fragments hits plain-text mentions of those paths inside trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/spec/panel/rulings.json and spec/decisions.json rationale strings — pre-existing parity-authoring artefacts (untouched by this stage's git status) that cite file paths in prose, not a source import; no repo's src actually imports another repo's src.",
         "The ladder ran green in all three frontends: format:check, lint and the unit suite (ins 600/600, animals 2356 passed + 8 pre-existing skips, plants 1927 passed + 8 pre-existing skips) plus test:fit (ins 50/50, animals 448/448, plants 231/231, all one run, no retry needed). The tests repo's typecheck, lint and format:check are also green. Logs are under workareas/shared/frontend-alignment/logs/s24-cross-service-shape-*.",
         "DEFERRED: nothing. Both halves of the ruling (form-action and auth.cookieName) are implemented in all three frontends per the plan; the fixtures/auth-state.ts open question about the single shared AUTH_SESSION_COOKIE_NAME env var covering both the ins and plants targets is carried forward as an open question, not fixed here, exactly as the plan's D11/out-of-scope section directs.",
-        "Work is staged (git add -A) in all four repos (ins, animals, plants, tests) but not committed, per the implementor's brief — the review/verify/judge/ladder stages ahead of commit still need to run."
+        "Work is staged (git add -A) in all four repos (ins, animals, plants, tests) but not committed, per the implementor's brief — the review/verify/judge/ladder stages ahead of commit still need to run.",
+        "CI FIXER attempt 2 of 2, 17 September 2026: red CI on all three PRs (animals-frontend #339, plants-frontend #69, animals-tests #227) traces to one shared cross-repo E2E run (trade-imports-animals-tests workflow-run 35163743454, reported to all three PRs via the workspace .github/actions/report-e2e-status action). The check-run URLs GitHub shows on each PR (e.g. animals-frontend runs/105019936848) are check-run ids posted by that action, not workflow runs in that repo, so get-failure.sh needs the animals-tests workflow_run id instead, found via list-runs.sh trade-imports-animals-tests \"\" workspace-e2e-tests.yml. The one failing spec is [plants] tests/e2e/features/plants/review.spec.ts:156 declaration is required and submission produces a read-only notification and Submitted dashboard card (failed on the run and its retry, same way): confirmation controller.js in trade-imports-plants-frontend correctly formats journey.submittedAt with toLocaleDateString using timeZone Europe/London, but the rendered page showed Date of notification: 16 September 2026 while the test expected 17 or 18 September. The run executed at 2026-09-16T23:50-23:51Z, already past midnight in Europe/London under BST, so this is a day-boundary race between the test-runner clock and the app-container clock/ICU timezone resolution, not a functional defect. Nothing this stage touched (content-security-policy.js, auth.js/auth.test.js, config.js, fixtures/auth-state.ts) is anywhere near this test or the confirmation feature: git show on all four s24 commits (5c1ea18 plants, 76a4f556 animals, b4f43be tests) confirms zero file overlap with review.spec.ts or the confirmation controller. This is a CI-only timing environment difference the local ladder, run at an arbitrary time of day never pinned to a UTC-midnight boundary, could not have caught, and fixing the shared E2E suite's midnight-boundary handling is unrelated repo and file scope, out of this stage's brief which covers only form-action and auth.cookieName. No code change made; reported ok:false per the CI-fixer brief's point 5.",
+        "Stage recorded with ci-red status after 2 fix attempts. E2E test run URLs: animals-frontend runs/105019936848, plants-frontend runs/105020006229, animals-tests runs/105020097071. Persistent day-boundary race in [plants] review.spec.ts:156; unrelated to this stage's scope (form-action and auth.cookieName)."
       ],
       "openQuestions": [
         "fixtures/auth-state.ts reads one shared process.env.AUTH_SESSION_COOKIE_NAME for both the ins and the plants target, so setting that variable in the Playwright runner environment would override both targets to the same cookie name. It is not set there today (only inside the ins container in docker/stack/frontend.compose.yml), and this stage mirrors the existing ins entry shape as the brief instructs, so the fixture is not redesigned here. Worth a per-target variable later."
@@ -1517,5 +1547,14 @@
         "failures": []
       }
     }
+  },
+  "ci": {
+    "state": "red",
+    "failures": [
+      "E2E Tests on DEFRA/trade-imports-animals-frontend PR 339",
+      "E2E Tests on DEFRA/trade-imports-plants-frontend PR 69",
+      "E2E Tests on DEFRA/trade-imports-animals-tests PR 227"
+    ],
+    "notes": "All failures are Playwright E2E Tests. See logs: s24-cross-service-shape-ci-fail-animals-frontend.log, s24-cross-service-shape-ci-fail-plants-frontend.log, s24-cross-service-shape-ci-fail-animals-tests.log"
   }
 }

@@ -202,14 +202,61 @@ Four practical takeaways, contrasting with the animals audit:
    would remain in storage until an evaluation with the new gate
    purges it (Scenario 2).
 
-4. **CYA display diverges from the dashboard display.** For a stale
-   country code the check-answers card shows `originCountryLabel`
-   which is `await countries.originLabel(code)` and returns undefined
-   — the field renders empty. The dashboard row, reading the same
-   record, falls back to the raw ISO code. So the trader sees "" on
-   CYA but "XY" on the dashboard card, for the same notification. This
-   is the concrete instance of the cross-view divergence noted in the
-   next section.
+4. **CYA and the dashboard both fall back to the raw ISO code.**
+   Initial reading of the CYA view-model suggested it renders the
+   country row empty. That was wrong. `originCountryLabel` is
+   undefined for a stale code, but the CYA `answerRow(field, value)`
+   helper uses a default-parameter fallback — `value = answers[field]`
+   — that kicks in when `undefined` is passed explicitly. So the row
+   value falls through to `answers.countryOfOrigin` = the raw code,
+   matching the dashboard. Pinned by the test
+   `check-answers/controller.test.js` — "Should render the raw ISO
+   code in the origin row when the stored country is no longer
+   offered by the origin block". The trader sees the same "ZZ" on
+   both surfaces; neither warns that the code is no longer offered.
+
+## Coverage added by this investigation (plants)
+
+Three level-1 pinning tests, each targeting a specific claim above.
+All three pass against the plants tip of main.
+
+- `sets/high-risk-plants/journeys/linear/features/origin/controller.test.js`
+  — describe `GET origin — amend with a stored country the reader no
+  longer offers`. Two tests: the stale code survives into
+  `values.countryOfOrigin` so it renders in the field, and the same
+  code is absent from `countryItems` so the select renders unselected.
+- `sets/high-risk-plants/journeys/linear/features/hub/controller.test.js`
+  — added test "Should still complete the origin row when the stored
+  country is no longer offered by the origin block". Locks in the
+  load-bearing claim: the completeness roll-up is a presence check on
+  the fulfilment map and does not cross-check ref data.
+- `sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js`
+  — added test "Should render the raw ISO code in the origin row when
+  the stored country is no longer offered by the origin block". Pins
+  the actual CYA behaviour (a subtle default-parameter fallback in
+  `answerRow` means undefined labels fall through to the raw code,
+  matching the dashboard).
+
+The dashboard-side claim (raw ISO code on unknown label) was already
+pinned by
+`dashboard/view-model/row/index.test.js:31-35` — "Should fall back
+to the raw code for an origin the country list does not name". No new
+test needed there.
+
+Next candidates — not yet written:
+
+- Plants port scenario, potato-conditional gate: seed
+  `proposedPlaceOfLanding: 'GB ZZZ'` and assert the hub row still
+  shows Completed (arrival-details roll-up) and the port item list on
+  the arrival-details page does not include it. Then a second
+  variation where `commodityType` is not potatoes and the port
+  question is off-scope entirely — assert the value sits inert.
+- Purge of an unrecognised obligation id, end-to-end. Seed an
+  answer at a key that does not correspond to a manifest obligation
+  and assert (a) the engine's `evaluate()` returns without it in
+  `fulfilments`, (b) the row still shows Completed if the collection
+  it lived on was otherwise complete, and (c) no user-facing warning
+  fires on hub/CYA.
 
 ## Cross-view divergence: dashboard vs notification journey
 

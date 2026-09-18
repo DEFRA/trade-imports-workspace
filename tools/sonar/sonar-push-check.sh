@@ -112,11 +112,25 @@ COMMON_ARGS=(
   "-Dsonar.qualitygate.wait=true"
 )
 
-echo "Running local Sonar pre-push check for $PROJECT_KEY (this can take a few minutes)..." >&2
+echo "Running local Sonar pre-push check for $PROJECT_KEY (this can take a few minutes; needs Docker running for repos with Testcontainers-based integration tests)..." >&2
 
 if [ -f pom.xml ]; then
   # Single combined invocation — see the "Runs as ONE build" note above.
-  mvn -q clean verify sonar:sonar "${COMMON_ARGS[@]}" "${PR_ARGS[@]}" -DskipITs 1>&2
+  #
+  # Deliberately does NOT pass -DskipITs (2026-09-18): an earlier version did,
+  # to keep this fast and Docker-independent. Confirmed by direct testing on
+  # trade-imports-address-book that this is a real correctness bug, not just
+  # a speed/accuracy trade-off: several of these repos' *IT.java integration
+  # tests are what actually exercise their configuration/bootstrap classes
+  # (TrustStoreConfiguration, MongoConfig, ProxyConfig, ...) — skipping them
+  # dropped address-book's measured line coverage from a genuine 82% to 59%,
+  # pushing it under the shared 65% jacoco-check floor for a reason that had
+  # nothing to do with the code actually being pushed. Running the full
+  # `verify` (unit + integration tests) is slower and requires Docker for
+  # any repo using Testcontainers, but it measures what jacoco-check and
+  # (via mvn's normal lifecycle) sonar:sonar actually see — matching what
+  # this check is meant to verify before a push leaves the machine.
+  mvn -q clean verify sonar:sonar "${COMMON_ARGS[@]}" "${PR_ARGS[@]}" 1>&2
   RESULT=$?
 elif [ -f package.json ]; then
   if ! command -v sonar-scanner &> /dev/null; then

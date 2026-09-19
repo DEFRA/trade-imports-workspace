@@ -8,7 +8,7 @@ This page lists the six questions the design leaves to you, then the calls it ma
 - **The other five questions have a default in force.** Each default was applied as a recorded decision, and one line from you replaces it.
 - **Two defaults change what gets built.** The increment that moves the house rules into a tracked document is deferred, and the increment that continues the DR1 union backlog is dropped. Each comes back if you rule the other way, with no further step: your ruling replaces the default, and replacing a decision first undoes everything it deferred, dropped, parked or rejected, before your option takes effect.
 
-The design was re-decided on merit in use (R8, `corrections/r8-merit.md`) and corrected by a 70-change triage (`corrections/change-list.md`). DESIGN.md section 0.2 says which candidate each part now comes from, and why.
+The design was re-decided on merit in use (R8, `corrections/r8-merit.md`) and corrected by a 70-change triage (`corrections/change-list.md`). DESIGN.md section 0.2 says which candidate each part now comes from, and why. Your steer on stage count then led to a consolidation (`consolidation/decision.md`): tim runs every deterministic step, one cheap agent runs each gap between judgement stages, and a typical increment spends about 43 agents instead of 59 to 97. Calls 20 to 30 below come from it.
 
 **How to answer.** Reply with one line per question, such as `q-house-rules-source: B`, followed by any words you want recorded. Your words are kept verbatim. An answer is recorded as tentative only when "?" comes straight after the letter ("B?"), or when you write maybe, probably, not sure or perhaps. Any other "?" in your words is just punctuation.
 
@@ -117,7 +117,7 @@ The ten exact checks are: prompts identical apart from the executor profile; no 
 
 The design made these calls without you. Each is recorded in DESIGN.md.
 
-1. **In the `codex` preset, the judge and acceptance run on Codex.** Only the watchers stay on Claude. This is a note in `presets.json`, not part of the backlog.
+1. **In the `codex` preset, the judge and acceptance run on Codex.** Only the cheap step agents that run tim's commands stay on Claude, about 2 an increment. This is a note in `presets.json`, not part of the backlog.
    To reverse: `tim backlog run bind <programme> --from next --preset codex-claude-checks --said "<your words>" --by sam --at <now>`. One command, no backlog edit.
 2. **One consistency reviewer checks every repo an increment touches, with a verdict per repo and a contract check at each seam between them.** Two judges read the review skill as one reviewer per repo. The skill's own step 4 and your R7 say one reviewer across repos.
    To reverse: `tim backlog rule requirements-pipeline --subject conflict:c-002 --choose judge-1 --by sam --at <now> --words "<your words>" --note "<why>"`. It swaps in the held variant req-126, one consistency review per touched repo, and the stage follows the atom.
@@ -155,6 +155,28 @@ The design made these calls without you. Each is recorded in DESIGN.md.
    To reverse: answer the question.
 19. **This programme's backlog may name Claude, Codex and the presets**, but only as the product's own interface: they name what is being built, never who builds it. A deviation enumerates the allowed terms, and the lint still refuses file paths, model tiers and build-mode words.
    To reverse: narrow `dv-tooling-commands`. Every atom about Codex support would then fail the lint.
+20. **tim now runs every local git step itself, including commits and merges of base; every push, PR, merge and Jira write stays its own call.** Local steps are reversible and tested on fixtures, so a committed test guards them better than an agent typing the command. The outward calls stay visible to guard-bash and are read back afterwards.
+   To reverse: set the stage-table flag `localGit: act`. Each local git step then comes back as its own visible call, at no extra agent cost.
+21. **The sync merge is pushed with the increment, not on its own.** Nothing needs the merge on the remote before land, and pushing it alone would expose an unproven merge and double the pushes.
+   To reverse: `tim backlog run set <programme> quality.pushSyncMerge true`. `prepare` then returns a push call after each clean merge.
+22. **One draft-PR call per repo rather than one per increment.** Each call names its repo, head and base, at no agent cost.
+   To reverse: emit one `tim backlog pr ensure --inc` call for all repos instead: fewer calls, less legible.
+23. **Verification stays one task per file with findings; batching it was declined.** Batching by repo and review family would save about 2 agents an increment but weaken the per-file attention R6 sets as the bar.
+   To reverse: add `fanOut: per-repo-family` to the verify stage and `quality.verifyBatch`.
+24. **Fix-verify runs straight after the fix, before the post-fix checks; a red check re-runs it.** Nothing mechanical then sits between fix and fix-verify, so they share one span and one agent is saved.
+   To reverse: move the fix-check back between fix and fix-verify in the stage table (one more cheap agent on increments with fixes).
+25. **The consolidation rests on your steer as relayed to the design agents** (`consolidation/sam-steer.md`), quoted by req-121 and req-136 to req-142.
+   To reverse: if a line misquotes you, correct that file; inc-010's verification re-checks the seven atoms that cite it.
+26. **Each push of an increment branch is its own visible call** (`git -C … push` with a full refspec), generated by `land` only after tim's branch proof and fast-forward check, and read back from the remote. Inside tim it would be invisible to guard-bash, and octokit cannot push.
+   To reverse: add `--push` to `land` so tim pushes in-process. One flag and its tests; guard-bash would no longer see the push.
+27. **The state branch push is its own visible call**, generated by `record`. Other sessions read that state, so it stays visible.
+   To reverse: `tim backlog run set <programme> record commit` keeps the state commit local.
+28. **Waiting for CI runs inside tim**, because it only reads.
+   To reverse: return `tim github pr checks --wait` as a visible call.
+29. **Merging is one visible `tim github pr merge --expect-head` call per repo, in provider-first order, never inside a macro**, and only when the merge setting carries your decision and every PR is green. `--expect-head` makes merging anything but the proven head impossible. This programme never merges.
+   To reverse: set `delivery.merge` to `never` (this programme's setting): no merge is ever emitted.
+30. **Jira create and transition are each their own visible call** when ticketing is on. This programme leaves ticketing off.
+   To reverse: leave `ticketing` unset (this programme's setting).
 
 ---
 
@@ -163,9 +185,8 @@ The design made these calls without you. Each is recorded in DESIGN.md.
 Agents cannot edit the workspace settings, so these wait for you:
 
 1. **Before the first build run,** raise "Dynamic workflow size" in `/config`. One increment can use dozens of agents.
-2. **Before inc-025, the first self-hosted build,** add these two allow rules to `.claude/settings.json`, so the pinned copy of the pipeline's tools runs without a prompt:
-   - `Bash(~/git/defra/trade-imports-workspace/workareas/clones/pipeline-pin/tools/**)`
-   - `Bash(~/git/defra/trade-imports-workspace/workareas/clones/pipeline-pin/tools/**:*)`
-3. **Before inc-019,** add a PostToolUse hook on `Read` that runs `tools/backlog/record-read.sh`. It records which session read which file and which lines, so the reading audit is exact.
-4. **Before inc-014,** extend guard-edits and the secrets-read check to cover `build/runs/**/receipt.json`, `build/runs/**/output.json` and `build/.accept-key`, so no agent can hand-write or read what proves a task was accepted.
-5. **Accept or refuse one deviation from CLAUDE.md rule 3.** Agents commit without `sonar analyze --staged`, because agents cannot run it. SonarCloud results for the pipeline's own work come from the pull request checks instead, and "no report" is shown as "no report", never as clean. The push-record hook does not help here: it recognises only a push run from inside the repo, and the build's pushes name their repo.
+2. **Before inc-019,** add a PostToolUse hook on `Read` that runs `tools/backlog/record-read.sh`. It records which session read which file and which lines, so the reading audit is exact.
+3. **Before inc-014,** extend guard-edits and the secrets-read check to cover `build/runs/**/receipt.json`, `build/runs/**/output.json`, `build/runs/**/facts/*.json` and `build/.accept-key`, so no agent can hand-write or read what proves a task was accepted or a step was run.
+4. **Accept or refuse one deviation from CLAUDE.md rule 3.** The pipeline commits without `sonar analyze --staged`, because agents cannot run it. SonarCloud results for the pipeline's own work come from the pull request checks, read by tim, and "no report" is shown as "no report", never as clean.
+
+The pinned copy of the pipeline's tools no longer needs an allow rule: the pinned tim runs through the `npm --prefix` form the settings already allow, and no pinned bash tool is called.

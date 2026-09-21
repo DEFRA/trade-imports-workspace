@@ -206,6 +206,11 @@ tim backlog ingest <programme> --op-id r1:inc-001:1:plan:t1:ingest --json   # re
 tim backlog ingest <programme> --expect-sha <sha256> --json                # refused with exit 3 if backlog.json has changed since
 tim backlog state set <programme> inc-001 phase --value '"plan"' --json    # set one field on one increment's build/state.json entry (requirements-v2 only)
 tim backlog state note <programme> inc-001 --file note.txt --stage plan --json  # append one note to build/journal.jsonl
+tim backlog rule <programme> q-house-rules-source --option A --by sam --at 2026-09-21T10:00:00Z --words "..." --note "..." --json  # record and apply a ruling (requirements-v2 only)
+tim backlog rule <programme> q-house-rules-source --by default --at 2026-09-21T10:00:00Z --json   # apply a defaulted question's default at once
+tim backlog rule <programme> q-house-rules-source --option B --supersedes d-005 --by sam --at 2026-09-21T10:00:00Z --words "Move to option B." --note "..." --json  # reverse a decision in force, naming it with --supersedes
+tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-09-21T10:00:00Z --words "maybe B?" --note "..." --json  # a hedge in --words is recorded tentative, not applied; --supersedes is not used here
+tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
 A programme is registered in one of two files: a parity corpus in
@@ -214,12 +219,12 @@ A programme is registered in one of two files: a parity corpus in
 on every run — in `tools/backlog/registry.json`. A key may appear in only one
 of the two files; `tim backlog registry list` reports both together.
 
-`tim backlog ingest`, `state set` and `state note` all go through the same
-write-safety core: `--op-id` makes a call idempotent (a replay returns the
-first result and writes nothing), and `--expect-sha` refuses a write whose
-target changed underneath it. Both exit 3 (`LOST_UPDATE`) on a stale
-`--expect-sha` and 4 (`LOCKED`) when another process holds the write lock
-after every retry.
+`tim backlog ingest`, `state set`, `state note` and `rule` (requirements-v2
+only) all go through the same write-safety core: `--op-id` makes a call
+idempotent (a replay returns the first result and writes nothing), and
+`--expect-sha` refuses a write whose target changed underneath it. Both exit
+3 (`LOST_UPDATE`) on a stale `--expect-sha` and 4 (`LOCKED`) when another
+process holds the write lock after every retry.
 
 ### Bypassing the interactive menu
 

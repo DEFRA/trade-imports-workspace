@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve, normalize, sep } from 'node:path'
 import { homedir } from 'node:os'
-import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { loadProgramme } from '../../backlog/programme.js'
 import { loadRegistry } from '../../backlog/registry.js'
 import { runIngest } from '../../backlog/ingest.js'
@@ -10,33 +9,14 @@ import { setIncrementField, appendJournalNote } from '../../backlog/state.js'
 import { INCREMENT_ID, SETTABLE_FIELDS } from '../../backlog/state-schema.js'
 import { readJsonFile } from '../../backlog/io.js'
 import { resolveStandards, lintStandards } from '../../backlog/standards.js'
-import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
-import { OK } from '../../constants/exitCodes.js'
 import { TimError } from '../../errors.js'
-
-const emit = (text) => process.stdout.write(`${text}\n`)
-const emitError = (text) => process.stderr.write(`${text}\n`)
-
-const programmeKeySchema = z.string().trim().min(1, 'Name a programme key.')
-
-const MAX_OP_ID_LENGTH = 200
-
-// DESIGN 4.3's op id shape: a person must be able to pass a plain id, so the
-// six-part `<runLabel>:<inc>:<attempt>:<stage>:<task>:<verb>` form is not
-// enforced — no caller composes it yet (`advance` is inc-017).
-const opIdSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(MAX_OP_ID_LENGTH)
-  .regex(
-    /^[A-Za-z0-9][A-Za-z0-9._-]*(:[A-Za-z0-9._-]+)*$/,
-    'is not a valid --op-id (letters, digits, ".", "_", "-" and ":" only, starting with a letter or digit).'
-  )
-
-const expectShaSchema = z
-  .string()
-  .regex(/^[0-9a-f]{64}$/, '--expect-sha must be a 64-character hex sha256.')
+import { register as registerLedger } from './ledger.js'
+import {
+  makeBacklogAction,
+  parseProgrammeKey,
+  opIdSchema,
+  expectShaSchema
+} from './shared.js'
 
 const ingestOptsSchema = z
   .object({
@@ -161,68 +141,6 @@ const readNoteFile = (path) => {
     throw error
   }
 }
-
-/**
- * Validate a positional argument before any side-effect runs, refusing with
- * exit 2 rather than a raw zod error (`.claude/rules/cli-patterns.md`).
- *
- * @param {unknown} value
- * @param {string} label
- * @returns {string}
- * @throws {TimError} USAGE
- */
-const parseProgrammeKey = (value, label) => {
-  const result = programmeKeySchema.safeParse(value)
-  if (!result.success) {
-    throw new TimError('USAGE', `${label}: ${result.error.issues[0].message}`)
-  }
-  return result.data
-}
-
-/**
- * Every `tim backlog` subcommand resolves the workspace, runs one function
- * (ingest may write backlog.json; the registry commands are read-only) over a
- * registered programme, then prints the result as text or as one JSON line —
- * the wrapper `tim parity`'s commands use (`commands/parity/index.js`'s
- * `makeParityAction`), over a programme key resolved through the registry
- * instead of a corpus resolved from a run id.
- *
- * @param {object} args
- * @param {(context: object, opts: object) => any} args.run
- * @param {(result: any) => string} args.renderText
- * @param {string} args.timVersion
- * @returns {Function} A commander action
- */
-const makeBacklogAction = ({ run, renderText, timVersion }) =>
-  function backlogAction(...positional) {
-    const args = positional.slice(0, -2)
-    const opts = this.optsWithGlobals()
-    try {
-      const workspaceRoot = resolveWorkspaceRoot({ explicit: opts.workspace })
-      const result = run({ workspaceRoot, args }, opts)
-      if (opts.json) {
-        emit(JSON.stringify(jsonEnvelope({ ok: true, result, timVersion })))
-      } else {
-        emit(renderText(result))
-      }
-      process.exit(OK)
-    } catch (error) {
-      if (opts.json) {
-        emit(
-          JSON.stringify(
-            jsonEnvelope({
-              ok: false,
-              error: errorPayloadFor(error),
-              timVersion
-            })
-          )
-        )
-      } else {
-        emitError(error.message ?? String(error))
-      }
-      process.exit(exitCodeFor(error))
-    }
-  }
 
 const renderIngest = (result) =>
   [
@@ -718,4 +636,6 @@ export const register = (program, { timVersion }) => {
         timVersion
       })
     )
+
+  registerLedger(backlog, { timVersion })
 }

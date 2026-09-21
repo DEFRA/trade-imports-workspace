@@ -14,6 +14,7 @@ import {
 } from './intake.js'
 import { ATOM_FIELDS, REFUSED_FIELDS } from './requirements-v2.classes.js'
 import { parseIncrement } from './requirements-v2-increments.js'
+import { checkLedger, REQUIREMENT_ID } from './requirements-v2.ledger.js'
 
 /**
  * DESIGN section 3.4's ten requirement kinds. Anything else is a typo.
@@ -46,7 +47,9 @@ export const atomSchema = passthrough({
   dependsOn: z.array(z.string()),
   relatedTo: z.array(z.string()),
   status: z.string(),
-  provenance: z.unknown().nullable()
+  provenance: z.unknown().nullable(),
+  needs: z.array(z.string()).optional(),
+  supersededBy: z.string().regex(REQUIREMENT_ID).nullable().optional()
 })
 
 export const v2BacklogSchema = passthrough({
@@ -89,7 +92,9 @@ export const parseAtom = (raw, index) => {
  * Parse a whole requirements-v2 backlog file: every atom, and — when
  * present — every increment, each refusing a row carrying a key DESIGN
  * 3.14 names as absent by design (D8, D26), so a re-parse never silently
- * carries one through, whichever pass triggered it.
+ * carries one through, whichever pass triggered it. Also checks the
+ * ledger (`questions[]`, `decisions[]` and every atom's `needs`) via
+ * `checkLedger` — see its own doc comment.
  *
  * @param {unknown} raw - The parsed JSON of a backlog file
  * @returns {object} The backlog with every atom and increment parsed
@@ -103,13 +108,14 @@ export const parseV2Backlog = (raw) => {
       `backlog: ${describeIssue(firstIssue(outer.error))}`
     )
   }
-  return {
+  const resolved = {
     ...outer.data,
     requirements: outer.data.requirements.map(parseAtom),
     ...(outer.data.increments !== undefined
       ? { increments: outer.data.increments.map(parseIncrement) }
       : {})
   }
+  return checkLedger(resolved)
 }
 
 /**

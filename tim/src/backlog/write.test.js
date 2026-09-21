@@ -9,7 +9,7 @@ import {
 import { join } from 'node:path'
 import { tmpdir, hostname } from 'node:os'
 import { execa } from 'execa'
-import { sha256Of, readVersioned, commitWrite } from './write.js'
+import { sha256Of, readVersioned, commitWrite, commitWithReplay } from './write.js'
 
 let dir
 
@@ -321,5 +321,138 @@ describe('the write-safety core, end to end with mkdtempSync directories', () =>
 
     expect(result.notes).toHaveLength(1)
     expect(result.notes[0]).toMatch(/Broke a stale lock/)
+  })
+})
+
+describe('commitWithReplay', () => {
+  test('a recorded op id returns the recorded result without calling afterReplayCheck (T-W1)', () => {
+    const path = join(dir, 'out.json')
+    const opsLogPath = join(dir, 'ops.jsonl')
+    commitWithReplay({
+      opsLogPath,
+      opId: 'op-1',
+      fingerprint: 'fp-1',
+      path,
+      format: 'json',
+      validate: acceptAnyBody,
+      command: 'test',
+      buildBody: () => ({
+        body: '{"a":1}\n',
+        resultStub: { label: 'first' }
+      }),
+      ...FAST_RETRY
+    })
+    const afterReplayCheck = () => {
+      throw new Error('afterReplayCheck must not run on a replay')
+    }
+
+    const replay = commitWithReplay({
+      opsLogPath,
+      opId: 'op-1',
+      fingerprint: 'fp-1',
+      path,
+      format: 'json',
+      validate: acceptAnyBody,
+      command: 'test',
+      afterReplayCheck,
+      buildBody: () => ({
+        body: '{"a":2}\n',
+        resultStub: { label: 'second' }
+      }),
+      ...FAST_RETRY
+    })
+
+    expect(replay.label).toBe('first')
+    expect(readFileSync(path, 'utf8')).toBe('{"a":1}\n')
+  })
+
+  test('without an op id it runs afterReplayCheck, builds, commits, and returns the result with sha256 and notes (T-W2)', () => {
+    const path = join(dir, 'out.json')
+    let afterReplayCheckCalls = 0
+
+    const result = commitWithReplay({
+      path,
+      format: 'json',
+      validate: acceptAnyBody,
+      command: 'test',
+      afterReplayCheck: () => {
+        afterReplayCheckCalls += 1
+      },
+      buildBody: (versioned) => {
+        expect(versioned.exists).toBe(false)
+        return { body: '{"a":1}\n', resultStub: { label: 'first' } }
+      },
+      ...FAST_RETRY
+    })
+
+    expect(afterReplayCheckCalls).toBe(1)
+    expect(result).toEqual({
+      label: 'first',
+      sha256: sha256Of('{"a":1}\n'),
+      notes: []
+    })
+    expect(readFileSync(path, 'utf8')).toBe('{"a":1}\n')
+  })
+
+  test('a write recorded under the same opId while buildBody runs is returned unchanged, with nothing double-written (T-W3)', () => {
+    const path = join(dir, 'out.json')
+    const opsLogPath = join(dir, 'ops.jsonl')
+
+    const result = commitWithReplay({
+      opsLogPath,
+      opId: 'op-1',
+      fingerprint: 'fp-1',
+      path,
+      format: 'json',
+      validate: acceptAnyBody,
+      command: 'test',
+      buildBody: () => {
+        commitWrite({
+          path,
+          body: '{"a":1}\n',
+          validate: acceptAnyBody,
+          command: 'test',
+          opId: 'op-1',
+          fingerprint: 'fp-1',
+          opsLogPath,
+          result: { label: 'concurrent-writer' },
+          ...FAST_RETRY
+        })
+        return { body: '{"a":2}\n', resultStub: { label: 'this-call' } }
+      },
+      ...FAST_RETRY
+    })
+
+    expect(result.label).toBe('concurrent-writer')
+    expect(readFileSync(path, 'utf8')).toBe('{"a":1}\n')
+    expect(readFileSync(opsLogPath, 'utf8').trim().split('\n')).toHaveLength(1)
+  })
+
+  test('an explicit expectSha overrides the versioned default, so a stale value is refused with LOST_UPDATE (T-W4)', () => {
+    const path = join(dir, 'out.json')
+    commitWrite({
+      path,
+      body: '{"a":1}\n',
+      validate: acceptAnyBody,
+      command: 'test',
+      ...FAST_RETRY
+    })
+    const staleSha = 'a'.repeat(64)
+
+    expect(() =>
+      commitWithReplay({
+        path,
+        format: 'json',
+        validate: acceptAnyBody,
+        command: 'test',
+        expectSha: staleSha,
+        buildBody: () => ({
+          body: '{"a":2}\n',
+          resultStub: { label: 'second' }
+        }),
+        ...FAST_RETRY
+      })
+    ).toThrowError(expect.objectContaining({ code: 'LOST_UPDATE' }))
+    expect(readFileSync(path, 'utf8')).toBe('{"a":1}\n')
   })
 })

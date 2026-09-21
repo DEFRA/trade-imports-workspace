@@ -6,7 +6,8 @@ import {
   checkOneIncrementPerAtom,
   parseIncrement,
   rootKeyOf,
-  requirementsV2Increments
+  requirementsV2Increments,
+  needsFor
 } from './requirements-v2-increments.js'
 
 const increment = (overrides = {}) => ({
@@ -464,6 +465,19 @@ describe('born status and needs (D14, D21, D28)', () => {
 
     expect(bornFor(context, item)).toBe('todo')
   })
+
+  test('needsFor over the bare {atomRows} shape matches what rowFrom writes for the same members (T-I3)', () => {
+    const atomRows = [
+      { id: 'req-001', status: 'adopted', needs: ['q-a', 'q-b'] },
+      { id: 'req-002', status: 'adopted', needs: ['q-b'] }
+    ]
+    const item = { members: ['req-001', 'req-002'] }
+    const ingestContext = { atomRows, atomTable: new Map(), startedIds: new Set() }
+
+    expect(needsFor(item, { atomRows })).toEqual(
+      rowFor(ingestContext, item).needs
+    )
+  })
 })
 
 describe('parseIncrement', () => {
@@ -514,3 +528,4 @@ describe('parseIncrement', () => {
     ).toThrow(/inc-001.*plan owns files/s)
   })
 })
+

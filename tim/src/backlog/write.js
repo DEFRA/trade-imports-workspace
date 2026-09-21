@@ -179,3 +179,71 @@ export const commitWrite = ({
     releaseLock({ lockPath })
   }
 }
+
+/**
+ * The replay-check, read, commit, unwrap sequence every writer that
+ * replays by op id runs through `commitWrite`.
+ *
+ * The op-id replay check runs first, before `args.afterReplayCheck` (e.g. a
+ * check that reads other files) — a resumed workflow replaying a call must
+ * get its original result back even when the world it read no longer
+ * matches what it wrote (DESIGN D7: "Each writer calls findOperation first,
+ * before reading anything else").
+ *
+ * @param {object} args
+ * @param {string} args.opsLogPath
+ * @param {string} [args.opId]
+ * @param {string} [args.fingerprint]
+ * @param {string} args.path - The target file this write replaces
+ * @param {'json'|'jsonl'} args.format
+ * @param {(parsed: any) => void} args.validate
+ * @param {string} [args.expectSha]
+ * @param {string} args.command
+ * @param {() => void} [args.afterReplayCheck] - Runs once, after the op-id
+ *   replay check and before the target is read
+ * @param {(versioned: {exists: boolean, sha256: string|null, text: string|null}) => {body: string, resultStub: object}} args.buildBody
+ * @param {number[]} [args.retryDelaysMs]
+ * @returns {object} The replayed result, or the fresh one with `sha256`/`notes` filled in
+ * @throws {TimError} USAGE, NOT_FOUND, PARSE, LOST_UPDATE, LOCKED
+ */
+export const commitWithReplay = ({
+  opsLogPath,
+  opId,
+  fingerprint,
+  path,
+  format,
+  validate,
+  expectSha,
+  command,
+  afterReplayCheck,
+  buildBody,
+  retryDelaysMs
+}) => {
+  if (opId) {
+    const found = findOperation({ opsLogPath, opId, fingerprint })
+    if (found) return found.result
+  }
+
+  afterReplayCheck?.()
+
+  const versioned = readVersioned(path)
+  const { body, resultStub } = buildBody(versioned)
+  const expectedSha = expectSha ?? versioned.sha256
+
+  const commit = commitWrite({
+    path,
+    body,
+    format,
+    validate,
+    expectedSha,
+    command,
+    opId,
+    fingerprint,
+    opsLogPath,
+    result: resultStub,
+    retryDelaysMs
+  })
+
+  if (commit.replayed) return commit.result
+  return { ...resultStub, sha256: commit.sha256, notes: commit.notes }
+}

@@ -342,7 +342,18 @@ const memberRowsFor = (item, context) => {
   return (item.members ?? []).map((id) => byId.get(id)).filter(Boolean)
 }
 
-const needsFor = (item, context) => {
+/**
+ * The union of every non-excluded member atom's `needs`, sorted (DESIGN
+ * 3.10). A member that is `superseded`, `parked` or `rejected` no longer
+ * contributes its own needs. `rule` calls this with the same `{atomRows}`
+ * shape ingest builds it with, so a recomputed row after a ruling matches
+ * what a re-ingest would derive (T-I3).
+ *
+ * @param {object} item - An increment row (its `members`)
+ * @param {{atomRows: object[]}} context
+ * @returns {string[]}
+ */
+export const needsFor = (item, context) => {
   const rows = memberRowsFor(item, context).filter(
     (row) => !CONTRIBUTING_EXCLUDED_STATUSES.has(row.status)
   )
@@ -352,7 +363,15 @@ const needsFor = (item, context) => {
   return [...new Set(needs)].sort()
 }
 
-const bornStatusFor = (item, context) => {
+/**
+ * `blocked` when the increment has any need or a `disputed` member,
+ * otherwise `todo` (DESIGN 3.9).
+ *
+ * @param {object} item - An increment row (its `members`)
+ * @param {{atomRows: object[]}} context
+ * @returns {'blocked'|'todo'}
+ */
+export const bornStatusFor = (item, context) => {
   const hasDisputedMember = memberRowsFor(item, context).some(
     (row) => row.status === 'disputed'
   )

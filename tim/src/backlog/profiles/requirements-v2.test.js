@@ -1,4 +1,7 @@
 import { describe, test, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   validateAtom,
   verificationOf,
@@ -7,6 +10,16 @@ import {
   parseV2Backlog,
   requirementsV2
 } from './requirements-v2.js'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const ledgerFixturePath = join(
+  here,
+  '..',
+  '__fixtures__',
+  'ledger',
+  'backlog.json'
+)
+const ledgerFixture = () => JSON.parse(readFileSync(ledgerFixturePath, 'utf8'))
 
 const atom = (overrides = {}) => ({
   key: 'alpha--second',
@@ -238,5 +251,30 @@ describe('parseV2Backlog', () => {
         requirements: [row]
       })
     ).toThrow(/req-001.*executor.*build\/run\.json/s)
+  })
+
+  test('refuses a backlog whose question has a must-answer category and a default, naming the question (T-V1)', () => {
+    const raw = ledgerFixture()
+    raw.questions[0].category = 'access-control'
+    raw.questions[0].ifNobodyAnswers = {
+      option: 'A',
+      consequence: 'ignored',
+      defaultWhy: null
+    }
+
+    expect(() => parseV2Backlog(raw)).toThrow(
+      /q-notification-list-scope.*cannot take a default/s
+    )
+  })
+
+  test('refuses an atom whose supersededBy is not a req id (T-V2)', () => {
+    const raw = ledgerFixture()
+    raw.requirements[0].supersededBy = 'not-a-req-id'
+
+    expect(() => parseV2Backlog(raw)).toThrow(/req-001/)
+  })
+
+  test('accepts the ledger fixture unchanged (T-V3)', () => {
+    expect(() => parseV2Backlog(ledgerFixture())).not.toThrow()
   })
 })

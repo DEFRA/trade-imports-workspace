@@ -1942,9 +1942,7 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     const payload = JSON.parse(stdout.trim())
     expect(payload.errors[0].code).toBe('NOT_FOUND')
     expect(payload.errors[0].message).toContain('no-such-note.txt')
-    expect(
-      existsSync(join(programmeDir, 'build', 'journal.jsonl'))
-    ).toBe(false)
+    expect(existsSync(join(programmeDir, 'build', 'journal.jsonl'))).toBe(false)
   })
 
   test('E12: state set on a parity-v1 corpus key exits 2 with USAGE', async () => {

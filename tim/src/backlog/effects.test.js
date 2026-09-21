@@ -334,9 +334,9 @@ describe('defer-increment and drop-increment (T-E7)', () => {
     expect(incIn(next, 'inc-001').status).toBe('deferred')
     expect(incIn(next, 'inc-001').statusNote).toBe('Deferred by d-001.')
     expect(RULED_STATUSES.has('deferred')).toBe(true)
-    expect(
-      requirementsV2Increments.isRuled(incIn(next, 'inc-001'), {})
-    ).toBe(true)
+    expect(requirementsV2Increments.isRuled(incIn(next, 'inc-001'), {})).toBe(
+      true
+    )
   })
 
   test('drop-increment writes dropped and a status note naming the decision', () => {
@@ -350,9 +350,9 @@ describe('defer-increment and drop-increment (T-E7)', () => {
     expect(incIn(next, 'inc-001').status).toBe('dropped')
     expect(incIn(next, 'inc-001').statusNote).toBe('Dropped by d-001.')
     expect(RULED_STATUSES.has('dropped')).toBe(true)
-    expect(
-      requirementsV2Increments.isRuled(incIn(next, 'inc-001'), {})
-    ).toBe(true)
+    expect(requirementsV2Increments.isRuled(incIn(next, 'inc-001'), {})).toBe(
+      true
+    )
   })
 
   test('T-E10b: revert of the live d-005 shape (prior status, no priorNote) restores the status and a defined statusNote without crashing', () => {

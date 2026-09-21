@@ -161,7 +161,10 @@ describe('acquireLock / releaseLock', () => {
       acquireLock({ lockPath, command: 'second-caller', retryDelaysMs })
     ).toThrowError(expect.objectContaining({ code: 'LOCKED' }))
 
-    const totalDelayMs = retryDelaysMs.reduce((total, delay) => total + delay, 0)
+    const totalDelayMs = retryDelaysMs.reduce(
+      (total, delay) => total + delay,
+      0
+    )
     expect(Date.now() - start).toBeGreaterThanOrEqual(totalDelayMs)
   })
 

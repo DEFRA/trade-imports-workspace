@@ -103,9 +103,9 @@ describe('req-015: the default read version protects against a race', () => {
       ...FAST_RETRY
     })
 
-    expect(() =>
-      ingest({ expectSha: shaBeforeCompetingWrite })
-    ).toThrowError(expect.objectContaining({ code: 'LOST_UPDATE' }))
+    expect(() => ingest({ expectSha: shaBeforeCompetingWrite })).toThrowError(
+      expect.objectContaining({ code: 'LOST_UPDATE' })
+    )
     expect(readVersioned(profile.paths.backlog).sha256).toBe(competing.sha256)
   })
 })

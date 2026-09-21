@@ -472,7 +472,11 @@ describe('born status and needs (D14, D21, D28)', () => {
       { id: 'req-002', status: 'adopted', needs: ['q-b'] }
     ]
     const item = { members: ['req-001', 'req-002'] }
-    const ingestContext = { atomRows, atomTable: new Map(), startedIds: new Set() }
+    const ingestContext = {
+      atomRows,
+      atomTable: new Map(),
+      startedIds: new Set()
+    }
 
     expect(needsFor(item, { atomRows })).toEqual(
       rowFor(ingestContext, item).needs
@@ -528,4 +532,3 @@ describe('parseIncrement', () => {
     ).toThrow(/inc-001.*plan owns files/s)
   })
 })
-

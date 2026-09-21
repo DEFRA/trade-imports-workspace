@@ -3,7 +3,9 @@ import { uniqueSuffix, uniqueTempPathFor } from './tmp-path.js'
 
 describe('uniqueSuffix', () => {
   test('is this process’s pid followed by a random hex tail', () => {
-    expect(uniqueSuffix()).toMatch(new RegExp(`^${process.pid}\\.[0-9a-f]{12}$`))
+    expect(uniqueSuffix()).toMatch(
+      new RegExp(`^${process.pid}\\.[0-9a-f]{12}$`)
+    )
   })
 
   test('two calls never collide', () => {

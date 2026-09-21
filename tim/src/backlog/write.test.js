@@ -9,7 +9,12 @@ import {
 import { join } from 'node:path'
 import { tmpdir, hostname } from 'node:os'
 import { execa } from 'execa'
-import { sha256Of, readVersioned, commitWrite, commitWithReplay } from './write.js'
+import {
+  sha256Of,
+  readVersioned,
+  commitWrite,
+  commitWithReplay
+} from './write.js'
 
 let dir
 

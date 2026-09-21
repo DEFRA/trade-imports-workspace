@@ -29,7 +29,9 @@ const sortedClone = (value) => {
  * @returns {string} hex sha256
  */
 export const fingerprintOf = (shape) =>
-  createHash('sha256').update(JSON.stringify(sortedClone(shape))).digest('hex')
+  createHash('sha256')
+    .update(JSON.stringify(sortedClone(shape)))
+    .digest('hex')
 
 /**
  * The recorded entry for one operation id, or `null` when it has not run

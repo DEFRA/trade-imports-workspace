@@ -447,7 +447,11 @@ export const applyRuling = ({
   const chosenLetter = isDefaultRuling
     ? question.ifNobodyAnswers.option
     : option
-  const chosenOption = resolveChosenOption({ question, questionId, chosenLetter })
+  const chosenOption = resolveChosenOption({
+    question,
+    questionId,
+    chosenLetter
+  })
 
   const hedged = !isDefaultRuling && isHedged(words)
   const isTentativeRuling = !isDefaultRuling && (Boolean(tentative) || hedged)

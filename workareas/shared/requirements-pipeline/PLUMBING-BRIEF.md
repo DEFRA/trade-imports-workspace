@@ -1,3 +1,60 @@
+# Summary of the overnight run (21–22 September 2026)
+
+**All four jobs are done and proved. Nothing is pushed.** Decisions, each with how to reverse it, are in
+`DECISIONS.md` beside this brief.
+
+## What was done
+
+| Commit | Job | What |
+|---|---|---|
+| `60d9316c` | 1 and 4 | The one backlog shape, `docs/reference/backlog-shape.md`. `tim backlog check` (shape, dependencies, cycles, refuses `filesToTouch`/`verification`/`recipe`/`implementorSkill`), `tim backlog next` (build-orchestrator's derive query as a tested command) and `tim backlog set` (status, commit, ticket, branch, notes, open questions, PRs) |
+| `267cbf7e` | — | Formatting only: tim files an earlier commit left unformatted |
+| `2dc0596d` | 3 | `increment-build-loop.js`: frontend-alignment's plan stage lifted in (`plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, a check per acceptance criterion, the ladder, out of scope). Implement executes the plan; the ladder runs the plan's ladder; the recipe rules are gone. Reviewers still read the `review` and `code-style` skills live by path. The Codex briefs read the same plan. Every backlog write goes through `tim backlog set`. New required arg `planOnly`. build-orchestrator derives with `tim backlog next` |
+| `17de85b4` | 2 | The `distil` skill, and its proof run |
+
+tim is green at `2dc0596d`: 149 test files, 1,963 tests, lint clean.
+
+**The proofs.**
+- **Distiller:** a mix of three CHED-PP trace pages and the high-risk plants Confluence requirements page. The
+  run went: 53 claims, then verification (2 refuted, 7 missed claims added), then 26 requirements and 7
+  conflicts (5 questions, each with a default), then 4 full-stack increments. `tim backlog check` passes, and
+  every adopted requirement is in exactly one increment. See `proof/hrp-origin/report.md`, which leads with the
+  questions.
+- **Builder:** the loop ran with `planOnly: true` over `inc-001` against the plants repos. It found the row's
+  premise partly wrong (the origin page already exists), planned against reality, and planned one slice across
+  backend, frontend and tests with the integration proof in the tests repo. See `proof/hrp-origin/plans/inc-001.md`.
+  It took 3 agents and 13 minutes.
+
+## How to use them now
+
+- **Distil:** say "distil these sources into a backlog" and name them. The skill (`.claude/skills/distil/SKILL.md`)
+  writes `workareas/shared/<programme>/sources.json`, then extracts, verifies, reconciles, consolidates, and
+  writes `backlog.json` and `report.md`. Read the report's questions first.
+- **Build:** say "orchestrate the build" with the workarea (build-orchestrator). To see how one increment would
+  be built without building it, run the loop with `planOnly: true`. Codex mode: `executor: 'codex'`, from the
+  same backlog, unedited.
+
+## Waiting for Sam
+
+1. **Add `distil` to the skill routing index in `CLAUDE.md`.** I did not, because `CLAUDE.md` has an
+   uncommitted edit of yours. The row is in `DECISIONS.md`.
+2. **Codex mode was not run live.** The briefs read the plan, but a real Codex build needs a Codex login and a
+   real increment. The plan stage runs on Claude in both modes (D5).
+3. **`lifecycle: local` is still broken on this branch.** Baseline refuses a repo on the base branch, and local
+   builds on it. The fix is on workspace PR #44 (synthesis §2.2, join 7). `planOnly` skips baseline, so the dry
+   run was not affected.
+4. **The harness refuses a subagent writing a report file** ("subagents should return findings as text").
+   The distil skill now has the report agent return its text for the main session to save. Other files write
+   fine.
+
+## The exact next step
+
+Pick a real programme and run the distiller on its sources, then build its first increment with
+build-orchestrator under `lifecycle: full` and `requireApproval: true`. That is the first end-to-end run of the
+fixed loop past planning.
+
+---
+
 # Brief: plumb the existing distil and build pieces together
 
 **What Sam wants:** loose requirements from anywhere go into **one `backlog.json` shape**, and the

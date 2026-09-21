@@ -1,14 +1,15 @@
 # Workspace workflows
 
-Deterministic multi-agent orchestration scripts. Point the `Workflow` tool at the file:
-`Workflow({ scriptPath: ".claude/workflows/increment-build-loop.js" })`. Launching by
-`name` runs a stale snapshot rather than what is on disk.
+Deterministic multi-agent orchestration scripts. Point the `Workflow` tool at the file
+with an `args` object — see the worked example below. Launching by `name` runs a stale
+snapshot rather than what is on disk.
 
 **To run a backlog rather than a single increment, use the `build-orchestrator` skill.**
-It derives each increment, patches a run copy of the loop, invokes it, checks the landing
-and repeats — from the main session, because **a subagent cannot invoke `Workflow`**. That
-is why the former two-tier `batch-orchestrator/` prompts were removed: their middle tier
-could never start the thing it existed to drive.
+It derives each increment and launches the tracked loop by `scriptPath` with that
+increment's configuration as `args`, checking the landing and repeating. This runs from
+the main session because **a subagent cannot invoke `Workflow`**. That is why the former
+two-tier `batch-orchestrator/` prompts were removed: their middle tier could never start
+the thing it existed to drive.
 
 ## `increment-build-loop.js`
 
@@ -17,17 +18,29 @@ full quality pass per increment rather than a single implement-and-hope pass. Th
 programme is data: the loop knows nothing about which backlog it is running beyond the
 config below.
 
-**The config** — edit the `FALLBACK` const at the top, or pass the same shape as `args`.
-It defaults to the fallback because `args` plumbing has proved unreliable in this runtime.
+**The config** — pass it as `args`, a JSON object, launching by `scriptPath`. Every key
+below is required, and the (full) ones only under `lifecycle: 'full'`. A missing key stops
+the run before any agent starts, naming each missing key. The first log line is the
+resolved configuration.
 
 | Field | What it is |
 |---|---|
 | `workarea` | Path under `workareas/` holding `backlog.json` — e.g. `shared/plant-products-ched-pp`, `trace-requirements/ched-pp` |
 | `branch` | The branch every repo in the programme is cut onto. The baseline guard checks it |
-| `scope` | Conventional-commit scope for the landing commit. Defaults to the workarea's basename |
-| `executor` | `claude` (default) or `codex` — see below |
-| `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Defaults to the animals repos; a programme in the plants repos overrides it |
-| `models` | Optional model per tier — `heavy` (implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done). A tier left out inherits the session model |
+| `scope` | Conventional-commit scope for the landing commit |
+| `executor` | `claude` or `codex` — see below |
+| `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on the current branch — no Jira, no push, no PR) |
+| `jiraProject` (full) | Jira project key raised tickets land in |
+| `epic` (full) | Parent epic every raised ticket hangs off |
+| `jiraInProgressStatus` (full) | The board's working status, set when the build starts |
+| `jiraDoneStatus` (full) | The board's finished status, set after the merge |
+| `jiraBoard` (full) | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA |
+| `ciFixAttempts` (full) | How many times a red PR may be fixed and re-pushed before the run stops |
+| `ciWatchMinutes` (full) | How long one CI watch may block before it counts as RED |
+| `requireApproval` (full) | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them |
+| `approvalWaitMinutes` (full) | How long the merge stage may wait for those approvals before it stops and leaves every PR open |
+| `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Give it in full — a programme in the plants repos names its own table here |
+| `models` | Required — pass `{}` to inherit the session model for both tiers. Each tier is optional: `heavy` (implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done) |
 | `increments` | The increment ids to build, in order |
 
 A list runs **serially**, and the run stops at the first failure so a broken increment is
@@ -43,13 +56,19 @@ rather than proceeding against nothing.
   branch: 'spike/trace-to-requirements',
   scope: 'plant-products',
   executor: 'claude',
+  lifecycle: 'local',
+  repos: {
+    frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
+    backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
+    tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
+  },
+  models: {},
   increments: ['pp-053']
 }
 ```
 
 That resolves to `workareas/shared/plant-products-ched-pp/backlog.json` and lands commits
-as `feat(plant-products): <increment title>`. It is one programme among several, not the
-loop's default reality — any other workarea works the same way.
+as `feat(plant-products): <increment title>`. Any other workarea works the same way.
 
 ### The stages, per increment
 
@@ -71,7 +90,7 @@ hand-run review apply the same standard.
 
 ### Executors
 
-`executor: 'claude'` (the default, and the proven path) runs every stage as a Claude
+`executor: 'claude'` (the proven path) runs every stage as a Claude
 subagent.
 
 `executor: 'codex'` delegates the three token-heavy stages — **implement**, **review** and
@@ -121,3 +140,47 @@ trail — read it with:
 jq -r '.increments[] | select((.openQuestions|length)>0) | .id + ": " + (.openQuestions|join(" | "))' \
   workareas/<workarea>/backlog.json
 ```
+
+## The args contract
+
+Every workflow under `.claude/workflows/*.js` accepts `args` as either an object or a
+JSON string. It stops, naming any missing required key, and logs its resolved
+configuration first — there are no fallback defaults. The three functions that do this —
+`parseArgs`, `requireKeys`, `logResolvedConfig` — are pasted **byte-identical** into every
+script between `// >>> args-contract` / `// <<< args-contract` markers.
+
+`tim/src/backlog/workflow-contract.test.js` enforces the contract on every script under
+this folder:
+
+- the args-contract block appears exactly once, byte-identical across scripts
+- no `FALLBACK` constant
+- no `??` default on the variable a script assigns from `parseArgs(...)`
+- a run with a missing key throws before any agent runs
+
+tim CI also runs whenever `.claude/workflows/**` changes, so a PR that reintroduces a
+default or drifts the block never merges unguarded.
+
+The call sequence is `parseArgs` → `requireKeys` → `logResolvedConfig`, before any other
+`log()` and before the first `agent()`. A required key is missing when it is absent or
+`undefined` — an explicit `null` counts as given, because some keys carry meaningful nulls.
+
+## `args-canary.js`
+
+A tracked, zero-agent workflow that proves the contract on *this* runtime, without
+spending any agents. It takes required keys `list` and `n` and returns
+`{ argsType: typeof args, resolved: config }` — so a live launch records exactly how this
+runtime delivered `args`.
+
+Launch by `scriptPath`, never `name`:
+
+- **L1.** `Workflow({ scriptPath: ".claude/workflows/args-canary.js", args: { list: ["a"], n: 1 } })`
+  Expected: returns `{ argsType: "object", resolved: { list: ["a"], n: 1 } }`; the first
+  journal log is `args-canary: resolved configuration {"list":["a"],"n":1}`.
+- **L2.** The same with `args: "{\"list\":[\"a\"],\"n\":1}"`.
+  Expected: the same `resolved`. `argsType` is `"string"` or `"object"`, whichever this
+  runtime delivers — record it with the Claude Code version.
+- **L3.** The same with `args: { list: ["a"] }`.
+  Expected: the run fails with `args-canary: args is missing required key n. Pass every
+  one in args: this workflow has no defaults`, and 0 agents.
+- **L4.** No args.
+  Expected: the run fails naming `keys list, n`, and 0 agents.

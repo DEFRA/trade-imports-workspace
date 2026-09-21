@@ -63,12 +63,15 @@ models        optional model per tier: heavy (implement, reviewers, verifiers,
 **no handover** — a stash does not travel. Use `full` for anything a colleague
 may pick up.
 
-**`requireApproval` defaults to true, and leaving it there is the point.** Green
-CI proves the code runs; it does not prove anyone agreed to it. The default
-exists because a run of this loop once put unreviewed commits onto a shared
-`main`. Turning it off gives a programme unattended merges — ask for that
-explicitly, and do not infer it from a user who simply wants the run to go
-faster.
+**This skill passes `requireApproval: true` unless the user asks otherwise, and
+leaving it there is the point.** The workflow itself has no default for this
+key — under `lifecycle: full` a run without it stops before any agent — so
+this default is something the skill supplies, not something the loop falls
+back to. Green CI proves the code runs; it does not prove anyone agreed to it.
+The default exists because a run of this loop once put unreviewed commits
+onto a shared `main`. Turning it off gives a programme unattended merges —
+ask for that explicitly, and do not infer it from a user who simply wants the
+run to go faster.
 
 Because GitHub refuses to let an author approve their own PR, the approver is
 always **somebody other than whoever the run is credentialed as**. A run under
@@ -160,22 +163,16 @@ order. Array order is the right default, not a rule.
 **Never edit `.claude/workflows/increment-build-loop.js`.** It is tracked and
 shared by every programme.
 
-`args` plumbing is unreliable, so what decides a run is the `FALLBACK` const
-written into the script file. Work from a fresh copy:
+Configuration goes only in `args`, as a JSON object. The loop parses a JSON
+string too, but it has no defaults of its own: a missing key stops the run
+before any agent starts, naming every key that is missing. Every value below
+— including the ones PARAMETERS calls a default — is something **this skill**
+writes into `args` for you; the workflow itself carries none of them.
 
-```bash
-cp .claude/workflows/increment-build-loop.js workareas/<workarea>/build-loop.run.js
-```
-
-**Copy it fresh before every increment**, overwriting whatever is there. That
-keeps the copy from drifting, and means the text you patch is always the
-pristine `FALLBACK` rather than whatever the last increment left behind.
-
-Patch `FALLBACK` in the copy **with the Edit tool** — read the file first, then
-replace the whole const:
+Build the args object with every key below:
 
 ```js
-const FALLBACK = {
+{
   workarea: '<workarea>',
   branch: '<branch>',
   scope: '<scope>',
@@ -200,28 +197,34 @@ const FALLBACK = {
 }
 ```
 
-**One id. Never more.** Change nothing else in the copy. Write `repos` out in
-full every time: the pristine copy carries the animals table, and the loop
-builds wherever that table points.
-
-Write `requireApproval` in explicitly, even though `true` is the loop's default.
-The patched `FALLBACK` is what a person reads to see what governs a run, and a
-merge gate that only exists as an unstated default is one a later reader will
-not know to look for. Set it to `false` only where the user has asked for
-unattended merges in as many words.
-
-Then invoke it, passing `args` too — if they arrive they agree with `FALLBACK`,
-and if they do not the patched copy is already right:
+Then wrap that object as `args`, launching by `scriptPath`:
 
 ```
-Workflow({ scriptPath: "workareas/<workarea>/build-loop.run.js", args: { ...the same shape... } })
+Workflow({ scriptPath: ".claude/workflows/increment-build-loop.js", args: <the object above> })
 ```
 
-The run copy is gitignored. Never commit it.
+**One id. Never more.** Change nothing else in `args`. Write `repos` out in
+full every time: the loop has no repos table of its own any more, so a
+missing `repos` stops the run before any agent starts.
+
+Write `requireApproval` in explicitly. The loop has no default for it: under
+`lifecycle: full` a run without it stops before any agent. The args are what
+a person reads to see what governs a run, so the merge gate is always written
+out. Set it to `false` only where the user has asked for unattended merges in
+as many words.
 
 ### 3. Check it landed
 
-Do not trust the workflow's report on its own. One query:
+Do not trust the workflow's report on its own.
+
+- The `Workflow` tool's result carries a `transcriptDir`. Read
+  `<transcriptDir>/journal.jsonl` and find the run's first `log()` line —
+  `increment-build-loop: resolved configuration {…}`. Check it matches the
+  `args` you passed. If it does not — or it is missing — stop with
+  `not-landed`, quoting both the log line (or its absence) and the args you
+  sent.
+
+Then one query:
 
 ```bash
 jq -r '.increments[] | select(.id=="<id>") | .status + " " + (.commit // "-") + " " + ((.prs // []) | tostring)' workareas/<workarea>/backlog.json
@@ -300,9 +303,10 @@ merge the straggler yourself: it has not been through the watcher or the
 approval gate, and merging it to clear the warning is worse than the warning.
 
 **`awaiting-approval` is not a failure and must never be reported as one.** The
-loop merges only PRs carrying an approving review — `requireApproval` defaults
-to true — and it merges none of an increment until all of them have one, so a run
-that ends here did everything right, merged nothing, and is waiting on a person.
+loop merges only PRs carrying an approving review — this skill passes
+`requireApproval: true` unless the user asked otherwise — and it merges none
+of an increment until all of them have one, so a run that ends here did
+everything right, merged nothing, and is waiting on a person.
 Report **every** unapproved PR URL and say plainly that they need a reviewer.
 Then stop:
 
@@ -383,7 +387,7 @@ findings, judge, ladder and land stay on Claude either way: they are
 orchestration and adjudication. Codex mode is `18 + n` agents against `15 + 3n`,
 so it is markedly cheaper on a wide increment.
 
-Switch by changing `executor` in the next increment's `FALLBACK` patch. **It
+Switch by changing `executor` in the next increment's args. **It
 takes effect at the next increment and never mid-increment**, so a run can start
 on Claude, move to Codex when the increments get wide, and move back. Say which
 executor built each increment in your per-increment line.
@@ -401,7 +405,7 @@ to you as `not-landed`.
 - **Do not read diffs, test logs or review argument.** They ran below a death
   boundary for a reason. Reading one to "just check something" is what fills the
   session and ends the run early.
-- **Never edit the tracked loop.** Only ever the run copy.
+- **Never edit the tracked loop.** Everything a run needs goes in its args.
 - **One increment per Workflow invocation.** The loop accepts a longer list; do
   not give it one.
 - **Never narrow the derive query to a planning field.** Status and

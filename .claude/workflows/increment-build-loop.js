@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → implement → style review + code review → adversarially verify findings → judge → fix → verification ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    'Running any increment backlog under workareas/. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Point FALLBACK at the workarea and set its increments, or pass args.',
+    "Running any increment backlog under workareas/. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys.",
   phases: [
     { title: 'Ticket' },
     { title: 'Branch' },
@@ -23,35 +23,36 @@ export const meta = {
 }
 
 // ---------------------------------------------------------------------------
-// Configuration. `args` plumbing is unreliable in this runtime, so FALLBACK is
-// the real switch: edit it, or pass the same shape as args.
+// Configuration comes only from args (an object, or a JSON string). There are
+// no defaults: a missing key stops the run before any agent starts. Keys
+// marked (full) are required only when lifecycle is 'full'.
 //   workarea        path under workareas/, holding backlog.json
 //   branch          the BASE branch. Every increment cuts its own branch off
 //                   this one and merges back into it
-//   scope           conventional-commit scope; defaults to the workarea's basename
+//   scope           conventional-commit scope
 //   executor        'claude' (every stage a subagent) or 'codex' (implement,
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
 //   lifecycle       'full'  ticket → branch → build → PR → CI → merge → ticket done
 //                   'local' build and commit on the current branch. No Jira, no
 //                           push, no PR. For programmes that do not want a PR per
 //                           increment
-//   jiraProject     Jira project key raised tickets land in
-//   epic            parent epic every raised ticket hangs off. Required when
+//   jiraProject (full)     Jira project key raised tickets land in
+//   epic (full)     parent epic every raised ticket hangs off. Required when
 //                   lifecycle is 'full'
-//   jiraInProgressStatus  the board's working status, set when the build starts
-//   jiraDoneStatus        the board's finished status, set after the merge
-//   jiraBoard       the numeric board id raised tickets are moved onto. Required
+//   jiraInProgressStatus (full)  the board's working status, set when the build starts
+//   jiraDoneStatus (full)        the board's finished status, set after the merge
+//   jiraBoard (full)  the numeric board id raised tickets are moved onto. Required
 //                   when lifecycle is 'full'. Board membership is NOT a field on
 //                   the issue and NOT implied by status: a freshly raised ticket
 //                   lands in the board's backlog and stays there, invisible to
 //                   the team, however many times it is transitioned. Moving it
 //                   is a separate agile call, and this is the id it needs
-//   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
+//   ciFixAttempts (full)   how many times a red PR may be fixed and re-pushed before the
 //                   run stops
-//   ciWatchMinutes  how long one CI watch may block before it counts as RED
-//   requireApproval whether EVERY PR of an increment needs an APPROVING REVIEW
+//   ciWatchMinutes (full)  how long one CI watch may block before it counts as RED
+//   requireApproval (full) whether EVERY PR of an increment needs an APPROVING REVIEW
 //                   ON GITHUB before the merge stage may merge ANY of them.
-//                   Default true. Green CI is not consent: it proves the code
+//                   Green CI is not consent: it proves the code
 //                   runs, not that anyone agreed to it. The gate is collected
 //                   for the whole increment up front, not per PR as each one is
 //                   reached — a per-PR gate merged an approved frontend and then
@@ -63,18 +64,18 @@ export const meta = {
 //                   always somebody other than whoever the run raised it as.
 //                   Set false only for a programme that genuinely wants
 //                   unattended merges
-//   approvalWaitMinutes  how long the merge stage may wait for those approvals
-//                   before it stops and leaves every PR open. Default 20
+//   approvalWaitMinutes (full)  how long the merge stage may wait for those approvals
+//                   before it stops and leaves every PR open.
 //   repos           the three repos an increment's "repo" field can name —
 //                   frontend, backend, tests — each with its workspace-relative
-//                   path and its GitHub owner/name slug. The animals repos are
-//                   the default; a programme in another repo family (the plants
-//                   frontend and backend, say) overrides the table here
-//   models          optional model per tier. heavy = implement, the reviewers,
-//                   the adversarial verifiers, judge, fix and CI fix; light = the
-//                   lifecycle and plumbing stages (ticket, branch, baseline,
-//                   ladder, land, PR, CI watch, merge, done). A tier left out
-//                   inherits the calling session's model
+//                   path and its GitHub owner/name slug. A programme in another
+//                   repo family (the plants frontend and backend, say) names its
+//                   own table here
+//   models          required; {} inherits the session model for both tiers. heavy =
+//                   implement, the reviewers, the adversarial verifiers, judge, fix
+//                   and CI fix; light = the lifecycle and plumbing stages (ticket,
+//                   branch, baseline, ladder, land, PR, CI watch, merge, done). A
+//                   tier left out inherits it
 //
 
 // Status names are BOARD CONFIGURATION, not constants — every board words them
@@ -87,43 +88,70 @@ export const meta = {
 // programme on another board must say so, and the run throws at startup if the
 // id is missing rather than quietly leaving every ticket in the backlog.
 // ---------------------------------------------------------------------------
-const FALLBACK = {
-  workarea: 'shared/plant-products-ched-pp',
-  branch: 'main',
-  scope: 'plant-products',
-  executor: 'claude',
-  lifecycle: 'full',
-  jiraProject: 'EUDPA',
-  epic: '',
-  jiraInProgressStatus: 'In Progress',
-  jiraDoneStatus: 'Done',
-  jiraBoard: 13780,
-  ciFixAttempts: 3,
-  ciWatchMinutes: 30,
-  repos: {
-    frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
-    backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
-    tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
-  },
-  models: {},
-  increments: ['pp-053']
+// >>> args-contract: byte-identical in every .claude/workflows/*.js, checked by tim/src/backlog/workflow-contract.test.js
+const parseArgs = (workflowName, rawArgs) => {
+  if (typeof rawArgs !== 'string') return rawArgs
+  try {
+    return JSON.parse(rawArgs)
+  } catch (error) {
+    throw new Error(`${workflowName}: args arrived as a string that is not JSON (${error.message})`)
+  }
 }
-const CFG = typeof args === 'object' && args && args.increments ? args : FALLBACK
 
-const WORKAREA_REL = String(CFG.workarea ?? '').replace(/^\/+|\/+$/g, '')
-const SCOPE = CFG.scope ?? WORKAREA_REL.split('/').pop()
+const missingKeys = (config, keys) =>
+  keys.filter((key) => config === null || typeof config !== 'object' || Array.isArray(config) || config[key] === undefined)
+
+const requireKeys = (workflowName, config, keys) => {
+  const missing = missingKeys(config, keys)
+  if (missing.length === 0) return
+  const noun = missing.length === 1 ? 'key' : 'keys'
+  throw new Error(`${workflowName}: args is missing required ${noun} ${missing.join(', ')}. Pass every one in args: this workflow has no defaults`)
+}
+
+const logResolvedConfig = (workflowName, config) => log(`${workflowName}: resolved configuration ${JSON.stringify(config)}`)
+// <<< args-contract
+
+const WORKFLOW_NAME = 'increment-build-loop'
+const ALWAYS_REQUIRED = ['workarea', 'branch', 'scope', 'executor', 'lifecycle', 'repos', 'models', 'increments']
+const FULL_LIFECYCLE_REQUIRED = [
+  'jiraProject',
+  'epic',
+  'jiraInProgressStatus',
+  'jiraDoneStatus',
+  'jiraBoard',
+  'ciFixAttempts',
+  'ciWatchMinutes',
+  'requireApproval',
+  'approvalWaitMinutes'
+]
+const CFG = parseArgs(WORKFLOW_NAME, args)
+requireKeys(WORKFLOW_NAME, CFG, [...ALWAYS_REQUIRED, ...(CFG?.lifecycle === 'full' ? FULL_LIFECYCLE_REQUIRED : [])])
+logResolvedConfig(WORKFLOW_NAME, CFG)
+
+if (typeof CFG.workarea !== 'string') {
+  throw new Error(
+    'increment-build-loop: config.workarea is required — a path relative to workareas/, e.g. "shared/plant-products-ched-pp"'
+  )
+}
+const WORKAREA_REL = CFG.workarea.replace(/^\/+|\/+$/g, '')
+const SCOPE = CFG.scope
+if (typeof SCOPE !== 'string' || !SCOPE.trim()) {
+  throw new Error(
+    'increment-build-loop: config.scope is required — a non-empty conventional-commit scope, e.g. "plant-products"'
+  )
+}
 const BASE_BRANCH = CFG.branch
-const EXECUTOR = CFG.executor ?? 'claude'
-const LIFECYCLE = CFG.lifecycle ?? 'full'
-const JIRA_PROJECT = CFG.jiraProject ?? 'EUDPA'
-const EPIC = CFG.epic ?? ''
-const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus ?? 'In Progress'
-const STATUS_DONE = CFG.jiraDoneStatus ?? 'Done'
-const JIRA_BOARD = CFG.jiraBoard ?? ''
-const CI_FIX_ATTEMPTS = CFG.ciFixAttempts ?? 3
-const CI_WATCH_MINUTES = CFG.ciWatchMinutes ?? 30
-const REQUIRE_APPROVAL = CFG.requireApproval ?? true
-const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes ?? 20
+const EXECUTOR = CFG.executor
+const LIFECYCLE = CFG.lifecycle
+const JIRA_PROJECT = CFG.jiraProject
+const EPIC = CFG.epic
+const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus
+const STATUS_DONE = CFG.jiraDoneStatus
+const JIRA_BOARD = CFG.jiraBoard
+const CI_FIX_ATTEMPTS = CFG.ciFixAttempts
+const CI_WATCH_MINUTES = CFG.ciWatchMinutes
+const REQUIRE_APPROVAL = CFG.requireApproval
+const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 
 // One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
 // longer wait is that many consecutive watches, and running out of them is RED.
@@ -150,12 +178,15 @@ if (EXECUTOR !== 'claude' && EXECUTOR !== 'codex') {
 if (LIFECYCLE !== 'full' && LIFECYCLE !== 'local') {
   throw new Error(`increment-build-loop: unknown lifecycle "${LIFECYCLE}" — expected "full" or "local"`)
 }
-if (LIFECYCLE === 'full' && !/^[A-Z]+-\d+$/.test(EPIC)) {
+if (LIFECYCLE === 'full' && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
   throw new Error(
     `increment-build-loop: config.epic is required when lifecycle is "full" — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
   )
 }
-if (LIFECYCLE === 'full' && (!STATUS_IN_PROGRESS.trim() || !STATUS_DONE.trim())) {
+if (
+  LIFECYCLE === 'full' &&
+  (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())
+) {
   throw new Error(
     `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
   )
@@ -165,8 +196,20 @@ if (LIFECYCLE === 'full' && !/^\d+$/.test(String(JIRA_BOARD))) {
     `increment-build-loop: config.jiraBoard is required when lifecycle is "full" — the numeric id of the board raised tickets are moved onto, e.g. 13780 for EUDPA. Without it every ticket is raised into the board's backlog and stays there, which no status change fixes. Got "${JIRA_BOARD}"`
   )
 }
-if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
+if (LIFECYCLE === 'full' && (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0)) {
   throw new Error(`increment-build-loop: config.ciFixAttempts must be a non-negative integer — got "${CI_FIX_ATTEMPTS}"`)
+}
+if (LIFECYCLE === 'full' && (!Number.isInteger(CI_WATCH_MINUTES) || CI_WATCH_MINUTES <= 0)) {
+  throw new Error(`increment-build-loop: config.ciWatchMinutes must be a positive integer — got "${CI_WATCH_MINUTES}"`)
+}
+if (LIFECYCLE === 'full' && (!Number.isInteger(APPROVAL_WAIT_MINUTES) || APPROVAL_WAIT_MINUTES <= 0)) {
+  throw new Error(`increment-build-loop: config.approvalWaitMinutes must be a positive integer — got "${APPROVAL_WAIT_MINUTES}"`)
+}
+if (LIFECYCLE === 'full' && typeof REQUIRE_APPROVAL !== 'boolean') {
+  throw new Error(`increment-build-loop: config.requireApproval must be a boolean — got "${REQUIRE_APPROVAL}"`)
+}
+if (!Array.isArray(CFG.increments) || CFG.increments.length === 0 || !CFG.increments.every((id) => typeof id === 'string' && id.trim())) {
+  throw new Error(`${WORKFLOW_NAME}: config.increments must be a non-empty list of increment ids — got ${JSON.stringify(CFG.increments)}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -175,7 +218,7 @@ if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
 // and on GitHub. All three keys are required so every stage's REPO PATHS line
 // reads the same whichever repo family the programme builds in.
 // ---------------------------------------------------------------------------
-const REPOS = CFG.repos ?? FALLBACK.repos
+const REPOS = CFG.repos
 const REPO_KEYS = ['frontend', 'backend', 'tests']
 
 for (const key of REPO_KEYS) {
@@ -190,10 +233,14 @@ for (const key of REPO_KEYS) {
 }
 
 // ---------------------------------------------------------------------------
-// Models. Two tiers, both optional. heavy() and light() wrap an agent's options
-// so a stage inherits the session model unless the programme set its tier.
+// Models. The key itself is required ({} to inherit the session model for
+// both); each tier is optional. heavy() and light() wrap an agent's options so
+// a stage inherits the session model unless the programme set its tier.
 // ---------------------------------------------------------------------------
-const MODELS = CFG.models ?? FALLBACK.models ?? {}
+const MODELS = CFG.models
+if (MODELS === null || typeof MODELS !== 'object' || Array.isArray(MODELS)) {
+  throw new Error(`${WORKFLOW_NAME}: config.models must be an object, {} to inherit the session model for both tiers — got ${JSON.stringify(MODELS)}`)
+}
 const MODEL_TIERS = ['heavy', 'light']
 
 for (const tier of MODEL_TIERS) {

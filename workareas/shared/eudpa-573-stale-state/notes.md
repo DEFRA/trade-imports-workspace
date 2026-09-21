@@ -113,7 +113,7 @@ well as non-member.
 | addresses / frozen-parties (display only) | party country label | `originLabel(code)` | Fallback: `originLabel(code) ?? code`. A stale code renders as the raw ISO code (e.g. "XY") with no label. No POST — display only. | n/a | n/a |
 | commodity-selection | commodity keys | set-owned `commodities/index.js` (static stub) | Filters stored keys against `commodityGroups()` at render. Stale keys are silently dropped from the rendered checkbox state. | Membership check on POST | Yes. |
 
-Three practical takeaways:
+Five practical takeaways:
 
 1. **Nothing silently accepts a stale value on POST.** Every membership
    rule reads the current reader list, so a stored `XY` cannot survive
@@ -138,6 +138,42 @@ Three practical takeaways:
    original answer is still overwritten with `''` in the same
    `answersFrom` build — but the trader can't leave the page without
    picking something, so no through-flow data loss.
+
+4. **CYA renders "Not applicable" for a stale country — not the raw
+   code the dashboard renders.** The row builder in
+   `sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment/import-details.js:26-27`
+   passes `(await countries.originLabel(answers.countryOfOrigin)) ?? ''`
+   into `row(...)`; the empty string flows through `valueText`, which
+   returns `copy.notApplicable` ("Not applicable") for any blank value
+   (`check-answers/view-model/rows/value-text.js:16-19`,
+   `check-answers/copy/copy.en.js:5`). This differs from the plants
+   CYA — plants' `answerRow` default-parameter fallback lands the raw
+   ISO code in the same row (see the plants section below). Consequence:
+   on animals a single stale country code produces four different
+   renderings across the trader's surfaces — dashboard card → raw code,
+   hub row → Completed, origin page → unselected select with no message,
+   CYA row → "Not applicable". The placeholder is the same string used
+   on finished cards for legitimately blank rows, so a trader cannot
+   tell a stale answer from an intentionally-omitted one.
+
+5. **Region-code cascade — a saved answer flips from valid to invalid
+   without the trader touching the field.** The stored
+   `regionOfOriginCode` is the whole code (`AT-123`). The suffix input
+   on the origin page is derived by stripping the country prefix from
+   the whole code on GET (`origin/controller.js:104-112`, `suffixOf`
+   at 78-83). While the stored country is still `AT`,
+   `suffixOf('AT', 'AT-123')` returns `'123'` (3 chars) and the suffix
+   rule `requiredMaxText(REGION_CODE_SUFFIX_FIELD, 5, …)` passes
+   (`controller.js:126-136`). Once the country goes stale (or is
+   wiped), the stored `AT-123` no longer starts with the current
+   prefix, so the whole value flows into the suffix input; the same
+   rule now measures `AT-123` (6 chars) and fails with "Region of
+   origin code must be 5 characters or less". The diagnostic message
+   names the region code, not the stale country — the trader sees a
+   length error against a value they never touched, and no cue linking
+   it to the origin dropdown. Same shape wherever a stored answer is
+   decomposed on render against another stored answer that has since
+   drifted (prefix, gate, joined identifier).
 
 Combined with the hub-level finding earlier — every section still
 shows Completed on entry — the failure mode on Amend is:
@@ -258,6 +294,63 @@ Next candidates — not yet written:
   it lived on was otherwise complete, and (c) no user-facing warning
   fires on hub/CYA.
 
+## Address-book — the upstream stale-state surface
+
+Every notification party (`consignor`, `placeOfOrigin`,
+`placeOfDestination`, `consignee`, `importer`, `contactAddress`) points
+at an address stored in the address-book service. The address record
+itself carries a `countryCode` field, so the stale-state failure mode
+above has a second locus that neither the animals nor plants notes
+above have covered: **the address book itself**.
+
+Consumer: the address-book UI lives in the INS frontend
+(`repos/trade-imports-ins-frontend/src/server/address-book/`).
+
+- Country reader — `address-book/address-countries.js:1-27` calls
+  `countriesClient.getCountries(traceId)` (MDM), filters out `GB`, and
+  builds select items for the address create/edit pages.
+  `resolveCountryCodeFromSearchTerm(q, countries)`
+  (`address-countries.js:39-47`) backs the autocomplete.
+- Persistence — `address-schema.js:10, 46` requires a `countryCode` on
+  every stored address; validated as a `Joi.string()` value with no
+  membership check against the reader.
+
+Consequences:
+
+1. **Address already saved, country later dropped from MDM.** The
+   record sits in address-book storage with the stale `countryCode`
+   intact. On the edit page GET the select falls through to unselected
+   (same shape as the animals origin page). No banner, no explanation.
+2. **Downstream propagation.** Every notification that references
+   that `addressId` inherits the stale country when the frontend
+   fetches the party live. No amount of notification-side purge or
+   validation catches it — the notification is faithful; the address
+   is stale. A single address feeding N notifications gives N
+   inherited failures.
+3. **Cross-service coupling.** The reject-submit requirement above
+   ("Membership re-check on submit") only fires against reference
+   data the notification directly stores. Party country codes come in
+   via the address-book lookup, not from the notification's own
+   fulfilments, so a check on the notification's fulfilments alone
+   would not catch this — the check either has to include live party
+   country codes, or the address book has to run its own membership
+   guard on read/write.
+
+Follow-up work worth pinning:
+
+- Audit the address-book edit/view/list templates for how they render
+  a stale `countryCode` (raw code, empty label, "Not applicable"
+  equivalent). Expected to mirror the animals CYA fallback pattern —
+  worth confirming.
+- Confirm whether the address-book service validates `countryCode`
+  membership on write. `address-schema.js` looks permissive; if so, a
+  newly-created address can already be born stale if MDM has drifted
+  since the last frontend reload.
+- Decide the reject-on-read policy for address-book: refuse to serve
+  a party whose country is not in the current MDM list, refuse to
+  save one, or surface the stale code with a diagnostic. Same
+  three-option shape as the notification-side recommendations above.
+
 ## Cross-view divergence: dashboard vs notification journey
 
 The dashboard row reads flat, projected fields directly off the
@@ -279,8 +372,12 @@ Consequences:
   original consignor name; CYA flags an outstanding party error; hub
   row still marks the section Completed. Three surfaces, three
   answers.
-- **Vanished reference-data code** — both surfaces fall back to the
-  raw code display-wise. Hub still Completed.
+- **Vanished reference-data code** — dashboard falls back to the raw
+  code; hub still Completed. The CYA row diverges by set: animals
+  renders "Not applicable" (`?? ''` collapses through `valueText` to
+  `copy.notApplicable`, see the animals section above); plants falls
+  back to the raw code (`answerRow` default-parameter, see the plants
+  section). Three surfaces disagree on animals, two on plants.
 - **Purged obligation** — dashboard still shows the flat fields it
   extracted at submit-time; amend journey has silently lost the
   fulfilment.
@@ -303,6 +400,334 @@ No reconciliation runs across the two surfaces.
    version field on the manifest and the persisted record.
 
 Option 1 is truer to what happened; option 2 is easier to build.
+
+## Requirement — reject submit for stored values that fail today's rules
+
+Confirmed on the demo walk: with `country-stale` seeded on an animals
+notification, clicking Submit succeeds and the record lands in the
+SUBMITTED state with `countryOfOrigin='ZZ'` intact. Nothing on the
+submit path re-checks membership of the stored value against the
+current countries reader.
+
+That is the load-bearing failure. Everything above about the
+Amend-surface confusion — silent GET, "Not applicable" on CYA, the
+region-code cascade — is a symptom of a state the record should never
+have reached. The trader could notice on Amend, but noticing is
+optional. The submit path is the boundary that has to close.
+
+The check-your-answers page is the trader's last chance to catch a
+stale document, and today it validates on neither GET (page load) nor
+POST (submit button). The trader lands on CYA with an empty or
+"Not applicable" row where a stale answer used to be, no error
+banner, and clicking Submit sends the payload through unchallenged.
+Related ticket: https://eaflood.atlassian.net/browse/EUDPA-295.
+
+Requirements:
+
+1. **Membership re-check on submit.** Refuse submit when any stored
+   fulfilment fails its current membership rule against reference data
+   (countries, ports, commodities) — the same rule the page's POST
+   already enforces. Applies whether or not the trader re-opened the
+   affected page. On failure, return the trader to the offending
+   page's Amend view with a plain message naming the field and the
+   current stored value ("The country code saved is no longer offered
+   — pick a country before submitting.").
+2. **Party resolution on submit.** Refuse submit when any stored
+   party addressId does not resolve against the current address-book.
+   `outstandingPartyErrors` at
+   `sets/.../check-answers/controller.js:27-92` already computes this
+   for the CYA banner — reuse it as a submit-time gate, not a banner
+   the trader can walk past.
+3. **Purge as reject.** Refuse submit when
+   `dropUnrecognisedFulfilments` or `purgeStorage` would remove any
+   fulfilment on read. Silent purge is only safe when submit refuses
+   the same document.
+
+Contrast with the recommendation options above (surface silent drops
+on render): those help the trader who re-opens the record; this
+requirement closes the loop when they don't.
+
+## Meeting notes — 2026-09-21 (tech lead + designer)
+
+Direction-of-travel points from the meeting that reshape where the
+recommendations above have to land.
+
+1. **Animals and plants dashboards are on the way out.** Both are
+   deprecated and will be removed once the INS frontend reaches
+   feature parity. Any recommendation aimed at "the dashboard card"
+   has a lifespan tied to that migration — worth landing on the INS
+   frontend surface instead if it arrives before the migration
+   completes.
+
+2. **INS frontend is being redesigned as the attention surface.** It
+   will highlight notifications that require the trader's attention.
+   From the INS frontend the trader navigates to:
+   - the task list (hub), for a notification not yet submitted;
+   - the check-your-answers page, for a submitted notification.
+   Both destinations will be amended to render a call-to-action or
+   user prompt when something on the notification has changed or
+   needs attention.
+
+3. **Stale-state signals map naturally onto (2).** The failure modes
+   audited above — silent GET on a stale country, "Not applicable"
+   on CYA, cascade validation errors on region code, silent purge of
+   an unrecognised obligation, deleted address-book party — are all
+   flavours of "something on this notification has changed". They
+   fit the redesigned INS frontend's attention model directly. Some
+   findings above can therefore be **captured and deferred** until
+   the INS frontend redesign lands, rather than layering one-off
+   banners onto the current dashboards / CYA pages.
+
+4. **Open: how the INS frontend learns that a notification needs
+   attention.** The signals originate in systems the INS frontend
+   does not own (MDM re-releases, obligation-manifest bumps per set,
+   address-book deletes). Running the full sanitiser / purge /
+   membership pass per notification on every dashboard load is not
+   free, but a coarser stamp costs freshness or reason granularity.
+   Discussion below.
+
+## Attention signalling — trigger sources
+
+Refining point (4) above: the signal that a notification needs
+attention has three distinct triggers, each with a different owner
+and a different amount of new work.
+
+1. **Obligation model changes — team-owned.** Every manifest change
+   ships in a set repo (animals-frontend, plants-frontend). We know
+   when they happen because we make them. Detection available today
+   without new infrastructure: stamp a manifest version on the
+   notification at submit and compare on read; or bump a
+   monotonically-incremented integer in CI on any change under
+   `obligations/`.
+
+2. **Ref-data changes — external, detected in the ref-data-service.**
+   MDM re-releases are owned by external teams and we get no
+   notification. The ref-data-service
+   (`repos/trade-imports-reference-data`) is the single surface into
+   MDM, so it is the natural change-detector. Current shape
+   (`MdmService.java`, `CacheConfig.java:16, 32-45`): Caffeine cache
+   per reader with `expireAfterWrite = 60 minutes` (env-configurable
+   via `CACHE_MDM_TTL_MINUTES`). Cache purpose is rate-limiting MDM,
+   not change detection (`CacheConfig.java:30-31`) — no previous
+   payload snapshot, no diff, no event emission on refresh. To turn
+   the ref-data-service into a change-detector: (a) snapshot the last
+   payload per reader, (b) diff on refresh, (c) emit a change event
+   per reader with the specific added/removed codes so consumers can
+   re-evaluate only the affected notifications. Cadence: the
+   `@Cacheable` path is lazy — it refreshes on first read after TTL
+   and never for readers no consumer is hitting — so a scheduled poll
+   (`@Scheduled(fixedRate = …)`) gives a predictable heartbeat, at
+   the cost of one MDM call per reader per interval (which the
+   current 60-minute TTL already implies as an upper bound).
+
+3. **Address-book changes — service-owned.** Deletion or edit of a
+   party is mediated by the address-book service, which is best
+   placed to emit change events on write. Third leg the
+   notification-side options above largely miss.
+
+See "Target architecture — precompute + emit" below for how the
+three triggers feed a single downstream flow to the INS frontend.
+
+Open sub-questions:
+
+- **Event granularity.** Diff-carrying per reader ("these codes
+  dropped from `MDM_COUNTRIES_CACHE`") vs coarse ("reader R
+  changed"). The diff makes each set's re-sweep targeted; coarse is
+  easier to build but forces a full sweep on every emit.
+- **Ref-data-service event transport.** Does the existing
+  dynamics-gateway → ASB path (ADR-EUDP-001 Option B) fit, or does
+  the ref-data-service need a direct producer?
+- **Reader inventory.** Countries and ports today
+  (`MDM_COUNTRIES_CACHE`, `MDM_POE_CACHE`); are there others each
+  set uses (commodity codes, other MDM domains) that would need the
+  same detection?
+- **Migration ordering.** The reject-on-submit requirement above
+  stands regardless — it guards the boundary rather than the
+  display, so it does not depend on the attention-signalling work.
+  Which lands first?
+
+## Target architecture — precompute + emit
+
+The end-to-end flow that keeps the existing event architecture's
+one-directional grain (compute → event → downstream store →
+downstream render). Preferred over sync RPC between the INS and set
+frontends (see "Rejected" below).
+
+1. **Trigger.** One of: manifest deploy in a set repo, ref-data
+   change event from the ref-data-service (per the ref-data
+   subsection above), address-book change event.
+2. **Precompute.** The set frontend (animals, plants) sweeps
+   affected submitted notifications and evaluates each fulfilments
+   payload against the current model + ref-data + address-book.
+   Produces per-notification `{ needsAttention: bool, flags: [{
+   obligationId, reason, helperText }] }`. Model-aware compute stays
+   where the model lives.
+3. **Emit.** The set publishes a `NotificationAttentionChanged`
+   event (or similar) with the reference and the flags. Same event
+   backbone that carries notification data today.
+4. **Consume.** INS backend consumes the event and stores the flags
+   on its read model, same shape as other projected fields.
+5. **Display.** INS frontend reads its own backend and renders the
+   CTA / attention prompt on the list, hub row and CYA page. Zero
+   cross-service RPC. INS never needs to know which readers fed
+   which fields on which notification — that stays inside the set.
+
+### Where does the emission originate?
+
+**Decision: emission in the backend, compute in the frontend.** The
+set frontend runs the sweep against the current model, then calls a
+new backend endpoint (e.g. `POST /notifications/:ref/attention-flags`)
+which stores the flags on the notification aggregate and emits the
+`NotificationAttentionChanged` event. Compute in frontend, transport
+in backend — preserves the existing "only backends emit events"
+pattern and gives the notification aggregate a durable copy for audit
+and re-emission.
+
+Alternatives considered and rejected:
+
+- **Frontend emits directly.** Would give the set frontend an
+  event-publishing dependency (SDK, ASB producer client). Simplest
+  data flow, but breaks the "only backends emit events" pattern.
+- **Move the compute into the backend** (package the manifest as a
+  shared library the backend imports). Cleanest architecturally, but
+  couples releases: any change to the obligation model would require
+  a lockstep frontend + backend deploy. The model changes often
+  enough for that to be a real drag on delivery; keeping the model
+  frontend-only preserves the set frontend's independent release
+  cadence.
+
+### Rejected — sweep-on-demand via INS → set frontend API
+
+Considered and explicitly rejected: an INS-frontend HTTP call to the
+set frontend (`GET /notifications/:ref/needs-attention`, or a bulk
+variant) per row on list render. It would work — the set frontend
+already has the engine loaded — and technically it is the smallest
+patch. But it introduces a second communication grain (sync RPC,
+downstream → upstream) alongside the event-driven upstream data
+flow. Two transports, two failure models, two consistency stories,
+in the same feature.
+
+Not worth the tension for the latency saving. The precompute + emit
+path above uses the existing grain and produces the same result on
+the display side. Recorded here so future readers see the shape was
+considered rather than overlooked.
+
+## Version pinning + migration — policy and mechanism
+
+Two further options for handling obligation-model change, distinct in
+kind from the trigger sources above. They combine rather than compete:
+policy first, then mechanism for the cases the policy leaves in scope.
+
+### Version pinning / grandfathering — policy
+
+Support multiple obligation-model versions live simultaneously. A
+notification submitted under model v1 keeps its v1 rules even after
+v2 is released; only new submissions run against v2. Older records
+never "need attention" for a v2 change.
+
+Architectural implications:
+
+- The animals frontend today runs a singleton manifest
+  (`sets/live-animals/obligations/manifest.js`,
+  `configureObligationSet`). Multi-version means loading and routing
+  between versions per request. Cheap when versions differ by an
+  obligation or two; harder when the schema shape moves.
+- Persist a model-version stamp on the notification at submit.
+- Maintain a version registry the frontend loads at boot (or on
+  demand).
+- Resolution: `runningModelFor(notification) → manifest_vN`.
+- Retirement policy: N months since a version was current, below M
+  live submissions, or never. Left unbounded, live-version count
+  grows indefinitely.
+
+Not every change is safe to grandfather — the "retroactive or not"
+call is a business/product decision per release, not ours in
+isolation. Rough split to expect:
+
+- **Additive-only** (new optional obligation, new commodity value) —
+  usually safe to grandfather.
+- **Compliance tightening / bug fix** — retroactive by law, usually.
+- **Removed obligation / reshaped `applyTo`** — case by case.
+
+Scope: the policy fits the obligation model cleanly. Extending it to
+other trigger sources is uneven:
+
+- **Ref data** — grandfathering means snapshotting MDM per
+  notification (storage cost per record) or maintaining a versioned
+  MDM cache in the ref-data-service (viable but non-trivial).
+- **Address book** — grandfathering does not apply; a deleted party
+  is genuinely gone.
+
+### Migration job on release — mechanism
+
+For changes the policy above deems retroactive, run a migration once
+per version bump. The job iterates SUBMITTED notifications, evaluates
+each fulfilments payload against the new manifest, and stamps flags
+on the record. Idempotent — a re-run lands on the same terminal
+state.
+
+Additions to the notification record:
+
+- `appliedModelVersion` — the version this record's rules are
+  evaluated against. Set at submit; bumped by the migration for
+  retroactive changes.
+- `needsAttentionFlags: [{ obligationId, reason, helperText }]` — per-
+  obligation reasons the CTA can quote.
+- Optional: `attentionComputedFor` — which model version the compute
+  ran against, for staleness detection if a later change lands
+  before the previous migration finishes.
+
+Trigger options:
+
+- Manifest-deploy CI hook — spawn the job after the frontend deploy
+  succeeds.
+- Manual invocation — team runs it as part of release ops (safer
+  for the first releases).
+- Continuous background heartbeat — belt-and-braces, catches missed
+  triggers.
+
+The migration mechanism is trigger-agnostic — the same sweep with
+the same output shape can run against ref-data change events (from
+the ref-data-service, per the earlier section) or address-book
+change events, filtered to affected notifications by the event
+payload.
+
+### Layering — per-release decision
+
+Per model change:
+
+- Product marks it as **retroactive** or **grandfathered**.
+- Grandfathered → notification keeps its `appliedModelVersion`;
+  nothing migrates; INS shows no flag.
+- Retroactive → the migration job bumps `appliedModelVersion` on
+  affected notifications and stamps per-obligation flags; INS reads
+  them.
+
+Fit with the earlier trigger split:
+
+- **Obligation model** — version pinning + migration together.
+- **Ref-data** — migration only (version pinning only realistic if
+  MDM is snapshottable).
+- **Address book** — migration only (version pinning does not
+  apply).
+
+Open questions this layering surfaces:
+
+- **Where does the "retroactive or grandfathered" decision live?** On
+  the manifest change itself (a boolean per version bump), in release
+  notes, or in a separate policy record read by the migration job?
+- **What does "helper text" look like?** Freeform prose per flag,
+  keyed to obligation id, versioned with the change that introduced
+  it — inline in the flags array, or in a separate copy bundle keyed
+  by change id?
+- **When is the migration authoritative?** If a notification is
+  amended after the migration stamps a flag, does the amend's own
+  engine pass clear the flag automatically, or does it need an
+  explicit re-sweep on save?
+- **What triggers `appliedModelVersion` to advance without a
+  migration?** A trader who submits an amend under v2 has presumably
+  opted-in to v2; the record's applied version should probably
+  advance at that point regardless of policy.
 
 ## Testing and walk-example strategy
 

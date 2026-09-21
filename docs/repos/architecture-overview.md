@@ -8,13 +8,20 @@ with roles is in the root [`CLAUDE.md`](../../CLAUDE.md). This page is about the
 Everything here was checked against the repos. Where a link is unproven the
 per-repo page says "Unclear from code".
 
-## The three journeys
+## Journeys and the INS
+
+There are two journeys today, and the INS, which is not a journey.
 
 | Journey | Frontend | Backend | Notes |
 |---|---|---|---|
 | Live animals | `trade-imports-animals-frontend` | `trade-imports-animals-backend` | The most complete journey; the only one with an outbox to PIMS. |
 | High-risk plants | `trade-imports-plants-frontend` | `trade-imports-plants-backend` | Persists notifications only. No outbox, no gateway. |
-| Cross-journey view (INS) | `trade-imports-ins-frontend` | `trade-imports-ins-backend` | Read model over notification events, plus the address-book UI. |
+
+The **INS** (`trade-imports-ins-frontend`, `trade-imports-ins-backend`, with
+`trade-imports-address-book`) is the front door and holds the capabilities shared
+across journeys. Today that is the notifications dashboard (a read model over
+notification events) and the address-book UI. It does not create notifications
+itself.
 
 `trade-imports-animals-admin` is the internal admin UI for the animals service.
 

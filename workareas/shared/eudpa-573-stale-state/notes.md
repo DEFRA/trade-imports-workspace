@@ -102,16 +102,41 @@ in the list is refused on POST. What varies is whether the stale value
 survives into the GET render, and whether the POST rule blocks empty as
 well as non-member.
 
-| Page | Field(s) | Reader | GET render with stale stored value | POST rule | Empty allowed on POST? |
-|---|---|---|---|---|---|
-| origin | `countryOfOrigin` | `countries.originCountries()` | Select has no matching `<option>` — widget renders as unselected (placeholder). Autocomplete input value blank. Prior code is not visible. | `oneOf('countryOfOrigin', countryValues, …)` | Yes — the origin controller's comment says empty on this page is OK because the obligations model keeps the row unfulfilled and CYA blocks submit (origin/controller.js:140–144). |
-| import-reason | `destinationCountry` (transhipment / transit) | `countries.originCountries()` | Same as origin — select renders unselected. | `requiredOneOf(…)` | No — blocks empty with the standard error. |
-| import-reason | `portOfExit` (transit / temp admission) | `ports.list()` | Select renders unselected. | `requiredOneOf(…)` | No. |
-| transport / port-of-entry | `portOfEntry` | `ports.list()` | Select renders unselected. | `oneOf(…)` | Yes — page allows partial save, mandatory-ness lives in the obligation model. |
-| transport / private-transporter-details | `country` (address block) | `countries.addressCountries()` | Select renders unselected. | `oneOf(…)` | Yes. |
-| transport / transit-countries | `transitedCountries` (list) | `countries.originCountries()` | **Different shape** — the controller filters stored codes against the current list at render (`selected.filter(code => offered.has(code))`, transit-countries.controller.js:48–59). Stale codes vanish from the rendered chip list before the trader sees them. No banner. | Filtered-again membership check on POST | Yes — page allows an empty list. |
-| addresses / frozen-parties (display only) | party country label | `originLabel(code)` | Fallback: `originLabel(code) ?? code`. A stale code renders as the raw ISO code (e.g. "XY") with no label. No POST — display only. | n/a | n/a |
-| commodity-selection | commodity keys | set-owned `commodities/index.js` (static stub) | Filters stored keys against `commodityGroups()` at render. Stale keys are silently dropped from the rendered checkbox state. | Membership check on POST | Yes. |
+| Page | Field(s) | Reader | GET render with stale stored value | POST rule | Empty allowed on POST? | Status |
+|---|---|---|---|---|---|---|
+| origin | `countryOfOrigin` | `countries.originCountries()` | Select has no matching `<option>` — widget renders as unselected (placeholder). Autocomplete input value blank. Prior code is not visible. | `oneOf('countryOfOrigin', countryValues, …)` | Yes — the origin controller's comment says empty on this page is OK because the obligations model keeps the row unfulfilled and CYA blocks submit (origin/controller.js:140–144). | Fixed on `chore/EUDPA-573-origin-page-hardening`. |
+| import-reason | `destinationCountry` (transhipment / transit) | `countries.originCountries()` | Same as origin — select renders unselected. | `requiredOneOf(…)` | No — blocks empty with the standard error. | Fixed on `chore/EUDPA-573-origin-page-hardening`. |
+| import-reason | `portOfExit` (transit / temp admission) | `ports.list()` | Select renders unselected. | `requiredOneOf(…)` | No. | Fixed on `chore/EUDPA-573-origin-page-hardening`. |
+| transport / port-of-entry | `portOfEntry` | `ports.list()` | Select renders unselected. | `oneOf(…)` | Yes — page allows partial save, mandatory-ness lives in the obligation model. | Fixed on `chore/EUDPA-573-origin-page-hardening`. |
+| transport / private-transporter-details | `country` (address block) | `countries.addressCountries()` | Select renders unselected. | `oneOf(…)` | Yes. | Fixed on `chore/EUDPA-573-origin-page-hardening`. |
+| transport / transit-countries | `transitedCountries` (list) | `countries.originCountries()` | **Different shape** — the controller filters stored codes against the current list at render (`selected.filter(code => offered.has(code))`, transit-countries.controller.js:48–59). Stale codes vanish from the rendered chip list before the trader sees them. No banner. | Filtered-again membership check on POST | Yes — page allows an empty list. | Fixed on `chore/EUDPA-573-origin-page-hardening` (banner on GET; the filter and commit path are unchanged). |
+| addresses / frozen-parties (display only) | party country label | `originLabel(code)` | Fallback: `originLabel(code) ?? code`. A stale code renders as the raw ISO code (e.g. "XY") with no label. No POST — display only. | n/a | n/a | Deferred — see below. |
+| commodity-selection | commodity keys | set-owned `commodities/index.js` (static stub) | Filters stored keys against `commodityGroups()` at render. Stale keys are silently dropped from the rendered checkbox state. | Membership check on POST | Yes. | Deferred — see below. |
+
+### Deferred rows
+
+Two rows above are deferred rather than fixed. Both are legitimate
+concerns, but the trigger for change is not the same as the six
+MDM-backed reader fields we did fix — the deferral is about *when*
+the fix has to land, not *whether* it is needed.
+
+- **addresses / frozen-parties (display only).** The party rows on
+  this page are captured at submit and rendered read-only — the
+  design intent is that the trader sees exactly what they submitted,
+  and further changes go via a new amendment flow rather than in-
+  place. Surfacing a stale-country annotation on a frozen field
+  would conflict with that design. If the trader needs to act on a
+  changed party country, the CTA belongs on the outer notification
+  surface (per the INS frontend attention plan below), not on the
+  frozen party display. Revisit when the INS attention work
+  crystallises the surface.
+- **commodity-selection.** The commodity list is set-owned
+  (`sets/live-animals/services/commodities/`) — a static list under
+  our own control, not fetched from MDM. Changes to it are team-
+  controlled and would be coordinated with a manifest / release
+  change. If we ever bump the list we can plan a migration or a
+  specific banner as part of that change; deferring until then
+  avoids designing against a hazard we own the timing of.
 
 Five practical takeaways:
 

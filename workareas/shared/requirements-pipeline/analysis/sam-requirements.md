@@ -136,6 +136,25 @@ changes to do this solution, so we're going to weight it heavier' … build the 
   judges' `reuse` dimension decided a tie. Every decision that rested on reuse or build cost must be
   re-decided on merit.
 
+## R9: scope with sense, because R8 is not a licence to gold-plate (added 21 September 2026)
+
+After 6 of 34 increments had landed 24,000 lines, Sam: "This is crazily slow. What's making this
+work so big? It's a few CLI wrappers and prompt files?" and "re-scope with some sense".
+
+- R8 means: when choosing between two ways to meet a requirement, do not pick the worse one
+  because it is cheaper to build. It does **not** mean every risk a critic can imagine earns a new
+  mechanism, or that nothing is ever cut.
+- The scope is what Sam asked for in R1 to R7, done well, and **no more**:
+  - a distiller: sources to verified vertical-slice atoms, a combine pass, `backlog.json`, a
+    decision-led report;
+  - an implementor: plan, audit, implement, review with the live workspace skills, verify,
+    judge, fix, ladder, acceptance, land;
+  - both working in Claude or Codex mode from the same backlog, with mechanical steps run as tim
+    commands by a cheap runner.
+- A mechanism earns its place only if it prevents a failure that has **actually happened**, or
+  that the requested behaviour cannot work without. It does not earn its place because a critic
+  can imagine it.
+
 ## R4 — hooks
 Per-tool-call hooks (`PreToolUse` guard-bash, guard-edits and the sonar secrets check;
 `PostToolUse` on git push) are configured in the workspace `.claude/settings.json` and do fire

@@ -68,6 +68,38 @@ describe('loadProgramme', () => {
     )
   })
 
+  test('gives paths.opsLog and paths.journal under the workarea', () => {
+    writeRegistry({
+      programmes: {
+        'fixture-requirements': {
+          profile: 'requirements-v2',
+          workarea: 'tim/src/backlog/__fixtures__/fixture-requirements'
+        }
+      }
+    })
+
+    const profile = loadProgramme({
+      workspaceRoot: workspace,
+      key: 'fixture-requirements'
+    })
+
+    expect(profile.paths.opsLog).toBe(
+      join(
+        workspace,
+        'tim/src/backlog/__fixtures__/fixture-requirements',
+        '.backlog-ops.jsonl'
+      )
+    )
+    expect(profile.paths.journal).toBe(
+      join(
+        workspace,
+        'tim/src/backlog/__fixtures__/fixture-requirements',
+        'build',
+        'journal.jsonl'
+      )
+    )
+  })
+
   test('expands a home-relative workarea rather than nesting it under the workspace', () => {
     writeRegistry({
       programmes: {

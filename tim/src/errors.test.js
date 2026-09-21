@@ -20,6 +20,11 @@ describe('TimError', () => {
     expect(error.code).toBe('LINT')
   })
 
+  test('ER1: constructs with LOST_UPDATE and LOCKED', () => {
+    expect(new TimError('LOST_UPDATE', 'x').code).toBe('LOST_UPDATE')
+    expect(new TimError('LOCKED', 'x').code).toBe('LOCKED')
+  })
+
   test('rejects unknown codes — protects the closed enum', () => {
     expect(() => new TimError('MADE_UP', 'x')).toThrow(/not in the allowed set/)
   })

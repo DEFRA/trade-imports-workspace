@@ -9,7 +9,9 @@ const VALID_CODES = new Set([
   'USER_ABORT',
   'PARTIAL_FAILURE',
   'LINT',
-  'UNKNOWN'
+  'UNKNOWN',
+  'LOST_UPDATE',
+  'LOCKED'
 ])
 
 export class TimError extends Error {

@@ -1,9 +1,11 @@
 import { existsSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
-import { readJsonFile, writeJsonAtomic } from './io.js'
+import { dirname, join } from 'node:path'
+import { readJsonFile } from './io.js'
 import { TimError } from '../errors.js'
 import { findCycle } from './graph.js'
 import { profileFor, DEFAULT_PROFILE_KEY } from './profiles/index.js'
+import { readVersioned, parseJsonText, commitWrite } from './write.js'
+import { findOperation, fingerprintOf } from './ops-log.js'
 
 const compareSortKey = (left, right) => {
   const length = Math.max(left.length, right.length)
@@ -242,8 +244,175 @@ const duplicateIdentities = (items, definition) => {
 const sameMembers = (before, after) =>
   before.size === after.size && [...before].every((entry) => after.has(entry))
 
-const readExisting = (path, definition) =>
-  existsSync(path) ? definition.parseBacklog(readJsonFile(path)) : null
+const assertNoDuplicateIdentities = (items, definition) => {
+  const duplicated = duplicateIdentities(items, definition)
+  if (!duplicated.length) return
+  throw new TimError(
+    'USAGE',
+    duplicated
+      .map(
+        ([identity, group]) =>
+          `"${identity}" names more than one item: ${group.map((item) => item.file ?? identity).join(', ')}. Each item's key must be unique.`
+      )
+      .join(' ')
+  )
+}
+
+const assertReplaceAllowed = ({
+  replace,
+  existingRows,
+  definition,
+  context
+}) => {
+  if (!replace || !existingRows.length) return
+  const blocked = ruled(existingRows, definition, context)
+  if (!blocked.length) return
+  throw new TimError(
+    'USAGE',
+    definition.messages.replaceBlocked(
+      blocked.map((row) => row.id),
+      { rows: blocked, context }
+    )
+  )
+}
+
+// An item whose file has gone leaves the backlog with it — striking one is
+// a deliberate act. Striking one somebody has already ruled on or built is
+// not, so `assertNoDroppedRulings` stops the run and says which file to put
+// back.
+const findDropped = ({ existingRows, items, definition }) => {
+  const present = new Set(items.map(definition.identityOf))
+  return existingRows.filter(
+    (row) =>
+      row[definition.identityField] &&
+      !present.has(row[definition.identityField])
+  )
+}
+
+const assertNoDroppedRulings = ({ dropped, dir, definition, context }) => {
+  const droppedRulings = ruled(dropped, definition, context)
+  if (!droppedRulings.length) return
+  throw new TimError(
+    'USAGE',
+    definition.messages.droppedRuling({ dir, rows: droppedRulings, context })
+  )
+}
+
+/**
+ * Every authored item folded onto its row: born when it is new, refreshed
+ * onto the existing row otherwise. Pure — it pushes nothing to a side
+ * list; `frozenChanges` and `regroupedRows` derive their own findings from
+ * what this returns.
+ *
+ * @param {object} args
+ * @returns {{id: string, item: object, previous: object|undefined, row: object}[]}
+ */
+const buildRows = ({
+  items,
+  ids,
+  byId,
+  replace,
+  profile,
+  definition,
+  context,
+  tables
+}) =>
+  items.map((authored) => {
+    const id = ids.get(definition.identityOf(authored))
+    const item = resolveReferences({ item: authored, id, tables, definition })
+    const previous = replace ? undefined : byId.get(id)
+    if (!previous) {
+      return {
+        id,
+        item,
+        previous,
+        row: born({ item, id, profile, definition, context, tables })
+      }
+    }
+    return {
+      id,
+      item,
+      previous,
+      row: refreshed({
+        row: previous,
+        item,
+        id,
+        profile,
+        definition,
+        context,
+        tables
+      })
+    }
+  })
+
+const frozenChanges = (built, definition) => {
+  if (!definition.frozen) return []
+  return built
+    .filter(({ previous, item }) => {
+      if (!previous) return false
+      const wouldBe = definition.frozen.compose(item)
+      const currentFrozen = previous[definition.frozen.field]
+      return Boolean(currentFrozen) && currentFrozen !== wouldBe
+    })
+    .map(({ id, item }) => `${id} (${definition.identityOf(item)})`)
+}
+
+const assertNoFrozenChanges = (entries, definition) => {
+  if (!entries.length) return
+  throw new TimError('USAGE', definition.messages.frozenChanged(entries))
+}
+
+const regroupedRows = (built, definition, context) => {
+  if (!definition.regroupField) return []
+  return built
+    .filter(({ previous }) => previous && definition.isRuled(previous, context))
+    .map(({ id, item, previous, row }) => {
+      const before = new Set(previous[definition.regroupField] ?? [])
+      const after = new Set(row[definition.regroupField] ?? [])
+      if (sameMembers(before, after)) return null
+      return {
+        id,
+        key: definition.identityOf(item),
+        before: [...before],
+        after: [...after]
+      }
+    })
+    .filter(Boolean)
+}
+
+const assertNoRegroups = (entries, definition) => {
+  if (!entries.length) return
+  throw new TimError('USAGE', definition.messages.regrouped(entries))
+}
+
+// The verify-before-ingest gate. A profile that does not declare
+// requireVerification is untouched: re-ingesting a programme that predates
+// the flag has to stay a no-op.
+const assertVerified = ({ items, byId, ids, replace, definition, profile }) => {
+  if (!definition.requireVerification(profile)) return
+  const unverified = items
+    .filter(
+      (item) => !byId.has(ids.get(definition.identityOf(item))) || replace
+    )
+    .filter((item) => !item.verification)
+    .map((item) => definition.identityOf(item))
+  if (!unverified.length) return
+  throw new TimError(
+    'USAGE',
+    definition.messages.unverified(unverified, profile)
+  )
+}
+
+const assertNoCycle = (rows, definition) => {
+  const cyclePath = findCycle(new Map(definition.cycleEdges(rows)))
+  if (!cyclePath) return
+  const byRowId = new Map(rows.map((row) => [row.id, row]))
+  const path = cyclePath.map((id) => {
+    const row = byRowId.get(id)
+    return { id, key: row?.key ?? id, title: row?.title }
+  })
+  throw new TimError('USAGE', definition.messages.cycle(path))
+}
 
 /**
  * Assemble a programme's backlog.json from the item files an agent
@@ -257,6 +426,14 @@ const readExisting = (path, definition) =>
  * / `tim/src/backlog/profiles/requirements-v2-increments.js` for what each
  * hook does for its own collection.
  *
+ * The write itself goes through `write.js`'s `commitWrite` — one lock, one
+ * lost-update check and one idempotent operation log for every profile.
+ * `tim parity ingest` calls this same function but passes no `opId`, so it
+ * writes no operation log and sees no behaviour change: the lock is
+ * held only for the milliseconds of the rename, and the lost-update check
+ * can only fire when two ingests race on one corpus, which today silently
+ * loses one of them.
+ *
  * @param {object} args
  * @param {object} args.profile - A loaded programme or corpus profile
  * @param {string} args.workspaceRoot
@@ -265,14 +442,23 @@ const readExisting = (path, definition) =>
  * @param {boolean} [args.replace] - Rebuild from scratch rather than merging
  * @param {boolean} [args.dryRun] - Report and write nothing
  * @param {string} [args.target] - Override the build-loop target (parity-v1 only)
+ * @param {string} [args.opId] - An idempotency key; a replay returns the
+ *   original result and writes nothing (req-016)
+ * @param {string} [args.expectSha] - The version this run is based on;
+ *   defaults to the version it reads. When the file no longer matches on
+ *   write, the run is refused (req-015)
+ * @param {string} [args.command] - Named in the lock and the operation log;
+ *   defaults to 'parity ingest' or 'backlog ingest' depending on the
+ *   profile's own profileKey
+ * @param {number[]} [args.retryDelaysMs]
  * @returns {object} A summary of what was written
  * @throws {TimError} NOT_FOUND when the item directory is missing, PARSE for
  *   a bad item file, USAGE for an unknown profile or collection, two items
  *   sharing one identity, a destructive rebuild, a dropped ruling, a
  *   regrouped started or ruled increment, a dependency cycle, a
  *   double-claimed atom, a frozen-field change, missing verification, an
- *   increments pass with no atoms yet, or an atoms pass that would drop an
- *   atom a claimed increment still names
+ *   increments pass with no atoms yet, an atoms pass that would drop an
+ *   atom a claimed increment still names, LOST_UPDATE, or LOCKED
  */
 export const runIngest = ({
   profile,
@@ -280,15 +466,44 @@ export const runIngest = ({
   collection,
   replace = false,
   dryRun = false,
-  target
+  target,
+  opId,
+  expectSha,
+  command,
+  retryDelaysMs
 }) => {
   const definition = profileFor(
     profile.profileKey ?? DEFAULT_PROFILE_KEY,
     collection
   )
+  const resolvedCommand =
+    command ??
+    ((profile.profileKey ?? DEFAULT_PROFILE_KEY) === DEFAULT_PROFILE_KEY
+      ? 'parity ingest'
+      : 'backlog ingest')
 
   const backlogPath = profile.paths.backlog
-  const existing = readExisting(backlogPath, definition)
+  const opsLogPath =
+    profile.paths.opsLog ?? join(dirname(backlogPath), '.backlog-ops.jsonl')
+  const fingerprint = opId
+    ? fingerprintOf({
+        verb: 'backlog ingest',
+        programme: profile.id,
+        collection: definition.collection,
+        replace,
+        target: target ?? null
+      })
+    : undefined
+
+  if (opId && !dryRun) {
+    const found = findOperation({ opsLogPath, opId, fingerprint })
+    if (found) return found.result
+  }
+
+  const versioned = readVersioned(backlogPath)
+  const existing = versioned.exists
+    ? definition.parseBacklog(parseJsonText(versioned.text, backlogPath))
+    : null
   const context = definition.context(profile, existing)
 
   const dir = definition.itemsDir(profile)
@@ -300,33 +515,11 @@ export const runIngest = ({
     context
   })
 
-  const duplicated = duplicateIdentities(items, definition)
-  if (duplicated.length) {
-    throw new TimError(
-      'USAGE',
-      duplicated
-        .map(
-          ([identity, group]) =>
-            `"${identity}" names more than one item: ${group.map((item) => item.file ?? identity).join(', ')}. Each item's key must be unique.`
-        )
-        .join(' ')
-    )
-  }
+  assertNoDuplicateIdentities(items, definition)
 
   const existingRows = existing?.[definition.itemsKey] ?? []
 
-  if (replace && existingRows.length) {
-    const blocked = ruled(existingRows, definition, context)
-    if (blocked.length) {
-      throw new TimError(
-        'USAGE',
-        definition.messages.replaceBlocked(
-          blocked.map((row) => row.id),
-          { rows: blocked, context }
-        )
-      )
-    }
-  }
+  assertReplaceAllowed({ replace, existingRows, definition, context })
 
   const ids = assignIds({
     items,
@@ -348,101 +541,26 @@ export const runIngest = ({
   )
   const tables = { batch: batchTable, ...definition.referenceTables(context) }
 
-  // An item whose file has gone leaves the backlog with it — striking one is
-  // a deliberate act. Striking one somebody has already ruled on or built is
-  // not, so that stops the run and says which file to put back.
-  const present = new Set(items.map(definition.identityOf))
-  const dropped = existingRows.filter(
-    (row) =>
-      row[definition.identityField] &&
-      !present.has(row[definition.identityField])
-  )
-  const droppedRulings = ruled(dropped, definition, context)
-  if (droppedRulings.length) {
-    throw new TimError(
-      'USAGE',
-      definition.messages.droppedRuling({
-        dir,
-        rows: droppedRulings,
-        context
-      })
-    )
-  }
+  const dropped = findDropped({ existingRows, items, definition })
+  assertNoDroppedRulings({ dropped, dir, definition, context })
 
-  const frozenList = []
-  const regrouped = []
-  const rows = items.map((authored) => {
-    const id = ids.get(definition.identityOf(authored))
-    const item = resolveReferences({ item: authored, id, tables, definition })
-    const previous = replace ? undefined : byId.get(id)
-    if (!previous) {
-      return born({ item, id, profile, definition, context, tables })
-    }
-    if (definition.frozen) {
-      const wouldBe = definition.frozen.compose(item)
-      const currentFrozen = previous[definition.frozen.field]
-      if (currentFrozen && currentFrozen !== wouldBe) {
-        frozenList.push(`${id} (${definition.identityOf(item)})`)
-      }
-    }
-    const row = refreshed({
-      row: previous,
-      item,
-      id,
-      profile,
-      definition,
-      context,
-      tables
-    })
-    if (definition.regroupField && definition.isRuled(previous, context)) {
-      const before = new Set(previous[definition.regroupField] ?? [])
-      const after = new Set(row[definition.regroupField] ?? [])
-      if (!sameMembers(before, after)) {
-        regrouped.push({
-          id,
-          key: definition.identityOf(item),
-          before: [...before],
-          after: [...after]
-        })
-      }
-    }
-    return row
+  const built = buildRows({
+    items,
+    ids,
+    byId,
+    replace,
+    profile,
+    definition,
+    context,
+    tables
   })
+  assertNoFrozenChanges(frozenChanges(built, definition), definition)
+  assertNoRegroups(regroupedRows(built, definition, context), definition)
 
-  if (frozenList.length) {
-    throw new TimError('USAGE', definition.messages.frozenChanged(frozenList))
-  }
-  if (regrouped.length) {
-    throw new TimError('USAGE', definition.messages.regrouped(regrouped))
-  }
+  const rows = built.map(({ row }) => row)
 
-  // The verify-before-ingest gate. A profile that does not declare
-  // requireVerification is untouched: re-ingesting a programme that predates
-  // the flag has to stay a no-op.
-  if (definition.requireVerification(profile)) {
-    const unverified = items
-      .filter(
-        (item) => !byId.has(ids.get(definition.identityOf(item))) || replace
-      )
-      .filter((item) => !item.verification)
-      .map((item) => definition.identityOf(item))
-    if (unverified.length) {
-      throw new TimError(
-        'USAGE',
-        definition.messages.unverified(unverified, profile)
-      )
-    }
-  }
-
-  const cyclePath = findCycle(new Map(definition.cycleEdges(rows)))
-  if (cyclePath) {
-    const byRowId = new Map(rows.map((row) => [row.id, row]))
-    const path = cyclePath.map((id) => {
-      const row = byRowId.get(id)
-      return { id, key: row?.key ?? id, title: row?.title }
-    })
-    throw new TimError('USAGE', definition.messages.cycle(path))
-  }
+  assertVerified({ items, byId, ids, replace, definition, profile })
+  assertNoCycle(rows, definition)
 
   definition.checkRows({ rows, context, profile })
 
@@ -460,17 +578,14 @@ export const runIngest = ({
     )
   }
 
-  const write = dryRun ? null : writeJsonAtomic(backlogPath, backlog)
-
   // A rebuild has no history to be new against: every row in it was written
   // by this run, whatever number it happens to carry.
   const isNew = (item) =>
     replace || !byId.has(ids.get(definition.identityOf(item)))
 
-  return {
+  const resultStub = {
     path: backlogPath,
     collection: definition.collection,
-    written: Boolean(write),
     total: items.length,
     new: items.filter(isNew).length,
     refreshed: items.filter((item) => !isNew(item)).length,
@@ -483,5 +598,35 @@ export const runIngest = ({
       isNew: isNew(item)
     })),
     ...definition.summary({ items, profile, dir, context, rows })
+  }
+
+  if (dryRun) {
+    return { ...resultStub, written: false, sha256: null, notes: [] }
+  }
+
+  const body = `${JSON.stringify(backlog, null, 2)}\n`
+  const expectedSha = expectSha ?? versioned.sha256
+
+  const commit = commitWrite({
+    path: backlogPath,
+    body,
+    format: 'json',
+    validate: (parsed) => definition.parseBacklog(parsed),
+    expectedSha,
+    command: resolvedCommand,
+    opId,
+    fingerprint,
+    opsLogPath,
+    result: { ...resultStub, written: true },
+    retryDelaysMs
+  })
+
+  if (commit.replayed) return commit.result
+
+  return {
+    ...resultStub,
+    written: true,
+    sha256: commit.sha256,
+    notes: commit.notes
   }
 }

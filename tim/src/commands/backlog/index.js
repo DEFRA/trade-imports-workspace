@@ -1,38 +1,65 @@
 import { z } from 'zod'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve, normalize, sep } from 'node:path'
 import { homedir } from 'node:os'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { loadProgramme } from '../../backlog/programme.js'
 import { loadRegistry } from '../../backlog/registry.js'
 import { runIngest } from '../../backlog/ingest.js'
+import { setIncrementField, appendJournalNote } from '../../backlog/state.js'
+import { INCREMENT_ID, SETTABLE_FIELDS } from '../../backlog/state-schema.js'
 import { readJsonFile } from '../../backlog/io.js'
 import { resolveStandards, lintStandards } from '../../backlog/standards.js'
-import { jsonEnvelope, exitCodeFor } from '../envelope.js'
+import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { OK } from '../../constants/exitCodes.js'
-import { isTimError, TimError } from '../../errors.js'
+import { TimError } from '../../errors.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
 
 const programmeKeySchema = z.string().trim().min(1, 'Name a programme key.')
 
+const MAX_OP_ID_LENGTH = 200
+
+// DESIGN 4.3's op id shape: a person must be able to pass a plain id, so the
+// six-part `<runLabel>:<inc>:<attempt>:<stage>:<task>:<verb>` form is not
+// enforced — no caller composes it yet (`advance` is inc-017).
+const opIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_OP_ID_LENGTH)
+  .regex(
+    /^[A-Za-z0-9][A-Za-z0-9._-]*(:[A-Za-z0-9._-]+)*$/,
+    'is not a valid --op-id (letters, digits, ".", "_", "-" and ":" only, starting with a letter or digit).'
+  )
+
+const expectShaSchema = z
+  .string()
+  .regex(/^[0-9a-f]{64}$/, '--expect-sha must be a 64-character hex sha256.')
+
 const ingestOptsSchema = z
   .object({
     atoms: z.boolean().optional().default(false),
-    increments: z.boolean().optional().default(false)
+    increments: z.boolean().optional().default(false),
+    dryRun: z.boolean().optional().default(false),
+    opId: opIdSchema.optional(),
+    expectSha: expectShaSchema.optional()
   })
   .refine((opts) => !(opts.atoms && opts.increments), {
     message:
       '--atoms and --increments cannot both be given. Choose one, or drop both for the default.'
   })
+  .refine((opts) => !(opts.dryRun && (opts.opId || opts.expectSha)), {
+    message: 'A dry run writes nothing, so it takes no --op-id or --expect-sha.'
+  })
 
 /**
- * Validate the ingest command's --atoms/--increments combination before any
- * side-effect runs (`.claude/rules/cli-patterns.md`).
+ * Validate the ingest command's options before any side-effect runs
+ * (`.claude/rules/cli-patterns.md`).
  *
  * @param {object} opts
- * @returns {{atoms: boolean, increments: boolean}}
+ * @returns {{atoms: boolean, increments: boolean, dryRun: boolean, opId: string|undefined, expectSha: string|undefined}}
  * @throws {TimError} USAGE
  */
 const parseIngestOpts = (opts) => {
@@ -41,6 +68,98 @@ const parseIngestOpts = (opts) => {
     throw new TimError('USAGE', result.error.issues[0].message)
   }
   return result.data
+}
+
+/**
+ * Validate an increment id positional before any side-effect runs.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ * @throws {TimError} USAGE
+ */
+const parseIncrementId = (value) => {
+  const result = z
+    .string()
+    .regex(INCREMENT_ID, 'must look like inc-001.')
+    .safeParse(value)
+  if (!result.success) {
+    throw new TimError('USAGE', `id: ${result.error.issues[0].message}`)
+  }
+  return result.data
+}
+
+const stateSetOptsSchema = z.object({
+  value: z.string().min(1, 'Give --value.'),
+  opId: opIdSchema.optional(),
+  expectSha: expectShaSchema.optional()
+})
+
+/**
+ * Validate `state set`'s options and parse `--value` as JSON before any
+ * side-effect runs.
+ *
+ * @param {object} opts
+ * @returns {{value: any, opId: string|undefined, expectSha: string|undefined}}
+ * @throws {TimError} USAGE
+ */
+const parseStateSetOpts = (opts) => {
+  const result = stateSetOptsSchema.safeParse(opts)
+  if (!result.success) {
+    throw new TimError('USAGE', result.error.issues[0].message)
+  }
+  let value
+  try {
+    value = JSON.parse(result.data.value)
+  } catch {
+    throw new TimError(
+      'USAGE',
+      `--value "${result.data.value}" is not valid JSON.`
+    )
+  }
+  return { value, opId: result.data.opId, expectSha: result.data.expectSha }
+}
+
+const stateNoteOptsSchema = z.object({
+  file: z.string().min(1, 'Give --file.'),
+  stage: z.string().trim().min(1).optional(),
+  by: z.string().trim().min(1).optional(),
+  opId: opIdSchema.optional(),
+  expectSha: expectShaSchema.optional()
+})
+
+/**
+ * Validate `state note`'s options before any side-effect runs.
+ *
+ * @param {object} opts
+ * @returns {{file: string, stage: string|undefined, by: string|undefined, opId: string|undefined, expectSha: string|undefined}}
+ * @throws {TimError} USAGE
+ */
+const parseStateNoteOpts = (opts) => {
+  const result = stateNoteOptsSchema.safeParse(opts)
+  if (!result.success) {
+    throw new TimError('USAGE', result.error.issues[0].message)
+  }
+  return result.data
+}
+
+/**
+ * Read a note file's text, refusing a missing file with a GDS-plain message
+ * rather than a raw `ENOENT`.
+ *
+ * @param {string} path
+ * @returns {string}
+ * @throws {TimError} NOT_FOUND when the file is missing; any other
+ *   filesystem error propagates unchanged
+ */
+const readNoteFile = (path) => {
+  try {
+    return readFileSync(path, 'utf8').trim()
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new TimError('NOT_FOUND', `Can't find ${path}.`)
+    }
+    throw error
+  }
 }
 
 /**
@@ -88,12 +207,12 @@ const makeBacklogAction = ({ run, renderText, timVersion }) =>
       }
       process.exit(OK)
     } catch (error) {
-      if (isTimError(error) && opts.json) {
+      if (opts.json) {
         emit(
           JSON.stringify(
             jsonEnvelope({
               ok: false,
-              error: { code: error.code, message: error.message },
+              error: errorPayloadFor(error),
               timVersion
             })
           )
@@ -119,7 +238,22 @@ const renderIngest = (result) =>
       : []),
     result.written
       ? `Written to ${result.path}`
-      : 'Nothing written. Drop --dry-run to apply.'
+      : 'Nothing written. Drop --dry-run to apply.',
+    ...(result.notes ?? [])
+  ].join('\n')
+
+const renderStateSet = (result) =>
+  [
+    `${result.id} ${result.field}: ${JSON.stringify(result.before ?? null)} -> ${JSON.stringify(result.after)}`,
+    `Written to ${result.path}`,
+    ...(result.notes ?? [])
+  ].join('\n')
+
+const renderStateNote = (result) =>
+  [
+    `${result.entry.id}: "${result.entry.note}"${result.entry.stage ? ` (${result.entry.stage})` : ''}`,
+    `Written to ${result.path}`,
+    ...(result.notes ?? [])
   ].join('\n')
 
 const resolveCollection = (opts) => {
@@ -343,6 +477,14 @@ export const register = (program, { timVersion }) => {
       '--increments',
       'Ingest requirement increments (requirements-v2 programmes only)'
     )
+    .option(
+      '--op-id <id>',
+      'An idempotency key. Replaying the same id is a no-op that prints the original result'
+    )
+    .option(
+      '--expect-sha <sha>',
+      'The sha256 this run is based on. Refused if the backlog has changed since'
+    )
     .action(
       makeBacklogAction({
         run: ({ workspaceRoot, args }, opts) => {
@@ -355,11 +497,100 @@ export const register = (program, { timVersion }) => {
             workspaceRoot,
             collection,
             replace: opts.replace,
-            dryRun: opts.dryRun,
-            target: opts.target
+            dryRun: ingestOpts.dryRun,
+            target: opts.target,
+            opId: ingestOpts.opId,
+            expectSha: ingestOpts.expectSha
           })
         },
         renderText: renderIngest,
+        timVersion
+      })
+    )
+
+  const state = backlog
+    .command('state')
+    .description(
+      "A requirements-v2 programme's run state (build/state.json) and journal (build/journal.jsonl)"
+    )
+
+  state
+    .command('set <programme> <id> <field>')
+    .description(
+      `Set one field on one increment's build/state.json entry. Allowed fields: ${SETTABLE_FIELDS.join(', ')}`
+    )
+    .addHelpText(
+      'after',
+      '\nExample: tim backlog state set fixture-requirements inc-001 phase --value \'"plan"\' --json'
+    )
+    .requiredOption('--value <json>', 'The new value, as JSON')
+    .option(
+      '--op-id <id>',
+      'An idempotency key. Replaying the same id is a no-op that prints the original result'
+    )
+    .option(
+      '--expect-sha <sha>',
+      'The sha256 this run is based on. Refused if the file has changed since'
+    )
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const key = parseProgrammeKey(args[0], 'programme')
+          const id = parseIncrementId(args[1])
+          const field = args[2]
+          const parsed = parseStateSetOpts(opts)
+          const profile = loadProgramme({ workspaceRoot, key })
+          return setIncrementField({
+            profile,
+            id,
+            field,
+            value: parsed.value,
+            opId: parsed.opId,
+            expectSha: parsed.expectSha
+          })
+        },
+        renderText: renderStateSet,
+        timVersion
+      })
+    )
+
+  state
+    .command('note <programme> <id>')
+    .description("Append one note to one increment's build/journal.jsonl")
+    .addHelpText(
+      'after',
+      '\nExample: tim backlog state note fixture-requirements inc-001 --file note.txt --stage plan --json'
+    )
+    .requiredOption('--file <path>', 'File holding the note text')
+    .option('--stage <name>', 'Which build stage wrote this note')
+    .option('--by <who>', 'Who or what wrote this note')
+    .option(
+      '--op-id <id>',
+      'An idempotency key. Replaying the same id is a no-op that prints the original result'
+    )
+    .option(
+      '--expect-sha <sha>',
+      'The sha256 this run is based on. Refused if the file has changed since'
+    )
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const key = parseProgrammeKey(args[0], 'programme')
+          const id = parseIncrementId(args[1])
+          const parsed = parseStateNoteOpts(opts)
+          const profile = loadProgramme({ workspaceRoot, key })
+          const note = readNoteFile(parsed.file)
+          return appendJournalNote({
+            profile,
+            id,
+            note,
+            stage: parsed.stage,
+            by: parsed.by,
+            opId: parsed.opId,
+            expectSha: parsed.expectSha
+          })
+        },
+        renderText: renderStateNote,
         timVersion
       })
     )

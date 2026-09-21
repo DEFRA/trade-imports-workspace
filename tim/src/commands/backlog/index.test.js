@@ -5,13 +5,16 @@ import {
   mkdirSync,
   writeFileSync,
   readFileSync,
+  readdirSync,
+  existsSync,
   rmSync,
   realpathSync
 } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { tmpdir } from 'node:os'
+import { tmpdir, hostname } from 'node:os'
 import { projectSlug } from '../../backlog/standards/claude-chain.js'
+import { sha256File } from '../../backlog/io.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -1325,5 +1328,644 @@ describe('tim backlog standards', () => {
     )
 
     expect(noRepos.exitCode).toBe(2)
+  })
+})
+
+describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-015, req-016, req-023)', () => {
+  const programmeKey = 'write-safety'
+  let programmeDir
+
+  const seedProgramme = () => {
+    programmeDir = join(workspace, 'workareas', 'shared', programmeKey)
+    copyFixtureAtoms(join(programmeDir, 'distil', 'atoms'))
+    writeRegistry({
+      programmes: {
+        [programmeKey]: {
+          profile: 'requirements-v2',
+          workarea: `workareas/shared/${programmeKey}`
+        }
+      }
+    })
+  }
+
+  const addAtom = (name) =>
+    writeFileSync(
+      join(programmeDir, 'distil', 'atoms', name),
+      JSON.stringify({
+        key: name.replace('.json', ''),
+        slice: 'gamma',
+        kind: 'capability',
+        title: 'A new requirement',
+        statement: 'The service MUST do a new thing.',
+        why: 'Because the new thing matters.',
+        acceptance: [
+          {
+            id: 'ac-1',
+            text: 'Given a thing, when it happens, then it is observed.',
+            witness: 'e2e',
+            confidence: 'stated',
+            sources: ['s1'],
+            scenario: null,
+            resolvedBy: null
+          }
+        ],
+        falsifiedBy: 'The new thing does not happen.',
+        sources: [
+          {
+            id: 's1',
+            source: 'sam-req',
+            ref: 'line:1',
+            quote: 'the new thing',
+            readAt: {
+              version: null,
+              fetchedAt: '2026-09-21',
+              seal: 'git-blob:z'
+            },
+            confidence: 'stated',
+            role: 'requirement'
+          }
+        ],
+        surface: { service: 's', area: 'a', repos: ['workspace'] }
+      })
+    )
+
+  const writeMinimalIncrement = () => {
+    const incrementsDir = join(programmeDir, 'distil', 'increments')
+    mkdirSync(incrementsDir, { recursive: true })
+    writeFileSync(
+      join(incrementsDir, 'core.json'),
+      JSON.stringify({
+        key: 'core',
+        title: 'An increment',
+        outcome: 'Something true when done.',
+        why: 'Why it ships.',
+        members: ['alpha--second'],
+        class: 'feat',
+        milestone: null,
+        checkpoint: null,
+        size: { class: 'S', basis: '1 criterion, 1 atom' },
+        combination: { why: 'One reason.', rules: [] }
+      })
+    )
+  }
+
+  const seedWithIncrement = async () => {
+    seedProgramme()
+    await runTim(['backlog', 'ingest', programmeKey], workspace)
+    writeMinimalIncrement()
+    await runTim(['backlog', 'ingest', programmeKey, '--increments'], workspace)
+  }
+
+  test('E1 req-015 e2e, concurrent: two racing ingest --expect-sha S0 --json processes give exits [0, 3], the loser LOST_UPDATE, and the winner sha differs from S0', async () => {
+    seedProgramme()
+    await runTim(['backlog', 'ingest', programmeKey], workspace)
+    const backlogPath = join(programmeDir, 'backlog.json')
+    const baselineSha = sha256File(backlogPath)
+    // A racer that reads the same baseline sha must produce different bytes
+    // from it, or both racers would see current === baseline and both
+    // succeed.
+    addAtom('gamma--first.json')
+
+    const [racerOne, racerTwo] = await Promise.all([
+      execa(
+        'node',
+        [
+          cliPath,
+          'backlog',
+          'ingest',
+          programmeKey,
+          '--expect-sha',
+          baselineSha,
+          '--json',
+          '--workspace',
+          workspace
+        ],
+        { reject: false }
+      ),
+      execa(
+        'node',
+        [
+          cliPath,
+          'backlog',
+          'ingest',
+          programmeKey,
+          '--expect-sha',
+          baselineSha,
+          '--json',
+          '--workspace',
+          workspace
+        ],
+        { reject: false }
+      )
+    ])
+
+    expect([racerOne.exitCode, racerTwo.exitCode].sort()).toEqual([0, 3])
+    const winner = racerOne.exitCode === 0 ? racerOne : racerTwo
+    const loser = racerOne.exitCode === 0 ? racerTwo : racerOne
+    const winnerResult = resultOf(winner)
+    const loserErrors = JSON.parse(loser.stdout.trim()).errors
+    expect(loserErrors[0].code).toBe('LOST_UPDATE')
+    expect(winnerResult.sha256).not.toBe(baselineSha)
+    expect(sha256File(backlogPath)).toBe(winnerResult.sha256)
+  })
+
+  test('E2 req-015 e2e, sequential: a second write against the same, now-stale --expect-sha exits 3, and the bytes are unchanged from the first write', async () => {
+    seedProgramme()
+    await runTim(['backlog', 'ingest', programmeKey], workspace)
+    const backlogPath = join(programmeDir, 'backlog.json')
+    const baselineSha = sha256File(backlogPath)
+    addAtom('gamma--first.json')
+
+    const first = await runTim(
+      [
+        'backlog',
+        'ingest',
+        programmeKey,
+        '--expect-sha',
+        baselineSha,
+        '--json'
+      ],
+      workspace
+    )
+    expect(first.exitCode).toBe(0)
+    const afterFirst = readFileSync(backlogPath, 'utf8')
+
+    const second = await runTim(
+      [
+        'backlog',
+        'ingest',
+        programmeKey,
+        '--expect-sha',
+        baselineSha,
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(second.exitCode).toBe(3)
+    expect(JSON.parse(second.stdout.trim()).errors[0].code).toBe('LOST_UPDATE')
+    expect(readFileSync(backlogPath, 'utf8')).toBe(afterFirst)
+  })
+
+  test('E3 req-016 e2e: state note, replayed, gives one journal line, one ops entry and an equal result', async () => {
+    await seedWithIncrement()
+    const notePath = join(workspace, 'note.txt')
+    writeFileSync(notePath, 'Started the increment.')
+
+    const first = await runTim(
+      [
+        'backlog',
+        'state',
+        'note',
+        programmeKey,
+        'inc-001',
+        '--file',
+        notePath,
+        '--op-id',
+        'r1:inc-001:1:plan:t1:note',
+        '--json'
+      ],
+      workspace
+    )
+    expect(first.exitCode).toBe(0)
+
+    const replay = await runTim(
+      [
+        'backlog',
+        'state',
+        'note',
+        programmeKey,
+        'inc-001',
+        '--file',
+        notePath,
+        '--op-id',
+        'r1:inc-001:1:plan:t1:note',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(replay.exitCode).toBe(0)
+    expect(resultOf(replay)).toEqual(resultOf(first))
+    expect(
+      readFileSync(join(programmeDir, 'build', 'journal.jsonl'), 'utf8')
+        .trim()
+        .split('\n')
+    ).toHaveLength(1)
+    expect(
+      readFileSync(join(programmeDir, '.backlog-ops.jsonl'), 'utf8')
+        .trim()
+        .split('\n')
+    ).toHaveLength(1)
+  })
+
+  test('E4 req-016 e2e: replaying state set op A after op B leaves phase as implement, and the output equals As first result', async () => {
+    await seedWithIncrement()
+
+    const opASet = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"',
+        '--op-id',
+        'op-a',
+        '--json'
+      ],
+      workspace
+    )
+    await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"implement"',
+        '--op-id',
+        'op-b',
+        '--json'
+      ],
+      workspace
+    )
+
+    const replayA = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"',
+        '--op-id',
+        'op-a',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(replayA.exitCode).toBe(0)
+    expect(resultOf(replayA)).toEqual(resultOf(opASet))
+    const state = JSON.parse(
+      readFileSync(join(programmeDir, 'build', 'state.json'), 'utf8')
+    )
+    expect(state.increments['inc-001'].phase).toBe('implement')
+  })
+
+  test('E5 req-016 e2e: an ingest --op-id replay after adding an atom leaves the bytes unchanged and prints an equal result', async () => {
+    seedProgramme()
+    const backlogPath = join(programmeDir, 'backlog.json')
+
+    const first = await runTim(
+      ['backlog', 'ingest', programmeKey, '--op-id', 'ingest-op-1', '--json'],
+      workspace
+    )
+    const afterFirst = readFileSync(backlogPath, 'utf8')
+
+    addAtom('gamma--first.json')
+    const replay = await runTim(
+      ['backlog', 'ingest', programmeKey, '--op-id', 'ingest-op-1', '--json'],
+      workspace
+    )
+
+    expect(replay.exitCode).toBe(0)
+    expect(resultOf(replay)).toEqual(resultOf(first))
+    expect(readFileSync(backlogPath, 'utf8')).toBe(afterFirst)
+  })
+
+  test('E6 req-023 e2e: a bad heads sha over an existing state exits 1 with PARSE, naming the path, and the state and build/ folder are otherwise untouched', async () => {
+    await seedWithIncrement()
+    await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"'
+      ],
+      workspace
+    )
+    const statePath = join(programmeDir, 'build', 'state.json')
+    const before = readFileSync(statePath, 'utf8')
+
+    const { stdout, exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'heads',
+        '--value',
+        '{"workspace":{"sha":"nope","branch":"b","dirty":false}}',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.errors[0].code).toBe('PARSE')
+    expect(payload.errors[0].message).toContain(statePath)
+    expect(readFileSync(statePath, 'utf8')).toBe(before)
+    expect(readdirSync(join(programmeDir, 'build'))).toEqual(['state.json'])
+  })
+
+  test('E7 req-023 e2e: the same bad value with no state file exits 1 and creates no build/ folder', async () => {
+    await seedWithIncrement()
+
+    const { exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'heads',
+        '--value',
+        '{"workspace":{"sha":"nope","branch":"b","dirty":false}}',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    expect(existsSync(join(programmeDir, 'build'))).toBe(false)
+  })
+
+  test('E8 req-023 e2e: a hand-edited unknown key in state makes state set phase exit 1, and the file is unchanged', async () => {
+    await seedWithIncrement()
+    const buildDir = join(programmeDir, 'build')
+    mkdirSync(buildDir, { recursive: true })
+    const statePath = join(buildDir, 'state.json')
+    writeFileSync(
+      statePath,
+      JSON.stringify({ increments: { 'inc-001': { phse: 'plan' } } })
+    )
+    const before = readFileSync(statePath, 'utf8')
+
+    const { exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    expect(readFileSync(statePath, 'utf8')).toBe(before)
+  })
+
+  test('E9 D7: distil/atoms as a file gives one JSON line, ok:false, code UNKNOWN, exit 1', async () => {
+    const badProgrammeDir = join(
+      workspace,
+      'workareas',
+      'shared',
+      'atoms-is-a-file'
+    )
+    mkdirSync(join(badProgrammeDir, 'distil'), { recursive: true })
+    writeFileSync(join(badProgrammeDir, 'distil', 'atoms'), 'not a directory')
+    writeRegistry({
+      programmes: {
+        'atoms-is-a-file': {
+          profile: 'requirements-v2',
+          workarea: 'workareas/shared/atoms-is-a-file'
+        }
+      }
+    })
+
+    const { stdout, exitCode } = await runTim(
+      ['backlog', 'ingest', 'atoms-is-a-file', '--json'],
+      workspace
+    )
+
+    const lines = stdout.trim().split('\n')
+    expect(lines).toHaveLength(1)
+    const payload = JSON.parse(lines[0])
+    expect(payload.ok).toBe(false)
+    expect(payload.errors[0].code).toBe('UNKNOWN')
+    expect(exitCode).toBe(1)
+  })
+
+  test('E10 LOCKED e2e: a lock planted with this process and host makes state set --json exit 4 with code LOCKED, and no state.json is written', async () => {
+    await seedWithIncrement()
+    const buildDir = join(programmeDir, 'build')
+    mkdirSync(buildDir, { recursive: true })
+    writeFileSync(
+      join(buildDir, '.state.lock'),
+      JSON.stringify({
+        pid: process.pid,
+        host: hostname(),
+        command: 'holder',
+        at: new Date().toISOString()
+      })
+    )
+
+    const { stdout, exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(4)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.errors[0].code).toBe('LOCKED')
+    expect(existsSync(join(buildDir, 'state.json'))).toBe(false)
+  })
+
+  test('E11a usage refusal: an unknown field exits 2, naming the allowed fields, with nothing written', async () => {
+    await seedWithIncrement()
+
+    const { exitCode, stderr } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'bogus',
+        '--value',
+        '"x"'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toContain('phase')
+    expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
+  })
+
+  test('E11b usage refusal: a bad --value exits 2 with nothing written', async () => {
+    await seedWithIncrement()
+
+    const { exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        'not-json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
+  })
+
+  test('E11c usage refusal: a bad --op-id exits 2 with nothing written', async () => {
+    await seedWithIncrement()
+
+    const { exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"',
+        '--op-id',
+        'has space'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
+  })
+
+  test('E11d usage refusal: a bad --expect-sha exits 2 with nothing written', async () => {
+    await seedWithIncrement()
+
+    const { exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"',
+        '--expect-sha',
+        'abc'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
+  })
+
+  test('E11e usage refusal: ingest --dry-run --op-id exits 2', async () => {
+    await seedWithIncrement()
+
+    const { exitCode, stderr } = await runTim(
+      ['backlog', 'ingest', programmeKey, '--dry-run', '--op-id', 'x'],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toContain('dry run')
+  })
+
+  test('E11f usage refusal: a malformed <id> positional on state set exits 2 with nothing written', async () => {
+    await seedWithIncrement()
+
+    const { exitCode } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        programmeKey,
+        'not-an-id',
+        'phase',
+        '--value',
+        '"plan"'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(existsSync(join(programmeDir, 'build', 'state.json'))).toBe(false)
+  })
+
+  test("E11g usage refusal: state note's --file naming a missing path exits 2 with NOT_FOUND, naming the path, with nothing written", async () => {
+    await seedWithIncrement()
+
+    const { exitCode, stdout } = await runTim(
+      [
+        'backlog',
+        'state',
+        'note',
+        programmeKey,
+        'inc-001',
+        '--file',
+        join(workspace, 'no-such-note.txt'),
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.errors[0].code).toBe('NOT_FOUND')
+    expect(payload.errors[0].message).toContain('no-such-note.txt')
+    expect(
+      existsSync(join(programmeDir, 'build', 'journal.jsonl'))
+    ).toBe(false)
+  })
+
+  test('E12: state set on a parity-v1 corpus key exits 2 with USAGE', async () => {
+    seedParityCorpus()
+
+    const { exitCode, stdout } = await runTim(
+      [
+        'backlog',
+        'state',
+        'set',
+        'alpha',
+        'inc-001',
+        'phase',
+        '--value',
+        '"plan"',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(JSON.parse(stdout.trim()).errors[0].code).toBe('USAGE')
   })
 })

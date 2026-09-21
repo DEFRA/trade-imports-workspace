@@ -63,9 +63,14 @@ export const loadProgramme = ({ workspaceRoot, key }) => {
       backlog: entry.backlog
         ? absolutise(workspaceRoot, entry.backlog)
         : join(workarea, 'backlog.json'),
-      // Where a recorded build attempt lives. Read-only here: inc-006 owns
-      // writing it, the lock and every other field.
-      state: join(workarea, 'build', 'state.json')
+      // Where a recorded build attempt lives, guarded by `build/.state.lock`.
+      state: join(workarea, 'build', 'state.json'),
+      // The idempotency ledger every write in this programme shares
+      // (backlog, state, journal alike), guarded by each write's own lock.
+      opsLog: join(workarea, '.backlog-ops.jsonl'),
+      // The append-only journal `state note` writes to, guarded by
+      // `build/.journal.lock`.
+      journal: join(workarea, 'build', 'journal.jsonl')
     }
   }
 }

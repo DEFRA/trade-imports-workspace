@@ -117,11 +117,17 @@ intended direction, stated by the team, and is not yet reflected in the code.
 - **The INS owns the capabilities shared across journeys.** The dashboard and the
   address book stay in the INS. Anything used by more than one journey belongs
   there rather than being rebuilt in each journey.
+- **Journeys may call the address-book API, but must not build their own
+  address-book screens.** A journey can read and write addresses through the
+  address-book API (for example to offer a saved address in a form). Any screen
+  for managing addresses (list, add, edit, delete) belongs in `ins-frontend`, and
+  a journey that needs one sends the user there, as the animals frontend does
+  with the address handshake.
 
 What this means for agents working today: put new cross-journey behaviour in the
 INS repos (`ins-frontend`, `ins-backend`, `address-book`), not in a single
-journey's frontend or backend. Where today's code differs from this direction
-(for example `plants-frontend` calling address-book directly, or the routing
+journey's frontend or backend. Do not add address-management pages to a journey
+frontend. Where today's code differs from this direction (for example the routing
 questions not existing yet), treat the code as the current state, not as the
 pattern to copy.
 

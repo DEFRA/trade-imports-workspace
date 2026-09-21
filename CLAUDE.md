@@ -22,7 +22,7 @@ Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agen
 - **Never edit `docker/stack/.staged/`** — it is generated on every stack start; edits are silently overwritten.
 - **Never commit `workareas/`** — it is gitignored runtime cache. The sole exception is `workareas/shared/` (tracked via a `.gitignore` negation for review handoff).
 - **Never let cross-repo branches drift** — same branch name across every affected repo (see rule 2).
-- **Before committing code changes:** run `sonar analyze --staged` and fix any BLOCKER or CRITICAL findings first (see SonarCloud integration below).
+- **Before pushing code changes:** a `PreToolUse` hook runs the real SonarCloud quality gate automatically on `git push` and blocks the push if it fails (see SonarCloud integration below). If `SONAR_TOKEN` isn't set locally, the hook skips gracefully — run the same check manually in that case.
 
 ### 4. Skill routing index
 
@@ -168,11 +168,19 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 
 `trade-imports-animals-frontend`, `-admin`, `-backend`, `-dynamics-gateway`, `-address-book`, `-reference-data`, `-ins-backend`, and `-ins-frontend` each have a SonarCloud Claude Code integration committed to `.claude/` and `.mcp.json`. This provides:
 
-- **Secrets scanning** — `UserPromptSubmit` and `PreToolUse` hooks block prompts/reads containing API keys or tokens
-- **MCP server** — query SonarCloud issues and rules via the `sonarqube` MCP server
-- **End-of-turn analysis** — a `Stop` hook runs `sonar analyze agentic` after each turn when uncommitted changes exist; any BLOCKER or CRITICAL findings are injected back as context so they can be addressed before the next response
+- **Secrets scanning** — `UserPromptSubmit` and `PreToolUse(Read)` hooks block prompts/reads containing API keys or tokens.
+- **MCP server** — query SonarCloud issues, quality gate status and rules directly via the per-repo `sonar-*` MCP servers (e.g. `mcp__sonar-gateway__search_sonar_issues_in_projects` for `trade-imports-dynamics-gateway`), without needing to run anything locally first.
+- **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running the canonical shared script at [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh) (one copy, referenced by every repo's `.claude/settings.json` via its `$HOME`-absolute path — not duplicated per repo). It runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
 
-**Before committing code changes:** run `sonar analyze --staged` (requires `sonar` CLI installed and `sonar auth login` completed) and fix any BLOCKER or CRITICAL findings before committing. Also run it when encountering CI failures, test failures, or unexpected behaviour. The MCP server can also be queried directly to fetch existing issues for a project.
+**Why not the server-side "Agentic Analysis" (Vortex) feature** the `sonar` CLI also offers (`sonar analyze agentic`, or `sonar analyze --staged`'s quality-check half): this DEFRA SonarCloud organization does not have that feature licensed (`403 Vortex Analysis is not available for this organization`) — confirmed by direct testing, not a config problem. The secrets-scanning half of the `sonar` CLI integration above is unaffected and still works. Don't reach for `sonar analyze agentic`/`--staged` expecting a working quality check; use the pre-push hook or run its script manually instead.
+
+**Requires `SONAR_TOKEN`** in the environment (a personal SonarCloud token, works across all these repos) — set alongside the other credentials in `~/.zshrc`. If it isn't set, the hook skips gracefully rather than blocking pushes over a missing local prerequisite; CI's own SonarCloud Scan check is still the authoritative backstop either way. To run the same check manually (e.g. mid-investigation, or on a repo without an open PR yet):
+
+```bash
+bash ~/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh <<< '{"tool_input":{"command":"git push"}}'
+```
+
+(the script reads its trigger command from that JSON on stdin, matching the real hook's contract) — or just invoke the underlying `mvn .../sonar:sonar` or `sonar-scanner` command the script runs, directly.
 
 ## Reference catalogues
 

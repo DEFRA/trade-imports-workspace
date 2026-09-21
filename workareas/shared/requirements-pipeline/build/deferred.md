@@ -140,8 +140,26 @@ error in `--json` mode writes plain text to stderr and nothing to stdout, which 
 contract in `tim/.claude/rules/cli-patterns.md`. `makeParityAction` (`commands/parity/index.js:72-87`)
 has the same gap.
 
-**Apply in inc-006**, where the error-code surface is next opened. Map any non-`TimError` to `UNKNOWN`
-in `tim/src/commands/envelope.js`, so both wrappers always emit exactly one JSON line.
+**Applied in inc-006, backlog half only.** `envelope.js` gained `errorPayloadFor(error)`, mapping any
+non-`TimError` to `UNKNOWN`, and `makeBacklogAction`'s catch now uses it whenever `opts.json` is set.
+**The parity half is withdrawn under Sam's ruling** ("Existing work is existing work. That's already
+in flight. This is a new thing. Don't backport."), the same ruling that withdrew D2, D3, D5, D8 and
+D9 above: `makeParityAction`'s catch in `commands/parity/index.js` is unchanged, and no later planner
+acts on it either. The gap this finding named is real and stays recorded here as found.
+
+### D-inc-009 for inc-009 (rulings ledger): a ruling must itself replay under `commitWrite`
+
+req-016 ac-1 reads "a ruling written with an operation id … the ledger holds one entry". inc-006
+proves the criterion on `state note`/`build/journal.jsonl` and the shared ops log (D10 of
+`plans/inc-006.md`), because the `rule` command and the decisions ledger belong to inc-009
+(req-028 to req-031), which does not include req-016 among its members. Without this entry,
+inc-009's planner — which reads this file, not `plans/inc-006.md` — would have no reason to look at
+req-016 again, and the literal "ruling" wording would go unproven.
+
+**Apply in inc-009.** `rule` commits its decision through the same `commitWrite` inc-006 built
+(`tim/src/backlog/write.js`), passed an `--op-id`. Re-prove req-016 ac-1 on an actual ruling: replay
+the same op id and assert the ledger still holds one entry and the command prints the original
+result verbatim.
 
 ### D8 for inc-040 (retire-old-paths): test `loadCorpusProfile`'s `profileKey` (F47, major)
 

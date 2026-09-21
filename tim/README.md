@@ -202,6 +202,10 @@ tim backlog ingest fixture-requirements --dry-run --json  # assemble backlog.jso
 tim backlog ingest <programme> --increments       # ingest requirement increments (requirements-v2 only)
 tim backlog ingest <programme> --replace          # rebuild ids from scratch; refuses while any row is ruled or started
 tim backlog ingest <programme> --target <name>    # build-loop target the backlog names (parity-v1 only)
+tim backlog ingest <programme> --op-id r1:inc-001:1:plan:t1:ingest --json   # replaying the same --op-id is a no-op that prints the original result
+tim backlog ingest <programme> --expect-sha <sha256> --json                # refused with exit 3 if backlog.json has changed since
+tim backlog state set <programme> inc-001 phase --value '"plan"' --json    # set one field on one increment's build/state.json entry (requirements-v2 only)
+tim backlog state note <programme> inc-001 --file note.txt --stage plan --json  # append one note to build/journal.jsonl
 ```
 
 A programme is registered in one of two files: a parity corpus in
@@ -209,6 +213,13 @@ A programme is registered in one of two files: a parity corpus in
 `fixture-requirements`, the tracked fixture this file's own tests re-ingest
 on every run — in `tools/backlog/registry.json`. A key may appear in only one
 of the two files; `tim backlog registry list` reports both together.
+
+`tim backlog ingest`, `state set` and `state note` all go through the same
+write-safety core: `--op-id` makes a call idempotent (a replay returns the
+first result and writes nothing), and `--expect-sha` refuses a write whose
+target changed underneath it. Both exit 3 (`LOST_UPDATE`) on a stale
+`--expect-sha` and 4 (`LOCKED`) when another process holds the write lock
+after every retry.
 
 ### Bypassing the interactive menu
 

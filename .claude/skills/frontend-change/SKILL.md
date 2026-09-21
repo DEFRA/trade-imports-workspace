@@ -1,6 +1,6 @@
 ---
 name: frontend-change
-description: 'Make a change to a frontend repo in this workspace (today src/server/app in trade-imports-animals-frontend) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
+description: 'Make a change to a frontend repo in this workspace (today src/server/app in trade-imports-animals-frontend) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then the openspec behaviour spec and coverage entries it touched, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
 ---
 
 Make one change to a frontend repo in this workspace by following the recipe
@@ -13,7 +13,8 @@ expects more, so read the target from the caller (or from the build loop's
 target profile) rather than assuming it.
 
 The recipes are the instructions — this skill routes to the right one, adds the
-guard rails the docs assume, and runs the verification ladder. Do not restate or
+guard rails the docs assume, runs the verification ladder, and records what
+landed in the workspace's behaviour spec. Do not restate or
 improvise around a recipe: read it and follow it, varying as little as possible.
 The outcome is one verified increment staged in the target repo, reported and
 stopped — commit is the caller's call unless they said otherwise.
@@ -189,6 +190,130 @@ alone; set `PORT` only if you need a different one. Run
 `npm --prefix ... run format` before any commit — the pre-commit hook enforces
 format + lint + full units and will reject otherwise.
 
+## Step 5: Sync the behaviour spec
+
+Only once the ladder is green. A red ladder means there is no verified
+behaviour to describe — fix that first.
+
+The Behaviour Spec under `~/git/defra/trade-imports-workspace/openspec/`
+records intended behaviour (`specs/`) and which tests witness it
+(`coverage/`). An increment that lands without updating it is drift the
+next rebuild has to absorb. Read `references/SPEC_SYNC.md` before the
+first write — it carries the merge technique, the capability lookup and
+the file shapes. `openspec/config.yaml` owns the conventions.
+
+**The approach is the hybrid:** write `spec.md` and `coverage.json`
+directly, using the merge technique `references/SPEC_SYNC.md` carries,
+and validate the spec write with the CLI. No `openspec/changes/`
+proposal per increment — the increment already has a planning record
+(the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a
+second one costs an agent turn on every increment of a backlog. Do not
+spin up a throwaway proposal to reach for a lifecycle skill; those
+skills are gone.
+
+### 5.1 Identify the capabilities
+
+Read the diff of what you just verified:
+
+```bash
+git -C ~/git/defra/trade-imports-workspace/repos/<target repo> diff
+```
+
+Map each touched element to its capability path with the two lookup
+tables in `references/SPEC_SYNC.md`. Read the set from the caller or the
+target profile — `sets/live-animals` maps to the `live-animals/`
+namespace, `sets/high-risk-plants` to `plants/`. Do not assume
+live-animals because the examples in this file say so.
+
+One increment usually touches one capability. `add-a-section` touches
+three: `journey-flow`, `journey-section-captions`, and a newly minted
+`journey-pages/<leaf>`.
+
+### 5.2 Write the spec
+
+Existing capability — merge into
+`openspec/specs/<path>/spec.md`. New capability — mint an AREA code,
+prove no collision, add the `AREAS.md` row, author the initial
+Purpose / Requirement / Scenario, and create both files. Both paths are
+in `references/SPEC_SYNC.md`.
+
+### 5.3 Write the coverage
+
+Update `openspec/coverage/<path>/coverage.json` for the scenarios you
+touched. Links attach to scenarios; the increment's own co-located
+`*.fit.spec.js` tests are `fit` links. Never add an `e2e` link for a
+test this increment did not write — the E2E suite lives in the tests
+repo, which this skill does not touch.
+
+### 5.4 Validate the spec write
+
+Once per capability written:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh <capability-path> [<capability-path> ...]
+```
+
+Non-zero exit is a halt, not a warning — go to 5.7. `coverage.json` is
+not validated: the CLI does not resolve against `openspec/coverage/`.
+The self-check in 5.6 is its only gate, so read that write carefully.
+
+### 5.5 Self-check the spec against the diff
+
+The spec must be an account of what the diff implements, not a
+copy-forward from a prior increment and not a guess. Make the check
+falsifiable: for every scenario you added or changed, name the diff hunk
+that implements its THEN clause.
+
+```
+SCN-CONSIGN-ADDR-002-A ← src/server/app/sets/<set>/journeys/linear/features/<f>/copy.en.js:31
+```
+
+Two ways this fails, both halts:
+
+- A scenario with no diff line behind it — you described behaviour this
+  increment did not implement.
+- A behavioural change visible in the diff that no scenario covers — you
+  implemented behaviour the spec does not record.
+
+### 5.6 Self-check the coverage against the diff
+
+For every `tests[]` link on a scenario this increment touched, confirm
+the `file` appears in the diff's file list and the named `test` exists in
+that file's current body. A link whose file is not in the diff, on a
+scenario you touched, was carried forward without re-verification —
+halt.
+
+An untouched scenario's existing links are not in scope. Only what this
+increment claims.
+
+### 5.7 On a halt
+
+Do not print the Completion output — the increment is not complete.
+Print a mismatch report instead and hand it to the caller:
+
+```
+frontend-change HALTED at spec sync: <what disagreed>.
+
+Capability: <capability-path>
+Check: 5.4 validate | 5.5 spec vs diff | 5.6 coverage vs diff
+Detail: <scenario ID, and the evidence that was missing>
+Written so far (uncommitted, workspace repo): <paths>
+```
+
+`journey-builder`'s loop re-verifies rather than trusting a worker's
+green, so a non-completion lands as a failed increment and the target
+repo is rolled back. The workspace-side spec write is **not** rolled
+back with it — say what you wrote so the caller can decide.
+
+### 5.8 Staged, not committed
+
+The spec write lands in the workspace checkout and stays there. Do not
+`git add` and do not `git commit` in
+`~/git/defra/trade-imports-workspace` — the commit decision belongs to
+the caller, exactly as it already does for the target repo. This is the
+one point where an increment touches two git repositories, so the
+Completion output names both.
+
 ## Completion output
 
 ```
@@ -196,13 +321,25 @@ frontend-change complete: <one-line description of the increment>.
 
 Recipe followed: <path>
 Files touched: <N> (<key paths>)
-Ladder: test:live-animals <n>/<n> · npm test <n>/<n> · lint green ·
+Ladder: <unit script> <n>/<n> · npm test <n>/<n> · lint green ·
         features <n>/<n> · e2e <n>/<n>
+Spec sync: <capability-path> (<n> scenarios)<, AREA <CODE> minted> ·
+           validate green
 Design calls: <flagged decisions, or "none — recipe followed verbatim">
 
-Staged, not committed. Next: review the diff, then commit (conventional
-message, EUDPA ticket prefix).
+Staged, not committed — in TWO checkouts, each needing its own commit:
+  <target repo>: <key paths>
+  workspace:     openspec/specs/<path>/spec.md,
+                 openspec/coverage/<path>/coverage.json
+                 <, openspec/coverage/AREAS.md>
+
+Next: review both diffs, then commit (conventional message, EUDPA ticket
+prefix).
 ```
+
+Name every workspace file you wrote. The caller cannot commit what it
+has not been told about, and it was not otherwise watching that
+checkout.
 
 One increment per invocation. If the request implies several elements, do the
 first, stop, and list the remainder for the caller to re-invoke.

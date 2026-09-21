@@ -168,7 +168,11 @@ Serial by design — increments edit shared files (registry, flow, hub, CYA).
 3. Invoke the target's `implementorSkill` with the increment's `type` as its
    mode — both frontend targets name `frontend-change`, which reads the target
    repo's own recipe docs, the obligation and flow guard rails, and its own
-   verification ladder. One increment per invocation.
+   verification ladder. One increment per invocation. Its last step writes the
+   workspace's `openspec/` spec and coverage entries and leaves them
+   **uncommitted** — `commit-increment.sh` commits `commitPaths` in the target
+   worktree only, so those edits accumulate across the run and a rollback at
+   step 4 does not undo them. Commit or discard the workspace side yourself.
 4. Parent re-verifies: `tools/journey-builder/verify-increment.sh EUDPA-X`
    — never trust the worker's green. Mismatch → rollback + failed.
 5. Loop to 1. Halt early on 3 consecutive failures (systemic signal).

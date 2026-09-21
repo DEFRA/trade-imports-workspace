@@ -181,6 +181,33 @@ Only the changed lines are in scope for findings. Weigh them against:
 - Test coverage — but only ask whether *this change* is tested, not
   whether the file's overall coverage is good.
 
+### Behaviour-spec files
+
+`openspec/specs/**/spec.md` and `openspec/coverage/**/coverage.json` are
+the workspace's Behaviour Spec. `frontend-change` writes them at the end
+of every increment, so they arrive in PRs as a claim about behaviour —
+and a wrong claim is as damaging as wrong code, because the next person
+trusts it. Two extra checks, both `--severity Critical` on a mismatch:
+
+- **`openspec/specs/**/spec.md`** — for every added or changed
+  Given/When/Then scenario, does it describe the same behaviour as the
+  ticket's Acceptance Criteria in `ticket.md`? Not only "does the code
+  satisfy the AC" — the usual question — but "does this spec update
+  accurately represent it". A scenario that overstates, understates or
+  quietly restates a different rule is a mismatch.
+- **`openspec/coverage/**/coverage.json`** — for every `tests[]` link on
+  a scenario this PR touched, is the named test file actually present in
+  the PR diff? A link carried over unchanged from a previous increment's
+  `coverage.json`, on a scenario this PR changed, is a coverage claim
+  nobody re-verified. Untouched scenarios' links are out of scope.
+
+The spec and the code it describes may land in **different PRs** — the
+spec lives in `trade-imports-workspace`, the frontend code in its own
+repo. Use the full PR set in `.review-meta.json`, and read the sibling
+repo under `~/git/defra/trade-imports-workspace/repos/…` when the
+behaviour you are checking is not in this file's own diff. "No code diff
+in this PR" is not a reason to skip the check.
+
 In MERGE_RESOLVED mode, additionally:
 
 - For every prior `Fix + Done` item on this file (from step 2.4):
@@ -226,17 +253,22 @@ Then run `file-review-set-verdict.sh` once:
 
 | Severity | What |
 |---|---|
-| Critical | Bug, security issue, broken AC |
+| Critical | Bug, security issue, broken AC, or a behaviour-spec update that misrepresents the AC or claims unverified coverage |
 | Major | Quality / maintainability / missing test for new behaviour |
 | Minor | Nitpick — only worth flagging if a best-practice explicitly bans it |
 
 ## File type guidance
+
+Behaviour-spec files match their own rows, not the generic Config row —
+`coverage.json` is a behaviour claim, not configuration.
 
 | Type | Specific scope |
 |---|---|
 | Source (`.java`, `.js`, `.ts`) | New/changed behaviour + tests for it |
 | Test (`*Test.java`, `*.test.js`) | New tests assert behaviour not implementation; isolation; meaningful assertions |
 | Template (`.njk`) | govuk-frontend usage, accessibility, content style |
+| Behaviour spec (`openspec/specs/**/spec.md`) | Added/changed scenarios describe the same behaviour as the ticket AC; conventions in `openspec/config.yaml` (MUST not SHALL, observable-only scenarios, no test names, stable IDs) |
+| Coverage (`openspec/coverage/**/coverage.json`) | Links on touched scenarios name test files present in this ticket's PR set; derived `coverage` values match the `tests[]` array |
 | Config (`.yml`, `.json`, `pom.xml`, `package.json`) | New keys correct, no secrets, dep versions; do not flag missing comments |
 | Lockfile (`package-lock.json`) | Only flag if a transitive dep has a known CVE; do not flag drift |
 

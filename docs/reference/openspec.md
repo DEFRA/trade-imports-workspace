@@ -10,7 +10,15 @@ npx --yes @fission-ai/openspec@latest <command>
 
 Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/openspec](https://github.com/Fission-AI/OpenSpec).
 
-For change proposals (propose / apply / sync / archive), use the workspace `openspec-*` skills — not this sheet.
+## How the spec stays in sync
+
+The spec is maintained **per increment, by the skill that lands the increment** — no change proposals. `frontend-change` finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` gets this for free: it invokes `frontend-change` once per increment.
+
+This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
+
+**The spec write lands uncommitted.** The Behaviour Spec is in this repo; the frontend code is in its own. `frontend-change` stages the `openspec/` edit in the workspace checkout and names the files in its completion output, but does not commit it — the commit is the caller's, exactly as it is for the target repo. So unexpected `openspec/` entries in `git status` after a build run are that, not a stray edit. Commit them with the increment they belong to.
+
+Reviewing a PR that touches `openspec/`? The `review` skill checks the spec update against the ticket's AC and the coverage links against the PR set's tests, at Critical severity. See `.claude/skills/review/references/FILE_REVIEWER.md` → "Behaviour-spec files".
 
 ## Specs day-to-day
 
@@ -66,18 +74,9 @@ comm -23 \
   <(find openspec/coverage -name coverage.json | sort)
 ```
 
-## Changes (thin)
+## Changes
 
-Only when you need the CLI without a skill:
-
-| Command | What it does |
-|---------|--------------|
-| `openspec list` | List active changes (default; not specs) |
-| `openspec status --change <name>` | Artifact completion for one change |
-| `openspec validate --changes` | Validate all changes |
-| `openspec validate --all` | Validate changes and specs |
-
-Prefer the `openspec-propose`, `openspec-apply-change`, `openspec-update-change`, `openspec-sync-specs`, and `openspec-archive-change` skills for the full lifecycle.
+Not used here — see [How the spec stays in sync](#how-the-spec-stays-in-sync). `openspec/changes/` holds nothing but its `archive/.gitkeep`, so `openspec list`, `openspec status --change` and `openspec validate --changes` have nothing to report. `openspec validate --specs --strict` is the one you want, and it is in the table above.
 
 ## Reading a coverage row
 
@@ -94,7 +93,9 @@ Prefer **E2E** when the scenario is about the system; **fit** when it’s about 
 
 ## Next skills (remove when implemented)
 
-Existing `openspec-*` skills cover planned deltas. Still missing: keep **main** specs and coverage honest day-to-day.
+`frontend-change` keeps the spec honest **per increment**. Still missing: the periodic sweeps that catch what no single increment owns — drift in code nobody touched this week, coverage links whose tests moved, holes nothing has filled.
+
+**The periodic full-drift-detection sweep is out of scope for EUDPA-574** (which built the per-increment half) and wants its own ticket. `spec-drift` and `coverage-refresh` below are where it belongs.
 
 Build first: `coverage-gaps` → `coverage-refresh` → `spec-drift`.
 
@@ -106,11 +107,10 @@ Build first: `coverage-gaps` → `coverage-refresh` → `spec-drift`.
 | `coverage-for-scenario` | Given `SCN-…`, find witnesses or confirm `none` |
 | `missing-tests` | Turn none/partial into a test plan (implement only if asked) |
 | `spec-drift` | Spec ↔ code: CLEAN / DRIFT / SPEC GAP |
-| `spec-from-tests` | New test proves behaviour → propose small spec delta |
-| `spec-change` | Propose/update wrapper that respects `AREAS.md` + `config.yaml` |
+| `spec-from-tests` | New test proves behaviour → small spec edit, same technique as `frontend-change` Step 5 |
 | `spec-rename-guard` | After a capability rename: refs, `AREAS.md`, coverage paths (IDs stay) |
 
-Rules: never put test names in `spec.md`; never invent AREA codes; report skills before apply modes; scope by capability except the gaps inventory.
+Rules: never put test names in `spec.md`; never invent AREA codes; report before apply; scope by capability except the gaps inventory.
 
 ## Leave out of day-to-day use
 

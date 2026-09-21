@@ -81,7 +81,42 @@ by it.
   - no Grep or Glob tools;
   - never bare `node`, never `sonar`.
 - tim's own rails are in `tim/CLAUDE.md`.
-- **Talk to Sam before any large step.** Show him the plan (a few lines per change) first.
+## Work autonomously (Sam is asleep)
+
+**Never stop to ask Sam, and never wait for approval.**
+- When a choice comes up, decide it, record it in `DECISIONS.md` beside this brief, and keep going.
+  Each entry gets one line for the choice and one line for how to reverse it.
+
+**Stay on the rails. They replace the check-ins:**
+- **Only the four jobs above.** Before each change, ask yourself: "Is this joining existing pieces
+  together, or building a new one?" If it's a new piece, don't build it; note it in `DECISIONS.md`
+  as a suggestion instead.
+- **Small commits, one per job or sub-step.**
+  - Every commit keeps `npm --prefix ~/git/defra/trade-imports-workspace/tim test` and `run lint`
+    green, if tim changed.
+  - Read each log once.
+  - Nothing is ever "pre-existing".
+- **One review per job.** Review the diff against the workspace `review` and `code-style` skills,
+  reading their SKILL.md and persona files by path. Fix what matters, then commit.
+  - Do not stack up panels, critics or audits: that is how the last session went wrong.
+- **Use Workflow only for genuine fan-out,** for example reviewing many files at once. Plain editing
+  work is done directly.
+- **Prove it works.**
+  - Run the distiller on one small real mix of sources, for example one of the
+    `workareas/trace-requirements/` source sets plus a Confluence page or a doc. It must produce a
+    valid backlog in the one shape.
+  - Run the fixed loop's plan stage over one of those increments, as a dry run up to planning.
+  - Do not build product increments.
+- **If you hit something only Sam can decide, or something you cannot unblock:** park it in
+  `DECISIONS.md` under "Waiting for Sam", then carry on with everything else.
+
+**When you finish, or when you are near a usage limit,** write a summary at the top of this brief:
+- what was done, with commit shas;
+- how to use the distiller and the builder now;
+- what is waiting for Sam;
+- the exact next step.
+
+Then stop.
 
 ## State
 

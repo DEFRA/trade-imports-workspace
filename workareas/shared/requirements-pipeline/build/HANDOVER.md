@@ -1,3 +1,6 @@
+> **SUPERSEDED, 21 September 2026.** Sam stopped this build: it had become a new platform instead of
+> plumbing together what already exists. Do not follow this file. Start at `../PLUMBING-BRIEF.md`.
+
 # Requirements pipeline: overnight handover (21 September 2026)
 
 You are taking over the build of Sam's requirements pipeline. It is two skills and two workflows:

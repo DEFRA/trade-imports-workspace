@@ -57,8 +57,11 @@ for capability in "$@"; do
     fi
 done
 
+noun="capabilities"
+[[ $# -eq 1 ]] && noun="capability"
+
 if [[ "$failures" -gt 0 ]]; then
-    echo "FAIL: $failures of $# capabilities did not validate"
+    echo "FAIL: $failures of $# $noun did not validate"
     exit 1
 fi
-echo "OK: $# capabilities validated"
+echo "OK: $# $noun validated"

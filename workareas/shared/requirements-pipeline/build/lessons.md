@@ -62,6 +62,22 @@ reviewers.
 changed-line count and route review on it. The threshold and group size are run knobs in
 `run.json`, not backlog fields (R5). Codex gets the same routing (R6).
 
+## L5: prove the commit, not the working tree (applies to inc-021, the done gate, and inc-022, land)
+
+inc-012 landed `5876fb9e` with `standards.js` and `claude-chain.js` importing
+`standards/problem-kind.js`, but that file was never staged. The ladder ran against the working
+tree, where the file existed, so it passed. The commit on its own could not load: 59 CLI tests fail
+at `5876fb9e`. It surfaced only when the tree was cleaned for another reason.
+
+**The fix, now in `bootstrap-build.js`:** after the land commit, a check lists every path still
+dirty or untracked that is neither pre-existing nor under `build/`. Any leftover stops the run.
+
+**How to apply:** tim's `land` (DESIGN 4.2, stage 22) must confirm that nothing the manifest names
+is left uncommitted after it commits. The done-gate audit (stage 26) must treat a leftover as red.
+Better still, the ladder facts that land relies on should come from a run against the committed
+tree, for example `git stash push -u -- <manifest paths>` around a re-run, or a clean worktree of
+the commit.
+
 ## L2: an increment that changes existing code needs a survey before the plan (applies to inc-018, plan)
 
 inc-004 (generalise the parity writer into a core that serves any programme) failed the audit four

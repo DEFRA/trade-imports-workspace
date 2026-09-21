@@ -20,6 +20,34 @@ Decisions.
 The judge deferred this rather than fixing it because inc-003's plan named DESIGN.md untouched,
 and an increment never edits what its plan does not name.
 
+## Withdrawn 21 September 2026: D2, D3, D5, D8 and D9
+
+Sam ruled: "Existing work is existing work. That's already in flight. This is a new thing. Don't
+backport." Each of these deferrals would have reworked parity's existing tooling in inc-040:
+- moving `corpora.json`
+- the bash readers
+- `resolveCorpusId`'s run-id probe
+- `acceptRepoint`'s read
+- the `profileKey` test
+
+inc-040 no longer does that: req-112, "remove old paths", is dropped. Parity keeps running as it
+does today, through the parity-v1 profile inc-004 built. **No later planner should act on these
+five.** They stay below only as the record of what was found.
+
+## For inc-022 (delivery): reusable partial work from the dropped inc-001
+
+inc-022 now owns req-001 (draft PR and CI wait as tim commands) and req-004 (the session's commit
+trailer). The dropped inc-001 had part-built the tim side of req-001 before it was stopped, and
+that work is saved as the git stash "inc-001 partial (dropped 2026-09-21)". The files are
+`tim/src/commands/github/pr.js`, `tim/src/github/`, the `github-client` additions,
+`tim/src/constants/prExitCodes.js` and `tim/src/test-support/fake-github.js`, each with its tests.
+inc-022's implementer may read it for reference with `git -C ~/git/defra/trade-imports-workspace
+show 'stash@{0}^3:<path>'`, or `stash@{0}:<path>` for a tracked file.
+
+It is unreviewed. It was never planned against req-001's current wording. Its edits to the old
+build loop, the build-orchestrator skill and `tools/npm/npm-in-repo.sh` are backports, and must not
+be reapplied.
+
 ## From inc-004 (writer core)
 
 ### D2 for inc-040 (`retire-old-paths`, req-112): `git mv tools/parity/corpora.json tools/backlog/registry.json`, the three bash readers, and `scaffold-corpus.sh:98`

@@ -128,7 +128,8 @@ const S = {
   }, required: ['accepted', 'criteria', 'gaps'] },
   land: { type: 'object', properties: {
     sha: { type: 'string' }, committedFiles: { type: 'array', items: { type: 'string' } },
-  }, required: ['sha', 'committedFiles'] },
+    leftover: { type: 'array', items: { type: 'string' }, description: 'paths still dirty or untracked after the commit that are neither pre-existing nor under the build folder' },
+  }, required: ['sha', 'committedFiles', 'leftover'] },
 }
 
 const results = []
@@ -392,8 +393,14 @@ ${GUARD}
    Also stage the plan file ${P}/build/plans/${ID}.md.
 3. git -C ${ROOT} commit -F ${LOGS_T}/${ID}-commit-msg.txt
 4. git -C ${ROOT} rev-parse HEAD
-Return the sha and the files committed.`, { label: L('land'), phase: 'Land', ...RUNNER, schema: S.land })
+5. git -C ${ROOT} status --porcelain --untracked-files=all > ${LOGS_T}/${ID}-post-land-status.txt 2>&1 ; Read it once.
+   Pre-existing paths to IGNORE: ${JSON.stringify(PREEXISTING)}. Also ignore everything under ${P}/build/.
+   Return every other path it lists in "leftover" (a file this increment created or changed that did not make it into the commit).
+Return the sha, the files committed and the leftover paths.`, { label: L('land'), phase: 'Land', ...RUNNER, schema: S.land })
   if (!landed || !landed.sha) { stop('land failed'); break }
+  // Lesson L5: the ladder runs on the working tree, so a file left out of the commit passes the
+  // ladder while the commit cannot load. Anything left over stops the run before it builds on it.
+  if (landed.leftover && landed.leftover.length) { stop(`landed ${landed.sha} but left files out of the commit: ${landed.leftover.join(', ')}`); break }
 
   const deferred = (judged.rulings || []).filter(r => r.ruling === 'defer').map(r => ({ ...r, finding: surviving.find(f => f.key === r.key) }))
   results.push({ id: ID, landed: true, sha: landed.sha, findings: allFindings.length, surviving: surviving.length, fixed: fixNow.length, deferred, criteria: accept.criteria.length, repairs })

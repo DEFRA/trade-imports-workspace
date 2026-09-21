@@ -510,8 +510,8 @@
     },
     {
       "id": "m3",
-      "name": "Codex is equal",
-      "goal": "Codex mode meets the parity bar.",
+      "name": "Codex builds too",
+      "goal": "Codex builds from the same backlog, and each executor has built one real increment.",
       "checkpoint": "walkthrough"
     },
     {
@@ -3229,7 +3229,7 @@
       "dependsOn": [
         "req-011"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -3241,7 +3241,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the distiller verifies every atom by a different task (req-094); a writer-level check of the verifier's registration guards a failure that has not happened."
     },
     {
       "id": "req-018",
@@ -3296,7 +3297,7 @@
       "dependsOn": [
         "req-017"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -3308,7 +3309,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-025, whose rule now never picks an increment with an unverified member."
     },
     {
       "id": "req-019",
@@ -3375,7 +3377,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -3387,7 +3389,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): an evidence-role rule for a failure that has not happened."
     },
     {
       "id": "req-020",
@@ -3440,7 +3443,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -3452,7 +3455,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a confidence-role rule for a failure that has not happened."
     },
     {
       "id": "req-021",
@@ -3479,29 +3483,6 @@
         {
           "id": "ac-2",
           "text": "Given an assumption that names a model tier, in a backlog with no deviation allowing it, when the strict check runs, then it fails and names the assumption's field.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s2"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-3",
-          "text": "Given a deviation that enumerates a tooling interface, when the strict check runs over one criterion naming one of its verbs and another naming a file path, then the first passes and the second fails.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1",
-            "s2"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-4",
-          "text": "Given this programme's own backlog after its bootstrap corrections, when `tim backlog check --strict` runs over it, then it exits 0.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -3618,7 +3599,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -3630,7 +3611,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the workspace secrets hooks and the pre-land scan (req-070) already cover credentials."
     },
     {
       "id": "req-023",
@@ -3721,23 +3703,12 @@
         },
         {
           "id": "ac-2",
-          "text": "Given a backlog and its hash, when the build is handed over to a Codex-orchestrated session and the integration proof source is set to CI, then the backlog's hash is unchanged.",
+          "text": "Given a backlog and its hash, when a run's settings and executor bindings are changed, then the backlog's hash is unchanged.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
             "s1",
             "s2"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-3",
-          "text": "Given a backlog with no deviation enumerating executor names, when the strict check runs, then any prose field naming an executor, preset, model tier or harness term is refused.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
           ],
           "scenario": null,
           "resolvedBy": null
@@ -3807,13 +3778,13 @@
       "slice": "state",
       "kind": "rule",
       "title": "One rule decides what is buildable",
-      "statement": "The next buildable increment MUST be decided by one rule, which names every reason when nothing is buildable.",
+      "statement": "The next buildable increment MUST be decided by one rule, which never picks an increment with an unverified member or a parked increment, and names every reason when nothing is buildable.",
       "why": "Three incompatible rules made unknown statuses either buildable or never built.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given increments in every status, when the next buildable increment is asked for, then only a to-do increment with adopted members, no needs, done dependencies and no hold is returned.",
+          "text": "Given increments in every status, when the next buildable increment is asked for, then only a to-do increment whose members are all verified, whose dependencies are done and which is not parked is returned.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -3824,7 +3795,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given nothing buildable, when the next increment is asked for, then the answer lists the questions, holds, unverified atoms and unmet dependencies in the way.",
+          "text": "Given nothing buildable, when the next increment is asked for, then the answer lists the open questions, unverified atoms, parked increments and unmet dependencies in the way.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -3862,9 +3833,7 @@
       "decisions": [
         "d-002"
       ],
-      "dependsOn": [
-        "req-018"
-      ],
+      "dependsOn": [],
       "status": "proposed",
       "provenance": {
         "authoredBy": {
@@ -3930,7 +3899,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -3942,7 +3911,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): holds and release commands are replaced by a plain stop with its reason; a platform red (req-076) is the one kept park."
     },
     {
       "id": "req-027",
@@ -4006,7 +3976,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -4018,7 +3988,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a stage-record audit for done guards a failure that has not happened; done means accepted and landed."
     },
     {
       "id": "req-028",
@@ -4383,8 +4354,7 @@
         "d-002"
       ],
       "dependsOn": [
-        "req-030",
-        "req-081"
+        "req-030"
       ],
       "status": "proposed",
       "provenance": {
@@ -4601,7 +4571,7 @@
       "slice": "report",
       "kind": "rule",
       "title": "Machine-written prose is copy-edited and claim-checked",
-      "statement": "Every machine-written prose field in the report MUST be rewritten into plain English by one task and checked against its sources by a different task.",
+      "statement": "The report's machine-written prose MUST be rewritten into plain English by one task and checked against its sources by a different task, which reverts any rewrite that changes a fact.",
       "why": "Nobody checked the alignment report's prose, and report quality is what Sam values most.",
       "actor": "Sam",
       "acceptance": [
@@ -4619,7 +4589,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given a distillation, when its report is built, then duplicates were swept by the distiller's ATOM_DEDUPER, every machine-written field was rewritten by its PROSE_EDITOR and checked by a different PROSE_CLAIM_VERIFIER task, and no parity persona ran.",
+          "text": "Given a distillation, when its report is built, then every machine-written prose field was rewritten by one task and claim-checked by another.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -4778,7 +4748,7 @@
       "dependsOn": [
         "req-101"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -4790,7 +4760,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a per-phase provenance table in the report guards a failure that has not happened."
     },
     {
       "id": "req-038",
@@ -4857,7 +4828,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -4869,7 +4840,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a noticed-and-not-raised list guards a failure that has not happened."
     },
     {
       "id": "req-039",
@@ -4924,7 +4896,7 @@
       "dependsOn": [
         "req-067"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -4936,7 +4908,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): acceptance per criterion lives in each increment's build record; the distiller's report does not need it."
     },
     {
       "id": "req-040",
@@ -5318,7 +5291,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -5330,7 +5303,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): reviewers are told in their prompt to ignore the persona steps a workflow replaces; editing the skills for it is not needed."
     },
     {
       "id": "req-045",
@@ -5493,13 +5467,24 @@
       "slice": "executor",
       "kind": "rule",
       "title": "Every model stage has one contract for both executors",
-      "statement": "Every model stage MUST have one brief, one input set and one output schema that both executors use.",
+      "statement": "Every model stage MUST have one brief, one input set and one output schema that both executors use, and every output MUST be checked against that schema before the workflow acts on it.",
       "why": "Two contracts drift, and Codex mode got worse results.",
       "actor": "both executors",
       "acceptance": [
         {
           "id": "ac-1",
           "text": "Given any model stage, when its tasks are prepared for each executor, then both get the same brief, inputs and schema.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": [
+            "s1"
+          ],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-2",
+          "text": "Given a Codex output that is missing a required key, when it is read back, then the task counts as failed and never as zero findings.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -5621,7 +5606,7 @@
       "dependsOn": [
         "req-011"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -5633,7 +5618,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-047: one schema per stage, validated, with no receipts."
     },
     {
       "id": "req-049",
@@ -5649,28 +5635,6 @@
           "id": "ac-1",
           "text": "Given one task prepared for each executor, when the prompts are compared with the profile sections removed, then they are byte-identical.",
           "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-2",
-          "text": "Given a neutral stage brief that mentions an executor by name, an executor's permission mode, the guard-rails block or one executor's own tool, when the contract test runs, then it fails and names the brief and the word.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-3",
-          "text": "Given the three legacy stage briefs, when the new briefs and executor profiles are reviewed against them, then every legacy sentence appears in substance in exactly one place: a neutral brief or one executor's profile.",
-          "witness": "review",
           "confidence": "stated",
           "sources": [
             "s1"
@@ -5728,7 +5692,7 @@
       "slice": "executor",
       "kind": "capability",
       "title": "Codex tasks run concurrently and survive the call limit",
-      "statement": "Codex tasks MUST run concurrently, in slices that fit one shell call, resuming their sessions until each finishes or has failed five slices.",
+      "statement": "Codex tasks MUST run concurrently, in slices that fit one shell call, resuming their sessions until each finishes or has failed five slices, and MUST leave no process running when a slice ends.",
       "why": "Codex must fan out per file as Claude does, and a Codex run often outlasts one call.",
       "actor": "the Codex adapter",
       "acceptance": [
@@ -5756,43 +5720,9 @@
           "resolvedBy": null
         },
         {
-          "id": "ac-3",
-          "text": "Given a draft that passes the output schema but fails a semantic check, when its stage runs, then the task is resumed with the problems, its corrected draft is accepted, and the receipt records the number of attempts.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1",
-            "s2"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-4",
-          "text": "Given a stage already being run, when a second runner starts on it, then the second exits as already running; and given a lock left by a dead runner, a new runner breaks it and records a note.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s2"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
           "id": "ac-5",
           "text": "Given a task that starts a grandchild process in its own process group, when the slice deadline passes, then no process of that task's tree is left running.",
           "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s2"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-6",
-          "text": "Given the Codex guard on the branch, when its file mode is read at HEAD and in the working tree, then it is executable in both.",
-          "witness": "unit",
           "confidence": "stated",
           "sources": [
             "s2"
@@ -5842,9 +5772,7 @@
       "decisions": [
         "d-002"
       ],
-      "dependsOn": [
-        "req-048"
-      ],
+      "dependsOn": [],
       "status": "proposed",
       "provenance": {
         "authoredBy": {
@@ -5872,28 +5800,6 @@
         {
           "id": "ac-1",
           "text": "Given a Codex review task that tries to edit a file, when its stage is accepted, then the edit did not happen and no repo changed.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-2",
-          "text": "Given a writing task under either executor that changes the backlog, the decisions ledger, the build folder outside its own task, or the workspace's own settings or hooks, when the task is accepted, then it is refused as a failed stage naming the path.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-3",
-          "text": "Given a Codex writing task that tries a command the workspace guards deny, when its stage runs, then the command is refused before it runs and the refusal is in the task's log; or, where the guard probe shows no per-call guard can run, the report states that writable roots and accept's refusals are the only fence.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -5952,13 +5858,13 @@
       "slice": "executor",
       "kind": "capability",
       "title": "Each stage role can go to either executor",
-      "statement": "The executor MUST be chosen per stage role, from named presets or single-role overrides, for each increment.",
+      "statement": "The executor MUST be chosen per run or per increment from a named preset, all Claude or Codex for the heavy stages with Claude orchestrating, and any single stage role MAY be overridden.",
       "why": "Which stages go to Codex is a per-run choice, with sensible defaults.",
       "actor": "Sam",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given the preset that keeps the judge on Claude, when an increment is built, then every other model role runs on Codex and the judge runs on Claude.",
+          "text": "Given the preset that keeps the judge on Claude, when an increment is built, then every other heavy stage runs on Codex, the judge runs on Claude, and only cheap runner agents run on Claude besides.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -6078,7 +5984,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -6090,7 +5996,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the manifest and the land leftover check (lesson L5) already catch stray git changes."
     },
     {
       "id": "req-054",
@@ -6143,7 +6050,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -6155,7 +6062,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a canonical rails document guards a drift that has not happened; inc-003's contract test stays."
     },
     {
       "id": "req-055",
@@ -6163,7 +6071,7 @@
       "slice": "build",
       "kind": "capability",
       "title": "One run builds increments until something stops it",
-      "statement": "One build run MUST build increments one after another, re-reading the next increment and its bindings after each.",
+      "statement": "One build run MUST build increments one after another, re-reading the next increment and its executor binding after each, and MUST stop cleanly before the runtime's agent cap, so a relaunch carries on from the first unbuilt increment.",
       "why": "Appended work, rulings and executor switches must be picked up without a relaunch.",
       "actor": "the build workflow",
       "acceptance": [
@@ -6181,11 +6089,23 @@
         },
         {
           "id": "ac-2",
-          "text": "Given the multi-repo fixture programme (a provider repo, a consumer repo and a tests repo as small local repos, with a real contract test between provider and consumer), when a run drains it with no model tasks, then every increment is branched under the same name in all three repos, laddered in each, and stops cleanly.",
+          "text": "Given the multi-repo fixture programme (a provider repo, a consumer repo and a tests repo as small local repos), when a run drains it, then every increment is branched under the same name in all three repos and the run stops cleanly.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
             "s3"
+          ],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-3",
+          "text": "Given a run with too few agents left for its next increment, when it reaches that increment, then it stops naming the reason, and a relaunch builds that increment next.",
+          "witness": "e2e",
+          "confidence": "inferred",
+          "sources": [
+            "s1",
+            "s2"
           ],
           "scenario": null,
           "resolvedBy": null
@@ -6246,9 +6166,7 @@
         "d-002"
       ],
       "dependsOn": [
-        "req-025",
-        "req-048",
-        "req-003"
+        "req-025"
       ],
       "status": "proposed",
       "provenance": {
@@ -6399,7 +6317,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -6411,7 +6329,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-055."
     },
     {
       "id": "req-058",
@@ -6478,7 +6397,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -6490,7 +6409,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-055: a relaunch carries on from the first unbuilt increment."
     },
     {
       "id": "req-059",
@@ -6498,13 +6418,37 @@
       "slice": "build",
       "kind": "capability",
       "title": "Each increment is planned just in time",
-      "statement": "The build MUST write each increment's plan just before building it, from the live code, and keep it as the record of how the increment was built.",
+      "statement": "The build MUST write each increment's plan just before building it, from the live code and after a separate survey of what that code assumes, and keep it as the record of how the increment was built. Programme knowledge MUST reach the planner only as documents the programme names.",
       "why": "The workflow owns the implementation, and plans were returned but never kept.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
           "text": "Given an increment about to be built, when the plan stage completes, then the plan is saved for the increment and names its decisions, edits, tests and acceptance map.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": [
+            "s1",
+            "s2"
+          ],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-2",
+          "text": "Given an increment that changes existing code, when the plan stage completes, then a survey of that code's assumptions exists and the plan answers every item in it.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": [
+            "s1",
+            "s2"
+          ],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-3",
+          "text": "Given a programme that names a lessons document and a deferred-findings document, when an increment is planned, then the plan applies every entry that names that increment.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -6580,7 +6524,7 @@
       "slice": "build",
       "kind": "rule",
       "title": "A different task checks the plan against the requirement",
-      "statement": "Before implementing, a task other than the planner MUST derive the requirement from the row, never from the plan's restatement of it, and refuse a plan that drops, narrows or widens the increment's current acceptance, plans lifecycle steps, or justifies a choice by build effort.",
+      "statement": "Before implementing, a task other than the planner MUST derive the requirement from the row, never from the plan's restatement of it, and refuse a plan that drops, narrows or widens the increment's acceptance, or justifies a choice by build effort. It MUST split blocking objections from notes, and the audit MUST end within two rounds.",
       "why": "A plan can prove the wrong thing, planners overreached into lifecycle, and a choice made for the cost of building it is not a choice on merit.",
       "actor": "the build workflow",
       "acceptance": [
@@ -6603,6 +6547,18 @@
           "confidence": "stated",
           "sources": [
             "s3"
+          ],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-3",
+          "text": "Given a plan revised after a first audit, when the second audit runs, then it rules only on whether each first-round objection was resolved and whether the revision broke anything, and hands every other point to the implementer as a note.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": [
+            "s1",
+            "s2"
           ],
           "scenario": null,
           "resolvedBy": null
@@ -6731,7 +6687,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -6743,21 +6699,22 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-059."
     },
     {
       "id": "req-062",
       "key": "build--per-file-review",
       "slice": "build",
       "kind": "rule",
-      "title": "Every changed file gets a style review and a code review",
-      "statement": "Every content-changed file MUST get its own style review and its own code review, under either executor, with only mechanical exclusions.",
+      "title": "Every changed file is reviewed with the live review skills",
+      "statement": "Every content-changed file MUST be reviewed, under either executor, by a reviewer that follows the workspace review and code-style skills' own instructions, personas and best-practice routing, read when it runs. Files MUST be reviewed in groups sized by their change, one reviewer to a group, with only mechanical exclusions.",
       "why": "One reviewer over the whole change was the main way Codex mode fell short.",
       "actor": "both executors",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a change to 14 files including one lockfile and one pure rename, when review runs under either executor, then 12 files each get two review receipts and the two exclusions are listed.",
+          "text": "Given a change to 14 files including one lockfile and one pure rename, when review runs under either executor, then each of the other 12 files is in exactly one review group's result and the two exclusions are listed.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -6769,7 +6726,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given two review tasks running at the same time, when each reads files, then every read is recorded against the task that made it, and a file counts as read only when its whole line range was read.",
+          "text": "Given a change to a review skill's persona file, when the next increment is reviewed, then its reviewers follow the changed persona with no change to the workflow.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -6824,7 +6781,6 @@
         "c-003"
       ],
       "dependsOn": [
-        "req-044",
         "req-059"
       ],
       "status": "proposed",
@@ -6946,7 +6902,7 @@
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a code reviewer that dies, when the review stage ends, then the task is retried once and, if still missing, the increment is held naming it.",
+          "text": "Given a code reviewer that dies, when the review stage ends, then the task is retried once and, if still missing, the build stops naming it.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -7025,7 +6981,7 @@
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a fixer that reports a fix it did not make, when fixes are verified, then the item is sent back and, if still unfixed, the increment is held.",
+          "text": "Given a fixer that reports a fix it did not make, when fixes are verified, then the item is sent back and, if still unfixed, the build stops naming it.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -7085,14 +7041,14 @@
       "key": "build--discovered-one-channel",
       "slice": "build",
       "kind": "rule",
-      "title": "Work found during a build enters the backlog one way",
-      "statement": "Work a build discovers MUST enter the backlog only as a judged, verified atom or a question, through the writer.",
+      "title": "Deferred findings reach the increment they name",
+      "statement": "A finding the judge defers MUST be recorded where the planner of the increment it names will read it, and new work a build discovers MUST reach the backlog only as a proposed atom or a question.",
       "why": "Three channels for discovered work lost items between them.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a judge that defers a finding as new work, when the increment is recorded, then the backlog gains one proposed atom, which a separate verify task and the recipe lint check before it is adopted with its own increment, and its file and line coordinates stay in run state.",
+          "text": "Given a judge that defers a finding to a later increment, when the increment lands, then that later increment's planner receives the finding.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -7157,7 +7113,7 @@
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a change whose suite is green but no test exercises criterion X, when acceptance runs, then X is recorded not met and the increment is held before anything lands.",
+          "text": "Given a change whose suite is green but no test exercises criterion X, when acceptance runs, then X is recorded not met and the build stops before anything lands.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -7168,7 +7124,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given an acceptance task, when its inputs are prepared, then neither the plan nor any plan output is among them, and the stage audit fails if one is.",
+          "text": "Given an acceptance task, when its inputs are prepared, then neither the plan nor any plan output is among them.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -7230,24 +7186,13 @@
       "slice": "build",
       "kind": "rule",
       "title": "Ladder results are recorded exit codes",
-      "statement": "Every ladder result MUST be the recorded exit code of its rung, written by the writer as a signed fact record, never an agent's report.",
+      "statement": "Every ladder result MUST be the exit code its rung recorded, never an agent's report.",
       "why": "An agent's word that a suite is green is not evidence.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a rung that fails, when an agent reports it green, then the recorded result is red and the increment is held.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-2",
-          "text": "Given a fact record edited after the writer wrote it, when the increment is marked done, then the change is refused, naming the record.",
+          "text": "Given a rung that fails, when an agent reports it green, then the recorded result is red and the build stops.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -7305,14 +7250,14 @@
       "key": "build--baseline-hygiene",
       "slice": "build",
       "kind": "rule",
-      "title": "A red baseline becomes its own work",
-      "statement": "A rung that is red before any change MUST become a hygiene increment ahead of the current one, which is held until the hygiene increment is done.",
+      "title": "A red baseline stops the increment",
+      "statement": "A rung that is red before any change MUST stop the increment before planning, naming the rung, so no failure is ever passed off as pre-existing.",
       "why": "Red baselines were skipped or called pre-existing.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a red unit suite before an increment starts, when the baseline runs, then a hygiene increment is created and built next, and the held increment is released when it is done.",
+          "text": "Given a red unit suite before an increment starts, when the baseline runs, then the increment is not built and the stop names the red rung and its log.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -7394,7 +7339,7 @@
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given a change containing a token-shaped string, when the secrets stage runs, then the increment is held, naming the file and line.",
+          "text": "Given a change containing a token-shaped string, when the secrets scan runs, then the build stops before anything lands, naming the file and line.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -7672,7 +7617,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -7684,7 +7629,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): per-increment branches and Jira tickets were not asked for (see RESCOPE open question 2)."
     },
     {
       "id": "req-074",
@@ -7836,13 +7782,13 @@
       "slice": "lifecycle",
       "kind": "rule",
       "title": "A platform fault parks one increment and the build goes on",
-      "statement": "A red that only a platform fix can clear MUST hold that increment with the fix named, and the build MUST continue with other work.",
+      "statement": "A red that only a platform fix can clear MUST park that increment with the fix named, and the build MUST carry on with increments that do not depend on it.",
       "why": "A missing platform secret is not a reason to stop every other increment.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given CI red on a missing platform secret, when CI is recorded, then the increment is held as platform-blocked naming the secret, and the next buildable increment starts.",
+          "text": "Given CI red on a missing platform secret, when CI is recorded, then the increment is parked as platform-blocked naming the secret, and the next buildable increment starts.",
           "witness": "e2e",
           "confidence": "inferred",
           "sources": [
@@ -7971,7 +7917,7 @@
         "req-055",
         "req-002"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -7983,7 +7929,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a pinned copy of the tools guards a failure that has not happened."
     },
     {
       "id": "req-078",
@@ -8008,7 +7955,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given a binding written while an increment is mid-build, when its next stage is prepared, then that stage and every later one run under the new binding, the task already running finishes on its executor, and the backlog is unchanged.",
+          "text": "Given a binding written while a run is building, when the next increment starts, then it runs under the new binding and the backlog is unchanged.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -8070,7 +8017,7 @@
       "slice": "skill",
       "kind": "capability",
       "title": "Every stop prints a handover a new session can resume from",
-      "statement": "At every stop, the implementor MUST print a handover naming the programme, the exact args, the run id and each hold's release command.",
+      "statement": "At every stop, the implementor MUST print a handover naming the programme, the exact launch args, the run id, the stop reason and what would release it.",
       "why": "A replacement session must resume with no other context.",
       "actor": "Sam",
       "acceptance": [
@@ -8219,7 +8166,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -8231,7 +8178,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): Sam asked for Claude-only and Claude-driving-Codex; a Codex-orchestrated session was not asked for."
     },
     {
       "id": "req-081",
@@ -8305,7 +8253,7 @@
         "req-028",
         "req-048"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -8317,21 +8265,22 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a verification pass over this programme's own atoms is replaced by the rescope."
     },
     {
       "id": "req-082",
       "key": "proof--claude-canary",
       "slice": "proof",
       "kind": "rule",
-      "title": "The new path builds real full-stack work on Claude first",
-      "statement": "Before Codex is compared, the new build path MUST build real full-stack product increments end to end on Claude, with every stage record present.",
+      "title": "Each executor builds one real increment",
+      "statement": "Before the implementor is called done, it MUST build one real small full-stack product increment on Claude and another on Codex from the same unedited backlog, and the two builds' review findings, judge rulings and ladder results MUST be set side by side for Sam.",
       "why": "It is cheaper to reject one canary than a whole backlog.",
       "actor": "Sam",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given three canary increments, each spanning the plants frontend, the plants backend and the tests repo, when they are built on Claude, then each lands with an integration proof through the real stack and passes the done gate, and the build stops for a walkthrough.",
+          "text": "Given two small product increments, when one is built on Claude and the other on Codex with no backlog edit, then each lands with an integration proof through the real stack, and a side-by-side record shows each build's review findings, judge rulings and ladder results.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -8389,10 +8338,7 @@
       "dependsOn": [
         "req-067",
         "req-072",
-        "req-078",
-        "req-077",
-        "req-032",
-        "req-085"
+        "req-078"
       ],
       "edgeChecks": [
         {
@@ -8604,7 +8550,7 @@
           }
         }
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -8616,7 +8562,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the formal parity bar is replaced by one simple proof on each executor (req-082)."
     },
     {
       "id": "req-084",
@@ -8669,7 +8616,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -8681,7 +8628,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a reading audit from transcripts and logs guards a failure that has not happened."
     },
     {
       "id": "req-085",
@@ -8769,7 +8717,7 @@
       "slice": "distil",
       "kind": "capability",
       "title": "One markdown source distils end to end into a backlog and a report",
-      "statement": "A distil run MUST take a source through characterising, authoring, verification by a different task, ingest, solo increments and a rendered report in one workflow whose every step the decision engine chooses. Each phase MUST be gated, and restarting a phase MUST reset every later phase and mark stale any phase whose inputs changed after it finished.",
+      "statement": "A distil run MUST take a source through characterising, checking, slicing, authoring, verification by a different task, ingest, solo increments and a rendered report in one workflow. Each phase MUST be gated, and restarting a phase MUST reset every later phase.",
       "why": "Built one layer at a time, the distiller would first run end to end only at the last increment. A thin end-to-end path first means every later increment widens something that already runs; and a restarted phase used to leave later phases marked done over stale inputs.",
       "actor": "the distil workflow",
       "acceptance": [
@@ -8786,7 +8734,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given a one-source markdown fixture, when the distil workflow runs end to end, then the programme holds adopted atoms each verified by a task other than its author, one solo increment per atom, and a rendered report, and only the authoring and verifying steps started model tasks.",
+          "text": "Given a one-source markdown fixture, when the distil workflow runs end to end, then the programme holds adopted atoms each verified by a task other than its author, one solo increment per atom, and a rendered report.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -8850,7 +8798,6 @@
       ],
       "dependsOn": [
         "req-011",
-        "req-121",
         "req-047"
       ],
       "status": "proposed",
@@ -9003,7 +8950,7 @@
       "slice": "distil",
       "kind": "capability",
       "title": "Documents, wiki pages and tickets are read as sources",
-      "statement": "The distiller MUST accept Word, PDF, markdown, spreadsheets, slide decks, Confluence pages and Jira issues and epics as sources, each with its own provenance scheme, and every link a requirement source makes to another source MUST be registered, stated absent with a reason, or raised as a question.",
+      "statement": "The distiller MUST accept Word, PDF, markdown, spreadsheets, slide decks, Confluence pages and Jira issues and epics as sources, each unit citing where in its source it came from.",
       "why": "Requirements arrive from anywhere, often several sources at once, and the plants run lost its requirements workbook as a link nobody followed.",
       "actor": "Sam",
       "acceptance": [
@@ -9030,19 +8977,8 @@
           "resolvedBy": null
         },
         {
-          "id": "ac-3",
-          "text": "Given a requirement source that links to a workbook nobody has fetched, when the source checks run, then they fail naming the link until it is registered, stated absent with a reason, or raised as a question.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
           "id": "ac-4",
-          "text": "Given a fixture of a Word document, a workbook, an image board and an earlier backlog, when the distil workflow runs end to end, then the rendered backlog cites units from each source.",
+          "text": "Given a fixture of a Word document, a workbook and an image board, when the distil workflow runs end to end, then the rendered backlog cites units from each source.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -9248,7 +9184,7 @@
       "dependsOn": [
         "req-087"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -9260,7 +9196,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): conversation sources are not needed for the minimum (see RESCOPE open question 1)."
     },
     {
       "id": "req-092",
@@ -9313,7 +9250,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -9325,7 +9262,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): carrying earlier distillations over was not asked for, and Sam ruled no backports."
     },
     {
       "id": "req-093",
@@ -9480,9 +9418,7 @@
       "decisions": [
         "d-002"
       ],
-      "dependsOn": [
-        "req-081"
-      ],
+      "dependsOn": [],
       "status": "proposed",
       "provenance": {
         "authoredBy": {
@@ -9548,7 +9484,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -9560,7 +9496,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-094, whose verifier already asks whether each atom is single."
     },
     {
       "id": "req-096",
@@ -9613,7 +9550,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -9625,7 +9562,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a thin-slice audit guards a failure that has not happened."
     },
     {
       "id": "req-097",
@@ -9678,7 +9616,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -9690,7 +9628,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-101, which gives every unit exactly one outcome."
     },
     {
       "id": "req-098",
@@ -9825,7 +9764,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -9837,7 +9776,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the judges panel is cut; req-129 sends every conflict precedence cannot settle to Sam as a question."
     },
     {
       "id": "req-100",
@@ -9927,7 +9867,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given the fixture sources distilled end to end by the distil workflow, when the report is rendered, then the coverage section gives every source unit exactly one outcome, and the critic's findings appear in the weak-evidence section.",
+          "text": "Given the fixture sources distilled end to end by the distil workflow, when the report is rendered, then the coverage section gives every source unit exactly one outcome.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -9967,8 +9907,7 @@
       ],
       "dependsOn": [
         "req-098",
-        "req-100",
-        "req-097"
+        "req-100"
       ],
       "status": "proposed",
       "provenance": {
@@ -10035,7 +9974,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -10047,7 +9986,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a cold critic guards a failure that has not happened."
     },
     {
       "id": "req-103",
@@ -10055,13 +9995,13 @@
       "slice": "distil",
       "kind": "rule",
       "title": "Questions reach Sam well asked",
-      "statement": "Every question MUST be clustered, split into single decisions, written in four parts, classed, ranked by blast radius and passed by a critic that did not write it.",
+      "statement": "Every question MUST be one decision, written in four parts (a headline, options with their sources, a recommendation, and what happens if nobody answers), classed as must-answer or defaulted, and ranked by how much it blocks.",
       "why": "Hundreds of raw questions are unanswerable; a few well-asked ones get ruled in a batch.",
       "actor": "Sam",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given two raw questions that are the same decision, when the questions phase runs, then one question remains with both callers, four parts, a class and a critic's pass.",
+          "text": "Given two raw questions that are the same decision, when the questions phase runs, then one question remains, in four parts and with a class.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -10166,7 +10106,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given a proposed group whose only shared signal is its repos, or a shared implementation component, when it is verified, then it is refused naming the reason.",
+          "text": "Given a proposed group whose only shared signal is its repos, or a shared implementation component, when it is ingested, then it is refused naming the reason.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -10302,7 +10242,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -10314,7 +10254,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the writer's layer and combine checks already refuse a bad group; a second verifier adds no proven value."
     },
     {
       "id": "req-106",
@@ -10549,14 +10490,14 @@
       "key": "distil--codex-bindable",
       "slice": "distil",
       "kind": "capability",
-      "title": "Every distillation phase with model tasks can run on Codex",
-      "statement": "Every distillation phase that runs model tasks MUST be bindable to Codex, role by role, through the same stage contract, and the distil Codex preset MUST bind characterise, extract-verify, carryover, reslice, author, verify and gap-audit.",
+      "title": "The distiller's heavy tasks can run on Codex",
+      "statement": "The distiller's heavy model tasks (characterising, authoring and verifying) MUST be able to run on Codex through the same stage contract and runner as the build.",
       "why": "The heaviest distillation work should be able to spare Claude usage too.",
       "actor": "Sam",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given the distil Codex preset, when a slice is authored and verified, then both tasks run on Codex and their outputs pass the same accept step.",
+          "text": "Given the distiller bound to Codex, when a slice is authored and verified, then both tasks run on Codex and their outputs pass the same schema check.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -10663,10 +10604,7 @@
         "d-002",
         "d-006"
       ],
-      "dependsOn": [
-        "req-005",
-        "req-085"
-      ],
+      "dependsOn": [],
       "status": "parked",
       "provenance": {
         "authoredBy": {
@@ -10687,7 +10625,7 @@
       "slice": "retire",
       "kind": "content",
       "title": "Skill routing names the new skills, with every row intact",
-      "statement": "The workspace's skill routing MUST name the two new skills and no retired one, with every row intact.",
+      "statement": "The workspace's skill routing MUST name the two new skills, with every row intact.",
       "why": "The routing table lists neither current driver, and one row breaks out of the table.",
       "actor": "every session",
       "acceptance": [
@@ -10732,7 +10670,6 @@
         "d-002"
       ],
       "dependsOn": [
-        "req-083",
         "req-107"
       ],
       "edgeChecks": [
@@ -10892,7 +10829,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -10904,7 +10841,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): each guide is updated by the increment that changes what it describes."
     },
     {
       "id": "req-114",
@@ -10971,7 +10909,6 @@
         "d-002"
       ],
       "dependsOn": [
-        "req-095",
         "req-115"
       ],
       "status": "proposed",
@@ -11170,7 +11107,7 @@
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given an increment of the multi-repo fixture spanning its three repos, when it is built, then one plan and one implementation receipt cover all three repos.",
+          "text": "Given an increment of the multi-repo fixture spanning its three repos, when it is built, then one plan and one implementation cover all three repos.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -11193,7 +11130,7 @@
         },
         {
           "id": "ac-3",
-          "text": "Given an increment of the multi-repo fixture whose plan adds a repo its surface did not name, when the plan is approved, then that repo is branched under the same name, baselined and laddered before implementation, and the member atom's surface names it with the reason.",
+          "text": "Given an increment whose plan adds a repo its surface did not name, when implementation starts, then that repo is on the same branch name as the others and is laddered with them.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -11281,7 +11218,7 @@
       "slice": "build",
       "kind": "rule",
       "title": "A product increment is not done without an end-to-end proof",
-      "statement": "An increment that changes a product repo MUST NOT be marked done until the tests repo has exercised it through the real stack and passed.",
+      "statement": "An increment that changes a product repo MUST NOT be marked done until the tests repo has exercised it through the real stack and passed, on a stack that builds every touched repo from its own head and takes every other service from a known image.",
       "why": "The definition of done includes an integration proof.",
       "actor": "the build workflow",
       "acceptance": [
@@ -11298,18 +11235,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given an increment of the multi-repo fixture, when its integration proof runs, then the record names every service with where it came from, each touched repo built from its own head and never a fallback image, and each end-to-end criterion mapped to a passed test.",
-          "witness": "e2e",
-          "confidence": "stated",
-          "sources": [
-            "s1"
-          ],
-          "scenario": null,
-          "resolvedBy": null
-        },
-        {
-          "id": "ac-3",
-          "text": "Given an increment whose proof cannot run locally, when it is recorded, then it is held as proof owed, and no increment depending on it is buildable until it is proved.",
+          "text": "Given an increment of the multi-repo fixture, when its integration proof runs, then the record names every service and where it came from, with each touched repo built from its own head and never a fallback image.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -11348,7 +11274,6 @@
         "d-002"
       ],
       "dependsOn": [
-        "req-027",
         "req-116",
         "req-055"
       ],
@@ -11645,7 +11570,7 @@
         "req-025",
         "req-048"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -11657,7 +11582,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the tim decision-engine state machine is cut; the Workflow script holds the stage order, as the bootstrap does."
     },
     {
       "id": "req-122",
@@ -11811,7 +11737,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -11823,7 +11749,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-118."
     },
     {
       "id": "req-124",
@@ -11949,7 +11876,7 @@
         "req-087"
       ],
       "variantOf": "q-conversation-retention",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -11961,7 +11888,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of req-091, which is cut."
     },
     {
       "id": "req-126",
@@ -12032,7 +11960,7 @@
         "req-059"
       ],
       "variantOf": "c-002",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12044,7 +11972,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of a review shape the rescope replaces (req-062)."
     },
     {
       "id": "req-127",
@@ -12104,7 +12033,7 @@
         "req-059"
       ],
       "variantOf": "c-003",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12116,7 +12045,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of a review shape the rescope replaces (req-062)."
     },
     {
       "id": "req-128",
@@ -12170,7 +12100,7 @@
       ],
       "dependsOn": [],
       "variantOf": "q-panel-authority",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12182,7 +12112,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of the judges panel, which is cut."
     },
     {
       "id": "req-129",
@@ -12356,7 +12287,7 @@
         }
       ],
       "variantOf": "q-parity-bar",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12368,7 +12299,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of the parity bar, which is cut."
     },
     {
       "id": "req-131",
@@ -12476,7 +12408,7 @@
         }
       ],
       "variantOf": "q-parity-bar",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12488,7 +12420,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of the parity bar, which is cut."
     },
     {
       "id": "req-132",
@@ -12596,7 +12529,7 @@
         }
       ],
       "variantOf": "q-parity-bar",
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12608,7 +12541,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): a variant of the parity bar, which is cut."
     },
     {
       "id": "req-133",
@@ -12832,7 +12766,7 @@
         "req-043",
         "req-044"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -12844,21 +12778,22 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-062."
     },
     {
       "id": "req-136",
       "key": "build--mechanical-outside-judgement",
       "slice": "build",
       "kind": "rule",
-      "title": "Deterministic steps run as tested writer commands, never inside a judgement task",
-      "statement": "Every deterministic step of a build or a distillation (branch set-up, merging the base branch, rungs, change lists, scans, stack runs, commits and state writes) MUST run as a tested writer command, and no planning, implementing, reviewing, verifying, judging, fixing or acceptance task MUST run any such step other than accepting its own output.",
+      "title": "Mechanical steps are tested tim commands run by a cheap runner",
+      "statement": "Every deterministic step of a build or a distillation (the same branch name in every touched repo, change lists, ladder rungs, scans, stack runs, commits and state writes) MUST be a tested tim command, run by a cheap runner that makes no judgement, and its result MUST be what the command recorded, never an agent's report.",
       "why": "Deterministic work is scripted and tested once; a judgement task that runs it spends its attention and its tokens on work that has one right answer.",
       "actor": "the build workflow",
       "acceptance": [
         {
           "id": "ac-1",
-          "text": "Given the multi-repo fixture increment built end to end, when every judgement task's commands are read from its transcript or event log, then none ran anything but reading files and accepting its own output.",
+          "text": "Given the multi-repo fixture increment, when its branch set-up, rungs and commit run, then each is a tim command whose exit code and output are recorded where the next stage reads them.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -12870,7 +12805,7 @@
         },
         {
           "id": "ac-2",
-          "text": "Given the same run, when the journal is read, then every rung, merge, commit and scan has a fact record the writer wrote, and none rests on an agent's report.",
+          "text": "Given a runner that reports a red rung as green, when the next stage reads the result, then it sees red.",
           "witness": "e2e",
           "confidence": "stated",
           "sources": [
@@ -12935,9 +12870,7 @@
       "decisions": [
         "d-002"
       ],
-      "dependsOn": [
-        "req-139"
-      ],
+      "dependsOn": [],
       "status": "proposed",
       "provenance": {
         "authoredBy": {
@@ -13073,7 +13006,7 @@
         "req-050",
         "req-121"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -13085,7 +13018,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): one step agent per gap belongs to the decision engine, which is cut."
     },
     {
       "id": "req-138",
@@ -13191,7 +13125,7 @@
       "dependsOn": [
         "req-072"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -13203,7 +13137,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): outward calls are already their own shell calls in the cheap runner; no further mechanism is needed."
     },
     {
       "id": "req-139",
@@ -13283,7 +13218,7 @@
       "dependsOn": [
         "req-064"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -13295,7 +13230,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): pipelined fan-out is an optimisation with no recorded failure behind it."
     },
     {
       "id": "req-140",
@@ -13387,7 +13323,7 @@
         "d-002"
       ],
       "dependsOn": [],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -13399,7 +13335,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): folded into req-136."
     },
     {
       "id": "req-141",
@@ -13468,7 +13405,7 @@
       "dependsOn": [
         "req-088"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -13480,7 +13417,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): pipelined distil tasks are an optimisation with no recorded failure behind it."
     },
     {
       "id": "req-142",
@@ -13549,7 +13487,7 @@
       "dependsOn": [
         "req-037"
       ],
-      "status": "proposed",
+      "status": "dropped",
       "provenance": {
         "authoredBy": {
           "phase": "design",
@@ -13561,7 +13499,8 @@
         "why": null,
         "correction": null,
         "searchedFor": null
-      }
+      },
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): cold readers guard a failure that has not happened."
     }
   ],
   "increments": [
@@ -13967,9 +13906,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-021 moved to inc-029 and req-018 folded into req-025; the other four atoms guard failures that have not happened."
     },
     {
       "id": "inc-008",
@@ -14029,9 +13968,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): merged into inc-017, where run state and the next-increment rule are first needed."
     },
     {
       "id": "inc-009",
@@ -14094,9 +14033,10 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "done",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": null,
+      "commit": "dc4f3d2bd0257717a0f75fb180d78002265c4652"
     },
     {
       "id": "inc-010",
@@ -14128,9 +14068,9 @@
         "basis": "1 criterion over 124 atoms (variants excluded), 1 area, 1 repo"
       },
       "combination": null,
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): self-verification of this backlog's atoms is replaced by the rescope."
     },
     {
       "id": "inc-011",
@@ -14294,79 +14234,59 @@
     },
     {
       "id": "inc-014",
-      "key": "stage-contracts",
-      "title": "Every model stage has one contract for both executors",
-      "outcome": "Each model stage has one brief, input set and schema; both executors' output passes one accept step with a receipt; prompts differ only in the profile, and no neutral brief carries one executor's words; the rails have one source; house rules reach both executors; and done means the stage audit passes.",
-      "why": "Whichever executor runs a stage, it is given the same work and held to the same checks.",
+      "key": "codex-executor",
+      "title": "Codex builds from the same backlog, switched by a sentence",
+      "outcome": "Every model stage has one brief, input set and schema for both executors; prompts differ only in the executor profile; house rules and the resolved rule and best-practice files reach both; Codex runs the heavy stages concurrently in resumable slices, with checking roles read-only; the executor is chosen per run or increment by a sentence; and one real small increment is built on each executor with the results set side by side.",
+      "why": "R5 and R6: the same backlog builds under either executor, and Codex takes the heavy work to save Claude usage.",
       "members": [
-        "req-027",
         "req-045",
         "req-047",
-        "req-048",
         "req-049",
-        "req-054"
+        "req-050",
+        "req-051",
+        "req-052",
+        "req-078",
+        "req-082"
       ],
       "class": "feat",
       "surface": {
         "repos": [
-          "workspace"
+          "workspace",
+          "plantsFrontend",
+          "plantsBackend",
+          "tests"
         ],
         "areas": [
           "executor",
-          "state",
-          "context"
+          "skill",
+          "proof"
         ]
       },
-      "milestone": "m1",
+      "milestone": "m3",
       "dependsOn": [
-        "inc-005",
+        "inc-022",
         "inc-012"
       ],
       "sequence": null,
       "needs": [],
       "checkpoint": null,
       "size": {
-        "class": "L",
-        "basis": "9 criteria, 3 areas, 1 repo"
+        "class": "M",
+        "basis": "12 criteria, 3 areas, 4 repos"
       },
       "combination": {
         "rules": [
-          "cr-same-acceptance-boundary",
-          "cr-same-surface"
+          "cr-same-surface",
+          "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-acceptance-boundary: one fixture stage prepared and accepted under each executor shows all six. cr-same-surface: each is what a stage's task is given or held to.",
-        "risk": "medium",
-        "attributability": "Each part is proven by its own criterion on the same fixture stage, and each failure names the task and the rule.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "stage-contracts",
-            "into": [
-              [
-                "state--done-gate"
-              ],
-              [
-                "context--house-rules-parity"
-              ],
-              [
-                "executor--one-contract"
-              ],
-              [
-                "executor--accept-both"
-              ],
-              [
-                "executor--prompt-parity"
-              ],
-              [
-                "executor--rails-one-copy"
-              ]
-            ]
-          }
-        ]
+        "why": "The contract, the runner, the switch and the proof are one executor, and the proof exercises all of them.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-015",
@@ -14426,9 +14346,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): merged into inc-014, one Codex executor increment."
     },
     {
       "id": "inc-016",
@@ -14465,16 +14385,18 @@
     {
       "id": "inc-017",
       "key": "build-drain",
-      "title": "One run drains the backlog from its args alone",
-      "outcome": "One build run builds increments until a stop, each next step decided by one tested command from recorded state, configured only by its args, stopping cleanly before the agent cap and resuming from recorded state; and a multi-repo fixture programme drains with one branch name in every repo, its branches, merges of base and commits made by the writer.",
-      "why": "What a person launching a run sees: it keeps going, takes the same next step whoever drives it, and stops or resumes cleanly.",
+      "title": "The implementor drains a backlog one slice at a time from its args",
+      "outcome": "An implementor skill launches one build run from its args alone; the run picks each next buildable increment by one rule, from run state the backlog never carries; tim commands run by a cheap runner set up the same branch in every repo the increment touches and commit it locally with the session's trailer; the run stops cleanly before the agent cap and prints a handover at every stop.",
+      "why": "The walking skeleton of the build: every later build increment adds a stage to it.",
       "members": [
+        "req-004",
+        "req-024",
+        "req-025",
         "req-055",
         "req-056",
-        "req-057",
-        "req-058",
-        "req-121",
-        "req-140"
+        "req-074",
+        "req-079",
+        "req-136"
       ],
       "class": "feat",
       "surface": {
@@ -14482,71 +14404,46 @@
           "workspace"
         ],
         "areas": [
-          "build"
+          "build",
+          "state",
+          "skill"
         ]
       },
       "milestone": "m1",
       "dependsOn": [
         "inc-003",
-        "inc-008",
-        "inc-014"
+        "inc-006"
       ],
       "sequence": null,
       "needs": [],
       "checkpoint": null,
       "size": {
         "class": "L",
-        "basis": "9 criteria, 1 area, 1 repo"
+        "basis": "13 criteria, 3 areas, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
           "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all six are how one run behaves from launch to stop. cr-same-acceptance-boundary: one zero-model drain of the fixture programme shows the loop, args, ceiling, resume and decision engine; req-140's branch set-up and merges are what the drain fixture's same-named branches prove.",
-        "risk": "medium",
-        "attributability": "Each is proven by a distinct fixture run and stop reason, and the decision engine's steps are recorded one by one.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "build-drain",
-            "into": [
-              [
-                "build--drain"
-              ],
-              [
-                "build--args-only"
-              ],
-              [
-                "build--agent-ceiling"
-              ],
-              [
-                "build--resume"
-              ],
-              [
-                "build--one-decision-engine"
-              ],
-              [
-                "build--local-git-in-writer"
-              ]
-            ]
-          }
-        ]
+        "why": "All eight atoms are what one drain run needs before any stage is added, and one fixture drain shows them all.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-018",
       "key": "plan-and-audit",
-      "title": "Each increment is planned once across its whole slice, and the plan is checked",
-      "outcome": "Each increment is planned just in time across every repo it touches, a different task derives the requirement from the row and checks the plan against it, a repo the plan adds is set up like the others, programme knowledge arrives as documents, and one implementation covers the slice.",
-      "why": "How a slice goes from requirement to one implementation across its repos.",
+      "title": "Each slice is surveyed, planned once across its repos, audited and implemented",
+      "outcome": "Each increment is surveyed and planned just in time across every repo it touches, a different task audits the plan against the backlog row in at most two rounds, and one implementation covers the whole slice.",
+      "why": "Lessons L1 to L3 show that a survey and a converging audit catch the real planning failures.",
       "members": [
         "req-059",
         "req-060",
-        "req-061",
         "req-117"
       ],
       "class": "feat",
@@ -14568,55 +14465,34 @@
       "checkpoint": null,
       "size": {
         "class": "M",
-        "basis": "7 criteria, 1 area, 1 repo"
+        "basis": "9 criteria, 1 area, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
           "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all four are how an increment is planned and implemented. cr-same-acceptance-boundary: one multi-repo fixture increment, planned, audited and implemented, shows all four.",
-        "risk": "medium",
-        "attributability": "A plan, audit or implement red names its stage.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "plan-and-audit",
-            "into": [
-              [
-                "build--jit-plan"
-              ],
-              [
-                "build--plan-audit"
-              ],
-              [
-                "build--knowledge-not-prompts"
-              ],
-              [
-                "build--whole-slice-one-pass"
-              ]
-            ]
-          }
-        ]
+        "why": "Planning, auditing and implementing one slice are one pass over one plan.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-019",
-      "key": "review-no-silent",
-      "title": "Every changed file is reviewed, and no dead task passes",
-      "outcome": "Every content-changed file gets a style and a code review under either executor, following the review skills' own instructions and personas, read live, which say what a workflow replaces; every read is credited to the task that made it; one consistency review covers every repo and checks the contract at each seam; no task commits behind the workflow; a dead task never reads as a pass; and review, verification, judging and fixing run as one fan-out that skips a task with nothing to act on.",
-      "why": "What a reviewed change looks like, on either executor, across every repo it touches.",
+      "key": "review-judge-fix",
+      "title": "Every changed file is reviewed with the live skills, and every fix is confirmed",
+      "outcome": "Every changed file is reviewed in groups sized by its change, following the review and code-style skills read live; one consistency review covers every repo; critical and major findings are checked adversarially; a judge rules; a dead task never passes; each fix is confirmed by another task; and deferred work reaches the increment it names.",
+      "why": "R2 and R7 ask for live-skill review across the whole slice; lesson L4 sizes it by the diff.",
       "members": [
-        "req-044",
-        "req-053",
         "req-062",
         "req-063",
         "req-064",
-        "req-135",
-        "req-139"
+        "req-065",
+        "req-066"
       ],
       "class": "feat",
       "surface": {
@@ -14631,57 +14507,28 @@
       },
       "milestone": "m1",
       "dependsOn": [
-        "inc-018",
-        "inc-012"
+        "inc-018"
       ],
       "sequence": null,
       "needs": [],
       "checkpoint": null,
       "size": {
-        "class": "L",
-        "basis": "12 criteria, 3 areas, 1 repo"
+        "class": "M",
+        "basis": "7 criteria, 3 areas, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
           "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all seven are what the review of one change shows. cr-same-acceptance-boundary: one review of a multi-repo fixture change shows all seven; req-139's fan-out is the review stage those findings run through, so the same fixture review proves it.",
-        "risk": "medium",
-        "attributability": "Receipts name each file and task, the reading record names each skill file read, and the consistency result names each seam.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "review-no-silent",
-            "into": [
-              [
-                "context--persona-seam"
-              ],
-              [
-                "executor--no-hidden-commit"
-              ],
-              [
-                "build--per-file-review"
-              ],
-              [
-                "build--consistency-across-repos"
-              ],
-              [
-                "build--no-silent-success"
-              ],
-              [
-                "context--skills-read-live"
-              ],
-              [
-                "build--judgement-spans"
-              ]
-            ]
-          }
-        ]
+        "why": "Review, verification, judging and fixing are one flow over the same findings.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-020",
@@ -14736,9 +14583,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): merged into inc-019, so review, judge and fix are one increment."
     },
     {
       "id": "inc-041",
@@ -14795,22 +14642,22 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): merged into inc-021, so the integration proof and acceptance are one increment."
     },
     {
       "id": "inc-021",
-      "key": "done-means-proven",
-      "title": "Done means proven, from recorded facts",
-      "outcome": "After the integration proof and before anything lands, a fresh task that never sees the plan judges acceptance against the backlog and names a passing test for every end-to-end criterion; ladders and baselines are tool facts; a red baseline becomes its own work; secrets stop a change; and SonarCloud silence is not clean.",
-      "why": "Everything the done gate reads before an increment may land.",
+      "key": "proven-before-land",
+      "title": "A slice is proven through the real stack and accepted before it lands",
+      "outcome": "Ladder results are the rungs' recorded exit codes, a red baseline stops the increment, the change is scanned for credentials, a product slice passes end to end on a stack built from its heads, and a fresh task that never sees the plan accepts it against the backlog before anything lands.",
+      "why": "R7 asks for an integration proof, and lesson L5 shows a proof must rest on recorded facts.",
       "members": [
         "req-067",
         "req-068",
         "req-069",
         "req-070",
-        "req-071"
+        "req-118"
       ],
       "class": "feat",
       "surface": {
@@ -14823,8 +14670,8 @@
       },
       "milestone": "m1",
       "dependsOn": [
-        "inc-020",
-        "inc-041"
+        "inc-019",
+        "inc-011"
       ],
       "sequence": null,
       "needs": [],
@@ -14838,53 +14685,28 @@
           "cr-same-surface",
           "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all five are what the done gate reads before landing. cr-same-acceptance-boundary: one fixture build with a planted red of each kind shows all five.",
-        "risk": "medium",
-        "attributability": "The audit names the missing or failed record.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "done-means-proven",
-            "into": [
-              [
-                "build--acceptance-independent"
-              ],
-              [
-                "build--ladder-facts"
-              ],
-              [
-                "build--baseline-hygiene"
-              ],
-              [
-                "build--secrets"
-              ],
-              [
-                "build--sonar-recorded"
-              ]
-            ]
-          }
-        ]
+        "why": "Every member is a check that must pass before land, and acceptance reads the others' results.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-022",
-      "key": "lifecycle-profiles",
-      "title": "Every delivery strategy lands work safely",
-      "outcome": "Programme, per-increment and local delivery each land work their own way, merges follow the ruled policy as one unit with providers first, platform faults park one increment, and every push, pull request, merge and ticket write is its own call whose result is read back.",
-      "why": "How an increment's work reaches its branch, its pull requests and main, under whichever strategy the programme ruled.",
+      "key": "programme-delivery",
+      "title": "Work lands on a programme branch with draft pull requests, and merges only as ruled",
+      "outcome": "Under programme delivery each increment lands on one branch per repo with one reused draft pull request and a CI wait that tells green from silence; SonarCloud silence reads as no report; merging happens only under a recorded decision, providers first, once every pull request is green; and a platform red parks one increment while the build carries on.",
+      "why": "R7 asks for one pull request per repo landed as one unit in provider-before-consumer order.",
       "members": [
+        "req-001",
+        "req-071",
         "req-072",
-        "req-073",
-        "req-074",
         "req-075",
         "req-076",
-        "req-119",
-        "req-138",
-        "req-001",
-        "req-004"
+        "req-119"
       ],
       "class": "feat",
       "surface": {
@@ -14897,56 +14719,28 @@
       },
       "milestone": "m1",
       "dependsOn": [
-        "inc-017"
+        "inc-021"
       ],
       "sequence": null,
       "needs": [],
       "checkpoint": null,
       "size": {
-        "class": "L",
-        "basis": "11 criteria, 1 area, 1 repo"
+        "class": "M",
+        "basis": "9 criteria, 1 area, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
           "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all seven are how a person sees an increment land. cr-same-acceptance-boundary: one fixture increment landed under each strategy shows all seven; req-138's visible, read-back pushes are how every strategy's landing reaches the remote.",
-        "risk": "medium",
-        "attributability": "Each strategy is proven on its own fixture programme.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "lifecycle-profiles",
-            "into": [
-              [
-                "lifecycle--programme"
-              ],
-              [
-                "lifecycle--per-increment"
-              ],
-              [
-                "lifecycle--local"
-              ],
-              [
-                "lifecycle--merge-policy"
-              ],
-              [
-                "lifecycle--platform-park"
-              ],
-              [
-                "lifecycle--one-unit-merge-order"
-              ],
-              [
-                "lifecycle--outward-visible-observed"
-              ]
-            ]
-          }
-        ]
+        "why": "Every member is how work leaves the machine, and one fixture programme's delivery shows them all.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-023",
@@ -15006,9 +14800,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-078 moved to inc-014 and req-079 to inc-017; req-080 is cut."
     },
     {
       "id": "inc-024",
@@ -15038,9 +14832,9 @@
         "basis": "3 criteria, 1 area, 1 repo"
       },
       "combination": null,
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the pinned tool copy guards a failure that has not happened."
     },
     {
       "id": "inc-042",
@@ -15100,21 +14894,22 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-136, made lighter, moved to inc-017; req-137 is cut with the decision engine."
     },
     {
       "id": "inc-025",
       "key": "decision-led-report",
       "title": "The report leads with decisions and takes batch rulings",
-      "outcome": "The report opens with what needs a ruling and what may be reversed, every number is derived, progress is N of TOTAL, and Sam can rule in one batch.",
-      "why": "What Sam reads first and rules from: one page.",
+      "outcome": "The report opens with what needs a ruling and what may be reversed, every number is derived, progress is N of TOTAL, Sam can rule in one batch, and machine-written prose is rewritten in plain English and claim-checked by another task.",
+      "why": "R1: the report's quality matters above all; the reports analysis records the failures these atoms prevent.",
       "members": [
         "req-032",
         "req-033",
         "req-034",
-        "req-035"
+        "req-035",
+        "req-036"
       ],
       "class": "feat",
       "surface": {
@@ -15125,10 +14920,9 @@
           "report"
         ]
       },
-      "milestone": "m2",
+      "milestone": "m4",
       "dependsOn": [
-        "inc-009",
-        "inc-010"
+        "inc-033"
       ],
       "sequence": {
         "after": [
@@ -15140,40 +14934,21 @@
       "checkpoint": null,
       "size": {
         "class": "M",
-        "basis": "4 criteria, 1 area, 1 repo"
+        "basis": "7 criteria, 1 area, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
-          "cr-one-new-surface"
+          "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all four are what Sam meets on the decision page. cr-one-new-surface: one rendered page.",
+        "why": "Every member is a property of the one rendered report.",
         "risk": "low",
-        "attributability": "Each criterion checks a separate part of the page.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "decision-led-report",
-            "into": [
-              [
-                "report--decision-led"
-              ],
-              [
-                "report--derived-counts"
-              ],
-              [
-                "report--answer-sheet"
-              ],
-              [
-                "report--progress-count"
-              ]
-            ]
-          }
-        ]
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-026",
@@ -15331,9 +15106,9 @@
         "basis": "1 criterion, three full-stack canary builds, 4 repos"
       },
       "combination": null,
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-082 is now the simple two-executor proof in inc-014."
     },
     {
       "id": "inc-028",
@@ -15414,21 +15189,24 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): the formal parity bar is replaced by req-082."
     },
     {
       "id": "inc-029",
       "key": "distil-walking-skeleton",
-      "title": "One markdown source distils end to end into a backlog and a report",
-      "outcome": "One markdown source is taken by the distil workflow, every step chosen by the decision engine, through characterising, extract checking, authoring, verification by another task, ingest and solo increments to a rendered report, with every phase gated, a restart resetting what follows, and each task that reads only another's accepted output starting as soon as it is accepted. Every later distiller increment widens this path.",
-      "why": "Built one layer at a time, the distiller would first run end to end at its last increment; a thin end-to-end path first means every later increment widens something that already runs.",
+      "title": "One markdown source distils into verified vertical-slice atoms",
+      "outcome": "The distil workflow takes one markdown source through characterising, a check by another agent, slicing by behaviour, authoring vertical-slice atoms, verification by a different task, and ingest into solo increments and a rendered report; the backlog it writes carries no recipe or executor words.",
+      "why": "The walking skeleton of the distiller: every later distiller increment widens this path.",
       "members": [
+        "req-021",
         "req-086",
         "req-087",
         "req-088",
-        "req-141"
+        "req-093",
+        "req-094",
+        "req-114"
       ],
       "class": "feat",
       "surface": {
@@ -15441,9 +15219,9 @@
       },
       "milestone": "m4",
       "dependsOn": [
-        "inc-005",
         "inc-014",
-        "inc-017"
+        "inc-011",
+        "inc-009"
       ],
       "sequence": {
         "after": [
@@ -15455,40 +15233,21 @@
       "checkpoint": null,
       "size": {
         "class": "M",
-        "basis": "6 criteria, 1 area, 1 repo"
+        "basis": "12 criteria, 1 area, 1 repo"
       },
       "combination": {
         "rules": [
-          "cr-same-acceptance-boundary",
-          "cr-same-surface"
+          "cr-same-surface",
+          "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-acceptance-boundary: one end-to-end run on a small fixture shows all four. cr-same-surface: all four are what a person sees when a source is distilled; req-141's hand-off between characterise and extract check, and between author and verify, is part of the path the skeleton runs.",
-        "risk": "medium",
-        "attributability": "Each phase has its own gate, and a failed gate stops the run naming it.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "distil-walking-skeleton",
-            "into": [
-              [
-                "distil--end-to-end-skeleton"
-              ],
-              [
-                "distil--characterise"
-              ],
-              [
-                "distil--extract-verify"
-              ],
-              [
-                "distil--dependent-tasks-without-agent"
-              ]
-            ]
-          }
-        ]
+        "why": "Pass 1 from source to verified atoms is one path, and one fixture run shows it end to end.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-030",
@@ -15547,9 +15306,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-089 and req-090 moved to inc-038; req-092 is cut."
     },
     {
       "id": "inc-031",
@@ -15579,9 +15338,9 @@
         "basis": "3 criteria, 1 area, 1 repo"
       },
       "combination": null,
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): conversation sources are not in the minimum (see RESCOPE open question 1)."
     },
     {
       "id": "inc-032",
@@ -15654,20 +15413,24 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): merged into inc-029, the distiller's walking skeleton."
     },
     {
       "id": "inc-033",
-      "key": "conflicts-panel-dedupe",
-      "title": "Disagreements are recorded, settled or escalated, and duplicates absorbed",
-      "outcome": "The end-to-end distil run widens to disagreement: every disagreement is a conflict with both sides quoted and a command that reverses its pick, a panel settles what precedence cannot within its authority, and duplicates are found across every pair.",
-      "why": "What a person sees when sources disagree or repeat each other.",
+      "key": "settle-and-combine",
+      "title": "Disagreements, duplicates and questions are settled, and atoms combine into increments",
+      "outcome": "Every disagreement is a conflict with both sides quoted and a pick or a question to Sam; duplicates are absorbed with their survivor named; every source unit ends in exactly one outcome; questions are single decisions in four parts, ranked by what they block; and related atoms combine into increments by shared behaviour, re-derivable after a ruling without moving ids.",
+      "why": "Pass 2 of R1, and the settling that must come before it.",
       "members": [
         "req-098",
-        "req-099",
-        "req-100"
+        "req-129",
+        "req-100",
+        "req-101",
+        "req-103",
+        "req-104",
+        "req-106"
       ],
       "class": "feat",
       "surface": {
@@ -15680,45 +15443,28 @@
       },
       "milestone": "m4",
       "dependsOn": [
-        "inc-009",
-        "inc-032"
+        "inc-029"
       ],
       "sequence": null,
       "needs": [],
       "checkpoint": null,
       "size": {
         "class": "M",
-        "basis": "4 criteria, 1 area, 1 repo"
+        "basis": "12 criteria, 1 area, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
           "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all three are what a person sees when sources disagree or repeat each other. cr-same-acceptance-boundary: one fixture with a disagreement and a duplicate, run end to end, shows all three.",
-        "risk": "medium",
-        "attributability": "Each phase writes its own records.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "conflicts-panel-dedupe",
-            "into": [
-              [
-                "distil--conflicts"
-              ],
-              [
-                "distil--panel"
-              ],
-              [
-                "distil--dedupe"
-              ]
-            ]
-          }
-        ]
+        "why": "Settling and combining run in order over the same atoms, and one fixture run shows them together.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-034",
@@ -15774,9 +15520,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-101 moved to inc-033; the critic is cut."
     },
     {
       "id": "inc-035",
@@ -15806,9 +15552,9 @@
         "basis": "2 criteria, 1 area, 1 repo"
       },
       "combination": null,
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-103, made lighter, moved to inc-033."
     },
     {
       "id": "inc-036",
@@ -15869,9 +15615,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): merged into inc-033."
     },
     {
       "id": "inc-037",
@@ -15940,20 +15686,23 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): req-036, made lighter, moved to inc-025; the rest is cut."
     },
     {
       "id": "inc-038",
-      "key": "distiller-skill-and-canary",
-      "title": "The distiller skill runs end to end and is proved on real sources",
-      "outcome": "One skill takes sources from interview to report, the heavy phases can run on Codex, and the first real run is compared with a known-good digest, counting its vertical increments against the digest's layer-split rows.",
-      "why": "The distiller's front door and its first real proof.",
+      "key": "distiller-skill",
+      "title": "The distiller skill runs end to end on real sources, on either executor",
+      "outcome": "One skill takes Word, PDF, markdown, spreadsheet, slide, Confluence, Jira and image sources from an interview to a report, resumable at any phase; its heavy tasks can run on Codex; the workspace routing names both new skills; and the first real run is compared with a known-good digest.",
+      "why": "R1 asks for requirements from anywhere; the first real run proves the whole distiller.",
       "members": [
+        "req-089",
+        "req-090",
         "req-107",
         "req-108",
-        "req-109"
+        "req-109",
+        "req-111"
       ],
       "class": "feat",
       "surface": {
@@ -15961,51 +15710,35 @@
           "workspace"
         ],
         "areas": [
-          "distil"
+          "distil",
+          "skill"
         ]
       },
       "milestone": "m4",
       "dependsOn": [
-        "inc-030",
-        "inc-036",
-        "inc-037"
+        "inc-025",
+        "inc-014"
       ],
       "sequence": null,
       "needs": [],
       "checkpoint": "walkthrough",
       "size": {
-        "class": "L",
-        "basis": "4 criteria, 1 area, 1 repo, one real distillation"
+        "class": "M",
+        "basis": "10 criteria, 2 areas, 1 repo"
       },
       "combination": {
         "rules": [
           "cr-same-surface",
-          "cr-one-new-surface"
+          "cr-same-acceptance-boundary"
         ],
-        "why": "cr-same-surface: all three are what Sam meets through the distiller skill. cr-one-new-surface: the skill is one new user-facing surface, proved by running it on the canary.",
-        "risk": "medium",
-        "attributability": "The canary report separates skill failures from distillation differences.",
-        "reverseEffects": [
-          {
-            "op": "split",
-            "target": "distiller-skill-and-canary",
-            "into": [
-              [
-                "distil--skill"
-              ],
-              [
-                "distil--canary"
-              ],
-              [
-                "distil--codex-bindable"
-              ]
-            ]
-          }
-        ]
+        "why": "The skill, its real sources and its first real run are proved together.",
+        "risk": "low",
+        "attributability": "Each member keeps its own criteria, so a red names the atom.",
+        "reverseEffects": []
       },
       "status": "todo",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Rescoped under R9 on 21 September 2026: see design/RESCOPE.md."
     },
     {
       "id": "inc-039",
@@ -16106,9 +15839,9 @@
           }
         ]
       },
-      "status": "todo",
+      "status": "dropped",
       "doneBy": null,
-      "statusNote": null
+      "statusNote": "Dropped under R9 (Sam, 21 September 2026: scope with sense): nothing is retired, because Sam ruled no backports; req-111 moved to inc-038 and req-113 is cut."
     }
   ]
 }

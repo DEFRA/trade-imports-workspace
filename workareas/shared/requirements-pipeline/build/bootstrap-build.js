@@ -5,8 +5,8 @@ export const meta = {
     { title: 'Baseline' },
     { title: 'Plan', detail: 'Opus plans just in time; a different Opus audits it against the backlog row' },
     { title: 'Implement' },
-    { title: 'Review', detail: 'per-file code-style + review personas read live; one consistency reviewer' },
-    { title: 'Verify', detail: 'adversarial, default refuted' },
+    { title: 'Review', detail: 'one reviewer per file group applying the code-style and review personas read live; one consistency reviewer' },
+    { title: 'Verify', detail: 'adversarial, default refuted, critical and major findings only' },
     { title: 'Judge' },
     { title: 'Fix' },
     { title: 'Ladder', detail: 'cheap run-this agent: tim test + lint to logs' },
@@ -159,6 +159,9 @@ for (const ID of cfg.increments) {
   const row = await agent(`${READ_ROW.replace(/<ID>/g, ID)}\n${GUARD}\nReturn the increment's id, status, title (or the single member atom's title if the increment has none), member atom ids, the status of every increment in its dependsOn, and the total number of acceptance criteria across its members.`,
     { label: L('row'), phase: 'Baseline', ...RUNNER, schema: S.row })
   if (!row) { stop('could not read the backlog row'); break }
+  // A cheap reader once returned inc-006's row when asked for inc-007, and the loop skipped
+  // inc-007 as done. The script checks the answer against the question.
+  if (row.id !== ID) { stop(`the row reader returned ${row.id} when asked for ${ID}`); break }
   if (row.status !== 'todo') { stop(`status is ${row.status}, not todo`); continue }
   const landedHere = new Set(results.filter(r => r.landed).map(r => r.id))
   const unmet = row.depStatuses.filter(d => d.status !== 'done' && !landedHere.has(d.id))
@@ -261,38 +264,43 @@ Then size every file in "files": run git -C ${ROOT} diff HEAD --numstat > ${LOGS
 
   phase('Review')
   const reviewedFiles = new Set(manifest.files)
-  const reviewFile = (f) => [
-    () => agent(`You are a STYLE REVIEWER for one file: ${f} (increment ${ID}).
-Follow the workspace code-style skill as its owner wrote it, reading it LIVE now: first ${SK}/code-style/SKILL.md (to learn its method, its language-to-bundle routing and its severity rules), then ${SK}/code-style/references/STYLE_FILE_REVIEWER.md (your persona). Use the skill's own routing to decide which best-practice bundle applies to this file type and read that bundle. If the skill routes no bundle for this file type, review it against the GDS plain-English rules in ${ROOT_ABS}/docs/best-practices/gds/ for prose files, or return no findings.
-${GUARD}${STANDARDS}
-Review only the lines this increment changed: git -C ${ROOT} diff HEAD -- ${f} (or, for an untracked new file, the whole file). Ignore the persona's steps about writing review files, posting to PRs, committing or marking outcomes: return findings instead. List every standards file you actually read.`,
-      { label: L(`style:${f}`), phase: 'Review', model: 'sonnet', schema: S.findings }),
-    () => agent(`You are a CODE REVIEWER for one file: ${f} (increment ${ID}).
-Follow the workspace review skill as its owner wrote it, reading it LIVE now: first ${SK}/review/SKILL.md (its method, severity rules and best-practice routing), then ${SK}/review/references/FILE_REVIEWER.md (your persona), then the best-practice files the skill routes this file type to.
-${GUARD}${STANDARDS}
-Review the change: git -C ${ROOT} diff HEAD -- ${f} (or the whole file if untracked), in the context of the whole file. Judge correctness, error handling, security, test coverage and the tim rails. Also judge it against the requirement: ${READ_ROW.replace(/<ID>/g, ID)}
-Ignore the persona's steps about writing review files, posting or committing: return findings instead. List every standards file you actually read.`,
-      { label: L(`code:${f}`), phase: 'Review', model: 'sonnet', schema: S.findings }),
-  ]
-  // Review is sized by each file's diff (lesson L4). A new file, or one with more than
-  // TRIVIAL_LINES changed lines, gets a dedicated style reviewer and code reviewer. Smaller
-  // changes (import repoints, one-line tweaks) are grouped, and each group gets ONE reviewer
-  // applying both skills' personas, read live. No changed file goes unreviewed.
+  // One review pass per file group (R9 rescope, 21 September 2026). inc-004 spent 102 of 140
+  // agents on per-file reviewers (lesson L4), and two reviewers on every file over 12 lines
+  // still cost about 80 agents an increment. Each group's ONE reviewer applies both skills'
+  // personas, read live. Groups are packed in path order, so neighbouring files share a
+  // reviewer, and sized by changed lines. No changed file goes unreviewed.
   const TRIVIAL_LINES = 12
   const GROUP_SIZE = 15
+  const REVIEW_GROUP_LINES = 500
+  const REVIEW_GROUP_FILES = 5
   const sizeOf = Object.fromEntries((manifest.sizes || []).map(s => [s.file, s]))
+  const linesOf = (f) => { const s = sizeOf[f]; return s ? s.changedLines : REVIEW_GROUP_LINES }
   const isSubstantial = (f) => { const s = sizeOf[f]; return !s || s.isNew || s.changedLines > TRIVIAL_LINES }
-  const substantial = manifest.files.filter(isSubstantial)
-  const trivial = manifest.files.filter(f => !isSubstantial(f))
+  const substantial = manifest.files.filter(isSubstantial).sort()
+  const trivial = manifest.files.filter(f => !isSubstantial(f)).sort()
+  const substantialGroups = []
+  let current = []
+  let currentLines = 0
+  for (const f of substantial) {
+    if (current.length && (current.length >= REVIEW_GROUP_FILES || currentLines + linesOf(f) > REVIEW_GROUP_LINES)) {
+      substantialGroups.push(current)
+      current = []
+      currentLines = 0
+    }
+    current.push(f)
+    currentLines += linesOf(f)
+  }
+  if (current.length) substantialGroups.push(current)
   const trivialGroups = []
   for (let i = 0; i < trivial.length; i += GROUP_SIZE) trivialGroups.push(trivial.slice(i, i + GROUP_SIZE))
-  log(`${ID}: review sized: ${substantial.length} substantial files x2 reviewers, ${trivial.length} small changes in ${trivialGroups.length} grouped reviewer(s)`)
-  const reviewGroup = (group, n) => () => agent(`You are the SMALL-CHANGE REVIEWER for increment ${ID}, group ${n}. Every file below changed by only a few lines. Apply BOTH workspace review skills, read LIVE now: ${SK}/code-style/SKILL.md with ${SK}/code-style/references/STYLE_FILE_REVIEWER.md, and ${SK}/review/SKILL.md with ${SK}/review/references/FILE_REVIEWER.md, plus the best-practice files each skill routes these file types to.
+  log(`${ID}: review grouped: ${substantial.length} substantial files in ${substantialGroups.length} group(s), ${trivial.length} small changes in ${trivialGroups.length} group(s)`)
+  const reviewGroup = (group, n) => () => agent(`You are the REVIEWER for increment ${ID}, file group ${n}. You do both the style review and the code review of every file below. Apply BOTH workspace review skills as their owners wrote them, read LIVE now: ${SK}/code-style/SKILL.md with ${SK}/code-style/references/STYLE_FILE_REVIEWER.md, and ${SK}/review/SKILL.md with ${SK}/review/references/FILE_REVIEWER.md. Use each skill's own routing to find the best-practice files for these file types, and read them. If the skills route no bundle for a file type, review prose against the GDS plain-English rules in ${ROOT_ABS}/docs/best-practices/gds/.
 ${GUARD}${STANDARDS}
-For each file, review its change (git -C ${ROOT} diff HEAD -- <file>) in the context of the surrounding code: style, correctness, and whether the change is complete (for example, a repointed import that still resolves, and no stale path left behind). Files: ${JSON.stringify(group)}
+For each file, review its change (git -C ${ROOT} diff HEAD -- <file>, or the whole file if it is untracked) in the context of the whole file: style against the bundles, then correctness, error handling, security, test coverage, the tim rails, and whether the change is complete (for example, a repointed import that still resolves, and no stale path left behind). Give each file the attention a dedicated reviewer would. Also judge the change against the requirement: ${READ_ROW.replace(/<ID>/g, ID)}
+Files: ${JSON.stringify(group)}
 Ignore the personas' steps about writing review files, posting or committing: return findings. List every standards file you read.`,
-    { label: L(`small:${n}`), phase: 'Review', model: 'sonnet', schema: S.findings })
-  const perFile = await parallel([...substantial.flatMap(f => reviewFile(f)), ...trivialGroups.map((g, n) => reviewGroup(g, n + 1))])
+    { label: L(`review:${n}`), phase: 'Review', model: 'sonnet', schema: S.findings })
+  const perFile = await parallel([...substantialGroups, ...trivialGroups].map((g, n) => reviewGroup(g, n + 1)))
   const consistency = await agent(`You are the CONSISTENCY REVIEWER for increment ${ID}. Follow ${SK}/review/SKILL.md and ${SK}/review/references/CONSISTENCY_REVIEWER.md, read LIVE now.
 ${GUARD}${STANDARDS}
 Read the whole change together: every file in ${JSON.stringify(manifest.files)} (git -C ${ROOT} diff HEAD -- <file>, or the whole file if untracked). Check the contracts between the parts (command signatures against their callers, schemas against their readers, docs and skills against the code), naming against the design ${DESIGN_ABS}, and the plan's invariants in ${PLAN_FILE}: run each one that obeys the guard rails and report any that fail. Ignore the persona's steps about writing files or posting: return findings. List every standards file you read.`,
@@ -304,17 +312,24 @@ Read the whole change together: every file in ${JSON.stringify(manifest.files)} 
   log(`${ID}: ${allFindings.length} findings from ${reviewSets.length} reviewers`)
 
   phase('Verify')
+  // Adversarial verification only for critical and major findings (R9 rescope). Minor findings
+  // go to the judge unverified, marked so, and the judge checks one before ruling it fix-now.
+  // Serious findings are batched a few files to a verifier, never one verifier per file.
+  const VERIFY_BATCH_FILES = 5
   const byFile = {}
-  allFindings.forEach((f, i) => { (byFile[f.file] = byFile[f.file] || []).push({ index: i, ...f }) })
-  const verifyResults = await parallel(Object.entries(byFile).map(([file, fs]) => () => agent(`You are an ADVERSARIAL VERIFIER. Try to REFUTE each finding about ${file}. Default to refuted=true unless the evidence holds when you check the actual code yourself. Do not invent corrections to seem useful.
+  allFindings.forEach((f, i) => { if (f.severity !== 'minor') (byFile[f.file] = byFile[f.file] || []).push({ index: i, ...f }) })
+  const fileEntries = Object.entries(byFile)
+  const verifyBatches = []
+  for (let i = 0; i < fileEntries.length; i += VERIFY_BATCH_FILES) verifyBatches.push(fileEntries.slice(i, i + VERIFY_BATCH_FILES))
+  const verifyResults = await parallel(verifyBatches.map((batch, n) => () => agent(`You are an ADVERSARIAL VERIFIER. Try to REFUTE each finding about ${JSON.stringify(batch.map(([file]) => file))}. Default to refuted=true unless the evidence holds when you check the actual code yourself. Do not invent corrections to seem useful.
 ${GUARD}
-Findings (keep each index): ${JSON.stringify(fs)}`, { label: L(`verify:${file}`), phase: 'Verify', model: 'sonnet', schema: S.verify })))
+Findings (keep each index): ${JSON.stringify(batch.flatMap(([, fs]) => fs))}`, { label: L(`verify:${n + 1}`), phase: 'Verify', model: 'sonnet', schema: S.verify })))
   const verdicts = verifyResults.filter(Boolean).flatMap(v => v.verdicts)
   const deadVerifiers = verifyResults.filter(v => !v).length
   if (deadVerifiers) log(`${ID}: ${deadVerifiers} verifier(s) died; their findings are kept as unrefuted`)
   const refuted = new Set(verdicts.filter(v => v.refuted).map(v => v.index))
-  const surviving = allFindings.map((f, i) => ({ key: `F${i}`, ...f })).filter((f, i) => !refuted.has(i))
-  log(`${ID}: ${surviving.length} findings survive verification`)
+  const surviving = allFindings.map((f, i) => ({ key: `F${i}`, verified: f.severity !== 'minor', ...f })).filter((f, i) => !refuted.has(i))
+  log(`${ID}: ${surviving.length} findings go to the judge (${verifyBatches.length} verifier(s) over the critical and major ones)`)
 
   let judged = { rulings: [] }
   let fixNow = []
@@ -322,6 +337,7 @@ Findings (keep each index): ${JSON.stringify(fs)}`, { label: L(`verify:${file}`)
     phase('Judge')
     judged = await agent(`You are the JUDGE for increment ${ID}. Rule each surviving finding fix-now, defer or reject, without asking anyone.
 fix-now: a real defect or standards breach in this change. defer: real but belongs to a later increment (name it). reject: wrong, a matter of taste the standards do not require, or out of scope.
+A finding with verified=false is minor and was not adversarially verified: check it against the code yourself before you rule it fix-now.
 ${READ_ROW.replace(/<ID>/g, ID)}
 Hard requirements: ${REQS_ABS}. Plan: ${PLAN_FILE}.
 ${GUARD}

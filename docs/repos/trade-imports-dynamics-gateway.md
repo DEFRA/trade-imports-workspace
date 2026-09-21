@@ -20,7 +20,7 @@ Centralised gateway that forwards notification events to Azure Service Bus (ASB)
 - Notification data, persistence or the outbox itself (the animals backend writes and publishes the events; this service holds no database).
 - The event and PIMS schemas (defined in `trade-imports-schemas`; here they are mirrored as Java classes).
 - The SNS-to-SQS subscription and queue provisioning (platform/Floci setup); the queue's `maxReceiveCount` and visibility timeout are CDP platform defaults.
-- The Dynamics/PIMS consumer of the ASB queue: Unclear from code.
+- The consumer of the ASB queue. PIMS consumes it; PIMS is outside this workspace and its team, so no repo here shows it.
 - End-user authentication. Only replay-all/delete-all are guarded, by a shared secret header.
 
 ## Integrations
@@ -35,7 +35,7 @@ Centralised gateway that forwards notification events to Azure Service Bus (ASB)
 | Outbound | AWS CloudWatch | Embedded metrics (EMF) | Metrics |
 | Outbound | trade-imports-schemas | Documentation links only (Javadoc URLs); no build-time or runtime dependency | Reference for `OutboxEvent` and `PimsEventV1` shapes |
 
-The backend also carries a `TRADE_IMPORTS_DYNAMICS_GATEWAY_BASE_URL` setting in the workspace stack. Whether the backend calls the REST endpoint directly is Unclear from code (not checked in backend source).
+The backend also carries a `TRADE_IMPORTS_DYNAMICS_GATEWAY_BASE_URL` setting in the workspace stack, but `trade-imports-animals-backend/src` contains no reference to the gateway and no client for it. Events reach the gateway only through SNS and SQS.
 
 ## Stack
 

@@ -140,15 +140,22 @@ pattern to copy.
 
 ## Known gaps and inconsistencies
 
-- Who consumes the Azure Service Bus queue (Dynamics or PIMS) is not visible in
-  any repo here.
-- plants-backend publishes nothing, so plants notifications never reach the INS
-  read model or PIMS. That may be intended while the journey is built.
-- ins-backend and address-book have no authentication layer in code; they rely
-  on the caller and CDP ingress.
-- `trade-imports-plants-prototype` is not cloned in the workspace, so its page is
-  thin.
-- `trade-imports-stub` and `reference-data` configure Mongo but no code uses it.
+Each item says whether it is intended, planned, or an unresolved gap.
+
+- **Azure Service Bus consumer: PIMS.** PIMS consumes the queue the gateway
+  publishes to. PIMS is outside the scope of this workspace and its team, so no
+  repo here shows the consumer. This is expected, not a gap to close here.
+- **plants-backend publishes no events: intended for now.** The plants journey is
+  new and no events have been defined for it yet. Until they are, plants
+  notifications do not reach the INS read model or PIMS.
+- **No authentication on ins-backend and address-book: known gap, to fix later.**
+  Today they rely on the caller and CDP ingress. Do not treat this as the
+  intended design.
+- **`trade-imports-plants-prototype`: known gap.** It is a prototype for the
+  design team, and its page is thin. Do not treat it as a copy of the plants
+  frontend for architecture purposes.
+- **Unused Mongo config in `trade-imports-stub` and `reference-data`: template
+  leftover.** No code uses it, and it can be ignored.
 
 Related: [`README.md`](README.md) in this folder for the per-repo pages,
 [`../local-setup.md`](../local-setup.md) for running the stack.

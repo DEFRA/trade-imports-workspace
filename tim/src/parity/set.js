@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { readJsonFile, writeJsonAtomic } from './io.js'
+import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 import { parseBacklog } from './schema.js'
 import { parseLineSpec } from './citations/parse.js'
 import { TimError } from '../errors.js'

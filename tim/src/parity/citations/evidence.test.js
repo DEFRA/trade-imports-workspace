@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { readJsonFile } from '../io.js'
+import { readJsonFile } from '../../backlog/io.js'
 import { resolveCitation, runEvidence } from './evidence.js'
 import { citationHealth } from '../check-evidence.js'
 

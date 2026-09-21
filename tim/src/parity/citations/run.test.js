@@ -10,7 +10,7 @@ import {
   runCitations
 } from './run.js'
 import { indexByBasename } from './resolve.js'
-import { readJsonFile } from '../io.js'
+import { readJsonFile } from '../../backlog/io.js'
 import { setCitation } from '../set.js'
 
 const profile = {

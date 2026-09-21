@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from 'node:fs'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { parseBacklog, parseDeferred } from './schema.js'
 
 /**

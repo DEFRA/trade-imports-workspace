@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { readJsonFile, writeJsonAtomic } from './io.js'
+import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 
 /**
  * A seal is the picture a reader was last shown for one side of one finding.

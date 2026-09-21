@@ -24,6 +24,7 @@ import { register as registerGithub } from './commands/github/index.js'
 import { register as registerConfluence } from './commands/confluence/index.js'
 import { register as registerGha } from './commands/gha/index.js'
 import { register as registerParity } from './commands/parity/index.js'
+import { register as registerBacklog } from './commands/backlog/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -154,6 +155,7 @@ export const buildProgram = () => {
   registerConfluence(program, { timVersion: pkg.version })
   registerGha(program, { timVersion: pkg.version })
   registerParity(program, { timVersion: pkg.version })
+  registerBacklog(program, { timVersion: pkg.version })
 
   return program
 }

@@ -1,5 +1,5 @@
 import { readAuthored } from './yield.js'
-import { findingsDir } from './ingest.js'
+import { findingsDir } from './profile-v1.js'
 
 /**
  * Words that carry no signal about what a finding is about.

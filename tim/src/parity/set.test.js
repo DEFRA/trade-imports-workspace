@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { setSlot, setSlots, setDecisionRequired, setCitation } from './set.js'
 
 let dir

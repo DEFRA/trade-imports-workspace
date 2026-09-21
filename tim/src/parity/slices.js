@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { loadPairs } from './assets/pairs.js'
 import { TimError } from '../errors.js'
 

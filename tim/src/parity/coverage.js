@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 
 const require = createRequire(import.meta.url)

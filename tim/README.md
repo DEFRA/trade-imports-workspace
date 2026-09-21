@@ -189,6 +189,26 @@ Every subcommand takes a positional run id — there is no default, because a
 report that silently rendered the wrong corpus would be worse than one that
 refused.
 
+### `tim backlog` — programme backlogs
+
+The same writer core `tim parity ingest` uses, generalised over any
+registered programme through a profile — `parity-v1` for a comparison
+corpus, `requirements-v2` for a DESIGN section 3.4 requirements atom set.
+
+```bash
+tim backlog registry list --json                 # every registered programme, its profile and workarea
+tim backlog registry show fixture-requirements    # one programme's resolved paths
+tim backlog ingest fixture-requirements --dry-run --json  # assemble backlog.json from item files
+tim backlog ingest <programme> --replace          # rebuild ids from scratch; refuses while any row holds a ruling
+tim backlog ingest <programme> --target <name>    # build-loop target the backlog names (parity-v1 only)
+```
+
+A programme is registered in one of two files: a parity corpus in
+`tools/parity/corpora.json`, or any other programme — such as
+`fixture-requirements`, the tracked fixture this file's own tests re-ingest
+on every run — in `tools/backlog/registry.json`. A key may appear in only one
+of the two files; `tim backlog registry list` reports both together.
+
 ### Bypassing the interactive menu
 
 The menu only opens when stdout is a TTY and the user has not asked for plain text. In any of the following situations tim falls back to printing `--help` to stdout, so pipes, CI and skill scripts keep working unchanged:

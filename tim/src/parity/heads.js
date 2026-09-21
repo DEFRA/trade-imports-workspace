@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile, writeJsonAtomic } from './io.js'
+import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 import { run } from '../exec/exec.js'
 import { TimError } from '../errors.js'
 

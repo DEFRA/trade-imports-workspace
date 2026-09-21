@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { loadCorpus } from './load.js'
 import { loadPairs, indexPairs, screenPairsFor } from './assets/pairs.js'
 import { readSeals } from './seals.js'

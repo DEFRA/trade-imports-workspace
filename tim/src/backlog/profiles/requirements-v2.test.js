@@ -106,23 +106,66 @@ describe('validateAtom', () => {
     expect(atomSchema.parse(row).needs).toEqual(['q-something'])
   })
 
-  test('reads a verification record from provenance.verifiedBy and nowhere else', () => {
-    const withTopLevel = validate({
-      verification: 'ignored',
-      provenance: { verifiedBy: null }
-    })
-    expect(withTopLevel.verification).toBeUndefined()
+  test('refuses a top-level verification key, naming the plan', () => {
+    expect(() =>
+      validate({ verification: 'ignored', provenance: { verifiedBy: null } })
+    ).toThrow(/"verification".*plan/s)
+  })
 
+  test('reads a verification record from provenance.verifiedBy and nowhere else', () => {
     const withProvenance = validate({
       provenance: {
         verifiedBy: { phase: 'verify', task: 'verify:alpha', run: 'run-1' }
       }
     })
+
     expect(withProvenance.verification).toEqual({
       phase: 'verify',
       task: 'verify:alpha',
       run: 'run-1'
     })
+  })
+
+  test('refuses filesToTouch, naming the plan', () => {
+    expect(() => validate({ filesToTouch: ['a.js'] })).toThrow(
+      /"filesToTouch".*plan owns files/s
+    )
+  })
+
+  test('refuses an unknown key, naming it and the known fields', () => {
+    expect(() => validate({ bandwidth: 'high' })).toThrow(
+      /"bandwidth".*Known fields:/s
+    )
+  })
+
+  test('refuses a classed field this collection does not persist yet, naming its future owner', () => {
+    expect(() => validate({ actor: 'importer' })).toThrow(
+      /"actor".*author \(inc-032\)/s
+    )
+  })
+
+  test('passes a not-yet-persisted field whose eventual owner is ingest itself', () => {
+    expect(() => validate({ confidence: 'stated' })).not.toThrow()
+  })
+
+  test('returns needs as given when it is a list of strings', () => {
+    expect(validate({ needs: ['q-1', 'q-2'] }).needs).toEqual(['q-1', 'q-2'])
+  })
+
+  test('returns [] for needs when absent', () => {
+    expect(validate().needs).toEqual([])
+  })
+
+  test('refuses needs: "q-1" (not a list), naming the file and needs', () => {
+    expect(() => validate({ needs: 'q-1' })).toThrow(
+      /alpha--second\.json.*"needs"/s
+    )
+  })
+
+  test('refuses needs: [""] (an empty entry), naming the file and needs', () => {
+    expect(() => validate({ needs: [''] })).toThrow(
+      /alpha--second\.json.*"needs"/s
+    )
   })
 
   test('derives the born status proposed', () => {
@@ -146,6 +189,22 @@ describe('parseAtom', () => {
   test('names the actual bad value on a wrongly-typed field, not the literal "undefined"', () => {
     expect(() => parseAtom({ ...atom(), id: 42 }, 0)).toThrow(/got 42/)
   })
+
+  test('refuses a row carrying executor, naming the field and build/run.json (D8, D26)', () => {
+    const row = {
+      ...atom(),
+      id: 'req-001',
+      dependsOn: [],
+      relatedTo: [],
+      status: 'proposed',
+      provenance: null,
+      executor: 'codex'
+    }
+
+    expect(() => parseAtom(row, 0)).toThrow(
+      /req-001.*executor.*build\/run\.json/s
+    )
+  })
 })
 
 describe('parseV2Backlog', () => {
@@ -158,5 +217,26 @@ describe('parseV2Backlog', () => {
         requirements: []
       })
     ).toThrow(/got 42/)
+  })
+
+  test('refuses an atom row carrying executor, naming the field and build/run.json, on the read (D8, D26)', () => {
+    const row = {
+      ...atom(),
+      id: 'req-001',
+      dependsOn: [],
+      relatedTo: [],
+      status: 'proposed',
+      provenance: null,
+      executor: 'codex'
+    }
+
+    expect(() =>
+      parseV2Backlog({
+        schemaVersion: 2,
+        programme: 'p',
+        profile: 'requirements-v2',
+        requirements: [row]
+      })
+    ).toThrow(/req-001.*executor.*build\/run\.json/s)
   })
 })

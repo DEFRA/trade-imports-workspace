@@ -66,6 +66,64 @@ const copyFixtureAtoms = (destDir) => {
   }
 }
 
+const adoptEveryAtom = (programmeDir) => {
+  const backlogPath = join(programmeDir, 'backlog.json')
+  const currentBacklog = JSON.parse(readFileSync(backlogPath, 'utf8'))
+  const adopted = {
+    ...currentBacklog,
+    requirements: currentBacklog.requirements.map((row) => ({
+      ...row,
+      status: 'adopted'
+    }))
+  }
+  writeFileSync(backlogPath, JSON.stringify(adopted))
+}
+
+const writeIncrement = (programmeDir, key, body) => {
+  const incrementsDir = join(programmeDir, 'distil', 'increments')
+  mkdirSync(incrementsDir, { recursive: true })
+  writeFileSync(
+    join(incrementsDir, `${key}.json`),
+    JSON.stringify({
+      key,
+      title: 'An increment',
+      outcome: 'Something true when done.',
+      why: 'Why it ships.',
+      members: ['alpha--second'],
+      class: 'feat',
+      milestone: null,
+      checkpoint: null,
+      size: { class: 'S', basis: '1 criterion, 1 atom' },
+      combination: { why: 'One reason.', rules: [] },
+      ...body
+    })
+  )
+}
+
+const seedParityCorpus = () => {
+  writeCorpora({
+    default: 'alpha',
+    corpora: {
+      alpha: {
+        runId: 'RUN-1',
+        backlog: 'workareas/journey-builder/RUN-1/backlog.json',
+        workarea: 'workareas/shared/alpha',
+        sides: [],
+        repos: {}
+      }
+    }
+  })
+  mkdirSync(join(workspace, 'workareas', 'shared', 'alpha', 'findings'), {
+    recursive: true
+  })
+}
+
+const writeState = (programmeDir, body) => {
+  const buildDir = join(programmeDir, 'build')
+  mkdirSync(buildDir, { recursive: true })
+  writeFileSync(join(buildDir, 'state.json'), JSON.stringify(body))
+}
+
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-backlog-cli-'))
   seedWorkspaceRoot()
@@ -307,21 +365,7 @@ describe('tim backlog ingest', () => {
   })
 
   test('backlog ingest <parity key> --dry-run --json returns the same counts as parity ingest <runId> --dry-run --json (req-009 ac-1 across profiles)', async () => {
-    writeCorpora({
-      default: 'alpha',
-      corpora: {
-        alpha: {
-          runId: 'RUN-1',
-          backlog: 'workareas/journey-builder/RUN-1/backlog.json',
-          workarea: 'workareas/shared/alpha',
-          sides: [],
-          repos: {}
-        }
-      }
-    })
-    mkdirSync(join(workspace, 'workareas', 'shared', 'alpha', 'findings'), {
-      recursive: true
-    })
+    seedParityCorpus()
     mkdirSync(join(workspace, 'tools', 'journey-builder'), { recursive: true })
     writeFileSync(
       join(workspace, 'tools', 'journey-builder', 'targets.json'),
@@ -492,21 +536,7 @@ describe('tim backlog ingest', () => {
   })
 
   test('--target round-trips into a parity-v1 backlog, overriding the build-loop target it would otherwise resolve', async () => {
-    writeCorpora({
-      default: 'alpha',
-      corpora: {
-        alpha: {
-          runId: 'RUN-1',
-          backlog: 'workareas/journey-builder/RUN-1/backlog.json',
-          workarea: 'workareas/shared/alpha',
-          sides: [],
-          repos: {}
-        }
-      }
-    })
-    mkdirSync(join(workspace, 'workareas', 'shared', 'alpha', 'findings'), {
-      recursive: true
-    })
+    seedParityCorpus()
 
     const { exitCode } = await runTim(
       ['backlog', 'ingest', 'alpha', '--target', 'my-target'],
@@ -527,5 +557,339 @@ describe('tim backlog ingest', () => {
       )
     )
     expect(written.target).toBe('my-target')
+  })
+})
+
+const trackedFixtureDir = join(fixtureAtomsDir, '..', '..')
+
+describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
+  const registerTrackedFixture = () =>
+    writeRegistry({
+      programmes: {
+        'fixture-requirements': {
+          profile: 'requirements-v2',
+          workarea: trackedFixtureDir
+        }
+      }
+    })
+
+  const seedProgramme = () => {
+    const programmeDir = join(
+      workspace,
+      'workareas',
+      'shared',
+      'not-a-ticket-id'
+    )
+    copyFixtureAtoms(join(programmeDir, 'distil', 'atoms'))
+    writeRegistry({
+      programmes: {
+        'not-a-ticket-id': {
+          profile: 'requirements-v2',
+          workarea: 'workareas/shared/not-a-ticket-id'
+        }
+      }
+    })
+    return programmeDir
+  }
+
+  test('--increments --dry-run --json over the tracked fixture: exit 0, collection increments, two assignments, written false', async () => {
+    registerTrackedFixture()
+    const { stdout, exitCode } = await runTim(
+      [
+        'backlog',
+        'ingest',
+        'fixture-requirements',
+        '--increments',
+        '--dry-run',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.result.collection).toBe('increments')
+    expect(payload.result.total).toBe(2)
+    expect(payload.result.written).toBe(false)
+  })
+
+  test('--atoms given explicitly: exit 0, collection atoms, the same counts as the flagless run', async () => {
+    registerTrackedFixture()
+    const { stdout, exitCode } = await runTim(
+      [
+        'backlog',
+        'ingest',
+        'fixture-requirements',
+        '--atoms',
+        '--dry-run',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.result.collection).toBe('atoms')
+    expect(payload.result.total).toBe(3)
+  })
+
+  test('both flags at once: exit 2, stderr naming the two flags', async () => {
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'fixture-requirements', '--atoms', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toContain('--atoms')
+    expect(stderr).toContain('--increments')
+  })
+
+  test('--atoms on a parity-v1 programme: exit 2, stderr naming findings', async () => {
+    seedParityCorpus()
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'alpha', '--atoms'],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toContain('findings')
+  })
+
+  test('req-010 ac-1: an authored increment carrying filesToTouch: exit 1, stderr matching filesToTouch and plan owns files', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry', {
+      filesToTouch: ['a.js']
+    })
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    expect(stderr).toMatch(/filesToTouch/)
+    expect(stderr).toMatch(/plan owns files/)
+  })
+
+  test('req-010 ac-2: an authored increment carrying executor: exit 1, stderr matching executor and build/run.json', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry', { executor: 'codex' })
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    expect(stderr).toMatch(/executor/)
+    expect(stderr).toMatch(/build\/run\.json/)
+  })
+
+  // req-011 ac-1's witness (D27) is the existing "re-ingests after an atom
+  // is inserted ahead" case above, unchanged — no new case needed here.
+
+  test('req-012 ac-1: two authored increments naming each other in dependsOn: exit 2, stderr naming both keys, no increments key written', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'a', {
+      members: ['alpha--second'],
+      dependsOn: ['b']
+    })
+    writeIncrement(programmeDir, 'b', {
+      members: ['alpha--third'],
+      dependsOn: ['a']
+    })
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toMatch(/a/)
+    expect(stderr).toMatch(/b/)
+    const written = JSON.parse(
+      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+    )
+    expect(written.increments).toBeUndefined()
+  })
+
+  test('req-013 ac-1: three atoms adopted, one increment claiming two: exit 0, membership covered === adopted, a solo row written', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    adoptEveryAtom(programmeDir)
+    writeIncrement(programmeDir, 'core-and-registry', {
+      members: ['alpha--second', 'alpha--third']
+    })
+
+    const { stdout, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments', '--json'],
+      workspace
+    )
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.result.membership).toEqual({
+      adopted: 3,
+      covered: 3,
+      solo: 1,
+      combined: 1
+    })
+    const written = JSON.parse(
+      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+    )
+    const solo = written.increments.find((row) => row.key.startsWith('solo--'))
+    expect(solo.key).toBe('solo--beta--first')
+    expect(solo.title).toBeUndefined()
+    expect(solo.outcome).toBeUndefined()
+  })
+
+  test('req-014 ac-1: a started increment left out by a re-combine: exit 2, stderr naming the key, the row still in backlog.json', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry')
+    await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+    writeState(programmeDir, {
+      increments: { 'inc-001': { attempts: [{ n: 1 }] } }
+    })
+    rmSync(join(programmeDir, 'distil', 'increments', 'core-and-registry.json'))
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toContain('core-and-registry')
+    const written = JSON.parse(
+      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+    )
+    expect(written.increments).toHaveLength(1)
+  })
+
+  test('the same removal with no state.json: exit 0, the row is gone', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry')
+    await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+    rmSync(join(programmeDir, 'distil', 'increments', 'core-and-registry.json'))
+
+    const { exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(0)
+    const written = JSON.parse(
+      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+    )
+    expect(written.increments).toHaveLength(0)
+  })
+
+  test('a backlog.json hand-edited to add executor to an atom row: exit 1, stderr naming executor and build/run.json, the file unchanged (D8, D26)', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    const backlogPath = join(programmeDir, 'backlog.json')
+    const held = JSON.parse(readFileSync(backlogPath, 'utf8'))
+    held.requirements[0] = { ...held.requirements[0], executor: 'codex' }
+    writeFileSync(backlogPath, JSON.stringify(held))
+    const before = readFileSync(backlogPath, 'utf8')
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id'],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    expect(stderr).toContain('executor')
+    expect(stderr).toContain('build/run.json')
+    expect(readFileSync(backlogPath, 'utf8')).toBe(before)
+  })
+
+  test('an authored increment with members: ["req-999"] over the three fixture atoms: exit 1, stderr naming the file, members and req-999', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry', { members: ['req-999'] })
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(1)
+    expect(stderr).toContain('core-and-registry.json')
+    expect(stderr).toContain('members')
+    expect(stderr).toContain('req-999')
+    const written = JSON.parse(
+      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+    )
+    expect(written.increments).toBeUndefined()
+  })
+
+  test('the regroup guard through the CLI: a started increment losing a member: exit 2, stderr naming its key and id, backlog.json unchanged', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry', {
+      members: ['alpha--second', 'alpha--third']
+    })
+    await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+    writeState(programmeDir, {
+      increments: { 'inc-001': { attempts: [{ n: 1 }] } }
+    })
+    writeIncrement(programmeDir, 'core-and-registry', {
+      members: ['alpha--second']
+    })
+    const before = readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+
+    const { stderr, exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(2)
+    expect(stderr).toContain('core-and-registry')
+    expect(stderr).toContain('inc-001')
+    expect(readFileSync(join(programmeDir, 'backlog.json'), 'utf8')).toBe(
+      before
+    )
+  })
+
+  test('the same edit with no state.json: exit 0, the smaller members is written under the same id', async () => {
+    const programmeDir = seedProgramme()
+    await runTim(['backlog', 'ingest', 'not-a-ticket-id'], workspace)
+    writeIncrement(programmeDir, 'core-and-registry', {
+      members: ['alpha--second', 'alpha--third']
+    })
+    await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+    writeIncrement(programmeDir, 'core-and-registry', {
+      members: ['alpha--second']
+    })
+
+    const { exitCode } = await runTim(
+      ['backlog', 'ingest', 'not-a-ticket-id', '--increments'],
+      workspace
+    )
+
+    expect(exitCode).toBe(0)
+    const written = JSON.parse(
+      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
+    )
+    expect(written.increments[0].id).toBe('inc-001')
+    expect(written.increments[0].members).toHaveLength(1)
   })
 })

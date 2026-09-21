@@ -30,7 +30,8 @@ const absolutise = (workspaceRoot, path) => {
  * @param {string} args.workspaceRoot
  * @param {string} args.key - A registry key, never a path
  * @returns {object} A profile object that `runIngest` and the backlog
- *   commands can read paths from
+ *   commands can read paths from, including `paths.state` — where a
+ *   recorded build attempt lives
  * @throws {TimError} NOT_FOUND for an unknown key, USAGE for an unknown
  *   profile or a registry entry missing `workarea`
  */
@@ -61,7 +62,10 @@ export const loadProgramme = ({ workspaceRoot, key }) => {
       workarea,
       backlog: entry.backlog
         ? absolutise(workspaceRoot, entry.backlog)
-        : join(workarea, 'backlog.json')
+        : join(workarea, 'backlog.json'),
+      // Where a recorded build attempt lives. Read-only here: inc-006 owns
+      // writing it, the lock and every other field.
+      state: join(workarea, 'build', 'state.json')
     }
   }
 }

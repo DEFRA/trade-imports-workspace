@@ -12,6 +12,32 @@ const emitError = (text) => process.stderr.write(`${text}\n`)
 
 const programmeKeySchema = z.string().trim().min(1, 'Name a programme key.')
 
+const ingestOptsSchema = z
+  .object({
+    atoms: z.boolean().optional().default(false),
+    increments: z.boolean().optional().default(false)
+  })
+  .refine((opts) => !(opts.atoms && opts.increments), {
+    message:
+      '--atoms and --increments cannot both be given. Choose one, or drop both for the default.'
+  })
+
+/**
+ * Validate the ingest command's --atoms/--increments combination before any
+ * side-effect runs (`.claude/rules/cli-patterns.md`).
+ *
+ * @param {object} opts
+ * @returns {{atoms: boolean, increments: boolean}}
+ * @throws {TimError} USAGE
+ */
+const parseIngestOpts = (opts) => {
+  const result = ingestOptsSchema.safeParse(opts)
+  if (!result.success) {
+    throw new TimError('USAGE', result.error.issues[0].message)
+  }
+  return result.data
+}
+
 /**
  * Validate a positional argument before any side-effect runs, refusing with
  * exit 2 rather than a raw zod error (`.claude/rules/cli-patterns.md`).
@@ -79,7 +105,7 @@ const renderIngest = (result) =>
     `${result.total} items — ${result.new} new, ${result.refreshed} refreshed.`,
     ...result.assignment.map(
       (entry) =>
-        `  ${entry.id}  ${entry.isNew ? 'new     ' : 'existing'}  ${entry.file}`
+        `  ${entry.id}  ${entry.isNew ? 'new     ' : 'existing'}  ${entry.file ?? entry.key}`
     ),
     ...(result.dropped.length
       ? [
@@ -90,6 +116,12 @@ const renderIngest = (result) =>
       ? `Written to ${result.path}`
       : 'Nothing written. Drop --dry-run to apply.'
   ].join('\n')
+
+const resolveCollection = (opts) => {
+  if (opts.increments) return 'increments'
+  if (opts.atoms) return 'atoms'
+  return undefined
+}
 
 const renderRegistryList = (result) =>
   result.programmes
@@ -121,25 +153,38 @@ export const register = (program, { timVersion }) => {
     )
     .addHelpText(
       'after',
-      '\nExample: tim backlog ingest fixture-requirements --dry-run --json'
+      '\nExamples:\n' +
+        '  tim backlog ingest fixture-requirements --dry-run --json\n' +
+        '  tim backlog ingest fixture-requirements --increments --json'
     )
     .option(
       '--replace',
-      'Rebuild from scratch rather than merging. Refuses while any row holds a ruling'
+      'Rebuild from scratch rather than merging. Refuses while any row is ruled or started'
     )
     .option('--dry-run', 'Report what would be written and write nothing')
     .option(
       '--target <name>',
       'Build-loop target the backlog names (parity-v1 programmes only)'
     )
+    .option(
+      '--atoms',
+      'Ingest requirement atoms (requirements-v2 programmes; the default collection)'
+    )
+    .option(
+      '--increments',
+      'Ingest requirement increments (requirements-v2 programmes only)'
+    )
     .action(
       makeBacklogAction({
         run: ({ workspaceRoot, args }, opts) => {
           const key = parseProgrammeKey(args[0], 'programme')
+          const ingestOpts = parseIngestOpts(opts)
           const profile = loadProgramme({ workspaceRoot, key })
+          const collection = resolveCollection(ingestOpts)
           return runIngest({
             profile,
             workspaceRoot,
+            collection,
             replace: opts.replace,
             dryRun: opts.dryRun,
             target: opts.target

@@ -296,6 +296,7 @@ const slotFinding = ({ slots, correction, verification, relatedTo }) => ({
  */
 export const parityV1 = {
   key: 'parity-v1',
+  collection: 'findings',
   itemsKey: 'increments',
   idPrefix: 'inc-',
   identityField: 'source',
@@ -314,7 +315,9 @@ export const parityV1 = {
       screens: context.screens
     }),
   sortKey: (item) => [item.slice, item.file],
-  references: [{ field: 'relatedTo', shape: 'object' }],
+  references: [
+    { field: 'relatedTo', shape: 'object', scope: 'batch', verifyIds: false }
+  ],
   frozen: { field: 'detail', compose: (item) => composeDetail(item.slots) },
   bornStatus: () => INITIAL_STATUS,
   isRuled: (row) =>

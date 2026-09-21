@@ -58,6 +58,14 @@ describe('loadProgramme', () => {
         'backlog.json'
       )
     )
+    expect(profile.paths.state).toBe(
+      join(
+        workspace,
+        'tim/src/backlog/__fixtures__/fixture-requirements',
+        'build',
+        'state.json'
+      )
+    )
   })
 
   test('expands a home-relative workarea rather than nesting it under the workspace', () => {

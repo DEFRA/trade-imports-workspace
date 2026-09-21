@@ -213,6 +213,17 @@ tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-
 tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
+Three commands work on any workarea's `backlog.json` in the one backlog shape
+(`docs/reference/backlog-shape.md`), with no registration. The distiller and
+the build loop use them:
+
+```bash
+tim backlog check shared/my-programme --json     # the shape, dependencies, cycles and recipe fields; exits 1 when out of shape
+tim backlog next shared/my-programme --json      # the next buildable id, or NONE
+tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
+tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
+```
+
 A programme is registered in one of two files: a parity corpus in
 `tools/parity/corpora.json`, or any other programme — such as
 `fixture-requirements`, the tracked fixture this file's own tests re-ingest

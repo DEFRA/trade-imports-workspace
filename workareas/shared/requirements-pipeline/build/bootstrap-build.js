@@ -158,7 +158,7 @@ for (const ID of cfg.increments) {
   const planPrompt = (objections) => `You are the PLANNER for increment ${ID} of Sam's requirements-pipeline programme.
 ${READ_ROW.replace(/<ID>/g, ID)}
 ${GUARD}${STANDARDS}
-The HOW lives in the programme's design, which is the knowledge source for this programme: ${DESIGN_ABS} (large: grep -n for the sections, commands and atom ids this increment needs, then Read those ranges). Sam's hard requirements R1-R8: ${REQS_ABS}. Read the live code you will change; plan against the tree as it is now, not as the design imagined it. If the design and the live code disagree, the live code is the fact and you record the decision.
+The HOW lives in the programme's design, which is the knowledge source for this programme: ${DESIGN_ABS} (large: grep -n for the sections, commands and atom ids this increment needs, then Read those ranges). Sam's hard requirements R1-R8: ${REQS_ABS}. Read ${P_ABS}/build/lessons.md and ${P_ABS}/build/deferred.md, and apply every lesson or deferred finding that names this increment. Read the live code you will change; plan against the tree as it is now, not as the design imagined it. If the design and the live code disagree, the live code is the fact and you record the decision.
 Write the plan to ${PLAN_FILE} with these sections:
 0 Decisions (every choice the atoms leave open, made and recorded with rejected alternatives; never leave a fork for the implementer)
 1 Criteria map (every acceptance criterion of every member atom, quoted, and how the change will meet it and how it will be proven)

@@ -144,6 +144,12 @@ ${GUARD}
     branch: { type: 'string' }, preexisting: { type: 'array', items: { type: 'string' } } }, required: ['branch', 'preexisting'] } })
 if (!base || base.branch !== BRANCH) throw new Error(`Baseline: not on ${BRANCH} (${base && base.branch})`)
 const PREEXISTING = base.preexisting
+// Lesson L5: the product folders must start clean, so land can stage them wholesale and no
+// cheap-model file filtering ever decides what reaches a commit.
+const PRODUCT_DIRS = ['tim', '.claude', 'tools', 'docs', '.github']
+const PRODUCT_PATHSPEC = PRODUCT_DIRS.join(' ')
+const dirtyProduct = PREEXISTING.filter(p => PRODUCT_DIRS.some(d => p === d || p.startsWith(`${d}/`)))
+if (dirtyProduct.length) throw new Error(`Baseline: product folders are not clean, so land cannot stage them wholesale: ${dirtyProduct.join(', ')}`)
 log(`Baseline: ${PREEXISTING.length} pre-existing dirty or untracked paths will be left alone`)
 
 for (const ID of cfg.increments) {
@@ -245,17 +251,16 @@ Return every file you created, edited, moved or deleted (workspace-relative), wh
 
   const manifestPrompt = `You are a "run this" agent. Make no judgement.
 ${GUARD}
-Run: git -C ${ROOT} status --porcelain --untracked-files=all > ${LOGS_T}/${ID}-status.txt 2>&1 ; then Read ${LOGS_ABS}/${ID}-status.txt.
-Pre-existing paths to IGNORE (they belong to other work): ${JSON.stringify(PREEXISTING)}
-The plan names these paths: ${JSON.stringify(plan.files)}
-Also IGNORE everything under ${P}/build/ (plans and logs; the land step handles the plan file).
-Return in "files" every path in the status output that is not pre-existing and not ignored (a directory entry counts as every file under it; list the files with find if needed). Return in "unexpected" the ones that are not under any path the plan names.
+Run exactly: git -C ${ROOT} status --porcelain --untracked-files=all -- ${PRODUCT_PATHSPEC} ${P}/design > ${LOGS_T}/${ID}-status.txt 2>&1 ; then Read ${LOGS_ABS}/${ID}-status.txt.
+Return in "files" EVERY path that output lists, with no filtering (for a rename line "old -> new", return the new path; include deleted files).
+The plan names these paths: ${JSON.stringify(plan.files)}. Return in "unexpected" the files that are not under any path the plan names.
 Then size every file in "files": run git -C ${ROOT} diff HEAD --numstat > ${LOGS_T}/${ID}-numstat.txt 2>&1 and Read it once. For a tracked file, changedLines = added + removed from that output. For an untracked new file, isNew=true and changedLines = its line count (wc -l on that one file). Return one "sizes" entry per file.`
   let manifest = await agent(manifestPrompt, { label: L('manifest'), phase: 'Implement', ...RUNNER, schema: S.manifest })
   if (!manifest || !manifest.files.length) { stop('manifest found no changed files'); break }
   if (manifest.unexpected.length) log(`${ID}: files changed outside the plan: ${manifest.unexpected.join(', ')}`)
 
   phase('Review')
+  const reviewedFiles = new Set(manifest.files)
   const reviewFile = (f) => [
     () => agent(`You are a STYLE REVIEWER for one file: ${f} (increment ${ID}).
 Follow the workspace code-style skill as its owner wrote it, reading it LIVE now: first ${SK}/code-style/SKILL.md (to learn its method, its language-to-bundle routing and its severity rules), then ${SK}/code-style/references/STYLE_FILE_REVIEWER.md (your persona). Use the skill's own routing to decide which best-practice bundle applies to this file type and read that bundle. If the skill routes no bundle for this file type, review it against the GDS plain-English rules in ${ROOT_ABS}/docs/best-practices/gds/ for prose files, or return no findings.
@@ -381,6 +386,29 @@ Then run tim's tests to ${LOGS_T}/${ID}-accept-repair-test.log and lint to ${LOG
   }
   if (!accept || !accept.accepted) { stop(`not accepted: ${accept ? accept.gaps.join(' | ') : 'checker died'}`, { acceptance: accept }); break }
 
+  // Late review (lesson L5): a fixer or repair can create or touch files after review ran
+  // (inc-006's fixer extracted two helpers that were never reviewed). Review them before land.
+  const finalManifest = await agent(manifestPrompt, { label: L('manifest-final'), phase: 'Land', ...RUNNER, schema: S.manifest })
+  if (!finalManifest) { stop('final manifest failed'); break }
+  manifest = finalManifest
+  const lateFiles = finalManifest.files.filter(f => !reviewedFiles.has(f))
+  if (lateFiles.length) {
+    log(`${ID}: late review of ${lateFiles.length} file(s) created or touched after review: ${lateFiles.join(', ')}`)
+    const lateGroups = []
+    for (let i = 0; i < lateFiles.length; i += GROUP_SIZE) lateGroups.push(lateFiles.slice(i, i + GROUP_SIZE))
+    const late = await parallel(lateGroups.map((g, n) => reviewGroup(g, `late-${n + 1}`)))
+    if (late.some(r => !r)) { stop('a late reviewer died; a dead reviewer never reads as approval'); break }
+    const lateSerious = late.flatMap(r => r.findings).filter(f => f.severity !== 'minor')
+    if (lateSerious.length) {
+      const lateFix = await agent(`You are the FIXER for ${ID}, late review. Apply these findings on files created after the main review, following ${SK}/review/references/REVIEW_ITEM_FIXER.md and ${SK}/code-style/references/STYLE_IMPLEMENTOR.md for method (read live), ignoring their commit steps.
+${GUARD}${STANDARDS}
+Findings: ${JSON.stringify(lateSerious)}`, { label: L('late-fix'), phase: 'Land', ...DOER, schema: S.impl })
+      if (!lateFix || !lateFix.done) { stop('late fix failed'); break }
+      const lateLadder = await agent(ladderPrompt('L'), { label: L('ladder-late'), phase: 'Land', ...RUNNER, schema: S.ladder })
+      if (!lateLadder || lateLadder.testExit !== 0 || lateLadder.lintExit !== 0) { stop('late fix left the ladder red'); break }
+    }
+  }
+
   phase('Land')
   const landed = await agent(`You are a "run this" agent that lands increment ${ID}. Make no judgement.
 ${GUARD}
@@ -389,13 +417,14 @@ ${GUARD}
    blank line, then one line per behaviour change: ${JSON.stringify(plan.behaviourChanges)}
    blank line, then: Backlog-Increment: requirements-pipeline/${ID}
    blank line, then: ${cfg.trailer}
-2. Stage each of these files by name, one git -C ${ROOT} add -- <path> call each (for a deleted file use git -C ${ROOT} rm --cached -- <path> only if add refuses): ${JSON.stringify(manifest.files)}
-   Also stage the plan file ${P}/build/plans/${ID}.md.
-3. git -C ${ROOT} commit -F ${LOGS_T}/${ID}-commit-msg.txt
-4. git -C ${ROOT} rev-parse HEAD
-5. git -C ${ROOT} status --porcelain --untracked-files=all > ${LOGS_T}/${ID}-post-land-status.txt 2>&1 ; Read it once.
-   Pre-existing paths to IGNORE: ${JSON.stringify(PREEXISTING)}. Also ignore everything under ${P}/build/.
-   Return every other path it lists in "leftover" (a file this increment created or changed that did not make it into the commit).
+2. Stage the product folders wholesale, exactly this one command (they were clean when the run started, so everything in them is this increment's):
+   git -C ${ROOT} add -A -- ${PRODUCT_PATHSPEC}
+3. Stage these by name, one git -C ${ROOT} add -- <path> call each, skipping any under ${PRODUCT_PATHSPEC} (already staged): ${JSON.stringify(manifest.files)}
+   Also stage ${P}/build/plans/${ID}.md and ${P}/build/deferred.md.
+4. git -C ${ROOT} commit -F ${LOGS_T}/${ID}-commit-msg.txt
+5. git -C ${ROOT} rev-parse HEAD
+6. git -C ${ROOT} status --porcelain --untracked-files=all -- ${PRODUCT_PATHSPEC} > ${LOGS_T}/${ID}-post-land-status.txt 2>&1 ; Read it once.
+   Return EVERY path that file lists in "leftover", with no filtering. It must be empty.
 Return the sha, the files committed and the leftover paths.`, { label: L('land'), phase: 'Land', ...RUNNER, schema: S.land })
   if (!landed || !landed.sha) { stop('land failed'); break }
   // Lesson L5: the ladder runs on the working tree, so a file left out of the commit passes the

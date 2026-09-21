@@ -199,7 +199,8 @@ corpus, `requirements-v2` for a DESIGN section 3.4 requirements atom set.
 tim backlog registry list --json                 # every registered programme, its profile and workarea
 tim backlog registry show fixture-requirements    # one programme's resolved paths
 tim backlog ingest fixture-requirements --dry-run --json  # assemble backlog.json from item files
-tim backlog ingest <programme> --replace          # rebuild ids from scratch; refuses while any row holds a ruling
+tim backlog ingest <programme> --increments       # ingest requirement increments (requirements-v2 only)
+tim backlog ingest <programme> --replace          # rebuild ids from scratch; refuses while any row is ruled or started
 tim backlog ingest <programme> --target <name>    # build-loop target the backlog names (parity-v1 only)
 ```
 

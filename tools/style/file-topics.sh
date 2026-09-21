@@ -1,15 +1,18 @@
 #!/bin/bash
 # file-topics.sh — map a file path to its additive best-practices topic list.
 #
-# PURE function of the PATH STRING: no filesystem access, deterministic, so it
-# is trivially testable. Both discovery (prepare-style.sh) and the rules baker
-# (bake-rules-bundle.sh) — via prepare-style.sh — call it as the single source
-# of truth for the file-type -> topic mapping WITHIN the pipeline.
+# PURE function of the PATH STRING plus the routing data below: no other
+# filesystem access, deterministic, so it is trivially testable. Both
+# discovery (prepare-style.sh) and the rules baker (bake-rules-bundle.sh) —
+# via prepare-style.sh — call it as the single source of truth for the
+# file-type -> topic mapping WITHIN the pipeline.
 #
-# This mirrors the same extension/path mapping that EUDPA-275 hand-aligned into
-# .claude/rules/. The two copies are intentionally separate: the .claude/rules/
-# path-scoped injection and this pipeline router are different mechanisms and do
-# not share files.
+# The mapping itself lives in
+# .claude/skills/code-style/assets/routing.json (`fileTopics`), read below
+# with jq. This mirrors the same extension/path mapping that EUDPA-275
+# hand-aligned into .claude/rules/. The two copies are intentionally
+# separate: the .claude/rules/ path-scoped injection and this pipeline
+# router are different mechanisms and do not share files.
 #
 # Usage:   file-topics.sh <path>
 # Output:  zero or more topic names, one per line, in canonical order:
@@ -29,38 +32,29 @@ if [[ -z "$path" ]]; then
     exit 1
 fi
 
-java=false; node=false; gds=false; playwright=false; k6=false
+ROUTING="$HOME/git/defra/trade-imports-workspace/.claude/skills/code-style/assets/routing.json"
+if [[ ! -f "$ROUTING" ]]; then
+    echo "Can't read routing data: $ROUTING" >&2
+    exit 1
+fi
+if ! jq -e '.fileTopics and .topics' "$ROUTING" >/dev/null 2>&1; then
+    echo "$ROUTING is not valid routing data" >&2
+    exit 1
+fi
 
-# java: *.java
-case "$path" in
-    *.java) java=true ;;
-esac
+# Bash 3.2 (macOS /bin/bash) has no associative arrays, so matched topics are
+# collected in a space-padded string, then filtered against the routing
+# file's own topic order.
+matched=""
+while IFS=$'\t' read -r pattern topic; do
+    if [[ "$path" == $pattern ]]; then
+        matched="$matched $topic"
+    fi
+done < <(jq -r '.fileTopics[] | .patterns[] as $p | .topics[] as $t | [$p, $t] | @tsv' "$ROUTING")
 
-# node: *.js *.mjs *.cjs *.jsx
-case "$path" in
-    *.js|*.mjs|*.cjs|*.jsx) node=true ;;
-esac
-
-# gds: *.njk
-case "$path" in
-    *.njk) gds=true ;;
-esac
-
-# playwright: *.spec.ts *.spec.js *.visual.spec.ts  (additive: also node,
-# so .ts specs still pick up the node bundle)
-case "$path" in
-    *.spec.ts|*.spec.js|*.visual.spec.ts) playwright=true; node=true ;;
-esac
-
-# k6: **/k6/**  *.k6.js  **/perf/**/*.js   (additive: node still matches *.js)
-case "$path" in
-    */k6/*|*.k6.js|*/perf/*.js) k6=true ;;
-esac
-
-# Emit in canonical order.
-if [[ "$java" == true ]]; then echo java; fi
-if [[ "$node" == true ]]; then echo node; fi
-if [[ "$gds" == true ]]; then echo gds; fi
-if [[ "$playwright" == true ]]; then echo playwright; fi
-if [[ "$k6" == true ]]; then echo k6; fi
-exit 0
+jq -r --arg matched " $matched " '
+  .topics
+  | keys_unsorted[] as $topic
+  | select(($matched | index(" " + $topic + " ")) != null)
+  | $topic
+' "$ROUTING"

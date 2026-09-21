@@ -8,6 +8,7 @@ const VALID_CODES = new Set([
   'MISSING_DEP',
   'USER_ABORT',
   'PARTIAL_FAILURE',
+  'LINT',
   'UNKNOWN'
 ])
 

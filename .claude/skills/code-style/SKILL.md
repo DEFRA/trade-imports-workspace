@@ -11,10 +11,13 @@ tickets (Java, GDS/Nunjucks, Playwright, k6, Node). The per-file reviewer
 persona (`references/STYLE_FILE_REVIEWER.md`) is written
 language-neutrally and takes its ruleset from the pre-baked
 per-(repo,topic) `style-rules.{repo}.{topic}.md` bundle(s) rather than an
-inlined catalogue. Discovery and rule-bundling route each file through
-`tools/style/file-topics.sh` — a pure path→topic router (java, node, gds,
+inlined catalogue. Discovery routes each file through `tools/style/file-topics.sh`, a thin
+jq reader of `assets/routing.json`'s path→topic map (java, node, gds,
 playwright, k6; additive, so a Playwright spec gets both playwright and
-node) that is the single source of truth for the file-type mapping.
+node); rule-bundling then reads the per-topic best-practice lists from
+the same file via `tools/style/bake-rules-bundle.sh`. `assets/routing.json`
+is the single source of truth for the file-type mapping; edit it, not
+the scripts, to add a topic.
 
 Per-repo state lives in
 `~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXX/items.{repo}.json`
@@ -487,8 +490,8 @@ All under `~/git/defra/trade-imports-workspace/tools/style/`:
 |---|---|
 | `start-style.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `prepare-style.sh` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles |
-| `file-topics.sh` | Pure path→topic router (java/node/gds/playwright/k6, additive); single source of truth for the file-type mapping |
-| `bake-rules-bundle.sh` | Concatenate `docs/best-practices/` files into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
+| `file-topics.sh` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
+| `bake-rules-bundle.sh` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
 | `aggregate-file-reviews.sh` | Fresh Step 4 — write `items.{repo}.json` from per-file `.style.json` files; emit File Analysis Summary / Items markdown |
 | `render-items.sh` | Render `items.{repo}.json` as the `## Items` markdown view |
 | `style-items.sh` | Walker / implementor / refresh — list items with filters |

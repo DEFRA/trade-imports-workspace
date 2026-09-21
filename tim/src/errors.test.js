@@ -15,6 +15,11 @@ describe('TimError', () => {
     expect(error.cause).toBe(upstream)
   })
 
+  test('constructs with LINT', () => {
+    const error = new TimError('LINT', 'x')
+    expect(error.code).toBe('LINT')
+  })
+
   test('rejects unknown codes — protects the closed enum', () => {
     expect(() => new TimError('MADE_UP', 'x')).toThrow(/not in the allowed set/)
   })

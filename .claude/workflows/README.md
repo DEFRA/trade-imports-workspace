@@ -18,6 +18,12 @@ full quality pass per increment rather than a single implement-and-hope pass. Th
 programme is data: the loop knows nothing about which backlog it is running beyond the
 config below.
 
+The backlog is in the one shape in
+[`docs/reference/backlog-shape.md`](../../docs/reference/backlog-shape.md): each row is a
+requirement (what, why, acceptance) and a full-stack slice. The loop plans the how just in
+time, against the live tree, into `<workarea>/plans/<id>.md`, and every later stage works
+from that plan. Stages write back to the backlog only through `tim backlog set`.
+
 **The config** — pass it as `args`, a JSON object, launching by `scriptPath`. Every key
 below is required, and the (full) ones only under `lifecycle: 'full'`. A missing key stops
 the run before any agent starts, naming each missing key. The first log line is the
@@ -30,6 +36,7 @@ resolved configuration.
 | `scope` | Conventional-commit scope for the landing commit |
 | `executor` | `claude` or `codex` — see below |
 | `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on the current branch — no Jira, no push, no PR) |
+| `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
 | `jiraProject` (full) | Jira project key raised tickets land in |
 | `epic` (full) | Parent epic every raised ticket hangs off |
 | `jiraInProgressStatus` (full) | The board's working status, set when the build starts |
@@ -40,7 +47,7 @@ resolved configuration.
 | `requireApproval` (full) | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them |
 | `approvalWaitMinutes` (full) | How long the merge stage may wait for those approvals before it stops and leaves every PR open |
 | `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Give it in full — a programme in the plants repos names its own table here |
-| `models` | Required — pass `{}` to inherit the session model for both tiers. Each tier is optional: `heavy` (implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done) |
+| `models` | Required — pass `{}` to inherit the session model for both tiers. Each tier is optional: `heavy` (plan, implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done) |
 | `increments` | The increment ids to build, in order |
 
 A list runs **serially**, and the run stops at the first failure so a broken increment is
@@ -57,6 +64,7 @@ rather than proceeding against nothing.
   scope: 'plant-products',
   executor: 'claude',
   lifecycle: 'local',
+  planOnly: false,
   repos: {
     frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
     backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
@@ -75,12 +83,13 @@ as `feat(plant-products): <increment title>`. Any other workarea works the same 
 | Stage | Agents | What it does |
 |---|---|---|
 | Baseline | 1 | Refuses to start on a dirty tree or a red suite, so any later red is unambiguously ours |
-| Implement | 1 | Follows the `frontend-change` skill (frontend), Java best-practices (backend) or Playwright best-practices (tests). Stages, never commits |
+| Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the ladder, out of scope. Lifted from `frontend-alignment.js` |
+| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits |
 | Review | 2n+1 | One style reviewer and one code reviewer **per changed file**, plus a consistency reviewer across the whole change |
 | Verify findings | 1 per file | Adversarial refutation — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
 | Fix | 1 | Applies only what the judge ruled fix-now |
-| Ladder | 1 | Runs the increment's own `verification` array, in order, to logs |
+| Ladder | 1 | Runs the plan's ladder, in order, to logs: each changed repo's own gate, the acceptance checks, the integration proof |
 | Land | 1–2 | Commits on green and marks the increment done; `git stash push -u` on red |
 
 The reviewers follow the personas the skills already ship —
@@ -95,8 +104,8 @@ subagent.
 
 `executor: 'codex'` delegates the three token-heavy stages — **implement**, **review** and
 **fix** — to Codex CLI, using the briefs in [`codex/`](codex/) and the output schemas in
-[`codex/schemas/`](codex/schemas/). Baseline, verify-findings, judge, ladder and land stay
-on Claude in both modes: they are orchestration and adjudication.
+[`codex/schemas/`](codex/schemas/). Baseline, plan, verify-findings, judge, ladder and land
+stay on Claude in both modes. Both executors build from the same plan file.
 
 A workflow script has no shell of its own, so each codex stage is **two** agents: a shell
 that writes the resolved prompt to `<workarea>/logs/<id>-<stage>.prompt.md`, runs one

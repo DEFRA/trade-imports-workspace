@@ -12,10 +12,10 @@ Compound commands, pipes, `node`, `npx`, absolute paths and `cd` are all fine he
 
 ## Constants
 
-Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<skills>`, `<INCREMENT_ID>`,
-`<branch>`, `<baseBranch>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a real value
-in the prompt that pointed you here. Use those bindings; never guess one. `<repo>` below means whichever
-of the three repo paths the increment's `repo` field names.
+Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<skills>`,
+`<INCREMENT_ID>`, `<branch>`, `<baseBranch>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound
+to a real value in the prompt that pointed you here. Use those bindings; never guess one. `<repo>` below
+means each of the repo paths the plan changes. The increment is a full-stack slice: review it in every one.
 
 Workspace root `<workspace>`; plan of record `<backlog>`. The three repos are `<frontendRepo>`,
 `<backendRepo>` and `<testsRepo>` — bound per run, and different between programmes. Never substitute
@@ -23,13 +23,13 @@ a repo name you remember from another run.
 
 ## Step 1 — load the standard
 
-Read the increment: `jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog>`.
-Where it has `acceptanceCriteria` those are the contract, and where it has `filesToTouch` that is the
-agreed scope fence. **A thin increment carries neither, and that is normal** — backlogs differ, and the
-implementor is expected to derive the solution from the repo's own recipes and conventions. Then the
-contract is what the increment's descriptors (`type`, `title`, `detail`, `section`, `page`, `slug`,
-`obligations`) plus the governing recipe together require. Judge the change against that. Never raise a
-finding whose substance is that the increment was underspecified.
+Read the increment: `jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog>`, and the programme's
+invariants: `jq 'del(.increments)' <backlog>`. The row's `acceptanceCriteria` are the contract. Then read
+`<plan>`: the planner's decisions, the files it expected to change, the tests it asked for and its
+section 7, "Out of scope", which is the scope fence. Judge the change against the acceptance criteria
+first and the plan second. A better solution than the plan imagined is not a finding; a behaviour change
+the plan did not declare is. Never raise a finding whose substance is that the increment was
+underspecified.
 
 Read the personas that define the house standard and apply all three:
 
@@ -53,8 +53,8 @@ only thing here nobody else has looked at.
 
 ## Step 1b — the programme's own concerns
 
-The prompt that pointed you here may name traps specific to this programme, and the increment's `recipe`
-field may cite a plan that names more. Read them and hunt for them alongside the standing list below.
+The prompt that pointed you here may name traps specific to this programme, and the plan's risks name
+more. Read them and hunt for them alongside the standing list below.
 
 ## Step 2 — see the change
 
@@ -81,10 +81,14 @@ Read changed files **in full** where the diff alone could mislead. A diff hides 
 
 Standing concerns, in priority order:
 
-1. **Scope-fence breaches.** Anything changed that the increment's `filesToTouch` did not list — most
-   importantly **production code changed by a test-only increment**. Ask of every such edit: was this
-   forced (the test cannot pass without it because production is genuinely wrong), or is it opportunistic
-   redesign that belongs in its own increment? Name which, and say what a later increment now inherits.
+1. **Scope-fence breaches.** Anything changed that the plan put out of scope, or that no acceptance
+   criterion needs — most importantly **production code changed by a test-only increment**. Ask of every
+   such edit: was this forced (the test cannot pass without it because production is genuinely wrong), or
+   is it opportunistic redesign that belongs in its own increment? Name which, and say what a later
+   increment now inherits.
+1b. **The contract between repos.** What the frontend sends and expects must match what the backend
+   accepts and returns, and the tests repo must exercise the slice through it. A slice whose parts do not
+   meet is a finding however clean each part is.
 2. **Behaviour changed on a path the increment was not scoped to touch.** A shared helper edited to make
    one caller's test pass changes every other caller too.
 3. **Test quality.** Tests asserting implementation rather than behaviour (`verify(collaborator)` /

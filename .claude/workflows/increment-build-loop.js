@@ -1,13 +1,14 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → implement → style review + code review → adversarially verify findings → judge → fix → verification ladder → commit → PR → CI → merge → close the ticket',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    "Running any increment backlog under workareas/. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys.",
+    "Running any increment backlog under workareas/ in the one backlog shape (docs/reference/backlog-shape.md): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys. planOnly:true writes the plan and stops.",
   phases: [
     { title: 'Ticket' },
     { title: 'Branch' },
     { title: 'Baseline' },
+    { title: 'Plan' },
     { title: 'Implement' },
     { title: 'Review' },
     { title: 'Verify findings' },
@@ -66,7 +67,10 @@ export const meta = {
 //                   unattended merges
 //   approvalWaitMinutes (full)  how long the merge stage may wait for those approvals
 //                   before it stops and leaves every PR open.
-//   repos           the three repos an increment's "repo" field can name —
+//   planOnly        true: plan each increment into <workarea>/plans/<id>.md and
+//                   stop — no ticket, branch, baseline or build. false: the
+//                   whole lifecycle
+//   repos           the three repos an increment's "repos" list can name —
 //                   frontend, backend, tests — each with its workspace-relative
 //                   path and its GitHub owner/name slug. A programme in another
 //                   repo family (the plants frontend and backend, say) names its
@@ -112,7 +116,7 @@ const logResolvedConfig = (workflowName, config) => log(`${workflowName}: resolv
 // <<< args-contract
 
 const WORKFLOW_NAME = 'increment-build-loop'
-const ALWAYS_REQUIRED = ['workarea', 'branch', 'scope', 'executor', 'lifecycle', 'repos', 'models', 'increments']
+const ALWAYS_REQUIRED = ['workarea', 'branch', 'scope', 'executor', 'lifecycle', 'planOnly', 'repos', 'models', 'increments']
 const FULL_LIFECYCLE_REQUIRED = [
   'jiraProject',
   'epic',
@@ -152,6 +156,7 @@ const CI_FIX_ATTEMPTS = CFG.ciFixAttempts
 const CI_WATCH_MINUTES = CFG.ciWatchMinutes
 const REQUIRE_APPROVAL = CFG.requireApproval
 const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
+const PLAN_ONLY = CFG.planOnly
 
 // One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
 // longer wait is that many consecutive watches, and running out of them is RED.
@@ -205,6 +210,9 @@ if (LIFECYCLE === 'full' && (!Number.isInteger(CI_WATCH_MINUTES) || CI_WATCH_MIN
 if (LIFECYCLE === 'full' && (!Number.isInteger(APPROVAL_WAIT_MINUTES) || APPROVAL_WAIT_MINUTES <= 0)) {
   throw new Error(`increment-build-loop: config.approvalWaitMinutes must be a positive integer — got "${APPROVAL_WAIT_MINUTES}"`)
 }
+if (typeof PLAN_ONLY !== 'boolean') {
+  throw new Error(`${WORKFLOW_NAME}: config.planOnly must be a boolean — got "${PLAN_ONLY}"`)
+}
 if (LIFECYCLE === 'full' && typeof REQUIRE_APPROVAL !== 'boolean') {
   throw new Error(`increment-build-loop: config.requireApproval must be a boolean — got "${REQUIRE_APPROVAL}"`)
 }
@@ -213,10 +221,10 @@ if (!Array.isArray(CFG.increments) || CFG.increments.length === 0 || !CFG.increm
 }
 
 // ---------------------------------------------------------------------------
-// Repos. An increment names its repo as frontend, backend or tests (or both,
-// meaning backend then frontend); this table says where each one lives on disk
-// and on GitHub. All three keys are required so every stage's REPO PATHS line
-// reads the same whichever repo family the programme builds in.
+// Repos. An increment is a full-stack slice and lists the repos it touches in
+// "repos"; this table says where each one lives on disk and on GitHub. All
+// three keys are required so every stage's REPO PATHS line reads the same
+// whichever repo family the programme builds in.
 // ---------------------------------------------------------------------------
 const REPOS = CFG.repos
 const REPO_KEYS = ['frontend', 'backend', 'tests']
@@ -311,6 +319,13 @@ const WORKAREA = `${ABS}/workareas/${WORKAREA_REL}`
 const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA_REL}`
 const BACKLOG = `${WORKAREA}/backlog.json`
 const BACKLOG_TILDE = `${WORKAREA_TILDE}/backlog.json`
+const PLANS = `${WORKAREA}/plans`
+
+// Every backlog write goes through tim, which validates it and writes it whole.
+// A hand-edited backlog.json is how a run corrupted its own state.
+const setRow = (id, flags) => `tim backlog set ${WORKAREA_REL} ${id} ${flags} --workspace ${TILDE} --json`
+const SET_ROW_RULE = `WRITING TO THE BACKLOG: never Edit ${BACKLOG} by hand. Every write is one \`tim backlog set\` call, shown
+where it is needed. It exits non-zero and says why if the write is refused — report that, do not work around it.`
 const SKILLS = ABS + '/.claude/skills'
 const BRIEFS = ABS + '/.claude/workflows/codex'
 const BRIEFS_TILDE = TILDE + '/.claude/workflows/codex'
@@ -326,8 +341,17 @@ const ghTable = Object.entries(GH_REPO)
   .map(([k, v]) => `${k}=${v}`)
   .join(', ')
 
-const REPO_RULE = `REPO PATHS: ${repoTable}. An increment whose "repo" field is \`both\` means BOTH the backend and the
-frontend repo — do the work in each, on the SAME branch name (CLAUDE.md rule 2, cross-repo branch parity).`
+const REPO_RULE = `REPO PATHS: ${repoTable}. An increment is a full-stack slice: it is built, reviewed and proved in
+every repo it touches at once, on the SAME branch name in each (CLAUDE.md rule 2, cross-repo branch parity).
+ITS REPOS: the increment's \`repos\` list. Where it has none, an older backlog's \`repo\` field: \`both\` means backend,
+frontend and tests; any other value means that repo plus tests. Where it has neither, all three: ${REPO_KEYS.join(', ')}.
+Listing a repo the change leaves alone costs nothing — no change means no commit and no PR.`
+
+// Commit and rollback act on every configured repo with changes, not only the
+// ones the row or the plan named: an implementor that fixed a stale spec in the
+// tests repo must not leave it staged for the next increment to trip over.
+const CHANGED_REPOS_RULE = `WHICH REPOS: check EVERY configured repo — ${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')} —
+with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.`
 
 // Canonical merge order for a cross-repo increment. Lower merges first.
 //
@@ -422,8 +446,9 @@ ${REPO_RULE}
 ${PUSH_RULE}
 EVIDENCE: ${evidence}
 TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
-1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
-2. For EACH repo, stage what the increment produced — but NOTHING under logs/, no coverage output, no
+1. ${CHANGED_REPOS_RULE} A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and
+   change nothing in it.
+2. For EACH repo with changes, stage what the increment produced — but NOTHING under logs/, no coverage output, no
    test-results/, no Playwright artefacts.
 3. Commit it on \`${branch}\`, marked as failing: subject \`wip(${SCOPE}): <increment title> — ${reason}\`,
    body naming exactly what went red, and the usual trailer.
@@ -431,9 +456,10 @@ TASK — the work goes onto its own branch, not into a stash. A stash ref does n
    That is what lets another engineer fetch the attempt and see what was tried.
 5. Do NOT open a pull request. This work does not pass its ladder and must not look reviewable.
 6. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
-7. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG}: what went red, the branch name and
-   the wip commit SHA. Do NOT write a \`commit\` field — the increment is not built, and writing one would make
-   the next attempt skip the build. Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
+7. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; branch <branch>; wip <sha>'")}\`.
+   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
+   Do NOT record a commit — the increment is not built, and a recorded commit would make the next attempt skip
+   the build.
 The next attempt branches from here and builds on top; the squash merge collapses the wip commit.
 NEVER \`reset --hard\`, NEVER \`clean -fd\`.
 Report the branch name and the wip SHA.
@@ -443,12 +469,13 @@ ${GUARDRAILS}
 ${REPO_RULE}
 EVIDENCE: ${evidence}
 TASK:
-1. Look up the increment's repo(s): \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`.
-2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for EACH of them — NEVER \`reset --hard\`,
-   NEVER \`clean -fd\`. The stash is recoverable and that is the point.
+1. ${CHANGED_REPOS_RULE}
+2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for EACH of them that has changes — NEVER
+   \`reset --hard\`, NEVER \`clean -fd\`. The stash is recoverable and that is the point.
 3. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
-4. Append an "ATTEMPT FAILED" note to the increment's notes in ${BACKLOG} recording what went red and the
-   stash ref, so the next attempt starts informed. Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
+4. Record it, so the next attempt starts informed:
+   \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; stash <ref>'")}\`.
+   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
 Report the stash refs so the work can be recovered. Note that a stash is machine-local — it does not travel.
 Return the structured output only.`
 
@@ -575,6 +602,28 @@ const LADDER_SCHEMA = {
     failures: { type: 'array', items: { type: 'string' } },
     repairsAttempted: { type: 'number' },
     summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const PLAN_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary', 'repos', 'behaviourChanges', 'decisions'],
+  properties: {
+    ok: { type: 'boolean', description: 'false only when the increment cannot be carried out as written' },
+    summary: { type: 'string' },
+    repos: {
+      type: 'array',
+      items: { type: 'string', enum: ['frontend', 'backend', 'tests'] },
+      description: 'The repos the plan changes, in merge order'
+    },
+    behaviourChanges: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Every behaviour a user, operator or other system will see change, one line each. Empty when the change is pure structure'
+    },
+    decisions: { type: 'array', items: { type: 'string' }, description: 'Every choice the increment left open, and how you settled it' },
+    risks: { type: 'array', items: { type: 'string' } }
   },
   additionalProperties: false
 }
@@ -712,19 +761,18 @@ const CI_SCHEMA = {
 
 const readIncrement = (id) => `
 THE INCREMENT — read it in full before anything else:
-Run this Bash command and read the output: \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`
-That object is your brief. Backlogs differ in shape, so read what THIS one carries and work from that.
-It may spell the change out — filesToTouch (paths + action + what), obligations, flowChanges, schemaFields,
-copyKeys, specs, acceptanceCriteria, verification (the ladder, in order), notes, openQuestions. It may
-instead state a finding and cite the evidence for it, and leave the change to you. Both are supported inputs.
-A field that is absent is NOT a defect and NOT a reason to stop: THE BACKLOG SAYS WHAT IS WRONG, AND
-WORKING OUT WHAT TO CHANGE IS YOUR JOB. Derive it from the code and the cited evidence, and say in your
-summary what you derived and why.
-What IS worth reporting as a defect is a claim that does not hold — a path that is not there, a citation
-whose line has moved on, an asserted behaviour the application does not have. Thin is fine; wrong is not.
-Supporting context: read ONLY what the increment's "recipe" field cites, resolving workarea-relative paths
-against ${WORKAREA}. Read the cited sections, not the whole document.
+\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\` — the requirement, and
+\`jq 'del(.increments)' ${BACKLOG_TILDE}\` — the programme's header, whose invariants every increment keeps.
+The row is a REQUIREMENT: title, detail (what and why), acceptanceCriteria (what must be observably true
+afterwards), sources (where it came from), openQuestions and notes. It never says how. How is worked out
+against the live tree, just in time, and written to the plan at ${PLANS}/${id}.md.
+An older backlog's row may still carry filesToTouch, verification or recipe. Treat them as hints about where to
+look, never as the script: the code as it is now wins.
+What IS worth reporting as a defect is a claim that does not hold — a behaviour the application does not have,
+a source that says something else, two criteria that contradict each other. Thin is fine; wrong is not.
 `
+
+const readPlan = (id) => `THE PLAN is at ${PLANS}/${id}.md. Read it in full.`
 
 // ---------------------------------------------------------------------------
 // Codex delegation. A workflow script has no shell of its own, so a codex stage
@@ -782,6 +830,7 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <branch>       = ${workingBranch ?? BASE_BRANCH}
   <baseBranch>   = ${BASE_BRANCH}
   <INCREMENT_ID> = ${id}
+  <plan>         = ${PLANS}/${id}.md
   <frontendRepo> = ${ABS}/${REPOS.frontend.path}
   <backendRepo>  = ${ABS}/${REPOS.backend.path}
   <testsRepo>    = ${ABS}/${REPOS.tests.path}
@@ -871,6 +920,64 @@ const codexResult = (result, stage, id) => {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Plan — the row says what, why and acceptance; the planner works out how,
+// against the live tree, immediately before it is built. Lifted from
+// frontend-alignment.js, where "Sonnet never had to decide anything".
+// ---------------------------------------------------------------------------
+const standardsKeys = REPO_KEYS.map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``).join(', ')
+
+const planIncrement = (id, branchedRepos = null) =>
+  agent(
+    `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
+${GUARDRAILS}
+${readIncrement(id)}
+${REPO_RULE}
+${branchedRepos ? `BRANCHED REPOS: the repos branched for this increment are ${branchedRepos.join(', ')}. Plan only
+within them, and if the slice genuinely needs another repo, return ok:false naming it.\n` : ''}
+WHAT A PLAN IS: a file-level script for an implementor who has less context than you. The increment says what must
+be true afterwards and why. You work out how, against the code as it is now, and settle every choice so the
+implementor decides nothing.
+
+1. PIN THE TREE. For each of the increment's repos, record its branch and HEAD in the plan:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` and \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\`.
+2. READ, IN FULL, with the Read tool:
+   - the files the change will touch, and the nearest existing feature that already does something similar —
+     the exemplar the implementor will imitate;
+   - the standards for those files. Run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\`
+     (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
+     every rules and bestPractice file it lists;
+   - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
+     the journey flow, ${SKILLS}/frontend-change/SKILL.md, then the repo's own recipe it routes to. Plan by that
+     recipe, substituting this programme's repo path and set. A recipe is the repo's own how-knowledge: follow it
+     rather than improvising.
+3. CHECK THE CLAIMS. Test each thing the increment asserts about the application against the live tree. Where one
+   is wrong, record it under Decisions and plan against reality. If the increment cannot be carried out at all,
+   return ok:false saying exactly why.
+4. WRITE ${PLANS}/${id}.md with the Write tool. Open with a table of the repos: path, branch, HEAD. Then:
+   0. Decisions — every choice the increment left open, how you settled it, and the alternative you rejected.
+   1. Moves — every file that moves or is deleted, from → to. "None" is an answer.
+   2. Edits — for each file that changes, what changes and why. Name the exemplar to copy where there is one.
+   3. New files — full intent, and the file to imitate.
+   4. Tests — which tests change or are new, and what each pins. Where the slice changes anything a user or
+      another system can see, include the INTEGRATION PROOF: an E2E or contract test in the tests repo that
+      exercises the slice through the real stack.
+   5. Invariants to prove — one runnable check per acceptance criterion where practical, with its expected result,
+      plus any programme invariant this change could break.
+   6. Ladder — for each repo the plan changes, in order, the commands that prove it green: the repo's own gate as
+      its package.json or pom.xml defines it (format check, lint, unit tests; \`mvn verify\` for a Java repo, never
+      \`mvn test\`), then section 5's checks, then the integration proof. Write every command in the GUARD RAILS form
+      (\`npm --prefix\`, \`mvn -f\`, tilde paths, one command each) and say what each needs running, such as the
+      workspace stack for E2E.
+   7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
+   The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
+   The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
+   or "the backend half" for another increment.
+Return ok, summary, repos (the repos the plan changes), behaviourChanges, decisions and risks.
+Return the structured output only.`,
+    heavy({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
+  )
+
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable. Run exactly one command and read its output:
 \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
@@ -892,6 +999,23 @@ log(
 const results = []
 
 for (const id of CFG.increments) {
+  if (PLAN_ONLY) {
+    phase('Plan')
+    const plan = await planIncrement(id)
+    results.push({
+      id,
+      outcome: plan?.ok ? 'planned' : 'plan-refused',
+      plan: `${PLANS}/${id}.md`,
+      detail: plan?.summary ?? 'the planner died',
+      repos: plan?.repos,
+      behaviourChanges: plan?.behaviourChanges,
+      decisions: plan?.decisions,
+      risks: plan?.risks
+    })
+    log(`${id}: ${plan?.ok ? 'PLANNED' : 'PLAN REFUSED'} — ${plan?.summary ?? 'the planner died'}`)
+    continue
+  }
+
   // -----------------------------------------------------------------------
   // Ticket — reuse or raise, put it in the working status, and work out where
   // to resume. Runs first so a retry never re-does work the last attempt landed.
@@ -909,9 +1033,10 @@ for (const id of CFG.increments) {
 the lifecycle this run picks up. YOU RAISE AT MOST ONE TICKET, AND ONLY IF THE INCREMENT HAS NONE.
 ${GUARDRAILS}
 ${REPO_RULE}
+${SET_ROW_RULE}
 
 STEP 1 — READ WHAT IS ALREADY PERSISTED. One Bash call:
-\`jq -r '.increments[] | select(.id=="${id}") | {ticket, branch, commit, prs, repo, kind, title}' ${BACKLOG_TILDE}\`
+\`jq -r '.increments[] | select(.id=="${id}") | {ticket, branch, commit, prs, repos, repo, kind, title}' ${BACKLOG_TILDE}\`
 Everything below turns on that output. Read it before you do anything else.
 
 STEP 2 — THE TICKET.
@@ -945,8 +1070,8 @@ Backlog: {{workareas/${WORKAREA_REL}/backlog.json}}
      \`JIRA_PROJECT_KEY=${JIRA_PROJECT} ${JIRA}/create-ticket.sh -t Task -p ${EPIC} -D ${WORKAREA_TILDE}/logs/${id}-ticket.txt "${id} — <the increment title, trimmed to fit>" > ${WORKAREA_TILDE}/logs/${id}-ticket.log 2>&1\`
   c. Read that log. Its first line is the new key. If the command failed, report ok:false with the log's
      contents and STOP — do not retry, a retry is how a board gets two tickets for one increment.
-  d. **IMMEDIATELY** persist it: Edit ${BACKLOG} to set this increment's \`ticket\` field to the key, before you
-     do anything else at all. Re-check with \`jq empty ${BACKLOG_TILDE}\`. This write is what makes a retry safe.
+  d. **IMMEDIATELY** persist it, before you do anything else at all: \`${setRow(id, '--ticket <KEY>')}\`.
+     This write is what makes a retry safe.
 
 STEP 3 — THE WORKING STATUS. This board's working status is \`${STATUS_IN_PROGRESS}\` and its finished
 status is \`${STATUS_DONE}\`. Both names are CONFIGURATION and are given to you here. Use them literally.
@@ -974,8 +1099,7 @@ Set movedToBoard:true when the command exits 0. If it fails, report ok:false wit
 
 STEP 5 — THE BRANCH NAME.
 - If \`branch\` is already persisted on the increment, REUSE IT VERBATIM. Do not recompute it.
-- Otherwise build it as \`<type>/<KEY>-<slug>\` and persist it to the increment's \`branch\` field
-  (Edit ${BACKLOG}, then \`jq empty ${BACKLOG_TILDE}\`):
+- Otherwise build it as \`<type>/<KEY>-<slug>\` and persist it: \`${setRow(id, '--branch <branch>')}\`.
   - \`<type>\` from the increment's \`kind\`: bug/fix → \`fix\`; chore/docs/refactor/test/test-coverage/
     test-infrastructure/fixture → \`chore\`; everything else → \`feat\`.
   - \`<slug>\` from the title: lower case, every run of non-alphanumeric characters becomes one \`-\`, trim
@@ -992,18 +1116,13 @@ Re-entering an increment must never rebuild work that is already committed on it
 status.** A board status is moved by people for reasons this loop cannot see, and a ticket parked at
 Deskcheck or IN QA says nothing about how far the build got.
 
-STEP 7 — repos[]: from the increment's \`repo\` field. frontend → \["frontend"\]; backend → \["backend"\];
-tests → \["tests"\]; both → \["backend","frontend"\] IN THAT ORDER.
-If the field is ABSENT, \`null\` or empty — whole backlogs are written without it — do NOT guess a single repo
-from the increment's title or band. Read its \`band\` and apply this:
-  \`frontend-work\` or anything else that changes the UI → \["frontend","tests"\]
-  \`needs-backend\` → \["backend","frontend","tests"\]
-  a band that is plainly tests-only → \["tests"\]
-**Include \`tests\` in every case that changes what a user sees.** A UI change breaks the E2E specs and their
-visual baselines essentially always, so the tests repo is part of the increment from the start, not a surprise.
-Naming it here is what gets it BRANCHED, and a repo that is never branched sits on \`${BASE_BRANCH}\` for the
-whole run — which is how an increment once committed straight onto the tests repo's main. Over-listing a repo
-costs nothing: a repo with no changes simply gets no commit and no PR.
+STEP 7 — repos[]: by the ITS REPOS rule above, in merge order (backend, tests, frontend). An older row's
+\`repo\` of \`both\` → \["backend","frontend","tests"\]; any other single \`repo\` → that repo plus \`tests\`.
+Do NOT narrow the list from the increment's title. **Include \`tests\` in every case that changes what a user
+sees.** A UI change breaks the E2E specs and their visual baselines essentially always, and the slice's
+integration proof lives there. Naming a repo here is what gets it BRANCHED, and a repo that is never branched sits
+on \`${BASE_BRANCH}\` for the whole run — which is how an increment once committed straight onto the tests repo's
+main. Over-listing a repo costs nothing: a repo with no changes simply gets no commit and no PR.
 
 Report ok:true only if the ticket exists, its status is one you left alone or successfully set, STEP 4
 moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
@@ -1092,6 +1211,7 @@ Return the structured output only.`,
     }
   }
 
+  let plan = null
   let rawFindings = []
   let confirmed = []
   let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
@@ -1115,7 +1235,7 @@ ${GUARDRAILS}
 ${readIncrement(id)}
 ${REPO_RULE}
 TASK:
-1. Determine the increment's repo(s) from its "repo" field and confirm each one is clean:
+1. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the ticket stage settled them: ${repos.join(', ')})` : ''} and confirm each one is clean:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
 2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
@@ -1140,40 +1260,47 @@ Return the structured output only.`,
   }
 
   // -----------------------------------------------------------------------
-  // Implement — the frontend-change skill is the script for frontend work.
+  // Plan — just in time, against the tree the implementor is about to edit.
+  // -----------------------------------------------------------------------
+  phase('Plan')
+
+  plan = await planIncrement(id, repos)
+
+  if (!plan || !plan.ok) {
+    log(`${id}: PLAN REFUSED — ${plan ? plan.summary : 'the planner died'}`)
+    results.push({ id, ticket: ticket?.key, outcome: 'plan-refused', plan: `${PLANS}/${id}.md`, detail: plan?.summary ?? 'the planner died' })
+    break
+  }
+
+  const planOutsideBranched = repos && plan.repos.filter((r) => !repos.includes(r))
+  if (planOutsideBranched && planOutsideBranched.length) {
+    log(`${id}: PLAN OUTSIDE BRANCHED REPOS — ${planOutsideBranched.join(', ')}`)
+    results.push({ id, ticket: ticket?.key, outcome: 'plan-outside-branched-repos', detail: `plan touches ${planOutsideBranched.join(', ')}, branched only ${repos.join(', ')}` })
+    break
+  }
+  log(`${id}: planned — ${plan.repos.join(', ')}; ${plan.behaviourChanges.length} behaviour changes`)
+
+  // -----------------------------------------------------------------------
+  // Implement — execute the plan, and nothing else.
   // -----------------------------------------------------------------------
   phase('Implement')
 
   const impl = EXECUTOR === 'codex'
-    ? await codexStage(id, 'implement', 'Implement', incrementSchema, `You are implementing increment ${id}.`, workBranch)
+    ? await codexStage(id, 'implement', 'Implement', incrementSchema, `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.`, workBranch)
     : await agent(
-    `You are the IMPLEMENTOR for increment ${id}. You make the change and nothing else — you do not review it,
+    `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
 ${GUARDRAILS}
 ${readIncrement(id)}
 ${REPO_RULE}
-
-HOW TO BUILD IT — route on the increment's "repo" field:
-- **frontend** → the workspace frontend-change skill is your script. READ ${SKILLS}/frontend-change/SKILL.md IN
-  FULL and follow it verbatim. It routes you to the repo's own recipe under
-  \`src/server/app/sets/<set>/docs/add-a-*.md\` (or the obligation/flow maintenance guard rails) — read that recipe
-  and follow it, varying as little as possible. Do NOT improvise around a recipe. The recipes are set-relative, so
-  where the increment targets a set other than the one a recipe was written against (\`sets/<set>/\`), substitute the
-  set folder and otherwise follow it exactly. THIS programme's frontend is \`${TILDE}/${REPO_PATH.frontend}\` — the
-  skill's own path examples name the repo it was written against, so wherever the skill or a recipe spells out a
-  repo path or an npm --prefix, substitute this repo and this increment's set. Where the increment cites a gap that
-  no recipe covers, the increment's own filesToTouch IS the script, and any exemplar it names is the shape to
-  imitate.
-- **backend** → follow the increment plus the workspace Java best practices
-  (${TILDE}/docs/best-practices/java/). Mirror the package idiom \`${TILDE}/${REPO_PATH.backend}\` already has; where
-  it has no precedent, the animals backend is the house reference. Compact-constructor null guards on public
-  records at API boundaries. One round-trip + one unknown-value negative per enum — never a test per enum constant.
-- **tests** → follow the increment plus ${TILDE}/docs/best-practices/playwright/. Independent tests, raw
-  role/label locators, no page objects where the repo does not already use them, no sleeps, expect.poll only for
-  non-locator state.
+${readPlan(id)} Follow it verbatim: it has already settled every choice. Where it names an exemplar, open that file
+and copy its shape rather than improvising. Where it follows a repo's recipe, read the recipe it cites and follow
+it exactly. Where the plan is wrong about the tree, do the smallest thing that meets the increment's acceptance
+criteria and say what you changed in notes.
+Before you write to a file, read the rules and best-practice files the plan lists for it.
 
 RULES:
-- Implement EXACTLY the increment's scope. Do not fix adjacent things you notice — report them in notes instead;
+- Implement EXACTLY the plan's scope. Do not fix adjacent things you notice — report them in notes instead;
   a later increment or the judge will deal with them.
 - **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
   change inserts or reorders a page, the tests-repo spec covering the page BEFORE yours still expects the old
@@ -1187,10 +1314,10 @@ RULES:
   you are unsure whether to do it, DO IT — an increment that lands incomplete is worse than one that lands wide.
   Where you genuinely leave something out, say so in notes as \`DEFERRED: <what>\`, on its own line, so the
   orchestrator can find it and check it is tracked. Deferred work that exists only in prose gets lost.
-- Every user-facing string goes in copy.en.js AND copy.cy.js with identical structure. NO display logic in
-  obligations or the model.
-- Write the specs the increment lists (co-located Playwright spec, axe test) — they are part of the increment,
-  not optional extras.
+- In a frontend with copy files, every user-facing string goes in copy.en.js AND copy.cy.js with identical
+  structure. NO display logic in obligations or the model.
+- Write the tests the plan lists, the integration proof included — they are part of the increment, not optional
+  extras.
 - STAGE your work (\`git -C ... add\`) but DO NOT COMMIT. Landing is a later step that runs after review.
 - If you get stuck on a red step, you get at most 3 self-repair attempts. If still red, stop and report ok:false
   with exactly what is red and what you tried — do NOT thrash, and do NOT weaken a test to make it pass.
@@ -1235,8 +1362,9 @@ YOUR PERSONA — read ${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md IN 
 you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKILL.md for the language routing
 (Java → modern-java + Javadoc; GDS/Nunjucks → components/styles/patterns; Playwright → playwright; Node → the
 17-rule style guide + JSDoc).
-CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`.
-See the change with \`git -C ${TILDE}/<repoPath> diff --staged -- <file>\`.
+CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`, and the plan it was
+built from at ${PLANS}/${id}.md. See the change with \`git -C ${TILDE}/<repoPath> diff --staged -- <file>\`, and
+compare it with the exemplar the plan names for this file.
 SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
 security belong to a different reviewer; do not duplicate them.
 HOUSE RULES that override generic style advice: comments are removed aggressively (code near-bare; rationale lives
@@ -1256,15 +1384,16 @@ ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/FILE_REVIEWER.md IN FULL and follow it. Also read
 ${SKILLS}/review/SKILL.md for the review dimensions.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\` — its
-acceptanceCriteria are what this code is supposed to do. See the change with
-\`git -C ${TILDE}/<repoPath> diff --staged -- <file>\`.
+acceptanceCriteria are what this code is supposed to do, and the header's invariants
+(\`jq 'del(.increments)' ${BACKLOG_TILDE}\`) are what it must not break. The plan is at ${PLANS}/${id}.md. See the
+change with \`git -C ${TILDE}/<repoPath> diff --staged -- <file>\`.
 SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Specifically hunt for:
-- behaviour that does not match the increment's acceptanceCriteria
+- behaviour that does not match the increment's acceptanceCriteria, or a behaviour change the plan did not declare
 - tests that assert implementation rather than behaviour (toHaveBeenCalledWith on a collaborator is the tell);
   mocks at the module boundary rather than the network boundary
 - tests whose name claims something their assertions do not pin (coverage padding — those should be deleted)
 - missing negative/edge cases the acceptance criteria imply
-- the programme-specific traps the increment or its cited plan names — for example, in a multi-set frontend:
+- the traps the plan's risks name, and the programme-specific ones — for example, in a multi-set frontend:
   route-shape vs link-builder confusion (route tables must use the PREFIX-FREE builders; rendered links, redirects
   and form actions must use the PREFIX-BEARING ones), display logic leaking into obligations or the model, and any
   platform-layer file that has learned a set's vocabulary.
@@ -1279,14 +1408,16 @@ Return the structured output only.`,
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
-CONTEXT: increment at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`; whole change via
-\`git -C ${TILDE}/<repoPath> diff --staged\`.
+CONTEXT: increment at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`; plan at ${PLANS}/${id}.md;
+the whole change via \`git -C ${TILDE}/<repoPath> diff --staged\` in EVERY repo the plan names.
 LOOK FOR: the same concept named two ways across files; a pattern the repo already has, reimplemented instead of
-reused (check the named exemplar the increment cites and compare); registration that exists in one place but not
-its twin (a page in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js,
-copy.en.js without the matching copy.cy.js key); an obligation with no schema field behind it or a schema field
-nothing writes; and anything the increment's filesToTouch listed that is NOT in the diff, or in the diff but NOT
-listed.
+reused (compare with the exemplar the plan names); registration that exists in one place but not its twin (a page
+in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js
+without the matching copy.cy.js key); an obligation with no schema field behind it or a schema field nothing
+writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what the frontend
+sends and expects matches what the backend accepts and returns, and the tests repo exercises the slice through it;
+an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
+report any that fails as a finding. A better solution than the plan imagined is not a finding.
 Return the structured output only.`,
       heavy({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
@@ -1382,9 +1513,9 @@ FOR EACH finding decide exactly one of:
   a security or correctness defect, a test that does not pin what it claims, or a house-rule violation is fix-now
   regardless of severity label.
 - **defer-to-open-question** — real, but genuinely outside this increment's scope, or it needs a product/design
-  decision that code cannot settle. You MUST then append it to that increment's openQuestions in
-  ${BACKLOG} (Edit the file; keep it valid JSON — re-check with
-  \`jq empty ${BACKLOG_TILDE}\`) so it is never silently dropped.
+  decision that code cannot settle. You MUST then record it, so it is never silently dropped:
+  \`${setRow(id, "--open-question '<the question, and the finding that raised it>'")}\`.
+  Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
 - **reject** — you disagree with it even post-refutation. Say why, with evidence.
 
 BIAS: prefer fix-now for anything cheap and clearly right. Prefer defer for anything that would expand the
@@ -1437,16 +1568,23 @@ Return the structured output only.`,
   }
 
   // -----------------------------------------------------------------------
-  // Ladder — the increment's own verification list, in its own order.
+  // Ladder — the plan's section 6, which the planner expanded against the
+  // live tree: each changed repo's own gate, the invariants, the integration proof.
   // -----------------------------------------------------------------------
   phase('Ladder')
 
   const ladder = await agent(
-    `You are the VERIFIER for increment ${id}. Run its verification ladder and report honestly.
+    `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${GUARDRAILS}
 ${readIncrement(id)}
-TASK — run the increment's "verification" array IN ORDER, each to its own log under ${WORKAREA_TILDE}/logs/ named
-\`${id}-<step>.log\`, reading each log ONCE. Every step must be green before you run the next.
+${readPlan(id)}
+TASK — run the plan's section 6, "Ladder", IN ORDER, each command to its own log under ${WORKAREA_TILDE}/logs/
+named \`${id}-<repo>-<step>.log\`, reading each log ONCE. Every step must be green before you run the next.
+- FIRST CHECK THE LADDER COVERS THE CHANGE. For every repo with staged changes
+  (\`git -C ${TILDE}/<repoPath> diff --staged --stat\`), the ladder must run that repo's own gate — the format
+  check, lint and unit scripts its package.json defines, or \`mvn verify\` for a Java repo. Where the plan left one
+  out, run it too, and say so. Where the slice changes anything a user or another system can see, the ladder must
+  include the integration proof in the tests repo; if the plan has none, that is a failure, not a skip.
 - If a step is red, you get at most 3 repair attempts across the whole ladder. A repair normally fixes the CODE —
   never weaken, skip or delete a test to get green, and never mark a step green that was not.
 - **The one exception: an assertion that is wrong about the framework, not about the application.** A test can
@@ -1460,7 +1598,7 @@ TASK — run the increment's "verification" array IN ORDER, each to its own log 
   unpassable. If any of the four does not hold, the test is catching a real defect — fix the code instead.
   This matters because a browser suite is run by nobody else: the implementor cannot run it, so an assertion
   authored wrongly against a browser-only component reaches you and stops here unless you can correct it.
-- Where the verification names more than one leg — a platform change that must leave every consumer still working —
+- Where the ladder names more than one leg — a platform change that must leave every consumer still working —
   run every leg, not just the one your increment was aimed at.
 - If the ladder includes an E2E leg, read \`test-results/*/error-context.md\` for any failure rather than grepping
   the run output. Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that
@@ -1504,9 +1642,11 @@ Return the structured output only.`,
     `Increment ${id} is implemented, reviewed, judged and verified green. COMMIT IT.
 ${GUARDRAILS}
 ${REPO_RULE}
+${SET_ROW_RULE}
 TASK:
-1. Look up its repo: \`jq -r '.increments[] | select(.id=="${id}") | .repo' ${BACKLOG_TILDE}\`, and its
-   title for the commit subject.
+1. ${CHANGED_REPOS_RULE}${LIFECYCLE === 'full' ? ` Under full lifecycle, a repo with changes that is not on \`${workBranch}\` is a
+   stop: report landed:false naming it, and change nothing in it.` : ''} The increment's title, for the commit subject:
+   \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
 2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
@@ -1514,14 +1654,15 @@ TASK:
    no CI and no review behind it. That has happened here once already.
 3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
-4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\`, a body saying what changed and
-   naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and the trailer:
+4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the
+   behaviour changes below are not empty, otherwise the type the increment's \`kind\` implies — a body saying what
+   changed and naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and the trailer:
    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
-   A \`both\` increment gets ONE commit per repo, each with the same subject.
+   Behaviour changes, from the plan: ${plan?.behaviourChanges?.length ? plan.behaviourChanges.map((b) => `\n   - ${b}`).join('') : 'none'}
+   A slice across several repos gets ONE commit per repo, each with the same subject.
 5. Do NOT push. A later stage owns that.
-6. Update ${BACKLOG}: add a "commit" field with the short SHA${LIFECYCLE === 'local' ? ' and set this increment\'s "status" to "done"' : '. Leave "status" alone — this increment is not done until its PR is merged'}.
-   Keep the JSON valid (\`jq empty ${BACKLOG_TILDE}\`).
-Report the commit SHA. For a \`both\` increment report both, backend first, space separated.
+6. Record it: \`${setRow(id, `--commit "<sha, or several backend first, space separated>"${LIFECYCLE === 'local' ? ' --status done' : ''}`)}\`.${LIFECYCLE === 'local' ? '' : ' Leave the status alone — this increment is not done until its PRs are merged.'}
+Report the commit SHA. For several repos report each, backend first, space separated.
 Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
@@ -1589,10 +1730,9 @@ For EACH repo, in that order:
         order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
      b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
      raised:true.
-5. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array holds
-   \`{"repo":"<repo>","url":"<url>","number":<n>}\` for every PR that now exists — appending, never replacing an
-   entry that is already there. Re-check with \`jq empty ${BACKLOG_TILDE}\`. Do this after EACH repo, not once at
-   the end: a run that dies between two PRs must not lose the first.
+5. **IMMEDIATELY** persist it: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
+   It adds the PR, or merges these fields into the entry already recorded with that url. Do this after EACH
+   repo, not once at the end: a run that dies between two PRs must not lose the first.
 
 Report every PR in prs\[\], in the same order. Report ok:true only when every repo that had commits ahead of
 \`${BASE_BRANCH}\` has exactly one open PR, and every repo you skipped at step 2 genuinely had none. At least one
@@ -1710,9 +1850,8 @@ TASK:
    c. Nothing there → write the body to ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md saying what broke, what you
       changed and which increment and ticket it belongs to, then
       \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <what you fixed>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
-   d. **IMMEDIATELY** persist it: Edit ${BACKLOG} so this increment's \`prs\` array also holds
-      \`{"repo":"<repo>","url":"<url>","number":<n>}\` — appending, never replacing an entry already there.
-      \`jq empty ${BACKLOG_TILDE}\` after. Do this per repo, not once at the end.
+   d. **IMMEDIATELY** persist it: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
+      Do this per repo, not once at the end.
    e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
       THIS run reads. Skipping either one is how a PR gets left behind.
 7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
@@ -1838,8 +1977,7 @@ For EACH pr, in that order:`
    base branch went red after merging
    <repo>" in blocked, and put the failing job in failures\[\]. Do NOT auto-revert and do NOT push a fix — the
    base branch being red is a human decision, not a repair job.
-6. Persist it: Edit ${BACKLOG} to mark that PR's entry in this increment's \`prs\` array \`"merged": true\` with
-   its merge \`"sha"\`. \`jq empty ${BACKLOG_TILDE}\` after. Do this after EACH merge.
+6. Persist it: \`${setRow(id, `--pr '{"url":"<url>","merged":true,"sha":"<merge sha>"}'`)}\`. Do this after EACH merge.
 
 FINAL SWEEP, after the last merge and before you report. **The list above is not proof that it is the whole
 increment.** A CI fixer may have opened a PR in another repo, and if anything went wrong when it registered
@@ -1917,9 +2055,8 @@ TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIG
    Do NOT guess a nearby status, do NOT pick one off the list yourself, and do NOT edit the ticket some
    other way.
 2. Confirm it landed: \`${JIRA}/ticket.sh ${ticket.key} summary\` must now show status \`${STATUS_DONE}\`.
-3. Update ${BACKLOG}: set this increment's "status" to "done". Leave \`ticket\`, \`branch\`, \`commit\` and
-   \`prs\` in place — they are the record of how it got there. Keep the JSON valid
-   (\`jq empty ${BACKLOG_TILDE}\`).
+3. Mark it done: \`${setRow(id, '--status done')}\`. It leaves \`ticket\`, \`branch\`, \`commit\` and \`prs\` in place —
+   they are the record of how it got there.
 Return the structured output only.`,
       light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
     )

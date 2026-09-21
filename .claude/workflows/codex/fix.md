@@ -12,8 +12,9 @@ pipes, `node`, `npx`, absolute paths and `cd` are fine.
 
 ## Constants
 
-Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<logs>`, `<INCREMENT_ID>` — is
-bound to a real value in the prompt that pointed you here. Use those bindings; never guess one.
+Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`,
+`<INCREMENT_ID>` — is bound to a real value in the prompt that pointed you here. Use those bindings;
+never guess one.
 
 Workspace root `<workspace>`; plan of record `<backlog>`; logs
 `<logs>`; repos under `<workspace>/repos/`.
@@ -32,9 +33,8 @@ Workspace root `<workspace>`; plan of record `<backlog>`; logs
 - If a fix turns out to be **wrong or impossible** — it breaks a test that is pinning correct behaviour,
   or the premise is false — **stop on that item**, leave it unapplied, and explain in `notes`. Do not
   improvise an alternative, and never weaken or delete a test to make a fix land.
-- Read the increment before you start: its `acceptanceCriteria` where it has them, otherwise its
-  descriptors and the recipe the implementor followed. That is the contract every fix serves. A thin
-  increment is normal and is not a reason to stop.
+- Read the increment before you start: its `acceptanceCriteria` are the contract every fix serves, and
+  `<plan>` is how it was built.
 - Keep the house idiom: for Java, mirror the package idiom already in the repo you are editing — read
   what is there rather than assuming a package name. Otherwise the workspace best practices under
   `<workspace>/docs/best-practices/`.
@@ -42,8 +42,8 @@ Workspace root `<workspace>`; plan of record `<backlog>`; logs
 
 ## Verify before you report
 
-Run the increment's own `verification` array in order, or where it has none, the unit, format and lint
-rungs the repo defines. **Additionally, if the diff touches `src/main` in the backend, run `mvn verify`
+Run the plan's section 6, "Ladder", in order, skipping only the browser legs below. It includes each
+changed repo's unit, format and lint rungs. **Additionally, if the diff touches `src/main` in the backend, run `mvn verify`
 (not just `mvn test`)** — integration tests run under Failsafe at `verify` and a `mvn test` ladder would
 skip them entirely.
 

@@ -1,7 +1,7 @@
 # Codex brief — INCREMENT IMPLEMENTOR
 
-You are the **implementor** for one increment of a backlog-driven build. You make the change and nothing
-else — you do not review it, and you do not commit it.
+You are the **implementor** for one increment of a backlog-driven build. You execute the increment's plan
+and nothing else — you do not review it, and you do not commit it.
 
 ## Your shell is normal
 
@@ -13,14 +13,15 @@ discipline, house rules — applies in full.
 
 ## Constants
 
-Every `<placeholder>` in this brief — `<workspace>`, `<workarea>`, `<backlog>`, `<logs>`, `<skills>`,
-`<branch>`, `<INCREMENT_ID>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a real
-value in the prompt that pointed you here. Use those bindings; never guess one.
+Every `<placeholder>` in this brief — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`,
+`<skills>`, `<branch>`, `<INCREMENT_ID>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a
+real value in the prompt that pointed you here. Use those bindings; never guess one.
 
 | Thing | Path |
 |---|---|
 | Workspace root | `<workspace>` |
-| Plan of record | `<backlog>` |
+| Backlog | `<backlog>` |
+| This increment's plan | `<plan>` |
 | Workarea | `<workarea>` |
 | Logs | `<logs>` |
 | Skills | `<skills>` |
@@ -35,64 +36,42 @@ from memory is how one programme's increment ends up built in another programme'
 Every repo this increment touches is already on branch `<branch>`, cut for this increment by an earlier
 stage. Do not switch branches and do not create one.
 
-An increment whose `repo` field is `both` means BOTH the backend and the frontend repo. Do the work in
-each, on that same branch name in both.
+The increment is a full-stack slice. Its plan names every repo it changes; do the work in each, on that
+same branch name in all of them.
 
-## Step 1 — read the increment in full
+## Step 1 — read the increment, then the plan
 
 ```bash
 jq '.increments[] | select(.id=="<INCREMENT_ID>")' <backlog>
+jq 'del(.increments)' <backlog>
 ```
 
-That object states what the increment is. **How detailed it is varies enormously between backlogs, and
-a thin one is normal, not broken.** Some carry a full specification — `filesToTouch` (paths + action +
-what), `flowChanges`, `schemaFields`, `copyKeys`, `specs`, `acceptanceCriteria`, `verification` (the
-ladder, in order), `recipe`. Others carry little more than `type`, `repo`, a `title` or `detail`, and a
-few descriptors such as `section`, `page`, `slug` or `obligations`. **Both shapes are buildable.** Read
-whichever fields are present; never require a field, and never treat its absence as a blocker.
+The row is the **requirement**: `title`, `detail` (what and why), `acceptanceCriteria` (what must be
+observably true afterwards), `sources`, `openQuestions`. The header holds the programme's invariants.
+Neither says how.
 
-**You work out the solution. That is the job.** Where the increment does not spell something out, derive
-it the way an engineer joining this codebase would: from the repo's own recipes and conventions, from
-the neighbouring features, and from the workspace best practices. Do not stop and ask to be handed a
-paint-by-numbers spec, and do not report a thin increment as a defect.
+Then read `<plan>` in full. A planner wrote it against the live tree just before you started. It has
+settled every choice (section 0), and lists the moves, edits, new files, tests, the checks that prove the
+acceptance criteria, the ladder, and what is out of scope. **Execute it.** Where it names an exemplar, open
+that file and copy its shape. Where it follows a repo's recipe (for a frontend journey change, the
+`frontend-change` skill's recipe), read the recipe it cites and follow it exactly.
 
-What a thin increment still owes you is a claim that holds up. **Thin is fine; wrong is not.** Report in
-`notes` — and only in `notes` — the things that are actually false: a path that is not there, a citation
-whose line has moved on, an asserted behaviour the application does not have, two fields that contradict
-each other. Those are defects. Silence about a detail is not.
+Where the plan is wrong about the tree, do the smallest thing that meets the acceptance criteria and say in
+`notes` what you changed and why. Report in `notes` anything the row or the plan asserts that is false.
 
-Supporting context: if the increment has a `recipe` field, read what it cites, resolving
-workarea-relative paths against `<workarea>`; where it cites a document by heading, read the cited
-sections, not the whole file. If it has no `recipe`, find the governing recipe yourself — for a frontend
-increment that is the set's own docs, reached through the `frontend-change` skill in Step 2. Read what
-you need to get it right and no more.
+## Step 2 — read the standards for what you touch
 
-## Step 2 — build it, routed on the increment's `repo` field
-
-**frontend** — the workspace `frontend-change` skill is your script. Read
-`<skills>/frontend-change/SKILL.md` in full and follow it verbatim. It routes you to the repo's own recipe
-under `src/server/app/sets/<set>/docs/add-a-*.md` (or the obligation / journey-flow maintenance guard
-rails) — read that recipe and follow it, varying as little as possible. Do **not** improvise around a
-recipe. The recipes are set-relative, so where your increment targets a set other than the one a recipe was
-written against, substitute the set folder and otherwise follow it exactly. Where the increment cites a gap
-that no recipe covers, the increment's own `filesToTouch` **is** the script and any exemplar it names is
-the shape to imitate — and where it has no `filesToTouch` either, the recipe plus the nearest existing
-feature of the same kind is the shape to imitate. Latitude about *how* is not latitude about *whether*:
-where a recipe governs, follow it.
-
-**backend** — follow the increment plus the workspace Java best practices under
-`<workspace>/docs/best-practices/java/`. Mirror the package idiom already in `<backendRepo>` exactly —
-read what is there rather than assuming a package name; each programme's backend has its own. Compact-constructor null guards on public records at API boundaries. One round-trip test
-plus one unknown-value negative per enum — **never** a test per enum constant. Integration tests (`*IT`)
-run under Failsafe: `mvn verify`, not `mvn test`.
-
-**tests** — follow the increment plus `<workspace>/docs/best-practices/playwright/`. Independent tests,
-raw role/label locators, no page objects where the repo does not already use them, no sleeps,
-`expect.poll` only for non-locator state.
+Before you write to a file, read the rules and best-practice files the plan lists for it. Where it lists
+none, run `tim backlog standards --files <repoKey>:<path> --json` (the repo key is the folder name under
+`<workspace>/repos/`, or `workspace`) and read what it names. The house rules you will be reviewed
+against include: compact-constructor null guards on public Java records at API boundaries; one round-trip
+test plus one unknown-value negative per enum, never a test per constant; Java integration tests (`*IT`)
+run under `mvn verify`, not `mvn test`; Playwright tests independent, with role/label locators and no
+sleeps.
 
 ## Rules
 
-- Implement **exactly** the increment's scope. Do not fix adjacent things you notice — put them in
+- Implement **exactly** the plan's scope. Do not fix adjacent things you notice — put them in
   `notes` and let a later increment or the judge deal with them.
 - **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
   change inserts or reorders a page, the tests-repo spec covering the page BEFORE yours still expects the
@@ -100,19 +79,19 @@ raw role/label locators, no page objects where the repo does not already use the
   that spec yourself, in `<testsRepo>`, on the SAME branch name — cross-repo branch parity means the stack
   serves your branch frontend to your branch specs, so your own ladder catches it in seconds rather than a
   CI round trip finding it in half an hour. An increment that ships a page and leaves a stale spec behind
-  is not finished. This is in scope even when the increment's `repo` field says only `frontend`.
+  is not finished. This is in scope even when the plan did not list the tests repo.
 - **Work that belongs to this increment gets DONE, never deferred.** The scope fence above stops you
   wandering into other people's increments; it is not a licence to leave your own half-finished. If
   something is in scope and you are unsure whether to do it, DO IT.
-- **Never edit `backlog.json`.** It is the orchestrator's artefact and the plan of record. If your work
+- **Never edit `backlog.json` or the plan.** They are the orchestrator's artefacts. If your work
   reveals that a new increment is needed — a defect you must not fix here, a missing dependency edge, a
   step the plan omitted — describe it fully in `notes`, including what it should depend on and what its
   acceptance criteria would be. The orchestrator writes it in. Editing the plan from inside an increment
   puts a planning change inside a diff nobody is reviewing as a planning change.
-- Every user-facing string goes in `copy.en.js` **and** `copy.cy.js` with identical structure. No display
-  logic in obligations or in the model — no labels, titleKeys or hints there.
-- Write the specs the increment lists (co-located Playwright spec, axe test) — or, where it lists none,
-  the specs the governing recipe calls for. They are part of the increment, not optional extras.
+- In a frontend with copy files, every user-facing string goes in `copy.en.js` **and** `copy.cy.js` with
+  identical structure. No display logic in obligations or in the model — no labels, titleKeys or hints there.
+- Write the tests the plan lists, the integration proof included. They are part of the increment, not
+  optional extras.
 - **Frontend work: run `npm run format` before you report.** The repo's pre-commit hook runs
   `format:check && lint && test`, so a formatting miss blocks the commit even when your ladder was green.
   Watch for it after edits that change a line's length — shortening `it.fails(` to `it(`, for example,

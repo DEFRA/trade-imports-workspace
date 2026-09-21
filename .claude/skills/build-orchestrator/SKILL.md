@@ -1,6 +1,6 @@
 ---
 name: build-orchestrator
-description: Drive an increment backlog through the increment-build-loop workflow, one increment at a time, from the main session. Derives the next buildable increment from backlog.json, runs the loop over it, checks it landed, and repeats until a set number of increments is done or something stops it — then prints a copy-paste handover prompt so a replacement agent resumes with no other context. Switches the executor between Claude and Codex, per run or between increments. Use when the user wants to build increments from a workarea backlog, resume a build run, or hand one over (triggers "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build"). NOT for authoring or ordering a backlog — that is parity or journey-builder. NOT for one already-agreed change to a repo — that is frontend-change or ticket.
+description: Drive an increment backlog through the increment-build-loop workflow, one increment at a time, from the main session. Derives the next buildable increment from backlog.json, runs the loop over it, checks it landed, and repeats until a set number of increments is done or something stops it — then prints a copy-paste handover prompt so a replacement agent resumes with no other context. Switches the executor between Claude and Codex, per run or between increments. Use when the user wants to build increments from a workarea backlog, resume a build run, or hand one over (triggers "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build"). NOT for authoring or ordering a backlog — that is the distil skill, or parity for a comparison corpus. NOT for one already-agreed change to a repo — that is frontend-change or ticket.
 ---
 
 # build-orchestrator
@@ -17,7 +17,7 @@ subagent cannot invoke the `Workflow` tool**, so the middle tier could never
 start the thing it existed to drive.
 
 It was also solving a problem that had already been solved. The loop's own
-`agent()` calls are the death boundary — all `15 + 3n` of them live and die
+`agent()` calls are the death boundary — all `16 + 3n` of them live and die
 inside the workflow, and the session that invoked it absorbs only the return
 value. Your context grows by one short result per increment whether or not
 anything sits in between.
@@ -108,10 +108,16 @@ idempotent, so it runs on reused tickets too.
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is 22–46 agents against a default guideline of 15. You cannot set
+   increment is 23–47 agents against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it.
 2. **Pull the workspace repo.** `backlog.json` is the state.
-3. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
+3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It is the
+   one shape in `docs/reference/backlog-shape.md`: each row a requirement (what,
+   why, acceptance), never a recipe. The loop plans the how itself, just in time,
+   into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
+   fail on recipe fields; the loop still reads it, treating those fields as hints,
+   so report the failures and carry on. Do not rewrite another programme's backlog.
+4. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
    it if the run is long; do not carry a stale copy in your head.
 
@@ -126,13 +132,14 @@ chosen in advance. A list committed five deep throws away everything the first
 increment teaches.
 
 ```bash
-jq -r '["done","deferred","dropped","blocked","rejected","merged-into"] as $withheld | [.increments[] | select(.status=="done") | .id] as $done | [.increments[] | select(.status | IN($withheld[]) | not) | select([(.dependsOn // [])[] | IN($done[])] | all) | .id] | .[0] // "NONE"' workareas/<workarea>/backlog.json
+tim backlog next <workarea>
 ```
 
 `NONE` → stop with `no-buildable`.
 
-**Buildability is status and dependencies. Nothing else.** The five withheld
-statuses are named explicitly and everything else counts as buildable, so an
+**Buildability is status and dependencies. Nothing else.** The six withheld
+statuses (`done`, `deferred`, `dropped`, `blocked`, `rejected`, `merged-into`)
+are named explicitly and everything else counts as buildable, so an
 unknown status fails **loudly** — it gets picked up and you see it — rather than
 silently vanishing from the count. That direction matters: a query that reports
 zero buildable work reads exactly like a finished backlog, which is the
@@ -178,6 +185,7 @@ Build the args object with every key below:
   scope: '<scope>',
   executor: '<executor>',
   lifecycle: '<lifecycle>',
+  planOnly: false, // true writes <workarea>/plans/<id>.md and stops: a dry run to see how it would be built
   jiraProject: '<jiraProject>',
   epic: '<epic>',
   jiraInProgressStatus: '<inProgress>',
@@ -257,8 +265,11 @@ jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key 
   per-increment line. Do NOT raise a second increment for it: two increments doing the
   same work collide when the second finds the first has done it.
 - **Not covered** → add an increment for it. Append it with a fresh id (never renumber),
-  `dependsOn` the increment that surfaced it, and a `notes` line saying which increment
-  and stage it came from. Then it is tracked, and the run continues.
+  in the one shape: a `title`, a `detail` saying what and why, at least one observable
+  `acceptanceCriteria` entry, `dependsOn` the increment that surfaced it, `status: "todo"`,
+  and a `notes` line saying which increment and stage it came from. Never a file list or
+  commands — the loop plans those. Then run `tim backlog check <workarea>`, and the run
+  continues.
 
 Work that exists only in a stage's prose is work that will be lost. This step is what
 stops that, and it costs one query.
@@ -382,10 +393,11 @@ defect.
 `claude` runs every stage as a Claude subagent — the proven path.
 
 `codex` delegates the three token-heavy stages, **implement, review and fix**,
-to Codex CLI via the briefs in `.claude/workflows/codex/`. Baseline, verify
-findings, judge, ladder and land stay on Claude either way: they are
-orchestration and adjudication. Codex mode is `18 + n` agents against `15 + 3n`,
-so it is markedly cheaper on a wide increment.
+to Codex CLI via the briefs in `.claude/workflows/codex/`. Baseline, plan, verify
+findings, judge, ladder and land stay on Claude either way. Both executors build
+from the same plan file, so the same backlog builds under either with no edit.
+Codex mode is `19 + n` agents against `16 + 3n`, so it is markedly cheaper on a
+wide increment.
 
 Switch by changing `executor` in the next increment's args. **It
 takes effect at the next increment and never mid-increment**, so a run can start

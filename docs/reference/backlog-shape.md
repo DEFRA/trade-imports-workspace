@@ -37,8 +37,10 @@ loop's planner and reviewers read the envelope as well as the row.
 | `kind` | no | `feat`, `fix`, `chore`, `refactor`, `test` or `docs`. Sets the branch prefix |
 | `repos` | no | The repo keys the slice touches, such as `["backend","frontend","tests"]`. Left out, the loop takes every configured repo |
 | `sources` | no | Where it came from: `{ "source": "trace:iuu", "ref": "pages/transport-details.json" }` |
+| `requirements` | no | The distiller's requirement ids the row covers (`req-004`), from `distil/requirements.json` |
 | `openQuestions` | no | What is still undecided. A `blocked` row must have at least one |
 | `notes` | no | Anything a builder should know that is not a requirement |
+| `gate` | no | A checkpoint: the loop lands this increment, then stops so a person can look before anything that depends on it |
 
 The build loop owns `ticket`, `branch`, `commit` and `prs`, and writes them with `tim backlog set`.
 

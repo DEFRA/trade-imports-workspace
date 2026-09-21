@@ -72,6 +72,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'scope',
     'executor',
     'lifecycle',
+    'planOnly',
     'repos',
     'models',
     'increments'
@@ -85,6 +86,7 @@ const LOCAL_ARGS = {
   scope: 'args-fixture',
   executor: 'claude',
   lifecycle: 'local',
+  planOnly: false,
   repos: {
     frontend: {
       path: 'repos/trade-imports-animals-frontend',
@@ -380,6 +382,69 @@ describe('increment-build-loop', () => {
 
     expect(run.error.message).toBe(
       'increment-build-loop: args is missing required key scope. Pass every one in args: this workflow has no defaults'
+    )
+  })
+
+  test('refuses a planOnly that is not a boolean', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...LOCAL_ARGS, planOnly: 'yes' }
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: config.planOnly must be a boolean — got "yes"'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  const runPlanOnly = () =>
+    runWorkflowScript(scriptPath, {
+      args: { ...LOCAL_ARGS, planOnly: true },
+      answers: [
+        WORKSPACE_ANSWER,
+        { ok: true, summary: '1' },
+        {
+          ok: true,
+          summary: 'Planned across three repos.',
+          repos: ['backend', 'tests', 'frontend'],
+          behaviourChanges: ['The list shows only your own notifications.'],
+          decisions: ['Filter in the backend query, not the frontend.']
+        }
+      ]
+    })
+
+  test('plans the increment and stops when planOnly is true', async () => {
+    const run = await runPlanOnly()
+
+    expect(run.result).toEqual({
+      increments: [
+        {
+          id: 'inc-900',
+          outcome: 'planned',
+          plan: '/ws/workareas/shared/args-fixture/plans/inc-900.md',
+          detail: 'Planned across three repos.',
+          repos: ['backend', 'tests', 'frontend'],
+          behaviourChanges: ['The list shows only your own notifications.'],
+          decisions: ['Filter in the backend query, not the frontend.']
+        }
+      ]
+    })
+  })
+
+  test('runs no stage after the planner when planOnly is true', async () => {
+    const run = await runPlanOnly()
+
+    expect(run.agents.map((entry) => entry.options.label)).toEqual([
+      'workspace',
+      'preflight',
+      'inc-900 plan'
+    ])
+  })
+
+  test('tells the planner where to write the plan', async () => {
+    const run = await runPlanOnly()
+
+    expect(run.agents[2].prompt).toContain(
+      'WRITE /ws/workareas/shared/args-fixture/plans/inc-900.md'
     )
   })
 

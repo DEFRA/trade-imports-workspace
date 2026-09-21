@@ -92,7 +92,10 @@ const S = {
   manifest: { type: 'object', properties: {
     files: { type: 'array', items: { type: 'string' } },
     unexpected: { type: 'array', items: { type: 'string' } },
-  }, required: ['files', 'unexpected'] },
+    sizes: { type: 'array', items: { type: 'object', properties: {
+      file: { type: 'string' }, changedLines: { type: 'number' }, isNew: { type: 'boolean' } },
+      required: ['file', 'changedLines', 'isNew'] } },
+  }, required: ['files', 'unexpected', 'sizes'] },
   findings: { type: 'object', properties: {
     findings: { type: 'array', items: { type: 'object', properties: {
       file: { type: 'string' }, line: { type: 'number' }, severity: { type: 'string', enum: ['critical', 'major', 'minor'] },
@@ -150,15 +153,36 @@ for (const ID of cfg.increments) {
     { label: L('row'), phase: 'Baseline', ...RUNNER, schema: S.row })
   if (!row) { stop('could not read the backlog row'); break }
   if (row.status !== 'todo') { stop(`status is ${row.status}, not todo`); continue }
-  const unmet = row.depStatuses.filter(d => d.status !== 'done')
+  const landedHere = new Set(results.filter(r => r.landed).map(r => r.id))
+  const unmet = row.depStatuses.filter(d => d.status !== 'done' && !landedHere.has(d.id))
   if (unmet.length) { stop(`dependencies not done: ${unmet.map(d => d.id + '=' + d.status).join(', ')}`); break }
 
   phase('Plan')
   const PLAN_FILE = `${PLANS_ABS}/${ID}.md`
+  const SURVEY_FILE = `${P_ABS}/build/surveys/${ID}.md`
+  // A survey before planning. Generalising existing code fails at the audit when the planner has
+  // not inventoried where that code assumes its current shape (lesson L2, from inc-004).
+  const survey = await agent(`You are the SURVEYOR for increment ${ID}. You do not plan or change anything: you establish facts.
+${READ_ROW.replace(/<ID>/g, ID)}
+${GUARD}${STANDARDS}
+The programme's design is ${DESIGN_ABS} (large: grep -n for what this increment needs). Read the LIVE code this increment would touch, in full.
+Write ${SURVEY_FILE} with:
+1 Files in scope, each with what it does today and how large it is.
+2 EVERY assumption the live code makes that this increment's requirement would break: each with a file:line citation and the exact expression. For a generalisation, that means every hard-coded name, prefix, regex, field name, path shape and message that is specific to the current caller, INCLUDING ones buried in helpers the main path calls. Read the whole module, not the parts you expect.
+3 Mismatched pairs: places where a value is stored under one field name and read under another, or a look-up key differs from the key a map was built with.
+4 Existing tests that pin current behaviour, with their file and case names, and which would have to keep passing unchanged.
+5 Seams: the smallest set of hooks, parameters or injections that would let both callers share this code, each naming the live line it replaces.
+6 Facts the design asserts that the live code contradicts.
+Return the count of assumptions and mismatches you found, and the survey path.`,
+    { label: L('survey'), phase: 'Plan', ...DOER, schema: { type: 'object', properties: {
+      surveyFile: { type: 'string' }, assumptions: { type: 'number' }, mismatches: { type: 'number' },
+      headline: { type: 'string' } }, required: ['surveyFile', 'assumptions', 'mismatches', 'headline'] } })
+  if (survey) log(`${ID}: survey found ${survey.assumptions} assumptions, ${survey.mismatches} mismatches`)
   const planPrompt = (objections) => `You are the PLANNER for increment ${ID} of Sam's requirements-pipeline programme.
 ${READ_ROW.replace(/<ID>/g, ID)}
 ${GUARD}${STANDARDS}
-The HOW lives in the programme's design, which is the knowledge source for this programme: ${DESIGN_ABS} (large: grep -n for the sections, commands and atom ids this increment needs, then Read those ranges). Sam's hard requirements R1-R8: ${REQS_ABS}. Read ${P_ABS}/build/lessons.md and ${P_ABS}/build/deferred.md, and apply every lesson or deferred finding that names this increment. Read the live code you will change; plan against the tree as it is now, not as the design imagined it. If the design and the live code disagree, the live code is the fact and you record the decision.
+The HOW lives in the programme's design, which is the knowledge source for this programme: ${DESIGN_ABS} (large: grep -n for the sections, commands and atom ids this increment needs, then Read those ranges). Sam's hard requirements R1-R8: ${REQS_ABS}. A surveyor has already inventoried the live code at ${SURVEY_FILE}: read it first and in full. Your plan must account for EVERY assumption, mismatch and seam it lists, or say in Decisions why one does not apply. If the survey is wrong, check the code yourself and record the correction.
+Read ${P_ABS}/build/lessons.md and ${P_ABS}/build/deferred.md, and apply every lesson or deferred finding that names this increment. Read the live code you will change; plan against the tree as it is now, not as the design imagined it. If the design and the live code disagree, the live code is the fact and you record the decision.
 Write the plan to ${PLAN_FILE} with these sections:
 0 Decisions (every choice the atoms leave open, made and recorded with rejected alternatives; never leave a fork for the implementer)
 1 Criteria map (every acceptance criterion of every member atom, quoted, and how the change will meet it and how it will be proven)
@@ -176,7 +200,8 @@ Return the plan summary.`
   const auditPrompt = `You are the PLAN AUDITOR for ${ID}. You did not write the plan.
 ${READ_ROW.replace(/<ID>/g, ID)}
 ${GUARD}
-Derive the requirement YOURSELF from the backlog row and its atoms (never from the plan's restatement of them). Then read the plan ${PLAN_FILE} and check:
+Derive the requirement YOURSELF from the backlog row and its atoms (never from the plan's restatement of them). Read the surveyor's inventory of the live code at ${SURVEY_FILE}, and check its claims against the code where a plan decision rests on one. Then read the plan ${PLAN_FILE} and check:
+(0) every assumption, mismatch and seam in the survey is either handled by the plan or dismissed in Decisions with a reason that holds;
 (a) every acceptance criterion of every member atom is covered and will be proven;
 (b) nothing is built that no atom asks for, unless the design requires it for this increment and the plan's Decisions say so;
 (c) R1-R8 in ${REQS_ABS} hold, especially: the backlog stays requirement-shaped (R1), anything executor-specific stays out of the backlog (R5), full-stack slices (R7), and nothing is chosen for build cost (R8);
@@ -186,15 +211,27 @@ Classify every point you raise.
 - BLOCKING (goes in objections, and fails the audit): a false premise the plan's scope or decisions rest on; an acceptance criterion not covered or not proven; something built that no atom asks for; a breach of R1-R8, the tim rails or the guard rails; a design deviation not justified on merit.
 - NOTE (goes in notes, passes the audit): a flaw the implementer can correct while executing, such as an imprecise invariant command, a missing edge-case test, or a naming improvement. Notes are handed to the implementer, who must address them.
 Be concrete. pass=true exactly when objections is empty.`
+  // At most two audit rounds (lesson L3). Round 1 is a full audit. Round 2 judges only whether
+  // round 1's objections were resolved, plus any regression the revision itself introduced;
+  // anything else it notices becomes a note. Acceptance checks every criterion independently
+  // against the final change, so the plan does not have to be perfect.
   let audit = await agent(auditPrompt, { label: L('plan-audit'), phase: 'Plan', ...THINK, schema: S.audit })
-  let planRefused = false
-  for (let round = 2; audit && !audit.pass && round <= 4; round++) {
-    plan = await agent(planPrompt(audit.objections), { label: L(`plan-revise-${round}`), phase: 'Plan', ...THINK, schema: S.plan })
-    if (!plan || !plan.ok) { planRefused = true; break }
-    audit = await agent(auditPrompt, { label: L(`plan-audit-${round}`), phase: 'Plan', ...THINK, schema: S.audit })
+  if (audit && !audit.pass) {
+    const firstObjections = audit.objections
+    const firstNotes = audit.notes || []
+    plan = await agent(planPrompt(firstObjections), { label: L('plan-revise'), phase: 'Plan', ...THINK, schema: S.plan })
+    if (!plan || !plan.ok) { stop(`plan refused on revision: ${plan ? plan.refusal : 'planner died'}`); break }
+    audit = await agent(`You are the PLAN AUDITOR for ${ID}, round 2. This is a CONVERGENCE check, not a fresh audit.
+${GUARD}
+Round 1 raised these blocking objections against the plan: ${JSON.stringify(firstObjections)}
+The planner has revised ${PLAN_FILE}. For EACH round-1 objection, decide: resolved (the plan now handles it, or its Decisions dismiss it with a reason that holds) or unresolved.
+The only other thing that may block is a REGRESSION the revision itself introduced: something the round-1 plan got right that the revised plan now gets wrong.
+Anything else you notice goes in notes, never in objections: the implementer addresses notes, and an independent acceptance check tests every criterion against the final change.
+objections = the unresolved round-1 objections plus any regression; pass=true exactly when that list is empty.`,
+      { label: L('plan-audit-2'), phase: 'Plan', ...THINK, schema: S.audit })
+    if (audit) audit.notes = [...firstNotes, ...(audit.notes || [])]
   }
-  if (planRefused) { stop(`plan refused on revision: ${plan ? plan.refusal : 'planner died'}`); break }
-  if (!audit || !audit.pass) { stop(`plan audit failed after 4 rounds: ${audit ? audit.objections.join(' | ') : 'auditor died'}`); break }
+  if (!audit || !audit.pass) { stop(`plan audit failed after 2 rounds: ${audit ? audit.objections.join(' | ') : 'auditor died'}`); break }
 
   phase('Implement')
   const impl = await agent(`You are the IMPLEMENTER for ${ID}. Execute the plan at ${PLAN_FILE} and nothing else. Where the plan is silent, choose what best meets the atoms and say so in your notes.
@@ -211,7 +248,8 @@ Run: git -C ${ROOT} status --porcelain --untracked-files=all > ${LOGS_T}/${ID}-s
 Pre-existing paths to IGNORE (they belong to other work): ${JSON.stringify(PREEXISTING)}
 The plan names these paths: ${JSON.stringify(plan.files)}
 Also IGNORE everything under ${P}/build/ (plans and logs; the land step handles the plan file).
-Return in "files" every path in the status output that is not pre-existing and not ignored (a directory entry counts as every file under it; list the files with find if needed). Return in "unexpected" the ones that are not under any path the plan names.`
+Return in "files" every path in the status output that is not pre-existing and not ignored (a directory entry counts as every file under it; list the files with find if needed). Return in "unexpected" the ones that are not under any path the plan names.
+Then size every file in "files": run git -C ${ROOT} diff HEAD --numstat > ${LOGS_T}/${ID}-numstat.txt 2>&1 and Read it once. For a tracked file, changedLines = added + removed from that output. For an untracked new file, isNew=true and changedLines = its line count (wc -l on that one file). Return one "sizes" entry per file.`
   let manifest = await agent(manifestPrompt, { label: L('manifest'), phase: 'Implement', ...RUNNER, schema: S.manifest })
   if (!manifest || !manifest.files.length) { stop('manifest found no changed files'); break }
   if (manifest.unexpected.length) log(`${ID}: files changed outside the plan: ${manifest.unexpected.join(', ')}`)
@@ -230,7 +268,25 @@ Review the change: git -C ${ROOT} diff HEAD -- ${f} (or the whole file if untrac
 Ignore the persona's steps about writing review files, posting or committing: return findings instead. List every standards file you actually read.`,
       { label: L(`code:${f}`), phase: 'Review', model: 'sonnet', schema: S.findings }),
   ]
-  const perFile = await parallel(manifest.files.flatMap(f => reviewFile(f)))
+  // Review is sized by each file's diff (lesson L4). A new file, or one with more than
+  // TRIVIAL_LINES changed lines, gets a dedicated style reviewer and code reviewer. Smaller
+  // changes (import repoints, one-line tweaks) are grouped, and each group gets ONE reviewer
+  // applying both skills' personas, read live. No changed file goes unreviewed.
+  const TRIVIAL_LINES = 12
+  const GROUP_SIZE = 15
+  const sizeOf = Object.fromEntries((manifest.sizes || []).map(s => [s.file, s]))
+  const isSubstantial = (f) => { const s = sizeOf[f]; return !s || s.isNew || s.changedLines > TRIVIAL_LINES }
+  const substantial = manifest.files.filter(isSubstantial)
+  const trivial = manifest.files.filter(f => !isSubstantial(f))
+  const trivialGroups = []
+  for (let i = 0; i < trivial.length; i += GROUP_SIZE) trivialGroups.push(trivial.slice(i, i + GROUP_SIZE))
+  log(`${ID}: review sized: ${substantial.length} substantial files x2 reviewers, ${trivial.length} small changes in ${trivialGroups.length} grouped reviewer(s)`)
+  const reviewGroup = (group, n) => () => agent(`You are the SMALL-CHANGE REVIEWER for increment ${ID}, group ${n}. Every file below changed by only a few lines. Apply BOTH workspace review skills, read LIVE now: ${SK}/code-style/SKILL.md with ${SK}/code-style/references/STYLE_FILE_REVIEWER.md, and ${SK}/review/SKILL.md with ${SK}/review/references/FILE_REVIEWER.md, plus the best-practice files each skill routes these file types to.
+${GUARD}${STANDARDS}
+For each file, review its change (git -C ${ROOT} diff HEAD -- <file>) in the context of the surrounding code: style, correctness, and whether the change is complete (for example, a repointed import that still resolves, and no stale path left behind). Files: ${JSON.stringify(group)}
+Ignore the personas' steps about writing review files, posting or committing: return findings. List every standards file you read.`,
+    { label: L(`small:${n}`), phase: 'Review', model: 'sonnet', schema: S.findings })
+  const perFile = await parallel([...substantial.flatMap(f => reviewFile(f)), ...trivialGroups.map((g, n) => reviewGroup(g, n + 1))])
   const consistency = await agent(`You are the CONSISTENCY REVIEWER for increment ${ID}. Follow ${SK}/review/SKILL.md and ${SK}/review/references/CONSISTENCY_REVIEWER.md, read LIVE now.
 ${GUARD}${STANDARDS}
 Read the whole change together: every file in ${JSON.stringify(manifest.files)} (git -C ${ROOT} diff HEAD -- <file>, or the whole file if untracked). Check the contracts between the parts (command signatures against their callers, schemas against their readers, docs and skills against the code), naming against the design ${DESIGN_ABS}, and the plan's invariants in ${PLAN_FILE}: run each one that obeys the guard rails and report any that fail. Ignore the persona's steps about writing files or posting: return findings. List every standards file you read.`,

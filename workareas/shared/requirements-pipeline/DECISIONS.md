@@ -1,0 +1,53 @@
+# Decisions: plumbing the distil and build pieces
+
+Each entry: the choice, then how to reverse it. Written while Sam was asleep, 21–22 September 2026.
+
+## The backlog shape
+
+- **D1. The one shape is the trace backlog's row plus `detail`, `sources`, `repos` and `openQuestions`.** The loop, build-orchestrator and the four trace backlogs already read `id`, `title`, `kind`, `dependsOn`, `acceptanceCriteria` and `status`, so no existing reader changes meaning.
+  Reverse: edit `docs/reference/backlog-shape.md` and `tim/src/backlog/shape.js` together.
+- **D2. The requirements-v2 atoms/increments profile is left in place but is not the one shape.** It is tested and registered, and nothing on this branch builds from it. Its fields (`members`, `outcome`, `why`, `surface`) are not what the loop reads.
+  Reverse: point `tim backlog check` at the v2 parser instead, and teach the loop `outcome`/`why`.
+- **D3. `tim backlog check` refuses the four recipe fields (`filesToTouch`, `verification`, `recipe`, `implementorSkill`) on a row.** The loop still reads a legacy backlog that has them, as hints, so no other programme breaks.
+  Reverse: delete `RECIPE_FIELDS` from `shape.js`.
+- **D4. No deterministic layer-split check.** The stashed attempt (inc-011) was 3,400 lines and unfinished. The distiller's consolidate step and its verifier refuse layer splits in the prompt instead, and `repos` lists every repo a slice touches.
+  Reverse: pop the useful parts of `stash@{0}` into `shape.js`.
+
+## The builder
+
+- **D5. The plan stage runs on Claude (heavy tier) in both executor modes.** Implement, review and fix still go to Codex in Codex mode. A Codex plan brief is a suggestion, not built (Codex is available, not preferred).
+  Reverse: add a `plan` entry to `CODEX` in the loop and a `codex/plan.md` brief.
+- **D6. The plan is written to `<workarea>/plans/<id>.md` and re-planned on every attempt.** The path is fixed, so there is no pointer to lose (frontend-alignment's `planFile` defect). A retry plans against the live tree, which is the point of planning just in time.
+  Reverse: skip the plan stage when the file exists.
+- **D7. Every changed file is still reviewed.** frontend-alignment's `reviewFocus` cap was not lifted: it trades review coverage for cost, and the loop's reviewers are already per file.
+  Reverse: add `reviewFocus` to `PLAN_SCHEMA` and slice `reviewTargets` by it.
+- **D8. The ladder is the plan's section 6, which must include each touched repo's own gate and the slice's integration proof.** The row carries no commands. The ladder agent refuses a plan whose ladder leaves out a touched repo.
+  Reverse: restore the `verification` wording in the ladder stage.
+- **D9. A row's repos come from `repos`, else legacy `repo`, else all three configured repos.** The `band` routing is gone: over-listing a repo costs nothing (no change, no commit, no PR), and a slice should not be narrowed by a guess.
+  Reverse: restore STEP 7's band table in the ticket stage.
+- **D10. New required arg `planOnly`.** `true` runs the plan stage and stops, with no ticket, branch, baseline or build. It is how the plan stage is proved without building product.
+  Reverse: remove `planOnly` from `ALWAYS_REQUIRED` and the early return.
+- **D11. Loop stages write the backlog through `tim backlog set`, not by hand-editing JSON.**
+  Reverse: restore the Edit-and-`jq empty` wording.
+
+## The distiller
+
+- **D12. `distil` is a skill run from the main session with Agent subagents, not a new Workflow script.** Extract and verify fan out one agent per source; reconcile, consolidate and report are one agent each. The main session checks each step on disk.
+  Reverse: wrap sections 1–5 of `.claude/skills/distil/SKILL.md` in a workflow script.
+- **D13. A trace set is read from its mined, verified output, not re-mined.** The trace-to-requirements workflow stays the trace extractor; `distil` runs it only for a set that has not been mined.
+  Reverse: have the extractor re-run the trace workflow every time.
+- **D14. Journey-builder's extractor method and reconciler ground rules are reused by path; its obligations-model mapping and `journey-spec.json` store are not.** That store has no home for backend, tooling or cross-repo requirements (synthesis §2.1 step 3).
+  Reverse: have the reconcile step write `journey-spec.json` through the `spec-add-*.sh` scripts.
+- **D15. Every question carries a default, and a row whose question has a default is `todo`, not `blocked`.** The trace runs over-gated (CHED-P blocked 74 of 108 rows). A row is `blocked` only when there is no safe default.
+  Reverse: the consolidate rule in section 4 of the skill.
+- **D16. Rows carry optional `requirements` ids, and coverage (each adopted requirement in exactly one increment) is two `jq` lines in the skill.** A candidate for `tim backlog check --requirements`, not built.
+  Reverse: drop the field and the two checks.
+
+## Suggestions, not built
+
+- A Codex plan brief (D5).
+- More than three repo keys in the loop's `repos` table (reference-data, stub, gateway). R7 wants any repo a slice needs; the loop only has frontend, backend and tests. No slice has needed a fourth yet.
+
+## Waiting for Sam
+
+- **Add `distil` to the skill routing index in `CLAUDE.md`.** Not done: `CLAUDE.md` has an uncommitted edit of yours, and I did not want to commit it with mine. The row: `| distil | "distil requirements", "turn these requirements into a backlog", "build a backlog from", "re-distil" | Sources in, one backlog.json of full-stack requirement increments out, plus a decision-led report. |`

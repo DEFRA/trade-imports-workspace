@@ -1,0 +1,286 @@
+{
+  "source": "trace:ched-pp",
+  "structure": "A pre-mined trace-to-requirements workflow output at workareas/trace-requirements/ched-pp/, covering IPAFFS's live CHED-PP (plants/plant products) notification journey. journey-spec.json lists the 39 pages in build order (a plain array of slugs under .pages[].slug) and carries the same per-page detail as pages/*.json. Each pages/<slug>.json is a deeply-evidenced page spec built from Playwright trace captures plus two 'legacy' corroboration sources (the IPAFFS frontend's Joi validation/copy catalogue and the backend Jakarta submission-model schema) and the existing QA automation suite (page objects, workflow configs, spec assertions). Every field, validation message, behaviour and note carries its own 'confidence' tag from the set's own four-level taxonomy: confirmed (observed rendered in a trace) > legacy (read from an authoritative IPAFFS source, not rendered, but trustworthy for copy/values) > inferred (deduced from tests/page objects) > gap (no evidence, an open question). SPEC-GATE.md documents this taxonomy and totals; there is no separate verify-verdicts.json in this set — its own verification is these embedded per-item confidence tags plus a page-level 'confidence' that takes the weakest of its parts. Extraction here maps that taxonomy onto this skill's confidence scale: confirmed/legacy -> verbatim (both carry an exact quoted string from an authoritative source, rendered or not), inferred -> inferred, gap -> gap. conflicts.json (28 entries) records disagreements the trace set found between sources or pages, each with a ruling and, where unresolved, needsHuman:true. Scope for this extract: pages/country-of-origin.json, pages/variety-of-genus-and-species.json, pages/commodity-basic-description.json in full, plus the journey-spec.json page-order list and the conflicts.json entries whose pageSlug or alsoAffects names one of these three pages (c-001, c-003, c-012, c-018).",
+  "claims": [
+    {
+      "id": "trace-001",
+      "statement": "In the create flow, the Country of origin page is reached immediately after the Import Type page (or, for a DoA agent acting on behalf of another organisation, after an optional Organisation Selection page). It is the only entry route either evidence source shows.",
+      "kind": "behaviour",
+      "ref": "pages/country-of-origin.json > entryRoutes[0]",
+      "quote": "Create flow — straight after the Import Type page (or after the optional Organisation Selection page for DoA agents acting on behalf of another org).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-002",
+      "statement": "The Country of origin page asks one question under the caption 'About the consignment' and heading 'Origin of the plants, plant product or other objects', with no hint text and no body copy — the field label is the entire question.",
+      "kind": "copy",
+      "ref": "pages/country-of-origin.json > caption, heading, bodyCopy, openQuestions (no hint text)",
+      "quote": "No hint text and no body copy exist on this page at all — the govuk-label--m label is the entire question.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-003",
+      "statement": "The Country of origin field is a single select of 254 options: a 'Select a country' placeholder, 249 flat countries/territories, and one optgroup labelled 'United Kingdom of Great Britain and Northern Ireland' holding England, Scotland, Wales and Northern Ireland, positioned alphabetically between 'United Arab Emirates' and 'United States Minor Outlying Islands'.",
+      "kind": "data",
+      "ref": "pages/country-of-origin.json > fields[0] (origin-country), nonStandardPatterns[1]",
+      "quote": "254 <option> elements in total = 1 placeholder + 249 flat country options + 4 options nested inside a single <optgroup label=\"United Kingdom of Great Britain and Northern Ireland\">.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-004",
+      "statement": "The country of origin is mandatory for a CHED-PP notification, enforced at both the frontend and the backend submission model.",
+      "kind": "rule",
+      "ref": "pages/country-of-origin.json > fields[0].requiredLegacyEvidence",
+      "quote": "MANDATORY confirmed at the authoritative schema layer, not just the frontend Joi... this field is required both at the frontend (Joi any.required, en.js copy) and at the backend schema (@NotNull, microservice message key .commodities.countryoforigin.not.null).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-005",
+      "statement": "The Country of origin page has exactly one button, 'Save and continue' — no 'Save and review' or 'Save and return to hub' action ever renders on this page.",
+      "kind": "behaviour",
+      "ref": "pages/country-of-origin.json > secondaryActionsNote",
+      "quote": "this page has NO secondary actions... The route handler hardcodes the action list with no branch... so 'save-and-return'... and 'save-and-review'... can never render on this route.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-006",
+      "statement": "Submitting the Country of origin page with no country selected shows the validation message 'Select the country of origin of plants, plant product or other objects'.",
+      "kind": "copy",
+      "ref": "pages/country-of-origin.json > validationMessages[0]",
+      "quote": "Select the country of origin of plants, plant product or other objects",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-007",
+      "statement": "A second, independent backend validation layer also rejects a missing country of origin, with the terser message 'Country of origin'.",
+      "kind": "copy",
+      "ref": "pages/country-of-origin.json > validationMessages[2]",
+      "quote": "Country of origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-008",
+      "statement": "There is a cross-field rule: if a temporary place of destination (POD) is set on the notification but the chosen origin country is not an EU/POD-eligible country, submission is rejected with 'You must select an EU country if you are using a POD'.",
+      "kind": "rule",
+      "ref": "pages/country-of-origin.json > validationMessages[3]",
+      "quote": "You must select an EU country if you are using a POD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-009",
+      "statement": "On the CHED-PP review page, Country of origin renders as a no-action summary row with no 'Change' link; the value can be amended after submission, but only via a different page (consignment-countries, reached from the amend hub), not by returning to this page.",
+      "kind": "behaviour",
+      "ref": "pages/country-of-origin.json > downstreamBehaviour[3], downstreamBehaviour[4]",
+      "quote": "For CHED-PP the review page renders Country of origin as a NO-ACTION summary row — there is no 'Change' link against it. Changing the country after submission is done on the separate consignment-countries page (consignment/page-2), not by returning to this page.",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-010",
+      "statement": "Two different pages in the journey both carry the visible label 'Country of origin', but they persist to two distinct data items: this page's answer is the origin country, and the other page's identically-labelled control is a separate consigned/dispatch country.",
+      "kind": "data",
+      "ref": "pages/country-of-origin.json > legacyModelContext[0]",
+      "quote": "The two 'Country of origin'-labelled pages are TWO DISTINCT model fields, not one datum captured twice... Distinct fields with distinct messages = two different concepts sharing a UI label (origin vs consigned/dispatch country).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-011",
+      "statement": "Downstream, the chosen country is displayed by its name (e.g. 'Austria'), not its code, on the review and view-details pages.",
+      "kind": "behaviour",
+      "ref": "pages/country-of-origin.json > downstreamBehaviour[2]",
+      "quote": "The stored value is displayed downstream by country NAME, not ISO code — the review summary row renders e.g. 'Austria'.",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-012",
+      "statement": "The country chosen here acts as the notification's EU/rest-of-world routing switch and, combined with the commodity chosen later, drives a CHED-PP-specific 'Article 72' classification that the legacy service's own tests show affects the journey but do not show how.",
+      "kind": "rule",
+      "ref": "pages/country-of-origin.json > downstreamBehaviour[0], downstreamBehaviour[1]",
+      "quote": "This page is therefore not a leaf data-capture page — it is the journey's main branch point... the CHED-PP suite tests as four distinct journeys... What the classification actually changes downstream is therefore still a gap for a human.",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-013",
+      "statement": "In the legacy service, the browser tab title on this page ('Origin of the animal or product') does not match the on-page heading ('Origin of the plants, plant product or other objects') even on a CHED-PP notification — a defect, not intended behaviour to carry forward.",
+      "kind": "constraint",
+      "ref": "pages/country-of-origin.json > openQuestions[0]",
+      "quote": "The <title> is 'Origin of the animal or product - Import and export applications - GOV.UK' even on the CHED-PP journey, while the H1 reads 'Origin of the plants, plant product or other objects'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-014",
+      "statement": "The rendered country-of-origin select labels the IE entry 'Republic of Ireland', not 'Ireland'.",
+      "kind": "copy",
+      "ref": "conflicts.json > c-012",
+      "quote": "The rendered country select option reads 'Republic of Ireland' (value IE); types/country.ts:110 names the IE entry 'Ireland'... rendered-trace: adopt 'Republic of Ireland' as the displayed label.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-015",
+      "statement": "The Variety and class page only appears for a genus/species whose reference data carries at least one variety option and at least one class option; a species with neither never shows this page.",
+      "kind": "behaviour",
+      "ref": "pages/variety-of-genus-and-species.json > fields[0].conditionalOn",
+      "quote": "The table for a species is rendered ONLY if it has >0 variety options AND >0 class options.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-016",
+      "statement": "The Variety and class page asks under the caption 'Description of the goods' and heading 'Variety and class of commodity', with no visible body copy in its default state.",
+      "kind": "copy",
+      "ref": "pages/variety-of-genus-and-species.json > caption, heading, bodyCopyNotes",
+      "quote": "The page has NO visible body copy in the observed default state.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-017",
+      "statement": "For each added genus/species, the page shows one table row with a 'Variety' select (options depend on the species — the observed CIDAC species has a single option, 'None') and a 'Class' select with a fixed set of options: a 'Select class' placeholder, 'Class I', 'Class II' and 'Extra Class'.",
+      "kind": "data",
+      "ref": "pages/variety-of-genus-and-species.json > fields[0], fields[2]",
+      "quote": "options: [\"Select class\", \"Class I\", \"Class II\", \"Extra Class\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-018",
+      "statement": "Choosing 'Other' as the variety reveals a free-text 'Enter Other Variety' box (hidden otherwise) alongside a warning, 'Please ensure this variety is not in the dropdown list', and the free text must be 1 to 32 lowercase letters (spaces allowed).",
+      "kind": "behaviour",
+      "ref": "pages/variety-of-genus-and-species.json > fields[1], govukComponents (Warning text)",
+      "quote": "Please ensure this variety is not in the dropdown list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-019",
+      "statement": "The page offers two secondary actions: 'Add another variety' and 'Add another Genus (and species)'.",
+      "kind": "behaviour",
+      "ref": "pages/variety-of-genus-and-species.json > secondaryActions",
+      "quote": "\"Add another variety\", \"Add another Genus (and species)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-020",
+      "statement": "'Save and continue' on the Variety and class page advances to the Commodity summary page; it does not return to the species picker.",
+      "kind": "behaviour",
+      "ref": "pages/variety-of-genus-and-species.json > nextPage",
+      "quote": "the CHED-PP Commodity summary page... This page ADVANCES; it does not return to the species-picker.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-021",
+      "statement": "Validation on the Variety and class page: 'Select the variety' when a class has been chosen for a species but the variety is left blank; 'Select the class' when a variety has been chosen but the class is left blank; 'At least one species variety must be added' when the row is submitted empty and the species has no existing entries; 'Variety and class has already been entered for species' when the submitted variety+class pair duplicates one already saved for that species.",
+      "kind": "copy",
+      "ref": "pages/variety-of-genus-and-species.json > validationMessages[0..3]",
+      "quote": "SPECIES_VARIETY: 'Select the variety' ... SPECIES_CLASS: 'Select the class' ... SPECIES_VARIETY_MANDATORY: 'At least one species variety must be added' ... SPECIES_VARIETY_DUPLICATE: 'Variety and class has already been entered for species'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-022",
+      "statement": "When variety is 'Other', leaving the free-text box empty shows 'Enter the name of other variety'; failing the lowercase a-z pattern shows 'Other variety must only contain lowercase characters a-z up to length 32'.",
+      "kind": "copy",
+      "ref": "pages/variety-of-genus-and-species.json > validationMessages[4..5]",
+      "quote": "SPECIES_VARIETY_OTHER_REQUIRED: 'Enter the name of other variety' ... SPECIES_VARIETY_OTHER_INVALID: 'Other variety must only contain lowercase characters a-z up to length 32'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-023",
+      "statement": "As the notification approaches a configurable maximum number of commodity lines, one of three mutually exclusive advisory messages is shown instead of the normal add controls, and both 'add' buttons are hidden whichever of the three is showing: 'You can only add one more variety and class before reaching the maximum number of commodity lines'; 'You have reached the maximum amount of commodity lines however you can add the following variety and class'; 'You have added the maximum amount of commodity lines. You cannot add another variety and class'.",
+      "kind": "rule",
+      "ref": "pages/variety-of-genus-and-species.json > validationMessages[7..9]",
+      "quote": "Both 'Add another variety'... and 'Add another Genus (and species)'... are wrapped in {{#unless (or isLastCommodityLineWithSomeSelected isMaxCommodityLinesWithSomeNotSelected isMaxCommodityLines)}} — so ANY of the three advisory states hides BOTH add buttons.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-024",
+      "statement": "Adding a variety/class that would push the notification's total commodity lines over the configured cap shows 'Commodity lines must be fewer than {cap+1}'.",
+      "kind": "copy",
+      "ref": "pages/variety-of-genus-and-species.json > validationMessages[6]",
+      "quote": "MAX_COMMODITY_LINES: `Commodity lines must be fewer than ${parseInt(MAX_COMMODITY_LINES_VALUE) + 1}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-025",
+      "statement": "The Commodity page (species picker) is captioned 'Description of the goods' with heading 'Commodity', and its body copy includes 'You can add multiple Genus (and Species)'.",
+      "kind": "copy",
+      "ref": "pages/commodity-basic-description.json > caption, heading, bodyCopy",
+      "quote": "\"You can add multiple Genus (and Species)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-026",
+      "statement": "In its default rendering, the Commodity page shows a paginated, filterable table of Genus (and Species) plus EPPO code reference data, with a per-row 'Add' button, and free-text 'Genus (and Species)' and 'EPPO code' filter fields plus a 'Search' button.",
+      "kind": "behaviour",
+      "ref": "pages/commodity-basic-description.json > variants[0], fields (genus, eppo-code, search, add-species)",
+      "quote": "a paginated, filterable reference-data table of Genus (and Species) + EPPO code, with a per-row Add submit button.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-027",
+      "statement": "When a filter matches no species, the results table shows 'No search results' as an empty-state row, not a validation error.",
+      "kind": "copy",
+      "ref": "pages/commodity-basic-description.json > validationMessages[0]",
+      "quote": "No search results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-028",
+      "statement": "For machinery/non-plant commodity codes, the Commodity page instead shows species as checkboxes — one tick box per species, no filter, no Search, no Add and no pagination — under the legend 'Select species of commodity' with hint 'Select all that apply.'.",
+      "kind": "behaviour",
+      "ref": "pages/commodity-basic-description.json > variants[1], fields (<EPPO_CODE>-checkbox)",
+      "quote": "A SECOND, structurally different rendering of the same page in which species are CHECKBOXES... rather than a paginated table of Add buttons... legend 'Select species of commodity', hint 'Select all that apply.'",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-029",
+      "statement": "Clicking 'Save and continue' on the Commodity page with no species added shows 'Select at least one species'.",
+      "kind": "copy",
+      "ref": "pages/commodity-basic-description.json > validationMessages[1]",
+      "quote": "Select at least one species",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-030",
+      "statement": "If adding a species would push the notification over its configured maximum commodity lines, the page shows the field-level message 'You have added the maximum amount of commodity lines' together with the summary heading 'You have exceeded the maximum of {N} commodity lines per notification'.",
+      "kind": "copy",
+      "ref": "pages/commodity-basic-description.json > validationMessages[3..4]",
+      "quote": "MAX_COMMODITY_LINES_SINGLE: 'You have added the maximum amount of commodity lines' ... MAX_COMMODITY_LINES_EXCEEDED: 'You have exceeded the maximum of ${MAX_COMMODITY_LINES_VALUE} commodity lines per notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-031",
+      "statement": "Where the Commodity page's 'Save and continue' goes next is conditional: for a commodity whose species carries no class options it advances directly to the next consignment page; for a commodity whose species does carry class options (e.g. an HMI commodity) it goes to the Variety and class page first.",
+      "kind": "behaviour",
+      "ref": "pages/commodity-basic-description.json > continueDestination",
+      "quote": "CONDITIONAL — NOT always page-5... The rebuild must model this branch: species -> [class] -> summary -> page-5.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-032",
+      "statement": "In the journey's build order, Country of origin, then later the Commodity page (species picker) and its conditional Variety and class page, appear in this sequence: ... consignment-organisation, country-of-origin, origin-of-import, commodity-input-method, csv-upload, commodity-search, commodity-basic-description, variety-of-genus-and-species, commodity-summary, about-the-consignment, ...",
+      "kind": "behaviour",
+      "ref": "journey-spec.json > pages[].slug (ordered)",
+      "quote": "[\"notifications-dashboard\",\"import-type\",\"consignment-for\",\"consignment-organisation\",\"country-of-origin\",\"origin-of-import\",\"commodity-input-method\",\"csv-upload\",\"commodity-search\",\"commodity-basic-description\",\"variety-of-genus-and-species\",\"commodity-summary\",\"about-the-consignment\", ...]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-033",
+      "statement": "'Select class' is not a separate page — it is the class dropdown hosted on the Variety and class page (variety-of-genus-and-species). An earlier draft of the trace set had modelled it as its own page; that was refuted and resolved.",
+      "kind": "behaviour",
+      "ref": "conflicts.json > c-001",
+      "quote": "ONE page. commodity-class is the 'Select class' dropdown hosted on variety-of-genus-and-species, not a page. rendered-trace beats the page object.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-034",
+      "statement": "The frontend and backend validation layers use different wording for the same required-field errors on commodity pages including commodity-basic-description: the frontend phrases them as 'Enter/Select the …', the backend as 'Add the …'. Neither has ever been observed rendered, so this is an open conflict with no default winner yet.",
+      "kind": "constraint",
+      "ref": "conflicts.json > c-018",
+      "quote": "Precedence cannot settle it: both strings are legacy (same tier), no rendered trace exists, and which the user actually sees depends on WHERE validation fires first... Content design must choose one canonical string per field.",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-035",
+      "statement": "Neither the Country of origin page nor the Commodity/species pages have ever had their empty-submit validation error state observed rendered in a trace or exercised by the legacy QA suite; the error copy recorded here is transcribed from source only, unconfirmed against rendered reality.",
+      "kind": "constraint",
+      "ref": "pages/country-of-origin.json > openQuestions (empty-submit note); pages/commodity-basic-description.json > validationMessages[5]",
+      "quote": "No error state for this page was captured IN A TRACE OR TEST — both evidence traces are zero-error happy paths... there is no second source for this page's error copy — it must come from a human.",
+      "confidence": "gap"
+    }
+  ]
+}

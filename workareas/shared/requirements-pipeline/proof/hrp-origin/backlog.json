@@ -1,0 +1,118 @@
+{
+  "programme": "hrp-origin-and-commodity",
+  "generatedFrom": ["confluence:6518997274", "trace:ched-pp"],
+  "invariants": [
+    "The notification captures the data on the policy's published 'All other goods' list and nothing it excludes: no region of origin, no variety or class, no commodity-line cap. Whether that list is still current is open (c-007: 'Have the policy leads confirmed that the All other goods data list is still current?'); until answered, build to the list as published, and treat any later change as a new requirement.",
+    "The country of origin is asked before any commodity question: every commodity page an increment adds comes after the country of origin page in the journey (req-005).",
+    "Every answer the importer gives is saved to the notification: leaving a page and coming back shows the answer already given.",
+    "Every required-field error follows the GOV.UK pattern: one message per error, shown in the error summary and beside the field, and the importer stays on the page."
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "The importer gives the country the goods originate from",
+      "detail": "Policy needs the country the plants or wood originate from for risk assessment and inspection planning. After choosing the import type, the importer is asked for the country of origin on its own page, chooses one country from a list, and cannot go on without one. Wherever the notification's answers are shown back, the country appears by its name. This is the country of origin, not the country of dispatch, which is a separate datum.",
+      "acceptanceCriteria": [
+        "After choosing the import type, the importer is taken to a page captioned 'About the consignment' with the heading 'Origin of the plants, plant product or other objects', and the browser tab title matches the heading. (trace:ched-pp pages/country-of-origin.json entryRoutes, caption, heading; trace:ched-pp journey-spec.json page order)",
+        "The page asks one question, the country of origin, with no hint and no body copy, and has one button, 'Save and continue'. (trace:ched-pp pages/country-of-origin.json caption, heading, bodyCopy, secondaryActionsNote)",
+        "The importer chooses exactly one country from a list of countries. (confluence:6518997274 §All other goods item 6; trace:ched-pp pages/country-of-origin.json fields[0])",
+        "Choosing a country and selecting 'Save and continue' saves it to the notification; returning to the page shows that country already chosen. (confluence:6518997274 §All other goods item 6; trace:ched-pp pages/country-of-origin.json fields[0].requiredLegacyEvidence)",
+        "Selecting 'Save and continue' without choosing a country shows 'Select the country of origin of plants, plant product or other objects' in the error summary and beside the field, and the importer stays on the page. (trace:ched-pp pages/country-of-origin.json validationMessages[0]; conflicts c-006 default)",
+        "A notification with no country of origin cannot be completed. (confluence:6518997274 §Notification Data Requirements; trace:ched-pp pages/country-of-origin.json fields[0].requiredLegacyEvidence)",
+        "Wherever the notification's answers are shown back to the importer, the country of origin is shown by its name, for example 'Austria', not by its code. (trace:ched-pp pages/country-of-origin.json downstreamBehaviour[2])"
+      ],
+      "requirements": ["req-001", "req-002", "req-003", "req-004", "req-005"],
+      "sources": [
+        { "source": "confluence:6518997274", "ref": "H4 'All other goods', item 6; H1 'Notification Data Requirements'" },
+        { "source": "trace:ched-pp", "ref": "pages/country-of-origin.json; journey-spec.json page order; conflicts.json c-018" }
+      ],
+      "repos": ["frontend", "backend", "tests"],
+      "kind": "feat",
+      "dependsOn": [],
+      "status": "todo",
+      "openQuestions": [
+        "c-006: Which error wording should a missing country of origin show? Default built: the IPAFFS frontend wording 'Select the country of origin of plants, plant product or other objects'."
+      ],
+      "notes": "Combines pass-1 slices S1 (choose and save the country), S2 (the page's presentation and position after the import type), S3 (the missing-country error) and S4 (country shown by name). All four are the same page and the same saved answer, so building them apart would repeat the same set-up and ladder. IPAFFS's mismatched tab title is a recorded defect and is not carried forward. The UK region of origin, the country-driven routing rules and the Article 72 classification are out of scope (req-013, req-017)."
+    },
+    {
+      "id": "inc-002",
+      "title": "The importer adds a commodity line with its commodity code and category",
+      "detail": "Policy needs, for each of the relevant goods in the consignment, the commodity code and the category of the goods. After the country of origin, the importer starts a commodity line by giving its commodity code and choosing its category. The commodity line is the record that the genus and species and the quantity later attach to.",
+      "acceptanceCriteria": [
+        "After saving the country of origin, the importer is asked for the commodity details of the goods, starting with the commodity code. (trace:ched-pp journey-spec.json page order; confluence:6518997274 §All other goods item 4)",
+        "The importer gives a commodity code for the commodity line, and it is saved to the notification; returning to the question shows the code already given. (confluence:6518997274 §All other goods item 4)",
+        "Continuing without a commodity code shows an error in the error summary and beside the field, and the importer stays on the page. (confluence:6518997274 §All other goods item 4)",
+        "The importer chooses one category for the commodity line from: plants for planting; cut trees; wood and wood products (including isolated bark); other plants and plant products. (confluence:6518997274 §All other goods item 3; conflicts c-002 default)",
+        "The chosen category is saved to the commodity line; returning to the question shows it already chosen. (confluence:6518997274 §All other goods item 3)",
+        "Continuing without a category shows an error in the error summary and beside the field, and the importer stays on the page. (confluence:6518997274 §All other goods item 3; conflicts c-002 default)",
+        "A notification with no commodity line, or a commodity line with no commodity code or no category, cannot be completed. (confluence:6518997274 §All other goods items 3 and 4)"
+      ],
+      "requirements": ["req-006", "req-007"],
+      "sources": [
+        { "source": "confluence:6518997274", "ref": "H4 'All other goods', items 3 and 4" },
+        { "source": "trace:ched-pp", "ref": "journey-spec.json page order" }
+      ],
+      "repos": ["frontend", "backend", "tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-001"],
+      "status": "todo",
+      "openQuestions": [
+        "c-002: What is the full list of goods categories the importer chooses from? Default built: four categories (plants for planting; cut trees; wood and wood products, including isolated bark; other plants and plant products), one per commodity line, required."
+      ],
+      "notes": "Combines pass-1 slices S5 (commodity code) and S6 (category). Both are single answers on the same new record, the commodity line, so they share its set-up and are asked together. The trace slice has no commodity code or category page to copy, so the builder chooses the presentation from GOV.UK patterns; error wording for these two fields is not specified by either source. Tree size, phytosanitary treatments, supplier id and intended use are out of scope (req-022 to req-025)."
+    },
+    {
+      "id": "inc-003",
+      "title": "The importer finds and adds the genus and species of each commodity line",
+      "detail": "Policy needs the genus and species of the goods, and the EPPO code for plants for planting. IPAFFS captures both through one pick from reference data. For each commodity line the importer filters the reference list by name or EPPO code, adds one or more genus and species, can remove any but the last, and cannot go on without at least one. The notification records the EPPO code of every one added.",
+      "acceptanceCriteria": [
+        "After the commodity code and category, the importer sees a list of genus and species from reference data, each entry showing its EPPO code, with an 'Add' action on each. (confluence:6518997274 §All other goods items 3 and 8; trace:ched-pp pages/commodity-basic-description.json variants[0])",
+        "The importer can filter the list by genus-and-species name or by EPPO code; a filter with no match shows 'No search results' in the list, not an error. (trace:ched-pp pages/commodity-basic-description.json fields, validationMessages[0])",
+        "Adding a genus and species saves it, with its EPPO code, to the commodity line; returning to the page shows it among those added. (confluence:6518997274 §All other goods items 3 and 8; trace:ched-pp pages/commodity-basic-description.json variants[0])",
+        "The page tells the importer 'You can add multiple Genus (and Species)', and they can add more than one. (trace:ched-pp pages/commodity-basic-description.json bodyCopy; confluence:6518997274 §All other goods item 4)",
+        "With two or more added, the importer can remove any of them; with one added, it has no remove action. (trace:ched-pp pages/commodity-basic-description.json structure, Remove species table)",
+        "Continuing with none added shows 'Select at least one species' in the error summary and beside the field, and the importer stays on the page. (trace:ched-pp pages/commodity-basic-description.json validationMessages[1]; conflicts c-006 default)",
+        "Every commodity line needs at least one genus and species, whatever its category. (conflicts c-001 default; trace:ched-pp pages/commodity-basic-description.json variants[0])"
+      ],
+      "requirements": ["req-008", "req-009", "req-010"],
+      "sources": [
+        { "source": "confluence:6518997274", "ref": "H4 'All other goods', items 3, 4 and 8" },
+        { "source": "trace:ched-pp", "ref": "pages/commodity-basic-description.json; conflicts.json c-003, c-018" }
+      ],
+      "repos": ["frontend", "backend", "tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-002"],
+      "status": "todo",
+      "openQuestions": [
+        "c-001: Does the importer give genus and species for every commodity line, or genus for every line and species only for plants for planting? Default built: every commodity line needs one genus-and-species pick, whatever the category.",
+        "c-006: Which error wording should a missing genus and species show? Default built: the IPAFFS frontend wording 'Select at least one species'."
+      ],
+      "notes": "Combines pass-1 slices S7 (find and add a genus and species, EPPO recorded), S8 (add several, remove all but the last) and S9 (the none-added error). All three are the same picker on the same page acting on the same list, so one increment. The machinery tick-box variant, the no-species-data rendering, the Variety and class page and the commodity-line cap are out of scope (req-014, req-015, req-016). The page's caption and heading are not taken from IPAFFS ('Description of the goods' / 'Commodity') as acceptance, since the extract gives them only as context; the builder may use them."
+    },
+    {
+      "id": "inc-004",
+      "title": "The importer gives the quantity of each commodity line",
+      "detail": "Policy needs the quantity of the relevant goods. What is counted and in what unit is not stated, so the default is built: each commodity line records one quantity, a whole number above zero with a unit from a short fixed list.",
+      "acceptanceCriteria": [
+        "For each commodity line the importer gives a quantity and chooses its unit from: number of items; kilograms. (confluence:6518997274 §All other goods item 5; conflicts c-003 default)",
+        "The quantity and unit are saved to the commodity line; returning to the question shows them already given. (confluence:6518997274 §All other goods item 5)",
+        "Continuing without a quantity, or without a unit, shows an error in the error summary and beside the field, and the importer stays on the page. (confluence:6518997274 §All other goods item 5; conflicts c-003 default)",
+        "A quantity that is not a whole number greater than zero shows an error and is not saved. (conflicts c-003 default)",
+        "A notification with a commodity line that has no quantity cannot be completed. (confluence:6518997274 §All other goods item 5)"
+      ],
+      "requirements": ["req-011"],
+      "sources": [
+        { "source": "confluence:6518997274", "ref": "H4 'All other goods', item 5" }
+      ],
+      "repos": ["frontend", "backend", "tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-002"],
+      "status": "todo",
+      "openQuestions": [
+        "c-003: What does the quantity count for each commodity line, and in which units? Default built: one quantity per line, a whole number greater than zero, with a unit of number of items or kilograms, required."
+      ],
+      "notes": "Pass-1 slice S10 on its own. It shares the commodity line with inc-002, but kept separate because it carries its own open question (c-003) whose answer may reshape the field, and so an answer can change it without reopening the commodity code and category."
+    }
+  ]
+}

@@ -530,13 +530,30 @@ describe('increment-build-loop', () => {
       )
     })
 
-    test('tells the baseline to run only the tests repo static checks, never a Playwright/E2E script', async () => {
+    test('tells the baseline to run the frontend FIT suite and the tests repo local E2E suite, not skip them', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain('it must establish the BROWSER suites green too')
+      expect(prompt).toContain('run test:fit:ci >')
+      expect(prompt).toContain('run test:docker-compose >')
+      expect(prompt).toContain(
+        'Bring the workspace stack up in the FOREGROUND with `tim docker dev`'
+      )
+      expect(prompt).toContain('then `tim docker down`')
+    })
+
+    test('tells the baseline never to pick a script that targets a remote or CDP-deployed environment', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        'run only the static-check scripts its package.json defines — `format:check`, `lint`, `typecheck`'
+        'NEVER a script whose Playwright config targets a remote or CDP-deployed'
       )
-      expect(prompt).toContain('never a Playwright/browser/E2E script')
+      expect(prompt).toContain('In the tests repo that rules out `test`,')
+      expect(prompt).toContain('`test:security*` and `test:browserstack`')
+      expect(prompt).toContain(
+        '`test:docker-compose` is the one this workspace standardises on'
+      )
+      expect(prompt).toContain('never raw `npx playwright`')
     })
 
     test('refuses main as the branch to build on before any agent', async () => {

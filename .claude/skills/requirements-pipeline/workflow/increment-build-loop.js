@@ -407,10 +407,30 @@ const STACK_RULE_FOR_BASELINE = `${STACK_RULE}
 ${STACK_DOWN_CHECK}
 Name in your summary which repo's suite, if any, needed you to stop the stack first.`
 
+// The one lifecycle an E2E suite follows against the local stack, wherever it runs — at baseline or in the
+// ladder. The stack belongs to whichever stage is running E2E, for only as long as it needs it.
+const E2E_LOCAL_STACK_LIFECYCLE = `Bring the workspace stack up in the FOREGROUND with \`tim docker dev\` (Bash
+timeout 600000; it returns once the stack is healthy), run the E2E suite(s), then \`tim docker down\` — every time,
+green or red — before you report or run anything else. Never drive it with raw \`docker\` or \`docker compose\`.`
+
+// The one thing an E2E script must never be: one whose Playwright config targets a deployed CDP environment
+// instead of the local stack. A baseline run once picked exactly that — its global setup called
+// ephemeral-protected.api.dev.cdp-int.defra.cloud — and went red nondeterministically for a reason that had
+// nothing to do with the increment. Baseline is not exempt from running E2E because of that failure — it is the
+// reason baseline must pick the LOCAL script, never skip the suite.
+const NEVER_REMOTE_E2E_SCRIPT = `NEVER a script whose Playwright config targets a remote or CDP-deployed
+environment — recognise one by a base URL like \`https://*.cdp-int.defra.cloud\`, a global setup that calls one, or
+an env var naming a deployed stage (\`ENVIRONMENT\`, \`PROFILE=security\`). In the tests repo that rules out \`test\`,
+\`test:a11y\`, \`test:security*\` and \`test:browserstack\` — only a \`test:docker-compose*\` script runs against the
+local stack, and \`test:docker-compose\` is the one this workspace standardises on. And never raw \`npx playwright\`
+— always the repo's own npm script.`
+
 // The baseline stage's logs, named once so the ladder is pointed at exactly
-// the files the baseline wrote.
+// the files the baseline wrote. Two extra keys beyond REPO_KEYS: the frontend's FIT suite and the tests repo's
+// local-stack E2E suite each get their own log, alongside their repo's unit/static-check log.
 const baselineLog = (id, repoKey) => `${WORKAREA_TILDE}/logs/${id}-baseline-${repoKey}.log`
-const baselineLogList = (id) => REPO_KEYS.map((key) => `   ${key}: ${baselineLog(id, key)}`).join('\n')
+const BASELINE_LOG_KEYS = [...REPO_KEYS, 'frontend-fit', 'tests-e2e']
+const baselineLogList = (id) => BASELINE_LOG_KEYS.map((key) => `   ${key}: ${baselineLog(id, key)}`).join('\n')
 
 // ---------------------------------------------------------------------------
 // Review groups. One style reviewer and one code reviewer per (repo, language)
@@ -1471,16 +1491,21 @@ ${
    branch and never on a repo's default branch.`
 }
 3. ${STACK_RULE_FOR_BASELINE}
-4. Run the FASTEST meaningful suite for each repo, to a log, and read it once. The ladder later compares every red
-   rung with these logs, so write them to exactly these paths:
-   frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${baselineLog(id, 'frontend')} 2>&1\`
+4. Run the FASTEST meaningful suite for each repo, to a log, and read it once. Baseline exists so a later red is
+   attributable, so it must establish the BROWSER suites green too, not only unit and static checks — the ladder
+   later compares every red rung, E2E included, with the logs baseline wrote here:
+   frontend: unit — \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${baselineLog(id, 'frontend')} 2>&1\` —
+             then its FIT suite via its CI-named script (read package.json for the exact name; \`test:fit:ci\` in
+             this workspace's frontends) — \`npm --prefix ${TILDE}/${REPO_PATH.frontend} run test:fit:ci >
+             ${baselineLog(id, 'frontend-fit')} 2>&1\`.
    backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${baselineLog(id, 'backend')} 2>&1\`
-   tests:    run only the static-check scripts its package.json defines — \`format:check\`, \`lint\`, \`typecheck\` —
-             to \`${baselineLog(id, 'tests')}\`; never a Playwright/browser/E2E script, even one that looks like the
-             repo's main \`test\` script. Those belong to the ladder, which runs them against the local stack.
-             The same principle holds for every repo: baseline runs unit and static checks only, never a script
-             that needs a running stack or a remote environment.
-5. Report ok:true only if every repo's tree is clean, the stack was down for every suite, and every suite is green.
+   tests:    static checks first — \`format:check\`, \`lint\`, \`typecheck\` — to \`${baselineLog(id, 'tests')}\`. Then,
+             LAST (everything above runs with the stack down per step 3), its E2E suite against the LOCAL stack:
+             \`npm --prefix ${TILDE}/${REPO_PATH.tests} run test:docker-compose > ${baselineLog(id, 'tests-e2e')}
+             2>&1\`. ${E2E_LOCAL_STACK_LIFECYCLE}
+   ${NEVER_REMOTE_E2E_SCRIPT}
+5. Report ok:true only if every repo's tree is clean, the stack was down for every unit/FIT/static-check suite, the
+   stack was brought up and back down cleanly around the E2E suite, and every suite is green.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema })
   )
@@ -1982,9 +2007,8 @@ named \`${id}-<repo>-<step>.log\`, reading each log ONCE. Every step must be gre
   and check each the same way. Stopping the stack is not a repair. If anything else holds a port, name the process
   and pid in failures[] and do not kill it. Never record a rung as "could not run" when the only thing in its way
   was the workspace stack.
-- E2E RUNGS: bring the stack up in the FOREGROUND with \`tim docker dev\` (Bash timeout 600000; it returns once the
-  stack is healthy), run the E2E rungs, then \`tim docker down\` — every time, green or red, before you report or
-  go back to a unit rung.
+- E2E RUNGS: ${E2E_LOCAL_STACK_LIFECYCLE}
+  ${NEVER_REMOTE_E2E_SCRIPT}
 - EVERY RED RUNG IS COMPARED WITH THE BASELINE. Before any edit, the baseline stage ran each repo's fastest suite
   to these logs (a repo it skipped has none):
 ${baselineLogList(id)}

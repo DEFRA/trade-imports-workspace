@@ -48,9 +48,8 @@ implementation.
 ### Implement
 
 If the user asks to build / implement / follow the plan, follow
-`references/IMPLEMENTOR.md`. Reads the plan, makes the change, syncs the
-`openspec/` behaviour spec for any observable behaviour it changed, then
-raises a PR. Verifies via GitHub Actions.
+`references/IMPLEMENTOR.md`. Reads the plan, makes the change, raises a
+PR. Verifies via GitHub Actions.
 
 ### Refactor
 

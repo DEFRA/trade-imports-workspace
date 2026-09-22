@@ -32,8 +32,8 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 |---|---|---|
 | `ticket-creator` | "create ticket", "raise ticket", "new ticket", "file a bug", "flesh out ticket" | Create a new Jira ticket end-to-end (Bug/Story/Task). |
 | `ticket-refiner` | "is ticket ready", "pre-refinement", "refinement check" | Assess whether a ticket is READY / NEEDS WORK / SPIKE REQUIRED. |
-| `ticket` | "plan EUDPA-", "implement EUDPA-", "refactor", "tidy up" | Plan / implement / refactor an existing ticket. IMPLEMENT also syncs the `openspec/` behaviour spec for observable behaviour it changed. |
-| `review` | "review EUDPA-", "re-review", "walk review", "implement review" | Code review across all languages and repos (correctness, security, tests), including whether the `openspec/` behaviour spec was updated and updated accurately. |
+| `ticket` | "plan EUDPA-", "implement EUDPA-", "refactor", "tidy up" | Plan / implement / refactor an existing ticket. |
+| `review` | "review EUDPA-", "re-review", "walk review", "implement review" | Code review across all languages and repos (correctness, security, tests). |
 | `code-style` | "style review EUDPA-", "walk style EUDPA-", "triage style", "fix style EUDPA-", "lint review" | JS code-style review + remediation against the 17-rule guide. |
 | `npm-upgrade` | "upgrade npm deps", "upgrade dependencies", "walk upgrade EUDPA-X", "implement upgrade EUDPA-X" | Three-phase non-govuk-frontend npm upgrade workflow + interactive manual-side walker. |
 | `govuk-upgrade` | "upgrade govuk-frontend", "govuk upgrade", "walk govuk EUDPA-X", "implement govuk EUDPA-X" | Per-version govuk-frontend upgrade with CHANGELOG-driven plans (JSON-state, dispatcher, walker). |

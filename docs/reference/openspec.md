@@ -12,16 +12,9 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 ## How the spec stays in sync
 
-The spec is maintained **as work lands, by the skill that lands it** — no change proposals. Three skills carry it, and `review` is the backstop:
+The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
 
-| Skill | What it does |
-|---|---|
-| `frontend-change` | Finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. Halts rather than reporting complete on a mismatch. |
-| `journey-builder` | Inherits it — invokes `frontend-change` once per increment. |
-| `ticket` IMPLEMENT | Same technique, same `SPEC_SYNC.md`, after its tests go green and before it raises the PR. Covers backend and cross-cutting changes the journey-shaped lookup does not. |
-| `review` | Checks a spec update that **is** in the diff against the ticket AC (Critical), **and** flags a PR set that changed observable behaviour and wrote no spec at all (Major — Critical on a `frontend-change`/`journey-builder` increment, where the write is mandatory). |
-
-**What is still not covered.** A change landed by hand, or in a repo no namespace maps to (the tests repo, the stub, reference-data, dynamics-gateway, address-book), still needs a manual spec update and nothing will remind you. Neither will anything catch drift in code nobody touched this week — the periodic sweeps that would are in "Next skills" below and are not built.
+**That is the whole of the automated coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you. The periodic sweeps that would catch the rest are in "Next skills" below and are not built.
 
 This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
@@ -31,8 +24,7 @@ This is the hybrid approach — direct write plus CLI validation. `openspec/chan
 
 | Caller | Spec root | What happens next |
 |---|---|---|
-| Direct — a person invoking `frontend-change` | this checkout | The edit is written and left **uncommitted**, with every file named in the skill's completion output. Commit it with the increment it belongs to. |
-| `ticket` IMPLEMENT | this checkout | Committed. Into the ticket's own PR when the ticket already touches this repo; otherwise onto a **same-named branch** here with its own PR, so both land in the ticket's PR set and `review` can cross-reference them. |
+| Direct — a person, or the `ticket` skill | this checkout | The edit is written and left **uncommitted**, with every file named in the skill's completion output. Commit it with the increment it belongs to. |
 | `journey-builder` | `workareas/journey-builder/<run>/workspace-worktree` | Committed per increment on branch `spec/<run-id>`, and carried by **one PR per run** raised at run end. |
 
 So: unexpected `openspec/` entries in `git status` are the first case, not a stray edit. And an unfamiliar worktree under `workareas/` — a worktree of this repo, nested inside its own working tree — is the second. Both are deliberate. `git worktree prune` clears a stale one; `git clean -fdx` at the repo root would destroy a live one.

@@ -683,12 +683,33 @@ cross-field pages (origin, import-reason) are more work than
 scalar-field pages. Ballpark: a day per page, plus the registry,
 the aggregator, and the async-batching design. Weeks, not hours.
 
-Whether this is worth building depends on the "Current
-recommendation" section below: if we ship what we have and defer
-the auto-detect pipeline, we also defer this. It becomes worth
-building when we hit a concrete Scenario 3 incident that the
-membership loop cannot catch — arrival-date drift being the first
-candidate that already lives in the animals code.
+### One concrete incident already, so the choice is targeted vs central
+
+The arrival-date drift on `port-of-entry` is a live Scenario 3
+case in the animals code today — not a hypothetical waiting to
+happen. That reframes the decision:
+
+- **Targeted fix** — add `arrivalDate` to a small submit-time
+  revalidation loop alongside the membership check. Roughly
+  `dateTextInRange(answers.arrivalDateAtPort, arrivalWindow())` at
+  submit time; ~20 lines in the same `bridge/reject-stale-at-submit.js`
+  the membership loop lives in. Closes the concrete incident.
+  Doesn't address any future Scenario 3 the same way.
+- **Central architecture** — the full sketch above. Subsumes the
+  targeted fix, plus every other rule, plus every rule we haven't
+  written yet. Weeks.
+- **Accept** — the trader Amends stale, submits stale, downstream
+  policy handles what an out-of-window arrival means when it
+  actually reaches the vet check. Cheapest, but shifts the failure
+  onto a surface further from the trader.
+
+Sensible sequence: ship the targeted fix (membership + arrival-
+date + party resolution + purge-as-reject) now — it closes the
+concrete cases with bounded work. Revisit the central architecture
+when a second unrelated Scenario 3 case surfaces that the targeted
+approach can't cover cheaply — that's the signal that per-rule
+additions are becoming unwieldy and a systematic re-run is worth
+the weeks.
 
 ## Meeting notes — 2026-09-21 (tech lead + designer)
 

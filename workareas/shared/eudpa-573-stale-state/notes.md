@@ -776,6 +776,36 @@ support-activity path or the full auto-detect target. Under the
 support-activity path it is the last line of defence; under the
 auto-detect target it is the trigger.
 
+**Caveat: snapshot-and-diff only works for readers that can hold the
+whole list.** Countries and ports fit today — the whole payload
+sits in the ref-data-service's Caffeine cache (60-minute TTL). The
+commodity dataset does not: it is far too large to fetch in one
+payload, and once un-stubbed the reader will only expose it as a
+type-ahead search returning slices. Snapshot-and-diff cannot see a
+whole-list drop that never lived in one place.
+
+For large-dataset readers, detection has to shift shape:
+
+- **Per-key verification against stored values.** Instead of "did
+  the dataset change?", ask "does this specific stored code still
+  resolve?" — once per stored code, on the notifications we care
+  about. Each check is a bounded lookup against the upstream
+  service. Scales with notifications, not with the catalogue. Fits
+  both the migration-script pattern and an ad-hoc attention sweep.
+- **Upstream change feed.** MDM (or the ref-data-service on our
+  side) publishes deltas — codes added, removed, amended. Requires
+  the upstream to offer one; not something we can build alone.
+- **Dataset version stamp.** The upstream exposes an ETag / version
+  / manifest hash; we only need to know it moved, not what changed,
+  and combine with per-key verification when it does.
+
+Implications for the frontend staleness helpers already shipped
+(`isCountryStale(code)`, `isPortStale(code)`): these call the
+reader's `list()` and check membership. Fine for countries and
+ports; needs to become a per-key `resolve(code)` lookup once
+commodities is un-stubbed. The reader API can present both idioms;
+the predicate name and shape stay the same.
+
 ### Discovery questions before committing
 
 - Who at MDM tells us about pending changes? In what channel? With

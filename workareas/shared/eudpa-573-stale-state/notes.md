@@ -887,11 +887,75 @@ Open questions this framing surfaces:
 - **How is the INS index kept fresh?** Same event backbone, thinner
   payload; or a scheduled pull.
 
-Status: not agreed. Recorded here because it materially changes the
-architectural direction the meeting notes above assumed. Needs a
-team discussion before either the target-architecture or the
-support-activity path commits to per-notification attention state
-inside INS.
+Status: not yet agreed. Named as the preferred CTA shape in the
+"Current recommendation" section below — needs a team discussion
+because it reverses the 2026-09-21 meeting direction on retiring
+the set-frontend dashboards.
+
+## Current recommendation — ship what we have, defer the pipeline
+
+The full precompute + emit pipeline (target architecture, above) is
+substantial infrastructure — six discrete pieces (detection in
+ref-data-service, event contract, set backend sweep, set frontend
+attention compute, INS backend ingest, INS CTA render), each with
+its own failure modes and evolution cost. It also bets against
+unknowns: MDM's change cadence, whether comms arrive, whether the
+trader population is large enough that the "re-open the record and
+see the banner" path is provably insufficient. None of those
+conditions are validated.
+
+Recommended position:
+
+1. **Frontend hardening (shipped).** Six pages on animals, two on
+   plants, GET-only. Covers the trader who re-opens the record —
+   the largest slice of the actual risk — with per-page logic
+   living where the concern arises.
+2. **Reject-on-submit (captured as a requirement above).** Closes
+   the boundary for the trader who never re-opens the affected
+   page. Each page's POST already runs the current-rule
+   membership check; extend it to guard submit.
+3. **Support-activity path (captured).** When MDM does change and
+   comms arrive, a per-change migration script sweeps affected
+   notifications. Volume bounded by change frequency, which is
+   likely low. Uses the migration mechanism from "Version pinning
+   + migration" below.
+4. **Canary (captured, under support-activity).** Snapshot-and-diff
+   loop on the small-list readers (countries, ports) to alarm on
+   silent MDM changes. Bounded work; not a full detection
+   pipeline.
+
+Deferred: the full auto-detect target — precompute + emit + INS
+ingest + INS render. It is captured in the target-architecture
+section as the shape that would apply under conditions we have not
+validated (silent frequent MDM changes; regulatory obligation to
+proactively notify traders; population scale where the re-open path
+is provably insufficient). Revisit if evidence for any of those
+emerges.
+
+If the CTA becomes a hard requirement, the recommended
+implementation is the **parent-dashboard pattern** above rather
+than the pipeline. Reasons:
+
+- The set frontend already has the model, the ref-data readers,
+  the address-book resolver and the copy in scope. Computing "does
+  this notification need attention" is a local operation, not a
+  cross-service one.
+- All the APIs needed to validate a notification are in hand —
+  the same code the current-model engine uses to render the hub,
+  origin, CYA and every other page.
+- The event pipeline shrinks. INS only needs "trader X has N
+  notifications of type Y" for the index — no per-notification
+  attention state to serialise across the boundary.
+- Per-set CTAs stay authored where the concern arises. No shared
+  payload contract for attention across sets; no coordinated
+  deploys when one set adds a new concern.
+
+Trade-offs to accept if we go this route: navigation cost (extra
+click from INS to the set dashboard), cross-set summarising
+becomes convention rather than a shared model, and it reverses
+the 2026-09-21 meeting direction on retiring set-frontend
+dashboards. That reversal is the discussion the parent-dashboard
+section above still owes.
 
 ## Version pinning + migration — policy and mechanism
 

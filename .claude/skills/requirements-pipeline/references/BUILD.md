@@ -23,19 +23,29 @@ So: you derive, you invoke, you check it landed, you go again.
 
 ## PARAMETERS
 
-Ask for anything the user has not given, except where a default applies.
+The user gives the backlog (its workarea), the lifecycle and, under `full`, the
+epic. Everything else is worked out or defaulted. Never ask for a value the list
+below says how to derive.
 
 ```
 workarea      path under workareas/ holding backlog.json, e.g. shared/dr1-parity-union
-branch        the BASE branch. Every increment cuts its own off this and merges back
-scope         conventional-commit scope for landing commits
+branch        under full, the BASE branch: every increment cuts its own off this
+              and merges back. Default main.
+              Under local, the scratch branch every increment is committed on.
+              Default spike/<programme>, which YOU create (see "Before the first
+              increment") — the loop refuses to start unless every repo is on it
+scope         conventional-commit scope for landing commits. Default the
+              backlog envelope's `programme`
 executor      claude (default) | codex
 lifecycle     full (default) | local
-stopAfter     how many increments to build before stopping. A number, or "all"
+stopAfter     how many increments to build before stopping. A number, or "all".
+              Default 1, or the count the user names ("the next 3")
 jiraProject   default EUDPA                        full only
-epic          parent epic every raised ticket hangs off   full only
-inProgress    the board's working status           full only
-doneStatus    the board's finished status          full only
+epic          parent epic every raised ticket hangs off. The one thing
+              a full run must be told                    full only
+inProgress    the board's working status. Read it from the board's
+              transitions (below) rather than asking     full only
+doneStatus    the board's finished status, the same way  full only
 board         numeric id of the board tickets are moved onto. 13780 is
               EUDPA. Default 13780                 full only
 requireApproval      whether EVERY PR of an increment needs an approving review
@@ -44,11 +54,14 @@ requireApproval      whether EVERY PR of an increment needs an approving review
 approvalWaitMinutes  how long the merge stage waits for those approvals before
               stopping with every PR open. Default 20   full only
 repos         where frontend, backend and tests live: a workspace-relative path
-              and a GitHub owner/name slug each. Defaults to the animals repos.
-              A programme in the plants repos says so here — the same three
-              keys name different repos in different programmes, and a path
-              typed from memory is how a plants increment ends up built in the
-              animals frontend
+              and a GitHub owner/name slug each. Take it from the backlog
+              envelope's `repos`, which DISTIL wrote:
+                jq '.repos' workareas/<workarea>/backlog.json
+              Ask only when that prints null (a backlog older than the field).
+              Never type it from memory and never default to the animals repos:
+              the same three keys name different repos in different
+              programmes, and a path typed from memory is how a plants
+              increment ends up built in the animals frontend
 models        optional model per tier: heavy (implement, reviewers, verifiers,
               judge, fix, CI fix) and light (ticket, branch, baseline, ladder,
               land, PR, CI watch, merge, done). A tier left out inherits the
@@ -116,7 +129,25 @@ idempotent, so it runs on reused tickets too.
    into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
-4. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
+4. **Under `lifecycle: local`, create the scratch branch.** Nothing else does:
+   the loop has no branch stage under `local` and stops if any repo is not
+   already on `branch`. For each repo in the envelope's `repos`, one command per
+   call:
+
+   ```bash
+   git -C ~/git/defra/trade-imports-workspace/<path> status --porcelain
+   git -C ~/git/defra/trade-imports-workspace/<path> rev-parse --verify --quiet refs/heads/<branch>
+   git -C ~/git/defra/trade-imports-workspace/<path> switch <branch>
+   git -C ~/git/defra/trade-imports-workspace/<path> fetch origin
+   git -C ~/git/defra/trade-imports-workspace/<path> symbolic-ref --short refs/remotes/origin/HEAD
+   git -C ~/git/defra/trade-imports-workspace/<path> switch -c <branch> <origin/default>
+   ```
+
+   A repo with uncommitted changes is someone's work: stop and say which, and
+   never stash it. If the branch exists, switch to it; if not, fetch and cut it
+   from the default branch (`origin/main` when `symbolic-ref` prints nothing).
+   Every repo carries the same name (workspace rule 2).
+5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
    it if the run is long; do not carry a stale copy in your head.
 
@@ -212,8 +243,9 @@ Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-
 ```
 
 **One id. Never more.** Change nothing else in `args`. Write `repos` out in
-full every time: the loop has no repos table of its own any more, so a
-missing `repos` stops the run before any agent starts.
+full every time, copied from the backlog envelope's `repos`: the loop has no
+repos table of its own any more, so a missing `repos` stops the run before
+any agent starts.
 
 Write `requireApproval` in explicitly. The loop has no default for it: under
 `lifecycle: full` a run without it stops before any agent. The args are what

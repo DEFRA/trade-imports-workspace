@@ -61,6 +61,9 @@ const expectationOf = (root, fieldSchema) => {
       ? `a list of ${listItemPhrase(root, resolved.items)}`
       : 'a list'
   }
+  if (resolved.type === 'object' && resolved.additionalProperties) {
+    return `an object whose values are ${listItemPhrase(root, resolved.additionalProperties)}`
+  }
   if (resolved.type === 'object') return 'an object'
   if (resolved.type === 'string') return 'text'
   return 'what backlog.schema.json says'

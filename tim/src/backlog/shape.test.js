@@ -214,6 +214,31 @@ describe('checkBacklog', () => {
     ).toEqual(['The backlog "invariants" must be a list of text.'])
   })
 
+  test('passes a repos table with a path and a GitHub slug for each repo', () => {
+    const repos = {
+      frontend: {
+        path: 'repos/trade-imports-plants-frontend',
+        github: 'DEFRA/trade-imports-plants-frontend'
+      },
+      tests: {
+        path: 'repos/trade-imports-animals-tests',
+        github: 'DEFRA/trade-imports-animals-tests'
+      }
+    }
+
+    expect(checkBacklog({ ...backlogOf(row()), repos }).problems).toEqual([])
+  })
+
+  test('refuses a repos table entry with no path', () => {
+    const repos = {
+      frontend: { github: 'DEFRA/trade-imports-plants-frontend' }
+    }
+
+    expect(checkBacklog({ ...backlogOf(row()), repos }).problems).toEqual([
+      'The backlog "repos" must be an object whose values are objects with "path", "github".'
+    ])
+  })
+
   test('counts rows by status', () => {
     expect(
       checkBacklog(backlogOf(row(), row({ id: 'inc-002', status: 'done' })))

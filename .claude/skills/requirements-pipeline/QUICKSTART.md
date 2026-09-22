@@ -4,11 +4,11 @@ Two steps: **distil** requirements into a backlog, then **build** it. First run 
 
 ## 1. Distil
 
-Name the goal, the sources and which source wins in a disagreement. Include the repos you will build in.
+Name the goal and the sources. The skill works out which repos to build in and which source wins.
 
-> Distil requirements for high-risk plants origin and commodity. Goal: an importer gives where the goods come from and what they are. Sources: the plants frontend and backend repos, Confluence page 6518997274, and the CHED-PP trace set limited to the country-of-origin and commodity pages. Precedence: the repos' existing rulings, then Confluence, then the traces.
+> Distil requirements for high-risk plants origin and commodity. Goal: an importer gives where the goods come from and what they are. Sources: Confluence page 6518997274, and the CHED-PP trace set limited to the country-of-origin and commodity pages.
 
-Read `workareas/shared/<programme>/report.md`. It starts with the questions for you, each with a default. To answer them:
+Read `workareas/shared/<programme>/report.md`. It starts with the repos and precedence the skill chose, then the questions for you, each with a default. To answer them:
 
 > Re-distil hrp-origin-and-commodity. Q1: use the nine statutory categories.
 
@@ -16,7 +16,7 @@ Read `workareas/shared/<programme>/report.md`. It starts with the questions for 
 
 To try it on a scratch branch, with no tickets or PRs:
 
-> Build inc-001 from shared/hrp-origin-and-commodity, lifecycle local, on branch spike/hrp-origin.
+> Build inc-001 from shared/hrp-origin-and-commodity, lifecycle local.
 
 To build it for real, with a ticket, PRs, CI and merge:
 

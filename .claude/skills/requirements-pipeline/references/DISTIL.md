@@ -31,17 +31,22 @@ record the decision, keep going.
 
 ## 0. Intake
 
-Ask for the programme name and the sources only if the user has not given them. Then write
-`<workarea>/sources.json` yourself — it is the one file you author:
+The user gives the goal and the sources. That is all they need to give. Ask for either only if it is missing,
+and derive the programme name from the goal if they do not name one. **Never ask which repos to build in or
+which source wins** — work both out, as below, and state them in the report's first lines so a wrong guess is
+caught. Then write `<workarea>/sources.json` yourself — it is the one file you author:
 
 ```json
 {
   "programme": "hrp-origin-and-commodity",
   "goal": "One sentence: what is being built, for whom.",
   "repos": { "frontend": "repos/trade-imports-plants-frontend", "backend": "repos/trade-imports-plants-backend", "tests": "repos/trade-imports-animals-tests" },
-  "precedence": ["confluence:6518997274", "repo:frontend", "trace:ched-pp"],
+  "reposWhy": "High-risk plants origin and commodity is the plants journey: the plants frontend and backend own it; the tests repo holds every service's E2E suite.",
+  "precedence": ["repo:frontend", "repo:backend", "repo:tests", "confluence:6518997274", "trace:ched-pp"],
   "sources": [
     { "id": "repo:frontend", "kind": "repo", "locator": "repos/trade-imports-plants-frontend", "scope": "the origin and commodity pages, spec/decisions.json", "role": "what exists today and what has already been ruled" },
+    { "id": "repo:backend", "kind": "repo", "locator": "repos/trade-imports-plants-backend", "scope": "the notification's origin and commodity fields", "role": "what exists today and what has already been ruled" },
+    { "id": "repo:tests", "kind": "repo", "locator": "repos/trade-imports-animals-tests", "scope": "the plants origin and commodity specs", "role": "what is already proven end to end" },
     { "id": "confluence:6518997274", "kind": "confluence", "locator": "6518997274", "scope": "whole page", "role": "policy: what data must be captured" },
     { "id": "trace:ched-pp", "kind": "trace", "locator": "workareas/trace-requirements/ched-pp", "scope": "pages/country-of-origin.json, pages/variety-of-genus-and-species.json", "role": "how the current service does it" }
   ]
@@ -49,13 +54,27 @@ Ask for the programme name and the sources only if the user has not given them. 
 ```
 
 - `workarea` is `workareas/shared/<programme>/` unless the user names another.
-- `precedence` lists sources from most to least authoritative. It decides conflicts. Ask if it is not obvious;
-  policy and signed-off design usually beat how an old service happens to behave.
+- **Work out `repos` from the goal.** The workspace already knows what every repo does: read the "Repo map"
+  table in `CLAUDE.md`, `docs/repos/*.md` where a repo has one, then the README and CLAUDE.md of each
+  candidate repo. Pick the repos that own the behaviour the goal describes, keyed `frontend`, `backend` and
+  `tests`, each a workspace-relative `repos/<folder>` path. The tests repo (`repos/trade-imports-animals-tests`,
+  which holds every service's E2E suite) is always included: it is where an increment proves itself end to
+  end. Leave a key out when the goal needs no change there. Write one line in `reposWhy` saying why these
+  repos. Ask the user only when two repo families fit the goal equally well (animals or plants, say) and the
+  goal and sources do not settle it. Otherwise decide.
+- **Work out `precedence`.** It lists sources from most to least authoritative and decides conflicts. The
+  default order is:
+  1. the target repos' existing rulings (the `repo:<key>` sources)
+  2. policy and design documents (Confluence pages, documents)
+  3. signed-off designs (images, design canvases)
+  4. traces or the behaviour of an old system
+  Within a tier, keep the order the user listed the sources in. The user states precedence only to override
+  this; follow them when they do, and never ask.
 - **The target is always a source.** Add one source per repo in `repos` (kind `repo`, id `repo:<key>`), its
   `scope` the area the goal touches, with the role "what exists today and what has already been ruled". If the
   target keeps a decisions or rulings ledger (such as `spec/decisions.json`), add it to that repo's scope. An
-  existing ruling outranks a default the distiller would otherwise invent; place the target in `precedence`
-  where the user puts it relative to policy, and ask only if that order is not obvious.
+  existing ruling outranks a default the distiller would otherwise invent. The tests repo is a source too: its
+  role is "what is already proven end to end", and its scope the specs for the area the goal touches.
 - `scope` narrows a large source. Distil a slice of a big source well rather than all of it thinly.
 - Fetch a Confluence page to `<workarea>/sources/<page-id>.json` with
   `tim confluence page <id> --json > <workarea>/sources/<page-id>.json`. Copy a document into `<workarea>/sources/`.
@@ -197,8 +216,11 @@ validates against that file.
   default to build.
 - **Re-distilling over an existing backlog:** keep every existing id, and never change the status of a row
   that is not `todo`. Add new rows with new ids.
-- Also put `programme`, `generatedFrom` (the source ids) and `invariants` (rules every increment keeps, once
-  each) on the envelope.
+- Also put `programme`, `generatedFrom` (the source ids), `invariants` (rules every increment keeps, once
+  each) and `repos` on the envelope. `repos` is the table the build loop takes, written from `sources.json`:
+  each key's `path` as it is there, and its `github` slug `DEFRA/<folder name>` unless the repo's remote says
+  otherwise — check each with `git -C ~/git/defra/trade-imports-workspace/<path> remote get-url origin`. BUILD
+  reads this table, so nobody has to type it.
 
 Then check it yourself, in the main session:
 
@@ -217,6 +239,9 @@ One agent (model `opus`) drafts the report from the files on disk and returns it
 `----- BEGIN report.md -----` and `----- END report.md -----`. The harness refuses a subagent writing a report
 file, so you save the reply to `<workarea>/report.md` unchanged. Decisions come first:
 
+0. **What the skill decided for you**, in the report's first lines: the repos it will build in and
+   `reposWhy`, and the precedence order it used. Two or three lines, so a wrong guess is caught before
+   anything is built.
 1. **Questions for Sam.** One per open question: the question, the default that will be built if nobody
    answers, which increments it touches, and the sources on each side. Any clash with an existing ruling in
    the target first, then most consequential first.
@@ -233,7 +258,8 @@ Plain English, GDS style: short sentences, active voice. No file dumps.
 
 - `tim backlog check` passes.
 - Every adopted `new` or `change` requirement is in exactly one increment; every `exists` one is in the report.
-- `report.md` leads with the questions.
+- `report.md` leads with the repos and precedence the skill chose, then the questions.
+- The backlog envelope carries `repos`.
 - Tell the user: the counts, the questions, and how to build it:
   `tim backlog next <workarea-under-workareas>`, then the BUILD phase (`BUILD.md`). For a dry run of one increment's plan,
   run the build loop with `planOnly: true`.

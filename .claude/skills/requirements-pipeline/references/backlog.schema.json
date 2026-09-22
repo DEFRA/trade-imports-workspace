@@ -17,6 +17,11 @@
       "description": "Rules every increment must keep, such as \"Every page round-trips the CSRF token.\". Written once here, not repeated on each row. The loop's planner and reviewers read the envelope as well as the row.",
       "$ref": "#/$defs/textList"
     },
+    "repos": {
+      "description": "Where the programme builds: each repo key a row's `repos` names (frontend, backend, tests) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/repo" }
+    },
     "increments": {
       "description": "The rows, in build order. `tim backlog next` returns the first one that is not withheld and whose every dependency is done.",
       "type": "array",
@@ -33,6 +38,21 @@
       "description": "A list of text.",
       "type": "array",
       "items": { "$ref": "#/$defs/text" }
+    },
+    "repo": {
+      "description": "One repo the programme builds in.",
+      "type": "object",
+      "required": ["path", "github"],
+      "properties": {
+        "path": {
+          "description": "The repo's folder, relative to the workspace root, such as \"repos/trade-imports-plants-frontend\".",
+          "$ref": "#/$defs/text"
+        },
+        "github": {
+          "description": "The repo's GitHub owner/name, such as \"DEFRA/trade-imports-plants-frontend\". Taken from the repo's origin remote.",
+          "$ref": "#/$defs/text"
+        }
+      }
     },
     "increment": {
       "description": "One increment: a requirement (what, why and acceptance), never a recipe, and a full-stack slice covering every repo the behaviour needs. The build loop's plan stage works out the how against the live tree, just in time, and writes it to workareas/<workarea>/plans/<id>.md. Other fields are allowed, because older backlogs carry more.",

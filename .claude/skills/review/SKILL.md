@@ -224,6 +224,90 @@ batch implementor / refresh tools mutate it via `review-*.sh`. The
 
 Skip this step if only one repository is involved.
 
+## Step 5.5: Behaviour-spec drift check
+
+The `openspec/` checks in `references/FILE_REVIEWER.md` fire only on a
+spec file that is **in** the diff — they ask "you wrote a spec, is it
+right?". Nothing there asks the other question: *behaviour changed and
+no spec was written.* That is drift-by-omission, the failure the whole
+Behaviour Spec exists to surface, and it is invisible to a per-file
+reviewer, which cannot see what the PR set as a whole is missing. The
+consistency reviewer cannot cover it either — it marks single-repo
+reviews `N/A`, and a lone frontend PR is exactly the case that matters.
+
+So it is a parent check, run once here, after Step 5's aggregation so
+`review-add-item.sh` can append to the populated `items.{repo}.json`.
+
+**1. Does the Behaviour Spec cover any repo in this PR set?** It covers
+four namespaces, and only these repos map to them:
+
+| Namespace | Repos |
+|---|---|
+| `live-animals/` | `trade-imports-animals-frontend`, `trade-imports-animals-backend` |
+| `admin/` | `trade-imports-animals-admin` |
+| `ins/` | `trade-imports-ins-frontend`, `trade-imports-ins-backend` |
+| `plants/` | `trade-imports-plants-frontend`, `trade-imports-plants-backend` |
+
+That is which repos can **change** behaviour in a namespace, not which
+appear in its `coverage.json` — no coverage link names
+`trade-imports-animals-backend` today, yet `live-animals/notification-lifecycle`
+describes statuses, durability and idempotent delete that the backend
+owns. Do not narrow the table by grepping coverage.
+
+`trade-imports-animals-tests` is the other way round: it appears in every
+namespace as a **witness**, never an owner. A tests-repo change does not
+change intended behaviour and needs no `specs/` update — though it can
+invalidate `coverage/` links, which `FILE_REVIEWER`'s coverage row covers.
+
+No repo in the set maps to a namespace → skip, and say so in the index.
+A workspace-only, tests-repo-only, stub, reference-data, dynamics-gateway
+or address-book PR has no intended behaviour of its own to record.
+
+**2. Did the PR set change observable behaviour?** Observable means a
+user or an operator could see the difference: page copy, a new or
+removed page, validation, journey flow or task rows, an obligation's
+gate or scope, a notification's lifecycle or status, an API response
+another service's user sees.
+
+**Not** observable: refactors, renames, dependency bumps, CI and tooling,
+test-only changes, logging, comments, formatting. This is the same
+judgement `frontend-change` Step 5.1a makes, and it carries the same
+warning in reverse — **a check that fires on every PR gets ignored**.
+Where nothing observable changed, raise nothing.
+
+**3. Is there a matching `openspec/specs/**` change anywhere in the PR
+set?** Look across every diff, not just the behaviour-changing repo —
+the spec lives in `trade-imports-workspace`, so it usually arrives in a
+*separate* PR:
+
+```bash
+grep -l 'openspec/specs/' ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.diffs/*.diff
+```
+
+No hit, and steps 1 and 2 both said yes → file it against the
+**behaviour-changing repo**, not the workspace, so the author who made
+the change is the one who sees it:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} \
+  --file {the file whose change is observable} --line {line} \
+  --severity Major --category behaviour-spec-drift \
+  --issue "Changes observable behaviour (<what>) with no openspec/specs update anywhere in the PR set — the Behaviour Spec now describes behaviour the code no longer has." \
+  --fix "Add or amend the scenario under openspec/specs/<namespace>/<capability>/, following .claude/skills/frontend-change/references/SPEC_SYNC.md, and its coverage.json sibling."
+```
+
+**Severity is Major, not Critical** — it is an omission, where AC8/AC9's
+Critical is reserved for a spec that actively *misrepresents* the
+behaviour. A wrong spec is worse than an absent one, because it is
+trusted. **Raise it to Critical** if the change came through
+`frontend-change` or a `journey-builder` increment: there the spec write
+is a mandatory step that halts on mismatch, so its absence means a halt
+was overridden or the step was skipped.
+
+Record the outcome either way in the index's AC table — "no spec update
+needed, nothing observable changed" is a result, and saying it stops the
+next reviewer re-deriving it.
+
 ## Step 6: Write Index
 
 Create `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md` —
@@ -489,6 +573,13 @@ refresh reviewer's `.review.json` contains **only deltas** —
 regressions and net-new findings. Items that exist in items.json and
 are still present in the code are NOT re-reported (the persona
 instructs this). The reconciler simply appends every todo it finds.
+
+**Then re-run Step 5.5** against the refreshed diffs. New commits can add
+observable behaviour without a spec update just as readily as the first
+push, and a drift item raised at FRESH is not re-raised by the per-file
+reviewers — it is not attached to any one file. If 5.5 already filed one
+and the spec still has not arrived, leave the existing item alone rather
+than filing a second.
 
 `/tmp/refresh-summary-{repo}.json` shape:
 ```json

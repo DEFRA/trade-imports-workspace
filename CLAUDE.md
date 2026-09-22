@@ -60,7 +60,7 @@ Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-refe
 | `repos/trade-imports-address-book` | DEFRA/trade-imports-address-book | Org-scoped address book API (system of record for Standard Address Block records) | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | DEFRA/trade-imports-ins-frontend | Import Notification Service front-door (address-book UI, sign-in, dashboard shell) | Node.js |
 | `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
-| `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (set empty — awaiting requirements) | Node.js |
+| `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (implemented on the shared journey platform; requirements still being reconciled) | Node.js |
 | `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend — its `upstream` remote is `trade-imports-plants-frontend`; sync with `git fetch upstream` then `git merge upstream/main` | Node.js |
 | `repos/trade-imports-plants-backend` | DEFRA/trade-imports-plants-backend | High-risk plants notification persistence | Java / Spring Boot |
 | `repos/trade-imports-schemas` | DEFRA/trade-imports-schemas | Shared schema definitions | Node.js |
@@ -145,6 +145,10 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 ## Docs
 
 - `docs/` — project documentation. Architecture notes, ADRs, runbooks.
+- [`docs/repos/architecture-overview.md`](docs/repos/architecture-overview.md) —
+  how the services connect and what each is responsible for (read this first
+  when a task crosses repos). Per-repo pages sit alongside it in
+  [`docs/repos/`](docs/repos/).
 - [`docs/adr/`](docs/adr/) — architecture decision records. See
   [`docs/adr/0001-consolidate-workspace-docs-under-docs.md`](docs/adr/0001-consolidate-workspace-docs-under-docs.md)
   for why `docs/` is the single canonical documentation root.

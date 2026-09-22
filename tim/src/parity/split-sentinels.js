@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { readJsonFile, writeJsonAtomic } from './io.js'
+import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 import { parseBacklog } from './schema.js'
 import { splitSentinels } from './load.js'
 import { isWithdrawn } from './counts.js'

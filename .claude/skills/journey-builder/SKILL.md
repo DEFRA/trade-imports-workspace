@@ -135,7 +135,7 @@ type vocabulary is deliberately small; widen it in both scripts together.
 ## Mode: plan
 
 The generator gives an increment a type, a subject and a place in the chain.
-That is a buildable increment: the `build-orchestrator` skill's derive query
+That is a buildable increment: the `requirements-pipeline` BUILD phase's derive query
 is status and dependencies only, and the loop's implementor derives the change
 from the increment's `detail`, the spec objects it names and the code.
 

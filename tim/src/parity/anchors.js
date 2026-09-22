@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile, writeJsonAtomic } from './io.js'
+import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 import { parseBacklog } from './schema.js'
 import { resolveCapturePaths } from './capture/run.js'
 import { insertionPoint, mergeAnchors, summarise } from './insertion.js'

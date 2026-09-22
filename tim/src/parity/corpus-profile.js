@@ -1,19 +1,12 @@
-import { readFileSync, existsSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { TimError } from '../errors.js'
+import { CORPORA_FILE, readCorporaFile } from '../backlog/registry.js'
+import { readJsonFile } from '../backlog/io.js'
 
-export const CORPORA_FILE = 'tools/parity/corpora.json'
-
-const readJson = (path) => {
-  try {
-    return JSON.parse(readFileSync(path, 'utf8'))
-  } catch (error) {
-    throw new TimError('PARSE', `Can't read ${path}: ${error.message}`)
-  }
-}
-
-const readJsonIfPresent = (path) => (existsSync(path) ? readJson(path) : null)
+const readJsonIfPresent = (path) =>
+  existsSync(path) ? readJsonFile(path) : null
 
 /**
  * The bands a corpus gets when it declares none.
@@ -76,11 +69,7 @@ export const expandHome = (path) =>
  * @throws {TimError} NOT_FOUND when a run id belongs to no corpus
  */
 export const resolveCorpusId = ({ workspaceRoot, runId, explicit }) => {
-  const corporaPath = join(workspaceRoot, CORPORA_FILE)
-  if (!existsSync(corporaPath)) {
-    throw new TimError('NOT_FOUND', `Can't find ${CORPORA_FILE}.`)
-  }
-  const corpora = readJson(corporaPath)
+  const corpora = readCorporaFile({ workspaceRoot })
 
   if (explicit) return { id: explicit, source: '--corpus' }
 
@@ -124,8 +113,7 @@ const absolutise = (workspaceRoot, path) => {
  * @throws {TimError} NOT_FOUND when the corpus id is unknown
  */
 export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
-  const corporaPath = join(workspaceRoot, CORPORA_FILE)
-  const corpora = readJson(corporaPath)
+  const corpora = readCorporaFile({ workspaceRoot })
   const { id, source } = resolveCorpusId({ workspaceRoot, runId, explicit })
 
   const raw = corpora.corpora?.[id]
@@ -192,6 +180,7 @@ export const loadCorpusProfile = ({ workspaceRoot, runId, explicit }) => {
   return {
     ...raw,
     id,
+    profileKey: raw.profile ?? 'parity-v1',
     resolvedFrom: source,
     workspaceRoot,
     runId: runId ?? raw.runId,

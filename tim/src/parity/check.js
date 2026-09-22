@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { relative } from 'node:path'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { parseBacklog } from './schema.js'
 import { markersIn, wordCount } from './render/prose.js'
 import { tokeniseIncrement } from './citations/parse.js'

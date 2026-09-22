@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 1,
+  "manifestDirs": ["service", "app", "src"],
+  "technologies": [
+    {
+      "name": "k6",
+      "when": {
+        "anyOf": [
+          { "fileContains": { "file": "package.json", "pattern": "\"k6\"" } },
+          {
+            "anyFileContains": {
+              "glob": "*.js",
+              "pattern": "from ['\"]k6[/'\"]|require\\(['\"]k6"
+            }
+          },
+          { "dirExists": "k6" },
+          { "fileExists": "k6.config.js" },
+          {
+            "allOf": [
+              {
+                "anyFileContains": {
+                  "glob": "*.js",
+                  "pattern": "export (default )?function|import \\{ (check|sleep|group)"
+                }
+              },
+              {
+                "anyFileContains": {
+                  "glob": "*.js",
+                  "pattern": "from ['\"]k6/http['\"]"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/k6/BEST_PRACTICES.md"]
+    },
+    {
+      "name": "playwright",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "package.json",
+              "pattern": "\"@playwright/test\"|\"playwright\""
+            }
+          },
+          { "fileExists": "playwright.config.ts" },
+          { "fileExists": "playwright.config.js" },
+          {
+            "anyFileContains": {
+              "glob": "*.ts",
+              "pattern": "from ['\"]@playwright/test['\"]"
+            }
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/playwright/BEST_PRACTICES.md"]
+    },
+    {
+      "name": "springboot",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "pom.xml",
+              "pattern": "spring-boot|org\\.springframework\\.boot"
+            }
+          },
+          {
+            "fileContains": {
+              "file": "build.gradle",
+              "pattern": "org\\.springframework\\.boot|spring-boot"
+            }
+          },
+          {
+            "anyFileContains": {
+              "glob": "*.java",
+              "pattern": "@SpringBootApplication|@RestController|@Service|@Repository"
+            }
+          }
+        ]
+      },
+      "bestPractice": [
+        "docs/best-practices/java/spring-boot.md",
+        "docs/best-practices/java/modern-java.md",
+        "docs/best-practices/java/testing/unit.md",
+        "docs/best-practices/java/testing/integration.md"
+      ]
+    },
+    {
+      "name": "spring-data-mongodb",
+      "requires": "springboot",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "pom.xml",
+              "pattern": "spring-boot-starter-data-mongodb|spring-data-mongodb"
+            }
+          },
+          {
+            "fileContains": {
+              "file": "build.gradle",
+              "pattern": "spring-boot-starter-data-mongodb|spring-data-mongodb"
+            }
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/java/spring-data-mongodb.md"]
+    },
+    {
+      "name": "openapi-springdoc",
+      "requires": "springboot",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "pom.xml",
+              "pattern": "springdoc-openapi"
+            }
+          },
+          {
+            "fileContains": {
+              "file": "build.gradle",
+              "pattern": "springdoc-openapi"
+            }
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/java/openapi-springdoc.md"]
+    },
+    {
+      "name": "aws-sdk-v2",
+      "requires": "springboot",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "pom.xml",
+              "pattern": "software\\.amazon\\.awssdk"
+            }
+          },
+          {
+            "fileContains": {
+              "file": "build.gradle",
+              "pattern": "software\\.amazon\\.awssdk"
+            }
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/java/aws-sdk-v2.md"]
+    },
+    {
+      "name": "hapi",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "package.json",
+              "pattern": "\"@hapi/hapi\"|\"hapi\""
+            }
+          },
+          {
+            "anyFileContains": {
+              "glob": "*.js",
+              "pattern": "require\\(['\"]@hapi/hapi['\"]|from ['\"]@hapi/hapi['\"]"
+            }
+          },
+          {
+            "anyFileContains": {
+              "glob": "*.js",
+              "pattern": "Hapi\\.server\\(|new Hapi\\.Server"
+            }
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/node/hapi.md"]
+    },
+    {
+      "name": "pino",
+      "when": {
+        "fileContains": {
+          "file": "package.json",
+          "pattern": "\"pino\"|\"hapi-pino\""
+        }
+      },
+      "bestPractice": ["docs/best-practices/node/pino-logging.md"]
+    },
+    {
+      "name": "nunjucks",
+      "when": {
+        "fileContains": { "file": "package.json", "pattern": "\"nunjucks\"" }
+      },
+      "bestPractice": ["docs/best-practices/node/nunjucks.md"]
+    },
+    {
+      "name": "rest-api",
+      "when": {
+        "anyOf": [
+          {
+            "anyFileContains": {
+              "glob": "*.java",
+              "pattern": "@RestController|@RequestMapping|@GetMapping|@PostMapping"
+            }
+          },
+          {
+            "anyFileContains": {
+              "glob": "*.js",
+              "pattern": "router\\.(get|post|put|delete)|app\\.(get|post|put|delete)"
+            }
+          },
+          {
+            "anyFileContains": {
+              "glob": "*.js",
+              "pattern": "server\\.route\\("
+            }
+          }
+        ]
+      },
+      "bestPractice": ["docs/best-practices/rest-api/rest-api.md"]
+    },
+    {
+      "name": "gds",
+      "when": {
+        "anyOf": [
+          {
+            "fileContains": {
+              "file": "package.json",
+              "pattern": "\"govuk-frontend\""
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  { "dirExists": "src/views" },
+                  { "dirExists": "views" },
+                  { "dirExists": "service/src/views" },
+                  { "dirExists": "service/views" }
+                ]
+              },
+              {
+                "anyFileContains": {
+                  "glob": "*.njk",
+                  "pattern": "govukButton|govukInput|govukRadios|govukCheckboxes"
+                }
+              }
+            ]
+          },
+          { "anyFileContains": { "glob": "*.njk", "pattern": "govuk-" } }
+        ]
+      },
+      "bestPractice": [
+        "docs/best-practices/gds/language.md",
+        "docs/best-practices/gds/styles.md",
+        "docs/best-practices/gds/components.md",
+        "docs/best-practices/gds/patterns.md",
+        "docs/best-practices/gds/accessibility.md",
+        "docs/best-practices/node/govuk-frontend.md",
+        "docs/best-practices/node/code-style.md",
+        "docs/best-practices/node/testing/frontend.md"
+      ]
+    }
+  ]
+}

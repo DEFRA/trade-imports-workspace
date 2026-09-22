@@ -1,6 +1,6 @@
 import { existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile } from '../io.js'
+import { readJsonFile } from '../../backlog/io.js'
 
 /**
  * The four states, best first. Every card gets one per side, always: a missing

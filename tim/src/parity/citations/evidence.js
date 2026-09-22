@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { readJsonFile, writeJsonAtomic } from '../io.js'
+import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import { parseBacklog } from '../schema.js'
 import { permalink, existsAtCommit, blobId } from './github-url.js'
 import { readAtCommit, sliceSnippet, citedText, rangesOf } from './snippet.js'

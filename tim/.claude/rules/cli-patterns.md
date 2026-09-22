@@ -26,6 +26,7 @@ paths:
 
 - All errors go to stderr. Stdout is reserved for the command's output (text or JSON).
 - Use the constants in `src/constants/exitCodes.js`. Don't write magic numbers.
+- The shared writer core's write-safety refusals (a lost update, a lock still held) use `src/constants/writerExitCodes.js` instead (`LOST_UPDATE` = 3, `LOCKED` = 4), mapped by `exitCodeFor` in `src/commands/envelope.js`. Both `tim backlog *` and `tim parity ingest` can exit with these.
 - In `--json` mode, errors emit `{ok: false, schema_version: 1, tim_version, errors: [{code, message}]}` to stdout _and_ set the exit code.
 
 ## Help text

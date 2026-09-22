@@ -45,6 +45,7 @@ Shared shell scripts called by skills via
 | **review** | | |
 | `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |
+| `tools/review/detect-tech.sh` | REPO_PATH | Detects technologies + best-practice paths for a repo; reads `.claude/skills/review/assets/routing.json` |
 | `tools/review/verify-coverage.sh` | EUDPA-X [--json] | Check coverage |
 | `tools/review/verify-consistency.sh` | EUDPA-X [--json] | Check consistency |
 | `tools/review/verify-style-coverage.sh` | EUDPA-X [--json] | Check JS style review coverage |
@@ -67,7 +68,8 @@ Shared shell scripts called by skills via
 | **style** | | |
 | `tools/style/start-style.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/style/prepare-style.sh` | EUDPA-X [--json] | Fresh Step 1 — init `.style.json` placeholders + per-repo rules bundle |
-| `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO | Concatenate `docs/best-practices/` into `style-rules.{repo}.md` |
+| `tools/style/file-topics.sh` | PATH | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
+| `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO TOPIC | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
 | `tools/style/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
 | `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view |
 | `tools/style/style-items.sh` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |

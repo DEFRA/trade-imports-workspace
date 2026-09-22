@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { readJsonFile } from './io.js'
-import { findingsDir, verificationOf } from './ingest.js'
+import { readJsonFile } from '../backlog/io.js'
+import { findingsDir, verificationOf } from './profile-v1.js'
 import {
   readSlices,
   slicesPath,

@@ -1,6 +1,6 @@
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { loadCorpusProfile } from '../../parity/corpus-profile.js'
-import { readJsonFile, writeJsonAtomic } from '../../parity/io.js'
+import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import { parseBacklog } from '../../parity/schema.js'
 import { normaliseBacklog } from '../../parity/normalise.js'
 import { runCounts } from '../../parity/counts.js'
@@ -17,7 +17,7 @@ import { runSlices, renderSlices } from '../../parity/slices.js'
 import { runYield, renderYield } from '../../parity/yield.js'
 import { runDuplicates, renderDuplicates } from '../../parity/duplicates.js'
 import { runHeads, renderHeads } from '../../parity/heads.js'
-import { runIngest } from '../../parity/ingest.js'
+import { runIngest } from '../../backlog/ingest.js'
 import { runAnchors } from '../../parity/anchors.js'
 import {
   runCheckEvidence,
@@ -31,10 +31,9 @@ import {
   setDecisionRequired,
   setCitation
 } from '../../parity/set.js'
-import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
+import { OK, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
-
-const SCHEMA_VERSION = 1
+import { jsonEnvelope, exitCodeFor } from '../envelope.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
@@ -65,16 +64,7 @@ export const makeParityAction = ({ run, renderText, timVersion }) =>
       })
       const result = await run({ workspaceRoot, runId, profile, args }, opts)
       if (opts.json) {
-        emit(
-          JSON.stringify({
-            ok: true,
-            schema_version: SCHEMA_VERSION,
-            tim_version: timVersion,
-            result,
-            errors: [],
-            metadata: { ranAt: new Date().toISOString() }
-          })
-        )
+        emit(JSON.stringify(jsonEnvelope({ ok: true, result, timVersion })))
       } else {
         emit(renderText(result))
       }
@@ -82,22 +72,18 @@ export const makeParityAction = ({ run, renderText, timVersion }) =>
     } catch (error) {
       if (isTimError(error) && opts.json) {
         emit(
-          JSON.stringify({
-            ok: false,
-            schema_version: SCHEMA_VERSION,
-            tim_version: timVersion,
-            result: null,
-            errors: [{ code: error.code, message: error.message }]
-          })
+          JSON.stringify(
+            jsonEnvelope({
+              ok: false,
+              error: { code: error.code, message: error.message },
+              timVersion
+            })
+          )
         )
       } else {
         emitError(error.message ?? String(error))
       }
-      process.exit(
-        isTimError(error) && ['USAGE', 'NOT_FOUND'].includes(error.code)
-          ? USAGE
-          : ERROR
-      )
+      process.exit(exitCodeFor(error))
     }
   }
 

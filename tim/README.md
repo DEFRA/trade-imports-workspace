@@ -189,6 +189,90 @@ Every subcommand takes a positional run id — there is no default, because a
 report that silently rendered the wrong corpus would be worse than one that
 refused.
 
+### `tim backlog` — programme backlogs
+
+The same writer core `tim parity ingest` uses, generalised over any
+registered programme through a profile — `parity-v1` for a comparison
+corpus, `requirements-v2` for a DESIGN section 3.4 requirements atom set.
+
+```bash
+tim backlog registry list --json                 # every registered programme, its profile and workarea
+tim backlog registry show fixture-requirements    # one programme's resolved paths
+tim backlog ingest fixture-requirements --dry-run --json  # assemble backlog.json from item files
+tim backlog ingest <programme> --increments       # ingest requirement increments (requirements-v2 only)
+tim backlog ingest <programme> --replace          # rebuild ids from scratch; refuses while any row is ruled or started
+tim backlog ingest <programme> --target <name>    # build-loop target the backlog names (parity-v1 only)
+tim backlog ingest <programme> --op-id r1:inc-001:1:plan:t1:ingest --json   # replaying the same --op-id is a no-op that prints the original result
+tim backlog ingest <programme> --expect-sha <sha256> --json                # refused with exit 3 if backlog.json has changed since
+tim backlog state set <programme> inc-001 phase --value '"plan"' --json    # set one field on one increment's build/state.json entry (requirements-v2 only)
+tim backlog state note <programme> inc-001 --file note.txt --stage plan --json  # append one note to build/journal.jsonl
+tim backlog rule <programme> q-house-rules-source --option A --by sam --at 2026-09-21T10:00:00Z --words "..." --note "..." --json  # record and apply a ruling (requirements-v2 only)
+tim backlog rule <programme> q-house-rules-source --by default --at 2026-09-21T10:00:00Z --json   # apply a defaulted question's default at once
+tim backlog rule <programme> q-house-rules-source --option B --supersedes d-005 --by sam --at 2026-09-21T10:00:00Z --words "Move to option B." --note "..." --json  # reverse a decision in force, naming it with --supersedes
+tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-09-21T10:00:00Z --words "maybe B?" --note "..." --json  # a hedge in --words is recorded tentative, not applied; --supersedes is not used here
+tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
+```
+
+Three commands work on any workarea's `backlog.json` in the one backlog shape,
+with no registration. The shape is defined by
+`.claude/skills/requirements-pipeline/references/backlog.schema.json`, which
+`check` reads from the workspace at runtime and validates against; it then checks
+what a schema cannot say (every dependency is in the backlog, no cycle, no
+duplicate id). The requirements-pipeline skill's DISTIL and BUILD phases and the
+build loop use them:
+
+```bash
+tim backlog check shared/my-programme --json     # the shape, dependencies, cycles and recipe fields; exits 1 when out of shape
+tim backlog next shared/my-programme --json      # the next buildable id, or NONE
+tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
+tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
+```
+
+A programme is registered in one of two files: a parity corpus in
+`tools/parity/corpora.json`, or any other programme — such as
+`fixture-requirements`, the tracked fixture this file's own tests re-ingest
+on every run — in `tools/backlog/registry.json`. A key may appear in only one
+of the two files; `tim backlog registry list` reports both together.
+
+`tim backlog ingest`, `state set`, `state note` and `rule` (requirements-v2
+only) all go through the same write-safety core: `--op-id` makes a call
+idempotent (a replay returns the first result and writes nothing), and
+`--expect-sha` refuses a write whose target changed underneath it. Both exit
+3 (`LOST_UPDATE`) on a stale `--expect-sha` and 4 (`LOCKED`) when another
+process holds the write lock after every retry.
+
+### `tim build` — the build loop's deterministic steps
+
+The build loop's branch and gate steps, run the same way every time. Both read
+the repos a backlog builds from its envelope `repos` map.
+
+```bash
+tim build branch shared/my-programme feat/EUDPA-123-origin --lifecycle full --json   # every backlog repo on one branch
+tim build gate shared/my-programme --phase unit --json      # unit rungs only
+tim build gate shared/my-programme --json                   # unit, then FIT, then E2E
+tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere other than <workarea>/logs/
+```
+
+`tim build branch` checks the branch out in each repo where it exists
+locally, and otherwise cuts it with `--no-track` from `origin/<branch>` if the
+remote has it, else from the repo's default branch. It changes nothing if a
+repo it would move has uncommitted work (exit 1, `DIRTY_TREE`, naming the
+files), and under `--lifecycle local` it refuses `main`, `master` or the
+repo's default branch (exit 2). Running it again is a no-op.
+
+`tim build gate` runs the rungs in
+`.claude/skills/requirements-pipeline/references/gates.json` for each backlog
+repo, in backlog order: every unit rung, then every FIT rung (after checking
+its ports are free — a held port fails the rung and names the holder), then
+the E2E rungs against the workspace stack built from local source
+(`run-stack.sh -d`, the path `tim docker dev` takes). If the stack was down,
+the gate starts it and always stops it afterwards; if it was up, the gate
+rebuilds it from local source and leaves it up. Each rung writes to
+`gate-<repo>-<rung>.log`; nothing streams. A rung that cannot run fails with
+its reason. The result is `{green, rungs, stack}` and the command exits 1
+unless every rung passed. gates.json refuses any rung that names a remote or
+CDP script.
+
 ### Bypassing the interactive menu
 
 The menu only opens when stdout is a TTY and the user has not asked for plain text. In any of the following situations tim falls back to printing `--help` to stdout, so pipes, CI and skill scripts keep working unchanged:

@@ -574,7 +574,7 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | Script | Purpose |
 |---|---|
 | `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
-| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh` |
+| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh`, which reads `assets/routing.json` |
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
 | `verify-consistency.sh` | Fresh Step 4 consistency gate |
 | `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |

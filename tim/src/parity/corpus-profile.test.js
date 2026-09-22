@@ -224,6 +224,18 @@ describe('the band taxonomy belongs to the corpus', () => {
 })
 
 describe('loadCorpusProfile', () => {
+  test('throws NOT_FOUND, not PARSE, when tools/parity/corpora.json is missing', () => {
+    rmSync(join(workspace, 'tools', 'parity', 'corpora.json'))
+
+    try {
+      loadCorpusProfile({ workspaceRoot: workspace })
+      throw new Error('expected loadCorpusProfile to throw')
+    } catch (error) {
+      expect(error.code).toBe('NOT_FOUND')
+      expect(error.message).toBe("Can't find tools/parity/corpora.json.")
+    }
+  })
+
   test('lists the known ids when the corpus is unknown', () => {
     expect(() =>
       loadCorpusProfile({ workspaceRoot: workspace, explicit: 'gamma' })

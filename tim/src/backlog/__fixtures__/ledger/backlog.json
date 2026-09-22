@@ -1,0 +1,712 @@
+{
+  "schemaVersion": 2,
+  "programme": "fixture-ledger",
+  "profile": "requirements-v2",
+  "requirements": [
+    {
+      "id": "req-001",
+      "key": "dashboard--list-scope",
+      "slice": "dashboard",
+      "kind": "rule",
+      "title": "The dashboard lists only notifications the user may see",
+      "statement": "The dashboard MUST list only the notifications the signed-in user may see, under the scope ruled for q-notification-list-scope.",
+      "why": "An unscoped list leaks another organisation's notifications.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given two users in different organisations each with a notification, when either user opens their dashboard, then only notifications within the ruled scope are listed.",
+          "witness": "e2e",
+          "confidence": "gap",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A dashboard listing a notification outside the ruled scope.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "Should a user see only their own organisation's notifications?",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "plants",
+        "area": "dashboard",
+        "repos": ["plantsFrontend"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": ["q-notification-list-scope"],
+      "status": "adopted",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-002",
+      "key": "dashboard--list-scope--org",
+      "slice": "dashboard",
+      "kind": "rule",
+      "title": "The dashboard lists only the user's own organisation",
+      "statement": "The dashboard MUST list only notifications created under the signed-in user's current organisation.",
+      "why": "Option A of q-notification-list-scope.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given a notification created under another organisation, when the user opens the dashboard, then it is not listed.",
+          "witness": "e2e",
+          "confidence": "gap",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A dashboard listing a notification from another organisation.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "Should a user see only their own organisation's notifications?",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "plants",
+        "area": "dashboard",
+        "repos": ["plantsFrontend"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-003",
+      "key": "dashboard--list-scope--own",
+      "slice": "dashboard",
+      "kind": "rule",
+      "title": "The dashboard lists only notifications the user created",
+      "statement": "The dashboard MUST list only notifications the signed-in user created, across organisations.",
+      "why": "Option B of q-notification-list-scope.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given a notification another colleague created in the same organisation, when the user opens the dashboard, then it is not listed.",
+          "witness": "e2e",
+          "confidence": "gap",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A dashboard listing a colleague's notification.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "Should a user see only their own organisation's notifications?",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "plants",
+        "area": "dashboard",
+        "repos": ["plantsFrontend"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-004",
+      "key": "house-rules--tracked-doc",
+      "slice": "house-rules",
+      "kind": "content",
+      "title": "The house rules live in a tracked document",
+      "statement": "The house rules MUST live in a tracked best-practice document that the code-style bundles include.",
+      "why": "Rules in one person's memory never reach other people, CI or another person's build.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given the tracked house-rules document, when a style bundle is baked for a Node file, then the bundle includes the house rules.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A baked style bundle without the house rules after they are tracked.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "judge-3",
+          "ref": "line:45",
+          "quote": "The house-rules asymmetry is the most important thing any candidate found.",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-18",
+            "seal": "git-blob:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "confidence": "stated",
+          "role": "decision-record"
+        }
+      ],
+      "surface": {
+        "service": "requirements-pipeline",
+        "area": "context",
+        "repos": ["workspace"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-005",
+      "key": "notification-view--list-scope",
+      "slice": "notification-view",
+      "kind": "rule",
+      "title": "The notification view shows only notifications the user may see",
+      "statement": "The notification view MUST show only the notification the signed-in user may see, under the scope ruled for q-notification-list-scope.",
+      "why": "An unscoped view leaks another organisation's notification.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given a notification outside the ruled scope, when the user requests its view directly, then it is refused.",
+          "witness": "e2e",
+          "confidence": "gap",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A notification view reachable outside the ruled scope.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "Should a user see only their own organisation's notifications?",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "plants",
+        "area": "notification-view",
+        "repos": ["plantsFrontend"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": ["q-notification-list-scope"],
+      "status": "adopted",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-006",
+      "key": "notification-view--list-scope--org",
+      "slice": "notification-view",
+      "kind": "rule",
+      "title": "The notification view scopes to the user's own organisation",
+      "statement": "The notification view MUST show only a notification created under the signed-in user's current organisation.",
+      "why": "Option A of q-notification-list-scope.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given a notification created under another organisation, when the user requests its view, then it is refused.",
+          "witness": "e2e",
+          "confidence": "gap",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A notification view reachable from another organisation.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "Should a user see only their own organisation's notifications?",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "plants",
+        "area": "notification-view",
+        "repos": ["plantsFrontend"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-007",
+      "key": "notification-view--list-scope--own",
+      "slice": "notification-view",
+      "kind": "rule",
+      "title": "The notification view scopes to notifications the user created",
+      "statement": "The notification view MUST show only a notification the signed-in user created, across organisations.",
+      "why": "Option B of q-notification-list-scope.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given a colleague's notification in the same organisation, when the user requests its view, then it is refused.",
+          "witness": "e2e",
+          "confidence": "gap",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A notification view reachable for a colleague's notification.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "Should a user see only their own organisation's notifications?",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "plants",
+        "area": "notification-view",
+        "repos": ["plantsFrontend"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-008",
+      "key": "unrelated--no-needs",
+      "slice": "unrelated",
+      "kind": "hygiene",
+      "title": "An unrelated atom with no needs",
+      "statement": "This atom exists only to prove an unrelated increment stays buildable while inc-001 is blocked.",
+      "why": "req-031 ac-1's falsifier: every other increment stays buildable.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given nothing in particular, when nothing in particular happens, then this atom stays adopted.",
+          "witness": "unit",
+          "confidence": "stated",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "This atom ever blocking on a question.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:1",
+          "quote": "every other increment stays buildable",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "service": "requirements-pipeline",
+        "area": "fixture",
+        "repos": ["workspace"]
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "adopted",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    }
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "key": "notification-access-scope",
+      "title": "Users see only the notifications they may see",
+      "outcome": "A signed-in user sees their notifications on the dashboard and in the notification view, and never another organisation's.",
+      "why": "Both members wait on the same access-control ruling and share one end-to-end proof.",
+      "members": ["req-001", "req-005"],
+      "class": "feat",
+      "surface": {
+        "repos": ["plantsFrontend"],
+        "areas": ["dashboard", "notification-view"]
+      },
+      "milestone": null,
+      "dependsOn": [],
+      "sequence": null,
+      "needs": ["q-notification-list-scope"],
+      "checkpoint": "halt-after",
+      "size": { "class": "M", "basis": "2 criteria, 2 atoms" },
+      "combination": {
+        "why": "One ruling decides both; one journey proves both.",
+        "rules": ["cr-same-acceptance-boundary", "cr-no-need-boundary"]
+      },
+      "status": "blocked",
+      "doneBy": null,
+      "statusNote": "Needs q-notification-list-scope (must answer)."
+    },
+    {
+      "id": "inc-002",
+      "key": "house-rules-tracked-doc",
+      "title": "The house rules move into a tracked document",
+      "outcome": "The house rules live in a tracked best-practice document that the code-style bundles include.",
+      "why": "req-004's only member.",
+      "members": ["req-004"],
+      "class": "docs",
+      "surface": { "repos": ["workspace"], "areas": ["context"] },
+      "milestone": null,
+      "dependsOn": [],
+      "sequence": null,
+      "needs": [],
+      "checkpoint": null,
+      "size": { "class": "S", "basis": "1 criterion, 1 atom" },
+      "combination": {
+        "why": "req-004 is a single atom; nothing else shares its slice.",
+        "rules": ["solo-slice"]
+      },
+      "status": "todo",
+      "doneBy": null,
+      "statusNote": null
+    },
+    {
+      "id": "inc-003",
+      "key": "unrelated-increment",
+      "title": "An unrelated increment with no needs",
+      "outcome": "req-008 stays adopted and this increment stays buildable throughout.",
+      "why": "req-008's only member.",
+      "members": ["req-008"],
+      "class": "chore",
+      "surface": { "repos": ["workspace"], "areas": ["fixture"] },
+      "milestone": null,
+      "dependsOn": [],
+      "sequence": null,
+      "needs": [],
+      "checkpoint": null,
+      "size": { "class": "S", "basis": "1 criterion, 1 atom" },
+      "combination": {
+        "why": "req-008 is a single atom; nothing else shares its slice.",
+        "rules": ["solo-slice"]
+      },
+      "status": "todo",
+      "doneBy": null,
+      "statusNote": null
+    }
+  ],
+  "questions": [
+    {
+      "id": "q-notification-list-scope",
+      "headline": "Should a user see only their own organisation's notifications?",
+      "question": "The dashboard and notification view list notifications. Which notifications may a signed-in user see?",
+      "inPlay": "The dashboard list and the notification view, in the plants frontend.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Only notifications created under the user's current organisation.",
+          "consequence": "Colleagues in one organisation see each other's work; nobody sees another organisation's.",
+          "sources": ["s-policy-14"],
+          "counts": { "requirement": 1 },
+          "effects": [
+            { "op": "supersede", "target": "req-001", "by": "req-002" },
+            { "op": "supersede", "target": "req-005", "by": "req-006" },
+            { "op": "reject", "target": "req-003" },
+            { "op": "reject", "target": "req-007" }
+          ]
+        },
+        {
+          "id": "B",
+          "text": "Only notifications the user personally created, across organisations.",
+          "consequence": "An agent working for two importers sees both; colleagues see nothing of each other's.",
+          "sources": ["s-transcript-7"],
+          "counts": { "requirement": 1 },
+          "effects": [
+            { "op": "supersede", "target": "req-001", "by": "req-003" },
+            { "op": "supersede", "target": "req-005", "by": "req-007" },
+            { "op": "reject", "target": "req-002" },
+            { "op": "reject", "target": "req-006" }
+          ]
+        }
+      ],
+      "recommended": "A",
+      "recommendedBy": "panel",
+      "ifNobodyAnswers": {
+        "option": null,
+        "consequence": "Nothing that lists notifications is built. inc-001 stays blocked.",
+        "defaultWhy": null
+      },
+      "category": "access-control",
+      "class": "must-answer",
+      "mustAnswer": true,
+      "status": "open",
+      "decision": null
+    },
+    {
+      "id": "q-house-rules-source",
+      "headline": "Where should the four house rules live, so Codex and people see them too?",
+      "question": "Four house rules live in memory and reach only one executor's style reviewers. Where should they live?",
+      "inPlay": "Every style review task, and the code-style skill's bundles.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Keep them in memory, and point both executors at the memory files by path.",
+          "consequence": "Both executors see the same rules. The increment that moves them into a tracked document is deferred.",
+          "sources": ["workspace-code"],
+          "counts": { "constraint": 1 },
+          "effects": [
+            {
+              "op": "set-assumption",
+              "target": "as-house-rules-by-path",
+              "value": "A"
+            },
+            { "op": "defer-increment", "target": "inc-002" }
+          ]
+        },
+        {
+          "id": "B",
+          "text": "Move them into a tracked best-practice document that the code-style bundles include.",
+          "consequence": "Everyone and every executor sees the same rules.",
+          "sources": ["judge-3"],
+          "counts": { "decision-record": 1 },
+          "effects": [
+            {
+              "op": "set-assumption",
+              "target": "as-house-rules-by-path",
+              "value": "B"
+            },
+            { "op": "adopt", "target": "req-004" }
+          ]
+        }
+      ],
+      "recommended": "B",
+      "recommendedBy": "judge",
+      "ifNobodyAnswers": {
+        "option": "A",
+        "consequence": "Both executors read the rules by path, and inc-002 is deferred until Sam rules.",
+        "defaultWhy": "Moving the rules changes the code-style bundles the whole team uses, a standard only Sam owns."
+      },
+      "category": "process",
+      "class": "defaulted",
+      "mustAnswer": false,
+      "status": "open",
+      "decision": null
+    },
+    {
+      "id": "q-panel-authority",
+      "headline": "What may the judges panel decide without you?",
+      "question": "When sources disagree and the precedence rules cannot settle it, a panel of three judges and a chair rules. Which rulings may it make on its own?",
+      "inPlay": "The distiller's panel phase and every conflict it settles.",
+      "options": [
+        {
+          "id": "A",
+          "text": "The panel rules anything the sources, precedence and Sam's standing rulings can settle.",
+          "consequence": "Fewer questions reach Sam, and Sam sees every panel call afterwards.",
+          "sources": ["synthesis"],
+          "counts": { "current-behaviour": 1 },
+          "effects": [
+            {
+              "op": "set-assumption",
+              "target": "as-panel-authority",
+              "value": "A"
+            }
+          ]
+        },
+        {
+          "id": "B",
+          "text": "The panel only recommends.",
+          "consequence": "More questions reach Sam.",
+          "sources": ["g-reports"],
+          "counts": { "current-behaviour": 1 },
+          "effects": [
+            {
+              "op": "set-assumption",
+              "target": "as-panel-authority",
+              "value": "B"
+            }
+          ]
+        }
+      ],
+      "recommended": "A",
+      "recommendedBy": "panel",
+      "ifNobodyAnswers": {
+        "option": "A",
+        "consequence": "The panel rules within option A's limits, and each ruling is listed for Sam to reverse.",
+        "defaultWhy": null
+      },
+      "category": "process",
+      "class": "defaulted",
+      "mustAnswer": false,
+      "status": "open",
+      "decision": null
+    }
+  ],
+  "decisions": [],
+  "assumptions": [
+    {
+      "id": "as-house-rules-by-path",
+      "text": "Until Sam rules, every task that writes or reviews code reads the four house rules by path from the files they live in today.",
+      "default": null,
+      "confidence": "inferred",
+      "reviseIf": "Sam rules q-house-rules-source",
+      "question": "q-house-rules-source",
+      "decision": null
+    },
+    {
+      "id": "as-panel-authority",
+      "text": "The panel rules anything the sources, precedence and Sam's standing rulings can settle, and escalates the rest.",
+      "default": null,
+      "confidence": "inferred",
+      "reviseIf": "Sam rules q-panel-authority",
+      "question": "q-panel-authority",
+      "decision": null
+    }
+  ],
+  "combination": {
+    "rules": ["cr-same-acceptance-boundary", "cr-no-need-boundary"],
+    "ceiling": { "acceptance": 12, "newSurfaces": 1, "e2eJourneys": 2 },
+    "declined": [],
+    "basis": {
+      "atomsSha": "sha256:placeholder0000000000000000000000000000000000000000000000000"
+    }
+  }
+}

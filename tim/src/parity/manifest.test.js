@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { readJsonFile } from './io.js'
+import { readJsonFile } from '../backlog/io.js'
 import { pngSize, runManifest } from './manifest.js'
 
 // A one-pixel PNG, byte for byte. Enough for the header reader to work on.

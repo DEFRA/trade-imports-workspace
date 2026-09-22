@@ -53,7 +53,7 @@ resolved configuration.
 | `branch` | Under `full`, the base branch each increment's own branch is cut from and merged back into. Under `local`, the scratch branch every increment is built and committed on — never `main` or `master` |
 | `scope` | Conventional-commit scope for the landing commit |
 | `executor` | `claude` or `codex` — see below |
-| `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on `branch`, which every repo must already be on — no ticket, no branch stage, no Jira, no push, no PR). The baseline and land stages refuse a repo on any other branch, and a local run refuses `main` or `master` outright |
+| `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on `branch`, which the baseline puts every repo on with `tim build branch` — no ticket, no branch stage, no Jira, no push, no PR). The baseline and land stages refuse a repo on any other branch, and a local run refuses `main` or `master` outright |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
 | `jiraProject` (full) | Jira project key raised tickets land in |
 | `epic` (full) | Parent epic every raised ticket hangs off |
@@ -100,23 +100,23 @@ as `feat(plant-products): <increment title>`. Any other workarea works the same 
 
 | Stage | Agents | What it does |
 |---|---|---|
-| Baseline | 1 | Refuses to start on a dirty tree or a red suite, so any later red is unambiguously ours |
-| Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the ladder, out of scope. Lifted from `frontend-alignment.js` |
-| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Never starts the workspace stack |
+| Baseline | 1 | Under `local`, `tim build branch --lifecycle local` first. Refuses a dirty tree, then runs `tim build gate` one phase at a time (unit, FIT, E2E) into `logs/<id>-baseline/` and reports each rung as tim printed it. Baseline green is gate green, so any later red is unambiguously ours |
+| Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js` |
+| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); never starts or stops the workspace stack |
 | Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
-| Fix | 1 | Applies only what the judge ruled fix-now. Never starts the workspace stack |
-| Ladder | 1 | Runs the plan's ladder, in order, to logs: each changed repo's own gate, the acceptance checks, the integration proof. Given the implementor's and fixer's notes and the baseline log paths |
+| Fix | 1 | Applies only what the judge ruled fix-now. Checks itself with the gate's unit and FIT phases, like the implementor |
+| Ladder | 1 | Runs `tim build gate` one phase at a time into `logs/<id>-ladder/`, then the plan's sections 5 and 6 checks. Given the implementor's and fixer's notes and every baseline rung with its log |
 
-**The ladder owns the workspace stack.** It is the only stage that starts it — in the
-foreground with `tim docker dev`, for its E2E rungs — and it stops it with `tim docker down`
-as soon as they finish. Before a unit or FIT rung it checks the ports the plan names are free,
-and stops the stack if that is what holds them. It runs every rung itself, after the fix
-stage; re-runs the whole ladder, E2E included, after any repair; runs format in check mode;
-and compares every red rung with the baseline logs. A failure in a suite that was green at
-baseline is this increment's to repair or diagnose — "pre-existing" needs the same failure in
-the baseline log.
+**The gate owns the repos' own rungs and the workspace stack.** `tim build gate` runs the
+rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
+unit, `mvn verify`, FIT after a free-port check, and the tests repo's local-stack E2E — and
+for E2E starts the stack only if it was down and stops only what it started. No agent picks
+those scripts or starts or stops the stack; a stack that is up is left alone. The ladder
+compares every red rung with the baseline rung of the same repo and name: every one was green
+at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
+the red phase, and the unit phase too, then the plan's checks.
 | Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and marks the increment done. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — `git stash push -u` under `local`, a pushed wip commit under `full` — so the tree is left clean and the attempt recoverable |
 
 The reviewers follow the personas the skills already ship —

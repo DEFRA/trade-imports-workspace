@@ -518,42 +518,41 @@ describe('increment-build-loop', () => {
       expect(prompt).toContain('NO repo may be on\n   `main` or `master`')
     })
 
-    test('tells the baseline the workspace stack must be down before it runs a suite', async () => {
+    test('tells the baseline to put every repo on the branch with tim build branch', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        'Before you run a unit or FIT suite, the workspace stack must be DOWN'
-      )
-      expect(prompt).toContain('stop it with `tim docker down`')
-      expect(prompt).toContain(
-        "Name in your summary which repo's suite, if any, needed you to stop the stack first."
+        '`tim build branch shared/args-fixture spike/args-fixture --lifecycle local --workspace ~/ws --json`'
       )
     })
 
-    test('tells the baseline to run the frontend FIT suite and the tests repo local E2E suite, not skip them', async () => {
+    test('tells the baseline to run every gate phase with tim build gate, into its own logs', async () => {
       const prompt = await baselinePrompt()
 
-      expect(prompt).toContain('it must establish the BROWSER suites green too')
-      expect(prompt).toContain('run test:fit:ci >')
-      expect(prompt).toContain('run test:docker-compose >')
       expect(prompt).toContain(
-        'Bring the workspace stack up in the FOREGROUND with `tim docker dev`'
+        [
+          '   1. `tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`',
+          '   2. `tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`',
+          '   3. `tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`'
+        ].join('\n')
       )
-      expect(prompt).toContain('then `tim docker down`')
     })
 
-    test('tells the baseline never to pick a script that targets a remote or CDP-deployed environment', async () => {
+    test('tells the baseline it chooses no test script', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        'NEVER a script whose Playwright config targets a remote or CDP-deployed'
+        'You choose no test, script or suite: `tim build gate` does that.'
       )
-      expect(prompt).toContain('In the tests repo that rules out `test`,')
-      expect(prompt).toContain('`test:security*` and `test:browserstack`')
+    })
+
+    test('tells the baseline to leave the workspace stack to the gate', async () => {
+      const prompt = await baselinePrompt()
+
       expect(prompt).toContain(
-        '`test:docker-compose` is the one this workspace standardises on'
+        'Never start or stop the workspace stack, and never drive `docker` yourself.'
       )
-      expect(prompt).toContain('never raw `npx playwright`')
+      expect(prompt).not.toContain('tim docker down')
     })
 
     test('refuses main as the branch to build on before any agent', async () => {
@@ -577,7 +576,20 @@ describe('increment-build-loop', () => {
     })
 
     describe('building an increment', () => {
-      const BASELINE_ANSWER = { ok: true, summary: 'green' }
+      const BASELINE_ANSWER = {
+        ok: true,
+        green: true,
+        rungs: [
+          {
+            repo: 'trade-imports-animals-frontend',
+            name: 'unit',
+            phase: 'unit',
+            ok: true,
+            log: '/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-trade-imports-animals-frontend-unit.log'
+          }
+        ],
+        summary: 'green'
+      }
       const PLAN_ANSWER = {
         ok: true,
         summary: 'Planned in the frontend.',
@@ -647,8 +659,7 @@ describe('increment-build-loop', () => {
             {
               ok: true,
               summary: 'Saved the origin.',
-              notes:
-                'FIT went green once :3003 was freed by stopping the stack.'
+              notes: 'FIT went green once the port-holding test server exited.'
             }
           ]
         })
@@ -701,30 +712,89 @@ describe('increment-build-loop', () => {
         ])
       })
 
-      test('points the ladder at the baseline logs', async () => {
+      const promptOf = (run, label) =>
+        run.agents.find((entry) => entry.options.label === label).prompt
+
+      test('hands the ladder every baseline rung with its log', async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          'frontend: ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline-frontend.log'
+          '   trade-imports-animals-frontend unit (unit): green — /ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-trade-imports-animals-frontend-unit.log'
         )
       })
 
-      test('tells the baseline to write the logs the ladder reads', async () => {
-        const run = await runThroughFixToLadder()
-        const baselinePrompt = run.agents.find(
-          (entry) => entry.options.label === 'inc-900 baseline'
-        ).prompt
+      test('hands the fixer every baseline rung with its log', async () => {
+        const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 fix')
 
-        expect(baselinePrompt).toContain(
-          '> ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline-frontend.log 2>&1'
+        expect(prompt).toContain(
+          '   trade-imports-animals-frontend unit (unit): green — /ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-trade-imports-animals-frontend-unit.log'
         )
+      })
+
+      test('tells the ladder to run every gate phase with tim build gate, into its own logs', async () => {
+        const prompt = ladderPrompt(await runThroughFixToLadder())
+
+        expect(prompt).toContain(
+          [
+            '   1. `tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`',
+            '   2. `tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`',
+            '   3. `tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`'
+          ].join('\n')
+        )
+      })
+
+      test('tells the ladder a rung green at baseline and red now is the increment’s to fix', async () => {
+        const prompt = ladderPrompt(await runThroughFixToLadder())
+
+        expect(prompt).toContain(
+          "A rung green at baseline and red now is this\n   increment's to fix"
+        )
+      })
+
+      test('tells the implementor and fixer to check themselves with the gate’s unit and FIT phases only', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 implement')).toContain(
+          '`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement`'
+        )
+        expect(promptOf(run, 'inc-900 fix')).toContain(
+          '`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix`'
+        )
+        expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
+      })
+
+      test('tells no agent to stop the workspace stack before a unit or FIT suite', async () => {
+        const run = await runThroughFixToLadder()
+        const stopsTheStack = run.agents
+          .filter(({ prompt }) =>
+            /tim docker down|stack must be DOWN/.test(prompt)
+          )
+          .map(({ options }) => options.label)
+
+        expect(stopsTheStack).toEqual([])
+      })
+
+      test('stops at a baseline whose gate is red', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: LOCAL_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            PREFLIGHT_ANSWER,
+            { ...BASELINE_ANSWER, green: false, summary: 'lint red' }
+          ]
+        })
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'baseline-red',
+          detail: 'lint red'
+        })
       })
 
       test("hands the fixer's notes to the ladder", async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          'notes: FIT went green once :3003 was freed by stopping the stack.'
+          'notes: FIT went green once the port-holding test server exited.'
         )
       })
 
@@ -751,10 +821,12 @@ describe('increment-build-loop', () => {
         )
       })
 
-      test('gives the ladder the workspace stack to start and stop', async () => {
+      test('leaves the workspace stack to the gate in the ladder', async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
-        expect(prompt).toContain('You are that stage: you own the stack')
+        expect(prompt).toContain(
+          'For E2E it starts the workspace stack only if it was down and\nstops only what it started.'
+        )
       })
 
       const GREEN_LADDER = {
@@ -999,6 +1071,12 @@ describe('increment-build-loop', () => {
       expect(prompt).toContain(
         'if ANY repo is on `main`, stop and report ok:false naming it'
       )
+    })
+
+    test('leaves branching to the branch stage, not the baseline', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).not.toContain('tim build branch')
     })
   })
 })

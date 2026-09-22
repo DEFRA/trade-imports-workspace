@@ -12,8 +12,8 @@ pipes, `node`, `npx`, absolute paths and `cd` are fine.
 
 ## Constants
 
-Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`, `<branch>`,
-`<INCREMENT_ID>` — is bound to a real value in the prompt that pointed you here. Use those bindings;
+Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`, `<skills>`,
+`<branch>`, `<INCREMENT_ID>`, `<gateUnit>` — is bound to a real value in the prompt that pointed you here. Use those bindings;
 never guess one.
 
 Workspace root `<workspace>`; plan of record `<backlog>`; logs
@@ -47,34 +47,32 @@ land stage commits them.
 
 ## Verify before you report
 
-Run the plan's section 6, "Ladder", in order, skipping only the browser legs below. It includes each
-changed repo's unit, format and lint rungs. **Additionally, if the diff touches `src/main` in the backend, run `mvn verify`
-(not just `mvn test`)** — integration tests run under Failsafe at `verify` and a `mvn test` ladder would
-skip them entirely.
+A repo's own rungs — format check, lint, typecheck, unit tests, `mvn verify` — belong to `tim build gate`,
+which reads them from `<skills>/requirements-pipeline/references/gates.json`. Check your fixes with its unit
+phase, and never pick, add or substitute a script for those rungs:
+`<gateUnit>`
+It prints one JSON line; each rung has an `ok` and a `log`. Then run the plan's sections 5 and 6 checks as
+the plan writes them, each to a file under `<logs>`, read once.
 
-**Browser-driven suites are not yours to run** — the in-repo `*.fit.spec.js` suites, Playwright E2E and
-Lighthouse cannot start under your sandbox, and a later verification-ladder stage runs them outside it.
-Skip those rungs, run every other one, and name what you skipped in `notes`. A browser rung you could
-not run is not a reason to report `ok: false`.
+**Browser-driven suites are not yours to run** — the gate's FIT and E2E phases, and Lighthouse, cannot start
+under your sandbox, and the verification-ladder stage runs the whole gate outside it. A browser phase you
+could not run is not a reason to report `ok: false`.
 
-Run suites to a file under `<logs>` and read the file once. At most 3 self-repair attempts on a red step;
-if still red, report `ok: false` with exactly what is red and what you tried.
+At most 3 self-repair attempts on a red rung; if still red, report `ok: false` with exactly what is red and
+what you tried.
 
 - **Use what is already known.** The prompt that pointed you here carries the implementor's notes. Where
-  they diagnose a red suite or say what got it green, start from that rather than diagnosing it again.
-- **Compare every red rung with the baseline.** The prompt lists the baseline logs,
-  `<logs>/<INCREMENT_ID>-baseline-<repo>.log`, written before any edit. A failure in a suite that was green
-  at baseline was caused by this increment or the environment it left behind — a stack still up, a port
-  held — even when the failing test's own file is unchanged. Repair it or diagnose it. Call a failure
-  pre-existing only when the baseline log shows the same test failing the same way, and quote that line.
-- **Re-run every rung after your last fix**, not only the one that was red: a fix to one rung can break
-  another. Only a full pass after your final edit counts.
-- **Never background a command** (no trailing `&`). Every rung runs in the foreground and returns.
-- **Format runs in check mode.** The rung is `format:check`, never `format`. A red check is repaired by
-  running `format` and then the check again, and that counts as one of your 3 repairs.
-- **Never start the workspace stack** (`tim docker dev` / `up`). The ladder stage owns it, starts it for
-  E2E and stops it after. If you find it up and a unit suite is failing on a port it holds, stop it with
-  `tim docker down` — never raw `docker` — and re-run the suite.
+  they diagnose a red rung or say what got it green, start from that rather than diagnosing it again.
+- **Compare every red rung with the baseline.** The prompt lists every rung of the baseline gate, run before
+  any edit, with its log. Every one was green then, so a rung red now was caused by this increment, even
+  when the failing test's own file is unchanged. Repair it or diagnose it; "pre-existing" is not available.
+- **Re-run the unit phase after your last fix**, not only the rung that was red: a fix to one rung can break
+  another. Only a green run after your final edit counts.
+- **Never background a command** (no trailing `&`). Every command runs in the foreground and returns.
+- **A red format rung** is repaired by running the repo's `format` script and then the unit phase again, and
+  that counts as one of your 3 repairs.
+- **Never start or stop the workspace stack**, and never drive `docker`. The gate owns the stack. A stack
+  that is up is not in your way: leave it.
 
 ## Report
 

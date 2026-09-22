@@ -69,8 +69,8 @@ models        optional model per tier: heavy (implement, reviewers, verifiers,
 ```
 
 `lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
-`local` builds and commits on `branch`, which every repo must already be on and
-which must not be `main` or `master`: no Jira, no push, no PR, and
+`local` builds and commits on `branch`, which `tim build branch` puts every repo
+on and which must not be `main` or `master`: no Jira, no push, no PR, and
 **no handover** — a stash does not travel. Use `full` for anything a colleague
 may pick up.
 
@@ -129,29 +129,42 @@ idempotent, so it runs on reused tickets too.
    into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
-4. **Under `lifecycle: local`, create the scratch branch.** Nothing else does:
-   the loop has no branch stage under `local` and stops if any repo is not
-   already on `branch`. One command does it for every repo in the envelope's
-   `repos`:
+4. **Under `lifecycle: local`, put every repo on the scratch branch.** The
+   loop has no branch stage under `local`. Run, before the first increment:
 
    ```bash
-   tim build branch <workarea> <branch> --lifecycle local --json
+   tim build branch <workarea> spike/<programme> --lifecycle local --workspace ~/git/defra/trade-imports-workspace --json
    ```
 
    It checks the branch out where it exists, and otherwise cuts it with
-   `--no-track` from the default branch, so every repo carries the same name
-   (workspace rule 2). A repo with uncommitted changes is someone's work: the
-   command changes nothing, exits 1 with `DIRTY_TREE` and names the files. Stop
-   and say which; never stash it. It refuses `main`, `master` or the default
-   branch under `local`. Running it again is a no-op.
+   `--no-track` from the default branch, so every repo in the envelope's `repos`
+   carries the same name (workspace rule 2). A repo with uncommitted changes is
+   someone's work: the command changes nothing, exits 1 with `DIRTY_TREE` and
+   names the files. Stop and say which; never stash it. It refuses `main`,
+   `master` or the default branch under `local`. Running it again is a no-op, and
+   the loop's baseline runs the same command at the start of every increment, so
+   a repo that drifted between runs is put back before anything is built.
+
+   Under `lifecycle: full` the loop keeps its own branch stage. That stage
+   branches only the increment's repos, cuts from a freshly fetched base branch
+   the run names, fast-forwards a branch already pushed, and repairs an upstream
+   that points at the base branch. `tim build branch` does none of those, so
+   swapping it in would lose them.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
    rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
    a free-port check, then E2E against the workspace stack built from local
-   source. Every rung writes to its own log under `<workarea>/logs/`, a rung that
-   cannot run fails with its reason, and the command exits 1 unless every rung
-   passed. Add a repo's rungs to `gates.json` before the first increment that
-   builds it; the gate fails a repo it has no rungs for.
+   source. It starts the stack for E2E only if it was down and stops only what it
+   started. Every rung writes to its own log, a rung that cannot run fails with
+   its reason, and the command exits 1 unless every rung passed. The baseline and
+   the ladder each run it one phase per call (each phase fits a ten-minute Bash
+   window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
+   the implementor and fixer run its unit and FIT phases to check themselves. No
+   agent picks a repo's test scripts or starts or stops the stack. Both commands
+   read the repos from the backlog envelope's `repos` map, so a backlog without
+   one goes baseline-red until it has one. Add a repo's rungs to `gates.json`
+   before the first increment that builds it; the gate fails a repo it has no
+   rungs for.
 5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
    it if the run is long; do not carry a stale copy in your head.

@@ -31,14 +31,14 @@ export const meta = {
 //   branch          under 'full', the BASE branch: every increment cuts its own
 //                   branch off this one and merges back into it. Under 'local',
 //                   the scratch branch every increment is built and committed on
-//                   — every repo must already be on it, and it must not be main
-//                   or master
+//                   — the baseline puts every repo on it with `tim build branch`,
+//                   and it must not be main or master
 //   scope           conventional-commit scope
 //   executor        'claude' (every stage a subagent) or 'codex' (implement,
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
 //   lifecycle       'full'  ticket → branch → build → PR → CI → merge → ticket done
-//                   'local' build and commit on `branch` itself, which every repo
-//                           must already be on. No ticket, no branch stage, no
+//                   'local' build and commit on `branch` itself, which the
+//                           baseline puts every repo on. No ticket, no branch stage, no
 //                           Jira, no push, no PR. `branch` is a scratch branch,
 //                           never main or master. For programmes that do not want
 //                           a PR per increment
@@ -378,59 +378,67 @@ branched: act on \`openspec/\` ONLY, on whatever branch the workspace is on, and
 workspace — not the backlog, not the plans, not the logs. See what it holds with
 \`git -C ${TILDE} status --short -- openspec/\`.`
 
-// One owner for the workspace stack. In the hrp-origin-v2 run the implementor
-// started it for E2E and left it up: the frontend's errors.test.js, which
-// expects nothing on :8086, went red, and the stack's plants-frontend held
-// :3003 so FIT could not start. The ladder then called the red "pre-existing".
-const STACK_RULE = `THE WORKSPACE STACK belongs to the LADDER stage, and to no other. Only the ladder starts it — in the
-FOREGROUND, with \`tim docker dev\` (it blocks until the stack is healthy and returns; Bash timeout 600000) — and
-only for its E2E rungs, and it stops it with \`tim docker down\` as soon as those rungs finish, green or red. Every
-other stage leaves it alone: never start it, never leave it running, and never drive it with raw \`docker\` or
-\`docker compose\` — \`tim docker\` and \`scripts/stack/\` are the only wrappers. A running stack holds ports the unit
-and FIT suites need (a frontend's own port, the stub on :8086) and turns green suites red.`
+// The repo's own rungs — format, lint, typecheck, unit, `mvn verify`, FIT and
+// E2E — belong to `tim build gate`, which reads them from gates.json and owns
+// the workspace stack. Agents that picked those scripts by hand picked a
+// remote CDP one, ran unit tests against a stack left up and called a real
+// failure "pre-existing". The gate runs one phase per call so each fits in
+// one ten-minute Bash window.
+const GATE_PHASES = ['unit', 'fit', 'e2e']
+const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
+const gateCommand = (phase, logs) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs}`
+const gateCommandList = (phases, logs) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
 
-// The one check every stage below the ladder runs before ANY unit or FIT suite: is the workspace stack up, and
-// does it hold a port the suite needs? A run against increment hrp-origin-v2's baseline went baseline-red because
-// the stack was up and nobody checked first — the plants frontend's errors.test.js, which expects nothing
-// listening on :8086, got 200 instead of the 503 it asserts.
-const STACK_DOWN_CHECK = `Before you run a unit or FIT suite, the workspace stack must be DOWN — it holds ports those
-suites need (a frontend's own port, the stub's :8086) and turns green suites red. Check first:
-\`docker ps --filter label=com.docker.compose.project=trade-imports\` (or, port by port,
-\`lsof -nP -iTCP:<port> -sTCP:LISTEN\` — no output means free; a Docker process holding it — com.docker.backend,
-docker-proxy, OrbStack, vpnkit — is the workspace stack). If it is up, stop it with \`tim docker down\` and check
-again before you run the suite. Never drive it with raw \`docker\` or \`docker compose\`.`
+const GATE_RULE = `THE GATE owns every repo's own rungs and the workspace stack. \`tim build gate\` runs the rungs
+listed for each backlog repo in ${ABS}/.claude/skills/requirements-pipeline/references/gates.json — format check,
+lint, typecheck, unit tests, \`mvn verify\`, FIT and the local-stack E2E suite — each to its own
+\`gate-<repo>-<rung>.log\` under the --logs folder. For E2E it starts the workspace stack only if it was down and
+stops only what it started. So:
+- Never pick, add, drop or substitute a script for a repo's own rungs, and never run one by hand.
+- Never start or stop the workspace stack, and never drive \`docker\` yourself. A stack that is up is not in your way:
+  leave it as it is.
+- Run each gate command in the FOREGROUND with the Bash tool's \`timeout\` set to 600000. It prints one JSON line:
+  \`ok\`, then \`result.green\` and \`result.rungs[]\`, each with \`repo\`, \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\`.
+  It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
+  it is neither green nor red, so say so and go on. A command that errors before running any rung (\`ok\` false with
+  an \`errors[]\` entry and no \`result\`), or that hits the Bash timeout, is RED: report its error verbatim.
+- A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
+  \`test-results/*/error-context.md\` in the tests repo as well.`
 
-const STACK_RULE_FOR_BUILDERS = `${STACK_RULE}
-So YOU do not run E2E: leave those rungs to the ladder and name them in notes. ${STACK_DOWN_CHECK}`
+const builderGateRule = (id, stage) => `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its unit and
+FIT phases yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
+${gateCommandList(['unit', 'fit'], gateLogs(id, stage))}
+Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
+repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
+never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A stack that is up
+is not in your way: leave it. The plan's sections 5 and 6 checks are yours to run as the plan writes them.`
 
-const STACK_RULE_FOR_BASELINE = `${STACK_RULE}
-${STACK_DOWN_CHECK}
-Name in your summary which repo's suite, if any, needed you to stop the stack first.`
+// Codex has a normal shell and reads absolute paths; its sandbox cannot start
+// a browser, so it runs only the gate's unit phase.
+const codexGateUnit = (id, stage) =>
+  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage}`
 
-// The one lifecycle an E2E suite follows against the local stack, wherever it runs — at baseline or in the
-// ladder. The stack belongs to whichever stage is running E2E, for only as long as it needs it.
-const E2E_LOCAL_STACK_LIFECYCLE = `Bring the workspace stack up in the FOREGROUND with \`tim docker dev\` (Bash
-timeout 600000; it returns once the stack is healthy), run the E2E suite(s), then \`tim docker down\` — every time,
-green or red — before you report or run anything else. Never drive it with raw \`docker\` or \`docker compose\`.`
+const GATE_RUNG_SCHEMA = {
+  type: 'object',
+  required: ['repo', 'name', 'phase', 'ok'],
+  properties: {
+    repo: { type: 'string' },
+    name: { type: 'string' },
+    phase: { type: 'string', enum: GATE_PHASES },
+    ok: { type: 'boolean' },
+    log: { type: 'string' },
+    reason: { type: 'string' }
+  },
+  additionalProperties: false
+}
 
-// The one thing an E2E script must never be: one whose Playwright config targets a deployed CDP environment
-// instead of the local stack. A baseline run once picked exactly that — its global setup called
-// ephemeral-protected.api.dev.cdp-int.defra.cloud — and went red nondeterministically for a reason that had
-// nothing to do with the increment. Baseline is not exempt from running E2E because of that failure — it is the
-// reason baseline must pick the LOCAL script, never skip the suite.
-const NEVER_REMOTE_E2E_SCRIPT = `NEVER a script whose Playwright config targets a remote or CDP-deployed
-environment — recognise one by a base URL like \`https://*.cdp-int.defra.cloud\`, a global setup that calls one, or
-an env var naming a deployed stage (\`ENVIRONMENT\`, \`PROFILE=security\`). In the tests repo that rules out \`test\`,
-\`test:a11y\`, \`test:security*\` and \`test:browserstack\` — only a \`test:docker-compose*\` script runs against the
-local stack, and \`test:docker-compose\` is the one this workspace standardises on. And never raw \`npx playwright\`
-— always the repo's own npm script.`
+const describeGateRung = ({ repo, name, phase, ok, log: rungLog, reason }) =>
+  `   ${repo} ${name} (${phase}): ${ok ? 'green' : `RED — ${reason ?? 'no reason given'}`}${rungLog ? ` — ${rungLog}` : ''}`
 
-// The baseline stage's logs, named once so the ladder is pointed at exactly
-// the files the baseline wrote. Two extra keys beyond REPO_KEYS: the frontend's FIT suite and the tests repo's
-// local-stack E2E suite each get their own log, alongside their repo's unit/static-check log.
-const baselineLog = (id, repoKey) => `${WORKAREA_TILDE}/logs/${id}-baseline-${repoKey}.log`
-const BASELINE_LOG_KEYS = [...REPO_KEYS, 'frontend-fit', 'tests-e2e']
-const baselineLogList = (id) => BASELINE_LOG_KEYS.map((key) => `   ${key}: ${baselineLog(id, key)}`).join('\n')
+const baselineRungList = (baseline) =>
+  (baseline?.rungs ?? []).map(describeGateRung).join('\n') || '   (the baseline reported no rungs)'
 
 // ---------------------------------------------------------------------------
 // Review groups. One style reviewer and one code reviewer per (repo, language)
@@ -828,6 +836,22 @@ const LADDER_SCHEMA = {
   additionalProperties: false
 }
 
+const BASELINE_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'green', 'rungs', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'Every repo is on the right branch with a clean tree' },
+    green: { type: 'boolean', description: 'Every gate phase that had rungs came back green' },
+    rungs: {
+      type: 'array',
+      items: GATE_RUNG_SCHEMA,
+      description: 'Every rung from every gate phase, copied from the JSON tim printed'
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
 const PLAN_SCHEMA = {
   type: 'object',
   required: ['ok', 'summary', 'repos', 'behaviourChanges', 'decisions'],
@@ -1191,18 +1215,12 @@ implementor decides nothing.
       exercises the slice through the real stack.
    5. Invariants to prove — one runnable check per acceptance criterion where practical, with its expected result,
       plus any programme invariant this change could break.
-   6. Ladder — for each repo the plan changes, in order, the commands that prove it green: the repo's own gate as
-      its package.json or pom.xml defines it (format check, lint, unit tests; \`mvn verify\` for a Java repo, never
-      \`mvn test\`), then section 5's checks, then the integration proof. Write every command in the GUARD RAILS form
-      (\`npm --prefix\`, \`mvn -f\`, tilde paths, one command each) and say what each needs running.
-      USE THE REPO'S OWN CI SCRIPTS. Read package.json's \`scripts\` and the repo's .github/workflows, and where a
-      CI-named script exists — \`test:ci\`, \`test:fit:ci\`, \`format:check\` — the rung is that script, never a
-      hand-built command line or a hand-picked port. A format rung is always a CHECK script, never \`format\`.
-      NAME THE PORTS. For every rung that serves a port or expects one free, read the port from the repo's
-      playwright.config.* or vitest.config.* (webServer, baseURL, port) and the tests' own fixtures — never assume
-      it — and write it next to the rung: "listens on :<port>" or "needs :<port> free". The ladder checks those ports
-      before it runs the rung.
-      E2E rungs need the workspace stack. The ladder starts and stops it itself, so write the E2E command alone.
+   6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from
+      gates.json — format check, lint, typecheck, unit tests, \`mvn verify\`, FIT and the tests repo's local-stack
+      E2E suite, which carries the integration proof — so never list those here. List only what this increment
+      needs proved on top of them and section 5, one command each in the GUARD RAILS form (\`npm --prefix\`,
+      \`mvn -f\`, tilde paths), with what each proves. None of them may need the workspace stack running: a check
+      that needs the real stack belongs in the tests repo's E2E suite, which the gate runs. "None" is an answer.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
@@ -1464,57 +1482,59 @@ Return the structured output only.`,
   phase('Baseline')
 
   const baseline = await agent(
-    `You are the BASELINE GUARD for increment ${id}. Establish that the tree is green BEFORE any edit, so a
-failure later in this increment is unambiguously ours.
+    `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
+green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
+report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
 ${GUARDRAILS}
-${readIncrement(id)}
 ${REPO_RULE}
+${GATE_RULE}
 TASK:
-1. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the ticket stage settled them: ${repos.join(', ')})` : ''} and confirm each one is clean:
-   \`git -C ${TILDE}/<repoPath> status --short\`.
-   If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
-   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
-   this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
-2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
 ${
   LIFECYCLE === 'full'
-    ? `   in your summary. Do not switch branches — an earlier stage owns that.
+    ? `1. THE BRANCH. The branch stage has already put the increment's repos on their branch, cut from a fresh
+   \`${BASE_BRANCH}\`. Do not switch branches. Record which branch each repo is on
+   (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) in your summary.
    One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
    checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
    on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
    catch a repo the branch stage did not cover.`
-    : `   in your summary. Do not switch branches — this run has lifecycle \`local\`, so there is no branch stage and
-   the run was handed the branch to build on.
-   Two assertions: EVERY repo must be on \`${BASE_BRANCH}\`, the branch this run was given, and NO repo may be on
+    : `1. THE BRANCH. This run has lifecycle \`local\`, so there is no branch stage. One command puts every backlog repo
+   on the branch this run was given — a no-op for a repo already on it:
+   \`tim build branch ${WORKAREA_REL} ${BASE_BRANCH} --lifecycle local --workspace ${TILDE} --json\`
+   It exits 1 with DIRTY_TREE, changing nothing, when a repo it would move has uncommitted work, and refuses
+   ${DEFAULT_BRANCHES_TEXT}. If it exits non-zero, stop and report ok:false quoting its errors.
+   Then record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) in your
+   summary. Two assertions: EVERY repo must be on \`${BASE_BRANCH}\`, the branch this run was given, and NO repo may be on
    ${DEFAULT_BRANCHES_TEXT}. If any repo is on another branch, or on ${DEFAULT_BRANCHES_TEXT}, stop and report ok:false
    naming it. A local run commits every increment straight onto the branch it is on, so it builds on a scratch
    branch and never on a repo's default branch.`
 }
-3. ${STACK_RULE_FOR_BASELINE}
-4. Run the FASTEST meaningful suite for each repo, to a log, and read it once. Baseline exists so a later red is
-   attributable, so it must establish the BROWSER suites green too, not only unit and static checks — the ladder
-   later compares every red rung, E2E included, with the logs baseline wrote here:
-   frontend: unit — \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${baselineLog(id, 'frontend')} 2>&1\` —
-             then its FIT suite via its CI-named script (read package.json for the exact name; \`test:fit:ci\` in
-             this workspace's frontends) — \`npm --prefix ${TILDE}/${REPO_PATH.frontend} run test:fit:ci >
-             ${baselineLog(id, 'frontend-fit')} 2>&1\`.
-   backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${baselineLog(id, 'backend')} 2>&1\`
-   tests:    static checks first — \`format:check\`, \`lint\`, \`typecheck\` — to \`${baselineLog(id, 'tests')}\`. Then,
-             LAST (everything above runs with the stack down per step 3), its E2E suite against the LOCAL stack:
-             \`npm --prefix ${TILDE}/${REPO_PATH.tests} run test:docker-compose > ${baselineLog(id, 'tests-e2e')}
-             2>&1\`. ${E2E_LOCAL_STACK_LIFECYCLE}
-   ${NEVER_REMOTE_E2E_SCRIPT}
-5. Report ok:true only if every repo's tree is clean, the stack was down for every unit/FIT/static-check suite, the
-   stack was brought up and back down cleanly around the E2E suite, and every suite is green.
+2. CLEAN TREES. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the ticket stage settled them: ${repos.join(', ')})` : ''}
+   (\`jq '.increments[] | select(.id=="${id}") | {repos, repo}' ${BACKLOG_TILDE}\`) and confirm each one is clean:
+   \`git -C ${TILDE}/<repoPath> status --short\`.
+   If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
+   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
+   this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
+3. THE GATE. Run these, in this order, one Bash call each, and nothing else:
+${gateCommandList(GATE_PHASES, gateLogs(id, 'baseline'))}
+   Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.
+4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
+   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
+   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
 Return the structured output only.`,
-    light({ label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema })
+    light({ label: `${id} baseline`, phase: 'Baseline', schema: BASELINE_SCHEMA })
   )
 
-  if (!baseline || !baseline.ok) {
+  if (!baseline || !baseline.ok || !baseline.green) {
     log(`${id}: BASELINE RED — skipping. ${baseline ? baseline.summary : 'agent failed'}`)
     results.push({ id, outcome: 'baseline-red', detail: baseline?.summary ?? 'agent failed' })
     continue
   }
+
+  const baselineEvidence = `THE BASELINE GATE, run before any edit — every rung below was green then, so a rung red now
+is this increment's to fix, even when the failing test's own file is unchanged. Its logs are in
+${gateLogs(id, 'baseline')}/, named \`gate-<repo>-<rung>.log\`:
+${baselineRungList(baseline)}`
 
   // -----------------------------------------------------------------------
   // Plan — just in time, against the tree the implementor is about to edit.
@@ -1547,7 +1567,8 @@ Return the structured output only.`,
         phaseName: 'Implement',
         schema: incrementSchema,
         instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.`,
-        workingBranch: workBranch
+        workingBranch: workBranch,
+        bindings: { gateUnit: codexGateUnit(id, 'implement') }
       })
     : await agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
@@ -1583,7 +1604,7 @@ RULES:
 - STAGE your work (\`git -C ... add\`) but DO NOT COMMIT. Landing is a later step that runs after review.
 - If you get stuck on a red step, you get at most 3 self-repair attempts. If still red, stop and report ok:false
   with exactly what is red and what you tried — do NOT thrash, and do NOT weaken a test to make it pass.
-${STACK_RULE_FOR_BUILDERS}
+${builderGateRule(id, 'implement')}
 
 Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
 including anything the increment got wrong and any diagnosis of a red suite you made).
@@ -1916,12 +1937,12 @@ Return the structured output only.`,
         schema: incrementSchema,
         instructions: `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${ruledFixes}
 
-THE BASELINE LOGS, written before any edit — compare every red rung with them:
-${baselineLogList(id)}
+${baselineEvidence}
 
 THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
 ${impl.notes || '(none)'}`,
-        workingBranch: workBranch
+        workingBranch: workBranch,
+        bindings: { gateUnit: codexGateUnit(id, 'fix') }
       })
       if (!fixResult) {
         results.push(
@@ -1955,9 +1976,10 @@ RULES: apply each fix and prove it with the test or assertion the instruction na
 judge rejected or deferred. Do NOT expand scope. If a fix turns out to be wrong or impossible, say so in your
 summary rather than forcing it — a fix that requires weakening a test is not a fix. Leave everything STAGED, do
 not commit.
-${STACK_RULE_FOR_BUILDERS}
-If a suite goes red for a reason that is not your fix — a port held, an environment variable, the stack — write the
-diagnosis and whatever got it green in notes. The ladder runs after you and is given your notes.
+${builderGateRule(id, 'fix')}
+${baselineEvidence}
+If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
+and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
         heavy({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
       )
@@ -1971,14 +1993,14 @@ Return the structured output only.`,
   }
 
   const earlierFindings = `WHAT EARLIER STAGES ALREADY FOUND — read it before your first rung. A diagnosis already made is yours to use,
-not to make again; where it says what got a suite green (a port freed, the stack stopped), start from that.
+not to make again; where it says what got a rung green, start from that.
 IMPLEMENTOR — ${impl.summary}
   notes: ${impl.notes || '(none)'}
 FIXER — ${fixerReport()}`
 
   // -----------------------------------------------------------------------
-  // Ladder — the plan's section 6, which the planner expanded against the
-  // live tree: each changed repo's own gate, the invariants, the integration proof.
+  // Ladder — the gate, run the same way the baseline ran it, then the plan's
+  // increment-specific checks. A red rung that was green at baseline is ours.
   // -----------------------------------------------------------------------
   phase('Ladder')
 
@@ -1989,41 +2011,33 @@ ${readIncrement(id)}
 ${readPlan(id)}
 ${earlierFindings}
 
-${STACK_RULE}
-You are that stage: you own the stack for this increment.
+${GATE_RULE}
 
-TASK — run the plan's section 6, "Ladder", IN ORDER, each command to its own log under ${WORKAREA_TILDE}/logs/
-named \`${id}-<repo>-<step>.log\`, reading each log ONCE. Every step must be green before you run the next.
-- EVERY RUNG RUNS HERE, after the fix stage, even one the implementor or fixer already ran green — their runs are
-  evidence, not proof. The E2E rungs included.
-- AFTER ANY REPAIR, RUN THE WHOLE LADDER AGAIN from its first rung, E2E included. A repair to one rung can break
-  another, and an E2E run from before a repair proves nothing about the code after it. Only a full pass with no
-  repair inside it is green.
-- FORMAT RUNS IN CHECK MODE. The rung is the repo's \`format:check\` (or its check-only equivalent), never
-  \`format\`. A red format check is repaired by running \`format\` and then the check again — that counts as one of
-  your repairs, and it restarts the ladder like any other.
-- PORTS BEFORE EVERY UNIT OR FIT RUNG. ${STACK_DOWN_CHECK} The plan names the ports each rung listens on or needs
-  free; where it does not, read them from the repo's playwright.config.* / vitest.config.* and the tests' fixtures,
-  and check each the same way. Stopping the stack is not a repair. If anything else holds a port, name the process
-  and pid in failures[] and do not kill it. Never record a rung as "could not run" when the only thing in its way
-  was the workspace stack.
-- E2E RUNGS: ${E2E_LOCAL_STACK_LIFECYCLE}
-  ${NEVER_REMOTE_E2E_SCRIPT}
-- EVERY RED RUNG IS COMPARED WITH THE BASELINE. Before any edit, the baseline stage ran each repo's fastest suite
-  to these logs (a repo it skipped has none):
-${baselineLogList(id)}
-  When a rung goes red, read the matching baseline log once. A failure in a suite that was GREEN at baseline was
-  caused by this increment or by the environment it left behind — a stack still up, a port held, a file moved —
-  even when the failing test's own file is unchanged. Repair it, or diagnose it and name the cause in failures[].
-  A suite the baseline did not run has no baseline, and the same holds for it. "Pre-existing" is available ONLY when
-  the baseline log shows the SAME test failing the same way — quote that line from it when you say so.
-- FIRST CHECK THE LADDER COVERS THE CHANGE. For every repo with staged changes
-  (\`git -C ${TILDE}/<repoPath> diff --staged --stat\`), the ladder must run that repo's own gate — the format
-  check, lint and unit scripts its package.json defines, or \`mvn verify\` for a Java repo. Where the plan left one
-  out, run it too, and say so. Where the slice changes anything a user or another system can see, the ladder must
-  include the integration proof in the tests repo; if the plan has none, that is a failure, not a skip.
-- If a step is red, you get at most 3 repair attempts across the whole ladder. A repair normally fixes the CODE —
-  never weaken, skip or delete a test to get green, and never mark a step green that was not.
+${baselineEvidence}
+
+TASK — the ladder, IN ORDER. Every rung runs here, after the fix stage, even one the implementor or fixer already
+ran green: their runs are evidence, not proof.
+1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
+${gateCommandList(GATE_PHASES, gateLogs(id, 'ladder'))}
+   Run every one, even after a red one, so you have the whole picture before you repair anything.
+2. THE INCREMENT'S OWN CHECKS. The plan's section 5, "Invariants to prove", then its section 6, "Increment-specific
+   checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
+   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run; none of them
+   may need the workspace stack running. Where a check does, record it in failures[] as
+   "could not run: needs the workspace stack — belongs in the E2E suite".
+3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
+   increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
+   for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.
+4. COVERAGE. For every repo with staged changes (\`git -C ${TILDE}/<repoPath> diff --staged --stat\`), the gate must
+   have run at least one rung. A changed repo with none is a failure — "not gated: <repo>" — not a skip. Where the
+   slice changes anything a user or another system can see, its integration proof (the plan's section 4) must be a
+   spec in the tests repo that the gate's E2E rung ran; if the plan has none, that is a failure, not a skip.
+- REPAIRS. You get at most 3 across the whole ladder. A repair normally fixes the CODE — never weaken, skip or delete
+  a test to get green, and never mark a rung green that was not. A red format rung is repaired by running the repo's
+  \`format\` script, never by editing the check. After a repair, re-run the gate phase that was red, and the unit
+  phase as well when the red phase was not unit — a repair edits source, and unit carries format and lint — then the
+  plan's checks again. Green means the latest run of every phase and every check passed, with no
+  repair after it.
 - **The one exception: an assertion that is wrong about the framework, not about the application.** A test can
   itself be the defect — most often an exact-text assertion against a component that renders more than the text
   it was given, such as a GDS macro that prepends visually-hidden fallback text. Correcting such an assertion is
@@ -2035,15 +2049,16 @@ ${baselineLogList(id)}
   unpassable. If any of the four does not hold, the test is catching a real defect — fix the code instead.
   This matters because a browser suite is run by nobody else: the implementor cannot run it, so an assertion
   authored wrongly against a browser-only component reaches you and stops here unless you can correct it.
-- Where the ladder names more than one leg — a platform change that must leave every consumer still working —
+- Where the plan's checks name more than one leg — a platform change that must leave every consumer still working —
   run every leg, not just the one your increment was aimed at.
-- If the ladder includes an E2E leg, read \`test-results/*/error-context.md\` for any failure rather than grepping
-  the run output. Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that
-  recover on retry — a green run with retried journey specs IS a pass, but say so explicitly.
-- If a step genuinely cannot run (it needs a branch that does not exist yet, a port something other than the
-  stack holds), do NOT pretend it passed: record it in failures[] as "could not run: <reason>" and set green:false.
-Before you report, the workspace stack is DOWN: \`tim docker down\` if you brought it up.
-Report green:true ONLY if every step actually ran and actually passed, in one pass with no repair after it.
+- For a red E2E rung, read \`test-results/*/error-context.md\` in the tests repo rather than grepping the rung's log.
+  Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that recover on retry —
+  a green rung with retried journey specs IS a pass, but say so explicitly.
+- A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
+  start or stop the stack to clear it: record the reason in failures[] and set green:false.
+In ran[], list every gate rung as \`<repo> <name>\` and every plan check you ran. In failures[], one line per red rung
+or check, with its reason and its log.
+Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
     light({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
   )

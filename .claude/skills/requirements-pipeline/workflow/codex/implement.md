@@ -14,7 +14,7 @@ discipline, house rules — applies in full.
 ## Constants
 
 Every `<placeholder>` in this brief — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`,
-`<skills>`, `<branch>`, `<INCREMENT_ID>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound to a
+`<skills>`, `<branch>`, `<INCREMENT_ID>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>`, `<gateUnit>` — is bound to a
 real value in the prompt that pointed you here. Use those bindings; never guess one.
 
 | Thing | Path |
@@ -52,7 +52,7 @@ Neither says how.
 
 Then read `<plan>` in full. A planner wrote it against the live tree just before you started. It has
 settled every choice (section 0), and lists the moves, edits, new files, tests, the checks that prove the
-acceptance criteria, the ladder, and what is out of scope. **Execute it.** Where it names an exemplar, open
+acceptance criteria, the increment-specific checks beyond the gate, and what is out of scope. **Execute it.** Where it names an exemplar, open
 that file and copy its shape. Where it follows a repo's recipe (for a frontend journey change, the
 `frontend-change` skill's recipe), read the recipe it cites and follow it exactly.
 
@@ -96,23 +96,22 @@ sleeps.
   `format:check && lint && test`, so a formatting miss blocks the commit even when your ladder was green.
   Watch for it after edits that change a line's length — shortening `it.fails(` to `it(`, for example,
   lets Prettier collapse a call that was previously wrapped.
-- Run test suites **to a file** under `<logs>` and read that file once. Do not re-run a suite
-  just to see its output again. For Playwright failures read `test-results/*/error-context.md`, not the
-  tail of the run.
-- **Browser-driven suites are not yours to run.** Anything that launches a real browser — the in-repo
-  `*.fit.spec.js` suites (`test:fit`, `test:fit:features`, `test:fit:ci`), Playwright E2E, Lighthouse —
-  cannot start under your sandbox: Chromium is refused its Mach port and every test fails at launch,
-  which tells you nothing about the change. A later **verification-ladder stage runs the full ladder,
-  browser legs included**, outside your sandbox. Leave those rungs to it.
-  Run every rung you *can*: unit and set suites, `format:check` or `format`, `lint`, and for the backend
-  `mvn verify`. Those are yours and a red one is still yours to fix. Then in `notes` name the rungs you
-  did not run and why, so the ladder knows what it is covering. Do not attempt a sandbox bypass, and do
-  not report `ok: false` merely because a browser rung was unavailable to you — a change whose runnable
-  rungs are all green is `ok: true` with the deferral recorded.
-- **Never start the workspace stack** (`tim docker dev` / `up`). The ladder stage owns it: it starts it in
-  the foreground for E2E and stops it afterwards. A stack left running holds ports the unit and FIT suites
-  need and turns green suites red. If you find it up and a unit suite is failing on a port it holds, stop
-  it with `tim docker down` — never raw `docker` — and re-run the suite.
+- **Check your work with the gate, not with scripts you pick.** A repo's own rungs — format check, lint,
+  typecheck, unit tests, `mvn verify` — belong to `tim build gate`, which reads them from
+  `<skills>/requirements-pipeline/references/gates.json`. Run its unit phase:
+  `<gateUnit>`
+  It prints one JSON line; each rung has an `ok` and a `log`, and a red rung's log is yours to read once.
+  A red rung is yours to fix. Never pick, add or substitute a script for a repo's own rungs.
+- **Browser-driven suites are not yours to run.** The gate's FIT and E2E phases, and anything else that
+  launches a real browser, cannot start under your sandbox: Chromium is refused its Mach port and every
+  test fails at launch, which tells you nothing about the change. The **verification-ladder stage runs
+  the whole gate, browser phases included**, outside your sandbox. Do not attempt a sandbox bypass, and do
+  not report `ok: false` merely because a browser phase was unavailable to you — a change whose unit
+  phase is green is `ok: true`.
+- **Never start or stop the workspace stack**, and never drive `docker`. The gate owns the stack. A stack
+  that is up is not in your way: leave it.
+- Run any other command the plan asks for **to a file** under `<logs>` and read that file once. For
+  Playwright failures read `test-results/*/error-context.md`, not the tail of the run.
 - **Stage** your work (`git -C <repo> add`) but **do not commit**. Landing happens after review.
 - Test failures are yours to fix. "Pre-existing" and "separate issue" are not available to you — if the
   suite is red when you finish, you have not finished.

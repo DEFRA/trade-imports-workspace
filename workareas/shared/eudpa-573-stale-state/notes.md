@@ -119,6 +119,19 @@ so a newly-invalid combination is only caught when the trader
 happens to re-visit the affected page — or when the reject-on-submit
 requirement below fires at finalise time.
 
+Concrete live example: the arrival-date window on animals'
+`port-of-entry` (`port-of-entry.controller.js:58-69`) is
+`dateTextInRange('arrivalDateAtPort', { min: dateWindow.min, max:
+dateWindow.max, … })`, where `arrivalWindow()` slides on today's
+date (one week back, six months forward). A notification submitted
+with arrival = today + 1 month whose trader Amends two months
+later has an arrival date that is now a month in the past. The
+rule is stable; its input drifts. Nothing re-runs the range check
+on submit; the notification finalises with the stored out-of-window
+date. A membership-only reject-on-submit loop would not catch it.
+Same shape wherever a rule's bounds move because "now" moves —
+so this class is not a hypothetical.
+
 Trigger source: team-owned (deploy of the frontend that carries the
 tightened rule); same shape as obligation-model changes. The
 migration-job pattern in "Version pinning + migration" below fits —
@@ -539,6 +552,143 @@ Requirements:
 Contrast with the recommendation options above (surface silent drops
 on render): those help the trader who re-opens the record; this
 requirement closes the loop when they don't.
+
+## Structural sketch — centralised per-page validation
+
+The reject-on-submit requirement above scopes itself to three
+bullets — membership re-check, party resolution, purge-as-reject.
+The first is a tractable slice: a known set of ref-data-backed
+fields, a per-field membership check against the current reader,
+~50 lines in a `bridge/reject-stale-at-submit.js`. But it misses
+everything else — length caps, date ranges, cross-field cascades,
+any future rule tightening. Static analysis to enumerate "non-
+membership rules we'd need at submit time" is fragile — the
+arrival-date range under Scenario 3 is one example already present
+in the animals code today, not a hypothetical.
+
+The fuller shape: expose each page's validation as a re-runnable
+hook, register it centrally, and call from every place that cares
+(submit, CYA render, hub row status). Below is a structural sketch,
+not committed — named so future work can reason about it.
+
+### What each page exposes
+
+A single addition per page controller:
+
+```js
+export const validateStoredAnswers = async (answers, scope) => {
+  if (!isPageInScope(scope)) return {}
+  const payload = payloadFromAnswers(answers, scope)
+  const { errors } = validate(await fields(...), payload)
+  return errorsKeyedByAnswer(errors)
+}
+```
+
+Three pieces the hook owns internally:
+
+- **Scope predicate.** The page's in-scope check under the current
+  answers / scope. Import-reason under `reasonForImport === 'reEntry'`
+  is a no-op; private-transporter under a commercial transporter is
+  a no-op; port-of-entry is always in scope.
+- **Inverse projection.** The mirror of the current
+  `formValuesFromAnswers` (which projects stored answers into form
+  values for GET prefill). The rules take a payload-shaped object;
+  the hook reconstructs one. Most pages are trivial (payload keys
+  match stored keys); origin has the region-code suffix mechanic
+  and import-reason has the reveal-conditional keys, each still
+  self-contained inside the hook.
+- **Error re-keying.** Rules return errors keyed on form-field
+  names; the hook translates them to stored answer names. 1:1 for
+  most pages; N:1 for import-reason where two reveal fields both
+  map to one stored `destinationCountry`.
+
+### Central registry and runner
+
+`sets/.../features/index.js` already imports every page module as
+`dispatchPages`. Add `validateStoredAnswers` alongside the routes;
+the registry gathers them the same way. A small aggregator in
+`bridge/`:
+
+```js
+export const validateAllStored = async (answers, scope) => {
+  const perPage = await Promise.all(
+    PAGES_WITH_HOOKS.map(({ page, validateStoredAnswers }) =>
+      validateStoredAnswers(answers, scope).then((errors) => ({
+        page,
+        errors
+      }))
+    )
+  )
+  return perPage.filter(({ errors }) => Object.keys(errors).length > 0)
+}
+```
+
+Three consumption points, one aggregator:
+
+- **Submit path.** `submitJourney` calls `validateAllStored`; if
+  any errors, refuse the finalise and route the trader to the first
+  offending page.
+- **CYA render.** Decorate cards with per-answer "needs attention"
+  markers, plus a summary banner naming affected sections.
+- **Hub row status.** Downgrade a section's row from Completed to
+  "Needs attention" when its page's hook returns errors, or add a
+  badge — designer's call.
+
+### Async IO and large-dataset readers
+
+Some rules require remote calls, not an in-memory list membership
+check. The most concrete case: **commodity codes.** Once un-stubbed
+the commodity dataset is far too large to hold in memory, and the
+type-ahead search API is prefix-oriented — not usable for "does
+this exact stored code still resolve?". A different reader shape is
+needed:
+
+- `commodities.resolve(code) → Promise<{ known: boolean, ... }>` —
+  a dedicated reverse-lookup on the ref-data-service, backed by an
+  MDM lookup. Distinct from the type-ahead endpoint.
+- The `validateStoredAnswers` hook is already async, so a reader
+  that awaits a remote call needs no further plumbing at the hook
+  level.
+- **Batching matters.** A CYA render or a hub load that fans out
+  N remote calls (one per stored code, one per notification the
+  trader has open) is a real latency concern. Either the reader
+  accepts a batch or the aggregator coalesces.
+- **Caching per request.** The same code checked twice in the same
+  render (e.g. across two consumer surfaces) should hit once. A
+  request-scoped memo on the reader closes this.
+
+### Migration path
+
+Additive; no big-bang rewrite. Pick one simple page (port-of-entry)
+and add the hook; add the registry-and-aggregator scaffolding wired
+into submit only; expand page by page. Once every page has a hook,
+wire the aggregator into CYA render and hub row status. Each step
+is testable and reversible.
+
+### Guardrail — no page forgotten
+
+The concern that "a new rule lands on a page and no one remembers
+to add it to the reject-on-submit registry" turns into a runtime
+question: every page module in `dispatchPages` must either export
+`validateStoredAnswers` or explicitly opt out. A boot-time
+assertion (or a build-time lint) closes the loop and makes silent
+misses impossible.
+
+### Cost, honestly
+
+Not trivial. Every page controller gains a small hook; existing
+tests already cover the `fields()` factory but new tests cover the
+hook's projection and error re-keying. Reveal-conditional and
+cross-field pages (origin, import-reason) are more work than
+scalar-field pages. Ballpark: a day per page, plus the registry,
+the aggregator, and the async-batching design. Weeks, not hours.
+
+Whether this is worth building depends on the "Current
+recommendation" section below: if we ship what we have and defer
+the auto-detect pipeline, we also defer this. It becomes worth
+building when we hit a concrete Scenario 3 incident that the
+membership loop cannot catch — arrival-date drift being the first
+candidate that already lives in the animals code.
 
 ## Meeting notes — 2026-09-21 (tech lead + designer)
 

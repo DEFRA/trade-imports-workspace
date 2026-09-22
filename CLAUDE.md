@@ -40,7 +40,7 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `skill-creator` | "scaffold skill `<name>`", "skill-create `<name>`", "new workspace skill `<name>`", "audit skill `<name>`", "audit skills" | Meta-skill — CREATE scaffolds a new workspace skill; AUDIT walks an existing skill against the 8-pattern checklist. |
 | `understanding-check` | "interview EUDPA-X", "check understanding EUDPA-X", "understanding-check EUDPA-X" | Pre-merge author-understanding check on an AI-assisted PR. |
 | `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on a frontend repo (today `trade-imports-animals-frontend`, src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout. |
-
+| `distil` | "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "re-distil" | Sources in, one backlog.json of full-stack requirement increments out, plus a decision-led report. |
 | `parity` | "compare these two things and give me a report", "compare X against Y", "set up a new comparison", "resume the comparison", "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-", "migrate parity EUDPA-", "recapture the parity corpus" | Build, check and adjudicate a findings report for a comparison corpus. COMPARE runs the whole pipeline from an interview to a rendered report, resumable at every phase. Renders a findings backlog as a decision surface with the code and the pictures in reach; migrates finding prose into structured slots under ten invariants. Hands `status`/`gate`/`dependsOn` to `journey-builder`. |
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
@@ -88,6 +88,7 @@ tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
 tim auth                  # equivalent of tools/auth.sh
 tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
 tim parity report EUDPA-X # render a findings report; see the parity skill
+tim backlog registry list # every registered programme, its profile and workarea
 ```
 
 `tim/` is a sub-project of this repo rather than one of the cloned

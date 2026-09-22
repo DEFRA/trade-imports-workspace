@@ -31,8 +31,16 @@ Programme plan: `~/.claude/plans/so-in-the-frontend-reflective-yeti.md`.
 ## Mode: digest (Phase 1 — available now)
 
 1. `tools/journey-builder/prepare-digest.sh EUDPA-X` — seeds workarea +
-   worktree + cached sources + extract placeholders + spec skeleton.
+   worktrees + cached sources + extract placeholders + spec skeleton.
    Idempotent; `--refetch` refreshes cached sources.
+
+   **Two** worktrees: `frontend-worktree` on `spike/<run-id>-<suffix>` for the
+   code, and `workspace-worktree` on `spec/<run-id>` for the workspace's
+   Behaviour Spec. Both are recorded in `.digest-meta.json` (`worktree`,
+   `workspace_worktree`) and every later script reads them from there. The
+   second is a worktree of the workspace repo nested inside its own working
+   tree — legal, and invisible to `git status` because `workareas/` is
+   gitignored, but `git clean -fdx` at the workspace root would destroy it.
 2. Fan out one `general-purpose` Task subagent per non-pending source the
    target declares — read them from `.digest-meta.json`'s `sources`, do not
    assume the live-animals three. Each is told:
@@ -169,11 +177,68 @@ Serial by design — increments edit shared files (registry, flow, hub, CYA).
    mode — both frontend targets name `frontend-change`, which reads the target
    repo's own recipe docs, the obligation and flow guard rails, and its own
    verification ladder. One increment per invocation.
+
+   **Pass both roots explicitly; the skill's defaults are for a direct
+   invocation and are wrong here.** Read them from
+   `<workarea>/.digest-meta.json`:
+
+   ```bash
+   jq -r '.worktree, .workspace_worktree' ~/git/defra/trade-imports-workspace/workareas/journey-builder/EUDPA-X/.digest-meta.json
+   ```
+
+   - **target repo** = `.worktree` — the run's frontend worktree, not
+     `repos/<name>`. `frontend-change`'s Step 5.1 diffs whatever it is given;
+     pointed at the wrong checkout it sees no increment diff at all, which
+     makes the AC4/AC5 self-checks vacuous or wrongly halting.
+   - **spec root** = `.workspace_worktree` — the run's workspace worktree, on
+     branch `spec/<run-id>`. The main workspace checkout is the tree this
+     agent reads its own skills from; it must not change branch or go dirty.
+
 4. Parent re-verifies: `tools/journey-builder/verify-increment.sh EUDPA-X`
    — never trust the worker's green. Mismatch → rollback + failed.
+
+   **`verify-increment.sh` covers the code rungs only** — it runs the target
+   profile's npm scripts in the target worktree and cannot see `openspec/` at
+   all. A spec-sync halt would otherwise pass step 4, because the code ladder
+   is green at the moment `frontend-change` halts. Two extra checks here:
+
+   - A `frontend-change HALTED at spec sync` report is a **failed
+     increment** — rollback + failed, not a pass with a note.
+   - Re-validate the capabilities the worker named, against the spec root,
+     rather than trusting its validate line:
+
+     ```bash
+     ~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root <workspace worktree> <capability-path> ...
+     ```
+
+   On success `commit-increment.sh` commits both arms — the spec in the
+   workspace worktree first, then the code in the target worktree. On failure
+   `rollback-increment.sh` undoes both. Neither is optional: an increment
+   whose code rolls back while its spec survives leaves a `spec.md` asserting
+   behaviour that exists in no repo.
+
 5. Loop to 1. Halt early on 3 consecutive failures (systemic signal).
 6. Per completed section run `verify-increment.sh EUDPA-X --e2e`; per
    milestone: full E2E + Sam walk-through.
+7. **At run end, one PR for the Behaviour Spec.** Push `spec/<run-id>` from
+   the workspace worktree and open a single PR on
+   `DEFRA/trade-imports-workspace` listing the increments it carries:
+
+   ```bash
+   git -C <workspace worktree> push -u origin refs/heads/spec/EUDPA-X:refs/heads/spec/EUDPA-X
+   ```
+
+   The fully-qualified refspec is the form this loop mandates everywhere —
+   never a bare `git push`, never `--force`.
+
+   One PR per run, not per increment. The per-increment *commits* already
+   give the rollback boundary; the PR only has to give a review surface, and
+   one reviewed once beats forty two-file prose PRs rubber-stamped. It is also
+   what makes `review`'s behaviour-spec checks reachable at all — before this,
+   no PR in a build run touched `openspec/`.
+
+   Then tidy up: `git -C ~/git/defra/trade-imports-workspace worktree prune`
+   once the run's workarea is torn down.
 
 ## Mode: verify
 

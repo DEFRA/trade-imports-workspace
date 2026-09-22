@@ -40,6 +40,8 @@ SOURCES_DIR="$WORKAREA/.sources"
 WORKTREE="$WORKAREA/frontend-worktree"
 SPEC_BRANCH="spike/$RUN_ID-$TARGET_SPEC_BRANCH_SUFFIX"
 SPEC_DIR="$WORKTREE/$TARGET_SPEC_DIR"
+WORKSPACE_WORKTREE="$WORKAREA/workspace-worktree"
+BEHAVIOUR_SPEC_BRANCH="spec/$RUN_ID"
 
 mkdir -p "$SOURCES_DIR"
 
@@ -53,6 +55,28 @@ if [[ ! -d "$WORKTREE" ]]; then
     fi
 fi
 BASE_SHA=$(git -C "$FRONTEND_REPO" rev-parse "$BASE_BRANCH")
+
+# --- Workspace worktree (the Behaviour Spec side) -------------------------
+# frontend-change's spec-sync step writes openspec/specs and openspec/coverage
+# at the end of every increment. Those writes land HERE, not in the main
+# checkout, for two reasons: the main checkout is the tree the running agent
+# reads its own skills from, so it must not change branch under itself; and a
+# dirty openspec/ there silently stalls tim's --ff-only auto-pull. Each
+# increment's spec write is then its own commit on this branch, which is what
+# gives rollback-increment.sh something to undo — without it a rolled-back
+# increment leaves a spec.md asserting behaviour that exists in no repo.
+#
+# A worktree of the workspace repo, nested inside the workspace's own working
+# tree. Legal, and invisible to git status because workareas/ is gitignored.
+# `git worktree prune` (or `git worktree remove`) cleans it up; a `git clean
+# -fdx` at the workspace root would destroy it.
+if [[ ! -d "$WORKSPACE_WORKTREE" ]]; then
+    if git -C "$WORKSPACE" show-ref --verify --quiet "refs/heads/$BEHAVIOUR_SPEC_BRANCH"; then
+        git -C "$WORKSPACE" worktree add "$WORKSPACE_WORKTREE" "$BEHAVIOUR_SPEC_BRANCH"
+    else
+        git -C "$WORKSPACE" worktree add "$WORKSPACE_WORKTREE" -b "$BEHAVIOUR_SPEC_BRANCH" main
+    fi
+fi
 
 # --- Cache sources --------------------------------------------------------
 # Driven by the target's sources[]. A `code` source is read live by the
@@ -199,12 +223,15 @@ fi
 jq -n \
     --arg run_id "$RUN_ID" --arg worktree "$WORKTREE" --arg spec_dir "$SPEC_DIR" \
     --arg branch "$SPEC_BRANCH" --arg base_branch "$BASE_BRANCH" --arg base_sha "$BASE_SHA" \
+    --arg ws_worktree "$WORKSPACE_WORKTREE" --arg ws_branch "$BEHAVIOUR_SPEC_BRANCH" \
     --arg at "$FETCHED_AT" --arg target "$TARGET_ID" --argjson sources "$TARGET_SOURCES" \
     '{
         run_id: $run_id,
         mode: "digest",
         target: $target,
         worktree: $worktree,
+        workspace_worktree: $ws_worktree,
+        behaviour_spec_branch: $ws_branch,
         spec_dir: $spec_dir,
         spec_branch: $branch,
         base_branch: $base_branch,
@@ -220,6 +247,7 @@ else
     echo "Workarea:   $WORKAREA"
     echo "Target:     $TARGET_ID ($TARGET_REPO)"
     echo "Worktree:   $WORKTREE ($SPEC_BRANCH off $BASE_BRANCH@${BASE_SHA:0:8})"
+    echo "Spec tree:  $WORKSPACE_WORKTREE ($BEHAVIOUR_SPEC_BRANCH off main)"
     echo "Spec dir:   $SPEC_DIR"
     echo "Sources:    $active_ids"
     while IFS=$'\t' read -r s_id s_type; do

@@ -1581,6 +1581,14 @@ and copy its shape rather than improvising. Where it follows a repo's recipe, re
 it exactly. Where the plan is wrong about the tree, do the smallest thing that meets the increment's acceptance
 criteria and say what you changed in notes.
 Before you write to a file, read the rules and best-practice files the plan lists for it.
+Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
+paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
+skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
+and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
+at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
+\`${TILDE}/${REPO_PATH.frontend}\`; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
+\`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
+in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.
 
 RULES:
 - Implement EXACTLY the plan's scope. Do not fix adjacent things you notice — report them in notes instead;

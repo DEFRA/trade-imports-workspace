@@ -796,6 +796,73 @@ choice. If comms are unreliable, absent, or if the cadence is high
 enough to swamp on-call, the full auto-detect target becomes worth
 the infrastructure.
 
+## Alternative — parent dashboard, per-set attention (needs discussion)
+
+Both architectures above assume the INS frontend is *the* attention
+surface: it ingests per-notification attention flags from every set
+and renders CTAs on a unified list. A different shape is possible:
+
+- INS is a lightweight **parent dashboard** — an index of the
+  notification types the trader has in flight (e.g. "3 animals, 1
+  plants"). Nothing more.
+- Each set frontend keeps (or regains) its own per-notification
+  dashboard. Attention flags, CTAs and stale-state signals live on
+  the set-owned dashboard alongside the notification data and the
+  model that judges it.
+- INS links out to the animals dashboard, the plants dashboard, and
+  so on.
+
+Consequences to weigh:
+
+- **Pro — CTA is much simpler.** The dashboard renders inside the
+  set frontend, so it has the model, the ref-data readers, the
+  address-book resolver and the copy in scope. No cross-set
+  serialisation needed; the "compute → emit → INS ingest" pipeline
+  either shrinks to a bare "notification-created" ping (for the
+  index) or drops out entirely.
+- **Pro — same pattern per set.** Each set owns its own attention
+  story. Consistency across sets becomes convention rather than a
+  shared payload contract.
+- **Pro — reduces event fidelity pressure.** The concern that "the
+  INS backend event pipeline carries too much per-notification
+  detail" goes away if INS only needs an index.
+- **Con — reverses the direction in the 2026-09-21 meeting notes.**
+  Those notes deferred to INS as the attention surface and had the
+  set-frontend dashboards being retired. This proposal keeps (or
+  reinstates) them.
+- **Con — navigation cost.** One extra click from the parent
+  dashboard into the set-specific dashboard. Deep links from
+  external systems (emails, other services) get slightly more
+  complex — they either point at the set dashboard directly or
+  bounce through INS.
+- **Con — cross-set summarising is harder.** Anything that wants a
+  unified "here is everything you need to look at" view needs to
+  either federate or duplicate the per-set attention logic.
+
+Open questions this framing surfaces:
+
+- **What sits on the parent dashboard?** A count per notification
+  type? A list with reference numbers and status but no per-answer
+  attention detail? A federated attention count ("2 need attention")
+  that requires each set to publish just that summary?
+- **What events does INS still consume?** Likely "notification
+  created / status changed" for the index, not the per-notification
+  answer detail the auto-detect target requires.
+- **Do the set backends still emit at the same fidelity?** If INS
+  no longer needs the detail, other consumers might, so the payload
+  shape is a separate question from the INS surface shape.
+- **Where does the address-book upstream stale-state show up?**
+  Per set (each set frontend can query address-book live for its
+  own parties), same as it would under the target architecture.
+- **How is the INS index kept fresh?** Same event backbone, thinner
+  payload; or a scheduled pull.
+
+Status: not agreed. Recorded here because it materially changes the
+architectural direction the meeting notes above assumed. Needs a
+team discussion before either the target-architecture or the
+support-activity path commits to per-notification attention state
+inside INS.
+
 ## Version pinning + migration — policy and mechanism
 
 Two further options for handling obligation-model change, distinct in

@@ -50,4 +50,4 @@ Each entry: the choice, then how to reverse it. Written while Sam was asleep, 21
 
 ## Waiting for Sam
 
-- **Add `distil` to the skill routing index in `CLAUDE.md`.** Not done: `CLAUDE.md` has an uncommitted edit of yours, and I did not want to commit it with mine. The row: `| distil | "distil requirements", "turn these requirements into a backlog", "build a backlog from", "re-distil" | Sources in, one backlog.json of full-stack requirement increments out, plus a decision-led report. |`
+- Nothing. The `distil` row went into `CLAUDE.md`'s skill index in `d73a42ed`. PR #56 is raised.

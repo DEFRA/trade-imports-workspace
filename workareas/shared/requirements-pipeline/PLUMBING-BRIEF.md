@@ -36,14 +36,12 @@ tim is green at `2dc0596d`: 149 test files, 1,963 tests, lint clean.
 
 ## Waiting for Sam
 
-1. **Add `distil` to the skill routing index in `CLAUDE.md`.** I did not, because `CLAUDE.md` has an
-   uncommitted edit of yours. The row is in `DECISIONS.md`.
-2. **Codex mode was not run live.** The briefs read the plan, but a real Codex build needs a Codex login and a
-   real increment. The plan stage runs on Claude in both modes (D5).
-3. **`lifecycle: local` is still broken on this branch.** Baseline refuses a repo on the base branch, and local
+1. **Codex mode was not run live.** Codex is logged in; it needs a real increment. The plan stage runs on
+   Claude in both modes (D5).
+2. **`lifecycle: local` is still broken on this branch.** Baseline refuses a repo on the base branch, and local
    builds on it. The fix is on workspace PR #44 (synthesis §2.2, join 7). `planOnly` skips baseline, so the dry
    run was not affected.
-4. **The harness refuses a subagent writing a report file** ("subagents should return findings as text").
+3. **The harness refuses a subagent writing a report file** ("subagents should return findings as text").
    The distil skill now has the report agent return its text for the main session to save. Other files write
    fine.
 

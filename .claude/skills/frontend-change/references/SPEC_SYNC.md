@@ -63,14 +63,16 @@ the page's **title** — the `title` key in `copy.<locale>.js`, not
 `legend`, per `config.yaml` — against what is already specified:
 
 ```bash
-ls ~/git/defra/trade-imports-workspace/openspec/specs/<namespace>/journey-pages/
+ls <spec root>/openspec/specs/<namespace>/journey-pages/
 ```
 
 ```bash
-ls ~/git/defra/trade-imports-workspace/openspec/specs/<namespace>/journey-obligations/
+ls <spec root>/openspec/specs/<namespace>/journey-obligations/
 ```
 
-(substituting the spec root for the workspace path under `journey-builder`).
+The spec root is `~/git/defra/trade-imports-workspace` on a direct
+invocation and the run's workspace worktree under `journey-builder` — the
+worktree is the one that has this run's earlier increments in it.
 
 Read the `spec.md` of any leaf that looks close — its Purpose records the
 page title. Then make the call explicitly, in one sentence you could be
@@ -91,14 +93,15 @@ An `add-a-page` or `add-a-section` increment creates a capability. Mint
 only after the explicit judgement above. Four things land together:
 
 1. **Proof the capability is genuinely new**, before anything is written.
-   Two greps, and **both** must miss:
+   Two greps, and **both** must miss. Both read **the spec root's**
+   `AREAS.md`, not the workspace checkout's:
 
    ```bash
-   grep -c '| <namespace>/<kind>/<leaf> |' ~/git/defra/trade-imports-workspace/openspec/coverage/AREAS.md
+   grep -c '| <namespace>/<kind>/<leaf> |' <spec root>/openspec/coverage/AREAS.md
    ```
 
    ```bash
-   grep -c '| <CODE> |' ~/git/defra/trade-imports-workspace/openspec/coverage/AREAS.md
+   grep -c '| <CODE> |' <spec root>/openspec/coverage/AREAS.md
    ```
 
    The path grep is the gate that catches a leaf-name mistake: a hit
@@ -109,6 +112,14 @@ only after the explicit judgement above. Four things land together:
    `0` is the only acceptable answer to either — and `grep -c` exits
    non-zero on a count of zero, so that exit code is the success case
    here, not a failure.
+
+   **Why the spec root and not the workspace checkout.** Under
+   `journey-builder`, rows minted by earlier increments of the same run
+   are committed on the run's branch in its worktree and are not in the
+   main checkout yet. Grepping the main checkout would miss exactly the
+   collision these gates exist to catch — and `AREAS.md` is a single
+   append-ordered registry, so the duplicate would surface as a merge
+   conflict at run end rather than here.
 
 2. **An AREA code.** Derive a candidate from the leaf, prefixed to match
    the namespace's existing rows (`PLANTS-` inside `plants/`; unprefixed

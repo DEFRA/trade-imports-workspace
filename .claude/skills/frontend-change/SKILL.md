@@ -264,6 +264,11 @@ stays unstaged, so this does not commit anything or change what 5.8
 promises. Throughout 5.5 and 5.6, "the diff's file list" therefore means
 tracked modifications **and** newly created files.
 
+One consequence worth knowing: an intent-to-add path is no longer
+*untracked*, so a bare `git clean -fd` walks straight past it. Anything
+undoing an increment must `git reset` the paths first or the new files
+survive the rollback — `journey-builder`'s `rollback-increment.sh` does.
+
 Map each touched element to its capability path with the lookup tables in
 `references/SPEC_SYNC.md`. Read the set from the caller or the target
 profile — `sets/live-animals` maps to the `live-animals/` namespace,

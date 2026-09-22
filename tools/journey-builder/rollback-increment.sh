@@ -17,6 +17,13 @@
 # commit message. A rollback invoked twice, or invoked after someone committed
 # by hand in that worktree, must be a no-op rather than eat an unrelated commit.
 #
+# BOTH arms reset the index before reverting. frontend-change's step 5.1 runs
+# `git add -N .` so that newly created files show up in `git diff` — without
+# which an add-a-page increment's whole new feature folder is invisible to its
+# own self-checks. An intent-to-add path is in the index, so it is no longer
+# untracked, and `clean -fd` walks straight past it: the new file would SURVIVE
+# the rollback. `git reset` first puts it back to untracked so clean can take it.
+#
 # Usage:
 #   rollback-increment.sh EUDPA-X --increment inc-004 --reason "..."
 
@@ -47,6 +54,7 @@ ws_worktree="$(jq -r '.workspace_worktree // empty' "$WORKAREA/.digest-meta.json
 
 # --- Arm 1: the Behaviour Spec, in the workspace worktree -----------------
 if [[ -n "$ws_worktree" && -d "$ws_worktree" ]]; then
+    git -C "$ws_worktree" reset -q -- "${WORKSPACE_COMMIT_PATHS[@]}"
     # checkout -- fails on a path with no committed version yet (a brand-new
     # capability directory), which is exactly the case clean -fd handles.
     git -C "$ws_worktree" checkout -- "${WORKSPACE_COMMIT_PATHS[@]}" 2>/dev/null || true
@@ -67,6 +75,7 @@ if [[ -n "$ws_worktree" && -d "$ws_worktree" ]]; then
 fi
 
 # --- Arm 2: the code, in the target worktree ------------------------------
+git -C "$worktree" reset -q -- "${TARGET_COMMIT_PATHS[@]}"
 git -C "$worktree" checkout -- "${TARGET_COMMIT_PATHS[@]}"
 git -C "$worktree" clean -fd -- "${TARGET_COMMIT_PATHS[@]}"
 

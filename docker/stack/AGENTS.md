@@ -65,6 +65,11 @@ Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002,
 plants-frontend 3003, defra-id-stub 3007, backend 8085, reference-data 8086,
 stub 8087, gateway 8088, address-book 8089, ins-backend 8090, plants-backend 8091.
 
+EUDPA-390 (address lookup spike, dev/local only): the STS simulator in `trade-imports-stub`
+gets its own dedicated port, 8098 — the AWS SDK's `GetWebIdentityToken` always POSTs to the
+root path of its endpoint override, so it can't share a sub-path on 8087 with the other
+simulators. Published in `stubs.compose.yml` alongside 8087.
+
 ## `--profile` semantics (strict)
 
 Repeatable. Valid: `database`, `infrastructure`, `servicebus`, `stubs`, `backend`, `frontend`, `monitoring`,

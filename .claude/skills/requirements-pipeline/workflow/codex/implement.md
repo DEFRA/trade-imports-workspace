@@ -33,8 +33,8 @@ Those three are **bound per run** and differ between programmes — the same thr
 repos in different backlogs. Never substitute a repo name you remember from another run; a path typed
 from memory is how one programme's increment ends up built in another programme's repo.
 
-Every repo this increment touches is already on branch `<branch>`, cut for this increment by an earlier
-stage. Do not switch branches and do not create one.
+Every repo this increment touches is already on branch `<branch>` — cut for this increment by an earlier
+stage, or, on a local run, the branch the run was given. Do not switch branches and do not create one.
 
 The increment is a full-stack slice. Its plan names every repo it changes; do the work in each, on that
 same branch name in all of them.

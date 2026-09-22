@@ -28,15 +28,20 @@ export const meta = {
 // no defaults: a missing key stops the run before any agent starts. Keys
 // marked (full) are required only when lifecycle is 'full'.
 //   workarea        path under workareas/, holding backlog.json
-//   branch          the BASE branch. Every increment cuts its own branch off
-//                   this one and merges back into it
+//   branch          under 'full', the BASE branch: every increment cuts its own
+//                   branch off this one and merges back into it. Under 'local',
+//                   the scratch branch every increment is built and committed on
+//                   — every repo must already be on it, and it must not be main
+//                   or master
 //   scope           conventional-commit scope
 //   executor        'claude' (every stage a subagent) or 'codex' (implement,
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
 //   lifecycle       'full'  ticket → branch → build → PR → CI → merge → ticket done
-//                   'local' build and commit on the current branch. No Jira, no
-//                           push, no PR. For programmes that do not want a PR per
-//                           increment
+//                   'local' build and commit on `branch` itself, which every repo
+//                           must already be on. No ticket, no branch stage, no
+//                           Jira, no push, no PR. `branch` is a scratch branch,
+//                           never main or master. For programmes that do not want
+//                           a PR per increment
 //   jiraProject (full)     Jira project key raised tickets land in
 //   epic (full)     parent epic every raised ticket hangs off. Required when
 //                   lifecycle is 'full'
@@ -182,6 +187,15 @@ if (EXECUTOR !== 'claude' && EXECUTOR !== 'codex') {
 }
 if (LIFECYCLE !== 'full' && LIFECYCLE !== 'local') {
   throw new Error(`increment-build-loop: unknown lifecycle "${LIFECYCLE}" — expected "full" or "local"`)
+}
+// Under local there is no branch stage: every increment is committed straight
+// onto `branch`. That is only safe on a scratch branch, never a default one.
+const DEFAULT_BRANCHES = ['main', 'master']
+const DEFAULT_BRANCHES_TEXT = DEFAULT_BRANCHES.map((name) => `\`${name}\``).join(' or ')
+if (LIFECYCLE === 'local' && !PLAN_ONLY && DEFAULT_BRANCHES.includes(BASE_BRANCH)) {
+  throw new Error(
+    `increment-build-loop: lifecycle "local" commits every increment straight onto config.branch, so it must be a scratch branch, not "${BASE_BRANCH}". Cut one in every repo and pass its name, or use lifecycle "full"`
+  )
 }
 if (LIFECYCLE === 'full' && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
   throw new Error(
@@ -1258,11 +1272,20 @@ TASK:
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
-   in your summary. Do not switch branches — an earlier stage owns that.
+${
+  LIFECYCLE === 'full'
+    ? `   in your summary. Do not switch branches — an earlier stage owns that.
    One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
    checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
    on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
-   catch a repo the branch stage did not cover.
+   catch a repo the branch stage did not cover.`
+    : `   in your summary. Do not switch branches — this run has lifecycle \`local\`, so there is no branch stage and
+   the run was handed the branch to build on.
+   Two assertions: EVERY repo must be on \`${BASE_BRANCH}\`, the branch this run was given, and NO repo may be on
+   ${DEFAULT_BRANCHES_TEXT}. If any repo is on another branch, or on ${DEFAULT_BRANCHES_TEXT}, stop and report ok:false
+   naming it. A local run commits every increment straight onto the branch it is on, so it builds on a scratch
+   branch and never on a repo's default branch.`
+}
 3. Run the FASTEST meaningful suite for each repo, to a log, and read it once:
    frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${WORKAREA_TILDE}/logs/${id}-baseline-frontend.log 2>&1\`
    backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${WORKAREA_TILDE}/logs/${id}-baseline-backend.log 2>&1\`
@@ -1663,14 +1686,22 @@ ${GUARDRAILS}
 ${REPO_RULE}
 ${SET_ROW_RULE}
 TASK:
-1. ${CHANGED_REPOS_RULE}${LIFECYCLE === 'full' ? ` Under full lifecycle, a repo with changes that is not on \`${workBranch}\` is a
-   stop: report landed:false naming it, and change nothing in it.` : ''} The increment's title, for the commit subject:
+1. ${CHANGED_REPOS_RULE} Under ${LIFECYCLE} lifecycle, a repo with changes that is not on \`${workBranch}\` is a
+   stop: report landed:false naming it, and change nothing in it. The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
-2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
+${
+  LIFECYCLE === 'full'
+    ? `2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
    a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no PR,
-   no CI and no review behind it. That has happened here once already.
+   no CI and no review behind it. That has happened here once already.`
+    : `2. For EVERY repo you are about to commit in, confirm it is on the branch this run was given FIRST:
+   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints anything
+   else — ${DEFAULT_BRANCHES_TEXT} above all — STOP and report landed:false naming the repo. Do not commit and do
+   not "fix it up after" — this run has lifecycle \`local\` and commits straight onto the branch it is on, so a
+   commit on a default branch is one \`git push\` away from being there for good, with no PR, no CI and no review.`
+}
 3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the

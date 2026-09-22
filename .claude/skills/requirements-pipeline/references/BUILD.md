@@ -56,7 +56,8 @@ models        optional model per tier: heavy (implement, reviewers, verifiers,
 ```
 
 `lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
-`local` builds and commits on the current branch: no Jira, no push, no PR, and
+`local` builds and commits on `branch`, which every repo must already be on and
+which must not be `main` or `master`: no Jira, no push, no PR, and
 **no handover** — a stash does not travel. Use `full` for anything a colleague
 may pick up.
 

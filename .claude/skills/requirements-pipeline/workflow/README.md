@@ -50,10 +50,10 @@ resolved configuration.
 | Field | What it is |
 |---|---|
 | `workarea` | Path under `workareas/` holding `backlog.json` — e.g. `shared/plant-products-ched-pp`, `trace-requirements/ched-pp` |
-| `branch` | The branch every repo in the programme is cut onto. The baseline guard checks it |
+| `branch` | Under `full`, the base branch each increment's own branch is cut from and merged back into. Under `local`, the scratch branch every increment is built and committed on — never `main` or `master` |
 | `scope` | Conventional-commit scope for the landing commit |
 | `executor` | `claude` or `codex` — see below |
-| `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on the current branch — no Jira, no push, no PR) |
+| `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on `branch`, which every repo must already be on — no ticket, no branch stage, no Jira, no push, no PR). The baseline and land stages refuse a repo on any other branch, and a local run refuses `main` or `master` outright |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
 | `jiraProject` (full) | Jira project key raised tickets land in |
 | `epic` (full) | Parent epic every raised ticket hangs off |

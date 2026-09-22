@@ -94,7 +94,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
 
 const LOCAL_ARGS = {
   workarea: 'shared/args-fixture',
-  branch: 'main',
+  branch: 'spike/args-fixture',
   scope: 'args-fixture',
   executor: 'claude',
   lifecycle: 'local',
@@ -468,5 +468,136 @@ describe('increment-build-loop', () => {
     expect(run.error.message).toBe(
       'increment-build-loop: args is missing required key executor. Pass every one in args: this workflow has no defaults'
     )
+  })
+
+  describe('under a local lifecycle', () => {
+    const PREFLIGHT_ANSWER = { ok: true, summary: '1' }
+
+    const runToBaseline = () =>
+      runWorkflowScript(scriptPath, {
+        args: LOCAL_ARGS,
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, null]
+      })
+
+    const baselinePrompt = async () => {
+      const run = await runToBaseline()
+      return run.agents.find(
+        (entry) => entry.options.label === 'inc-900 baseline'
+      ).prompt
+    }
+
+    test('goes from preflight straight to the baseline, with no ticket or branch stage', async () => {
+      const run = await runToBaseline()
+
+      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+        'workspace',
+        'preflight',
+        'inc-900 baseline'
+      ])
+    })
+
+    test('does not tell the baseline to refuse a repo on the branch the run was given', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).not.toContain(
+        'if ANY repo is on `spike/args-fixture`, stop and report ok:false'
+      )
+    })
+
+    test('tells the baseline every repo must be on the branch the run was given', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        'EVERY repo must be on `spike/args-fixture`, the branch this run was given'
+      )
+    })
+
+    test('tells the baseline to refuse a repo on main or master', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain('NO repo may be on\n   `main` or `master`')
+    })
+
+    test('refuses main as the branch to build on before any agent', async () => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: { ...LOCAL_ARGS, branch: 'main' }
+      })
+
+      expect(run.error.message).toContain(
+        'lifecycle "local" commits every increment straight onto config.branch, so it must be a scratch branch, not "main"'
+      )
+      expect(run.agents).toEqual([])
+    })
+
+    test('refuses master as the branch to build on before any agent', async () => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: { ...LOCAL_ARGS, branch: 'master' }
+      })
+
+      expect(run.error.message).toContain('not "master"')
+      expect(run.agents).toEqual([])
+    })
+
+    test('still plans against main when planOnly is true', async () => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: { ...LOCAL_ARGS, branch: 'main', planOnly: true },
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, null]
+      })
+
+      expect(run.result.increments[0].outcome).toBe('plan-refused')
+    })
+  })
+
+  describe('under a full lifecycle', () => {
+    const FULL_ARGS = {
+      ...LOCAL_ARGS,
+      branch: 'main',
+      lifecycle: 'full',
+      jiraProject: 'EUDPA',
+      epic: 'EUDPA-1',
+      jiraInProgressStatus: 'In Progress',
+      jiraDoneStatus: 'Done',
+      jiraBoard: 13780,
+      ciFixAttempts: 3,
+      ciWatchMinutes: 30,
+      requireApproval: true,
+      approvalWaitMinutes: 20
+    }
+
+    const TICKET_ANSWER = {
+      ok: true,
+      key: 'EUDPA-900',
+      created: false,
+      movedToBoard: true,
+      branch: 'feat/EUDPA-900-fixture',
+      repos: ['backend', 'tests', 'frontend'],
+      resumeAt: 'build',
+      status: 'In Progress',
+      summary: 'reused'
+    }
+
+    const baselinePrompt = async () => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: FULL_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          TICKET_ANSWER,
+          { ok: true, summary: 'branched' },
+          null
+        ]
+      })
+      return run.agents.find(
+        (entry) => entry.options.label === 'inc-900 baseline'
+      ).prompt
+    }
+
+    test('still tells the baseline to refuse a repo on the base branch', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        'if ANY repo is on `main`, stop and report ok:false naming it'
+      )
+    })
   })
 })

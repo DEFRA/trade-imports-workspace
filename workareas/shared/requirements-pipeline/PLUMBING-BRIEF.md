@@ -43,9 +43,11 @@ what is coupled to what; `references/SHAPE.md` is the backlog shape; `references
 
 1. **Codex mode was not run live.** Codex is logged in; it needs a real increment. The plan stage runs on
    Claude in both modes (D5).
-2. **`lifecycle: local` is still broken on this branch.** Baseline refuses a repo on the base branch, and local
-   builds on it. A fix was on workspace PR #44, which was closed unmerged; it still sits on branch `chore/NO_JIRA-plants-snagging-workarea` (synthesis §2.2, join 7). `planOnly` skips baseline, so the dry
-   run was not affected.
+2. **`lifecycle: local` is fixed on this branch.** Baseline used to refuse a repo on the base branch, and land
+   demanded HEAD be the work branch but stopped if it printed the base branch — the same string under local.
+   Under local both stages now require every repo to be on the branch the run was given and refuse `main` or
+   `master`, and a non-planOnly local run refuses `branch: main|master` before any agent starts. Full is
+   unchanged. The closed PR #44 idea was ported, not its branch. Not yet run live past baseline.
 3. **The harness refuses a subagent writing a report file** ("subagents should return findings as text").
    The DISTIL phase now has the report agent return its text for the main session to save. Other files write
    fine.

@@ -49,8 +49,10 @@ doneStatus    the board's finished status, the same way  full only
 board         numeric id of the board tickets are moved onto. 13780 is
               EUDPA. Default 13780                 full only
 requireApproval      whether EVERY PR of an increment needs an approving review
-              on GitHub before the loop merges ANY of them.
-              Default true                              full only
+              on GitHub before the loop merges ANY of them, on top of the
+              multi-agent review, adversarial verification and judge every
+              increment already goes through.
+              Default false                             full only
 approvalWaitMinutes  how long the merge stage waits for those approvals before
               stopping with every PR open. Default 20   full only
 repos         where frontend, backend and tests live: a workspace-relative path
@@ -74,27 +76,39 @@ on and which must not be `main` or `master`: no Jira, no push, no PR, and
 **no handover** — a stash does not travel. Use `full` for anything a colleague
 may pick up.
 
-**This skill passes `requireApproval: true` unless the user asks otherwise, and
-leaving it there is the point.** The workflow itself has no default for this
-key — under `lifecycle: full` a run without it stops before any agent — so
-this default is something the skill supplies, not something the loop falls
-back to. Green CI proves the code runs; it does not prove anyone agreed to it.
-The default exists because a run of this loop once put unreviewed commits
-onto a shared `main`. Turning it off gives a programme unattended merges —
-ask for that explicitly, and do not infer it from a user who simply wants the
-run to go faster.
+**This skill passes `requireApproval: false` unless the user asks otherwise,
+and that is the point.** The workflow itself has no default for this key —
+under `lifecycle: full` a run without it stops before any agent — so this
+default is something the skill supplies, not something the loop falls back
+to. By the time an increment reaches the merge stage it has already been
+through a style reviewer and a code reviewer per (repo, language) group, a
+consistency reviewer across the whole change, an adversarial verifier that
+tries to refute every finding, and a judge that rules every survivor
+fix-now, defer or reject, without a human in the loop. **That multi-agent
+review, verification and judgement IS the review.** A GitHub approving
+review on top of it is a second, *human* gate, and a run that has to stop
+and wait for one cannot run 24/7 — which is the whole point of this loop.
 
-Because GitHub refuses to let an author approve their own PR, the approver is
-always **somebody other than whoever the run is credentialed as**. A run under
-this default is therefore not unattended: it will stop and wait for a colleague.
-Say so when a user asks for a large `stopAfter`, rather than letting them find
-out at the first increment.
+Set `requireApproval: true` when a programme genuinely wants that second,
+human gate in front of every merge — a run built for a colleague to review
+before anything lands, say, or a programme still earning trust in the loop.
+With it on, every PR of an increment needs an approving review on GitHub
+before the merge stage may merge any of them, and the loop's whole-increment
+approval sweep, `awaiting-approval` and `changes-requested` stops (below)
+apply exactly as they always have. Because GitHub refuses to let an author
+approve their own PR, the approver is always **somebody other than whoever
+the run is credentialed as**, so a run under `requireApproval: true` is not
+unattended: it will stop and wait for a colleague, and a large `stopAfter`
+will likely hit that wait at the very first increment — say so when a user
+asks for one. **To get the old (human-gated) behaviour back, pass
+`requireApproval: true` explicitly.**
 
-**The gate covers the whole increment, not one PR at a time.** The merge stage
-collects an approval for every PR before it merges any of them, so a reviewer who
-approves the frontend and leaves the tests repo waiting no longer gets half an
-increment on `main`. Tell a reviewer they owe the increment *all* of its PRs —
-approving one of two is the same as approving neither.
+**The gate, when it is on, covers the whole increment, not one PR at a
+time.** The merge stage collects an approval for every PR before it merges
+any of them, so a reviewer who approves the frontend and leaves the tests
+repo waiting no longer gets half an increment on `main`. Tell a reviewer
+they owe the increment *all* of its PRs — approving one of two is the same
+as approving neither.
 
 **Confirm the two status names against the board before the first increment.**
 They are board configuration, not constants, and a wrong one stops every
@@ -242,7 +256,7 @@ Build the args object with every key below:
   jiraBoard: 13780, // the EUDPA board. Another programme's board is another id
   ciFixAttempts: 3,
   ciWatchMinutes: 30,
-  requireApproval: true,
+  requireApproval: false,
   approvalWaitMinutes: 20,
   repos: {
     frontend: { path: 'repos/<frontend repo>', github: 'DEFRA/<frontend repo>' },
@@ -268,8 +282,9 @@ any agent starts.
 Write `requireApproval` in explicitly. The loop has no default for it: under
 `lifecycle: full` a run without it stops before any agent. The args are what
 a person reads to see what governs a run, so the merge gate is always written
-out. Set it to `false` only where the user has asked for unattended merges in
-as many words.
+out. Set it to `true` only where the user has asked for a human approval gate
+in as many words — the default is `false`, because the review, adversarial
+verification and judge stages already are the review.
 
 ### 3. Check it landed
 
@@ -355,6 +370,12 @@ Stop and print the handover prompt when any of these fire:
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
 failing.
 
+**`gate` is honoured regardless of `requireApproval`.** A row's own `gate`
+field is a checkpoint somebody set deliberately on that specific increment —
+data on the backlog, not a setting on the run — and it is unaffected by
+whether the human approval gate is on or off. `awaiting-approval` and
+`changes-requested`, by contrast, fire only when `requireApproval: true`.
+
 **`pr-left-open` means the increment is half-landed, and the half that landed
 does not auto-revert.** The merge stage sweeps every repo for an open PR on the
 branch before it reports green, precisely because the list of PRs it was handed
@@ -363,11 +384,12 @@ a repo the increment did not start with. Report which repo and which URL. Do not
 merge the straggler yourself: it has not been through the watcher or the
 approval gate, and merging it to clear the warning is worse than the warning.
 
-**`awaiting-approval` is not a failure and must never be reported as one.** The
-loop merges only PRs carrying an approving review — this skill passes
-`requireApproval: true` unless the user asked otherwise — and it merges none
-of an increment until all of them have one, so a run that ends here did
-everything right, merged nothing, and is waiting on a person.
+**`awaiting-approval` is not a failure and must never be reported as one.** It
+can only fire when `requireApproval: true` — off by default, so this is
+something a programme opted into rather than something this skill supplies
+for free. With it on, the loop merges only PRs carrying an approving review,
+and it merges none of an increment until all of them have one, so a run that
+ends here did everything right, merged nothing, and is waiting on a person.
 Report **every** unapproved PR URL and say plainly that they need a reviewer.
 Then stop:
 

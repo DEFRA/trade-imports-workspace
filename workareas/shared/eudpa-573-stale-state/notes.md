@@ -637,6 +637,97 @@ path above uses the existing grain and produces the same result on
 the display side. Recorded here so future readers see the shape was
 considered rather than overlooked.
 
+## Alternative — MDM changes as a support activity
+
+MDM owns the reference-data lifecycle; we do not. That framing points
+at a lower-infrastructure alternative to the auto-detect target above:
+treat each MDM change as a planned support activity we hear about out-
+of-band, with the ref-data-service running a canary rather than a full
+event pipeline.
+
+### Additive vs subtractive changes
+
+Not every MDM change affects existing notifications:
+
+- **Additive changes** — a code appears in the current reader list
+  that was not in the previous release. No stored answer is
+  invalidated. Safe by construction; no attention signal needed.
+- **Subtractive changes** — a code present in the previous release
+  is absent from the current one. Every notification whose stored
+  answer is that code is now stale in the frontend's meaning. This
+  is the case the frontend hardening (above) protects against and
+  the case attention signalling has to detect.
+- **Amendments** — a code stays but its attributes change (rename,
+  block membership, effective dates). May or may not affect stored
+  answers depending on which attributes are read. Treat as
+  subtractive when the changed attribute is one the frontend or
+  notification reads.
+
+"Subtractive" is the operative word — the concise opposite of
+"additive" without the connotations "reductive" carries in general
+English.
+
+### The support-activity path
+
+Trigger source: MDM comms tell us codes are dropping (or attributes
+changing). Per change, we run a migration script that sweeps
+affected submitted notifications, evaluates each fulfilments payload
+against the current model, and stamps `needsAttention` with
+per-change helper text tuned to the specific removal ("The country
+XY is no longer available because ..."). The frontend hardening
+already shipped in `chore/EUDPA-573-origin-page-hardening` is the
+always-on safety net beneath.
+
+Trade-offs against the auto-detect target:
+
+- **Pro** — no snapshot / diff / emit infrastructure inside the
+  ref-data-service; no event bus dependency; per-change reasoning
+  can carry richer helper text than auto-detect naturally can.
+- **Pro** — bounded work per change: only the migration script has
+  to run, not a continuous detection loop.
+- **Con** — depends on MDM's comms discipline. Silent removals slip
+  past unnoticed; the frontend hardening is the only guard.
+- **Con** — each change is a delivery event with a lead time; needs
+  runbook + on-call awareness.
+- **Con** — does not scale to address-book changes (trader-driven,
+  no lead time available). Address-book still needs its own event-
+  driven mechanism.
+
+### Canary — belt-and-braces without the full pipeline
+
+The ref-data-service can still run a snapshot-and-diff loop as a
+**canary**: on refresh, compare the new payload to the previous
+snapshot per reader; if any subtractive change is detected without a
+matching comms notice, raise an alarm to us (a log line, a
+metric, a page). Bounded work, high signal — no per-notification
+sweep and no event bus, just a "did MDM change without telling us"
+check.
+
+Reasonable to build the canary regardless of whether we adopt the
+support-activity path or the full auto-detect target. Under the
+support-activity path it is the last line of defence; under the
+auto-detect target it is the trigger.
+
+### Discovery questions before committing
+
+- Who at MDM tells us about pending changes? In what channel? With
+  what lead time?
+- Historical cadence of country / port list changes — annually?
+  Weekly? Ad-hoc?
+- Are there ever emergency drops (sanctions, compliance) with zero
+  comms?
+- Does MDM's release process distinguish additive from subtractive
+  changes explicitly, or would we have to compute the diff
+  ourselves?
+- What does MDM already publish about upcoming changes that we
+  could tap into (release notes, change tickets, mailing list)?
+
+If MDM comms are reliable and the cadence is low, the support-
+activity path with the canary underneath is probably the right-sized
+choice. If comms are unreliable, absent, or if the cadence is high
+enough to swamp on-call, the full auto-detect target becomes worth
+the infrastructure.
+
 ## Version pinning + migration — policy and mechanism
 
 Two further options for handling obligation-model change, distinct in

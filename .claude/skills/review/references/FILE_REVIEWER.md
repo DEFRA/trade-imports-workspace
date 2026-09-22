@@ -73,9 +73,11 @@ In every mode:
    ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/best-practices/{repo}.md
    ```
    `prepare-review.sh` already concatenated every best-practice file
-   applicable to your repo there. Don't walk
-   `.review-meta.json` or read individual `docs/best-practices/*.md`
-   files — the bundle is the single source. When citing a rule on
+   applicable to your repo there. Don't walk `.review-meta.json` **for
+   best-practice paths**, and don't read individual
+   `docs/best-practices/*.md` files — the bundle is the single source for
+   those. (Reading `.review-meta.json` for the PR set is a different
+   thing, and the behaviour-spec check in step 5 needs it.) When citing a rule on
    `file-review-add-item.sh --best-practice <path>`, use the relative
    path shown in the bundle's `## Source: docs/best-practices/...`
    headings (e.g. `node/pino-logging.md`).
@@ -192,6 +194,58 @@ In MERGE_RESOLVED mode, additionally:
 - Pay extra attention to the integration points where the two sides
   of the merge meet — most likely defect sites.
 
+#### Behaviour-spec files
+
+`openspec/specs/**/spec.md` and `openspec/coverage/**/coverage.json` are
+the workspace's Behaviour Spec. `frontend-change` writes them at the end
+of every increment, so they arrive in PRs as a claim about behaviour —
+and a wrong claim is as damaging as wrong code, because the next person
+trusts it. Two extra checks, both `--severity Critical` on a mismatch:
+
+- **`openspec/specs/**/spec.md`** — for every added or changed
+  Given/When/Then scenario, does it describe the same behaviour as the
+  ticket's Acceptance Criteria in `ticket.md`? Not only "does the code
+  satisfy the AC" — the usual question — but "does this spec update
+  accurately represent it". A scenario that overstates, understates or
+  quietly restates a different rule is a mismatch.
+- **`openspec/coverage/**/coverage.json`** — for every `tests[]` link on
+  a scenario this PR touched, is the named test real and does it witness
+  that scenario? One rule, below. A link carried over unchanged from a
+  previous increment's `coverage.json`, on a scenario this PR changed, is
+  a coverage claim nobody re-verified. Untouched scenarios' links are out
+  of scope.
+
+**When a coverage link passes.** Either is enough:
+
+- the named `file` appears in any diff under
+  `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.diffs/*.diff`; **or**
+- it exists in the repo the link names, and its body actually asserts the
+  scenario.
+
+Flag Critical only when the file cannot be found at all, or is found and
+does not cover the scenario. Links routinely name tests in
+`trade-imports-animals-tests`, which often has no PR in the set — "not in
+this PR's diff" is not on its own a finding.
+
+**Which checkout to read.** `prepare-review.sh` clones every repo in the
+PR set pinned at its merge commit under
+`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/`
+— the same pinned path step 4 uses. Go there first. Only fall back to the
+live clone at `~/git/defra/trade-imports-workspace/repos/{repo}/` when the
+repo has no PR in the set, and say so in the finding: that clone sits on
+whatever branch its owner left it on and may be dirty, so a Critical
+raised against it can be a false positive. Either way record the ref you
+resolved:
+
+```bash
+git -C <the checkout you read> rev-parse --short HEAD
+```
+
+The spec and the code it describes may land in **different PRs** — the
+spec lives in `trade-imports-workspace`, the frontend code in its own
+repo. Read `.review-meta.json` for the full PR set. "No code diff in this
+PR" is not a reason to skip the check.
+
 ### 6. Filter your findings
 
 **A good finding is:**
@@ -226,17 +280,22 @@ Then run `file-review-set-verdict.sh` once:
 
 | Severity | What |
 |---|---|
-| Critical | Bug, security issue, broken AC |
+| Critical | Bug, security issue, broken AC, or a behaviour-spec update that misrepresents the AC or claims unverified coverage |
 | Major | Quality / maintainability / missing test for new behaviour |
 | Minor | Nitpick — only worth flagging if a best-practice explicitly bans it |
 
 ## File type guidance
+
+Behaviour-spec files match their own rows, not the generic Config row —
+`coverage.json` is a behaviour claim, not configuration.
 
 | Type | Specific scope |
 |---|---|
 | Source (`.java`, `.js`, `.ts`) | New/changed behaviour + tests for it |
 | Test (`*Test.java`, `*.test.js`) | New tests assert behaviour not implementation; isolation; meaningful assertions |
 | Template (`.njk`) | govuk-frontend usage, accessibility, content style |
+| Behaviour spec (`openspec/specs/**/spec.md`) | Added/changed scenarios describe the same behaviour as the ticket AC; conventions in `openspec/config.yaml` (MUST not SHALL, observable-only scenarios, no test names, stable IDs) |
+| Coverage (`openspec/coverage/**/coverage.json`) | Links on touched scenarios pass the two-way rule under "Behaviour-spec files" — in a PR-set diff, or present in the named repo and actually asserting the scenario; derived `coverage` values match the `tests[]` array |
 | Config (`.yml`, `.json`, `pom.xml`, `package.json`) | New keys correct, no secrets, dep versions; do not flag missing comments |
 | Lockfile (`package-lock.json`) | Only flag if a transitive dep has a known CVE; do not flag drift |
 

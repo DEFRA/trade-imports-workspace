@@ -1,0 +1,105 @@
+{
+  "uid": "ins-backend-address-lookup",
+  "title": "ins-backend address lookup (local)",
+  "description": "Local stack only: the addressLookup.* meters read from Prometheus. Dev reads the same meter names from CloudWatch.",
+  "tags": ["local", "ins-backend"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": true,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Searches",
+      "description": "Searches in the selected time range.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "instant": true, "expr": "sum(increase(addressLookup_searches_total[$__range]))" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Failed searches",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "instant": true, "expr": "sum(increase(addressLookup_outcome_failed_total[$__range])) or vector(0)" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Mean gateway time",
+      "description": "The gateway call only, with any token hops taken off. A mean, not a percentile.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "instant": true, "expr": "sum(increase(addressLookup_durationMs_lookup_total[$__range])) / sum(increase(addressLookup_searches_total[$__range]))" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Searches per minute, by mode",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "spanNulls": true, "showPoints": "auto" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "legendFormat": "postcode", "expr": "sum(increase(addressLookup_mode_postcode_total[1m]))" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "B", "legendFormat": "find", "expr": "sum(increase(addressLookup_mode_find_total[1m]))" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Outcomes per minute",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "spanNulls": true, "showPoints": "auto" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "legendFormat": "results", "expr": "sum(increase(addressLookup_outcome_results_total[1m]))" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "B", "legendFormat": "no results", "expr": "sum(increase(addressLookup_outcome_no_results_total[1m]))" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "C", "legendFormat": "failed", "expr": "sum(increase(addressLookup_outcome_failed_total[1m]))" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Failures per minute, by reason",
+      "description": "One metric per reason, because the CloudWatch publisher drops tags.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "spanNulls": true, "showPoints": "auto" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "legendFormat": "{{reason}}", "expr": "label_replace(sum by (__name__) (increase({__name__=~\"addressLookup_failure_.+_total\"}[1m])), \"reason\", \"$1\", \"__name__\", \"addressLookup_failure_(.+)_total\")" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Mean time per search",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "spanNulls": true, "showPoints": "auto" } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "A", "legendFormat": "gateway", "expr": "sum(increase(addressLookup_durationMs_lookup_total[1m])) / sum(increase(addressLookup_searches_total[1m]))" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "refId": "B", "legendFormat": "total, incl. token hops", "expr": "sum(increase(addressLookup_durationMs_total[1m])) / sum(increase(addressLookup_searches_total[1m]))" }
+      ]
+    }
+  ]
+}

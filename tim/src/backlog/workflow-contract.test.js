@@ -538,6 +538,188 @@ describe('increment-build-loop', () => {
       expect(run.agents).toEqual([])
     })
 
+    describe('building an increment', () => {
+      const BASELINE_ANSWER = { ok: true, summary: 'green' }
+      const PLAN_ANSWER = {
+        ok: true,
+        summary: 'Planned in the frontend.',
+        repos: ['frontend'],
+        behaviourChanges: [],
+        decisions: []
+      }
+      const NO_FINDINGS = { findings: [] }
+      const FINDING = {
+        file: 'frontend:src/a.js',
+        severity: 'major',
+        what: 'The origin is not saved.',
+        why: 'The handler drops it.',
+        fix: 'Save it.'
+      }
+
+      const implementAnswer = (changedFiles) => ({
+        ok: true,
+        summary: 'Built the origin page.',
+        changedFiles,
+        notes: 'E2E left to the ladder.'
+      })
+
+      const frontendFiles = (count, extension) =>
+        Array.from(
+          { length: count },
+          (_, index) => `frontend:src/file-${index}.${extension}`
+        )
+
+      const runToReview = (changedFiles) =>
+        runWorkflowScript(scriptPath, {
+          args: LOCAL_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            PREFLIGHT_ANSWER,
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(changedFiles)
+          ]
+        })
+
+      const labelsInPhase = (run, phaseName) =>
+        run.agents
+          .filter((entry) => entry.options.phase === phaseName)
+          .map((entry) => entry.options.label)
+
+      const runThroughFixToLadder = () =>
+        runWorkflowScript(scriptPath, {
+          args: LOCAL_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            PREFLIGHT_ANSWER,
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            { findings: [FINDING] },
+            NO_FINDINGS,
+            { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+            {
+              decisions: [
+                { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
+              ],
+              fixNow: ['Save the origin in src/a.js.'],
+              summary: 'one fix'
+            },
+            {
+              ok: true,
+              summary: 'Saved the origin.',
+              notes:
+                'FIT went green once :3003 was freed by stopping the stack.'
+            }
+          ]
+        })
+
+      const ladderPrompt = (run) =>
+        run.agents.find((entry) => entry.options.label === 'inc-900 ladder')
+          .prompt
+
+      test('reviews files in one repo and language with one style and one code reviewer', async () => {
+        const run = await runToReview(frontendFiles(3, 'js'))
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:frontend-javascript',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('gives docs a code reviewer but no style reviewer', async () => {
+        const run = await runToReview([
+          'frontend:src/a.js',
+          'frontend:README.md'
+        ])
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript',
+          'inc-900 review:frontend-javascript',
+          'inc-900 review:frontend-docs',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('splits a group of more than twelve files in two', async () => {
+        const run = await runToReview(frontendFiles(13, 'js'))
+
+        expect(labelsInPhase(run, 'Review')).toEqual([
+          'inc-900 style:frontend-javascript-1',
+          'inc-900 style:frontend-javascript-2',
+          'inc-900 review:frontend-javascript-1',
+          'inc-900 review:frontend-javascript-2',
+          'inc-900 consistency'
+        ])
+      })
+
+      test('verifies findings with one verifier per group', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(labelsInPhase(run, 'Verify findings')).toEqual([
+          'inc-900 verify:frontend-javascript'
+        ])
+      })
+
+      test('points the ladder at the baseline logs', async () => {
+        const prompt = ladderPrompt(await runThroughFixToLadder())
+
+        expect(prompt).toContain(
+          'frontend: ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline-frontend.log'
+        )
+      })
+
+      test('tells the baseline to write the logs the ladder reads', async () => {
+        const run = await runThroughFixToLadder()
+        const baselinePrompt = run.agents.find(
+          (entry) => entry.options.label === 'inc-900 baseline'
+        ).prompt
+
+        expect(baselinePrompt).toContain(
+          '> ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline-frontend.log 2>&1'
+        )
+      })
+
+      test("hands the fixer's notes to the ladder", async () => {
+        const prompt = ladderPrompt(await runThroughFixToLadder())
+
+        expect(prompt).toContain(
+          'notes: FIT went green once :3003 was freed by stopping the stack.'
+        )
+      })
+
+      test("hands the implementor's notes to the ladder", async () => {
+        const prompt = ladderPrompt(await runThroughFixToLadder())
+
+        expect(prompt).toContain('notes: E2E left to the ladder.')
+      })
+
+      test('tells the ladder no fix stage ran when the judge ruled nothing', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: LOCAL_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            PREFLIGHT_ANSWER,
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js'])
+          ]
+        })
+
+        expect(ladderPrompt(run)).toContain(
+          'FIXER — no fix stage ran: the judge ruled nothing fix-now'
+        )
+      })
+
+      test('gives the ladder the workspace stack to start and stop', async () => {
+        const prompt = ladderPrompt(await runThroughFixToLadder())
+
+        expect(prompt).toContain('You are that stage: you own the stack')
+      })
+    })
+
     test('still plans against main when planOnly is true', async () => {
       const run = await runWorkflowScript(scriptPath, {
         args: { ...LOCAL_ARGS, branch: 'main', planOnly: true },

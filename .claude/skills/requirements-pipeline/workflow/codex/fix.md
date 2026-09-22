@@ -55,8 +55,26 @@ not run is not a reason to report `ok: false`.
 Run suites to a file under `<logs>` and read the file once. At most 3 self-repair attempts on a red step;
 if still red, report `ok: false` with exactly what is red and what you tried.
 
+- **Use what is already known.** The prompt that pointed you here carries the implementor's notes. Where
+  they diagnose a red suite or say what got it green, start from that rather than diagnosing it again.
+- **Compare every red rung with the baseline.** The prompt lists the baseline logs,
+  `<logs>/<INCREMENT_ID>-baseline-<repo>.log`, written before any edit. A failure in a suite that was green
+  at baseline was caused by this increment or the environment it left behind — a stack still up, a port
+  held — even when the failing test's own file is unchanged. Repair it or diagnose it. Call a failure
+  pre-existing only when the baseline log shows the same test failing the same way, and quote that line.
+- **Re-run every rung after your last fix**, not only the one that was red: a fix to one rung can break
+  another. Only a full pass after your final edit counts.
+- **Never background a command** (no trailing `&`). Every rung runs in the foreground and returns.
+- **Format runs in check mode.** The rung is `format:check`, never `format`. A red check is repaired by
+  running `format` and then the check again, and that counts as one of your 3 repairs.
+- **Never start the workspace stack** (`tim docker dev` / `up`). The ladder stage owns it, starts it for
+  E2E and stops it after. If you find it up and a unit suite is failing on a port it holds, stop it with
+  `tim docker down` — never raw `docker` — and re-run the suite.
+
 ## Report
 
 Your final message must satisfy the schema given via `--output-schema`: `ok`, `summary`, `changedFiles`,
-`notes`. In `notes`, state for each ruled fix whether it was applied, and name anything you deliberately
-left alone.
+`notes`. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`, the repo key being
+`frontend`, `backend` or `tests` — review is grouped by repo and language from it. In `notes`, state for
+each ruled fix whether it was applied, name anything you deliberately left alone, and write down any
+diagnosis of a red suite and what got it green — the ladder stage is given your notes.

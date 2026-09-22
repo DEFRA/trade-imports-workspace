@@ -109,6 +109,10 @@ sleeps.
   did not run and why, so the ladder knows what it is covering. Do not attempt a sandbox bypass, and do
   not report `ok: false` merely because a browser rung was unavailable to you — a change whose runnable
   rungs are all green is `ok: true` with the deferral recorded.
+- **Never start the workspace stack** (`tim docker dev` / `up`). The ladder stage owns it: it starts it in
+  the foreground for E2E and stops it afterwards. A stack left running holds ports the unit and FIT suites
+  need and turns green suites red. If you find it up and a unit suite is failing on a port it holds, stop
+  it with `tim docker down` — never raw `docker` — and re-run the suite.
 - **Stage** your work (`git -C <repo> add`) but **do not commit**. Landing happens after review.
 - Test failures are yours to fix. "Pre-existing" and "separate issue" are not available to you — if the
   suite is red when you finish, you have not finished.
@@ -121,4 +125,7 @@ sleeps.
 ## Step 3 — report
 
 Your final message must satisfy the JSON schema supplied via `--output-schema`: `ok`, `summary`,
-`changedFiles` (repo-relative paths), `notes`. Nothing else.
+`changedFiles`, `notes`. Nothing else. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`,
+the repo key being `frontend`, `backend` or `tests` (e.g. `frontend:src/server/app/index.js`) — review is
+grouped by repo and language from it. In `notes`, write down any diagnosis of a red suite and what got it
+green: the ladder stage is given your notes.

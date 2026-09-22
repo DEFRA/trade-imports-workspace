@@ -119,7 +119,7 @@ idempotent, so it runs on reused tickets too.
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is 23–47 agents against a default guideline of 15. You cannot set
+   increment is 22–34 agents against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -428,8 +428,9 @@ defect.
 to Codex CLI via the briefs in [`../workflow/codex/`](../workflow/codex/). Baseline, plan, verify
 findings, judge, ladder and land stay on Claude either way. Both executors build
 from the same plan file, so the same backlog builds under either with no edit.
-Codex mode is `19 + n` agents against `16 + 3n`, so it is markedly cheaper on a
-wide increment.
+Codex mode is `19 + g` agents against `16 + 3g`, where `g` is the number of
+(repo, language) groups the changed files fall into — typically 2–6, however many
+files there are, because review and verification fan out per group, not per file.
 
 Switch by changing `executor` in the next increment's args. **It
 takes effect at the next increment and never mid-increment**, so a run can start

@@ -118,7 +118,8 @@ defect.
 ## Step 5 — report
 
 Your final message must satisfy the JSON schema given via `--output-schema`. Findings only — no fixes
-applied, nothing committed, no file written.
+applied, nothing committed, no file written. Write each finding's `file` as `<repoKey>:<repo-relative path>`
+(`frontend`, `backend` or `tests`), so the verification stage can group findings by repo and language.
 
 **Always report, even if you did not finish.** Reporting is not the last thing you do if there is room
 left — it is the thing you must not run out of room for. If you are running low, stop reading, stop

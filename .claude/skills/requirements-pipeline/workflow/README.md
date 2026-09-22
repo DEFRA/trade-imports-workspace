@@ -102,12 +102,21 @@ as `feat(plant-products): <increment title>`. Any other workarea works the same 
 |---|---|---|
 | Baseline | 1 | Refuses to start on a dirty tree or a red suite, so any later red is unambiguously ours |
 | Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the ladder, out of scope. Lifted from `frontend-alignment.js` |
-| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits |
-| Review | 2n+1 | One style reviewer and one code reviewer **per changed file**, plus a consistency reviewer across the whole change |
-| Verify findings | 1 per file | Adversarial refutation — each finding must survive an agent actively trying to kill it |
+| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Never starts the workspace stack |
+| Review | 2g+1 at most | One style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
+| Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
-| Fix | 1 | Applies only what the judge ruled fix-now |
-| Ladder | 1 | Runs the plan's ladder, in order, to logs: each changed repo's own gate, the acceptance checks, the integration proof |
+| Fix | 1 | Applies only what the judge ruled fix-now. Never starts the workspace stack |
+| Ladder | 1 | Runs the plan's ladder, in order, to logs: each changed repo's own gate, the acceptance checks, the integration proof. Given the implementor's and fixer's notes and the baseline log paths |
+
+**The ladder owns the workspace stack.** It is the only stage that starts it — in the
+foreground with `tim docker dev`, for its E2E rungs — and it stops it with `tim docker down`
+as soon as they finish. Before a unit or FIT rung it checks the ports the plan names are free,
+and stops the stack if that is what holds them. It runs every rung itself, after the fix
+stage; re-runs the whole ladder, E2E included, after any repair; runs format in check mode;
+and compares every red rung with the baseline logs. A failure in a suite that was green at
+baseline is this increment's to repair or diagnose — "pre-existing" needs the same failure in
+the baseline log.
 | Land | 1–2 | Commits on green and marks the increment done; `git stash push -u` on red |
 
 The reviewers follow the personas the skills already ship —
@@ -138,7 +147,7 @@ Three things to know about codex mode:
 - Codex has a **normal shell**, so each brief opens by telling it to ignore the Claude-only
   `GUARD RAILS` block (no `&&`, tilde-only paths, `node`/`npx` denied).
 - The review stage is **one** codex reviewer over the whole change applying all three
-  personas, not the 2n+1 per-file fan-out. Codex's findings schema also carries a
+  personas, not the 2g+1 per-group fan-out. Codex's findings schema also carries a
   `confidence` per finding, which the relay folds into `why` because the Claude-side schema
   has no room for it.
 - **A stage that cannot run halts the loop.** If the review or fix stage produces no result

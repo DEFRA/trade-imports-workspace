@@ -378,6 +378,109 @@ branched: act on \`openspec/\` ONLY, on whatever branch the workspace is on, and
 workspace — not the backlog, not the plans, not the logs. See what it holds with
 \`git -C ${TILDE} status --short -- openspec/\`.`
 
+// One owner for the workspace stack. In the hrp-origin-v2 run the implementor
+// started it for E2E and left it up: the frontend's errors.test.js, which
+// expects nothing on :8086, went red, and the stack's plants-frontend held
+// :3003 so FIT could not start. The ladder then called the red "pre-existing".
+const STACK_RULE = `THE WORKSPACE STACK belongs to the LADDER stage, and to no other. Only the ladder starts it — in the
+FOREGROUND, with \`tim docker dev\` (it blocks until the stack is healthy and returns; Bash timeout 600000) — and
+only for its E2E rungs, and it stops it with \`tim docker down\` as soon as those rungs finish, green or red. Every
+other stage leaves it alone: never start it, never leave it running, and never drive it with raw \`docker\` or
+\`docker compose\` — \`tim docker\` and \`scripts/stack/\` are the only wrappers. A running stack holds ports the unit
+and FIT suites need (a frontend's own port, the stub on :8086) and turns green suites red.`
+
+const STACK_RULE_FOR_BUILDERS = `${STACK_RULE}
+So YOU do not run E2E: leave those rungs to the ladder and name them in notes. If you find the stack already up
+and a unit or FIT suite you need is failing on a port it holds, stop it with \`tim docker down\` before you re-run
+that suite.`
+
+// The baseline stage's logs, named once so the ladder is pointed at exactly
+// the files the baseline wrote.
+const baselineLog = (id, repoKey) => `${WORKAREA_TILDE}/logs/${id}-baseline-${repoKey}.log`
+const baselineLogList = (id) => REPO_KEYS.map((key) => `   ${key}: ${baselineLog(id, key)}`).join('\n')
+
+// ---------------------------------------------------------------------------
+// Review groups. One style reviewer and one code reviewer per (repo, language)
+// group of changed files, never per file: per-file review spent 87 agents and
+// 81% of fresh tokens on a 31-file increment, 29 of them returning nothing.
+// A group over REVIEW_GROUP_CAP files splits into near-equal parts, so no one
+// reviewer is handed more than it can read in full.
+// ---------------------------------------------------------------------------
+const REVIEW_GROUP_CAP = 12
+const DOCS_LANGUAGE = 'docs'
+const LANGUAGE_BY_EXTENSION = {
+  java: 'java',
+  js: 'javascript',
+  mjs: 'javascript',
+  cjs: 'javascript',
+  ts: 'javascript',
+  njk: 'nunjucks',
+  html: 'nunjucks',
+  scss: 'styles',
+  css: 'styles',
+  md: DOCS_LANGUAGE,
+  json: DOCS_LANGUAGE,
+  yaml: DOCS_LANGUAGE,
+  yml: DOCS_LANGUAGE,
+  txt: DOCS_LANGUAGE
+}
+
+const repoKeyOfPath = (repoPath) => REPO_KEYS.find((key) => REPO_PATH[key] === repoPath)
+
+const repoOfFile = (file) => {
+  const prefixed = /^([a-z]+):/.exec(file)
+  if (prefixed && REPO_KEYS.includes(prefixed[1])) return prefixed[1]
+  const underRepos = /^repos\/[^/]+/.exec(file)
+  return (underRepos && repoKeyOfPath(underRepos[0])) ?? 'unknown'
+}
+
+const languageOfFile = (file) => {
+  const extension = /\.([A-Za-z0-9]+)$/.exec(file)?.[1]?.toLowerCase()
+  return LANGUAGE_BY_EXTENSION[extension] ?? 'other'
+}
+
+const splitIntoParts = (items, cap) => {
+  const partCount = Math.ceil(items.length / cap)
+  const partSize = Math.ceil(items.length / partCount)
+  return Array.from({ length: partCount }, (_, index) => items.slice(index * partSize, (index + 1) * partSize))
+}
+
+const groupByReviewKey = (items, fileOf) => {
+  const byKey = new Map()
+  for (const item of items) {
+    const key = `${repoOfFile(fileOf(item))}/${languageOfFile(fileOf(item))}`
+    byKey.set(key, [...(byKey.get(key) ?? []), item])
+  }
+  return byKey
+}
+
+const partName = (repo, language, index, partCount) =>
+  partCount > 1 ? `${repo}-${language}-${index + 1}` : `${repo}-${language}`
+
+// Each group carries its distinct files and the items (files or findings)
+// that fall on them; a split divides by file, never across one file's items.
+const reviewGroupsOf = (items, fileOf) =>
+  [...groupByReviewKey(items, fileOf).entries()].flatMap(([key, groupItems]) => {
+    const [repo, language] = key.split('/')
+    const parts = splitIntoParts([...new Set(groupItems.map(fileOf))], REVIEW_GROUP_CAP)
+    return parts.map((part, index) => ({
+      repo,
+      language,
+      files: part,
+      items: groupItems.filter((item) => part.includes(fileOf(item))),
+      name: partName(repo, language, index, parts.length)
+    }))
+  })
+
+const WHOLE_CHANGE = '(whole change)'
+const findingFile = (finding) => finding.file || WHOLE_CHANGE
+
+const groupFilesForReview = (fileList) => reviewGroupsOf(fileList, (file) => file)
+const groupFindingsForVerification = (findings) => reviewGroupsOf(findings, findingFile)
+
+const groupRepoPath = (group) => (REPO_PATH[group.repo] ? `${TILDE}/${REPO_PATH[group.repo]}` : `${TILDE}/<repoPath>`)
+const groupFileList = (group) => group.files.map((file) => `- ${file}`).join('\n')
+
 // Canonical merge order for a cross-repo increment. Lower merges first.
 //
 // backend before frontend: the backend is the provider and the frontend the
@@ -421,6 +524,8 @@ GUARD RAILS (mandatory, every step):
 - NEVER sleep-poll. Foreground \`sleep\` is denied. Wait on CI by BLOCKING on \`gh pr checks --watch\` or
   \`gh run watch --exit-status\`, with the Bash tool's \`timeout\` parameter set to 600000 (its ceiling).
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
+- NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
+  returns by itself — a backgrounded one is one whose result you never read.
 - Never \`git push --force\`. Never merge a PR that is not green.
 - NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
   does it by merging an approved PR. Every other push in every other stage goes to a work branch, always with the
@@ -998,8 +1103,15 @@ implementor decides nothing.
    6. Ladder — for each repo the plan changes, in order, the commands that prove it green: the repo's own gate as
       its package.json or pom.xml defines it (format check, lint, unit tests; \`mvn verify\` for a Java repo, never
       \`mvn test\`), then section 5's checks, then the integration proof. Write every command in the GUARD RAILS form
-      (\`npm --prefix\`, \`mvn -f\`, tilde paths, one command each) and say what each needs running, such as the
-      workspace stack for E2E.
+      (\`npm --prefix\`, \`mvn -f\`, tilde paths, one command each) and say what each needs running.
+      USE THE REPO'S OWN CI SCRIPTS. Read package.json's \`scripts\` and the repo's .github/workflows, and where a
+      CI-named script exists — \`test:ci\`, \`test:fit:ci\`, \`format:check\` — the rung is that script, never a
+      hand-built command line or a hand-picked port. A format rung is always a CHECK script, never \`format\`.
+      NAME THE PORTS. For every rung that serves a port or expects one free, read the port from the repo's
+      playwright.config.* or vitest.config.* (webServer, baseURL, port) and the tests' own fixtures — never assume
+      it — and write it next to the rung: "listens on :<port>" or "needs :<port> free". The ladder checks those ports
+      before it runs the rung.
+      E2E rungs need the workspace stack. The ladder starts and stops it itself, so write the E2E command alone.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
@@ -1286,10 +1398,12 @@ ${
    naming it. A local run commits every increment straight onto the branch it is on, so it builds on a scratch
    branch and never on a repo's default branch.`
 }
-3. Run the FASTEST meaningful suite for each repo, to a log, and read it once:
-   frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${WORKAREA_TILDE}/logs/${id}-baseline-frontend.log 2>&1\`
-   backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${WORKAREA_TILDE}/logs/${id}-baseline-backend.log 2>&1\`
-   tests:    read package.json and run its unit/lint script if one exists; if the suite needs a running stack, SKIP it and say so.
+3. Run the FASTEST meaningful suite for each repo, to a log, and read it once. The ladder later compares every red
+   rung with these logs, so write them to exactly these paths:
+   frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${baselineLog(id, 'frontend')} 2>&1\`
+   backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${baselineLog(id, 'backend')} 2>&1\`
+   tests:    read package.json and run its unit/lint script if one exists, to \`${baselineLog(id, 'tests')}\`; if the
+             suite needs a running stack, SKIP it and say so.
 4. Report ok:true only if every repo's tree is clean and every suite is green.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema })
@@ -1363,9 +1477,12 @@ RULES:
 - STAGE your work (\`git -C ... add\`) but DO NOT COMMIT. Landing is a later step that runs after review.
 - If you get stuck on a red step, you get at most 3 self-repair attempts. If still red, stop and report ok:false
   with exactly what is red and what you tried — do NOT thrash, and do NOT weaken a test to make it pass.
+${STACK_RULE_FOR_BUILDERS}
 
-Return ok, a summary, changedFiles (repo-relative paths you created or edited), and notes (anything the reviewers
-or the judge should know, including anything the increment got wrong).`,
+Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
+including anything the increment got wrong and any diagnosis of a red suite you made).
+changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
+${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
     heavy({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
   )
 
@@ -1390,45 +1507,57 @@ or the judge should know, including anything the increment got wrong).`,
   log(`${id}: implemented, ${files.length} files changed — reviewing`)
 
   // -----------------------------------------------------------------------
-  // Review — style and correctness, per file, in parallel, plus consistency.
+  // Review — style and correctness, one pair of reviewers per (repo,
+  // language) group of changed files, in parallel, plus consistency.
   // -----------------------------------------------------------------------
   phase('Review')
 
   const reviewTargets = files.length > 0 ? files : ['(no files reported — review the staged diff)']
+  const reviewGroups = groupFilesForReview(reviewTargets)
+  const styleGroups = reviewGroups.filter((group) => group.language !== DOCS_LANGUAGE)
+  log(`${id}: ${reviewGroups.length} review group(s) — ${reviewGroups.map((group) => `${group.name} (${group.files.length})`).join(', ')}`)
 
-  const styleReviews = reviewTargets.map((file) => () =>
+  const groupHeader = (group) => `${group.files.length} file(s) in the ${group.repo} repo (${groupRepoPath(group)}), language
+${group.language}. Review EVERY one of them — each file on its own merits, read in full:
+${groupFileList(group)}
+The \`<repoKey>:\` prefix names the repo; the rest is the path inside it. Report each finding's \`file\` exactly as it
+is written in that list, so it can be routed back to this group.`
+
+  const styleReviews = styleGroups.map((group) => () =>
     agent(
-      `You are a STYLE REVIEWER for increment ${id}, reviewing ONE file: ${file}
+      `You are a STYLE REVIEWER for increment ${id}, reviewing ${groupHeader(group)}
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md IN FULL and follow it. It defines what
 you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKILL.md for the language routing
 (Java → modern-java + Javadoc; GDS/Nunjucks → components/styles/patterns; Playwright → playwright; Node → the
-17-rule style guide + JSDoc).
+17-rule style guide + JSDoc). The persona is written per file: apply it to each file in the list in turn, and load
+the bundle once for the group.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`, and the plan it was
-built from at ${PLANS}/${id}.md. See the change with \`git -C ${TILDE}/<repoPath> diff --staged -- <file>\`, and
-compare it with the exemplar the plan names for this file.
+built from at ${PLANS}/${id}.md. See the change with \`git -C ${groupRepoPath(group)} diff --staged -- <path>\` for
+each file, and compare it with the exemplar the plan names for that file.
 SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
 security belong to a different reviewer; do not duplicate them.
 HOUSE RULES that override generic style advice: comments are removed aggressively (code near-bare; rationale lives
 in docs/, not in the file); no migration/rename comments — git history is the source of truth; pipelines get named
 helper functions rather than dense inline callbacks; names say what a thing does, never the benefit it brings.
-Report ONLY real findings, each with a concrete fix. No praise, no summary of what the file does. If the file is
+Report ONLY real findings, each with a concrete fix. No praise, no summary of what a file does. If every file is
 clean, return an empty findings array.
 Return the structured output only.`,
-      heavy({ label: `${id} style:${file.split('/').pop()}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      heavy({ label: `${id} style:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
-  const codeReviews = reviewTargets.map((file) => () =>
+  const codeReviews = reviewGroups.map((group) => () =>
     agent(
-      `You are a CODE REVIEWER for increment ${id}, reviewing ONE file: ${file}
+      `You are a CODE REVIEWER for increment ${id}, reviewing ${groupHeader(group)}
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/FILE_REVIEWER.md IN FULL and follow it. Also read
-${SKILLS}/review/SKILL.md for the review dimensions.
+${SKILLS}/review/SKILL.md for the review dimensions. The persona is written per file: apply it to each file in the
+list in turn.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\` — its
 acceptanceCriteria are what this code is supposed to do, and the header's invariants
 (\`jq 'del(.increments)' ${BACKLOG_TILDE}\`) are what it must not break. The plan is at ${PLANS}/${id}.md. See the
-change with \`git -C ${TILDE}/<repoPath> diff --staged -- <file>\`.
+change with \`git -C ${groupRepoPath(group)} diff --staged -- <path>\` for each file.
 SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Specifically hunt for:
 - behaviour that does not match the increment's acceptanceCriteria, or a behaviour change the plan did not declare
 - tests that assert implementation rather than behaviour (toHaveBeenCalledWith on a collaborator is the tell);
@@ -1441,7 +1570,7 @@ SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Spe
   platform-layer file that has learned a set's vocabulary.
 Report ONLY real findings with a concrete failure scenario. Style nits belong to a different reviewer — skip them.
 Return the structured output only.`,
-      heavy({ label: `${id} review:${file.split('/').pop()}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      heavy({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -1460,6 +1589,8 @@ writes; a move or new file the plan listed that did not happen; THE CONTRACT BET
 sends and expects matches what the backend accepts and returns, and the tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
 report any that fails as a finding. A better solution than the plan imagined is not a finding.
+Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
+routed to the right verifier.
 Return the structured output only.`,
       heavy({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
@@ -1476,21 +1607,20 @@ Return the structured output only.`,
   // -----------------------------------------------------------------------
   if (rawFindings.length > 0) {
     phase('Verify findings')
-    // Grouped BY FILE: every finding still gets refuted independently, but the
-    // file, the diff and the increment are read once per file instead of once
-    // per finding — that redundancy was the loop's dominant cost.
-    const byFile = new Map()
-    rawFindings.forEach((f, i) => {
-      const key = f.file || '(whole change)'
-      if (!byFile.has(key)) byFile.set(key, [])
-      byFile.get(key).push({ ...f, n: i + 1 })
-    })
+    // Grouped the way review was, by (repo, language): every finding still
+    // gets refuted independently, but the increment, the conventions and each
+    // diff are read once per group instead of once per file or per finding.
+    const numbered = rawFindings.map((finding, index) => ({ ...finding, n: index + 1 }))
+    const verifyGroups = groupFindingsForVerification(numbered)
 
     const verdicts = await parallel(
-      [...byFile.entries()].map(([file, items]) => () =>
-        agent(
-          `You are an ADVERSARIAL VERIFIER for increment ${id}. You are given ${items.length} finding(s) against ONE
-file: ${file}. Your job is to REFUTE each of them. Default to refuted unless the evidence is clear — a wrong
+      verifyGroups.map((group) => () => {
+        const items = group.items
+        const groupFiles = group.files.join(', ')
+        return agent(
+          `You are an ADVERSARIAL VERIFIER for increment ${id}. You are given ${items.length} finding(s) against
+${group.files.length} file(s) in the ${group.repo} repo (${groupRepoPath(group)}), language ${group.language}:
+${groupFiles}. Your job is to REFUTE each of them. Default to refuted unless the evidence is clear — a wrong
 finding that survives costs more than a real one that is missed, because it drives a pointless edit to working code.
 ${GUARDRAILS}
 Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of
@@ -1504,15 +1634,16 @@ ${items
   )
   .join('\n')}
 
-CHECK THEM against the ACTUAL code (\`git -C ${TILDE}/<repoPath> diff --staged -- ${file}\`, and Read the file in
-full — the diff alone can mislead), against the increment's acceptanceCriteria
+CHECK THEM against the ACTUAL code (\`git -C ${groupRepoPath(group)} diff --staged -- <path>\` for each file named,
+where the \`<repoKey>:\` prefix is dropped to get <path>, and Read each file in full — the diff alone can mislead),
+against the increment's acceptanceCriteria
 (\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`), and against the house conventions the
 repo actually follows (find a comparable file and compare — "unconventional" is only a finding if the convention
 really exists here). Read those sources ONCE and reuse them across all ${items.length} findings.
 For each: real:false if it is wrong, already handled elsewhere, out of the increment's scope, or a matter of taste
 dressed as a defect. real:true ONLY if you could not refute it. Cite file:line in every reasoning.
 Return one verdict per finding, using the SAME numbers as above. Return the structured output only.`,
-          heavy({ label: `${id} verify:${file.split('/').pop()}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
+          heavy({ label: `${id} verify:${group.name}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
         ).then((v) => {
           // A dead verifier must not silently delete findings — pass them to the
           // judge marked unrefuted rather than dropping them on the floor.
@@ -1524,7 +1655,7 @@ Return one verdict per finding, using the SAME numbers as above. Return the stru
             return verdict.real ? { ...f, verdict: verdict.reasoning } : null
           })
         })
-      )
+      })
     )
     confirmed = verdicts.filter(Boolean).flat().filter(Boolean)
     log(`${id}: ${confirmed.length}/${rawFindings.length} findings survived refutation`)
@@ -1573,41 +1704,65 @@ Return the structured output only.`,
   // -----------------------------------------------------------------------
   // Fix — apply only what the judge ruled fix-now.
   // -----------------------------------------------------------------------
+  let fixResult = null
+
   if (judgement.fixNow.length > 0) {
     phase('Fix')
     log(`${id}: judge ruled ${judgement.fixNow.length} fixes`)
+    const ruledFixes = judgement.fixNow.map((f, i) => `${i + 1}. ${f}`).join('\n')
     if (EXECUTOR === 'codex') {
-      codexResult(
+      fixResult = codexResult(
         await codexStage(
           id,
           'fix',
           'Fix',
           incrementSchema,
-          `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${judgement.fixNow.map((f, i) => `${i + 1}. ${f}`).join('\n')}`,
+          `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${ruledFixes}
+
+THE BASELINE LOGS, written before any edit — compare every red rung with them:
+${baselineLogList(id)}
+
+THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
+${impl.notes || '(none)'}`,
           workBranch
         ),
         'fix',
         id
       )
     } else {
-      await agent(
+      fixResult = await agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
 purely stylistic also read ${SKILLS}/code-style/references/STYLE_IMPLEMENTOR.md.
 ${readIncrement(id)}
 THE RULED FIXES:
-${judgement.fixNow.map((f, i) => `${i + 1}. ${f}`).join('\n')}
+${ruledFixes}
 
 RULES: apply each fix and prove it with the test or assertion the instruction names. Do NOT re-open anything the
 judge rejected or deferred. Do NOT expand scope. If a fix turns out to be wrong or impossible, say so in your
 summary rather than forcing it — a fix that requires weakening a test is not a fix. Leave everything STAGED, do
 not commit.
+${STACK_RULE_FOR_BUILDERS}
+If a suite goes red for a reason that is not your fix — a port held, an environment variable, the stack — write the
+diagnosis and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
         heavy({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
       )
     }
   }
+
+  const fixerReport = () => {
+    if (fixResult) return `${fixResult.summary}\n  notes: ${fixResult.notes || '(none)'}`
+    if (judgement.fixNow.length > 0) return 'the fix stage returned no result'
+    return 'no fix stage ran: the judge ruled nothing fix-now'
+  }
+
+  const earlierFindings = `WHAT EARLIER STAGES ALREADY FOUND — read it before your first rung. A diagnosis already made is yours to use,
+not to make again; where it says what got a suite green (a port freed, the stack stopped), start from that.
+IMPLEMENTOR — ${impl.summary}
+  notes: ${impl.notes || '(none)'}
+FIXER — ${fixerReport()}`
 
   // -----------------------------------------------------------------------
   // Ladder — the plan's section 6, which the planner expanded against the
@@ -1620,8 +1775,38 @@ Return the structured output only.`,
 ${GUARDRAILS}
 ${readIncrement(id)}
 ${readPlan(id)}
+${earlierFindings}
+
+${STACK_RULE}
+You are that stage: you own the stack for this increment.
+
 TASK — run the plan's section 6, "Ladder", IN ORDER, each command to its own log under ${WORKAREA_TILDE}/logs/
 named \`${id}-<repo>-<step>.log\`, reading each log ONCE. Every step must be green before you run the next.
+- EVERY RUNG RUNS HERE, after the fix stage, even one the implementor or fixer already ran green — their runs are
+  evidence, not proof. The E2E rungs included.
+- AFTER ANY REPAIR, RUN THE WHOLE LADDER AGAIN from its first rung, E2E included. A repair to one rung can break
+  another, and an E2E run from before a repair proves nothing about the code after it. Only a full pass with no
+  repair inside it is green.
+- FORMAT RUNS IN CHECK MODE. The rung is the repo's \`format:check\` (or its check-only equivalent), never
+  \`format\`. A red format check is repaired by running \`format\` and then the check again — that counts as one of
+  your repairs, and it restarts the ladder like any other.
+- PORTS BEFORE EVERY UNIT OR FIT RUNG. The plan names the ports each rung listens on or needs free; where it does
+  not, read them from the repo's playwright.config.* / vitest.config.* and the tests' fixtures. For each port,
+  \`lsof -nP -iTCP:<port> -sTCP:LISTEN\` — no output means free. If the Docker engine holds it (com.docker.backend,
+  docker-proxy, OrbStack, vpnkit), that is the workspace stack: stop it with \`tim docker down\` and check again.
+  Stopping the stack is not a repair. If anything else holds it, name the process and pid in failures[] and do
+  not kill it. Never record a rung as "could not run" when the only thing in its way was the workspace stack.
+- E2E RUNGS: bring the stack up in the FOREGROUND with \`tim docker dev\` (Bash timeout 600000; it returns once the
+  stack is healthy), run the E2E rungs, then \`tim docker down\` — every time, green or red, before you report or
+  go back to a unit rung.
+- EVERY RED RUNG IS COMPARED WITH THE BASELINE. Before any edit, the baseline stage ran each repo's fastest suite
+  to these logs (a repo it skipped has none):
+${baselineLogList(id)}
+  When a rung goes red, read the matching baseline log once. A failure in a suite that was GREEN at baseline was
+  caused by this increment or by the environment it left behind — a stack still up, a port held, a file moved —
+  even when the failing test's own file is unchanged. Repair it, or diagnose it and name the cause in failures[].
+  A suite the baseline did not run has no baseline, and the same holds for it. "Pre-existing" is available ONLY when
+  the baseline log shows the SAME test failing the same way — quote that line from it when you say so.
 - FIRST CHECK THE LADDER COVERS THE CHANGE. For every repo with staged changes
   (\`git -C ${TILDE}/<repoPath> diff --staged --stat\`), the ladder must run that repo's own gate — the format
   check, lint and unit scripts its package.json defines, or \`mvn verify\` for a Java repo. Where the plan left one
@@ -1645,9 +1830,10 @@ named \`${id}-<repo>-<step>.log\`, reading each log ONCE. Every step must be gre
 - If the ladder includes an E2E leg, read \`test-results/*/error-context.md\` for any failure rather than grepping
   the run output. Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that
   recover on retry — a green run with retried journey specs IS a pass, but say so explicitly.
-- If a step cannot run at all (needs a stack that is not up, needs a branch that does not exist yet), do NOT
-  pretend it passed: record it in failures[] as "could not run: <reason>" and set green:false.
-Report green:true ONLY if every step actually ran and actually passed.
+- If a step genuinely cannot run (it needs a branch that does not exist yet, a port something other than the
+  stack holds), do NOT pretend it passed: record it in failures[] as "could not run: <reason>" and set green:false.
+Before you report, the workspace stack is DOWN: \`tim docker down\` if you brought it up.
+Report green:true ONLY if every step actually ran and actually passed, in one pass with no repair after it.
 Return the structured output only.`,
     light({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
   )

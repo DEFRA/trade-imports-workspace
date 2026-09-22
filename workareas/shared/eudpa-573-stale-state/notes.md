@@ -1,13 +1,14 @@
 # EUDPA-573 — stale state on amend / reload
 
 Investigation notes on what the animals and plants frontends do when a
-submitted (or in-flight) notification is reloaded after either the
-reference data or the obligation model has moved on underneath it.
+submitted (or in-flight) notification is reloaded after the reference
+data, the obligation model, or the validation logic itself has moved
+on underneath it.
 
 Shared engine code — every code reference below applies to both repos
 unless called out.
 
-## The two scenarios
+## The three scenarios
 
 1. **Stale reference-data value.** A stored code — country, port,
    commodity — is no longer in the reference-data payload (MDM
@@ -16,6 +17,12 @@ unless called out.
 2. **Model change.** The obligation model itself has moved: an
    obligation added, removed, or its `applyTo` gate reshaped, since the
    notification was last saved.
+3. **Validation logic change.** A rule inside a controller or a
+   shared validation helper has tightened since submit — a shorter
+   max-length, a stricter regex, a narrower date range, a new
+   cross-field consistency check. The stored value survives; the
+   rule that judges it does not. Distinct from Scenario 2 because
+   the manifest has not changed — this is code-only.
 
 ## Where the trader lands on Amend
 
@@ -91,6 +98,44 @@ country/port/commodity codes.
 Test coverage: only obligation *removal* is tested
 (`evaluator.test.js:173-176` — "unrecognised obligation ids are
 dropped (tolerate-and-amend)"). Reshaped gates untested.
+
+## Scenario 3 — validation logic change
+
+Rules that live in the controller (max-length, regex, date range,
+cross-field consistency) can move independently of the obligation
+model. The manifest is unchanged; the rule is not.
+
+| Change | Behaviour | User-visible? |
+|---|---|---|
+| Tightened rule (shorter max-length, stricter regex, narrower range) | Nothing checks the stored value on GET or Amend entry. The next POST that revisits the field is refused with the new rule's copy. | **No** until the trader re-opens the page. |
+| Loosened rule | Stored value stays valid. | Safe. |
+| Cross-field consistency rule added / tightened | A combination that was valid at submit may now fail. Only surfaces on re-POST that touches one of the fields. | **No** until the trader re-opens. |
+| Error copy change | Stored value still valid; only the wording differs when validation fires. | Safe. |
+
+Same silent-drift shape as Scenarios 1 and 2: the stored answer
+carries forward; the rule that judged it has moved. The Amend flow
+does not re-run every page's validation against every stored answer,
+so a newly-invalid combination is only caught when the trader
+happens to re-visit the affected page — or when the reject-on-submit
+requirement below fires at finalise time.
+
+Trigger source: team-owned (deploy of the frontend that carries the
+tightened rule); same shape as obligation-model changes. The
+migration-job pattern in "Version pinning + migration" below fits —
+the sweep runs the current rules against each stored payload and
+stamps `needsAttention` on those that newly fail.
+
+Scope of the fixes shipped so far: the six frontend-hardening
+commits on `chore/EUDPA-573-origin-page-hardening` cover
+ref-data-membership checks only. Extending the same "detect on GET,
+surface an error, blank the value" pattern to arbitrary
+validation-logic changes is a separate piece of work — likely a
+generalisation of the pattern rather than one-off checks per
+controller.
+
+Test coverage: none dedicated. Rule tightening is caught only
+incidentally, when a test seeds a specific pre-tightening value and
+happens to POST it.
 
 ## Per-page behaviour on Amend — animals frontend
 

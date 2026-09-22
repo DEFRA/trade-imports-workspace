@@ -1,5 +1,24 @@
 import { describe, test, expect } from 'vitest'
-import { checkBacklog, nextBuildable, setRowFields } from './shape.js'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { loadBacklogSchema, statusesOf } from './backlog-schema.js'
+import {
+  WITHHELD_STATUSES,
+  checkBacklog as checkAgainst,
+  nextBuildable,
+  setRowFields
+} from './shape.js'
+
+const workspaceRoot = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..'
+)
+
+const schema = loadBacklogSchema(workspaceRoot)
+
+const checkBacklog = (backlog) => checkAgainst(backlog, schema)
 
 const row = (overrides = {}) => ({
   id: 'inc-001',
@@ -13,6 +32,9 @@ const row = (overrides = {}) => ({
   status: 'todo',
   ...overrides
 })
+
+const rowWithout = (field) =>
+  Object.fromEntries(Object.entries(row()).filter(([key]) => key !== field))
 
 const backlogOf = (...rows) => ({ programme: 'demo', increments: rows })
 
@@ -113,11 +135,108 @@ describe('checkBacklog', () => {
     ).toEqual(['inc-001 "repos" must be a list of text.'])
   })
 
+  test('refuses a row that is not an object', () => {
+    expect(checkBacklog(backlogOf('inc-001')).problems).toEqual([
+      'increments[0] is not an object.'
+    ])
+  })
+
+  test('names a row with no id by its position', () => {
+    const { problems } = checkBacklog(backlogOf(rowWithout('id')))
+
+    expect(problems).toEqual(['increments[0] has no "id".'])
+  })
+
+  test('refuses a title that is only whitespace', () => {
+    expect(checkBacklog(backlogOf(row({ title: '  ' }))).problems).toEqual([
+      'inc-001 has no "title".'
+    ])
+  })
+
+  test('refuses a row with no dependsOn', () => {
+    const { problems } = checkBacklog(backlogOf(rowWithout('dependsOn')))
+
+    expect(problems).toEqual([
+      'inc-001 has no "dependsOn". Give [] when it waits for nothing.'
+    ])
+  })
+
+  test('refuses an unknown kind', () => {
+    expect(checkBacklog(backlogOf(row({ kind: 'add-page' }))).problems).toEqual(
+      [
+        'inc-001 has kind "add-page". Use one of: feat, fix, chore, refactor, test, docs.'
+      ]
+    )
+  })
+
+  test('passes notes as text or as a list of text', () => {
+    const { problems } = checkBacklog(
+      backlogOf(
+        row({ notes: 'Combines two slices.' }),
+        row({ id: 'inc-002', notes: ['ATTEMPT FAILED: ladder red'] })
+      )
+    )
+    expect(problems).toEqual([])
+  })
+
+  test('refuses notes that are neither text nor a list of text', () => {
+    expect(checkBacklog(backlogOf(row({ notes: 7 }))).problems).toEqual([
+      'inc-001 "notes" must be text or a list of text.'
+    ])
+  })
+
+  test('refuses a pull request with no url', () => {
+    expect(
+      checkBacklog(backlogOf(row({ prs: [{ repo: 'frontend' }] }))).problems
+    ).toEqual(['inc-001 "prs" must be a list of objects with "url".'])
+  })
+
+  test('passes the fields the build loop writes', () => {
+    const built = row({
+      status: 'done',
+      ticket: 'EUDPA-1',
+      branch: 'feat/EUDPA-1',
+      commit: 'abc1234',
+      prs: [{ repo: 'frontend', url: 'https://github.com/DEFRA/x/pull/1' }]
+    })
+    expect(checkBacklog(backlogOf(built)).problems).toEqual([])
+  })
+
+  test('passes a field the schema does not name, as older backlogs carry', () => {
+    expect(checkBacklog(backlogOf(row({ milestone: 'M1' }))).problems).toEqual(
+      []
+    )
+  })
+
+  test('refuses an envelope field of the wrong type', () => {
+    expect(
+      checkBacklog({ invariants: 'Keep CSRF.', increments: [row()] }).problems
+    ).toEqual(['The backlog "invariants" must be a list of text.'])
+  })
+
   test('counts rows by status', () => {
     expect(
       checkBacklog(backlogOf(row(), row({ id: 'inc-002', status: 'done' })))
         .counts
     ).toEqual({ todo: 1, done: 1 })
+  })
+})
+
+describe('WITHHELD_STATUSES', () => {
+  test('withholds only statuses backlog.schema.json allows', () => {
+    const allowed = statusesOf(schema)
+
+    const unknown = [...WITHHELD_STATUSES].filter(
+      (status) => !allowed.includes(status)
+    )
+
+    expect(unknown).toEqual([])
+  })
+
+  test('leaves only todo buildable of the statuses the schema allows', () => {
+    expect(
+      statusesOf(schema).filter((status) => !WITHHELD_STATUSES.has(status))
+    ).toEqual(['todo'])
   })
 })
 

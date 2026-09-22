@@ -2,8 +2,8 @@
 
 The first phase of the `requirements-pipeline` skill. Sources in, one `backlog.json` out. Every row is a
 **requirement** (what, why, acceptance), never a recipe, and a **full-stack slice**, never one layer of one. The
-shape is `~/git/defra/trade-imports-workspace/.claude/skills/requirements-pipeline/references/SHAPE.md`: read it
-before you start. The BUILD phase ([`BUILD.md`](BUILD.md)) builds what this phase writes.
+fields are defined in `~/git/defra/trade-imports-workspace/.claude/skills/requirements-pipeline/references/backlog.schema.json`,
+and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both before you start. The BUILD phase ([`BUILD.md`](BUILD.md)) builds what this phase writes.
 
 This phase joins pieces that already exist. It does not replace them:
 
@@ -156,7 +156,8 @@ The reconciler prompt says:
 
 One agent (model `opus`) turns adopted requirements into increments in two passes, then writes
 `<workarea>/backlog.json` in the one shape and runs `tim backlog check <workarea-under-workareas> --json` until
-it passes.
+it passes. Give the agent the path to `backlog.schema.json`: every field it writes is defined there, and `check`
+validates against that file.
 
 - **Pass 1, thin slices.** Group requirements into the thinnest end-to-end behaviours a user or system can
   observe. Each slice spans every repo it needs. Never a slice per layer ("the backend for X", "the tests for

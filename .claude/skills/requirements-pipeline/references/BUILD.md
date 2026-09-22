@@ -108,8 +108,9 @@ idempotent, so it runs on reused tickets too.
    increment is 23–47 agents against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it.
 2. **Pull the workspace repo.** `backlog.json` is the state.
-3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It is the
-   one shape in [`SHAPE.md`](SHAPE.md): each row a requirement (what,
+3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
+   one shape defined in [`backlog.schema.json`](backlog.schema.json), with the rules
+   in [`SHAPE.md`](SHAPE.md): each row a requirement (what,
    why, acceptance), never a recipe. The loop plans the how itself, just in time,
    into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,

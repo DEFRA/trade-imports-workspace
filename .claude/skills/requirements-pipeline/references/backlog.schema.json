@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The backlog shape",
+  "description": "The one backlog.json shape of the requirements-pipeline skill, at workareas/<workarea>/backlog.json. DISTIL writes it, `tim backlog check` validates it against this file, and BUILD and the increment build loop read it. Each row is a requirement (what, why and acceptance), never a recipe, and a full-stack slice, never one layer. The judgement rules a schema cannot hold are in SHAPE.md beside this file.",
+  "type": "object",
+  "required": ["increments"],
+  "properties": {
+    "programme": {
+      "description": "The programme's name, such as \"iuu-transport\".",
+      "$ref": "#/$defs/text"
+    },
+    "generatedFrom": {
+      "description": "The source ids the backlog was distilled from, such as [\"trace:iuu\", \"confluence:6518997286\"].",
+      "$ref": "#/$defs/textList"
+    },
+    "invariants": {
+      "description": "Rules every increment must keep, such as \"Every page round-trips the CSRF token.\". Written once here, not repeated on each row. The loop's planner and reviewers read the envelope as well as the row.",
+      "$ref": "#/$defs/textList"
+    },
+    "increments": {
+      "description": "The rows, in build order. `tim backlog next` returns the first one that is not withheld and whose every dependency is done.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/increment" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "textList": {
+      "description": "A list of text.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "increment": {
+      "description": "One increment: a requirement (what, why and acceptance), never a recipe, and a full-stack slice covering every repo the behaviour needs. The build loop's plan stage works out the how against the live tree, just in time, and writes it to workareas/<workarea>/plans/<id>.md. Other fields are allowed, because older backlogs carry more.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "detail",
+        "acceptanceCriteria",
+        "dependsOn",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "description": "`inc-NNN`. Stable: never renumber, because rulings and commits cite it.",
+          "$ref": "#/$defs/text"
+        },
+        "title": {
+          "description": "What changes, in plain English.",
+          "$ref": "#/$defs/text"
+        },
+        "detail": {
+          "description": "What and why: the user need, and the behaviour afterwards.",
+          "$ref": "#/$defs/text"
+        },
+        "acceptanceCriteria": {
+          "description": "At least one outcome a user, operator, other system or reviewer can observe. Each may end with its provenance in brackets, such as \"(confluence:6518997286 §3)\". What a criterion may and must not name is in SHAPE.md.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "dependsOn": {
+          "description": "Ids that must be `done` first. A real ordering need, not a layer order. [] when it waits for nothing.",
+          "$ref": "#/$defs/textList"
+        },
+        "status": {
+          "description": "`todo` is buildable. `done` is what a dependency waits for. `blocked`, `deferred`, `dropped`, `rejected` and `merged-into` are withheld: `tim backlog next` never picks them up.",
+          "enum": [
+            "todo",
+            "blocked",
+            "done",
+            "deferred",
+            "dropped",
+            "rejected",
+            "merged-into"
+          ]
+        },
+        "kind": {
+          "description": "Sets the branch prefix.",
+          "enum": ["feat", "fix", "chore", "refactor", "test", "docs"]
+        },
+        "repos": {
+          "description": "The repo keys the slice touches, such as [\"backend\", \"frontend\", \"tests\"]. Left out, the loop takes every configured repo.",
+          "$ref": "#/$defs/textList"
+        },
+        "sources": {
+          "description": "Where it came from, such as { \"source\": \"trace:iuu\", \"ref\": \"pages/transport-details.json\" }.",
+          "type": "array"
+        },
+        "requirements": {
+          "description": "The distiller's requirement ids the row covers, such as \"req-004\", from distil/requirements.json.",
+          "$ref": "#/$defs/textList"
+        },
+        "openQuestions": {
+          "description": "What is still undecided. A `blocked` row must have at least one. A `todo` row may carry one that has a default, which the builder follows and says so.",
+          "$ref": "#/$defs/textList"
+        },
+        "notes": {
+          "description": "Anything a builder should know that is not a requirement, such as which slices the row combines and why. Text, or a list of text: `tim backlog set --note` appends.",
+          "anyOf": [{ "$ref": "#/$defs/text" }, { "$ref": "#/$defs/textList" }]
+        },
+        "gate": {
+          "description": "A checkpoint: the loop lands this increment, then stops so a person can look before anything that depends on it. The text says what to look at.",
+          "$ref": "#/$defs/text"
+        },
+        "ticket": {
+          "description": "Written by the build loop through `tim backlog set --ticket`: the Jira key raised for the increment.",
+          "$ref": "#/$defs/text"
+        },
+        "branch": {
+          "description": "Written by the build loop through `tim backlog set --branch`: the branch the increment builds on.",
+          "$ref": "#/$defs/text"
+        },
+        "commit": {
+          "description": "Written by the build loop through `tim backlog set --commit`: the commit the increment landed as.",
+          "$ref": "#/$defs/text"
+        },
+        "prs": {
+          "description": "Written by the build loop through `tim backlog set --pr`: the increment's pull requests, one per repo, merged into by url.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "properties": { "url": { "$ref": "#/$defs/text" } }
+          }
+        }
+      },
+      "not": {
+        "description": "Recipe fields. A row says what, why and acceptance; the build plans the how just in time.",
+        "anyOf": [
+          { "required": ["filesToTouch"] },
+          { "required": ["verification"] },
+          { "required": ["recipe"] },
+          { "required": ["implementorSkill"] }
+        ]
+      },
+      "if": {
+        "required": ["status"],
+        "properties": { "status": { "const": "blocked" } }
+      },
+      "then": {
+        "description": "A blocked row says what it waits for.",
+        "required": ["openQuestions"],
+        "properties": { "openQuestions": { "minItems": 1 } }
+      }
+    }
+  }
+}

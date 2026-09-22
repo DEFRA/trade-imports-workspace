@@ -35,8 +35,9 @@ full quality pass per increment rather than a single implement-and-hope pass. Th
 programme is data: the loop knows nothing about which backlog it is running beyond the
 config below.
 
-The backlog is in the one shape in
-[`../references/SHAPE.md`](../references/SHAPE.md): each row is a
+The backlog is in the one shape defined by
+[`../references/backlog.schema.json`](../references/backlog.schema.json), with the rules a
+schema cannot check in [`../references/SHAPE.md`](../references/SHAPE.md): each row is a
 requirement (what, why, acceptance) and a full-stack slice. The loop plans the how just in
 time, against the live tree, into `<workarea>/plans/<id>.md`, and every later stage works
 from that plan. Stages write back to the backlog only through `tim backlog set`.

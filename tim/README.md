@@ -213,9 +213,12 @@ tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-
 tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
-Three commands work on any workarea's `backlog.json` in the one backlog shape
-(`.claude/skills/requirements-pipeline/references/SHAPE.md`), with no
-registration. The requirements-pipeline skill's DISTIL and BUILD phases and the
+Three commands work on any workarea's `backlog.json` in the one backlog shape,
+with no registration. The shape is defined by
+`.claude/skills/requirements-pipeline/references/backlog.schema.json`, which
+`check` reads from the workspace at runtime and validates against; it then checks
+what a schema cannot say (every dependency is in the backlog, no cycle, no
+duplicate id). The requirements-pipeline skill's DISTIL and BUILD phases and the
 build loop use them:
 
 ```bash

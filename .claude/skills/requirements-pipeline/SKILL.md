@@ -10,7 +10,7 @@ file format between them.
 
 ```
 sources ──DISTIL──▶ workareas/<workarea>/backlog.json ──BUILD──▶ merged increments
-                    (references/SHAPE.md)                (workflow/increment-build-loop.js)
+                    (references/backlog.schema.json)     (workflow/increment-build-loop.js)
 ```
 
 ## The two phases
@@ -21,8 +21,10 @@ sources ──DISTIL──▶ workareas/<workarea>/backlog.json ──BUILD─�
 | BUILD | [`references/BUILD.md`](references/BUILD.md) | A backlog in the one shape exists and you want increments built, a stopped run resumed, or a run handed over |
 
 Read the phase file in full before you start it, and read
-[`references/SHAPE.md`](references/SHAPE.md) either way: it is the contract both phases
-keep. A run can do DISTIL and stop for Sam's answers, then come back for BUILD in another
+[`references/backlog.schema.json`](references/backlog.schema.json) and
+[`references/SHAPE.md`](references/SHAPE.md) either way: the schema defines every field,
+and SHAPE.md holds the judgement rules a schema cannot. Together they are the contract
+both phases keep. A run can do DISTIL and stop for Sam's answers, then come back for BUILD in another
 session — the backlog on disk is the only hand-off.
 
 ## What lives here
@@ -31,7 +33,8 @@ session — the backlog on disk is the only hand-off.
 requirements-pipeline/
   SKILL.md                 this file
   references/
-    SHAPE.md               the one backlog.json shape: envelope, row, what a criterion may name
+    backlog.schema.json    the one backlog.json shape: every envelope and row field, described
+    SHAPE.md               what the schema cannot say: requirement not recipe, full-stack slice, what a criterion may name, provenance
     DISTIL.md              phase 1: intake → extract → verify → reconcile → consolidate → report
     BUILD.md               phase 2: derive → run the loop → check it landed → handover
   workflow/
@@ -60,17 +63,21 @@ tim backlog standards --files <repoKey>:<path> --json            # the standards
 
 ## What is coupled to what
 
-The shape is the joint. Change any one of these and check the others in the same change:
+The shape is the joint, and [`references/backlog.schema.json`](references/backlog.schema.json)
+is its one definition. tim, DISTIL's consolidate step and the loop all read that file;
+nothing else lists the fields. Change it and check the others in the same change:
 
 | Piece | What it does with the shape |
 |---|---|
-| [`references/SHAPE.md`](references/SHAPE.md) | Defines it |
-| DISTIL's consolidate step ([`references/DISTIL.md`](references/DISTIL.md) §4) | Writes it, and runs `tim backlog check` until it passes |
-| `tim/src/backlog/shape.js` | Validates it (`check`), names the withheld statuses and derives the next id (`next`) |
+| [`references/backlog.schema.json`](references/backlog.schema.json) | Defines it: every field, required or not, the statuses, the recipe fields refused |
+| [`references/SHAPE.md`](references/SHAPE.md) | The judgement rules a schema cannot check |
+| DISTIL's consolidate step ([`references/DISTIL.md`](references/DISTIL.md) §4) | Writes it to the schema, and runs `tim backlog check` until it passes |
+| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`) |
 | The loop's `readIncrement` and plan stage ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row and envelope into every stage's prompt; the planner turns the row into `plans/<id>.md` |
 | BUILD's derive and landed checks ([`references/BUILD.md`](references/BUILD.md)) | Relies on `next`'s status-and-dependencies rule and the `status`/`commit`/`prs` fields the loop writes |
 | The Codex briefs ([`workflow/codex/`](workflow/codex/)) | Read the same plan and row under `executor: 'codex'` |
 
-A new row field, a new status, or a renamed one touches all of them. The loop's args
+A new row field, a new status, or a renamed one starts in the schema and touches all of
+them. The loop's args
 contract is checked by `tim/src/backlog/workflow-contract.test.js`, which scans this
 skill's `workflow/` as well as `.claude/workflows/`.

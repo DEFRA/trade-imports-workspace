@@ -1,8 +1,12 @@
 import { z } from 'zod'
 import { join, normalize, sep } from 'node:path'
+import {
+  BACKLOG_SCHEMA_PATH,
+  loadBacklogSchema,
+  statusesOf
+} from '../../backlog/backlog-schema.js'
 import { readJsonFile, writeJsonAtomic } from '../../backlog/io.js'
 import {
-  STATUSES,
   checkBacklog,
   nextBuildable,
   setRowFields
@@ -41,24 +45,28 @@ export const backlogPathFor = (workspaceRoot, workarea) => {
 
 const prSchema = z.object({ url: z.string().min(1) }).passthrough()
 
-const setOptsSchema = z
-  .object({
-    status: z
-      .enum(STATUSES, {
-        message: `--status must be one of: ${STATUSES.join(', ')}.`
-      })
-      .optional(),
-    commit: z.string().trim().min(1).optional(),
-    ticket: z.string().trim().min(1).optional(),
-    branch: z.string().trim().min(1).optional(),
-    note: z.string().trim().min(1).optional(),
-    openQuestion: z.string().trim().min(1).optional(),
-    pr: z.string().optional()
-  })
-  .refine((opts) => Object.values(opts).some((value) => value !== undefined), {
-    message:
-      'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question or --pr.'
-  })
+const setOptsSchemaFor = (statuses) =>
+  z
+    .object({
+      status: z
+        .enum(statuses, {
+          message: `--status must be one of: ${statuses.join(', ')}.`
+        })
+        .optional(),
+      commit: z.string().trim().min(1).optional(),
+      ticket: z.string().trim().min(1).optional(),
+      branch: z.string().trim().min(1).optional(),
+      note: z.string().trim().min(1).optional(),
+      openQuestion: z.string().trim().min(1).optional(),
+      pr: z.string().optional()
+    })
+    .refine(
+      (opts) => Object.values(opts).some((value) => value !== undefined),
+      {
+        message:
+          'Give at least one of --status, --commit, --ticket, --branch, --note, --open-question or --pr.'
+      }
+    )
 
 const parsePr = (raw) => {
   let value
@@ -75,14 +83,15 @@ const parsePr = (raw) => {
 }
 
 /**
- * Validate `tim backlog set`'s options before any read.
+ * Validate `tim backlog set`'s options before the backlog is read.
  *
  * @param {object} opts
+ * @param {string[]} statuses - The statuses backlog.schema.json allows
  * @returns {object} The changes to apply
  * @throws {TimError} USAGE
  */
-export const parseSetOpts = (opts) => {
-  const parsed = parseOptions(setOptsSchema, {
+export const parseSetOpts = (opts, statuses) => {
+  const parsed = parseOptions(setOptsSchemaFor(statuses), {
     status: opts.status,
     commit: opts.commit,
     ticket: opts.ticket,
@@ -126,7 +135,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('check <workarea>')
     .description(
-      "Check a workarea's backlog.json against the one backlog shape the distiller writes and the build loop reads"
+      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, the one backlog shape the distiller writes and the build loop reads, and that every dependency is in the backlog with no cycle`
     )
     .addHelpText(
       'after',
@@ -137,7 +146,8 @@ export const register = (backlog, { timVersion }) => {
       makeBacklogAction({
         run: ({ workspaceRoot, args }) => {
           const path = backlogPathFor(workspaceRoot, args[0])
-          const result = { path, ...checkBacklog(readJsonFile(path)) }
+          const schema = loadBacklogSchema(workspaceRoot)
+          const result = { path, ...checkBacklog(readJsonFile(path), schema) }
           if (result.problems.length) {
             throw new TimError(
               'LINT',
@@ -183,7 +193,10 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog set shared/my-programme inc-004 --pr \'{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9","number":9}\' --json\n' +
         '  tim backlog set shared/my-programme inc-004 --status done --json'
     )
-    .option('--status <status>', `One of: ${STATUSES.join(', ')}`)
+    .option(
+      '--status <status>',
+      `One of the statuses in ${BACKLOG_SCHEMA_PATH}`
+    )
     .option('--commit <sha>', 'The commit the increment landed as')
     .option('--ticket <key>', 'The Jira key raised for the increment')
     .option('--branch <name>', 'The branch the increment builds on')
@@ -201,7 +214,10 @@ export const register = (backlog, { timVersion }) => {
         run: ({ workspaceRoot, args }, opts) => {
           const path = backlogPathFor(workspaceRoot, args[0])
           const id = args[1]
-          const changes = parseSetOpts(opts)
+          const changes = parseSetOpts(
+            opts,
+            statusesOf(loadBacklogSchema(workspaceRoot))
+          )
           const { backlog: updated, changed } = setRowFields({
             backlog: readJsonFile(path),
             id,

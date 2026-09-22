@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
+  cpSync,
   mkdtempSync,
   mkdirSync,
   writeFileSync,
@@ -11,9 +12,11 @@ import {
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
+import { BACKLOG_SCHEMA_PATH } from '../../backlog/backlog-schema.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
+const realSchemaPath = join(here, '..', '..', '..', '..', BACKLOG_SCHEMA_PATH)
 
 const WORKAREA = 'shared/demo'
 
@@ -60,6 +63,9 @@ beforeEach(() => {
   workspace = realpathSync(mkdtempSync(join(tmpdir(), 'tim-rows-')))
   writeFileSync(join(workspace, 'Makefile'), 'all:\n')
   mkdirSync(join(workspace, 'repos'))
+  const schemaCopy = join(workspace, BACKLOG_SCHEMA_PATH)
+  mkdirSync(dirname(schemaCopy), { recursive: true })
+  cpSync(realSchemaPath, schemaCopy)
 })
 
 afterEach(() => {
@@ -100,6 +106,17 @@ describe('tim backlog check', () => {
     const run = await runTim(['check', WORKAREA])
     expect(envelopeOf(run).errors[0].message).toBe(
       `Can't find ${backlogPath()}.`
+    )
+  })
+
+  test('names a missing backlog schema', async () => {
+    writeBacklog([row()])
+    rmSync(join(workspace, BACKLOG_SCHEMA_PATH))
+
+    const run = await runTim(['check', WORKAREA])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      `Can't find the backlog schema at ${join(workspace, BACKLOG_SCHEMA_PATH)}. tim checks every backlog against it.`
     )
   })
 })

@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    "Running any increment backlog under workareas/ in the one backlog shape (.claude/skills/requirements-pipeline/references/SHAPE.md): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys. planOnly:true writes the plan and stops.",
+    "Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys. planOnly:true writes the plan and stops.",
   phases: [
     { title: 'Ticket' },
     { title: 'Branch' },

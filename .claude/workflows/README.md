@@ -11,6 +11,15 @@ the main session because **a subagent cannot invoke `Workflow`**. That is why th
 two-tier `batch-orchestrator/` prompts were removed: their middle tier could never start
 the thing it existed to drive.
 
+## `frontend-alignment.js`
+
+Kept as a reference only, at
+[`workareas/shared/frontend-alignment/frontend-alignment.reference.js`](../../workareas/shared/frontend-alignment/frontend-alignment.reference.js)
+— not runnable from here, and deliberately outside `.claude/workflows/` so it does not
+trip the workflow-contract test's `FALLBACK` check. It drove the design demonstration
+that brought `trade-imports-ins-frontend` into shape against the two journey frontends,
+stage by stage; its plan stage was lifted into `increment-build-loop.js` below.
+
 ## `increment-build-loop.js`
 
 Builds increments from **any** `backlog.json` under `workareas/`, one at a time, with a

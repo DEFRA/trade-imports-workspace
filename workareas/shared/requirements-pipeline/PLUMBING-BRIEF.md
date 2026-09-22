@@ -18,11 +18,11 @@ tim is green at `2dc0596d`: 149 test files, 1,963 tests, lint clean.
 - **Distiller:** a mix of three CHED-PP trace pages and the high-risk plants Confluence requirements page. The
   run went: 53 claims, then verification (2 refuted, 7 missed claims added), then 26 requirements and 7
   conflicts (5 questions, each with a default), then 4 full-stack increments. `tim backlog check` passes, and
-  every adopted requirement is in exactly one increment. See `proof/hrp-origin/report.md`, which leads with the
+  every adopted requirement is in exactly one increment. The proof runs are local test data under `proof/`, not committed; the report leads with the
   questions.
 - **Builder:** the loop ran with `planOnly: true` over `inc-001` against the plants repos. It found the row's
   premise partly wrong (the origin page already exists), planned against reality, and planned one slice across
-  backend, frontend and tests with the integration proof in the tests repo. See `proof/hrp-origin/plans/inc-001.md`.
+  backend, frontend and tests with the integration proof in the tests repo. The plan is in the local `proof/` folder.
   It took 3 agents and 13 minutes.
 
 ## How to use them now

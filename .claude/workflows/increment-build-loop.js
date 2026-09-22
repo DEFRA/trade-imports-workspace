@@ -1114,9 +1114,18 @@ HOW TO BUILD IT — route on the increment's "repo" field:
   where the increment targets a set other than the one a recipe was written against (\`sets/<set>/\`), substitute the
   set folder and otherwise follow it exactly. THIS programme's frontend is \`${TILDE}/${REPO_PATH.frontend}\` — the
   skill's own path examples name the repo it was written against, so wherever the skill or a recipe spells out a
-  repo path or an npm --prefix, substitute this repo and this increment's set. Where the increment cites a gap that
-  no recipe covers, the increment's own filesToTouch IS the script, and any exemplar it names is the shape to
+  TARGET REPO path or an npm --prefix, substitute this repo and this increment's set. Where the increment cites a gap
+  that no recipe covers, the increment's own filesToTouch IS the script, and any exemplar it names is the shape to
   imitate.
+  **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The skill's Step 5 writes the
+  workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`) and calls
+  \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, not the target repo, and
+  rewriting them at this repo would write the spec into the wrong tree.
+  For Step 5's two roots: the TARGET REPO is this programme's frontend above; the SPEC ROOT is \`${TILDE}\` (the
+  skill's default — do NOT pass one). This loop's Land stage commits only the increment's own repos,
+  so the \`openspec/\` write stays **uncommitted in the workspace checkout**. That is expected, not a mistake — name
+  every file the skill's completion output lists in your own notes, so the operator can commit them. If the skill
+  HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.
 - **backend** → follow the increment plus the workspace Java best practices
   (${TILDE}/docs/best-practices/java/). Mirror the package idiom \`${TILDE}/${REPO_PATH.backend}\` already has; where
   it has no precedent, the animals backend is the house reference. Compact-constructor null guards on public

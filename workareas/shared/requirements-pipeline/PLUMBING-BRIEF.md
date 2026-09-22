@@ -1,6 +1,6 @@
 # Summary of the overnight run (21–22 September 2026)
 
-**All four jobs are done and proved. Nothing is pushed.** Decisions, each with how to reverse it, are in
+**All four jobs are done and proved. Raised as PR #56.** Decisions, each with how to reverse it, are in
 `DECISIONS.md` beside this brief.
 
 ## What was done
@@ -39,7 +39,7 @@ tim is green at `2dc0596d`: 149 test files, 1,963 tests, lint clean.
 1. **Codex mode was not run live.** Codex is logged in; it needs a real increment. The plan stage runs on
    Claude in both modes (D5).
 2. **`lifecycle: local` is still broken on this branch.** Baseline refuses a repo on the base branch, and local
-   builds on it. The fix is on workspace PR #44 (synthesis §2.2, join 7). `planOnly` skips baseline, so the dry
+   builds on it. A fix was on workspace PR #44, which was closed unmerged; it still sits on branch `chore/NO_JIRA-plants-snagging-workarea` (synthesis §2.2, join 7). `planOnly` skips baseline, so the dry
    run was not affected.
 3. **The harness refuses a subagent writing a report file** ("subagents should return findings as text").
    The distil skill now has the report agent return its text for the main session to save. Other files write

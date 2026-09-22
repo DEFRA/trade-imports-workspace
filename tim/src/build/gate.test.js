@@ -238,8 +238,10 @@ describe('runGate — unit and FIT rungs', () => {
       expect.objectContaining({
         ok: false,
         log: null,
-        reason: expect.stringContaining(
-          `Port ${port} is in use by node (pid ${process.pid}).`
+        reason: expect.stringMatching(
+          new RegExp(
+            `^Port ${port} is in use by \\S+ \\(pid ${process.pid}\\)\\.`
+          )
         )
       })
     ])

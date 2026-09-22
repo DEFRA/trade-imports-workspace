@@ -223,15 +223,38 @@ touch reference data than on animals — origin (country), arrival-details
 themselves collect a country. The check-answers view-model and the
 dashboard row are the only display-side readers.
 
-| Page | Field(s) | Reader | GET render with stale stored value | POST rule | Empty allowed on POST? |
-|---|---|---|---|---|---|
-| origin | `countryOfOrigin` | `countries.originCountries()` | Select has no matching option; renders unselected. Prior code isn't visible. (origin/controller.js:137) | `requiredOneOf('countryOfOrigin', await countryValues(), …)` — origin/controller.js:70–77 | No. Empty rejected with `copy.errors.countryRequired`. |
-| arrival-details | `proposedPlaceOfLanding` (potato-conditional) | `ports.list()` | Select renders unselected when out of the current list. | `requiredOneOf(PROPOSED_PLACE_OF_LANDING, await portCodes(), …)` (arrival-details/controller.js:93–100) — **rule only applies when `asksForPotatoDetails(scope)` is true**. | No when the rule applies. If scope changes so it doesn't apply, the field is no longer collected here. |
-| consignor-select | address-book party (id) | address-book, not ref-data | Pre-selects the stored id if the address still exists; falls back to the picker. | `chosenFor()` verifies the id resolves against address-book. | Handled by the picker; not a ref-data path. |
-| consignment-contact-select | address-book party (id) | address-book | Same shape as consignor-select. | Same. | Same. |
-| place-of-destination | address-book party (id) | address-book | Same shape. | Same. | Same. |
-| check-answers (display) | `originLabel(code)` + `ports.label(code)` | both | Falls through to `undefined` on an unknown code (no `?? code` fallback in check-answers view-model — check-answers/view-model/index.js:111–116). Label renders empty. | n/a — display only | n/a |
-| dashboard row (display) | `originLabel(journey.originCountryCode)` | countries | Falls back to raw code: `originLabel ?? journey.originCountryCode ?? ''` (dashboard/view-model/row/index.js:18–27). | n/a | n/a |
+| Page | Field(s) | Reader | GET render with stale stored value | POST rule | Empty allowed on POST? | Status |
+|---|---|---|---|---|---|---|
+| origin | `countryOfOrigin` | `countries.originCountries()` | Select has no matching option; renders unselected. Prior code isn't visible. (origin/controller.js:137) | `requiredOneOf('countryOfOrigin', await countryValues(), …)` — origin/controller.js:70–77 | No. Empty rejected with `copy.errors.countryRequired`. | Fixed on `chore/EUDPA-573-plants-origin-page-hardening`. |
+| arrival-details | `proposedPlaceOfLanding` (potato-conditional) | `ports.list()` | Select renders unselected when out of the current list. | `requiredOneOf(PROPOSED_PLACE_OF_LANDING, await portCodes(), …)` (arrival-details/controller.js:93–100) — **rule only applies when `asksForPotatoDetails(scope)` is true**. | No when the rule applies. If scope changes so it doesn't apply, the field is no longer collected here. | Fixed on `chore/EUDPA-573-plants-origin-page-hardening` (scope-aware; nothing surfaced under a non-potato commodity). |
+| consignor-select | address-book party (id) | address-book, not ref-data | Pre-selects the stored id if the address still exists; falls back to the picker. | `chosenFor()` verifies the id resolves against address-book. | Handled by the picker; not a ref-data path. | Deferred — see below. |
+| consignment-contact-select | address-book party (id) | address-book | Same shape as consignor-select. | Same. | Same. | Deferred — see below. |
+| place-of-destination | address-book party (id) | address-book | Same shape. | Same. | Same. | Deferred — see below. |
+| check-answers (display) | `originLabel(code)` + `ports.label(code)` | both | Falls through to `undefined` on an unknown code (no `?? code` fallback in check-answers view-model — check-answers/view-model/index.js:111–116). Label renders empty. | n/a — display only | n/a | Deferred — see below. |
+| dashboard row (display) | `originLabel(journey.originCountryCode)` | countries | Falls back to raw code: `originLabel ?? journey.originCountryCode ?? ''` (dashboard/view-model/row/index.js:18–27). | n/a | n/a | Deferred — see below. |
+
+### Deferred rows
+
+Five rows above are deferred rather than fixed. The reasoning mirrors
+the animals-frontend deferrals: the trigger for change or the surface
+the change appears on sits outside this branch's scope.
+
+- **Three address-book pickers (`consignor-select`,
+  `consignment-contact-select`, `place-of-destination`).** These are
+  not MDM-backed; they resolve against the address-book service, and
+  the picker itself already handles the "party not found" case via
+  `chosenFor()`. Stale-address-book behaviour is a different problem
+  covered further down under "Address-book — the upstream stale-
+  state surface", and belongs on the address-book side rather than
+  every consumer.
+- **check-answers (display only).** Display concern rather than an
+  input handler. Fits the redesigned INS attention surface below
+  more naturally than a one-off CYA banner. Revisit when the INS
+  attention work crystallises.
+- **dashboard row (display only).** Same reasoning as the animals
+  dashboard row: the dashboards are being retired in favour of the
+  INS frontend (per the meeting notes below). Any fix here has a
+  lifespan tied to that migration.
 
 Not present on plants:
 

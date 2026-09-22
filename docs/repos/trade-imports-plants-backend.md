@@ -18,7 +18,7 @@ Owns:
 Does NOT own:
 - Journey UI, validation copy or flow: the plants frontend does.
 - Reference data, addresses, identity.
-- Outbound publishing: the README states there is no outbox, no GBN-AG event publishing and no PIMS routing. Unlike the animals backend, no SQS, SNS or S3 code is present.
+- Outbound publishing: no outbox, no GBN-AG event publishing and no PIMS routing exist yet, and unlike the animals backend, no SQS, SNS or S3 code is present. This is a gap to close, not the intended end state: an outbox is planned for the plants backend, on the same pattern as the animals backend (see [`architecture-overview.md`](architecture-overview.md#known-gaps-and-inconsistencies)).
 - Authentication: no auth or JWT dependency is in `pom.xml` and no security config was found. Unclear from code whether access control relies on the platform network.
 
 ## Integrations

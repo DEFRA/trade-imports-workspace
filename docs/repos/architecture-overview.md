@@ -67,7 +67,7 @@ flowchart LR
 | animals-backend | Animals notification aggregate and lifecycle, audit trail, the outbox and its publishing | UI, reference data, address records |
 | animals-admin | Internal views over notifications, DLQ operator UI | Business rules (delegates to backend and gateway) |
 | plants-frontend | High-risk plants UI, journey flow, validation, session | Persistence, reference data, addresses |
-| plants-backend | Plants notification aggregate and lifecycle, reference numbers, audit | Outbox, PIMS routing, identity |
+| plants-backend | Plants notification aggregate and lifecycle, reference numbers, audit | Identity. No outbox or PIMS routing yet — planned, not yet built |
 | ins-frontend | Sign-in front door, notifications dashboard, address-book UI (a backend-for-frontend) | Any database |
 | ins-backend | Cross-journey notification read model, built from events | Writes to notifications; it is read-only over REST |
 | address-book | Organisation-scoped address records (system of record) | Authentication; trusts the `Trade-Imports-Organisation-Id` header |
@@ -145,8 +145,11 @@ Each item says whether it is intended, planned, or an unresolved gap.
 - **Azure Service Bus consumer: PIMS.** PIMS consumes the queue the gateway
   publishes to. PIMS is outside the scope of this workspace and its team, so no
   repo here shows the consumer. This is expected, not a gap to close here.
-- **plants-backend publishes no events: intended for now.** The plants journey is
-  new and no events have been defined for it yet. Until they are, plants
+- **plants-backend publishes no events: intended for now, an outbox is planned.**
+  The plants journey is new and no events have been defined for it yet. An
+  outbox is planned for plants-backend on the same pattern as animals-backend
+  (SNS FIFO, aggregate id as message group), so treat this as build order, not
+  as a design difference between the two backends. Until it exists, plants
   notifications do not reach the INS read model or PIMS.
 - **No authentication on ins-backend and address-book: known gap, to fix later.**
   Today they rely on the caller and CDP ingress. Do not treat this as the

@@ -518,6 +518,18 @@ describe('increment-build-loop', () => {
       expect(prompt).toContain('NO repo may be on\n   `main` or `master`')
     })
 
+    test('tells the baseline the workspace stack must be down before it runs a suite', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        'Before you run a unit or FIT suite, the workspace stack must be DOWN'
+      )
+      expect(prompt).toContain('stop it with `tim docker down`')
+      expect(prompt).toContain(
+        "Name in your summary which repo's suite, if any, needed you to stop the stack first."
+      )
+    })
+
     test('refuses main as the branch to build on before any agent', async () => {
       const run = await runWorkflowScript(scriptPath, {
         args: { ...LOCAL_ARGS, branch: 'main' }

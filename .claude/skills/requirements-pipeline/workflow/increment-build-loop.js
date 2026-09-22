@@ -389,10 +389,23 @@ other stage leaves it alone: never start it, never leave it running, and never d
 \`docker compose\` — \`tim docker\` and \`scripts/stack/\` are the only wrappers. A running stack holds ports the unit
 and FIT suites need (a frontend's own port, the stub on :8086) and turns green suites red.`
 
+// The one check every stage below the ladder runs before ANY unit or FIT suite: is the workspace stack up, and
+// does it hold a port the suite needs? A run against increment hrp-origin-v2's baseline went baseline-red because
+// the stack was up and nobody checked first — the plants frontend's errors.test.js, which expects nothing
+// listening on :8086, got 200 instead of the 503 it asserts.
+const STACK_DOWN_CHECK = `Before you run a unit or FIT suite, the workspace stack must be DOWN — it holds ports those
+suites need (a frontend's own port, the stub's :8086) and turns green suites red. Check first:
+\`docker ps --filter label=com.docker.compose.project=trade-imports\` (or, port by port,
+\`lsof -nP -iTCP:<port> -sTCP:LISTEN\` — no output means free; a Docker process holding it — com.docker.backend,
+docker-proxy, OrbStack, vpnkit — is the workspace stack). If it is up, stop it with \`tim docker down\` and check
+again before you run the suite. Never drive it with raw \`docker\` or \`docker compose\`.`
+
 const STACK_RULE_FOR_BUILDERS = `${STACK_RULE}
-So YOU do not run E2E: leave those rungs to the ladder and name them in notes. If you find the stack already up
-and a unit or FIT suite you need is failing on a port it holds, stop it with \`tim docker down\` before you re-run
-that suite.`
+So YOU do not run E2E: leave those rungs to the ladder and name them in notes. ${STACK_DOWN_CHECK}`
+
+const STACK_RULE_FOR_BASELINE = `${STACK_RULE}
+${STACK_DOWN_CHECK}
+Name in your summary which repo's suite, if any, needed you to stop the stack first.`
 
 // The baseline stage's logs, named once so the ladder is pointed at exactly
 // the files the baseline wrote.
@@ -1398,13 +1411,14 @@ ${
    naming it. A local run commits every increment straight onto the branch it is on, so it builds on a scratch
    branch and never on a repo's default branch.`
 }
-3. Run the FASTEST meaningful suite for each repo, to a log, and read it once. The ladder later compares every red
+3. ${STACK_RULE_FOR_BASELINE}
+4. Run the FASTEST meaningful suite for each repo, to a log, and read it once. The ladder later compares every red
    rung with these logs, so write them to exactly these paths:
    frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${baselineLog(id, 'frontend')} 2>&1\`
    backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${baselineLog(id, 'backend')} 2>&1\`
    tests:    read package.json and run its unit/lint script if one exists, to \`${baselineLog(id, 'tests')}\`; if the
              suite needs a running stack, SKIP it and say so.
-4. Report ok:true only if every repo's tree is clean and every suite is green.
+5. Report ok:true only if every repo's tree is clean, the stack was down for every suite, and every suite is green.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema })
   )
@@ -1790,12 +1804,11 @@ named \`${id}-<repo>-<step>.log\`, reading each log ONCE. Every step must be gre
 - FORMAT RUNS IN CHECK MODE. The rung is the repo's \`format:check\` (or its check-only equivalent), never
   \`format\`. A red format check is repaired by running \`format\` and then the check again — that counts as one of
   your repairs, and it restarts the ladder like any other.
-- PORTS BEFORE EVERY UNIT OR FIT RUNG. The plan names the ports each rung listens on or needs free; where it does
-  not, read them from the repo's playwright.config.* / vitest.config.* and the tests' fixtures. For each port,
-  \`lsof -nP -iTCP:<port> -sTCP:LISTEN\` — no output means free. If the Docker engine holds it (com.docker.backend,
-  docker-proxy, OrbStack, vpnkit), that is the workspace stack: stop it with \`tim docker down\` and check again.
-  Stopping the stack is not a repair. If anything else holds it, name the process and pid in failures[] and do
-  not kill it. Never record a rung as "could not run" when the only thing in its way was the workspace stack.
+- PORTS BEFORE EVERY UNIT OR FIT RUNG. ${STACK_DOWN_CHECK} The plan names the ports each rung listens on or needs
+  free; where it does not, read them from the repo's playwright.config.* / vitest.config.* and the tests' fixtures,
+  and check each the same way. Stopping the stack is not a repair. If anything else holds a port, name the process
+  and pid in failures[] and do not kill it. Never record a rung as "could not run" when the only thing in its way
+  was the workspace stack.
 - E2E RUNGS: bring the stack up in the FOREGROUND with \`tim docker dev\` (Bash timeout 600000; it returns once the
   stack is healthy), run the E2E rungs, then \`tim docker down\` — every time, green or red, before you report or
   go back to a unit rung.

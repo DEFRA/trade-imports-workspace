@@ -789,8 +789,12 @@ and a different amount of new work.
    placed to emit change events on write. Third leg the
    notification-side options above largely miss.
 
-See "Target architecture — precompute + emit" below for how the
-three triggers feed a single downstream flow to the INS frontend.
+See "Deferred — auto-detect pipeline (precompute + emit)" below
+for the shape that would apply if we chose to react to these
+triggers automatically. The "Current recommendation" further down
+rejects that pipeline as impractical for the size of the risk we
+have evidence for; the section is retained as a captured design
+rather than a target.
 
 Open sub-questions:
 
@@ -810,7 +814,13 @@ Open sub-questions:
   display, so it does not depend on the attention-signalling work.
   Which lands first?
 
-## Target architecture — precompute + emit
+## Deferred — auto-detect pipeline (precompute + emit)
+
+Originally named as the target architecture; superseded by the
+"Current recommendation" below, which finds this pipeline
+impractical for the size of the risk we have evidence for. Kept as
+a captured design so a future decision to build it starts from a
+worked shape rather than a blank page.
 
 The end-to-end flow that keeps the existing event architecture's
 one-directional grain (compute → event → downstream store →
@@ -1048,13 +1058,13 @@ Open questions this framing surfaces:
   that requires each set to publish just that summary?
 - **What events does INS still consume?** Likely "notification
   created / status changed" for the index, not the per-notification
-  answer detail the auto-detect target requires.
+  answer detail the auto-detect pipeline would have required.
 - **Do the set backends still emit at the same fidelity?** If INS
   no longer needs the detail, other consumers might, so the payload
   shape is a separate question from the INS surface shape.
 - **Where does the address-book upstream stale-state show up?**
   Per set (each set frontend can query address-book live for its
-  own parties), same as it would under the target architecture.
+  own parties), same as it would under the auto-detect pipeline.
 - **How is the INS index kept fresh?** Same event backbone, thinner
   payload; or a scheduled pull.
 
@@ -1065,8 +1075,9 @@ the set-frontend dashboards.
 
 ## Current recommendation — ship what we have, defer the pipeline
 
-The full precompute + emit pipeline (target architecture, above) is
-substantial infrastructure — six discrete pieces (detection in
+The full precompute + emit pipeline (see "Deferred — auto-detect
+pipeline" above) is substantial infrastructure — six discrete
+pieces (detection in
 ref-data-service, event contract, set backend sweep, set frontend
 attention compute, INS backend ingest, INS CTA render), each with
 its own failure modes and evolution cost. It also bets against
@@ -1095,13 +1106,13 @@ Recommended position:
    silent MDM changes. Bounded work; not a full detection
    pipeline.
 
-Deferred: the full auto-detect target — precompute + emit + INS
-ingest + INS render. It is captured in the target-architecture
-section as the shape that would apply under conditions we have not
-validated (silent frequent MDM changes; regulatory obligation to
-proactively notify traders; population scale where the re-open path
-is provably insufficient). Revisit if evidence for any of those
-emerges.
+Deferred: the full auto-detect pipeline — precompute + emit + INS
+ingest + INS render. It is captured in the "Deferred — auto-detect
+pipeline" section as the shape that would apply under conditions
+we have not validated (silent frequent MDM changes; regulatory
+obligation to proactively notify traders; population scale where
+the re-open path is provably insufficient). Revisit if evidence
+for any of those emerges.
 
 If the CTA becomes a hard requirement, the recommended
 implementation is the **parent-dashboard pattern** above rather

@@ -18,14 +18,21 @@ set -e
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 
-RUN_ID=""; INC=""; STATUS=""; COMMIT=""; SPEC_COMMIT=""; REASON=""
+RUN_ID=""; INC=""; STATUS=""; COMMIT=""; SPEC_COMMIT=""; SPEC_COMMIT_GIVEN=false; REASON=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         EUDPA-*) RUN_ID="$1"; shift ;;
         --increment) INC="$2"; shift 2 ;;
         --status) STATUS="$2"; shift 2 ;;
         --commit) COMMIT="$2"; shift 2 ;;
-        --spec-commit) SPEC_COMMIT="$2"; shift 2 ;;
+        # Passing the flag EMPTY is meaningful and different from omitting
+        # it: commit-increment.sh always passes it, and an empty value means
+        # "this increment committed no spec" — an increment with no
+        # observable behaviour change writes none. Preserving the previous
+        # value there would leave a stale sha that rollback-increment.sh
+        # later matches HEAD against, which is the exact confusion its sha
+        # guard exists to prevent.
+        --spec-commit) SPEC_COMMIT="$2"; SPEC_COMMIT_GIVEN=true; shift 2 ;;
         --reason) REASON="$2"; shift 2 ;;
         *) echo "Unknown arg: $1" >&2; exit 1 ;;
     esac
@@ -51,12 +58,15 @@ exists=$(jq --arg id "$INC" '[.increments[] | select(.id == $id)] | length' "$ta
 tmp="$(mktemp "$target.XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
 jq --arg id "$INC" --arg status "$STATUS" --arg commit "$COMMIT" \
-   --arg spec_commit "$SPEC_COMMIT" --arg reason "$REASON" \
+   --arg spec_commit "$SPEC_COMMIT" --argjson spec_given "$SPEC_COMMIT_GIVEN" \
+   --arg reason "$REASON" \
     '.increments |= map(
         if .id == $id then
             .status = $status
             | .commit = (if $commit == "" then .commit else $commit end)
-            | .spec_commit = (if $spec_commit == "" then .spec_commit else $spec_commit end)
+            | .spec_commit = (if $spec_given
+                              then (if $spec_commit == "" then null else $spec_commit end)
+                              else .spec_commit end)
             | .failure_reason = (if $status == "failed" then $reason else null end)
         elif ($status == "failed" and (.dependsOn | index($id)) != null and .status == "todo") then
             .status = "blocked" | .failure_reason = ("blocked by failed " + $id)

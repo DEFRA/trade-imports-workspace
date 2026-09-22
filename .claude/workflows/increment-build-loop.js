@@ -353,6 +353,17 @@ Listing a repo the change leaves alone costs nothing — no change means no comm
 const CHANGED_REPOS_RULE = `WHICH REPOS: check EVERY configured repo — ${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')} —
 with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.`
 
+// frontend-change ends by writing the workspace's own behaviour spec under
+// openspec/ and leaves it uncommitted. The workspace is not a configured repo
+// and is never branched, so without this no stage commits those edits, they
+// pile up across a run, and a rolled-back increment leaves a spec for behaviour
+// that is gone.
+const SPEC_RULE = `THE BEHAVIOUR SPEC: an increment may also change \`${TILDE}/openspec/\`, the workspace repo's own spec and
+coverage, which frontend-change writes and leaves uncommitted. The workspace is not a configured repo and is never
+branched: act on \`openspec/\` ONLY, on whatever branch the workspace is on, and never on anything else in the
+workspace — not the backlog, not the plans, not the logs. See what it holds with
+\`git -C ${TILDE} status --short -- openspec/\`.`
+
 // Canonical merge order for a cross-repo increment. Lower merges first.
 //
 // backend before frontend: the backend is the provider and the frontend the
@@ -456,6 +467,9 @@ TASK — the work goes onto its own branch, not into a stash. A stash ref does n
    That is what lets another engineer fetch the attempt and see what was tried.
 5. Do NOT open a pull request. This work does not pass its ladder and must not look reviewable.
 6. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
+6a. ${SPEC_RULE} If it has changes, they cannot go on \`${branch}\` — the workspace is not on it — so stash them:
+   \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
+   \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
 7. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; branch <branch>; wip <sha>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
    Do NOT record a commit — the increment is not built, and a recorded commit would make the next attempt skip
@@ -473,6 +487,9 @@ TASK:
 2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for EACH of them that has changes — NEVER
    \`reset --hard\`, NEVER \`clean -fd\`. The stash is recoverable and that is the point.
 3. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
+3a. ${SPEC_RULE} If it has changes, stash them the same way:
+   \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
+   \`git -C ${TILDE} status --short -- openspec/\` is empty.
 4. Record it, so the next attempt starts informed:
    \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; stash <ref>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
@@ -1238,6 +1255,8 @@ TASK:
 1. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the ticket stage settled them: ${repos.join(', ')})` : ''} and confirm each one is clean:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
+   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
+   this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 2. Record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) and put it
    in your summary. Do not switch branches — an earlier stage owns that.
    One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
@@ -1660,6 +1679,11 @@ TASK:
    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
    Behaviour changes, from the plan: ${plan?.behaviourChanges?.length ? plan.behaviourChanges.map((b) => `\n   - ${b}`).join('') : 'none'}
    A slice across several repos gets ONE commit per repo, each with the same subject.
+4a. ${SPEC_RULE} If it has changes, they are part of this increment: commit them in the workspace with the same
+   subject and trailer, and nothing else from the workspace. Two commands, the pathspec on both:
+   \`git -C ${TILDE} add -- openspec/\` then \`git -C ${TILDE} commit -m "<message>" -- openspec/\`.
+   The pathspec on the commit is load-bearing: anything else staged in the workspace stays out of it. Do NOT push
+   the workspace. Name the spec commit in your summary, separately from the repo commits.
 5. Do NOT push. A later stage owns that.
 6. Record it: \`${setRow(id, `--commit "<sha, or several backend first, space separated>"${LIFECYCLE === 'local' ? ' --status done' : ''}`)}\`.${LIFECYCLE === 'local' ? '' : ' Leave the status alone — this increment is not done until its PRs are merged.'}
 Report the commit SHA. For several repos report each, backend first, space separated.

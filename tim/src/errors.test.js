@@ -25,6 +25,10 @@ describe('TimError', () => {
     expect(new TimError('LOCKED', 'x').code).toBe('LOCKED')
   })
 
+  test('constructs with DIRTY_TREE for a repo with uncommitted work', () => {
+    expect(new TimError('DIRTY_TREE', 'x').code).toBe('DIRTY_TREE')
+  })
+
   test('rejects unknown codes — protects the closed enum', () => {
     expect(() => new TimError('MADE_UP', 'x')).toThrow(/not in the allowed set/)
   })

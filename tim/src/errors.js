@@ -11,7 +11,8 @@ const VALID_CODES = new Set([
   'LINT',
   'UNKNOWN',
   'LOST_UPDATE',
-  'LOCKED'
+  'LOCKED',
+  'DIRTY_TREE'
 ])
 
 export class TimError extends Error {

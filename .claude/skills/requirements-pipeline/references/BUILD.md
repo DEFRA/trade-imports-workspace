@@ -131,22 +131,27 @@ idempotent, so it runs on reused tickets too.
    so report the failures and carry on. Do not rewrite another programme's backlog.
 4. **Under `lifecycle: local`, create the scratch branch.** Nothing else does:
    the loop has no branch stage under `local` and stops if any repo is not
-   already on `branch`. For each repo in the envelope's `repos`, one command per
-   call:
+   already on `branch`. One command does it for every repo in the envelope's
+   `repos`:
 
    ```bash
-   git -C ~/git/defra/trade-imports-workspace/<path> status --porcelain
-   git -C ~/git/defra/trade-imports-workspace/<path> rev-parse --verify --quiet refs/heads/<branch>
-   git -C ~/git/defra/trade-imports-workspace/<path> switch <branch>
-   git -C ~/git/defra/trade-imports-workspace/<path> fetch origin
-   git -C ~/git/defra/trade-imports-workspace/<path> symbolic-ref --short refs/remotes/origin/HEAD
-   git -C ~/git/defra/trade-imports-workspace/<path> switch -c <branch> <origin/default>
+   tim build branch <workarea> <branch> --lifecycle local --json
    ```
 
-   A repo with uncommitted changes is someone's work: stop and say which, and
-   never stash it. If the branch exists, switch to it; if not, fetch and cut it
-   from the default branch (`origin/main` when `symbolic-ref` prints nothing).
-   Every repo carries the same name (workspace rule 2).
+   It checks the branch out where it exists, and otherwise cuts it with
+   `--no-track` from the default branch, so every repo carries the same name
+   (workspace rule 2). A repo with uncommitted changes is someone's work: the
+   command changes nothing, exits 1 with `DIRTY_TREE` and names the files. Stop
+   and say which; never stash it. It refuses `main`, `master` or the default
+   branch under `local`. Running it again is a no-op.
+
+   The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
+   rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
+   a free-port check, then E2E against the workspace stack built from local
+   source. Every rung writes to its own log under `<workarea>/logs/`, a rung that
+   cannot run fails with its reason, and the command exits 1 unless every rung
+   passed. Add a repo's rungs to `gates.json` before the first increment that
+   builds it; the gate fails a repo it has no rungs for.
 5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
    it if the run is long; do not carry a stale copy in your head.

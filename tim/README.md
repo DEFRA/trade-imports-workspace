@@ -241,6 +241,38 @@ idempotent (a replay returns the first result and writes nothing), and
 3 (`LOST_UPDATE`) on a stale `--expect-sha` and 4 (`LOCKED`) when another
 process holds the write lock after every retry.
 
+### `tim build` — the build loop's deterministic steps
+
+The build loop's branch and gate steps, run the same way every time. Both read
+the repos a backlog builds from its envelope `repos` map.
+
+```bash
+tim build branch shared/my-programme feat/EUDPA-123-origin --lifecycle full --json   # every backlog repo on one branch
+tim build gate shared/my-programme --phase unit --json      # unit rungs only
+tim build gate shared/my-programme --json                   # unit, then FIT, then E2E
+tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere other than <workarea>/logs/
+```
+
+`tim build branch` checks the branch out in each repo where it exists
+locally, and otherwise cuts it with `--no-track` from `origin/<branch>` if the
+remote has it, else from the repo's default branch. It changes nothing if a
+repo it would move has uncommitted work (exit 1, `DIRTY_TREE`, naming the
+files), and under `--lifecycle local` it refuses `main`, `master` or the
+repo's default branch (exit 2). Running it again is a no-op.
+
+`tim build gate` runs the rungs in
+`.claude/skills/requirements-pipeline/references/gates.json` for each backlog
+repo, in backlog order: every unit rung, then every FIT rung (after checking
+its ports are free — a held port fails the rung and names the holder), then
+the E2E rungs against the workspace stack built from local source
+(`run-stack.sh -d`, the path `tim docker dev` takes). If the stack was down,
+the gate starts it and always stops it afterwards; if it was up, the gate
+rebuilds it from local source and leaves it up. Each rung writes to
+`gate-<repo>-<rung>.log`; nothing streams. A rung that cannot run fails with
+its reason. The result is `{green, rungs, stack}` and the command exits 1
+unless every rung passed. gates.json refuses any rung that names a remote or
+CDP script.
+
 ### Bypassing the interactive menu
 
 The menu only opens when stdout is a TTY and the user has not asked for plain text. In any of the following situations tim falls back to printing `--help` to stdout, so pipes, CI and skill scripts keep working unchanged:

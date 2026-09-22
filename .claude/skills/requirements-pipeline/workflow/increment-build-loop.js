@@ -1475,8 +1475,11 @@ ${
    rung with these logs, so write them to exactly these paths:
    frontend: \`npm --prefix ${TILDE}/${REPO_PATH.frontend} test > ${baselineLog(id, 'frontend')} 2>&1\`
    backend:  \`mvn -q -f ${TILDE}/${REPO_PATH.backend}/pom.xml test > ${baselineLog(id, 'backend')} 2>&1\`
-   tests:    read package.json and run its unit/lint script if one exists, to \`${baselineLog(id, 'tests')}\`; if the
-             suite needs a running stack, SKIP it and say so.
+   tests:    run only the static-check scripts its package.json defines — \`format:check\`, \`lint\`, \`typecheck\` —
+             to \`${baselineLog(id, 'tests')}\`; never a Playwright/browser/E2E script, even one that looks like the
+             repo's main \`test\` script. Those belong to the ladder, which runs them against the local stack.
+             The same principle holds for every repo: baseline runs unit and static checks only, never a script
+             that needs a running stack or a remote environment.
 5. Report ok:true only if every repo's tree is clean, the stack was down for every suite, and every suite is green.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: incrementSchema })

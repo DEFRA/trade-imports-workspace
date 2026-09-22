@@ -530,6 +530,15 @@ describe('increment-build-loop', () => {
       )
     })
 
+    test('tells the baseline to run only the tests repo static checks, never a Playwright/E2E script', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        'run only the static-check scripts its package.json defines — `format:check`, `lint`, `typecheck`'
+      )
+      expect(prompt).toContain('never a Playwright/browser/E2E script')
+    })
+
     test('refuses main as the branch to build on before any agent', async () => {
       const run = await runWorkflowScript(scriptPath, {
         args: { ...LOCAL_ARGS, branch: 'main' }

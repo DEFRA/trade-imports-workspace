@@ -1,8 +1,9 @@
 # The backlog shape
 
-One `backlog.json` shape joins the pieces. The `distil` skill writes it, `tim backlog check` validates it, and
-build-orchestrator and `.claude/workflows/increment-build-loop.js` read it. It lives at
-`workareas/<workarea>/backlog.json`.
+One `backlog.json` shape joins the pieces of the `requirements-pipeline` skill. The DISTIL phase
+([`DISTIL.md`](DISTIL.md)) writes it, `tim backlog check` validates it (`tim/src/backlog/shape.js`), and the BUILD
+phase ([`BUILD.md`](BUILD.md)) and [`../workflow/increment-build-loop.js`](../workflow/increment-build-loop.js)
+read it. It lives at `workareas/<workarea>/backlog.json`.
 
 An increment is a **requirement**: what, why and acceptance. It is never a recipe. The build loop's plan stage
 works out the how against the live tree, just in time, and writes it to `workareas/<workarea>/plans/<id>.md`.

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'acorn'
@@ -10,11 +10,12 @@ import {
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
-// The args items of DESIGN 4.6's contract test: every .claude/workflows/*.js
-// script accepts args as a string, stops naming any missing required key,
-// logs its resolved configuration first, and carries no fallback defaults.
-// Later increments add the rails, briefs, skill-contract and span-walker
-// items alongside these (inc-014, inc-019).
+// The args items of DESIGN 4.6's contract test: every workflow script — the
+// shared ones in .claude/workflows/ and a skill's own under
+// .claude/skills/<skill>/workflow/ — accepts args as a string, stops naming
+// any missing required key, logs its resolved configuration first, and
+// carries no fallback defaults. Later increments add the rails, briefs,
+// skill-contract and span-walker items alongside these (inc-014, inc-019).
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),
   '..',
@@ -22,14 +23,25 @@ const workspaceRoot = join(
   '..'
 )
 const workflowsDir = join(workspaceRoot, '.claude', 'workflows')
+const skillsDir = join(workspaceRoot, '.claude', 'skills')
+const buildLoopDir = join(skillsDir, 'requirements-pipeline', 'workflow')
 
-const workflowScripts = () =>
-  readdirSync(workflowsDir)
+const skillWorkflowDirs = () =>
+  readdirSync(skillsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(skillsDir, entry.name, 'workflow'))
+    .filter((dir) => existsSync(dir))
+
+const scriptsIn = (dir) =>
+  readdirSync(dir)
     .filter((name) => name.endsWith('.js'))
     .map((name) => {
-      const path = join(workflowsDir, name)
+      const path = join(dir, name)
       return { name, path, source: readFileSync(path, 'utf8') }
     })
+
+const workflowScripts = () =>
+  [workflowsDir, ...skillWorkflowDirs()].flatMap(scriptsIn)
 
 const countOccurrences = (source, marker) => source.split(marker).length - 1
 
@@ -267,7 +279,7 @@ describe('args-canary', () => {
 })
 
 describe('increment-build-loop', () => {
-  const scriptPath = join(workflowsDir, 'increment-build-loop.js')
+  const scriptPath = join(buildLoopDir, 'increment-build-loop.js')
 
   const runJsonStringArgs = () =>
     runWorkflowScript(scriptPath, {

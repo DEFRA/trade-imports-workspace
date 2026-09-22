@@ -12,7 +12,7 @@ import { makeBacklogAction, parseOptions } from './shared.js'
 
 /**
  * The backlog.json under `workareas/<workarea>/`, the same path the build loop
- * and build-orchestrator take. Refuses an absolute path or one that climbs out
+ * and the BUILD phase take. Refuses an absolute path or one that climbs out
  * of workareas/ before any read.
  *
  * @param {string} workspaceRoot

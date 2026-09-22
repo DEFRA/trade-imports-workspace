@@ -18,7 +18,7 @@ export const STATUSES = [
 /**
  * The statuses the build never picks up. Named as a deny-list, so a status
  * nobody expected is picked up and seen rather than silently skipped
- * (build-orchestrator, "Buildability is status and dependencies").
+ * (requirements-pipeline BUILD.md, "Buildability is status and dependencies").
  */
 export const WITHHELD_STATUSES = new Set([
   'done',
@@ -140,7 +140,7 @@ const countByStatus = (rows) => {
 
 /**
  * Every way a backlog departs from the one shape the distiller writes and the
- * build loop reads (docs/reference/backlog-shape.md).
+ * build loop reads (.claude/skills/requirements-pipeline/references/SHAPE.md).
  *
  * @param {unknown} backlog - The parsed backlog.json
  * @returns {{problems: string[], counts: Record<string, number>, total: number}}
@@ -172,7 +172,7 @@ export const checkBacklog = (backlog) => {
 
 /**
  * The first row, in file order, that is not withheld and whose every
- * dependency is `done` — the same rule build-orchestrator's derive step
+ * dependency is `done` — the same rule the BUILD phase's derive step
  * states.
  *
  * @param {{increments: object[]}} backlog

@@ -214,8 +214,9 @@ tim backlog question check-page <programme> --page design/decisions-for-sam.md -
 ```
 
 Three commands work on any workarea's `backlog.json` in the one backlog shape
-(`docs/reference/backlog-shape.md`), with no registration. The distiller and
-the build loop use them:
+(`.claude/skills/requirements-pipeline/references/SHAPE.md`), with no
+registration. The requirements-pipeline skill's DISTIL and BUILD phases and the
+build loop use them:
 
 ```bash
 tim backlog check shared/my-programme --json     # the shape, dependencies, cycles and recipe fields; exits 1 when out of shape

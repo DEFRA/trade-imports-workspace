@@ -27,12 +27,17 @@ tim is green at `2dc0596d`: 149 test files, 1,963 tests, lint clean.
 
 ## How to use them now
 
-- **Distil:** say "distil these sources into a backlog" and name them. The skill (`.claude/skills/distil/SKILL.md`)
-  writes `workareas/shared/<programme>/sources.json`, then extracts, verifies, reconciles, consolidates, and
-  writes `backlog.json` and `report.md`. Read the report's questions first.
-- **Build:** say "orchestrate the build" with the workarea (build-orchestrator). To see how one increment would
-  be built without building it, run the loop with `planOnly: true`. Codex mode: `executor: 'codex'`, from the
-  same backlog, unedited.
+Everything is one skill, `.claude/skills/requirements-pipeline/` (D17): `SKILL.md` says which phase to use and
+what is coupled to what; `references/SHAPE.md` is the backlog shape; `references/DISTIL.md` and
+`references/BUILD.md` are the two phases; `workflow/` holds the loop, its README and the Codex briefs.
+
+- **Distil:** say "distil these sources into a backlog" and name them. The DISTIL phase
+  (`references/DISTIL.md`) writes `workareas/shared/<programme>/sources.json`, then extracts, verifies,
+  reconciles, consolidates, and writes `backlog.json` and `report.md`. Read the report's questions first.
+- **Build:** say "orchestrate the build" with the workarea. The BUILD phase (`references/BUILD.md`) launches
+  `Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args })`. To
+  see how one increment would be built without building it, run the loop with `planOnly: true`. Codex mode:
+  `executor: 'codex'`, from the same backlog, unedited.
 
 ## Waiting for Sam
 
@@ -42,13 +47,13 @@ tim is green at `2dc0596d`: 149 test files, 1,963 tests, lint clean.
    builds on it. A fix was on workspace PR #44, which was closed unmerged; it still sits on branch `chore/NO_JIRA-plants-snagging-workarea` (synthesis §2.2, join 7). `planOnly` skips baseline, so the dry
    run was not affected.
 3. **The harness refuses a subagent writing a report file** ("subagents should return findings as text").
-   The distil skill now has the report agent return its text for the main session to save. Other files write
+   The DISTIL phase now has the report agent return its text for the main session to save. Other files write
    fine.
 
 ## The exact next step
 
-Pick a real programme and run the distiller on its sources, then build its first increment with
-build-orchestrator under `lifecycle: full` and `requireApproval: true`. That is the first end-to-end run of the
+Pick a real programme and run the DISTIL phase on its sources, then build its first increment with the
+BUILD phase under `lifecycle: full` and `requireApproval: true`. That is the first end-to-end run of the
 fixed loop past planning.
 
 ---

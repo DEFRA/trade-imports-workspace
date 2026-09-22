@@ -43,6 +43,11 @@ Each entry: the choice, then how to reverse it. Written while Sam was asleep, 21
 - **D16. Rows carry optional `requirements` ids, and coverage (each adopted requirement in exactly one increment) is two `jq` lines in the skill.** A candidate for `tim backlog check --requirements`, not built.
   Reverse: drop the field and the two checks.
 
+## The layout
+
+- **D17. The shape doc, the distil skill, the build-orchestrator skill, the build loop and its Codex briefs are one skill, `.claude/skills/requirements-pipeline/`, with a DISTIL and a BUILD phase.** They were one coupled system in five places; the paths D1–D16 name are the pre-D17 ones (`docs/reference/backlog-shape.md` → `references/SHAPE.md`, `skills/distil/SKILL.md` → `references/DISTIL.md`, `skills/build-orchestrator/SKILL.md` → `references/BUILD.md`, `.claude/workflows/{increment-build-loop.js,codex/}` → `workflow/`).
+  Reverse: `git mv` each file back, restore the two SKILL.md frontmatters and the `distil` row in `CLAUDE.md`, and drop the skill-workflow scan from `tim/src/backlog/workflow-contract.test.js` and the path from `tim-ci.yml`.
+
 ## Suggestions, not built
 
 - A Codex plan brief (D5).

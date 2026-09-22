@@ -5,7 +5,7 @@ export const meta = {
   phases: [{ title: 'Resolve' }]
 }
 
-// >>> args-contract: byte-identical in every .claude/workflows/*.js, checked by tim/src/backlog/workflow-contract.test.js
+// >>> args-contract: byte-identical in every workflow script (.claude/workflows/*.js, .claude/skills/*/workflow/*.js), checked by tim/src/backlog/workflow-contract.test.js
 const parseArgs = (workflowName, rawArgs) => {
   if (typeof rawArgs !== 'string') return rawArgs
   try {

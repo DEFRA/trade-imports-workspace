@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    "Running any increment backlog under workareas/ in the one backlog shape (docs/reference/backlog-shape.md): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys. planOnly:true writes the plan and stops.",
+    "Running any increment backlog under workareas/ in the one backlog shape (.claude/skills/requirements-pipeline/references/SHAPE.md): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys. planOnly:true writes the plan and stops.",
   phases: [
     { title: 'Ticket' },
     { title: 'Branch' },
@@ -92,7 +92,7 @@ export const meta = {
 // programme on another board must say so, and the run throws at startup if the
 // id is missing rather than quietly leaving every ticket in the backlog.
 // ---------------------------------------------------------------------------
-// >>> args-contract: byte-identical in every .claude/workflows/*.js, checked by tim/src/backlog/workflow-contract.test.js
+// >>> args-contract: byte-identical in every workflow script (.claude/workflows/*.js, .claude/skills/*/workflow/*.js), checked by tim/src/backlog/workflow-contract.test.js
 const parseArgs = (workflowName, rawArgs) => {
   if (typeof rawArgs !== 'string') return rawArgs
   try {
@@ -327,8 +327,8 @@ const setRow = (id, flags) => `tim backlog set ${WORKAREA_REL} ${id} ${flags} --
 const SET_ROW_RULE = `WRITING TO THE BACKLOG: never Edit ${BACKLOG} by hand. Every write is one \`tim backlog set\` call, shown
 where it is needed. It exits non-zero and says why if the write is refused — report that, do not work around it.`
 const SKILLS = ABS + '/.claude/skills'
-const BRIEFS = ABS + '/.claude/workflows/codex'
-const BRIEFS_TILDE = TILDE + '/.claude/workflows/codex'
+const BRIEFS = ABS + '/.claude/skills/requirements-pipeline/workflow/codex'
+const BRIEFS_TILDE = TILDE + '/.claude/skills/requirements-pipeline/workflow/codex'
 const JIRA = TILDE + '/tools/jira'
 
 const REPO_PATH = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].path]))

@@ -1,13 +1,10 @@
----
-name: build-orchestrator
-description: Drive an increment backlog through the increment-build-loop workflow, one increment at a time, from the main session. Derives the next buildable increment from backlog.json, runs the loop over it, checks it landed, and repeats until a set number of increments is done or something stops it — then prints a copy-paste handover prompt so a replacement agent resumes with no other context. Switches the executor between Claude and Codex, per run or between increments. Use when the user wants to build increments from a workarea backlog, resume a build run, or hand one over (triggers "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build"). NOT for authoring or ordering a backlog — that is the distil skill, or parity for a comparison corpus. NOT for one already-agreed change to a repo — that is frontend-change or ticket.
----
+# BUILD phase
 
-# build-orchestrator
-
-Runs `increment-build-loop.js` over a backlog, one increment per invocation,
-from **the session you are in**. There is no orchestrator tier below you and no
-subagent between you and the loop.
+The second phase of the `requirements-pipeline` skill. Runs
+[`../workflow/increment-build-loop.js`](../workflow/increment-build-loop.js) over
+a backlog the DISTIL phase ([`DISTIL.md`](DISTIL.md)) wrote, one increment per
+invocation, from **the session you are in**. There is no orchestrator tier below
+you and no subagent between you and the loop.
 
 ## Why there is only one tier
 
@@ -112,7 +109,7 @@ idempotent, so it runs on reused tickets too.
    this for the user and the run is throttled without it.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It is the
-   one shape in `docs/reference/backlog-shape.md`: each row a requirement (what,
+   one shape in [`SHAPE.md`](SHAPE.md): each row a requirement (what,
    why, acceptance), never a recipe. The loop plans the how itself, just in time,
    into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
@@ -167,7 +164,8 @@ order. Array order is the right default, not a rule.
 
 ### 2. Run the loop over it
 
-**Never edit `.claude/workflows/increment-build-loop.js`.** It is tracked and
+**Never edit `.claude/skills/requirements-pipeline/workflow/increment-build-loop.js`
+during a run.** It is tracked and
 shared by every programme.
 
 Configuration goes only in `args`, as a JSON object. The loop parses a JSON
@@ -208,7 +206,7 @@ Build the args object with every key below:
 Then wrap that object as `args`, launching by `scriptPath`:
 
 ```
-Workflow({ scriptPath: ".claude/workflows/increment-build-loop.js", args: <the object above> })
+Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args: <the object above> })
 ```
 
 **One id. Never more.** Change nothing else in `args`. Write `repos` out in
@@ -353,7 +351,7 @@ resumption mechanism: there is no ledger and no session state, because
 state the next machine cannot see.
 
 ````
-Resume the <programme> build with the build-orchestrator skill.
+Resume the <programme> build with the requirements-pipeline skill's BUILD phase.
 
 workarea     <workarea>
 branch       <branch>
@@ -393,7 +391,7 @@ defect.
 `claude` runs every stage as a Claude subagent — the proven path.
 
 `codex` delegates the three token-heavy stages, **implement, review and fix**,
-to Codex CLI via the briefs in `.claude/workflows/codex/`. Baseline, plan, verify
+to Codex CLI via the briefs in [`../workflow/codex/`](../workflow/codex/). Baseline, plan, verify
 findings, judge, ladder and land stay on Claude either way. Both executors build
 from the same plan file, so the same backlog builds under either with no edit.
 Codex mode is `19 + n` agents against `16 + 3n`, so it is markedly cheaper on a

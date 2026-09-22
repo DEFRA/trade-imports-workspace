@@ -1,15 +1,11 @@
----
-name: distil
-description: Turn loose requirements from any mix of sources — Playwright trace sets, Confluence pages, documents (docx, PDF, text), images, another repo — into one backlog.json of full-stack increments in the one backlog shape, plus a decision-led report. Extracts with provenance per source, verifies each extract with a different agent, cross-references and reconciles across sources, records conflicts and open questions, then consolidates thin vertical slices into sensibly sized increments. The output is what build-orchestrator and increment-build-loop build from. Use when the user wants requirements distilled into a backlog (triggers "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil"). NOT for building the backlog — that is build-orchestrator. NOT for a comparison findings report between two built things — that is parity.
----
+# DISTIL phase
 
-# distil
+The first phase of the `requirements-pipeline` skill. Sources in, one `backlog.json` out. Every row is a
+**requirement** (what, why, acceptance), never a recipe, and a **full-stack slice**, never one layer of one. The
+shape is `~/git/defra/trade-imports-workspace/.claude/skills/requirements-pipeline/references/SHAPE.md`: read it
+before you start. The BUILD phase ([`BUILD.md`](BUILD.md)) builds what this phase writes.
 
-Sources in, one `backlog.json` out. Every row is a **requirement** (what, why, acceptance), never a recipe, and
-a **full-stack slice**, never one layer of one. The shape is
-`~/git/defra/trade-imports-workspace/docs/reference/backlog-shape.md`: read it before you start.
-
-This skill joins pieces that already exist. It does not replace them:
+This phase joins pieces that already exist. It does not replace them:
 
 | Step | The existing piece it uses |
 |---|---|
@@ -177,7 +173,7 @@ it passes.
   ids it covers), `sources`, `repos`, `kind`, `dependsOn` (a real ordering need only), `status`, and
   `openQuestions` where a question touches it.
 - An acceptance criterion never names a file, function, class, CSS class, test file or command (the rules
-  in `backlog-shape.md`).
+  in `SHAPE.md`).
 - A row touched by an unanswered question is `todo` when its question has a default, with the question in
   `openQuestions` so the builder follows the default and says so. It is `blocked` only when there is no safe
   default to build.
@@ -219,5 +215,5 @@ Plain English, GDS style: short sentences, active voice. No file dumps.
 - Every adopted requirement is in exactly one increment.
 - `report.md` leads with the questions.
 - Tell the user: the counts, the questions, and how to build it:
-  `tim backlog next <workarea-under-workareas>`, then build-orchestrator. For a dry run of one increment's plan,
+  `tim backlog next <workarea-under-workareas>`, then the BUILD phase (`BUILD.md`). For a dry run of one increment's plan,
   run the build loop with `planOnly: true`.

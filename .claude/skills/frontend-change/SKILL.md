@@ -16,8 +16,9 @@ The recipes are the instructions — this skill routes to the right one, adds th
 guard rails the docs assume, runs the verification ladder, and records what
 landed in the workspace's behaviour spec. Do not restate or
 improvise around a recipe: read it and follow it, varying as little as possible.
-The outcome is one verified increment staged in the target repo, reported and
-stopped — commit is the caller's call unless they said otherwise.
+The outcome is one verified increment written but uncommitted in the target
+repo, reported and stopped — commit is the caller's call unless they said
+otherwise.
 
 ## Path conventions
 

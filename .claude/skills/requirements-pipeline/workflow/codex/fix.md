@@ -12,12 +12,17 @@ pipes, `node`, `npx`, absolute paths and `cd` are fine.
 
 ## Constants
 
-Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`,
+Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`, `<branch>`,
 `<INCREMENT_ID>` — is bound to a real value in the prompt that pointed you here. Use those bindings;
 never guess one.
 
 Workspace root `<workspace>`; plan of record `<backlog>`; logs
 `<logs>`; repos under `<workspace>/repos/`.
+
+Every repo this increment touches is already on branch `<branch>` — cut for this increment by an earlier
+stage, or, on a local run, the branch the run was given. Do not switch branches and do not create one,
+even where no separate increment branch seems to exist: your fixes stay staged on `<branch>`, where the
+land stage commits them.
 
 ## Rules
 

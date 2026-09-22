@@ -730,6 +730,187 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain('You are that stage: you own the stack')
       })
+
+      const GREEN_LADDER = {
+        green: true,
+        ran: ['frontend unit'],
+        summary: 'green'
+      }
+      const ON_BRANCH = {
+        ok: true,
+        summary: 'every repo on spike/args-fixture'
+      }
+      const PRESERVED = { ok: true, summary: 'stashed as failed-inc-900' }
+
+      const runToLand = (guardAnswer, landAnswer) =>
+        runWorkflowScript(scriptPath, {
+          args: LOCAL_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            PREFLIGHT_ANSWER,
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            GREEN_LADDER,
+            guardAnswer,
+            landAnswer,
+            PRESERVED
+          ]
+        })
+
+      const runToFailedLand = () =>
+        runToLand(ON_BRANCH, {
+          landed: false,
+          summary: 'backend is on spike/args-fixture-inc-900'
+        })
+
+      const labels = (run) => run.agents.map((entry) => entry.options.label)
+
+      test('checks every repo is on the branch before land', async () => {
+        const run = await runToFailedLand()
+
+        expect(labels(run).indexOf('inc-900 branch-guard:land')).toBe(
+          labels(run).indexOf('inc-900 land') - 1
+        )
+      })
+
+      test('tells the branch guard which branch every repo must be on', async () => {
+        const run = await runToFailedLand()
+        const guardPrompt = run.agents.find(
+          (entry) => entry.options.label === 'inc-900 branch-guard:land'
+        ).prompt
+
+        expect(guardPrompt).toContain(
+          'Every repo this increment works\nin must be on `spike/args-fixture`'
+        )
+      })
+
+      test('preserves the attempt when land fails', async () => {
+        const run = await runToFailedLand()
+
+        expect(labels(run).slice(-2)).toEqual([
+          'inc-900 land',
+          'inc-900 preserve'
+        ])
+      })
+
+      test('records a failed land with what the preserve stage kept', async () => {
+        const run = await runToFailedLand()
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'land-failed',
+          detail: 'backend is on spike/args-fixture-inc-900',
+          preserved: 'stashed as failed-inc-900'
+        })
+      })
+
+      test('preserves the attempt instead of landing when a repo is off the branch', async () => {
+        const run = await runToLand(
+          { ok: false, summary: 'backend is on another commit' },
+          PRESERVED
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'off-branch',
+          preserved: 'stashed as failed-inc-900'
+        })
+        expect(labels(run)).not.toContain('inc-900 land')
+      })
+
+      describe('with the codex executor', () => {
+        const CODEX_RAN = { ok: true, summary: 'codex ran in one slice' }
+
+        const runCodexToReview = () =>
+          runWorkflowScript(scriptPath, {
+            args: { ...LOCAL_ARGS, executor: 'codex' },
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              BASELINE_ANSWER,
+              PLAN_ANSWER,
+              CODEX_RAN,
+              implementAnswer(['frontend:src/a.js', 'backend:src/B.java']),
+              ON_BRANCH,
+              CODEX_RAN,
+              CODEX_RAN,
+              CODEX_RAN,
+              NO_FINDINGS,
+              NO_FINDINGS,
+              NO_FINDINGS,
+              ON_BRANCH
+            ]
+          })
+
+        const codexShellPrompt = (run, slug) =>
+          run.agents.find(
+            (entry) => entry.options.label === `inc-900 codex:${slug}`
+          ).prompt
+
+        test('runs one codex review per group and one for consistency', async () => {
+          const run = await runCodexToReview()
+
+          expect(
+            labelsInPhase(run, 'Review').filter((label) =>
+              label.startsWith('inc-900 codex:')
+            )
+          ).toEqual([
+            'inc-900 codex:review-frontend-javascript',
+            'inc-900 codex:review-backend-java',
+            'inc-900 codex:review-consistency'
+          ])
+        })
+
+        test('relays every codex review through the findings schema', async () => {
+          const run = await runCodexToReview()
+
+          expect(
+            labelsInPhase(run, 'Review').filter((label) =>
+              label.startsWith('inc-900 relay:')
+            )
+          ).toEqual([
+            'inc-900 relay:review-frontend-javascript',
+            'inc-900 relay:review-backend-java',
+            'inc-900 relay:review-consistency'
+          ])
+        })
+
+        test("binds a group's files and its style and code personas", async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview(),
+            'review-frontend-javascript'
+          )
+
+          expect(prompt).toContain(
+            '<personas> = /ws/.claude/skills/code-style/references/STYLE_FILE_REVIEWER.md, /ws/.claude/skills/review/references/FILE_REVIEWER.md'
+          )
+          expect(prompt).toContain('<reviewFiles> = frontend:src/a.js')
+        })
+
+        test('binds the consistency persona to the consistency review', async () => {
+          const prompt = codexShellPrompt(
+            await runCodexToReview(),
+            'review-consistency'
+          )
+
+          expect(prompt).toContain(
+            '<personas> = /ws/.claude/skills/review/references/CONSISTENCY_REVIEWER.md'
+          )
+        })
+
+        test('checks the branch after the implement and review stages', async () => {
+          const run = await runCodexToReview()
+
+          expect(
+            labels(run).filter((label) => label.includes('branch-guard'))
+          ).toEqual([
+            'inc-900 branch-guard:implement',
+            'inc-900 branch-guard:review'
+          ])
+        })
+      })
     })
 
     test('still plans against main when planOnly is true', async () => {

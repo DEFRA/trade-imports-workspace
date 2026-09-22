@@ -13,13 +13,27 @@ Compound commands, pipes, `node`, `npx`, absolute paths and `cd` are all fine he
 ## Constants
 
 Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<skills>`,
-`<INCREMENT_ID>`, `<branch>`, `<baseBranch>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>` — is bound
-to a real value in the prompt that pointed you here. Use those bindings; never guess one. `<repo>` below
-means each of the repo paths the plan changes. The increment is a full-stack slice: review it in every one.
+`<INCREMENT_ID>`, `<branch>`, `<baseBranch>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>`,
+`<personas>`, `<reviewFiles>` — is bound to a real value in the prompt that pointed you here. Use those
+bindings; never guess one. `<repo>` below means each of the repo paths the plan changes.
 
 Workspace root `<workspace>`; plan of record `<backlog>`. The three repos are `<frontendRepo>`,
 `<backendRepo>` and `<testsRepo>` — bound per run, and different between programmes. Never substitute
 a repo name you remember from another run.
+
+Every repo is already on branch `<branch>`. Do not switch branches and do not create one.
+
+## Your share of the review
+
+The review is split the same way whichever executor runs it: one run per (repo, language) group of
+changed files, applying the style and code personas to that group, plus one consistency run across the
+whole change. You are ONE of those runs.
+
+- `<reviewFiles>` is your share. For a group run it lists the files, each written
+  `<repoKey>:<repo-relative path>`: review every one of them in full and report findings on those files
+  only — another run has each other group. For the consistency run it is the whole change: look across
+  files and repos, not at one file on its own merits.
+- `<personas>` is the persona file or files to apply. Apply those and no other.
 
 ## Step 1 — load the standard
 
@@ -31,11 +45,13 @@ first and the plan second. A better solution than the plan imagined is not a fin
 the plan did not declare is. Never raise a finding whose substance is that the increment was
 underspecified.
 
-Read the personas that define the house standard and apply all three:
+Read each persona bound to `<personas>` in full and apply it. They are drawn from:
 
 - `<skills>/review/references/FILE_REVIEWER.md` — correctness, security, error handling, test quality
-- `<skills>/review/references/CONSISTENCY_REVIEWER.md` — the cross-file lens
 - `<skills>/code-style/references/STYLE_FILE_REVIEWER.md` — style and conventions
+- `<skills>/review/references/CONSISTENCY_REVIEWER.md` — the cross-file lens
+
+A file persona is written per file: apply it to each file in `<reviewFiles>` in turn.
 
 **Then look at the change (Step 2) before you load any tech-specific rules**, and load only the ones the
 change actually needs:
@@ -58,8 +74,9 @@ more. Read them and hunt for them alongside the standing list below.
 
 ## Step 2 — see the change
 
-Review **the increment's whole change**, which is everything the branch has added on top of the base —
-not just what happens to be sitting in the index right now:
+See **the increment's whole change**, which is everything the branch has added on top of the base —
+not just what happens to be sitting in the index right now. A group run reads it for context and
+reports on `<reviewFiles>` only:
 
 ```bash
 git -C <repo> diff <baseBranch>...HEAD --stat

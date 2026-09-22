@@ -119,7 +119,7 @@ idempotent, so it runs on reused tickets too.
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is 22–34 agents against a default guideline of 15. You cannot set
+   increment is 23–35 agents on Claude and 29–41 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -428,9 +428,12 @@ defect.
 to Codex CLI via the briefs in [`../workflow/codex/`](../workflow/codex/). Baseline, plan, verify
 findings, judge, ladder and land stay on Claude either way. Both executors build
 from the same plan file, so the same backlog builds under either with no edit.
-Codex mode is `19 + g` agents against `16 + 3g`, where `g` is the number of
+Codex mode is at most `23 + 3g` agents against `17 + 3g`, where `g` is the number of
 (repo, language) groups the changed files fall into — typically 2–6, however many
 files there are, because review and verification fan out per group, not per file.
+Both executors review at the same granularity: Codex runs one review per group plus
+one consistency review, each a shell and a relay, and a branch guard after every
+codex stage keeps each repo on the run's branch.
 
 Switch by changing `executor` in the next increment's args. **It
 takes effect at the next increment and never mid-increment**, so a run can start
@@ -438,9 +441,10 @@ on Claude, move to Codex when the increments get wide, and move back. Say which
 executor built each increment in your per-increment line.
 
 Codex mode needs a Codex login. If a codex stage produces no result — non-zero
-exit, no last-message file, unparseable JSON — the loop throws rather than
-proceeding, because a crashed reviewer must never read as approval. That surfaces
-to you as `not-landed`.
+exit, no last-message file, unparseable JSON — the loop preserves the attempt and
+stops rather than proceeding, because a crashed reviewer must never read as
+approval. So does a failed land or a repo the branch guard cannot move back. Each
+leaves the tree clean and surfaces to you as `not-landed`.
 
 ## GUARD RAILS
 

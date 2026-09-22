@@ -565,6 +565,8 @@ GUARD RAILS (mandatory, every step):
 // carries the base branch as upstream, and push with an explicit fully-qualified
 // refspec so no push ever has a destination left to resolve. Either alone would
 // have stopped it; a stage that pushes is worth two locks.
+const HEAD_BRANCH_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\``
+
 const PUSH_RULE = `HOW TO PUSH — the exact form, every time, no variations:
 \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/<branch>:refs/heads/<branch>\`
 Never \`--force\`. Never a bare \`git push\`. Never \`push origin <branch>\` — that leaves git to work out the
@@ -573,7 +575,7 @@ branch's upstream, which is how a commit once landed on \`${BASE_BRANCH}\` with 
 qualified \`refs/heads/X:refs/heads/X\` can only ever update branch X.
 
 BEFORE ANY COMMIT OR PUSH, prove you are on the branch you think you are:
-\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`
+${HEAD_BRANCH_CHECK}
 If that prints anything other than the work branch — \`${BASE_BRANCH}\` above all — STOP and report ok:false.
 Do not commit "just this once" and sort the branch out afterwards.`
 
@@ -627,6 +629,57 @@ TASK:
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
 Report the stash refs so the work can be recovered. Note that a stash is machine-local — it does not travel.
 Return the structured output only.`
+
+// Every stop after the implementor has touched the tree goes through here, so
+// the tree is left clean and the attempt recoverable. A stop that only records
+// its outcome leaves staged work the next run's baseline refuses.
+const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evidence, outcome, detail }) => {
+  log(`${id}: ${outcome.toUpperCase()} — preserving the attempt. ${detail}`)
+  const kept = await agent(
+    preserveWork(id, workBranch, reason, evidence),
+    light({ label: `${id} preserve`, phase: phaseName, schema: incrementSchema })
+  )
+  return {
+    id,
+    ticket: ticket?.key,
+    branch: LIFECYCLE === 'full' ? workBranch : undefined,
+    outcome,
+    detail,
+    preserved: kept?.summary
+  }
+}
+
+// The Codex fix stage of hrp-origin-codex inc-001 cut `spike/hrp-origin-codex-inc-001`
+// in the backend "because no separate increment branch existed" and staged its
+// fixes there; land then refused the repo. Run after every Codex stage and
+// before land, this puts such a repo back when that is safe and stops when not.
+const branchGuard = (id, stageName, phaseName, branch, branchedRepos) => {
+  const reposToCheck = branchedRepos
+    ? `the increment's repos — ${branchedRepos.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')} — and any other
+configured repo whose \`git -C ${TILDE}/<repoPath> status --short\` is not empty (${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')})`
+    : `every configured repo — ${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')}`
+
+  return agent(
+    `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
+in must be on \`${branch}\`. A stage that switched a repo to another branch, or cut a new one, leaves the work where
+the land stage refuses it. You check, move a repo back where that is safe, and change nothing else.
+${GUARDRAILS}
+CHECK ${reposToCheck}.
+For EACH of them:
+1. ${HEAD_BRANCH_CHECK} Prints \`${branch}\` → that repo is fine; go to the next.
+2. Anything else → compare the commits: \`git -C ${TILDE}/<repoPath> rev-parse HEAD\` and
+   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet refs/heads/${branch}\`.
+   - The same SHA → \`git -C ${TILDE}/<repoPath> checkout ${branch}\`. The staged and unstaged work travels with it,
+     because the two branches point at the same commit. Run step 1 again and confirm it prints \`${branch}\`. Say in
+     your summary which repo you moved and from which branch. Leave that other branch where it is — do not delete it.
+   - A different SHA, \`${branch}\` missing, or a checkout that refuses → STOP: report ok:false naming the repo, the
+     branch it is on and both SHAs, and change nothing in it.
+Never create a branch, and never commit, stash, reset or clean. You only ever move a repo back onto \`${branch}\`.
+Report ok:true only when every repo you checked prints \`${branch}\`.
+Return the structured output only.`,
+    light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: incrementSchema })
+  )
+}
 
 const incrementSchema = {
   type: 'object',
@@ -948,20 +1001,27 @@ const CODEX = {
   }
 }
 
-const codexPaths = (id, stage) => ({
-  promptFile: `${WORKAREA}/logs/${id}-${stage}.prompt.md`,
-  promptFileTilde: `${WORKAREA_TILDE}/logs/${id}-${stage}.prompt.md`,
-  lastMessage: `${WORKAREA}/logs/${id}-${stage}.lastmsg.txt`,
-  lastMessageTilde: `${WORKAREA_TILDE}/logs/${id}-${stage}.lastmsg.txt`,
-  runLog: `${WORKAREA_TILDE}/logs/${id}-${stage}.log`
+// A stage that fans out (review, one Codex run per group) names each run with
+// its own slug, so every run has its own prompt, result and log.
+const codexPaths = (id, slug) => ({
+  promptFile: `${WORKAREA}/logs/${id}-${slug}.prompt.md`,
+  promptFileTilde: `${WORKAREA_TILDE}/logs/${id}-${slug}.prompt.md`,
+  lastMessage: `${WORKAREA}/logs/${id}-${slug}.lastmsg.txt`,
+  lastMessageTilde: `${WORKAREA_TILDE}/logs/${id}-${slug}.lastmsg.txt`,
+  runLog: `${WORKAREA_TILDE}/logs/${id}-${slug}.log`
 })
 
-const codexRun = (id, stage, phaseName, instructions, workingBranch) => {
+const bindingLines = (bindings) =>
+  Object.entries(bindings)
+    .map(([name, value]) => `  <${name}> = ${value}`)
+    .join('\n')
+
+const codexRun = (id, stage, { phaseName, instructions, workingBranch, slug = stage, bindings = {} }) => {
   const { brief, schemaFile } = CODEX[stage]
-  const { promptFile, promptFileTilde, lastMessageTilde, runLog } = codexPaths(id, stage)
+  const { promptFile, promptFileTilde, lastMessageTilde, runLog } = codexPaths(id, slug)
 
   return agent(
-    `You are the CODEX SHELL for the ${stage} stage of increment ${id}. Codex does the work; you start it, wait
+    `You are the CODEX SHELL for the ${slug} stage of increment ${id}. Codex does the work; you start it, wait
 for it, and report ONLY whether it RAN. You do not do the stage yourself, you do not edit anything Codex
 owns, and you do not read or judge what Codex concluded — a separate relay agent does that.
 ${GUARDRAILS}
@@ -983,6 +1043,7 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <frontendRepo> = ${ABS}/${REPOS.frontend.path}
   <backendRepo>  = ${ABS}/${REPOS.backend.path}
   <testsRepo>    = ${ABS}/${REPOS.tests.path}
+${bindingLines(bindings)}
 
 ${instructions}
 ---8<---
@@ -1004,7 +1065,7 @@ resumes exactly where it stopped. So you run it in slices, each slice one foregr
   must not be left there. Go to 2b.
 
 2b. FOREGROUND Bash, fast — end the slice and find the session:
-\`pkill -f "codex [e]xec.*${id}-${stage}" ; grep -m1 "session id:" ${runLog}\`
+\`pkill -f "codex [e]xec.*${id}-${slug}\\.lastmsg" ; grep -m1 "session id:" ${runLog}\`
 The bracket in \`[e]xec\` is deliberate: it stops the pattern matching your own shell. Nothing is lost —
 Codex writes its session to disk as it goes.
 
@@ -1028,46 +1089,43 @@ ok here is about the RUN, NEVER about what Codex concluded: a Codex run that fin
 a red suite or an unapplied fix is still ok:true to you. NEVER write ${lastMessageTilde} yourself and never
 invent a result.
 Return the structured output only.`,
-    light({ label: `${id} codex:${stage}`, phase: phaseName, schema: incrementSchema })
+    light({ label: `${id} codex:${slug}`, phase: phaseName, schema: incrementSchema })
   )
 }
 
-const codexRelay = (id, stage, phaseName, schema) => {
+const codexRelay = (id, stage, { phaseName, schema, slug = stage }) => {
   const { schemaFile, relay } = CODEX[stage]
-  const { lastMessage } = codexPaths(id, stage)
+  const { lastMessage } = codexPaths(id, slug)
 
   return agent(
-    `You are the RELAY for the ${stage} stage of increment ${id}. Codex has already run and written its final
+    `You are the RELAY for the ${slug} stage of increment ${id}. Codex has already run and written its final
 message to ${lastMessage}. Re-emitting that file as your structured output is your ENTIRE job.
 ${GUARDRAILS}
 Read ${lastMessage} once with the Read tool. It conforms to ${BRIEFS}/schemas/${schemaFile}.
 ${relay}
 Add nothing of your own — no findings, no opinions, no work. Run no suite. Edit no file.
 Return the structured output only.`,
-    light({ label: `${id} relay:${stage}`, phase: phaseName, schema })
+    light({ label: `${id} relay:${slug}`, phase: phaseName, schema })
   )
 }
 
 // Returns null when the stage could not produce a result — a dead shell agent, a
 // codex run that never wrote one, or a dead relay. Callers must treat null as a
 // failure to review/implement/fix, never as an empty-but-valid result.
-const codexStage = async (id, stage, phaseName, schema, instructions, workingBranch) => {
-  const run = await codexRun(id, stage, phaseName, instructions, workingBranch)
+const codexStage = async (id, stage, options) => {
+  const slug = options.slug ?? stage
+  const run = await codexRun(id, stage, options)
   if (!run || !run.ok) {
-    log(`${id}: codex ${stage} DID NOT RUN — ${run ? run.summary : 'the codex shell agent died'}`)
+    log(`${id}: codex ${slug} DID NOT RUN — ${run ? run.summary : 'the codex shell agent died'}`)
     return null
   }
-  const relayed = await codexRelay(id, stage, phaseName, schema)
-  if (!relayed) log(`${id}: codex ${stage} ran but its relay agent died`)
+  const relayed = await codexRelay(id, stage, options)
+  if (!relayed) log(`${id}: codex ${slug} ran but its relay agent died`)
   return relayed
 }
 
-const codexResult = (result, stage, id) => {
-  if (result) return result
-  throw new Error(
-    `increment-build-loop: the codex ${stage} stage produced no result for ${id} — the run or its relay failed. Halting rather than treating a stage that did not run as a clean one. See ${WORKAREA}/logs/${id}-${stage}.log`
-  )
-}
+const codexNoResult = (id, slug) =>
+  `the codex ${slug} stage produced no result — the run or its relay failed. See ${WORKAREA}/logs/${id}-${slug}.log`
 
 // ---------------------------------------------------------------------------
 // Plan — the row says what, why and acceptance; the planner works out how,
@@ -1372,6 +1430,7 @@ Return the structured output only.`,
   let confirmed = []
   let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
   let land = null
+  const findingCounts = () => ({ raw: rawFindings.length, confirmed: confirmed.length, fixed: judgement.fixNow.length })
 
   build: {
     if (resumeAt !== 'build') {
@@ -1456,7 +1515,12 @@ Return the structured output only.`,
   phase('Implement')
 
   const impl = EXECUTOR === 'codex'
-    ? await codexStage(id, 'implement', 'Implement', incrementSchema, `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.`, workBranch)
+    ? await codexStage(id, 'implement', {
+        phaseName: 'Implement',
+        schema: incrementSchema,
+        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.`,
+        workingBranch: workBranch
+      })
     : await agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
@@ -1500,21 +1564,43 @@ ${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is
     heavy({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
   )
 
+  const attempt = { id, ticket, workBranch }
+
   if (!impl || !impl.ok) {
-    log(`${id}: IMPLEMENT FAILED — preserving the attempt. ${impl ? impl.summary : 'agent failed'}`)
-    const kept = await agent(
-      preserveWork(id, workBranch, 'the implementor could not finish it', impl?.summary ?? 'the implementor agent died'),
-      light({ label: `${id} preserve`, phase: 'Implement', schema: incrementSchema })
+    results.push(
+      await preserveAttempt({
+        ...attempt,
+        phaseName: 'Implement',
+        reason: 'the implementor could not finish it',
+        evidence: impl?.summary ?? 'the implementor agent died',
+        outcome: 'implement-failed',
+        detail: impl?.summary ?? 'agent failed'
+      })
     )
-    results.push({
-      id,
-      ticket: ticket?.key,
-      branch: LIFECYCLE === 'full' ? workBranch : undefined,
-      outcome: 'implement-failed',
-      detail: impl?.summary ?? 'agent failed',
-      preserved: kept?.summary
-    })
     continue
+  }
+
+  // Returns the preserved result when a repo is off the run's branch and could
+  // not be moved back, or null when every repo is on it.
+  const offBranch = async (stageName, phaseName) => {
+    const guard = await branchGuard(id, stageName, phaseName, workBranch, repos)
+    if (guard?.ok) return null
+    return preserveAttempt({
+      ...attempt,
+      phaseName,
+      reason: `a repo left \`${workBranch}\` by the end of the ${stageName} stage`,
+      evidence: guard?.summary ?? 'the branch guard died',
+      outcome: 'off-branch',
+      detail: guard?.summary ?? 'the branch guard died'
+    })
+  }
+
+  if (EXECUTOR === 'codex') {
+    const stray = await offBranch('implement', 'Implement')
+    if (stray) {
+      results.push(stray)
+      break
+    }
   }
 
   const files = (impl.changedFiles ?? []).filter((f) => !f.endsWith('.log'))
@@ -1609,10 +1695,82 @@ Return the structured output only.`,
       heavy({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
 
-  const reviewResults = EXECUTOR === 'codex'
-    ? [codexResult(await codexStage(id, 'review', 'Review', FINDINGS_SCHEMA, `Review the staged, uncommitted change for increment ${id}.`, workBranch), 'review', id)]
-    : await parallel([...styleReviews, ...codeReviews, consistencyReview])
-  rawFindings = reviewResults.filter(Boolean).flatMap((r) => r.findings ?? [])
+  // Codex reviews at the same granularity as Claude: one run per group applying
+  // that group's personas (style + code, code alone for docs), plus one
+  // consistency run across the whole change. hrp-origin-codex inc-001 had one
+  // run over the whole change return 1 finding where the grouped Claude review
+  // of the same increment returned 21 raw, 3 confirmed.
+  const STYLE_PERSONA = `${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md`
+  const CODE_PERSONA = `${SKILLS}/review/references/FILE_REVIEWER.md`
+  const CONSISTENCY_PERSONA = `${SKILLS}/review/references/CONSISTENCY_REVIEWER.md`
+  const personasOf = (group) => (group.language === DOCS_LANGUAGE ? [CODE_PERSONA] : [STYLE_PERSONA, CODE_PERSONA])
+
+  const codexReview = (slug, personas, reviewFiles, instructions) => () =>
+    codexStage(id, 'review', {
+      phaseName: 'Review',
+      schema: FINDINGS_SCHEMA,
+      slug,
+      instructions,
+      workingBranch: workBranch,
+      bindings: { personas: personas.join(', '), reviewFiles }
+    }).then((result) => ({ slug, result }))
+
+  const codexGroupReviews = reviewGroups.map((group) =>
+    codexReview(
+      `review-${group.name}`,
+      personasOf(group),
+      group.files.join(', '),
+      `Review ONE GROUP of the staged, uncommitted change for increment ${id}: ${groupHeader(group)}
+Apply every persona bound to <personas>, and no other. Another Codex run reviews each other group, and a consistency
+run looks across the whole change, so report findings on this group's files only.`
+    )
+  )
+
+  const codexConsistencyReview = codexReview(
+    'review-consistency',
+    [CONSISTENCY_PERSONA],
+    `${WHOLE_CHANGE} — every file staged or committed on ${workBranch} in every repo`,
+    `Review the WHOLE staged, uncommitted change for increment ${id} ACROSS files and repos. Apply the persona bound to
+<personas>, and no other: other Codex runs review each (repo, language) group file by file. Hunt for the same concept
+named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
+between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
+reporting any that fails as a finding.`
+  )
+
+  const codexReviewResults = async () => {
+    const runs = await parallel([...codexGroupReviews, codexConsistencyReview])
+    const failed = runs.filter((run) => !run.result).map((run) => run.slug)
+    return { results: runs.map((run) => run.result), failed }
+  }
+
+  const reviewed = EXECUTOR === 'codex'
+    ? await codexReviewResults()
+    : { results: await parallel([...styleReviews, ...codeReviews, consistencyReview]), failed: [] }
+
+  // A Codex review that did not run must never read as a clean one.
+  if (reviewed.failed.length > 0) {
+    results.push(
+      await preserveAttempt({
+        ...attempt,
+        phaseName: 'Review',
+        reason: 'a review stage produced no result',
+        evidence: reviewed.failed.map((slug) => codexNoResult(id, slug)).join(' | '),
+        outcome: 'review-failed',
+        detail: `no result from ${reviewed.failed.join(', ')}`
+      })
+    )
+    break
+  }
+
+  if (EXECUTOR === 'codex') {
+    const stray = await offBranch('review', 'Review')
+    if (stray) {
+      results.push(stray)
+      break
+    }
+  }
+
+  rawFindings = reviewed.results.filter(Boolean).flatMap((r) => r.findings ?? [])
   log(`${id}: ${rawFindings.length} raw findings — verifying adversarially`)
 
   // -----------------------------------------------------------------------
@@ -1725,24 +1883,36 @@ Return the structured output only.`,
     log(`${id}: judge ruled ${judgement.fixNow.length} fixes`)
     const ruledFixes = judgement.fixNow.map((f, i) => `${i + 1}. ${f}`).join('\n')
     if (EXECUTOR === 'codex') {
-      fixResult = codexResult(
-        await codexStage(
-          id,
-          'fix',
-          'Fix',
-          incrementSchema,
-          `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${ruledFixes}
+      fixResult = await codexStage(id, 'fix', {
+        phaseName: 'Fix',
+        schema: incrementSchema,
+        instructions: `THE RULED FIXES for increment ${id} — apply exactly these, in order:\n${ruledFixes}
 
 THE BASELINE LOGS, written before any edit — compare every red rung with them:
 ${baselineLogList(id)}
 
 THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
 ${impl.notes || '(none)'}`,
-          workBranch
-        ),
-        'fix',
-        id
-      )
+        workingBranch: workBranch
+      })
+      if (!fixResult) {
+        results.push(
+          await preserveAttempt({
+            ...attempt,
+            phaseName: 'Fix',
+            reason: 'the fix stage produced no result',
+            evidence: codexNoResult(id, 'fix'),
+            outcome: 'fix-failed',
+            detail: codexNoResult(id, 'fix')
+          })
+        )
+        break
+      }
+      const stray = await offBranch('fix', 'Fix')
+      if (stray) {
+        results.push(stray)
+        break
+      }
     } else {
       fixResult = await agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
@@ -1857,25 +2027,23 @@ Return the structured output only.`,
   phase('Land')
 
   if (!ladder || !ladder.green) {
-    log(`${id}: LADDER RED — preserving the attempt`)
-    const rb = await agent(
-      preserveWork(
-        id,
-        workBranch,
-        'red verification ladder',
-        ladder ? (ladder.failures ?? []).join(' | ') : 'verifier agent failed'
-      ),
-      light({ label: `${id} preserve`, phase: 'Land', schema: incrementSchema })
+    results.push(
+      await preserveAttempt({
+        ...attempt,
+        phaseName: 'Land',
+        reason: 'red verification ladder',
+        evidence: ladder ? (ladder.failures ?? []).join(' | ') : 'verifier agent failed',
+        outcome: 'ladder-red',
+        detail: ladder?.summary ?? 'verifier failed'
+      })
     )
-    results.push({
-      id,
-      ticket: ticket?.key,
-      branch: LIFECYCLE === 'full' ? workBranch : undefined,
-      outcome: 'ladder-red',
-      detail: ladder?.summary ?? 'verifier failed',
-      preserved: rb?.summary
-    })
     log(`${id}: attempt preserved — stopping the run so the failure is not built on top of`)
+    break
+  }
+
+  const strayBeforeLand = await offBranch('land', 'Land')
+  if (strayBeforeLand) {
+    results.push(strayBeforeLand)
     break
   }
 
@@ -1920,27 +2088,36 @@ Report the commit SHA. For several repos report each, backend first, space separ
 Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
+
+  if (!land || !land.landed) {
+    results.push({
+      ...(await preserveAttempt({
+        ...attempt,
+        phaseName: 'Land',
+        reason: 'the land stage could not commit it',
+        evidence: land?.summary ?? 'the land agent died',
+        outcome: 'land-failed',
+        detail: land?.summary ?? 'agent failed'
+      })),
+      findings: findingCounts()
+    })
+    break
+  }
   } // build
 
-  const findings = { raw: rawFindings.length, confirmed: confirmed.length, fixed: judgement.fixNow.length }
+  const findings = findingCounts()
   const judgementCalls = judgement.decisions.map((d) => `${d.call}: ${d.what}`)
 
   if (LIFECYCLE === 'local') {
     results.push({
       id,
-      outcome: land && land.landed ? 'landed' : 'land-failed',
-      commit: land?.commit,
+      outcome: 'landed',
+      commit: land.commit,
       findings,
       judgement: judgementCalls
     })
-    log(`${id}: LANDED ${land?.commit ?? ''} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+    log(`${id}: LANDED ${land.commit ?? ''} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
   } else {
-    if (resumeAt === 'build' && (!land || !land.landed)) {
-      log(`${id}: COMMIT FAILED — ${land ? land.summary : 'agent failed'}`)
-      results.push({ id, ticket: ticket.key, outcome: 'land-failed', detail: land?.summary ?? 'agent failed', findings })
-      break
-    }
-
     const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
 
     // ---------------------------------------------------------------------

@@ -103,7 +103,7 @@ as `feat(plant-products): <increment title>`. Any other workarea works the same 
 | Baseline | 1 | Refuses to start on a dirty tree or a red suite, so any later red is unambiguously ours |
 | Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the ladder, out of scope. Lifted from `frontend-alignment.js` |
 | Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Never starts the workspace stack |
-| Review | 2g+1 at most | One style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
+| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
 | Fix | 1 | Applies only what the judge ruled fix-now. Never starts the workspace stack |
@@ -117,7 +117,7 @@ stage; re-runs the whole ladder, E2E included, after any repair; runs format in 
 and compares every red rung with the baseline logs. A failure in a suite that was green at
 baseline is this increment's to repair or diagnose — "pre-existing" needs the same failure in
 the baseline log.
-| Land | 1–2 | Commits on green and marks the increment done; `git stash push -u` on red |
+| Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and marks the increment done. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — `git stash push -u` under `local`, a pushed wip commit under `full` — so the tree is left clean and the attempt recoverable |
 
 The reviewers follow the personas the skills already ship —
 `review/references/{FILE_REVIEWER,CONSISTENCY_REVIEWER,REVIEW_ITEM_FIXER}.md` and
@@ -142,19 +142,27 @@ makes "the run died" distinguishable from "Codex looked and found nothing". The 
 written with `<workspace>` / `<workarea>` / `<backlog>` / `<logs>` / `<skills>` /
 `<branch>` / `<INCREMENT_ID>` placeholders that the loop binds to real values in that prompt.
 
-Three things to know about codex mode:
+Four things to know about codex mode:
 
 - Codex has a **normal shell**, so each brief opens by telling it to ignore the Claude-only
   `GUARD RAILS` block (no `&&`, tilde-only paths, `node`/`npx` denied).
-- The review stage is **one** codex reviewer over the whole change applying all three
-  personas, not the 2g+1 per-group fan-out. Codex's findings schema also carries a
-  `confidence` per finding, which the relay folds into `why` because the Claude-side schema
-  has no room for it.
-- **A stage that cannot run halts the loop.** If the review or fix stage produces no result
-  — non-zero exit, no last-message file, unparseable JSON, or a dead shell or relay agent —
-  the loop throws rather than proceeding. A crashed reviewer must never read as approval.
-  The implement stage instead routes the same failure into its existing rollback path, which
-  stashes the tree first; it has no silent-success branch to protect.
+- **Review runs at the same granularity as Claude's.** One codex review per (repo, language)
+  group, in parallel, applying that group's personas (style and code; code alone for docs),
+  plus one codex consistency review across the whole change — `g + 1` codex runs, each with
+  its own shell and relay. The brief takes the group's files as `<reviewFiles>` and its
+  personas as `<personas>`. Findings merge and go through the same verify and judge path as
+  Claude's. Codex's findings schema also carries a `confidence` per finding, which the relay
+  folds into `why` because the Claude-side schema has no room for it.
+- **Every repo stays on the run's branch.** Each brief says so, and a light branch guard runs
+  after every codex stage and again before land. A repo on another branch at the same commit
+  is moved back, carrying its staged work; anything else stops the run through the preserve
+  step.
+- **A stage that cannot run stops the loop.** If a review or fix run produces no result —
+  non-zero exit, no last-message file, unparseable JSON, or a dead shell or relay agent — the
+  loop preserves the attempt and stops rather than proceeding. A crashed reviewer must never
+  read as approval.
+
+Per increment, codex mode is at most `23 + 3g` agents against Claude's `17 + 3g`.
 
 ### What still stops for a human
 

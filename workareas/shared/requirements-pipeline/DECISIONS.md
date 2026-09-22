@@ -43,6 +43,9 @@ Each entry: the choice, then how to reverse it. Written while Sam was asleep, 21
 - **D16. Rows carry optional `requirements` ids, and coverage (each adopted requirement in exactly one increment) is two `jq` lines in the skill.** A candidate for `tim backlog check --requirements`, not built.
   Reverse: drop the field and the two checks.
 
+- **D18. The target code and its rulings ledger are always a DISTIL source, and every adopted requirement carries a `delta` (`new`, `change`, `exists`); `exists` rows go to the report as already met, never into an increment.** The hrp-origin proof distilled a trace slice and a Confluence page without reading `repos/trade-imports-plants-frontend`: the plan stage found inc-001 and inc-002 mostly built, and inc-002's "choose one of 4 categories" contradicted the 9 statutory categories already ruled there (d-019, d-026, d-029, c-007). A clash with a ruling defaults to keeping the ruling.
+  Reverse: drop the "target is always a source" intake rule, the target extract rule, `delta`/`deltaNote` and the "Already met" report section from `references/DISTIL.md`, and the line in `SKILL.md`'s phase table.
+
 ## The layout
 
 - **D17. The shape doc, the distil skill, the build-orchestrator skill, the build loop and its Codex briefs are one skill, `.claude/skills/requirements-pipeline/`, with a DISTIL and a BUILD phase.** They were one coupled system in five places; the paths D1–D16 name are the pre-D17 ones (`docs/reference/backlog-shape.md` → `references/SHAPE.md`, `skills/distil/SKILL.md` → `references/DISTIL.md`, `skills/build-orchestrator/SKILL.md` → `references/BUILD.md`, `.claude/workflows/{increment-build-loop.js,codex/}` → `workflow/`).

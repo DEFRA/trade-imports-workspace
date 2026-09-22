@@ -17,7 +17,7 @@ sources ──DISTIL──▶ workareas/<workarea>/backlog.json ──BUILD─�
 
 | Phase | Read | Use it when |
 |---|---|---|
-| DISTIL | [`references/DISTIL.md`](references/DISTIL.md) | You have requirement sources and no backlog, or new sources to fold into an existing backlog (re-distil keeps every existing id) |
+| DISTIL | [`references/DISTIL.md`](references/DISTIL.md) | You have requirement sources and no backlog, or new sources to fold into an existing backlog (re-distil keeps every existing id). The target repos and their rulings are always a source, so the backlog holds changes, not a rebuild |
 | BUILD | [`references/BUILD.md`](references/BUILD.md) | A backlog in the one shape exists and you want increments built, a stopped run resumed, or a run handed over |
 
 Read the phase file in full before you start it, and read

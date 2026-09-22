@@ -169,10 +169,20 @@ Per increment, codex mode is at most `23 + 3g` agents against Claude's `17 + 3g`
 - **A `gate` on the increment.** Some increments are HALT-FOR-REVIEW by design — in the
   plant-products backlog, `pp-012` (depth-3 collection characterisation) and `pp-021` (the
   commodity model) are. The judge absorbs routine review triage; it does not absorb these.
-  The loop lands the increment, then stops.
+  The loop lands the increment, then stops. This is a row's own field, honoured regardless of
+  `requireApproval` — a checkpoint somebody set deliberately on that increment, not a setting
+  on the run.
 - **A red ladder.** Rolled back with `git stash push -u` (recoverable — never `reset --hard`),
   the failure recorded in the increment's `notes`, and the run stops.
-- **Pushing.** The loop commits but never pushes.
+- **`requireApproval: true`, if a programme opted into it.** Off by default — the multi-agent
+  review, adversarial verification and judge already are the review — but when a programme sets
+  it, every PR of an increment needs an approving review on GitHub before the merge stage may
+  merge any of them, and the run stops at `awaiting-approval` (green, unapproved) or
+  `changes-requested` until a human acts. See `../references/BUILD.md` for the whole-increment
+  approval sweep this turns on.
+- **Under `lifecycle: local` only, pushing.** There is no PR stage, so the loop commits and
+  stops there — nothing is pushed. Under `full` the PR stage pushes and raises the PR itself;
+  nothing waits on a person to do it.
 
 ### Deferred findings are never lost
 

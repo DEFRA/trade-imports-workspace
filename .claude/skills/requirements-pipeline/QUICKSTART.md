@@ -18,12 +18,15 @@ To try it on a scratch branch, with no tickets or PRs:
 
 > Build inc-001 from shared/hrp-origin-and-commodity, lifecycle local.
 
-To build it for real, with a ticket, PRs, CI and merge:
+To build it for real, with a ticket, PRs, CI and merge — the loop merges each
+increment itself once it is green, reviewed, adversarially verified and
+judged:
 
-> Build the next 3 increments from shared/hrp-origin-and-commodity, lifecycle full, epic EUDPA-12345.
+> Build every increment from shared/hrp-origin-and-commodity, lifecycle full, epic EUDPA-12345.
 
 Add "with Codex" to have Codex build it. To see the plan without building, say "dry-run the plan for inc-001".
+To put a human approval gate back in front of every merge, say "... and require an approving review on every PR" (`requireApproval: true`).
 
 ## When it stops
 
-It prints a handover prompt. Paste that into a new session to carry on. `awaiting-approval` means the PRs are green and need someone else's review.
+It prints a handover prompt. Paste that into a new session to carry on. It only stops for a genuine failure — CI that stayed red, a red base branch, a half-merged increment — or for an increment carrying a designed review gate. `awaiting-approval` and `changes-requested` only happen if you asked for the human approval gate; otherwise the loop never waits on a person.

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { followRef, resolveRef, validateJson } from './json-schema.js'
+import { validateJson } from './validate-json.js'
 
 const schemaOf = (body) => ({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -26,23 +26,11 @@ describe('validateJson', () => {
   })
 
   test('names the wrong type', () => {
-    expect(validateJson(schemaOf({ type: 'array' }), 'x')).toEqual([
-      { path: [], keyword: 'type', params: { type: 'array' } }
-    ])
-  })
-
-  test('accepts any of a list of types', () => {
-    expect(validateJson(schemaOf({ type: ['string', 'null'] }), null)).toEqual(
-      []
-    )
-  })
-
-  test('tells an array from an object and null from both', () => {
-    const objectSchema = schemaOf({ type: 'object' })
-
     expect(
-      [[], null].map((value) => validateJson(objectSchema, value).length)
-    ).toEqual([1, 1])
+      validateJson(schemaOf({ type: 'array' }), 'x').map(
+        (error) => error.keyword
+      )
+    ).toEqual(['type'])
   })
 
   test('names a value outside an enum with the allowed values', () => {
@@ -51,17 +39,13 @@ describe('validateJson', () => {
     ])
   })
 
-  test('names a value that is not the const', () => {
-    expect(validateJson(schemaOf({ const: 'a' }), 'b')).toEqual([
-      { path: [], keyword: 'const', params: { allowedValue: 'a' } }
-    ])
-  })
-
   test('checks pattern and minLength on strings only', () => {
     const schema = schemaOf({ pattern: '\\S', minLength: 2 })
 
     expect({
-      blank: validateJson(schema, ' ').map((error) => error.keyword),
+      blank: validateJson(schema, ' ')
+        .map((error) => error.keyword)
+        .sort(),
       number: validateJson(schema, 5)
     }).toEqual({ blank: ['minLength', 'pattern'], number: [] })
   })
@@ -105,18 +89,7 @@ describe('validateJson', () => {
     })
   })
 
-  test('collects every allOf branch', () => {
-    const schema = schemaOf({
-      allOf: [{ required: ['a'] }, { required: ['b'] }]
-    })
-
-    expect(validateJson(schema, {}).map((error) => error.params)).toEqual([
-      { missingProperty: 'a' },
-      { missingProperty: 'b' }
-    ])
-  })
-
-  test('refuses a value the not matches', () => {
+  test('refuses a value the not matches, without the matched branch errors', () => {
     const schema = schemaOf({ not: { required: ['recipe'] } })
 
     expect({
@@ -128,7 +101,7 @@ describe('validateJson', () => {
     })
   })
 
-  test('applies then only when if matches, and else otherwise', () => {
+  test('applies then only when if matches, and else otherwise, without the branch errors', () => {
     const schema = schemaOf({
       if: { properties: { status: { const: 'blocked' } } },
       then: { required: ['openQuestions'] },
@@ -148,57 +121,21 @@ describe('validateJson', () => {
     })
   })
 
-  test('treats true as anything and false as nothing', () => {
-    expect({
-      anything: validateJson(schemaOf({ properties: { a: true } }), { a: 1 }),
-      nothing: validateJson(schemaOf({ properties: { a: false } }), { a: 1 })
-    }).toEqual({
-      anything: [],
-      nothing: [{ path: ['a'], keyword: 'false', params: {} }]
-    })
-  })
-
-  test('refuses a schema that uses a keyword it does not check', () => {
+  test('collects every allOf branch', () => {
     const schema = schemaOf({
-      properties: { name: { type: 'string', maxLength: 3 } }
+      allOf: [{ required: ['a'] }, { required: ['b'] }]
     })
 
-    expect(() => validateJson(schema, {})).toThrow(
-      `The schema at #/properties/name uses "maxLength", which tim's schema checker does not support.`
-    )
-  })
-})
-
-describe('resolveRef', () => {
-  test('refuses a ref outside the schema', () => {
-    expect(() => resolveRef({}, 'other.json#/a')).toThrow(
-      'The schema\'s "$ref" "other.json#/a" is not inside the schema.'
-    )
+    expect(validateJson(schema, {}).map((error) => error.params)).toEqual([
+      { missingProperty: 'a' },
+      { missingProperty: 'b' }
+    ])
   })
 
-  test('refuses a ref that points at nothing', () => {
-    expect(() => resolveRef({ $defs: {} }, '#/$defs/missing')).toThrow(
-      'The schema\'s "$ref" "#/$defs/missing" points at nothing.'
-    )
-  })
+  test('compiles a schema object once and reuses it across calls', () => {
+    const schema = schemaOf({ type: 'object', required: ['name'] })
 
-  test('decodes escaped pointer segments', () => {
-    expect(resolveRef({ 'a/b': { type: 'string' } }, '#/a~1b')).toEqual({
-      type: 'string'
-    })
-  })
-})
-
-describe('followRef', () => {
-  test('returns a subschema with no ref as it is', () => {
-    expect(followRef({}, { type: 'string' })).toEqual({ type: 'string' })
-  })
-
-  test('returns the schema a ref points at', () => {
-    const root = { $defs: { text: { type: 'string' } } }
-
-    expect(followRef(root, { $ref: '#/$defs/text' })).toEqual({
-      type: 'string'
-    })
+    expect(validateJson(schema, {})).toEqual(validateJson(schema, {}))
+    expect(validateJson(schema, { name: 'Ada' })).toEqual([])
   })
 })

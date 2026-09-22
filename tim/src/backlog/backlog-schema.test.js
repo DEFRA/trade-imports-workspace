@@ -10,7 +10,7 @@ import {
   rowSchemaOf,
   statusesOf
 } from './backlog-schema.js'
-import { validateJson } from './json-schema.js'
+import { validateJson } from './validate-json.js'
 
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),

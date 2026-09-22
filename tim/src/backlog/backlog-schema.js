@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
 import { readJsonFile } from './io.js'
-import { followRef } from './json-schema.js'
+import { followRef } from './schema-ref.js'
 
 /**
  * Where the one definition of the backlog shape lives, relative to the

@@ -1,7 +1,8 @@
 import { TimError } from '../errors.js'
 import { recipeFieldsOf, rowSchemaOf } from './backlog-schema.js'
 import { findCycle } from './graph.js'
-import { followRef, validateJson } from './json-schema.js'
+import { followRef } from './schema-ref.js'
+import { validateJson } from './validate-json.js'
 
 /**
  * The statuses the build never picks up. Named as a deny-list, so a status

@@ -87,16 +87,15 @@ const restoreOrDropStaleCopy = (lockPath, stalePath) => {
 }
 
 /**
- * Break a stale lock, race-safely: rename it aside, confirm nobody replaced
- * it in the gap, then clear it. Returns a note describing what was broken,
- * or `null` when the lock turned out to be live after all (raced) — either
- * because another process replaced it after the rename, or because another
- * process broke it first and `lockPath` was already gone by the time this
- * one tried to rename it.
+ * Claim whatever is currently at `lockPath` with an atomic rename, so what
+ * gets inspected afterwards is exactly what the rename captured — never a
+ * separately-read snapshot that another process could have superseded
+ * before this process acted on it. Returns `null` when there was nothing
+ * to claim: another process broke it, or acquired it fresh, first.
  *
- * @returns {string|null}
+ * @returns {{stalePath: string, content: object|null}|null}
  */
-const breakStaleLock = (lockPath, content) => {
+const captureCurrentLock = (lockPath) => {
   const stalePath = `${lockPath}.${uniqueSuffix()}.stale`
   try {
     renameSync(lockPath, stalePath)
@@ -104,10 +103,24 @@ const breakStaleLock = (lockPath, content) => {
     if (error.code === 'ENOENT') return null
     throw error
   }
-  const reread = readLockContent(stalePath)
-  const stillTheSame =
-    reread && JSON.stringify(reread) === JSON.stringify(content)
-  if (!stillTheSame) {
+  return { stalePath, content: readLockContent(stalePath) }
+}
+
+/**
+ * Break whatever is currently at `lockPath`, race-safely: claim it first
+ * (see {@link captureCurrentLock}), then decide from what was actually
+ * claimed. A live lock — whether the original holder or another process
+ * that has since acquired it — is put straight back unbroken. Only a
+ * genuinely stale claim is cleared.
+ *
+ * @returns {string|null} A note describing what was broken, or `null` when
+ *   there was nothing to break.
+ */
+const breakIfStale = (lockPath) => {
+  const captured = captureCurrentLock(lockPath)
+  if (!captured) return null
+  const { stalePath, content } = captured
+  if (!isStale(content)) {
     restoreOrDropStaleCopy(lockPath, stalePath)
     return null
   }
@@ -121,9 +134,7 @@ const attemptAcquire = ({ lockPath, content }) => {
     return { acquired: true, notes: [] }
   } catch (error) {
     if (error.code !== ERR_EEXIST) throw error
-    const existing = readLockContent(lockPath)
-    if (!isStale(existing)) return { acquired: false, notes: [] }
-    const note = breakStaleLock(lockPath, existing)
+    const note = breakIfStale(lockPath)
     if (!note) return { acquired: false, notes: [] }
     try {
       writeLockAtomically(lockPath, content)

@@ -30,6 +30,11 @@ const plural = (count, singular, pluralForm = `${singular}s`) =>
  * @param {{specRoot: string, capabilityCount: number, findings: object[], skipped: object[]}} result
  * @returns {string}
  */
+const skippedLine = (entry) =>
+  entry.repo
+    ? `${entry.check} ${entry.repo}: ${entry.reason}`
+    : `${entry.check}: ${entry.reason}`
+
 export const renderLintText = ({
   specRoot,
   capabilityCount,
@@ -42,7 +47,9 @@ export const renderLintText = ({
       (finding) =>
         `  ${finding.check.padEnd(16)} ${finding.capability.padEnd(40)} ${finding.message}`
     ),
-    `Skipped: ${skipped.map((entry) => `${entry.check} (${entry.reason})`).join('; ')}`
+    skipped.length > 0
+      ? `Skipped: ${skipped.map(skippedLine).join('; ')}`
+      : 'Skipped: none.'
   ].join('\n')
 
 export const register = (program, { timVersion }) => {

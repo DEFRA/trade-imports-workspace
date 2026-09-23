@@ -69,6 +69,12 @@ const seedWorkspace = (specText) => {
   mkdirSync(join(root, 'repos'), { recursive: true })
   mkdirSync(join(root, 'openspec', 'specs', 'widgets'), { recursive: true })
   mkdirSync(join(root, 'openspec', 'coverage', 'widgets'), { recursive: true })
+  mkdirSync(
+    join(root, '.claude', 'skills', 'requirements-pipeline', 'references'),
+    {
+      recursive: true
+    }
+  )
   writeFileSync(join(root, 'openspec', 'specs', 'widgets', 'spec.md'), specText)
   writeFileSync(
     join(root, 'openspec', 'coverage', 'widgets', 'coverage.json'),
@@ -79,6 +85,17 @@ const seedWorkspace = (specText) => {
     ['| Capability | Area code |', '|---|---|', '| widgets | WIDGET |'].join(
       '\n'
     )
+  )
+  writeFileSync(
+    join(
+      root,
+      '.claude',
+      'skills',
+      'requirements-pipeline',
+      'references',
+      'gates.json'
+    ),
+    JSON.stringify({ repos: {} })
   )
 }
 
@@ -122,6 +139,15 @@ describe('tim spec lint', () => {
 
     expect(run.exitCode).toBe(0)
     expect(envelope.result.findings).toEqual([])
+    expect(envelope.result.skipped).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: 'link-file',
+          repo: 'trade-imports-x'
+        }),
+        expect.objectContaining({ check: 'link-test', repo: 'trade-imports-x' })
+      ])
+    )
   }, 60_000)
 })
 
@@ -137,7 +163,13 @@ describe('renderLintText', () => {
           message: 'REQ-WIDGET-001 is wrong.'
         }
       ],
-      skipped: [{ check: 'link-file', reason: 'not yet implemented' }]
+      skipped: [
+        {
+          check: 'link-file',
+          repo: 'trade-imports-x',
+          reason: 'not cloned under repos/'
+        }
+      ]
     })
     const lines = text.split('\n')
 
@@ -145,7 +177,20 @@ describe('renderLintText', () => {
     expect(lines[1]).toContain('rollup')
     expect(lines[1]).toContain('widgets')
     expect(lines[1]).toContain('REQ-WIDGET-001 is wrong.')
-    expect(lines[2]).toBe('Skipped: link-file (not yet implemented)')
+    expect(lines[2]).toBe(
+      'Skipped: link-file trade-imports-x: not cloned under repos/'
+    )
+  })
+
+  test('says nothing was skipped when every linked repo resolved', () => {
+    expect(
+      renderLintText({
+        specRoot: '/ws',
+        capabilityCount: 1,
+        findings: [],
+        skipped: []
+      }).split('\n')[1]
+    ).toBe('Skipped: none.')
   })
 
   test('pluralises zero findings across many capabilities', () => {

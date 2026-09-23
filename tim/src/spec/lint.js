@@ -22,6 +22,11 @@ import {
   checkNoShall,
   checkCrossReferences
 } from './checks/conventions.js'
+import {
+  prepareLinkResolution,
+  checkLinkFilesExist,
+  checkLinkTestsResolve
+} from './checks/links.js'
 import { TimError } from '../errors.js'
 
 const pairingFindings = (capability) => {
@@ -51,33 +56,25 @@ const inScope = (capabilityPath, scopeCapability) =>
   capabilityPath === scopeCapability ||
   capabilityPath.startsWith(`${scopeCapability}/`)
 
-// The two checks that read the linked repos — link `file` exists, link
-// `test` resolves. Land in a later piece; until then every run reports them
-// as skipped rather than silently pretending the corpus is fully checked.
-const REPO_CHECKS_SKIPPED = [
-  {
-    check: 'link-file',
-    reason: 'not yet implemented — needs the repos cloned'
-  },
-  {
-    check: 'link-test',
-    reason:
-      'not yet implemented — needs the repos cloned, with node_modules installed'
-  }
-]
-
 /**
- * The ten workspace-only checks plus the two openspec-validate-delegated
- * ones (checks/shape.js, checks/ids.js, checks/rollups.js,
- * checks/conventions.js, openspec-cli.js — BUILD-IT-NOW.md §1.1). The two
- * repo-reading checks (link file exists, link test resolves) are reported
- * as skipped until a later piece adds them.
+ * All twelve checks (BUILD-IT-NOW.md §1.1): the two delegated to `openspec
+ * validate --specs --strict --json` (openspec-cli.js), the ten
+ * workspace-only ones (checks/shape.js, checks/ids.js, checks/rollups.js,
+ * checks/conventions.js), and the two that read the linked repos
+ * (checks/links.js) — link `file` exists, link `test` resolves. A repo
+ * that is not cloned, or has no `node_modules`, is reported as skipped
+ * with the reason rather than failed.
+ *
+ * The two repo-reading checks always resolve against `workspaceRoot`'s
+ * `repos/`, never against `--root` — `--root` scopes which `openspec/` is
+ * validated (a journey-builder worktree has no `repos/` of its own), not
+ * where the real repo clones live.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} [args.root] - Overrides the spec root (journey-builder worktrees)
  * @param {string} [args.capability] - Scope to one capability path and its descendants
- * @param {Function} [args.run] - The subprocess seam for the delegated openspec-validate call
+ * @param {Function} [args.run] - The subprocess seam, for both the delegated openspec-validate call and the repo listings
  * @returns {Promise<{specRoot: string, capabilityCount: number, findings: object[], skipped: object[]}>}
  * @throws {TimError} NOT_FOUND when --capability names nothing in the corpus
  */
@@ -109,6 +106,12 @@ export const runSpecLint = async ({ workspaceRoot, root, capability, run }) => {
     await validateWithOpenspecCli({ specRoot, capability, run })
   ).filter((finding) => inScope(finding.capability, capability))
 
+  const resolution = await prepareLinkResolution({
+    corpus: { capabilities: scoped },
+    workspaceRoot,
+    run
+  })
+
   const localFindings = scoped.flatMap((entry) => [
     ...pairingFindings(entry),
     ...checkCoverageShape(entry),
@@ -121,7 +124,9 @@ export const runSpecLint = async ({ workspaceRoot, root, capability, run }) => {
     ...checkRequirementRollup(entry),
     ...checkThenPresent(entry),
     ...checkNoShall(entry),
-    ...checkCrossReferences(entry, knownCapabilityPaths)
+    ...checkCrossReferences(entry, knownCapabilityPaths),
+    ...checkLinkFilesExist(entry, workspaceRoot, resolution.cloned),
+    ...checkLinkTestsResolve(entry, workspaceRoot, resolution)
   ])
 
   const globalIdFindings = checkGlobalIdUniqueness(corpus.capabilities).filter(
@@ -132,6 +137,6 @@ export const runSpecLint = async ({ workspaceRoot, root, capability, run }) => {
     specRoot,
     capabilityCount: scoped.length,
     findings: [...openspecFindings, ...localFindings, ...globalIdFindings],
-    skipped: REPO_CHECKS_SKIPPED
+    skipped: resolution.skipped
   }
 }

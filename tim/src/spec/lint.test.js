@@ -79,6 +79,23 @@ beforeEach(() => {
       '\n'
     )
   )
+  mkdirSync(
+    join(root, '.claude', 'skills', 'requirements-pipeline', 'references'),
+    {
+      recursive: true
+    }
+  )
+  writeFileSync(
+    join(
+      root,
+      '.claude',
+      'skills',
+      'requirements-pipeline',
+      'references',
+      'gates.json'
+    ),
+    JSON.stringify({ repos: {} })
+  )
 })
 
 afterEach(() => {
@@ -94,10 +111,15 @@ describe('runSpecLint', () => {
 
     expect(result.findings).toEqual([])
     expect(result.capabilityCount).toBe(1)
-    expect(result.skipped.map((entry) => entry.check)).toEqual([
-      'link-file',
-      'link-test'
-    ])
+    expect(result.skipped).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: 'link-file',
+          repo: 'trade-imports-x'
+        }),
+        expect.objectContaining({ check: 'link-test', repo: 'trade-imports-x' })
+      ])
+    )
   })
 
   test('flags a capability with a spec.md but no coverage.json', async () => {

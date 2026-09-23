@@ -128,3 +128,43 @@ export const computeSpecStatus = async ({
     capabilityCount: corpus.capabilities.length
   }
 }
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+const daysAgo = (isoDate) =>
+  Math.floor((Date.now() - new Date(isoDate).getTime()) / ONE_DAY_MS)
+
+/**
+ * `computeSpecStatus`'s result plus how many days old `verifiedAt` is —
+ * the shape `renderStalenessLine` and every staleness-header consumer
+ * (`tim workspace status`, `tim spec gaps`, `tim spec candidates`) reads.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @returns {Promise<object|null>} `null` when openspec/baseline.json is missing
+ */
+export const computeStaleness = async ({ workspaceRoot }) => {
+  try {
+    const status = await computeSpecStatus({ workspaceRoot })
+    return { ...status, daysAgo: daysAgo(status.verifiedAt) }
+  } catch (error) {
+    if (error.code === 'NOT_FOUND') return null
+    throw error
+  }
+}
+
+const plural = (count, singular, pluralForm = `${singular}s`) =>
+  `${count} ${count === 1 ? singular : pluralForm}`
+
+/**
+ * The one staleness line every spec command's header is built from, e.g.
+ * "Behaviour Spec verified 2026-09-16 (7 days ago) — 10 linked test
+ * files changed since, 65 links across 16 of 72 capabilities unverified."
+ *
+ * @param {object} staleness - From computeStaleness; must not be null
+ * @returns {string}
+ */
+export const renderStalenessLine = (staleness) =>
+  `Behaviour Spec verified ${staleness.verifiedAt} (${plural(staleness.daysAgo, 'day', 'days')} ago) — ` +
+  `${plural(staleness.totalChangedLinkedFiles, 'linked test file', 'linked test files')} changed since, ` +
+  `${plural(staleness.totalChangedLinks, 'link', 'links')} across ${staleness.capabilitiesAffected} of ${staleness.capabilityCount} capabilities unverified.`

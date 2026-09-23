@@ -5,7 +5,7 @@ import { run } from '../../exec/exec.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { OK, USAGE } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
-import { computeSpecStatus } from '../../spec/status.js'
+import { computeStaleness, renderStalenessLine } from '../../spec/status.js'
 
 const SCHEMA_VERSION = 1
 
@@ -56,11 +56,6 @@ const collectStatus = async (workspaceRoot, repo) => {
 export const collectStatuses = (workspaceRoot) =>
   Promise.all(REPOS.map((repo) => collectStatus(workspaceRoot, repo)))
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
-
-const daysAgo = (isoDate) =>
-  Math.floor((Date.now() - new Date(isoDate).getTime()) / ONE_DAY_MS)
-
 /**
  * How stale the Behaviour Spec is against its baseline, for the one line
  * `tim workspace status` adds — with no gate or hook anywhere in the spec
@@ -71,31 +66,10 @@ const daysAgo = (isoDate) =>
  * @param {string} workspaceRoot
  * @returns {Promise<object|null>}
  */
-export const collectSpecStaleness = async (workspaceRoot) => {
-  try {
-    const status = await computeSpecStatus({ workspaceRoot })
-    return { ...status, daysAgo: daysAgo(status.verifiedAt) }
-  } catch (error) {
-    if (isTimError(error) && error.code === 'NOT_FOUND') return null
-    throw error
-  }
-}
+export const collectSpecStaleness = (workspaceRoot) =>
+  computeStaleness({ workspaceRoot })
 
-const plural = (count, singular, pluralForm = `${singular}s`) =>
-  `${count} ${count === 1 ? singular : pluralForm}`
-
-/**
- * The staleness line `tim workspace status` adds, e.g. "Behaviour Spec
- * verified 2026-09-16 (7 days ago) — 10 linked test files changed since,
- * 12 links across 16 of 72 capabilities unverified."
- *
- * @param {object} staleness - From collectSpecStaleness
- * @returns {string}
- */
-export const renderSpecStalenessLine = (staleness) =>
-  `Behaviour Spec verified ${staleness.verifiedAt} (${plural(staleness.daysAgo, 'day', 'days')} ago) — ` +
-  `${plural(staleness.totalChangedLinkedFiles, 'linked test file', 'linked test files')} changed since, ` +
-  `${plural(staleness.totalChangedLinks, 'link', 'links')} across ${staleness.capabilitiesAffected} of ${staleness.capabilityCount} capabilities unverified.`
+export const renderSpecStalenessLine = renderStalenessLine
 
 export const renderText = (statuses, specStaleness) =>
   [
@@ -134,9 +108,11 @@ export const register = (parent, { timVersion }) => {
           collectStatuses(workspaceRoot),
           collectSpecStaleness(workspaceRoot)
         ])
-        if (globalOpts.json)
+        if (globalOpts.json) {
           emit(renderJson(statuses, specStaleness, timVersion))
-        else emit(renderText(statuses, specStaleness))
+        } else {
+          emit(renderText(statuses, specStaleness))
+        }
         process.exit(OK)
       } catch (error) {
         if (isTimError(error) && globalOpts.json) {

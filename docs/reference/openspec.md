@@ -26,8 +26,9 @@ This is the hybrid approach — direct write plus CLI validation. `openspec/chan
 |---|---|---|
 | Direct — a person, or the `ticket` skill | this checkout | The edit is written and left **uncommitted**, with every file named in the skill's completion output. Commit it with the increment it belongs to. |
 | `journey-builder` | `workareas/journey-builder/<run>/workspace-worktree` | Committed per increment on branch `spec/<run-id>`, and carried by **one PR per run** raised at run end. |
+| `requirements-pipeline` BUILD | this checkout | Committed **per increment**, on whatever branch the workspace is on, straight from the increment build loop's land stage. It **never pushes** and raises **no PR** — so `review`'s `openspec/` checks never fire for a pipeline run, since they only fire where a PR set touches `openspec/`. The periodic sweep (`spec-sweep`, below) is what covers this path. |
 
-So: unexpected `openspec/` entries in `git status` are the first case, not a stray edit. And an unfamiliar worktree under `workareas/` — a worktree of this repo, nested inside its own working tree — is the second. Both are deliberate. `git worktree prune` clears a stale one; `git clean -fdx` at the repo root would destroy a live one.
+So: unexpected `openspec/` entries in `git status` are the first case, not a stray edit. And an unfamiliar worktree under `workareas/` — a worktree of this repo, nested inside its own working tree — is the second. Both are deliberate. `git worktree prune` clears a stale one; `git clean -fdx` at the repo root would destroy a live one. Unpushed local commits from the third case accumulate on `main` until someone pushes.
 
 The split exists because a build run needs a rollback boundary. If every increment wrote this checkout uncommitted, a rolled-back increment would undo the code and keep the spec describing it — a `spec.md` asserting behaviour that exists in no repo, which validates green and is worse than the drift the sync exists to stop. A dirty `openspec/` here also silently stalls `tim`'s `--ff-only` auto-pull.
 
@@ -112,26 +113,30 @@ Not used here — see [How the spec stays in sync](#how-the-spec-stays-in-sync).
 
 Prefer **E2E** when the scenario is about the system; **fit** when it’s about the page; **both** when the requirement is load-bearing.
 
-## Next skills (remove when implemented)
+## `tim spec` — validating and maintaining the binding
 
-`frontend-change` keeps the spec honest **per increment**. Still missing: the periodic sweeps that catch what no single increment owns — drift in code nobody touched this week, coverage links whose tests moved, holes nothing has filled.
+`frontend-change` keeps the spec honest **per increment**. What was missing was a way to check the
+`coverage.json` binding itself — nothing validated it, and `openspec validate --specs --strict` still
+reports `0 failed` against a corpus with dangling links — and a periodic sweep for drift no single
+increment owns: coverage links whose tests moved, holes nothing has filled, code nobody touched this
+week. Both are now built as `tim spec` (no AI) and the `spec-sweep` skill (the one AI piece). Nothing
+here gates a PR, a push, a merge or a build run — every command is run by a person or by the sweep, and
+every output is a report.
 
-**The periodic full-drift-detection sweep is out of scope for EUDPA-574** (which built the per-increment half) and wants its own ticket. `spec-drift` and `coverage-refresh` below are where it belongs.
+| Command | Job | AI |
+|---|---|---|
+| `tim spec lint` | Validates the spec ↔ test binding — shape, ID parity, both rollups, prose cross-refs, and (where the repos are cloned) that every link's file exists and its test title resolves. Delegates `## Purpose` / `## Requirements` / ≥1-scenario checks to `openspec validate --specs --strict --json` and merges its issues. Exits non-zero on any finding | none |
+| `tim spec status` | Baseline sha and date per repo (from `openspec/baseline.json`), current HEAD, and how many **linked** test files changed since | none |
+| `tim spec gaps` | Every scenario that is not `full`, clustered and risk-ordered, rendering each row's existing `notes` verbatim — the diagnosis is already written when the coverage was built | none |
+| `tim spec candidates` | What the next sweep should look at: linked files changed since the baseline, `lint`'s unresolved list, `gaps` as known-holes context, grouped into work packets per capability | none |
+| `tim spec baseline` / `--advance` | Print the baseline, or move it — only a person runs `--advance`, after accepting a sweep's findings | none |
+| `tim spec e2e-overlap` | E2E tests whose every witnessed scenario also has a full-strength `fit` or `unit` witness — a shortlist for judgement, not a delete list | none |
 
-Build first: `coverage-gaps` → `coverage-refresh` → `spec-drift`.
-
-| Skill | Job |
-|---|---|
-| `coverage-gaps` | `jq` inventory of none/partial; analysis-only backlog |
-| `coverage-refresh` | Re-read test bodies for capabilities whose tests changed; fix rollups / broken links |
-| `coverage-audit` | Per-capability: links still assert the THEN clauses? |
-| `coverage-for-scenario` | Given `SCN-…`, find witnesses or confirm `none` |
-| `missing-tests` | Turn none/partial into a test plan (implement only if asked) |
-| `spec-drift` | Spec ↔ code: CLEAN / DRIFT / SPEC GAP |
-| `spec-from-tests` | New test proves behaviour → small spec edit, same technique as `frontend-change` Step 5 |
-| `spec-rename-guard` | After a capability rename: refs, `AREAS.md`, coverage paths (IDs stay) |
-
-Rules: never put test names in `spec.md`; AREA codes are stable once assigned — never renumber an existing one, and a genuinely new capability mints the next free code with the collision checks in [`SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md); report before apply; scope by capability except the gaps inventory.
+`spec-sweep` (`.claude/skills/spec-sweep/`) calls `tim spec candidates --json` itself, judges only the
+work packets it returns, and emits one of four verdicts per finding: **STALE LINK** (fixes
+`coverage.json`, applied), **SPEC WRONG** / **SPEC GAP** (proposes a `spec.md` edit, never applies it),
+**NO ACTION**. It never advances the baseline itself — it prints `tim spec baseline --advance` for a
+person to run after accepting the report.
 
 ## Leave out of day-to-day use
 

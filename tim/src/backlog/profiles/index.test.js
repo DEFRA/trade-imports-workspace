@@ -71,7 +71,6 @@ const requiredHooks = {
   references: 'object',
   bornStatus: 'function',
   isRuled: 'function',
-  requireVerification: 'function',
   rowFrom: 'function',
   bornExtras: 'function',
   foldOnto: 'function',

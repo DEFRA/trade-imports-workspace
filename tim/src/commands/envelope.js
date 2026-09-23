@@ -46,9 +46,8 @@ const EXIT_BY_CODE = {
  * mistake the caller can fix by changing the command line; `LOST_UPDATE`
  * and `LOCKED` are DESIGN 4.3's write-safety refusals, raised by the shared
  * writer core (`runIngest` and `commitWrite` — see
- * `constants/writerExitCodes.js`), so both `tim backlog *` and
- * `tim parity ingest` can exit 3 or 4; everything else is a run that
- * started and failed.
+ * `constants/writerExitCodes.js`), so `tim backlog *` can exit 3 or 4;
+ * everything else is a run that started and failed.
  *
  * @param {Error} error
  * @returns {number}

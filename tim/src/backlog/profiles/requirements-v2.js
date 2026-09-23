@@ -295,7 +295,6 @@ export const requirementsV2 = {
   cycleEdges: (rows) => rows.map((row) => [row.id, row.dependsOn ?? []]),
   bornStatus: () => STATUS_PROPOSED,
   isRuled: (row) => row.status !== STATUS_PROPOSED,
-  requireVerification: () => false,
   checkRows: ({ rows, context }) => {
     const presentIds = new Set(rows.map((row) => row.id))
     const goneButClaimed = [
@@ -370,8 +369,6 @@ export const requirementsV2 = {
       `These atoms hold a ruling but their files are no longer in ${dir}: ${rows.map((row) => row.key).join(', ')}. Put the files back, or clear the rulings first.`,
     frozenChanged: (entries) =>
       `statement is frozen at first ingest and these atoms would change it: ${entries.join(', ')}. It is the oracle a later rewrite is checked against, so a changed statement is a new variant atom, never an edit.`,
-    unverified: (files) =>
-      `${files.length} atoms carry no verification record and this programme requires one before a first ingest: ${files.join(', ')}.`,
     referenceNoId: (field) =>
       `"${field}" holds an entry that is not a key. Name the other atom by its key.`,
     referenceUnknown: (field, named) =>

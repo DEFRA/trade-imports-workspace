@@ -41,7 +41,6 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `understanding-check` | "interview EUDPA-X", "check understanding EUDPA-X", "understanding-check EUDPA-X" | Pre-merge author-understanding check on an AI-assisted PR. |
 | `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on a frontend repo (today `trade-imports-animals-frontend`, src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout, then a post-verification sync of the `openspec/` behaviour spec and coverage entries the increment touched. |
 | `requirements-pipeline` | "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil", "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build" | Sources in, one backlog.json of full-stack requirement increments out (DISTIL), then built one increment at a time through the increment build loop (BUILD). The backlog shape, the loop and its Codex briefs live beside it. |
-| `parity` | "compare these two things and give me a report", "compare X against Y", "set up a new comparison", "resume the comparison", "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-", "migrate parity EUDPA-", "recapture the parity corpus" | Build, check and adjudicate a findings report for a comparison corpus. COMPARE runs the whole pipeline from an interview to a rendered report, resumable at every phase. Renders a findings backlog as a decision surface with the code and the pictures in reach; migrates finding prose into structured slots under ten invariants. Hands `status`/`gate`/`dependsOn` to `journey-builder`. |
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 
@@ -88,7 +87,7 @@ tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
 tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
 tim auth                  # equivalent of tools/auth.sh
 tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
-tim parity report EUDPA-X # render a findings report; see the parity skill
+tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 ```
 

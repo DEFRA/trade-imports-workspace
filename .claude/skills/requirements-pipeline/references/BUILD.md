@@ -31,7 +31,7 @@ The user gives the workarea and the epic. Everything else is worked out or
 defaulted. Never ask for a value the list below says how to derive.
 
 ```
-workarea      path under workareas/ holding backlog.json, e.g. shared/dr1-parity-union
+workarea      path under workareas/ holding backlog.json, e.g. shared/my-programme
 branch        the BASE branch: every increment cuts its own off this and
               merges back. Default main.
 scope         conventional-commit scope for landing commits. Default the

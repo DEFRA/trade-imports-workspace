@@ -287,10 +287,10 @@ jq -n \
 
 # Refuse to drop increments this generator cannot re-derive. A backlog gets
 # hand-extended (EUDPA-249 grew 67 increments from 35 derivable ones, several
-# marked "not generator-derivable"), and the parity skill writes its findings
-# backlog to this same filename. Regenerating over either silently destroys
-# that work; status preservation by content key does not save an increment
-# whose key the generator no longer emits.
+# marked "not generator-derivable"), and a backlog written by anything other
+# than this generator lands on the same filename. Regenerating over either
+# silently destroys that work; status preservation by content key does not
+# save an increment whose key the generator no longer emits.
 if [[ -f "$target" && "$FORCE" != true ]]; then
     lost=$(jq -r --slurpfile new "$out" '
         def ckey: "\(.type):\(.key // .page // .gap // .collection // .section // "tail")";
@@ -301,8 +301,8 @@ if [[ -f "$target" && "$FORCE" != true ]]; then
         rm -f "$out"
         echo "Error: regenerating $RUN_ID would drop increments the generator cannot re-derive:" >&2
         echo "  $lost" >&2
-        echo "These are hand-authored, or were written by another skill — parity writes its" >&2
-        echo "findings backlog to this same file. Regenerating destroys them and their rulings." >&2
+        echo "These are hand-authored, or were written by something other than this" >&2
+        echo "generator. Regenerating destroys them and their rulings." >&2
         echo "Declare extras in $extras_file (backlog-add-extra.sh) to make yours re-derivable," >&2
         echo "or re-run with --force only once you are certain they are disposable." >&2
         exit 1

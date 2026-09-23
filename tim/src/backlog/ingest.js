@@ -385,24 +385,6 @@ const assertNoRegroups = (entries, definition) => {
   throw new TimError('USAGE', definition.messages.regrouped(entries))
 }
 
-// The verify-before-ingest gate. A profile that does not declare
-// requireVerification is untouched: re-ingesting a programme that predates
-// the flag has to stay a no-op.
-const assertVerified = ({ items, byId, ids, replace, definition, profile }) => {
-  if (!definition.requireVerification(profile)) return
-  const unverified = items
-    .filter(
-      (item) => !byId.has(ids.get(definition.identityOf(item))) || replace
-    )
-    .filter((item) => !item.verification)
-    .map((item) => definition.identityOf(item))
-  if (!unverified.length) return
-  throw new TimError(
-    'USAGE',
-    definition.messages.unverified(unverified, profile)
-  )
-}
-
 const assertNoCycle = (rows, definition) => {
   const cyclePath = findCycle(new Map(definition.cycleEdges(rows)))
   if (!cyclePath) return
@@ -454,7 +436,7 @@ const assertNoCycle = (rows, definition) => {
  *   a bad item file, USAGE for an unknown profile or collection, two items
  *   sharing one identity, a destructive rebuild, a dropped ruling, a
  *   regrouped started or ruled increment, a dependency cycle, a
- *   double-claimed atom, a frozen-field change, missing verification, an
+ *   double-claimed atom, a frozen-field change, an
  *   increments pass with no atoms yet, an atoms pass that would drop an
  *   atom a claimed increment still names, LOST_UPDATE, or LOCKED
  */
@@ -553,7 +535,6 @@ export const runIngest = ({
 
   const rows = built.map(({ row }) => row)
 
-  assertVerified({ items, byId, ids, replace, definition, profile })
   assertNoCycle(rows, definition)
 
   definition.checkRows({ rows, context, profile })

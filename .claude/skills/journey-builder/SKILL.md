@@ -247,23 +247,18 @@ the target profile declares (unit, format, lint, and with `--e2e` the target's
 end-to-end suite). A target that omits a rung skips it. Log at
 `<workarea>/.verify.log`.
 
-## Handoff with `parity`
+## Backlogs digest mode did not build
 
-Some backlogs under `workareas/journey-builder/` are not built by digest mode —
-they are findings backlogs, produced by the `parity` skill from a comparison
-between a codebase and a requirements source. Both skills write the same
-`backlog.json`, and the split is produce and consume:
+Some backlogs under `workareas/journey-builder/` were not built by digest mode.
+They carry fields this skill never writes — `finding.*`, `citations[]`,
+`visual[]`, `decision` — alongside the rulings and revalidation notes recorded
+against them.
 
-- **parity** builds the findings, resolves their evidence, renders them as a
-  decision surface and adjudicates them. It owns `finding.*`, `citations[]`,
-  `visual[]`, `decision`, and — through `rule-decision.sh` — `status` and
-  `gate`.
-- **journey-builder** consumes `status`, `gate` and `dependsOn` to run the loop
-  over whatever has been accepted. It never reads `finding.*`, and it never
-  regenerates a findings backlog: `backlog-generate.sh` rewrites the whole file
-  and would destroy the rulings and the revalidation notes recorded in it.
-
-Never run both against one run at the same time. Both write the whole file.
+Run the loop over those the same way: read `status`, `gate` and `dependsOn`,
+and build whatever has been accepted. Never regenerate one.
+`backlog-generate.sh` rewrites the whole file, so a regeneration destroys every
+ruling in it — which is why it refuses outright when it would drop an increment
+it cannot re-derive.
 
 ## Tools
 

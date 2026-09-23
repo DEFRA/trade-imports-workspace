@@ -1,4 +1,5 @@
 import { register as registerLint } from './lint.js'
+import { register as registerStatus } from './status.js'
 
 export const register = (program, { timVersion }) => {
   const spec = program
@@ -8,4 +9,5 @@ export const register = (program, { timVersion }) => {
     )
 
   registerLint(spec, { timVersion })
+  registerStatus(spec, { timVersion })
 }

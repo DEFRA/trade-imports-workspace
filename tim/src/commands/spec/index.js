@@ -2,6 +2,7 @@ import { register as registerLint } from './lint.js'
 import { register as registerStatus } from './status.js'
 import { register as registerGaps } from './gaps.js'
 import { register as registerCandidates } from './candidates.js'
+import { register as registerBaseline } from './baseline.js'
 
 export const register = (program, { timVersion }) => {
   const spec = program
@@ -14,4 +15,5 @@ export const register = (program, { timVersion }) => {
   registerStatus(spec, { timVersion })
   registerGaps(spec, { timVersion })
   registerCandidates(spec, { timVersion })
+  registerBaseline(spec, { timVersion })
 }

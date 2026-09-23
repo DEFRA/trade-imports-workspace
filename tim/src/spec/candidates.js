@@ -13,8 +13,9 @@ const inScope = (capabilityPath, scopeCapability) =>
   capabilityPath.startsWith(`${scopeCapability}/`)
 
 const commitLogFor = async ({ workspaceRoot, repoEntry, run }) => {
-  if (!repoEntry.cloned || repoEntry.baselineSha === repoEntry.headSha)
+  if (!repoEntry.cloned || repoEntry.baselineSha === repoEntry.headSha) {
     return []
+  }
   const result = await run('git', [
     '-C',
     repoPath(workspaceRoot, repoEntry.repo),
@@ -62,8 +63,9 @@ const coverageTouchedSinceBaseline = async ({
  * @returns {Promise<Set<string>>} repo-relative directories with any change
  */
 const widenedDirectories = async ({ workspaceRoot, repoEntry, run }) => {
-  if (!repoEntry.cloned || repoEntry.baselineSha === repoEntry.headSha)
+  if (!repoEntry.cloned || repoEntry.baselineSha === repoEntry.headSha) {
     return new Set()
+  }
   const dir = repoPath(workspaceRoot, repoEntry.repo)
   const allChanged = await changedFilesSince(
     dir,

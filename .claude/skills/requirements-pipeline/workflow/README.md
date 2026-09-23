@@ -8,12 +8,12 @@ Launching by `name` runs a stale snapshot rather than what is on disk:
 Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args })
 ```
 
-**To run a backlog rather than a single increment, follow the BUILD phase**
-([`../references/BUILD.md`](../references/BUILD.md)). It derives each increment and
-launches this loop by `scriptPath` with that increment's configuration as `args`, checking
-the landing and repeating. This runs from the main session because **a subagent cannot
-invoke `Workflow`**. That is why the former two-tier `batch-orchestrator/` prompts were
-removed: their middle tier could never start the thing it existed to drive.
+**To run a backlog, follow the BUILD phase**
+([`../references/BUILD.md`](../references/BUILD.md)). It builds the args once, launches this
+loop by `scriptPath`, and reads the result — the loop derives its own next increment and
+keeps going. This runs from the main session because **a subagent cannot invoke
+`Workflow`**. That is why the former two-tier `batch-orchestrator/` prompts were removed:
+their middle tier could never start the thing it existed to drive.
 
 The loop keeps the args contract every workflow script in the workspace keeps — see
 [`.claude/workflows/README.md`](../../../workflows/README.md#the-args-contract) — and
@@ -31,7 +31,8 @@ its plan stage was lifted into `increment-build-loop.js` below.
 ## `increment-build-loop.js`
 
 Builds increments from **any** `backlog.json` under `workareas/`, one at a time, with a
-full quality pass per increment rather than a single implement-and-hope pass. The
+full quality pass per increment rather than a single implement-and-hope pass. It derives
+its own next increment, so one invocation drains as much of the backlog as it can. The
 programme is data: the loop knows nothing about which backlog it is running beyond the
 config below.
 
@@ -64,12 +65,43 @@ missing key. The first log line is the resolved configuration.
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open |
 | `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Give it in full — a programme in the plants repos names its own table here |
 | `models` | Required — pass `{}` to inherit the session model for both tiers. Each tier is optional: `heavy` (plan, implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done) |
-| `increments` | The increment ids to build, in order |
+| `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
+| `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
-A list runs **serially**, and the run stops at the first failure so a broken increment is
-never built on top of. A preflight `jq` against the resolved `backlog.json` runs before
-anything else: a workarea with no readable backlog throws, naming the path it tried,
-rather than proceeding against nothing.
+A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
+with no readable backlog throws, naming the path it tried, rather than proceeding against
+nothing.
+
+### What drains the backlog, and what stops it
+
+With `increments: null` the loop runs `tim backlog next <workarea> --json` in a one-command
+agent before each increment and builds the id it names, reading `result.next` from the JSON
+envelope. It goes round again after each landing, so one launch builds many increments and
+the run outlives the session that started it. Resuming is launching it again with the same
+args: `backlog.json` carries the status, ticket, branch and PRs, and the ticket stage
+resumes an increment part-way through its lifecycle.
+
+The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. It stops:
+
+- at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
+- at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
+  built out;
+- at **`agent-budget`**, before starting an increment that would take the run past the
+  `Workflow` tool's cap of 1000 agents. An increment is up to 36 agents on Claude and 42 on
+  Codex, so a run fits roughly 27 or 23 of them. Nothing is wrong: launch again;
+- at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
+- at **any stage failure** — `baseline-red`, `implement-failed`, `ladder-red`, `ci-red`,
+  `main-red` and the rest, each named in `../references/BUILD.md`.
+
+**A failure stops the whole run.** The loop never moves on to another increment after one
+goes wrong: `tim backlog next` selects on status and `dependsOn` alone, so a failed attempt
+is still the next buildable increment, and carrying on would rebuild it or build on top of
+it. The `not-landed` stop is the backstop for that — an id that comes back twice ends the
+run.
+
+`planOnly` needs an explicit `increments` list and refuses `null`. A plan does not change
+what `tim backlog next` returns, so a `planOnly` drain would plan the same increment for
+ever.
 
 ### Worked example — the plant-products/CHED-PP programme
 
@@ -95,7 +127,8 @@ rather than proceeding against nothing.
     tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
   },
   models: {},
-  increments: ['pp-053']
+  increments: null,
+  stopAfter: 'all'
 }
 ```
 

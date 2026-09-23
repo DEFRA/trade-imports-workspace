@@ -16,9 +16,12 @@ Read `workareas/shared/<programme>/report.md`. It starts with the repos and prec
 
 Every run goes ticket → branch → build → PR → CI → merge → ticket done — the
 loop merges each increment itself once it is green, reviewed, adversarially
-verified and judged:
+verified and judged, then works out the next one and does it again:
 
 > Build every increment from shared/hrp-origin-and-commodity, epic EUDPA-12345.
+
+That builds the whole backlog from one launch. Say how many if you want fewer:
+"build the next 3".
 
 Every ticket the loop raises hangs off that epic, so a run needs one. If the
 programme has no epic yet, raise it first — the `ticket-creator` skill, or
@@ -29,4 +32,4 @@ To put a human approval gate back in front of every merge, say "... and require 
 
 ## When it stops
 
-It prints a handover prompt. Paste that into a new session to carry on. It only stops for a genuine failure — CI that stayed red, a red base branch, a half-merged increment — or for an increment carrying a designed review gate. `awaiting-approval` and `changes-requested` only happen if you asked for the human approval gate; otherwise the loop never waits on a person.
+It prints a handover prompt. Paste that into a new session to carry on. It stops when it has built what you asked for, when the backlog has nothing left to build, or when it runs out of the 1,000 agents one run gets — none of which is a failure, and the last two just mean launching it again. Otherwise it stops for a genuine failure — CI that stayed red, a red base branch, a half-merged increment — or for an increment carrying a designed review gate. `awaiting-approval` and `changes-requested` only happen if you asked for the human approval gate; otherwise the loop never waits on a person.

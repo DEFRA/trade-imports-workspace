@@ -86,6 +86,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'repos',
     'models',
     'increments',
+    'stopAfter',
     'jiraProject',
     'epic',
     'jiraInProgressStatus',
@@ -133,6 +134,7 @@ const BASE_ARGS = {
   },
   models: { light: 'fixture-light' },
   increments: ['inc-900'],
+  stopAfter: 1,
   jiraProject: 'EUDPA',
   epic: 'EUDPA-1',
   jiraInProgressStatus: 'In Progress',
@@ -391,9 +393,51 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.error.message).toContain(
-      'config.increments must be a non-empty list'
+      'config.increments must be null to drain the backlog, or a non-empty list of increment ids'
     )
     expect(run.logs.length).toBe(1)
+    expect(run.agents).toEqual([])
+  })
+
+  test('stops before any agent when stopAfter is missing', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'stopAfter')
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: args is missing required key stopAfter. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test('refuses a stopAfter that would never stop the run', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, stopAfter: 0 }
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: config.stopAfter must be a positive integer or "all" — it counts increments that LANDED. Got 0'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test('accepts stopAfter "all" and carries on to the backlog', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, stopAfter: 'all' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.error.message).toContain('no readable backlog')
+  })
+
+  test('refuses planOnly without an explicit increments list', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, planOnly: true, increments: null }
+    })
+
+    expect(run.error.message).toContain(
+      'config.planOnly needs an explicit config.increments list'
+    )
     expect(run.agents).toEqual([])
   })
 
@@ -457,7 +501,11 @@ describe('increment-build-loop', () => {
           behaviourChanges: ['The list shows only your own notifications.'],
           decisions: ['Filter in the backend query, not the frontend.']
         }
-      ]
+      ],
+      stopped: {
+        reason: 'no-buildable',
+        detail: 'the increments list is built out'
+      }
     })
   })
 
@@ -896,6 +944,215 @@ describe('increment-build-loop', () => {
           preserved: `wip commit pushed to ${WORK_BRANCH}`
         })
         expect(labels(run)).not.toContain('inc-900 land')
+      })
+
+      describe('deriving its own next increment', () => {
+        // One increment's worth of answers, from the ticket through to the gate
+        // check, every stage green: what it takes for the loop to count one as
+        // landed and go round again.
+        const LANDED = [
+          TICKET_ANSWER,
+          BRANCHED_ANSWER,
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js']),
+          NO_FINDINGS,
+          NO_FINDINGS,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          { landed: true, commit: 'abc1234', summary: 'committed' },
+          {
+            ok: true,
+            prs: [
+              {
+                repo: 'frontend',
+                url: 'https://github.com/DEFRA/x/pull/9',
+                number: 9
+              }
+            ],
+            summary: 'one PR'
+          },
+          { green: true, summary: 'every check green' },
+          {
+            green: true,
+            merged: [{ repo: 'frontend', sha: 'def5678' }],
+            summary: 'merged'
+          },
+          { ok: true, summary: 'ticket moved to Done' },
+          { ok: true, summary: 'no gate' }
+        ]
+
+        const derived = (id) => ({ ok: true, next: id, summary: id })
+
+        const runDraining = (stopAfter, ...answers) =>
+          runWorkflowScript(scriptPath, {
+            args: { ...BASE_ARGS, increments: null, stopAfter },
+            answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, ...answers]
+          })
+
+        test('asks tim for the next increment and builds the id it names', async () => {
+          const run = await runDraining(
+            1,
+            derived('inc-901'),
+            TICKET_ANSWER,
+            BRANCHED_ANSWER,
+            null
+          )
+
+          expect(labels(run)).toEqual([
+            'workspace',
+            'preflight',
+            'derive next',
+            'inc-901 ticket',
+            'inc-901 branch',
+            'inc-901 baseline'
+          ])
+        })
+
+        test('tells the derive agent to read result.next from the envelope', async () => {
+          const run = await runDraining(1, derived('inc-901'), null)
+          const prompt = run.agents.find(
+            (entry) => entry.options.label === 'derive next'
+          ).prompt
+
+          expect(prompt).toContain(
+            '`tim backlog next shared/args-fixture --workspace ~/ws --json`'
+          )
+          expect(prompt).toContain('Read `result.next` and nothing else')
+        })
+
+        test('stops with no-buildable when tim returns no next increment', async () => {
+          const run = await runDraining(1, {
+            ok: true,
+            summary: 'result.next was null'
+          })
+
+          expect(run.result).toEqual({
+            increments: [],
+            stopped: {
+              reason: 'no-buildable',
+              detail: 'result.next was null'
+            }
+          })
+        })
+
+        test('stops with derive-failed rather than calling a broken query a finished backlog', async () => {
+          const run = await runDraining(1, {
+            ok: false,
+            summary: 'tim backlog next exited 2: no such workarea'
+          })
+
+          expect(run.result.stopped).toEqual({
+            reason: 'derive-failed',
+            detail: 'tim backlog next exited 2: no such workarea'
+          })
+        })
+
+        test('stops with count-reached once stopAfter increments have landed', async () => {
+          const run = await runDraining(1, derived('inc-901'), ...LANDED)
+
+          expect(run.result.increments).toEqual([
+            expect.objectContaining({ id: 'inc-901', outcome: 'landed' })
+          ])
+          expect(run.result.stopped).toEqual({
+            reason: 'count-reached',
+            detail: '1 increment(s) landed, which is what stopAfter asked for'
+          })
+        })
+
+        test('derives again after one lands and builds the next id', async () => {
+          const run = await runDraining(
+            2,
+            derived('inc-901'),
+            ...LANDED,
+            derived('inc-902'),
+            null
+          )
+
+          expect(labels(run).slice(-2)).toEqual([
+            'derive next',
+            'inc-902 ticket'
+          ])
+        })
+
+        test('stops with not-landed when the same id comes back twice', async () => {
+          const run = await runDraining(
+            2,
+            derived('inc-901'),
+            ...LANDED,
+            derived('inc-901')
+          )
+
+          expect(run.result.stopped.reason).toBe('not-landed')
+          expect(run.result.stopped.detail).toContain(
+            'inc-901 came back a second time'
+          )
+        })
+
+        // The Workflow tool caps a run at 1000 agents. At 36 an increment on
+        // Claude, plus the two startup agents, the twenty-eighth does not fit —
+        // so the run stops before starting it rather than dying inside it.
+        test('stops before the increment that would exhaust the agent budget', async () => {
+          const run = await runDraining(
+            'all',
+            ...Array.from({ length: 30 }, (_, index) => index).flatMap(
+              (index) => [derived(`inc-9${index}`), ...LANDED]
+            )
+          )
+
+          expect(run.result.increments.length).toBe(27)
+          expect(run.result.stopped.reason).toBe('agent-budget')
+          expect(run.result.stopped.detail).toContain('27 increment(s) landed')
+        })
+      })
+
+      describe('an explicit increments list', () => {
+        const runListed = (...answers) =>
+          runWorkflowScript(scriptPath, {
+            args: {
+              ...BASE_ARGS,
+              increments: ['inc-900', 'inc-901'],
+              stopAfter: 'all'
+            },
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              TICKET_ANSWER,
+              BRANCHED_ANSWER,
+              ...answers
+            ]
+          })
+
+        test('derives nothing and builds the ids it was given, in order', async () => {
+          const run = await runListed({
+            ...BASELINE_ANSWER,
+            green: false,
+            summary: 'lint red'
+          })
+
+          expect(labels(run)).toEqual([
+            'workspace',
+            'preflight',
+            'inc-900 ticket',
+            'inc-900 branch',
+            'inc-900 baseline'
+          ])
+        })
+
+        test('stops the whole run at a red baseline instead of trying the next id', async () => {
+          const run = await runListed({
+            ...BASELINE_ANSWER,
+            green: false,
+            summary: 'lint red'
+          })
+
+          expect(run.result.stopped).toEqual({
+            reason: 'baseline-red',
+            detail: 'inc-900: lint red'
+          })
+          expect(labels(run)).not.toContain('inc-901 ticket')
+        })
       })
 
       describe('with the codex executor', () => {

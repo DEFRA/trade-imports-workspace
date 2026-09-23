@@ -3,8 +3,9 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops.',
+    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops.',
   phases: [
+    { title: 'Derive' },
     { title: 'Ticket' },
     { title: 'Branch' },
     { title: 'Baseline' },
@@ -29,6 +30,14 @@ export const meta = {
 // increment runs the one pipeline: ticket → branch → build → PR → CI → merge →
 // ticket done.
 //   workarea        path under workareas/, holding backlog.json
+//   increments      null to DRAIN the backlog: the run derives its own next
+//                   increment with `tim backlog next` after each one lands, so
+//                   one invocation builds as many as it can. Or a list of ids,
+//                   built serially in the order given — an explicit override
+//                   for a run that must build exactly those
+//   stopAfter       how many increments may LAND before the run stops: a
+//                   positive integer, or 'all'. It counts landings, not
+//                   attempts, so a stopped attempt never uses one up
 //   branch          the BASE branch: every increment cuts its own branch off
 //                   this one and merges back into it
 //   scope           conventional-commit scope
@@ -65,7 +74,9 @@ export const meta = {
 //                   before it stops and leaves every PR open.
 //   planOnly        true: plan each increment into <workarea>/plans/<id>.md and
 //                   stop — no ticket, branch, baseline or build. false: the
-//                   whole lifecycle
+//                   whole lifecycle. It needs an explicit `increments` list:
+//                   planning a backlog you are not building has no end, because
+//                   a plan does not change what `tim backlog next` returns
 //   repos           the three repos an increment's "repos" list can name —
 //                   frontend, backend, tests — each with its workspace-relative
 //                   path and its GitHub owner/name slug. A programme in another
@@ -121,6 +132,7 @@ const ALWAYS_REQUIRED = [
   'repos',
   'models',
   'increments',
+  'stopAfter',
   'jiraProject',
   'epic',
   'jiraInProgressStatus',
@@ -159,6 +171,7 @@ const CI_WATCH_MINUTES = CFG.ciWatchMinutes
 const REQUIRE_APPROVAL = CFG.requireApproval
 const APPROVAL_WAIT_MINUTES = CFG.approvalWaitMinutes
 const PLAN_ONLY = CFG.planOnly
+const STOP_AFTER = CFG.stopAfter
 
 // One watch call blocks for at most ten minutes — the Bash tool's ceiling. A
 // longer wait is that many consecutive watches, and running out of them is RED.
@@ -168,6 +181,19 @@ const CI_WATCH_WINDOWS = Math.max(1, Math.ceil(CI_WATCH_MINUTES / 10))
 // Running out is NOT a failure — it means nobody has looked yet, and the PR is
 // left open for them to.
 const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
+
+// The Workflow tool caps one run at 1000 agents over its whole lifetime. That
+// is the tool's limit, not a programme's choice, so it is a constant here and
+// not a config key. An increment is 23–35 agents on Claude and 29–41 on Codex,
+// plus the one that derives it, so a drain of an open-ended backlog would hit
+// the cap mid-increment and lose the attempt. The run stops before starting one
+// that would not fit — roughly 27 increments on Claude, 23 on Codex — and
+// resuming is launching the workflow again with the same args, because
+// backlog.json already carries the status, ticket, branch and PRs.
+const AGENT_CAP = 1000
+const AGENTS_PER_INCREMENT = { claude: 36, codex: 42 }
+const STARTUP_AGENTS = 2
+const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
 if (!WORKAREA_REL) {
   throw new Error(
@@ -212,8 +238,23 @@ if (typeof PLAN_ONLY !== 'boolean') {
 if (typeof REQUIRE_APPROVAL !== 'boolean') {
   throw new Error(`increment-build-loop: config.requireApproval must be a boolean — got "${REQUIRE_APPROVAL}"`)
 }
-if (!Array.isArray(CFG.increments) || CFG.increments.length === 0 || !CFG.increments.every((id) => typeof id === 'string' && id.trim())) {
-  throw new Error(`${WORKFLOW_NAME}: config.increments must be a non-empty list of increment ids — got ${JSON.stringify(CFG.increments)}`)
+const EXPLICIT_IDS = CFG.increments
+const idListOk =
+  Array.isArray(EXPLICIT_IDS) && EXPLICIT_IDS.length > 0 && EXPLICIT_IDS.every((id) => typeof id === 'string' && id.trim())
+if (EXPLICIT_IDS !== null && !idListOk) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.increments must be null to drain the backlog, or a non-empty list of increment ids — got ${JSON.stringify(EXPLICIT_IDS)}`
+  )
+}
+if (STOP_AFTER !== 'all' && (!Number.isInteger(STOP_AFTER) || STOP_AFTER <= 0)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.stopAfter must be a positive integer or "all" — it counts increments that LANDED. Got ${JSON.stringify(STOP_AFTER)}`
+  )
+}
+if (PLAN_ONLY && EXPLICIT_IDS === null) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.planOnly needs an explicit config.increments list. A plan does not change what \`tim backlog next\` returns, so a planOnly drain would plan the same increment for ever`
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -1207,11 +1248,100 @@ if (!preflight || !preflight.ok) {
   )
 }
 
-log(`${WORKAREA_REL}: ${CFG.increments.length} increment(s) off ${BASE_BRANCH}, executor ${EXECUTOR}`)
+// Deriving the next increment is a shell command, and a workflow script has no
+// shell — hence an agent for one `tim backlog next` call. It reads the id out
+// of the JSON envelope rather than the text rendering, so "NONE" never has to
+// be told apart from an increment that happens to be called that.
+const NEXT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    next: { type: 'string', description: 'The increment id tim returned. Leave it out when result.next was null' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const deriveNext = () =>
+  agent(
+    `Report the next buildable increment in this backlog. Run exactly one command and read its output:
+\`tim backlog next ${WORKAREA_REL} --workspace ${TILDE} --json\`
+It prints one JSON line shaped \`{ok, schema_version, tim_version, result: {path, next}, errors, metadata}\`.
+Read \`result.next\` and nothing else:
+- a string → that is the id. Return ok:true with it VERBATIM in \`next\`.
+- \`null\` → nothing is buildable. Return ok:true, leave \`next\` out, and say so in summary.
+If the command exits non-zero or prints no JSON, return ok:false quoting exactly what it said. Do NOT choose an
+increment yourself, do NOT read the backlog, and do NOT judge whether the one tim named looks ready: buildability
+is status and dependencies, which tim has already applied.
+One Bash call, no Grep/Glob tools, tilde paths only.`,
+    light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
+  )
+
+const queue = EXPLICIT_IDS === null ? null : [...EXPLICIT_IDS]
+const plannedWork = queue ? `${queue.length} increment(s)` : 'draining the backlog'
+const stopAfterText = STOP_AFTER === 'all' ? 'every one it can' : `${STOP_AFTER} landed`
+log(`${WORKAREA_REL}: ${plannedWork} off ${BASE_BRANCH}, executor ${EXECUTOR}, stopping after ${stopAfterText}`)
 
 const results = []
+let built = 0
+let lastId = null
+let stopped = null
 
-for (const id of CFG.increments) {
+while (true) {
+  if (STOP_AFTER !== 'all' && built >= STOP_AFTER) {
+    stopped = { reason: 'count-reached', detail: `${built} increment(s) landed, which is what stopAfter asked for` }
+    break
+  }
+
+  // Checked before the increment starts, never part-way through one: a run that
+  // runs out of agents mid-increment loses the attempt it was making.
+  if (agentsThrough(built + 1) > AGENT_CAP) {
+    stopped = {
+      reason: 'agent-budget',
+      detail: `${built} increment(s) landed. Another would take this run past the Workflow tool's ${AGENT_CAP}-agent cap at up to ${AGENTS_PER_INCREMENT[EXECUTOR]} agents per increment on ${EXECUTOR}. Launch the workflow again with the same args to carry on`
+    }
+    break
+  }
+
+  let id = null
+
+  if (queue) {
+    id = queue.shift()
+    if (!id) {
+      stopped = { reason: 'no-buildable', detail: 'the increments list is built out' }
+      break
+    }
+  } else {
+    phase('Derive')
+    const derived = await deriveNext()
+    if (!derived || !derived.ok) {
+      stopped = { reason: 'derive-failed', detail: derived?.summary ?? 'the derive agent failed' }
+      log(`${WORKAREA_REL}: COULD NOT DERIVE THE NEXT INCREMENT — ${stopped.detail}`)
+      break
+    }
+    if (!derived.next) {
+      stopped = { reason: 'no-buildable', detail: derived.summary }
+      break
+    }
+    id = derived.next
+    log(`${WORKAREA_REL}: next is ${id}`)
+  }
+
+  // The backstop. Every failure path below stops the run, so nothing should
+  // hand back the same id twice — but a path that forgets would otherwise
+  // rebuild one increment for ever, because `tim backlog next` selects on
+  // status and dependsOn alone and a failed attempt changes neither.
+  if (id === lastId) {
+    stopped = {
+      reason: 'not-landed',
+      detail: `${id} came back a second time, so the previous attempt at it did not land. Read its row in the backlog before running again`
+    }
+    log(`${id}: DERIVED TWICE — the last attempt did not land. Stopping.`)
+    break
+  }
+  lastId = id
+
   if (PLAN_ONLY) {
     phase('Plan')
     const plan = await planIncrement(id)
@@ -1346,6 +1476,7 @@ Return the structured output only.`,
   if (!ticket || !ticket.ok || !ticket.key) {
     log(`${id}: TICKET STAGE FAILED — ${ticket ? ticket.summary : 'agent failed'}`)
     results.push({ id, outcome: 'ticket-failed', detail: ticket?.summary ?? 'agent failed' })
+    stopped = { reason: 'ticket-failed', detail: `${id}: ${ticket?.summary ?? 'agent failed'}` }
     break
   }
 
@@ -1360,6 +1491,7 @@ Return the structured output only.`,
       outcome: 'ticket-failed',
       detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
     })
+    stopped = { reason: 'ticket-failed', detail: `${id}: ${ticket.key} is still in the backlog of board ${JIRA_BOARD}` }
     break
   }
 
@@ -1419,6 +1551,7 @@ Return the structured output only.`,
   if (!branched || !branched.ok) {
     log(`${id}: BRANCH STAGE FAILED — ${branched ? branched.summary : 'agent failed'}`)
     results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branched?.summary ?? 'agent failed' })
+    stopped = { reason: 'branch-failed', detail: `${id}: ${branched?.summary ?? 'agent failed'}` }
     break
   }
 
@@ -1471,10 +1604,14 @@ Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: BASELINE_SCHEMA })
   )
 
+  // A red tree before this increment touched anything makes nothing downstream
+  // trustworthy, so the run stops rather than trying the next increment against
+  // the same tree.
   if (!baseline || !baseline.ok || !baseline.green) {
-    log(`${id}: BASELINE RED — skipping. ${baseline ? baseline.summary : 'agent failed'}`)
+    log(`${id}: BASELINE RED — stopping the run. ${baseline ? baseline.summary : 'agent failed'}`)
     results.push({ id, outcome: 'baseline-red', detail: baseline?.summary ?? 'agent failed' })
-    continue
+    stopped = { reason: 'baseline-red', detail: `${id}: ${baseline?.summary ?? 'agent failed'}` }
+    break
   }
 
   const baselineEvidence = `THE BASELINE GATE, run before any edit — every rung below was green then, so a rung red now
@@ -1492,6 +1629,7 @@ ${baselineRungList(baseline)}`
   if (!plan || !plan.ok) {
     log(`${id}: PLAN REFUSED — ${plan ? plan.summary : 'the planner died'}`)
     results.push({ id, ticket: ticket?.key, outcome: 'plan-refused', plan: `${PLANS}/${id}.md`, detail: plan?.summary ?? 'the planner died' })
+    stopped = { reason: 'plan-refused', detail: `${id}: ${plan?.summary ?? 'the planner died'}` }
     break
   }
 
@@ -1499,6 +1637,10 @@ ${baselineRungList(baseline)}`
   if (planOutsideBranched && planOutsideBranched.length) {
     log(`${id}: PLAN OUTSIDE BRANCHED REPOS — ${planOutsideBranched.join(', ')}`)
     results.push({ id, ticket: ticket?.key, outcome: 'plan-outside-branched-repos', detail: `plan touches ${planOutsideBranched.join(', ')}, branched only ${repos.join(', ')}` })
+    stopped = {
+      reason: 'plan-outside-branched-repos',
+      detail: `${id}: the plan touches ${planOutsideBranched.join(', ')}, branched only ${repos.join(', ')}`
+    }
     break
   }
   log(`${id}: planned — ${plan.repos.join(', ')}; ${plan.behaviourChanges.length} behaviour changes`)
@@ -1569,6 +1711,9 @@ ${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is
 
   const attempt = { id, ticket, workBranch }
 
+  // The attempt is preserved as a pushed wip commit, so the work is not lost —
+  // but a dead implementor has had its go, and the run stops rather than
+  // deriving an increment that would be built on top of it.
   if (!impl || !impl.ok) {
     results.push(
       await preserveAttempt({
@@ -1580,7 +1725,8 @@ ${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is
         detail: impl?.summary ?? 'agent failed'
       })
     )
-    continue
+    stopped = { reason: 'implement-failed', detail: `${id}: ${impl?.summary ?? 'agent failed'}` }
+    break
   }
 
   // Returns the preserved result when a repo is off the run's branch and could
@@ -1602,6 +1748,7 @@ ${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is
     const stray = await offBranch('implement', 'Implement')
     if (stray) {
       results.push(stray)
+      stopped = { reason: 'off-branch', detail: `${id} after implement: ${stray.detail}` }
       break
     }
   }
@@ -1762,6 +1909,7 @@ reporting any that fails as a finding.`
         detail: `no result from ${reviewed.failed.join(', ')}`
       })
     )
+    stopped = { reason: 'review-failed', detail: `${id}: no result from ${reviewed.failed.join(', ')}` }
     break
   }
 
@@ -1769,6 +1917,7 @@ reporting any that fails as a finding.`
     const stray = await offBranch('review', 'Review')
     if (stray) {
       results.push(stray)
+      stopped = { reason: 'off-branch', detail: `${id} after review: ${stray.detail}` }
       break
     }
   }
@@ -1909,11 +2058,13 @@ ${impl.notes || '(none)'}`,
             detail: codexNoResult(id, 'fix')
           })
         )
+        stopped = { reason: 'fix-failed', detail: `${id}: ${codexNoResult(id, 'fix')}` }
         break
       }
       const stray = await offBranch('fix', 'Fix')
       if (stray) {
         results.push(stray)
+        stopped = { reason: 'off-branch', detail: `${id} after fix: ${stray.detail}` }
         break
       }
     } else {
@@ -2034,12 +2185,14 @@ Return the structured output only.`,
       })
     )
     log(`${id}: attempt preserved — stopping the run so the failure is not built on top of`)
+    stopped = { reason: 'ladder-red', detail: `${id}: ${ladder?.summary ?? 'verifier failed'}` }
     break
   }
 
   const strayBeforeLand = await offBranch('land', 'Land')
   if (strayBeforeLand) {
     results.push(strayBeforeLand)
+    stopped = { reason: 'off-branch', detail: `${id} before land: ${strayBeforeLand.detail}` }
     break
   }
 
@@ -2089,6 +2242,7 @@ Return the structured output only.`,
       })),
       findings: findingCounts()
     })
+    stopped = { reason: 'land-failed', detail: `${id}: ${land?.summary ?? 'agent failed'}` }
     break
   }
   } // build
@@ -2153,6 +2307,7 @@ Return the structured output only.`,
     if (!pr || !pr.ok || (pr.prs ?? []).length === 0) {
       log(`${id}: PR STAGE FAILED — ${pr ? pr.summary : 'agent failed'}`)
       results.push({ id, ticket: ticket.key, outcome: 'pr-failed', detail: pr?.summary ?? 'agent failed', findings })
+      stopped = { reason: 'pr-failed', detail: `${id}: ${pr?.summary ?? 'agent failed'}` }
       break
     }
 
@@ -2299,6 +2454,7 @@ Return the structured output only.`,
         detail: detail || 'ci did not go green',
         findings
       })
+      stopped = { reason: 'ci-red', detail: `${id}: ${detail || 'ci did not go green'}. PRs left open: ${prs.map((p) => p.url).join(' ')}` }
       break
     }
 
@@ -2441,6 +2597,7 @@ Return the structured output only.`,
         detail: detail || 'the merge stage did not reach green',
         findings
       })
+      stopped = { reason: outcome, detail: `${id}: ${detail || 'the merge stage did not reach green'}` }
       break
     }
 
@@ -2480,8 +2637,11 @@ Return the structured output only.`,
       detail: done?.summary ?? 'agent failed',
       findings
     })
+    stopped = { reason: 'done-failed', detail: `${id}: ${done?.summary ?? 'agent failed'}. The merge stands` }
     break
   }
+
+  built += 1
 
   results.push({
     id,
@@ -2510,8 +2670,11 @@ Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
   if (gate && !gate.ok) {
     log(`${id}: HALT-FOR-REVIEW GATE — stopping the run. ${gate.summary}`)
     results.push({ id, ticket: ticket?.key, outcome: 'halted-at-gate', detail: gate.summary })
+    stopped = { reason: 'gate', detail: `${id}: ${gate.summary}` }
     break
   }
 }
 
-return { increments: results }
+log(`${WORKAREA_REL}: ${built} increment(s) landed — stopping: ${stopped.reason}. ${stopped.detail}`)
+
+return { increments: results, stopped }

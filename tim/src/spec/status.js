@@ -19,12 +19,28 @@ export const BASELINE_PATH = join('openspec', 'baseline.json')
 export const loadBaseline = (workspaceRoot) =>
   readJsonFile(join(workspaceRoot, BASELINE_PATH))
 
-const headSha = async (repoDir, run) => {
+export const headSha = async (repoDir, run) => {
   const result = await run('git', ['-C', repoDir, 'rev-parse', 'HEAD'])
   return result.exitCode === 0 ? result.stdout.trim() : null
 }
 
-const changedFilesSince = async (repoDir, baselineSha, headOfHead, run) => {
+/**
+ * Every file that changed in a repo between two shas — the raw list, not
+ * intersected with anything. `tim spec candidates --wide` reuses this to
+ * check a linked file's whole directory, not just the file itself.
+ *
+ * @param {string} repoDir
+ * @param {string} baselineSha
+ * @param {string} headOfHead
+ * @param {Function} run
+ * @returns {Promise<string[]>}
+ */
+export const changedFilesSince = async (
+  repoDir,
+  baselineSha,
+  headOfHead,
+  run
+) => {
   if (baselineSha === headOfHead) return []
   const result = await run('git', [
     '-C',

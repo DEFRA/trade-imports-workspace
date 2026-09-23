@@ -60,8 +60,9 @@ export const findClusters = (rows) => {
     byName.set(row.name, [...ids, row.id])
   }
   for (const ids of byName.values()) {
-    for (let index = 1; index < ids.length; index += 1)
+    for (let index = 1; index < ids.length; index += 1) {
       union(ids[0], ids[index])
+    }
   }
 
   const knownIds = new Set(rows.map((row) => row.id))

@@ -26,6 +26,7 @@ import { register as registerGha } from './commands/gha/index.js'
 import { register as registerParity } from './commands/parity/index.js'
 import { register as registerBacklog } from './commands/backlog/index.js'
 import { register as registerBuild } from './commands/build/index.js'
+import { register as registerCapture } from './commands/capture/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -158,6 +159,7 @@ export const buildProgram = () => {
   registerParity(program, { timVersion: pkg.version })
   registerBacklog(program, { timVersion: pkg.version })
   registerBuild(program, { timVersion: pkg.version })
+  registerCapture(program, { timVersion: pkg.version })
 
   return program
 }

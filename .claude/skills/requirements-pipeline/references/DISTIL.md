@@ -9,9 +9,8 @@ This phase joins pieces that already exist. It does not replace them:
 
 | Step | The existing piece it uses |
 |---|---|
-| Extract a trace set | `workareas/trace-requirements/<set>/`: the trace-to-requirements workflow's verified per-page specs (`pages/*.json`), `journey-spec.json` and `conflicts.json`. Where a set has not been mined yet, run that workflow first (copy `workareas/trace-requirements/ched-pp/trace-to-requirements.workflow.js` and repoint its paths) |
+| Extract a trace source | The method in [`TRACE_EXTRACTOR.md`](TRACE_EXTRACTOR.md) beside this file: mine a directory of trace zips with the `playwright-trace` CLI, or read a set already mined under `workareas/trace-requirements/` |
 | Extract a document, Confluence page, image or repo | The method in `.claude/skills/journey-builder/references/SOURCE_EXTRACTOR.md`: characterise first, extract second; `.docx` through `unzip -p`; images one at a time with Read |
-| Verify an extract | The trace workflow's Verify phase and parity's rule: a different agent from the author tries to refute every claim |
 | Reconcile | The ground rules in `.claude/skills/journey-builder/references/SPEC_RECONCILER.md`: declared precedence, every disagreement recorded, never blocking, provenance on every claim. Not its obligations-model mapping, which is frontend-specific |
 | Validate and derive | `tim backlog check`, `tim backlog next` |
 
@@ -42,13 +41,14 @@ caught. Then write `<workarea>/sources.json` yourself — it is the one file you
   "goal": "One sentence: what is being built, for whom.",
   "repos": { "frontend": "repos/trade-imports-plants-frontend", "backend": "repos/trade-imports-plants-backend", "tests": "repos/trade-imports-animals-tests" },
   "reposWhy": "High-risk plants origin and commodity is the plants journey: the plants frontend and backend own it; the tests repo holds every service's E2E suite.",
-  "precedence": ["repo:frontend", "repo:backend", "repo:tests", "confluence:6518997274", "trace:ched-pp"],
+  "precedence": ["repo:frontend", "repo:backend", "repo:tests", "confluence:6518997274", "trace:ched-pp", "trace:recorded-run"],
   "sources": [
     { "id": "repo:frontend", "kind": "repo", "locator": "repos/trade-imports-plants-frontend", "scope": "the origin and commodity pages, spec/decisions.json", "role": "what exists today and what has already been ruled" },
     { "id": "repo:backend", "kind": "repo", "locator": "repos/trade-imports-plants-backend", "scope": "the notification's origin and commodity fields", "role": "what exists today and what has already been ruled" },
     { "id": "repo:tests", "kind": "repo", "locator": "repos/trade-imports-animals-tests", "scope": "the plants origin and commodity specs", "role": "what is already proven end to end" },
     { "id": "confluence:6518997274", "kind": "confluence", "locator": "6518997274", "scope": "whole page", "role": "policy: what data must be captured" },
-    { "id": "trace:ched-pp", "kind": "trace", "locator": "workareas/trace-requirements/ched-pp", "scope": "pages/country-of-origin.json, pages/variety-of-genus-and-species.json", "role": "how the current service does it" }
+    { "id": "trace:ched-pp", "kind": "trace", "locator": "workareas/trace-requirements/ched-pp", "scope": "pages/country-of-origin.json, pages/variety-of-genus-and-species.json", "role": "how the current service does it" },
+    { "id": "trace:recorded-run", "kind": "trace", "locator": "workareas/shared/hrp-origin-and-commodity/sources/traces", "scope": "the traces whose titles name the origin or commodity steps", "role": "how the current service does it" }
   ]
 }
 ```
@@ -75,6 +75,10 @@ caught. Then write `<workarea>/sources.json` yourself — it is the one file you
   target keeps a decisions or rulings ledger (such as `spec/decisions.json`), add it to that repo's scope. An
   existing ruling outranks a default the distiller would otherwise invent. The tests repo is a source too: its
   role is "what is already proven end to end", and its scope the specs for the area the goal touches.
+- **A trace source brings its driving test suite with it, where one exists.** A trace shows only what
+  somebody walked, so it is a lower bound on the service. The suite that drove it names the pages and
+  fields no recorded run happened to reach. Add it as a `repo` source scoped to those specs, and the
+  reconcile step raises the floor. Where the suite is gone, say so in the report: the lower bound stands.
 - `scope` narrows a large source. Distil a slice of a big source well rather than all of it thinly.
 - Fetch a Confluence page to `<workarea>/sources/<page-id>.json` with
   `tim confluence page <id> --json > <workarea>/sources/<page-id>.json`. Copy a document into `<workarea>/sources/`.
@@ -109,10 +113,9 @@ The extractor prompt says:
   class or function.
 - `quote` is the source's words. `inferred` means you read it between the lines, so say why in the statement.
   `gap` means the source should say something and does not.
-- A trace set is already mined: read its `pages/*.json` in scope and its `conflicts.json`, and take only what
-  survived its own verification. The trace workflow's verifier writes its corrections back into
-  `pages/*.json`; a set that also has `verify-verdicts.json` (such as `iuu`) records which pages it faulted. Its `acceptanceCriteria` in `backlog.json`
-  are not a source: they are an earlier distillation.
+- A trace source is mined or read, depending on what its `locator` points at. Give the agent
+  `TRACE_EXTRACTOR.md` beside this file: it covers a directory of trace zips and an already-mined set
+  under `workareas/trace-requirements/`, and ends in the claim shape above.
 - A target repo is read for what it does today: each claim is current observable behaviour or an existing
   ruling (quote the ruling's id and words), and `ref` is the file and line. Files are fine as provenance here;
   the statement still describes what a user or system observes.

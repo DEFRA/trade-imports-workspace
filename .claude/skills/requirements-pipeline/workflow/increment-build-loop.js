@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    "Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs for the chosen lifecycle is required, and a missing one stops the run before any agent starts — see the (full) markers below for lifecycle:'full'-only keys. planOnly:true writes the plan and stops.",
+    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation builds one increment (or a serial list) with a full multi-agent quality pass per increment. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops.',
   phases: [
     { title: 'Ticket' },
     { title: 'Branch' },
@@ -25,38 +25,29 @@ export const meta = {
 
 // ---------------------------------------------------------------------------
 // Configuration comes only from args (an object, or a JSON string). There are
-// no defaults: a missing key stops the run before any agent starts. Keys
-// marked (full) are required only when lifecycle is 'full'.
+// no defaults: a missing key stops the run before any agent starts. Every
+// increment runs the one pipeline: ticket → branch → build → PR → CI → merge →
+// ticket done.
 //   workarea        path under workareas/, holding backlog.json
-//   branch          under 'full', the BASE branch: every increment cuts its own
-//                   branch off this one and merges back into it. Under 'local',
-//                   the scratch branch every increment is built and committed on
-//                   — the baseline puts every repo on it with `tim build branch`,
-//                   and it must not be main or master
+//   branch          the BASE branch: every increment cuts its own branch off
+//                   this one and merges back into it
 //   scope           conventional-commit scope
 //   executor        'claude' (every stage a subagent) or 'codex' (implement,
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
-//   lifecycle       'full'  ticket → branch → build → PR → CI → merge → ticket done
-//                   'local' build and commit on `branch` itself, which the
-//                           baseline puts every repo on. No ticket, no branch stage, no
-//                           Jira, no push, no PR. `branch` is a scratch branch,
-//                           never main or master. For programmes that do not want
-//                           a PR per increment
-//   jiraProject (full)     Jira project key raised tickets land in
-//   epic (full)     parent epic every raised ticket hangs off. Required when
-//                   lifecycle is 'full'
-//   jiraInProgressStatus (full)  the board's working status, set when the build starts
-//   jiraDoneStatus (full)        the board's finished status, set after the merge
-//   jiraBoard (full)  the numeric board id raised tickets are moved onto. Required
-//                   when lifecycle is 'full'. Board membership is NOT a field on
-//                   the issue and NOT implied by status: a freshly raised ticket
-//                   lands in the board's backlog and stays there, invisible to
-//                   the team, however many times it is transitioned. Moving it
-//                   is a separate agile call, and this is the id it needs
-//   ciFixAttempts (full)   how many times a red PR may be fixed and re-pushed before the
+//   jiraProject     Jira project key raised tickets land in
+//   epic            parent epic every raised ticket hangs off
+//   jiraInProgressStatus  the board's working status, set when the build starts
+//   jiraDoneStatus        the board's finished status, set after the merge
+//   jiraBoard       the numeric board id raised tickets are moved onto. Board
+//                   membership is NOT a field on the issue and NOT implied by
+//                   status: a freshly raised ticket lands in the board's backlog
+//                   and stays there, invisible to the team, however many times
+//                   it is transitioned. Moving it is a separate agile call, and
+//                   this is the id it needs
+//   ciFixAttempts   how many times a red PR may be fixed and re-pushed before the
 //                   run stops
-//   ciWatchMinutes (full)  how long one CI watch may block before it counts as RED
-//   requireApproval (full) whether EVERY PR of an increment needs an APPROVING REVIEW
+//   ciWatchMinutes  how long one CI watch may block before it counts as RED
+//   requireApproval whether EVERY PR of an increment needs an APPROVING REVIEW
 //                   ON GITHUB before the merge stage may merge ANY of them.
 //                   Green CI is not consent: it proves the code
 //                   runs, not that anyone agreed to it. The gate is collected
@@ -70,7 +61,7 @@ export const meta = {
 //                   always somebody other than whoever the run raised it as.
 //                   Set false only for a programme that genuinely wants
 //                   unattended merges
-//   approvalWaitMinutes (full)  how long the merge stage may wait for those approvals
+//   approvalWaitMinutes  how long the merge stage may wait for those approvals
 //                   before it stops and leaves every PR open.
 //   planOnly        true: plan each increment into <workarea>/plans/<id>.md and
 //                   stop — no ticket, branch, baseline or build. false: the
@@ -121,8 +112,15 @@ const logResolvedConfig = (workflowName, config) => log(`${workflowName}: resolv
 // <<< args-contract
 
 const WORKFLOW_NAME = 'increment-build-loop'
-const ALWAYS_REQUIRED = ['workarea', 'branch', 'scope', 'executor', 'lifecycle', 'planOnly', 'repos', 'models', 'increments']
-const FULL_LIFECYCLE_REQUIRED = [
+const ALWAYS_REQUIRED = [
+  'workarea',
+  'branch',
+  'scope',
+  'executor',
+  'planOnly',
+  'repos',
+  'models',
+  'increments',
   'jiraProject',
   'epic',
   'jiraInProgressStatus',
@@ -134,7 +132,7 @@ const FULL_LIFECYCLE_REQUIRED = [
   'approvalWaitMinutes'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
-requireKeys(WORKFLOW_NAME, CFG, [...ALWAYS_REQUIRED, ...(CFG?.lifecycle === 'full' ? FULL_LIFECYCLE_REQUIRED : [])])
+requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
 logResolvedConfig(WORKFLOW_NAME, CFG)
 
 if (typeof CFG.workarea !== 'string') {
@@ -151,7 +149,6 @@ if (typeof SCOPE !== 'string' || !SCOPE.trim()) {
 }
 const BASE_BRANCH = CFG.branch
 const EXECUTOR = CFG.executor
-const LIFECYCLE = CFG.lifecycle
 const JIRA_PROJECT = CFG.jiraProject
 const EPIC = CFG.epic
 const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus
@@ -185,49 +182,34 @@ if (!BASE_BRANCH) {
 if (EXECUTOR !== 'claude' && EXECUTOR !== 'codex') {
   throw new Error(`increment-build-loop: unknown executor "${EXECUTOR}" — expected "claude" or "codex"`)
 }
-if (LIFECYCLE !== 'full' && LIFECYCLE !== 'local') {
-  throw new Error(`increment-build-loop: unknown lifecycle "${LIFECYCLE}" — expected "full" or "local"`)
-}
-// Under local there is no branch stage: every increment is committed straight
-// onto `branch`. That is only safe on a scratch branch, never a default one.
-const DEFAULT_BRANCHES = ['main', 'master']
-const DEFAULT_BRANCHES_TEXT = DEFAULT_BRANCHES.map((name) => `\`${name}\``).join(' or ')
-if (LIFECYCLE === 'local' && !PLAN_ONLY && DEFAULT_BRANCHES.includes(BASE_BRANCH)) {
+if (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC)) {
   throw new Error(
-    `increment-build-loop: lifecycle "local" commits every increment straight onto config.branch, so it must be a scratch branch, not "${BASE_BRANCH}". Cut one in every repo and pass its name, or use lifecycle "full"`
+    `increment-build-loop: config.epic is required — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
   )
 }
-if (LIFECYCLE === 'full' && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
-  throw new Error(
-    `increment-build-loop: config.epic is required when lifecycle is "full" — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
-  )
-}
-if (
-  LIFECYCLE === 'full' &&
-  (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())
-) {
+if (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim()) {
   throw new Error(
     `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
   )
 }
-if (LIFECYCLE === 'full' && !/^\d+$/.test(String(JIRA_BOARD))) {
+if (!/^\d+$/.test(String(JIRA_BOARD))) {
   throw new Error(
-    `increment-build-loop: config.jiraBoard is required when lifecycle is "full" — the numeric id of the board raised tickets are moved onto, e.g. 13780 for EUDPA. Without it every ticket is raised into the board's backlog and stays there, which no status change fixes. Got "${JIRA_BOARD}"`
+    `increment-build-loop: config.jiraBoard is required — the numeric id of the board raised tickets are moved onto, e.g. 13780 for EUDPA. Without it every ticket is raised into the board's backlog and stays there, which no status change fixes. Got "${JIRA_BOARD}"`
   )
 }
-if (LIFECYCLE === 'full' && (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0)) {
+if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
   throw new Error(`increment-build-loop: config.ciFixAttempts must be a non-negative integer — got "${CI_FIX_ATTEMPTS}"`)
 }
-if (LIFECYCLE === 'full' && (!Number.isInteger(CI_WATCH_MINUTES) || CI_WATCH_MINUTES <= 0)) {
+if (!Number.isInteger(CI_WATCH_MINUTES) || CI_WATCH_MINUTES <= 0) {
   throw new Error(`increment-build-loop: config.ciWatchMinutes must be a positive integer — got "${CI_WATCH_MINUTES}"`)
 }
-if (LIFECYCLE === 'full' && (!Number.isInteger(APPROVAL_WAIT_MINUTES) || APPROVAL_WAIT_MINUTES <= 0)) {
+if (!Number.isInteger(APPROVAL_WAIT_MINUTES) || APPROVAL_WAIT_MINUTES <= 0) {
   throw new Error(`increment-build-loop: config.approvalWaitMinutes must be a positive integer — got "${APPROVAL_WAIT_MINUTES}"`)
 }
 if (typeof PLAN_ONLY !== 'boolean') {
   throw new Error(`${WORKFLOW_NAME}: config.planOnly must be a boolean — got "${PLAN_ONLY}"`)
 }
-if (LIFECYCLE === 'full' && typeof REQUIRE_APPROVAL !== 'boolean') {
+if (typeof REQUIRE_APPROVAL !== 'boolean') {
   throw new Error(`increment-build-loop: config.requireApproval must be a boolean — got "${REQUIRE_APPROVAL}"`)
 }
 if (!Array.isArray(CFG.increments) || CFG.increments.length === 0 || !CFG.increments.every((id) => typeof id === 'string' && id.trim())) {
@@ -608,12 +590,10 @@ If that prints anything other than the work branch — \`${BASE_BRANCH}\` above 
 Do not commit "just this once" and sort the branch out afterwards.`
 
 // Preserving a failed attempt. A stash is machine-local: on another machine the
-// ref means nothing and the work is gone. Under the full lifecycle the increment
-// already owns a branch, so the work is committed and PUSHED there and travels.
-// A stash stays the mechanism for genuinely local mess, and the only rollback verb.
+// ref means nothing and the work is gone. The increment already owns a branch,
+// so the work is committed and PUSHED there and travels.
 const preserveWork = (id, branch, reason, evidence) =>
-  LIFECYCLE === 'full'
-    ? `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
+  `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
 ${GUARDRAILS}
 ${REPO_RULE}
 ${PUSH_RULE}
@@ -640,23 +620,6 @@ The next attempt branches from here and builds on top; the squash merge collapse
 NEVER \`reset --hard\`, NEVER \`clean -fd\`.
 Report the branch name and the wip SHA.
 Return the structured output only.`
-    : `Attempt at increment ${id} failed: ${reason}. Roll it back NON-DESTRUCTIVELY and preserve the evidence.
-${GUARDRAILS}
-${REPO_RULE}
-EVIDENCE: ${evidence}
-TASK:
-1. ${CHANGED_REPOS_RULE}
-2. \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` for EACH of them that has changes — NEVER
-   \`reset --hard\`, NEVER \`clean -fd\`. The stash is recoverable and that is the point.
-3. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
-3a. ${SPEC_RULE} If it has changes, stash them the same way:
-   \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
-   \`git -C ${TILDE} status --short -- openspec/\` is empty.
-4. Record it, so the next attempt starts informed:
-   \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; stash <ref>'")}\`.
-   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
-Report the stash refs so the work can be recovered. Note that a stash is machine-local — it does not travel.
-Return the structured output only.`
 
 // Every stop after the implementor has touched the tree goes through here, so
 // the tree is left clean and the attempt recoverable. A stop that only records
@@ -670,7 +633,7 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
   return {
     id,
     ticket: ticket?.key,
-    branch: LIFECYCLE === 'full' ? workBranch : undefined,
+    branch: workBranch,
     outcome,
     detail,
     preserved: kept?.summary
@@ -1244,9 +1207,7 @@ if (!preflight || !preflight.ok) {
   )
 }
 
-log(
-  `${WORKAREA_REL}: ${CFG.increments.length} increment(s) off ${BASE_BRANCH}, executor ${EXECUTOR}, lifecycle ${LIFECYCLE}`
-)
+log(`${WORKAREA_REL}: ${CFG.increments.length} increment(s) off ${BASE_BRANCH}, executor ${EXECUTOR}`)
 
 const results = []
 
@@ -1277,11 +1238,10 @@ for (const id of CFG.increments) {
   let repos = null
   let resumeAt = 'build'
 
-  if (LIFECYCLE === 'full') {
-    phase('Ticket')
+  phase('Ticket')
 
-    ticket = await agent(
-      `You are the TICKET STAGE for increment ${id}. You give the increment a Jira ticket and work out where in
+  ticket = await agent(
+    `You are the TICKET STAGE for increment ${id}. You give the increment a Jira ticket and work out where in
 the lifecycle this run picks up. YOU RAISE AT MOST ONE TICKET, AND ONLY IF THE INCREMENT HAS NONE.
 ${GUARDRAILS}
 ${REPO_RULE}
@@ -1380,44 +1340,44 @@ Report ok:true only if the ticket exists, its status is one you left alone or su
 moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
 finished, verbatim.
 Return the structured output only.`,
-      light({ label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA })
-    )
+    light({ label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA })
+  )
 
-    if (!ticket || !ticket.ok || !ticket.key) {
-      log(`${id}: TICKET STAGE FAILED — ${ticket ? ticket.summary : 'agent failed'}`)
-      results.push({ id, outcome: 'ticket-failed', detail: ticket?.summary ?? 'agent failed' })
-      break
-    }
+  if (!ticket || !ticket.ok || !ticket.key) {
+    log(`${id}: TICKET STAGE FAILED — ${ticket ? ticket.summary : 'agent failed'}`)
+    results.push({ id, outcome: 'ticket-failed', detail: ticket?.summary ?? 'agent failed' })
+    break
+  }
 
-    // A ticket in the backlog is one the team cannot see, and nothing later in
-    // the lifecycle notices. Checked here rather than trusted to the stage's own
-    // ok, because "I set the status" reads like success from inside that stage.
-    if (!ticket.movedToBoard) {
-      log(`${id}: TICKET STAGE FAILED — ${ticket.key} was not moved onto board ${JIRA_BOARD}`)
-      results.push({
-        id,
-        ticket: ticket.key,
-        outcome: 'ticket-failed',
-        detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
-      })
-      break
-    }
+  // A ticket in the backlog is one the team cannot see, and nothing later in
+  // the lifecycle notices. Checked here rather than trusted to the stage's own
+  // ok, because "I set the status" reads like success from inside that stage.
+  if (!ticket.movedToBoard) {
+    log(`${id}: TICKET STAGE FAILED — ${ticket.key} was not moved onto board ${JIRA_BOARD}`)
+    results.push({
+      id,
+      ticket: ticket.key,
+      outcome: 'ticket-failed',
+      detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
+    })
+    break
+  }
 
-    workBranch = ticket.branch
-    repos = ticket.repos
-    resumeAt = ticket.resumeAt ?? 'build'
-    log(
-      `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on board ${JIRA_BOARD}, branch ${workBranch}, resuming at ${resumeAt}`
-    )
+  workBranch = ticket.branch
+  repos = ticket.repos
+  resumeAt = ticket.resumeAt ?? 'build'
+  log(
+    `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on board ${JIRA_BOARD}, branch ${workBranch}, resuming at ${resumeAt}`
+  )
 
-    // ---------------------------------------------------------------------
-    // Branch — off FRESH base, in every repo the increment touches. Refuses on
-    // a dirty tree, because switching branches over uncommitted work loses it.
-    // ---------------------------------------------------------------------
-    phase('Branch')
+  // -----------------------------------------------------------------------
+  // Branch — off FRESH base, in every repo the increment touches. Refuses on
+  // a dirty tree, because switching branches over uncommitted work loses it.
+  // -----------------------------------------------------------------------
+  phase('Branch')
 
-    const branched = await agent(
-      `You are the BRANCH STAGE for increment ${id} (${ticket.key}). Put every repo this increment touches on
+  const branched = await agent(
+    `You are the BRANCH STAGE for increment ${id} (${ticket.key}). Put every repo this increment touches on
 \`${workBranch}\`, cut from a FRESHLY FETCHED \`${BASE_BRANCH}\`.
 ${GUARDRAILS}
 ${REPO_RULE}
@@ -1453,14 +1413,13 @@ The branch name is IDENTICAL in every repo. That is CLAUDE.md rule 2 and it is l
 stack probes each repo for a branch-tagged image, so a mismatched name breaks the linked-branch pickup.
 Report ok:true only when every repo is on ${workBranch} with a clean tree.
 Return the structured output only.`,
-      light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_SCHEMA })
-    )
+    light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_SCHEMA })
+  )
 
-    if (!branched || !branched.ok) {
-      log(`${id}: BRANCH STAGE FAILED — ${branched ? branched.summary : 'agent failed'}`)
-      results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branched?.summary ?? 'agent failed' })
-      break
-    }
+  if (!branched || !branched.ok) {
+    log(`${id}: BRANCH STAGE FAILED — ${branched ? branched.summary : 'agent failed'}`)
+    results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branched?.summary ?? 'agent failed' })
+    break
   }
 
   let plan = null
@@ -1489,26 +1448,13 @@ ${GUARDRAILS}
 ${REPO_RULE}
 ${GATE_RULE}
 TASK:
-${
-  LIFECYCLE === 'full'
-    ? `1. THE BRANCH. The branch stage has already put the increment's repos on their branch, cut from a fresh
+1. THE BRANCH. The branch stage has already put the increment's repos on their branch, cut from a fresh
    \`${BASE_BRANCH}\`. Do not switch branches. Record which branch each repo is on
    (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) in your summary.
    One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
    checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
    on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
-   catch a repo the branch stage did not cover.`
-    : `1. THE BRANCH. This run has lifecycle \`local\`, so there is no branch stage. One command puts every backlog repo
-   on the branch this run was given — a no-op for a repo already on it:
-   \`tim build branch ${WORKAREA_REL} ${BASE_BRANCH} --lifecycle local --workspace ${TILDE} --json\`
-   It exits 1 with DIRTY_TREE, changing nothing, when a repo it would move has uncommitted work, and refuses
-   ${DEFAULT_BRANCHES_TEXT}. If it exits non-zero, stop and report ok:false quoting its errors.
-   Then record which branch each repo is on (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) in your
-   summary. Two assertions: EVERY repo must be on \`${BASE_BRANCH}\`, the branch this run was given, and NO repo may be on
-   ${DEFAULT_BRANCHES_TEXT}. If any repo is on another branch, or on ${DEFAULT_BRANCHES_TEXT}, stop and report ok:false
-   naming it. A local run commits every increment straight onto the branch it is on, so it builds on a scratch
-   branch and never on a repo's default branch.`
-}
+   catch a repo the branch stage did not cover.
 2. CLEAN TREES. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the ticket stage settled them: ${repos.join(', ')})` : ''}
    (\`jq '.increments[] | select(.id=="${id}") | {repos, repo}' ${BACKLOG_TILDE}\`) and confirm each one is clean:
    \`git -C ${TILDE}/<repoPath> status --short\`.
@@ -2103,27 +2049,19 @@ ${GUARDRAILS}
 ${REPO_RULE}
 ${SET_ROW_RULE}
 TASK:
-1. ${CHANGED_REPOS_RULE} Under ${LIFECYCLE} lifecycle, a repo with changes that is not on \`${workBranch}\` is a
+1. ${CHANGED_REPOS_RULE} A repo with changes that is not on \`${workBranch}\` is a
    stop: report landed:false naming it, and change nothing in it. The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
-${
-  LIFECYCLE === 'full'
-    ? `2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
+2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, STOP and report landed:false naming the repo. Do not commit and do not "fix it up after" —
    a commit made on the base branch is one \`git push\` away from being on the base branch for good, with no PR,
-   no CI and no review behind it. That has happened here once already.`
-    : `2. For EVERY repo you are about to commit in, confirm it is on the branch this run was given FIRST:
-   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` must print \`${workBranch}\`. If it prints anything
-   else — ${DEFAULT_BRANCHES_TEXT} above all — STOP and report landed:false naming the repo. Do not commit and do
-   not "fix it up after" — this run has lifecycle \`local\` and commits straight onto the branch it is on, so a
-   commit on a default branch is one \`git push\` away from being there for good, with no PR, no CI and no review.`
-}
+   no CI and no review behind it. That has happened here once already.
 3. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the
    behaviour changes below are not empty, otherwise the type the increment's \`kind\` implies — a body saying what
-   changed and naming the increment id${LIFECYCLE === 'full' ? ` and its ticket \`${ticket?.key}\`` : ''}, and the trailer:
+   changed and naming the increment id and its ticket \`${ticket?.key}\`, and the trailer:
    Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
    Behaviour changes, from the plan: ${plan?.behaviourChanges?.length ? plan.behaviourChanges.map((b) => `\n   - ${b}`).join('') : 'none'}
    A slice across several repos gets ONE commit per repo, each with the same subject.
@@ -2133,7 +2071,7 @@ ${
    The pathspec on the commit is load-bearing: anything else staged in the workspace stays out of it. Do NOT push
    the workspace. Name the spec commit in your summary, separately from the repo commits.
 5. Do NOT push. A later stage owns that.
-6. Record it: \`${setRow(id, `--commit "<sha, or several backend first, space separated>"${LIFECYCLE === 'local' ? ' --status done' : ''}`)}\`.${LIFECYCLE === 'local' ? '' : ' Leave the status alone — this increment is not done until its PRs are merged.'}
+6. Record it: \`${setRow(id, '--commit "<sha, or several backend first, space separated>"')}\`. Leave the status alone — this increment is not done until its PRs are merged.
 Report the commit SHA. For several repos report each, backend first, space separated.
 Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
@@ -2158,29 +2096,19 @@ Return the structured output only.`,
   const findings = findingCounts()
   const judgementCalls = judgement.decisions.map((d) => `${d.call}: ${d.what}`)
 
-  if (LIFECYCLE === 'local') {
-    results.push({
-      id,
-      outcome: 'landed',
-      commit: land.commit,
-      findings,
-      judgement: judgementCalls
-    })
-    log(`${id}: LANDED ${land.commit ?? ''} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
-  } else {
-    const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
+  const prList = (list) => list.map((p) => `${p.repo}: ${p.url}`).join('\n')
 
-    // ---------------------------------------------------------------------
-    // Pull request — push the branch and raise one PR per repo. Idempotent:
-    // an existing open PR for this head is reused, never duplicated.
-    // ---------------------------------------------------------------------
-    let prs = []
+  // -----------------------------------------------------------------------
+  // Pull request — push the branch and raise one PR per repo. Idempotent:
+  // an existing open PR for this head is reused, never duplicated.
+  // -----------------------------------------------------------------------
+  let prs = []
 
-    if (resumeAt !== 'done') {
-      phase('Pull request')
+  if (resumeAt !== 'done') {
+    phase('Pull request')
 
-      const pr = await agent(
-        `You are the PULL REQUEST STAGE for increment ${id} (${ticket.key}) on branch \`${workBranch}\`.
+    const pr = await agent(
+      `You are the PULL REQUEST STAGE for increment ${id} (${ticket.key}) on branch \`${workBranch}\`.
 YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS BRANCH.
 ${GUARDRAILS}
 ${PUSH_RULE}
@@ -2219,27 +2147,27 @@ Report every PR in prs\[\], in the same order. Report ok:true only when every re
 \`${BASE_BRANCH}\` has exactly one open PR, and every repo you skipped at step 2 genuinely had none. At least one
 PR must exist — a run where EVERY repo was empty means nothing was built, and that is ok:false.
 Return the structured output only.`,
-        light({ label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA })
-      )
+      light({ label: `${id} pr`, phase: 'Pull request', schema: PR_SCHEMA })
+    )
 
-      if (!pr || !pr.ok || (pr.prs ?? []).length === 0) {
-        log(`${id}: PR STAGE FAILED — ${pr ? pr.summary : 'agent failed'}`)
-        results.push({ id, ticket: ticket.key, outcome: 'pr-failed', detail: pr?.summary ?? 'agent failed', findings })
-        break
-      }
+    if (!pr || !pr.ok || (pr.prs ?? []).length === 0) {
+      log(`${id}: PR STAGE FAILED — ${pr ? pr.summary : 'agent failed'}`)
+      results.push({ id, ticket: ticket.key, outcome: 'pr-failed', detail: pr?.summary ?? 'agent failed', findings })
+      break
+    }
 
-      prs = pr.prs
-      log(`${id}: ${prs.length} PR(s) — ${prs.map((p) => p.url).join(' ')}`)
+    prs = pr.prs
+    log(`${id}: ${prs.length} PR(s) — ${prs.map((p) => p.url).join(' ')}`)
 
-      // -------------------------------------------------------------------
-      // CI — block on the checks, fix red a bounded number of times, and stop
-      // rather than merge anything that is not green.
-      // -------------------------------------------------------------------
-      phase('CI')
+    // ---------------------------------------------------------------------
+    // CI — block on the checks, fix red a bounded number of times, and stop
+    // rather than merge anything that is not green.
+    // ---------------------------------------------------------------------
+    phase('CI')
 
-      const watch = () =>
-        agent(
-          `You are the CI WATCHER for increment ${id} (${ticket.key}). WAIT for the checks on every PR below to
+    const watch = () =>
+      agent(
+        `You are the CI WATCHER for increment ${id} (${ticket.key}). WAIT for the checks on every PR below to
 resolve, and report what they did. You change no code and you merge nothing.
 ${GUARDRAILS}
 THE PULL REQUESTS:
@@ -2265,18 +2193,18 @@ For EACH pr, in the order listed:
 gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a fixer gets it.
 green:true ONLY if EVERY pr resolved green. Report each pr's state as green, red or unresolved.
 Return the structured output only.`,
-          light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })
-        )
+        light({ label: `${id} ci watch`, phase: 'CI', schema: CI_SCHEMA })
+      )
 
-      let ci = await watch()
+    let ci = await watch()
 
-      let ciAttempt = 0
-      while ((!ci || !ci.green) && !hardStop(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
-        ciAttempt += 1
-        log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
+    let ciAttempt = 0
+    while ((!ci || !ci.green) && !hardStop(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
+      ciAttempt += 1
+      log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
 
-        const fix = await agent(
-          `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
+      const fix = await agent(
+        `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
 CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you do not close anything.
 ${GUARDRAILS}
 ${PUSH_RULE}
@@ -2338,54 +2266,54 @@ TASK:
 7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
-          heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
-        )
+        heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
+      )
 
-        // Fold in anything the fixer had to open elsewhere, deduped by url, so
-        // the next watch() blocks on it and the merge stage merges it. `prs` is
-        // a plain variable and the script has no filesystem access, so a PR the
-        // fixer wrote only to the backlog would otherwise stay invisible for
-        // the rest of the run.
-        for (const p of fix?.newPrs ?? []) {
-          if (p?.url && !prs.some((existing) => existing.url === p.url)) {
-            prs.push(p)
-            log(`${id}: CI fixer opened ${p.repo} ${p.url} — added to this increment's PRs`)
-          }
+      // Fold in anything the fixer had to open elsewhere, deduped by url, so
+      // the next watch() blocks on it and the merge stage merges it. `prs` is
+      // a plain variable and the script has no filesystem access, so a PR the
+      // fixer wrote only to the backlog would otherwise stay invisible for
+      // the rest of the run.
+      for (const p of fix?.newPrs ?? []) {
+        if (p?.url && !prs.some((existing) => existing.url === p.url)) {
+          prs.push(p)
+          log(`${id}: CI fixer opened ${p.repo} ${p.url} — added to this increment's PRs`)
         }
-
-        ci = await watch()
       }
 
-      if (!ci || !ci.green) {
-        // Exhausted. The PR stays open and the ticket stays in the working
-        // status — a red PR is never merged and never closed, because a human
-        // has to see it.
-        const detail = ci ? [ci.blocked, ...(ci.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'ci watcher agent died'
-        log(`${id}: CI STILL RED after ${ciAttempt} fix attempt(s) — stopping. PRs left open: ${prs.map((p) => p.url).join(' ')}`)
-        results.push({
-          id,
-          ticket: ticket.key,
-          outcome: 'ci-red',
-          prs: prs.map((p) => p.url),
-          ciFixAttempts: ciAttempt,
-          detail: detail || 'ci did not go green',
-          findings
-        })
-        break
-      }
+      ci = await watch()
+    }
 
-      // -------------------------------------------------------------------
-      // Merge — approvals collected for the WHOLE increment first, then merge
-      // in canonical order, watching the base branch after each one.
-      // -------------------------------------------------------------------
-      phase('Merge')
+    if (!ci || !ci.green) {
+      // Exhausted. The PR stays open and the ticket stays in the working
+      // status — a red PR is never merged and never closed, because a human
+      // has to see it.
+      const detail = ci ? [ci.blocked, ...(ci.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'ci watcher agent died'
+      log(`${id}: CI STILL RED after ${ciAttempt} fix attempt(s) — stopping. PRs left open: ${prs.map((p) => p.url).join(' ')}`)
+      results.push({
+        id,
+        ticket: ticket.key,
+        outcome: 'ci-red',
+        prs: prs.map((p) => p.url),
+        ciFixAttempts: ciAttempt,
+        detail: detail || 'ci did not go green',
+        findings
+      })
+      break
+    }
 
-      // Merge order is the script's decision, not the order PRs happened to be
-      // appended in. See MERGE_RANK.
-      const mergeOrder = sortForMerge(prs)
+    // ---------------------------------------------------------------------
+    // Merge — approvals collected for the WHOLE increment first, then merge
+    // in canonical order, watching the base branch after each one.
+    // ---------------------------------------------------------------------
+    phase('Merge')
 
-      const merge = await agent(
-        `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is
+    // Merge order is the script's decision, not the order PRs happened to be
+    // appended in. See MERGE_RANK.
+    const mergeOrder = sortForMerge(prs)
+
+    const merge = await agent(
+      `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is
 necessary but NOT sufficient — every one of them also needs an approving review on GitHub, and you collect ALL of
 those BEFORE you merge ANYTHING` : ''}.
 Merge them and prove \`${BASE_BRANCH}\` survived it.
@@ -2474,59 +2402,59 @@ as it is and name it, so a human can finish it.
 green:true ONLY if every pr merged, ${BASE_BRANCH} went green afterwards for every one of them, AND the final
 sweep found no open PR left on \`${workBranch}\` in any repo.
 Return the structured output only.`,
-        light({ label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA })
+      light({ label: `${id} merge`, phase: 'Merge', schema: CI_SCHEMA })
+    )
+
+    if (!merge || !merge.green) {
+      const detail = merge ? [merge.blocked, ...(merge.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'merge agent died'
+      // Waiting on a reviewer is not a broken increment, and must never be
+      // reported as one: `main-red` reads as "something is wrong with the
+      // build", and the fix for that is nothing like "go and ask a colleague".
+      //
+      // The stage says which condition fired in `stopReason`, a fixed enum
+      // value, rather than us reading it back out of its prose. Anything we
+      // do not recognise — including a stage that never set it — falls to
+      // `main-red`, because the two mistakes are not symmetrical: calling a
+      // healthy pause a failure wastes somebody's afternoon, while calling a
+      // red base branch a healthy pause hides it.
+      const stopReason = merge?.stopReason
+      const atGate = stopReason === 'awaiting-approval' || stopReason === 'changes-requested'
+      // `pr-left-open` is its own outcome rather than `main-red`. The base
+      // branch is fine; what is wrong is that the increment is only partly
+      // merged, and the two need completely different things from a human.
+      const leftOpen = stopReason === 'pr-left-open'
+      const outcome = atGate || leftOpen ? stopReason : 'main-red'
+      log(
+        atGate
+          ? `${id}: STOPPED AT THE APPROVAL GATE (${stopReason}) — ${detail}`
+          : leftOpen
+            ? `${id}: PARTLY MERGED — a PR on ${workBranch} is still open: ${detail}`
+            : `${id}: MERGE/BASE-BRANCH STOP${stopReason ? ` (${stopReason})` : ' (stopReason not set)'} — ${detail}`
       )
-
-      if (!merge || !merge.green) {
-        const detail = merge ? [merge.blocked, ...(merge.failures ?? [])].filter((x) => x && x !== 'none').join(' | ') : 'merge agent died'
-        // Waiting on a reviewer is not a broken increment, and must never be
-        // reported as one: `main-red` reads as "something is wrong with the
-        // build", and the fix for that is nothing like "go and ask a colleague".
-        //
-        // The stage says which condition fired in `stopReason`, a fixed enum
-        // value, rather than us reading it back out of its prose. Anything we
-        // do not recognise — including a stage that never set it — falls to
-        // `main-red`, because the two mistakes are not symmetrical: calling a
-        // healthy pause a failure wastes somebody's afternoon, while calling a
-        // red base branch a healthy pause hides it.
-        const stopReason = merge?.stopReason
-        const atGate = stopReason === 'awaiting-approval' || stopReason === 'changes-requested'
-        // `pr-left-open` is its own outcome rather than `main-red`. The base
-        // branch is fine; what is wrong is that the increment is only partly
-        // merged, and the two need completely different things from a human.
-        const leftOpen = stopReason === 'pr-left-open'
-        const outcome = atGate || leftOpen ? stopReason : 'main-red'
-        log(
-          atGate
-            ? `${id}: STOPPED AT THE APPROVAL GATE (${stopReason}) — ${detail}`
-            : leftOpen
-              ? `${id}: PARTLY MERGED — a PR on ${workBranch} is still open: ${detail}`
-              : `${id}: MERGE/BASE-BRANCH STOP${stopReason ? ` (${stopReason})` : ' (stopReason not set)'} — ${detail}`
-        )
-        results.push({
-          id,
-          ticket: ticket.key,
-          outcome,
-          stopReason: stopReason ?? 'not-set',
-          prs: prs.map((p) => p.url),
-          merged: merge?.merged ?? [],
-          detail: detail || 'the merge stage did not reach green',
-          findings
-        })
-        break
-      }
-
-      log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
+      results.push({
+        id,
+        ticket: ticket.key,
+        outcome,
+        stopReason: stopReason ?? 'not-set',
+        prs: prs.map((p) => p.url),
+        merged: merge?.merged ?? [],
+        detail: detail || 'the merge stage did not reach green',
+        findings
+      })
+      break
     }
 
-    // ---------------------------------------------------------------------
-    // Done — the ticket moves only once the merge is real and the base branch
-    // has proved it. This is also what marks the increment done in the backlog.
-    // ---------------------------------------------------------------------
-    phase('Done')
+    log(`${id}: merged ${(merge.merged ?? []).map((m) => `${m.repo}=${m.sha}`).join(' ')} — ${BASE_BRANCH} green`)
+  }
 
-    const done = await agent(
-      `Increment ${id} is merged into \`${BASE_BRANCH}\` and the base branch is green. Close out ${ticket.key}.
+  // -----------------------------------------------------------------------
+  // Done — the ticket moves only once the merge is real and the base branch
+  // has proved it. This is also what marks the increment done in the backlog.
+  // -----------------------------------------------------------------------
+  phase('Done')
+
+  const done = await agent(
+    `Increment ${id} is merged into \`${BASE_BRANCH}\` and the base branch is green. Close out ${ticket.key}.
 ${GUARDRAILS}
 TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIGURATION, given to you here.
 1. \`${JIRA}/transition-ticket.sh ${ticket.key} "${STATUS_DONE}"\`.
@@ -2539,35 +2467,34 @@ TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIG
 3. Mark it done: \`${setRow(id, '--status done')}\`. It leaves \`ticket\`, \`branch\`, \`commit\` and \`prs\` in place —
    they are the record of how it got there.
 Return the structured output only.`,
-      light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
-    )
+    light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
+  )
 
-    if (!done || !done.ok) {
-      log(`${id}: TICKET NOT MOVED TO "${STATUS_DONE}" — ${done ? done.summary : 'agent failed'}. The merge stands.`)
-      results.push({
-        id,
-        ticket: ticket.key,
-        outcome: 'done-failed',
-        prs: prs.map((p) => p.url),
-        detail: done?.summary ?? 'agent failed',
-        findings
-      })
-      break
-    }
-
+  if (!done || !done.ok) {
+    log(`${id}: TICKET NOT MOVED TO "${STATUS_DONE}" — ${done ? done.summary : 'agent failed'}. The merge stands.`)
     results.push({
       id,
       ticket: ticket.key,
-      branch: workBranch,
-      outcome: 'landed',
-      commit: land?.commit,
+      outcome: 'done-failed',
       prs: prs.map((p) => p.url),
-      findings,
-      judgement: judgementCalls
+      detail: done?.summary ?? 'agent failed',
+      findings
     })
-
-    log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+    break
   }
+
+  results.push({
+    id,
+    ticket: ticket.key,
+    branch: workBranch,
+    outcome: 'landed',
+    commit: land?.commit,
+    prs: prs.map((p) => p.url),
+    findings,
+    judgement: judgementCalls
+  })
+
+  log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
 
   // A HALT-FOR-REVIEW gate is a DESIGNED human checkpoint, not a review finding.
   // The judge absorbs routine triage; it does not absorb these.
@@ -2577,7 +2504,7 @@ Return the structured output only.`,
 If it prints \`null\`, return ok:true with summary "no gate". Otherwise return ok:false and put the gate's full text
 in summary — the run will stop so a human can review before dependent increments proceed.
 Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
-    light({ label: `${id} gate check`, phase: LIFECYCLE === 'full' ? 'Done' : 'Land', schema: incrementSchema })
+    light({ label: `${id} gate check`, phase: 'Done', schema: incrementSchema })
   )
 
   if (gate && !gate.ok) {

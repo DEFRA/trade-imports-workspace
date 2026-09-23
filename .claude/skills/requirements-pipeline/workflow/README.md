@@ -43,27 +43,25 @@ time, against the live tree, into `<workarea>/plans/<id>.md`, and every later st
 from that plan. Stages write back to the backlog only through `tim backlog set`.
 
 **The config** — pass it as `args`, a JSON object, launching by `scriptPath`. Every key
-below is required, and the (full) ones only under `lifecycle: 'full'`. A missing key stops
-the run before any agent starts, naming each missing key. The first log line is the
-resolved configuration.
+below is required. A missing key stops the run before any agent starts, naming each
+missing key. The first log line is the resolved configuration.
 
 | Field | What it is |
 |---|---|
 | `workarea` | Path under `workareas/` holding `backlog.json` — e.g. `shared/plant-products-ched-pp`, `trace-requirements/ched-pp` |
-| `branch` | Under `full`, the base branch each increment's own branch is cut from and merged back into. Under `local`, the scratch branch every increment is built and committed on — never `main` or `master` |
+| `branch` | The base branch each increment's own branch is cut from and merged back into |
 | `scope` | Conventional-commit scope for the landing commit |
 | `executor` | `claude` or `codex` — see below |
-| `lifecycle` | `full` (ticket → branch → build → PR → CI → merge → ticket done) or `local` (build and commit on `branch`, which the baseline puts every repo on with `tim build branch` — no ticket, no branch stage, no Jira, no push, no PR). The baseline and land stages refuse a repo on any other branch, and a local run refuses `main` or `master` outright |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
-| `jiraProject` (full) | Jira project key raised tickets land in |
-| `epic` (full) | Parent epic every raised ticket hangs off |
-| `jiraInProgressStatus` (full) | The board's working status, set when the build starts |
-| `jiraDoneStatus` (full) | The board's finished status, set after the merge |
-| `jiraBoard` (full) | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA |
-| `ciFixAttempts` (full) | How many times a red PR may be fixed and re-pushed before the run stops |
-| `ciWatchMinutes` (full) | How long one CI watch may block before it counts as RED |
-| `requireApproval` (full) | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them |
-| `approvalWaitMinutes` (full) | How long the merge stage may wait for those approvals before it stops and leaves every PR open |
+| `jiraProject` | Jira project key raised tickets land in |
+| `epic` | Parent epic every raised ticket hangs off |
+| `jiraInProgressStatus` | The board's working status, set when the build starts |
+| `jiraDoneStatus` | The board's finished status, set after the merge |
+| `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA |
+| `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
+| `ciWatchMinutes` | How long one CI watch may block before it counts as RED |
+| `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them |
+| `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open |
 | `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Give it in full — a programme in the plants repos names its own table here |
 | `models` | Required — pass `{}` to inherit the session model for both tiers. Each tier is optional: `heavy` (plan, implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done) |
 | `increments` | The increment ids to build, in order |
@@ -78,11 +76,19 @@ rather than proceeding against nothing.
 ```js
 {
   workarea: 'shared/plant-products-ched-pp',
-  branch: 'spike/trace-to-requirements',
+  branch: 'main',
   scope: 'plant-products',
   executor: 'claude',
-  lifecycle: 'local',
   planOnly: false,
+  jiraProject: 'EUDPA',
+  epic: 'EUDPA-12345',
+  jiraInProgressStatus: 'In Progress',
+  jiraDoneStatus: 'Done',
+  jiraBoard: 13780,
+  ciFixAttempts: 3,
+  ciWatchMinutes: 30,
+  requireApproval: false,
+  approvalWaitMinutes: 20,
   repos: {
     frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
     backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
@@ -100,7 +106,7 @@ as `feat(plant-products): <increment title>`. Any other workarea works the same 
 
 | Stage | Agents | What it does |
 |---|---|---|
-| Baseline | 1 | Under `local`, `tim build branch --lifecycle local` first. Refuses a dirty tree, then runs `tim build gate` one phase at a time (unit, FIT, E2E) into `logs/<id>-baseline/` and reports each rung as tim printed it. Baseline green is gate green, so any later red is unambiguously ours |
+| Baseline | 1 | Refuses a dirty tree, then runs `tim build gate` one phase at a time (unit, FIT, E2E) into `logs/<id>-baseline/` and reports each rung as tim printed it. Baseline green is gate green, so any later red is unambiguously ours |
 | Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js` |
 | Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); never starts or stops the workspace stack |
 | Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
@@ -117,7 +123,7 @@ those scripts or starts or stops the stack; a stack that is up is left alone. Th
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
-| Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and marks the increment done. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — `git stash push -u` under `local`, a pushed wip commit under `full` — so the tree is left clean and the attempt recoverable |
+| Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
 
 The reviewers follow the personas the skills already ship —
 `review/references/{FILE_REVIEWER,CONSISTENCY_REVIEWER,REVIEW_ITEM_FIXER}.md` and
@@ -172,7 +178,7 @@ Per increment, codex mode is at most `23 + 3g` agents against Claude's `17 + 3g`
   The loop lands the increment, then stops. This is a row's own field, honoured regardless of
   `requireApproval` — a checkpoint somebody set deliberately on that increment, not a setting
   on the run.
-- **A red ladder.** Rolled back with `git stash push -u` (recoverable — never `reset --hard`),
+- **A red ladder.** Preserved as a pushed wip commit (recoverable — never `reset --hard`),
   the failure recorded in the increment's `notes`, and the run stops.
 - **`requireApproval: true`, if a programme opted into it.** Off by default — the multi-agent
   review, adversarial verification and judge already are the review — but when a programme sets
@@ -180,9 +186,6 @@ Per increment, codex mode is at most `23 + 3g` agents against Claude's `17 + 3g`
   merge any of them, and the run stops at `awaiting-approval` (green, unapproved) or
   `changes-requested` until a human acts. See `../references/BUILD.md` for the whole-increment
   approval sweep this turns on.
-- **Under `lifecycle: local` only, pushing.** There is no PR stage, so the loop commits and
-  stops there — nothing is pushed. Under `full` the PR stage pushes and raises the PR itself;
-  nothing waits on a person to do it.
 
 ### Deferred findings are never lost
 

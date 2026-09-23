@@ -14,15 +14,15 @@ Read `workareas/shared/<programme>/report.md`. It starts with the repos and prec
 
 ## 2. Build
 
-To try it on a scratch branch, with no tickets or PRs:
+Every run goes ticket → branch → build → PR → CI → merge → ticket done — the
+loop merges each increment itself once it is green, reviewed, adversarially
+verified and judged:
 
-> Build inc-001 from shared/hrp-origin-and-commodity, lifecycle local.
+> Build every increment from shared/hrp-origin-and-commodity, epic EUDPA-12345.
 
-To build it for real, with a ticket, PRs, CI and merge — the loop merges each
-increment itself once it is green, reviewed, adversarially verified and
-judged:
-
-> Build every increment from shared/hrp-origin-and-commodity, lifecycle full, epic EUDPA-12345.
+Every ticket the loop raises hangs off that epic, so a run needs one. If the
+programme has no epic yet, raise it first — the `ticket-creator` skill, or
+`tools/jira`.
 
 Add "with Codex" to have Codex build it. To see the plan without building, say "dry-run the plan for inc-001".
 To put a human approval gate back in front of every merge, say "... and require an approving review on every PR" (`requireApproval: true`).

@@ -4,10 +4,6 @@ import { run } from '../exec/exec.js'
 import { TimError } from '../errors.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
 
-export const LIFECYCLES = ['local', 'full']
-
-export const PROTECTED_BRANCHES = ['main', 'master']
-
 const FALLBACK_DEFAULT = 'main'
 
 const git = (dir, args) => run('git', ['-C', dir, ...args])
@@ -67,16 +63,10 @@ const inspect = async ({ key, folder, path }, branch) => {
   }
 }
 
-const isProtected = (branch, defaultName) =>
-  PROTECTED_BRANCHES.includes(branch) || branch === defaultName
-
-const problemsWith = (inspection, branch, lifecycle) => {
-  const { folder, cloned, current, dirty, defaultName } = inspection
+const problemsWith = (inspection, branch) => {
+  const { folder, cloned, current, dirty } = inspection
   if (!cloned) return [`${folder} is not cloned at ${inspection.path}.`]
   return [
-    lifecycle === 'local' && isProtected(branch, defaultName)
-      ? `${folder}: a local run commits straight onto its branch, so name a scratch branch, not ${branch}.`
-      : null,
     current !== branch && dirty.length > 0
       ? `${folder} has uncommitted work: ${dirty.join(', ')}. Commit or stash it first.`
       : null
@@ -170,29 +160,22 @@ const applyTo = async (inspection, branch) => {
  * alone; one that has it locally switches to it; otherwise the branch is cut
  * with `--no-track` from `origin/<branch>` when the remote has it, else from
  * the repo's default branch. Nothing changes if any repo would lose
- * uncommitted work, is not cloned, or — under the local lifecycle — the
- * branch is the repo's default branch.
+ * uncommitted work or is not cloned.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.workarea
  * @param {string} args.branch
- * @param {'local'|'full'} args.lifecycle
- * @returns {Promise<{workarea: string, branch: string, lifecycle: string, repos: object[]}>}
+ * @returns {Promise<{workarea: string, branch: string, repos: object[]}>}
  * @throws {TimError} DIRTY_TREE or USAGE, before any repo changes
  */
-export const runBuildBranch = async ({
-  workspaceRoot,
-  workarea,
-  branch,
-  lifecycle
-}) => {
+export const runBuildBranch = async ({ workspaceRoot, workarea, branch }) => {
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const inspections = await Promise.all(
     repos.map((repo) => inspect(repo, branch))
   )
   const problems = inspections.flatMap((inspection) =>
-    problemsWith(inspection, branch, lifecycle)
+    problemsWith(inspection, branch)
   )
   if (problems.length > 0) {
     const dirty = inspections.some(
@@ -206,5 +189,5 @@ export const runBuildBranch = async ({
   const results = await Promise.all(
     inspections.map((inspection) => applyTo(inspection, branch))
   )
-  return { workarea, branch, lifecycle, repos: results }
+  return { workarea, branch, repos: results }
 }

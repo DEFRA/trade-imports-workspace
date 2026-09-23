@@ -23,38 +23,33 @@ So: you derive, you invoke, you check it landed, you go again.
 
 ## PARAMETERS
 
-The user gives the backlog (its workarea), the lifecycle and, under `full`, the
-epic. Everything else is worked out or defaulted. Never ask for a value the list
-below says how to derive.
+The user gives the workarea and the epic. Everything else is worked out or
+defaulted. Never ask for a value the list below says how to derive.
 
 ```
 workarea      path under workareas/ holding backlog.json, e.g. shared/dr1-parity-union
-branch        under full, the BASE branch: every increment cuts its own off this
-              and merges back. Default main.
-              Under local, the scratch branch every increment is committed on.
-              Default spike/<programme>, which YOU create (see "Before the first
-              increment") — the loop refuses to start unless every repo is on it
+branch        the BASE branch: every increment cuts its own off this and
+              merges back. Default main.
 scope         conventional-commit scope for landing commits. Default the
               backlog envelope's `programme`
 executor      claude (default) | codex
-lifecycle     full (default) | local
 stopAfter     how many increments to build before stopping. A number, or "all".
               Default 1, or the count the user names ("the next 3")
-jiraProject   default EUDPA                        full only
+jiraProject   default EUDPA
 epic          parent epic every raised ticket hangs off. The one thing
-              a full run must be told                    full only
+              a run must be told
 inProgress    the board's working status. Read it from the board's
-              transitions (below) rather than asking     full only
-doneStatus    the board's finished status, the same way  full only
+              transitions (below) rather than asking
+doneStatus    the board's finished status, the same way
 board         numeric id of the board tickets are moved onto. 13780 is
-              EUDPA. Default 13780                 full only
+              EUDPA. Default 13780
 requireApproval      whether EVERY PR of an increment needs an approving review
               on GitHub before the loop merges ANY of them, on top of the
               multi-agent review, adversarial verification and judge every
               increment already goes through.
-              Default false                             full only
+              Default false
 approvalWaitMinutes  how long the merge stage waits for those approvals before
-              stopping with every PR open. Default 20   full only
+              stopping with every PR open. Default 20
 repos         where frontend, backend and tests live: a workspace-relative path
               and a GitHub owner/name slug each. Take it from the backlog
               envelope's `repos`, which DISTIL wrote:
@@ -70,17 +65,13 @@ models        optional model per tier: heavy (implement, reviewers, verifiers,
               session model
 ```
 
-`lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
-`local` builds and commits on `branch`, which `tim build branch` puts every repo
-on and which must not be `main` or `master`: no Jira, no push, no PR, and
-**no handover** — a stash does not travel. Use `full` for anything a colleague
-may pick up.
+Every run goes ticket → branch → build → PR → CI → merge → ticket done.
 
 **This skill passes `requireApproval: false` unless the user asks otherwise,
 and that is the point.** The workflow itself has no default for this key —
-under `lifecycle: full` a run without it stops before any agent — so this
-default is something the skill supplies, not something the loop falls back
-to. By the time an increment reaches the merge stage it has already been
+a run without it stops before any agent — so this default is something the
+skill supplies, not something the loop falls back to. By the time an
+increment reaches the merge stage it has already been
 through a style reviewer and a code reviewer per (repo, language) group, a
 consistency reviewer across the whole change, an adversarial verifier that
 tries to refute every finding, and a judge that rules every survivor
@@ -143,27 +134,9 @@ idempotent, so it runs on reused tickets too.
    into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
-4. **Under `lifecycle: local`, put every repo on the scratch branch.** The
-   loop has no branch stage under `local`. Run, before the first increment:
-
-   ```bash
-   tim build branch <workarea> spike/<programme> --lifecycle local --workspace ~/git/defra/trade-imports-workspace --json
-   ```
-
-   It checks the branch out where it exists, and otherwise cuts it with
-   `--no-track` from the default branch, so every repo in the envelope's `repos`
-   carries the same name (workspace rule 2). A repo with uncommitted changes is
-   someone's work: the command changes nothing, exits 1 with `DIRTY_TREE` and
-   names the files. Stop and say which; never stash it. It refuses `main`,
-   `master` or the default branch under `local`. Running it again is a no-op, and
-   the loop's baseline runs the same command at the start of every increment, so
-   a repo that drifted between runs is put back before anything is built.
-
-   Under `lifecycle: full` the loop keeps its own branch stage. That stage
-   branches only the increment's repos, cuts from a freshly fetched base branch
-   the run names, fast-forwards a branch already pushed, and repairs an upstream
-   that points at the base branch. `tim build branch` does none of those, so
-   swapping it in would lose them.
+4. **Check the gate covers every repo the programme builds.** Branching needs
+   nothing from you — the loop's Branch stage cuts each increment's branch off a
+   freshly fetched base, in the increment's repos only.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
    rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
@@ -174,9 +147,9 @@ idempotent, so it runs on reused tickets too.
    the ladder each run it one phase per call (each phase fits a ten-minute Bash
    window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
    the implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts or starts or stops the stack. Both commands
-   read the repos from the backlog envelope's `repos` map, so a backlog without
-   one goes baseline-red until it has one. Add a repo's rungs to `gates.json`
+   agent picks a repo's test scripts or starts or stops the stack. It reads the
+   repos from the backlog envelope's `repos` map, so a backlog without one goes
+   baseline-red until it has one. Add a repo's rungs to `gates.json`
    before the first increment that builds it; the gate fails a repo it has no
    rungs for.
 5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
@@ -247,7 +220,6 @@ Build the args object with every key below:
   branch: '<branch>',
   scope: '<scope>',
   executor: '<executor>',
-  lifecycle: '<lifecycle>',
   planOnly: false, // true writes <workarea>/plans/<id>.md and stops: a dry run to see how it would be built
   jiraProject: '<jiraProject>',
   epic: '<epic>',
@@ -279,10 +251,10 @@ full every time, copied from the backlog envelope's `repos`: the loop has no
 repos table of its own any more, so a missing `repos` stops the run before
 any agent starts.
 
-Write `requireApproval` in explicitly. The loop has no default for it: under
-`lifecycle: full` a run without it stops before any agent. The args are what
-a person reads to see what governs a run, so the merge gate is always written
-out. Set it to `true` only where the user has asked for a human approval gate
+Write `requireApproval` in explicitly. The loop has no default for it: a run
+without it stops before any agent. The args are what a person reads to see
+what governs a run, so the merge gate is always written out. Set it to
+`true` only where the user has asked for a human approval gate
 in as many words — the default is `false`, because the review, adversarial
 verification and judge stages already are the review.
 
@@ -308,9 +280,8 @@ jq -r '.increments[] | select(.id=="<id>") | .status + " " + (.commit // "-") + 
   backlog says. Do not retry it and do not move to the next increment: an
   increment built on a broken one is worse than a stopped run.
 
-Under `lifecycle: full`, landed means merged. The loop writes `ticket`, `branch`
-and `prs` as soon as each exists, so a retry later resumes rather than raising a
-second ticket.
+Landed means merged. The loop writes `ticket`, `branch` and `prs` as soon as
+each exists, so a retry later resumes rather than raising a second ticket.
 
 ### 3b. Catch anything the increment deferred
 
@@ -431,7 +402,6 @@ workarea     <workarea>
 branch       <branch>
 scope        <scope>
 executor     <executor>
-lifecycle    <lifecycle>
 jiraProject  <jiraProject>
 epic         <epic>
 inProgress   <inProgress>

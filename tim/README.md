@@ -247,7 +247,7 @@ The build loop's branch and gate steps, run the same way every time. Both read
 the repos a backlog builds from its envelope `repos` map.
 
 ```bash
-tim build branch shared/my-programme feat/EUDPA-123-origin --lifecycle full --json   # every backlog repo on one branch
+tim build branch shared/my-programme feat/EUDPA-123-origin --json   # every backlog repo on one branch
 tim build gate shared/my-programme --phase unit --json      # unit rungs only
 tim build gate shared/my-programme --json                   # unit, then FIT, then E2E
 tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere other than <workarea>/logs/
@@ -257,8 +257,7 @@ tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere oth
 locally, and otherwise cuts it with `--no-track` from `origin/<branch>` if the
 remote has it, else from the repo's default branch. It changes nothing if a
 repo it would move has uncommitted work (exit 1, `DIRTY_TREE`, naming the
-files), and under `--lifecycle local` it refuses `main`, `master` or the
-repo's default branch (exit 2). Running it again is a no-op.
+files). Running it again is a no-op.
 
 `tim build gate` runs the rungs in
 `.claude/skills/requirements-pipeline/references/gates.json` for each backlog

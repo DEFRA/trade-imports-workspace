@@ -281,8 +281,11 @@ reach instead for a link to a test that nearly covers it.
 wraps `openspec validate <capability-path> --strict`, rooted at the spec
 root via `--root`. Non-zero is a halt.
 
-`coverage.json` has **no** CLI validator — the OpenSpec root does not
-resolve against `openspec/coverage/`. Step 5's coverage self-check is its
-only gate, and nothing checks the object shape above at all. Treat that
-asymmetry as a reason to read the coverage write more carefully, not
-less: copy the exemplar key-for-key rather than writing from memory.
+`coverage.json` has **no OpenSpec CLI validator** — the OpenSpec root
+does not resolve against `openspec/coverage/`, and Step 5's coverage
+self-check is what gates this step. `tim spec lint` (`docs/reference/openspec.md`)
+now checks the object shape above, the spec-coverage ID/name parity, both
+rollups and the two repo-reading links — but it runs corpus-wide, on
+demand or in the periodic sweep, not per increment here. Read the
+coverage write carefully regardless: copy the exemplar key-for-key
+rather than writing from memory.

@@ -311,8 +311,8 @@ scenarios you touched. Links attach to scenarios; the increment's own
 co-located `*.fit.spec.js` tests are `fit` links. Never add an `e2e` link
 for a test this increment did not write — the E2E suite lives in the
 tests repo, which this skill does not touch. `SPEC_SYNC.md` carries the
-full object shape; nothing validates it, so copy the exemplar
-key-for-key.
+full object shape; `tim spec lint` can check it later, but nothing
+checks it here, so copy the exemplar key-for-key.
 
 ### 5.4 Validate the spec write
 
@@ -326,8 +326,11 @@ The helper itself always lives in the workspace checkout — that path is
 literal. `--root` is what points it at the tree you actually wrote.
 
 Non-zero exit is a halt, not a warning — go to 5.7. `coverage.json` is
-not validated: the CLI does not resolve against `openspec/coverage/`.
-The self-check in 5.6 is its only gate, so read that write carefully.
+not validated here: the OpenSpec CLI does not resolve against
+`openspec/coverage/`. The self-check in 5.6 is this step's only gate —
+`tim spec lint` checks coverage.json corpus-wide, but that runs on
+demand or in the periodic sweep, not per increment — so read that write
+carefully.
 
 ### 5.5 Self-check the spec against the diff
 

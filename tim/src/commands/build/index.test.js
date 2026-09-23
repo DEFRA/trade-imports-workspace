@@ -90,7 +90,6 @@ describe('tim build branch', () => {
         ok: true,
         result: expect.objectContaining({
           branch: 'feat/EUDPA-9',
-          lifecycle: 'full',
           repos: [
             expect.objectContaining({
               repo: 'frontend',
@@ -103,31 +102,6 @@ describe('tim build branch', () => {
     })
   })
 
-  test('refuses main under the local lifecycle before touching a repo', async () => {
-    seedWorkspace(['frontend'])
-
-    const run = await runTim([
-      'build',
-      'branch',
-      WORKAREA,
-      'main',
-      '--lifecycle',
-      'local',
-      '--json'
-    ])
-
-    expect({ exitCode: run.exitCode, errors: envelopeOf(run).errors }).toEqual({
-      exitCode: 2,
-      errors: [
-        {
-          code: 'USAGE',
-          message:
-            'A local run commits straight onto its branch, so name a scratch branch, not main.'
-        }
-      ]
-    })
-  })
-
   test('refuses a branch name git would not accept', async () => {
     seedWorkspace(['frontend'])
 
@@ -136,24 +110,6 @@ describe('tim build branch', () => {
     expect({ exitCode: run.exitCode, stderr: run.stderr }).toEqual({
       exitCode: 2,
       stderr: expect.stringContaining('The branch name is not valid.')
-    })
-  })
-
-  test('refuses an unknown lifecycle', async () => {
-    seedWorkspace(['frontend'])
-
-    const run = await runTim([
-      'build',
-      'branch',
-      WORKAREA,
-      'feat/x',
-      '--lifecycle',
-      'sometimes'
-    ])
-
-    expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
-      exitCode: 2,
-      stderr: '--lifecycle must be one of: local, full.'
     })
   })
 

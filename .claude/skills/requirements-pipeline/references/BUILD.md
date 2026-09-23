@@ -2,9 +2,9 @@
 
 The second phase of the `requirements-pipeline` skill. Runs
 [`../workflow/increment-build-loop.js`](../workflow/increment-build-loop.js) over
-a backlog the DISTIL phase ([`DISTIL.md`](DISTIL.md)) wrote, one increment per
-invocation, from **the session you are in**. There is no orchestrator tier below
-you and no subagent between you and the loop.
+a backlog the DISTIL phase ([`DISTIL.md`](DISTIL.md)) wrote, from **the session
+you are in**. There is no orchestrator tier below you and no subagent between
+you and the loop.
 
 ## Why there is only one tier
 
@@ -14,47 +14,49 @@ subagent cannot invoke the `Workflow` tool**, so the middle tier could never
 start the thing it existed to drive.
 
 It was also solving a problem that had already been solved. The loop's own
-`agent()` calls are the death boundary — all `16 + 3n` of them live and die
-inside the workflow, and the session that invoked it absorbs only the return
-value. Your context grows by one short result per increment whether or not
-anything sits in between.
+`agent()` calls are the death boundary — every one of them lives and dies inside
+the workflow, and the session that invoked it absorbs only the return value.
+Your context grows by one short result per run, however many increments the run
+built.
 
-So: you derive, you invoke, you check it landed, you go again.
+**The loop derives its own next increment.** It asks `tim backlog next` after
+each one lands and keeps going until `stopAfter` increments have landed or
+something stops it, so a run outlives the session's attention rather than
+needing a turn per increment. You build the args once, launch once, and read the
+result.
 
 ## PARAMETERS
 
-The user gives the backlog (its workarea), the lifecycle and, under `full`, the
-epic. Everything else is worked out or defaulted. Never ask for a value the list
-below says how to derive.
+The user gives the workarea and the epic. Everything else is worked out or
+defaulted. Never ask for a value the list below says how to derive.
 
 ```
 workarea      path under workareas/ holding backlog.json, e.g. shared/dr1-parity-union
-branch        under full, the BASE branch: every increment cuts its own off this
-              and merges back. Default main.
-              Under local, the scratch branch every increment is committed on.
-              Default spike/<programme>, which YOU create (see "Before the first
-              increment") — the loop refuses to start unless every repo is on it
+branch        the BASE branch: every increment cuts its own off this and
+              merges back. Default main.
 scope         conventional-commit scope for landing commits. Default the
               backlog envelope's `programme`
 executor      claude (default) | codex
-lifecycle     full (default) | local
-stopAfter     how many increments to build before stopping. A number, or "all".
-              Default 1, or the count the user names ("the next 3")
-jiraProject   default EUDPA                        full only
+stopAfter     how many increments may LAND before the run stops. A positive
+              number, or "all". Default 1, or the count the user names ("the
+              next 3"). It counts landings, not attempts
+increments    null to drain the backlog, which is the normal run. A list of ids
+              only where the user named exactly what to build
+jiraProject   default EUDPA
 epic          parent epic every raised ticket hangs off. The one thing
-              a full run must be told                    full only
+              a run must be told
 inProgress    the board's working status. Read it from the board's
-              transitions (below) rather than asking     full only
-doneStatus    the board's finished status, the same way  full only
+              transitions (below) rather than asking
+doneStatus    the board's finished status, the same way
 board         numeric id of the board tickets are moved onto. 13780 is
-              EUDPA. Default 13780                 full only
+              EUDPA. Default 13780
 requireApproval      whether EVERY PR of an increment needs an approving review
               on GitHub before the loop merges ANY of them, on top of the
               multi-agent review, adversarial verification and judge every
               increment already goes through.
-              Default false                             full only
+              Default false
 approvalWaitMinutes  how long the merge stage waits for those approvals before
-              stopping with every PR open. Default 20   full only
+              stopping with every PR open. Default 20
 repos         where frontend, backend and tests live: a workspace-relative path
               and a GitHub owner/name slug each. Take it from the backlog
               envelope's `repos`, which DISTIL wrote:
@@ -70,17 +72,13 @@ models        optional model per tier: heavy (implement, reviewers, verifiers,
               session model
 ```
 
-`lifecycle: full` runs ticket → branch → build → PR → CI → merge → ticket done.
-`local` builds and commits on `branch`, which `tim build branch` puts every repo
-on and which must not be `main` or `master`: no Jira, no push, no PR, and
-**no handover** — a stash does not travel. Use `full` for anything a colleague
-may pick up.
+Every run goes ticket → branch → build → PR → CI → merge → ticket done.
 
 **This skill passes `requireApproval: false` unless the user asks otherwise,
 and that is the point.** The workflow itself has no default for this key —
-under `lifecycle: full` a run without it stops before any agent — so this
-default is something the skill supplies, not something the loop falls back
-to. By the time an increment reaches the merge stage it has already been
+a run without it stops before any agent — so this default is something the
+skill supplies, not something the loop falls back to. By the time an
+increment reaches the merge stage it has already been
 through a style reviewer and a code reviewer per (repo, language) group, a
 consistency reviewer across the whole change, an adversarial verifier that
 tries to refute every finding, and a judge that rules every survivor
@@ -134,7 +132,9 @@ idempotent, so it runs on reused tickets too.
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
    increment is 23–35 agents on Claude and 29–41 on Codex, against a default guideline of 15. You cannot set
-   this for the user and the run is throttled without it.
+   this for the user and the run is throttled without it. The tool's own hard
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 27
+   increments on Claude and 23 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
    one shape defined in [`backlog.schema.json`](backlog.schema.json), with the rules
@@ -143,27 +143,9 @@ idempotent, so it runs on reused tickets too.
    into `<workarea>/plans/<id>.md`. A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
-4. **Under `lifecycle: local`, put every repo on the scratch branch.** The
-   loop has no branch stage under `local`. Run, before the first increment:
-
-   ```bash
-   tim build branch <workarea> spike/<programme> --lifecycle local --workspace ~/git/defra/trade-imports-workspace --json
-   ```
-
-   It checks the branch out where it exists, and otherwise cuts it with
-   `--no-track` from the default branch, so every repo in the envelope's `repos`
-   carries the same name (workspace rule 2). A repo with uncommitted changes is
-   someone's work: the command changes nothing, exits 1 with `DIRTY_TREE` and
-   names the files. Stop and say which; never stash it. It refuses `main`,
-   `master` or the default branch under `local`. Running it again is a no-op, and
-   the loop's baseline runs the same command at the start of every increment, so
-   a repo that drifted between runs is put back before anything is built.
-
-   Under `lifecycle: full` the loop keeps its own branch stage. That stage
-   branches only the increment's repos, cuts from a freshly fetched base branch
-   the run names, fast-forwards a branch already pushed, and repairs an upstream
-   that points at the base branch. `tim build branch` does none of those, so
-   swapping it in would lose them.
+4. **Check the gate covers every repo the programme builds.** Branching needs
+   nothing from you — the loop's Branch stage cuts each increment's branch off a
+   freshly fetched base, in the increment's repos only.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
    rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
@@ -174,30 +156,31 @@ idempotent, so it runs on reused tickets too.
    the ladder each run it one phase per call (each phase fits a ten-minute Bash
    window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
    the implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts or starts or stops the stack. Both commands
-   read the repos from the backlog envelope's `repos` map, so a backlog without
-   one goes baseline-red until it has one. Add a repo's rungs to `gates.json`
+   agent picks a repo's test scripts or starts or stops the stack. It reads the
+   repos from the backlog envelope's `repos` map, so a backlog without one goes
+   baseline-red until it has one. Add a repo's rungs to `gates.json`
    before the first increment that builds it; the gate fails a repo it has no
    rungs for.
 5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
    it if the run is long; do not carry a stale copy in your head.
 
-## THE LOOP
+## THE RUN
 
-Repeat until a stop condition fires.
+Build the args, launch once, read the result. The loop does the repeating.
 
-### 1. Derive the next increment
+### 1. What the loop derives for itself
 
-Once per increment, immediately after the previous one lands — never a list
-chosen in advance. A list committed five deep throws away everything the first
-increment teaches.
+You do not pick the increments. With `increments: null` the loop runs
 
 ```bash
 tim backlog next <workarea>
 ```
 
-`NONE` → stop with `no-buildable`.
+itself, after each increment lands, and builds whatever id comes back. That is
+what lets one launch build many: a list chosen in advance throws away everything
+the first increment teaches, and a run that needed a turn from you per increment
+died whenever the session did.
 
 **Buildability is status and dependencies. Nothing else.** The six withheld
 statuses (`done`, `deferred`, `dropped`, `blocked`, `rejected`, `merged-into`)
@@ -213,21 +196,23 @@ in the status, not in prose — if a programme's do-not-build list in
 `PROGRAMME-NOTES.md` is long, that is a smell worth raising, because those
 increments should carry a withheld status instead.
 
-**Do not gate on how planned an increment looks.** A backlog says what is wrong,
-what it cites as evidence and whether anyone has ruled on it. Working out what
-to change is the implementor skill's job. So:
+**Nothing gates on how planned an increment looks.** A backlog says what is
+wrong, what it cites as evidence and whether anyone has ruled on it. Working out
+what to change is the loop's plan stage. So:
 
-- Do not infer or require a planning field.
-- Do not return `no-buildable` because an increment reads thin.
+- Do not add a planning field for the query to read.
+- Do not withhold an increment because it reads thin.
 - Do not write a plan into the backlog to make one look ready.
 
 A thin increment is buildable and gets built. **Thin is fine; wrong is not** —
 what a thin increment still owes you is a claim that holds up.
 
-Then check `PROGRAMME-NOTES.md` for a do-not-build list and for an imposed
-order. Array order is the right default, not a rule.
+Read `PROGRAMME-NOTES.md` before you launch, for a do-not-build list and any
+imposed order. The loop cannot see it: anything it must not build needs a
+withheld status on the row, and anything that must come first needs a
+`dependsOn`. Array order is the right default, not a rule.
 
-### 2. Run the loop over it
+### 2. Launch it
 
 **Never edit `.claude/skills/requirements-pipeline/workflow/increment-build-loop.js`
 during a run.** It is tracked and
@@ -247,7 +232,6 @@ Build the args object with every key below:
   branch: '<branch>',
   scope: '<scope>',
   executor: '<executor>',
-  lifecycle: '<lifecycle>',
   planOnly: false, // true writes <workarea>/plans/<id>.md and stops: a dry run to see how it would be built
   jiraProject: '<jiraProject>',
   epic: '<epic>',
@@ -264,7 +248,8 @@ Build the args object with every key below:
     tests: { path: 'repos/<tests repo>', github: 'DEFRA/<tests repo>' }
   },
   models: { heavy: '<model or leave the object empty>', light: '<model>' },
-  increments: ['<the one id you derived>']
+  increments: null, // null drains the backlog. A list only where the user named the ids
+  stopAfter: '<a positive number, or "all">'
 }
 ```
 
@@ -274,53 +259,61 @@ Then wrap that object as `args`, launching by `scriptPath`:
 Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args: <the object above> })
 ```
 
-**One id. Never more.** Change nothing else in `args`. Write `repos` out in
-full every time, copied from the backlog envelope's `repos`: the loop has no
-repos table of its own any more, so a missing `repos` stops the run before
-any agent starts.
+**One launch. Never one per increment.** Change nothing else in `args`. Write
+`repos` out in full every time, copied from the backlog envelope's `repos`: the
+loop has no repos table of its own any more, so a missing `repos` stops the run
+before any agent starts.
 
-Write `requireApproval` in explicitly. The loop has no default for it: under
-`lifecycle: full` a run without it stops before any agent. The args are what
-a person reads to see what governs a run, so the merge gate is always written
-out. Set it to `true` only where the user has asked for a human approval gate
+`stopAfter` is what ends an ordinary run, so write it in explicitly too. Pass
+`"all"` only when the user asked for the whole backlog; the loop still stops at
+`agent-budget` before it runs out of agents, and relaunching with the same args
+carries on.
+
+Write `requireApproval` in explicitly. The loop has no default for it: a run
+without it stops before any agent. The args are what a person reads to see
+what governs a run, so the merge gate is always written out. Set it to
+`true` only where the user has asked for a human approval gate
 in as many words — the default is `false`, because the review, adversarial
 verification and judge stages already are the review.
 
-### 3. Check it landed
+### 3. Check what it landed
 
-Do not trust the workflow's report on its own.
+The run returns `{increments, stopped}`: one entry per increment it attempted,
+each with its `outcome`, and one `stopped` saying which condition ended the run.
+Do not trust that report on its own.
 
 - The `Workflow` tool's result carries a `transcriptDir`. Read
   `<transcriptDir>/journal.jsonl` and find the run's first `log()` line —
   `increment-build-loop: resolved configuration {…}`. Check it matches the
-  `args` you passed. If it does not — or it is missing — stop with
-  `not-landed`, quoting both the log line (or its absence) and the args you
-  sent.
+  `args` you passed. If it does not — or it is missing — stop, quoting both the
+  log line (or its absence) and the args you sent.
 
-Then one query:
+Then one query for every id the run reported:
 
 ```bash
 jq -r '.increments[] | select(.id=="<id>") | .status + " " + (.commit // "-") + " " + ((.prs // []) | tostring)' workareas/<workarea>/backlog.json
 ```
 
-- `done` → it landed. Continue.
-- anything else → **stop.** Report the id, what the workflow said, and what the
-  backlog says. Do not retry it and do not move to the next increment: an
-  increment built on a broken one is worse than a stopped run.
+- `done` → it landed.
+- anything else, for an increment the run called `landed` → the backlog and the
+  workflow disagree. Report both and stop; do not relaunch until someone has
+  looked.
 
-Under `lifecycle: full`, landed means merged. The loop writes `ticket`, `branch`
-and `prs` as soon as each exists, so a retry later resumes rather than raising a
-second ticket.
+Landed means merged. The loop writes `ticket`, `branch` and `prs` as soon as
+each exists, so a later run resumes the increment rather than raising a second
+ticket.
 
-### 3b. Catch anything the increment deferred
+### 3b. Catch anything the increments deferred
 
 The workflow's return value carries what its stages left undone. Stages are told to
 finish their own work and to mark anything they genuinely left out as
-`DEFERRED: <what>` on its own line. **Read the result for those, and for a CI fixer's
-"out of scope" or "not done" wording** — a CI fixer works after every reviewer has
-finished, so what it defers is the least-seen work in the whole pipeline.
+`DEFERRED: <what>` on its own line. **Sweep every increment in the returned list
+for those, and for a CI fixer's "out of scope" or "not done" wording** — a CI
+fixer works after every reviewer has finished, so what it defers is the
+least-seen work in the whole pipeline. This runs once, after the run stops,
+because the loop no longer hands you control between increments.
 
-For each one, check it against `backlog.json` before you move on:
+For each one, check it against `backlog.json`:
 
 ```bash
 jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key // "-") + "  " + (.detail // "")' workareas/<workarea>/backlog.json | grep -i '<keyword>'
@@ -333,39 +326,54 @@ jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key 
   in the one shape: a `title`, a `detail` saying what and why, at least one observable
   `acceptanceCriteria` entry, `dependsOn` the increment that surfaced it, `status: "todo"`,
   and a `notes` line saying which increment and stage it came from. Never a file list or
-  commands — the loop plans those. Then run `tim backlog check <workarea>`, and the run
-  continues.
+  commands — the loop plans those. Then run `tim backlog check <workarea>`.
 
 Work that exists only in a stage's prose is work that will be lost. This step is what
 stops that, and it costs one query.
 
-### 4. Report one line, then go again
+### 4. Report one line per increment
 
-Per increment, to the user:
+To the user, from the returned list:
 
 ```
 inc-NNN  landed   <title>            PR #123 · EUDPA-4567
 ```
 
-Then derive the next one **before** writing any prose. Do not summarise the run
-between increments; do not read the diff; do not open the test logs. Everything
-worth reading already ran inside the workflow.
+Then the stop reason, then the handover prompt. Do not read the diffs and do not
+open the test logs. Everything worth reading already ran inside the workflow.
 
 ## STOP CONDITIONS
 
-Stop and print the handover prompt when any of these fire:
+The run returns `stopped: {reason, detail}`. Report the reason and print the
+handover prompt.
 
 | Reason | What it means |
 |---|---|
 | `count-reached` | `stopAfter` increments have landed. The ordinary ending |
-| `no-buildable` | The derive query returned `NONE` |
+| `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
+| `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
+| `derive-failed` | `tim backlog next` itself failed. **Not** a finished backlog — fix the query or the workarea and launch again |
 | `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
-| `not-landed` | Step 3 found a status other than `done` |
+| `not-landed` | The same id came back twice, so the previous attempt at it did not land |
+| `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch |
+| `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
+| `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch |
+| `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
+| `off-branch` | A repo left the run's branch and could not be moved back |
+| `ladder-red` | The verification ladder went red. Preserved, not discarded |
+| `land-failed` | The commit could not be made |
+| `pr-failed` | The branch pushed but the PRs could not be raised |
 | `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | Every PR is green but at least one has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
 | `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
+| `done-failed` | The merge is real but the ticket would not move to the finished status |
+
+**Every failure stops the whole run, not just that increment.** The loop never
+skips to the next id after one goes wrong: `tim backlog next` selects on status
+and `dependsOn` alone, so a failed attempt is still the next buildable
+increment, and carrying on would either rebuild it or build on top of a failure.
 
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
 failing.
@@ -431,7 +439,6 @@ workarea     <workarea>
 branch       <branch>
 scope        <scope>
 executor     <executor>
-lifecycle    <lifecycle>
 jiraProject  <jiraProject>
 epic         <epic>
 inProgress   <inProgress>
@@ -475,16 +482,16 @@ Both executors review at the same granularity: Codex runs one review per group p
 one consistency review, each a shell and a relay, and a branch guard after every
 codex stage keeps each repo on the run's branch.
 
-Switch by changing `executor` in the next increment's args. **It
-takes effect at the next increment and never mid-increment**, so a run can start
-on Claude, move to Codex when the increments get wide, and move back. Say which
-executor built each increment in your per-increment line.
+Switch by changing `executor` and launching again. **One run builds every
+increment with one executor**, so a programme moves to Codex when the increments
+get wide by ending the run and starting the next one there. Say which executor
+built each increment in your per-increment line.
 
 Codex mode needs a Codex login. If a codex stage produces no result — non-zero
 exit, no last-message file, unparseable JSON — the loop preserves the attempt and
 stops rather than proceeding, because a crashed reviewer must never read as
 approval. So does a failed land or a repo the branch guard cannot move back. Each
-leaves the tree clean and surfaces to you as `not-landed`.
+leaves the tree clean and stops the run with its own reason above.
 
 ## GUARD RAILS
 
@@ -495,8 +502,9 @@ leaves the tree clean and surfaces to you as `not-landed`.
   boundary for a reason. Reading one to "just check something" is what fills the
   session and ends the run early.
 - **Never edit the tracked loop.** Everything a run needs goes in its args.
-- **One increment per Workflow invocation.** The loop accepts a longer list; do
-  not give it one.
+- **One Workflow invocation per run.** The loop derives its own increments; do
+  not launch it once per increment and do not pass a list of ids unless the user
+  named them.
 - **Never narrow the derive query to a planning field.** Status and
   dependencies decide buildability; a thin increment is still buildable.
 - **Do not renumber increment ids.** They are bound to rulings and citations.

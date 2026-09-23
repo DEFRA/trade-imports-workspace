@@ -4,11 +4,7 @@ import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { OK, ERROR } from '../../constants/exitCodes.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
-import {
-  runBuildBranch,
-  LIFECYCLES,
-  PROTECTED_BRANCHES
-} from '../../build/branch.js'
+import { runBuildBranch } from '../../build/branch.js'
 import { runGate, GATE_PHASES } from '../../build/gate.js'
 
 const SCHEMA_VERSION = 1
@@ -26,29 +22,16 @@ const workareaSchema = z
 const BRANCH_NAME =
   /^(?!-)(?!.*\.\.)(?!.*\/\/)(?!.*@\{)(?!.*\.lock(\/|$))[A-Za-z0-9._/-]+(?<![./])$/
 
-const branchOptionsSchema = z
-  .object({
-    workarea: workareaSchema,
-    branch: z
-      .string()
-      .trim()
-      .regex(
-        BRANCH_NAME,
-        'The branch name is not valid. Use letters, digits and ".", "_", "-" or "/", such as feat/EUDPA-123-origin.'
-      ),
-    lifecycle: z.enum(LIFECYCLES, {
-      message: `--lifecycle must be one of: ${LIFECYCLES.join(', ')}.`
-    })
-  })
-  .superRefine(({ branch, lifecycle }, context) => {
-    if (lifecycle === 'local' && PROTECTED_BRANCHES.includes(branch)) {
-      context.addIssue({
-        code: 'custom',
-        path: ['branch'],
-        message: `A local run commits straight onto its branch, so name a scratch branch, not ${branch}.`
-      })
-    }
-  })
+const branchOptionsSchema = z.object({
+  workarea: workareaSchema,
+  branch: z
+    .string()
+    .trim()
+    .regex(
+      BRANCH_NAME,
+      'The branch name is not valid. Use letters, digits and ".", "_", "-" or "/", such as feat/EUDPA-123-origin.'
+    )
+})
 
 const gateOptionsSchema = z.object({
   workarea: workareaSchema,
@@ -172,25 +155,19 @@ const registerBranch = (build, timVersion) =>
       'The workarea under workareas/, such as shared/my-programme'
     )
     .argument('<branch>', 'The branch every repo in the backlog should be on')
-    .option(
-      '--lifecycle <lifecycle>',
-      'local (commits straight onto the branch, so never main) or full',
-      'full'
-    )
     .description(
       "Put every repo the backlog builds on one branch. Checks it out where it exists, otherwise cuts it with --no-track from the repo's default branch. Refuses before changing anything if a repo has uncommitted work."
     )
     .addHelpText(
       'after',
-      '\nExample:\n  tim build branch shared/my-programme feat/EUDPA-123-origin --lifecycle full --json'
+      '\nExample:\n  tim build branch shared/my-programme feat/EUDPA-123-origin --json'
     )
-    .action(async function branchAction(workarea, branch, opts) {
+    .action(async function branchAction(workarea, branch) {
       const globalOpts = this.optsWithGlobals()
       try {
         const parsed = parseOptions(branchOptionsSchema, {
           workarea,
-          branch,
-          lifecycle: opts.lifecycle
+          branch
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace

@@ -44,8 +44,8 @@ const workspaceWith = async (...names) => {
   return repos
 }
 
-const branchTo = (branch, lifecycle = 'full') =>
-  runBuildBranch({ workspaceRoot: root, workarea: WORKAREA, branch, lifecycle })
+const branchTo = (branch) =>
+  runBuildBranch({ workspaceRoot: root, workarea: WORKAREA, branch })
 
 const errorFrom = async (promise) => {
   try {
@@ -177,18 +177,6 @@ describe('runBuildBranch', () => {
     expect(outcome.repos).toEqual([
       expect.objectContaining({ ok: true, switched: false, uncommitted: 1 })
     ])
-  })
-
-  test('refuses the default branch under the local lifecycle', async () => {
-    await workspaceWith('frontend')
-
-    const error = await errorFrom(branchTo('main', 'local'))
-
-    expect(error).toEqual({
-      code: 'USAGE',
-      message:
-        'Nothing changed.\nfrontend: a local run commits straight onto its branch, so name a scratch branch, not main.'
-    })
   })
 
   test('refuses a repo that is not cloned', async () => {

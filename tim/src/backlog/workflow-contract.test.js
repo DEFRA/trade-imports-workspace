@@ -74,30 +74,49 @@ const parseArgsResultIdentifier = (source) => {
   return declarator?.id.name ?? null
 }
 
-// Every key the loop requires under `lifecycle: 'local'` (the always-required
-// ones), used to prove "no args at all" names each of them — not merely that
-// it throws.
+// Every key the loop requires, in the order it names them, used to prove "no
+// args at all" names each of them — not merely that it throws.
 const REQUIRED_KEYS_BY_SCRIPT = {
   'increment-build-loop.js': [
     'workarea',
     'branch',
     'scope',
     'executor',
-    'lifecycle',
     'planOnly',
     'repos',
     'models',
-    'increments'
+    'increments',
+    'stopAfter',
+    'jiraProject',
+    'epic',
+    'jiraInProgressStatus',
+    'jiraDoneStatus',
+    'jiraBoard',
+    'ciFixAttempts',
+    'ciWatchMinutes',
+    'requireApproval',
+    'approvalWaitMinutes'
   ],
   'args-canary.js': ['list', 'n']
 }
 
-const LOCAL_ARGS = {
+const JIRA_AND_CI_KEYS = [
+  'jiraProject',
+  'epic',
+  'jiraInProgressStatus',
+  'jiraDoneStatus',
+  'jiraBoard',
+  'ciFixAttempts',
+  'ciWatchMinutes',
+  'requireApproval',
+  'approvalWaitMinutes'
+]
+
+const BASE_ARGS = {
   workarea: 'shared/args-fixture',
-  branch: 'spike/args-fixture',
+  branch: 'main',
   scope: 'args-fixture',
   executor: 'claude',
-  lifecycle: 'local',
   planOnly: false,
   repos: {
     frontend: {
@@ -114,7 +133,17 @@ const LOCAL_ARGS = {
     }
   },
   models: { light: 'fixture-light' },
-  increments: ['inc-900']
+  increments: ['inc-900'],
+  stopAfter: 1,
+  jiraProject: 'EUDPA',
+  epic: 'EUDPA-1',
+  jiraInProgressStatus: 'In Progress',
+  jiraDoneStatus: 'Done',
+  jiraBoard: 13780,
+  ciFixAttempts: 3,
+  ciWatchMinutes: 30,
+  requireApproval: true,
+  approvalWaitMinutes: 20
 }
 
 const WORKSPACE_ANSWER = {
@@ -125,10 +154,12 @@ const WORKSPACE_ANSWER = {
   summary: 'resolved'
 }
 
-const withoutKey = (object, key) =>
+const withoutKeys = (object, keys) =>
   Object.fromEntries(
-    Object.entries(object).filter(([entryKey]) => entryKey !== key)
+    Object.entries(object).filter(([entryKey]) => !keys.includes(entryKey))
   )
+
+const withoutKey = (object, key) => withoutKeys(object, [key])
 
 describe('every workflow script', () => {
   test('finds at least the build loop and the canary', () => {
@@ -283,7 +314,7 @@ describe('increment-build-loop', () => {
 
   const runJsonStringArgs = () =>
     runWorkflowScript(scriptPath, {
-      args: JSON.stringify(LOCAL_ARGS),
+      args: JSON.stringify(BASE_ARGS),
       answers: [WORKSPACE_ANSWER, null]
     })
 
@@ -291,7 +322,7 @@ describe('increment-build-loop', () => {
     const run = await runJsonStringArgs()
 
     expect(run.logs[0]).toBe(
-      `increment-build-loop: resolved configuration ${JSON.stringify(LOCAL_ARGS)}`
+      `increment-build-loop: resolved configuration ${JSON.stringify(BASE_ARGS)}`
     )
   })
 
@@ -325,18 +356,18 @@ describe('increment-build-loop', () => {
 
   test('resolves object args to the same configuration as the string', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: LOCAL_ARGS,
+      args: BASE_ARGS,
       answers: [WORKSPACE_ANSWER, null]
     })
 
     expect(run.logs[0]).toBe(
-      `increment-build-loop: resolved configuration ${JSON.stringify(LOCAL_ARGS)}`
+      `increment-build-loop: resolved configuration ${JSON.stringify(BASE_ARGS)}`
     )
   })
 
   test('stops before any agent when increments is missing, the reproduced failure', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: JSON.stringify(withoutKey(LOCAL_ARGS, 'increments'))
+      args: JSON.stringify(withoutKey(BASE_ARGS, 'increments'))
     })
 
     expect(run.error.message).toBe(
@@ -345,9 +376,9 @@ describe('increment-build-loop', () => {
     expect(run.agents).toEqual([])
   })
 
-  test('names every Jira and CI key a full lifecycle needs', async () => {
+  test('names every Jira and CI key the loop needs', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: { ...LOCAL_ARGS, lifecycle: 'full' }
+      args: withoutKeys(BASE_ARGS, JIRA_AND_CI_KEYS)
     })
 
     expect(run.error.message).toContain(
@@ -356,31 +387,63 @@ describe('increment-build-loop', () => {
     expect(run.agents).toEqual([])
   })
 
-  test('does not require Jira keys for a local lifecycle', async () => {
-    const run = await runWorkflowScript(scriptPath, {
-      args: LOCAL_ARGS,
-      answers: [WORKSPACE_ANSWER, null]
-    })
-
-    expect(run.logs[0]).toMatch(/^increment-build-loop: resolved configuration/)
-    expect(run.agents.length).toBe(2)
-  })
-
   test('refuses an empty increments list after logging the configuration', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: { ...LOCAL_ARGS, increments: [] }
+      args: { ...BASE_ARGS, increments: [] }
     })
 
     expect(run.error.message).toContain(
-      'config.increments must be a non-empty list'
+      'config.increments must be null to drain the backlog, or a non-empty list of increment ids'
     )
     expect(run.logs.length).toBe(1)
     expect(run.agents).toEqual([])
   })
 
+  test('stops before any agent when stopAfter is missing', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: withoutKey(BASE_ARGS, 'stopAfter')
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: args is missing required key stopAfter. Pass every one in args: this workflow has no defaults'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test('refuses a stopAfter that would never stop the run', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, stopAfter: 0 }
+    })
+
+    expect(run.error.message).toBe(
+      'increment-build-loop: config.stopAfter must be a positive integer or "all" — it counts increments that LANDED. Got 0'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  test('accepts stopAfter "all" and carries on to the backlog', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, stopAfter: 'all' },
+      answers: [WORKSPACE_ANSWER, null]
+    })
+
+    expect(run.error.message).toContain('no readable backlog')
+  })
+
+  test('refuses planOnly without an explicit increments list', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, planOnly: true, increments: null }
+    })
+
+    expect(run.error.message).toContain(
+      'config.planOnly needs an explicit config.increments list'
+    )
+    expect(run.agents).toEqual([])
+  })
+
   test('refuses a models value that is not an object', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: { ...LOCAL_ARGS, models: null }
+      args: { ...BASE_ARGS, models: null }
     })
 
     expect(run.error.message).toContain('config.models must be an object')
@@ -389,7 +452,7 @@ describe('increment-build-loop', () => {
 
   test('refuses a scope it would once have derived', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: withoutKey(LOCAL_ARGS, 'scope')
+      args: withoutKey(BASE_ARGS, 'scope')
     })
 
     expect(run.error.message).toBe(
@@ -399,7 +462,7 @@ describe('increment-build-loop', () => {
 
   test('refuses a planOnly that is not a boolean', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: { ...LOCAL_ARGS, planOnly: 'yes' }
+      args: { ...BASE_ARGS, planOnly: 'yes' }
     })
 
     expect(run.error.message).toBe(
@@ -410,7 +473,7 @@ describe('increment-build-loop', () => {
 
   const runPlanOnly = () =>
     runWorkflowScript(scriptPath, {
-      args: { ...LOCAL_ARGS, planOnly: true },
+      args: { ...BASE_ARGS, planOnly: true },
       answers: [
         WORKSPACE_ANSWER,
         { ok: true, summary: '1' },
@@ -438,7 +501,11 @@ describe('increment-build-loop', () => {
           behaviourChanges: ['The list shows only your own notifications.'],
           decisions: ['Filter in the backend query, not the frontend.']
         }
-      ]
+      ],
+      stopped: {
+        reason: 'no-buildable',
+        detail: 'the increments list is built out'
+      }
     })
   })
 
@@ -462,7 +529,7 @@ describe('increment-build-loop', () => {
 
   test('refuses an executor it would once have defaulted', async () => {
     const run = await runWorkflowScript(scriptPath, {
-      args: withoutKey(LOCAL_ARGS, 'executor')
+      args: withoutKey(BASE_ARGS, 'executor')
     })
 
     expect(run.error.message).toBe(
@@ -470,60 +537,65 @@ describe('increment-build-loop', () => {
     )
   })
 
-  describe('under a local lifecycle', () => {
+  describe('the build stages', () => {
     const PREFLIGHT_ANSWER = { ok: true, summary: '1' }
+    const WORK_BRANCH = 'feat/EUDPA-900-fixture'
+    const TICKET_ANSWER = {
+      ok: true,
+      key: 'EUDPA-900',
+      created: false,
+      movedToBoard: true,
+      branch: WORK_BRANCH,
+      repos: ['backend', 'tests', 'frontend'],
+      resumeAt: 'build',
+      status: 'In Progress',
+      summary: 'reused'
+    }
+    const BRANCHED_ANSWER = { ok: true, summary: 'branched' }
 
-    const runToBaseline = () =>
+    const runFrom = (...answers) =>
       runWorkflowScript(scriptPath, {
-        args: LOCAL_ARGS,
-        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, null]
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          TICKET_ANSWER,
+          BRANCHED_ANSWER,
+          ...answers
+        ]
       })
 
     const baselinePrompt = async () => {
-      const run = await runToBaseline()
+      const run = await runFrom(null)
       return run.agents.find(
         (entry) => entry.options.label === 'inc-900 baseline'
       ).prompt
     }
 
-    test('goes from preflight straight to the baseline, with no ticket or branch stage', async () => {
-      const run = await runToBaseline()
+    test('raises the ticket and cuts the branch before the baseline', async () => {
+      const run = await runFrom(null)
 
       expect(run.agents.map((entry) => entry.options.label)).toEqual([
         'workspace',
         'preflight',
+        'inc-900 ticket',
+        'inc-900 branch',
         'inc-900 baseline'
       ])
     })
 
-    test('does not tell the baseline to refuse a repo on the branch the run was given', async () => {
-      const prompt = await baselinePrompt()
-
-      expect(prompt).not.toContain(
-        'if ANY repo is on `spike/args-fixture`, stop and report ok:false'
-      )
-    })
-
-    test('tells the baseline every repo must be on the branch the run was given', async () => {
+    test('tells the baseline to refuse a repo on the base branch', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        'EVERY repo must be on `spike/args-fixture`, the branch this run was given'
+        'if ANY repo is on `main`, stop and report ok:false naming it'
       )
     })
 
-    test('tells the baseline to refuse a repo on main or master', async () => {
+    test('leaves branching to the branch stage, not the baseline', async () => {
       const prompt = await baselinePrompt()
 
-      expect(prompt).toContain('NO repo may be on\n   `main` or `master`')
-    })
-
-    test('tells the baseline to put every repo on the branch with tim build branch', async () => {
-      const prompt = await baselinePrompt()
-
-      expect(prompt).toContain(
-        '`tim build branch shared/args-fixture spike/args-fixture --lifecycle local --workspace ~/ws --json`'
-      )
+      expect(prompt).not.toContain('tim build branch')
     })
 
     test('tells the baseline to run every gate phase with tim build gate, into its own logs', async () => {
@@ -553,26 +625,6 @@ describe('increment-build-loop', () => {
         'Never start or stop the workspace stack, and never drive `docker` yourself.'
       )
       expect(prompt).not.toContain('tim docker down')
-    })
-
-    test('refuses main as the branch to build on before any agent', async () => {
-      const run = await runWorkflowScript(scriptPath, {
-        args: { ...LOCAL_ARGS, branch: 'main' }
-      })
-
-      expect(run.error.message).toContain(
-        'lifecycle "local" commits every increment straight onto config.branch, so it must be a scratch branch, not "main"'
-      )
-      expect(run.agents).toEqual([])
-    })
-
-    test('refuses master as the branch to build on before any agent', async () => {
-      const run = await runWorkflowScript(scriptPath, {
-        args: { ...LOCAL_ARGS, branch: 'master' }
-      })
-
-      expect(run.error.message).toContain('not "master"')
-      expect(run.agents).toEqual([])
     })
 
     describe('building an increment', () => {
@@ -620,16 +672,7 @@ describe('increment-build-loop', () => {
         )
 
       const runToReview = (changedFiles) =>
-        runWorkflowScript(scriptPath, {
-          args: LOCAL_ARGS,
-          answers: [
-            WORKSPACE_ANSWER,
-            PREFLIGHT_ANSWER,
-            BASELINE_ANSWER,
-            PLAN_ANSWER,
-            implementAnswer(changedFiles)
-          ]
-        })
+        runFrom(BASELINE_ANSWER, PLAN_ANSWER, implementAnswer(changedFiles))
 
       const labelsInPhase = (run, phaseName) =>
         run.agents
@@ -637,32 +680,27 @@ describe('increment-build-loop', () => {
           .map((entry) => entry.options.label)
 
       const runThroughFixToLadder = () =>
-        runWorkflowScript(scriptPath, {
-          args: LOCAL_ARGS,
-          answers: [
-            WORKSPACE_ANSWER,
-            PREFLIGHT_ANSWER,
-            BASELINE_ANSWER,
-            PLAN_ANSWER,
-            implementAnswer(['frontend:src/a.js']),
-            NO_FINDINGS,
-            { findings: [FINDING] },
-            NO_FINDINGS,
-            { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
-            {
-              decisions: [
-                { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
-              ],
-              fixNow: ['Save the origin in src/a.js.'],
-              summary: 'one fix'
-            },
-            {
-              ok: true,
-              summary: 'Saved the origin.',
-              notes: 'FIT went green once the port-holding test server exited.'
-            }
-          ]
-        })
+        runFrom(
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js']),
+          NO_FINDINGS,
+          { findings: [FINDING] },
+          NO_FINDINGS,
+          { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+          {
+            decisions: [
+              { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
+            ],
+            fixNow: ['Save the origin in src/a.js.'],
+            summary: 'one fix'
+          },
+          {
+            ok: true,
+            summary: 'Saved the origin.',
+            notes: 'FIT went green once the port-holding test server exited.'
+          }
+        )
 
       const ladderPrompt = (run) =>
         run.agents.find((entry) => entry.options.label === 'inc-900 ladder')
@@ -775,13 +813,10 @@ describe('increment-build-loop', () => {
       })
 
       test('stops at a baseline whose gate is red', async () => {
-        const run = await runWorkflowScript(scriptPath, {
-          args: LOCAL_ARGS,
-          answers: [
-            WORKSPACE_ANSWER,
-            PREFLIGHT_ANSWER,
-            { ...BASELINE_ANSWER, green: false, summary: 'lint red' }
-          ]
+        const run = await runFrom({
+          ...BASELINE_ANSWER,
+          green: false,
+          summary: 'lint red'
         })
 
         expect(run.result.increments[0]).toMatchObject({
@@ -805,16 +840,11 @@ describe('increment-build-loop', () => {
       })
 
       test('tells the ladder no fix stage ran when the judge ruled nothing', async () => {
-        const run = await runWorkflowScript(scriptPath, {
-          args: LOCAL_ARGS,
-          answers: [
-            WORKSPACE_ANSWER,
-            PREFLIGHT_ANSWER,
-            BASELINE_ANSWER,
-            PLAN_ANSWER,
-            implementAnswer(['frontend:src/a.js'])
-          ]
-        })
+        const run = await runFrom(
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js'])
+        )
 
         expect(ladderPrompt(run)).toContain(
           'FIXER — no fix stage ran: the judge ruled nothing fix-now'
@@ -836,33 +866,31 @@ describe('increment-build-loop', () => {
       }
       const ON_BRANCH = {
         ok: true,
-        summary: 'every repo on spike/args-fixture'
+        summary: `every repo on ${WORK_BRANCH}`
       }
-      const PRESERVED = { ok: true, summary: 'stashed as failed-inc-900' }
+      const PRESERVED = {
+        ok: true,
+        summary: `wip commit pushed to ${WORK_BRANCH}`
+      }
 
       const runToLand = (guardAnswer, landAnswer) =>
-        runWorkflowScript(scriptPath, {
-          args: LOCAL_ARGS,
-          answers: [
-            WORKSPACE_ANSWER,
-            PREFLIGHT_ANSWER,
-            BASELINE_ANSWER,
-            PLAN_ANSWER,
-            implementAnswer(['frontend:src/a.js']),
-            NO_FINDINGS,
-            NO_FINDINGS,
-            NO_FINDINGS,
-            GREEN_LADDER,
-            guardAnswer,
-            landAnswer,
-            PRESERVED
-          ]
-        })
+        runFrom(
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js']),
+          NO_FINDINGS,
+          NO_FINDINGS,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          guardAnswer,
+          landAnswer,
+          PRESERVED
+        )
 
       const runToFailedLand = () =>
         runToLand(ON_BRANCH, {
           landed: false,
-          summary: 'backend is on spike/args-fixture-inc-900'
+          summary: 'backend is on main'
         })
 
       const labels = (run) => run.agents.map((entry) => entry.options.label)
@@ -882,7 +910,7 @@ describe('increment-build-loop', () => {
         ).prompt
 
         expect(guardPrompt).toContain(
-          'Every repo this increment works\nin must be on `spike/args-fixture`'
+          `Every repo this increment works\nin must be on \`${WORK_BRANCH}\``
         )
       })
 
@@ -900,8 +928,8 @@ describe('increment-build-loop', () => {
 
         expect(run.result.increments[0]).toMatchObject({
           outcome: 'land-failed',
-          detail: 'backend is on spike/args-fixture-inc-900',
-          preserved: 'stashed as failed-inc-900'
+          detail: 'backend is on main',
+          preserved: `wip commit pushed to ${WORK_BRANCH}`
         })
       })
 
@@ -913,9 +941,218 @@ describe('increment-build-loop', () => {
 
         expect(run.result.increments[0]).toMatchObject({
           outcome: 'off-branch',
-          preserved: 'stashed as failed-inc-900'
+          preserved: `wip commit pushed to ${WORK_BRANCH}`
         })
         expect(labels(run)).not.toContain('inc-900 land')
+      })
+
+      describe('deriving its own next increment', () => {
+        // One increment's worth of answers, from the ticket through to the gate
+        // check, every stage green: what it takes for the loop to count one as
+        // landed and go round again.
+        const LANDED = [
+          TICKET_ANSWER,
+          BRANCHED_ANSWER,
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js']),
+          NO_FINDINGS,
+          NO_FINDINGS,
+          NO_FINDINGS,
+          GREEN_LADDER,
+          ON_BRANCH,
+          { landed: true, commit: 'abc1234', summary: 'committed' },
+          {
+            ok: true,
+            prs: [
+              {
+                repo: 'frontend',
+                url: 'https://github.com/DEFRA/x/pull/9',
+                number: 9
+              }
+            ],
+            summary: 'one PR'
+          },
+          { green: true, summary: 'every check green' },
+          {
+            green: true,
+            merged: [{ repo: 'frontend', sha: 'def5678' }],
+            summary: 'merged'
+          },
+          { ok: true, summary: 'ticket moved to Done' },
+          { ok: true, summary: 'no gate' }
+        ]
+
+        const derived = (id) => ({ ok: true, next: id, summary: id })
+
+        const runDraining = (stopAfter, ...answers) =>
+          runWorkflowScript(scriptPath, {
+            args: { ...BASE_ARGS, increments: null, stopAfter },
+            answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, ...answers]
+          })
+
+        test('asks tim for the next increment and builds the id it names', async () => {
+          const run = await runDraining(
+            1,
+            derived('inc-901'),
+            TICKET_ANSWER,
+            BRANCHED_ANSWER,
+            null
+          )
+
+          expect(labels(run)).toEqual([
+            'workspace',
+            'preflight',
+            'derive next',
+            'inc-901 ticket',
+            'inc-901 branch',
+            'inc-901 baseline'
+          ])
+        })
+
+        test('tells the derive agent to read result.next from the envelope', async () => {
+          const run = await runDraining(1, derived('inc-901'), null)
+          const prompt = run.agents.find(
+            (entry) => entry.options.label === 'derive next'
+          ).prompt
+
+          expect(prompt).toContain(
+            '`tim backlog next shared/args-fixture --workspace ~/ws --json`'
+          )
+          expect(prompt).toContain('Read `result.next` and nothing else')
+        })
+
+        test('stops with no-buildable when tim returns no next increment', async () => {
+          const run = await runDraining(1, {
+            ok: true,
+            summary: 'result.next was null'
+          })
+
+          expect(run.result).toEqual({
+            increments: [],
+            stopped: {
+              reason: 'no-buildable',
+              detail: 'result.next was null'
+            }
+          })
+        })
+
+        test('stops with derive-failed rather than calling a broken query a finished backlog', async () => {
+          const run = await runDraining(1, {
+            ok: false,
+            summary: 'tim backlog next exited 2: no such workarea'
+          })
+
+          expect(run.result.stopped).toEqual({
+            reason: 'derive-failed',
+            detail: 'tim backlog next exited 2: no such workarea'
+          })
+        })
+
+        test('stops with count-reached once stopAfter increments have landed', async () => {
+          const run = await runDraining(1, derived('inc-901'), ...LANDED)
+
+          expect(run.result.increments).toEqual([
+            expect.objectContaining({ id: 'inc-901', outcome: 'landed' })
+          ])
+          expect(run.result.stopped).toEqual({
+            reason: 'count-reached',
+            detail: '1 increment(s) landed, which is what stopAfter asked for'
+          })
+        })
+
+        test('derives again after one lands and builds the next id', async () => {
+          const run = await runDraining(
+            2,
+            derived('inc-901'),
+            ...LANDED,
+            derived('inc-902'),
+            null
+          )
+
+          expect(labels(run).slice(-2)).toEqual([
+            'derive next',
+            'inc-902 ticket'
+          ])
+        })
+
+        test('stops with not-landed when the same id comes back twice', async () => {
+          const run = await runDraining(
+            2,
+            derived('inc-901'),
+            ...LANDED,
+            derived('inc-901')
+          )
+
+          expect(run.result.stopped.reason).toBe('not-landed')
+          expect(run.result.stopped.detail).toContain(
+            'inc-901 came back a second time'
+          )
+        })
+
+        // The Workflow tool caps a run at 1000 agents. At 36 an increment on
+        // Claude, plus the two startup agents, the twenty-eighth does not fit —
+        // so the run stops before starting it rather than dying inside it.
+        test('stops before the increment that would exhaust the agent budget', async () => {
+          const run = await runDraining(
+            'all',
+            ...Array.from({ length: 30 }, (_, index) => index).flatMap(
+              (index) => [derived(`inc-9${index}`), ...LANDED]
+            )
+          )
+
+          expect(run.result.increments.length).toBe(27)
+          expect(run.result.stopped.reason).toBe('agent-budget')
+          expect(run.result.stopped.detail).toContain('27 increment(s) landed')
+        })
+      })
+
+      describe('an explicit increments list', () => {
+        const runListed = (...answers) =>
+          runWorkflowScript(scriptPath, {
+            args: {
+              ...BASE_ARGS,
+              increments: ['inc-900', 'inc-901'],
+              stopAfter: 'all'
+            },
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              TICKET_ANSWER,
+              BRANCHED_ANSWER,
+              ...answers
+            ]
+          })
+
+        test('derives nothing and builds the ids it was given, in order', async () => {
+          const run = await runListed({
+            ...BASELINE_ANSWER,
+            green: false,
+            summary: 'lint red'
+          })
+
+          expect(labels(run)).toEqual([
+            'workspace',
+            'preflight',
+            'inc-900 ticket',
+            'inc-900 branch',
+            'inc-900 baseline'
+          ])
+        })
+
+        test('stops the whole run at a red baseline instead of trying the next id', async () => {
+          const run = await runListed({
+            ...BASELINE_ANSWER,
+            green: false,
+            summary: 'lint red'
+          })
+
+          expect(run.result.stopped).toEqual({
+            reason: 'baseline-red',
+            detail: 'inc-900: lint red'
+          })
+          expect(labels(run)).not.toContain('inc-901 ticket')
+        })
       })
 
       describe('with the codex executor', () => {
@@ -923,10 +1160,12 @@ describe('increment-build-loop', () => {
 
         const runCodexToReview = () =>
           runWorkflowScript(scriptPath, {
-            args: { ...LOCAL_ARGS, executor: 'codex' },
+            args: { ...BASE_ARGS, executor: 'codex' },
             answers: [
               WORKSPACE_ANSWER,
               PREFLIGHT_ANSWER,
+              TICKET_ANSWER,
+              BRANCHED_ANSWER,
               BASELINE_ANSWER,
               PLAN_ANSWER,
               CODEX_RAN,
@@ -1009,74 +1248,6 @@ describe('increment-build-loop', () => {
           ])
         })
       })
-    })
-
-    test('still plans against main when planOnly is true', async () => {
-      const run = await runWorkflowScript(scriptPath, {
-        args: { ...LOCAL_ARGS, branch: 'main', planOnly: true },
-        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, null]
-      })
-
-      expect(run.result.increments[0].outcome).toBe('plan-refused')
-    })
-  })
-
-  describe('under a full lifecycle', () => {
-    const FULL_ARGS = {
-      ...LOCAL_ARGS,
-      branch: 'main',
-      lifecycle: 'full',
-      jiraProject: 'EUDPA',
-      epic: 'EUDPA-1',
-      jiraInProgressStatus: 'In Progress',
-      jiraDoneStatus: 'Done',
-      jiraBoard: 13780,
-      ciFixAttempts: 3,
-      ciWatchMinutes: 30,
-      requireApproval: true,
-      approvalWaitMinutes: 20
-    }
-
-    const TICKET_ANSWER = {
-      ok: true,
-      key: 'EUDPA-900',
-      created: false,
-      movedToBoard: true,
-      branch: 'feat/EUDPA-900-fixture',
-      repos: ['backend', 'tests', 'frontend'],
-      resumeAt: 'build',
-      status: 'In Progress',
-      summary: 'reused'
-    }
-
-    const baselinePrompt = async () => {
-      const run = await runWorkflowScript(scriptPath, {
-        args: FULL_ARGS,
-        answers: [
-          WORKSPACE_ANSWER,
-          { ok: true, summary: '1' },
-          TICKET_ANSWER,
-          { ok: true, summary: 'branched' },
-          null
-        ]
-      })
-      return run.agents.find(
-        (entry) => entry.options.label === 'inc-900 baseline'
-      ).prompt
-    }
-
-    test('still tells the baseline to refuse a repo on the base branch', async () => {
-      const prompt = await baselinePrompt()
-
-      expect(prompt).toContain(
-        'if ANY repo is on `main`, stop and report ok:false naming it'
-      )
-    })
-
-    test('leaves branching to the branch stage, not the baseline', async () => {
-      const prompt = await baselinePrompt()
-
-      expect(prompt).not.toContain('tim build branch')
     })
   })
 })

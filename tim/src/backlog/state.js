@@ -46,7 +46,7 @@ const requireRequirementsV2Profile = (profile) => {
   if (profile.profileKey === REQUIREMENTS_V2) return
   throw new TimError(
     'USAGE',
-    `"${profile.id}" is a parity-v1 programme. Run state is only kept for requirements-v2 programmes.`
+    `"${profile.id}" uses the "${profile.profileKey}" profile. Run state is only kept for requirements-v2 programmes.`
   )
 }
 

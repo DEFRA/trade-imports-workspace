@@ -14,17 +14,8 @@ const writeRegistry = (body) => {
   )
 }
 
-const writeCorpora = (body) => {
-  mkdirSync(join(workspace, 'tools', 'parity'), { recursive: true })
-  writeFileSync(
-    join(workspace, 'tools', 'parity', 'corpora.json'),
-    JSON.stringify(body)
-  )
-}
-
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-programme-'))
-  writeCorpora({ default: 'alpha', corpora: {} })
 })
 
 afterEach(() => {
@@ -143,34 +134,6 @@ describe('loadProgramme', () => {
     )
   })
 
-  test('returns a parity corpus profile, with sides and bands present, for a parity-v1 entry', () => {
-    writeCorpora({
-      default: 'alpha',
-      corpora: {
-        alpha: {
-          runId: 'RUN-1',
-          backlog: 'workareas/journey-builder/RUN-1/backlog.json',
-          deferred: 'workareas/journey-builder/RUN-1/deferred.json',
-          meta: 'workareas/journey-builder/RUN-1/.corpus-meta.json',
-          evidence: 'workareas/journey-builder/RUN-1/evidence.json',
-          reportDir: 'workareas/journey-builder/RUN-1/report',
-          workarea: 'workareas/shared/alpha',
-          pairingModule: 'workareas/shared/alpha/pairs.js',
-          deltasDir: 'workareas/shared/alpha/deltas',
-          upstreamFindings: 'workareas/shared/alpha/backlog.json',
-          sides: [],
-          repos: {}
-        }
-      }
-    })
-
-    const profile = loadProgramme({ workspaceRoot: workspace, key: 'alpha' })
-
-    expect(profile.profileKey).toBe('parity-v1')
-    expect(profile.sides).toEqual([])
-    expect(profile.bands.length).toBeGreaterThan(0)
-  })
-
   test('refuses a programme whose entry names a profile no definition knows, naming the known profiles', () => {
     writeRegistry({
       programmes: {
@@ -183,10 +146,10 @@ describe('loadProgramme', () => {
 
     expect(() =>
       loadProgramme({ workspaceRoot: workspace, key: 'bogus' })
-    ).toThrow(/parity-v1, requirements-v2/)
+    ).toThrow(/Unknown profile "made-up-profile".*requirements-v2/s)
   })
 
-  test('refuses a non-parity programme whose entry names no workarea, naming the key and the registry file', () => {
+  test('refuses a programme whose entry names no workarea, naming the key and the registry file', () => {
     writeRegistry({
       programmes: {
         homeless: { profile: 'requirements-v2' }

@@ -651,7 +651,7 @@ export const recordRuling = ({
   if (profile.profileKey !== REQUIREMENTS_V2) {
     throw new TimError(
       'USAGE',
-      `"${profile.id}" is a parity-v1 programme. Rulings are only kept for requirements-v2 programmes.`
+      `"${profile.id}" uses the "${profile.profileKey}" profile. Rulings are only kept for requirements-v2 programmes.`
     )
   }
 

@@ -242,7 +242,7 @@ describe('refusals and safety', () => {
     )
   })
 
-  test('writes a v2 header (schemaVersion: 2, programme, profile) and a requirements[] array, and no run_id, target or corpus', () => {
+  test('writes a v2 header (schemaVersion: 2, programme, profile) and a requirements[] array', () => {
     writeAtom('alpha--second.json')
 
     ingest()
@@ -252,9 +252,14 @@ describe('refusals and safety', () => {
     expect(written.programme).toBe('temp-requirements')
     expect(written.profile).toBe('requirements-v2')
     expect(Array.isArray(written.requirements)).toBe(true)
-    expect(written.run_id).toBeUndefined()
-    expect(written.target).toBeUndefined()
-    expect(written.corpus).toBeUndefined()
+  })
+
+  test('ignores a build-loop target, which this profile records nowhere', () => {
+    writeAtom('alpha--second.json')
+
+    ingest({ target: 'some-target' })
+
+    expect(backlog().target).toBeUndefined()
   })
 
   test('writes nothing under --dry-run while still refusing a bad atom', () => {

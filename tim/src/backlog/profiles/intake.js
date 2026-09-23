@@ -52,10 +52,10 @@ export const describeIssue = (issue) => {
   return `${issue.message} at ${path || '<root>'}`
 }
 
-// Additive-tolerant, subtractive-strict — the same rule parity's schema
-// follows (parity/schema.js). Unknown keys pass through untouched so a later
-// increment (rule, verify-record, combine) can add fields this one does not
-// know about; a missing or retyped required key is a hard, named error.
+// Additive-tolerant, subtractive-strict. Unknown keys pass through untouched
+// so a later increment (rule, verify-record, combine) can add fields this one
+// does not know about; a missing or retyped required key is a hard, named
+// error.
 export const passthrough = (shape) => z.object(shape).catchall(z.unknown())
 
 /**

@@ -51,14 +51,6 @@ const writeRegistry = (body) => {
   )
 }
 
-const writeCorpora = (body) => {
-  mkdirSync(join(workspace, 'tools', 'parity'), { recursive: true })
-  writeFileSync(
-    join(workspace, 'tools', 'parity', 'corpora.json'),
-    JSON.stringify(body)
-  )
-}
-
 const copyFixtureAtoms = (destDir) => {
   mkdirSync(destDir, { recursive: true })
   for (const name of [
@@ -107,24 +99,6 @@ const writeIncrement = (programmeDir, key, body) => {
   )
 }
 
-const seedParityCorpus = () => {
-  writeCorpora({
-    default: 'alpha',
-    corpora: {
-      alpha: {
-        runId: 'RUN-1',
-        backlog: 'workareas/journey-builder/RUN-1/backlog.json',
-        workarea: 'workareas/shared/alpha',
-        sides: [],
-        repos: {}
-      }
-    }
-  })
-  mkdirSync(join(workspace, 'workareas', 'shared', 'alpha', 'findings'), {
-    recursive: true
-  })
-}
-
 const writeState = (programmeDir, body) => {
   const buildDir = join(programmeDir, 'build')
   mkdirSync(buildDir, { recursive: true })
@@ -134,7 +108,7 @@ const writeState = (programmeDir, body) => {
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-backlog-cli-'))
   seedWorkspaceRoot()
-  writeCorpora({ default: 'nowhere', corpora: {} })
+  writeRegistry({ programmes: {} })
 })
 
 afterEach(() => {
@@ -335,11 +309,9 @@ describe('tim backlog ingest', () => {
   })
 
   test('an atom missing a required field: exit 1, and stderr names the file and the field', async () => {
-    // Exit 1, not 2: a malformed authored item is a PARSE-coded refusal
-    // (parity/profile-v1.js and backlog/profiles/requirements-v2.js both
-    // raise PARSE for this, and D11 keeps the parity exit mapping —
-    // USAGE/NOT_FOUND -> 2, everything else -> 1 — unchanged). Exit 2 is
-    // reserved for a bad command line, such as an unknown programme key.
+    // Exit 1, not 2: a malformed authored item is a PARSE-coded refusal, and
+    // the exit mapping is USAGE/NOT_FOUND -> 2, everything else -> 1. Exit 2
+    // is reserved for a bad command line, such as an unknown programme key.
     const programmeDir = join(
       workspace,
       'workareas',
@@ -369,30 +341,6 @@ describe('tim backlog ingest', () => {
     expect(exitCode).toBe(1)
     expect(stderr).toContain('alpha--second.json')
     expect(stderr).toContain('kind')
-  })
-
-  test('backlog ingest <parity key> --dry-run --json returns the same counts as parity ingest <runId> --dry-run --json (req-009 ac-1 across profiles)', async () => {
-    seedParityCorpus()
-    mkdirSync(join(workspace, 'tools', 'journey-builder'), { recursive: true })
-    writeFileSync(
-      join(workspace, 'tools', 'journey-builder', 'targets.json'),
-      JSON.stringify({ default: 'fixture-target' })
-    )
-
-    const viaParity = await runTim(
-      ['parity', 'ingest', 'RUN-1', '--dry-run', '--json'],
-      workspace
-    )
-    const viaBacklog = await runTim(
-      ['backlog', 'ingest', 'alpha', '--dry-run', '--json'],
-      workspace
-    )
-
-    expect(viaParity.exitCode).toBe(0)
-    expect(viaBacklog.exitCode).toBe(0)
-    const parityResult = resultOf(viaParity)
-    const backlogResult = resultOf(viaBacklog)
-    expect(backlogResult).toEqual(parityResult)
   })
 
   test('without --json, prints each assigned item and where it wrote, and names any item that left the backlog', async () => {
@@ -512,59 +460,6 @@ describe('tim backlog ingest', () => {
     expect(afterByKey['alpha--first']).toBe('req-001')
     expect(afterByKey['alpha--second']).toBe('req-002')
   })
-
-  test('--target has no effect on a requirements-v2 backlog, which carries no target field', async () => {
-    const programmeDir = join(
-      workspace,
-      'workareas',
-      'shared',
-      'not-a-ticket-id'
-    )
-    copyFixtureAtoms(join(programmeDir, 'distil', 'atoms'))
-    writeRegistry({
-      programmes: {
-        'not-a-ticket-id': {
-          profile: 'requirements-v2',
-          workarea: 'workareas/shared/not-a-ticket-id'
-        }
-      }
-    })
-
-    const { exitCode } = await runTim(
-      ['backlog', 'ingest', 'not-a-ticket-id', '--target', 'some-target'],
-      workspace
-    )
-
-    expect(exitCode).toBe(0)
-    const written = JSON.parse(
-      readFileSync(join(programmeDir, 'backlog.json'), 'utf8')
-    )
-    expect(written.target).toBeUndefined()
-  })
-
-  test('--target round-trips into a parity-v1 backlog, overriding the build-loop target it would otherwise resolve', async () => {
-    seedParityCorpus()
-
-    const { exitCode } = await runTim(
-      ['backlog', 'ingest', 'alpha', '--target', 'my-target'],
-      workspace
-    )
-
-    expect(exitCode).toBe(0)
-    const written = JSON.parse(
-      readFileSync(
-        join(
-          workspace,
-          'workareas',
-          'journey-builder',
-          'RUN-1',
-          'backlog.json'
-        ),
-        'utf8'
-      )
-    )
-    expect(written.target).toBe('my-target')
-  })
 })
 
 const trackedFixtureDir = join(fixtureAtomsDir, '..', '..')
@@ -649,18 +544,6 @@ describe('tim backlog ingest --atoms / --increments (D2, D27)', () => {
     expect(exitCode).toBe(2)
     expect(stderr).toContain('--atoms')
     expect(stderr).toContain('--increments')
-  })
-
-  test('--atoms on a parity-v1 programme: exit 2, stderr naming findings', async () => {
-    seedParityCorpus()
-
-    const { stderr, exitCode } = await runTim(
-      ['backlog', 'ingest', 'alpha', '--atoms'],
-      workspace
-    )
-
-    expect(exitCode).toBe(2)
-    expect(stderr).toContain('findings')
   })
 
   test('req-010 ac-1: an authored increment carrying filesToTouch: exit 1, stderr matching filesToTouch and plan owns files', async () => {
@@ -1943,27 +1826,5 @@ describe('tim backlog ingest --op-id / --expect-sha, and tim backlog state (req-
     expect(payload.errors[0].code).toBe('NOT_FOUND')
     expect(payload.errors[0].message).toContain('no-such-note.txt')
     expect(existsSync(join(programmeDir, 'build', 'journal.jsonl'))).toBe(false)
-  })
-
-  test('E12: state set on a parity-v1 corpus key exits 2 with USAGE', async () => {
-    seedParityCorpus()
-
-    const { exitCode, stdout } = await runTim(
-      [
-        'backlog',
-        'state',
-        'set',
-        'alpha',
-        'inc-001',
-        'phase',
-        '--value',
-        '"plan"',
-        '--json'
-      ],
-      workspace
-    )
-
-    expect(exitCode).toBe(2)
-    expect(JSON.parse(stdout.trim()).errors[0].code).toBe('USAGE')
   })
 })

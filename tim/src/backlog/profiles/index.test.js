@@ -15,13 +15,13 @@ describe('profileFor', () => {
 
   test('refuses an unknown profile key, listing the known ones', () => {
     expect(() => profileFor('made-up-profile')).toThrow(
-      /parity-v1, requirements-v2/
+      /Unknown profile "made-up-profile".*requirements-v2/s
     )
   })
 
-  test('defaults to parity-v1', () => {
+  test('defaults to requirements-v2', () => {
     expect(profileFor().key).toBe(DEFAULT_PROFILE_KEY)
-    expect(profileFor(undefined).key).toBe('parity-v1')
+    expect(profileFor(undefined).key).toBe('requirements-v2')
   })
 
   test('refuses a key that only resolves because it shadows Object.prototype', () => {
@@ -40,10 +40,6 @@ describe('collections (D1)', () => {
     expect(profileFor('requirements-v2').idPrefix).toBe('req-')
   })
 
-  test("profileFor('parity-v1', 'atoms') is refused, naming findings", () => {
-    expect(() => profileFor('parity-v1', 'atoms')).toThrow(/findings/)
-  })
-
   test("profileFor('requirements-v2', 'made-up') is refused, naming atoms and increments", () => {
     expect(() => profileFor('requirements-v2', 'made-up')).toThrow(
       /atoms, increments/
@@ -51,7 +47,6 @@ describe('collections (D1)', () => {
   })
 
   test('collectionKeysFor returns the collections per profile', () => {
-    expect(collectionKeysFor('parity-v1')).toEqual(['findings'])
     expect(collectionKeysFor('requirements-v2')).toEqual([
       'atoms',
       'increments'
@@ -76,7 +71,6 @@ const requiredHooks = {
   references: 'object',
   bornStatus: 'function',
   isRuled: 'function',
-  requireVerification: 'function',
   rowFrom: 'function',
   bornExtras: 'function',
   foldOnto: 'function',
@@ -126,17 +120,11 @@ describe('every registered profile definition', () => {
     }
   })
 
-  test('every references entry declares a string scope and a boolean verifyIds (D5.1)', () => {
-    for (const { key, definition } of everyDefinition()) {
+  test('every references entry declares a string scope and verifies the ids it names (D5.1)', () => {
+    for (const { definition } of everyDefinition()) {
       for (const entry of definition.references) {
         expect(typeof entry.scope).toBe('string')
-        expect(typeof entry.verifyIds).toBe('boolean')
-        if (key === 'parity-v1' && entry.field === 'relatedTo') {
-          expect(entry.verifyIds).toBe(false)
-        }
-        if (key === 'requirements-v2') {
-          expect(entry.verifyIds).toBe(true)
-        }
+        expect(entry.verifyIds).toBe(true)
       }
     }
   })

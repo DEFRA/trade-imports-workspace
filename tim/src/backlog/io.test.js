@@ -13,7 +13,7 @@ import { readJsonFile, writeJsonAtomic, sha256File } from './io.js'
 let dir
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'tim-parity-io-'))
+  dir = mkdtempSync(join(tmpdir(), 'tim-backlog-io-'))
 })
 
 afterEach(() => {
@@ -59,7 +59,7 @@ describe('writeJsonAtomic', () => {
   })
 
   test('writes into a directory that does not exist yet', () => {
-    const path = join(dir, 'brand-new-corpus', 'nested', 'out.json')
+    const path = join(dir, 'brand-new-programme', 'nested', 'out.json')
     writeJsonAtomic(path, { a: 1 })
     expect(readJsonFile(path)).toEqual({ a: 1 })
   })

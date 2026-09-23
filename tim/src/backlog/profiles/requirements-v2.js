@@ -122,8 +122,7 @@ export const parseV2Backlog = (raw) => {
  * A verifier's record of having looked at an atom.
  *
  * Read from `provenance.verifiedBy` and nowhere else — DESIGN 3.4's
- * Provenance shape gives that field no other home, unlike parity's finding
- * files, which grew a top-level fallback over time.
+ * Provenance shape gives that field no other home.
  *
  * @param {object} raw - An atom file as parsed
  * @returns {object|string|null}
@@ -147,8 +146,7 @@ const validateNeeds = (raw, file) => {
 /**
  * Read and validate one authored requirement atom file.
  *
- * Every refusal names the file and the field, the same contract parity's
- * finding validator keeps.
+ * Every refusal names the file and the field.
  *
  * @param {object} args
  * @param {object} args.raw - The parsed atom file
@@ -222,7 +220,7 @@ export const validateAtom = ({ raw, file }) => {
   }
 }
 
-/** The status a newborn atom is given. See parity's sibling `INITIAL_STATUS`. */
+/** The status a newborn atom is given. */
 const STATUS_PROPOSED = 'proposed'
 
 const tally = (items, key) =>
@@ -237,8 +235,7 @@ const tally = (items, key) =>
 /**
  * The `requirements-v2` profile's **atoms** collection: DESIGN section
  * 3.4's atom shape, expressed as the hooks the generic core in
- * `backlog/ingest.js` calls. See `tim/src/parity/profile-v1.js` for the
- * sibling parity definition and `./requirements-v2-increments.js` for the
+ * `backlog/ingest.js` calls. See `./requirements-v2-increments.js` for the
  * sibling increments collection.
  */
 export const requirementsV2 = {
@@ -298,7 +295,6 @@ export const requirementsV2 = {
   cycleEdges: (rows) => rows.map((row) => [row.id, row.dependsOn ?? []]),
   bornStatus: () => STATUS_PROPOSED,
   isRuled: (row) => row.status !== STATUS_PROPOSED,
-  requireVerification: () => false,
   checkRows: ({ rows, context }) => {
     const presentIds = new Set(rows.map((row) => row.id))
     const goneButClaimed = [
@@ -373,8 +369,6 @@ export const requirementsV2 = {
       `These atoms hold a ruling but their files are no longer in ${dir}: ${rows.map((row) => row.key).join(', ')}. Put the files back, or clear the rulings first.`,
     frozenChanged: (entries) =>
       `statement is frozen at first ingest and these atoms would change it: ${entries.join(', ')}. It is the oracle a later rewrite is checked against, so a changed statement is a new variant atom, never an edit.`,
-    unverified: (files) =>
-      `${files.length} atoms carry no verification record and this programme requires one before a first ingest: ${files.join(', ')}.`,
     referenceNoId: (field) =>
       `"${field}" holds an entry that is not a key. Name the other atom by its key.`,
     referenceUnknown: (field, named) =>

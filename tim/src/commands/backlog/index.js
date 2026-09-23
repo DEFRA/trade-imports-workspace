@@ -385,10 +385,6 @@ export const register = (program, { timVersion }) => {
     )
     .option('--dry-run', 'Report what would be written and write nothing')
     .option(
-      '--target <name>',
-      'Build-loop target the backlog names (parity-v1 programmes only)'
-    )
-    .option(
       '--atoms',
       'Ingest requirement atoms (requirements-v2 programmes; the default collection)'
     )
@@ -417,7 +413,6 @@ export const register = (program, { timVersion }) => {
             collection,
             replace: opts.replace,
             dryRun: ingestOpts.dryRun,
-            target: opts.target,
             opId: ingestOpts.opId,
             expectSha: ingestOpts.expectSha
           })
@@ -516,9 +511,7 @@ export const register = (program, { timVersion }) => {
 
   const registry = backlog
     .command('registry')
-    .description(
-      'The programmes tim knows about, from the requirements registry and the parity corpora'
-    )
+    .description('The programmes tim knows about, from the programme registry')
 
   registry
     .command('list')

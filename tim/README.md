@@ -87,113 +87,57 @@ Every command supports:
 - `--verbose` — structured logs to stderr
 - `--workspace <path>` — override the resolved workspace root
 
-### `tim parity` — findings reports
+### `tim capture` — photograph a running app
 
-Builds, checks and renders a backlog of comparison findings as a decision
-surface. The corpus is data (`tools/parity/corpora.json`), and `sides[]` is a
-list rather than a pair, so a comparison is not stuck at two sources.
-
-```bash
-tim parity normalise EUDPA-328 --write   # Pass 0: repo-relative paths, split screens
-tim parity meta EUDPA-328 --write        # pins, captures, every derived count
-tim parity citations EUDPA-328 --write   # extract citations[]; queue the ambiguous
-tim parity evidence EUDPA-328 --write    # permalinks, blob ids, snippets, anchor checks
-tim parity report EUDPA-328 [--open]     # render report/, and open it
-tim parity report EUDPA-328 --target artifact   # one self-contained file to share
-tim parity check EUDPA-328 --pass a      # the ten migration invariants
-tim parity counts EUDPA-328 --json       # every number the masthead prints
-```
-
-`report/` is a static app — `index.html`, `app.css`, `app.js` and `assets/` —
-that opens straight off the filesystem. There is no server: the page never
-fetches and its script is not a module, which are the only two things a
-`file://` page cannot do. Copy the folder anywhere and it still works.
-
-The artifact is the exception and carries its stylesheet and script inline,
-because it exists to be sent to someone and a second and third file that had
-to travel with it would defeat the point.
-
-The evidence — the pictures, and the commits they are of — has its own
-commands. Element crops are declared as data rather than written into a spec,
-and a picture that moves under a pending ruling has to say so:
+Runs an app's own FIT suite with Playwright tracing on, keeps the traces under
+the workarea, and says which of the journey's pages the suite reached.
 
 ```bash
-tim parity seed-anchors EUDPA-328 --write        # anchors.<side>.json from the compare deltas
-tim parity insertion-anchors EUDPA-328 --write   # where a one-sided control would go
-tim parity manifest EUDPA-328 --side prototype --sha 491b3926 --write
-tim parity check-evidence EUDPA-328 [--strict]   # pin drift, captures, dead citations
-tim parity repoint EUDPA-328 --side frontend --to <sha> [--accept]
-tim parity report EUDPA-328 --reseal         # accept every picture that moved
+tim capture shared/my-programme --app animals-frontend          # run the suite, keep the traces
+tim capture shared/my-programme --app animals-frontend --json   # the same, as one JSON line
 ```
 
-The pictures themselves come from two more commands, and both drive a browser:
+The workarea's `capture.json` names each app it can capture. Each entry gives
+the `repo` the app lives in, the `fitScript` that runs its FIT suite, the
+Playwright `projects` to run, the `flow` module the journey's pages are
+declared in, and the `pagePath` those pages are served under — a URL template
+ending in `{slug}`, such as `/notifications/{journeyId}/{slug}`.
 
-```bash
-tim parity map EUDPA-328 --side frontend --write       # what screens are there, and how to reach them
-tim parity capture EUDPA-328 --side frontend           # walk the plan the map wrote, and record it
+```json
+{
+  "apps": {
+    "animals-frontend": {
+      "repo": "repos/trade-imports-animals-frontend",
+      "fitScript": "test:fit",
+      "projects": ["chromium"],
+      "flow": "src/server/app/flow.js",
+      "pagePath": "/notifications/{journeyId}/{slug}"
+    }
+  }
+}
 ```
 
-These are requirements-gathering tools, not tests. Playwright is here because
-Playwright drives browsers; nothing in either command asserts that an
-application is correct. They record what an application does today so it can be
-compared against a signed-off design, which is why they live in the workspace
-rather than in either application's repo. For the same reason neither imports an
-application's own journey helpers: those suites are not maintained, so a harness
-built on them breaks the moment somebody refactors one.
+Traces land in `<workarea>/traces/<app>/<sha>/`, one folder per commit, beside
+a `manifest.json` (what ran, when, and how it exited) and a `coverage.json`
+(every page in the flow, and whether a trace reached it). A capture never
+writes over one that is already there: the sha names the folder, so re-running
+at the same commit is refused rather than silently replacing the evidence.
 
-`map` crawls a side from the `app.baseURL` and `app.startPath` in its corpus
-entry, with no knowledge of the journey. It reads each rendered page, fills what
-the page tells it how to fill, takes one forward action and queues every choice
-it did not take. Values come off a five-rung ladder — seeded, enumerated, mined
-from a hint or an error message, typed, generic — and the rung is stored against
-every field, so a value carries its provenance. `--write` produces
-`map.<side>.json`, a `hints.<side>.json` stub with one empty entry per field
-nothing could fill, the `<side>.routes.json` route plan, and one page model per
-screen in the side's model directory. `--check` exits non-zero while anything is
-unexplored, blocked or unfilled; `--budget-steps`, `--budget-minutes`,
-`--headed` and `--data-state` cover the rest.
+The gap list is the point. The suite is the app's own, so a page it never
+visits is a page nothing photographs — and those are the pages still needing a
+spec before the app is fully captured. `tim capture` names them rather than
+reporting a clean run over partial evidence.
 
-`capture` walks that plan and, on each screen it reaches, takes a full-page
-screenshot, one crop per declared anchor and a page model in the same page
-visit, then writes `manifest.json` beside them. It refuses to start without a
-route plan and prints the path the map would have written. A screen it cannot
-reach is reported as a stated absence, not left as a broken image.
-
-Both need Playwright installed in `tim` — `npm install`, then
-`npx playwright install chromium`. Without it they stop with `MISSING_DEP`.
-
-`report` records what it showed you in `evidence/seals.json`. On the next
-build, any picture that has changed carries a ribbon and is listed above
-everything else, so nobody rules on a finding under an image that was swapped
-without them. `repoint` is the same idea for a whole side: it writes a preview
-of old beside new before anything is superseded.
-
-Writers use the setters rather than editing JSON, so a fan-out worker cannot
-reformat the file or touch a second increment:
-
-```bash
-tim parity set-slot EUDPA-328 inc-037 frontend --pass a --file slot.txt
-tim parity set-decision EUDPA-328 inc-055 --question "…" --source authored
-tim parity set-citation EUDPA-328 inc-096 c9 --repo prototype --path app/routes.js
-```
-
-`set-citation` stamps `resolution: "human"`, and `citations --write` carries
-those resolutions forward over each rebuild — matched on the field and the token
-as the prose wrote it, since the ref is positional and the path is the very
-thing the parser could not find. A resolution whose prose has since gone is kept
-and flagged rather than dropped, and the run names it. The command prints what
-the backlog holds beside what the parser derives on its own, so the two never
-get mistaken for each other.
-
-Every subcommand takes a positional run id — there is no default, because a
-report that silently rendered the wrong corpus would be worse than one that
-refused.
+The command reads the flow module before the suite starts, so a `capture.json`
+naming the wrong flow is refused in a second rather than after a browser run.
+Playwright has to be installed in the app's own repo; the suite is run there,
+not here.
 
 ### `tim backlog` — programme backlogs
 
-The same writer core `tim parity ingest` uses, generalised over any
-registered programme through a profile — `parity-v1` for a comparison
-corpus, `requirements-v2` for a DESIGN section 3.4 requirements atom set.
+One writer core over any registered programme, through the profile the
+programme names — `requirements-v2` for a DESIGN section 3.4 requirements
+atom set.
 
 ```bash
 tim backlog registry list --json                 # every registered programme, its profile and workarea
@@ -201,7 +145,6 @@ tim backlog registry show fixture-requirements    # one programme's resolved pat
 tim backlog ingest fixture-requirements --dry-run --json  # assemble backlog.json from item files
 tim backlog ingest <programme> --increments       # ingest requirement increments (requirements-v2 only)
 tim backlog ingest <programme> --replace          # rebuild ids from scratch; refuses while any row is ruled or started
-tim backlog ingest <programme> --target <name>    # build-loop target the backlog names (parity-v1 only)
 tim backlog ingest <programme> --op-id r1:inc-001:1:plan:t1:ingest --json   # replaying the same --op-id is a no-op that prints the original result
 tim backlog ingest <programme> --expect-sha <sha256> --json                # refused with exit 3 if backlog.json has changed since
 tim backlog state set <programme> inc-001 phase --value '"plan"' --json    # set one field on one increment's build/state.json entry (requirements-v2 only)
@@ -228,11 +171,9 @@ tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --jso
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
 ```
 
-A programme is registered in one of two files: a parity corpus in
-`tools/parity/corpora.json`, or any other programme — such as
-`fixture-requirements`, the tracked fixture this file's own tests re-ingest
-on every run — in `tools/backlog/registry.json`. A key may appear in only one
-of the two files; `tim backlog registry list` reports both together.
+A programme is registered in `tools/backlog/registry.json` — including
+`fixture-requirements`, the tracked fixture this file's own tests re-ingest on
+every run. `tim backlog registry list` reports what it holds.
 
 `tim backlog ingest`, `state set`, `state note` and `rule` (requirements-v2
 only) all go through the same write-safety core: `--op-id` makes a call

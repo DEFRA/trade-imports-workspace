@@ -635,10 +635,10 @@ describe('recordRuling (T-R2, T-R14)', () => {
     ).toBe('ruled')
   })
 
-  test('T-R14: refused with USAGE on a parity-v1 profile', () => {
+  test('T-R14: refused with USAGE on a profile other than requirements-v2', () => {
     expect(() =>
       recordRuling({
-        profile: { id: 'a-corpus', profileKey: 'parity-v1', paths: {} },
+        profile: { id: 'alpha', profileKey: 'some-other-profile', paths: {} },
         questionId: 'q-x',
         option: 'A',
         by: 'sam',

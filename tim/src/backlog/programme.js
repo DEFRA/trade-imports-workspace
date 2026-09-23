@@ -1,8 +1,7 @@
 import { join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { findProgramme } from './registry.js'
-import { profileFor, DEFAULT_PROFILE_KEY } from './profiles/index.js'
-import { loadCorpusProfile } from '../parity/corpus-profile.js'
+import { profileFor } from './profiles/index.js'
 import { TimError } from '../errors.js'
 
 const expandHome = (path) =>
@@ -19,10 +18,7 @@ const absolutise = (workspaceRoot, path) => {
  * Load one registered programme, resolved through whichever profile it
  * declares.
  *
- * A `parity-v1` entry delegates to `loadCorpusProfile`, which already knows
- * how to build a corpus's full path set — req-009 ac-1's promise that the
- * same command line works for both profiles rests on this. Any other
- * profile builds its paths from the registry entry alone: `workarea`,
+ * A programme builds its paths from its registry entry alone: `workarea`,
  * absolutised, and `backlog` at the entry's own path or, when it names
  * none, `<workarea>/backlog.json`.
  *
@@ -38,13 +34,6 @@ const absolutise = (workspaceRoot, path) => {
 export const loadProgramme = ({ workspaceRoot, key }) => {
   const entry = findProgramme({ workspaceRoot, key })
   const definition = profileFor(entry.profileKey)
-
-  if (definition.key === DEFAULT_PROFILE_KEY) {
-    return {
-      ...loadCorpusProfile({ workspaceRoot, explicit: key }),
-      profileKey: definition.key
-    }
-  }
 
   if (!entry.workarea) {
     throw new TimError(

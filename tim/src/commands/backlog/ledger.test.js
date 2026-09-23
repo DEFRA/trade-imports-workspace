@@ -75,14 +75,6 @@ const writeRegistry = (body) => {
   )
 }
 
-const writeCorpora = (body) => {
-  mkdirSync(join(workspace, 'tools', 'parity'), { recursive: true })
-  writeFileSync(
-    join(workspace, 'tools', 'parity', 'corpora.json'),
-    JSON.stringify(body)
-  )
-}
-
 const registerProgramme = (
   key = PROGRAMME,
   workarea = `workareas/shared/${PROGRAMME}`
@@ -120,7 +112,6 @@ const copyLedgerDir = (subpath, destDir) => {
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-ledger-cli-'))
   seedWorkspaceRoot()
-  writeCorpora({ default: 'nowhere', corpora: {} })
   writeRegistry({ programmes: {} })
   registerProgramme()
   writeBacklog(ledgerFixtureBacklog())
@@ -611,20 +602,7 @@ describe('tim backlog rule', () => {
     expect(readFileSync(backlogPath(), 'utf8')).toBe(before)
   })
 
-  test('T-L11: rule on a parity-v1 corpus key exits 2', async () => {
-    writeCorpora({
-      default: 'alpha',
-      corpora: {
-        alpha: {
-          runId: 'RUN-1',
-          backlog: 'workareas/journey-builder/RUN-1/backlog.json',
-          workarea: 'workareas/shared/alpha',
-          sides: [],
-          repos: {}
-        }
-      }
-    })
-
+  test('T-L11: rule on a programme nobody registered exits 2, naming the key', async () => {
     const run = await runTim(
       [
         'backlog',
@@ -647,6 +625,9 @@ describe('tim backlog rule', () => {
     )
 
     expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toContain(
+      'No programme registered under "alpha"'
+    )
   })
 
   test.each([

@@ -552,7 +552,6 @@ export const requirementsV2Increments = {
   isRuled: (row, context) =>
     (context?.startedIds?.has(row.id) ?? false) ||
     RULED_STATUSES.has(row.status),
-  requireVerification: () => false,
   rowFrom: ({ item, id, context, tables = { batch: new Map() } }) => ({
     id,
     key: item.key,
@@ -609,8 +608,6 @@ export const requirementsV2Increments = {
           return `${row.id} (${row.key}) ${stateReason(row, context)}, and ${location}.`
         })
         .join(' ')} Put the file back, or clear the ruling first.`,
-    unverified: (files) =>
-      `${files.length} increments carry no verification record: ${files.join(', ')}.`,
     referenceNoId: (field) =>
       `"${field}" holds an entry that is not a key. Name the other ${field === 'members' ? 'atom' : 'increment'} by its key.`,
     referenceUnknown: (field, named) =>

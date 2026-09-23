@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
-import { CORPORA_FILE } from '../backlog/registry.js'
+import { CORPORA_FILE } from './corpus-profile.js'
 import { THEME_CSS } from './render/theme.js'
 import { esc } from './render/prose.js'
 

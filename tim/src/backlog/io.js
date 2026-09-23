@@ -33,9 +33,9 @@ export const readJsonFile = (path) => {
  * the file is the canonical record of a body of work, and the build loop
  * reads it between every increment.
  *
- * The directory is created first. A corpus's files all land in one directory
- * that nothing else makes, so the first write of a new corpus is always into
- * a directory that has never existed.
+ * The directory is created first. A programme's files all land in one
+ * directory that nothing else makes, so the first write of a new programme is
+ * always into a directory that has never existed.
  *
  * @param {string} path
  * @param {any} value

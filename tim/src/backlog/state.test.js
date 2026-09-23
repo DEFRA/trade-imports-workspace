@@ -118,9 +118,9 @@ const buildV2Profile = () => {
   }
 }
 
-const buildParityProfile = () => ({
+const buildForeignProfileProgramme = () => ({
   id: 'alpha',
-  profileKey: 'parity-v1',
+  profileKey: 'some-other-profile',
   paths: {
     workarea: root,
     backlog: join(root, 'backlog.json'),
@@ -202,8 +202,8 @@ describe('setIncrementField', () => {
     )
   })
 
-  test('ST4: a parity-v1 profile throws USAGE, and nothing is written', () => {
-    const profile = buildParityProfile()
+  test('ST4: a profile other than requirements-v2 throws USAGE, and nothing is written', () => {
+    const profile = buildForeignProfileProgramme()
 
     expect(() =>
       setIncrementField({

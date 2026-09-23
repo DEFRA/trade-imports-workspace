@@ -68,10 +68,8 @@ export const parseOptions = (schema, opts) => {
 /**
  * Every `tim backlog` subcommand resolves the workspace, runs one function
  * (a write, or a read-only inspection) over a registered programme, then
- * prints the result as text or as one JSON line — the wrapper `tim parity`'s
- * commands use (`commands/parity/index.js`'s `makeParityAction`), over a
- * programme key resolved through the registry instead of a corpus resolved
- * from a run id.
+ * prints the result as text or as one JSON line, over a programme key
+ * resolved through the registry.
  *
  * @param {object} args
  * @param {(context: object, opts: object) => any} args.run

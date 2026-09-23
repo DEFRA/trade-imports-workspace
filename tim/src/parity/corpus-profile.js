@@ -1,12 +1,35 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { homedir } from 'node:os'
 import { TimError } from '../errors.js'
-import { CORPORA_FILE, readCorporaFile } from '../backlog/registry.js'
 import { readJsonFile } from '../backlog/io.js'
+
+/** The parity corpora file. */
+export const CORPORA_FILE = 'tools/parity/corpora.json'
 
 const readJsonIfPresent = (path) =>
   existsSync(path) ? readJsonFile(path) : null
+
+/**
+ * Read `tools/parity/corpora.json`. Required — every command that resolves a
+ * corpus needs it.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @returns {object}
+ * @throws {TimError} NOT_FOUND naming the exact relative path, PARSE on bad JSON
+ */
+export const readCorporaFile = ({ workspaceRoot }) => {
+  const path = join(workspaceRoot, CORPORA_FILE)
+  if (!existsSync(path)) {
+    throw new TimError('NOT_FOUND', `Can't find ${CORPORA_FILE}.`)
+  }
+  try {
+    return JSON.parse(readFileSync(path, 'utf8'))
+  } catch (error) {
+    throw new TimError('PARSE', `Can't read ${path}: ${error.message}`)
+  }
+}
 
 /**
  * The bands a corpus gets when it declares none.

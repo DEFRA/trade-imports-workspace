@@ -418,38 +418,36 @@ const assertNoCycle = (rows, definition) => {
  * Assemble a programme's backlog.json from the item files an agent
  * authored, through the profile registered for it.
  *
- * One writer core serves every registered programme: it names no finding, no
- * screen, no band and no atom. Everything profile-shaped is a hook on the
- * definition resolved from `profile.profileKey` and `collection` — see
+ * One writer core serves every registered programme: it names no atom and no
+ * increment. Everything profile-shaped is a hook on the definition resolved
+ * from `profile.profileKey` and `collection` — see
  * `tim/src/backlog/profiles/index.js` for the profiles this core knows, and
- * `tim/src/parity/profile-v1.js` / `tim/src/backlog/profiles/requirements-v2.js`
- * / `tim/src/backlog/profiles/requirements-v2-increments.js` for what each
- * hook does for its own collection.
+ * `tim/src/backlog/profiles/requirements-v2.js` /
+ * `tim/src/backlog/profiles/requirements-v2-increments.js` for what each hook
+ * does for its own collection.
  *
  * The write itself goes through `write.js`'s `commitWrite` — one lock, one
- * lost-update check and one idempotent operation log for every profile.
- * `tim parity ingest` calls this same function but passes no `opId`, so it
- * writes no operation log and sees no behaviour change: the lock is
- * held only for the milliseconds of the rename, and the lost-update check
- * can only fire when two ingests race on one corpus, which today silently
- * loses one of them.
+ * lost-update check and one idempotent operation log for every profile. A
+ * caller that passes no `opId` writes no operation log: the lock is held only
+ * for the milliseconds of the rename, and the lost-update check can only fire
+ * when two ingests race on one programme.
  *
  * @param {object} args
- * @param {object} args.profile - A loaded programme or corpus profile
+ * @param {object} args.profile - A loaded programme
  * @param {string} args.workspaceRoot
  * @param {string} [args.collection] - Which of the profile's item
  *   collections to ingest; defaults to the profile's own default
  * @param {boolean} [args.replace] - Rebuild from scratch rather than merging
  * @param {boolean} [args.dryRun] - Report and write nothing
- * @param {string} [args.target] - Override the build-loop target (parity-v1 only)
+ * @param {string} [args.target] - Build-loop target, passed to the profile's
+ *   own header hook
  * @param {string} [args.opId] - An idempotency key; a replay returns the
  *   original result and writes nothing (req-016)
  * @param {string} [args.expectSha] - The version this run is based on;
  *   defaults to the version it reads. When the file no longer matches on
  *   write, the run is refused (req-015)
  * @param {string} [args.command] - Named in the lock and the operation log;
- *   defaults to 'parity ingest' or 'backlog ingest' depending on the
- *   profile's own profileKey
+ *   defaults to 'backlog ingest'
  * @param {number[]} [args.retryDelaysMs]
  * @returns {object} A summary of what was written
  * @throws {TimError} NOT_FOUND when the item directory is missing, PARSE for
@@ -476,11 +474,7 @@ export const runIngest = ({
     profile.profileKey ?? DEFAULT_PROFILE_KEY,
     collection
   )
-  const resolvedCommand =
-    command ??
-    ((profile.profileKey ?? DEFAULT_PROFILE_KEY) === DEFAULT_PROFILE_KEY
-      ? 'parity ingest'
-      : 'backlog ingest')
+  const resolvedCommand = command ?? 'backlog ingest'
 
   const backlogPath = profile.paths.backlog
   const opsLogPath =

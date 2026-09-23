@@ -1,5 +1,4 @@
 import { TimError } from '../../errors.js'
-import { parityV1 } from '../../parity/profile-v1.js'
 import { requirementsV2 } from './requirements-v2.js'
 import { requirementsV2Increments } from './requirements-v2-increments.js'
 
@@ -21,10 +20,6 @@ const DEFAULT_HOOKS = {
 const withDefaults = (definition) => ({ ...DEFAULT_HOOKS, ...definition })
 
 const PROFILES = {
-  [parityV1.key]: {
-    default: 'findings',
-    collections: { findings: withDefaults(parityV1) }
-  },
   [requirementsV2.key]: {
     default: 'atoms',
     collections: {
@@ -38,7 +33,7 @@ const PROFILES = {
 export const PROFILE_KEYS = Object.keys(PROFILES)
 
 /** The profile a programme gets when its registry entry names none. */
-export const DEFAULT_PROFILE_KEY = parityV1.key
+export const DEFAULT_PROFILE_KEY = requirementsV2.key
 
 const profileEntry = (key) =>
   Object.hasOwn(PROFILES, key) ? PROFILES[key] : null
@@ -56,11 +51,9 @@ export const collectionKeysFor = (key) =>
 /**
  * The collection definition for a profile key.
  *
- * @param {string} [key] - Defaults to `parity-v1`, which is what every
- *   corpus written before profiles existed gets
+ * @param {string} [key] - Defaults to `DEFAULT_PROFILE_KEY`
  * @param {string} [collection] - Defaults to the profile's own default
- *   collection, which is byte-for-byte what this returned for both keys
- *   before collections existed
+ *   collection
  * @returns {object}
  * @throws {TimError} USAGE, naming the known profiles or the profile's
  *   known collections

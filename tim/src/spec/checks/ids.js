@@ -1,18 +1,15 @@
 import { parsedCoverage } from './shape.js'
+import { makeFinding } from './finding.js'
 
-const finding = (capability, message) => ({
-  check: 'ids',
-  capability,
-  message
-})
+const finding = makeFinding('ids')
 
-const specIds = (capability) => [
-  ...capability.requirements.map((requirement) => ({
+const extractIds = (requirements) => [
+  ...requirements.map((requirement) => ({
     kind: 'requirement',
     id: requirement.id,
     name: requirement.name
   })),
-  ...capability.requirements.flatMap((requirement) =>
+  ...requirements.flatMap((requirement) =>
     requirement.scenarios.map((scenario) => ({
       kind: 'scenario',
       id: scenario.id,
@@ -20,6 +17,8 @@ const specIds = (capability) => [
     }))
   )
 ]
+
+const specIds = (capability) => extractIds(capability.requirements)
 
 /**
  * Check 5 (presence half) — every requirement and scenario in spec.md has
@@ -40,20 +39,7 @@ export const checkIdsPresent = (capability) => {
     )
 }
 
-const coverageIds = (parsedCoverage) => [
-  ...parsedCoverage.requirements.map((requirement) => ({
-    kind: 'requirement',
-    id: requirement.id,
-    name: requirement.name
-  })),
-  ...parsedCoverage.requirements.flatMap((requirement) =>
-    requirement.scenarios.map((scenario) => ({
-      kind: 'scenario',
-      id: scenario.id,
-      name: scenario.name
-    }))
-  )
-]
+const coverageIds = (coverage) => extractIds(coverage.requirements)
 
 /**
  * Check 5 (parity half) — the set of IDs spec.md declares (read only from

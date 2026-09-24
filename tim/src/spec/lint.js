@@ -49,8 +49,10 @@ const pairingFindings = (capability) => {
 
 /**
  * The three groups every check belongs to, named for what the check reads.
- * All three are file-local — no repo is read, so a full run finishes in
- * about a second.
+ * `coverage` and `binding` are pure file reads, finishing in well under a
+ * second on their own. `specs` additionally delegates two checks to
+ * `openspec validate` via `npx` (openspec-cli.js), which shells out and
+ * can take several seconds, especially cold.
  */
 export const CHECK_GROUPS = ['specs', 'coverage', 'binding']
 

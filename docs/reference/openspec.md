@@ -78,9 +78,10 @@ its descendants.
 
 The three lint groups are independent — naming any narrows to those,
 naming none runs all three, and whatever didn't run is reported as "not
-selected" rather than omitted. `--binding` is pairing only; it does not
-prove `--specs` or `--coverage` — binding can be green while a THEN is
-missing or a rollup is wrong.
+selected" rather than omitted. `--binding` only checks the joins between
+spec.md and coverage.json — pairing, ID parity, names verbatim; it does
+not prove `--specs` or `--coverage` — binding can be green while a THEN
+is missing or a rollup is wrong.
 
 Lint has **no `--links` group** — a coverage link naming a test that no
 longer exists is not a lint finding. `spec-catchup` is what notices that

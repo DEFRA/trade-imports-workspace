@@ -122,10 +122,12 @@ export const buildCorpus = ({ root }) => {
   const specPaths = findCapabilityPaths(specsRoot, 'spec.md')
   const coveragePaths = findCapabilityPaths(coverageRoot, 'coverage.json')
   const allPaths = [...new Set([...specPaths, ...coveragePaths])].sort()
+  const specPathSet = new Set(specPaths)
+  const coveragePathSet = new Set(coveragePaths)
 
   const capabilities = allPaths.map((path) => {
-    const hasSpec = specPaths.includes(path)
-    const hasCoverage = coveragePaths.includes(path)
+    const hasSpec = specPathSet.has(path)
+    const hasCoverage = coveragePathSet.has(path)
     const specFile = join(specsRoot, path, 'spec.md')
     const coverageFile = join(coverageRoot, path, 'coverage.json')
     const specText = hasSpec ? readFileSync(specFile, 'utf8') : null

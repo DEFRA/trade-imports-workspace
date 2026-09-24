@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod'
+import { makeFinding } from './finding.js'
 
 const testLinkSchema = z.object({
   type: z.enum(['e2e', 'fit', 'unit']),
@@ -33,11 +34,7 @@ export const coverageFileSchema = z.object({
   requirements: z.array(requirementSchema)
 })
 
-const finding = (capability, message) => ({
-  check: 'shape',
-  capability,
-  message
-})
+const finding = makeFinding('shape')
 
 /**
  * A capability's coverage.json, parsed against `coverageFileSchema`, or

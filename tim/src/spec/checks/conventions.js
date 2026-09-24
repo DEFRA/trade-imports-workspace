@@ -1,8 +1,6 @@
-const finding = (capability, message) => ({
-  check: 'conventions',
-  capability,
-  message
-})
+import { makeFinding } from './finding.js'
+
+const finding = makeFinding('conventions')
 
 const THEN_LINE = /-\s*\*\*THEN\*\*/
 const SHALL_WORD = /\bSHALL\b/

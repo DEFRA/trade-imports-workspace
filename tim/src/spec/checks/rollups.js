@@ -1,10 +1,7 @@
 import { parsedCoverage } from './shape.js'
+import { makeFinding } from './finding.js'
 
-const finding = (capability, message) => ({
-  check: 'rollup',
-  capability,
-  message
-})
+const finding = makeFinding('rollup')
 
 /**
  * The scenario-level rollup rule from openspec/config.yaml: full if any

@@ -128,7 +128,7 @@ something different from what you think it measures. The second was fixed here
 because this ticket's own pushes would have triggered it; the first is recorded for
 its own ticket.
 
-### `ins-backend`'s coverage exclusions live only in the CI workflow
+### Java repos' coverage exclusions live only in their CI workflows
 
 `.github/workflows/sonarcloud.yml` passes scanner arguments that appear nowhere in
 `sonar-project.properties`:
@@ -141,14 +141,29 @@ its own ticket.
 So any scan that doesn't replicate that command line measures a different scope. On
 identical code the same commit reads **79.4%** without those flags and **97.5%**
 with them — an 18-point swing that has nothing to do with the code. This affects the
-local pre-push hook, which passes neither. Moving these into
-`sonar-project.properties` would make local and CI agree without changing what CI
-measures.
+local pre-push hook, which passes neither.
 
-The other four Java repos (`animals-backend`, `address-book`,
-`dynamics-gateway`, `reference-data`) share a byte-identical
-`sonar-project.properties`; whether their CI workflows also carry divergent flags
-has not been checked.
+**This is systemic, not an ins-backend quirk.** All five Java repos carry these
+flags in CI while their `sonar-project.properties` files stay byte-identical and
+mention none of it — and the flags don't agree with one another:
+
+| Repo | `sonar.exclusions` | `sonar.coverage.exclusions` |
+|---|---|---|
+| `animals-backend` | `**/src/test/**` | the four-pattern set above |
+| `address-book` | `**/src/test/**` | the four-pattern set above |
+| `ins-backend` | `**/src/test/**` | the four-pattern set above |
+| `reference-data` | `**/src/test/**` | the same **plus** `**/configuration/*Configuration.java` |
+| `dynamics-gateway` | `**/src/test/**` | **none** |
+
+So a local scan of any of the five measures a different scope than its own CI, and
+`reference-data` and `dynamics-gateway` additionally measure different scopes from
+their three siblings — `dynamics-gateway`'s 95.9% `new_coverage` is computed over
+config, TLS, exception and filter classes that the other four exclude.
+
+Moving each repo's flags into its own `sonar-project.properties` would make local
+and CI agree per repo without changing what any CI job measures. Whether the five
+*should* converge on one exclusion set is a separate question, and a real one —
+right now the divergence looks accidental rather than decided.
 
 ### The pre-push hook passed no `sonar.branch.name` — fixed here
 

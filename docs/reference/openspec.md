@@ -14,7 +14,7 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
 
-**That is the whole of the automated coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you. The periodic sweeps that would catch the rest are in "Next skills" below and are not built.
+**That is the whole of the automated coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you at the time. What catches the rest is the periodic catch-up — `tim workspace status`'s staleness line says when one is due, and `spec-catchup` runs it. See [`tim spec`](#tim-spec--validating-and-maintaining-the-binding) below.
 
 This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
@@ -26,7 +26,7 @@ This is the hybrid approach — direct write plus CLI validation. `openspec/chan
 |---|---|---|
 | Direct — a person, or the `ticket` skill | this checkout | The edit is written and left **uncommitted**, with every file named in the skill's completion output. Commit it with the increment it belongs to. |
 | `journey-builder` | `workareas/journey-builder/<run>/workspace-worktree` | Committed per increment on branch `spec/<run-id>`, and carried by **one PR per run** raised at run end. |
-| `requirements-pipeline` BUILD | this checkout | Committed **per increment**, on whatever branch the workspace is on, straight from the increment build loop's land stage. It **never pushes** and raises **no PR** — so `review`'s `openspec/` checks never fire for a pipeline run, since they only fire where a PR set touches `openspec/`. The periodic sweep (`spec-sweep`, below) is what covers this path. |
+| `requirements-pipeline` BUILD | this checkout | Committed **per increment**, on whatever branch the workspace is on, straight from the increment build loop's land stage. It **never pushes** and raises **no PR** — so `review`'s `openspec/` checks never fire for a pipeline run, since they only fire where a PR set touches `openspec/`. The periodic catch-up (`spec-catchup`, below) is what covers this path. |
 
 So: unexpected `openspec/` entries in `git status` are the first case, not a stray edit. And an unfamiliar worktree under `workareas/` — a worktree of this repo, nested inside its own working tree — is the second. Both are deliberate. `git worktree prune` clears a stale one; `git clean -fdx` at the repo root would destroy a live one. Unpushed local commits from the third case accumulate on `main` until someone pushes.
 
@@ -119,7 +119,7 @@ Prefer **E2E** when the scenario is about the system; **fit** when it’s about 
 `coverage.json` binding itself — nothing validated it, and `openspec validate --specs --strict` still
 reports `0 failed` against a corpus with dangling links — and a periodic sweep for drift no single
 increment owns: coverage links whose tests moved, holes nothing has filled, code nobody touched this
-week. Both are now built as `tim spec` (no AI) and the `spec-sweep` skill (the one AI piece). Nothing
+week. Both are now built as `tim spec` (no AI) and the `spec-catchup` skill (the one AI piece). Nothing
 here gates a PR, a push, a merge or a build run — every command is run by a person or by the sweep, and
 every output is a report.
 
@@ -163,7 +163,7 @@ that makes a `coverage: "none"` carry a note.
 `binding` cannot run in a `specs`-only or `coverage`-only pass: ID parity, name parity and the pairing
 check each need both files, which is why the groups are four and not three.
 
-`spec-sweep` (`.claude/skills/spec-sweep/`) calls `tim spec candidates --json` itself, judges only the
+`spec-catchup` (`.claude/skills/spec-catchup/`) calls `tim spec candidates --json` itself, judges only the
 work packets it returns, and emits one of four verdicts per finding: **STALE LINK** (fixes
 `coverage.json`, applied), **SPEC WRONG** / **SPEC GAP** (proposes a `spec.md` edit, never applies it),
 **NO ACTION**. It never advances the baseline itself — it prints `tim spec baseline --advance` for a

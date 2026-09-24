@@ -124,8 +124,9 @@ the in-tree pattern (`AddressLookupClientTest`).
 ## Two further blind spots found along the way
 
 Both are the same family of problem as the ticket itself — tooling measuring
-something different from what you think it measures. Neither is fixed here; each
-wants its own ticket.
+something different from what you think it measures. The second was fixed here
+because this ticket's own pushes would have triggered it; the first is recorded for
+its own ticket.
 
 ### `ins-backend`'s coverage exclusions live only in the CI workflow
 
@@ -149,17 +150,23 @@ The other four Java repos (`animals-backend`, `address-book`,
 `sonar-project.properties`; whether their CI workflows also carry divergent flags
 has not been checked.
 
-### The pre-push hook doesn't pass `sonar.branch.name`
+### The pre-push hook passed no `sonar.branch.name` — fixed here
 
-[`tools/sonar/sonar-push-check.sh`](../../tools/sonar/sonar-push-check.sh)'s
-`COMMON_ARGS` sets no branch. Run from a feature branch with no PR open — which is
-exactly what EUDPA-618's own tech notes recommended as the "easy way to trigger a
-whole-repo scan" — the scanner has no branch context, so the analysis either lands
-on **`main`**, overwriting its real analysis with feature-branch code, or creates a
-stray branch entry. It should pass `-Dsonar.branch.name="$BRANCH"` when no PR
-exists.
+[`tools/sonar/sonar-push-check.sh`](../../tools/sonar/sonar-push-check.sh) set no
+branch on its scanner invocation. Run from a feature branch with no PR open — which
+is exactly what EUDPA-618's own tech notes recommended as the "easy way to trigger a
+whole-repo scan" — the analysis carried neither `sonar.branch.name` nor the
+`sonar.pullrequest.*` trio, and SonarCloud assigns such an analysis to the project's
+**main** branch. So the first push of any new feature branch silently overwrote
+`main`'s analysis with unmerged code, leaving `main`'s recorded quality state
+describing code that was never on `main`.
 
-Both scans behind this document therefore passed `-Dsonar.branch.name` explicitly.
+Fixed: when no PR is open the hook now passes `-Dsonar.branch.name="$BRANCH"`, and
+on a detached HEAD (no PR to scope to, no branch name to send) it skips rather than
+submit an unnamed analysis. The PR-open path is unchanged.
+
+Both scans behind this document predate that fix and passed
+`-Dsonar.branch.name` explicitly for the same reason.
 
 ## Accepted, not fixed: ins-frontend's remaining findings
 

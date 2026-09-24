@@ -84,6 +84,26 @@ if command -v gh &> /dev/null; then
   fi
 fi
 
+# No PR yet, so the analysis is branch-scoped — and it MUST say which branch.
+# SonarCloud assigns an analysis carrying neither sonar.branch.name nor the
+# sonar.pullrequest.* trio to the project's MAIN branch, so without this the
+# first push of a new feature branch silently overwrites main's analysis with
+# unmerged code. That leaves main's recorded quality state describing code that
+# was never on main — the opposite of what this check exists to protect.
+# Found while auditing branch-level gates across the eight integrated repos
+# (EUDPA-618); see docs/analysis/sonarcloud-branch-gate-status.md.
+if [ ${#PR_ARGS[@]} -eq 0 ]; then
+  if [ -z "$BRANCH" ]; then
+    # Detached HEAD: no PR to scope to and no branch name to send. Skipping is the
+    # only safe option — running anyway is the overwrite described above, and
+    # blocking the push over it would punish the user for CI's job.
+    echo "Detached HEAD with no open PR — skipping local Sonar pre-push check," >&2
+    echo "as an unnamed analysis would be recorded against main. CI still runs it." >&2
+    exit 0
+  fi
+  PR_ARGS=("-Dsonar.branch.name=$BRANCH")
+fi
+
 COMMON_ARGS=(
   "-Dsonar.token=$SONAR_TOKEN"
   "-Dsonar.host.url=https://sonarcloud.io"

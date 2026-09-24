@@ -8,8 +8,8 @@ const toPosixRelative = (root, path) =>
 const bracketPositions = (text) =>
   [...text.matchAll(/[{[]/g)].map((match) => match.index).sort((a, b) => a - b)
 
-// npm prints script banners before the JSON (SPIKE.md), and a fit repo's
-// test:fit script runs webpack first — whose own log lines (e.g.
+// npm prints script banners before the JSON, and a fit repo's test:fit
+// script runs webpack first — whose own log lines (e.g.
 // "[webpack-cli] Compiler starting...") can contain an earlier, unrelated
 // `[` or `{`. So try every bracket position in order and keep the first
 // one that parses as a *complete* JSON document, rather than trusting the
@@ -56,7 +56,7 @@ const walkPlaywrightSuites = (suites = []) =>
  * --reporter=json`. A spec's `file` is testDir-relative and may start
  * `../` — resolve it against `config.rootDir`, then make it repo-relative.
  * `endsWith` is not sufficient here: it silently missed 5 of 319 animals
- * fit links (SPIKE.md).
+ * fit links.
  *
  * @param {{config: {rootDir: string}, suites: object[]}} parsed
  * @param {string} repoPath
@@ -101,7 +101,7 @@ export const buildUnitIndex = async ({ repoPath, run = runProcess }) =>
  * The fit-suite title index for one repo, via its own `test:fit` script —
  * not `test:fit:ci`, whose CI-only flags (retries, extra reporters) land
  * before ours on the command line and would collide with
- * `--reporter=json` (SPIKE.md). `--list` runs nothing.
+ * `--reporter=json`. `--list` runs nothing.
  *
  * @param {object} args
  * @param {string} args.repoPath
@@ -123,8 +123,7 @@ export const buildFitIndex = async ({ repoPath, run = runProcess }) =>
  * The e2e title index for the tests repo, covering all four Playwright
  * projects in one call. `_test_docker_compose`, not `test:docker-compose`
  * — the latter's `--grep-invert '@a11y|@active'` would omit those specs,
- * making their links read unresolved (SPIKE.md). `--list` needs no
- * running stack.
+ * making their links read unresolved. `--list` needs no running stack.
  *
  * @param {object} args
  * @param {string} args.repoPath

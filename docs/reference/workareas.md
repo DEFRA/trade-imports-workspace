@@ -24,6 +24,8 @@ workareas/skills-audit/<name>.md                   → AUDIT-mode plan document 
 workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, ticket.md, analysis.{repo}.json, questions.json, transcript.json, report.md, .diffs/{repo}.diff, best-practices/{repo}.md
 workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; canonical build-loop state)
 workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; provenance — pins, captures, resolved citations)
+workareas/spec-catchup/<YYYY-MM-DD>/               → findings.json, report.md (`spec-catchup` via `tim spec findings --skill catchup`)
+workareas/spec-cover/<YYYY-MM-DD>/                 → findings.json, report.md (`spec-cover` via `tim spec findings --skill cover`)
 workareas/<programme>/traces/<app>/<sha>/          → Playwright traces, manifest.json and coverage.json (written by `tim capture`)
 ```
 

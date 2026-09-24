@@ -125,9 +125,9 @@ const NO_LINK_RESOLUTION = {
 }
 
 /**
- * All twelve checks (BUILD-IT-NOW.md §1.1): the two delegated to `openspec
- * validate --specs --strict --json` (openspec-cli.js), the ten
- * workspace-only ones (checks/shape.js, checks/ids.js, checks/rollups.js,
+ * All twelve checks: the two delegated to `openspec validate --specs
+ * --strict --json` (openspec-cli.js), the ten workspace-only ones
+ * (checks/shape.js, checks/ids.js, checks/rollups.js,
  * checks/conventions.js), and the two that read the linked repos
  * (checks/links.js) — link `file` exists, link `test` resolves. A repo
  * that is not cloned, or has no `node_modules`, is reported as skipped

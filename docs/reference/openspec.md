@@ -58,9 +58,17 @@ Aliases also exist under `openspec spec list|show|validate` — same idea.
 
 ## Coverage gaps (workspace-owned)
 
-Coverage is not an OpenSpec CLI feature. It lives in `openspec/coverage/<capability-path>/coverage.json`, mirroring each `spec.md`. Query the JSON; do not re-derive gaps by hand.
+Coverage is not an OpenSpec CLI feature. It lives in `openspec/coverage/<capability-path>/coverage.json`, mirroring each `spec.md`. Prefer `tim spec gaps` — clustered, risk-ordered, notes verbatim. Do not re-derive the inventory by hand for day-to-day use.
 
-**Every non-full scenario:**
+```bash
+tim spec gaps --json            # every non-full scenario
+tim spec gaps --none --json     # uncovered only
+tim spec gaps --partial --json  # weak witnesses only
+```
+
+To fill `none` / `partial` rows, use the `spec-cover` skill (writes tests, updates coverage links). To catch code that moved ahead of the words, use `spec-catchup`.
+
+**One-off inspection without `tim`** (same matrix the commands read):
 
 ```bash
 find openspec/coverage -name coverage.json -exec jq -r '
@@ -71,24 +79,13 @@ find openspec/coverage -name coverage.json -exec jq -r '
 ' {} \;
 ```
 
-**Only uncovered (`none`):**
-
-```bash
-find openspec/coverage -name coverage.json -exec jq -r '
-  .capability as $cap
-  | .requirements[].scenarios[]
-  | select(.coverage == "none")
-  | "\($cap)\t\(.id)\t\(.name)\t\(.notes // "")"
-' {} \;
-```
-
 **Specs still missing stable IDs** (expect empty — IDs are required on every requirement and scenario):
 
 ```bash
 grep -rL '\*\*ID\*\*:' openspec/specs --include=spec.md
 ```
 
-**Coverage files missing for a capability:**
+**Coverage files missing for a capability** (also covered by `tim spec lint`'s `binding` group):
 
 ```bash
 comm -23 \
@@ -145,7 +142,7 @@ the whole cost of a full run.
 | `specs` | `## Purpose` / `## Requirements` present · ≥1 scenario per requirement · stable IDs present and globally unique · a `THEN` in every scenario · MUST not SHALL · prose cross-references resolve | `openspec/specs/` | ~1s |
 | `coverage` | shape and enums · scenario rollup · requirement rollup · a `none` carries `notes` · `areaCode` against `AREAS.md` · `specFile` path | `openspec/coverage/` | ~0.2s |
 | `binding` | a `coverage.json` per `spec.md` and the reverse · ID parity · names verbatim | **both files** | ~0.2s |
-| `links` | every link's `file` exists · every link's `test` resolves to a real test title | `openspec/coverage/` + `repos/` + the test runners | **~6 min** |
+| `links` | every link's `file` exists · every link's `test` resolves to a real test title | `openspec/coverage/` + `repos/` + the test runners | **~1 min** |
 
 ```bash
 tim spec lint                    # all four groups
@@ -166,13 +163,17 @@ that makes a `coverage: "none"` carry a note.
 check each need both files, which is why the groups are four and not three.
 
 `spec-catchup` (`.claude/skills/spec-catchup/`) calls `tim spec candidates --json`,
-seeds `findings.json`, walks each finding for approval, applies accepted
-`coverage.json` / `spec.md` edits, then runs
+seeds a dated run under `workareas/spec-catchup/<YYYY-MM-DD>/` (`findings.json`
+is the state; `report.md` is a render), walks each finding for approval, applies
+accepted `coverage.json` / `spec.md` edits, then runs
 `tim spec baseline --advance --require-ruled`.
 
 `spec-cover` (`.claude/skills/spec-cover/`) calls `tim spec gaps`, seeds
-cover findings, walks for approval, writes tests in service repos, updates
-coverage links, and **does not** advance the baseline.
+`workareas/spec-cover/<YYYY-MM-DD>/`, walks for approval, writes tests in
+service repos, updates coverage links, and **does not** advance the baseline.
+
+Neither skill invents a parallel state root — same `workareas/<skill>/…`
+pattern as `review` and `code-style`. See [`workareas.md`](workareas.md).
 
 ## Leave out of day-to-day use
 

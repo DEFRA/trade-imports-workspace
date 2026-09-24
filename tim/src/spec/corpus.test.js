@@ -59,6 +59,15 @@ describe('parseSpecMarkdown', () => {
 
     expect(requirement.id).toBeNull()
   })
+
+  test('reads a CRLF-encoded spec.md the same as LF', () => {
+    const requirements = parseSpecMarkdown(SPEC_TEXT.replaceAll('\n', '\r\n'))
+
+    expect(requirements).toHaveLength(1)
+    expect(requirements[0].id).toBe('REQ-WIDGET-001')
+    expect(requirements[0].scenarios).toHaveLength(2)
+    expect(requirements[0].scenarios[0].id).toBe('SCN-WIDGET-001-A')
+  })
 })
 
 let root

@@ -1,12 +1,7 @@
 import { z } from 'zod'
-import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
-import { OK } from '../../constants/exitCodes.js'
-import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { TimError } from '../../errors.js'
 import { computeSpecGaps } from '../../spec/gaps.js'
-
-const emit = (text) => process.stdout.write(`${text}\n`)
-const emitError = (text) => process.stderr.write(`${text}\n`)
+import { makeSpecAction } from './shared.js'
 
 const optionsSchema = z.object({
   none: z.boolean().optional().default(false),
@@ -65,35 +60,13 @@ export const register = (program, { timVersion }) => {
         '  tim spec gaps --none\n' +
         '  tim spec gaps --capability live-animals/addresses'
     )
-    .action(async function gapsAction(opts) {
-      const globalOpts = this.optsWithGlobals()
-      try {
-        const parsed = parseOptions(opts)
-        const workspaceRoot = resolveWorkspaceRoot({
-          explicit: globalOpts.workspace
-        })
-        const result = await computeSpecGaps({ workspaceRoot, ...parsed })
-        emit(
-          globalOpts.json
-            ? JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))
-            : renderGapsText(result)
-        )
-        process.exit(OK)
-      } catch (error) {
-        if (globalOpts.json) {
-          emit(
-            JSON.stringify(
-              jsonEnvelope({
-                ok: false,
-                error: errorPayloadFor(error),
-                timVersion
-              })
-            )
-          )
-        } else {
-          emitError(error.message ?? String(error))
-        }
-        process.exit(exitCodeFor(error))
-      }
-    })
+    .action(
+      makeSpecAction({
+        parseOptions,
+        run: ({ workspaceRoot }, parsed) =>
+          computeSpecGaps({ workspaceRoot, ...parsed }),
+        renderText: renderGapsText,
+        timVersion
+      })
+    )
 }

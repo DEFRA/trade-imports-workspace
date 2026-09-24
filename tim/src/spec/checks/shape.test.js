@@ -211,6 +211,13 @@ describe('readAreasTable', () => {
 
     expect(readAreasTable(root)).toEqual(new Map())
   })
+
+  test('does not read the header separator row as a capability', () => {
+    const table = readAreasTable(root)
+
+    expect(table.has('---')).toBe(false)
+    expect(table.size).toBe(1)
+  })
 })
 
 describe('checkAreaCodeAndSpecFile', () => {

@@ -38,4 +38,33 @@ describe('resolveSpecRoot', () => {
 
     rmSync(empty, { recursive: true, force: true })
   })
+
+  test('resolves a relative --root against workspaceRoot, not process.cwd()', () => {
+    mkdirSync(
+      join(
+        workspaceRoot,
+        'workareas',
+        'run-1',
+        'worktree',
+        'openspec',
+        'specs'
+      ),
+      {
+        recursive: true
+      }
+    )
+    const originalCwd = process.cwd()
+    process.chdir(tmpdir())
+
+    try {
+      expect(
+        resolveSpecRoot({
+          workspaceRoot,
+          root: 'workareas/run-1/worktree'
+        })
+      ).toBe(join(workspaceRoot, 'workareas', 'run-1', 'worktree'))
+    } finally {
+      process.chdir(originalCwd)
+    }
+  })
 })

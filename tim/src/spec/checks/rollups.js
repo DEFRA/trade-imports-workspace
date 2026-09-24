@@ -1,4 +1,4 @@
-import { coverageFileSchema } from './shape.js'
+import { parsedCoverage } from './shape.js'
 
 const finding = (capability, message) => ({
   check: 'rollup',
@@ -39,11 +39,10 @@ export const derivedRequirementCoverage = (scenarios) => {
  * @returns {object[]}
  */
 export const checkScenarioRollup = (capability) => {
-  if (!capability.hasCoverage || capability.coverageParseError) return []
-  const result = coverageFileSchema.safeParse(capability.coverage)
-  if (!result.success) return []
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
 
-  return result.data.requirements
+  return coverage.requirements
     .flatMap((requirement) => requirement.scenarios)
     .filter(
       (scenario) =>
@@ -65,11 +64,10 @@ export const checkScenarioRollup = (capability) => {
  * @returns {object[]}
  */
 export const checkRequirementRollup = (capability) => {
-  if (!capability.hasCoverage || capability.coverageParseError) return []
-  const result = coverageFileSchema.safeParse(capability.coverage)
-  if (!result.success) return []
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
 
-  return result.data.requirements
+  return coverage.requirements
     .filter(
       (requirement) =>
         requirement.coverage !==

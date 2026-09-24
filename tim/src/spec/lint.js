@@ -1,5 +1,6 @@
 import { resolveSpecRoot } from './config.js'
 import { buildCorpus } from './corpus.js'
+import { inScope } from './scope.js'
 import { validateWithOpenspecCli } from './openspec-cli.js'
 import {
   checkCoverageShape,
@@ -45,12 +46,6 @@ const pairingFindings = (capability) => {
   }
   return []
 }
-
-const inScope = (capabilityPath, scopeCapability) =>
-  !scopeCapability ||
-  (typeof capabilityPath === 'string' &&
-    (capabilityPath === scopeCapability ||
-      capabilityPath.startsWith(`${scopeCapability}/`)))
 
 /**
  * The three groups every check belongs to, named for what the check reads.

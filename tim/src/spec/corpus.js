@@ -37,7 +37,7 @@ export const parseSpecMarkdown = (specText) => {
     requirement = null
   }
 
-  for (const line of specText.split('\n')) {
+  for (const line of specText.split(/\r\n|\r|\n/)) {
     const requirementHeading = line.match(REQUIREMENT_HEADING)
     if (requirementHeading) {
       closeRequirement()

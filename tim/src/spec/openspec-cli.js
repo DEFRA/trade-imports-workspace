@@ -1,7 +1,11 @@
 import { run as runProcess } from '../exec/exec.js'
 import { TimError } from '../errors.js'
 
-const OPENSPEC_PACKAGE = '@fission-ai/openspec@latest'
+// Pinned, not @latest: this is a deterministic quality gate (tim spec lint),
+// and an unannounced upstream bump could silently change validate's output
+// between two otherwise-identical runs. Bump deliberately when there's a
+// reason to.
+const OPENSPEC_PACKAGE = '@fission-ai/openspec@1.13.2'
 
 /**
  * Checks 1 and 2, delegated. Shells out to `openspec validate --specs

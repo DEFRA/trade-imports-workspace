@@ -23,7 +23,7 @@ describe('validateWithOpenspecCli', () => {
         command: 'npx',
         args: [
           '--yes',
-          '@fission-ai/openspec@latest',
+          '@fission-ai/openspec@1.13.2',
           'validate',
           '--specs',
           '--strict',
@@ -45,7 +45,7 @@ describe('validateWithOpenspecCli', () => {
 
     expect(calls[0].args).toEqual([
       '--yes',
-      '@fission-ai/openspec@latest',
+      '@fission-ai/openspec@1.13.2',
       'validate',
       'live-animals/addresses',
       '--strict',

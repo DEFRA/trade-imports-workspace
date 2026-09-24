@@ -1,12 +1,8 @@
 import { z } from 'zod'
-import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
-import { OK, ERROR } from '../../constants/exitCodes.js'
-import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
+import { ERROR, OK } from '../../constants/exitCodes.js'
 import { TimError } from '../../errors.js'
 import { runSpecLint, CHECK_GROUPS } from '../../spec/lint.js'
-
-const emit = (text) => process.stdout.write(`${text}\n`)
-const emitError = (text) => process.stderr.write(`${text}\n`)
+import { makeSpecAction } from './shared.js'
 
 const optionsSchema = z.object({
   capability: z.string().trim().min(1).optional(),
@@ -101,40 +97,20 @@ export const register = (program, { timVersion }) => {
         '  tim spec lint --capability live-animals/addresses\n' +
         '  tim spec lint --root workareas/journey-builder/run-1/workspace-worktree'
     )
-    .action(async function lintAction(opts) {
-      const globalOpts = this.optsWithGlobals()
-      try {
-        const parsed = parseOptions(opts)
-        const workspaceRoot = resolveWorkspaceRoot({
-          explicit: globalOpts.workspace
-        })
-        const result = await runSpecLint({
-          workspaceRoot,
-          capability: parsed.capability,
-          root: parsed.root,
-          groups: groupsFrom(parsed)
-        })
-        emit(
-          globalOpts.json
-            ? JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))
-            : renderLintText(result)
-        )
-        process.exit(result.findings.length > 0 ? ERROR : OK)
-      } catch (error) {
-        if (globalOpts.json) {
-          emit(
-            JSON.stringify(
-              jsonEnvelope({
-                ok: false,
-                error: errorPayloadFor(error),
-                timVersion
-              })
-            )
-          )
-        } else {
-          emitError(error.message ?? String(error))
-        }
-        process.exit(exitCodeFor(error))
-      }
-    })
+    .action(
+      makeSpecAction({
+        parseOptions,
+        run: ({ workspaceRoot }, parsed) =>
+          runSpecLint({
+            workspaceRoot,
+            capability: parsed.capability,
+            root: parsed.root,
+            groups: groupsFrom(parsed)
+          }),
+        renderText: renderLintText,
+        exitCodeForResult: (result) =>
+          result.findings.length > 0 ? ERROR : OK,
+        timVersion
+      })
+    )
 }

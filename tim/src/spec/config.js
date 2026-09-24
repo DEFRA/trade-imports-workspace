@@ -15,7 +15,7 @@ import { TimError } from '../errors.js'
  * @throws {TimError} USAGE when the resolved root has no openspec/specs
  */
 export const resolveSpecRoot = ({ workspaceRoot, root }) => {
-  const specRoot = root ? resolve(root) : workspaceRoot
+  const specRoot = root ? resolve(workspaceRoot, root) : workspaceRoot
   if (!existsSync(join(specRoot, 'openspec', 'specs'))) {
     throw new TimError(
       'USAGE',

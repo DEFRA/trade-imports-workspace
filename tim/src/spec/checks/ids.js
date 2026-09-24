@@ -1,4 +1,4 @@
-import { coverageFileSchema } from './shape.js'
+import { parsedCoverage } from './shape.js'
 
 const finding = (capability, message) => ({
   check: 'ids',
@@ -64,16 +64,16 @@ const coverageIds = (parsedCoverage) => [
  * @returns {object[]}
  */
 export const checkIdParity = (capability) => {
-  if (!capability.hasSpec || !capability.hasCoverage) return []
-  const result = coverageFileSchema.safeParse(capability.coverage)
-  if (!result.success) return []
+  if (!capability.hasSpec) return []
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
 
   const specSet = new Set(
     specIds(capability)
       .map((entry) => entry.id)
       .filter(Boolean)
   )
-  const coverageSet = new Set(coverageIds(result.data).map((entry) => entry.id))
+  const coverageSet = new Set(coverageIds(coverage).map((entry) => entry.id))
 
   const missingFromCoverage = [...specSet].filter((id) => !coverageSet.has(id))
   const missingFromSpec = [...coverageSet].filter((id) => !specSet.has(id))
@@ -99,9 +99,9 @@ export const checkIdParity = (capability) => {
  * @returns {object[]}
  */
 export const checkNameParity = (capability) => {
-  if (!capability.hasSpec || !capability.hasCoverage) return []
-  const result = coverageFileSchema.safeParse(capability.coverage)
-  if (!result.success) return []
+  if (!capability.hasSpec) return []
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
 
   const specById = new Map(
     specIds(capability)
@@ -109,7 +109,7 @@ export const checkNameParity = (capability) => {
       .map((entry) => [entry.id, entry.name])
   )
 
-  return coverageIds(result.data)
+  return coverageIds(coverage)
     .filter(
       (entry) => specById.has(entry.id) && specById.get(entry.id) !== entry.name
     )

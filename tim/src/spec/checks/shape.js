@@ -40,6 +40,20 @@ const finding = (capability, message) => ({
 })
 
 /**
+ * A capability's coverage.json, parsed against `coverageFileSchema`, or
+ * `null` when there is nothing to parse or it fails to parse — the
+ * guard-and-safeParse pair every check below repeats, named once.
+ *
+ * @param {object} capability
+ * @returns {object|null}
+ */
+export const parsedCoverage = (capability) => {
+  if (!capability.hasCoverage || capability.coverageParseError) return null
+  const result = coverageFileSchema.safeParse(capability.coverage)
+  return result.success ? result.data : null
+}
+
+/**
  * Check 3 — coverage.json shape: required keys present, type in
  * e2e|fit|unit, strength in full|partial. Reports the JSON parse error
  * itself as a finding rather than throwing, so one malformed file doesn't
@@ -77,10 +91,9 @@ export const checkCoverageShape = (capability) => {
  * @returns {object[]}
  */
 export const checkNoneHasNotes = (capability) => {
-  if (!capability.hasCoverage || capability.coverageParseError) return []
-  const result = coverageFileSchema.safeParse(capability.coverage)
-  if (!result.success) return []
-  return result.data.requirements
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
+  return coverage.requirements
     .flatMap((requirement) => requirement.scenarios)
     .filter(
       (scenario) => scenario.coverage === 'none' && !scenario.notes?.trim()
@@ -94,6 +107,14 @@ export const checkNoneHasNotes = (capability) => {
 }
 
 const AREAS_ROW = /^\|\s*([a-z0-9/-]+)\s*\|\s*([A-Z0-9-]+)\s*\|$/
+const ALL_DASHES = /^-+$/
+
+// A markdown separator row (`|---|---|`) matches AREAS_ROW too — both its
+// capture groups are all-dashes, which satisfies `[a-z0-9/-]+` and
+// `[A-Z0-9-]+` alike. Drop it rather than mapping it into a bogus
+// '---' -> '---' entry.
+const isDataRow = (match) =>
+  Boolean(match) && !ALL_DASHES.test(match[1]) && !ALL_DASHES.test(match[2])
 
 /**
  * The capability → areaCode map from openspec/coverage/AREAS.md.
@@ -114,7 +135,7 @@ export const readAreasTable = (root) => {
   return new Map(
     lines
       .map((line) => line.match(AREAS_ROW))
-      .filter(Boolean)
+      .filter(isDataRow)
       .map((match) => [match[1], match[2]])
   )
 }
@@ -129,10 +150,9 @@ export const readAreasTable = (root) => {
  * @returns {object[]}
  */
 export const checkAreaCodeAndSpecFile = (capability, areasTable) => {
-  if (!capability.hasCoverage || capability.coverageParseError) return []
-  const result = coverageFileSchema.safeParse(capability.coverage)
-  if (!result.success) return []
-  const { areaCode, specFile } = result.data
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
+  const { areaCode, specFile } = coverage
   const findings = []
 
   const expectedAreaCode = areasTable.get(capability.path)

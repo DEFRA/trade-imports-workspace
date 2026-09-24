@@ -1,13 +1,13 @@
 import { buildCorpus } from './corpus.js'
-import { coverageFileSchema } from './checks/shape.js'
+import { parsedCoverage } from './checks/shape.js'
+import { inScope } from './scope.js'
 import { TimError } from '../errors.js'
 
 const scenarioRows = (corpus) =>
   corpus.capabilities.flatMap((capability) => {
-    if (!capability.hasCoverage || capability.coverageParseError) return []
-    const result = coverageFileSchema.safeParse(capability.coverage)
-    if (!result.success) return []
-    return result.data.requirements.flatMap((requirement) =>
+    const coverage = parsedCoverage(capability)
+    if (!coverage) return []
+    return coverage.requirements.flatMap((requirement) =>
       requirement.scenarios.map((scenario) => ({
         id: scenario.id,
         name: scenario.name,
@@ -19,11 +19,6 @@ const scenarioRows = (corpus) =>
       }))
     )
   })
-
-const inScope = (capabilityPath, scopeCapability) =>
-  !scopeCapability ||
-  capabilityPath === scopeCapability ||
-  capabilityPath.startsWith(`${scopeCapability}/`)
 
 /**
  * Narrowing grammar matching `tim spec lint`'s group flags: naming any of

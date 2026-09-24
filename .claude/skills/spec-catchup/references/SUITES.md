@@ -13,8 +13,8 @@ below.
 
 `<prefix>` in every command below is the **Spec prefix** column exactly
 as written — no trailing slash (`tim spec gaps --capability live-animals/`
-silently matches zero scenarios; drop the slash). The **E2E project**
-column is what `--project=` takes in
+throws `Can't find capability "live-animals/"`; drop the slash). The
+**E2E project** column is what `--project=` takes in
 `trade-imports-animals-tests`; note live-animals is the odd one out
 (`e2e`, not `animals`).
 

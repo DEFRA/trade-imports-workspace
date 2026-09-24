@@ -198,6 +198,7 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 | Address book | 8089 |
 | INS backend | 8090 |
 | Plants backend | 8091 |
+| Trade imports stub — STS simulator (EUDPA-390, dev/local only) | 8098 |
 | cdp-uploader | 7337 |
 | Floci | 4566 |
 | MongoDB | 27017 |

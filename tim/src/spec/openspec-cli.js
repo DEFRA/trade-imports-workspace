@@ -43,8 +43,12 @@ export const validateWithOpenspecCli = async ({
     )
   }
 
-  if (!Array.isArray(parsed.items)) {
-    const first = parsed.status?.[0]?.message
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !Array.isArray(parsed.items)
+  ) {
+    const first = parsed?.status?.[0]?.message
     throw new TimError(
       'PARSE',
       first
@@ -56,7 +60,7 @@ export const validateWithOpenspecCli = async ({
   return parsed.items
     .filter((item) => !item.valid)
     .flatMap((item) =>
-      item.issues.map((issue) => ({
+      (item.issues ?? []).map((issue) => ({
         check: 'openspec-validate',
         capability: item.id,
         message: `[${issue.level}] ${issue.path}: ${issue.message}`

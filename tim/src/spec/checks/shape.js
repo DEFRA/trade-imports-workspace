@@ -103,7 +103,14 @@ const AREAS_ROW = /^\|\s*([a-z0-9/-]+)\s*\|\s*([A-Z0-9-]+)\s*\|$/
  */
 export const readAreasTable = (root) => {
   const path = join(root, 'openspec', 'coverage', 'AREAS.md')
-  const lines = readFileSync(path, 'utf8').split('\n')
+  let text
+  try {
+    text = readFileSync(path, 'utf8')
+  } catch (error) {
+    if (error.code === 'ENOENT') return new Map()
+    throw error
+  }
+  const lines = text.split('\n')
   return new Map(
     lines
       .map((line) => line.match(AREAS_ROW))

@@ -79,6 +79,43 @@ describe('checkCoverageShape', () => {
 
     expect(findings).toHaveLength(1)
     expect(findings[0].capability).toBe('widgets')
+    expect(findings[0].message).toContain('type')
+  })
+
+  test('reports an invalid strength value', () => {
+    const broken = {
+      ...VALID_COVERAGE,
+      requirements: [
+        {
+          ...VALID_COVERAGE.requirements[0],
+          scenarios: [
+            {
+              ...VALID_COVERAGE.requirements[0].scenarios[0],
+              tests: [
+                {
+                  ...VALID_COVERAGE.requirements[0].scenarios[0].tests[0],
+                  strength: 'strong'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    const findings = checkCoverageShape(capabilityWithCoverage(broken))
+
+    expect(findings).toHaveLength(1)
+    expect(findings[0].message).toContain('strength')
+  })
+
+  test('reports a missing required key', () => {
+    const { capability: _omitted, ...broken } = VALID_COVERAGE
+
+    const findings = checkCoverageShape(capabilityWithCoverage(broken))
+
+    expect(findings).toHaveLength(1)
+    expect(findings[0].message).toContain('capability')
   })
 
   test('reports a captured JSON parse error rather than throwing', () => {
@@ -167,6 +204,12 @@ afterEach(() => {
 describe('readAreasTable', () => {
   test('maps each capability to its area code', () => {
     expect(readAreasTable(root).get('widgets')).toBe('WIDGET')
+  })
+
+  test('returns an empty map rather than throwing when AREAS.md is missing', () => {
+    rmSync(join(root, 'openspec', 'coverage', 'AREAS.md'))
+
+    expect(readAreasTable(root)).toEqual(new Map())
   })
 })
 

@@ -316,9 +316,63 @@ describe('runSpecLint', () => {
       run: recordingRun
     })
 
-    expect(result.capabilityCount).toBeGreaterThan(0)
+    expect(result.capabilityCount).toBe(1)
     expect(calls[0].args).toContain('--specs')
     expect(calls[0].args).not.toContain('live-animals')
+  })
+
+  test('a finding with no capability id does not crash --capability scoping', async () => {
+    const runWithMissingId = async () => ({
+      stdout: JSON.stringify({
+        items: [
+          {
+            valid: false,
+            issues: [{ level: 'ERROR', path: 'file', message: 'broken' }]
+          }
+        ]
+      }),
+      stderr: '',
+      exitCode: 0
+    })
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      capability: 'widgets',
+      run: runWithMissingId
+    })
+
+    expect(result.findings).toEqual([])
+  })
+
+  test('does not crash when AREAS.md is missing, and reports the missing rows instead', async () => {
+    rmSync(join(root, 'openspec', 'coverage', 'AREAS.md'))
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      run: cleanOpenspecRun
+    })
+
+    expect(
+      result.findings.some((f) => f.message.includes('AREAS.md has no row'))
+    ).toBe(true)
+  })
+
+  test('is clean with zero capabilities when openspec/specs exists but is empty', async () => {
+    const emptyRoot = mkdtempSync(join(tmpdir(), 'tim-spec-lint-empty-'))
+    mkdirSync(join(emptyRoot, 'openspec', 'specs'), { recursive: true })
+    mkdirSync(join(emptyRoot, 'openspec', 'coverage'), { recursive: true })
+    writeFileSync(
+      join(emptyRoot, 'openspec', 'coverage', 'AREAS.md'),
+      ['| Capability | Area code |', '|---|---|'].join('\n')
+    )
+
+    const result = await runSpecLint({
+      workspaceRoot: emptyRoot,
+      run: cleanOpenspecRun
+    })
+
+    expect(result.capabilityCount).toBe(0)
+    expect(result.findings).toEqual([])
   })
 
   test('flags coverage.json with no matching spec.md', async () => {

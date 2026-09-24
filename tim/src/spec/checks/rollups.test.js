@@ -114,13 +114,42 @@ describe('checkScenarioRollup', () => {
 
     expect(findings).toEqual([
       expect.objectContaining({
-        message: expect.stringContaining('SCN-WIDGET-001-A')
+        message:
+          'SCN-WIDGET-001-A is stated "full" but its tests[] derive to "partial".'
       })
     ])
   })
 })
 
 describe('checkRequirementRollup', () => {
+  test('passes a requirement whose stated coverage matches what its scenarios derive to', () => {
+    const findings = checkRequirementRollup(
+      capability([
+        {
+          id: 'REQ-WIDGET-001',
+          name: 'Widgets spin',
+          coverage: 'partial',
+          scenarios: [
+            {
+              id: 'SCN-WIDGET-001-A',
+              name: 'A widget spins',
+              coverage: 'full',
+              tests: []
+            },
+            {
+              id: 'SCN-WIDGET-001-B',
+              name: 'A widget stops',
+              coverage: 'none',
+              tests: []
+            }
+          ]
+        }
+      ])
+    )
+
+    expect(findings).toEqual([])
+  })
+
   test('flags a requirement stated "none" when one of its scenarios is full', () => {
     const findings = checkRequirementRollup(
       capability([
@@ -150,7 +179,8 @@ describe('checkRequirementRollup', () => {
 
     expect(findings).toEqual([
       expect.objectContaining({
-        message: expect.stringContaining('REQ-WIDGET-001')
+        message:
+          'REQ-WIDGET-001 is stated "none" but its scenarios derive to "full".'
       })
     ])
   })

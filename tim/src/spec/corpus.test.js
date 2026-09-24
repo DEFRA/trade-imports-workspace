@@ -14,7 +14,7 @@ Widgets.
 
 ### Requirement: Widgets spin
 **ID**: REQ-WIDGET-001
-The system MUST spin every widget. See also \`widgets/other\` for colour rules.
+The system MUST spin every widget. See also REQ-OTHER-001, mentioned only in prose, never on its own **ID**: line.
 
 #### Scenario: A widget spins on load
 **ID**: SCN-WIDGET-001-A
@@ -31,10 +31,13 @@ The system MUST spin every widget. See also \`widgets/other\` for colour rules.
 
 describe('parseSpecMarkdown', () => {
   test('reads each requirement and scenario with its own ID, not a prose mention', () => {
-    const [requirement] = parseSpecMarkdown(SPEC_TEXT)
+    const requirements = parseSpecMarkdown(SPEC_TEXT)
+    const [requirement] = requirements
 
     expect(requirement.name).toBe('Widgets spin')
     expect(requirement.id).toBe('REQ-WIDGET-001')
+    expect(requirements).toHaveLength(1)
+    expect(requirements.map((r) => r.id)).not.toContain('REQ-OTHER-001')
     expect(requirement.scenarios).toHaveLength(2)
     expect(requirement.scenarios[0]).toMatchObject({
       name: 'A widget spins on load',
@@ -81,6 +84,27 @@ const writeCoverage = (capability, body) => {
 }
 
 describe('buildCorpus', () => {
+  test('returns an empty capabilities list for a root with no spec.md or coverage.json', () => {
+    const corpus = buildCorpus({ root })
+
+    expect(corpus.capabilities).toEqual([])
+  })
+
+  test('leaves the missing half null when only coverage.json exists', () => {
+    writeCoverage('widgets', { capability: 'widgets' })
+
+    const corpus = buildCorpus({ root })
+
+    expect(corpus.capabilities).toEqual([
+      expect.objectContaining({
+        path: 'widgets',
+        hasSpec: false,
+        specText: null,
+        hasCoverage: true
+      })
+    ])
+  })
+
   test('pairs a capability with both a spec.md and a coverage.json', () => {
     writeSpec('widgets', SPEC_TEXT)
     writeCoverage('widgets', { capability: 'widgets' })

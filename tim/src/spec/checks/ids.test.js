@@ -76,7 +76,9 @@ describe('checkIdsPresent', () => {
     )
 
     expect(findings).toEqual([
-      expect.objectContaining({ message: expect.stringContaining('scenario') })
+      expect.objectContaining({
+        message: 'scenario "A widget spins on load" has no **ID**: line.'
+      })
     ])
   })
 })

@@ -30,7 +30,7 @@ own path/title (see "Unit links" below).
 | Report shows behaviour with no requirement/scenario for it | `add-spec` | Add the requirement/scenario to `spec.md` and its `coverage.json` row |
 | Linked fit/e2e test moved or was renamed, same behaviour | `update-link` | Update the coverage link's `file`/`test` |
 | Linked fit/e2e test is gone; source still shows the behaviour | `remove-dead-link` | Remove the dead link from `coverage.json` (recompute that scenario's coverage from what's left) and leave `spec.md` untouched — this becomes a `spec-cover` gap, not a catch-up rewrite |
-| Linked fit/e2e test is gone; source shows the behaviour is gone too | `delete-spec` | Delete `spec.md` and `coverage.json` for this capability together |
+| Linked fit/e2e test is gone; source shows the behaviour is gone too | `delete-spec` | Delete the dead requirement (and its scenarios) from `spec.md` and `coverage.json` — see "`delete-spec` in detail" below |
 | The words already match the report and source | `no-action` | Nothing |
 | You cannot tell either way, even after checking the trace (see below) | `uncertain` | Leave the spec; the parent reports this in the completion output rather than guessing |
 
@@ -78,6 +78,15 @@ scenario's `tests[]`, let its `coverage` re-derive from what's left
 (`none` if that was the only link), and leave the requirement/scenario
 wording in `spec.md` alone — `spec-cover` picks it up from
 `tim spec gaps` next.
+
+### `delete-spec` in detail
+
+A capability's `spec.md` usually holds several requirements — deleting
+the whole file over one dead requirement takes the rest down with it.
+Delete only the dead requirement's heading and its scenarios from
+`spec.md`, and only that requirement's block from `coverage.json`'s
+`requirements[]`. Delete the whole `spec.md` + `coverage.json` pair only
+when the dead requirement was the only one the file had.
 
 ## Output
 

@@ -48,8 +48,9 @@ const pairingFindings = (capability) => {
 
 const inScope = (capabilityPath, scopeCapability) =>
   !scopeCapability ||
-  capabilityPath === scopeCapability ||
-  capabilityPath.startsWith(`${scopeCapability}/`)
+  (typeof capabilityPath === 'string' &&
+    (capabilityPath === scopeCapability ||
+      capabilityPath.startsWith(`${scopeCapability}/`)))
 
 /**
  * The three groups every check belongs to, named for what the check reads.

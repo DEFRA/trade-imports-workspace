@@ -157,6 +157,120 @@ describe('computeSpecGaps', () => {
     expect(result.rows[0].capability).toBe('a')
   })
 
+  test('raises NOT_FOUND for a --capability the corpus does not have', async () => {
+    await expect(
+      computeSpecGaps({ workspaceRoot: root, capability: 'does-not-exist' })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  test('--capability includes a nested descendant capability', async () => {
+    mkdirSync(join(root, 'openspec', 'specs', 'a', 'child'), {
+      recursive: true
+    })
+    mkdirSync(join(root, 'openspec', 'coverage', 'a', 'child'), {
+      recursive: true
+    })
+    writeFileSync(
+      join(root, 'openspec', 'specs', 'a', 'child', 'spec.md'),
+      `# A Child Specification
+
+## Purpose
+
+Capability A's child.
+
+## Requirements
+
+### Requirement: The child does a thing
+**ID**: REQ-A-CHILD-001
+The system MUST do a thing.
+
+#### Scenario: A child scenario nothing witnesses
+**ID**: SCN-A-CHILD-001-A
+- **GIVEN** a
+- **WHEN** b
+- **THEN** c
+`
+    )
+    writeFileSync(
+      join(root, 'openspec', 'coverage', 'a', 'child', 'coverage.json'),
+      JSON.stringify(
+        noneCoverage(
+          'a/child',
+          'A-CHILD',
+          'SCN-A-CHILD-001-A',
+          'A child scenario nothing witnesses',
+          'GAP: nothing witnesses this either'
+        )
+      )
+    )
+
+    const result = await computeSpecGaps({
+      workspaceRoot: root,
+      capability: 'a'
+    })
+
+    expect(result.rows.map((row) => row.capability).sort()).toEqual([
+      'a',
+      'a/child'
+    ])
+  })
+
+  test('sorts none before partial when both are present', async () => {
+    writeFileSync(
+      join(root, 'openspec', 'coverage', 'b', 'coverage.json'),
+      JSON.stringify({
+        capability: 'b',
+        areaCode: 'B',
+        specFile: 'openspec/specs/b/spec.md',
+        requirements: [
+          {
+            id: 'REQ-B-001',
+            name: 'B does a thing',
+            coverage: 'partial',
+            scenarios: [
+              {
+                id: 'SCN-B-001-A',
+                name: 'A different claim',
+                coverage: 'partial',
+                tests: [
+                  {
+                    type: 'unit',
+                    repo: 'x',
+                    file: 'b.test.js',
+                    test: 't',
+                    strength: 'partial'
+                  }
+                ],
+                notes: 'partial only'
+              }
+            ]
+          }
+        ]
+      })
+    )
+
+    const result = await computeSpecGaps({ workspaceRoot: root })
+
+    expect(result.rows.map((row) => row.id)).toEqual([
+      'SCN-A-001-A',
+      'SCN-B-001-A'
+    ])
+    expect(result.rows.map((row) => row.coverage)).toEqual(['none', 'partial'])
+  })
+
+  test('returns zero counts and no rows for an empty corpus', async () => {
+    const emptyRoot = mkdtempSync(join(tmpdir(), 'tim-spec-gaps-empty-'))
+
+    const result = await computeSpecGaps({ workspaceRoot: emptyRoot })
+
+    expect(result).toEqual({
+      noneCount: 0,
+      partialCount: 0,
+      scenarioCount: 0,
+      rows: []
+    })
+  })
+
   test('--none / --partial narrow the gap list, unioned when both are given', async () => {
     writeFileSync(
       join(root, 'openspec', 'coverage', 'b', 'coverage.json'),

@@ -4,12 +4,27 @@ One journey set at a time. `catch-up` / `cover` / `catch-up and cover`
 with no set name runs all four, one at a time, each following the table
 below.
 
-| Set | Set name | Spec prefix | Local suite | E2E |
+| Set | Set name | Spec prefix | Local suite | E2E project |
 |---|---|---|---|---|
-| Live animals | `animals` | `live-animals/` | `trade-imports-animals-frontend`: `npm run test:fit` | `trade-imports-animals-tests`: `tests/e2e/features/` and `tests/e2e/pages/`, except `plants/`, `ins/`, `admin/` |
-| High-risk plants | `plants` | `plants/` | `trade-imports-plants-frontend`: `npm run test:fit` | `trade-imports-animals-tests`: `tests/e2e/features/plants/` |
-| Import Notification Service | `ins` | `ins/` | `trade-imports-ins-frontend`: `npm run test:fit` | `trade-imports-animals-tests`: `tests/e2e/features/ins/` |
-| Admin | `admin` | `admin/` | `trade-imports-animals-admin`: `npm test` (vitest — there is no fit suite) | `trade-imports-animals-tests`: `tests/e2e/features/admin/` and `tests/e2e/pages/admin/` |
+| Live animals | `animals` | `live-animals` | `trade-imports-animals-frontend`: `npm run test:fit` | `e2e` |
+| High-risk plants | `plants` | `plants` | `trade-imports-plants-frontend`: `npm run test:fit` | `plants` |
+| Import Notification Service | `ins` | `ins` | `trade-imports-ins-frontend`: `npm run test:fit` | `ins` |
+| Admin | `admin` | `admin` | `trade-imports-animals-admin`: `npm test` (vitest — there is no fit suite) | `admin` |
+
+`<prefix>` in every command below is the **Spec prefix** column exactly
+as written — no trailing slash (`tim spec gaps --capability live-animals/`
+silently matches zero scenarios; drop the slash). The **E2E project**
+column is what `--project=` takes in
+`trade-imports-animals-tests`; note live-animals is the odd one out
+(`e2e`, not `animals`).
+
+A capability's spec prefix and its coverage links' E2E project don't
+always match — e.g. `live-animals/notification-events`'s only links live
+under `--project=admin` (the outbox-event specs), so a green
+`--project=e2e` run alone never exercises them. If a report seems to
+have skipped a capability's own tests, check its `coverage.json` `file`
+paths against the project that would actually run them before trusting
+the report.
 
 ## Docker / OrbStack
 
@@ -17,10 +32,20 @@ Every set's E2E leg needs Docker Desktop or OrbStack running, then the
 stack:
 
 ```
-tim docker dev
+tim docker up
 ```
 
-The local suite (fit, or admin's vitest) does not need the daemon.
+Use `up` (published Dockerhub images) — this skill judges against what
+`main` actually looks like, and `dev` builds from the local `repos/`
+checkout, which can be stale relative to it. Reach for `dev` only when
+deliberately verifying in-progress local changes.
+
+The local suite (fit, or admin's vitest) does not need the daemon. When
+the stack is up, its published frontend container holds the same host
+port the fit suite's own webServer defaults to (animals: 3000, plants:
+3003) — override `PORT` for the fit run (e.g. `PORT=3050` / `PORT=3053`);
+each frontend repo's `playwright.config.js` already reads
+`process.env.PORT`.
 
 If Docker/OrbStack is down and this pass will run the E2E leg — always,
 on catch-up; on cover, only when the gap's proposed test is E2E — **stop
@@ -29,14 +54,14 @@ from the skill.
 
 ## Traces
 
-Run both legs with full traces retained, not just on failure — this skill
+Run every leg this set has with full traces retained, not just on failure — this skill
 judges scenarios off a **green** report, and the repos' own defaults
 (`retain-on-failure`, `on-first-retry`) capture nothing when everything
 passes:
 
 ```
-npm run test:fit -- --trace=on
-npm run test:docker-compose -- <path scope> --trace=on
+npm run test:fit -- --trace=on          # skip for admin — it has no fit suite
+npm run test:docker-compose -- --project=<this set's E2E project column> --trace=on
 ```
 
 `--trace=on` overrides each repo's `playwright.config` for this invocation

@@ -1,5 +1,6 @@
 import { buildCorpus } from './corpus.js'
 import { coverageFileSchema } from './checks/shape.js'
+import { TimError } from '../errors.js'
 
 const scenarioRows = (corpus) =>
   corpus.capabilities.flatMap((capability) => {
@@ -63,6 +64,7 @@ const sortRows = (rows) =>
  * @param {boolean} [args.partial] - Narrow to partial (unions with --none)
  * @param {string} [args.capability] - Scope to one capability and its descendants
  * @returns {Promise<{noneCount: number, partialCount: number, scenarioCount: number, rows: object[]}>}
+ * @throws {TimError} NOT_FOUND when --capability names nothing in the corpus
  */
 export const computeSpecGaps = async ({
   workspaceRoot,
@@ -71,6 +73,17 @@ export const computeSpecGaps = async ({
   capability
 }) => {
   const corpus = buildCorpus({ root: workspaceRoot })
+
+  if (
+    capability &&
+    !corpus.capabilities.some((entry) => inScope(entry.path, capability))
+  ) {
+    throw new TimError(
+      'NOT_FOUND',
+      `Can't find capability "${capability}" under ${workspaceRoot}/openspec.`
+    )
+  }
+
   const rows = scenarioRows(corpus).filter((row) =>
     inScope(row.capability, capability)
   )

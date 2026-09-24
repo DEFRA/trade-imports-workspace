@@ -27,10 +27,18 @@ proposing a thin test.
 Prefer **fit** for page behaviour in stub mode, **e2e** for an
 integrated/system path, **unit** only when the hole is mechanism-only —
 that should stay rare, and a unit link can never be the sole full
-witness for a page-level Then. See
+witness for a page-level Then a user could actually observe. See
 `docs/reference/openspec.md` → "Reading a coverage row" for the
 confidence table. Which repo/suite this maps to:
-[`../spec-catchup/references/SUITES.md`](../../spec-catchup/references/SUITES.md).
+[`../../spec-catchup/references/SUITES.md`](../../spec-catchup/references/SUITES.md).
+
+Exception: when the Then genuinely names something no user path
+exercises directly — ordering or config that a fit/e2e walk can't isolate
+from the rest of the journey — a unit witness against the production
+table/function it depends on is a legitimate `write-test`, not an
+automatic `accept-gap`. Say so plainly in `judgement` (name the missing
+user path) so a later reader can tell a deliberate mechanism witness from
+a lazy one.
 
 ## Propose the test and the probe
 

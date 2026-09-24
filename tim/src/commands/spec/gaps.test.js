@@ -50,13 +50,43 @@ const noneCoverage = () => ({
   ]
 })
 
+const partialCoverage = () => ({
+  capability: 'widgets',
+  areaCode: 'WIDGET',
+  specFile: 'openspec/specs/widgets/spec.md',
+  requirements: [
+    {
+      id: 'REQ-WIDGET-001',
+      name: 'Widgets spin',
+      coverage: 'partial',
+      scenarios: [
+        {
+          id: 'SCN-WIDGET-001-A',
+          name: 'A widget spins on load',
+          coverage: 'partial',
+          tests: [
+            {
+              type: 'unit',
+              repo: 'widgets',
+              file: 'widget.test.js',
+              test: 'spins',
+              strength: 'partial'
+            }
+          ],
+          notes: 'GAP: only a unit witness so far.'
+        }
+      ]
+    }
+  ]
+})
+
 let root
 
 afterEach(() => {
   if (root) rmSync(root, { recursive: true, force: true })
 })
 
-const seedWorkspace = () => {
+const seedWorkspace = (coverage = noneCoverage()) => {
   root = mkdtempSync(join(tmpdir(), 'tim-spec-gaps-cli-'))
   writeFileSync(join(root, 'Makefile'), 'all:\n')
   mkdirSync(join(root, 'repos'), { recursive: true })
@@ -68,7 +98,7 @@ const seedWorkspace = () => {
   )
   writeFileSync(
     join(root, 'openspec', 'coverage', 'widgets', 'coverage.json'),
-    JSON.stringify(noneCoverage())
+    JSON.stringify(coverage)
   )
 }
 
@@ -116,6 +146,17 @@ describe('tim spec gaps', () => {
     const envelope = JSON.parse(run.stdout.trim())
 
     expect(run.exitCode).toBe(0)
+    expect(envelope.result.rows).toEqual([])
+  })
+
+  test('--none with a partial-only corpus reports zero rows', async () => {
+    seedWorkspace(partialCoverage())
+
+    const run = await runTim(['spec', 'gaps', '--none', '--json'])
+    const envelope = JSON.parse(run.stdout.trim())
+
+    expect(run.exitCode).toBe(0)
+    expect(envelope.result.partialCount).toBe(1)
     expect(envelope.result.rows).toEqual([])
   })
 })

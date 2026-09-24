@@ -141,4 +141,25 @@ describe('validateWithOpenspecCli', () => {
       message: expect.stringContaining('Unknown item widgets')
     })
   })
+
+  test('raises PARSE rather than throwing a TypeError when the JSON is not an object', async () => {
+    const { run } = fakeRun('null')
+
+    await expect(
+      validateWithOpenspecCli({ specRoot: '/ws', run })
+    ).rejects.toMatchObject({
+      code: 'PARSE',
+      message: expect.stringContaining('did not return an items array')
+    })
+  })
+
+  test('treats a missing issues array as no issues rather than throwing', async () => {
+    const { run } = fakeRun(
+      JSON.stringify({ items: [{ id: 'widgets', valid: false }] })
+    )
+
+    await expect(
+      validateWithOpenspecCli({ specRoot: '/ws', run })
+    ).resolves.toEqual([])
+  })
 })

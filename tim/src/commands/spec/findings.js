@@ -211,9 +211,7 @@ export const register = (spec, { timVersion }) => {
             }
           })()
         const date =
-          opts.date ??
-          payload.date ??
-          new Date().toISOString().slice(0, 10)
+          opts.date ?? payload.date ?? new Date().toISOString().slice(0, 10)
         const { runDir, data, reportPath } = createRun({
           workspaceRoot,
           skill,
@@ -296,7 +294,10 @@ export const register = (spec, { timVersion }) => {
     )
     .option(...RUN_OPTION)
     .option(...SKILL_OPTION)
-    .option('--accept', "Accept the judge's finding (does not apply the edit yet)")
+    .option(
+      '--accept',
+      "Accept the judge's finding (does not apply the edit yet)"
+    )
     .option('--reject', 'The judge was wrong')
     .option('--edit', 'Right direction, different wording — then apply')
     .option('--defer', 'Leave it for a later walk')

@@ -356,11 +356,7 @@ export const markApplied = ({ runDir, id, skill = DEFAULT_SKILL }) => {
  * @param {string} [args.skill]
  * @returns {object}
  */
-export const ruleBucket = ({
-  runDir,
-  disposition,
-  skill = DEFAULT_SKILL
-}) => {
+export const ruleBucket = ({ runDir, disposition, skill = DEFAULT_SKILL }) => {
   const data = loadFindings(runDir, skill)
   data.noActionBucket.disposition = disposition
   data.noActionBucket.status = STATUS_FOR[disposition]

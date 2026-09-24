@@ -21,9 +21,7 @@ describe('matchesGapNarrowing', () => {
 
   test('--partial alone keeps only partial', () => {
     expect(matchesGapNarrowing({ coverage: 'none' }, false, true)).toBe(false)
-    expect(matchesGapNarrowing({ coverage: 'partial' }, false, true)).toBe(
-      true
-    )
+    expect(matchesGapNarrowing({ coverage: 'partial' }, false, true)).toBe(true)
   })
 
   test('--none and --partial together keep both (union)', () => {

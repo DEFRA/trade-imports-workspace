@@ -100,9 +100,9 @@ describe('tim spec findings seed', () => {
     expect(result.exitCode).toBe(0)
     const payload = JSON.parse(result.stdout.trim())
     expect(payload.result.run).toBe('workareas/spec-catchup/2026-09-24')
-    expect(
-      readFileSync(join(root, payload.result.report), 'utf8')
-    ).toContain('Spec catch-up — 2026-09-24')
+    expect(readFileSync(join(root, payload.result.report), 'utf8')).toContain(
+      'Spec catch-up — 2026-09-24'
+    )
   })
 
   test('refuses to overwrite a ruled run without --force', async () => {

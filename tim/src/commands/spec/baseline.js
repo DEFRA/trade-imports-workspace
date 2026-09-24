@@ -29,10 +29,7 @@ export const renderBaselineText = (baseline) =>
  * @param {string} workspaceRoot
  * @returns {string}
  */
-export const renderAdvanceText = (
-  { before, after, ruledRun },
-  workspaceRoot
-) =>
+export const renderAdvanceText = ({ before, after, ruledRun }, workspaceRoot) =>
   [
     `Baseline advanced: ${before.verifiedAt} (${before.verifiedBy}) -> ${after.verifiedAt} (${after.verifiedBy}).`,
     ...Object.keys(after.repos).map((repo) => {
@@ -40,9 +37,7 @@ export const renderAdvanceText = (
       return `  ${repo.padEnd(34)} ${moved ? `${before.repos[repo].slice(0, 12)} -> ${after.repos[repo].slice(0, 12)}` : 'unchanged'}`
     }),
     ...(ruledRun
-      ? [
-          `Checked against catch-up run ${relative(workspaceRoot, ruledRun)}.`
-        ]
+      ? [`Checked against catch-up run ${relative(workspaceRoot, ruledRun)}.`]
       : []),
     'Written to openspec/baseline.json — commit it yourself.'
   ].join('\n')

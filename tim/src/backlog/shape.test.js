@@ -239,6 +239,95 @@ describe('checkBacklog', () => {
     ])
   })
 
+  describe('the branch lifecycle fields', () => {
+    const syncRepos = {
+      ins: {
+        path: 'repos/trade-imports-ins-frontend',
+        github: 'DEFRA/trade-imports-ins-frontend'
+      },
+      tests: {
+        path: 'repos/trade-imports-animals-tests',
+        github: 'DEFRA/trade-imports-animals-tests'
+      }
+    }
+    const syncBacklogOf = (...rows) => ({
+      ...backlogOf(...rows),
+      repos: syncRepos
+    })
+
+    test('passes a merge row that runs unit and FIT and does not wait for CI', () => {
+      const mergeRow = row({
+        repos: ['tests'],
+        merge: { tests: 'origin/main' },
+        gatePhases: ['unit', 'fit'],
+        awaitCi: false
+      })
+
+      expect(checkBacklog(syncBacklogOf(mergeRow)).problems).toEqual([])
+    })
+
+    test('passes null for gate, merge, gatePhases and awaitCi', () => {
+      const unset = row({
+        gate: null,
+        merge: null,
+        gatePhases: null,
+        awaitCi: null
+      })
+
+      expect(checkBacklog(backlogOf(unset)).problems).toEqual([])
+    })
+
+    test('passes a docs row with no repos and no gate phases', () => {
+      const docsRow = row({ kind: 'docs', repos: [], gatePhases: [] })
+
+      expect(checkBacklog(syncBacklogOf(docsRow)).problems).toEqual([])
+    })
+
+    test('refuses a gate phase the gate does not have', () => {
+      expect(
+        checkBacklog(backlogOf(row({ gatePhases: ['unit', 'lint'] }))).problems
+      ).toEqual([
+        'inc-001 "gatePhases" must be a list of items from unit, fit, e2e, each once or null.'
+      ])
+    })
+
+    test('refuses a gate phase named twice', () => {
+      expect(
+        checkBacklog(backlogOf(row({ gatePhases: ['unit', 'unit'] }))).problems
+      ).toEqual([
+        'inc-001 "gatePhases" must be a list of items from unit, fit, e2e, each once or null.'
+      ])
+    })
+
+    test('refuses a merge that names no repo', () => {
+      expect(checkBacklog(backlogOf(row({ merge: {} }))).problems).toEqual([
+        'inc-001 "merge" must be an object whose values are text or null.'
+      ])
+    })
+
+    test('refuses an awaitCi that is not true or false', () => {
+      expect(checkBacklog(backlogOf(row({ awaitCi: 'no' }))).problems).toEqual([
+        'inc-001 "awaitCi" must be true or false or null.'
+      ])
+    })
+
+    test('refuses a merge into a repo the row does not build', () => {
+      const stray = row({ repos: ['ins'], merge: { tests: 'origin/main' } })
+
+      expect(checkBacklog(syncBacklogOf(stray)).problems).toEqual([
+        'inc-001 merges into "tests", which is not in its "repos".'
+      ])
+    })
+
+    test('refuses a merge into a repo the envelope does not name', () => {
+      const stray = row({ merge: { plants: 'origin/main' } })
+
+      expect(checkBacklog(syncBacklogOf(stray)).problems).toEqual([
+        'inc-001 merges into "plants", which the backlog\'s "repos" does not name.'
+      ])
+    })
+  })
+
   test('counts rows by status', () => {
     expect(
       checkBacklog(backlogOf(row(), row({ id: 'inc-002', status: 'done' })))

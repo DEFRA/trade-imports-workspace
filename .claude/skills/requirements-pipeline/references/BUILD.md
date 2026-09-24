@@ -32,8 +32,13 @@ defaulted. Never ask for a value the list below says how to derive.
 
 ```
 workarea      path under workareas/ holding backlog.json, e.g. shared/my-programme
-branch        the BASE branch: every increment cuts its own off this and
-              merges back. Default main.
+lifecycle     full (default) | branch. branch builds onto one existing
+              long-lived branch with no Jira and no merge: see "Branch
+              lifecycle" below. Use it only when the user names such a branch
+branch        full: the BASE branch every increment cuts its own off and
+              merges back into. Default main.
+              branch: the WORKING branch itself, the one the user named.
+              Never main or master
 scope         conventional-commit scope for landing commits. Default the
               backlog envelope's `programme`
 executor      claude (default) | codex
@@ -72,7 +77,10 @@ models        optional model per tier: heavy (implement, reviewers, verifiers,
               session model
 ```
 
-Every run goes ticket → branch → build → PR → CI → merge → ticket done.
+A `lifecycle: 'full'` run goes ticket → branch → build → PR → CI → merge → ticket
+done. A `lifecycle: 'branch'` run goes branch check → build → push → find the
+open PR → CI → done, and passes every Jira key, `requireApproval` and
+`approvalWaitMinutes` as `null` ([Branch lifecycle](#branch-lifecycle)).
 
 **This skill passes `requireApproval: false` unless the user asks otherwise,
 and that is the point.** The workflow itself has no default for this key —
@@ -230,6 +238,7 @@ Build the args object with every key below:
 {
   workarea: '<workarea>',
   branch: '<branch>',
+  lifecycle: 'full', // 'branch' only for a run onto an existing branch: see "Branch lifecycle"
   scope: '<scope>',
   executor: '<executor>',
   planOnly: false, // true writes <workarea>/plans/<id>.md and stops: a dry run to see how it would be built
@@ -363,12 +372,16 @@ handover prompt.
 | `ladder-red` | The verification ladder went red. Preserved, not discarded |
 | `land-failed` | The commit could not be made |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | Every PR is green but at least one has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
 | `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
-| `done-failed` | The merge is real but the ticket would not move to the finished status |
+| `done-failed` | The merge is real but the ticket would not move to the finished status. Under the branch lifecycle: the push is real but `tim backlog set --status done` failed |
+| `row-invalid` | Branch lifecycle only. The row's `repos`, `merge` or `gatePhases` do not fit the run: a repo it does not configure, a merge into a repo the row does not build, a gate phase that does not exist |
+| `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
+| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch |
+| `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one |
 
 **Every failure stops the whole run, not just that increment.** The loop never
 skips to the next id after one goes wrong: `tim backlog next` selects on status
@@ -423,6 +436,74 @@ asked.
 A run that stops short of `stopAfter` is not a failure — it is the loop telling
 you reality diverged from the plan.
 
+## Branch lifecycle
+
+`lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already exists in every backlog
+repo, each with its pull request already open, and leaves the merging to a human.
+
+### When to use it
+
+When the user names an existing branch and says the work goes onto it: a programme that syncs a feature branch
+with `main`, or that finishes a branch somebody else will merge. The first user is
+`workareas/shared/frontend-alignment/sync`, which brings `feat/NO_JIRA-frontend-alignment` up to date with `main`
+across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
+
+### What it never does
+
+- It makes no Jira call of any kind. There is no ticket and no board, so `jiraProject`, `epic`,
+  `jiraInProgressStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
+  `null`. The loop refuses a value in any of them, because a value would suggest it governs the run.
+- It never creates a branch, and refuses `main` and `master` as `branch`.
+- It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
+  a human's. A row whose acceptance is PR text (rewriting a PR body, lifting a draft) is not one this loop can
+  build: give it a withheld status, or do it by hand.
+- It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
+- It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
+  in progress and stashes the rest.
+- It runs on `executor: 'claude'` only. The Codex briefs name the frontend, backend and tests repos.
+
+### The row fields it reads
+
+Three optional row fields, defined in [`backlog.schema.json`](backlog.schema.json). The full lifecycle ignores all
+three.
+
+- `merge`, such as `{ "tests": "origin/main" }`: a ref to merge into each named repo. Every key must be in the row's
+  `repos`. The loop fetches and runs `git merge --no-ff --no-commit <ref>` after the plan and before the implementor,
+  who resolves it by the plan; the land stage commits it as a two-parent merge commit. The planner previews the
+  merge with `git merge-tree` and plans every resolution. Where the row's `notes` point at a resolutions file, it
+  plans exactly what that file records.
+- `gatePhases`, such as `["unit", "fit"]`: the phases of `tim build gate` the baseline and the ladder run. Use it
+  where the end-to-end proof belongs to one cross-repo row that runs after several merge rows. `[]` runs none.
+  Absent: all three.
+- `awaitCi: false`: push and record the PRs without waiting for CI. GitHub runs no checks on a PR that conflicts
+  with its base, so a row that lands before the merge that clears the conflict needs this, or it stops at
+  `ci-red` with `pr-conflicting`.
+
+A row with `repos: []` changes no backlog repo: its output is in the workspace repo itself, usually under
+`workareas/`. The workspace is not a backlog repo, so the loop does not commit it: the edits are left unstaged, the
+reviewers read them against HEAD, and the result lists them in `leftUncommitted`. **Commit them yourself after the
+run**, then push the workspace. Give such a row `gatePhases: []`, because nothing in the backlog repos changes.
+
+### Building the args
+
+The same keys as above, with `lifecycle: 'branch'`, `branch` set to the working branch, and `null` for every Jira
+key, `requireApproval` and `approvalWaitMinutes`. `repos` is the envelope's `repos` copied in full, whatever its
+keys are: the branch stage stops the run if the envelope and the args name different repos. The worked example in
+[`../workflow/README.md`](../workflow/README.md#the-branch-lifecycle) is the one for the frontend alignment sync.
+
+### Checking what landed
+
+A landed row is `done` in the backlog with its `commit` and `prs`, and is pushed to the branch. Nothing is merged,
+so there is no `main-red` to watch for. Each landed entry in the result carries `ci`: `green`, `not awaited` (the
+row set `awaitCi: false`) or `none` (the row changes no backlog repo). Report a row whose CI was not awaited as
+exactly that, never as green.
+
+### The stop reasons it adds
+
+`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. `ci-red` gains the
+`pr-conflicting` case. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
+`changes-requested`, `pr-left-open`) cannot fire.
+
 ## THE HANDOVER PROMPT
 
 Print this at every stop, in a fenced block, filled in. It is the whole
@@ -437,6 +518,7 @@ Resume the <programme> build with the requirements-pipeline skill's BUILD phase.
 
 workarea     <workarea>
 branch       <branch>
+lifecycle    <full or branch>
 scope        <scope>
 executor     <executor>
 jiraProject  <jiraProject>

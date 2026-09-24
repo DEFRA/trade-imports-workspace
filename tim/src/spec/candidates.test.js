@@ -235,9 +235,11 @@ describe('computeSpecCandidates', () => {
     expect(result.workPackets).toEqual([])
   })
 
-  test('--capability does not leak another capability\'s unresolved links', async () => {
+  test("--capability does not leak another capability's unresolved links", async () => {
     mkdirSync(join(root, 'openspec', 'specs', 'gadgets'), { recursive: true })
-    mkdirSync(join(root, 'openspec', 'coverage', 'gadgets'), { recursive: true })
+    mkdirSync(join(root, 'openspec', 'coverage', 'gadgets'), {
+      recursive: true
+    })
     writeFileSync(
       join(root, 'openspec', 'specs', 'gadgets', 'spec.md'),
       SPEC_TEXT.replaceAll('widget', 'gadget').replaceAll('WIDGET', 'GADGET')
@@ -258,7 +260,9 @@ describe('computeSpecCandidates', () => {
       'widgets'
     ])
     expect(
-      scoped.unresolvedLinks.every((finding) => finding.capability === 'widgets')
+      scoped.unresolvedLinks.every(
+        (finding) => finding.capability === 'widgets'
+      )
     ).toBe(true)
   })
 

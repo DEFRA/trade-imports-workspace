@@ -166,7 +166,11 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   codebases have moved on). See
   [`docs/analysis/gbn-ag-field-lineage.md`](docs/analysis/gbn-ag-field-lineage.md)
   for the frontend → NotificationAggregate → GBN-AG → PIMS GBN-AG field-mapping
-  audit.
+  audit, and
+  [`docs/analysis/sonarcloud-branch-gate-status.md`](docs/analysis/sonarcloud-branch-gate-status.md)
+  for the branch-level (not PR-scoped) quality gate status of all eight
+  sonar-integrated repos — read it before trusting a green PR check as
+  evidence that a repo's `main` is clean.
 
 ## SonarCloud integration
 

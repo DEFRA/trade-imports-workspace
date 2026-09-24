@@ -54,12 +54,12 @@ turn (`subagent_type: general-purpose`).
 | When | Spawn | Persona | Writes |
 |---|---|---|---|
 | ≥ ~8 work packets still need judgement (after Step 2) | One Task per batch of packets (≈5–10 each) | [`references/READER.md`](references/READER.md) | `workareas/spec-catchup/<date>/judge-<label>.json` |
-| ≥ 2 accepted findings touch **disjoint** capabilities | One Task per capability (or per finding if files don't overlap) | [`references/APPLY.md`](references/APPLY.md) | `openspec/specs/**`, `openspec/coverage/**` |
+| ≥ 2 accepted findings touch **disjoint** capabilities | One Task per capability **after** the parent has seeded and accepted | [`references/APPLY.md`](references/APPLY.md) | `openspec/specs/**`, `openspec/coverage/**` |
 
 Parent session: merge judge files into `payload.json`, seed, then
-auto-accept; after apply workers finish, mark `applied` and advance
-baseline. Keep apply **serial** when two findings share one
-`spec.md` / `coverage.json` (e.g. two address gaps).
+auto-accept. Workers **propose only** (`judge-*.json`). The parent
+applies serially after seed (or fans out APPLY only across disjoint
+files). Then mark `applied` and advance baseline.
 
 Small runs stay inline — no Task spawn required.
 
@@ -96,9 +96,10 @@ If there is nothing in scope, stop.
 ## Step 2: Declarative pre-pass (three capabilities only)
 
 `journey-flow`, `journey-section-captions` and `page-titles` (per service)
-have a mechanical answer — see prior Step 2 in git history / READER.md.
-Where source disagrees with `spec.md`, emit a **SPEC WRONG** finding with
-a concrete proposed diff.
+have a mechanical answer — follow the **Declarative pre-pass** section in
+[`references/READER.md`](references/READER.md). Compare the live source
+(flow section IDs, task-row captions, page titles) to `spec.md`. Where
+they disagree, emit a **spec-wrong** finding with a concrete `proposal.diff`.
 
 ## Step 3: Judge every other candidate
 
@@ -111,8 +112,9 @@ Follow [`references/READER.md`](references/READER.md). Four verdicts:
 | **spec-gap** | New behaviour; no requirement yet | Add to `spec.md` + coverage row |
 | **no-action** | Copy/layout/refactor only | Nothing — bucket ruled wholesale |
 
-Every finding needs the one-sentence judgement. Ambiguous → leave out of
-the seed and list under Unresolved in your completion notes — do not guess.
+Every finding needs the one-sentence judgement. Ambiguous → seed a
+**deferred** finding (`--defer` after seed) so `--require-ruled` cannot
+go `allRuled` while a packet was never judged. Do not omit it.
 
 Write intermediate judge notes as
 `workareas/spec-catchup/<date>/judge-*.json` (never beside the date folder).
@@ -147,13 +149,22 @@ Payload shape:
       }
     }
   ],
-  "noActionBucket": { "capabilities": 12 }
+  "noActionBucket": { "capabilities": 12, "ids": ["live-animals/foo"] },
+  "scope": {
+    "workPackets": ["live-animals/addresses"],
+    "unresolvedLinks": []
+  }
 }
 ```
 
 Ids are `F-001`, `F-002`, … (stale-link first, then spec-wrong, spec-gap).
 Prefer **individual findings only for stale-link / spec-wrong / spec-gap**.
-Count NO ACTION capabilities into `noActionBucket.capabilities`.
+Count NO ACTION capabilities into `noActionBucket.capabilities` **and**
+list their capability paths in `noActionBucket.ids`.
+`scope.workPackets` / `scope.unresolvedLinks` must list every candidate
+capability — seed refuses if any is missing from findings or `ids`.
+Copy `candidates.json` into the run dir so `--require-ruled` can check
+the same set.
 
 `baseline` is optional — seed fills it from `openspec/baseline.json`.
 

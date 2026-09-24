@@ -43,7 +43,17 @@ export const validateWithOpenspecCli = async ({
     )
   }
 
-  return (parsed.items ?? [])
+  if (!Array.isArray(parsed.items)) {
+    const first = parsed.status?.[0]?.message
+    throw new TimError(
+      'PARSE',
+      first
+        ? `openspec validate did not return items: ${first}`
+        : 'openspec validate did not return an items array.'
+    )
+  }
+
+  return parsed.items
     .filter((item) => !item.valid)
     .flatMap((item) =>
       item.issues.map((issue) => ({

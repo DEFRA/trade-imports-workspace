@@ -12,6 +12,17 @@ seed, apply, or edit `openspec/` — the parent merges and applies.
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../../docs/agent-skills.md) → "Bash call hygiene".
 
+## Declarative pre-pass
+
+For `journey-flow`, `journey-section-captions` and `page-titles` only:
+
+1. Read the live source (`flow.js` section IDs, hub task-row captions,
+   page `heading` / title copy) under the owning frontend repo.
+2. Compare that list, in order, to the capability's `spec.md`.
+3. If they differ, emit a `spec-wrong` finding whose `proposal.diff`
+   restates the source list. `evidence.source` is the file:line of the
+   source of truth.
+
 ## What you see per work packet
 
 Never the whole corpus — only:
@@ -32,14 +43,23 @@ an unchanged body is a STALE LINK, not drift.
 
 | Verdict | Meaning | On accept |
 |---|---|---|
-| **STALE LINK** | The behaviour is unchanged; the test's file, title, or method name moved | Apply `coverage.json` fix |
-| **SPEC WRONG** | The behaviour actually changed, and `spec.md` still describes the old behaviour | Auto-apply the `spec.md` diff |
-| **SPEC GAP** | The changed test proves new behaviour with no requirement or scenario for it yet | Auto-apply the addition |
-| **NO ACTION** | The change is copy, layout, or an internal refactor that doesn't touch the claim the scenario makes | Bucket only — no per-file edit |
+| Display | Seed `verdict` | Meaning | On accept |
+|---|---|---|---|
+| **STALE LINK** | `stale-link` | The behaviour is unchanged; the test's file, title, or method name moved | Apply `coverage.json` fix |
+| **SPEC WRONG** | `spec-wrong` | The behaviour actually changed, and `spec.md` still describes the old behaviour | Auto-apply the `spec.md` diff |
+| **SPEC GAP** | `spec-gap` | The changed test proves new behaviour with no requirement or scenario for it yet | Auto-apply the addition |
+| **NO ACTION** | `no-action` | The change is copy, layout, or an internal refactor that doesn't touch the claim the scenario makes | Bucket only — no per-file edit |
 
-Seed every non–NO ACTION finding into `findings.json` with a concrete
-`proposal.diff`. APPLY auto-runs after seed — do **not** edit `spec.md`
-or `coverage.json` during judgement, only while applying.
+Write seed-ready objects to `judge-<label>.json` only. Do **not** seed,
+accept, or apply — the parent merges, seeds, then applies. Do not put
+unresolved packets in `report.md`; list them in the completion notes
+and seed them as deferred findings.
+
+Each spec-wrong / spec-gap finding needs `evidence.test` or
+`evidence.source` quoting the assertion or source line. The Then must
+be **at least as strong** as that quote (already-selected beats
+selectable). Givens are observable only — no stub mode / full stack /
+test-harness words.
 
 ## The judgement sentence
 
@@ -55,7 +75,7 @@ side changed:
 **A missing sentence is a halt on that one finding**, not a guess. If you
 cannot honestly write one of the four sentences above — the diff is
 ambiguous, or you'd need to run the suite to be sure — put the finding under
-"Unresolved" in the report instead of forcing a verdict. Conflating STALE
+"Unresolved" in the completion notes (and seed a deferred finding) instead of forcing a verdict. Conflating STALE
 LINK with SPEC WRONG is the worst failure mode this whole skill exists to
 avoid: a "corrected" link silently hides a real requirement change, and
 nothing downstream will ever notice.
@@ -94,7 +114,7 @@ either way, but get it right the first time.
 
 A unified diff against the current `spec.md`, in the spec's own voice —
 Given/When/Then, MUST not SHALL, the requirement/scenario heading format
-`openspec/config.yaml` defines. Put it on the finding's `proposal` so the
-proposal so APPLY can land it. Do not soften a
+`openspec/config.yaml` defines. Put the unified diff on `proposal.diff` and the spec path on
+`proposal.file` so APPLY can land it. Do not soften a
 genuine behaviour change into a vague "may vary" — state what the system
 now does, concretely, the same way the rest of that capability's spec does.

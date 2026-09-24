@@ -46,7 +46,7 @@ export const register = (program, { timVersion }) => {
   program
     .command('baseline')
     .description(
-      'Print the Behaviour Spec baseline, or --advance it to the current HEADs. Catch-up may pass --require-ruled after a finished walk.'
+      'Print the Behaviour Spec baseline, or --advance it to the current HEADs. Catch-up may pass --require-ruled after every finding is applied.'
     )
     .option(
       '--advance',
@@ -77,6 +77,12 @@ export const register = (program, { timVersion }) => {
           throw new TimError(
             'USAGE',
             '--require-ruled only makes sense with --advance.'
+          )
+        }
+        if (opts.run && !opts.requireRuled) {
+          throw new TimError(
+            'USAGE',
+            '--run only makes sense with --require-ruled.'
           )
         }
         const result = opts.advance

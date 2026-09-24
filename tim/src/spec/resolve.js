@@ -25,7 +25,10 @@ export const resolveLink = ({ link, index, javaSourceText }) => {
   )
   if (runnerMatch) return { resolved: true, tier: 'runner-index' }
 
-  if (javaSourceText !== undefined && javaSourceText.includes(link.test)) {
+  if (
+    javaSourceText !== undefined &&
+    javaSourceText.includes(`${link.test}(`)
+  ) {
     return { resolved: true, tier: 'java-grep' }
   }
 

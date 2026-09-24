@@ -126,4 +126,19 @@ describe('validateWithOpenspecCli', () => {
       code: 'PARSE'
     })
   })
+
+  test('raises PARSE when the JSON has no items array', async () => {
+    const { run } = fakeRun(
+      JSON.stringify({
+        status: [{ severity: 'error', message: 'Unknown item widgets' }]
+      })
+    )
+
+    await expect(
+      validateWithOpenspecCli({ specRoot: '/ws', run })
+    ).rejects.toMatchObject({
+      code: 'PARSE',
+      message: expect.stringContaining('Unknown item widgets')
+    })
+  })
 })

@@ -36,6 +36,20 @@ guess.
 judged the candidates. Human review is the eventual PR/diff, not a
 keystroke gate mid-run. Artifacts stay under the dated run dir.
 
+The ticket named a propose-only `spec-sweep` that never advanced the
+baseline. That was rejected: catch-up auto-applies (including
+spec-wrong/spec-gap) and advances with `--require-ruled` on a
+**complete** seed. Residual risk is a false watermark — mitigated by
+seeding every work packet (ambiguous → deferred), quoting evidence on
+every Then, and lint `--links`. A later refactor must not collapse
+candidates / lint / findings / baseline into one full-corpus LLM sweep;
+that breaks AC5.
+
+**tim-vs-AI ownership:** tim owns candidates, lint, findings state, and
+baseline advance. The agent owns only judgement and file apply.
+AI-only is rejected because it re-reads the whole corpus and cannot
+gate `--require-ruled` on structured rulings.
+
 ## 6. Helpers introduced
 
 None under `tools/spec-catchup/`. All mutations go through

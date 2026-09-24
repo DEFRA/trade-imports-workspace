@@ -178,10 +178,22 @@ export const runSpecLint = async ({
   const wants = (group) => groups.includes(group)
   const areasTable = wants('coverage') ? readAreasTable(specRoot) : null
 
+  const openspecCapability =
+    capability &&
+    corpus.capabilities.some(
+      (entry) => entry.hasSpec && entry.path === capability
+    )
+      ? capability
+      : undefined
+
   const openspecFindings = wants('specs')
-    ? (await validateWithOpenspecCli({ specRoot, capability, run })).filter(
-        (finding) => inScope(finding.capability, capability)
-      )
+    ? (
+        await validateWithOpenspecCli({
+          specRoot,
+          capability: openspecCapability,
+          run
+        })
+      ).filter((finding) => inScope(finding.capability, capability))
     : []
 
   const resolution = wants('links')

@@ -119,7 +119,7 @@ increment owns: coverage links whose tests moved, holes nothing has filled, code
 week. Both are now built as `tim spec` (no AI) and two skills: `spec-catchup`
 (code ahead of words) and `spec-cover` (words ahead of tests). Nothing
 here gates a PR, a push, a merge or a build run — every command is run by a
-person or by a skill walk, and every output is a report or an uncommitted edit.
+person or by a skill (no walk), and every output is a report or an uncommitted edit.
 
 | Command | Job | AI |
 |---|---|---|
@@ -127,7 +127,7 @@ person or by a skill walk, and every output is a report or an uncommitted edit.
 | `tim spec status` | Baseline sha and date per repo (from `openspec/baseline.json`), current HEAD, and how many **linked** test files changed since | none |
 | `tim spec gaps` | Every scenario that is not `full`, clustered and risk-ordered, rendering each row's existing `notes` verbatim — the diagnosis is already written when the coverage was built. `--none` / `--partial` narrow (same union grammar as `tim spec lint` group flags); `--unit-only` and `--scenario` replace the listing | none |
 | `tim spec candidates` | What the next catch-up should look at: linked files changed since the baseline, `lint`'s unresolved list, `gaps` as known-holes context, grouped into work packets per capability | none |
-| `tim spec baseline` / `--advance` / `--require-ruled` | Print the baseline, or move it. `--require-ruled` refuses unless the latest catch-up run is fully ruled **and** applied. Catch-up runs this after a finished walk; cover never does | none |
+| `tim spec baseline` / `--advance` / `--require-ruled` | Print the baseline, or move it. `--require-ruled` refuses unless the latest catch-up run is fully ruled **and** applied. Catch-up runs this after every finding is auto-applied; cover never does | none |
 | `tim spec e2e-overlap` | E2E tests whose every witnessed scenario also has a full-strength `fit` or `unit` witness — a shortlist for judgement, not a delete list | none |
 | `tim spec findings` | Seed / list / rule / applied / render for a catch-up or cover run (`--skill catchup\|cover`). Findings.json is the state; report.md is a render | none |
 

@@ -62,6 +62,15 @@ describe('resolveLink', () => {
     ).toEqual({ resolved: true, tier: 'java-grep' })
   })
 
+  test('does not resolve a truncated Java method against a longer name', () => {
+    expect(
+      resolveLink({
+        link: { type: 'unit', file: 'src/Widget.java', test: 'shouldSpin' },
+        javaSourceText: 'class Widget { void shouldSpinWhenReady() {} }'
+      })
+    ).toEqual({ resolved: false, tier: null })
+  })
+
   test('is unresolved when neither tier finds it', () => {
     expect(
       resolveLink({

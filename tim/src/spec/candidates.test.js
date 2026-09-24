@@ -234,4 +234,45 @@ describe('computeSpecCandidates', () => {
 
     expect(result.workPackets).toEqual([])
   })
+
+  test('--capability does not leak another capability\'s unresolved links', async () => {
+    mkdirSync(join(root, 'openspec', 'specs', 'gadgets'), { recursive: true })
+    mkdirSync(join(root, 'openspec', 'coverage', 'gadgets'), { recursive: true })
+    writeFileSync(
+      join(root, 'openspec', 'specs', 'gadgets', 'spec.md'),
+      SPEC_TEXT.replaceAll('widget', 'gadget').replaceAll('WIDGET', 'GADGET')
+    )
+    writeFileSync(
+      join(root, 'openspec', 'coverage', 'gadgets', 'coverage.json'),
+      JSON.stringify(coverageFor('src/missing.test.js'))
+    )
+    writeFileSync(join(repoDir, 'src', 'a.test.js'), 'test() // changed')
+    await commit(repoDir, 'touch the linked test')
+
+    const scoped = await computeSpecCandidates({
+      workspaceRoot: root,
+      capability: 'widgets'
+    })
+
+    expect(scoped.workPackets.map((packet) => packet.capability)).toEqual([
+      'widgets'
+    ])
+    expect(
+      scoped.unresolvedLinks.every((finding) => finding.capability === 'widgets')
+    ).toBe(true)
+  })
+
+  test('returns the empty report when there is no baseline', async () => {
+    rmSync(join(root, 'openspec', 'baseline.json'))
+
+    await expect(
+      computeSpecCandidates({ workspaceRoot: root })
+    ).resolves.toEqual({
+      staleness: null,
+      workPackets: [],
+      unresolvedLinks: [],
+      knownGaps: [],
+      commitLog: {}
+    })
+  })
 })

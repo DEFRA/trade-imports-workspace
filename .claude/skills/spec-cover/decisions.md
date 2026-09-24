@@ -33,6 +33,14 @@ only when the fix would guess behaviour.
 **Why:** Same as catch-up — mid-run keystroke gates were the wrong
 safety rail; the PR/diff is the review surface.
 
+Workers propose only. The parent applies after seed/accept so
+parallel Tasks cannot race on the same `coverage.json`.
+
+`strength: "full"` requires a recorded red-then-green probe
+(prod-mutation for unit/fit, assertion-invert plus Then-clause
+checklist for e2e) and `tim spec lint --links`. A probe that stays
+green is a defer, not a weaker test.
+
 ## 6. Helpers introduced
 
 None under `tools/spec-cover/`. Uses `tim spec gaps` +

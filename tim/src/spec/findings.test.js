@@ -273,7 +273,7 @@ describe('renderReport', () => {
 
   test('withholds the advance command until everything is ruled and applied', () => {
     expect(renderReport(loadFindings(runDir))).toContain(
-      'Walk them before finishing this run'
+      'Rule them before finishing this run'
     )
 
     ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
@@ -387,5 +387,50 @@ describe('assertRunRuled', () => {
     ruleBucket({ runDir, disposition: 'accept' })
 
     expect(assertRunRuled({ workspaceRoot: root }).ok).toBe(true)
+  })
+
+  test('cover cannot advance the baseline', () => {
+    expect(() =>
+      assertRunRuled({ workspaceRoot: root, skill: 'cover' })
+    ).toThrow(/does not advance the baseline/)
+  })
+
+  test('refuses when candidates.json still has unjudged packets', () => {
+    ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
+    markApplied({ runDir, id: 'F-001' })
+    ruleBucket({ runDir, disposition: 'accept' })
+    writeFileSync(
+      join(runDir, 'candidates.json'),
+      JSON.stringify({
+        result: {
+          workPackets: [
+            { capability: 'live-animals/addresses' },
+            { capability: 'plants/authentication' }
+          ],
+          unresolvedLinks: []
+        }
+      })
+    )
+
+    expect(() => assertRunRuled({ workspaceRoot: root })).toThrow(
+      /never judged: plants\/authentication/
+    )
+  })
+})
+
+describe('createRun scope', () => {
+  test('refuses a seed that leaves a work packet unjudged', () => {
+    expect(() =>
+      createRun({
+        workspaceRoot: root,
+        date: '2026-09-25',
+        baseline: { verifiedAt: '2026-09-16', verifiedBy: '8932fbf9' },
+        findings: [finding()],
+        scope: {
+          workPackets: ['live-animals/addresses', 'plants/authentication'],
+          unresolvedLinks: []
+        }
+      })
+    ).toThrow(/never judged: plants\/authentication/)
   })
 })

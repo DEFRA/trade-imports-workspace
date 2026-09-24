@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { run as runProcess } from '../exec/exec.js'
 import { readJsonFile } from '../backlog/io.js'
+import { TimError } from '../errors.js'
 import { repoPath } from '../constants/repos.js'
 import { buildCorpus } from './corpus.js'
 import { linksOf } from './checks/links.js'
@@ -41,7 +42,7 @@ export const changedFilesSince = async (
   headOfHead,
   run
 ) => {
-  if (baselineSha === headOfHead) return []
+  if (!headOfHead || baselineSha === headOfHead) return []
   const result = await run('git', [
     '-C',
     repoDir,
@@ -50,6 +51,12 @@ export const changedFilesSince = async (
     '--name-only',
     '--pretty=format:'
   ])
+  if (result.exitCode !== 0) {
+    throw new TimError(
+      'USAGE',
+      `Can't list files changed since ${baselineSha}: ${result.stderr || result.stdout || 'git log failed'}`
+    )
+  }
   return result.stdout
     .split('\n')
     .map((line) => line.trim())

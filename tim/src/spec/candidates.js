@@ -3,7 +3,7 @@ import { run as runProcess } from '../exec/exec.js'
 import { repoPath } from '../constants/repos.js'
 import { buildCorpus } from './corpus.js'
 import { linksOf } from './checks/links.js'
-import { computeStaleness, loadBaseline, changedFilesSince } from './status.js'
+import { computeStaleness, changedFilesSince } from './status.js'
 import { runSpecLint } from './lint.js'
 import { computeSpecGaps } from './gaps.js'
 
@@ -106,16 +106,37 @@ const buildWorkPacket = ({
  * @param {Function} [args.run]
  * @returns {Promise<object>}
  */
+const emptyCandidates = () => ({
+  staleness: null,
+  workPackets: [],
+  unresolvedLinks: [],
+  knownGaps: [],
+  commitLog: {}
+})
+
+const lintForCandidates = async ({ workspaceRoot, run }) => {
+  try {
+    return await runSpecLint({
+      workspaceRoot,
+      groups: ['links'],
+      run
+    })
+  } catch {
+    return { findings: [] }
+  }
+}
+
 export const computeSpecCandidates = async ({
   workspaceRoot,
   capability,
   wide = false,
   run = runProcess
 }) => {
-  const baseline = loadBaseline(workspaceRoot)
   const staleness = await computeStaleness({ workspaceRoot, run })
+  if (!staleness) return emptyCandidates()
+
   const [lint, gaps] = await Promise.all([
-    runSpecLint({ workspaceRoot, run }),
+    lintForCandidates({ workspaceRoot, run }),
     computeSpecGaps({ workspaceRoot })
   ])
 
@@ -156,7 +177,7 @@ export const computeSpecCandidates = async ({
     const coverageUpdated = await coverageTouchedSinceBaseline({
       workspaceRoot,
       capabilityPath: capabilityEntry.path,
-      verifiedBy: baseline.verifiedBy,
+      verifiedBy: staleness.verifiedBy,
       run
     })
 
@@ -189,9 +210,10 @@ export const computeSpecCandidates = async ({
     workPackets: packets,
     unresolvedLinks: lint.findings.filter(
       (finding) =>
-        finding.check === 'link-file' || finding.check === 'link-test'
+        (finding.check === 'link-file' || finding.check === 'link-test') &&
+        inScope(finding.capability, capability)
     ),
-    knownGaps: gaps.rows,
+    knownGaps: gaps.rows.filter((row) => inScope(row.capability, capability)),
     commitLog: Object.fromEntries(
       Object.entries(commitLog).filter(([, log]) => log.length > 0)
     )

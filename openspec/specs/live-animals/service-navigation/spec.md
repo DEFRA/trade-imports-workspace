@@ -3,7 +3,7 @@
 ## Purpose
 
 The persistent navigation offered on every page of the service, and which section it marks as current. Signing out and showing no signed-in identity are governed by `live-animals/authentication`; this specifies only that the navigation offers the route to it.
-When more than one obligation set is served from the same app, navigation is evaluated for the set the user is in: links MUST stay on that set's URL prefix.
+When more than one obligation set is served from the same app, dashboard and service-name destinations are evaluated for the set the user is in.
 
 ## Requirements
 
@@ -51,4 +51,10 @@ When the live-animals set is mounted under its own URL prefix, the system MUST m
 **ID**: SCN-NAV-004-A
 - **GIVEN** the user is working on a live-animals notification under that set's URL prefix
 - **WHEN** they follow the dashboard item in the navigation
-- **THEN** the dashboard is shown under that same set prefix
+- **THEN** they arrive at the live-animals dashboard rather than the service root
+
+#### Scenario: Following the service name from inside a notification stays on the set prefix
+**ID**: SCN-NAV-004-B
+- **GIVEN** the user is working on a live-animals notification under that set's URL prefix
+- **WHEN** they follow the service name link in the header
+- **THEN** they arrive at the live-animals dashboard rather than the service root

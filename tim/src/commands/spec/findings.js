@@ -219,6 +219,7 @@ export const register = (spec, { timVersion }) => {
           baseline,
           findings: payload.findings ?? [],
           noActionBucket: payload.noActionBucket,
+          scope: payload.scope,
           force: Boolean(opts.force)
         })
         return {

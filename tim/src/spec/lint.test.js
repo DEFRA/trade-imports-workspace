@@ -294,17 +294,85 @@ describe('runSpecLint', () => {
       join(root, 'openspec', 'specs', 'gadgets', 'spec.md'),
       SPEC_TEXT.replaceAll('widget', 'gadget').replaceAll('WIDGET', 'GADGET')
     )
+    const calls = []
+    const recordingRun = async (command, args, opts) => {
+      calls.push({ command, args, cwd: opts?.cwd })
+      return cleanOpenspecRun()
+    }
 
     const result = await runSpecLint({
       workspaceRoot: root,
       capability: 'widgets',
-      run: cleanOpenspecRun
+      run: recordingRun
     })
 
     expect(result.capabilityCount).toBe(1)
     expect(
       result.findings.every((finding) => finding.capability === 'widgets')
     ).toBe(true)
+    expect(calls[0].args).toContain('widgets')
+    expect(calls[0].args).not.toContain('--specs')
+  })
+
+  test('a parent --capability does not pass the prefix to openspec validate', async () => {
+    mkdirSync(join(root, 'openspec', 'specs', 'live-animals', 'widgets'), {
+      recursive: true
+    })
+    mkdirSync(join(root, 'openspec', 'coverage', 'live-animals', 'widgets'), {
+      recursive: true
+    })
+    writeFileSync(
+      join(root, 'openspec', 'specs', 'live-animals', 'widgets', 'spec.md'),
+      SPEC_TEXT
+    )
+    writeFileSync(
+      join(
+        root,
+        'openspec',
+        'coverage',
+        'live-animals',
+        'widgets',
+        'coverage.json'
+      ),
+      JSON.stringify({
+        ...validCoverage(),
+        capability: 'live-animals/widgets',
+        specFile: 'openspec/specs/live-animals/widgets/spec.md'
+      })
+    )
+    const calls = []
+    const recordingRun = async (command, args, opts) => {
+      calls.push({ command, args, cwd: opts?.cwd })
+      return cleanOpenspecRun()
+    }
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      capability: 'live-animals',
+      groups: ['specs'],
+      run: recordingRun
+    })
+
+    expect(result.capabilityCount).toBeGreaterThan(0)
+    expect(calls[0].args).toContain('--specs')
+    expect(calls[0].args).not.toContain('live-animals')
+  })
+
+  test('flags coverage.json with no matching spec.md', async () => {
+    rmSync(join(root, 'openspec', 'specs', 'widgets', 'spec.md'))
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['binding'],
+      run: cleanOpenspecRun
+    })
+
+    expect(result.findings).toEqual([
+      expect.objectContaining({
+        check: 'pairing',
+        message: expect.stringContaining('no matching spec.md')
+      })
+    ])
   })
 
   test('raises NOT_FOUND for a --capability the corpus does not have', async () => {

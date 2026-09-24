@@ -17,7 +17,7 @@ export const DISPOSITIONS = ['accept', 'reject', 'edit', 'defer']
 
 /**
  * Per-skill run layout and verdict vocabulary. Catch-up writes the
- * Behaviour Spec; cover writes tests. Same walker machinery for both.
+ * Behaviour Spec; cover writes tests. Same findings state machine for both.
  */
 export const SKILLS = {
   catchup: {
@@ -90,7 +90,16 @@ const findingSchemaFor = (config) =>
         test: z.string().optional(),
         source: z.string().optional(),
         commit: z.string().optional(),
-        notes: z.string().optional()
+        notes: z.string().optional(),
+        thenClauses: z.array(z.string()).optional(),
+        probe: z
+          .object({
+            kind: z.enum(['prod-mutation', 'assertion-invert']),
+            command: z.string().min(1),
+            red: z.boolean(),
+            green: z.boolean()
+          })
+          .optional()
       })
       .default({}),
     proposal: z
@@ -123,12 +132,24 @@ const findingsFileSchemaFor = (config) =>
     noActionBucket: z
       .object({
         capabilities: z.number().int().nonnegative(),
+        ids: z.array(z.string()).default([]),
         disposition: z.enum(DISPOSITIONS).nullable().default(null),
         status: z
           .enum(['pending', 'accepted', 'rejected', 'deferred'])
           .default('pending')
       })
-      .default({ capabilities: 0, disposition: null, status: 'pending' })
+      .default({
+        capabilities: 0,
+        ids: [],
+        disposition: null,
+        status: 'pending'
+      }),
+    scope: z
+      .object({
+        workPackets: z.array(z.string()),
+        unresolvedLinks: z.array(z.string())
+      })
+      .optional()
   })
 
 /**
@@ -179,6 +200,50 @@ export const resolveRun = ({ workspaceRoot, skill = DEFAULT_SKILL, run }) => {
   return join(runsDir, dates.at(-1))
 }
 
+const accountedCapabilities = (data) =>
+  new Set([
+    ...data.findings.map((finding) => finding.capability),
+    ...(data.noActionBucket.ids ?? [])
+  ])
+
+const missingFromScope = (data, scope) => {
+  if (!scope) return []
+  const accounted = accountedCapabilities(data)
+  return [...scope.workPackets, ...scope.unresolvedLinks].filter(
+    (capability) => !accounted.has(capability)
+  )
+}
+
+const assertScopeAccounted = (data, scope = data.scope) => {
+  const missing = missingFromScope(data, scope)
+  if (missing.length === 0) return
+  throw new TimError(
+    'USAGE',
+    `Can't seed findings: these candidates were never judged: ${missing.join(', ')}.`
+  )
+}
+
+const scopeFromCandidatesFile = (runDir) => {
+  const path = join(runDir, 'candidates.json')
+  if (!existsSync(path)) return null
+  try {
+    const raw = JSON.parse(readFileSync(path, 'utf8'))
+    const result = raw.result ?? raw
+    return {
+      workPackets: (result.workPackets ?? []).map(
+        (packet) => packet.capability
+      ),
+      unresolvedLinks: [
+        ...new Set(
+          (result.unresolvedLinks ?? []).map((link) => link.capability)
+        )
+      ]
+    }
+  } catch {
+    return null
+  }
+}
+
 /**
  * Create (or overwrite) a run directory with findings.json and report.md.
  * Refuses to overwrite a run that already has rulings, unless `force`.
@@ -189,7 +254,8 @@ export const resolveRun = ({ workspaceRoot, skill = DEFAULT_SKILL, run }) => {
  * @param {string} args.date - YYYY-MM-DD
  * @param {{verifiedAt: string, verifiedBy: string}} args.baseline
  * @param {object[]} args.findings
- * @param {{capabilities: number}} [args.noActionBucket]
+ * @param {{capabilities: number, ids?: string[]}} [args.noActionBucket]
+ * @param {{workPackets: string[], unresolvedLinks: string[]}} [args.scope]
  * @param {boolean} [args.force] - Overwrite even when the existing run has rulings
  * @returns {{runDir: string, data: object, reportPath: string}}
  */
@@ -200,6 +266,7 @@ export const createRun = ({
   baseline,
   findings,
   noActionBucket,
+  scope,
   force = false
 }) => {
   const config = skillConfig(skill)
@@ -228,9 +295,11 @@ export const createRun = ({
     findings,
     noActionBucket: noActionBucket ?? {
       capabilities: 0,
+      ids: [],
       disposition: null,
       status: 'pending'
-    }
+    },
+    ...(scope ? { scope } : {})
   }
   const schema = findingsFileSchemaFor(config)
   const parsed = schema.safeParse(raw)
@@ -246,6 +315,7 @@ export const createRun = ({
   if (duplicate) {
     throw new TimError('USAGE', `Finding id ${duplicate} is used twice.`)
   }
+  assertScopeAccounted(parsed.data)
   saveFindings(runDir, parsed.data)
   const reportPath = writeReport(runDir, skill)
   return { runDir, data: parsed.data, reportPath }
@@ -445,7 +515,8 @@ export const assertRunRuled = ({
     )
   }
   const runDir = resolveRun({ workspaceRoot, skill, run })
-  const counts = countFindings(loadFindings(runDir, skill))
+  const data = loadFindings(runDir, skill)
+  const counts = countFindings(data)
   if (!counts.allRuled) {
     const parts = []
     if (counts.open > 0) parts.push(`${counts.open} still open`)
@@ -455,9 +526,11 @@ export const assertRunRuled = ({
     if (counts.bucketOpen) parts.push('the NO ACTION bucket is not ruled')
     throw new TimError(
       'USAGE',
-      `Can't advance the baseline yet: ${parts.join('; ')}. Walk the ${config.id} run first.`
+      `Can't advance the baseline yet: ${parts.join('; ')}. Finish the ${config.id} run first.`
     )
   }
+  const candidatesScope = scopeFromCandidatesFile(runDir)
+  if (candidatesScope) assertScopeAccounted(data, candidatesScope)
   return { ok: true, runDir, counts }
 }
 
@@ -537,7 +610,7 @@ export const renderReport = (data) => {
   const counts = countFindings(data)
   const next = (() => {
     if (!counts.allRuled) {
-      return `${counts.open} finding(s) still open${counts.unapplied ? `, ${counts.unapplied} accepted but not applied` : ''}${counts.bucketOpen ? ', and the NO ACTION bucket' : ''}. Walk them before finishing this run.`
+      return `${counts.open} finding(s) still open${counts.unapplied ? `, ${counts.unapplied} accepted but not applied` : ''}${counts.bucketOpen ? ', and the NO ACTION bucket' : ''}. Rule them before finishing this run.`
     }
     if (config.advancesBaseline) {
       return 'Every finding is ruled and applied. The baseline can be advanced:\n\n```bash\ntim spec baseline --advance --require-ruled\n```'

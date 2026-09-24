@@ -53,11 +53,11 @@ turn (`subagent_type: general-purpose`).
 
 | When | Spawn | Persona | Writes |
 |---|---|---|---|
-| ≥ ~4 gap rows | One Task per gap (or a small batch that shares one test file) | [`references/PROPOSER.md`](references/PROPOSER.md) then [`references/APPLY.md`](references/APPLY.md) in the same worker | test under `repos/<repo>/`, matching `coverage.json`, `workareas/spec-cover/<date>/judge-<id>.json` |
+| ≥ ~4 gap rows | One Task per gap (or a small batch that shares one test file) | [`references/PROPOSER.md`](references/PROPOSER.md) only | `workareas/spec-cover/<date>/judge-<id>.json` |
 
 Parent session: collect proposals into `payload.json`, seed, auto-accept,
-mark `applied` once each worker's lint is clean. Serialize workers that
-would edit the same coverage.json or the same test file.
+then apply **serially** (or fan out APPLY only across disjoint test
+files and coverage.json files). Mark `applied` once lint is clean.
 
 Zero or one gap stays inline.
 
@@ -109,8 +109,12 @@ paths, **unit** for mechanism only — see
 `docs/reference/openspec.md` → "Reading a coverage row". Do not claim
 `strength: "full"` for a weak assertion.
 
-Ambiguous gaps → leave out of the seed; list under Unresolved in
-completion notes. Write judge scratch as
+Every Then clause goes on `evidence.thenClauses`. Do not claim
+`strength: "full"` unless each clause has its own assertion **and**
+the APPLY probe went red then green.
+
+Ambiguous gaps → seed as deferred (`accept-gap` or `--defer`), not
+omit. Write judge scratch as
 `workareas/spec-cover/<date>/judge-*.json`.
 
 ## Step 3: Seed
@@ -137,7 +141,7 @@ Payload:
       "proposal": {
         "repo": "trade-imports-animals-tests",
         "type": "e2e",
-        "file": "tests/e2e/plants/auth-invalid.spec.ts",
+        "file": "tests/e2e/features/plants/auth.spec.ts",
         "diff": "+…",
         "coverageFile": "openspec/coverage/plants/authentication/coverage.json",
         "coverageDiff": "+…"
@@ -153,12 +157,14 @@ No human approval. For each pending finding, in id order:
 
 1. `tim spec findings rule F-00N --skill cover --accept`
 2. Follow [`references/APPLY.md`](references/APPLY.md) — write the test,
-   run the narrowest relevant test command, update coverage.json, run
-   `tim spec lint --coverage --binding --capability <path>`, **fix any
-   red test or lint failure yourself** until clean, then
+   run the probe (must go red, then green), update coverage.json, run
+   `tim spec lint --coverage --binding --links --capability <path>`,
+   **fix setup yourself — never weaken the assertion**, then
    `tim spec findings applied F-00N --skill cover`.
-3. If it cannot be made green after a reasonable fix attempt, `--defer`
-   with a note, revert that finding's edits if needed, and continue.
+3. If the test cannot be made green without guessing, or the probe
+   stays green when it should fail, `--defer` with
+   `tim spec findings rule F-00N --skill cover --defer --note "..."`,
+   revert that finding's edits, and continue.
 
 Do **not** run `tim spec baseline --advance` — cover does not own the
 baseline.

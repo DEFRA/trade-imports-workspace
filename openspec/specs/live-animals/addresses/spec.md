@@ -8,28 +8,35 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user add, edit, or remove an address book record inside the notification journey itself — no journey create/edit form, and the journey's create-address URL MUST 404. Maintaining the book MUST only be possible in the address book's own service (INS). When the full stack is running, the journey MUST offer a control that hands the user to INS to add a record and return; in stub mode that control MUST NOT be shown.
+The system MUST NOT let a user add, edit, or remove an address book record inside the notification journey itself — no journey create/edit form, and the journey's create-address URL MUST 404. Maintaining the book MUST only be possible in the address book's own service (INS). When the address-book service is available to the journey, the journey MUST offer a control that hands the user to INS to add a record and return; when it is not, that control MUST NOT be shown.
 
-#### Scenario: Choosing an address for a consignment role offers no add control in stub mode
+#### Scenario: Choosing an address for a consignment role offers no add control when the address book is unavailable
 **ID**: SCN-ADDR-001-A
 - **GIVEN** the user is choosing an address for one of the consignment roles
-- **AND** the animals frontend is running in stub mode
+- **AND** the address-book service is not available to the journey
 - **WHEN** they view the picker
 - **THEN** no control to add a new address via INS is offered
 
-#### Scenario: Choosing an address for a consignment role links to INS to add when the full stack is running
+#### Scenario: Choosing an address for a consignment role links to INS to add when the address book is available
 **ID**: SCN-ADDR-001-D
 - **GIVEN** the user is choosing an address for one of the consignment roles
-- **AND** the animals frontend is running against the full stack (not stub mode)
+- **AND** the address-book service is available to the journey
 - **WHEN** they view the picker
 - **THEN** a control is offered that takes them to INS to add an address
 
-#### Scenario: Choosing the consignment contact address offers no add control in stub mode
+#### Scenario: Choosing the consignment contact address offers no add control when the address book is unavailable
 **ID**: SCN-ADDR-001-B
 - **GIVEN** the user is choosing the consignment contact address
-- **AND** the animals frontend is running in stub mode
+- **AND** the address-book service is not available to the journey
 - **WHEN** they view the page
 - **THEN** no control to add a new address via INS is offered
+
+#### Scenario: Choosing the consignment contact address links to INS to add when the address book is available
+**ID**: SCN-ADDR-001-E
+- **GIVEN** the user is choosing the consignment contact address
+- **AND** the address-book service is available to the journey
+- **WHEN** they view the page
+- **THEN** a control is offered that takes them to INS to add an address
 
 #### Scenario: The create-address page is not served from the notification journey
 **ID**: SCN-ADDR-001-C
@@ -39,14 +46,15 @@ The system MUST NOT let a user add, edit, or remove an address book record insid
 
 ### Requirement: Adding via INS returns the user to the journey picker
 **ID**: REQ-ADDR-016
-When the user leaves the journey to add an address in INS, the system MUST return them to the same picker afterwards: saving MUST leave the new record selectable on that picker, and cancelling MUST return without selecting an address.
+When the user leaves the journey to add an address in INS, the system MUST return them to the same picker afterwards: saving MUST return them with the new address already selected and committed on that picker, and cancelling MUST return without selecting an address.
 
-#### Scenario: Saving in INS returns to the picker with the new address available
+#### Scenario: Saving in INS returns to the picker with the new address already selected
 **ID**: SCN-ADDR-016-A
 - **GIVEN** the user has opened INS to add an address from a consignment-role picker
 - **WHEN** they save a new address in INS
 - **THEN** they return to that picker's page
-- **AND** they can select the new address and continue so the role shows it
+- **AND** the new address is already selected
+- **AND** continuing shows that address on the role
 
 #### Scenario: Cancelling INS add returns to the picker without saving
 **ID**: SCN-ADDR-016-B

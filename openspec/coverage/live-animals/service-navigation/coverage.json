@@ -60,14 +60,23 @@
     {
       "id": "REQ-NAV-004",
       "name": "Dashboard navigation stays on the current set's URL prefix",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-NAV-004-A",
           "name": "Following the dashboard item from inside a notification stays on the set prefix",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should point the dashboard link and the service name at the set’s own base", "strength": "full", "notes": "asserts dashboard and service-name hrefs use SET_BASE rather than bare /" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "reaches the dashboard from inside a notification", "strength": "full", "notes": "follows the dashboard item from inside a notification; asserts URL is the set dashboard, not the service root" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should point the dashboard link and the service name at the set’s own base", "strength": "partial", "notes": "hrefs use SET_BASE rather than bare /; does not follow the link" }
+          ]
+        },
+        {
+          "id": "SCN-NAV-004-B",
+          "name": "Following the service name from inside a notification stays on the set prefix",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should point the dashboard link and the service name at the set’s own base", "strength": "partial", "notes": "service-name href is SET_BASE; no fit yet follows the service name from inside a notification" }
           ]
         }
       ]

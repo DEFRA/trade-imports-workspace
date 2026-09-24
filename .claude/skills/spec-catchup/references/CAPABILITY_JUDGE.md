@@ -32,7 +32,30 @@ own path/title (see "Unit links" below).
 | Linked fit/e2e test is gone; source still shows the behaviour | `remove-dead-link` | Remove the dead link from `coverage.json` (recompute that scenario's coverage from what's left) and leave `spec.md` untouched — this becomes a `spec-cover` gap, not a catch-up rewrite |
 | Linked fit/e2e test is gone; source shows the behaviour is gone too | `delete-spec` | Delete `spec.md` and `coverage.json` for this capability together |
 | The words already match the report and source | `no-action` | Nothing |
-| You cannot tell either way | `uncertain` | Leave the spec; the parent reports this in the completion output rather than guessing |
+| You cannot tell either way, even after checking the trace (see below) | `uncertain` | Leave the spec; the parent reports this in the completion output rather than guessing |
+
+### Traces — a fallback, not a default
+
+Step 1 now runs both legs with `--trace=on` (see
+[`SUITES.md`](SUITES.md#traces)), so a trace exists for every test in the
+report, pass or fail — not just the `journeys` fit project, which already
+always records one.
+
+Reach for it when source + test body genuinely don't resolve the
+judgement — most often because the test routes through a page object or
+shared journey helper (`page-objects/` in `trade-imports-animals-tests`)
+that hides what actually happened, or the verdict would otherwise land on
+`uncertain`. Don't open a trace when `spec.md`, the test, and the source
+already agree — that's cost with no signal, and it doesn't apply to
+`update-link`/`remove-dead-link`/`delete-spec` judgements at all (those
+turn on whether a test still exists, not on behaviour).
+
+Trace file: `test-results/<project-and-test-dir>/trace.zip` (Playwright
+names the directory from the project + test title). Inspect it with the
+`playwright-trace` skill. If it resolves the judgement, cite what you saw
+in `evidence` the same way you'd cite a test/source line — e.g.
+`"trace": "test-results/features-declares-species/trace.zip — network tab
+shows the species POST firing before the redirect"`.
 
 ### Unit links
 
@@ -67,7 +90,8 @@ Write `judge-<capability-or-batch-label>.json` to the run directory:
   "judgement": "One sentence: what changed and why this verdict.",
   "evidence": {
     "test": "repos/trade-imports-animals-frontend/src/.../foo.test.js:42",
-    "source": "repos/trade-imports-animals-frontend/src/.../bar.js:10"
+    "source": "repos/trade-imports-animals-frontend/src/.../bar.js:10",
+    "trace": "optional — only when the trace fallback actually resolved the judgement"
   },
   "proposal": {
     "specDiff": "unified diff or the replacement spec.md section",

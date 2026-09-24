@@ -14,7 +14,7 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
 
-**That is the whole of the automated coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you. The periodic sweeps that would catch the rest are in "Next skills" below and are not built.
+**That is the whole of the automated, per-increment coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you in the moment. The periodic sweep that catches the rest is `spec-catchup` (drift: the code says something the spec doesn't) and `spec-cover` (gaps: the spec says something no test proves) — see CLAUDE.md's skill table, or "Periodic sweep" below.
 
 This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
@@ -55,11 +55,54 @@ They were generated, not written, so **`openspec init` and `openspec update` wil
 
 Aliases also exist under `openspec spec list|show|validate` — same idea.
 
-## Coverage gaps (workspace-owned)
+## `tim spec` — lint and gaps
 
-Coverage is not an OpenSpec CLI feature. It lives in `openspec/coverage/<capability-path>/coverage.json`, mirroring each `spec.md`. Query the JSON; do not re-derive gaps by hand.
+The two deterministic checks the `spec-catchup` and `spec-cover` skills
+drive. No other `tim spec` subcommand exists — anything else here (the
+`jq` snippets below) is a hand query, not a maintained surface.
 
-**Every non-full scenario:**
+```bash
+tim spec lint --specs --coverage --binding [--capability live-animals|plants|ins|admin]
+tim spec gaps [--none|--partial] [--capability live-animals|plants|ins|admin]
+```
+
+No args means the whole corpus. `--capability` scopes to that prefix and
+its descendants.
+
+| Command | Group/flag | Contract |
+|---|---|---|
+| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs |
+| `lint` | `--coverage` | Shape, enums, scenario and requirement rollups, a `none` carries notes, `areaCode`, `specFile` |
+| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim |
+| `gaps` | `--none` / `--partial` | Every non-full row (naming neither returns both; naming both unions them) |
+
+The three lint groups are independent — naming any narrows to those,
+naming none runs all three, and whatever didn't run is reported as "not
+selected" rather than omitted. `--binding` is pairing only; it does not
+prove `--specs` or `--coverage` — binding can be green while a THEN is
+missing or a rollup is wrong.
+
+Lint has **no `--links` group** — a coverage link naming a test that no
+longer exists is not a lint finding. `spec-catchup` is what notices that
+(comparing links against the suite report, then the source), not `tim
+spec lint`.
+
+`tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
+be `coverage: "full"` and still have drifted words. It's `spec-cover`'s
+work list: `tim spec gaps --none` is what to cover next; `--partial` only
+when asked to strengthen an existing weak witness.
+
+## Coverage gaps — hand fallback
+
+Prefer `tim spec gaps` and `tim spec lint` above — they're the
+maintained surface, with `--capability` scoping and `--json` output a
+skill can consume. What follows is the same four queries run by hand:
+reach for one when `tim` isn't on `PATH`, or for a one-off check outside
+a skill run. Coverage is not an OpenSpec CLI feature either way — it
+lives in `openspec/coverage/<capability-path>/coverage.json`, mirroring
+each `spec.md`. Query the JSON; do not re-derive gaps by hand.
+
+**Every non-full scenario** — same as `tim spec gaps`:
 
 ```bash
 find openspec/coverage -name coverage.json -exec jq -r '
@@ -70,7 +113,7 @@ find openspec/coverage -name coverage.json -exec jq -r '
 ' {} \;
 ```
 
-**Only uncovered (`none`):**
+**Only uncovered (`none`)** — same as `tim spec gaps --none`:
 
 ```bash
 find openspec/coverage -name coverage.json -exec jq -r '
@@ -81,13 +124,15 @@ find openspec/coverage -name coverage.json -exec jq -r '
 ' {} \;
 ```
 
-**Specs still missing stable IDs** (expect empty — IDs are required on every requirement and scenario):
+**Specs still missing stable IDs** — same as `tim spec lint --specs`
+(expect empty — IDs are required on every requirement and scenario):
 
 ```bash
 grep -rL '\*\*ID\*\*:' openspec/specs --include=spec.md
 ```
 
-**Coverage files missing for a capability:**
+**Coverage files missing for a capability** — same as `tim spec lint
+--binding`'s pairing check:
 
 ```bash
 comm -23 \
@@ -112,26 +157,22 @@ Not used here — see [How the spec stays in sync](#how-the-spec-stays-in-sync).
 
 Prefer **E2E** when the scenario is about the system; **fit** when it’s about the page; **both** when the requirement is load-bearing.
 
-## Next skills (remove when implemented)
+## Periodic sweep
 
-`frontend-change` keeps the spec honest **per increment**. Still missing: the periodic sweeps that catch what no single increment owns — drift in code nobody touched this week, coverage links whose tests moved, holes nothing has filled.
+`frontend-change` keeps the spec honest **per increment**; the periodic
+sweep that catches what no single increment owns — drift in code
+nobody touched this week, coverage links whose tests moved, holes
+nothing has filled — is `spec-catchup` and `spec-cover`, one journey
+set at a time. Triggers, the shared loop, and the suite table live in
+each skill's own `SKILL.md` (`.claude/skills/spec-catchup/`,
+`.claude/skills/spec-cover/`); routing is in CLAUDE.md's skill table.
 
-**The periodic full-drift-detection sweep is out of scope for EUDPA-574** (which built the per-increment half) and wants its own ticket. `spec-drift` and `coverage-refresh` below are where it belongs.
-
-Build first: `coverage-gaps` → `coverage-refresh` → `spec-drift`.
-
-| Skill | Job |
-|---|---|
-| `coverage-gaps` | `jq` inventory of none/partial; analysis-only backlog |
-| `coverage-refresh` | Re-read test bodies for capabilities whose tests changed; fix rollups / broken links |
-| `coverage-audit` | Per-capability: links still assert the THEN clauses? |
-| `coverage-for-scenario` | Given `SCN-…`, find witnesses or confirm `none` |
-| `missing-tests` | Turn none/partial into a test plan (implement only if asked) |
-| `spec-drift` | Spec ↔ code: CLEAN / DRIFT / SPEC GAP |
-| `spec-from-tests` | New test proves behaviour → small spec edit, same technique as `frontend-change` Step 5 |
-| `spec-rename-guard` | After a capability rename: refs, `AREAS.md`, coverage paths (IDs stay) |
-
-Rules: never put test names in `spec.md`; AREA codes are stable once assigned — never renumber an existing one, and a genuinely new capability mints the next free code with the collision checks in [`SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md); report before apply; scope by capability except the gaps inventory.
+`tim spec lint`'s three groups also catch most of what a capability
+rename would otherwise silently break — a dangling cross-reference
+(`--specs`), a stale `AREAS.md` row or `specFile` mismatch
+(`--coverage`), an orphaned `spec.md`/`coverage.json` pair
+(`--binding`) — and `spec-catchup` won't let you commit until lint is
+clean for the prefix you're sweeping.
 
 ## Leave out of day-to-day use
 

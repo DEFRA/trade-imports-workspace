@@ -27,6 +27,22 @@ on catch-up; on cover, only when the gap's proposed test is E2E — **stop
 and ask the human to start it**. Never start Docker/OrbStack yourself
 from the skill.
 
+## Traces
+
+Run both legs with full traces retained, not just on failure — this skill
+judges scenarios off a **green** report, and the repos' own defaults
+(`retain-on-failure`, `on-first-retry`) capture nothing when everything
+passes:
+
+```
+npm run test:fit -- --trace=on
+npm run test:docker-compose -- <path scope> --trace=on
+```
+
+`--trace=on` overrides each repo's `playwright.config` for this invocation
+only — never edit the checked-in configs for this. Traces land under
+`test-results/<test>/trace.zip`; inspect with the `playwright-trace` skill.
+
 ## Report reuse
 
 A reused report is only valid when it was taken from the exact code this

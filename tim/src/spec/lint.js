@@ -57,6 +57,56 @@ const inScope = (capabilityPath, scopeCapability) =>
   capabilityPath.startsWith(`${scopeCapability}/`)
 
 /**
+ * The four groups every check belongs to, named for what the check reads.
+ * `specs`, `coverage` and `binding` are file-local and finish in about a
+ * second; `links` reads the linked repos and builds a test-title index per
+ * repo, which is the expensive part of a lint run.
+ */
+export const CHECK_GROUPS = ['specs', 'coverage', 'binding', 'links']
+
+// Ordered as the findings appear in the report, and tagged rather than
+// blocked by group: that keeps the order stable when a group is left out,
+// so a narrowed run is a filter over this list and not a different walk.
+const CAPABILITY_CHECKS = [
+  { group: 'binding', run: (capability) => pairingFindings(capability) },
+  { group: 'coverage', run: (capability) => checkCoverageShape(capability) },
+  { group: 'coverage', run: (capability) => checkNoneHasNotes(capability) },
+  {
+    group: 'coverage',
+    run: (capability, { areasTable }) =>
+      checkAreaCodeAndSpecFile(capability, areasTable)
+  },
+  { group: 'specs', run: (capability) => checkIdsPresent(capability) },
+  { group: 'binding', run: (capability) => checkIdParity(capability) },
+  { group: 'binding', run: (capability) => checkNameParity(capability) },
+  { group: 'coverage', run: (capability) => checkScenarioRollup(capability) },
+  {
+    group: 'coverage',
+    run: (capability) => checkRequirementRollup(capability)
+  },
+  { group: 'specs', run: (capability) => checkThenPresent(capability) },
+  { group: 'specs', run: (capability) => checkNoShall(capability) },
+  {
+    group: 'specs',
+    run: (capability, { knownCapabilityPaths }) =>
+      checkCrossReferences(capability, knownCapabilityPaths)
+  },
+  {
+    group: 'links',
+    run: (capability, { workspaceRoot, resolution }) =>
+      checkLinkFilesExist(capability, workspaceRoot, resolution.cloned)
+  },
+  {
+    group: 'links',
+    run: (capability, { workspaceRoot, resolution }) =>
+      checkLinkTestsResolve(capability, workspaceRoot, resolution)
+  }
+]
+
+const capabilityChecksFor = (groups) =>
+  CAPABILITY_CHECKS.filter((check) => groups.includes(check.group))
+
+/**
  * All twelve checks (BUILD-IT-NOW.md §1.1): the two delegated to `openspec
  * validate --specs --strict --json` (openspec-cli.js), the ten
  * workspace-only ones (checks/shape.js, checks/ids.js, checks/rollups.js,
@@ -74,11 +124,18 @@ const inScope = (capabilityPath, scopeCapability) =>
  * @param {string} args.workspaceRoot
  * @param {string} [args.root] - Overrides the spec root (journey-builder worktrees)
  * @param {string} [args.capability] - Scope to one capability path and its descendants
+ * @param {string[]} [args.groups] - Which of CHECK_GROUPS to run; defaults to all four
  * @param {Function} [args.run] - The subprocess seam, for both the delegated openspec-validate call and the repo listings
  * @returns {Promise<{specRoot: string, capabilityCount: number, findings: object[], skipped: object[]}>}
  * @throws {TimError} NOT_FOUND when --capability names nothing in the corpus
  */
-export const runSpecLint = async ({ workspaceRoot, root, capability, run }) => {
+export const runSpecLint = async ({
+  workspaceRoot,
+  root,
+  capability,
+  groups = CHECK_GROUPS,
+  run
+}) => {
   const specRoot = resolveSpecRoot({ workspaceRoot, root })
   const corpus = buildCorpus({ root: specRoot })
 
@@ -112,22 +169,16 @@ export const runSpecLint = async ({ workspaceRoot, root, capability, run }) => {
     run
   })
 
-  const localFindings = scoped.flatMap((entry) => [
-    ...pairingFindings(entry),
-    ...checkCoverageShape(entry),
-    ...checkNoneHasNotes(entry),
-    ...checkAreaCodeAndSpecFile(entry, areasTable),
-    ...checkIdsPresent(entry),
-    ...checkIdParity(entry),
-    ...checkNameParity(entry),
-    ...checkScenarioRollup(entry),
-    ...checkRequirementRollup(entry),
-    ...checkThenPresent(entry),
-    ...checkNoShall(entry),
-    ...checkCrossReferences(entry, knownCapabilityPaths),
-    ...checkLinkFilesExist(entry, workspaceRoot, resolution.cloned),
-    ...checkLinkTestsResolve(entry, workspaceRoot, resolution)
-  ])
+  const context = {
+    areasTable,
+    knownCapabilityPaths,
+    workspaceRoot,
+    resolution
+  }
+  const checks = capabilityChecksFor(groups)
+  const localFindings = scoped.flatMap((entry) =>
+    checks.flatMap((check) => check.run(entry, context))
+  )
 
   const globalIdFindings = checkGlobalIdUniqueness(corpus.capabilities).filter(
     (finding) => inScope(finding.capability, capability)

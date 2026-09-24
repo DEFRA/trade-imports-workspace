@@ -156,6 +156,55 @@ describe('runSpecLint', () => {
     ])
   })
 
+  test('runs only the check groups it is given', async () => {
+    const broken = validCoverage()
+    broken.requirements[0].coverage = 'partial'
+    writeFileSync(
+      join(root, 'openspec', 'coverage', 'widgets', 'coverage.json'),
+      JSON.stringify(broken)
+    )
+
+    const coverageOnly = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['coverage'],
+      run: cleanOpenspecRun
+    })
+    const specsOnly = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['specs'],
+      run: cleanOpenspecRun
+    })
+
+    expect(coverageOnly.findings).toEqual([
+      expect.objectContaining({ check: 'rollup', capability: 'widgets' })
+    ])
+    expect(specsOnly.findings).toEqual([])
+  })
+
+  test('keeps findings in report order when a group is left out', async () => {
+    rmSync(join(root, 'openspec', 'coverage', 'widgets', 'coverage.json'))
+    const spec = `${SPEC_TEXT}\n### Requirement: Widgets SHALL wobble\n**ID**: REQ-WIDGET-002\nThe system SHALL wobble.\n\n#### Scenario: A widget wobbles\n**ID**: SCN-WIDGET-002-A\n- **GIVEN** a widget\n- **WHEN** nudged\n- **THEN** it wobbles\n`
+    writeFileSync(join(root, 'openspec', 'specs', 'widgets', 'spec.md'), spec)
+
+    const all = await runSpecLint({
+      workspaceRoot: root,
+      run: cleanOpenspecRun
+    })
+    const withoutBinding = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['specs', 'coverage', 'links'],
+      run: cleanOpenspecRun
+    })
+
+    expect(all.findings.map((finding) => finding.check)).toEqual([
+      'pairing',
+      'conventions'
+    ])
+    expect(withoutBinding.findings.map((finding) => finding.check)).toEqual([
+      'conventions'
+    ])
+  })
+
   test('merges a finding delegated from openspec validate --json', async () => {
     const failingOpenspecRun = async () => ({
       stdout: JSON.stringify({

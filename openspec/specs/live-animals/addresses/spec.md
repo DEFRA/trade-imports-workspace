@@ -8,17 +8,17 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user add, edit, or remove an address book record from anywhere within the notification journey — wherever an address is chosen, and by URL as well as by control. Maintaining the book MUST only be possible in the address book's own service.
+The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service. Outside stub mode, the journey MAY offer a control that hands the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return the user to the picker with the newly added address already selected once they save it there, or to the picker unchanged if they cancel.
 
-#### Scenario: Choosing an address for a consignment role offers no way to add one
+#### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A
-- **GIVEN** the user is choosing an address for one of the consignment roles
+- **GIVEN** the user is choosing an address for one of the consignment roles, and the address book service is not available (stub mode)
 - **WHEN** they view the page
 - **THEN** no control to add a new address is offered
 
-#### Scenario: Choosing the consignment contact address offers no way to add one
+#### Scenario: Choosing the consignment contact address offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-B
-- **GIVEN** the user is choosing the consignment contact address
+- **GIVEN** the user is choosing the consignment contact address, and the address book service is not available (stub mode)
 - **WHEN** they view the page
 - **THEN** no control to add a new address is offered
 
@@ -27,6 +27,25 @@ The system MUST NOT let a user add, edit, or remove an address book record from 
 - **GIVEN** a notification journey is in progress
 - **WHEN** the user navigates directly to that journey's create-address URL
 - **THEN** the page responds with a 404, not a create-address form
+
+#### Scenario: Choosing an address links out to the address book's own service when it is available
+**ID**: SCN-ADDR-001-D
+- **GIVEN** the user is choosing an address for a consignment role or the consignment contact, and the address book service is available
+- **WHEN** they view the page
+- **THEN** a link to the address book's own add-address page is offered, and no add-address form is served within the journey itself
+
+#### Scenario: Saving a new address in the address book's own service returns to the picker with it selected
+**ID**: SCN-ADDR-001-E
+- **GIVEN** the user has followed the link from the picker to the address book's own add-address page
+- **WHEN** they save a new address there
+- **THEN** they return to the picker with the new address already selected
+- **AND** continuing from the picker commits that address to the role
+
+#### Scenario: Cancelling out of the address book's own service returns to the picker with nothing added
+**ID**: SCN-ADDR-001-F
+- **GIVEN** the user has followed the link from the picker to the address book's own add-address page
+- **WHEN** they cancel without saving
+- **THEN** they return to the picker, and the role still shows no address chosen
 
 ### Requirement: Every role resolves live from the address book while a notification is not yet submitted
 **ID**: REQ-ADDR-002

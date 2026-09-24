@@ -58,3 +58,13 @@ The system MUST offer the user routes to help — where to email about import no
 - **GIVEN** a notification has just been submitted
 - **WHEN** the user reads the confirmation page
 - **THEN** it gives an email address for help with import notifications, a telephone number and opening hours for technical help, and a route to help with a customs declaration
+
+### Requirement: The page tells the user what they still owe when documents are outstanding
+**ID**: REQ-CONFIRM-006
+The system MUST show a section telling the user what they still need to do before the consignment is imported, listing the health certificate and any other required documents, whenever the submitted notification carries no recorded documents, and MUST NOT show this section once documents have been recorded.
+
+#### Scenario: A submission with no documents carries the outstanding-work section
+**ID**: SCN-CONFIRM-006-A
+- **GIVEN** a notification was submitted with no documents recorded
+- **WHEN** the user reads the confirmation page
+- **THEN** a "Before the consignment is imported" section tells them they still need to upload the health certificate and any other required documents

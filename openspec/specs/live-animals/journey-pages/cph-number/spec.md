@@ -100,3 +100,13 @@ The system MUST show a collapsed expander above the CPH boxes offering to explai
 - **AND** its explanation is not visible
 - **WHEN** the user opens the expander
 - **THEN** the explanation, including where to find the number, becomes visible
+
+### Requirement: The back link returns to Overview
+**ID**: REQ-CPH-006
+The system MUST return the user to Overview when they follow the back link from the CPH number page.
+
+#### Scenario: The back link opens Overview
+**ID**: SCN-CPH-006-A
+- **GIVEN** the user is on the CPH number page
+- **WHEN** they follow the back link
+- **THEN** Overview is shown

@@ -4,6 +4,7 @@ import { register as registerGaps } from './gaps.js'
 import { register as registerCandidates } from './candidates.js'
 import { register as registerBaseline } from './baseline.js'
 import { register as registerE2eOverlap } from './e2e-overlap.js'
+import { register as registerFindings } from './findings.js'
 
 export const register = (program, { timVersion }) => {
   const spec = program
@@ -18,4 +19,5 @@ export const register = (program, { timVersion }) => {
   registerCandidates(spec, { timVersion })
   registerBaseline(spec, { timVersion })
   registerE2eOverlap(spec, { timVersion })
+  registerFindings(spec, { timVersion })
 }

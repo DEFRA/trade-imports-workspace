@@ -71,10 +71,15 @@ repos         where frontend, backend and tests live: a workspace-relative path
               the same three keys name different repos in different
               programmes, and a path typed from memory is how a plants
               increment ends up built in the animals frontend
-models        optional model per tier: heavy (implement, reviewers, verifiers,
-              judge, fix, CI fix) and light (ticket, branch, baseline, ladder,
-              land, PR, CI watch, merge, done). A tier left out inherits the
-              session model
+models        {} for the recommended split, pass that unless the user asks
+              for something else. Three tiers, each optional. think (default
+              opus) plans and judges: plan, judge, the consistency reviewer.
+              code (default sonnet) writes and repairs code: implement, the
+              per-group style and code reviewers, the finding verifiers, fix,
+              the ladder, CI fix. light (default haiku) runs a command and
+              reports what it said: everything else. A tier left out takes
+              its default; 'inherit' uses the session model instead. heavy is
+              a deprecated alias for setting think and code together
 ```
 
 A `lifecycle: 'full'` run goes ticket → branch → build → PR → CI → merge → ticket
@@ -256,7 +261,7 @@ Build the args object with every key below:
     backend: { path: 'repos/<backend repo>', github: 'DEFRA/<backend repo>' },
     tests: { path: 'repos/<tests repo>', github: 'DEFRA/<tests repo>' }
   },
-  models: { heavy: '<model or leave the object empty>', light: '<model>' },
+  models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
   stopAfter: '<a positive number, or "all">'
 }
@@ -527,7 +532,7 @@ inProgress   <inProgress>
 doneStatus   <doneStatus>
 board        <board>
 repos        <the repos table, one JSON object>
-models       <the models object, or {}>
+models       {}, the recommended split (think opus, code sonnet, light haiku)
 stopAfter    <a number, or all>
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).

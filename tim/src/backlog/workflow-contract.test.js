@@ -134,7 +134,7 @@ const BASE_ARGS = {
       github: 'DEFRA/trade-imports-animals-tests'
     }
   },
-  models: { light: 'fixture-light' },
+  models: { light: 'sonnet' },
   increments: ['inc-900'],
   stopAfter: 1,
   jiraProject: 'EUDPA',
@@ -331,7 +331,7 @@ describe('increment-build-loop', () => {
   test('selects the light model for the workspace-resolution agent', async () => {
     const run = await runJsonStringArgs()
 
-    expect(run.agents[0].options.model).toBe('fixture-light')
+    expect(run.agents[0].options.model).toBe('sonnet')
   })
 
   test('labels the preflight agent', async () => {
@@ -452,6 +452,81 @@ describe('increment-build-loop', () => {
     expect(run.agents).toEqual([])
   })
 
+  describe('the models config', () => {
+    const runPlanOnlyWithModels = (models) =>
+      runWorkflowScript(scriptPath, {
+        args: { ...BASE_ARGS, planOnly: true, models },
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          {
+            ok: true,
+            summary: 'Planned.',
+            repos: ['frontend'],
+            behaviourChanges: [],
+            decisions: []
+          }
+        ]
+      })
+
+    const modelOf = (run, label) =>
+      run.agents.find((entry) => entry.options.label === label).options.model
+
+    test('resolves the built-in default for every tier when models is empty', async () => {
+      const run = await runPlanOnlyWithModels({})
+
+      expect(modelOf(run, 'workspace')).toBe('haiku')
+      expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+    })
+
+    test('lets a tier be overridden explicitly', async () => {
+      const run = await runPlanOnlyWithModels({ think: 'sonnet' })
+
+      expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+      expect(modelOf(run, 'workspace')).toBe('haiku')
+    })
+
+    test('accepts "inherit" and leaves the session model in place', async () => {
+      const run = await runPlanOnlyWithModels({ light: 'inherit' })
+
+      expect(modelOf(run, 'workspace')).toBeUndefined()
+    })
+
+    test('refuses a model value that is not a known alias or "inherit", naming the tier', async () => {
+      const run = await runPlanOnlyWithModels({ light: 'gpt-5' })
+
+      expect(run.error.message).toContain(
+        'config.models.light must be one of opus, sonnet, haiku, or "inherit"'
+      )
+      expect(run.error.message).toContain('"gpt-5"')
+      expect(run.agents).toEqual([])
+    })
+
+    test('refuses a tier name it does not know', async () => {
+      const run = await runPlanOnlyWithModels({ heavyweight: 'opus' })
+
+      expect(run.error.message).toContain(
+        'config.models has no tier named heavyweight'
+      )
+      expect(run.agents).toEqual([])
+    })
+
+    test('the deprecated heavy alias sets the think tier', async () => {
+      const run = await runPlanOnlyWithModels({ heavy: 'opus' })
+
+      expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+    })
+
+    test('an explicit think value wins over the heavy alias', async () => {
+      const run = await runPlanOnlyWithModels({
+        heavy: 'opus',
+        think: 'sonnet'
+      })
+
+      expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+    })
+  })
+
   test('refuses a scope it would once have derived', async () => {
     const run = await runWorkflowScript(scriptPath, {
       args: withoutKey(BASE_ARGS, 'scope')
@@ -558,6 +633,18 @@ describe('increment-build-loop', () => {
     const runFrom = (...answers) =>
       runWorkflowScript(scriptPath, {
         args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          TICKET_ANSWER,
+          BRANCHED_ANSWER,
+          ...answers
+        ]
+      })
+
+    const runFromWithArgs = (argsOverride, ...answers) =>
+      runWorkflowScript(scriptPath, {
+        args: { ...BASE_ARGS, ...argsOverride },
         answers: [
           WORKSPACE_ANSWER,
           PREFLIGHT_ANSWER,
@@ -675,6 +762,40 @@ describe('increment-build-loop', () => {
 
       const runToReview = (changedFiles) =>
         runFrom(BASELINE_ANSWER, PLAN_ANSWER, implementAnswer(changedFiles))
+
+      const modelOf = (run, label) =>
+        run.agents.find((entry) => entry.options.label === label).options.model
+
+      test('runs the planner on the think tier and the implementor on the code tier', async () => {
+        const run = await runToReview(['frontend:src/a.js'])
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+        expect(modelOf(run, 'inc-900 implement')).toBe('sonnet')
+      })
+
+      test('the deprecated heavy alias sets both the think and code tiers', async () => {
+        const run = await runFromWithArgs(
+          { models: { heavy: 'opus' } },
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js'])
+        )
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+        expect(modelOf(run, 'inc-900 implement')).toBe('opus')
+      })
+
+      test('an explicit tier wins over the deprecated heavy alias', async () => {
+        const run = await runFromWithArgs(
+          { models: { heavy: 'opus', code: 'sonnet' } },
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js'])
+        )
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+        expect(modelOf(run, 'inc-900 implement')).toBe('sonnet')
+      })
 
       const labelsInPhase = (run, phaseName) =>
         run.agents

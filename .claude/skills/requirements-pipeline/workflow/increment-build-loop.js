@@ -98,11 +98,20 @@ export const meta = {
 //                   own table here. Under lifecycle 'branch' the keys are
 //                   whatever the backlog envelope's `repos` names (ins,
 //                   animals, plants, tests, say), copied in full
-//   models         required; {} inherits the session model for both tiers. heavy =
-//                   implement, the reviewers, the adversarial verifiers, judge, fix
-//                   and CI fix; light = the lifecycle and plumbing stages (ticket,
-//                   branch, baseline, ladder, land, PR, CI watch, merge, done). A
-//                   tier left out inherits it
+//   models         required; {} takes the recommended default on every tier —
+//                   it does NOT inherit the session model. Three tiers, each
+//                   optional: think (default opus) = plan, judge, the
+//                   consistency reviewer; code (default sonnet) = implement,
+//                   the per-group style and code reviewers, the finding
+//                   verifiers, fix, the ladder and CI fix; light (default
+//                   haiku) = every other stage — the ones that only run a
+//                   command and report what it said (ticket, branch, branch
+//                   guard, merge start, baseline, land, preserve, PR, CI
+//                   watch, merge, done, and the Codex shell and relay). A
+//                   tier left out takes its default; set it to "inherit" to
+//                   use the session model instead. `heavy` is a DEPRECATED
+//                   alias that sets both think and code, unless the
+//                   programme also gives one of those its own value
 //
 
 // Status names are BOARD CONFIGURATION, not constants — every board words them
@@ -355,25 +364,65 @@ for (const key of REPO_KEYS) {
 }
 
 // ---------------------------------------------------------------------------
-// Models. The key itself is required ({} to inherit the session model for
-// both); each tier is optional. heavy() and light() wrap an agent's options so
-// a stage inherits the session model unless the programme set its tier.
+// Models. Three tiers, each with a BUILT-IN default matched to the kind of
+// work the stage does:
+//   think (opus)   — plan, judge, the consistency reviewer: the calls that
+//                    decide something, not just carry it out.
+//   code (sonnet)  — implement, the per-group style and code reviewers, the
+//                    finding verifiers, fix, the ladder, CI fix: the calls
+//                    that write or repair code.
+//   light (haiku)  — every stage that only runs a command and reports what it
+//                    said: workspace resolve, preflight, derive next, ticket,
+//                    branch, branch guard, merge start, baseline, land,
+//                    preserve, PR, CI watch, merge, done, and the Codex shell
+//                    and relay (they too only run a command and report).
+// `{}` means "use the recommended default on every tier" — it no longer means
+// "inherit the session model". A tier left out of config.models takes its
+// default; set it to "inherit" to use the session model for that tier
+// instead. `heavy` is a DEPRECATED alias: given, it sets both think and code,
+// unless the programme also gives one of those its own value, which wins.
 // ---------------------------------------------------------------------------
-const MODELS = CFG.models
-if (MODELS === null || typeof MODELS !== 'object' || Array.isArray(MODELS)) {
-  throw new Error(`${WORKFLOW_NAME}: config.models must be an object, {} to inherit the session model for both tiers — got ${JSON.stringify(MODELS)}`)
-}
-const MODEL_TIERS = ['heavy', 'light']
+const MODEL_DEFAULTS = { think: 'opus', code: 'sonnet', light: 'haiku' }
+const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
+const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
 
-for (const tier of MODEL_TIERS) {
-  const model = MODELS[tier]
-  if (model !== undefined && (typeof model !== 'string' || !model.trim())) {
-    throw new Error(`increment-build-loop: config.models.${tier} must be a model name or left out — got ${JSON.stringify(model)}`)
-  }
+const RAW_MODELS = CFG.models
+if (RAW_MODELS === null || typeof RAW_MODELS !== 'object' || Array.isArray(RAW_MODELS)) {
+  throw new Error(`${WORKFLOW_NAME}: config.models must be an object, {} for the recommended default on every tier — got ${JSON.stringify(RAW_MODELS)}`)
 }
 
-const withTier = (tier) => (opts) => (MODELS[tier] ? { ...opts, model: MODELS[tier] } : opts)
-const heavy = withTier('heavy')
+const MODEL_KEYS = [...MODEL_TIERS, 'heavy']
+const unknownModelKeys = Object.keys(RAW_MODELS).filter((key) => !MODEL_KEYS.includes(key))
+if (unknownModelKeys.length > 0) {
+  throw new Error(`${WORKFLOW_NAME}: config.models has no tier named ${unknownModelKeys.join(', ')} — the tiers are think, code, light, plus the deprecated alias heavy`)
+}
+
+for (const key of MODEL_KEYS) {
+  const value = RAW_MODELS[key]
+  if (value === undefined) continue
+  if (value === 'inherit' || KNOWN_MODEL_ALIASES.includes(value)) continue
+  throw new Error(`${WORKFLOW_NAME}: config.models.${key} must be one of ${KNOWN_MODEL_ALIASES.join(', ')}, or "inherit" for the session model — got ${JSON.stringify(value)}`)
+}
+
+// heavy sets think and code TOGETHER, but only where the programme did not
+// also give that tier its own value — an explicit tier always wins over the
+// deprecated alias.
+const givenModel = (tier) => RAW_MODELS[tier] ?? (tier !== 'light' ? RAW_MODELS.heavy : undefined) ?? MODEL_DEFAULTS[tier]
+
+const RESOLVED_MODELS = Object.fromEntries(
+  MODEL_TIERS.map((tier) => {
+    const given = givenModel(tier)
+    return [tier, given === 'inherit' ? null : given]
+  })
+)
+
+log(
+  `${WORKFLOW_NAME}: models — think ${RESOLVED_MODELS.think ?? 'inherit (session model)'}, code ${RESOLVED_MODELS.code ?? 'inherit (session model)'}, light ${RESOLVED_MODELS.light ?? 'inherit (session model)'}`
+)
+
+const withTier = (tier) => (opts) => (RESOLVED_MODELS[tier] ? { ...opts, model: RESOLVED_MODELS[tier] } : opts)
+const think = withTier('think')
+const code = withTier('code')
 const light = withTier('light')
 
 // ---------------------------------------------------------------------------
@@ -1430,7 +1479,7 @@ implementor decides nothing.
    or "the backend half" for another increment.
 Return ok, summary, repos (the repos the plan changes), behaviourChanges, decisions and risks.
 Return the structured output only.`,
-    heavy({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
+    think({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
   )
 
 const preflight = await agent(
@@ -2383,7 +2432,7 @@ Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge
 including anything the increment got wrong and any diagnosis of a red suite you made).
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
 ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`frontend:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
-    heavy({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
+    code({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
   )
 
   const attempt = { id, ticket, workBranch }
@@ -2470,7 +2519,7 @@ helper functions rather than dense inline callbacks; names say what a thing does
 Report ONLY real findings, each with a concrete fix. No praise, no summary of what a file does. If every file is
 clean, return an empty findings array.
 Return the structured output only.`,
-      heavy({ label: `${id} style:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      code({ label: `${id} style:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -2497,7 +2546,7 @@ SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Spe
   platform-layer file that has learned a set's vocabulary.
 Report ONLY real findings with a concrete failure scenario. Style nits belong to a different reviewer — skip them.
 Return the structured output only.`,
-      heavy({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      code({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -2519,7 +2568,7 @@ report any that fails as a finding. A better solution than the plan imagined is 
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 Return the structured output only.`,
-      heavy({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      think({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
 
   // Codex reviews at the same granularity as Claude: one run per group applying
@@ -2644,7 +2693,7 @@ really exists here). Read those sources ONCE and reuse them across all ${items.l
 For each: real:false if it is wrong, already handled elsewhere, out of the increment's scope, or a matter of taste
 dressed as a defect. real:true ONLY if you could not refute it. Cite file:line in every reasoning.
 Return one verdict per finding, using the SAME numbers as above. Return the structured output only.`,
-          heavy({ label: `${id} verify:${group.name}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
+          code({ label: `${id} verify:${group.name}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
         ).then((v) => {
           // A dead verifier must not silently delete findings — pass them to the
           // judge marked unrefuted rather than dropping them on the floor.
@@ -2698,7 +2747,7 @@ correct increment over a large polished one.
 For every fix-now item, write a COMPLETE instruction in fixNow[]: the file, exactly what to change, and how to
 prove it (the test or assertion that should now pass). A fixer with no other context must be able to execute it.
 Return the structured output only.`,
-        heavy({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
+        think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
   }
 
@@ -2763,7 +2812,7 @@ ${baselineEvidence}
 If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
 and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
-        heavy({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
+        code({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
       )
     }
   }
@@ -2847,7 +2896,7 @@ In ran[], list every gate rung as \`<repo> <name>\` and every plan check you ran
 or check, with its reason and its log.
 Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
-    light({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
+    code({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
   )
 
   // -----------------------------------------------------------------------
@@ -3008,7 +3057,7 @@ Return the structured output only.`,
               : 'the watcher agent died — go and read the checks yourself'
             await agent(
               branchCiFixPrompt(id, ciAttempt, prList(prs), seen),
-              heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: incrementSchema })
+              code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: incrementSchema })
             )
             ci = await watchOnBranch()
           }
@@ -3230,7 +3279,7 @@ TASK:
 7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
-        heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
+        code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
       )
 
       // Fold in anything the fixer had to open elsewhere, deduped by url, so

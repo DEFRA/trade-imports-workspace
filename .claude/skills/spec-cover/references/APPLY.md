@@ -1,6 +1,7 @@
-# Apply — accepted cover findings
+# Apply — cover findings (auto)
 
-Write the approved test, update coverage links, mark applied.
+Auto-accept is already done by `SKILL.md` Step 4 before this file runs.
+Write the test, update coverage links, make tests + lint clean, mark applied.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../../docs/agent-skills.md) → "Bash call hygiene".
@@ -11,18 +12,24 @@ Write the approved test, update coverage links, mark applied.
    `~/git/defra/trade-imports-workspace/repos/<proposal.repo>/<proposal.file>`
    (create the file if needed; match neighbouring test style).
 2. Run the narrowest test command that exercises the new test (repo's
-   usual unit/fit/e2e invocation). Non-zero is a halt — fix or defer
-   with a note; do not mark applied on a red test.
+   usual unit/fit/e2e invocation). **Auto-resolve:** non-zero → fix the
+   test or surrounding setup yourself and re-run until green. Only
+   `--defer` (and revert) if you cannot make it green without guessing.
 3. Apply `proposal.coverageDiff` to
    `~/git/defra/trade-imports-workspace/<proposal.coverageFile>`
    (default `openspec/coverage/<capability>/coverage.json`). Link
    `type` / `repo` / `file` / `test` / `strength` must match what you
    wrote. Recalculate scenario and requirement rollups
    (`full` / `partial` / `none`) per `openspec/config.yaml`.
-4. Optionally:
-   ```bash
-   tim spec lint --coverage --binding --capability <capability-path>
-   ```
+
+After a coverage link update:
+
+```bash
+tim spec lint --coverage --binding --capability <capability-path>
+```
+
+**Auto-resolve:** non-zero → fix coverage/binding yourself and re-lint
+until clean before marking applied.
 
 ## accept-gap
 

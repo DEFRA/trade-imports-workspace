@@ -49,6 +49,16 @@ The system MUST show a sign-out confirmation once the user signs out, and MUST r
 - **WHEN** they then try to reopen the notification dashboard
 - **THEN** they land on the sign-in page again
 
+### Requirement: The service root sends a signed-in user to the default set dashboard
+**ID**: REQ-AUTH-005
+The system MUST redirect a signed-in user who opens the service root to the live-animals notification dashboard, now that journeys are served under set-scoped URL prefixes rather than at `/`.
+
+#### Scenario: Opening the service root after sign-in lands on the live-animals dashboard
+**ID**: SCN-AUTH-005-A
+- **GIVEN** the user is signed in
+- **WHEN** they open the service root
+- **THEN** they arrive at the live-animals notification dashboard
+
 ### Requirement: No signed-in user identity is shown anywhere in the service
 **ID**: REQ-AUTH-004
 The system MUST NOT display the signed-in user's identity (such as an email address) anywhere in the service once they are signed in.

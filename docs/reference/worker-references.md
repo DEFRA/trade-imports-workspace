@@ -28,12 +28,10 @@ artifacts that downstream `tools/` scripts consume.
 | `journey-builder` | `references/SPEC_RECONCILER.md` | One-shot — reconciles the extracts into `journey-spec.json` and `conflicts.json` |
 | `journey-builder` | `references/INCREMENT_PLANNER.md` | Per-increment plan into the build loop's shape, written through `backlog-plan-increment.sh` (ten at a time, in dependency order) |
 | `journey-builder` | `references/MODEL_EXTENDER.md` | One gated `model-extension` increment — grows the engine's obligation vocabulary |
-| `spec-catchup` | `references/READER.md` | Inline judge for candidate work packets |
-| `spec-catchup` | `references/WALKER.md` | Interactive approve/reject/defer over findings |
-| `spec-catchup` | `references/APPLY.md` | Apply accepted coverage/spec edits |
-| `spec-cover` | `references/PROPOSER.md` | Inline test proposal per coverage gap |
-| `spec-cover` | `references/WALKER.md` | Interactive approve/reject/defer over cover findings |
-| `spec-cover` | `references/APPLY.md` | Write accepted tests + coverage links |
+| `spec-catchup` | `references/READER.md` | Judge candidate work packets (inline or Task batch fan-out) |
+| `spec-catchup` | `references/APPLY.md` | Auto-apply coverage/spec edits + lint fix (Task per disjoint capability) |
+| `spec-cover` | `references/PROPOSER.md` | Propose + drive APPLY per coverage gap (Task fan-out when ≥ ~4 gaps) |
+| `spec-cover` | `references/APPLY.md` | Auto-write tests + coverage links + lint/test fix |
 
 
 Cursor reads `.claude/skills/` natively (per

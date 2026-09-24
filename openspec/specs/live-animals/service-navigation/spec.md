@@ -3,6 +3,7 @@
 ## Purpose
 
 The persistent navigation offered on every page of the service, and which section it marks as current. Signing out and showing no signed-in identity are governed by `live-animals/authentication`; this specifies only that the navigation offers the route to it.
+When more than one obligation set is served from the same app, navigation is evaluated for the set the user is in: links MUST stay on that set's URL prefix.
 
 ## Requirements
 
@@ -41,3 +42,13 @@ The system MUST return the user to the dashboard when they follow the dashboard 
 - **GIVEN** the user is working on a notification
 - **WHEN** they follow the dashboard item in the navigation
 - **THEN** the dashboard is shown
+
+### Requirement: Dashboard navigation stays on the current set's URL prefix
+**ID**: REQ-NAV-004
+When the live-animals set is mounted under its own URL prefix, the system MUST make the dashboard item (and the service name link) target that set's dashboard URL, not the site root alone, and MUST keep the user on that prefix when they follow the dashboard item from inside a notification.
+
+#### Scenario: Following the dashboard item from inside a notification stays on the set prefix
+**ID**: SCN-NAV-004-A
+- **GIVEN** the user is working on a live-animals notification under that set's URL prefix
+- **WHEN** they follow the dashboard item in the navigation
+- **THEN** the dashboard is shown under that same set prefix

@@ -1,34 +1,37 @@
 # spec-cover skill — decisions
 
 Recorded 2026-09-24 when the skill was created beside spec-catchup.
+Updated same day: walk removed; auto-apply.
 
 ## 1. State shape
 
-**Choice:** JSON-canonical (`findings.json` under
-`workareas/spec-cover/<date>/`), same walker machinery as catch-up via
+**Choice:** JSON-canonical under
+`workareas/spec-cover/<date>/`), same findings machinery as catch-up via
 `tim spec findings --skill cover`.
-**Why:** Per-gap approve/apply needs dispositions; report.md is a render.
 
 ## 2. Dispatcher
 
 **Choice:** No.
-**Why:** `tim spec gaps` + safety checks are enough inline.
 
 ## 3. Pre-baked context
 
-**Choice:** No — gaps JSON is the bake.
+**Choice:** No; `tim spec gaps` is the bake. Persist as `gaps.json` in
+the run dir.
 
 ## 4. Worker fan-out
 
-**Choice:** No for v1.
-**Why:** Gap sets are small enough (tens, not hundreds) for one session.
-Revisit if `--none` alone exceeds context.
+**Choice:** Yes — Task `general-purpose` per gap (or small same-file
+batch) for propose + apply when ≥ ~4 none/partial rows.
+**Why:** Writing tests is independent per gap until coverage.json /
+test-file collisions; those serialize in the parent.
 
 ## 5. Walker
 
-**Choice:** Yes — interactive approve-then-write.
-**Why:** Writing tests in service repos without approval is high-risk;
-same rail as catch-up for spec.md.
+**Choice:** No — removed. Agent auto-accepts and applies every seeded
+finding (writes tests + coverage), auto-fixes red tests and lint, defers
+only when the fix would guess behaviour.
+**Why:** Same as catch-up — mid-run keystroke gates were the wrong
+safety rail; the PR/diff is the review surface.
 
 ## 6. Helpers introduced
 
@@ -39,14 +42,19 @@ None under `tools/spec-cover/`. Uses `tim spec gaps` +
 
 "cover the gaps", "prove the spec", "spec-cover", "fill coverage holes"
 — distinct from `spec-catchup` (code ahead of words) and from
-`frontend-change` (per-increment sync).
+`tim spec lint`. No `walk cover` trigger.
 
-## 8. Allowlist entries added
+## 8. Allowlist
 
-None. `Bash(tim:*)` covers the commands.
+None beyond existing `Bash(tim:*)`.
 
-## 9. Baseline
+## 9. What the skill may write
 
-**Choice:** Cover never advances `openspec/baseline.json`.
-**Why:** Filling a matrix hole is not the same as verifying linked files
-since the last catch-up. Catch-up owns `--require-ruled` advance.
+Tests under `repos/<service>/`, coverage.json in the workspace. Never
+`openspec/baseline.json`.
+
+## 10. Workarea layout
+
+Everything for a date under `workareas/spec-cover/<YYYY-MM-DD>/`
+(including `gaps.json`, `payload.json`, `judge-*.json`). Nothing loose
+under `workareas/spec-cover/`.

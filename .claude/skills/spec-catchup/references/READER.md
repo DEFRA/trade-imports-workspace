@@ -1,8 +1,13 @@
 # The reader persona
 
-Followed inline by the same session running `SKILL.md` — not spawned as a
-subagent. One work packet at a time, from `tim spec candidates --json`'s
+Used inline **or** as a Task `general-purpose` worker. One work packet
+(or a parent-assigned batch) at a time, from `tim spec candidates --json`'s
 `workPackets`, plus every entry in `unresolvedLinks`.
+
+When spawned: write findings for your assigned packets only to
+`~/git/defra/trade-imports-workspace/workareas/spec-catchup/<date>/judge-<label>.json`
+(array of finding objects ready to merge into the seed payload). Do not
+seed, apply, or edit `openspec/` — the parent merges and applies.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../../docs/agent-skills.md) → "Bash call hygiene".
@@ -28,14 +33,13 @@ an unchanged body is a STALE LINK, not drift.
 | Verdict | Meaning | On accept |
 |---|---|---|
 | **STALE LINK** | The behaviour is unchanged; the test's file, title, or method name moved | Apply `coverage.json` fix |
-| **SPEC WRONG** | The behaviour actually changed, and `spec.md` still describes the old behaviour | Apply the `spec.md` diff (after walk approval) |
-| **SPEC GAP** | The changed test proves new behaviour with no requirement or scenario for it yet | Apply the addition (after walk approval) |
+| **SPEC WRONG** | The behaviour actually changed, and `spec.md` still describes the old behaviour | Auto-apply the `spec.md` diff |
+| **SPEC GAP** | The changed test proves new behaviour with no requirement or scenario for it yet | Auto-apply the addition |
 | **NO ACTION** | The change is copy, layout, or an internal refactor that doesn't touch the claim the scenario makes | Bucket only — no per-file edit |
 
 Seed every non–NO ACTION finding into `findings.json` with a concrete
-`proposal.diff`. The walker asks for approval before APPLY runs. Do **not**
-edit `spec.md` or `coverage.json` during judgement — only while applying
-an accepted finding.
+`proposal.diff`. APPLY auto-runs after seed — do **not** edit `spec.md`
+or `coverage.json` during judgement, only while applying.
 
 ## The judgement sentence
 
@@ -91,6 +95,6 @@ either way, but get it right the first time.
 A unified diff against the current `spec.md`, in the spec's own voice —
 Given/When/Then, MUST not SHALL, the requirement/scenario heading format
 `openspec/config.yaml` defines. Put it on the finding's `proposal` so the
-walker can show it and APPLY can land it after accept. Do not soften a
+proposal so APPLY can land it. Do not soften a
 genuine behaviour change into a vague "may vary" — state what the system
 now does, concretely, the same way the rest of that capability's spec does.

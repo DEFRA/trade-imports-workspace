@@ -1,7 +1,7 @@
-# Apply — accepted catch-up findings
+# Apply — catch-up findings (auto)
 
-Apply one accepted finding's proposal to disk, then mark it applied.
-Never apply before `tim spec findings rule … --accept` or `--edit`.
+Auto-accept is already done by `SKILL.md` Step 5 before this file runs.
+Land the proposal, make lint clean, mark applied.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../../docs/agent-skills.md) → "Bash call hygiene".
@@ -20,15 +20,20 @@ nothing witnesses it). Match `frontend-change`'s coverage shape in
 Apply the unified diff in `proposal.diff` to `proposal.file` (usually
 `openspec/specs/<capability>/spec.md`). Keep MUST not SHALL, stable IDs,
 and Given/When/Then. If the proposal also carries `coverageDiff` /
-`coverageFile`, apply that too.
+`coverageFile`, apply that too — when `coverageDiff` is prose-only,
+edit `coverage.json` by hand to match the new IDs/names/tests.
 
-After a `spec.md` edit:
+After a `spec.md` edit (and after coverage edits that change shape/IDs):
 
 ```bash
-npx --yes @fission-ai/openspec@latest validate <capability-path> --strict
+tim spec lint --specs --coverage --binding --capability <capability-path>
 ```
 
-Non-zero is a halt — fix before marking applied.
+**Auto-resolve:** non-zero is not a hard stop for the human — fix the
+finding yourself (ID/name parity, missing coverage rows, rollups,
+binding) and re-lint until clean. Prefer `tim spec lint` over bare
+`openspec validate`. Only `--defer` if you cannot make it clean without
+guessing behaviour.
 
 ### no-action
 
@@ -40,8 +45,7 @@ Nothing to apply (bucket only).
 tim spec findings applied F-00N --skill catchup
 ```
 
-Refuses unless the finding is `accepted`. That is intentional: applied
-always means a person said yes and the edit landed.
+Refuses unless the finding is `accepted` (auto-accept in Step 5).
 
 ## Leave uncommitted
 

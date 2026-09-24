@@ -160,3 +160,16 @@ The system MUST show the Overview arrival task row as completed once the arrival
 - **GIVEN** a potatoes notification has saved its date, time and place of landing
 - **WHEN** the user opens Overview
 - **THEN** the arrival task row reads completed
+
+### Requirement: A stored place of landing the service no longer offers is not shown as selected
+**ID**: REQ-PLANTS-ARRIVAL-DETAILS-012
+When a potatoes notification being amended holds a proposed place of landing the reference-data reader no longer offers, the system MUST open the arrival-details page without that port selected, MUST NOT list the stale code among the options, MUST show an error on the place-of-landing field, and MUST leave the stored value unchanged until the user chooses a replacement and saves.
+
+#### Scenario: Opening arrival details on amend with a stale place of landing blanks the field and explains why
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-012-A
+- **GIVEN** a potatoes notification being amended holds a proposed place of landing the reader no longer offers
+- **WHEN** the user opens the arrival-details page
+- **THEN** the place-of-landing field is shown unanswered
+- **AND** the stale code is not among the offered ports
+- **AND** an error on that field tells them the saved place is no longer available
+- **AND** the notification still holds the stale place until they save a new choice

@@ -8,25 +8,52 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user add, edit, or remove an address book record from anywhere within the notification journey — wherever an address is chosen, and by URL as well as by control. Maintaining the book MUST only be possible in the address book's own service.
+The system MUST NOT let a user add, edit, or remove an address book record inside the notification journey itself — no journey create/edit form, and the journey's create-address URL MUST 404. Maintaining the book MUST only be possible in the address book's own service (INS). When the full stack is running, the journey MUST offer a control that hands the user to INS to add a record and return; in stub mode that control MUST NOT be shown.
 
-#### Scenario: Choosing an address for a consignment role offers no way to add one
+#### Scenario: Choosing an address for a consignment role offers no add control in stub mode
 **ID**: SCN-ADDR-001-A
 - **GIVEN** the user is choosing an address for one of the consignment roles
-- **WHEN** they view the page
-- **THEN** no control to add a new address is offered
+- **AND** the animals frontend is running in stub mode
+- **WHEN** they view the picker
+- **THEN** no control to add a new address via INS is offered
 
-#### Scenario: Choosing the consignment contact address offers no way to add one
+#### Scenario: Choosing an address for a consignment role links to INS to add when the full stack is running
+**ID**: SCN-ADDR-001-D
+- **GIVEN** the user is choosing an address for one of the consignment roles
+- **AND** the animals frontend is running against the full stack (not stub mode)
+- **WHEN** they view the picker
+- **THEN** a control is offered that takes them to INS to add an address
+
+#### Scenario: Choosing the consignment contact address offers no add control in stub mode
 **ID**: SCN-ADDR-001-B
 - **GIVEN** the user is choosing the consignment contact address
+- **AND** the animals frontend is running in stub mode
 - **WHEN** they view the page
-- **THEN** no control to add a new address is offered
+- **THEN** no control to add a new address via INS is offered
 
 #### Scenario: The create-address page is not served from the notification journey
 **ID**: SCN-ADDR-001-C
 - **GIVEN** a notification journey is in progress
 - **WHEN** the user navigates directly to that journey's create-address URL
 - **THEN** the page responds with a 404, not a create-address form
+
+### Requirement: Adding via INS returns the user to the journey picker
+**ID**: REQ-ADDR-016
+When the user leaves the journey to add an address in INS, the system MUST return them to the same picker afterwards: saving MUST leave the new record selectable on that picker, and cancelling MUST return without selecting an address.
+
+#### Scenario: Saving in INS returns to the picker with the new address available
+**ID**: SCN-ADDR-016-A
+- **GIVEN** the user has opened INS to add an address from a consignment-role picker
+- **WHEN** they save a new address in INS
+- **THEN** they return to that picker's page
+- **AND** they can select the new address and continue so the role shows it
+
+#### Scenario: Cancelling INS add returns to the picker without saving
+**ID**: SCN-ADDR-016-B
+- **GIVEN** the user has opened INS to add an address from a consignment-role picker
+- **WHEN** they cancel from the INS add page
+- **THEN** they return to that picker's page
+- **AND** the role remains without an address selected
 
 ### Requirement: Every role resolves live from the address book while a notification is not yet submitted
 **ID**: REQ-ADDR-002

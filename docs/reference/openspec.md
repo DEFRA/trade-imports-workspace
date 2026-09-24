@@ -164,13 +164,16 @@ check each need both files, which is why the groups are four and not three.
 
 `spec-catchup` (`.claude/skills/spec-catchup/`) calls `tim spec candidates --json`,
 seeds a dated run under `workareas/spec-catchup/<YYYY-MM-DD>/` (`findings.json`
-is the state; `report.md` is a render), walks each finding for approval, applies
-accepted `coverage.json` / `spec.md` edits, then runs
+is the state; `report.md` is a render; judge/payload/candidates live in the
+same dated dir), auto-applies every finding's `coverage.json` / `spec.md`
+edits (no walk; lint fallout fixed in-loop; Task fan-out for large judge
+batches and disjoint applies), then runs
 `tim spec baseline --advance --require-ruled`.
 
 `spec-cover` (`.claude/skills/spec-cover/`) calls `tim spec gaps`, seeds
-`workareas/spec-cover/<YYYY-MM-DD>/`, walks for approval, writes tests in
-service repos, updates coverage links, and **does not** advance the baseline.
+`workareas/spec-cover/<YYYY-MM-DD>/`, auto-writes tests in service repos,
+updates coverage links (no walk; Task fan-out per gap when many), and
+**does not** advance the baseline.
 
 Neither skill invents a parallel state root — same `workareas/<skill>/…`
 pattern as `review` and `code-style`. See [`workareas.md`](workareas.md).

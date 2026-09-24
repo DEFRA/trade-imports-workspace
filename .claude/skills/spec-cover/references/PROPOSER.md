@@ -1,8 +1,16 @@
 # Proposer — one test plan per coverage gap
 
-Followed inline while seeding a `spec-cover` run. Input: one row from
-`tim spec gaps --json` (and the scenario text in
-`openspec/specs/<capability>/spec.md`).
+Used inline **or** as a Task `general-purpose` worker. Input: one row
+(or a parent-assigned small batch that shares one test file) from
+`tim spec gaps --json` and the scenario text in
+`openspec/specs/<capability>/spec.md`.
+
+When spawned for auto-cover: follow this file then
+[`APPLY.md`](APPLY.md) for your gaps — write the test, update coverage,
+lint, and drop a summary at
+`~/git/defra/trade-imports-workspace/workareas/spec-cover/<date>/judge-<id>.json`
+(finding shape for the parent to seed / mark applied). Do not advance
+the baseline. Do not edit `spec.md` to hide the gap.
 
 **Bash call hygiene** — one command per Bash call. Full rule table:
 [`docs/agent-skills.md`](../../../../docs/agent-skills.md) → "Bash call hygiene".

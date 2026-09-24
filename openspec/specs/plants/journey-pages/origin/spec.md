@@ -152,3 +152,16 @@ The system MUST send the user to the dashboard when they follow the back link fr
 - **GIVEN** the user has saved at least one answer on the notification
 - **WHEN** they return to the origin of the import page and follow the back link
 - **THEN** Overview is shown
+
+### Requirement: A stored country the service no longer offers is not shown as selected
+**ID**: REQ-PLANTS-ORIGIN-011
+When a notification already holds a country of origin that the reference-data reader no longer offers, the system MUST open the origin page with that country unselected, MUST NOT list the stale code among the options, MUST show an error on the country field explaining it is no longer available, and MUST leave the stored value unchanged until the user chooses a replacement and saves.
+
+#### Scenario: Opening origin on amend with a stale country blanks the field and explains why
+**ID**: SCN-PLANTS-ORIGIN-011-A
+- **GIVEN** a notification being amended holds a country of origin the reader no longer offers
+- **WHEN** the user opens the origin page
+- **THEN** the country field is shown unanswered
+- **AND** the stale code is not among the offered options
+- **AND** an error on the country field tells them the saved country is no longer available
+- **AND** the notification still holds the stale country until they save a new choice

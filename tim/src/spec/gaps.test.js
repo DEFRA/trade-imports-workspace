@@ -2,7 +2,35 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { findClusters, computeSpecGaps } from './gaps.js'
+import { findClusters, computeSpecGaps, matchesGapNarrowing } from './gaps.js'
+
+describe('matchesGapNarrowing', () => {
+  test('with neither flag, keeps every non-full row', () => {
+    expect(matchesGapNarrowing({ coverage: 'none' }, false, false)).toBe(true)
+    expect(matchesGapNarrowing({ coverage: 'partial' }, false, false)).toBe(
+      true
+    )
+  })
+
+  test('--none alone keeps only none', () => {
+    expect(matchesGapNarrowing({ coverage: 'none' }, true, false)).toBe(true)
+    expect(matchesGapNarrowing({ coverage: 'partial' }, true, false)).toBe(
+      false
+    )
+  })
+
+  test('--partial alone keeps only partial', () => {
+    expect(matchesGapNarrowing({ coverage: 'none' }, false, true)).toBe(false)
+    expect(matchesGapNarrowing({ coverage: 'partial' }, false, true)).toBe(
+      true
+    )
+  })
+
+  test('--none and --partial together keep both (union)', () => {
+    expect(matchesGapNarrowing({ coverage: 'none' }, true, true)).toBe(true)
+    expect(matchesGapNarrowing({ coverage: 'partial' }, true, true)).toBe(true)
+  })
+})
 
 describe('findClusters', () => {
   test('groups scenarios that share an identical name across capabilities', () => {
@@ -233,5 +261,80 @@ describe('computeSpecGaps', () => {
     })
 
     expect(result.unitOnly.map((row) => row.id)).toEqual(['SCN-A-001-A'])
+  })
+
+  test('--none lists only coverage-none rows', async () => {
+    writeFileSync(
+      join(root, 'openspec', 'coverage', 'b', 'coverage.json'),
+      JSON.stringify({
+        capability: 'b',
+        areaCode: 'B',
+        specFile: 'openspec/specs/b/spec.md',
+        requirements: [
+          {
+            id: 'REQ-B-001',
+            name: 'B does a thing',
+            coverage: 'partial',
+            scenarios: [
+              {
+                id: 'SCN-B-001-A',
+                name: 'A different claim',
+                coverage: 'partial',
+                tests: [
+                  {
+                    type: 'unit',
+                    repo: 'x',
+                    file: 'b.test.js',
+                    test: 't',
+                    strength: 'partial'
+                  }
+                ],
+                notes: 'partial only'
+              }
+            ]
+          }
+        ]
+      })
+    )
+
+    const noneOnly = await computeSpecGaps({
+      workspaceRoot: root,
+      none: true
+    })
+    expect(noneOnly.rows.every((row) => row.coverage === 'none')).toBe(true)
+    expect(noneOnly.rows).toHaveLength(1)
+
+    const both = await computeSpecGaps({
+      workspaceRoot: root,
+      none: true,
+      partial: true
+    })
+    expect(both.rows).toHaveLength(2)
+
+    const partialOnly = await computeSpecGaps({
+      workspaceRoot: root,
+      partial: true
+    })
+    expect(partialOnly.rows.every((row) => row.coverage === 'partial')).toBe(
+      true
+    )
+    expect(partialOnly.rows).toHaveLength(1)
+  })
+
+  test('staleness carries daysAgo when baseline.json is present', async () => {
+    writeFileSync(
+      join(root, 'openspec', 'baseline.json'),
+      JSON.stringify({
+        verifiedAt: '2026-09-16',
+        verifiedBy: 'abc',
+        repos: {}
+      })
+    )
+
+    const result = await computeSpecGaps({ workspaceRoot: root })
+
+    expect(result.staleness.verifiedAt).toBe('2026-09-16')
+    expect(typeof result.staleness.daysAgo).toBe('number')
+    expect(result.staleness.daysAgo).toBeGreaterThanOrEqual(0)
   })
 })

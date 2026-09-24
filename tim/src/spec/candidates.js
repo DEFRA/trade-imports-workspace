@@ -3,7 +3,7 @@ import { run as runProcess } from '../exec/exec.js'
 import { repoPath } from '../constants/repos.js'
 import { buildCorpus } from './corpus.js'
 import { linksOf } from './checks/links.js'
-import { computeSpecStatus, loadBaseline, changedFilesSince } from './status.js'
+import { computeStaleness, loadBaseline, changedFilesSince } from './status.js'
 import { runSpecLint } from './lint.js'
 import { computeSpecGaps } from './gaps.js'
 
@@ -113,7 +113,7 @@ export const computeSpecCandidates = async ({
   run = runProcess
 }) => {
   const baseline = loadBaseline(workspaceRoot)
-  const status = await computeSpecStatus({ workspaceRoot, run })
+  const staleness = await computeStaleness({ workspaceRoot, run })
   const [lint, gaps] = await Promise.all([
     runSpecLint({ workspaceRoot, run }),
     computeSpecGaps({ workspaceRoot })
@@ -121,12 +121,15 @@ export const computeSpecCandidates = async ({
 
   const corpus = buildCorpus({ root: workspaceRoot })
   const changedFilesByRepo = Object.fromEntries(
-    status.repos.map((entry) => [entry.repo, new Set(entry.changedLinkedFiles)])
+    staleness.repos.map((entry) => [
+      entry.repo,
+      new Set(entry.changedLinkedFiles)
+    ])
   )
   const widenedByRepo = wide
     ? Object.fromEntries(
         await Promise.all(
-          status.repos.map(async (entry) => [
+          staleness.repos.map(async (entry) => [
             entry.repo,
             await widenedDirectories({ workspaceRoot, repoEntry: entry, run })
           ])
@@ -174,7 +177,7 @@ export const computeSpecCandidates = async ({
 
   const commitLog = Object.fromEntries(
     await Promise.all(
-      status.repos.map(async (entry) => [
+      staleness.repos.map(async (entry) => [
         entry.repo,
         await commitLogFor({ workspaceRoot, repoEntry: entry, run })
       ])
@@ -182,7 +185,7 @@ export const computeSpecCandidates = async ({
   )
 
   return {
-    staleness: status,
+    staleness,
     workPackets: packets,
     unresolvedLinks: lint.findings.filter(
       (finding) =>

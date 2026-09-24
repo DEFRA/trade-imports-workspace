@@ -11,16 +11,34 @@ const emitError = (text) => process.stderr.write(`${text}\n`)
 
 const optionsSchema = z
   .object({
+    none: z.boolean().optional().default(false),
     partial: z.boolean().optional().default(false),
     unitOnly: z.boolean().optional().default(false),
     scenario: z.string().trim().min(1).optional(),
     capability: z.string().trim().min(1).optional()
   })
-  .refine((opts) => !(opts.unitOnly && opts.scenario), {
-    message: '--unit-only and --scenario cannot both be given.'
-  })
-  .refine((opts) => !(opts.partial && opts.scenario), {
-    message: '--partial and --scenario cannot both be given.'
+  .superRefine((opts, ctx) => {
+    const narrowing = opts.none || opts.partial
+    if (opts.unitOnly && opts.scenario) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '--unit-only and --scenario cannot both be given.'
+      })
+    }
+    if (narrowing && opts.scenario) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          '--none/--partial narrow the gap list; --scenario replaces it. Use one or the other.'
+      })
+    }
+    if (narrowing && opts.unitOnly) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          '--none/--partial narrow the gap list; --unit-only replaces it. Use one or the other.'
+      })
+    }
   })
 
 const parseOptions = (opts) => {
@@ -74,14 +92,21 @@ export const register = (program, { timVersion }) => {
     .description(
       'Every scenario the coverage matrix records as not full — clustered, risk-ordered, under a staleness header'
     )
-    .option('--partial', 'Narrow to partial only, dropping none')
+    .option(
+      '--none',
+      'Narrow to coverage none (unions with --partial; omit both for all gaps)'
+    )
+    .option(
+      '--partial',
+      'Narrow to coverage partial (unions with --none; omit both for all gaps)'
+    )
     .option(
       '--unit-only',
-      'List scenarios whose only full witness is a unit test — weak product evidence'
+      'Replace the gap list: scenarios whose only full witness is a unit test (not a gap)'
     )
     .option(
       '--scenario <id>',
-      'Look up one scenario by id, whatever its coverage state'
+      'Replace the gap list: look up one scenario by id, whatever its coverage state'
     )
     .option(
       '--capability <path>',
@@ -89,8 +114,15 @@ export const register = (program, { timVersion }) => {
     )
     .addHelpText(
       'after',
-      '\nExamples:\n' +
+      '\nNarrowing (--none / --partial):\n' +
+        '  Name either to keep that coverage; name both (or neither) for every\n' +
+        '  non-full row. Same grammar as tim spec lint group flags.\n' +
+        '\nReplacing the list (--unit-only / --scenario):\n' +
+        '  These are not filters on the gap set — they swap in a different\n' +
+        '  listing. Cannot combine with --none/--partial or each other.\n' +
+        '\nExamples:\n' +
         '  tim spec gaps --json\n' +
+        '  tim spec gaps --none\n' +
         '  tim spec gaps --unit-only\n' +
         '  tim spec gaps --scenario SCN-ADDR-004-A'
     )

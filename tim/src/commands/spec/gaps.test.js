@@ -123,4 +123,28 @@ describe('tim spec gaps', () => {
     expect(run.exitCode).toBe(2)
     expect(run.stderr).toContain('cannot both be given')
   })
+
+  test('exits with USAGE when --partial and --unit-only are both given', async () => {
+    seedWorkspace()
+
+    const run = await runTim(['spec', 'gaps', '--partial', '--unit-only'])
+
+    expect(run.exitCode).toBe(2)
+    expect(run.stderr).toContain('replaces it')
+  })
+
+  test('exits with USAGE when --none and --scenario are both given', async () => {
+    seedWorkspace()
+
+    const run = await runTim([
+      'spec',
+      'gaps',
+      '--none',
+      '--scenario',
+      'SCN-WIDGET-001-A'
+    ])
+
+    expect(run.exitCode).toBe(2)
+    expect(run.stderr).toContain('replaces it')
+  })
 })

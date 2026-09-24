@@ -154,14 +154,17 @@ const daysAgo = (isoDate) =>
  * `computeSpecStatus`'s result plus how many days old `verifiedAt` is —
  * the shape `renderStalenessLine` and every staleness-header consumer
  * (`tim workspace status`, `tim spec gaps`, `tim spec candidates`) reads.
+ * Call this — not `computeSpecStatus` alone — wherever the staleness line
+ * is rendered, or `daysAgo` will be undefined.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
+ * @param {Function} [args.run]
  * @returns {Promise<object|null>} `null` when openspec/baseline.json is missing
  */
-export const computeStaleness = async ({ workspaceRoot }) => {
+export const computeStaleness = async ({ workspaceRoot, run }) => {
   try {
-    const status = await computeSpecStatus({ workspaceRoot })
+    const status = await computeSpecStatus({ workspaceRoot, run })
     return { ...status, daysAgo: daysAgo(status.verifiedAt) }
   } catch (error) {
     if (error.code === 'NOT_FOUND') return null

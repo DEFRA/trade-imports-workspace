@@ -127,7 +127,7 @@ every output is a report.
 |---|---|---|
 | `tim spec lint` | Validates the spec ↔ test binding — shape, ID parity, both rollups, prose cross-refs, and (where the repos are cloned) that every link's file exists and its test title resolves. Delegates `## Purpose` / `## Requirements` / ≥1-scenario checks to `openspec validate --specs --strict --json` and merges its issues. Exits non-zero on any finding. Takes a **check-group selector** — see below | none |
 | `tim spec status` | Baseline sha and date per repo (from `openspec/baseline.json`), current HEAD, and how many **linked** test files changed since | none |
-| `tim spec gaps` | Every scenario that is not `full`, clustered and risk-ordered, rendering each row's existing `notes` verbatim — the diagnosis is already written when the coverage was built | none |
+| `tim spec gaps` | Every scenario that is not `full`, clustered and risk-ordered, rendering each row's existing `notes` verbatim — the diagnosis is already written when the coverage was built. `--none` / `--partial` narrow (same union grammar as `tim spec lint` group flags); `--unit-only` and `--scenario` replace the listing | none |
 | `tim spec candidates` | What the next sweep should look at: linked files changed since the baseline, `lint`'s unresolved list, `gaps` as known-holes context, grouped into work packets per capability | none |
 | `tim spec baseline` / `--advance` | Print the baseline, or move it — only a person runs `--advance`, after accepting a sweep's findings | none |
 | `tim spec e2e-overlap` | E2E tests whose every witnessed scenario also has a full-strength `fit` or `unit` witness — a shortlist for judgement, not a delete list | none |

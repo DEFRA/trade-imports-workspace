@@ -1,7 +1,7 @@
 import { buildCorpus } from './corpus.js'
 import { coverageFileSchema } from './checks/shape.js'
-import { computeSpecStatus } from './status.js'
-import { TimError, isTimError } from '../errors.js'
+import { computeStaleness } from './status.js'
+import { TimError } from '../errors.js'
 
 const scenarioRows = (corpus) =>
   corpus.capabilities.flatMap((capability) => {
@@ -124,13 +124,21 @@ const witnessTypes = (row) =>
     )
   ].sort()
 
-const staleness = async (workspaceRoot) => {
-  try {
-    return await computeSpecStatus({ workspaceRoot })
-  } catch (error) {
-    if (isTimError(error) && error.code === 'NOT_FOUND') return null
-    throw error
-  }
+/**
+ * Narrowing grammar matching `tim spec lint`'s group flags: naming any of
+ * `--none` / `--partial` keeps those coverages; naming none of them (or
+ * both) keeps every non-full row.
+ *
+ * @param {object} row
+ * @param {boolean} none
+ * @param {boolean} partial
+ * @returns {boolean}
+ */
+export const matchesGapNarrowing = (row, none, partial) => {
+  if (!none && !partial) return true
+  if (none && row.coverage === 'none') return true
+  if (partial && row.coverage === 'partial') return true
+  return false
 }
 
 /**
@@ -142,7 +150,8 @@ const staleness = async (workspaceRoot) => {
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
- * @param {boolean} [args.partial] - Narrow to partial only, dropping none
+ * @param {boolean} [args.none] - Narrow to none (unions with --partial)
+ * @param {boolean} [args.partial] - Narrow to partial (unions with --none)
  * @param {boolean} [args.unitOnly]
  * @param {string} [args.scenario] - One scenario id, any coverage state
  * @param {string} [args.capability] - Scope to one capability and its descendants
@@ -151,6 +160,7 @@ const staleness = async (workspaceRoot) => {
  */
 export const computeSpecGaps = async ({
   workspaceRoot,
+  none = false,
   partial = false,
   unitOnly = false,
   scenario,
@@ -160,7 +170,7 @@ export const computeSpecGaps = async ({
   const rows = scenarioRows(corpus).filter((row) =>
     inScope(row.capability, capability)
   )
-  const status = await staleness(workspaceRoot)
+  const status = await computeStaleness({ workspaceRoot })
 
   if (scenario) {
     const found = rows.find((row) => row.id === scenario)
@@ -184,9 +194,9 @@ export const computeSpecGaps = async ({
   }
 
   const nonFull = rows.filter((row) => row.coverage !== 'full')
-  const scoped = partial
-    ? nonFull.filter((row) => row.coverage === 'partial')
-    : nonFull
+  const scoped = nonFull.filter((row) =>
+    matchesGapNarrowing(row, none, partial)
+  )
   const clusters = findClusters(scoped)
   const byId = new Map(scoped.map((row) => [row.id, row]))
   const clustered = [...clusters.values()].map((ids) => clusterRow(ids, byId))

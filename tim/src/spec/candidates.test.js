@@ -145,6 +145,7 @@ describe('computeSpecCandidates', () => {
     const result = await computeSpecCandidates({ workspaceRoot: root })
 
     expect(result.workPackets).toEqual([])
+    expect(typeof result.staleness.daysAgo).toBe('number')
   })
 
   test('names the capability whose linked test file changed', async () => {

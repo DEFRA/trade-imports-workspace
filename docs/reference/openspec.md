@@ -14,7 +14,7 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
 
-**That is the whole of the automated coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you at the time. What catches the rest is the periodic catch-up — `tim workspace status`'s staleness line says when one is due, and `spec-catchup` runs it. See [`tim spec`](#tim-spec--validating-and-maintaining-the-binding) below.
+**That is the whole of the automated coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you at the time. What catches the rest is the periodic catch-up — `tim workspace status`'s staleness line says when one is due, and `spec-catchup` runs it. Open matrix holes (`none` / `partial`) are a different direction: `spec-cover` writes tests for them. See [`tim spec`](#tim-spec--validating-and-maintaining-the-binding) below.
 
 This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
@@ -119,18 +119,20 @@ Prefer **E2E** when the scenario is about the system; **fit** when it’s about 
 `coverage.json` binding itself — nothing validated it, and `openspec validate --specs --strict` still
 reports `0 failed` against a corpus with dangling links — and a periodic sweep for drift no single
 increment owns: coverage links whose tests moved, holes nothing has filled, code nobody touched this
-week. Both are now built as `tim spec` (no AI) and the `spec-catchup` skill (the one AI piece). Nothing
-here gates a PR, a push, a merge or a build run — every command is run by a person or by the sweep, and
-every output is a report.
+week. Both are now built as `tim spec` (no AI) and two skills: `spec-catchup`
+(code ahead of words) and `spec-cover` (words ahead of tests). Nothing
+here gates a PR, a push, a merge or a build run — every command is run by a
+person or by a skill walk, and every output is a report or an uncommitted edit.
 
 | Command | Job | AI |
 |---|---|---|
 | `tim spec lint` | Validates the spec ↔ test binding — shape, ID parity, both rollups, prose cross-refs, and (where the repos are cloned) that every link's file exists and its test title resolves. Delegates `## Purpose` / `## Requirements` / ≥1-scenario checks to `openspec validate --specs --strict --json` and merges its issues. Exits non-zero on any finding. Takes a **check-group selector** — see below | none |
 | `tim spec status` | Baseline sha and date per repo (from `openspec/baseline.json`), current HEAD, and how many **linked** test files changed since | none |
 | `tim spec gaps` | Every scenario that is not `full`, clustered and risk-ordered, rendering each row's existing `notes` verbatim — the diagnosis is already written when the coverage was built. `--none` / `--partial` narrow (same union grammar as `tim spec lint` group flags); `--unit-only` and `--scenario` replace the listing | none |
-| `tim spec candidates` | What the next sweep should look at: linked files changed since the baseline, `lint`'s unresolved list, `gaps` as known-holes context, grouped into work packets per capability | none |
-| `tim spec baseline` / `--advance` | Print the baseline, or move it — only a person runs `--advance`, after accepting a sweep's findings | none |
+| `tim spec candidates` | What the next catch-up should look at: linked files changed since the baseline, `lint`'s unresolved list, `gaps` as known-holes context, grouped into work packets per capability | none |
+| `tim spec baseline` / `--advance` / `--require-ruled` | Print the baseline, or move it. `--require-ruled` refuses unless the latest catch-up run is fully ruled **and** applied. Catch-up runs this after a finished walk; cover never does | none |
 | `tim spec e2e-overlap` | E2E tests whose every witnessed scenario also has a full-strength `fit` or `unit` witness — a shortlist for judgement, not a delete list | none |
+| `tim spec findings` | Seed / list / rule / applied / render for a catch-up or cover run (`--skill catchup\|cover`). Findings.json is the state; report.md is a render | none |
 
 ### `tim spec lint`'s check groups
 
@@ -163,11 +165,14 @@ that makes a `coverage: "none"` carry a note.
 `binding` cannot run in a `specs`-only or `coverage`-only pass: ID parity, name parity and the pairing
 check each need both files, which is why the groups are four and not three.
 
-`spec-catchup` (`.claude/skills/spec-catchup/`) calls `tim spec candidates --json` itself, judges only the
-work packets it returns, and emits one of four verdicts per finding: **STALE LINK** (fixes
-`coverage.json`, applied), **SPEC WRONG** / **SPEC GAP** (proposes a `spec.md` edit, never applies it),
-**NO ACTION**. It never advances the baseline itself — it prints `tim spec baseline --advance` for a
-person to run after accepting the report.
+`spec-catchup` (`.claude/skills/spec-catchup/`) calls `tim spec candidates --json`,
+seeds `findings.json`, walks each finding for approval, applies accepted
+`coverage.json` / `spec.md` edits, then runs
+`tim spec baseline --advance --require-ruled`.
+
+`spec-cover` (`.claude/skills/spec-cover/`) calls `tim spec gaps`, seeds
+cover findings, walks for approval, writes tests in service repos, updates
+coverage links, and **does not** advance the baseline.
 
 ## Leave out of day-to-day use
 

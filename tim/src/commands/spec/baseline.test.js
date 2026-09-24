@@ -26,23 +26,49 @@ describe('renderBaselineText', () => {
 
 describe('renderAdvanceText', () => {
   test('names each repo that moved, and leaves unchanged repos alone', () => {
-    const text = renderAdvanceText({
-      before: {
-        verifiedAt: '2026-09-01',
-        verifiedBy: 'oldsha01',
-        repos: { a: '1'.repeat(40), b: '2'.repeat(40) }
+    const text = renderAdvanceText(
+      {
+        before: {
+          verifiedAt: '2026-09-01',
+          verifiedBy: 'oldsha01',
+          repos: { a: '1'.repeat(40), b: '2'.repeat(40) }
+        },
+        after: {
+          verifiedAt: '2026-09-23',
+          verifiedBy: 'newsha01',
+          repos: { a: '9'.repeat(40), b: '2'.repeat(40) }
+        }
       },
-      after: {
-        verifiedAt: '2026-09-23',
-        verifiedBy: 'newsha01',
-        repos: { a: '9'.repeat(40), b: '2'.repeat(40) }
-      }
-    })
+      '/workspace'
+    )
 
     expect(text).toContain('2026-09-01 (oldsha01) -> 2026-09-23 (newsha01)')
     expect(text).toMatch(/a\s+1{12} -> 9{12}/)
     expect(text).toMatch(/b\s+unchanged/)
     expect(text).toContain('commit it yourself')
+  })
+
+  test('names the catch-up run when --require-ruled checked one', () => {
+    const text = renderAdvanceText(
+      {
+        before: {
+          verifiedAt: '2026-09-01',
+          verifiedBy: 'oldsha01',
+          repos: { a: '1'.repeat(40) }
+        },
+        after: {
+          verifiedAt: '2026-09-23',
+          verifiedBy: 'newsha01',
+          repos: { a: '9'.repeat(40) }
+        },
+        ruledRun: '/workspace/workareas/spec-catchup/2026-09-24'
+      },
+      '/workspace'
+    )
+
+    expect(text).toContain(
+      'Checked against catch-up run workareas/spec-catchup/2026-09-24.'
+    )
   })
 })
 

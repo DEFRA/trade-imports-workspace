@@ -4,7 +4,8 @@ import {
   mkdirSync,
   writeFileSync,
   readFileSync,
-  rmSync
+  rmSync,
+  existsSync
 } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -17,7 +18,9 @@ import {
   markApplied,
   ruleBucket,
   renderReport,
-  writeReport
+  writeReport,
+  createRun,
+  assertRunRuled
 } from './findings.js'
 
 const finding = (overrides = {}) => ({
@@ -192,8 +195,19 @@ describe('countFindings', () => {
     expect(counts.allRuled).toBe(false)
   })
 
-  test('everything ruled once each finding and the bucket are settled', () => {
+  test('accept alone is not allRuled — the change must also be applied', () => {
     ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
+    ruleBucket({ runDir, disposition: 'accept' })
+
+    const counts = countFindings(loadFindings(runDir))
+
+    expect(counts.unapplied).toBe(1)
+    expect(counts.allRuled).toBe(false)
+  })
+
+  test('everything ruled once each finding is applied and the bucket is settled', () => {
+    ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
+    markApplied({ runDir, id: 'F-001' })
     ruleBucket({ runDir, disposition: 'accept' })
 
     expect(countFindings(loadFindings(runDir)).allRuled).toBe(true)
@@ -257,13 +271,19 @@ describe('renderReport', () => {
     expect(renderReport(loadFindings(runDir))).toContain('accepts the judge')
   })
 
-  test('withholds the advance command until everything is ruled', () => {
+  test('withholds the advance command until everything is ruled and applied', () => {
     expect(renderReport(loadFindings(runDir))).toContain(
-      'Walk them before advancing the baseline'
+      'Walk them before finishing this run'
     )
 
     ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
     ruleBucket({ runDir, disposition: 'accept' })
+
+    expect(renderReport(loadFindings(runDir))).toContain(
+      'accepted but not applied'
+    )
+
+    markApplied({ runDir, id: 'F-001' })
 
     expect(renderReport(loadFindings(runDir))).toContain(
       'tim spec baseline --advance --require-ruled'
@@ -274,5 +294,98 @@ describe('renderReport', () => {
     const path = writeReport(runDir)
 
     expect(readFileSync(path, 'utf8')).toContain('# Spec catch-up — 2026-09-24')
+  })
+})
+
+describe('createRun', () => {
+  test('writes findings.json and report.md under the skill runs dir', () => {
+    const { runDir: created, data } = createRun({
+      workspaceRoot: root,
+      skill: 'cover',
+      date: '2026-09-25',
+      baseline: { verifiedAt: '2026-09-16', verifiedBy: '8932fbf9' },
+      findings: [
+        {
+          id: 'F-001',
+          verdict: 'write-test',
+          capability: 'plants/authentication',
+          anchor: 'SCN-PLANTS-AUTH-002-A',
+          judgement: 'No test proves the invalid-credentials message.',
+          proposal: {
+            file: 'tests/e2e/auth.spec.ts',
+            repo: 'trade-imports-animals-tests',
+            type: 'e2e',
+            diff: '+test("rejects invalid credentials", async () => {})'
+          }
+        }
+      ]
+    })
+
+    expect(created).toContain('spec-cover')
+    expect(data.skill).toBe('cover')
+    expect(existsSync(join(created, 'findings.json'))).toBe(true)
+    expect(readFileSync(join(created, 'report.md'), 'utf8')).toContain(
+      'Spec cover'
+    )
+  })
+
+  test('refuses to overwrite a run that already has rulings', () => {
+    ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
+
+    expect(() =>
+      createRun({
+        workspaceRoot: root,
+        skill: 'catchup',
+        date: '2026-09-24',
+        baseline: { verifiedAt: '2026-09-16', verifiedBy: '8932fbf9' },
+        findings: [
+          {
+            id: 'F-001',
+            verdict: 'stale-link',
+            capability: 'x',
+            judgement: 'The behaviour is unchanged and only the test moved.'
+          }
+        ]
+      })
+    ).toThrow(/already has rulings/)
+  })
+
+  test('--force overwrites a ruled run', () => {
+    ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
+
+    const { data } = createRun({
+      workspaceRoot: root,
+      skill: 'catchup',
+      date: '2026-09-24',
+      baseline: { verifiedAt: '2026-09-16', verifiedBy: '8932fbf9' },
+      findings: [
+        {
+          id: 'F-009',
+          verdict: 'stale-link',
+          capability: 'y',
+          judgement: 'The behaviour is unchanged and only the test moved.'
+        }
+      ],
+      force: true
+    })
+
+    expect(data.findings[0].id).toBe('F-009')
+    expect(data.findings[0].disposition).toBeNull()
+  })
+})
+
+describe('assertRunRuled', () => {
+  test('refuses while findings are still open', () => {
+    expect(() => assertRunRuled({ workspaceRoot: root })).toThrow(
+      /Can't advance the baseline yet/
+    )
+  })
+
+  test('passes once everything is applied', () => {
+    ruleFinding({ runDir, id: 'F-001', disposition: 'accept' })
+    markApplied({ runDir, id: 'F-001' })
+    ruleBucket({ runDir, disposition: 'accept' })
+
+    expect(assertRunRuled({ workspaceRoot: root }).ok).toBe(true)
   })
 })

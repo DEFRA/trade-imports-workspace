@@ -106,4 +106,46 @@ describe('advanceBaseline', () => {
 
     expect(after.repos['trade-imports-x']).toMatch(/^[0-9a-f]{40}$/)
   })
+
+  test('--require-ruled refuses when there is no catch-up run', async () => {
+    await expect(
+      advanceBaseline({ workspaceRoot: root, requireRuled: true })
+    ).rejects.toThrow(/Run spec-catchup first/)
+  })
+
+  test('--require-ruled advances after a fully settled catch-up run', async () => {
+    const runDir = join(root, 'workareas', 'spec-catchup', '2026-09-24')
+    mkdirSync(runDir, { recursive: true })
+    writeFileSync(
+      join(runDir, 'findings.json'),
+      JSON.stringify({
+        skill: 'catchup',
+        date: '2026-09-24',
+        baseline: { verifiedAt: '2026-09-01', verifiedBy: 'oldsha01' },
+        findings: [
+          {
+            id: 'F-001',
+            verdict: 'stale-link',
+            capability: 'x',
+            judgement: 'The behaviour is unchanged and only the test moved.',
+            disposition: 'accept',
+            status: 'applied'
+          }
+        ],
+        noActionBucket: {
+          capabilities: 0,
+          disposition: null,
+          status: 'pending'
+        }
+      })
+    )
+
+    const { after, ruledRun } = await advanceBaseline({
+      workspaceRoot: root,
+      requireRuled: true
+    })
+
+    expect(after.verifiedAt).toBe(new Date().toISOString().slice(0, 10))
+    expect(ruledRun).toBe(runDir)
+  })
 })

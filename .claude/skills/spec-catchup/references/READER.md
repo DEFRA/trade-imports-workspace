@@ -25,12 +25,17 @@ an unchanged body is a STALE LINK, not drift.
 
 ## The four verdicts
 
-| Verdict | Meaning | Action |
+| Verdict | Meaning | On accept |
 |---|---|---|
-| **STALE LINK** | The behaviour is unchanged; the test's file, title, or method name moved | Fix `coverage.json` — apply the edit, leave it uncommitted |
-| **SPEC WRONG** | The behaviour actually changed, and `spec.md` still describes the old behaviour | Propose the `spec.md` diff in the report — never apply it |
-| **SPEC GAP** | The changed test proves new behaviour with no requirement or scenario for it yet | Propose the addition in the report — never apply it |
-| **NO ACTION** | The change is copy, layout, or an internal refactor that doesn't touch the claim the scenario makes | One line in the report, grouped with the rest |
+| **STALE LINK** | The behaviour is unchanged; the test's file, title, or method name moved | Apply `coverage.json` fix |
+| **SPEC WRONG** | The behaviour actually changed, and `spec.md` still describes the old behaviour | Apply the `spec.md` diff (after walk approval) |
+| **SPEC GAP** | The changed test proves new behaviour with no requirement or scenario for it yet | Apply the addition (after walk approval) |
+| **NO ACTION** | The change is copy, layout, or an internal refactor that doesn't touch the claim the scenario makes | Bucket only — no per-file edit |
+
+Seed every non–NO ACTION finding into `findings.json` with a concrete
+`proposal.diff`. The walker asks for approval before APPLY runs. Do **not**
+edit `spec.md` or `coverage.json` during judgement — only while applying
+an accepted finding.
 
 ## The judgement sentence
 
@@ -85,6 +90,7 @@ either way, but get it right the first time.
 
 A unified diff against the current `spec.md`, in the spec's own voice —
 Given/When/Then, MUST not SHALL, the requirement/scenario heading format
-`openspec/config.yaml` defines. Do not soften a genuine behaviour change
-into a vague "may vary" — state what the system now does, concretely,
-the same way the rest of that capability's spec does.
+`openspec/config.yaml` defines. Put it on the finding's `proposal` so the
+walker can show it and APPLY can land it after accept. Do not soften a
+genuine behaviour change into a vague "may vary" — state what the system
+now does, concretely, the same way the rest of that capability's spec does.

@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { renderLintText } from './lint.js'
+import { renderLintText, groupsFrom } from './lint.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -125,6 +125,30 @@ describe('tim spec lint', () => {
     )
   }, 60_000)
 
+  test('refuses --links and --skip-links together rather than silently picking one', async () => {
+    seedWorkspace(SPEC_TEXT)
+
+    const run = await runTim(['spec', 'lint', '--links', '--skip-links'])
+
+    expect(run.exitCode).toBe(2)
+    expect(run.stderr).toContain(
+      'Use either --links or --skip-links, not both.'
+    )
+  }, 60_000)
+
+  test('--skip-links reports the links group as not selected', async () => {
+    seedWorkspace(SPEC_TEXT)
+
+    const run = await runTim(['spec', 'lint', '--skip-links', '--json'])
+    const envelope = JSON.parse(run.stdout.trim())
+
+    expect(run.exitCode).toBe(0)
+    expect(envelope.result.groups).toEqual(['specs', 'coverage', 'binding'])
+    expect(envelope.result.skipped).toEqual([
+      { check: 'links', repo: null, reason: 'not selected' }
+    ])
+  }, 60_000)
+
   test('exits zero for a well-formed capability', async () => {
     seedWorkspace(SPEC_TEXT)
 
@@ -202,5 +226,30 @@ describe('renderLintText', () => {
         skipped: []
       }).split('\n')[0]
     ).toBe('0 findings across 72 capabilities under /ws.')
+  })
+})
+
+describe('groupsFrom', () => {
+  test('runs all four groups when none is named', () => {
+    expect(groupsFrom({})).toEqual(['specs', 'coverage', 'binding', 'links'])
+  })
+
+  test('narrows to the groups named, in CHECK_GROUPS order', () => {
+    expect(groupsFrom({ binding: true, specs: true })).toEqual([
+      'specs',
+      'binding'
+    ])
+  })
+
+  test('--skip-links leaves out the only group that reads the repos', () => {
+    expect(groupsFrom({ skipLinks: true })).toEqual([
+      'specs',
+      'coverage',
+      'binding'
+    ])
+  })
+
+  test('a named group wins over --skip-links', () => {
+    expect(groupsFrom({ specs: true, skipLinks: true })).toEqual(['specs'])
   })
 })

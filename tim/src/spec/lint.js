@@ -106,6 +106,24 @@ const CAPABILITY_CHECKS = [
 const capabilityChecksFor = (groups) =>
   CAPABILITY_CHECKS.filter((check) => groups.includes(check.group))
 
+const UNSELECTED_REASON = 'not selected'
+
+// A group that did not run is reported, not omitted: a green narrow run
+// must never read like a green full one.
+const unselectedGroupSkips = (groups) =>
+  CHECK_GROUPS.filter((group) => !groups.includes(group)).map((group) => ({
+    check: group,
+    repo: null,
+    reason: UNSELECTED_REASON
+  }))
+
+const NO_LINK_RESOLUTION = {
+  gates: null,
+  indexes: {},
+  cloned: new Set(),
+  skipped: []
+}
+
 /**
  * All twelve checks (BUILD-IT-NOW.md §1.1): the two delegated to `openspec
  * validate --specs --strict --json` (openspec-cli.js), the ten
@@ -157,17 +175,22 @@ export const runSpecLint = async ({
       .filter((entry) => entry.hasSpec)
       .map((entry) => entry.path)
   )
-  const areasTable = readAreasTable(specRoot)
+  const wants = (group) => groups.includes(group)
+  const areasTable = wants('coverage') ? readAreasTable(specRoot) : null
 
-  const openspecFindings = (
-    await validateWithOpenspecCli({ specRoot, capability, run })
-  ).filter((finding) => inScope(finding.capability, capability))
+  const openspecFindings = wants('specs')
+    ? (await validateWithOpenspecCli({ specRoot, capability, run })).filter(
+        (finding) => inScope(finding.capability, capability)
+      )
+    : []
 
-  const resolution = await prepareLinkResolution({
-    corpus: { capabilities: scoped },
-    workspaceRoot,
-    run
-  })
+  const resolution = wants('links')
+    ? await prepareLinkResolution({
+        corpus: { capabilities: scoped },
+        workspaceRoot,
+        run
+      })
+    : NO_LINK_RESOLUTION
 
   const context = {
     areasTable,
@@ -180,14 +203,17 @@ export const runSpecLint = async ({
     checks.flatMap((check) => check.run(entry, context))
   )
 
-  const globalIdFindings = checkGlobalIdUniqueness(corpus.capabilities).filter(
-    (finding) => inScope(finding.capability, capability)
-  )
+  const globalIdFindings = wants('specs')
+    ? checkGlobalIdUniqueness(corpus.capabilities).filter((finding) =>
+        inScope(finding.capability, capability)
+      )
+    : []
 
   return {
     specRoot,
     capabilityCount: scoped.length,
+    groups,
     findings: [...openspecFindings, ...localFindings, ...globalIdFindings],
-    skipped: resolution.skipped
+    skipped: [...unselectedGroupSkips(groups), ...resolution.skipped]
   }
 }

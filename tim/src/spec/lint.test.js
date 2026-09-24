@@ -181,6 +181,55 @@ describe('runSpecLint', () => {
     expect(specsOnly.findings).toEqual([])
   })
 
+  test('reports every group it did not run, so a narrow pass never reads like a full one', async () => {
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['specs'],
+      run: cleanOpenspecRun
+    })
+
+    expect(result.groups).toEqual(['specs'])
+    expect(result.skipped).toEqual([
+      { check: 'coverage', repo: null, reason: 'not selected' },
+      { check: 'binding', repo: null, reason: 'not selected' },
+      { check: 'links', repo: null, reason: 'not selected' }
+    ])
+  })
+
+  test('spawns no repo listing when the links group is left out', async () => {
+    const commands = []
+    const recordingRun = async (command, args) => {
+      commands.push([command, ...args].join(' '))
+      return cleanOpenspecRun()
+    }
+
+    await runSpecLint({
+      workspaceRoot: root,
+      groups: ['coverage', 'binding'],
+      run: recordingRun
+    })
+
+    expect(commands).toEqual([])
+  })
+
+  test('shells out to openspec validate only when the specs group runs', async () => {
+    const commands = []
+    const recordingRun = async (command, args) => {
+      commands.push([command, ...args].join(' '))
+      return cleanOpenspecRun()
+    }
+
+    await runSpecLint({
+      workspaceRoot: root,
+      groups: ['specs'],
+      run: recordingRun
+    })
+
+    expect(commands).toEqual([
+      expect.stringContaining('validate --specs --strict --json')
+    ])
+  })
+
   test('keeps findings in report order when a group is left out', async () => {
     rmSync(join(root, 'openspec', 'coverage', 'widgets', 'coverage.json'))
     const spec = `${SPEC_TEXT}\n### Requirement: Widgets SHALL wobble\n**ID**: REQ-WIDGET-002\nThe system SHALL wobble.\n\n#### Scenario: A widget wobbles\n**ID**: SCN-WIDGET-002-A\n- **GIVEN** a widget\n- **WHEN** nudged\n- **THEN** it wobbles\n`

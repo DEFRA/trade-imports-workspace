@@ -125,12 +125,43 @@ every output is a report.
 
 | Command | Job | AI |
 |---|---|---|
-| `tim spec lint` | Validates the spec ↔ test binding — shape, ID parity, both rollups, prose cross-refs, and (where the repos are cloned) that every link's file exists and its test title resolves. Delegates `## Purpose` / `## Requirements` / ≥1-scenario checks to `openspec validate --specs --strict --json` and merges its issues. Exits non-zero on any finding | none |
+| `tim spec lint` | Validates the spec ↔ test binding — shape, ID parity, both rollups, prose cross-refs, and (where the repos are cloned) that every link's file exists and its test title resolves. Delegates `## Purpose` / `## Requirements` / ≥1-scenario checks to `openspec validate --specs --strict --json` and merges its issues. Exits non-zero on any finding. Takes a **check-group selector** — see below | none |
 | `tim spec status` | Baseline sha and date per repo (from `openspec/baseline.json`), current HEAD, and how many **linked** test files changed since | none |
 | `tim spec gaps` | Every scenario that is not `full`, clustered and risk-ordered, rendering each row's existing `notes` verbatim — the diagnosis is already written when the coverage was built | none |
 | `tim spec candidates` | What the next sweep should look at: linked files changed since the baseline, `lint`'s unresolved list, `gaps` as known-holes context, grouped into work packets per capability | none |
 | `tim spec baseline` / `--advance` | Print the baseline, or move it — only a person runs `--advance`, after accepting a sweep's findings | none |
 | `tim spec e2e-overlap` | E2E tests whose every witnessed scenario also has a full-strength `fit` or `unit` witness — a shortlist for judgement, not a delete list | none |
+
+### `tim spec lint`'s check groups
+
+The twelve checks fall into four groups, named for what each one reads. Three are file-local and
+finish in about a second; the fourth reads `repos/` and builds a test-title index per repo, which is
+the whole cost of a full run.
+
+| Group | Checks | Reads | Cost |
+|---|---|---|---|
+| `specs` | `## Purpose` / `## Requirements` present · ≥1 scenario per requirement · stable IDs present and globally unique · a `THEN` in every scenario · MUST not SHALL · prose cross-references resolve | `openspec/specs/` | ~1s |
+| `coverage` | shape and enums · scenario rollup · requirement rollup · a `none` carries `notes` · `areaCode` against `AREAS.md` · `specFile` path | `openspec/coverage/` | ~0.2s |
+| `binding` | a `coverage.json` per `spec.md` and the reverse · ID parity · names verbatim | **both files** | ~0.2s |
+| `links` | every link's `file` exists · every link's `test` resolves to a real test title | `openspec/coverage/` + `repos/` + the test runners | **~6 min** |
+
+```bash
+tim spec lint                    # all four groups
+tim spec lint --skip-links       # the three file-local groups — ~1.5s
+tim spec lint --specs            # spec.md conventions only
+tim spec lint --specs --coverage # naming more than one unions them
+tim spec lint --links            # the repo-reading checks only
+```
+
+Naming any group narrows to those; naming none runs all four. `--links` and `--skip-links` together
+is refused rather than resolved silently. `--capability` composes with every selector.
+
+**Whatever does not run is reported**, as `Skipped: links: not selected` in text and as a `skipped`
+entry plus a `groups` array in `--json`. A narrow pass must never read like a full one — the same rule
+that makes a `coverage: "none"` carry a note.
+
+`binding` cannot run in a `specs`-only or `coverage`-only pass: ID parity, name parity and the pairing
+check each need both files, which is why the groups are four and not three.
 
 `spec-sweep` (`.claude/skills/spec-sweep/`) calls `tim spec candidates --json` itself, judges only the
 work packets it returns, and emits one of four verdicts per finding: **STALE LINK** (fixes

@@ -14,14 +14,18 @@ import {
   NODE_REPOS,
   JAVA_REPOS,
   UNIT_TEST_EXEMPT_REPOS,
+  UPSTREAM_REPOS,
   REPOS_DIR,
   repoPath,
   realRepoPath,
   isNodeRepo,
   isJavaRepo,
   GITHUB_ORG,
-  repoUrl
+  repoUrl,
+  upstreamOf,
+  assertValidUpstreams
 } from './repos.js'
+import { TimError } from '../errors.js'
 
 // Read the roster independently of repos.js so these assertions test the
 // stack classification rather than restating a hardcoded list that goes stale
@@ -147,5 +151,79 @@ describe('repo constants', () => {
       if (original === undefined) delete process.env.TIM_GITHUB_BASE_URL
       else process.env.TIM_GITHUB_BASE_URL = original
     }
+  })
+
+  describe('upstream (optional manifest field)', () => {
+    const manifestUpstreams = Object.fromEntries(
+      manifest.repos
+        .filter((repo) => repo.upstream !== undefined)
+        .map((repo) => [repo.name, repo.upstream])
+    )
+
+    test('UPSTREAM_REPOS is every manifest entry that declares an upstream', () => {
+      expect(UPSTREAM_REPOS).toEqual(manifestUpstreams)
+    })
+
+    test('upstreamOf returns the declared upstream repo name', () => {
+      for (const [repo, upstream] of Object.entries(manifestUpstreams)) {
+        expect(upstreamOf(repo)).toBe(upstream)
+      }
+    })
+
+    test('upstreamOf returns null when the manifest declares none', () => {
+      const withoutUpstream = REPOS.find(
+        (repo) => manifestUpstreams[repo] === undefined
+      )
+      expect(upstreamOf(withoutUpstream)).toBeNull()
+      expect(upstreamOf('unknown-repo')).toBeNull()
+    })
+
+    test('every declared upstream is a real repo in the roster', () => {
+      for (const upstream of Object.values(manifestUpstreams)) {
+        expect(REPOS).toContain(upstream)
+      }
+    })
+
+    test('assertValidUpstreams accepts a manifest with no upstream fields', () => {
+      expect(() =>
+        assertValidUpstreams({
+          repos: [{ name: 'a' }, { name: 'b' }]
+        })
+      ).not.toThrow()
+    })
+
+    test('assertValidUpstreams accepts a valid upstream field', () => {
+      expect(() =>
+        assertValidUpstreams({
+          repos: [{ name: 'a', upstream: 'b' }, { name: 'b' }]
+        })
+      ).not.toThrow()
+    })
+
+    test('assertValidUpstreams rejects a non-string upstream', () => {
+      expect(() =>
+        assertValidUpstreams({ repos: [{ name: 'a', upstream: 123 }] })
+      ).toThrow(TimError)
+    })
+
+    test('assertValidUpstreams rejects an empty-string upstream', () => {
+      expect(() =>
+        assertValidUpstreams({ repos: [{ name: 'a', upstream: '  ' }] })
+      ).toThrow(TimError)
+    })
+
+    test('assertValidUpstreams rejects a repo naming itself as upstream', () => {
+      expect(() =>
+        assertValidUpstreams({ repos: [{ name: 'a', upstream: 'a' }] })
+      ).toThrow('cannot name itself')
+    })
+
+    test('assertValidUpstreams rejects an upstream not in the roster', () => {
+      expect(() =>
+        assertValidUpstreams({
+          repos: [{ name: 'a', upstream: 'ghost' }]
+        })
+      ).toThrow('is not a repo in the roster')
+    })
   })
 })

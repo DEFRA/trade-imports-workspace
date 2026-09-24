@@ -1,6 +1,12 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath, repoUrl, REPOS_DIR } from '../../constants/repos.js'
+import {
+  REPOS,
+  repoPath,
+  repoUrl,
+  REPOS_DIR,
+  upstreamOf
+} from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import {
   assertGitSupportsNegativeRefspecs,
@@ -84,6 +90,149 @@ const cloneLight = async (repo, label, dir) => {
   }
 }
 
+const UPSTREAM_REMOTE = 'upstream'
+const UPSTREAM_FETCH_REFSPEC = '+refs/heads/main:refs/remotes/upstream/main'
+const UPSTREAM_TAG_OPT = '--no-tags'
+const UPSTREAM_PUSH_URL = 'DISABLED'
+
+const readGitConfigAll = async (dir, key) => {
+  const result = await run('git', ['-C', dir, 'config', '--get-all', key])
+  return result.exitCode === 0 ? result.stdout.split('\n').filter(Boolean) : []
+}
+
+const readGitConfigLast = async (dir, key) => {
+  const values = await readGitConfigAll(dir, key)
+  return values.at(-1) ?? null
+}
+
+const setGitConfig = (dir, key, value) =>
+  run('git', ['-C', dir, 'config', '--replace-all', key, value])
+
+const upstreamRemoteState = async (dir) => ({
+  url: await readGitConfigLast(dir, `remote.${UPSTREAM_REMOTE}.url`),
+  fetch: await readGitConfigAll(dir, `remote.${UPSTREAM_REMOTE}.fetch`),
+  tagOpt: await readGitConfigLast(dir, `remote.${UPSTREAM_REMOTE}.tagOpt`),
+  pushurl: await readGitConfigLast(dir, `remote.${UPSTREAM_REMOTE}.pushurl`)
+})
+
+const upstreamRemoteIsCorrect = (state, url) =>
+  state.url === url &&
+  state.fetch.length === 1 &&
+  state.fetch[0] === UPSTREAM_FETCH_REFSPEC &&
+  state.tagOpt === UPSTREAM_TAG_OPT &&
+  state.pushurl === UPSTREAM_PUSH_URL
+
+/**
+ * Ensure the repo's `upstream` remote (when `repos.json` declares one)
+ * fetches only `main`, carries no tags, and cannot be pushed to — a
+ * designer's prototype clone pulls upstream changes but never
+ * accidentally pushes to the real service's repo. Idempotent: reads the
+ * current config first and writes only what's wrong, so a
+ * correctly-configured remote is left untouched.
+ *
+ * @returns {Promise<{exitCode: 0, action: 'none'|'unchanged'|'added'|'corrected'} | ReturnType<typeof failure>>}
+ */
+const ensureUpstreamRemote = async (repo, dir) => {
+  const upstreamRepo = upstreamOf(repo)
+  if (!upstreamRepo) return { exitCode: 0, action: 'none' }
+
+  const url = repoUrl(upstreamRepo)
+  const before = await upstreamRemoteState(dir)
+
+  if (before.url && upstreamRemoteIsCorrect(before, url)) {
+    return { exitCode: 0, action: 'unchanged' }
+  }
+
+  if (!before.url) {
+    const add = await run('git', [
+      '-C',
+      dir,
+      'remote',
+      'add',
+      UPSTREAM_REMOTE,
+      url
+    ])
+    if (add.exitCode !== 0) {
+      return failure(repo, `${repo} — add upstream remote`, add, 'failed')
+    }
+  } else if (before.url !== url) {
+    const setUrl = await run('git', [
+      '-C',
+      dir,
+      'remote',
+      'set-url',
+      UPSTREAM_REMOTE,
+      url
+    ])
+    if (setUrl.exitCode !== 0) {
+      return failure(
+        repo,
+        `${repo} — correct upstream remote url`,
+        setUrl,
+        'failed'
+      )
+    }
+  }
+
+  if (before.fetch.length !== 1 || before.fetch[0] !== UPSTREAM_FETCH_REFSPEC) {
+    const fetch = await setGitConfig(
+      dir,
+      `remote.${UPSTREAM_REMOTE}.fetch`,
+      UPSTREAM_FETCH_REFSPEC
+    )
+    if (fetch.exitCode !== 0) {
+      return failure(
+        repo,
+        `${repo} — set upstream fetch refspec`,
+        fetch,
+        'failed'
+      )
+    }
+  }
+
+  if (before.tagOpt !== UPSTREAM_TAG_OPT) {
+    const tagOpt = await setGitConfig(
+      dir,
+      `remote.${UPSTREAM_REMOTE}.tagOpt`,
+      UPSTREAM_TAG_OPT
+    )
+    if (tagOpt.exitCode !== 0) {
+      return failure(repo, `${repo} — set upstream tagOpt`, tagOpt, 'failed')
+    }
+  }
+
+  if (before.pushurl !== UPSTREAM_PUSH_URL) {
+    const pushurl = await setGitConfig(
+      dir,
+      `remote.${UPSTREAM_REMOTE}.pushurl`,
+      UPSTREAM_PUSH_URL
+    )
+    if (pushurl.exitCode !== 0) {
+      return failure(
+        repo,
+        `${repo} — disable upstream pushurl`,
+        pushurl,
+        'failed'
+      )
+    }
+  }
+
+  return { exitCode: 0, action: before.url ? 'corrected' : 'added' }
+}
+
+const UPSTREAM_ACTION_NOTE = {
+  added: 'upstream remote added',
+  corrected: 'upstream remote corrected'
+}
+
+const withUpstreamRemote = async (repo, dir, base) => {
+  if (base.exitCode !== 0) return base
+  const upstream = await ensureUpstreamRemote(repo, dir)
+  if (upstream.exitCode !== 0) return upstream
+  const note = UPSTREAM_ACTION_NOTE[upstream.action]
+  return note ? { ...base, label: `${base.label}, ${note}` } : base
+}
+
 const cloneTask = (workspaceRoot, repo) => {
   const dir = repoPath(workspaceRoot, repo)
   const alreadyCloned = existsSync(join(dir, '.git'))
@@ -94,18 +243,21 @@ const cloneTask = (workspaceRoot, repo) => {
   task.needsNegativeRefspecs = async () =>
     alreadyCloned ? needsGhPagesExclusion(dir) : true
   task.run = async () => {
-    if (alreadyCloned) {
-      if (await needsGhPagesExclusion(dir)) return healTask(repo, dir)
-      return {
-        repo,
-        label,
-        exitCode: 0,
-        action: 'exists',
-        stderrTail: null
+    const base = await (async () => {
+      if (alreadyCloned) {
+        if (await needsGhPagesExclusion(dir)) return healTask(repo, dir)
+        return {
+          repo,
+          label,
+          exitCode: 0,
+          action: 'exists',
+          stderrTail: null
+        }
       }
-    }
-    mkdirSync(join(workspaceRoot, REPOS_DIR), { recursive: true })
-    return cloneLight(repo, label, dir)
+      mkdirSync(join(workspaceRoot, REPOS_DIR), { recursive: true })
+      return cloneLight(repo, label, dir)
+    })()
+    return withUpstreamRemote(repo, dir, base)
   }
   return task
 }

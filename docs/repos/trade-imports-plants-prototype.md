@@ -31,4 +31,11 @@ Unclear from code.
 
 ## How to run
 
-Unclear from code. Clone it with the workspace setup, then read its README. If it matches the plants frontend, `npm install` then `npm run dev` would apply, but that is unconfirmed.
+It runs on stubs alone, with no backend, Defra ID, Redis or reference data. From the repo:
+
+```bash
+npx --yes npm@11.6.2 ci   # the repo pins npm 11.6.2; ambient npm rejects the lockfile
+npm start
+```
+
+It serves on port 3103, its real twin's (`trade-imports-plants-frontend`, 3003) plus 100, with a chooser at `/` listing every mounted prototype set. `PORT`, `STUB_MODE` and `SESSION_CACHE_ENGINE` still win when set.

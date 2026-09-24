@@ -269,6 +269,18 @@ a thin navigation index only, no item rows:
 [2-3 sentences. Full todo lists and item details are in each `review.{repo}.md`.]
 ```
 
+**Where the PR set touches `openspec/`**, the Acceptance Criteria Check
+runs both ways: the code satisfies the AC, *and* the behaviour-spec
+update accurately represents it. Added or changed scenarios under
+`openspec/specs/` must say what the AC says; `openspec/coverage/` links
+on touched scenarios must be backed by test files actually in the PR
+set. A mismatch is Critical — the file-reviewers will already have
+raised it (`references/FILE_REVIEWER.md` → "Behaviour-spec files");
+carry it into the AC table rather than letting it sit only in the items
+list. The spec and the code it describes often land in **separate PRs**,
+since the spec lives in `trade-imports-workspace` — check across the PR
+set, not within one diff.
+
 ## Step 7: Post the review (FRESH only)
 
 Post the review to every PR in `.review-meta.json` as a PR comment.
@@ -562,7 +574,7 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | Script | Purpose |
 |---|---|
 | `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
-| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh` |
+| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh`, which reads `assets/routing.json` |
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
 | `verify-consistency.sh` | Fresh Step 4 consistency gate |
 | `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |

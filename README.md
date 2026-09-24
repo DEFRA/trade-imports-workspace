@@ -18,6 +18,7 @@ Local workspace aggregating the independent GitHub repos of the DEFRA trade impo
 | `repos/trade-imports-ins-frontend` | [DEFRA/trade-imports-ins-frontend](https://github.com/DEFRA/trade-imports-ins-frontend) | Import Notification Service front-door | Node.js |
 | `repos/trade-imports-ins-backend` | [DEFRA/trade-imports-ins-backend](https://github.com/DEFRA/trade-imports-ins-backend) | Cross-journey notification read model | Java / Spring Boot |
 | `repos/trade-imports-plants-frontend` | [DEFRA/trade-imports-plants-frontend](https://github.com/DEFRA/trade-imports-plants-frontend) | High-risk plants journey | Node.js |
+| `repos/trade-imports-plants-prototype` | [DEFRA/trade-imports-plants-prototype](https://github.com/DEFRA/trade-imports-plants-prototype) | Prototype copy of the plants frontend, synced from it | Node.js |
 | `repos/trade-imports-plants-backend` | [DEFRA/trade-imports-plants-backend](https://github.com/DEFRA/trade-imports-plants-backend) | High-risk plants notification persistence | Java / Spring Boot |
 | `repos/trade-imports-schemas` | [DEFRA/trade-imports-schemas](https://github.com/DEFRA/trade-imports-schemas) | Shared schema definitions | Node.js |
 

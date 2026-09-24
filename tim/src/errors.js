@@ -8,7 +8,11 @@ const VALID_CODES = new Set([
   'MISSING_DEP',
   'USER_ABORT',
   'PARTIAL_FAILURE',
-  'UNKNOWN'
+  'LINT',
+  'UNKNOWN',
+  'LOST_UPDATE',
+  'LOCKED',
+  'DIRTY_TREE'
 ])
 
 export class TimError extends Error {

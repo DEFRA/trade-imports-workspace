@@ -11,6 +11,7 @@ COMPOSE_FILES=(
   -f "$STACK_DIR/backend.compose.yml"
   -f "$STACK_DIR/frontend.compose.yml"
   -f "$STACK_DIR/security.compose.yml"
+  -f "$STACK_DIR/monitoring.compose.yml"
 )
 
 ALL_PROFILES=(database infrastructure servicebus stubs backend frontend)
@@ -18,8 +19,9 @@ ALL_PROFILES=(database infrastructure servicebus stubs backend frontend)
 # Opt-in only — deliberately excluded from ALL_PROFILES (and so from
 # run-stack.sh's no-flags default). Nothing in the default stack depends on
 # ZAP; it's a heavy scanner requested deliberately via `--profile security`,
-# never brought up by a plain `run-stack.sh`.
-OPT_IN_PROFILES=(security)
+# never brought up by a plain `run-stack.sh`. `monitoring` (Prometheus + Grafana) is
+# opt-in for the same reason: only needed when looking at meters locally.
+OPT_IN_PROFILES=(security monitoring)
 
 # Build --dev images for the daemon's own architecture. Under emulation the
 # webpack production stage effectively never finishes on arm64. Export

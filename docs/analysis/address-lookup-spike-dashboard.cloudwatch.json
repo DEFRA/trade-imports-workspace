@@ -1,0 +1,131 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_CLOUDWATCH",
+      "label": "CloudWatch",
+      "description": "The CloudWatch data source in CDP dev Grafana",
+      "type": "datasource",
+      "pluginId": "cloudwatch",
+      "pluginName": "CloudWatch"
+    }
+  ],
+  "uid": "ins-backend-address-lookup-cw",
+  "title": "trade-imports-ins-backend address lookup (custom)",
+  "description": "EUDPA-390 spike. The addressLookup.* meters EmfMetricsPublisher sends to CloudWatch once a minute, each value being that minute's count or total.",
+  "tags": ["trade-imports-ins-backend", "address-lookup"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Searches",
+      "description": "Searches in the selected time range.",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "searches", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Failed searches",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "failed", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.outcome.failed", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Mean gateway time",
+      "description": "Total gateway time over total searches in the range, with any token hops taken off. A mean, not a percentile.",
+      "datasource": { "type": "__expr__", "uid": "__expr__" },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "decimals": 0 }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "lookup", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.lookup", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "searches", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
+        { "datasource": { "type": "__expr__", "uid": "__expr__" }, "refId": "C", "type": "reduce", "expression": "A", "reducer": "sum", "hide": true },
+        { "datasource": { "type": "__expr__", "uid": "__expr__" }, "refId": "D", "type": "reduce", "expression": "B", "reducer": "sum", "hide": true },
+        { "datasource": { "type": "__expr__", "uid": "__expr__" }, "refId": "E", "type": "math", "expression": "$C / $D" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Searches per minute, by mode",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "postcode", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.mode.postcode", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "postcode" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "find", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.mode.find", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "find" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Outcomes per minute",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "results", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.outcome.results", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "results" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "no_results", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.outcome.no_results", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "no results" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "C", "id": "failed", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.outcome.failed", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "failed" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Failures per minute, by reason",
+      "description": "One metric per reason, because the CloudWatch publisher drops tags.",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0, "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "f401", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.HTTP_401", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "HTTP_401" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "f403", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.HTTP_403", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "HTTP_403" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "C", "id": "f500", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.HTTP_500", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "HTTP_500" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "D", "id": "f503", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.HTTP_503", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "HTTP_503" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "E", "id": "fnonjson", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.NON_JSON_200", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "NON_JSON_200" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "F", "id": "ftimeout", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.TIMEOUT", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "TIMEOUT" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "G", "id": "fsts", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.STS_FAILED", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "STS_FAILED" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "H", "id": "ftoken", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.TOKEN_FAILED", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "TOKEN_FAILED" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "I", "id": "funknown", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.failure.UNKNOWN", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "UNKNOWN" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Mean time per search",
+      "description": "Each minute's total time over that minute's searches.",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "custom": { "drawStyle": "points", "pointSize": 6 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "lookup", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.lookup", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "total", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.total", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "C", "id": "searches", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "D", "id": "mean_gateway", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 1, "region": "default", "expression": "lookup / searches", "period": "60", "label": "gateway" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "E", "id": "mean_total", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 1, "region": "default", "expression": "total / searches", "period": "60", "label": "total, incl. token hops" }
+      ]
+    }
+  ]
+}

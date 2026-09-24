@@ -22,7 +22,7 @@ Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agen
 - **Never edit `docker/stack/.staged/`** — it is generated on every stack start; edits are silently overwritten.
 - **Never commit `workareas/`** — it is gitignored runtime cache. The sole exception is `workareas/shared/` (tracked via a `.gitignore` negation for review handoff).
 - **Never let cross-repo branches drift** — same branch name across every affected repo (see rule 2).
-- **Before committing code changes:** run `sonar analyze --staged` and fix any BLOCKER or CRITICAL findings first (see SonarCloud integration below).
+- **Before pushing code changes:** a `PreToolUse` hook runs the real SonarCloud quality gate automatically on `git push` and blocks the push if it fails (see SonarCloud integration below). If `SONAR_TOKEN` isn't set locally, the hook skips gracefully — run the same check manually in that case.
 
 ### 4. Skill routing index
 
@@ -39,9 +39,8 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `govuk-upgrade` | "upgrade govuk-frontend", "govuk upgrade", "walk govuk EUDPA-X", "implement govuk EUDPA-X" | Per-version govuk-frontend upgrade with CHANGELOG-driven plans (JSON-state, dispatcher, walker). |
 | `skill-creator` | "scaffold skill `<name>`", "skill-create `<name>`", "new workspace skill `<name>`", "audit skill `<name>`", "audit skills" | Meta-skill — CREATE scaffolds a new workspace skill; AUDIT walks an existing skill against the 8-pattern checklist. |
 | `understanding-check` | "interview EUDPA-X", "check understanding EUDPA-X", "understanding-check EUDPA-X" | Pre-merge author-understanding check on an AI-assisted PR. |
-| `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on a frontend repo (today `trade-imports-animals-frontend`, src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout. |
-
-| `parity` | "compare these two things and give me a report", "compare X against Y", "set up a new comparison", "resume the comparison", "regenerate the parity report", "rebuild the findings report", "rule the parity decisions", "walk parity EUDPA-", "migrate parity EUDPA-", "recapture the parity corpus" | Build, check and adjudicate a findings report for a comparison corpus. COMPARE runs the whole pipeline from an interview to a rendered report, resumable at every phase. Renders a findings backlog as a decision surface with the code and the pictures in reach; migrates finding prose into structured slots under ten invariants. Hands `status`/`gate`/`dependsOn` to `journey-builder`. |
+| `frontend-change` | "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend" | One recipe-verbatim increment on a frontend repo (today `trade-imports-animals-frontend`, src/server/app): recipes for additive elements, guard-railed maintenance for obligations and journey flow, verification ladder throughout, then a post-verification sync of the `openspec/` behaviour spec and coverage entries the increment touched. |
+| `requirements-pipeline` | "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil", "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build" | Sources in, one backlog.json of full-stack requirement increments out (DISTIL), then built one increment at a time through the increment build loop (BUILD). The backlog shape, the loop and its Codex briefs live beside it. |
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 
@@ -60,7 +59,8 @@ Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-refe
 | `repos/trade-imports-address-book` | DEFRA/trade-imports-address-book | Org-scoped address book API (system of record for Standard Address Block records) | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | DEFRA/trade-imports-ins-frontend | Import Notification Service front-door (address-book UI, sign-in, dashboard shell) | Node.js |
 | `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
-| `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (set empty — awaiting requirements) | Node.js |
+| `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (implemented on the shared journey platform; requirements still being reconciled) | Node.js |
+| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend — its `upstream` remote is `trade-imports-plants-frontend`; sync with `git fetch upstream` then `git merge upstream/main` | Node.js |
 | `repos/trade-imports-plants-backend` | DEFRA/trade-imports-plants-backend | High-risk plants notification persistence | Java / Spring Boot |
 | `repos/trade-imports-schemas` | DEFRA/trade-imports-schemas | Shared schema definitions | Node.js |
 
@@ -87,7 +87,8 @@ tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
 tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
 tim auth                  # equivalent of tools/auth.sh
 tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
-tim parity report EUDPA-X # render a findings report; see the parity skill
+tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
+tim backlog registry list # every registered programme, its profile and workarea
 ```
 
 `tim/` is a sub-project of this repo rather than one of the cloned
@@ -144,6 +145,10 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 ## Docs
 
 - `docs/` — project documentation. Architecture notes, ADRs, runbooks.
+- [`docs/repos/architecture-overview.md`](docs/repos/architecture-overview.md) —
+  how the services connect and what each is responsible for (read this first
+  when a task crosses repos). Per-repo pages sit alongside it in
+  [`docs/repos/`](docs/repos/).
 - [`docs/adr/`](docs/adr/) — architecture decision records. See
   [`docs/adr/0001-consolidate-workspace-docs-under-docs.md`](docs/adr/0001-consolidate-workspace-docs-under-docs.md)
   for why `docs/` is the single canonical documentation root.
@@ -161,17 +166,29 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   codebases have moved on). See
   [`docs/analysis/gbn-ag-field-lineage.md`](docs/analysis/gbn-ag-field-lineage.md)
   for the frontend → NotificationAggregate → GBN-AG → PIMS GBN-AG field-mapping
-  audit.
+  audit, and
+  [`docs/analysis/sonarcloud-branch-gate-status.md`](docs/analysis/sonarcloud-branch-gate-status.md)
+  for the branch-level (not PR-scoped) quality gate status of all eight
+  sonar-integrated repos — read it before trusting a green PR check as
+  evidence that a repo's `main` is clean.
 
 ## SonarCloud integration
 
 `trade-imports-animals-frontend`, `-admin`, `-backend`, `-dynamics-gateway`, `-address-book`, `-reference-data`, `-ins-backend`, and `-ins-frontend` each have a SonarCloud Claude Code integration committed to `.claude/` and `.mcp.json`. This provides:
 
-- **Secrets scanning** — `UserPromptSubmit` and `PreToolUse` hooks block prompts/reads containing API keys or tokens
-- **MCP server** — query SonarCloud issues and rules via the `sonarqube` MCP server
-- **End-of-turn analysis** — a `Stop` hook runs `sonar analyze agentic` after each turn when uncommitted changes exist; any BLOCKER or CRITICAL findings are injected back as context so they can be addressed before the next response
+- **Secrets scanning** — `UserPromptSubmit` and `PreToolUse(Read)` hooks block prompts/reads containing API keys or tokens.
+- **MCP server** — query SonarCloud issues, quality gate status and rules directly via the per-repo `sonar-*` MCP servers (e.g. `mcp__sonar-gateway__search_sonar_issues_in_projects` for `trade-imports-dynamics-gateway`), without needing to run anything locally first.
+- **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running the canonical shared script at [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh) (one copy, referenced by every repo's `.claude/settings.json` via its `$HOME`-absolute path — not duplicated per repo). It runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
 
-**Before committing code changes:** run `sonar analyze --staged` (requires `sonar` CLI installed and `sonar auth login` completed) and fix any BLOCKER or CRITICAL findings before committing. Also run it when encountering CI failures, test failures, or unexpected behaviour. The MCP server can also be queried directly to fetch existing issues for a project.
+**Why not the server-side "Agentic Analysis" (Vortex) feature** the `sonar` CLI also offers (`sonar analyze agentic`, or `sonar analyze --staged`'s quality-check half): this DEFRA SonarCloud organization does not have that feature licensed (`403 Vortex Analysis is not available for this organization`) — confirmed by direct testing, not a config problem. The secrets-scanning half of the `sonar` CLI integration above is unaffected and still works. Don't reach for `sonar analyze agentic`/`--staged` expecting a working quality check; use the pre-push hook or run its script manually instead.
+
+**Requires `SONAR_TOKEN`** in the environment (a personal SonarCloud token, works across all these repos) — set alongside the other credentials in `~/.zshrc`. If it isn't set, the hook skips gracefully rather than blocking pushes over a missing local prerequisite; CI's own SonarCloud Scan check is still the authoritative backstop either way. To run the same check manually (e.g. mid-investigation, or on a repo without an open PR yet):
+
+```bash
+bash ~/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh <<< '{"tool_input":{"command":"git push"}}'
+```
+
+(the script reads its trigger command from that JSON on stdin, matching the real hook's contract) — or just invoke the underlying `mvn .../sonar:sonar` or `sonar-scanner` command the script runs, directly.
 
 ## Reference catalogues
 

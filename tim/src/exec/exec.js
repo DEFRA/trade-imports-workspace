@@ -1,4 +1,6 @@
 import { execa } from 'execa'
+import { closeSync, mkdirSync, openSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { TimError } from '../errors.js'
 
 const isMissingExecutable = (error) =>
@@ -61,5 +63,50 @@ export const runStreamed = async (command, args = [], opts = {}) => {
     if (isMissingExecutable(error)) throw wrapMissing(error, command)
     if (isExecaExitError(error)) return settle(error)
     throw error
+  }
+}
+
+const commandLine = (command, args) => [command, ...args].join(' ')
+
+/**
+ * Run a subprocess with its stdout and stderr written to a log file, so
+ * nothing streams to the terminal. The log starts with the command line and
+ * the folder it ran in, and is replaced on every run.
+ *
+ * @param {string} command
+ * @param {string[]} [args]
+ * @param {object} opts - Passed to execa (cwd, env, ...), plus `logPath`
+ * @param {string} opts.logPath
+ * @returns {Promise<{exitCode: number, durationMs: number, log: string}>}
+ * @throws {TimError} MISSING_DEP when the executable is not found
+ */
+export const runToLog = async (command, args = [], { logPath, ...opts }) => {
+  mkdirSync(dirname(logPath), { recursive: true })
+  writeFileSync(
+    logPath,
+    `$ ${commandLine(command, args)}\n# in ${opts.cwd ?? process.cwd()}\n\n`
+  )
+  const logFd = openSync(logPath, 'a')
+  const start = performance.now()
+  const settle = (result) => ({
+    exitCode: result.exitCode ?? 0,
+    durationMs: Math.round(performance.now() - start),
+    log: logPath
+  })
+  try {
+    return settle(
+      await execa(command, args, {
+        ...opts,
+        stdin: 'ignore',
+        stdout: logFd,
+        stderr: logFd
+      })
+    )
+  } catch (error) {
+    if (isMissingExecutable(error)) throw wrapMissing(error, command)
+    if (isExecaExitError(error)) return settle(error)
+    throw error
+  } finally {
+    closeSync(logFd)
   }
 }

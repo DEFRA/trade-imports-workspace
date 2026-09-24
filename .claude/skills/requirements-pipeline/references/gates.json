@@ -1,0 +1,103 @@
+{
+  "$comment": "The build loop's rungs, run by `tim build gate` and checked by tim/src/build/gates.js. Keyed by repo folder under repos/. Phases run unit, then fit, then e2e; rungs run in the order listed. `run` is an npm script name or \"mvn verify\". `remoteScripts` lists a repo's scripts that reach a remote or CDP environment: the gate refuses a rung that names one. An e2e rung runs a `test:docker-compose` script against the workspace stack, scoped with `scope` (Playwright args after `--`), and runs only when the backlog builds one of its `forRepos`. A fit rung's `ports` must be free before it runs.",
+  "repos": {
+    "trade-imports-plants-frontend": {
+      "rungs": [
+        { "name": "format", "phase": "unit", "run": "format:check" },
+        { "name": "lint", "phase": "unit", "run": "lint" },
+        { "name": "unit", "phase": "unit", "run": "test" },
+        { "name": "fit", "phase": "fit", "run": "test:fit:ci", "ports": [3053] }
+      ]
+    },
+    "trade-imports-plants-backend": {
+      "rungs": [{ "name": "verify", "phase": "unit", "run": "mvn verify" }]
+    },
+    "trade-imports-animals-frontend": {
+      "rungs": [
+        { "name": "format", "phase": "unit", "run": "format:check" },
+        { "name": "lint", "phase": "unit", "run": "lint" },
+        { "name": "unit", "phase": "unit", "run": "test" },
+        { "name": "fit", "phase": "fit", "run": "test:fit:ci", "ports": [3050] }
+      ]
+    },
+    "trade-imports-animals-backend": {
+      "rungs": [{ "name": "verify", "phase": "unit", "run": "mvn verify" }]
+    },
+    "trade-imports-animals-admin": {
+      "rungs": [
+        { "name": "format", "phase": "unit", "run": "format:check" },
+        { "name": "lint", "phase": "unit", "run": "lint" },
+        { "name": "unit", "phase": "unit", "run": "test" }
+      ]
+    },
+    "trade-imports-ins-frontend": {
+      "rungs": [
+        { "name": "format", "phase": "unit", "run": "format:check" },
+        { "name": "lint", "phase": "unit", "run": "lint" },
+        { "name": "unit", "phase": "unit", "run": "test" },
+        { "name": "fit", "phase": "fit", "run": "test:fit:ci", "ports": [3000] }
+      ]
+    },
+    "trade-imports-ins-backend": {
+      "rungs": [{ "name": "verify", "phase": "unit", "run": "mvn verify" }]
+    },
+    "trade-imports-address-book": {
+      "rungs": [{ "name": "verify", "phase": "unit", "run": "mvn verify" }]
+    },
+    "trade-imports-animals-tests": {
+      "remoteScripts": [
+        "test",
+        "test:a11y",
+        "test:security",
+        "test:security:active",
+        "test:browserstack",
+        "probe:cdp-session-reuse",
+        "address-book:purge",
+        "report:publish"
+      ],
+      "rungs": [
+        { "name": "format", "phase": "unit", "run": "format:check" },
+        { "name": "lint", "phase": "unit", "run": "lint" },
+        { "name": "typecheck", "phase": "unit", "run": "typecheck" },
+        {
+          "name": "e2e-plants",
+          "phase": "e2e",
+          "run": "test:docker-compose",
+          "scope": ["--project=plants"],
+          "forRepos": [
+            "trade-imports-plants-frontend",
+            "trade-imports-plants-backend"
+          ]
+        },
+        {
+          "name": "e2e-animals",
+          "phase": "e2e",
+          "run": "test:docker-compose",
+          "scope": ["--project=e2e"],
+          "forRepos": [
+            "trade-imports-animals-frontend",
+            "trade-imports-animals-backend"
+          ]
+        },
+        {
+          "name": "e2e-admin",
+          "phase": "e2e",
+          "run": "test:docker-compose",
+          "scope": ["--project=admin"],
+          "forRepos": ["trade-imports-animals-admin"]
+        },
+        {
+          "name": "e2e-ins",
+          "phase": "e2e",
+          "run": "test:docker-compose",
+          "scope": ["--project=ins"],
+          "forRepos": [
+            "trade-imports-ins-frontend",
+            "trade-imports-ins-backend",
+            "trade-imports-address-book"
+          ]
+        }
+      ]
+    }
+  }
+}

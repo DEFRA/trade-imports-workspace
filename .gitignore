@@ -32,6 +32,8 @@ workareas/shared/*/evidence/*/crop/
 workareas/shared/*/capture/
 workareas/shared/*/harness/capture/
 !workareas/shared/*/evidence/*/manifest.json
+# Proof runs of the requirements pipeline are local test data, not requirements.
+workareas/shared/requirements-pipeline/proof/
 
 # Exception: a build-loop backlog.json is canonical state, not cache — it is the
 # executable definition of a body of work and survives the run that produced it.
@@ -86,6 +88,10 @@ ipaffs-playwright-traces/
 # Node dependencies — every repo and sub-project installs its own
 node_modules/
 
+# tim backlog's write locks and operation log (DESIGN 3.1): runtime only
+.backlog-ops.jsonl
+.*.lock
+
 # Scratch output from agent runs and local test invocations. These accumulate
 # in workareas/shared/, which is otherwise tracked, and drown real handover
 # docs in `git status`.
@@ -103,12 +109,6 @@ allure-report/
 .playwright-mcp/
 playwright-report/
 test-results/
-
-# Generated per capture run: the Playwright config tim writes plus that
-# run's own artefacts. It lives under tim/ rather than in the system temp
-# directory because Playwright resolves a config's imports relative to the
-# config file, and /tmp has no node_modules.
-tim/.parity-runs/
 
 # A journey-builder run driven by the batch orchestrator keeps its plan of
 # record beside backlog.json; L0 pushes these at every batch close.

@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 2,
+  "programme": "fixture-requirements",
+  "profile": "requirements-v2",
+  "requirements": [
+    {
+      "id": "req-001",
+      "key": "alpha--second",
+      "slice": "alpha",
+      "kind": "capability",
+      "title": "One writer core serves parity and requirement backlogs",
+      "statement": "The parity writer's id, reference, ruling and freeze logic MUST serve any registered programme through a profile, with parity's behaviour unchanged.",
+      "why": "In use the proven writer is id-stable and ruling-safe, and one core gives every programme the same locks, op ids and lost-update refusals.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given the existing parity corpora, when the writer's existing test suite runs after the change, then every test passes with no fixture changed.",
+          "witness": "unit",
+          "confidence": "stated",
+          "sources": ["s1", "s2"],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-2",
+          "text": "Given the tracked parity backlog, when its report is rendered, then the page matches the one rendered before the change apart from its stamp.",
+          "witness": "e2e",
+          "confidence": "inferred",
+          "sources": ["s2"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A parity test fixture edited to make the change pass, or an existing id that moves when an atom is inserted ahead of it.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "sam-req",
+          "ref": "line:10",
+          "quote": "One `backlog.json` format across distiller, driver and build loop.",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:62b7f4106a3566a0307991a9fb8163c27d879665"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        },
+        {
+          "id": "s2",
+          "source": "gap-5",
+          "ref": "line:114",
+          "quote": "Any migration that reshapes EUDPA-328's backlog breaks tim CI",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-18",
+            "seal": "git-blob:26dec66617907aec06842653c90e9575acd1bd99"
+          },
+          "confidence": "inferred",
+          "role": "current-behaviour"
+        }
+      ],
+      "surface": {
+        "repos": ["workspace"],
+        "service": "requirements-pipeline",
+        "area": "writer"
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-002",
+      "key": "alpha--third",
+      "slice": "alpha",
+      "kind": "capability",
+      "title": "Programmes are found through a registry",
+      "statement": "Every reader and writer MUST find a programme's files through the registry, never by building a path from a run id.",
+      "why": "Readers that built paths locked parity to ticket-shaped run ids.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given a programme registered under a key that is not a ticket id, when any backlog command runs with that key, then it reads and writes that programme's files.",
+          "witness": "e2e",
+          "confidence": "inferred",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A command that fails for a programme whose key is not a ticket id.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "gap-5",
+          "ref": "line:94",
+          "quote": "and no reader that constructs the path itself.",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-18",
+            "seal": "git-blob:26dec66617907aec06842653c90e9575acd1bd99"
+          },
+          "confidence": "inferred",
+          "role": "current-behaviour"
+        }
+      ],
+      "surface": {
+        "repos": ["workspace"],
+        "service": "requirements-pipeline",
+        "area": "writer"
+      },
+      "dependsOn": [],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    },
+    {
+      "id": "req-003",
+      "key": "beta--first",
+      "slice": "beta",
+      "kind": "rule",
+      "title": "The requirement backlog refuses unknown and recipe keys",
+      "statement": "The writer MUST refuse any unknown key in a requirement backlog, naming recipe and executor keys by name with their proper home.",
+      "why": "A strict schema is the mechanical guard against recipes and executor detail entering the backlog.",
+      "acceptance": [
+        {
+          "id": "ac-1",
+          "text": "Given an increment carrying a list of files to touch, when it is ingested, then it is refused with a message that the plan owns files.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": ["s1", "s2"],
+          "scenario": null,
+          "resolvedBy": null
+        },
+        {
+          "id": "ac-2",
+          "text": "Given an increment carrying an executor field, when it is ingested, then it is refused and the message names the run configuration as that field's home.",
+          "witness": "e2e",
+          "confidence": "stated",
+          "sources": ["s1"],
+          "scenario": null,
+          "resolvedBy": null
+        }
+      ],
+      "falsifiedBy": "A saved requirement backlog that contains a recipe or executor key.",
+      "sources": [
+        {
+          "id": "s1",
+          "source": "judge-3",
+          "ref": "line:91",
+          "quote": "that refuses recipe and executor keys by name",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-18",
+            "seal": "git-blob:0569748aad4cc57ab4f7a8a70b4af5eabf8c37be"
+          },
+          "confidence": "stated",
+          "role": "decision-record"
+        },
+        {
+          "id": "s2",
+          "source": "sam-req",
+          "ref": "line:11",
+          "quote": "It is never a recipe (files,",
+          "readAt": {
+            "version": null,
+            "fetchedAt": "2026-09-19",
+            "seal": "git-blob:62b7f4106a3566a0307991a9fb8163c27d879665"
+          },
+          "confidence": "stated",
+          "role": "requirement"
+        }
+      ],
+      "surface": {
+        "repos": ["workspace"],
+        "service": "requirements-pipeline",
+        "area": "writer"
+      },
+      "dependsOn": ["req-001"],
+      "relatedTo": [],
+      "needs": [],
+      "status": "proposed",
+      "provenance": {
+        "authoredBy": {
+          "phase": "design",
+          "task": "lead-architect",
+          "run": null
+        },
+        "verifiedBy": null,
+        "verdict": "unverified",
+        "why": null,
+        "correction": null,
+        "searchedFor": null
+      }
+    }
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "key": "core-and-registry",
+      "title": "One writer core serves parity and requirement backlogs, found through a registry",
+      "outcome": "Any registered programme is ingested through one profiled writer core, and every command finds it by registry key.",
+      "why": "alpha--second and alpha--third are the same seam: a writer generalised to serve any programme, and a registry that finds it without a ticket-shaped run id.",
+      "members": ["req-001", "req-002"],
+      "class": "feat",
+      "surface": { "repos": ["workspace"], "areas": ["writer"] },
+      "milestone": null,
+      "dependsOn": [],
+      "sequence": null,
+      "needs": [],
+      "checkpoint": null,
+      "size": { "class": "M", "basis": "3 criteria, 2 atoms" },
+      "combination": {
+        "why": "Both atoms land in the same writer-core change; splitting them would ship half a seam.",
+        "rules": ["same-writer-core"]
+      },
+      "status": "todo",
+      "doneBy": null,
+      "statusNote": null
+    },
+    {
+      "id": "inc-002",
+      "key": "strict-schema",
+      "title": "The requirement backlog refuses unknown and recipe keys",
+      "outcome": "An authored file or a saved row carrying a recipe or executor key is refused, naming its home.",
+      "why": "beta--first's member atom depends on alpha--second, so this increment ships after core-and-registry.",
+      "members": ["req-003"],
+      "class": "feat",
+      "surface": { "repos": ["workspace"], "areas": ["writer"] },
+      "milestone": null,
+      "dependsOn": ["inc-001"],
+      "sequence": null,
+      "needs": [],
+      "checkpoint": null,
+      "size": { "class": "S", "basis": "2 criteria, 1 atom" },
+      "combination": {
+        "why": "beta--first is a single atom; nothing else shares its slice.",
+        "rules": ["solo-slice"]
+      },
+      "status": "todo",
+      "doneBy": null,
+      "statusNote": null
+    }
+  ]
+}

@@ -14,6 +14,8 @@
 #       TARGET_REPO_KEY (which of those keys the target repo is),
 #       TARGET_SCOPE, TARGET_SPEC_DIR,
 #       TARGET_IMPLEMENTOR, TARGET_COMMIT_PATHS (array),
+#       WORKSPACE_COMMIT_PATHS (array — shared across targets, read from
+#       targets.json's top level, not from a profile),
 #       TARGET_VERIFY_UNIT / _FORMAT / _LINT / _E2E (empty means skip),
 #       TARGET_JOURNEY_ID, TARGET_SPEC_BRANCH_SUFFIX,
 #       TARGET_SOURCES (compact JSON array, drives prepare-digest.sh), and
@@ -71,6 +73,14 @@ load_target() {
     while IFS= read -r path; do
         [[ -n "$path" ]] && TARGET_COMMIT_PATHS+=("$path")
     done < <(jq -r '.commitPaths[]? ' <<<"$profile")
+
+    # Read from the file's top level, not the profile: the openspec/ layout
+    # is the same whichever set a run targets, so repeating it per target
+    # would only create a way for two targets to disagree about it.
+    WORKSPACE_COMMIT_PATHS=()
+    while IFS= read -r path; do
+        [[ -n "$path" ]] && WORKSPACE_COMMIT_PATHS+=("$path")
+    done < <(jq -r '.workspaceCommitPaths[]?' "$targets_file")
 
     TARGET_VERIFY_UNIT="$(jq -r '.verify.unit // empty' <<<"$profile")"
     TARGET_VERIFY_FORMAT="$(jq -r '.verify.format // empty' <<<"$profile")"

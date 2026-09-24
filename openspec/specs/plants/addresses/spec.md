@@ -72,7 +72,7 @@ The system MUST replace a previously saved address with a newly chosen one rathe
 
 ### Requirement: Saving with nothing chosen, or a value not on the list, is refused and focuses the first row
 **ID**: REQ-PLANTS-ADDR-005
-The system MUST refuse to save the picker when nothing has been chosen or the submitted value is not an address-book id the picker offered, and MUST focus the first row in the list when the user follows the resulting error. A record that has since been deleted MUST be treated the same as a value not on the list, and the search term MUST be preserved.
+The system MUST refuse to save the picker when nothing has been chosen or the submitted value is not an address-book id the picker offered, MUST focus the first row in the list when the user follows the resulting error and a row is shown, and MUST focus the search field instead when a search has left the list empty. A record that has since been deleted MUST be treated the same as a value not on the list, and the search term MUST be preserved.
 
 #### Scenario: Saving with nothing chosen shows the error and focuses the first row
 **ID**: SCN-PLANTS-ADDR-005-A
@@ -87,6 +87,12 @@ The system MUST refuse to save the picker when nothing has been chosen or the su
 - **GIVEN** the user submits an address-book id that no longer exists
 - **WHEN** the save is attempted
 - **THEN** the save is rejected with the same error, and the search term the user had entered is preserved
+
+#### Scenario: Saving after a no-match search focuses the search field
+**ID**: SCN-PLANTS-ADDR-005-C
+- **GIVEN** the user has searched for a term matching no address
+- **WHEN** they save and continue and follow the error
+- **THEN** the search field is focused
 
 ### Requirement: Results are paged, and a choice made on any page is the one saved
 **ID**: REQ-PLANTS-ADDR-006

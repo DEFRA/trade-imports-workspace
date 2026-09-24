@@ -69,14 +69,21 @@ The system MUST ask a commodity line only for the further fields its category ca
 **ID**: SCN-PLANTS-OB-COMMODITY-004-B
 - **GIVEN** a commodity line's category is trees for planting
 - **WHEN** the user enters its details
-- **THEN** it is asked for a genus, a species, a commodity code, a quantity and the size of the trees
+- **THEN** it is asked for a genus, a species, a commodity code, a quantity, an EPPO code and the size of the trees
 
 #### Scenario: A conifer-wood line asks for phytosanitary treatments, not a genus
 **ID**: SCN-PLANTS-OB-COMMODITY-004-C
 - **GIVEN** a commodity line's category is a wood category
 - **WHEN** the user enters its details
 - **THEN** it is asked for phytosanitary treatments applied
+- **AND** a cut-coniferous-trees line is also asked for the size of the trees
 - **AND** a conifer-wood-with-bark line is not asked for a genus
+
+#### Scenario: A plants-for-planting line asks for genus, species and codes
+**ID**: SCN-PLANTS-OB-COMMODITY-004-E
+- **GIVEN** a commodity line's category is plants for planting
+- **WHEN** the user enters its details
+- **THEN** it is asked for a genus, a species, a commodity code, a quantity and an EPPO code
 
 #### Scenario: A hardwood line's genus is narrowed to the three hardwood genera
 **ID**: SCN-PLANTS-OB-COMMODITY-004-D

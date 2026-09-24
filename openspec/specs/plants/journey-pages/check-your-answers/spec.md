@@ -20,7 +20,7 @@ The system MUST group the page under three numbered section headings — About t
 **ID**: SCN-PLANTS-CYA-001-B
 - **GIVEN** the user has completed every section of a notification and submitted it
 - **WHEN** they view the read-only check-your-answers
-- **THEN** cards show the country of origin, each commodity line's details, the arrival date, the intended destination, identification numbers and the contact
+- **THEN** cards show the country of origin, each commodity line's details, the arrival date, the Place of destination, identification numbers and the contact
 
 ### Requirement: Cards that do not apply to the commodity type are omitted
 **ID**: REQ-PLANTS-CYA-002
@@ -62,7 +62,7 @@ The system MUST show "Not provided" against any field or party role that has not
 **ID**: SCN-PLANTS-CYA-004-B
 - **GIVEN** a complete draft notification is open on check-your-answers
 - **WHEN** the place-of-destination address is removed from the address book and the page is reloaded
-- **THEN** the Intended destination card's rows each read "Not provided", and the removed party's name is not shown
+- **THEN** the Place of destination card's rows each read "Not provided", and the removed party's name is not shown
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005

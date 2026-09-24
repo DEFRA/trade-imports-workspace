@@ -8,13 +8,13 @@ Asks where the consignment is going, or where it is being kept now, chosen from 
 
 ### Requirement: The page asks its destination question under the heading and description the notification's state chooses
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-001
-The system MUST ask the destination question under one of three headings with a matching description: "Intended destination" for potatoes and for plants or wood that have not yet arrived; or "Where is the consignment now?" once a plants or wood consignment has already arrived. The state MUST be read from the arrival answer on each render rather than stored with the destination.
+The system MUST ask the destination question under the heading and description the notification's state chooses: "Place of destination" for potatoes and for plants or wood that have not yet arrived; or "Where is the consignment now?" once a plants or wood consignment has already arrived. The state MUST be read from the arrival answer on each render rather than stored with the destination.
 
 #### Scenario: A not-yet-arrived plants or wood notification is asked for the intended destination
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-001-A
 - **GIVEN** a plants or wood notification has answered that the consignment has not yet arrived
 - **WHEN** the place of destination page loads
-- **THEN** the heading is "Intended destination"
+- **THEN** the heading is "Place of destination"
 - **AND** the description explains where the goods will be kept after arrival for a plant health spot check
 
 #### Scenario: An already-arrived plants or wood notification is asked where the consignment is now
@@ -34,7 +34,7 @@ The system MUST ask the destination question under one of three headings with a 
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-001-D
 - **GIVEN** a potatoes notification has reached the place of destination
 - **WHEN** the page loads
-- **THEN** the heading is "Intended destination"
+- **THEN** the heading is "Place of destination"
 - **AND** the description explains where the goods will be kept after arrival for a plant health spot check
 
 ### Requirement: The page offers search of the organisation address book with a count of results

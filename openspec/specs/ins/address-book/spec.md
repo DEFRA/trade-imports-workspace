@@ -234,3 +234,13 @@ The system MUST show every field of an address against its label when viewed on 
 - **GIVEN** the user is viewing an address
 - **WHEN** they select Back
 - **THEN** they return to the address book list
+
+### Requirement: Adding from a journey handshake refuses an unrecognised journey type
+**ID**: REQ-INS-ADDR-016
+The system MUST refuse the add-address page when the request carries a journey handshake whose journey type is not one the service knows, and MUST show a page-not-found response rather than the form.
+
+#### Scenario: An unrecognised journey type is refused
+**ID**: SCN-INS-ADDR-016-A
+- **GIVEN** the user opens the add-address page with a handshake naming a journey type the service does not know
+- **WHEN** the page is shown
+- **THEN** they see a page-not-found response, not the add form

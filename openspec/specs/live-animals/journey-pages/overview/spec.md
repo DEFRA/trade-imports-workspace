@@ -14,35 +14,37 @@ The system MUST group the notification's tasks on the Overview page under six nu
 **ID**: SCN-OVERVIEW-001-A
 - **GIVEN** a new notification has just been started
 - **WHEN** the user views Overview
-- **THEN** it shows six numbered section headings in order: "1. About the consignment", "2. Commodity details", "3. Movement", "4. Addresses", "5. Documents", "6. Check and submit"
+- **THEN** it shows six numbered section headings in order: "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties", "6. Contact address"
 - **AND** each section lists that notification's always-present tasks (for example, "Where is this consignment coming from?" and "What are you importing?" under the first section)
 
-### Requirement: Each task row shows its own status, and an unready review task offers no link
+### Requirement: Each task row shows one of two statuses, and Overview offers a review button open at any point
 **ID**: REQ-OVERVIEW-002
-The system MUST show each task row's status using a fixed set of labels reflecting whether it has been answered, is available to start, or is blocked, and MUST NOT offer a link into the review task while it cannot yet be started. Why the review task is blocked until every other task is ready is specified separately, under `live-animals/journey-flow`.
+The system MUST show each task row's status as one of two labels — Complete once it is answered, To do otherwise, never a third or blocked state — and MUST offer a fixed "Review and submit" button, not a task row, that opens the review page at any point in the journey however much of the notification remains outstanding.
 
-#### Scenario: A fresh notification shows an answered task as completed and later tasks as not yet started or blocked
+#### Scenario: A fresh notification shows an answered task as Complete and an unworked task as To do, both linked
 **ID**: SCN-OVERVIEW-002-A
 - **GIVEN** a new notification whose entry page has been answered but nothing else
 - **WHEN** the user views Overview
-- **THEN** the entry task's row shows as completed, with a link
-- **AND** a task not yet worked on shows as not yet started, with a link to begin it
-- **AND** the review task shows as cannot start yet, with no link offered
+- **THEN** the entry task's row shows Complete, with a link
+- **AND** a task not yet worked on shows To do, with a link to begin it
 
-#### Scenario: Completing every task unlocks a link into the review
+#### Scenario: The Review and submit button opens the review before every task is answered
 **ID**: SCN-OVERVIEW-002-B
-- **GIVEN** every task on a notification has been fulfilled, not applicable, or optional
+- **GIVEN** a notification with only its entry page answered
 - **WHEN** the user views Overview
-- **THEN** the review task's row no longer shows cannot start yet, and offers a link to check your answers
+- **THEN** a "Review and submit" button is offered, not a task row, with no cannot-start-yet state shown anywhere on the page
+- **AND** following it opens the review page
 
-### Requirement: Overview offers a route back to the dashboard
+### Requirement: Overview's only route off the page is the Return to dashboard action — there is no back link
 **ID**: REQ-OVERVIEW-003
-The system MUST offer both a back link and a return-to-dashboard action from Overview, and MUST take the user to the dashboard either way.
+The system MUST offer a return-to-dashboard action from Overview and take the user to the dashboard, and MUST NOT show a back link, since Overview is the top of the notification rather than a step within it.
 
-#### Scenario: Both the back link and the return action lead to the dashboard
+#### Scenario: The return action leads to the dashboard, with no back link present
 **ID**: SCN-OVERVIEW-003-A
 - **GIVEN** the user is on Overview
-- **WHEN** they use either the back link or the return-to-dashboard action
+- **WHEN** they view the page
+- **THEN** no back link is shown
+- **WHEN** they use the return-to-dashboard action
 - **THEN** they arrive at the dashboard
 
 ### Requirement: Overview shows running totals of animals and packages once commodity lines exist

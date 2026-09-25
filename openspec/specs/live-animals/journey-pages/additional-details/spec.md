@@ -60,3 +60,14 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the additional details page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: The unweaned question is asked only when the consignment's commodities call for it
+**ID**: REQ-ADDL-DETAILS-005
+The system MUST ask whether the consignment contains unweaned animals only when at least one commodity line on the notification is one the service treats as capable of being unweaned, and MUST ask only what the animals are certified for otherwise. A save without an unweaned answer MUST be accepted when the question is not asked.
+
+#### Scenario: A consignment with no unweaned-eligible commodity is not asked about unweaned animals
+**ID**: SCN-ADDL-DETAILS-005-A
+- **GIVEN** the user has reached the additional details page for a consignment whose commodity lines are not among those the service treats as capable of being unweaned
+- **WHEN** the page loads
+- **THEN** only the certification question is shown
+- **AND** the page can be saved and continued without answering an unweaned question

@@ -100,3 +100,19 @@ The system MUST show a collapsed expander above the CPH boxes offering to explai
 - **AND** its explanation is not visible
 - **WHEN** the user opens the expander
 - **THEN** the explanation, including where to find the number, becomes visible
+
+### Requirement: The back link returns to where the page was entered from
+**ID**: REQ-CPH-006
+The system MUST return the user to Overview when they follow the back link from the CPH number page during the sequential journey walk, and to the addresses hub when they arrived at the page from its row there.
+
+#### Scenario: The back link opens Overview on a sequential walk
+**ID**: SCN-CPH-006-A
+- **GIVEN** the user reached the CPH number page by walking the journey in order
+- **WHEN** they follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: The back link returns to the addresses hub when entered from there
+**ID**: SCN-CPH-006-B
+- **GIVEN** the user reached the CPH number page from its row on the addresses hub (`?return=addresses`)
+- **WHEN** they follow the back link
+- **THEN** the addresses hub is shown

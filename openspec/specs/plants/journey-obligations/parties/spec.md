@@ -64,6 +64,8 @@ The system MUST clear the consignor and whichever identification number answers 
 **ID**: SCN-PLANTS-OB-PARTIES-004-A
 - **GIVEN** a consignor has been chosen for a plants-for-planting or wood-and-cut-trees notification
 - **WHEN** the commodity type is changed to potatoes
+- **THEN** Overview shows no consignor task row
+- **WHEN** the commodity type is changed back to plants-for-planting or wood-and-cut-trees
 - **THEN** the consignor is no longer shown as chosen, and the consignor task row reads not yet started
 
 #### Scenario: Changing identification-number scope clears the numbers that no longer apply

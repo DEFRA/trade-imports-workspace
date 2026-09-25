@@ -28,6 +28,12 @@ The system MUST ask for the arrival date under one of three labels: "Expected da
 - **WHEN** the arrival details load
 - **THEN** the date question is labelled "Date the consignment first arrived in Great Britain"
 
+#### Scenario: A potatoes notification is told it may enter the date the potatoes arrived
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-001-D
+- **GIVEN** a potatoes notification has reached the arrival details
+- **WHEN** the page loads
+- **THEN** the date question's hint says that if the potatoes have already arrived, the user should enter the date they arrived
+
 ### Requirement: A potatoes notification also asks for the time and the place of landing
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-002
 The system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field.

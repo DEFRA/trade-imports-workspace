@@ -17,6 +17,12 @@ The system MUST ask the user what they are importing, offering potatoes, plants 
 - **THEN** it offers potatoes, plants for planting, and wood and cut trees, each with its own timing hint
 - **AND** no type is shown as chosen
 
+#### Scenario: The page tells the user to notify each type in a separate notification
+**ID**: SCN-PLANTS-COMMODITY-TYPE-001-B
+- **GIVEN** the user has reached the commodity-type page without answering it before
+- **WHEN** the page loads
+- **THEN** it tells them to notify potatoes, plants for planting and wood in separate notifications
+
 ### Requirement: A chosen commodity type is accepted
 **ID**: REQ-PLANTS-COMMODITY-TYPE-002
 The system MUST accept a chosen commodity type, saving it without error, and MUST show it still chosen when the user returns to the page.

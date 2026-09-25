@@ -28,6 +28,8 @@ artifacts that downstream `tools/` scripts consume.
 | `journey-builder` | `references/SPEC_RECONCILER.md` | One-shot — reconciles the extracts into `journey-spec.json` and `conflicts.json` |
 | `journey-builder` | `references/INCREMENT_PLANNER.md` | Per-increment plan into the build loop's shape, written through `backlog-plan-increment.sh` (ten at a time, in dependency order) |
 | `journey-builder` | `references/MODEL_EXTENDER.md` | One gated `model-extension` increment — grows the engine's obligation vocabulary |
+| `spec-catchup` | `references/CAPABILITY_JUDGE.md` | Per-capability judgement against the suite report and source — `judge-<capability>.json` only, parent applies |
+| `spec-cover` | `references/GAP_JUDGE.md` | Per-gap Then-to-assert mapping and test proposal — `judge-<id>.json` only, parent writes and probes |
 
 Cursor reads `.claude/skills/` natively (per
 <https://cursor.com/docs/context/skills>). It has no parallel subagent

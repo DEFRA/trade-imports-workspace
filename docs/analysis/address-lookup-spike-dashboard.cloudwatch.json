@@ -49,17 +49,20 @@
       "id": 3,
       "type": "stat",
       "title": "Mean gateway time",
-      "description": "Total gateway time over total searches in the range, with any token hops taken off. A mean, not a percentile.",
-      "datasource": { "type": "__expr__", "uid": "__expr__" },
+      "description": "Total gateway time over total searches in the range, with any token hops taken off. A mean, not a percentile. The division is a Grafana transformation, because CloudWatch metric math and hidden queries make the CloudWatch plugin fail.",
+      "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
       "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
       "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "decimals": 0 }, "overrides": [] },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
       "targets": [
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "lookup", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.lookup", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "searches", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
-        { "datasource": { "type": "__expr__", "uid": "__expr__" }, "refId": "C", "type": "reduce", "expression": "A", "reducer": "sum", "hide": true },
-        { "datasource": { "type": "__expr__", "uid": "__expr__" }, "refId": "D", "type": "reduce", "expression": "B", "reducer": "sum", "hide": true },
-        { "datasource": { "type": "__expr__", "uid": "__expr__" }, "refId": "E", "type": "math", "expression": "$C / $D" }
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "lookup", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.lookup", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "lookup" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "searches", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "searches" }
+      ],
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "Time", "mode": "outer" } },
+        { "id": "reduce", "options": { "mode": "reduceFields", "reducers": ["sum"], "includeTimeField": false } },
+        { "id": "calculateField", "options": { "mode": "binary", "binary": { "left": { "matcher": { "id": "byName", "options": "lookup" } }, "operator": "/", "right": { "matcher": { "id": "byName", "options": "searches" } } }, "alias": "mean gateway time" } },
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "lookup": true, "searches": true } } }
       ]
     },
     {
@@ -114,17 +117,21 @@
       "id": 7,
       "type": "timeseries",
       "title": "Mean time per search",
-      "description": "Each minute's total time over that minute's searches.",
+      "description": "Each minute's total time over that minute's searches. The division is a Grafana transformation, because CloudWatch metric math and hidden queries make the CloudWatch plugin fail.",
       "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" },
       "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "custom": { "drawStyle": "points", "pointSize": 6 } }, "overrides": [] },
+      "fieldConfig": { "defaults": { "unit": "ms", "min": 0, "custom": { "drawStyle": "line", "lineWidth": 2, "lineInterpolation": "linear", "spanNulls": true, "showPoints": "always", "pointSize": 6, "fillOpacity": 10 } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "lookup", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.lookup", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "total", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.total", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "C", "id": "searches", "hide": true, "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "" },
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "D", "id": "mean_gateway", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 1, "region": "default", "expression": "lookup / searches", "period": "60", "label": "gateway" },
-        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "E", "id": "mean_total", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 1, "region": "default", "expression": "total / searches", "period": "60", "label": "total, incl. token hops" }
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "A", "id": "lookup", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.lookup", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "lookup" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "B", "id": "total", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.durationMs.total", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "total" },
+        { "datasource": { "type": "cloudwatch", "uid": "${DS_CLOUDWATCH}" }, "refId": "C", "id": "searches", "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "region": "default", "namespace": "trade-imports-ins-backend", "metricName": "addressLookup.searches", "statistic": "Sum", "period": "60", "dimensions": {}, "matchExact": false, "expression": "", "label": "searches" }
+      ],
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "Time", "mode": "outer" } },
+        { "id": "calculateField", "options": { "mode": "binary", "binary": { "left": { "matcher": { "id": "byName", "options": "lookup" } }, "operator": "/", "right": { "matcher": { "id": "byName", "options": "searches" } } }, "alias": "gateway" } },
+        { "id": "calculateField", "options": { "mode": "binary", "binary": { "left": { "matcher": { "id": "byName", "options": "total" } }, "operator": "/", "right": { "matcher": { "id": "byName", "options": "searches" } } }, "alias": "total, incl. token hops" } },
+        { "id": "organize", "options": { "excludeByName": { "lookup": true, "total": true, "searches": true } } }
       ]
     }
   ]

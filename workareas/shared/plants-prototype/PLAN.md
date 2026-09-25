@@ -58,6 +58,16 @@ Two plants-frontend stub files are now patched, taking the total to 24. The stub
 
 **Seen, not introduced here:** the dashboard lists whatever a browser session's `knownJourneys` cookie names, with no organisation check. So switching organisation in the same browser still shows notifications that browser opened before. It's plants-frontend behaviour.
 
+**Catch-up with plants-frontend #69 (2026-09-25, `f4c4abd`, merge not pushed).** Took upstream's three new commits, including #69 "Align plants with ins and animals, and backport ins's chassis hardening". Seven conflicts, all resolved with upstream's shape and the prototype's deltas re-attached. What moved for the prototype:
+- `router.js` now gates the set routes and the root on `auth.enabled`, and the set plugin is exported as `serviceRoutes`. `prototype-sets` registers inside that gate, in place of the redirect.
+- `/signout` is gone. Sign-out is `/auth/sign-out`, which stub mode now serves. The co-residency test uses upstream's `registerTestSessionAuth` instead of the prototype's anonymous default strategy.
+- Set routes now name the `session` strategy. The chooser and its reset route name it too, with mode `try`.
+- `config.js` takes the strict-boolean formats. The new `auth.cookieName` gets `plants-prototype-sid` in development, so `config.test.js` is newly patched. **25 plants-frontend files now carry patches.**
+- Upstream dropped the npm pin from its Dockerfile and workflows. The Dockerfile follows. The prototype-owned workflows keep the pin, and `npm-version.js`'s comment names them.
+- Upstream now links the header's address book to the INS frontend (`TRADE_IMPORTS_INS_FRONTEND_URL`, default `localhost:3002`), which the prototype doesn't run, so that link goes nowhere. Stub sign-in's signing key is now random per process, so sessions end on restart.
+
+Verified: format and lint clean, 2,101 unit tests pass (8 skipped), all 240 FIT specs pass including the chooser checks, and the sync reports upstream already merged.
+
 **Note on installing:** ambient npm is 11.17.0 and the repo pins 11.6.2, so plain `npm ci` fails with a false "lockfile out of sync". Use `npx --yes npm@11.6.2 ci`.
 
 ---

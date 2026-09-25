@@ -1,0 +1,53 @@
+{
+  "source": "refdata-503-test-stub",
+  "verdicts": [
+    {
+      "id": "503stub-001",
+      "holds": true,
+      "reason": "Quote confirmed verbatim against `git log -1 --format=%B a2f1d295`. The commit message also states 'Matches the pattern already used by services/run-mode.test.js' — confirming the vi.stubGlobal('fetch') idiom a2f1d295 introduces here is not novel to this file; it mirrors an existing pattern elsewhere in the same repo (relevant to 503stub-004's correction below)."
+    },
+    {
+      "id": "503stub-002",
+      "holds": true,
+      "reason": "Read the full trial-merge tree file at affadd1d3a841f3143656469cb73730e705ef94b:src/server/common/helpers/errors.test.js. Confirmed two conflict hunks exactly as quoted: the third test's declaration/setup (branch's /test/service-unavailable inject vs main's /test/refdata-missing test name and stubMode/fetch-stub preamble) and the closing assertions/finally block. Quote matches verbatim."
+    },
+    {
+      "id": "503stub-003",
+      "holds": true,
+      "reason": "Quote confirmed verbatim against s18-chassis-convergence.md's D7 row. Also independently verified the substance: origin/feat/NO_JIRA-frontend-alignment:src/server/app/services/run-mode.test.js (inherited pre-merge-base via EUDPA-575's fb3615e3, so genuinely present on the branch already) contains both 'Should reject with a serverUnavailable Boom error on load failure' tests — one for countries (line ~145: `await expect(countries.originLabel('ZZ')).rejects.toMatchObject({ isBoom: true, output: { statusCode: 503 } })`) and one for ports (same shape). D7's claim that animals 'loses nothing' is independently confirmed, not just asserted."
+    },
+    {
+      "id": "503stub-004",
+      "holds": false,
+      "reason": "The quote itself is verbatim and accurate — D10 does say exactly this. But the claim built on it overreaches: D10's own next sentence, in the same row, says 'The journeys stub fetch only because they have no nock' — i.e. D10 is an ins-scoped migration decision (part of s19, moving ins's NEW/changed tests to nock), not a workspace-wide ban already in force against the journeys. Confirmed animals' own run-mode.test.js — untouched by any alignment stage, already on the branch — uses `vi.stubGlobal('fetch', ...)` directly (via its local `stubFetch` helper, literally `const stubFetch = (impl) => vi.stubGlobal('fetch', vi.fn(impl))`) in multiple tests. a2f1d295's own commit message even cites this same file as its precedent ('Matches the pattern already used by services/run-mode.test.js'). So a2f1d295 does not violate any invariant actually enforced in animals at the time it landed — the branch's own inherited test suite uses the identical mechanism elsewhere.",
+      "correction": "Drop the framing that D10 is 'the workspace's own network-boundary-mock invariant' that a2f1d295 'violates'. State instead: D10 is s19's own forward-looking rule for ins's rewritten tests, and it explicitly carves out the journeys as already using vi.stubGlobal('fetch') (matching what run-mode.test.js still does on the branch today). The reason to prefer the branch's errors.test.js over a2f1d295 is D7's structural one (removes the flake's root cause entirely, converges the three repos' errors.test.js to one text) — not a claimed invariant violation that does not, in fact, apply to a2f1d295 within animals' own codebase."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "animals",
+      "path": "src/server/common/helpers/errors.test.js",
+      "holds": true,
+      "reason": "Read the full trial-merge tree file. Taking the branch's version wholesale is correct: the branch's third test (Boom-route, no countries/config/fetch dependency) plus the untouched run-mode.test.js (which already pins the countries- and ports-specific 503-on-load-failure behaviour at the service boundary, confirmed present and correct above) together reproduce every behavioural assertion main's single E2E test made — statusCode 503, the shared error-page title text, and the '>503</h1>' heading — with no assertion lost. Main's countries.originLabel('FR') route handler and its stubMode/fetch-stub scaffolding are correctly dropped.",
+      "correction": ""
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The resolution direction (take branch wholesale, drop a2f1d295 entirely) is correct and no main-only behavioural assertion is lost, for the reasons above. The stated justification is partly overstated (503stub-004's D10-as-ban framing, corrected above) but the underlying D7 rationale — removing the flake's root cause structurally and converging the three repos to one errors.test.js text — independently supports the same resolution, so the cluster's overall verdict stands even after that correction."
+  },
+  "missed": [
+    {
+      "id": "503stub-003-m1",
+      "statement": "The knockOn note ('No knock-on to plants... plants' errors.test.js already carries its own 503 test through a different, non-network route') is misleading. Plants' errors.test.js on the branch (origin/feat/NO_JIRA-frontend-alignment) carries a THIRD test beyond the shared D7 text — 'Should serve the shared error page as a 503 when a page reads reference data that will not load' — which calls countries.originLabel('FR') via an unstubbed /test/refdata-missing route with NO fetch stub and NO nock interceptor, relying only on flipping stubMode to false. This is exactly the same conditional flake a2f1d295 fixed for animals (passes in CI where nothing listens on the reference-data port, but would read 200 instead of 503 if a developer runs the full local stack, per D10's own admission that 'the journeys stub fetch only because they have no nock'). Plants therefore still carries this class of flake, unaddressed by anything in this cluster or by s18's D7 (D7 says errors.test.js should be 'one text in all three', but plants' branch version has this extra fourth test that ins and animals — post-resolution — will not have, so the three are not actually converged on this file).",
+      "kind": "behaviour",
+      "ref": "plants:src/server/common/helpers/errors.test.js:origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "test('Should serve the shared error page as a 503 when a page reads reference data that will not load', async () => {\n    // Flip to real mode for the length of this request so the reader tries\n    // to load; with no fetch stubbed the load rejects, the reader throws\n    // Boom.serverUnavailable, and catchAll renders the shared error page.\n    const originalStubMode = config.get('stubMode')\n    config.set('stubMode', false)\n    try {\n      const { result, statusCode } = await server.inject({\n        method: 'GET',\n        url: '/test/refdata-missing'\n      })",
+      "confidence": "verbatim"
+    }
+  ]
+}

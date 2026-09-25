@@ -1,0 +1,355 @@
+{
+  "cluster": "eudpa-573-stale-refdata",
+  "title": "Surface stale reference-data values on Amend pages",
+  "summary": "When a stored answer's country or port code has dropped out of the current reference-data list (an MDM re-release), the page's GET handler now blanks the stale value, adds a 'no longer available' error, and leaves the stored answer untouched so Save-and-continue cannot silently overwrite it with a blank. Landed on six animals pages (322f8b01) and two plants pages plus an investigation-only pinning commit (62a32ef, 31684a0, c69acf0, 2eaa7e4, 696c5e8, a918b7f). Every touched file — controllers, controller tests, copy pairs — is either untouched by the alignment branch or touched only on an unrelated single line (the `const view` template-path rename), so every file in this cluster merges cleanly with no manual resolution needed. The branch never touches either journey's `services/countries` or `services/ports` (s19's countries-lazy-load stage is scoped to ins only; s12/s18 do not reach these service files), so the `originCountries()` / `ports.list()` / `ports.portOptions()` calls this fix relies on are byte-identical before and after the merge and the fix's behaviour is unaffected by the alignment.",
+  "repos": ["animals", "plants"],
+  "mainCommits": {
+    "animals": [
+      "322f8b01 fix(EUDPA-573): surface stale ref-data values across six Amend pages (#363)"
+    ],
+    "plants": [
+      "62a32ef test(EUDPA-573): pin the amend-with-stale-reference-data behaviour",
+      "31684a0 fix(EUDPA-573): surface stale country on plants origin GET",
+      "c69acf0 fix(EUDPA-573): surface stale proposedPlaceOfLanding on arrival-details GET, scope-aware",
+      "2eaa7e4 chore(EUDPA-573): prettier format arrival-details controller.test.js",
+      "696c5e8 refactor(EUDPA-573): extract named staleness helpers, trim verbose comments",
+      "a918b7f chore(EUDPA-573): drop remaining lead-in comments in plants stale-state code"
+    ]
+  },
+  "files": [
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
+      "trialMerge": "clean",
+      "note": "Adds isCountryStale(code) using countries.originCountries(); branch never touches this file."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js",
+      "trialMerge": "clean",
+      "note": "Test file for the origin GET staleness guard."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.en.js",
+      "trialMerge": "clean",
+      "note": "Adds errors.countryNoLongerAvailable copy."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.cy.js",
+      "trialMerge": "clean",
+      "note": "Welsh machine-draft counterpart of countryNoLongerAvailable."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js",
+      "trialMerge": "clean",
+      "note": "staleAnswerErrors(answers) checks destinationCountry (countries) and portOfExit (ports) reveal fields, scope-aware to the current reasonForImport."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js",
+      "trialMerge": "clean",
+      "note": "Five new tests for the scope-aware stale-reveal errors."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js",
+      "trialMerge": "clean",
+      "note": "Adds countryNoLongerAvailable / portNoLongerAvailable copy."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js",
+      "trialMerge": "clean",
+      "note": "Welsh machine-draft counterpart."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js",
+      "trialMerge": "clean",
+      "note": "Branch's only change is the s21 `const view` template-path rename (…/port-of-entry/port-of-entry → …/port-of-entry/template), one line, non-overlapping with main's isPortStale(code) addition using ports.list(). Trial-merge tree carries both changes; verified byte-for-byte against expected merge."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js",
+      "trialMerge": "clean",
+      "note": "Test file for the isPortStale guard."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js",
+      "trialMerge": "clean",
+      "note": "Same shape as port-of-entry: branch touches only the s21 `const view` line, main adds isCountryStale(name) checking a free-text country name against countries. Non-overlapping lines, clean 3-way merge."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js",
+      "trialMerge": "clean",
+      "note": "Test file."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.js",
+      "trialMerge": "clean",
+      "note": "Same shape: branch's s21 `const view` rename only; main adds hasStaleCountries(codes) filtering an already-filtered transit-countries list. Non-overlapping lines, clean 3-way merge."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js",
+      "trialMerge": "clean",
+      "note": "Test file."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js",
+      "trialMerge": "clean",
+      "note": "Adds the three transport-group staleness messages."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.cy.js",
+      "trialMerge": "clean",
+      "note": "Welsh machine-draft counterpart."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js",
+      "trialMerge": "clean",
+      "note": "isCountryStale(code) using countries.originCountries(); trial-merge tree content verified byte-identical to origin/main's file."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js",
+      "trialMerge": "clean",
+      "note": "Test file, plus the pinning assertions from 62a32ef."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js",
+      "trialMerge": "clean",
+      "note": "Adds the stale-country message."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js",
+      "trialMerge": "clean",
+      "note": "Welsh machine-draft counterpart."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js",
+      "trialMerge": "clean",
+      "note": "isPortStale(code) checking proposedPlaceOfLanding against ports.list()/ports.portOptions(), scope-aware to the potato commodity gate."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+      "trialMerge": "clean",
+      "note": "Test file, reformatted by 2eaa7e4."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js",
+      "trialMerge": "clean",
+      "note": "Adds the stale-port message."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.cy.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.cy.js",
+      "trialMerge": "clean",
+      "note": "Welsh machine-draft counterpart."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js",
+      "trialMerge": "clean",
+      "note": "62a32ef, investigation-only: pins that the hub's Completed roll-up does NOT cross-check a stale code (singletonFulfilled is a presence check only) — no production change, a documented scope boundary."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js",
+      "trialMerge": "clean",
+      "note": "62a32ef, investigation-only: pins that the check-answers summary card renders the raw stale ISO code via answerRow's default-parameter fallback, with no 'no longer available' warning — no production change, a documented scope boundary."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "none",
+    "evidence": "The branch carries no equivalent stale-reference-data behaviour on either journey. Its only interaction with this cluster's files is s21's one-line `const view` template-path rename in three of the six animals controllers, and no interaction at all with the plants files. The branch's countries/ports services (services/countries/*, services/ports/*) are byte-identical to main's for both journeys — confirmed by an empty `git diff --stat` over both paths between each repo's merge-base and the branch — so the readers this fix depends on (originCountries(), ports.list(), ports.portOptions()) are unaffected."
+  },
+  "verdict": "clean",
+  "verdictWhy": "Every file in the cluster is either untouched by the branch or touched on a single, non-overlapping line (the s21 template rename). No manual conflict resolution is required anywhere in this cluster; a straight merge of main into the branch carries the fix through intact and it continues to call the same countries/ports functions with the same signatures.",
+  "resolutions": [],
+  "preAlign": [],
+  "wireIn": [],
+  "behaviourChanges": [
+    "No new behaviour change from the merge itself: the fix's runtime behaviour (blank the stale value, surface a 'no longer available' error, leave the stored answer intact) is identical before and after merging main into the branch, because the branch never touches services/countries, services/ports, or the business logic of any of the sixteen files this cluster spans.",
+    "Recorded scope boundary (not introduced by this merge, but worth carrying forward): only origin, import-reason, port-of-entry, private-transporter-details and transit-countries (animals) and origin and arrival-details (plants) scrub stale values on GET. The hub's Completed roll-up and the check-answers summary card do not cross-check a stale code against the current reader list — 62a32ef's three pinning tests document this as the investigation's own scope decision, not a gap this cluster's merge introduces or fixes."
+  ],
+  "knockOn": [],
+  "openQuestions": [
+    {
+      "question": "Should the hub 'Completed' status and the check-answers summary card also warn when a stored answer's code has gone stale (the two pinned-but-unfixed surfaces from 62a32ef), or is GET-time scrubbing on the answer pages themselves judged sufficient coverage for EUDPA-573?",
+      "default": "Leave as scoped — the investigation commit deliberately pins the current behaviour there rather than changing it, and no alignment stage touches those files, so there is nothing this merge forces a decision on."
+    }
+  ],
+  "claims": [
+    {
+      "id": "573-001",
+      "statement": "Animals' origin controller detects staleness by checking the stored countryOfOrigin against countries.originCountries(), the same reader the alignment's s19 countries-lazy-load stage deliberately keeps ins from adopting (D4) and never touches on the journeys.",
+      "kind": "structure",
+      "ref": "animals:src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js:322f8b01",
+      "quote": "const offered = new Set(\n    (await countries.originCountries()).map(({ value }) => value)\n  )\n  return !offered.has(code)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "573-002",
+      "statement": "The branch's only change to three of the six animals controllers this cluster touches is the s21 feature-folder convention's one-line template-path rename, so the merge is a clean, non-overlapping 3-way merge.",
+      "kind": "conflict",
+      "ref": "animals:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.js",
+      "quote": "const view = `${TEMPLATES}/features/transport/port-of-entry/template`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "573-003",
+      "statement": "The branch never touches either journey's services/countries or services/ports directories; the diff between each repo's merge-base and the branch over those paths is empty.",
+      "kind": "structure",
+      "ref": "animals+plants:src/server/app/services/countries,ports:trial-merge measurement",
+      "quote": "git diff --stat <mergeBase> origin/feat/NO_JIRA-frontend-alignment -- '*services/countries*' '*services/ports*'  → (no output)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "573-004",
+      "statement": "The animals 322f8b01 commit message records that its pre-commit hook was skipped because of a pre-existing errors.test.js refdata-503 failure on main — the exact test the refdata-503-test-stub cluster (a2f1d295) patches and the branch's s18 chassis-convergence stage replaces outright.",
+      "kind": "config",
+      "ref": "animals:322f8b01 commit message",
+      "quote": "Pre-commit hook skipped on user's explicit authorisation because a\npre-existing test failure on main (errors.test.js refdata-503 test)\nis blocking; unrelated to this change.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "573-005",
+      "statement": "Plants' 62a32ef commit is test-only investigation work with no production change, pinning that the hub and check-answers pages do not scrub a stale reference-data code the way the origin/arrival-details GET handlers now do.",
+      "kind": "behaviour",
+      "ref": "plants:62a32ef commit message",
+      "quote": "No production code changes. Notes at\nworkareas/shared/eudpa-573-stale-state/notes.md (workspace repo).",
+      "confidence": "verbatim"
+    }
+  ],
+  "journeyConflictAttribution": {
+    "animals": {
+      "src/config/config.test.js": ["eudpa-333", "s12-hardening-backport"],
+      "src/config/nunjucks/context/context.js": ["eudpa-619", "cross-service-shape"],
+      "src/server/app/lib/validate/calendar.js": ["chassis-convergence"],
+      "src/server/app/routes.js": ["eudpa-619", "tooling"],
+      "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js": ["eudpa-619"],
+      "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js": ["eudpa-619"],
+      "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js": ["eudpa-619"],
+      "src/server/app/shared/layout.test.js": ["eudpa-619", "cross-service-shape"],
+      "src/server/auth/controller.js": ["eudpa-619", "s12-hardening-backport"],
+      "src/server/common/helpers/errors.js": ["eudpa-619", "chassis-convergence"],
+      "src/server/common/helpers/errors.test.js": ["refdata-503-test-stub", "chassis-convergence"],
+      "src/server/router.js": ["eudpa-619", "tooling"]
+    },
+    "plants": {
+      "src/config/nunjucks/context/context.js": ["eudpa-619", "cross-service-shape"],
+      "src/server/app/routes.js": ["eudpa-619", "tooling"],
+      "src/server/app/shared/layout.test.js": ["eudpa-619", "cross-service-shape"],
+      "src/server/auth/controller.js": ["eudpa-619", "s12-hardening-backport"],
+      "src/server/common/helpers/errors.js": ["eudpa-619", "chassis-convergence"],
+      "src/server/router.js": ["eudpa-619", "tooling"]
+    },
+    "notes": {
+      "src/config/config.test.js": "add/add conflict: main (EUDPA-333, b7c5039b) creates config.test.js to pin startup URL validation for tradeImportsAddressBookApi/tradeImportsInsFrontend; the branch (s12-hardening-backport) independently creates the same new file to pin the strict-boolean stubMode format. Not resolved here — belongs to whichever agent covers EUDPA-333/s12.",
+      "src/config/nunjucks/context/context.js": "main (EUDPA-619) adds set-scoped context resolution; the branch (question 28/30, cross-service shape) adds insAddressBookUrl()/addressBookUrl and siblingFrontendBaseUrls. Both add distinct keys to the same context-building function.",
+      "src/server/app/lib/validate/calendar.js": "main (EUDPA-619, via a co-landed dependency bump touching the same file) vs the branch's s18-chassis-convergence backport of ins's four-digit-year DATE_TEXT_SHAPE guard into animals' calendar.js. Not part of this cluster's three commits.",
+      "src/server/app/routes.js": "main (EUDPA-619) keeps the per-set route export name (liveAnimals/highRiskPlants); the branch (tooling/auth convergence, s17) renames it to the shared serviceRoutes export both journeys and ins now use.",
+      "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js": "main (EUDPA-619) adds multi-set test scaffolding (registerTestSessionAuth / set context) to a bare Hapi server test; the branch's auth-convergence stage (question 2) made the same class of edit to six animals controller tests for auth: 'session' gating. Different commits, same file class.",
+      "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js": "Same shape as the animal-identification.controller.test.js conflict above.",
+      "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js": "Same shape again: EUDPA-619 multi-set scaffolding vs the branch's auth session-gating test helper.",
+      "src/server/app/shared/layout.test.js": "main (EUDPA-619) changes layout test scaffolding for multi-set rendering; the branch (question 28, cross-service shape) adds the ADDRESS_BOOK_URL assertion replacing the '#' placeholder.",
+      "src/server/auth/controller.js": "main (EUDPA-619) changes how the unauthorised view is resolved per-set; the branch (s12-hardening-backport, question 2) adds the organisationId/getPermissions guards and hoists UNAUTHORISED_VIEW, backported from ins.",
+      "src/server/common/helpers/errors.js": "main (EUDPA-619) adds errorChrome()/setIdForPath()/withSetContext()/setlessBase() so the error page resolves chrome per-set; the branch (s18-chassis-convergence, Q12) rewrites the same function to read every message from sharedCopy.errorPage via kit.js's base(). Both replace errorMessageFor's neighbourhood with incompatible mechanisms — a real design conflict, not this cluster's to resolve.",
+      "src/server/common/helpers/errors.test.js": "main = refdata-503-test-stub's own commit a2f1d295 (vi.stubGlobal('fetch') on a /test/refdata-missing route); branch = s18-chassis-convergence's D7 rewrite (a Boom-thrown /test/service-unavailable route with no countries dependency at all). This is this cluster's own conflict — resolved below.",
+      "src/server/router.js": "main (EUDPA-619) registers routes per discovered set; the branch (tooling/auth convergence) already renamed the import to serviceRoutes and folded stub-mode route selection in. Same class of collision as routes.js."
+    }
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "cluster": "tests-security-coverage",
+  "title": "Tests-repo security/a11y coverage and ZAP-report hardening, plus the auth.spec.ts conflict",
+  "summary": "Five tests-repo-only main commits (ZAP report banner styling, retargeting a security spec at a field still enforced by animals-frontend's own validation, flagging partial ZAP traffic, publishing a diagnostic report on CDP when passive security specs fail, and extending @active security + @a11y coverage for live-animals) all trial-merge with zero conflicts -- confirmed via `git merge-tree`, which reports no conflict for any of the fifteen files these five commits touch, including one file the branch itself had already edited (tests/security/ins/address-book.spec.ts, where the branch dropped the /about goto and main independently appended a handshake-token query-param check after it -- the merge correctly keeps both). The one real tests-repo conflict is tests/e2e/features/auth.spec.ts, caused by EUDPA-619 (623c3cc, a different commit/cluster, not one of this cluster's five) touching the exact same 'allows signing out after signing in' test the branch's own auth convergence (ruling 2) already edited. Despite the brief's phrasing, EUDPA-333 does not touch this file at all in this window -- its commits (cd378de, 48ea0c0) touch fixtures/auth-state.ts, addresses-read-only.spec.ts, contact-address.spec.ts and utils/playwright/environment.ts instead. None of the five cluster commits reference a URL, cookie name or sign-out path the branch changed; they depend only on animals-frontend's own field validation, the tests repo's own page objects, and ZAP/CDP report plumbing internal to the tests repo.",
+  "repos": ["tests"],
+  "mainCommits": {
+    "tests": [
+      "6ffe80b chore(NO_JIRA): box the ZAP report's warning banners",
+      "761db06 fix(NO_JIRA): retarget the draft-validation-error security spec at a field still enforced",
+      "30bbff0 chore(NO_JIRA): flag partial traffic on the ZAP active-scan report (#237)",
+      "7961e54 fix: publish a diagnostic report when passive security specs fail on CDP (#236)",
+      "cb1ca03 Extend @active security and @a11y coverage for live-animals (#235)",
+      "623c3cc EUDPA-619: move the URL layer onto the per-set prefixes (#238) -- NOT part of this cluster; included only because it is the sole source of the auth.spec.ts conflict this cluster is asked to resolve",
+      "cd378de fix(EUDPA-333): align INS handshake E2E gating with CDP behaviour (#233) -- NOT part of this cluster",
+      "48ea0c0 fix(EUDPA-333): extend handshake add-link E2E across all parties (#239) -- NOT part of this cluster"
+    ]
+  },
+  "files": [
+    {
+      "repo": "tests",
+      "mainPath": "utils/zap/run-and-gate.ts",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "utils/zap/run-and-gate.ts",
+      "trialMerge": "clean",
+      "note": "Two commits touch this file (6ffe80b banner styling, 30bbff0 partial-traffic flag); neither appears in the trial-merge conflict output."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/security/frontend-draft-validation-error.spec.ts",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "tests/security/frontend-draft-validation-error.spec.ts",
+      "trialMerge": "clean",
+      "note": "Retargets the spec to claim-but-blank a region-of-origin code instead of leaving country of origin blank, because animals-frontend's own origin page (parity-dr1) stopped requiring country of origin on save. Pure test-repo-internal change, no dependency on anything the branch touched."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "entrypoint.sh",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "entrypoint.sh",
+      "trialMerge": "clean",
+      "note": "Adds a shared write_fallback_report_html() helper and uses it for the specs-failed, zap-not-ready and security:active-refusal fallback report pages."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/security/admin/admin-auth.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "new file, no collision",
+      "branchPath": "tests/security/admin/admin-auth.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03. Branch has a differently-pathed tests/e2e/features/admin/admin-auth.spec.ts (its own, unrelated address-book-navigation work) -- no path collision."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/security/frontend-auth.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "untouched",
+      "branchPath": "tests/security/frontend-auth.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03, adds an @active spec for the sign-in/OIDC redirect round trip through ZAP."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/security/frontend-change-context.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "untouched",
+      "branchPath": "tests/security/frontend-change-context.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03, covers the ?change=1 Check Your Answers query parameter."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/security/ins/address-book-auth.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "new file, no collision",
+      "branchPath": "tests/security/ins/address-book-auth.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03. Branch has a differently-pathed tests/e2e/features/ins/... file -- no collision."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/security/ins/address-book.spec.ts",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "tests/security/ins/address-book.spec.ts",
+      "trialMerge": "clean",
+      "note": "Real interleave, verified in the merge-tree write-tree output: the branch had already dropped the '/about' goto (report.md: 'the ins security scan no longer visits /about') and renumbered the trailing comment from 'two static routes' to 'one static route'; main's cb1ca03 independently appends a handshake-token query-param check immediately after the remaining '/' goto. git's 3-way merge inserts main's new block after the branch's single '/' line with no conflict, correctly preserving both changes -- verified by reading the merged blob directly."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/a11y/notification-journey-conditional-pages.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "untouched",
+      "branchPath": "tests/a11y/notification-journey-conditional-pages.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/a11y/notification-lifecycle-states.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "untouched",
+      "branchPath": "tests/a11y/notification-lifecycle-states.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/a11y/sign-in.spec.ts",
+      "mainChange": "A",
+      "branchStatus": "untouched",
+      "branchPath": "tests/a11y/sign-in.spec.ts",
+      "trialMerge": "clean",
+      "note": "New file from cb1ca03, excludes a known upstream aria-expanded issue in the sign-in stub's own markup, consistent with an existing exclude elsewhere in the suite."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/e2e/features/auth.spec.ts",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "tests/e2e/features/auth.spec.ts",
+      "trialMerge": "conflict",
+      "note": "The only genuine conflict in this cluster's brief, and it comes from 623c3cc (EUDPA-619), NOT from any of this cluster's five commits. Both main and the branch edited the same 'allows signing out after signing in' test: main added an `import { SET_BASES } from '@page-objects/base/sets'`, a hardcoded `.toHaveAttribute('href', '/auth/sign-out')` assertion with a rationale comment, a new 'redirects the service root to the default set's dashboard' test, and a `${SET_BASES.liveAnimals}` prefix on the journey-further-in test's regex. The branch (ruling 2/30's auth convergence, landed as 849558a) added its own href assertion at the same insertion point using `.toHaveAttribute('href', pages.signOut.path)` instead of a literal."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "partial",
+    "evidence": "For the five cluster commits: branchEquivalent is 'none' for all of them individually (they are pure additions/fixes the branch never attempted) but every one merges in cleanly with zero hand-resolution, so no gap needs closing. For auth.spec.ts: the branch's `pages.signOut.path` assertion and main's hardcoded `/auth/sign-out` literal assert the identical value -- confirmed by reading page-objects/auth/sign-out-page.ts on the branch (`readonly path = '/auth/sign-out'`), which main did not touch in this window. So the two sides' href assertions are behaviourally equivalent, just written two different ways; only the wrapping SET_BASES-prefix test and import are genuinely new."
+  },
+  "verdict": "decide",
+  "verdictWhy": "The five cluster commits themselves are 'clean' -- no action needed beyond accepting the merge. But the brief specifically asks for auth.spec.ts's conflict to be resolved, and that resolution is a genuine decide: which of two equivalent-but-differently-written href assertions to keep, plus splicing in main's three EUDPA-619 additions that have no branch-side counterpart at all.",
+  "resolutions": [
+    {
+      "repo": "tests",
+      "path": "tests/security/frontend-draft-validation-error.spec.ts, utils/zap/run-and-gate.ts, entrypoint.sh, tests/security/admin/admin-auth.spec.ts, tests/security/frontend-auth.spec.ts, tests/security/frontend-change-context.spec.ts, tests/security/ins/address-book-auth.spec.ts, tests/security/ins/address-book.spec.ts, tests/a11y/notification-journey-conditional-pages.spec.ts, tests/a11y/notification-lifecycle-states.spec.ts, tests/a11y/sign-in.spec.ts",
+      "take": "Accept the clean auto-merge for all of these as-is.",
+      "why": "Every one of the five cluster commits' files trial-merges with zero conflict, including the one file (address-book.spec.ts) both sides independently edited -- verified by reading the merged blob directly and confirming both the branch's /about removal and main's handshake-token addition survive together correctly."
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/features/auth.spec.ts",
+      "take": "Start from the branch's current file (keeps its own `.toHaveAttribute('href', pages.signOut.path)` line, structurally the ledger's own convergence style) and layer in main's three EUDPA-619 additions that have no branch counterpart: the `import { SET_BASES } from '@page-objects/base/sets'` line, the new 'redirects the service root to the default set's dashboard' test, and the `${SET_BASES.liveAnimals}` prefix on the 'allows signing into a page further in the journey' regex. Do not replace the branch's `pages.signOut.path` reference with main's hardcoded literal -- they assert the identical value.",
+      "why": "The href assertions are behaviourally equivalent (both resolve to '/auth/sign-out', confirmed by reading page-objects/auth/sign-out-page.ts, which main did not touch), so main decides only the genuinely new behaviour (the per-set URL layer EUDPA-619 introduced), while the ledger's own already-landed convergence style (referencing the page object's `.path` rather than a literal) is preserved per the structure precedence."
+    }
+  ],
+  "preAlign": [
+    {
+      "repo": "tests",
+      "what": "The five cluster commits are not pre-alignable in the usual sense (they are pure main-side additions with no branch equivalent to reconcile ahead of time) -- there is nothing to pre-align, they should simply be merged in.",
+      "why": "n/a"
+    },
+    {
+      "repo": "tests",
+      "what": "auth.spec.ts's three EUDPA-619 additions (SET_BASES import, new root-redirect test, set-prefixed regex) could be applied directly onto the branch now as a small pre-align commit, keeping the branch's own href-assertion line untouched.",
+      "why": "Removes this file from the live conflict list before the real merge; the decision (keep branch's `pages.signOut.path` style, take main's three additions) is already made and doesn't depend on merge-time context."
+    }
+  ],
+  "wireIn": [],
+  "behaviourChanges": [
+    "ZAP report: 'Truncated scans' and 'Partial run' warning banners now render inside a bordered/tinted .callout box instead of bare red text.",
+    "ZAP active-scan report now shows an explicit 'Partial run' banner whenever the upstream traffic-generating step didn't succeed, closing a gap where a context with partial (not zero) traffic could render as a clean pass.",
+    "CDP's portal now shows a diagnostic fallback report (with the Playwright report copied alongside) when passive security specs fail, instead of 'No report found'.",
+    "The frontend-draft-validation-error security spec now triggers its error via a claimed-but-blank region-of-origin code, tracking animals-frontend's own parity-dr1 change that stopped requiring country of origin on save.",
+    "@active security coverage extended to the sign-in/OIDC redirect flow (all three frontends), the ?change=1 Check Your Answers query parameter, and the INS handshake add-route's token/id query parameters (rejected-guard path only).",
+    "@a11y coverage extended to sign-in (initial load + error state), several live-animals conditional-reveal pages, the private-transporter form, the approved-commercial-transporter register, and cancel-amendment/delete-confirmation pages."
+  ],
+  "knockOn": [
+    "cb1ca03's coverage extension is explicitly scoped to the live-animals journey only ('the high-risk plants frontend isn't wired into the ZAP compose context yet') -- no plants-side follow-up is implied or needed by this cluster.",
+    "auth.spec.ts's new 'redirects the service root to the default set's dashboard' test and the SET_BASES-prefixed regex are EUDPA-619 behaviour, not this cluster's -- their correctness depends on the per-set URL layer commit (623c3cc) as a whole, which touches 21 other files outside this cluster's scope and belongs to whichever cluster owns EUDPA-619."
+  ],
+  "openQuestions": [],
+  "claims": [
+    {
+      "id": "tsc-001",
+      "statement": "The branch already removed the '/about' goto from tests/security/ins/address-book.spec.ts before main's cb1ca03 independently appended a handshake-token check to the same file, and the two changes merge together correctly.",
+      "kind": "conflict",
+      "ref": "tests:tests/security/ins/address-book.spec.ts (merged tree d4ac0a82)",
+      "quote": "// The service's one static route. A GET, folded in here rather than\n    // given a spec of its own -- nothing else in the suite reaches it.\n    await pages.page.goto('/');\n\n    // journey-type/notification-id/fulfilment-id/handshake-token: query params",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tsc-002",
+      "statement": "The only main commit touching tests/e2e/features/auth.spec.ts since the tests repo's merge base is 623c3cc (EUDPA-619), not EUDPA-333.",
+      "kind": "structure",
+      "ref": "tests: git log 8f52771..origin/main -- tests/e2e/features/auth.spec.ts",
+      "quote": "623c3cc EUDPA-619: move the URL layer onto the per-set prefixes (#238)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tsc-003",
+      "statement": "The branch's `pages.signOut.path` and main's hardcoded '/auth/sign-out' literal in auth.spec.ts assert the identical value.",
+      "kind": "behaviour",
+      "ref": "tests:page-objects/auth/sign-out-page.ts (origin/feat/NO_JIRA-frontend-alignment)",
+      "quote": "readonly path = '/auth/sign-out';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tsc-004",
+      "statement": "EUDPA-619 itself went through a self-correction on this exact point mid-development, converging on the literal '/auth/sign-out' as the pinned value -- corroborating that this is the settled, correct value on both sides.",
+      "kind": "behaviour",
+      "ref": "tests: 623c3cc commit body, sub-commit 'fix(EUDPA-619): pin the sign-out link at its real path'",
+      "quote": "The sign-out link renders as /auth/sign-out - layout.njk sets signOutUrl to exactly that... but the new assertion expected /signout, which is a different route that the service navigation never links to.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tsc-005",
+      "statement": "cb1ca03's new security/a11y specs are explicitly scoped to live-animals only, with plants named as out of scope for this coverage extension.",
+      "kind": "behaviour",
+      "ref": "tests: cb1ca03 commit message",
+      "quote": "Scoped to the live-animals journey only -- the high-risk plants frontend isn't wired into the ZAP compose context yet.",
+      "confidence": "verbatim"
+    }
+  ]
+}

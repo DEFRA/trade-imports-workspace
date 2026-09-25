@@ -18,7 +18,7 @@
       "$ref": "#/$defs/textList"
     },
     "repos": {
-      "description": "Where the programme builds: each repo key a row's `repos` names (frontend, backend, tests) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
+      "description": "Where the programme builds: each repo key a row's `repos` names (frontend, backend and tests for the full lifecycle; any lower-case words under the branch lifecycle, such as ins, animals, plants and tests) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/repo" }
     },
@@ -105,7 +105,7 @@
           "enum": ["feat", "fix", "chore", "refactor", "test", "docs"]
         },
         "repos": {
-          "description": "The repo keys the slice touches, such as [\"backend\", \"frontend\", \"tests\"]. Left out, the loop takes every configured repo.",
+          "description": "The repo keys the slice touches, such as [\"backend\", \"frontend\", \"tests\"]: keys of the envelope's `repos`. Left out, the loop takes every configured repo. [] means the row changes no backlog repo, such as a docs row whose output is in the workspace repo; only the branch lifecycle builds one.",
           "$ref": "#/$defs/textList"
         },
         "sources": {
@@ -125,8 +125,34 @@
           "anyOf": [{ "$ref": "#/$defs/text" }, { "$ref": "#/$defs/textList" }]
         },
         "gate": {
-          "description": "A checkpoint: the loop lands this increment, then stops so a person can look before anything that depends on it. The text says what to look at.",
-          "$ref": "#/$defs/text"
+          "description": "A checkpoint: the loop lands this increment, then stops so a person can look before anything that depends on it. The text says what to look at. null means no checkpoint.",
+          "anyOf": [{ "$ref": "#/$defs/text" }, { "type": "null" }]
+        },
+        "merge": {
+          "description": "Branch lifecycle only: a ref to merge into each named repo before the row is built, such as { \"tests\": \"origin/main\" }. The loop fetches and runs `git merge --no-ff --no-commit <ref>`, the implementor resolves the merge by the plan, and the land stage commits it as a two-parent merge commit. Every key must be in the row's `repos`. null or absent: no merge. The full lifecycle ignores it.",
+          "anyOf": [
+            {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": { "$ref": "#/$defs/text" }
+            },
+            { "type": "null" }
+          ]
+        },
+        "gatePhases": {
+          "description": "Branch lifecycle only: the phases of `tim build gate` the baseline and the ladder run for this row, such as [\"unit\", \"fit\"] for a merge row whose end-to-end proof is another row's. [] runs no gate phase, for a row that changes no backlog repo. null or absent: all three. The full lifecycle always runs all three.",
+          "anyOf": [
+            {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "enum": ["unit", "fit", "e2e"] }
+            },
+            { "type": "null" }
+          ]
+        },
+        "awaitCi": {
+          "description": "Branch lifecycle only: false pushes the row and records its pull requests without waiting for CI, for a row whose pull requests cannot run checks yet (GitHub runs none on a pull request that conflicts with its base). null or absent: true. The full lifecycle always waits.",
+          "anyOf": [{ "type": "boolean" }, { "type": "null" }]
         },
         "ticket": {
           "description": "Written by the build loop through `tim backlog set --ticket`: the Jira key raised for the increment.",

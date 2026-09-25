@@ -1,0 +1,272 @@
+{
+  "cluster": "eudpa-333-handshake-qa",
+  "title": "QA follow-ups on the address-add handshake (four commits, three repos)",
+  "summary": "A second wave of EUDPA-333 QA fixes, landed 21-23 September (after the alignment branch had already ported the ORIGINAL handshake feature once via s19's 16 September main-merge, 1446fcc/ea2bfe6/a3dcb6d). Four independent fixes: (1) ins 2b4be7c — validates tradeImportsAddressBookApi.baseUrl as a URL at startup (format: String → 'url') and sets Cache-Control: no-store on every add-address form render (GET and POST error paths) so a browser back-button never replays a stale/submitted form; (2) animals b7c5039b — the same URL-format hardening for tradeImportsAddressBookApi.baseUrl (tradeImportsInsFrontend.baseUrl was ALREADY 'url' on the branch via s24, for an unrelated reason) plus parametrising one party-picker unit test across all five party types instead of just consignor; (3) tests 48ea0c0 — extends the INS add-link E2E assertions (addresses-read-only.spec.ts) from consignor-only to all five party pickers; (4) tests cd378de — replaces the compose-only skipIfComposeEnvironment/skipUnlessComposeEnvironment gating with skipIfNonStubStackEnvironment/skipUnlessNonStubStackEnvironment (true whenever the stack runs outside stub mode — compose OR CDP) and rewrites fixtures/auth-state.ts's authCookieNameFor to derive INS's session-cookie name from the target baseURL's hostname (ins-sid on localhost/127.0.0.1/cdp-docker.test, sid elsewhere) instead of a static per-target cookieName field, so CDP minting no longer needs an extra config knob. Observable behaviour: address-book API misconfiguration now fails fast at boot instead of a mystery 500 later; the ins add-address form is never served from a cached/back-button state; the E2E suite proves the handshake link for every party, not just consignor, and gates correctly against a real CDP run instead of only the local compose stack.",
+  "repos": ["ins", "animals", "tests"],
+  "mainCommits": {
+    "ins": ["2b4be7c fix(EUDPA-333): address QA AC gaps on INS add-address handshake (#34)"],
+    "animals": ["b7c5039b fix(EUDPA-333): address QA AC gaps on INS handshake add link (#367)"],
+    "tests": [
+      "48ea0c0 fix(EUDPA-333): extend handshake add-link E2E across all parties (#239)",
+      "cd378de fix(EUDPA-333): align INS handshake E2E gating with CDP behaviour (#233)"
+    ]
+  },
+  "files": [
+    {
+      "repo": "ins",
+      "mainPath": "src/config/config.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/config/config.js",
+      "trialMerge": "clean",
+      "note": "Only the tradeImportsAddressBookApi.baseUrl hunk (format: String → 'url') belongs to this cluster; it lands with no marker of its own inside a file whose OTHER conflict region belongs to address-lookup-spike (see eudpa-311's insConflictAttribution). Confirmed present, unmarked, in the trial-merge tree: `git show d664c0e912c3ac223e17b1c9aeb8bc796c6c8f81:src/config/config.js` shows `format: 'url'` at the tradeImportsAddressBookApi block with no surrounding <<<<<<< markers."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/config/config.url-validation.test.js",
+      "mainChange": "A",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "clean",
+      "note": "New file, no branch-path collision — merges in untouched. Not in the ins conflicts list. Two tests: reject a malformed tradeImportsAddressBookApi.baseUrl, reject a malformed tradeImportsAnimalsFrontend.baseUrl. Neither exists on the branch. tradeImportsAnimalsFrontend.baseUrl is already format: 'url' on the branch (has been since the URLs were first built, s22/s24), so convict already enforces the rejection structurally — main's file is the only place that asserts it explicitly."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/add/controller.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/add/add.controller.js",
+      "trialMerge": "misplaced",
+      "note": "Resurrected file is the composite of this commit's withNoStore wrapper AND 30dab4b's addressBookList() redirects (eudpa-311 owns that half — see that cluster's entry for the same path). This cluster owns only the withNoStore/NO_STORE/Cache-Control hunk. Branch's real add.controller.js (post s21 rename) has no Cache-Control handling anywhere — confirmed by `git grep -n 'no-store|Cache-Control' origin/feat/NO_JIRA-frontend-alignment -- src/` returning nothing."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/add/controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/add/add.controller.test.js",
+      "trialMerge": "misplaced",
+      "note": "This cluster owns the new 'GET sets Cache-Control: no-store' test (asserts headers['cache-control'] === 'no-store' on a plain GET /address-book/add). The same file/path is separately touched by fd1d21f (EUDPA-619, unrelated hunk) — flagged in eudpa-311's insConflictAttribution as shared with that cluster too. Resurrected at the old path; the real test lives at add.controller.test.js."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/config/config.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/config/config.js",
+      "trialMerge": "conflict",
+      "note": "Listed in animals' conflicts. Two hunks: tradeImportsAddressBookApi.baseUrl format: String → 'url' (branch: still String, needs porting) and tradeImportsInsFrontend.baseUrl format: String → 'url' (branch: ALREADY 'url', via s24 D5 — unrelated motivation, same end state, so this half of the conflict resolves to 'keep branch, main is redundant here')."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/config/config.test.js",
+      "mainChange": "A",
+      "branchStatus": "modified",
+      "branchPath": "src/config/config.test.js",
+      "trialMerge": "conflict",
+      "note": "Add/add conflict: main adds a brand-new file (describe('config URL validation') with two 'rejects a malformed X' tests); the branch independently already has a config.test.js (from s24) with unrelated content — auth.cookieName describe block, stubMode tests, env-backed-booleans test.each, and a 'loads TRADE_IMPORTS_INS_FRONTEND_URL with the 3002 default' test. Git will conflict-mark the whole file as two competing adds since there is no common ancestor version to 3-way-merge against."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js",
+      "trialMerge": "clean",
+      "note": "Not in animals' conflicts list — the branch never touched this file since the merge base, so main's it.each(PARTIES.map(...)) parametrisation (consignor-only → all five parties) merges in verbatim with no work needed. Confirmed via `git diff --name-status <mergeBase> origin/feat/NO_JIRA-frontend-alignment -- <path>` returning nothing, and the merged tree already contains 'PARTIES.map'."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/e2e/features/addresses-read-only.spec.ts",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "tests/e2e/features/addresses-read-only.spec.ts",
+      "trialMerge": "clean",
+      "note": "Not in the tests repo's one-item conflicts list (tests/e2e/features/auth.spec.ts only). Branch never touched this file since the merge base, so both commits' edits (48ea0c0's all-five-parties parametrisation and cd378de's skipIfNonStubStackEnvironment/skipUnlessNonStubStackEnvironment rename) merge cleanly, taking main's content wholesale."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "tests/e2e/pages/contact-address.spec.ts",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "tests/e2e/pages/contact-address.spec.ts",
+      "trialMerge": "clean",
+      "note": "Same skipIfComposeEnvironment/skipUnlessComposeEnvironment → skipIfNonStubStackEnvironment/skipUnlessNonStubStackEnvironment rename (cd378de). Branch never touched this file; merges cleanly."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "utils/playwright/environment.ts",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "utils/playwright/environment.ts",
+      "trialMerge": "clean",
+      "note": "Adds isCdpHostedEnvironment(), isNonStubStackEnvironment(), skipIfNonStubStackEnvironment(), skipUnlessNonStubStackEnvironment() alongside the existing skipIfCdpEnvironment/skipIfComposeEnvironment/skipUnlessComposeEnvironment (unchanged, still used elsewhere). Branch never touched this file; merges cleanly with the new functions added."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "fixtures/auth-state.ts",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "fixtures/auth-state.ts",
+      "trialMerge": "broken",
+      "note": "NOT in the tests repo's conflicts list, but the textual auto-merge is semantically broken — a landmine the conflict-marker scan misses entirely. main (cd378de) deletes the AuthTarget.cookieName? field, deletes the ins target's static cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'ins-sid' line, and rewrites authCookieNameFor(targetName) into authCookieNameFor(targetName, baseURL), which special-cases only targetName === 'ins' against a hostname allow-list. Independently, the branch's s24 stage added `cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid'` to the `plants` target, using the OLD (pre-cd378de) AuthTarget.cookieName field and the OLD single-arg authCookieNameFor(targetName) it reads from. Because the two edits sit on non-overlapping lines (branch inside the `plants:` object literal, main inside the `ins:` object literal, the type declaration, and the function body), git's line-based 3-way merge auto-resolves with NO conflict markers — but the merged result sets `cookieName` on a `plants` object whose `AuthTarget` type no longer declares that field (a TypeScript compile error), and even if that were suppressed, main's rewritten authCookieNameFor never reads `AUTH_TARGETS[targetName]?.cookieName` any more, so plants' 'plants-sid' value becomes dead, unreachable configuration — plants would silently fall back to the generic AUTH_COOKIE_NAME ('sid') in the compose stack, exactly the animals-session-cookie collision s24 was built to prevent. Confirmed by reading the trial-merge tree content in full: the plants object literal at `d4ac0a8219760d380c137aeb19bf7b1492a5ab74:fixtures/auth-state.ts` still carries `cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid'`, but the AuthTarget type two lines above it has already lost the `cookieName?: string;` field."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "none",
+    "evidence": "ins: `git grep -n 'no-store|Cache-Control' origin/feat/NO_JIRA-frontend-alignment -- src/` returns nothing; `tradeImportsAddressBookApi.baseUrl` is still `format: String` on the branch. animals: same format gap for the same key; the party-picker test is genuinely untouched by the branch (not partial-equivalent, simply unmodified since the merge base). tests: `skipIfNonStubStackEnvironment`/`skipUnlessNonStubStackEnvironment` do not exist anywhere on the branch; the branch's own fixtures/auth-state.ts change (s24) is unrelated in intent (giving plants a distinct dev cookie name) and predates cd378de's restructuring of the mechanism that would carry it."
+  },
+  "verdict": "decide",
+  "verdictWhy": "Every file except fixtures/auth-state.ts is a clean port (either take-branch-and-delete-resurrection, or a mechanical add of main's new format:'url'/no-store/test-parametrisation/skip-helper-rename behaviour). fixtures/auth-state.ts is a genuine decision: main's ins-only hostname-based cookie-name detection and the branch's static per-target cookieName field are two different designs for the same problem, and reconciling them (so plants keeps its distinct dev-mode session cookie AND main's CDP-aware ins detection survives) is a real judgement call, not a mechanical merge. Given the goal (main decides behaviour, the alignment ledger decides where code lives — but here main is also changing the MECHANISM, not just adding a value), the smallest change that preserves both behaviours is to generalise main's hostname-conditional branch from an if (targetName === 'ins') check into a small per-target compose-cookie-name lookup and delete the now-redundant AuthTarget.cookieName field entirely, matching D11's 'mirror the ins entry's shape exactly' instruction one level up (at the mechanism, not the field).",
+  "resolutions": [
+    {
+      "repo": "ins",
+      "path": "src/config/config.js",
+      "take": "Once address-lookup-spike's unrelated conflict region is resolved, confirm the tradeImportsAddressBookApi.baseUrl block reads format: 'url' (it already does in the trial-merge tree with no marker).",
+      "why": "Matches ins's own convention (every other browser/service URL key is already 'url') and closes the QA gap: a malformed TRADE_IMPORTS_ADDRESS_BOOK_URL now fails config.validate() at boot instead of surfacing as an opaque runtime fetch failure."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/config.url-validation.test.js",
+      "take": "Add the file as main wrote it (two tests: reject a malformed tradeImportsAddressBookApi.baseUrl, reject a malformed tradeImportsAnimalsFrontend.baseUrl).",
+      "why": "New file, no branch equivalent, mechanical add with no naming or placement decision — it sits beside config.js like every other *.test.js in that directory."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-book/add/add.controller.js",
+      "take": "Delete the resurrected old-path file (see eudpa-311). In the real branch file, wrap buildView's returned h.view(...) with .header('Cache-Control', 'no-store') so every GET and POST-error render of the add form carries the header; redirects (redirectAfterAdd/redirectAfterCancel) stay untouched, matching main's scope exactly.",
+      "why": "buildView is the single render path for both GET and every POST error branch in the branch's add.controller.js, so wrapping it once reproduces main's four separate withNoStore(...) call sites with one edit instead of four, with identical behaviour (redirects never get the header, exactly as main wrote it)."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-book/add/add.controller.test.js",
+      "take": "Delete the resurrected old-path test file (see eudpa-311). Port the one new test into the real add.controller.test.js: 'GET sets Cache-Control: no-store' asserting headers['cache-control'] === 'no-store' on a plain authenticated GET.",
+      "why": "Same assertion, same mechanism, just against the current controller test's existing server/auth harness."
+    },
+    {
+      "repo": "animals",
+      "path": "src/config/config.js",
+      "take": "Add format: 'url' to tradeImportsAddressBookApi.baseUrl. Leave tradeImportsInsFrontend.baseUrl exactly as it is on the branch (already 'url').",
+      "why": "Closes the same QA gap as ins, for the same key; the ins-frontend key needs no change because s24 already converted it for a different reason (feeding it to new URL(...) in content-security-policy.js)."
+    },
+    {
+      "repo": "animals",
+      "path": "src/config/config.test.js",
+      "take": "Keep the branch's file in full (auth.cookieName describe block, stubMode tests, env-backed-booleans test.each, the TRADE_IMPORTS_INS_FRONTEND_URL default test). Append main's describe('config URL validation', ...) block with its two 'rejects a malformed X' tests, adapted to import { config } from './config.js' (already imported by the branch's file).",
+      "why": "Both sets of tests assert genuinely different things (session-cookie/stub-mode wiring vs. URL-format rejection) and neither subsumes the other — this is an additive merge, not a real conflict, once resolved by hand."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js",
+      "take": "Accept the clean merge as-is — main's it.each(PARTIES...) parametrisation lands automatically.",
+      "why": "Not a conflict; nothing to decide."
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/features/addresses-read-only.spec.ts",
+      "take": "Accept the clean merge as-is.",
+      "why": "Not touched by the branch since the merge base; main's content lands wholesale."
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/pages/contact-address.spec.ts",
+      "take": "Accept the clean merge as-is.",
+      "why": "Same."
+    },
+    {
+      "repo": "tests",
+      "path": "utils/playwright/environment.ts",
+      "take": "Accept the clean merge as-is.",
+      "why": "Same; the new helpers are pure additions beside the existing, still-used compose-only helpers."
+    },
+    {
+      "repo": "tests",
+      "path": "fixtures/auth-state.ts",
+      "take": "Take main's authCookieNameFor(targetName, baseURL) mechanism and its AuthTarget type (drop cookieName? from the type). Generalise the single `if (targetName === 'ins')` hostname branch into a per-target compose-cookie-name lookup, e.g. `const COMPOSE_AUTH_COOKIE_NAMES: Record<string, string> = { ins: 'ins-sid', plants: 'plants-sid' }` consulted for any targetName present in it, instead of hardcoding 'ins' alone. Delete the branch's `cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid'` line from the plants object literal (the field no longer exists on the type, and the lookup table now owns that value). Keep the `process.env.AUTH_SESSION_COOKIE_NAME` override as the first-priority check for both targets, per main's ordering.",
+      "why": "Preserves main's stated goal (derive the cookie name from where the stack is actually running, not a static per-target field, so CDP needs no extra config) while not silently regressing s24's plants-sid-on-compose behaviour, which the textual auto-merge would otherwise leave dead. This is the smallest change that keeps both intents: one function, one small lookup table, no new per-target config surface."
+    }
+  ],
+  "preAlign": [],
+  "wireIn": [
+    {
+      "repo": "tests",
+      "what": "The generalised COMPOSE_AUTH_COOKIE_NAMES lookup in fixtures/auth-state.ts must be consulted by authCookieNameFor for BOTH 'ins' and 'plants', not just 'ins' as main wrote it — main never needed a plants case because when cd378de landed, main's own AUTH_TARGETS had no plants cookieName entry at all.",
+      "where": "fixtures/auth-state.ts, authCookieNameFor(targetName, baseURL)"
+    }
+  ],
+  "behaviourChanges": [
+    "ins: a malformed TRADE_IMPORTS_ADDRESS_BOOK_URL now fails config.validate({ allowed: 'strict' }) at process startup instead of surfacing later as an opaque fetch failure inside the address-book service client.",
+    "ins: every render of the add-address form (GET and every POST validation/API-error re-render) now carries Cache-Control: no-store, so a browser back button after a successful save, or after a validation error, never replays a stale form from cache.",
+    "animals: the same URL-format hardening applies to TRADE_IMPORTS_ADDRESS_BOOK_URL.",
+    "tests: the INS add-address handshake link is now asserted (present in non-stub mode, absent in stub mode) for all five party pickers (consignor, place of origin, consignee, importer, place of destination), not just consignor.",
+    "tests: the stub-vs-handshake-link E2E specs now gate correctly on CDP as well as the local compose stack (skipIfNonStubStackEnvironment/skipUnlessNonStubStackEnvironment), where before they gated on compose alone and would have behaved wrongly (or been silently skipped) against a real CDP run.",
+    "tests, once resolved per this cluster's decision: ins's session cookie name in E2E auth-state minting is derived from the target baseURL's hostname (ins-sid on localhost/127.0.0.1/cdp-docker.test, sid elsewhere) rather than a static config value, matching how the ins-frontend container actually names its cookie per environment; plants keeps its own distinct plants-sid on the same compose-hostname basis, which the textual auto-merge alone would have silently dropped."
+  ],
+  "knockOn": [
+    "If fixtures/auth-state.ts's auto-merge is accepted as-is (without the resolution above), plants' E2E auth-state minting silently falls back to the generic 'sid' cookie on the compose stack, defeating the point of s24's plants-sid divergence and very likely re-introducing the animals/plants session collision on localhost that s24 exists to prevent — with no test failure calling it out, since nothing currently asserts the compose-stack cookie name per target directly (D-noted as an open question by s24 itself: 'the single AUTH_SESSION_COOKIE_NAME env var shared by the ins and plants entries')."
+  ],
+  "openQuestions": [
+    {
+      "question": "Should the generalised compose-cookie-name lookup in fixtures/auth-state.ts (ins → ins-sid, plants → plants-sid) live in fixtures/auth-state.ts itself, or should it read the same per-service default convict already knows (auth.cookieName's isDevelopment ? '<service>-sid' : 'sid') so the two never drift? s24 already flagged the adjacent AUTH_SESSION_COOKIE_NAME single-env-var sharing as an open question it declined to redesign.",
+      "default": "Keep it local to fixtures/auth-state.ts as a small static lookup table (as proposed in this cluster's resolution) — matching D11's 'mirror the ins entry's shape' instruction literally, and not reopening s24's explicitly parked redesign."
+    }
+  ],
+  "claims": [
+    {
+      "id": "333-001",
+      "statement": "ins's fix sets Cache-Control: no-store on every add-address form render via a withNoStore wrapper, applied at four call sites (GET success, GET error, POST validation-error, POST API-error) but never on a redirect.",
+      "kind": "behaviour",
+      "ref": "ins:src/server/address-book/add/controller.js:2b4be7c",
+      "quote": "const withNoStore = (response) => response.header('Cache-Control', NO_STORE)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "333-002",
+      "statement": "ins's fix converts tradeImportsAddressBookApi.baseUrl from format: String to format: 'url', so a malformed value now fails config.validate() at startup.",
+      "kind": "config",
+      "ref": "ins:src/config/config.js:2b4be7c",
+      "quote": "-      format: String,\\n+      format: 'url',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "333-003",
+      "statement": "The branch has no Cache-Control handling anywhere in src/, confirmed by a full-tree grep against the branch HEAD.",
+      "kind": "gap",
+      "ref": "ins:origin/feat/NO_JIRA-frontend-alignment:src/",
+      "quote": "git grep -n \\\"no-store\\\\|Cache-Control\\\" origin/feat/NO_JIRA-frontend-alignment -- src/  →  (no output)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "333-004",
+      "statement": "main's fixtures/auth-state.ts rewrite deletes the AuthTarget.cookieName field and the ins target's static cookieName line, replacing them with authCookieNameFor(targetName, baseURL), which special-cases only targetName === 'ins'.",
+      "kind": "structure",
+      "ref": "tests:fixtures/auth-state.ts:cd378de",
+      "quote": "if (targetName === 'ins' && baseURL) {\\n    const host = baseURL.toLowerCase();\\n    if (host.includes('localhost') || host.includes('127.0.0.1') || host.includes('cdp-docker.test')) {\\n      return INS_COMPOSE_AUTH_COOKIE_NAME;\\n    }\\n  }\\n  return AUTH_COOKIE_NAME;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "333-005",
+      "statement": "The branch's s24 stage independently added a static cookieName field to the plants AuthTarget entry, using the pre-cd378de shape.",
+      "kind": "structure",
+      "ref": "tests:fixtures/auth-state.ts:origin/feat/NO_JIRA-frontend-alignment (diff against merge base 8f52771bbb2493b6d7d316cae9fed4449c54d778)",
+      "quote": "plants: {\\n    landingPath: '/',\\n    landingHeading: (page) => new PlantsDashboardPage(page).heading,\\n    cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid',\\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "333-006",
+      "statement": "The trial-merge tree's textual auto-merge of fixtures/auth-state.ts keeps the plants cookieName line while removing the field from the AuthTarget type and from authCookieNameFor's implementation — a broken combination with no conflict marker.",
+      "kind": "conflict",
+      "ref": "tests:d4ac0a8219760d380c137aeb19bf7b1492a5ab74:fixtures/auth-state.ts",
+      "quote": "export type AuthTarget = {\\n  landingPath: string;\\n  landingHeading: (page: Page) => Locator;\\n};\\n...\\n  plants: {\\n    landingPath: '/',\\n    landingHeading: (page) => new PlantsDashboardPage(page).heading,\\n    cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid',\\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "333-007",
+      "statement": "tests/e2e/features/auth.spec.ts is the tests repo's only listed conflict and is unrelated to either EUDPA-333 commit — neither 48ea0c0 nor cd378de touches it.",
+      "kind": "gap",
+      "ref": "tests:measure.json:conflicts",
+      "quote": "\"conflicts\": [\"tests/e2e/features/auth.spec.ts\"]",
+      "confidence": "verbatim"
+    }
+  ]
+}

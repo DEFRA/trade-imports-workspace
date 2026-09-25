@@ -1,0 +1,71 @@
+{
+  "cluster": "eudpa-620-transporter-country-code",
+  "title": "Add countryCode to shipped transporter records",
+  "summary": "Every shipped record in TRANSPORTER_OPTIONS (animals only) carried a free-text country name but no ISO countryCode; the backend's Address DTO reads only countryCode, so picking a shipped transporter submitted a notification with carrier.postalAddress.countryId null, the suspected root cause of nightly dynamics-gateway DLQ failures. Commit 39c3cb84 adds countryCode to all six shipped records, matching the shape privateTransporter() already produces for a hand-typed transporter. The alignment branch never touches src/server/app/services/transporters/ at all, so this is a clean, zero-conflict merge.",
+  "repos": ["animals"],
+  "mainCommits": {
+    "animals": [
+      "39c3cb84 fix(EUDPA-620): add countryCode to shipped transporter records (#364)"
+    ]
+  },
+  "files": [
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/services/transporters/records.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/services/transporters/records.js",
+      "trialMerge": "clean",
+      "note": "Adds `countryCode` to the privateRecord() destructure/shape and to the two shipped-commercial records that carried a bare `country` string (Switzerland → CH, Belgium → BE)."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "src/server/app/services/transporters/transporters.test.js",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "src/server/app/services/transporters/transporters.test.js",
+      "trialMerge": "clean",
+      "note": "Test assertions for the new countryCode field."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "none",
+    "evidence": "`git diff --name-status -M <mergeBase> origin/feat/NO_JIRA-frontend-alignment -- src/server/app/services/transporters/records.js src/server/app/services/transporters/transporters.test.js` returns no output in the animals clone — the branch has no commit touching this directory at all, and plants/ins have no equivalent transporters service (transporters are a live-animals-only concept)."
+  },
+  "verdict": "clean",
+  "verdictWhy": "Zero branch interaction. A merge of main into the branch carries this fix through unchanged; no file it touches appears anywhere in the animals conflict list.",
+  "resolutions": [],
+  "preAlign": [],
+  "wireIn": [],
+  "behaviourChanges": [
+    "No behaviour change introduced by the merge itself — the fix (shipped transporters now carry countryCode so the backend's Address DTO resolves carrier.postalAddress.countryId) is unaffected by anything the branch does."
+  ],
+  "knockOn": [],
+  "openQuestions": [],
+  "claims": [
+    {
+      "id": "620-001",
+      "statement": "The fix adds countryCode to privateRecord()'s shape and to the two shipped-commercial records (Switzerland, Belgium) that previously carried only a free-text country name.",
+      "kind": "structure",
+      "ref": "animals:src/server/app/services/transporters/records.js:39c3cb84",
+      "quote": "-      country: 'Switzerland'\n+      country: 'Switzerland',\n+      countryCode: 'CH'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "620-002",
+      "statement": "The branch does not touch the transporters service directory at all — the merge is a pure pass-through.",
+      "kind": "structure",
+      "ref": "animals:src/server/app/services/transporters/*:trial-merge measurement",
+      "quote": "git diff --name-status -M <mergeBase> origin/feat/NO_JIRA-frontend-alignment -- src/server/app/services/transporters/records.js src/server/app/services/transporters/transporters.test.js  → (no output)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "620-003",
+      "statement": "The commit's own message states the DTO-shape mismatch that caused the defect and names the reference shape it now matches.",
+      "kind": "behaviour",
+      "ref": "animals:39c3cb84 commit message",
+      "quote": "The backend's Address DTO only reads countryCode\n(an ISO alpha-2 code) — the free-text country field is a retired\nshape. Picking any shipped transporter therefore submitted a\nnotification with carrier.postalAddress.countryId null, believed to\nbe the root cause of nightly DLQ failures in dynamics-gateway.\n\nAdds the correct countryCode to all six shipped records, matching the\nshape private-transporter-details.controller.js's privateTransporter()\nalready produces for a hand-typed transporter.",
+      "confidence": "verbatim"
+    }
+  ]
+}

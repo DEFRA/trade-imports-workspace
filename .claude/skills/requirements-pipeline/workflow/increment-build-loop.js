@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
   whenToUse:
-    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops.',
+    'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
     { title: 'Derive' },
     { title: 'Ticket' },
@@ -38,8 +38,22 @@ export const meta = {
 //   stopAfter       how many increments may LAND before the run stops: a
 //                   positive integer, or 'all'. It counts landings, not
 //                   attempts, so a stopped attempt never uses one up
-//   branch          the BASE branch: every increment cuts its own branch off
-//                   this one and merges back into it
+//   branch          under lifecycle 'full', the BASE branch: every increment
+//                   cuts its own branch off this one and merges back into it.
+//                   Under lifecycle 'branch', the WORKING branch itself: it
+//                   already exists in every backlog repo, every increment is
+//                   committed and pushed straight onto it, and main or master
+//                   is refused
+//   lifecycle       'full': ticket → branch → build → PR → CI → merge → ticket
+//                   done. 'branch': assert the branch → build → push → find
+//                   the open PR → CI → mark done. No Jira call of any kind, no
+//                   branch created, no PR created or edited, nothing merged.
+//                   A row may ask for a ref to be merged into a repo (its
+//                   `merge` field) and name the gate phases it owes (its
+//                   `gatePhases` field) and whether CI is awaited (`awaitCi`);
+//                   only this lifecycle reads those three. The Jira keys,
+//                   requireApproval and approvalWaitMinutes must be null here,
+//                   because nothing reads them
 //   scope           conventional-commit scope
 //   executor        'claude' (every stage a subagent) or 'codex' (implement,
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
@@ -81,12 +95,23 @@ export const meta = {
 //                   frontend, backend, tests — each with its workspace-relative
 //                   path and its GitHub owner/name slug. A programme in another
 //                   repo family (the plants frontend and backend, say) names its
-//                   own table here
-//   models          required; {} inherits the session model for both tiers. heavy =
-//                   implement, the reviewers, the adversarial verifiers, judge, fix
-//                   and CI fix; light = the lifecycle and plumbing stages (ticket,
-//                   branch, baseline, ladder, land, PR, CI watch, merge, done). A
-//                   tier left out inherits it
+//                   own table here. Under lifecycle 'branch' the keys are
+//                   whatever the backlog envelope's `repos` names (ins,
+//                   animals, plants, tests, say), copied in full
+//   models         required; {} takes the recommended default on every tier —
+//                   it does NOT inherit the session model. Three tiers, each
+//                   optional: think (default opus) = plan, judge, the
+//                   consistency reviewer; code (default sonnet) = implement,
+//                   the per-group style and code reviewers, the finding
+//                   verifiers, fix, the ladder and CI fix; light (default
+//                   haiku) = every other stage — the ones that only run a
+//                   command and report what it said (ticket, branch, branch
+//                   guard, merge start, baseline, land, preserve, PR, CI
+//                   watch, merge, done, and the Codex shell and relay). A
+//                   tier left out takes its default; set it to "inherit" to
+//                   use the session model instead. `heavy` is a DEPRECATED
+//                   alias that sets both think and code, unless the
+//                   programme also gives one of those its own value
 //
 
 // Status names are BOARD CONFIGURATION, not constants — every board words them
@@ -126,6 +151,7 @@ const WORKFLOW_NAME = 'increment-build-loop'
 const ALWAYS_REQUIRED = [
   'workarea',
   'branch',
+  'lifecycle',
   'scope',
   'executor',
   'planOnly',
@@ -208,17 +234,59 @@ if (!BASE_BRANCH) {
 if (EXECUTOR !== 'claude' && EXECUTOR !== 'codex') {
   throw new Error(`increment-build-loop: unknown executor "${EXECUTOR}" — expected "claude" or "codex"`)
 }
-if (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC)) {
+const LIFECYCLE = CFG.lifecycle
+const LIFECYCLES = ['full', 'branch']
+if (!LIFECYCLES.includes(LIFECYCLE)) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.lifecycle must be "full" (ticket, own branch, PR, merge, ticket done) or "branch" (build onto an existing branch with no Jira and no merge) — got ${JSON.stringify(LIFECYCLE)}`
+  )
+}
+const IS_BRANCH = LIFECYCLE === 'branch'
+
+// Under the branch lifecycle nothing raises a ticket, moves a board or merges a
+// PR, so these keys would govern nothing. They must still be passed, as null,
+// so the args say plainly that the run has no Jira and no approval gate.
+const UNUSED_ON_BRANCH_KEYS = [
+  'jiraProject',
+  'epic',
+  'jiraInProgressStatus',
+  'jiraDoneStatus',
+  'jiraBoard',
+  'requireApproval',
+  'approvalWaitMinutes'
+]
+const PROTECTED_BRANCHES = ['main', 'master']
+
+if (IS_BRANCH) {
+  const givenUnused = UNUSED_ON_BRANCH_KEYS.filter((key) => CFG[key] !== null)
+  if (givenUnused.length > 0) {
+    throw new Error(
+      `${WORKFLOW_NAME}: lifecycle "branch" makes no Jira call and merges nothing, so ${givenUnused.join(', ')} must be null — got ${givenUnused.map((key) => `${key}=${JSON.stringify(CFG[key])}`).join(', ')}`
+    )
+  }
+  if (PROTECTED_BRANCHES.includes(BASE_BRANCH)) {
+    throw new Error(
+      `${WORKFLOW_NAME}: lifecycle "branch" commits and pushes straight onto config.branch, so it refuses ${PROTECTED_BRANCHES.join(' and ')}. Name the long-lived working branch — got "${BASE_BRANCH}"`
+    )
+  }
+  if (EXECUTOR !== 'claude') {
+    throw new Error(
+      `${WORKFLOW_NAME}: lifecycle "branch" runs on executor "claude" only. The Codex briefs name the frontend, backend and tests repos, and a branch-lifecycle backlog names its own — got "${EXECUTOR}"`
+    )
+  }
+}
+
+if (!IS_BRANCH && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
   throw new Error(
     `increment-build-loop: config.epic is required — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
   )
 }
-if (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim()) {
+if (!IS_BRANCH && (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())) {
   throw new Error(
     `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
   )
 }
-if (!/^\d+$/.test(String(JIRA_BOARD))) {
+if (!IS_BRANCH && !/^\d+$/.test(String(JIRA_BOARD))) {
   throw new Error(
     `increment-build-loop: config.jiraBoard is required — the numeric id of the board raised tickets are moved onto, e.g. 13780 for EUDPA. Without it every ticket is raised into the board's backlog and stays there, which no status change fixes. Got "${JIRA_BOARD}"`
   )
@@ -229,13 +297,13 @@ if (!Number.isInteger(CI_FIX_ATTEMPTS) || CI_FIX_ATTEMPTS < 0) {
 if (!Number.isInteger(CI_WATCH_MINUTES) || CI_WATCH_MINUTES <= 0) {
   throw new Error(`increment-build-loop: config.ciWatchMinutes must be a positive integer — got "${CI_WATCH_MINUTES}"`)
 }
-if (!Number.isInteger(APPROVAL_WAIT_MINUTES) || APPROVAL_WAIT_MINUTES <= 0) {
+if (!IS_BRANCH && (!Number.isInteger(APPROVAL_WAIT_MINUTES) || APPROVAL_WAIT_MINUTES <= 0)) {
   throw new Error(`increment-build-loop: config.approvalWaitMinutes must be a positive integer — got "${APPROVAL_WAIT_MINUTES}"`)
 }
 if (typeof PLAN_ONLY !== 'boolean') {
   throw new Error(`${WORKFLOW_NAME}: config.planOnly must be a boolean — got "${PLAN_ONLY}"`)
 }
-if (typeof REQUIRE_APPROVAL !== 'boolean') {
+if (!IS_BRANCH && typeof REQUIRE_APPROVAL !== 'boolean') {
   throw new Error(`increment-build-loop: config.requireApproval must be a boolean — got "${REQUIRE_APPROVAL}"`)
 }
 const EXPLICIT_IDS = CFG.increments
@@ -263,8 +331,26 @@ if (PLAN_ONLY && EXPLICIT_IDS === null) {
 // three keys are required so every stage's REPO PATHS line reads the same
 // whichever repo family the programme builds in.
 // ---------------------------------------------------------------------------
+// Under the branch lifecycle the keys are whatever the backlog envelope names.
+// They must be plain lower-case words, because a changed file is written
+// `<repoKey>:<path>` and routed back to its repo by that prefix. `workspace`
+// is reserved: it names the workspace repo itself, where a docs row writes.
 const REPOS = CFG.repos
-const REPO_KEYS = ['frontend', 'backend', 'tests']
+const FULL_REPO_KEYS = ['frontend', 'backend', 'tests']
+const WORKSPACE_KEY = 'workspace'
+const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
+
+if (IS_BRANCH) {
+  const keys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
+  const badKeys = keys.filter((key) => !/^[a-z]+$/.test(key) || key === WORKSPACE_KEY)
+  if (keys.length === 0 || badKeys.length > 0) {
+    throw new Error(
+      `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is a lower-case word other than "${WORKSPACE_KEY}" — got ${JSON.stringify(REPOS)}`
+    )
+  }
+}
+
+const REPO_KEYS = IS_BRANCH ? Object.keys(REPOS) : FULL_REPO_KEYS
 
 for (const key of REPO_KEYS) {
   const entry = REPOS?.[key]
@@ -278,25 +364,65 @@ for (const key of REPO_KEYS) {
 }
 
 // ---------------------------------------------------------------------------
-// Models. The key itself is required ({} to inherit the session model for
-// both); each tier is optional. heavy() and light() wrap an agent's options so
-// a stage inherits the session model unless the programme set its tier.
+// Models. Three tiers, each with a BUILT-IN default matched to the kind of
+// work the stage does:
+//   think (opus)   — plan, judge, the consistency reviewer: the calls that
+//                    decide something, not just carry it out.
+//   code (sonnet)  — implement, the per-group style and code reviewers, the
+//                    finding verifiers, fix, the ladder, CI fix: the calls
+//                    that write or repair code.
+//   light (haiku)  — every stage that only runs a command and reports what it
+//                    said: workspace resolve, preflight, derive next, ticket,
+//                    branch, branch guard, merge start, baseline, land,
+//                    preserve, PR, CI watch, merge, done, and the Codex shell
+//                    and relay (they too only run a command and report).
+// `{}` means "use the recommended default on every tier" — it no longer means
+// "inherit the session model". A tier left out of config.models takes its
+// default; set it to "inherit" to use the session model for that tier
+// instead. `heavy` is a DEPRECATED alias: given, it sets both think and code,
+// unless the programme also gives one of those its own value, which wins.
 // ---------------------------------------------------------------------------
-const MODELS = CFG.models
-if (MODELS === null || typeof MODELS !== 'object' || Array.isArray(MODELS)) {
-  throw new Error(`${WORKFLOW_NAME}: config.models must be an object, {} to inherit the session model for both tiers — got ${JSON.stringify(MODELS)}`)
-}
-const MODEL_TIERS = ['heavy', 'light']
+const MODEL_DEFAULTS = { think: 'opus', code: 'sonnet', light: 'haiku' }
+const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
+const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
 
-for (const tier of MODEL_TIERS) {
-  const model = MODELS[tier]
-  if (model !== undefined && (typeof model !== 'string' || !model.trim())) {
-    throw new Error(`increment-build-loop: config.models.${tier} must be a model name or left out — got ${JSON.stringify(model)}`)
-  }
+const RAW_MODELS = CFG.models
+if (RAW_MODELS === null || typeof RAW_MODELS !== 'object' || Array.isArray(RAW_MODELS)) {
+  throw new Error(`${WORKFLOW_NAME}: config.models must be an object, {} for the recommended default on every tier — got ${JSON.stringify(RAW_MODELS)}`)
 }
 
-const withTier = (tier) => (opts) => (MODELS[tier] ? { ...opts, model: MODELS[tier] } : opts)
-const heavy = withTier('heavy')
+const MODEL_KEYS = [...MODEL_TIERS, 'heavy']
+const unknownModelKeys = Object.keys(RAW_MODELS).filter((key) => !MODEL_KEYS.includes(key))
+if (unknownModelKeys.length > 0) {
+  throw new Error(`${WORKFLOW_NAME}: config.models has no tier named ${unknownModelKeys.join(', ')} — the tiers are think, code, light, plus the deprecated alias heavy`)
+}
+
+for (const key of MODEL_KEYS) {
+  const value = RAW_MODELS[key]
+  if (value === undefined) continue
+  if (value === 'inherit' || KNOWN_MODEL_ALIASES.includes(value)) continue
+  throw new Error(`${WORKFLOW_NAME}: config.models.${key} must be one of ${KNOWN_MODEL_ALIASES.join(', ')}, or "inherit" for the session model — got ${JSON.stringify(value)}`)
+}
+
+// heavy sets think and code TOGETHER, but only where the programme did not
+// also give that tier its own value — an explicit tier always wins over the
+// deprecated alias.
+const givenModel = (tier) => RAW_MODELS[tier] ?? (tier !== 'light' ? RAW_MODELS.heavy : undefined) ?? MODEL_DEFAULTS[tier]
+
+const RESOLVED_MODELS = Object.fromEntries(
+  MODEL_TIERS.map((tier) => {
+    const given = givenModel(tier)
+    return [tier, given === 'inherit' ? null : given]
+  })
+)
+
+log(
+  `${WORKFLOW_NAME}: models — think ${RESOLVED_MODELS.think ?? 'inherit (session model)'}, code ${RESOLVED_MODELS.code ?? 'inherit (session model)'}, light ${RESOLVED_MODELS.light ?? 'inherit (session model)'}`
+)
+
+const withTier = (tier) => (opts) => (RESOLVED_MODELS[tier] ? { ...opts, model: RESOLVED_MODELS[tier] } : opts)
+const think = withTier('think')
+const code = withTier('code')
 const light = withTier('light')
 
 // ---------------------------------------------------------------------------
@@ -378,11 +504,19 @@ const ghTable = Object.entries(GH_REPO)
   .map(([k, v]) => `${k}=${v}`)
   .join(', ')
 
-const REPO_RULE = `REPO PATHS: ${repoTable}. An increment is a full-stack slice: it is built, reviewed and proved in
+const FULL_REPO_RULE = `REPO PATHS: ${repoTable}. An increment is a full-stack slice: it is built, reviewed and proved in
 every repo it touches at once, on the SAME branch name in each (CLAUDE.md rule 2, cross-repo branch parity).
 ITS REPOS: the increment's \`repos\` list. Where it has none, an older backlog's \`repo\` field: \`both\` means backend,
 frontend and tests; any other value means that repo plus tests. Where it has neither, all three: ${REPO_KEYS.join(', ')}.
 Listing a repo the change leaves alone costs nothing — no change means no commit and no PR.`
+
+const BRANCH_REPO_RULE = `REPO PATHS: ${repoTable}. This run builds straight onto \`${BASE_BRANCH}\`, which already exists in
+every one of them with an open pull request. No stage creates a branch or a pull request.
+ITS REPOS: the increment's \`repos\` list, exactly as written. \`[]\` means it changes no backlog repo: its output is in
+the workspace repo itself (under workareas/), which is not a backlog repo and which the orchestrator commits. Where the
+row has no \`repos\` at all, every configured repo: ${REPO_KEYS.join(', ')}.`
+
+const REPO_RULE = IS_BRANCH ? BRANCH_REPO_RULE : FULL_REPO_RULE
 
 // Commit and rollback act on every configured repo with changes, not only the
 // ones the row or the plan named: an implementor that fixed a stale spec in the
@@ -430,9 +564,16 @@ stops only what it started. So:
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
   \`test-results/*/error-context.md\` in the tests repo as well.`
 
-const builderGateRule = (id, stage) => `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its unit and
-FIT phases yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-${gateCommandList(['unit', 'fit'], gateLogs(id, stage))}
+const BUILDER_PHASES = ['unit', 'fit']
+
+// The branch lifecycle narrows the builder's phases to the row's gatePhases.
+const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
+  phases.length === 0
+    ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
+yourself. Never run the gate's E2E phase, never start or stop the workspace stack, and never pick a script by hand for a
+repo's own rungs. The plan's sections 5 and 6 checks are yours to run as the plan writes them.`
+    : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
+${gateCommandList(phases, gateLogs(id, stage))}
 Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
 never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A stack that is up
@@ -491,9 +632,13 @@ const LANGUAGE_BY_EXTENSION = {
 
 const repoKeyOfPath = (repoPath) => REPO_KEYS.find((key) => REPO_PATH[key] === repoPath)
 
+// Under the branch lifecycle a docs row writes in the workspace repo itself,
+// reported as `workspace:<path>`, so review can be routed there too.
+const FILE_REPO_KEYS = IS_BRANCH ? [...REPO_KEYS, WORKSPACE_KEY] : REPO_KEYS
+
 const repoOfFile = (file) => {
   const prefixed = /^([a-z]+):/.exec(file)
-  if (prefixed && REPO_KEYS.includes(prefixed[1])) return prefixed[1]
+  if (prefixed && FILE_REPO_KEYS.includes(prefixed[1])) return prefixed[1]
   const underRepos = /^repos\/[^/]+/.exec(file)
   return (underRepos && repoKeyOfPath(underRepos[0])) ?? 'unknown'
 }
@@ -542,8 +687,21 @@ const findingFile = (finding) => finding.file || WHOLE_CHANGE
 const groupFilesForReview = (fileList) => reviewGroupsOf(fileList, (file) => file)
 const groupFindingsForVerification = (findings) => reviewGroupsOf(findings, findingFile)
 
-const groupRepoPath = (group) => (REPO_PATH[group.repo] ? `${TILDE}/${REPO_PATH[group.repo]}` : `${TILDE}/<repoPath>`)
+const isWorkspaceGroup = (group) => IS_BRANCH && group.repo === WORKSPACE_KEY
+
+const groupRepoPath = (group) => {
+  if (isWorkspaceGroup(group)) return TILDE
+  return REPO_PATH[group.repo] ? `${TILDE}/${REPO_PATH[group.repo]}` : `${TILDE}/<repoPath>`
+}
 const groupFileList = (group) => group.files.map((file) => `- ${file}`).join('\n')
+
+// The workspace repo's edits are left unstaged for the orchestrator, so they
+// are read against HEAD rather than from the index. A new file shows nowhere
+// in a diff: it is read in full.
+const groupDiffCommand = (group) =>
+  isWorkspaceGroup(group)
+    ? `\`git -C ${TILDE} diff HEAD -- <path>\` (a new, untracked file shows in no diff: Read it in full)`
+    : `\`git -C ${groupRepoPath(group)} diff --staged -- <path>\``
 
 // Canonical merge order for a cross-repo increment. Lower merges first.
 //
@@ -575,6 +733,19 @@ auto-reverts it.`
 // run without spending fix attempts on it.
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
+const FULL_PUSH_GUARD = `- Never \`git push --force\`. Never merge a PR that is not green.
+- NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
+  does it by merging an approved PR. Every other push in every other stage goes to a work branch, always with the
+  fully-qualified refspec form given below. A push that updates \`${BASE_BRANCH}\` has bypassed CI, review and the
+  approval gate at once.`
+
+const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, retitle, un-draft, close or merge a pull request: every PR on
+  \`${BASE_BRANCH}\` belongs to a human, and so does its title, its body and its draft state.
+- NEVER push to ${PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')}. Every push in every stage goes to \`${BASE_BRANCH}\`, the branch this run
+  builds on, always with the fully-qualified refspec form given below. Never create a branch.
+- A repo may be MID-MERGE by design (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA). Never
+  commit, continue, abort or reset that merge unless your own task below tells you to.`
+
 const GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
@@ -590,11 +761,7 @@ GUARD RAILS (mandatory, every step):
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
-- Never \`git push --force\`. Never merge a PR that is not green.
-- NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
-  does it by merging an approved PR. Every other push in every other stage goes to a work branch, always with the
-  fully-qualified refspec form given below. A push that updates \`${BASE_BRANCH}\` has bypassed CI, review and the
-  approval gate at once.
+${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
 
@@ -618,7 +785,18 @@ GUARD RAILS (mandatory, every step):
 // have stopped it; a stage that pushes is worth two locks.
 const HEAD_BRANCH_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\``
 
-const PUSH_RULE = `HOW TO PUSH — the exact form, every time, no variations:
+const BRANCH_PUSH_RULE = `HOW TO PUSH — the exact form, every time, no variations:
+\`git -C ${TILDE}/<repoPath> push origin refs/heads/${BASE_BRANCH}:refs/heads/${BASE_BRANCH}\`
+Never \`--force\`. Never a bare \`git push\`. Never \`push origin ${BASE_BRANCH}\` — that leaves git to work out the
+destination from the branch's upstream, and the fully qualified \`refs/heads/X:refs/heads/X\` can only ever update X.
+A push rejected as non-fast-forward means somebody else pushed to \`${BASE_BRANCH}\`: stop and report it, never force.
+
+BEFORE ANY COMMIT OR PUSH, prove you are on the branch you think you are:
+${HEAD_BRANCH_CHECK}
+If that prints anything other than \`${BASE_BRANCH}\` — ${PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')} above all — STOP and report ok:false.
+Do not commit "just this once" and sort the branch out afterwards.`
+
+const PUSH_RULE = IS_BRANCH ? BRANCH_PUSH_RULE : `HOW TO PUSH — the exact form, every time, no variations:
 \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/<branch>:refs/heads/<branch>\`
 Never \`--force\`. Never a bare \`git push\`. Never \`push origin <branch>\` — that leaves git to work out the
 destination, and in a repo configured \`push.default=tracking\` (two of these three repos are) it resolves to the
@@ -662,13 +840,52 @@ NEVER \`reset --hard\`, NEVER \`clean -fd\`.
 Report the branch name and the wip SHA.
 Return the structured output only.`
 
+// Under the branch lifecycle the branch is shared and carries open PRs, so a
+// failed attempt must never reach it: a wip commit there would show failing
+// work to every reviewer, and a commit made mid-merge would conclude a merge
+// nobody finished resolving. The attempt goes to patch files under logs/ and
+// the merge is aborted, which leaves the tree clean for the next run.
+const preserveWorkOnBranch = (id, branch, reason, evidence) =>
+  `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK WITHOUT COMMITTING ANY OF IT.
+${GUARDRAILS}
+${REPO_RULE}
+EVIDENCE: ${evidence}
+\`${branch}\` is a shared branch with open pull requests. NOTHING from a failed attempt may be committed or pushed to
+it. Your own task below is the one place you ARE told to abort a merge.
+TASK:
+1. ${CHANGED_REPOS_RULE} Also act on every repo that is MID-MERGE:
+   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
+   A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
+2. For EACH such repo, save the attempt under ${WORKAREA_TILDE}/logs/, one Bash call each, output redirected:
+   \`git -C ${TILDE}/<repoPath> diff --staged --binary > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.staged.patch\`
+   \`git -C ${TILDE}/<repoPath> diff --binary > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.unstaged.patch\`
+   \`git -C ${TILDE}/<repoPath> diff --name-only --diff-filter=U > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.unresolved.txt\`
+   \`git -C ${TILDE}/<repoPath> status --short > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.status.txt\`
+3. MID-MERGE repos only: note the ref being merged (\`git -C ${TILDE}/<repoPath> rev-parse MERGE_HEAD\`), then
+   \`git -C ${TILDE}/<repoPath> merge --abort\`. Never \`git commit\`, never \`merge --continue\`: a commit now would
+   put a half-resolved merge on \`${branch}\`.
+4. If a repo is still not clean (\`git -C ${TILDE}/<repoPath> status --short\` prints anything — work outside a merge,
+   or untracked files a merge left behind), \`git -C ${TILDE}/<repoPath> stash push -u -m "failed-${id}"\` and note the
+   stash ref. Never \`reset --hard\`, never \`clean -fd\`.
+5. Confirm each tree is clean and no merge is in progress: \`git -C ${TILDE}/<repoPath> status --short\` prints nothing and
+   \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints nothing.
+5a. ${SPEC_RULE} If it has changes, stash them:
+   \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
+   \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
+6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
+   Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
+   Do NOT record a commit — the increment is not built.
+Do NOT commit, do NOT push, do NOT open or edit a pull request.
+Report the patch files, the stash refs and which merges you aborted.
+Return the structured output only.`
+
 // Every stop after the implementor has touched the tree goes through here, so
 // the tree is left clean and the attempt recoverable. A stop that only records
 // its outcome leaves staged work the next run's baseline refuses.
 const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evidence, outcome, detail }) => {
   log(`${id}: ${outcome.toUpperCase()} — preserving the attempt. ${detail}`)
   const kept = await agent(
-    preserveWork(id, workBranch, reason, evidence),
+    (IS_BRANCH ? preserveWorkOnBranch : preserveWork)(id, workBranch, reason, evidence),
     light({ label: `${id} preserve`, phase: phaseName, schema: incrementSchema })
   )
   return {
@@ -706,7 +923,14 @@ For EACH of them:
      your summary which repo you moved and from which branch. Leave that other branch where it is — do not delete it.
    - A different SHA, \`${branch}\` missing, or a checkout that refuses → STOP: report ok:false naming the repo, the
      branch it is on and both SHAs, and change nothing in it.
-Never create a branch, and never commit, stash, reset or clean. You only ever move a repo back onto \`${branch}\`.
+Never create a branch, and never commit, stash, reset or clean. You only ever move a repo back onto \`${branch}\`.${
+      IS_BRANCH
+        ? `
+A repo MID-MERGE (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA) is in that state by design:
+a later stage commits the merge. Never \`merge --abort\`, \`merge --continue\` or check out in it. If it is on \`${branch}\` it
+is fine; if it is not, STOP and report ok:false naming it.`
+        : ''
+    }
 Report ok:true only when every repo you checked prints \`${branch}\`.
 Return the structured output only.`,
     light({ label: `${id} branch-guard:${stageName}`, phase: phaseName, schema: incrementSchema })
@@ -864,7 +1088,7 @@ const PLAN_SCHEMA = {
     summary: { type: 'string' },
     repos: {
       type: 'array',
-      items: { type: 'string', enum: ['frontend', 'backend', 'tests'] },
+      items: { type: 'string', enum: REPO_KEYS },
       description: 'The repos the plan changes, in merge order'
     },
     behaviourChanges: {
@@ -1182,13 +1406,37 @@ const codexNoResult = (id, slug) =>
 // ---------------------------------------------------------------------------
 const standardsKeys = REPO_KEYS.map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``).join(', ')
 
+const rowReposPlanLine = (rowRepos) => {
+  if (!rowRepos) return ''
+  if (rowRepos.length === 0) {
+    return `THE ROW'S REPOS: none. This row changes no backlog repo. Plan edits only in the workspace repo, under
+${WORKAREA_TILDE}/ or wherever the row names in the workspace, and return repos as []. The implementor leaves them
+uncommitted for the orchestrator.\n`
+  }
+  return `THE ROW'S REPOS: ${rowRepos.join(', ')}. Plan only within them, and if the slice genuinely needs another repo,
+return ok:false naming it.\n`
+}
+
+const branchPlanRule = (rowRepos) => `${rowReposPlanLine(rowRepos)}MERGE ROWS: a row whose \`merge\` field maps a repo key to a ref, such as \`{"tests": "origin/main"}\`, asks for that ref to
+be merged into that repo on \`${BASE_BRANCH}\`. The loop runs the merge itself, \`git merge --no-ff --no-commit <ref>\` after a
+fetch, before the implementor starts, and commits it as a two-parent merge commit after review. You plan what the loop
+cannot: how every conflict is resolved, and every file that merges cleanly but is wrong. Preview the merge without
+touching the tree: \`git -C ${TILDE}/<repoPath> fetch origin\`, then
+\`git -C ${TILDE}/<repoPath> merge-tree --write-tree --name-only --no-messages HEAD <ref>\`. Its first line is a tree id and
+every further line a conflicted path. Where the row's notes point at a resolutions file (resolutions.json beside the
+backlog, say), read it in full and plan each resolution exactly as it records. Never re-decide one; where the live tree
+disagrees with it, return ok:false saying where. Plan no git mechanics: no merge, commit, abort or push commands.
+GATE PHASES: the row's \`gatePhases\`, when present, is the subset of unit, fit and e2e the loop's gate runs for it. Where it
+leaves out e2e, the end-to-end proof belongs to another row: say so in section 4 rather than planning one.
+`
+
 const planIncrement = (id, branchedRepos = null) =>
   agent(
     `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
 ${GUARDRAILS}
 ${readIncrement(id)}
 ${REPO_RULE}
-${branchedRepos ? `BRANCHED REPOS: the repos branched for this increment are ${branchedRepos.join(', ')}. Plan only
+${IS_BRANCH ? branchPlanRule(branchedRepos) : branchedRepos ? `BRANCHED REPOS: the repos branched for this increment are ${branchedRepos.join(', ')}. Plan only
 within them, and if the slice genuinely needs another repo, return ok:false naming it.\n` : ''}
 WHAT A PLAN IS: a file-level script for an implementor who has less context than you. The increment says what must
 be true afterwards and why. You work out how, against the code as it is now, and settle every choice so the
@@ -1231,7 +1479,7 @@ implementor decides nothing.
    or "the backend half" for another increment.
 Return ok, summary, repos (the repos the plan changes), behaviourChanges, decisions and risks.
 Return the structured output only.`,
-    heavy({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
+    think({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
   )
 
 const preflight = await agent(
@@ -1278,10 +1526,421 @@ One Bash call, no Grep/Glob tools, tilde paths only.`,
     light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
   )
 
+// ---------------------------------------------------------------------------
+// The branch lifecycle. Every stage below runs only under lifecycle 'branch':
+// the run builds straight onto an existing branch that already carries an open
+// PR in each repo, so nothing raises a ticket, cuts a branch, raises or edits a
+// PR, or merges one. The branch stage replaces the ticket and branch stages:
+// it asserts every repo is ready and reads the row's lifecycle fields, because
+// the script has no filesystem of its own.
+// ---------------------------------------------------------------------------
+const repoPathList = (keys) => keys.map((key) => `${key} \`${TILDE}/${REPO_PATH[key]}\``).join(', ')
+const protectedBranchNames = PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')
+const MERGE_HEAD_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\``
+const UNRESOLVED_CHECK = `\`git -C ${TILDE}/<repoPath> diff --name-only --diff-filter=U\``
+
+const BRANCH_ROW_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'repos', 'merge', 'resumeAt', 'summary'],
+  properties: {
+    ok: {
+      type: 'boolean',
+      description: 'The envelope names exactly the configured repos, and every one is on the branch, clean, not mid-merge and fast-forwarded to its origin'
+    },
+    repos: {
+      type: 'array',
+      items: { type: 'string' },
+      description: "The row's repos exactly as written, [] included. Every configured repo only when the row has no repos field"
+    },
+    merge: {
+      type: 'array',
+      description: "The row's merge field, one entry per key in the order written. [] when it is null or absent",
+      items: {
+        type: 'object',
+        required: ['repo', 'ref'],
+        properties: { repo: { type: 'string' }, ref: { type: 'string' } },
+        additionalProperties: false
+      }
+    },
+    gatePhases: {
+      type: 'array',
+      items: { type: 'string' },
+      description: "The row's gatePhases verbatim. Leave it out when the row's is null or absent"
+    },
+    awaitCi: { type: 'boolean', description: "The row's awaitCi verbatim. Leave it out when the row's is null or absent" },
+    heads: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'head'],
+        properties: { repo: { type: 'string' }, head: { type: 'string' } },
+        additionalProperties: false
+      }
+    },
+    resumeAt: { type: 'string', enum: ['build', 'pr', 'ci'] },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const assertBranch = (id) =>
+  agent(
+    `You are the BRANCH STAGE for increment ${id}. This run builds straight onto \`${BASE_BRANCH}\`, which already exists in
+every backlog repo. You CREATE NOTHING: no branch, no commit, no pull request. You check, fast-forward and report.
+${GUARDRAILS}
+${REPO_RULE}
+STEP 1 — THE ROW AND THE ENVELOPE. Two Bash calls:
+\`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs}' ${BACKLOG_TILDE}\`
+\`jq -c '.repos | keys' ${BACKLOG_TILDE}\`
+The envelope's keys must be exactly ${[...REPO_KEYS].sort().join(', ')}: the repos this run was configured with. Any
+difference is ok:false naming it, because the gate reads the envelope and this run reads its args.
+
+STEP 2 — EVERY CONFIGURED REPO, not only the row's: the gate and the end-to-end rung build from all of them.
+For EACH of ${repoPathList(REPO_KEYS)}:
+1. ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else, ${protectedBranchNames} above all, is ok:false naming the
+   repo and the branch it is on. Never check out, never create a branch.
+2. \`git -C ${TILDE}/<repoPath> status --short\` must print nothing, and ${MERGE_HEAD_CHECK} must print
+   nothing. A dirty tree or a merge left in progress belongs to an earlier attempt: ok:false naming the repo and what you
+   saw. Never stash, reset, abort or clean it.
+3. \`git -C ${TILDE}/<repoPath> fetch origin\`
+4. \`git -C ${TILDE}/<repoPath> merge --ff-only origin/${BASE_BRANCH}\` brings in anything already pushed. "Already up to
+   date" is fine, and so is a local branch AHEAD of its origin: that is a push that failed, and the pull request stage
+   pushes it. A refusal means the branch has diverged from its origin: ok:false naming the repo, because it needs a human.
+5. \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\` into heads[].
+
+STEP 3 — REPORT THE ROW'S FIELDS, copied from STEP 1, never interpreted:
+- repos: the row's \`repos\` exactly as written, [] included. Only where the row has no \`repos\` (null or absent), every
+  configured repo: ${REPO_KEYS.join(', ')}.
+- merge: one {repo, ref} for each key of the row's \`merge\` object, in the order written. [] when it is null or absent.
+- gatePhases: verbatim when it is a list, [] included. Leave it out when it is null or absent.
+- awaitCi: verbatim when it is true or false. Leave it out when it is null or absent.
+- resumeAt, from \`commit\` and \`prs\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr". Otherwise "build".
+Report ok:true only when STEP 1's keys matched and every repo passed STEP 2.
+Return the structured output only.`,
+    light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_ROW_SCHEMA })
+  )
+
+const duplicatesIn = (list) => list.filter((item, index) => list.indexOf(item) !== index)
+
+// What the branch stage copied from the row, checked here rather than trusted:
+// a merge into a repo the row does not name would be built without its repo's
+// gate, and an unknown gate phase would fail inside tim instead of here.
+const rowFieldProblems = ({ repos: rowRepos, merge = [], gatePhases }) => {
+  const mergeRepos = merge.map((entry) => entry.repo)
+  return [
+    ...rowRepos.filter((key) => !REPO_KEYS.includes(key)).map((key) => `repos names "${key}", which is not a configured repo`),
+    ...duplicatesIn(rowRepos).map((key) => `repos names "${key}" twice`),
+    ...mergeRepos.filter((key) => !rowRepos.includes(key)).map((key) => `merge names "${key}", which is not in the row's repos`),
+    ...merge.filter((entry) => !entry.ref?.trim()).map((entry) => `merge gives "${entry.repo}" no ref`),
+    ...(gatePhases ?? []).filter((name) => !GATE_PHASES.includes(name)).map((name) => `gatePhases names "${name}"; use unit, fit and e2e`),
+    ...duplicatesIn(gatePhases ?? []).map((name) => `gatePhases names "${name}" twice`)
+  ]
+}
+
+const MERGE_START_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'merges', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'Every merge started, or the ref was already in the branch' },
+    merges: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'ref', 'alreadyMerged', 'conflicted'],
+        properties: {
+          repo: { type: 'string' },
+          ref: { type: 'string' },
+          mergeHead: { type: 'string', description: 'What MERGE_HEAD points at. Left out when alreadyMerged' },
+          alreadyMerged: { type: 'boolean', description: 'true when git said "Already up to date" and started no merge' },
+          conflicted: { type: 'array', items: { type: 'string' }, description: 'Every path git left unmerged' }
+        },
+        additionalProperties: false
+      }
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const startMerges = (id, merges) =>
+  agent(
+    `You are the MERGE STAGE for increment ${id}. You START the merges the row asks for, and stop there: the implementor
+resolves them and the land stage commits them. You resolve nothing and commit nothing.
+${GUARDRAILS}
+THE MERGES, each into \`${BASE_BRANCH}\`:
+${merges.map((entry) => `- ${entry.repo} (\`${TILDE}/${REPO_PATH[entry.repo]}\`): merge \`${entry.ref}\``).join('\n')}
+For EACH, in that order:
+1. ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`, and \`git -C ${TILDE}/<repoPath> status --short\` must print
+   nothing. Otherwise ok:false naming the repo, and start nothing in it.
+2. \`git -C ${TILDE}/<repoPath> fetch origin\`
+3. \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet <ref>\` must print a SHA. Otherwise ok:false naming the ref.
+4. \`git -C ${TILDE}/<repoPath> merge --no-ff --no-commit <ref>\`
+   - It exits 1 and names conflicts → expected. The merge is in progress; carry on.
+   - It says "Already up to date" → the ref is already in the branch and no merge started. Set alreadyMerged:true.
+   - Anything else (it refuses to start, unrelated histories) → ok:false quoting what it said.
+   Never add --squash, never add --ff-only, and never let it commit.
+5. Unless alreadyMerged: ${MERGE_HEAD_CHECK} must print a SHA; put it in mergeHead.
+6. ${UNRESOLVED_CHECK} into conflicted[]. [] is a clean merge.
+Never resolve a conflict, never \`git add\`, never commit, never \`merge --abort\`, \`--continue\` or \`reset\`. If a merge
+went wrong, report it: the loop's preserve step saves the attempt and aborts the merge.
+Return the structured output only.`,
+    light({ label: `${id} merge start`, phase: 'Implement', schema: MERGE_START_SCHEMA })
+  )
+
+// Every stage from implement to land is told the same thing about a merge in
+// progress, so none of them reads a staged merge as ordinary work, aborts it
+// or commits it half-resolved.
+const mergeNoteOf = (started) =>
+  started.length === 0
+    ? ''
+    : `
+A MERGE IS IN PROGRESS, by design. The loop started it; the land stage commits it as a two-parent merge commit:
+${started
+  .map(
+    (entry) =>
+      `- ${entry.repo} (\`${TILDE}/${REPO_PATH[entry.repo]}\`): \`${entry.ref}\` into \`${BASE_BRANCH}\`, ${entry.conflicted.length} conflicted path(s) when it started`
+  )
+  .join('\n')}
+\`git -C <repoPath> diff --staged\` shows the merge result against the PRE-MERGE HEAD, so it carries every change the
+merged ref brings as well as each resolution. \`git -C <repoPath> diff --staged <ref> -- <path>\` shows what the result
+keeps over the merged ref. \`git -C <repoPath> diff --name-only --diff-filter=U\` lists the paths still unresolved.
+The changes the merged ref brings were reviewed where they were written. What this increment owns is each RESOLUTION:
+how a conflicted or clean-but-wrong file combines the two sides, judged against the plan and any resolutions file the
+row's notes name. Never commit the merge, never \`git merge --abort\` or \`--continue\`, never \`reset\`.`
+
+const implementMergeTask = (started, skipped) => {
+  const skippedLine = skipped.length
+    ? `\nALREADY MERGED, so no merge started: ${skipped.map((entry) => `${entry.repo} (${entry.ref})`).join(', ')}. Say so in notes.`
+    : ''
+  if (started.length === 0) return skippedLine
+  return `${mergeNoteOf(started)}
+THE MERGE IS YOURS TO RESOLVE. Resolve every conflicted path, and every file that merged cleanly but is wrong, exactly as
+the plan says, then \`git -C <repoPath> add\` each one. Before you report, ${UNRESOLVED_CHECK} must print nothing in
+every merging repo. List every path you resolved or edited in changedFiles.${skippedLine}`
+}
+
+const WORKSPACE_ONLY_TASK = `
+THIS ROW CHANGES NO BACKLOG REPO. Its output is in the workspace repo, \`${TILDE}\`, where the plan puts it. Leave every
+edit there in the working tree: never \`git add\`, commit or stash anything in the workspace. The orchestrator commits it.
+Report each file as \`${WORKSPACE_KEY}:<path relative to the workspace root>\`.`
+
+const WORKSPACE_REVIEW_LINE = `
+This row changes no backlog repo: the whole change is in the workspace repo, left unstaged. See it with
+\`git -C ${TILDE} diff HEAD -- <path>\` for each changed file, and Read any new, untracked file in full.`
+
+const gateStepFor = (phases, logs) =>
+  phases.length
+    ? gateCommandList(phases, logs)
+    : "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
+
+const branchBaselinePrompt = (id, phases) => `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
+green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
+report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
+${GUARDRAILS}
+${REPO_RULE}
+${GATE_RULE}
+TASK:
+1. THE BRANCH. Every configured repo, ${repoPathList(REPO_KEYS)}, must be on \`${BASE_BRANCH}\`:
+   ${HEAD_BRANCH_CHECK}. Anything else, ${protectedBranchNames} above all, is ok:false naming the repo. Do not switch
+   branches.
+2. CLEAN TREES. For each of them, \`git -C ${TILDE}/<repoPath> status --short\` must print nothing and ${MERGE_HEAD_CHECK}
+   must print nothing. If any is dirty or mid-merge, stop and report ok:false.
+   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
+   this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
+3. THE GATE, for the phases this row owes. Run these, in this order, one Bash call each, and nothing else:
+${gateStepFor(phases, gateLogs(id, 'baseline'))}
+   Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.
+4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
+   \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
+   green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
+Return the structured output only.`
+
+const BRANCH_LAND_SCHEMA = {
+  type: 'object',
+  required: ['landed', 'pushed', 'summary'],
+  properties: {
+    landed: { type: 'boolean', description: 'Every repo with changes is committed, or no backlog repo had any' },
+    pushed: { type: 'boolean', description: 'Every commit you made is pushed to the branch. true when you made none' },
+    commit: { type: 'string', description: 'The SHA of each commit you made, space separated in the order of the configured repos' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const branchLandPrompt = (id, behaviourChanges, started) => `Increment ${id} is implemented, reviewed, judged and verified green on \`${BASE_BRANCH}\`. COMMIT IT AND PUSH IT.
+${GUARDRAILS}
+${REPO_RULE}
+${PUSH_RULE}
+${SET_ROW_RULE}${mergeNoteOf(started)}
+TASK:
+1. ${CHANGED_REPOS_RULE} Also act on every repo MID-MERGE (${MERGE_HEAD_CHECK} prints a SHA), even one whose status
+   looks empty. The increment's title, for the commit subject:
+   \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
+2. For EVERY repo you are about to commit in, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else is a
+   stop: landed:false naming the repo, and change nothing in it.
+3. In a repo MID-MERGE, ${UNRESOLVED_CHECK} must print nothing. Otherwise landed:false naming the paths: a merge is
+   never committed with a path unresolved.
+4. Confirm what is staged with \`git -C ${TILDE}/<repoPath> status --short\`. Stage anything the increment produced that
+   is still untracked, but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
+5. Commit, one commit per repo, each with the same message: \`<type>(${SCOPE}): <increment title>\`, where the type is
+   \`feat\` or \`fix\` when the behaviour changes below are not empty, otherwise the type the increment's \`kind\`
+   implies; and a body saying what changed and naming the increment id (this run has no ticket). No trailer.
+   Behaviour changes, from the plan: ${behaviourChanges?.length ? behaviourChanges.map((change) => `\n   - ${change}`).join('') : 'none'}
+   In a repo MID-MERGE that same \`git commit\` concludes the merge, and git records the merged ref as the second parent.
+   Never \`--squash\`, never \`merge --continue\`, never a commit that drops the second parent. Confirm it with
+   \`git -C ${TILDE}/<repoPath> rev-list --parents -n 1 HEAD\`: it must print three SHAs, the merge and its two parents.
+5a. ${SPEC_RULE} If it has changes, they are part of this increment: commit them in the workspace with the same
+   subject and trailer, and nothing else from the workspace. Two commands, the pathspec on both:
+   \`git -C ${TILDE} add -- openspec/\` then \`git -C ${TILDE} commit -m "<message>" -- openspec/\`.
+   Do NOT push the workspace. Name the spec commit in your summary, separately from the repo commits.
+   Anything else changed in the workspace, under workareas/ above all, is the orchestrator's to commit: leave it exactly
+   as it is.
+6. Record the commit BEFORE you push: \`${setRow(id, '--commit "<sha, or several in the order of the configured repos, space separated>"')}\`.
+   Leave the status alone.
+7. Push every repo you committed in, by HOW TO PUSH above:
+   \`git -C ${TILDE}/<repoPath> push origin refs/heads/${BASE_BRANCH}:refs/heads/${BASE_BRANCH}\`. A rejected push is
+   pushed:false, saying which repo and what git said. Never \`--force\`.
+8. When no backlog repo had changes and none was mid-merge, commit nothing and push nothing: landed:true, pushed:true,
+   no commit, and say so in your summary.
+Report landed, pushed, the commit SHA or SHAs, and a summary.
+Return the structured output only.`
+
+const BRANCH_PR_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'prs', 'missing', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    prs: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['repo', 'url'],
+        properties: { repo: { type: 'string' }, url: { type: 'string' }, number: { type: 'number' } },
+        additionalProperties: false
+      }
+    },
+    missing: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Every repo with no open pull request for the branch'
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const findPrsPrompt = (id, rowRepos) => `You are the PULL REQUEST STAGE for increment ${id} on \`${BASE_BRANCH}\`. You FIND the open pull request for the
+branch in each repo; you never create, edit, retitle, un-draft, close, approve or merge one. Their titles, bodies and
+draft state are a human's.
+${GUARDRAILS}
+${PUSH_RULE}
+REPOS: ${repoPathList(rowRepos)}. GitHub repos: ${rowRepos.map((key) => `${key}=${GH_REPO[key]}`).join(', ')}.
+For EACH repo:
+1. ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Otherwise ok:false naming the repo.
+2. \`git -C ${TILDE}/<repoPath> fetch origin\`, then \`git -C ${TILDE}/<repoPath> rev-list --count origin/${BASE_BRANCH}..HEAD\`.
+   Anything above 0 is a commit a stopped run never pushed: push it by HOW TO PUSH above. A rejected push is ok:false.
+3. \`gh pr list --repo <ghRepo> --head ${BASE_BRANCH} --state open --json number,url,isDraft,title\`
+   - exactly one → that is the repo's PR. Persist it at once: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
+   - none → put the repo in missing[] and ok:false. Do NOT create one.
+   - more than one → ok:false naming them all.
+Report prs[] in the same order. ok:true only when every repo has exactly one open PR.
+Return the structured output only.`
+
+const BRANCH_CI_SCHEMA = {
+  ...CI_SCHEMA,
+  properties: {
+    ...CI_SCHEMA.properties,
+    stopReason: {
+      type: 'string',
+      enum: ['none', 'pr-red', 'pr-conflicting', 'mergeability-unknown', 'no-checks'],
+      description: 'WHICH stop condition fired, as a fixed value the caller branches on. "none" when every PR is green'
+    }
+  }
+}
+
+const branchWatchPrompt = (id, prList) => `You are the CI WATCHER for increment ${id} on \`${BASE_BRANCH}\`. WAIT for the checks on every PR below to
+resolve, and report what they did. You change no code, you merge nothing, and you edit no PR.
+${GUARDRAILS}
+THE PULL REQUESTS:
+${prList}
+
+For EACH pr, in the order listed:
+1. MERGEABILITY FIRST. A PR that conflicts with its base gets NO checks at all, so waiting on its checks would wait for
+   nothing. \`gh pr view <url> --json mergeable,mergeStateStatus\`
+   - \`mergeable\` UNKNOWN → GitHub has not worked it out yet. Run the same command again, up to 10 times in all. Still
+     UNKNOWN → state "unresolved", a line in failures[], stopReason "mergeability-unknown".
+   - \`mergeable\` CONFLICTING, or \`mergeStateStatus\` DIRTY → state "red", failures[] "<repo> PR conflicts with its base:
+     GitHub runs no checks on it", blocked "<repo> PR conflicts with its base", stopReason "pr-conflicting". Do not
+     watch its checks. This is a red, not an API failure, and no code fix in this row clears it.
+   - anything else → go on to step 2.
+2. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
+   \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
+   Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
+   what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
+   "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
+   stopReason "no-checks". An absence of evidence is not green.
+3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+   \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
+   job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
+
+\`blocked\` is ONLY for something a code fix in this row cannot address: a conflict with the base, no checks, \`gh\`
+refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a
+fixer gets it. green:true ONLY if EVERY pr resolved green. stopReason "pr-red" for an ordinary red.
+Return the structured output only.`
+
+const branchCiFixPrompt = (id, attempt, prList, seen) => `You are the CI FIXER for increment ${id}, attempt ${attempt} of ${CI_FIX_ATTEMPTS}.
+CI is red on \`${BASE_BRANCH}\`. Fix the CODE, commit onto \`${BASE_BRANCH}\` and push. You do not merge, and you
+never create, edit or un-draft a pull request.
+${GUARDRAILS}
+${PUSH_RULE}
+${readIncrement(id)}
+THE PULL REQUESTS:
+${prList}
+WHAT THE WATCHER SAW:
+${seen}
+
+TASK:
+1. READ THE ACTUAL FAILURE, not a summary of it. \`gh pr checks <url> --repo <ghRepo>\` names the failing run;
+   \`gh run view <run-id> --repo <ghRepo> --log-failed > ${WORKAREA_TILDE}/logs/${id}-ci-fail-${attempt}.log 2>&1\`
+   gives you the log. Read that file ONCE.
+   **For a Playwright failure the evidence is \`test-results/*/error-context.md\` in the repo, NOT the tail of the
+   run log.** Go and read those files.
+2. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
+   push that republishes it does. A \`workflow_run\` job runs the copy of its workflow on the default branch (main),
+   never the branch's, so a fix to that workflow file on \`${BASE_BRANCH}\` changes nothing until it reaches main.
+3. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+   known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
+4. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
+   read once.
+5. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
+   ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\` first. Never check out another branch, never create one.
+6. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
+   the repo. Never open a pull request.
+7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+   ok:false saying exactly that. An honest refusal is worth more than a speculative push.
+Return the structured output only.`
+
+const markDoneOnBranch = (id, commit) =>
+  agent(
+    `Increment ${id} is built on \`${BASE_BRANCH}\` and pushed. Mark it done in the backlog. That is your whole job: this
+run has no ticket, and nothing is merged.
+${GUARDRAILS}
+${SET_ROW_RULE}
+Run exactly one command: \`${setRow(id, commit ? `--status done --commit "${commit}"` : '--status done')}\`
+It leaves \`branch\`, \`commit\` and \`prs\` in place: they are the record of how it got there.
+Report ok:true only when tim exited 0 and its JSON reports ok:true.
+Return the structured output only.`,
+    light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
+  )
+
 const queue = EXPLICIT_IDS === null ? null : [...EXPLICIT_IDS]
 const plannedWork = queue ? `${queue.length} increment(s)` : 'draining the backlog'
 const stopAfterText = STOP_AFTER === 'all' ? 'every one it can' : `${STOP_AFTER} landed`
-log(`${WORKAREA_REL}: ${plannedWork} off ${BASE_BRANCH}, executor ${EXECUTOR}, stopping after ${stopAfterText}`)
+log(
+  IS_BRANCH
+    ? `${WORKAREA_REL}: ${plannedWork} onto ${BASE_BRANCH} (branch lifecycle: no Jira, no merge), executor ${EXECUTOR}, stopping after ${stopAfterText}`
+    : `${WORKAREA_REL}: ${plannedWork} off ${BASE_BRANCH}, executor ${EXECUTOR}, stopping after ${stopAfterText}`
+)
 
 const results = []
 let built = 0
@@ -1367,6 +2026,38 @@ while (true) {
   let workBranch = BASE_BRANCH
   let repos = null
   let resumeAt = 'build'
+  // Only the branch lifecycle reads these three row fields.
+  let rowMerges = []
+  let rowGatePhases = GATE_PHASES
+  let rowAwaitsCi = true
+
+  ticketAndBranch: {
+    if (IS_BRANCH) {
+      phase('Branch')
+      const row = await assertBranch(id)
+      if (!row || !row.ok) {
+        log(`${id}: BRANCH STAGE FAILED — ${row ? row.summary : 'agent failed'}`)
+        results.push({ id, outcome: 'branch-failed', detail: row?.summary ?? 'agent failed' })
+        stopped = { reason: 'branch-failed', detail: `${id}: ${row?.summary ?? 'agent failed'}` }
+        break
+      }
+      const problems = rowFieldProblems(row)
+      if (problems.length > 0) {
+        log(`${id}: ROW INVALID — ${problems.join('; ')}`)
+        results.push({ id, outcome: 'row-invalid', detail: problems.join('; ') })
+        stopped = { reason: 'row-invalid', detail: `${id}: ${problems.join('; ')}` }
+        break
+      }
+      repos = row.repos
+      resumeAt = row.resumeAt
+      rowMerges = row.merge ?? []
+      rowGatePhases = row.gatePhases === undefined ? GATE_PHASES : GATE_PHASES.filter((name) => row.gatePhases.includes(name))
+      rowAwaitsCi = row.awaitCi !== false
+      log(
+        `${id}: on ${workBranch} in every repo; row repos ${repos.join(', ') || 'none'}; merges ${rowMerges.map((entry) => `${entry.repo}<-${entry.ref}`).join(', ') || 'none'}; gate ${rowGatePhases.join(', ') || 'none'}; CI ${rowAwaitsCi ? 'awaited' : 'not awaited'}; resuming at ${resumeAt}`
+      )
+      break ticketAndBranch
+    }
 
   phase('Ticket')
 
@@ -1554,12 +2245,15 @@ Return the structured output only.`,
     stopped = { reason: 'branch-failed', detail: `${id}: ${branched?.summary ?? 'agent failed'}` }
     break
   }
+  } // ticketAndBranch
 
   let plan = null
   let rawFindings = []
   let confirmed = []
   let judgement = { decisions: [], fixNow: [], summary: 'No findings to judge.' }
   let land = null
+  let mergesInProgress = []
+  let workspaceEdits = []
   const findingCounts = () => ({ raw: rawFindings.length, confirmed: confirmed.length, fixed: judgement.fixNow.length })
 
   build: {
@@ -1574,7 +2268,7 @@ Return the structured output only.`,
   phase('Baseline')
 
   const baseline = await agent(
-    `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
+    IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
 ${GUARDRAILS}
@@ -1650,6 +2344,37 @@ ${baselineRungList(baseline)}`
   // -----------------------------------------------------------------------
   phase('Implement')
 
+  // Branch lifecycle only: the loop, not the planner or the implementor, owns
+  // the git mechanics of a merge row. It starts each merge here and leaves it
+  // in progress for the implementor to resolve.
+  let mergesAlreadyIn = []
+  if (IS_BRANCH && rowMerges.length > 0) {
+    const started = await startMerges(id, rowMerges)
+    if (!started || !started.ok) {
+      results.push(
+        await preserveAttempt({
+          id,
+          ticket,
+          workBranch,
+          phaseName: 'Implement',
+          reason: 'a merge the row asks for could not start',
+          evidence: started?.summary ?? 'the merge stage agent died',
+          outcome: 'merge-failed',
+          detail: started?.summary ?? 'agent failed'
+        })
+      )
+      stopped = { reason: 'merge-failed', detail: `${id}: ${started?.summary ?? 'agent failed'}` }
+      break
+    }
+    mergesInProgress = started.merges.filter((entry) => !entry.alreadyMerged)
+    mergesAlreadyIn = started.merges.filter((entry) => entry.alreadyMerged)
+    log(
+      `${id}: merges started — ${started.merges.map((entry) => `${entry.repo}<-${entry.ref} ${entry.alreadyMerged ? 'already in' : `${entry.conflicted.length} conflicted`}`).join(', ')}`
+    )
+  }
+  const mergeNote = mergeNoteOf(mergesInProgress)
+  const builderPhases = BUILDER_PHASES.filter((name) => rowGatePhases.includes(name))
+
   const impl = EXECUTOR === 'codex'
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
@@ -1663,7 +2388,7 @@ ${baselineRungList(baseline)}`
 and you do not commit it.
 ${GUARDRAILS}
 ${readIncrement(id)}
-${REPO_RULE}
+${REPO_RULE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}
 ${readPlan(id)} Follow it verbatim: it has already settled every choice. Where it names an exemplar, open that file
 and copy its shape rather than improvising. Where it follows a repo's recipe, read the recipe it cites and follow
 it exactly. Where the plan is wrong about the tree, do the smallest thing that meets the increment's acceptance
@@ -1674,7 +2399,7 @@ paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERA
 skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
 and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
 at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
-\`${TILDE}/${REPO_PATH.frontend}\`; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
+${REPO_PATH.frontend ? `\`${TILDE}/${REPO_PATH.frontend}\`` : 'the backlog repo the plan names for the journey change'}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
 \`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
 in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.
 
@@ -1700,13 +2425,13 @@ RULES:
 - STAGE your work (\`git -C ... add\`) but DO NOT COMMIT. Landing is a later step that runs after review.
 - If you get stuck on a red step, you get at most 3 self-repair attempts. If still red, stop and report ok:false
   with exactly what is red and what you tried — do NOT thrash, and do NOT weaken a test to make it pass.
-${builderGateRule(id, 'implement')}
+${builderGateRule(id, 'implement', builderPhases)}
 
 Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
 including anything the increment got wrong and any diagnosis of a red suite you made).
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
-${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
-    heavy({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
+${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`frontend:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
+    code({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
   )
 
   const attempt = { id, ticket, workBranch }
@@ -1732,7 +2457,7 @@ ${REPO_KEYS.join(', ')} — e.g. \`frontend:src/server/app/index.js\`. Review is
   // Returns the preserved result when a repo is off the run's branch and could
   // not be moved back, or null when every repo is on it.
   const offBranch = async (stageName, phaseName) => {
-    const guard = await branchGuard(id, stageName, phaseName, workBranch, repos)
+    const guard = await branchGuard(id, stageName, phaseName, workBranch, IS_BRANCH ? null : repos)
     if (guard?.ok) return null
     return preserveAttempt({
       ...attempt,
@@ -1783,8 +2508,8 @@ you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKI
 17-rule style guide + JSDoc). The persona is written per file: apply it to each file in the list in turn, and load
 the bundle once for the group.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`, and the plan it was
-built from at ${PLANS}/${id}.md. See the change with \`git -C ${groupRepoPath(group)} diff --staged -- <path>\` for
-each file, and compare it with the exemplar the plan names for that file.
+built from at ${PLANS}/${id}.md. See the change with ${groupDiffCommand(group)} for
+each file, and compare it with the exemplar the plan names for that file.${mergeNote}
 SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
 security belong to a different reviewer; do not duplicate them.
 HOUSE RULES that override generic style advice: comments are removed aggressively (code near-bare; rationale lives
@@ -1793,7 +2518,7 @@ helper functions rather than dense inline callbacks; names say what a thing does
 Report ONLY real findings, each with a concrete fix. No praise, no summary of what a file does. If every file is
 clean, return an empty findings array.
 Return the structured output only.`,
-      heavy({ label: `${id} style:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      code({ label: `${id} style:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -1807,7 +2532,7 @@ list in turn.
 CONTEXT: the increment is at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\` — its
 acceptanceCriteria are what this code is supposed to do, and the header's invariants
 (\`jq 'del(.increments)' ${BACKLOG_TILDE}\`) are what it must not break. The plan is at ${PLANS}/${id}.md. See the
-change with \`git -C ${groupRepoPath(group)} diff --staged -- <path>\` for each file.
+change with ${groupDiffCommand(group)} for each file.${mergeNote}
 SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Specifically hunt for:
 - behaviour that does not match the increment's acceptanceCriteria, or a behaviour change the plan did not declare
 - tests that assert implementation rather than behaviour (toHaveBeenCalledWith on a collaborator is the tell);
@@ -1820,7 +2545,7 @@ SCOPE: correctness, security, error handling, performance, and TEST QUALITY. Spe
   platform-layer file that has learned a set's vocabulary.
 Report ONLY real findings with a concrete failure scenario. Style nits belong to a different reviewer — skip them.
 Return the structured output only.`,
-      heavy({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      code({ label: `${id} review:${group.name}`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
   )
 
@@ -1830,7 +2555,7 @@ Return the structured output only.`,
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
 CONTEXT: increment at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`; plan at ${PLANS}/${id}.md;
-the whole change via \`git -C ${TILDE}/<repoPath> diff --staged\` in EVERY repo the plan names.
+the whole change via \`git -C ${TILDE}/<repoPath> diff --staged\` in EVERY repo the plan names.${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}
 LOOK FOR: the same concept named two ways across files; a pattern the repo already has, reimplemented instead of
 reused (compare with the exemplar the plan names); registration that exists in one place but not its twin (a page
 in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js
@@ -1842,7 +2567,7 @@ report any that fails as a finding. A better solution than the plan imagined is 
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 Return the structured output only.`,
-      heavy({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
+      think({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
     )
 
   // Codex reviews at the same granularity as Claude: one run per group applying
@@ -1948,7 +2673,7 @@ ${groupFiles}. Your job is to REFUTE each of them. Default to refuted unless the
 finding that survives costs more than a real one that is missed, because it drives a pointless edit to working code.
 ${GUARDRAILS}
 Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of
-them tells you nothing about whether any one is real.
+them tells you nothing about whether any one is real.${mergeNote}
 
 THE FINDINGS:
 ${items
@@ -1958,7 +2683,7 @@ ${items
   )
   .join('\n')}
 
-CHECK THEM against the ACTUAL code (\`git -C ${groupRepoPath(group)} diff --staged -- <path>\` for each file named,
+CHECK THEM against the ACTUAL code (${groupDiffCommand(group)} for each file named,
 where the \`<repoKey>:\` prefix is dropped to get <path>, and Read each file in full — the diff alone can mislead),
 against the increment's acceptanceCriteria
 (\`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`), and against the house conventions the
@@ -1967,7 +2692,7 @@ really exists here). Read those sources ONCE and reuse them across all ${items.l
 For each: real:false if it is wrong, already handled elsewhere, out of the increment's scope, or a matter of taste
 dressed as a defect. real:true ONLY if you could not refute it. Cite file:line in every reasoning.
 Return one verdict per finding, using the SAME numbers as above. Return the structured output only.`,
-          heavy({ label: `${id} verify:${group.name}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
+          code({ label: `${id} verify:${group.name}`, phase: 'Verify findings', schema: VERDICT_SCHEMA })
         ).then((v) => {
           // A dead verifier must not silently delete findings — pass them to the
           // judge marked unrefuted rather than dropping them on the floor.
@@ -2021,7 +2746,7 @@ correct increment over a large polished one.
 For every fix-now item, write a COMPLETE instruction in fixNow[]: the file, exactly what to change, and how to
 prove it (the test or assertion that should now pass). A fixer with no other context must be able to execute it.
 Return the structured output only.`,
-        heavy({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
+        think({ label: `${id} judge`, phase: 'Judge', schema: JUDGEMENT_SCHEMA })
       )) ?? judgement
   }
 
@@ -2073,7 +2798,7 @@ ${impl.notes || '(none)'}`,
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
 purely stylistic also read ${SKILLS}/code-style/references/STYLE_IMPLEMENTOR.md.
-${readIncrement(id)}
+${readIncrement(id)}${mergeNote ? `${mergeNote}\n` : ''}
 THE RULED FIXES:
 ${ruledFixes}
 
@@ -2081,12 +2806,12 @@ RULES: apply each fix and prove it with the test or assertion the instruction na
 judge rejected or deferred. Do NOT expand scope. If a fix turns out to be wrong or impossible, say so in your
 summary rather than forcing it — a fix that requires weakening a test is not a fix. Leave everything STAGED, do
 not commit.
-${builderGateRule(id, 'fix')}
+${builderGateRule(id, 'fix', builderPhases)}
 ${baselineEvidence}
 If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
 and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
-        heavy({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
+        code({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
       )
     }
   }
@@ -2114,7 +2839,7 @@ FIXER — ${fixerReport()}`
 ${GUARDRAILS}
 ${readIncrement(id)}
 ${readPlan(id)}
-${earlierFindings}
+${earlierFindings}${mergeNote ? `${mergeNote}\nA path still unresolved (${UNRESOLVED_CHECK} prints it) is a failure, never a skip.` : ''}
 
 ${GATE_RULE}
 
@@ -2123,7 +2848,7 @@ ${baselineEvidence}
 TASK — the ladder, IN ORDER. Every rung runs here, after the fix stage, even one the implementor or fixer already
 ran green: their runs are evidence, not proof.
 1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
-${gateCommandList(GATE_PHASES, gateLogs(id, 'ladder'))}
+${gateStepFor(rowGatePhases, gateLogs(id, 'ladder'))}
    Run every one, even after a red one, so you have the whole picture before you repair anything.
 2. THE INCREMENT'S OWN CHECKS. The plan's section 5, "Invariants to prove", then its section 6, "Increment-specific
    checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
@@ -2134,9 +2859,14 @@ ${gateCommandList(GATE_PHASES, gateLogs(id, 'ladder'))}
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.
 4. COVERAGE. For every repo with staged changes (\`git -C ${TILDE}/<repoPath> diff --staged --stat\`), the gate must
-   have run at least one rung. A changed repo with none is a failure — "not gated: <repo>" — not a skip. Where the
+   have run at least one rung. A changed repo with none is a failure — "not gated: <repo>" — not a skip. ${
+     rowGatePhases.includes('e2e')
+       ? `Where the
    slice changes anything a user or another system can see, its integration proof (the plan's section 4) must be a
-   spec in the tests repo that the gate's E2E rung ran; if the plan has none, that is a failure, not a skip.
+   spec in the tests repo that the gate's E2E rung ran; if the plan has none, that is a failure, not a skip.`
+       : `This row's
+   gatePhases leave out e2e: its end-to-end proof belongs to another row, so do not fail it for want of one.`
+   }
 - REPAIRS. You get at most 3 across the whole ladder. A repair normally fixes the CODE — never weaken, skip or delete
   a test to get green, and never mark a rung green that was not. A red format rung is repaired by running the repo's
   \`format\` script, never by editing the check. After a repair, re-run the gate phase that was red, and the unit
@@ -2165,7 +2895,7 @@ In ran[], list every gate rung as \`<repo> <name>\` and every plan check you ran
 or check, with its reason and its log.
 Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
-    light({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
+    code({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
   )
 
   // -----------------------------------------------------------------------
@@ -2196,7 +2926,16 @@ Return the structured output only.`,
     break
   }
 
-  land = await agent(
+  workspaceEdits = [...(impl.changedFiles ?? []), ...(fixResult?.changedFiles ?? [])].filter(
+    (file) => IS_BRANCH && file.startsWith(`${WORKSPACE_KEY}:`)
+  )
+
+  land = IS_BRANCH
+    ? await agent(
+        branchLandPrompt(id, plan?.behaviourChanges, mergesInProgress),
+        light({ label: `${id} land`, phase: 'Land', schema: BRANCH_LAND_SCHEMA })
+      )
+    : await agent(
     `Increment ${id} is implemented, reviewed, judged and verified green. COMMIT IT.
 ${GUARDRAILS}
 ${REPO_RULE}
@@ -2214,8 +2953,7 @@ TASK:
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the
    behaviour changes below are not empty, otherwise the type the increment's \`kind\` implies — a body saying what
-   changed and naming the increment id and its ticket \`${ticket?.key}\`, and the trailer:
-   Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+   changed and naming the increment id and its ticket \`${ticket?.key}\`. No trailer.
    Behaviour changes, from the plan: ${plan?.behaviourChanges?.length ? plan.behaviourChanges.map((b) => `\n   - ${b}`).join('') : 'none'}
    A slice across several repos gets ONE commit per repo, each with the same subject.
 4a. ${SPEC_RULE} If it has changes, they are part of this increment: commit them in the workspace with the same
@@ -2245,6 +2983,16 @@ Return the structured output only.`,
     stopped = { reason: 'land-failed', detail: `${id}: ${land?.summary ?? 'agent failed'}` }
     break
   }
+
+  // Committed, and the commit recorded, but the branch moved underneath it.
+  // The tree is clean, so there is nothing to preserve: a human reconciles
+  // the branch, and a resume pushes the recorded commit.
+  if (IS_BRANCH && !land.pushed) {
+    log(`${id}: PUSH FAILED — ${land.summary}`)
+    results.push({ id, branch: workBranch, outcome: 'push-failed', commit: land.commit, detail: land.summary, findings: findingCounts() })
+    stopped = { reason: 'push-failed', detail: `${id}: ${land.summary}` }
+    break
+  }
   } // build
 
   const findings = findingCounts()
@@ -2257,6 +3005,114 @@ Return the structured output only.`,
   // an existing open PR for this head is reused, never duplicated.
   // -----------------------------------------------------------------------
   let prs = []
+
+  finish: {
+    // -----------------------------------------------------------------------
+    // Branch lifecycle: the commits are already pushed by land. Find the open
+    // PR in each repo the row touched, wait for CI unless the row says not to,
+    // and mark the row done. No PR is raised, edited or merged, and no ticket
+    // exists to close.
+    // -----------------------------------------------------------------------
+    if (IS_BRANCH) {
+      let ci = null
+      let ciAttempt = 0
+
+      if (repos.length > 0) {
+        phase('Pull request')
+        const found = await agent(
+          findPrsPrompt(id, repos),
+          light({ label: `${id} pr`, phase: 'Pull request', schema: BRANCH_PR_SCHEMA })
+        )
+        if (!found || !found.ok || (found.prs ?? []).length === 0) {
+          const missing = found?.missing ?? []
+          const reason = missing.length > 0 ? 'no-open-pr' : 'pr-failed'
+          const detail =
+            missing.length > 0
+              ? `no open pull request for ${workBranch} in ${missing.join(', ')}, and this lifecycle never raises one. ${found.summary}`
+              : found?.summary ?? 'agent failed'
+          log(`${id}: PR STAGE FAILED (${reason}) — ${detail}`)
+          results.push({ id, branch: workBranch, outcome: reason, detail, findings })
+          stopped = { reason, detail: `${id}: ${detail}` }
+          break
+        }
+        prs = found.prs
+        log(`${id}: found ${prs.length} open PR(s) on ${workBranch} — ${prs.map((p) => p.url).join(' ')}`)
+
+        if (rowAwaitsCi) {
+          phase('CI')
+          const watchOnBranch = () =>
+            agent(
+              branchWatchPrompt(id, prList(prs)),
+              light({ label: `${id} ci watch`, phase: 'CI', schema: BRANCH_CI_SCHEMA })
+            )
+
+          ci = await watchOnBranch()
+          while ((!ci || !ci.green) && !hardStop(ci) && ciAttempt < CI_FIX_ATTEMPTS) {
+            ciAttempt += 1
+            log(`${id}: CI RED — fix attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}`)
+            const seen = ci
+              ? (ci.failures ?? []).map((failure, index) => `${index + 1}. ${failure}`).join('\n') || ci.summary
+              : 'the watcher agent died — go and read the checks yourself'
+            await agent(
+              branchCiFixPrompt(id, ciAttempt, prList(prs), seen),
+              code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: incrementSchema })
+            )
+            ci = await watchOnBranch()
+          }
+
+          if (!ci || !ci.green) {
+            const detail = ci
+              ? [ci.blocked, ...(ci.failures ?? [])].filter((line) => line && line !== 'none').join(' | ')
+              : 'ci watcher agent died'
+            log(`${id}: CI STILL RED after ${ciAttempt} fix attempt(s) — stopping. PRs untouched: ${prs.map((p) => p.url).join(' ')}`)
+            results.push({
+              id,
+              branch: workBranch,
+              outcome: 'ci-red',
+              stopReason: ci?.stopReason ?? 'not-set',
+              prs: prs.map((p) => p.url),
+              ciFixAttempts: ciAttempt,
+              detail: detail || 'ci did not go green',
+              findings
+            })
+            stopped = { reason: 'ci-red', detail: `${id}: ${detail || 'ci did not go green'}. PRs untouched: ${prs.map((p) => p.url).join(' ')}` }
+            break
+          }
+        }
+      }
+
+      phase('Done')
+      const doneOnBranch = await markDoneOnBranch(id, land?.commit)
+      if (!doneOnBranch || !doneOnBranch.ok) {
+        log(`${id}: NOT MARKED DONE — ${doneOnBranch ? doneOnBranch.summary : 'agent failed'}. The push stands.`)
+        results.push({ id, branch: workBranch, outcome: 'done-failed', prs: prs.map((p) => p.url), detail: doneOnBranch?.summary ?? 'agent failed', findings })
+        stopped = { reason: 'done-failed', detail: `${id}: ${doneOnBranch?.summary ?? 'agent failed'}. The push stands` }
+        break
+      }
+
+      const ciOutcome = () => {
+        if (repos.length === 0) return 'none: the row changes no backlog repo'
+        if (!rowAwaitsCi) return 'not awaited: the row sets awaitCi false'
+        return 'green'
+      }
+
+      built += 1
+      results.push({
+        id,
+        branch: workBranch,
+        outcome: 'landed',
+        commit: land?.commit,
+        prs: prs.map((p) => p.url),
+        ci: ciOutcome(),
+        leftUncommitted: workspaceEdits,
+        findings,
+        judgement: judgementCalls
+      })
+      log(
+        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
+      )
+      break finish
+    }
 
   if (resumeAt !== 'done') {
     phase('Pull request')
@@ -2421,7 +3277,7 @@ TASK:
 7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
-        heavy({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
+        code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })
       )
 
       // Fold in anything the fixer had to open elsewhere, deduped by url, so
@@ -2655,6 +3511,7 @@ Return the structured output only.`,
   })
 
   log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+  } // finish
 
   // A HALT-FOR-REVIEW gate is a DESIGNED human checkpoint, not a review finding.
   // The judge absorbs routine triage; it does not absorb these.

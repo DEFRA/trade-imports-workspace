@@ -1,0 +1,832 @@
+{
+  "programme": "frontend-alignment-sync",
+  "generatedFrom": [
+    "rulings:sam-2026-09-24",
+    "playwright-1.63",
+    "sonar-pre-push-gate",
+    "eudpa-618-playwright-as-tests",
+    "eudpa-573-stale-refdata",
+    "eudpa-620-transporter-country-code",
+    "refdata-503-test-stub",
+    "eudpa-333-handshake-qa",
+    "tests-security-coverage",
+    "address-lookup-spike",
+    "eudpa-311-address-book-paths",
+    "eudpa-619-multi-set"
+  ],
+  "invariants": [
+    "One branch, one name: every row builds on feat/NO_JIRA-frontend-alignment in each repo it touches (ins #27, animals #339, plants #69, tests #227). No new branch, no new pull request.",
+    "Main is brought in by merging origin/main into the branch, once per repo. Never rebase the branch and never force-push.",
+    "Never merge a pull request. Only Sam merges, and only Sam lifts the drafts.",
+    "Sam's rulings of 24 September stand: the branch is to merge; the alignment adopts EUDPA-619 as it stands and conforms to it, never the reverse; the machine-drafted Welsh stays, and any new Welsh copy file carries the same machine-drafted header; these five repos are the only consumers of their URLs, so no redirect or deprecation is owed for a URL they drop.",
+    "Precedence: Sam's rulings, then main for behaviour, then the alignment ledger (stages.json) for structure and naming, then the branch as it stands.",
+    "Every merge-row conflict and every clean-but-wrong file is resolved exactly as resolutions.json records it; a row never re-decides a resolution. If the live tree disagrees with resolutions.json, stop that row and record why.",
+    "Lockfiles are regenerated, never hand-merged: ins, animals and plants under the pinned npm 11.6.2, the tests repo with plain npm. Agents cannot install; the main session runs every install and lockfile regeneration.",
+    "Pre-align work lands as its own commits on the branch before the merge; wire-in and follow-up work lands as its own commits after it.",
+    "Each row ends with its repos' ladder green: lint, format, unit tests and build in each frontend; type-check and lint in the tests repo. The end-to-end rung runs once, in the cross-repo end-to-end row, because the four merges agree on URLs, cookie names and sign-out only once all have landed.",
+    "No '#/' import specifier enters ins; every import follows the branch's relative convention."
+  ],
+  "repos": {
+    "ins": {
+      "path": "repos/trade-imports-ins-frontend",
+      "github": "DEFRA/trade-imports-ins-frontend"
+    },
+    "animals": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "plants": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-animals-tests",
+      "github": "DEFRA/trade-imports-animals-tests"
+    }
+  },
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "Pre-align: Playwright 1.63 in all four repos",
+      "detail": "main moved every repo from Playwright 1.61.x to 1.63.0 (and the tests repo's CLI and browser image with it). Landing the same bump on the branch first, as its own commit per repo, means the merge of main brings no Playwright change of its own, and ins's large package-file conflict no longer carries a version decision.",
+      "acceptanceCriteria": [
+        "Each of the four pull requests shows the Playwright test runner at 1.63.0; the tests repo also shows the Playwright CLI at 0.1.21 and the v1.63.0-jammy browser image for both its test container and its local visual-baseline refresh. (playwright-1.63 pw-001, pw-003, pw-005; verify:playwright-1.63 verdictHolds)",
+        "A clean install from each repo's committed lockfile succeeds, the three frontends under the pinned npm 11.6.2 and the tests repo under plain npm. (playwright-1.63 pw-005-m1, pw-003-m1)",
+        "The bump appears on the branch as its own commit in each repo, dated before the merge of main. (playwright-1.63 preAlign; direction.json)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "ins",
+        "animals",
+        "plants",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "playwright-1.63",
+          "ref": "extract preAlign; verify lockfileFinding"
+        }
+      ],
+      "requirements": [
+        "req-001",
+        "req-002"
+      ],
+      "notes": [
+        "Cluster: playwright-1.63. How: resolutions.json repos.*.package.json, package-lock.json, and tests Dockerfile and bin/update-visual-baselines-linux.sh (stage pre-align).",
+        "ins has the pin metadata but lost its pinned-install script in s20: invoke the pinned npm explicitly (c-020). The main session runs the regenerations.",
+        "Main session, 24 Sep: ins only. The bump plus a lockfile regenerated under pinned npm 11.6.2 and proved by a clean install (agents cannot install). animals, plants and tests are NOT pre-aligned on purpose: their package files merge clean from main, and a local regeneration would only create a lockfile conflict. They reach 1.63.0 through their merge rows, whose acceptance must show it. The ins package.json conflict that remains is only the branch's adjacent @lhci/cli line; resolutions.json takes the branch side for both package files."
+      ],
+      "commit": "1268634"
+    },
+    {
+      "id": "inc-002",
+      "title": "Pre-align: ins's SonarCloud treats the Playwright suite as tests",
+      "detail": "main's EUDPA-618 fixed ins's failing quality gate by classing the Playwright fit suite as test code and naming a URL literal. main's pattern was written for ins's old tree; on the branch's feature folders it needs the union with the branch's suffix pattern. Landing it first removes two ins conflicts from the merge and lets only the branch's own tree decide the pattern.",
+      "acceptanceCriteria": [
+        "SonarCloud reports every Playwright fit-suite file under ins's source, specs outside fit folders and helpers inside them alike, as test code rather than uncovered source. (eudpa-618-playwright-as-tests e618-001, e618-002, e618-003; verify:eudpa-618-playwright-as-tests sonar-project.properties)",
+        "ins's coverage figure excludes its browser bundle, and duplication checks skip configuration and test code, as animals' already do. (eudpa-618-playwright-as-tests resolutions; verify e618-003-m2)",
+        "ins's Automatic Analysis settings classify test code the same way as its CI scan settings, and the PR body says this is parity with plants, not a gate fix. (eudpa-618-playwright-as-tests e618-005; verify:eudpa-618-playwright-as-tests e618-005)",
+        "SonarCloud raises no 'insecure http' finding on ins's safe-redirect check, and the same redirects are allowed and refused as before. (eudpa-618-playwright-as-tests e618-004)",
+        "The SonarCloud check on ins's pull request passes. (eudpa-618-playwright-as-tests verdictWhy)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "ins"
+      ],
+      "sources": [
+        {
+          "source": "eudpa-618-playwright-as-tests",
+          "ref": "extract resolutions, preAlign; verify resolutionVerdicts"
+        }
+      ],
+      "requirements": [
+        "req-006",
+        "req-007",
+        "req-008"
+      ],
+      "openQuestions": [
+        "Is SonarCloud Automatic Analysis switched off for trade-imports-ins-frontend? Default: assume it is off; update the Automatic Analysis settings for parity only and say so in the PR body (c-002)."
+      ],
+      "notes": [
+        "Cluster: eudpa-618-playwright-as-tests. How: resolutions.json repos.ins sonar-project.properties, .sonarcloud.properties, src/auth/get-safe-redirect.js (stage pre-align).",
+        "Out of scope: ins duplication exemptions for copy decks and stub seeds (req-009)."
+      ],
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "62e6a5bcd0cb27d318ae6bdcdef8e899e3e945a5",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "repo": "ins",
+          "number": 27
+        }
+      ]
+    },
+    {
+      "id": "inc-003",
+      "title": "Pre-align: animals' date guard says what it guards against",
+      "detail": "main and the branch wrote the identical four-digit-year guard in animals' date parsing; only one comment differs and main's is the accurate one (27/3/26 would be read as 1926). Taking main's wording on the branch first removes one animals conflict.",
+      "acceptanceCriteria": [
+        "animals' four-digit-year date guard explains, word for word as on main, that a two-digit year such as 27/3/26 would be read as a year in the 1900s. (eudpa-619-multi-set 619-008; verify:eudpa-619-multi-set 619-m4, calendarQuestion)",
+        "Dates such as 27/3/26 and 5/8/26 are still refused and four-digit years still accepted. (eudpa-619-multi-set 619-008)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "animals"
+      ],
+      "sources": [
+        {
+          "source": "eudpa-619-multi-set",
+          "ref": "extract preAlign; verify resolutionVerdicts calendar.js"
+        }
+      ],
+      "requirements": [
+        "req-035"
+      ],
+      "notes": [
+        "Cluster: eudpa-619-multi-set (convergent calendar guard). How: resolutions.json repos.animals src/server/app/lib/validate/calendar.js.",
+        "plants carries the branch wording in unconflicted code: left for the next byte-equality pass (req-036, out of scope, c-008)."
+      ],
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "b830512cabf7e9d7512dda2c929e20a447c3425b",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 339
+        }
+      ]
+    },
+    {
+      "id": "inc-004",
+      "title": "Merge main into the tests repo",
+      "detail": "The tests repo goes first: it has one conflict, it carries the one silently broken merge in the programme (the sign-in fixture would drop plants' own development cookie), and its suite is what every later end-to-end proof runs. After it, the branch carries main's EUDPA-619 per-set URL layer, EUDPA-333 handshake coverage and the ZAP and accessibility work.",
+      "acceptanceCriteria": [
+        "The tests repo's feature branch contains main's tip through one merge commit, and pull request #227 reports mergeable. (direction.json; measure.json repos.tests)",
+        "The sign-in spec checks the sign-out link at /auth/sign-out through the sign-out page, and proves the service root redirects to the default set's dashboard. (tests-security-coverage tsc-002, tsc-003, tsc-004; verify:tests-security-coverage auth.spec.ts)",
+        "Signing in to ins or plants from the suite on the local stack sets that service's own development session cookie (ins-sid, plants-sid); animals, and every service outside the local stack, use sid; an explicit override still wins. (eudpa-333-handshake-qa 333-004, 333-005, 333-006; verify:eudpa-333-handshake-qa 333-m1)",
+        "The suite type-checks: no target declares a cookie field the target shape does not allow. (eudpa-333-handshake-qa 333-006)",
+        "The handshake add-link specs cover all five party pickers and gate on CDP as well as the local stack. (eudpa-333-handshake-qa files; verify:eudpa-333-handshake-qa addresses-read-only.spec.ts)",
+        "main's ZAP report banners, partial-run flag, CDP fallback report, retargeted draft-validation spec and live-animals @active and @a11y specs are present, and the ins address-book security spec keeps both the dropped /about visit and the handshake-token check. (tests-security-coverage tsc-001, tsc-005; verify tsc-005-m1)",
+        "Every page object and spec builds journey URLs on the per-set prefixes /live-animals and /high-risk-plants. (eudpa-619-multi-set 619-m14; verify:eudpa-619-multi-set cleanMergeFindings tests)"
+      ],
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "tests-security-coverage",
+          "ref": "extract resolutions; verify"
+        },
+        {
+          "source": "eudpa-333-handshake-qa",
+          "ref": "fixtures/auth-state.ts"
+        },
+        {
+          "source": "eudpa-619-multi-set",
+          "ref": "tests files"
+        }
+      ],
+      "requirements": [
+        "req-042",
+        "req-021",
+        "req-023"
+      ],
+      "openQuestions": [
+        "Should the fixture's per-service development cookie names be read from each service's own config default rather than a lookup in the fixture? Default: a small lookup in the fixture for ins and plants; animals keeps sid (c-028)."
+      ],
+      "notes": [
+        "Clusters combined: tests-security-coverage, eudpa-333-handshake-qa (tests half), eudpa-619-multi-set (tests half), playwright-1.63 (already pre-aligned). How: resolutions.json repos.tests (stage merge).",
+        "Merge order and why: tests, then plants, then animals, then ins. tests first for the reasons above; plants second as the canary for the EUDPA-619 composition pattern (router gate, barrel alias, set-free sign-in error page, co-residency repair) on the smallest journey merge (6 files); animals third reuses that pattern plus its own six extra conflicts; ins last, the largest (31 files), with its wire-ins after it. None of the merges needs another to be done first, so dependsOn names only the pre-aligns.",
+        "Exists requirements this row must prove survived: req-020, req-022, req-039."
+      ],
+      "merge": {
+        "tests": "origin/main"
+      },
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "7ac19fea83e7cccafea498172947aae6f20c4d7b",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 339
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/227",
+          "repo": "DEFRA/trade-imports-animals-tests",
+          "number": 227
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "repo": "DEFRA/trade-imports-ins-frontend",
+          "number": 27
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/69",
+          "repo": "DEFRA/trade-imports-plants-frontend",
+          "number": 69
+        }
+      ]
+    },
+    {
+      "id": "inc-005",
+      "title": "Merge main into plants",
+      "detail": "Brings main's EUDPA-619 (high-risk plants on its own /high-risk-plants prefix) and EUDPA-573 into the plants branch in one merge commit, composed with the alignment: the set and its root redirect sit behind the sign-in gate, the sign-in error page keeps shared copy on set-free chrome at all four failure paths (git silently breaks two of them), and main's co-residency suite is repaired for session-gated routes and the deleted /signout.",
+      "acceptanceCriteria": [
+        "plants' feature branch contains main's tip through one merge commit, and pull request #69 reports mergeable. (direction.json; measure.json repos.plants)",
+        "With sign-in enabled the service root redirects to /high-risk-plants and the journey answers there; with sign-in disabled both the root and /high-risk-plants answer 404, and the router tests assert both. (eudpa-619-multi-set 619-001, 619-003; verify 619-m11)",
+        "A sign-in that fails for any of the four reasons (not authenticated, token verification failure, no organisation, permissions lookup failure) shows the shared 'unable to sign you in' page with service chrome and never a server error. (eudpa-619-multi-set resolutions plants auth; verify 619-m5, 619-m12)",
+        "An address that does not exist shows the shared error page with the chrome of the set its address falls under, or set-free chrome outside every set. (eudpa-619-multi-set resolutions plants errors; verify 619-m7)",
+        "The co-residency suite passes and names /auth/sign-out as the one server-wide sign-out route; no route, test, comment or developer doc in plants names /signout other than the Defra ID sign-out handling. (verify:eudpa-619-multi-set 619-m2, 619-m6, 619-m10)",
+        "The high-risk plants routes are still registered under the plugin name high-risk-plants. (verify:eudpa-619-multi-set plants routes.js, 619-m9)",
+        "On origin and arrival details a stored country or place-of-landing code no longer in reference data is blanked with a 'no longer available' error, in English and Welsh, and the stored answer is kept. (eudpa-573-stale-refdata 573-003, 573-005)",
+        "Every plants feature test other than the branch's own fit specs is identical to main's. (verify:eudpa-619-multi-set 619-m14)"
+      ],
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "plants"
+      ],
+      "sources": [
+        {
+          "source": "eudpa-619-multi-set",
+          "ref": "extract resolutions plants; verify resolutionVerdicts, cleanMergeFindings"
+        },
+        {
+          "source": "eudpa-573-stale-refdata",
+          "ref": "plants files"
+        }
+      ],
+      "requirements": [
+        "req-055",
+        "req-029",
+        "req-049",
+        "req-050",
+        "req-051",
+        "req-052",
+        "req-053",
+        "req-054"
+      ],
+      "notes": [
+        "Clusters combined: eudpa-619-multi-set (plants), eudpa-573-stale-refdata (plants, clean), playwright-1.63 (pre-aligned). How: resolutions.json repos.plants (stage merge), with the verification's corrections applied (barrel alias, chromeFor and sharedCopy only, registerTestSessionAuth ported into plants).",
+        "The unstubbed reference-data 503 test merges in unchanged here; inc-010 fixes it.",
+        "Exists requirement this row must prove survived: req-011. Out of scope: req-004 (plants pre-push gate), req-036 (plants calendar wording).",
+        "package.json keeps the branch's s18 additions of joi 17.13.7 and sass 1.100.0 (main never had them); lockfile regeneration must keep both."
+      ],
+      "merge": {
+        "plants": "origin/main"
+      },
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "a551000643435482c49e579e5ce8bc2553e674a5",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/69",
+          "repo": "DEFRA/trade-imports-plants-frontend",
+          "number": 69
+        }
+      ]
+    },
+    {
+      "id": "inc-006",
+      "title": "Merge main into animals",
+      "detail": "Brings main's EUDPA-619 (live animals on /live-animals), EUDPA-573, EUDPA-620, the EUDPA-333 QA fixes, the 503-test de-flake and the pre-push quality gate into the animals branch in one merge commit, composed with the alignment the same way as plants, plus animals' own conflicts: three controller tests that need both the session gating and the set prefix, a config test both sides created, and the 503 test the branch had already made deterministic.",
+      "acceptanceCriteria": [
+        "animals' feature branch contains main's tip through one merge commit, and pull request #339 reports mergeable. (direction.json; measure.json repos.animals)",
+        "With sign-in enabled the service root redirects to /live-animals and the journey answers there; with sign-in disabled both the root and /live-animals answer 404, and the router tests assert both. (eudpa-619-multi-set 619-001, 619-003; verify 619-m11)",
+        "A sign-in that fails for any of the four reasons shows the shared 'unable to sign you in' page with set-free service chrome and never a server error; an address that does not exist shows the shared error page with its set's chrome, or set-free chrome outside every set. (eudpa-619-multi-set resolutions animals auth, errors; verify 619-m5)",
+        "The co-residency suite passes and names /auth/sign-out as the one server-wide sign-out route; no route, test, comment or developer doc in animals names /signout other than the Defra ID sign-out handling; the live-animals routes keep main's set-named registration. (verify:eudpa-619-multi-set 619-m2, 619-m9, 619-m10)",
+        "The three forged-request feature tests (animal identification, consignment details, documents) run authenticated under the /live-animals prefix and still prove a forged request is refused. (eudpa-619-multi-set resolutions; verify:eudpa-573-stale-refdata 573-002-m1)",
+        "animals refuses to start with a malformed address book API or ins frontend base URL, and its config tests cover both alongside the existing cookie-name and strict-boolean cases. (eudpa-333-handshake-qa resolutions animals config; measure.json repos.animals)",
+        "The shared error page's 503 test passes whether or not a reference-data service is running locally, and the countries and ports readers still prove their own 503 on load failure. (refdata-503-test-stub 503stub-002, 503stub-003; verify 503stub-004)",
+        "Stale codes on the six Amend pages are blanked with a 'no longer available' error in English and Welsh; shipped transporters submit an ISO country code; the party-picker test covers five parties; a push from a Claude Code session runs the real quality gate. (eudpa-573-stale-refdata 573-002; eudpa-620-transporter-country-code 620-002; eudpa-333-handshake-qa files; sonar-pre-push-gate sb-002)",
+        "Every other animals feature test is identical to main's. (verify:eudpa-619-multi-set 619-m14)"
+      ],
+      "dependsOn": [
+        "inc-001",
+        "inc-003"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "animals"
+      ],
+      "sources": [
+        {
+          "source": "eudpa-619-multi-set",
+          "ref": "extract resolutions animals; verify"
+        },
+        {
+          "source": "refdata-503-test-stub",
+          "ref": "errors.test.js"
+        },
+        {
+          "source": "eudpa-333-handshake-qa",
+          "ref": "animals files"
+        },
+        {
+          "source": "eudpa-573-stale-refdata",
+          "ref": "animals files"
+        },
+        {
+          "source": "eudpa-620-transporter-country-code",
+          "ref": "records.js"
+        },
+        {
+          "source": "sonar-pre-push-gate",
+          "ref": "animals .claude"
+        }
+      ],
+      "requirements": [
+        "req-056",
+        "req-028",
+        "req-030",
+        "req-031",
+        "req-032",
+        "req-033",
+        "req-034",
+        "req-048",
+        "req-014",
+        "req-018",
+        "req-041"
+      ],
+      "notes": [
+        "Clusters combined: eudpa-619-multi-set (animals), refdata-503-test-stub, eudpa-333-handshake-qa (animals), eudpa-573-stale-refdata (animals, clean), eudpa-620-transporter-country-code (clean), sonar-pre-push-gate (clean), playwright-1.63 and the calendar wording (pre-aligned). How: resolutions.json repos.animals (stage merge).",
+        "Attribution corrected (c-001): the session helper in the three controller tests is the branch's, the set-prefixed mount is main's.",
+        "Exists requirements this row must prove survived: req-003, req-010, req-013, req-019, req-040."
+      ],
+      "merge": {
+        "animals": "origin/main"
+      },
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "8bafd5eed822db5f92bcae57f8ac3965e035d162",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "repo": "trade-imports-animals-frontend",
+          "number": 339
+        }
+      ]
+    },
+    {
+      "id": "inc-007",
+      "title": "Merge main into ins, with its links into live animals",
+      "detail": "Brings main into ins in one merge commit whose conflicts are all pre-decided: main's EUDPA-311 path centralisation is already done on the branch (its resurrected old plugin files go), main's EUDPA-619 fix is kept so ins links into /live-animals rather than the animals root, and the EUDPA-333 URL validation lands. The link fix cannot be separated from the merge: its conflicted view-model and registry, its new link helper and the two test files that assert the prefixed addresses must change together for the merge commit's tree to build. The dev-only address lookup spike and the add-address no-store header are separable, so the merge removes main's misplaced copies and inc-008 and inc-009 place them.",
+      "acceptanceCriteria": [
+        "ins's feature branch contains main's tip through one merge commit whose tree passes the ladder on its own, and pull request #27 reports mergeable. (direction.json; measure.json repos.ins)",
+        "Every notification link on the ins dashboard, 'Start a new notification' and the address-book handshake return address point into /live-animals on the animals frontend, and ins's tests assert the prefixed addresses. (eudpa-619-multi-set 619-005, 619-006; verify:eudpa-619-multi-set add.controller.test.js, dashboard/controller.test.js, list.test.js)",
+        "The address book's URLs (list, add, view, edit, delete) and its navigation item behave exactly as on the branch today, and none of main's old per-page address-book plugin files, its second route-path module, its old navigation builder or its old list helper are present. (eudpa-311-address-book-paths 311-002, 311-003, 311-004; verify)",
+        "No import in ins uses the '#/' alias, and main's edited old-path add-address and home controller tests are gone. (eudpa-619-multi-set 619-004; verify 619-m3, 619-m13)",
+        "ins refuses to start with a malformed address book API or animals frontend base URL, with tests pinning both. (eudpa-333-handshake-qa 333-002; verify:address-lookup-spike src/config/config.js)",
+        "The run-mode service is the same text in ins, animals and plants. (address-lookup-spike als-004, als-016; verify)",
+        "A push from a Claude Code session runs the real quality gate. (sonar-pre-push-gate sb-002)"
+      ],
+      "dependsOn": [
+        "inc-001",
+        "inc-002"
+      ],
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "ins"
+      ],
+      "sources": [
+        {
+          "source": "eudpa-311-address-book-paths",
+          "ref": "extract resolutions; verify"
+        },
+        {
+          "source": "eudpa-619-multi-set",
+          "ref": "extract resolutions ins; verify resolutionVerdicts ins"
+        },
+        {
+          "source": "eudpa-333-handshake-qa",
+          "ref": "ins config"
+        },
+        {
+          "source": "address-lookup-spike",
+          "ref": "config.js, mode.js, plugins/router.js, router.test.js"
+        },
+        {
+          "source": "sonar-pre-push-gate",
+          "ref": "ins .claude"
+        }
+      ],
+      "requirements": [
+        "req-057",
+        "req-027",
+        "req-037",
+        "req-038"
+      ],
+      "openQuestions": [
+        "Reinstate the #/ alias across ins, or rewrite main's new files to relative imports? Default: relative imports; the alias stays a separate reversible decision (c-024)."
+      ],
+      "notes": [
+        "Clusters combined: eudpa-311-address-book-paths, eudpa-619-multi-set (ins link fix; inseparable from the merge commit), eudpa-333-handshake-qa (config half), address-lookup-spike (conflict half only), sonar-pre-push-gate (clean), eudpa-618 and playwright-1.63 (pre-aligned). How: resolutions.json repos.ins (stage merge): all 31 measured conflict files, the clean-but-wrong files, and removal of main's spike files from their old plugin-era paths.",
+        "Chosen: the spike is its own unit (inc-008). Between this merge and inc-008 the branch lacks the spike page; the branch is never merged in that state.",
+        "Exists requirements this row must prove survived: req-003, req-016, req-026."
+      ],
+      "merge": {
+        "ins": "origin/main"
+      },
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "3fd3aebd813e9190100352f4f71b6e1ff5914551",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "repo": "trade-imports-ins-frontend",
+          "number": 27
+        }
+      ]
+    },
+    {
+      "id": "inc-008",
+      "title": "Wire in: ins's dev-only address lookup spike in the aligned structure",
+      "detail": "main's EUDPA-390 spike page landed after the restructure, in the old per-page-plugin shape. It returns here as a feature of the aligned ins: the same page and behaviour, gated on the CDP environment each time the server starts, its lookup client following the branch's per-call stub/real service shape, its copy in a bundle with machine-drafted Welsh.",
+      "acceptanceCriteria": [
+        "When the CDP environment is dev or local and sign-in is enabled, the address lookup spike page answers at the same address as on main; in test, perf-test, ext-test, prod, infra-dev or management it answers 404, and the router tests prove all eight cases. (address-lookup-spike als-001, als-002; verify:address-lookup-spike wireInVerdicts features/index.js)",
+        "Searching by postcode or by free text lists matching addresses with per-hop timings (STS, Entra, gateway, backend total, page round trip) and a trace id. (address-lookup-spike summary, als-005)",
+        "Choosing a result shows it mapped onto the address book's own fields and names what the lookup cannot fill (county, ISO country code); nothing is saved; an unreadable chosen address and no results are handled as on main. (address-lookup-spike summary)",
+        "In stub mode the page returns the same three addresses as trade-imports-stub's simulator, with the backend down. (address-lookup-spike als-003)",
+        "The page renders full-width inside the shared layout, and its text comes from an English and Welsh copy bundle whose Welsh carries the machine-drafted header. (address-lookup-spike als-009, als-012, als-013; verify als-007-m1; rulings:sam-2026-09-24)",
+        "The spike's controller and client tests pass with the lookup mocked only at the network boundary. (address-lookup-spike als-011; verify als-005-m1)"
+      ],
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "ins"
+      ],
+      "sources": [
+        {
+          "source": "address-lookup-spike",
+          "ref": "extract wireIn; verify wireInVerdicts"
+        }
+      ],
+      "requirements": [
+        "req-024",
+        "req-025"
+      ],
+      "openQuestions": [
+        "Should the spike's dev/local gate live in the spike's own folder, or on the shared run-mode service? Default: the spike's own folder; the run-mode service stays identical in all three frontends (c-023).",
+        "Should the spike page gain a Playwright fit spec? Default: no; main shipped none for a temporary dev-only page (c-027)."
+      ],
+      "notes": [
+        "Cluster: address-lookup-spike. How: resolutions.json repos.ins entries with row inc-008 (stage wire-in), built from origin/main's blobs of 4a48670..71af650, with the verification's three corrections: gate evaluated at registration (c-014), display surface set after the base spread (c-015), the mock-oidc-config helper (c-016)."
+      ],
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "f8c3454903b04eec8e8d14919a66cf41c15c7703",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "repo": "trade-imports-ins-frontend",
+          "number": 27
+        }
+      ]
+    },
+    {
+      "id": "inc-009",
+      "title": "Wire in: ins's add-address form is never replayed from the browser cache",
+      "detail": "main's EUDPA-333 QA fix told the browser not to store the add-address form, so the back button never replays a stale or submitted form. It lived in the old controller the merge deletes; this places it in the aligned add controller.",
+      "acceptanceCriteria": [
+        "Opening the add-address form, and every re-render after a validation or address-book API error, tells the browser not to store the page. (eudpa-333-handshake-qa 333-001; verify:eudpa-333-handshake-qa add.controller.js)",
+        "A successful save or a cancel redirects without that instruction, as on main. (eudpa-333-handshake-qa 333-001)",
+        "After saving an address, pressing the browser's back button does not show the submitted form from cache. (eudpa-333-handshake-qa behaviourChanges)"
+      ],
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "done",
+      "kind": "fix",
+      "repos": [
+        "ins"
+      ],
+      "sources": [
+        {
+          "source": "eudpa-333-handshake-qa",
+          "ref": "ins add controller; verify resolutionVerdicts"
+        }
+      ],
+      "requirements": [
+        "req-017"
+      ],
+      "notes": [
+        "Cluster: eudpa-333-handshake-qa (ins half). How: resolutions.json repos.ins add.controller.js and add.controller.test.js#no-store (stage wire-in)."
+      ],
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "eeb8fad",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "repo": "trade-imports-ins-frontend",
+          "number": 27
+        }
+      ]
+    },
+    {
+      "id": "inc-010",
+      "title": "Follow-up: plants' error-page tests stop depending on local reference data",
+      "detail": "Verification found plants still proves its 503 page by letting a real reference-data read fail with nothing stubbed: it reads 200 whenever a developer has the reference-data service running. animals had the same flake and main fixed it. The branch already carries the deterministic shared test; this removes the flaky one and keeps the countries outage covered where it belongs.",
+      "acceptanceCriteria": [
+        "plants' error-page tests pass with a reference-data service answering locally and without one. (verify:refdata-503-test-stub 503stub-003-m1)",
+        "plants proves the shared error page renders at 503 for an unavailable service behind a page, the same proof ins and animals make. (refdata-503-test-stub 503stub-003)",
+        "plants' countries and ports readers still prove they fail with a 503 when reference data will not load. (refdata-503-test-stub 503stub-003; verify 503stub-003)"
+      ],
+      "dependsOn": [
+        "inc-005"
+      ],
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "plants"
+      ],
+      "sources": [
+        {
+          "source": "refdata-503-test-stub",
+          "ref": "verify missed 503stub-003-m1"
+        }
+      ],
+      "requirements": [
+        "req-015"
+      ],
+      "notes": [
+        "Cluster: refdata-503-test-stub (verification finding, c-004). How: resolutions.json repos.plants src/server/common/helpers/errors.test.js (stage follow-up)."
+      ],
+      "gate": "Stop for the main session: after the merges, the animals, plants and tests lockfiles carry main's changes but node_modules were installed before them. Reinstall all four repos (ins, animals, plants under pinned npm 11.6.2 via tools/npm/npm-in-repo.sh; tests with plain npm ci), then relaunch for the end-to-end row.",
+      "gatePhases": [
+        "unit",
+        "fit"
+      ],
+      "awaitCi": false,
+      "commit": "1c8d665faa5163243c9144b3cb8e7d4dbccf7c18",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/69",
+          "repo": "DEFRA/trade-imports-plants-frontend",
+          "number": 69
+        }
+      ]
+    },
+    {
+      "id": "inc-011",
+      "title": "End to end: the four branches work together, locally and in CI",
+      "detail": "Only with all four merges and the wire-ins in place do the frontends and the suite agree on per-set prefixes, per-service cookie names and the single sign-out address. This row runs the full local stack from the branch in dev mode with the tests repo's suite, then waits for CI on the four pull requests.",
+      "acceptanceCriteria": [
+        "The full workspace stack, started from the branch in dev mode with every repo-backed service built from local source, comes up healthy. (direction.json; measure.json)",
+        "The tests repo's end-to-end suite passes against that stack with no skipped journey spec beyond those the suite skips by design. (tests-security-coverage; eudpa-619-multi-set 619-m14)",
+        "Signing in to animals, then ins, then plants in one browser keeps all three sessions: each service keeps its own cookie. (eudpa-333-handshake-qa 333-006)",
+        "From the ins dashboard, a notification link, 'Start a new notification' and the address-book handshake return all land on live-animals pages. (eudpa-619-multi-set 619-005, 619-006)",
+        "CI is green on all four pull requests (ins #27, animals #339, plants #69, tests #227), including the SonarCloud checks. (direction.json; eudpa-618-playwright-as-tests)"
+      ],
+      "dependsOn": [
+        "inc-004",
+        "inc-005",
+        "inc-006",
+        "inc-007",
+        "inc-008",
+        "inc-009",
+        "inc-010"
+      ],
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "ins",
+        "animals",
+        "plants",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "tests-security-coverage",
+          "ref": "suite"
+        },
+        {
+          "source": "eudpa-619-multi-set",
+          "ref": "tests URL layer"
+        },
+        {
+          "source": "eudpa-333-handshake-qa",
+          "ref": "auth-state"
+        }
+      ],
+      "requirements": [
+        "req-043"
+      ],
+      "notes": [
+        "No clusters of its own: the proof for all of them. Failures found here are fixed on the branch in the repo they belong to, per resolutions.json where it covers them; a new decision is recorded before it is made."
+      ],
+      "gatePhases": [
+        "unit",
+        "fit",
+        "e2e"
+      ],
+      "awaitCi": true,
+      "commit": "830e508",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/27",
+          "repo": "ins",
+          "number": 27
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/339",
+          "repo": "animals",
+          "number": 339
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/69",
+          "repo": "plants",
+          "number": 69
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-tests/pull/227",
+          "repo": "tests",
+          "number": 227
+        }
+      ]
+    },
+    {
+      "id": "inc-012",
+      "title": "Merge readiness: the alignment report proposes the merge",
+      "detail": "Sam ruled the branch is to merge. The report in the workspace ledger (workareas/shared/frontend-alignment/report.md) still frames the work as a demonstration. It is rewritten as a proposal for merge that states every behaviour change and every accepted difference plainly, and lists what is still Sam's to decide.",
+      "acceptanceCriteria": [
+        "The report opens by proposing that the four pull requests be merged and says what merging changes for users and developers. (rulings:sam-2026-09-24)",
+        "Its behaviour-changes list says at least: ins no longer answers /signout and /auth/sign-out is the single sign-out URL; ins and plants set distinct session cookie names in development; form-action widens to named sibling origins; countries load on first read rather than at boot in ins only (animals and plants already did on main); the Address book navigation item links across services; the dev-only address lookup spike moved into ins's feature structure, still dev and local only; each journey serves its set on its own prefix with the root redirect behind sign-in, so with sign-in disabled the root answers 404; the add-address form is never served from cache. (verify:eudpa-573-stale-refdata countriesLoadingFinding; address-lookup-spike behaviourChanges; eudpa-619-multi-set behaviourChanges; eudpa-333-handshake-qa behaviourChanges)",
+        "It states as intended: animals keeps sid while ins and plants take their own development cookie names, and each service names its own sibling origins. (rulings:sam-2026-09-24; eudpa-333-handshake-qa 333-m1)",
+        "It lists open question 29 (should ins take the journeys' full countries reader surface and export-block filter) as blocked on Sam, with its default, and every other open question with its default. (conflicts c-025)",
+        "It records that main was merged into each branch (not replayed), with the conflict counts and why. (direction.json summaryForSam)"
+      ],
+      "dependsOn": [
+        "inc-011"
+      ],
+      "status": "done",
+      "kind": "docs",
+      "repos": [],
+      "sources": [
+        {
+          "source": "rulings:sam-2026-09-24",
+          "ref": "the branch is to merge"
+        },
+        {
+          "source": "eudpa-573-stale-refdata",
+          "ref": "verify countriesLoadingFinding"
+        }
+      ],
+      "requirements": [
+        "req-044"
+      ],
+      "notes": [
+        "Workspace ledger only: report.md lives in the workspace repo, which is not one of the four build repos, so repos is empty.",
+        "Correction to the brief applied (c-021): countries-on-first-read is an ins-only change."
+      ],
+      "gatePhases": []
+    },
+    {
+      "id": "inc-013",
+      "title": "Merge readiness: the four pull requests propose the merge",
+      "detail": "Each pull request is reviewed on its own, so each title and body is rewritten from a demonstration to a proposal for merge, carrying the same behaviour-changes list and accepted differences as the report.",
+      "acceptanceCriteria": [
+        "Each of the four pull requests has a title and body that propose it for merge and link the others and the report. (rulings:sam-2026-09-24)",
+        "Each body carries the behaviour-changes list and the accepted differences from the report, marking which apply to that repo. (eudpa-619-multi-set behaviourChanges; address-lookup-spike behaviourChanges; eudpa-333-handshake-qa behaviourChanges)",
+        "Each body lists the open questions with their defaults, question 29 marked blocked on Sam. (conflicts c-025, c-026)",
+        "ins's body says its Automatic Analysis settings change is parity only. (verify:eudpa-618-playwright-as-tests e618-005)",
+        "All four pull requests are still drafts. (rulings:sam-2026-09-24)"
+      ],
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "done",
+      "kind": "docs",
+      "repos": [
+        "ins",
+        "animals",
+        "plants",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "rulings:sam-2026-09-24",
+          "ref": "the branch is to merge"
+        }
+      ],
+      "requirements": [
+        "req-045"
+      ],
+      "notes": [
+        "Pull request text only; no commits.",
+        "Orchestrator, 24 Sep: the branch lifecycle never creates, edits or un-drafts a pull request, so the main session rewrites the four titles and bodies by hand after inc-012 lands. Withheld from the loop for that reason, not deferred as work.",
+        "Main session, 25 Sep: titles and bodies of ins #27, animals #339, plants #69 and tests #227 rewritten as proposals for merge, each listing that repo's behaviour changes, the differences kept on purpose, the merge order and its check state. Drafts left as drafts."
+      ]
+    },
+    {
+      "id": "inc-014",
+      "title": "Open question 29: ins's countries reader surface",
+      "detail": "The alignment kept ins on a narrower countries reader than the journeys (s19 D4). Whether ins should take the journeys' full reader surface and their export-block filter is Sam's decision; nothing in this sync depends on it.",
+      "acceptanceCriteria": [
+        "If Sam says yes, ins offers the same country lists and the same export-block filtering as the journeys; if he says no, the report records the decision and this row is dropped. (verify:eudpa-573-stale-refdata 573-001; conflicts c-025)"
+      ],
+      "dependsOn": [],
+      "status": "dropped",
+      "kind": "feat",
+      "repos": [
+        "ins"
+      ],
+      "sources": [
+        {
+          "source": "ledger:alignment",
+          "ref": "question 29; s19 D4"
+        }
+      ],
+      "requirements": [
+        "req-047"
+      ],
+      "openQuestions": [
+        "Should ins take the journeys' full countries reader surface and their export-block filter? Default: no; ins keeps its narrower reader as s19 D4 ruled (c-025). Blocked on Sam."
+      ],
+      "notes": [
+        "Not part of making the branch mergeable; recorded so the question is not lost.",
+        "Sam, 24 Sep 2026: ins keeps its narrower countries reader, its full MDM list and its trace header. The two countries services stay different files. Question 29 closed; the report records it as a ruling."
+      ]
+    },
+    {
+      "id": "inc-015",
+      "title": "Lift the drafts",
+      "detail": "The four pull requests stay drafts until Sam says otherwise. When he does, they leave draft together and are requested for review.",
+      "acceptanceCriteria": [
+        "On Sam's word, all four pull requests leave draft together and show as ready for review; none is merged by this programme. (rulings:sam-2026-09-24; conflicts c-026)"
+      ],
+      "dependsOn": [
+        "inc-013"
+      ],
+      "status": "blocked",
+      "kind": "chore",
+      "repos": [
+        "ins",
+        "animals",
+        "plants",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "rulings:sam-2026-09-24",
+          "ref": "never merge without Sam"
+        }
+      ],
+      "requirements": [
+        "req-046"
+      ],
+      "openQuestions": [
+        "May the four pull requests leave draft and be requested for review? Default: they stay drafts until Sam says so (c-026). Blocked on Sam."
+      ],
+      "notes": [
+        "Pull request state only."
+      ]
+    }
+  ]
+}

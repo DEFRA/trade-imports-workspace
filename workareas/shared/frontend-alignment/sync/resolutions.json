@@ -1,0 +1,1393 @@
+{
+  "programme": "frontend-alignment-sync",
+  "branch": "feat/NO_JIRA-frontend-alignment",
+  "readMe": "The pre-decided resolution record the backlog rows execute. Keyed repo -> path -> { clusters, take, why, source, notes, stage, row }. stage is pre-align (own commit on the branch before the merge), merge (inside the one 'Merge origin/main' commit; conflict = git marks it, clean-but-wrong = git merges it silently and it is wrong), wire-in (own commit after the merge) or follow-up (own commit, found by verification). source says whether the take comes from the survey (extract) or from its verification (verify); where a verification corrected the survey, the correction is applied here. Conflict lists come from measure.json (trial merges ins d664c0e9, animals affadd1d, plants 171c002c, tests d4ac0a82). Lockfiles are never hand-merged: after the merge the main session regenerates them (ins, animals, plants under pinned npm 11.6.2 via the repo's npm-version script, e.g. npx --yes \"$(node scripts/npm-version.js)\" install then a clean install; tests with plain npm). Agents cannot install.",
+  "repos": {
+    "tests": {
+      "package.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "main's two lines: @playwright/test 1.63.0 and @playwright/cli 0.1.21.",
+        "why": "The branch never touched the file; pre-aligning makes the merge a no-op for it.",
+        "source": "verify",
+        "notes": "Verifier: tests changed two lines, not one (c-022)."
+      },
+      "package-lock.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "Regenerate with plain npm after the package bump (main session), then a clean install.",
+        "why": "The tests repo has no packageManager pin on either side.",
+        "source": "verify",
+        "notes": "lockfileFinding.tests."
+      },
+      "Dockerfile": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "main's base image mcr.microsoft.com/playwright:v1.63.0-jammy.",
+        "why": "Keeps browser binaries matched to the runner.",
+        "source": "extract",
+        "notes": ""
+      },
+      "bin/update-visual-baselines-linux.sh": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "main's PLAYWRIGHT_IMAGE default v1.63.0-jammy.",
+        "why": "Matches the Dockerfile.",
+        "source": "extract",
+        "notes": ""
+      },
+      "tests/e2e/features/auth.spec.ts": {
+        "stage": "merge",
+        "row": "inc-004",
+        "clusters": [
+          "eudpa-619-multi-set",
+          "tests-security-coverage"
+        ],
+        "take": "At the one marker keep the branch's href assertion against pages.signOut.path; drop main's literal-plus-comment version. Everything else git merges: confirm main's SET_BASES import, the 'redirects the service root to the default set's dashboard' test and the ${SET_BASES.liveAnimals}-prefixed journey regex are present.",
+        "why": "Both assert /auth/sign-out (sign-out-page.ts path, untouched by main); the page-object form is the ledger's convergence style.",
+        "source": "verify",
+        "notes": "c-006: only one line is hand work."
+      },
+      "fixtures/auth-state.ts": {
+        "stage": "merge",
+        "row": "inc-004",
+        "clusters": [
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Clean-but-wrong. Keep main's AuthTarget type (no cookieName field) and authCookieNameFor(targetName, baseURL). Replace its single `targetName === 'ins'` host branch with a lookup `COMPOSE_AUTH_COOKIE_NAMES = { ins: 'ins-sid', plants: 'plants-sid' }` consulted for any target in it when the host is localhost, 127.0.0.1 or cdp-docker.test. process.env.AUTH_SESSION_COOKIE_NAME stays the first check. Delete the plants literal's `cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid'` line. e2e/admin (animals) targets unchanged: they fall back to AUTH_COOKIE_NAME 'sid'.",
+        "why": "Git keeps a plants field the type no longer declares (compile error) and main's function never reads it, so plants would silently mint 'sid' on the local stack and collide with animals.",
+        "source": "verify",
+        "notes": "c-005 (333 verify beats tsc-003-m1), c-028 default: local lookup. animals' own cookie default is flat 'sid' (333-m1)."
+      },
+      "(every other path)": {
+        "stage": "merge",
+        "row": "inc-004",
+        "clusters": [
+          "tests-security-coverage",
+          "eudpa-333-handshake-qa",
+          "eudpa-619-multi-set"
+        ],
+        "take": "Take git's merge. Confirm present: utils/zap/run-and-gate.ts banner callouts and partial-run flag; entrypoint.sh fallback report helper; tests/security/frontend-draft-validation-error.spec.ts region-of-origin target; the cb1ca03 security and a11y specs; tests/security/ins/address-book.spec.ts with the branch's single '/' visit followed by main's handshake-token check; tests/e2e/features/addresses-read-only.spec.ts and tests/e2e/pages/contact-address.spec.ts on the NonStubStack skip helpers; utils/playwright/environment.ts new helpers; the 21 clean 619 URL-layer files (page-objects/base/sets.ts etc.).",
+        "why": "All merge clean (tsc-001, 333 verify, 619-m14).",
+        "source": "verify",
+        "notes": "No spec asserts CSP form-action (tsc-005-m1)."
+      }
+    },
+    "plants": {
+      "package.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "@playwright/test 1.61.0 -> 1.63.0 on the branch.",
+        "why": "main's only package change; makes the merge a no-op for the file.",
+        "source": "extract",
+        "notes": ""
+      },
+      "package-lock.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "Regenerate under the pinned npm 11.6.2 (main session), then a clean install. The clean install is load-bearing.",
+        "why": "plants main ecccaad then 7b121f9: the same bump broke clean install when regenerated under the wrong npm.",
+        "source": "verify",
+        "notes": "pw-005-m1."
+      },
+      "src/config/nunjucks/context/context.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Combine: main's `homeUrl: setId ? withSetContext(setId, dashboardPath) : '/'` and set-scoped `activeNavigationItem: setId ? withSetContext(setId, () => activeNavigationItem(request.path)) : null`, plus the branch's `addressBookUrl: insAddressBookUrl()`. Imports, hasSetContext guard and insAddressBookUrl are already merged outside the markers. Reword any comment naming '/signout' to '/auth/*'.",
+        "why": "Non-overlapping properties of one object; merged context.test.js expects exactly {homeUrl, activeNavigationItem, addressBookUrl}.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/routes.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "The one-line barrel `export { highRiskPlants as serviceRoutes } from './routes-high-risk-plants.js'`.",
+        "why": "Conform to 619 (ruling): main's gateway keeps its set name; the shared name router.js imports lives in the barrel alias.",
+        "source": "verify",
+        "notes": "c-007. routes.test.js asserts the plugin name 'high-risk-plants', unchanged."
+      },
+      "src/server/app/routes-high-risk-plants.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "main's file verbatim (`export const highRiskPlants`).",
+        "why": "619-owned; see routes.js.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/routes.test.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "main's file plus the branch's 'Should name the session strategy on every promoted route' assertion (toMatchObject({ auth: 'session' })) in place of main's 'Should leave every promoted route to inherit the server default strategy' (not.toHaveProperty('auth')), because kit.routeOptions = { auth: 'session' } (shared/kit.js:16) is applied to every promoted route.",
+        "why": "The live merged tree already carries the branch's assertion, not main's byte-for-byte file; it is what git kept and the only form that still holds against kit.js's session-strategy default.",
+        "source": "verify",
+        "notes": "Not byte-identical to main; corrects the '(every other path)' entry's earlier claim that it was."
+      },
+      "src/server/app/shared/layout.test.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Context gets `homeUrl: SET_BASE` (main) and `addressBookUrl: ADDRESS_BOOK_URL` (branch); href list becomes [SET_BASE, ADDRESS_BOOK_URL, '#', '/auth/sign-out'].",
+        "why": "Matches the merged layout's four links.",
+        "source": "extract",
+        "notes": "Verifier holds."
+      },
+      "src/server/auth/controller.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "`import { serverWideBase, sharedCopy } from '../app/shared/kit.js'` (no base). Keep UNAUTHORISED_VIEW. All four `h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))` sites (not-authenticated, token-verify failure, organisationId guard, getPermissions catch) become `serverWideBase(sharedCopy.unauthorised.title)`. No wrapper.",
+        "why": "Git auto-merges the import to serverWideBase silently while the two branch-only sites still call base(): ReferenceError on a real sign-in path.",
+        "source": "verify",
+        "notes": "619-m5, 619-m12."
+      },
+      "src/server/common/helpers/errors.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Resolve the import to `import { chromeFor, sharedCopy } from '../../app/shared/kit.js'`; change nothing else (the body already spreads chromeFor(errorMessage, request.path) and errorMessageFor reads sharedCopy).",
+        "why": "Keeping base would be an unused import that fails neostandard lint.",
+        "source": "verify",
+        "notes": "c-009."
+      },
+      "src/server/router.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Keep the branch's imports (serviceRoutes from './app/routes.js', no signout) and its auth.enabled gate. Add main's `SET_BASE as HIGH_RISK_PLANTS_BASE` import and `export const DEFAULT_SET_BASE`. Inside the gate: `await server.register(serviceRoutes, { routes: { prefix: HIGH_RISK_PLANTS_BASE } })` then the GET '/' redirect to DEFAULT_SET_BASE. Drop main's signout registration and its comment block.",
+        "why": "The branch's router.test.js pins '/' 404 with auth disabled; /signout was deleted by s17.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/router.test.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Clean-but-weak. Keep the '/' 404 assertion and add a GET DEFAULT_SET_BASE (imported from './router.js') expecting 404 with auth disabled.",
+        "why": "After 619 the dashboard lives at the set prefix (619-m11).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/co-residency.test.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Clean-but-wrong. Register a test 'session' strategy before `server.register([nunjucksConfig, router])` via registerTestSessionAuth ported into plants' engine/test-support.js (see that entry). Root-route list becomes ['/', SIGN_IN_OIDC_PATH, '/favicon.ico', '/health', '/public/{param*}']. Replace 'Should serve /signout outside every set prefix' with a test in the real-composition-root block asserting the route table has '/auth/sign-out' and no `${HIGH_RISK_PLANTS_BASE}/auth/sign-out`. Reword the header's /signout sentence.",
+        "why": "Bare Hapi server meets the branch's routeOptions { auth: 'session' } and throws in beforeAll; the suite also pins deleted /signout.",
+        "source": "verify",
+        "notes": "619-m1, 619-m2, 619-m6."
+      },
+      "src/server/app/engine/test-support.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Add registerTestSessionAuth(server), ported from animals' engine/test-support.js (a 'test-session' scheme authenticating with authenticatedCredentials, registered as strategy 'session').",
+        "why": "plants has no such helper (619-m6); the co-residency fix needs it.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/shared/set-context.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Reword the /signout mentions (about lines 27 and 49) to /auth/*.",
+        "why": "s17 gate: no /signout outside the OIDC sign-out module.",
+        "source": "verify",
+        "notes": "619-m10."
+      },
+      "src/server/app/shared/set-context.test.js": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Delete the setIdForPath('/signout') line (about line 126); /auth/sign-out is asserted beside it.",
+        "why": "Same gate.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/docs/add-a-set.md": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Bullet becomes '`/health`, the `/auth/*` routes (including `/auth/sign-out`) and the static-asset route are server-wide', keeping the 'registers happily under a prefix' warning against /auth/sign-out.",
+        "why": "Same gate.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/common/helpers/errors.test.js": {
+        "stage": "follow-up",
+        "row": "inc-010",
+        "clusters": [
+          "refdata-503-test-stub"
+        ],
+        "take": "Merge: take git's result. Follow-up: remove the '503 when a page reads reference data that will not load' test and its /test/refdata-missing route and stubMode toggle, leaving the shared D7 text (the /test/service-unavailable Boom route). Before removing, confirm plants' countries and ports readers have their own 'reject with a serverUnavailable Boom error on load failure' tests at the service boundary; if either is missing, add it there (fetch stubbed or nock, matching that file's existing style) so the countries outage stays covered.",
+        "why": "The test reads real reference data with nothing stubbed: 200 instead of 503 whenever a local reference-data service answers, the flake animals fixed on main. Removing it also converges errors.test.js to one text across the three repos (s18 D7).",
+        "source": "verify",
+        "notes": "503stub-003-m1, c-004."
+      },
+      "src/server/app/lib/validate/calendar.js": {
+        "stage": "none",
+        "row": "",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Leave as it is (not in conflict).",
+        "why": "Verifier: flag the comment wording for the next plants/animals byte-equality pass rather than edit it in this sync.",
+        "source": "verify",
+        "notes": "req-036 out of scope."
+      },
+      ".claude/settings.json": {
+        "stage": "none",
+        "row": "",
+        "clusters": [
+          "sonar-pre-push-gate"
+        ],
+        "take": "Unchanged.",
+        "why": "plants main never adopted the pre-push gate; out of scope (req-004).",
+        "source": "extract",
+        "notes": ""
+      },
+      "(every other path)": {
+        "stage": "merge",
+        "row": "inc-005",
+        "clusters": [
+          "eudpa-573-stale-refdata",
+          "eudpa-619-multi-set"
+        ],
+        "take": "Take git's merge. Confirm present: origin and arrival-details stale-code handling with copy in en and cy and the pinning tests (573); main's 619 files (set-context, set-completeness gate, feature tests byte-identical to main).",
+        "why": "Clean (573-003, 619-m14).",
+        "source": "verify",
+        "notes": ""
+      }
+    },
+    "animals": {
+      "package.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "@playwright/test 1.61.0 -> 1.63.0.",
+        "why": "main's only package change.",
+        "source": "extract",
+        "notes": ""
+      },
+      "package-lock.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "Regenerate under pinned npm 11.6.2 (main session), then a clean install.",
+        "why": "Same lesson as plants.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/lib/validate/calendar.js": {
+        "stage": "pre-align",
+        "row": "inc-003",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "main's comment line verbatim: '// `27/3/26` parses as a year in the 1900s and slips under a `max` bound.' Nothing else differs. At merge the file is then identical on both sides.",
+        "why": "Only main's wording is accurate (date-fns reads 26 AD, Date.UTC maps it to 1926).",
+        "source": "verify",
+        "notes": "c-008."
+      },
+      "src/config/config.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Take git's merge; confirm tradeImportsAddressBookApi.baseUrl and tradeImportsInsFrontend.baseUrl both read format 'url'.",
+        "why": "Not in conflict (c-018): both sides agree on the ins-frontend key.",
+        "source": "verify",
+        "notes": "Distiller read trial tree affadd1d."
+      },
+      "src/config/config.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Add/add: keep the branch's file in full (STRICT_BOOLEAN/stubMode tests, env-backed booleans, auth.cookieName, the TRADE_IMPORTS_INS_FRONTEND_URL default test) and append main's describe('config URL validation') with its two 'rejects a malformed ...' tests and its afterEach restore, using the existing `import { config } from './config.js'`.",
+        "why": "Disjoint assertions; neither subsumes the other.",
+        "source": "extract",
+        "notes": "Verifier holds."
+      },
+      "src/config/nunjucks/context/context.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "As plants: main's homeUrl and set-scoped activeNavigationItem plus the branch's addressBookUrl: insAddressBookUrl(). Reword main's '/signout' comment to '/auth/*'.",
+        "why": "Non-overlapping properties.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/routes.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "`export { liveAnimals as serviceRoutes } from './routes-live-animals.js'`.",
+        "why": "Conform to 619; alias in the barrel.",
+        "source": "verify",
+        "notes": "c-007."
+      },
+      "src/server/app/routes-live-animals.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "main's file verbatim (`export const liveAnimals`).",
+        "why": "619-owned.",
+        "source": "verify",
+        "notes": "All its relative imports resolve in affadd1d."
+      },
+      "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "`registerTestSessionAuth(server)` (branch) first, then main's `await server.register({ name: 'animal-identification-under-test', register: (inner) => inner.route(animalIdentification.routes) }, { routes: { prefix: SET_BASE } })` in place of the branch's bare server.route(...).",
+        "why": "Strategy must exist before the route is added; the route must sit under the prefix.",
+        "source": "verify",
+        "notes": "c-001: the helper is the branch's, the scaffolding main's."
+      },
+      "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Same as animal-identification, with consignmentDetails.",
+        "why": "Same shape.",
+        "source": "verify",
+        "notes": "c-001."
+      },
+      "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Take main's serverWithDocumentRoutes({ cookies, crumb }) helper and its four call sites; insert `registerTestSessionAuth(server)` right after `const server = Hapi.server()` inside the helper.",
+        "why": "Keeps the branch's session gating on every server the helper builds.",
+        "source": "verify",
+        "notes": "c-001. Four conflict blocks."
+      },
+      "src/server/app/shared/layout.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "As plants: homeUrl SET_BASE plus addressBookUrl ADDRESS_BOOK_URL; hrefs [SET_BASE, ADDRESS_BOOK_URL, '#', '/auth/sign-out'].",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/auth/controller.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "`import { setlessBase, sharedCopy } from '../app/shared/kit.js'` (no base); `const unauthorisedChrome = () => setlessBase(sharedCopy.unauthorised.title)`; keep UNAUTHORISED_VIEW; all four sites become `h.view(UNAUTHORISED_VIEW, unauthorisedChrome())`.",
+        "why": "The two branch-only sites sit outside the markers and would call an unimported base().",
+        "source": "verify",
+        "notes": "Import is inside a marker here (619-m5)."
+      },
+      "src/server/common/helpers/errors.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "`import { base, setlessBase, sharedCopy } from '../../app/shared/kit.js'` and `import { setIdForPath, withSetContext } from '../../app/shared/set-context.js'`; keep the branch's errorMessageFor; add main's errorChrome(request, errorMessage) (set from path, else setlessBase); catchAll spreads errorChrome. Drop '/signout' from errorChrome's JSDoc.",
+        "why": "Set-aware chrome (main) on shared error copy (branch).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/common/helpers/errors.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "refdata-503-test-stub"
+        ],
+        "take": "Both hunks: the branch's /test/service-unavailable Boom route and its plain assertion. Discard main's /test/refdata-missing route, countries/config imports, stubMode toggle and fetch stub/unstub.",
+        "why": "Removes the flake's cause and keeps one errors test text across three repos (s18 D7); run-mode.test.js keeps the countries and ports 503 tests.",
+        "source": "verify",
+        "notes": "c-003: reason is D7, not an invariant breach."
+      },
+      "src/server/router.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "As plants, with `SET_BASE as LIVE_ANIMALS_BASE` from './app/sets/live-animals/set.js' and DEFAULT_SET_BASE exported (co-residency.test.js imports it); prefixed register and '/' redirect inside the auth.enabled gate; no signout registration or comment.",
+        "why": "",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/router.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Add GET DEFAULT_SET_BASE -> 404 with auth disabled beside the '/' assertion.",
+        "why": "619-m11.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/co-residency.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Call registerTestSessionAuth(server) from './engine/test-support.js' before registering the router; drop '/signout' from the root-route list; replace the /signout test with one asserting '/auth/sign-out' is in the real server's table and `${LIVE_ANIMALS_BASE}/auth/sign-out` is not; reword the header.",
+        "why": "Fails in beforeAll on the merged tree (619-m2).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/shared/kit.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Reword the setlessBase JSDoc's '/signout' to '/auth/*'.",
+        "why": "s17 gate (619-m10).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/shared/set-context.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Reword the /signout mentions (about lines 23 and 45).",
+        "why": "s17 gate.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/shared/set-context.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Delete setIdForPath('/signout') (about line 98).",
+        "why": "s17 gate.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/config/nunjucks/context/context.test.js": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Delete the activeNavigationItem('/signout') line (about line 262).",
+        "why": "s17 gate; /auth/sign-out is asserted beside it.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/docs/add-a-set.md": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "As plants.",
+        "why": "s17 gate.",
+        "source": "verify",
+        "notes": ""
+      },
+      "(every other path)": {
+        "stage": "merge",
+        "row": "inc-006",
+        "clusters": [
+          "sonar-pre-push-gate",
+          "eudpa-573-stale-refdata",
+          "eudpa-620-transporter-country-code",
+          "eudpa-333-handshake-qa",
+          "eudpa-619-multi-set"
+        ],
+        "take": "Take git's merge. Confirm present: .claude pre-push gate hook equal to main and no sonar-analyze.sh; the six Amend pages' stale-code handling with en and cy copy; transporter records carrying countryCode; party-picker test across five parties; engine/test-support.js exporting registerTestSessionAuth; every other 619 feature test byte-identical to main.",
+        "why": "Clean (sb-002, 573-002, 620-002, 619-m14).",
+        "source": "verify",
+        "notes": ""
+      }
+    },
+    "ins": {
+      "package.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "Pre-align: bump @playwright/test 1.61.0 -> 1.63.0 on the branch. Merge (conflict): take the branch's file in full.",
+        "why": "main's only package change; the conflict region is the branch's own tooling divergence (webpack, joi, esbuild ...).",
+        "source": "extract",
+        "notes": "c-019: only the Playwright bump touches the package files."
+      },
+      "package-lock.json": {
+        "stage": "pre-align",
+        "row": "inc-001",
+        "clusters": [
+          "playwright-1.63"
+        ],
+        "take": "Pre-align DONE by the main session (ins commit on the branch, 24 Sep): regenerated under pinned npm 11.6.2 and proved with a clean install. Merge (conflict): take the branch's lockfile in full. It already carries @playwright/test 1.63.0, main's only package change, so no regeneration is needed at merge; the gate's install check is the proof.",
+        "why": "Never hand-merge; the pin metadata is back on the branch but the convenience script is not.",
+        "source": "verify",
+        "notes": "c-020, pw-003-m1."
+      },
+      "sonar-project.properties": {
+        "stage": "pre-align",
+        "row": "inc-002",
+        "clusters": [
+          "eudpa-618-playwright-as-tests"
+        ],
+        "take": "sonar.exclusions=src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** ; sonar.tests=src/ ; sonar.test.inclusions=src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** ; sonar.coverage.exclusions=src/client/** ; sonar.cpd.exclusions=**/config.js,src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/**. Merge (conflict): take the branch's (pre-aligned) file.",
+        "why": "The union covers dashboard.fit.spec.js (suffix leg) and fit/ helpers address-form, seed-address, axe (directory leg). Root fit/ is outside sonar.sources.",
+        "source": "verify",
+        "notes": "e618-003-m1."
+      },
+      ".sonarcloud.properties": {
+        "stage": "pre-align",
+        "row": "inc-002",
+        "clusters": [
+          "eudpa-618-playwright-as-tests"
+        ],
+        "take": "Mirror the same union into sonar.exclusions, sonar.tests, sonar.test.inclusions and sonar.cpd.exclusions (sonar.sources=src/ unchanged).",
+        "why": "Parity with plants' equivalent file only; the 'Automatic Analysis runs beside CI' premise is probably false.",
+        "source": "verify",
+        "notes": "c-002 question; default: parity only. main has no such file, so git keeps the branch's."
+      },
+      "src/auth/get-safe-redirect.js": {
+        "stage": "pre-align",
+        "row": "inc-002",
+        "clusters": [
+          "eudpa-618-playwright-as-tests"
+        ],
+        "take": "Apply main's refactor on the branch: `const parseBase = 'https://placeholder'` with main's comment, used in the new URL() call and the origin comparison. Merge (conflict, if any remains): take main's body, which is then identical.",
+        "why": "Zero behaviour change; silences two S5332 false positives.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/config/config.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike",
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "At the marker take the branch's side (stubMode block, no runMode, no auth.stubMode, no cdpEnvironment yet). Confirm tradeImportsAddressBookApi.baseUrl reads format 'url' outside the markers. The cdpEnvironment key is added by the spike wire-in (inc-008).",
+        "why": "main's side of the marker is its pre-s03 run-mode config plus the spike key; the format change merges with no marker (c-017).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/config/config.url-validation.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Take git's merge (new file, relative import of './config.js').",
+        "why": "Clean; distiller checked its imports.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/config/nunjucks/context/build-navigation.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete (git rm).",
+        "why": "Modify/delete resurrection; its job is context.js's activeNavigationItem plus layout.njk's navigation.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/config/nunjucks/context/context.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "The branch's import block and returned object (activeNavigationItem, dashboardUrl, addressBookUrl as strings from shared/paths.js); discard main's config/buildNavigation/routes.js imports and its five addressBook* function entries.",
+        "why": "No template calls a context function on the branch.",
+        "source": "extract",
+        "notes": "Verifier holds."
+      },
+      "src/config/nunjucks/context/context.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "The branch's file in full (expectedContext, #activeNavigationItem block); discard main's two inline expectations.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/add/controller.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths",
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Delete. Its no-store behaviour is placed in the aligned add controller by inc-009.",
+        "why": "Resurrected old plugin-era controller.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/add/controller.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths",
+          "eudpa-333-handshake-qa",
+          "eudpa-619-multi-set"
+        ],
+        "take": "Delete. Its /live-animals RETURN_URL moves into add.controller.test.js (this row); its no-store test into inc-009.",
+        "why": "Modify/delete resurrection with unresolvable #/ imports.",
+        "source": "verify",
+        "notes": "c-011."
+      },
+      "src/server/address-book/add/index.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "Old plugin file deleted by s06.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/delete/controller.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "Superseded by features/address-book/delete/delete.controller.js.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/delete/index.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/delete/index.njk": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/edit/controller.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/edit/index.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/edit/index.njk": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/list/controller.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/list/index.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/list/index.njk": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/view/index.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-book/view/index.njk": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/common/constants/routes.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Clean-but-wrong: delete.",
+        "why": "A second single source of address-book paths beside shared/paths.js.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/common/constants/routes.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Clean-but-wrong: delete.",
+        "why": "paths.test.js already covers the same builders.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/common/helpers/address-book-helper.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-311-address-book-paths"
+        ],
+        "take": "Delete.",
+        "why": "Superseded by features/address-book/view-model/list.js; imports a deleted pagination helper.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-book/journey-registry.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "main's body (SET_BASES-driven return URL via buildSetBaseUrl) with imports `../../../common/constants/journey-set-bases.js` and `../../../common/helpers/set-base-url.js`; drop the branch's now-unused config import.",
+        "why": "Behaviour is main's; relative imports are the branch's convention (c-024 default).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/dashboard/view-model/list.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Drop the config import; keep dashboardPath; add SET_BASES and buildSetBaseUrl from `../../../../common/constants/journey-set-bases.js` and `../../../../common/helpers/set-base-url.js`. Body below merges with main's set-aware link builders.",
+        "why": "",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/dashboard/view-model/list.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Hunk 1: keep both, the branch's copy import and REFERENCE_NUMBER constant and main's afterEach resetting configState.animalsBaseUrl. Hunks 2-3: `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view` in the submitted-link test and the mapNotificationRows href.",
+        "why": "main's afterEach resets state two new tests mutate.",
+        "source": "verify",
+        "notes": "c-010."
+      },
+      "src/server/common/helpers/serve-static-files.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "The branch's imports (../test-helpers/mock-oidc-config.js); keep main's explanatory comment on beforeEach; body identical.",
+        "why": "main's side re-imports duplicates and an unresolvable #/ mock-auth.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/common/helpers/set-base-url.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Clean-but-wrong: `import { config } from '../../../config/config.js'`.",
+        "why": "#/ alias does not resolve.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/common/helpers/set-base-url.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Clean-but-wrong: same relative import.",
+        "why": "",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/address-book/add/add.controller.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Clean-but-wrong: RETURN_URL becomes `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value` (two dependent assertions follow).",
+        "why": "Goes red once journey-registry emits the prefix.",
+        "source": "verify",
+        "notes": "The no-store test is added in inc-009."
+      },
+      "src/server/app/features/dashboard/controller.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Clean-but-wrong: the two notification hrefs gain /live-animals and the start link becomes href=\"http://localhost:3000/live-animals\".",
+        "why": "Three assertions go red otherwise (619-006).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/routes/home/controller.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "eudpa-619-multi-set"
+        ],
+        "take": "Delete.",
+        "why": "Modify/delete resurrection with #/ imports; its assertions live in dashboard/controller.test.js.",
+        "source": "verify",
+        "notes": "c-011."
+      },
+      "src/server/common/services/mode.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "The branch's file unchanged (isStubMode only); discard both sides' marker contents in favour of it.",
+        "why": "Identical across ins, animals, plants (s03/s18); the spike gate lives with the spike (c-023 default).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/plugins/router.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Delete.",
+        "why": "Modify/delete resurrection of the per-page plugin router; every import is stale.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/router.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "At the merge take the branch's side of the import block and drop main's EUDPA-390 describe; the describe comes back, re-pointed, with the spike in inc-008.",
+        "why": "Keeps the merge commit's tree green without the spike.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/index.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove from the old place in the merge commit (git rm). inc-008 rebuilds the page in the aligned structure from origin/main's blobs (4a48670..71af650).",
+        "why": "Main-added at the old plugin-era path with #/ imports; unreachable (nothing registers it) and its tests fail to load, so the merge tree would not be green.",
+        "source": "extract",
+        "notes": "Chosen: the spike is a unit of its own, so the merge commit removes the misplaced copy and inc-008 places it."
+      },
+      "src/server/address-lookup-spike/controller.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove (see index.js); rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/controller.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/index.njk": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/detect-search-mode.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/detect-search-mode.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/map-to-address-fields.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/address-lookup-spike/map-to-address-fields.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/common/clients/address-lookup-client.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; replaced in inc-008 by app/services/address-lookup/index.js.",
+        "why": "",
+        "source": "extract",
+        "notes": "Directory-rename-split warning on src/server/common/clients: nothing else of main's lands there."
+      },
+      "src/server/common/clients/address-lookup-client.real.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/common/clients/address-lookup-client.stub.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/common/clients/address-lookup-client.test.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; rebuilt in inc-008.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/common/clients/__mocks__/address-lookup-client.js": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Remove; no replacement (s04 D2: nock at the network boundary).",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "(every other path)": {
+        "stage": "merge",
+        "row": "inc-007",
+        "clusters": [
+          "sonar-pre-push-gate",
+          "eudpa-333-handshake-qa",
+          "eudpa-619-multi-set"
+        ],
+        "take": "Take git's merge. Confirm present: .claude pre-push gate hook equal to main and no sonar-analyze.sh; journey-set-bases.js and its test; journey-registry.test.js and dashboard.fit.spec.js with /live-animals assertions; no '#/' specifier anywhere under src.",
+        "why": "Clean (sb-002, 619 cleanMergeFindings).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/controller.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "From main's controller: plain get/post handlers; `export const routes = kit.pageRoutes('/address-lookup-spike', { get, post })`; view model `{ ...kit.base(PAGE_TITLE, { recoverableError }), contentColumnClass: kit.surfaceClass('display'), heading: PAGE_TITLE, ...extra }`; client calls from ../../services/address-lookup/index.js with no trace parameter; the controller reads getTraceId() itself and attaches it to the view model so the page still shows the trace id.",
+        "why": "The branch's feature convention; the display surface must be set after the base spread (c-015).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/template.njk": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Extends 'shared/layout.njk'; fills {% block journeyContent %}; every string from copy.",
+        "why": "layouts/page.njk no longer exists (als-012).",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/copy/copy.en.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Every English string from main's index.njk and controller, unchanged in wording.",
+        "why": "copy-convention.test.js requires a copy bundle for any feature with a template.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/copy/copy.cy.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Machine-drafted Welsh with the same machine-drafted header comment the other features' copy.cy.js carry.",
+        "why": "Sam's ruling: machine-drafted Welsh stays, same header.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/copy/copy.test.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Same shape as sibling features' copy tests (en and cy key parity).",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/controller.test.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's 13 tests re-pointed: runInRealMode() plus insBackendApi() nock interceptors on /address-lookup instead of the __mocks__ module mock; sessionAuth from '../../../../common/test-helpers/session-auth.js' and mockOidcConfig from '../../../../common/test-helpers/mock-oidc-config.js', mocking get-oidc-config as address-book/list/list.controller.test.js does.",
+        "why": "s04 D2; the helper split has three files, not two (c-016).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/detect-search-mode.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's file unchanged.",
+        "why": "Pure function.",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/detect-search-mode.test.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's file unchanged.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/map-to-address-fields.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's file unchanged.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/map-to-address-fields.test.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's file unchanged.",
+        "why": "",
+        "source": "extract",
+        "notes": ""
+      },
+      "src/server/app/features/address-lookup-spike/is-dev-or-local.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "`export const isDevOrLocalEnvironment = () => ['dev', 'local'].includes(config.get('cdpEnvironment'))`, config from '../../../../config/config.js'.",
+        "why": "Gate kept with the feature; mode service stays identical across three repos.",
+        "source": "extract",
+        "notes": "c-023 default."
+      },
+      "src/server/app/routes.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Inside serviceRoutes' register(server): `server.route(isDevOrLocalEnvironment() ? [...allRoutes, ...addressLookupSpike.routes] : allRoutes)`, importing the spike controller and the gate. features/index.js's static allRoutes stays unchanged (routes.test.js snapshot unaffected). Add main's one-line comment that this is a temporary dev/local-only spike with no flag of its own.",
+        "why": "Re-evaluated at each registration, as main's was; serviceRoutes is registered only when auth is enabled, matching main's placement (als-001 verify).",
+        "source": "verify",
+        "notes": "c-014."
+      },
+      "src/server/router.test.js#EUDPA-390": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Append main's '#router EUDPA-390 address lookup spike gating' describe (2 registered-when, 6 not-registered-when cases via config.set('cdpEnvironment', ...)) with relative imports (./server.js, ../config/config.js, ./common/constants/status-codes.js).",
+        "why": "Pins the gate; passes once the gate is evaluated at registration.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/config/config.js#cdpEnvironment": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Add main's cdpEnvironment block verbatim (doc, the eight-value enum, default 'local', env ENVIRONMENT) after defraId, before stubMode.",
+        "why": "config.js is the per-service file allowed to differ (s24).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/services/address-lookup/index.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "Re-export lookupDefaultPostcode, lookupByPostcode, lookupByFind, each choosing stub or client per call on isStubMode() from '../../../common/services/mode.js'.",
+        "why": "The branch's service shape (countries, address-book, ins-backend).",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/services/address-lookup/client.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's real client as three named exports: tradeImportsInsBackendApi.baseUrl and tracing.header from config, getTraceId() read internally, throwOnError from '../../lib/http-client.js'.",
+        "why": "s04 D14/D16.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/services/address-lookup/stub.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's stub as three named async exports returning the same three addresses, without the unused trace parameter.",
+        "why": "",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/services/address-lookup/address-lookup.test.js": {
+        "stage": "wire-in",
+        "row": "inc-008",
+        "clusters": [
+          "address-lookup-spike"
+        ],
+        "take": "main's four client tests as nock against config.get('tradeImportsInsBackendApi.baseUrl') inside runInRealMode(), reusing insBackendApi(); no config-module mock.",
+        "why": "ins-backend.test.js precedent.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/address-book/add/add.controller.js": {
+        "stage": "wire-in",
+        "row": "inc-009",
+        "clusters": [
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Wrap buildView's returned h.view(...) with `.header('Cache-Control', 'no-store')`; redirects untouched.",
+        "why": "buildView is the single render path for GET and every POST error, reproducing main's four withNoStore sites with one edit.",
+        "source": "verify",
+        "notes": ""
+      },
+      "src/server/app/features/address-book/add/add.controller.test.js#no-store": {
+        "stage": "wire-in",
+        "row": "inc-009",
+        "clusters": [
+          "eudpa-333-handshake-qa"
+        ],
+        "take": "Add 'GET sets Cache-Control: no-store' (headers['cache-control'] === 'no-store' on an authenticated GET) and, for a POST validation error, the same header; assert a successful POST redirect does not carry it.",
+        "why": "Pins main's behaviour against the aligned harness.",
+        "source": "verify",
+        "notes": ""
+      }
+    }
+  }
+}

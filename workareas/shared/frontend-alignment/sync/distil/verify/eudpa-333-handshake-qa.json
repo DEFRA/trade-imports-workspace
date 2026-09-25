@@ -1,0 +1,126 @@
+{
+  "source": "eudpa-333-handshake-qa",
+  "verdicts": [
+    {
+      "id": "333-001",
+      "holds": true,
+      "reason": "git show 2b4be7c -- src/server/address-book/add/controller.js confirms `const NO_STORE = 'no-store'` and `const withNoStore = (response) => response.header('Cache-Control', NO_STORE)`, applied at exactly four call sites (GET success, GET countries-fetch failure, and renderAddForm's two POST-facing branches), never on redirectAfterAdd/redirectAfterCancel."
+    },
+    {
+      "id": "333-002",
+      "holds": true,
+      "reason": "git show 2b4be7c -- src/config/config.js shows the exact hunk `- format: String,\\n+ format: 'url',` under tradeImportsAddressBookApi.baseUrl."
+    },
+    {
+      "id": "333-003",
+      "holds": true,
+      "reason": "`git grep -n \"no-store\\|Cache-Control\" origin/feat/NO_JIRA-frontend-alignment -- src/` returns nothing (exit 1) — reproduced exactly."
+    },
+    {
+      "id": "333-004",
+      "holds": true,
+      "reason": "git show cd378de -- fixtures/auth-state.ts confirms the diff: AuthTarget.cookieName? and the ins target's static cookieName line are deleted; authCookieNameFor(targetName, baseURL) is added with the exact quoted `if (targetName === 'ins' && baseURL) { ... }` hostname check against localhost/127.0.0.1/cdp-docker.test."
+    },
+    {
+      "id": "333-005",
+      "holds": true,
+      "reason": "git show b4f43be (s24, 17 September, predates cd378de's 21 September rewrite) confirms the branch independently added `cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid'` to the plants AuthTarget entry, using the pre-cd378de single-arg authCookieNameFor(targetName) shape."
+    },
+    {
+      "id": "333-006",
+      "holds": true,
+      "reason": "git show d4ac0a8219760d380c137aeb19bf7b1492a5ab74:fixtures/auth-state.ts read in full: AuthTarget type is `{ landingPath: string; landingHeading: (page: Page) => Locator; }` (no cookieName field), yet the plants object literal still carries `cookieName: process.env.AUTH_SESSION_COOKIE_NAME ?? 'plants-sid'` as an excess property TypeScript will reject on a Record<string, AuthTarget> literal, and authCookieNameFor's body only special-cases targetName === 'ins' — it never reads AUTH_TARGETS[targetName]?.cookieName at all. No conflict markers anywhere in the file. The plants value is dead even before the type error is fixed."
+    },
+    {
+      "id": "333-007",
+      "holds": true,
+      "reason": "`git log --oneline <tests mergeBase>..origin/main -- tests/e2e/features/auth.spec.ts` returns only 623c3cc (EUDPA-619); neither 48ea0c0 nor cd378de touches it. measure.json's tests conflicts list is confirmed to contain only this one path."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "ins",
+      "path": "src/config/config.js",
+      "holds": true,
+      "reason": "Confirmed format: 'url' lands unmarked in the trial-merge tree regardless of the unrelated address-lookup-spike conflict region in the same file."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/config.url-validation.test.js",
+      "holds": true,
+      "reason": "New file, no branch path collision (confirmed clean in trial-merge tree); mechanical add."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-book/add/add.controller.js",
+      "holds": true,
+      "reason": "Read the branch's actual add.controller.js in full: buildView is the single render function called from every GET/POST error path (get success, get catch, submitAddress validation-error, submitAddress isValidationFailure catch, submitAddress unexpected catch) and never from redirectAfterAdd/redirectAfterCancel. Wrapping buildView's `h.view(...)` return with `.header('Cache-Control', 'no-store')` exactly reproduces main's four withNoStore call sites' behaviour (every render gets the header, every redirect does not) with one edit instead of four."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-book/add/add.controller.test.js",
+      "holds": true,
+      "reason": "Confirmed no existing Cache-Control assertion on the branch; porting one 'GET sets Cache-Control: no-store' test against the current harness is the correct, minimal action."
+    },
+    {
+      "repo": "animals",
+      "path": "src/config/config.js",
+      "holds": true,
+      "reason": "Read the branch's config.js directly: tradeImportsAddressBookApi.baseUrl is still `format: String`, tradeImportsInsFrontend.baseUrl is already `format: 'url'`. b7c5039b's diff changes exactly these two keys from String to 'url'. The resolution (add format:'url' to the address-book key only, leave the ins-frontend key alone) is correct and complete."
+    },
+    {
+      "repo": "animals",
+      "path": "src/config/config.test.js",
+      "holds": true,
+      "reason": "Read both files in full: the branch's file covers stubMode/env-backed-booleans/auth.cookieName/TRADE_IMPORTS_INS_FRONTEND_URL-default — none of which main's new 'config URL validation' describe block (two URL-rejection tests) duplicates or contradicts. Genuinely additive; appending is correct."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js",
+      "holds": true,
+      "reason": "Confirmed this path is absent from measure.json's animals conflicts list and b7c5039b is the only commit touching it since the merge base (git show --name-status b7c5039b: config.js, config.test.js, this file only) — a genuinely clean, untouched-by-branch merge."
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/features/addresses-read-only.spec.ts",
+      "holds": true,
+      "reason": "Confirmed touched only by 48ea0c0 and cd378de among main's tests commits, and not in the tests repo's one-item conflicts list. Clean merge stands."
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/pages/contact-address.spec.ts",
+      "holds": true,
+      "reason": "Confirmed touched only by cd378de, not in the conflicts list. Clean."
+    },
+    {
+      "repo": "tests",
+      "path": "utils/playwright/environment.ts",
+      "holds": true,
+      "reason": "Confirmed touched only by cd378de, not in the conflicts list; new helpers are pure additions beside the still-used skipIfComposeEnvironment family."
+    },
+    {
+      "repo": "tests",
+      "path": "fixtures/auth-state.ts",
+      "holds": true,
+      "reason": "The proposed generalisation (a per-target COMPOSE_AUTH_COOKIE_NAMES lookup consulted for any targetName present, replacing the single ins-only branch, with the AuthTarget.cookieName field and plants' dead literal removed) is verified sound against the real per-service defaults: ins-frontend's and plants-frontend's own src/config/config.js both define `auth.cookieName.default: isDevelopment ? '<service>-sid' : 'sid'` (confirmed by reading both files directly), so extending main's existing hostname-based dev-environment approximation from ins-only to also cover plants is consistent with an already-established pattern, not an invented one. animals-frontend's own auth.cookieName default is a flat 'sid' with no isDevelopment branch (confirmed), so the tests repo's default AUTH_COOKIE_NAME='sid' fallback for the 'e2e'/'admin' targets is already correct on both compose and CDP and needs no lookup entry — the resolution correctly leaves those targets untouched."
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "All four main commits' full file lists were cross-checked against the survey's files array: ins (2b4be7c: config.js, config.url-validation.test.js, add/controller.js, add/controller.test.js — 4/4), animals (b7c5039b: config.js, config.test.js, party-picker.controller.test.js — 3/3), tests (48ea0c0 + cd378de union: auth-state.ts, addresses-read-only.spec.ts, contact-address.spec.ts, environment.ts — 4/4). The one genuinely novel finding — fixtures/auth-state.ts's marker-free but semantically broken auto-merge — is independently confirmed by reading the trial-merge blob directly: the AuthTarget type has lost cookieName while the plants literal still sets it, and authCookieNameFor never reads it, so plants would silently fall back to 'sid' on the compose stack. The proposed per-target lookup fix is correct for ins and plants (verified against their own config.js isDevelopment-conditional cookie defaults) and rightly leaves animals untouched (its cookie name never varies by environment)."
+  },
+  "missed": [
+    {
+      "id": "333-m1",
+      "statement": "The resolution never states explicitly that no change is needed for the tests repo's 'e2e'/'admin' (animals) AUTH_TARGETS entries, or why: animals-frontend's own auth.cookieName config has no isDevelopment branch (always 'sid'), so the existing flat AUTH_COOKIE_NAME='sid' fallback is already correct on both the compose stack and CDP and the generalised lookup table rightly has no 'animals' entry. This was verified directly (src/config/config.js in trade-imports-animals-frontend) but the survey's resolution and its verdictWhy stop at 'ins, plants and animals' in the summary without showing the animals check, leaving a reader to wonder whether animals was actually considered or just assumed safe.",
+      "kind": "gap",
+      "ref": "trade-imports-animals-frontend:src/config/config.js:auth.cookieName (origin/feat/NO_JIRA-frontend-alignment)",
+      "quote": "default: 'sid',",
+      "confidence": "verbatim"
+    }
+  ]
+}

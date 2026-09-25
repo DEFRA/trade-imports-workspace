@@ -68,13 +68,22 @@ Two plants-frontend stub files are now patched, taking the total to 24. The stub
 
 Verified: format and lint clean, 2,101 unit tests pass (8 skipped), all 240 FIT specs pass including the chooser checks, and the sync reports upstream already merged.
 
+**Auth follows plants-frontend (2026-09-25, `0203baa`, not pushed).** Sam's rulings: "Just do what Plants currently does ... get anything custom to do with auth out of the way", and get rid of the organisation switching.
+- Sign-in is plants-frontend's, unpatched. `auth.js`, `csrf.js`, `session-cache.js` and `mode.js`'s `isStubMode()` are back to upstream, so production ignores STUB_MODE for sign-in and signs in through Defra ID. Locally, `npm run dev` uses plants-frontend's stub sign-in.
+- Data stays stubbed everywhere. `mode.js` gains `isStubDataMode()` (STUB_MODE, or production), which the records, address-book, countries and ports seams call. The session seam is left as plants-frontend's: in production that is yar on the memory cache.
+- Organisation handling is gone: no switcher, no "Signed in as", no organisation registry, and the org-scoped stub `clear` patches are reverted. Seeding writes one shared set of example notifications per set, at boot and after a reset, authenticated through `server.inject`'s `auth` option, so it needs no sign-in route. Every signed-in session is given the seeded ids through the session seam. "Reset this prototype's data" clears the set for everyone. `PROTOTYPE_SEED=false` on the FIT web server keeps every spec's dashboard empty.
+- **20 plants-frontend files now carry patches** (was 25).
+- CDP draft: the dev env adds `AUTH_ENABLED=true` and plants-frontend's `DEFRA_ID_*` values, with the prototype's own redirect URLs. The Defra ID stub keeps no registration list, so nothing needs registering. `DEFRA_ID_CLIENT_SECRET` joins the secrets.
+
+Verified: format and lint clean, 2,103 unit tests pass (8 skipped), 236 FIT specs pass, and the sync reports upstream already merged.
+
 **Note on installing:** ambient npm is 11.17.0 and the repo pins 11.6.2, so plain `npm ci` fails with a false "lockfile out of sync". Use `npx --yes npm@11.6.2 ci`.
 
 ---
 
 ## Still to do
 
-Nothing on the prototype branch. Everything below landed on 2026-09-24 (see Done), except the richer address book. What's left is Sam's: remove the prototype's stale `.claude/settings.json` hooks, run the HTTP check on `npm start`/`docker run` (curl is denied to agents), commit the CDP drafts, answer the two questions below, and merge the PRs. It's also worth taking the org-scoped stub `clear` and an address-book seam upstream into plants-frontend.
+Nothing on the prototype branch. Everything below landed on 2026-09-24 (see Done), except the richer address book. What's left is Sam's: remove the prototype's stale `.claude/settings.json` hooks, run the HTTP check on `npm start`/`docker run` (curl is denied to agents), commit the CDP drafts, answer the two questions below, and merge the PRs. It's also worth taking an address-book seam upstream into plants-frontend.
 
 The original scope, kept for reference:
 
@@ -146,5 +155,5 @@ The prototype owns all of `.github/` and its tooling files.
 
 ## Open for Sam
 
-1. **Who can reach the deployed prototype?** Stub sign-in lets anyone who reaches the URL in. Is CDP's internal-only access enough, or does it need a shared password on the chooser?
+1. **Who can reach the deployed prototype?** It signs in through the Defra ID stub, which lets anyone who reaches it pick a test user. Is CDP's internal-only access enough?
 2. **Which CDP environment**, and should every merge to `main` deploy?

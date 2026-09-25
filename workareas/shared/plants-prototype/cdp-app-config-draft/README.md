@@ -24,16 +24,28 @@ needed, not copies of an existing file — see the caveat at the top of each.
 
 ## What differs from plants-frontend, and why
 
-- **`STUB_MODE=true`, `SESSION_CACHE_ENGINE=memory`, set explicitly.** The
-  prototype's own code already defaults to these (`src/prototype-defaults.js`,
-  increment 1), but only when the variable isn't already set. CDP's own
-  `NODE_ENV=production` would otherwise flip the session cache to `redis`
-  (see `config.js`). Setting both here means staying in stub mode doesn't
-  depend on that local fallback once it's deployed.
-- **No backend, reference data, address book or Defra ID config.** Stub mode
-  never calls the real services those variables point at, and `config.js`
-  already has safe stub defaults for all of them — dropped entirely rather
-  than pointed at anything.
+- **Sign-in is plants-frontend's, unchanged.** `AUTH_ENABLED=true` and every
+  `DEFRA_ID_*` setting mirror plants-frontend's dev entry, pointed at the same
+  Defra ID stub. Only the two redirect URLs differ, naming the prototype's
+  own host (`https://trade-imports-plants-prototype.dev.cdp-int.defra.cloud/auth/sign-in-oidc`
+  and `/auth/sign-out-oidc`).
+- **Nothing to register with the Defra ID stub.** The stub
+  (`trade-imports-defra-id-stub`, `src/routes/open-id.js`) only checks that
+  `client_id`, `serviceId` and `client_secret` are non-empty and that the
+  redirect URLs are valid URLs; it keeps no list of registered clients or
+  redirect URLs. The client id only chooses which set of stub users it offers
+  (its S3 data is filed by client id, falling back to its built-in users), so
+  the prototype reuses plants-frontend's `DEFRA_ID_CLIENT_ID` and
+  `DEFRA_ID_SERVICE_ID` and gets the same users.
+- **`SESSION_CACHE_ENGINE=memory`, set explicitly.** The prototype's own code
+  already defaults to it (`src/prototype-defaults.js`), but only when the
+  variable isn't already set, and plants-frontend's production default is
+  Redis. The prototype runs one instance with no Redis.
+- **No `STUB_MODE`.** Production ignores it for sign-in, exactly as in
+  plants-frontend, and the prototype's data services serve stub data in
+  production regardless (`isStubDataMode` in `mode.js`).
+- **No backend, reference data or address book URLs.** The data is always
+  stubbed, so the prototype never calls those services.
 - **No `PORT`.** Neither does plants-frontend. CDP fixes `PORT=8085` for
   every service (`cdp-app-config/global/global_protected_fixed.env`,
   which can't be overridden) — the prototype's own default of 3103 only
@@ -55,9 +67,14 @@ public placeholder default so the app boots without it, but that default is
 checked into the prototype's git history, so a real deployment needs its own
 value or anyone could forge a session cookie against it.
 
-No other secret is needed: dropping Defra ID, backend, reference data,
-address book and Redis config also drops their secrets
-(`DEFRA_ID_CLIENT_SECRET`, `REDIS_PASSWORD`) — stub mode never uses them.
+**`DEFRA_ID_CLIENT_SECRET`** — one per environment, via the CDP portal, as
+plants-frontend has. Sign-in sends it on every token request. The Defra ID
+stub only checks that it is present, so plants-frontend's value or any other
+non-empty value works; without one the app falls back to `config.js`'s public
+`test-secret` placeholder.
+
+No other secret is needed: with no backend, reference data, address book or
+Redis config, their secrets (such as `REDIS_PASSWORD`) are not needed either.
 
 `cdp-app-config` itself has no secrets-list file to mirror: it explicitly
 never stores secrets (its README says so) — they're entered directly into
@@ -65,9 +82,9 @@ the CDP portal instead.
 
 ## Open questions (from PLAN.md — Sam decides, not drafted here)
 
-1. **Who can reach it?** Stub sign-in lets anyone who reaches the URL in — is
-   CDP's internal-only frontend zone enough, or does the chooser need a
-   shared password too?
+1. **Who can reach it?** Sign-in now goes through the Defra ID stub, as
+   plants-frontend's does, but the stub lets anyone who reaches it pick a
+   test user. Is CDP's internal-only frontend zone enough?
 2. **Which environment, and does every merge deploy?** This draft targets
    `dev` — the lowest tier plants-frontend has real config for — but Sam
    hasn't chosen, and hasn't decided whether every `main` merge should

@@ -1784,8 +1784,7 @@ TASK:
    is still untracked, but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 5. Commit, one commit per repo, each with the same message: \`<type>(${SCOPE}): <increment title>\`, where the type is
    \`feat\` or \`fix\` when the behaviour changes below are not empty, otherwise the type the increment's \`kind\`
-   implies; a body saying what changed and naming the increment id (this run has no ticket); and the trailer:
-   Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+   implies; and a body saying what changed and naming the increment id (this run has no ticket). No trailer.
    Behaviour changes, from the plan: ${behaviourChanges?.length ? behaviourChanges.map((change) => `\n   - ${change}`).join('') : 'none'}
    In a repo MID-MERGE that same \`git commit\` concludes the merge, and git records the merged ref as the second parent.
    Never \`--squash\`, never \`merge --continue\`, never a commit that drops the second parent. Confirm it with
@@ -2954,8 +2953,7 @@ TASK:
    that is still untracked — but NOTHING under logs/, no coverage output, no test-results/, no .playwright artefacts.
 4. Commit with a conventional message: \`<type>(${SCOPE}): <increment title>\` — \`feat\` or \`fix\` when the
    behaviour changes below are not empty, otherwise the type the increment's \`kind\` implies — a body saying what
-   changed and naming the increment id and its ticket \`${ticket?.key}\`, and the trailer:
-   Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+   changed and naming the increment id and its ticket \`${ticket?.key}\`. No trailer.
    Behaviour changes, from the plan: ${plan?.behaviourChanges?.length ? plan.behaviourChanges.map((b) => `\n   - ${b}`).join('') : 'none'}
    A slice across several repos gets ONE commit per repo, each with the same subject.
 4a. ${SPEC_RULE} If it has changes, they are part of this increment: commit them in the workspace with the same

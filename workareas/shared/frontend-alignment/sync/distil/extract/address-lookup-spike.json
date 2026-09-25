@@ -1,0 +1,437 @@
+{
+  "cluster": "address-lookup-spike",
+  "title": "EUDPA-390 dev-only address lookup spike page (ins)",
+  "summary": "A dev/local-only page at GET+POST /address-lookup-spike, registered only when the CDP-injected ENVIRONMENT is 'dev' or 'local' (no flag of our own). It searches trade-imports-ins-backend's GET /address-lookup by postcode or free text, shows per-hop timings (STS, Entra, gateway, backend total, page round trip) and a trace id, and maps a chosen result onto the address book's own fields, naming what the lookup cannot fill (county, ISO country code). Nothing is saved. The client follows the existing real/stub split so the page works with the backend down; the stub serves the same three addresses trade-imports-stub's simulator returns.",
+  "repos": ["ins"],
+  "mainCommits": {
+    "ins": [
+      "4a48670 feat(EUDPA-390): add the dev-only address lookup spike page",
+      "581345e feat: search the address lookup spike page by postcode or free text, and map a chosen result",
+      "97b7451 fix: handle an unreadable chosen address, cover no-results and lookup queries, apply formatting",
+      "71af650 fix: address SonarCloud warnings on the address lookup spike"
+    ]
+  },
+  "files": [
+    {
+      "repo": "ins",
+      "mainPath": "src/config/config.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/config/config.js",
+      "trialMerge": "conflict",
+      "targetPath": "src/config/config.js",
+      "note": "Two unrelated hunks land in this one conflict. Only the `cdpEnvironment` block (added after `defraId`, before the old `runMode`/`auth.stubMode` block main still carried) belongs to this cluster — pure addition, no collision with anything s03 changed. The other hunk (`tradeImportsAddressBookApi.baseUrl` format `String`→`'url'`) is EUDPA-333's and is named, not resolved, here."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/services/mode.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/server/common/services/mode.js",
+      "trialMerge": "conflict",
+      "targetPath": "src/server/common/services/mode.js (no change — see resolutions)",
+      "note": "Main's side of the conflict is its pre-s03 mode.js (mode()/isRealMode()/isStubMode() over runMode, isAuthStubMode(), plus the new isDevOrLocalEnvironment()) — all superseded except the one new export. mode.js is one of the files s03/s18 made byte-equal across ins/animals/plants; adding an ins-only export here would break that. Resolution keeps the branch's file untouched and relocates the gate."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/plugins/router.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "absent (superseded by src/server/router.js + src/server/app/features/index.js)",
+      "trialMerge": "conflict",
+      "targetPath": "src/server/app/features/index.js (conditional splice into allRoutes)",
+      "note": "Modify/delete: main added an `addressLookupSpike` import and an `isDevOrLocalEnvironment()`-gated push onto the routes array registered per-plugin; the branch deleted this whole per-page-plugin registration model. `git merge-tree` resurrects main's file verbatim at the old path — every import in it (`../routes/home/index.js`, `../address-book/list/index.js`, `#/config/config.js`, ...) is stale on the branch. Do not keep this file."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/plugins/router.test.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/server/router.test.js",
+      "trialMerge": "conflict",
+      "targetPath": "src/server/router.test.js",
+      "note": "Git resolves this as a modify/rename (branch's router.test.js correlates with main's plugins/router.test.js by content), surfacing the conflict at the branch path. Only the new `#router EUDPA-390 address lookup spike gating` describe block (6 tests: 2 registered-when × 6 not-registered-when, via `config.set('cdpEnvironment', ...)`) is this cluster's; the existing `#router auth gating` describe is untouched by main and needs no merge."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/index.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "deleted — no counterpart; its two jobs (route table, dev/local gate) move into controller.js's `routes` export and features/index.js's conditional splice",
+      "note": "A hand-rolled Hapi plugin object (`{ plugin: { name, register(server) { server.route([...]) } } }`) registering GET+POST /address-lookup-spike with `sessionAuthRouteOptions`. The branch has no per-feature plugin objects; every feature exports a plain `routes` array built by `kit.pageRoutes(path, { get, post })`, aggregated once in features/index.js."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/controller.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/controller.js",
+      "note": "Imports `addressLookupClient` from `#/server/common/clients/address-lookup-client.js` (alias unresolved on the branch — no `imports` map in package.json) and exports `{ get: { handler }, post: { handler } }` rather than `{ get, post }` handlers + a `routes` export. View calls `h.view(VIEW, { pageTitle, heading, ...extra })` directly rather than through `kit.base()`, so it never sets `sharedCopy`/`contentColumnClass`/`layout` that shared/layout.njk now reads."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/controller.test.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/controller.test.js",
+      "note": "13 tests. Mocks the client module at the boundary (`vi.mock('#/server/common/clients/address-lookup-client.js', () => import('.../__mocks__/address-lookup-client.js'))`) — the module-mock pattern s04 D2 replaced everywhere with nock at the network boundary. Also imports `#/server/common/test-helpers/mock-auth.js` (sessionAuth/mockOidcConfig), which on the branch is split into `mock-auth-config.js` + `session-auth.js`. Both need adapting, not just a path swap."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/index.njk",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/template.njk",
+      "note": "`{% extends 'layouts/page.njk' %}` — that template no longer exists (branch's is `shared/layout.njk`, at `src/server/app/shared/layout.njk`, and pinned by copy-convention as one of the identical-across-ins/animals/plants files). The page also defines `{% block content %}` wholesale (a full-width, ungridded layout); the branch's layout defines `{% block content %}` itself (wraps a govuk-grid-row/contentColumnClass) with an inner `{% block journeyContent %}` for features to fill. Every string is hardcoded English inline — no copy/ bundle."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/detect-search-mode.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/detect-search-mode.js",
+      "note": "Pure function, no imports beyond its own regex/constant. Clean mechanical move, no edit needed."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/detect-search-mode.test.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/detect-search-mode.test.js",
+      "note": "Imports only its sibling module by relative path (`./detect-search-mode.js`) — survives the move unedited."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/map-to-address-fields.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/map-to-address-fields.js",
+      "note": "Pure function, no imports. Clean mechanical move. Its doc comment references `address-book/address-schema.js` by name only (prose), nothing to fix."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-lookup-spike/map-to-address-fields.test.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/features/address-lookup-spike/map-to-address-fields.test.js",
+      "note": "Imports only its sibling module by relative path — survives the move unedited."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/clients/address-lookup-client.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "broken",
+      "targetPath": "deleted — superseded by src/server/app/services/address-lookup/index.js",
+      "note": "The selector: `export const addressLookupClient = isStubMode() ? stubClient : realClient`, evaluated once at import (module-load-time selection), using `#/server/common/services/mode.js` (alias unresolved) and an object-of-methods shape. Every branch service (countries, address-book, ins-backend) instead asks `isStubMode()` per call inside a named-export index.js."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/clients/address-lookup-client.real.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "broken",
+      "targetPath": "src/server/app/services/address-lookup/client.js",
+      "note": "Imports `#/config/config.js` (alias unresolved) and `throwOnError` from `./http-client.js` — that file moved to `src/server/app/lib/http-client.js` under s04 (git mv, byte-identical), so the relative specifier no longer resolves even once the alias is fixed. Threads `traceId` as an explicit parameter through every method; the branch's clients (countries/client.js) instead call `getTraceId()` from `@defra/hapi-tracing` internally and take no trace parameter (s04 D14/D16)."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/clients/address-lookup-client.stub.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "src/server/app/services/address-lookup/stub.js",
+      "note": "No imports; three named async functions returning the fixed three-address fixture. Clean move once the trace parameter is dropped to match client.js's new shape (the stub never used `_traceId` for anything but signature parity)."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/clients/address-lookup-client.test.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "broken",
+      "targetPath": "src/server/app/services/address-lookup/address-lookup.test.js",
+      "note": "4 tests (real client via nock), but `vi.mock('#/config/config.js', ...)` mocks the whole config module by alias (unresolved) rather than reading the real convict defaults the way countries.test.js/address-book.test.js do. Rename follows the branch's `<service>.test.js` convention (countries.test.js, address-book.test.js, ins-backend.test.js)."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/clients/__mocks__/address-lookup-client.js",
+      "mainChange": "A",
+      "branchStatus": "absent",
+      "branchPath": "",
+      "trialMerge": "misplaced",
+      "targetPath": "deleted — no replacement",
+      "note": "A `vi.fn()`-stubbed module mock. s04 D2 deleted both existing `__mocks__/` files and created none; controller tests instead boot the server in real mode and nock the convict base URL. `address-lookup-client.real.js`'s base URL is `tradeImportsInsBackendApi.baseUrl` — the same one `insBackendApi()` in real-mode.js already nocks for the home controller's notifications calls — so no new nock-scope helper is needed."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "none",
+    "evidence": "`git -C <clone> ls-tree -r --name-only origin/feat/NO_JIRA-frontend-alignment | grep -i address-lookup` returns nothing. The branch's `src/server/router.js` registers a single `serviceRoutes` plugin built from `app/routes.js` → `features/index.js`'s `allRoutes`, with no per-page plugin list and no conditional route at all; `src/server/common/services/mode.js` exports only `isStubMode`; `src/config/config.js` has no `cdpEnvironment` key."
+  },
+  "verdict": "port",
+  "verdictWhy": "Every gap is closed by applying conventions the ledger has already landed elsewhere on the branch (s03's mode.js byte-equality, s04's app/services/<name>/{index,client,stub}.js shape and per-call isStubMode()/getTraceId(), s21's features/<name>/{controller.js,template.njk,controller.test.js} convention and kit.pageRoutes wiring, s18's network-boundary-mock rule). No file's target location or shape is ambiguous. The one structural requirement worth flagging loudly — copy-convention.test.js forces a copy/ bundle on any feature with a .njk template — is not a choice either; it is enforced by an existing test with no dev-only exemption.",
+  "resolutions": [
+    {
+      "repo": "ins",
+      "path": "src/config/config.js",
+      "take": "Keep the branch's file; append the `cdpEnvironment` convict block verbatim (doc string, the 8-value enum, default 'local', env 'ENVIRONMENT'), placed after `defraId` and before `stubMode` — the same slot main used relative to its own (now-superseded) `runMode` block. Leave the `tradeImportsAddressBookApi.baseUrl` format hunk alone; that belongs to EUDPA-333.",
+      "why": "Pure addition, no branch key it collides with; s24 already established config.js as \"the file allowed to differ\" per service, so an ins-only key here is normal, not drift."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/services/mode.js",
+      "take": "Discard both sides of the conflict shown in the merge tree; keep the branch's file completely unchanged (`isStubMode` only). Do not add `isDevOrLocalEnvironment` here.",
+      "why": "mode.js is byte-equal across ins/animals/plants per s03/s18's own invariant checks (`diff -rq` over src/server/common/). Adding an ins-only, EUDPA-390-only export here would be the first deliberate break of that invariant for a feature that isn't even shared chassis."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-lookup-spike/is-dev-or-local.js",
+      "take": "New file (not in main): `export const isDevOrLocalEnvironment = () => ['dev', 'local'].includes(config.get('cdpEnvironment'))`, reading `config` from `../../../../config/config.js`. Import it from `features/index.js` only.",
+      "why": "Keeps the gate exactly as main expresses it (same values, same config key) while keeping it local to the one feature that needs it — consistent with \"feature folders are independent by design\" and preserves mode.js's cross-repo byte-equality."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/plugins/router.js",
+      "take": "Delete outright (do not resurrect). Its two jobs move: the route table becomes controller.js's `routes` export via `kit.pageRoutes`; the dev/local gate becomes a conditional spread in features/index.js's `allRoutes`, e.g. `...(isDevOrLocalEnvironment() ? addressLookupSpike.routes : [])`.",
+      "why": "The branch's router.js/routes.js/features-index.js model has already replaced per-page plugin registration everywhere else; resurrecting this file would reintroduce the pattern the alignment removed."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/router.test.js",
+      "take": "Keep the branch's `#router auth gating` describe untouched (main doesn't touch it — no conflict there). Append main's `#router EUDPA-390 address lookup spike gating` describe verbatim, re-pointed at the branch's own imports (`./server.js`, `../config/config.js`, `./common/constants/status-codes.js`) — no `#/` alias, and no `vi`/OIDC mock needed: the suite's default STUB_MODE=true means `isStubMode()` already skips the OIDC round-trip inside `src/plugins/auth.js`'s `register()`, so `createServer()` never reaches out.",
+      "why": "The 8 new test cases (2 registered-when-dev-or-local + 6 not-registered-when-anything-else) pin exactly the behaviour this cluster adds; nothing about them depends on the deleted plugin file, only on the route existing (or not) at `/address-lookup-spike`."
+    }
+  ],
+  "preAlign": [
+    {
+      "repo": "ins",
+      "what": "The `cdpEnvironment` convict key in src/config/config.js (see resolutions above).",
+      "why": "Self-contained addition with no dependency on the rest of the port; landing it first lets the feature-folder work proceed without touching config.js again."
+    }
+  ],
+  "wireIn": [
+    {
+      "repo": "ins",
+      "what": "controller.js — rename `{ get: { handler }, post: { handler } }` to plain `get`/`post` handler functions; replace `view(h, extra)`'s `h.view(VIEW, { pageTitle, heading, ...extra })` with `h.view(VIEW, { ...kit.base(PAGE_TITLE, { contentColumnClass: kit.surfaceClass('display') }), heading: PAGE_TITLE, ...extra })` (display, not the two-thirds default, matches main's original full-width, ungridded layout most closely — dashboard/list already makes the same call for its own tables); export `export const routes = kit.pageRoutes('/address-lookup-spike', { get, post })`; import `addressLookupClient`'s three functions from `../../services/address-lookup/index.js` instead of the deleted selector; drop the `traceId` parameter from the internal `search()` call and instead attach the controller's own `getTraceId()` result onto the returned view model (the client itself no longer takes or needs it, but the page must keep showing the trace id).",
+      "where": "src/server/app/features/address-lookup-spike/controller.js"
+    },
+    {
+      "repo": "ins",
+      "what": "template.njk — `{% extends 'layouts/page.njk' %}` → `{% extends 'shared/layout.njk' %}`; `{% block content %}...{% endblock %}` → `{% block journeyContent %}...{% endblock %}` (drop the outer grid wrapper the page no longer needs to supply itself); every hardcoded English string moves into copy/copy.en.js and is referenced as `copy.<key>` (see below).",
+      "where": "src/server/app/features/address-lookup-spike/template.njk"
+    },
+    {
+      "repo": "ins",
+      "what": "New copy/copy.en.js, copy/copy.cy.js (machine-draft, per the branch's established convention — s07's Welsh-header comment), copy/copy.test.js — every string copy-convention.test.js's `featuresWithTemplates` sweep will require once template.njk exists in a features/ subfolder with a .njk file.",
+      "where": "src/server/app/features/address-lookup-spike/copy/"
+    },
+    {
+      "repo": "ins",
+      "what": "New is-dev-or-local.js (see resolutions), imported only by features/index.js.",
+      "where": "src/server/app/features/address-lookup-spike/is-dev-or-local.js"
+    },
+    {
+      "repo": "ins",
+      "what": "features/index.js — add `import * as addressLookupSpike from './address-lookup-spike/controller.js'` and `import { isDevOrLocalEnvironment } from './address-lookup-spike/is-dev-or-local.js'`; extend `allRoutes` with `...(isDevOrLocalEnvironment() ? addressLookupSpike.routes : [])` as its last entry.",
+      "where": "src/server/app/features/index.js"
+    },
+    {
+      "repo": "ins",
+      "what": "New app/services/address-lookup/{index.js,client.js,stub.js} following countries'/address-book's shape exactly: stub.js exports the three named async functions unchanged; client.js exports the same three names, reads `tradeImportsInsBackendApi.baseUrl` and `tracing.header` from convict, reads the trace id via `getTraceId()` internally instead of taking a parameter, and imports `throwOnError` from `../../lib/http-client.js`; index.js re-exports each name, branching per call on `isStubMode()` from `../../../common/services/mode.js`.",
+      "where": "src/server/app/services/address-lookup/"
+    },
+    {
+      "repo": "ins",
+      "what": "New address-lookup.test.js — nock against `config.get('tradeImportsInsBackendApi.baseUrl')` inside `runInRealMode()`, reusing `insBackendApi()` from common/test-helpers/real-mode.js (same base URL the ins-backend notifications client already nocks); no config-module mock.",
+      "where": "src/server/app/services/address-lookup/address-lookup.test.js"
+    },
+    {
+      "repo": "ins",
+      "what": "controller.test.js — replace the `vi.mock('.../address-lookup-client.js', () => import('.../__mocks__/...'))` module-boundary mock with `runInRealMode()` + `insBackendApi()` nock interceptors on `/address-lookup`, matching every other feature's controller test on the branch (s04 D2); replace the `#/server/common/test-helpers/mock-auth.js` import with the branch's `sessionAuth`/`mockOidcConfig` split (`common/test-helpers/session-auth.js` and `mock-auth-config.js` — confirm exact export names against a sibling controller test, e.g. address-book/list/list.controller.test.js, before writing).",
+      "where": "src/server/app/features/address-lookup-spike/controller.test.js"
+    }
+  ],
+  "behaviourChanges": [
+    {
+      "change": "Trace id plumbing moves from an explicit parameter threaded through search()/client calls to the client reading getTraceId() internally, matching every other branch service.",
+      "userVisible": false,
+      "note": "The trace id is still read from the same hapi-tracing context and still displayed on the page (the controller captures it once via getTraceId() for its own logger calls and attaches it to the search result for the view) — no behaviour change, only where the read happens."
+    },
+    {
+      "change": "The page's copy moves from inline template strings to a copy/copy.en.js + copy/copy.cy.js bundle, forced by copy-convention.test.js.",
+      "userVisible": false,
+      "note": "English text rendered is identical; Welsh is new (machine-draft, unreachable — no locale toggle exists anywhere in the service, per the report's Known caveats), consistent with every other feature's copy.cy.js."
+    }
+  ],
+  "knockOn": [
+    "features/index.js's allRoutes grows a conditional (environment-dependent) entry — the first one. Every other entry is unconditional. Worth a one-line comment (main already has one: \"EUDPA-390: temporary spike page, dev/local only (plan D3) — no flag of our own.\") so the exception reads as deliberate, not a mistake in a later stage's review.",
+    "The dependency-cruiser boundary (`.dependency-cruiser.cjs`, s21 D10) excludes `/fit/` and `*.fit.spec.js` from feature-isolation checking but does not exclude address-lookup-spike itself — since this feature has no fit spec at all (main never added one), nothing here interacts with that exclusion list."
+  ],
+  "openQuestions": [
+    {
+      "question": "Should isDevOrLocalEnvironment() live in a feature-local file (this extract's default) or be added to the shared mode.js, accepting that mode.js stops being byte-equal across ins/animals/plants for the one repo that has a dev-only spike the other two don't?",
+      "default": "Feature-local file (src/server/app/features/address-lookup-spike/is-dev-or-local.js) — preserves the s03/s18 byte-equality invariant; the gate is trivial to duplicate if a later spike needs the same pattern elsewhere."
+    },
+    {
+      "question": "Does address-lookup-spike get a Playwright fit spec on the branch, the way every other feature folder does (s21's convention: a single-page feature's spec sits beside its controller)? Main never added one for this page.",
+      "default": "No — out of scope for this port. Main shipped without one; adding one now would be gold-plating a temporary dev-only page, not a mechanical carry-forward of main's behaviour."
+    }
+  ],
+  "claims": [
+    {
+      "id": "als-001",
+      "statement": "The spike page is registered only when the CDP-injected ENVIRONMENT is 'dev' or 'local', gated in router.js, not by a dedicated flag.",
+      "kind": "behaviour",
+      "ref": "ins:src/server/plugins/router.js@4a48670",
+      "quote": "// EUDPA-390: temporary spike page, dev/local only (plan D3) — no flag of our own.\n        if (isDevOrLocalEnvironment()) {\n          routes.push(addressLookupSpike)\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-002",
+      "statement": "isDevOrLocalEnvironment() reads the new cdpEnvironment convict key, sourced from the ENVIRONMENT env var, defaulting to 'local'.",
+      "kind": "config",
+      "ref": "ins:src/config/config.js@4a48670",
+      "quote": "cdpEnvironment: {\n    doc: \"The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). EUDPA-390: the address lookup spike page is registered only for dev/local — see router.js.\",\n    format: [\n      'dev',\n      'test',\n      'perf-test',\n      'ext-test',\n      'prod',\n      'infra-dev',\n      'management',\n      'local'\n    ],\n    default: 'local',\n    env: 'ENVIRONMENT'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-003",
+      "statement": "The client follows the existing real/stub split, selected once at module load via isStubMode() from mode.js.",
+      "kind": "structure",
+      "ref": "ins:src/server/common/clients/address-lookup-client.js@4a48670",
+      "quote": "export const addressLookupClient = isStubMode() ? stubClient : realClient",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-004",
+      "statement": "On the branch, mode.js exports only isStubMode(); the old mode()/isRealMode()/isAuthStubMode() surface main's spike was built against no longer exists.",
+      "kind": "structure",
+      "ref": "ins:src/server/common/services/mode.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const isStubMode = () =>\n  config.get('stubMode') && !config.get('isProduction')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-005",
+      "statement": "On the branch, services ask isStubMode() per call inside a named-export index.js, not once at module load, and the client reads the trace id from hapi-tracing internally rather than taking it as a parameter.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/services/countries/index.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const ensureLoaded = async () => {\n  if (isStubMode() || loaded) {\n    return\n  }\n  try {\n    countries = await fetchCountries()\n    loaded = true\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-006",
+      "statement": "The branch registers every feature's routes through a single serviceRoutes plugin built from features/index.js's allRoutes, not per-page plugins.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/routes.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const serviceRoutes = {\n  plugin: {\n    name: 'import-notification-service',\n    register: (server) => {\n      server.route(allRoutes)\n    }\n  }\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-007",
+      "statement": "A feature's routes are built with kit.pageRoutes(path, {get, post}, options = routeOptions), where routeOptions defaults to session auth — the branch equivalent of main's sessionAuthRouteOptions.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/shared/kit.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const routeOptions = { auth: 'session' }\n...\nexport const pageRoutes = (path, { get, post }, options = routeOptions) => [\n  { method: 'GET', path, options, handler: get },\n  ...(post ? [{ method: 'POST', path, options, handler: post }] : [])\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-008",
+      "statement": "The branch's package.json carries no #/ imports map, so every #/-prefixed specifier in main's spike code (config.js, mode.js, the client, the test helpers) fails to resolve on the branch.",
+      "kind": "structure",
+      "ref": "ins:package.json@origin/feat/NO_JIRA-frontend-alignment and trial-merge tree d664c0e",
+      "quote": "grep -A3 '\"imports\"' package.json → no output on either the branch tip or the trial-merge tree",
+      "confidence": "inferred"
+    },
+    {
+      "id": "als-009",
+      "statement": "Every feature folder with a .njk template must own a copy/ bundle (copy.en.js, copy.cy.js, copy.test.js); there is no dev-only exemption.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/copy-convention.test.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "it.each(featuresWithTemplates)(\n    'Should give %s a copy/ folder with copy.en.js, copy.cy.js and copy.test.js',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-010",
+      "statement": "http-client.js (source of throwOnError, which address-lookup-client.real.js imports) moved from src/server/common/clients/ to src/server/app/lib/ under s04, as a byte-identical git mv.",
+      "kind": "structure",
+      "ref": "workspace:workareas/shared/frontend-alignment/plans/s04-services-shape.md#L76",
+      "quote": "| `src/server/common/clients/http-client.js` | `src/server/app/lib/http-client.js` | move (D12) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-011",
+      "statement": "s04 D2 deleted both __mocks__ folders and replaced every module-boundary client mock with nock at the network boundary; no new __mocks__ folder is created.",
+      "kind": "structure",
+      "ref": "workspace:workareas/shared/frontend-alignment/plans/s04-services-shape.md#L49",
+      "quote": "**nock, everywhere.** Both `__mocks__` files are deleted and no new one is created. Every controller test that used to `vi.mock` a client module now boots the server in real mode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-012",
+      "statement": "The branch's shared/layout.njk wraps its content block in a govuk-grid-row/contentColumnClass and exposes an inner journeyContent block for features to fill, rather than letting a page override the whole content block as main's layouts/page.njk let it.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/shared/layout.njk@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "{% block content %}\n  <div class=\"govuk-grid-row\">\n    <div class=\"{{ contentColumnClass | default(\"govuk-grid-column-two-thirds\", true) }}\">\n      ...\n      {% block journeyContent %}{% endblock %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-013",
+      "statement": "main's spike page bypassed the grid entirely by overriding {% block content %} wholesale, giving itself a full-width, ungridded layout.",
+      "kind": "structure",
+      "ref": "ins:src/server/address-lookup-spike/index.njk@48d89c4",
+      "quote": "{% extends 'layouts/page.njk' %}\n...\n{% block content %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-014",
+      "statement": "The trial merge resurrects main's src/server/plugins/router.js verbatim (a modify/delete conflict), importing from paths that no longer exist on the branch.",
+      "kind": "conflict",
+      "ref": "ins:src/server/plugins/router.js@trial-merge-tree-d664c0e",
+      "quote": "import { home } from '../routes/home/index.js'\n...\nimport { config } from '#/config/config.js'\nimport { isDevOrLocalEnvironment } from '#/server/common/services/mode.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-015",
+      "statement": "The trial merge's router.test.js conflict is confined to the import block and the new EUDPA-390 describe; the pre-existing #router auth gating describe is untouched by main and merges without incident.",
+      "kind": "conflict",
+      "ref": "ins:src/server/router.test.js@trial-merge-tree-d664c0e",
+      "quote": "<<<<<<< origin/feat/NO_JIRA-frontend-alignment:src/server/router.test.js\nimport { createServer } from './server.js'\n...\n=======\nimport { createServer } from '#/server/server.js'\n...\n>>>>>>> origin/main:src/server/plugins/router.test.js\n\ndescribe('#router auth gating', () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-016",
+      "statement": "The mode.js conflict is confined to the whole function-export surface (branch's isStubMode-only vs main's mode/isRealMode/isStubMode/isAuthStubMode/isDevOrLocalEnvironment); nothing outside that block conflicts.",
+      "kind": "conflict",
+      "ref": "ins:src/server/common/services/mode.js@trial-merge-tree-d664c0e",
+      "quote": "import { config } from '../../../config/config.js'\n\n<<<<<<< origin/feat/NO_JIRA-frontend-alignment\n...isStubMode...\n=======\nexport const mode = () => config.get('runMode')\n...\nexport const isDevOrLocalEnvironment = () =>\n  ['dev', 'local'].includes(config.get('cdpEnvironment'))\n>>>>>>> origin/main",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-017",
+      "statement": "The config.js conflict carries a second, unrelated hunk from EUDPA-333 changing tradeImportsAddressBookApi.baseUrl's format from String to 'url'.",
+      "kind": "conflict",
+      "ref": "ins:src/config/config.js@2b4be7c",
+      "quote": "-      format: String,\n+      format: 'url',",
+      "confidence": "verbatim"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "cluster": "sonar-pre-push-gate",
+  "title": "Replace the unlicensed Vortex Stop hook with a real pre-push quality gate",
+  "summary": "main in ins and animals replaced a no-op Stop hook (running `sonar analyze agentic`, a feature this DEFRA SonarCloud org does not have licensed) with a PreToolUse(Bash) hook that runs tools/sonar/sonar-push-check.sh on an actual `git push` and blocks the push on a failing quality gate. The branch predates this fix in both repos (it still carries the old .claude/sonar-analyze.sh file and Stop hook from the original EUDPA-371 SonarCloud setup, untouched since) and merges it in cleanly with zero conflict -- the merged .claude/settings.json is byte-identical to main's. plants-frontend's main never received this fix at all: plants's .claude/settings.json and .claude/sonar-analyze.sh are byte-identical between main and the branch, both still running the broken Stop hook. Separately: main made no changes to any .github/workflows/* file in any of the four repos in this window, so this sync introduces no new workflow_run risk; the one pre-existing workflow_run risk (lighthouse.yml calling scripts/npm-version.js) was already resolved by the branch's own ruling-17 follow-up commits.",
+  "repos": ["ins", "animals", "plants"],
+  "mainCommits": {
+    "ins": ["392afac fix(sonar): replace the unlicensed Vortex Stop hook with a real pre-push quality gate"],
+    "animals": ["91aa281c fix(sonar): replace the unlicensed Vortex Stop hook with a real pre-push quality gate (#359)"],
+    "plants": []
+  },
+  "files": [
+    {
+      "repo": "ins",
+      "mainPath": ".claude/settings.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": ".claude/settings.json",
+      "trialMerge": "clean",
+      "note": "Verified: the trial-merged tree's .claude/settings.json is byte-for-byte identical (diff exit 0) to main's copy. Branch's only difference from main pre-merge is that it still has the old Stop-hook shape from EUDPA-371 (186282c), never touched since."
+    },
+    {
+      "repo": "ins",
+      "mainPath": ".claude/sonar-analyze.sh",
+      "mainChange": "D",
+      "branchStatus": "untouched",
+      "branchPath": ".claude/sonar-analyze.sh",
+      "trialMerge": "clean",
+      "note": "Deletion applies cleanly; the merged tree's `git ls-tree` has no .claude/sonar-analyze.sh entry."
+    },
+    {
+      "repo": "animals",
+      "mainPath": ".claude/settings.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": ".claude/settings.json",
+      "trialMerge": "clean",
+      "note": "Same verification as ins: merged tree's file diffs empty against main's copy."
+    },
+    {
+      "repo": "animals",
+      "mainPath": ".claude/sonar-analyze.sh",
+      "mainChange": "D",
+      "branchStatus": "untouched",
+      "branchPath": ".claude/sonar-analyze.sh",
+      "trialMerge": "clean",
+      "note": "Deletion applies cleanly."
+    },
+    {
+      "repo": "plants",
+      "mainPath": ".claude/settings.json",
+      "mainChange": "none",
+      "branchStatus": "untouched",
+      "branchPath": ".claude/settings.json",
+      "trialMerge": "clean",
+      "note": "plants main never made this change (log over the merge-base..main range for .claude/ is empty). main and branch are byte-identical (same git tree object 2ab877f... for the whole .claude/ directory), both still running the old Stop hook that calls `sonar analyze agentic --force`."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "none",
+    "evidence": "ins and animals: the branch's .claude/ tree dates from EUDPA-371 (feat(EUDPA-371): turn on SonarCloud CI analysis and Claude Code integration) and was never touched again on the branch -- confirmed via `git log --oneline origin/feat/NO_JIRA-frontend-alignment -- .claude/sonar-analyze.sh` returning only that one commit. plants: main and branch are identical (same tree sha), i.e. plants has no equivalent on either side."
+  },
+  "verdict": "clean",
+  "verdictWhy": "ins and animals merge with zero conflicts and the merged result is provably byte-identical to main's fixed version -- no hand resolution needed, just land the merge. plants is a separate, out-of-scope gap (main hasn't adopted the fix there), not something this sync should invent on the branch's own initiative.",
+  "resolutions": [
+    {
+      "repo": "ins",
+      "path": ".claude/settings.json, .claude/sonar-analyze.sh",
+      "take": "Accept the merge as-is (git's own 3-way merge already produces main's exact content).",
+      "why": "Proven byte-identical to main by direct diff; nothing for a human or agent to decide."
+    },
+    {
+      "repo": "animals",
+      "path": ".claude/settings.json, .claude/sonar-analyze.sh",
+      "take": "Accept the merge as-is.",
+      "why": "Same proof as ins."
+    }
+  ],
+  "preAlign": [
+    {
+      "repo": "ins",
+      "what": "Could cherry-pick 392afac directly onto the branch now instead of waiting for the main-merge.",
+      "why": "Optional only -- the merge already resolves this with zero conflict, so pre-aligning buys nothing extra here beyond one fewer file touched in the merge commit's diff."
+    },
+    {
+      "repo": "animals",
+      "what": "Same optional cherry-pick of 91aa281c.",
+      "why": "Same reasoning as ins."
+    }
+  ],
+  "wireIn": [],
+  "behaviourChanges": [
+    "ins and animals: a `git push` from a Claude Code session now runs the real local build/test/SonarCloud pipeline via tools/sonar/sonar-push-check.sh and blocks the push if the quality gate fails, replacing a Stop hook that silently did nothing every turn.",
+    "plants is unaffected by this cluster -- it keeps running the no-op Stop hook until a separate fix lands on its own main."
+  ],
+  "knockOn": [
+    "None for ins/animals beyond what's already documented workspace-wide (CLAUDE.md's SonarCloud integration section): SONAR_TOKEN must be set locally or the hook skips gracefully."
+  ],
+  "openQuestions": [
+    {
+      "question": "Should plants-frontend get the same sonar-pre-push-gate fix as ins and animals, given its main still runs the broken, unlicensed Vortex Stop hook?",
+      "default": "Out of scope for this sync -- main decides behaviour and plants's main hasn't adopted the fix yet. Raise it as a separate, ordinary fix PR against trade-imports-plants-frontend's main, independent of this merge."
+    }
+  ],
+  "workflowRisks": [
+    {
+      "repo": "ins",
+      "file": ".github/workflows/lighthouse.yml",
+      "risk": "main has no lighthouse.yml at all (confirmed via `git ls-tree origin/main -- .github/workflows/`), so there is no workflow_run risk introduced by main in this window -- the branch's own lighthouse.yml simply cannot fire via workflow_run until this branch reaches main. This is the pre-existing, already-documented 'Known caveat' in report.md, not a new finding.",
+      "severity": "none-new"
+    },
+    {
+      "repo": "animals",
+      "file": ".github/workflows/lighthouse.yml",
+      "risk": "Unchanged by main in this window (empty `git log mergeBase..main -- .github/workflows`). It already depends on scripts/npm-version.js and the packageManager field, which the branch restored specifically because a workflow_run job runs MAIN's copy of lighthouse.yml, which still calls that script -- already resolved by ruling 17's follow-up commits (f9c9bce, 780ec235, bcc7166), not a new risk from this sync.",
+      "severity": "none-new"
+    },
+    {
+      "repo": "plants",
+      "file": ".github/workflows/lighthouse.yml",
+      "risk": "Same shape and same resolution as animals.",
+      "severity": "none-new"
+    },
+    {
+      "repo": "all four (ins, animals, plants, tests)",
+      "file": "n/a",
+      "risk": "main changed zero .github/workflows/*.yml files in any of the four repos since each repo's own merge base (verified with `git diff --stat <mergeBase> origin/main -- .github/workflows` returning no output in every repo). This sync therefore introduces no new workflow_run drift of any kind; every workflow_run consideration on the table is pre-existing and already handled by the branch's own tooling-convergence stage (s20/ruling 17).",
+      "severity": "none"
+    }
+  ],
+  "claims": [
+    {
+      "id": "sb-001",
+      "statement": "plants-frontend main never received the sonar-pre-push-gate fix; .claude/settings.json and .claude/sonar-analyze.sh are byte-identical between plants main and the alignment branch, both still running the broken Stop hook that calls `sonar analyze agentic`.",
+      "kind": "structure",
+      "ref": "plants: git ls-tree origin/main -- .claude vs git ls-tree origin/feat/NO_JIRA-frontend-alignment -- .claude",
+      "quote": "040000 tree 2ab877fde6624fba05c7b63bcd3b7fe9ebf8d6e4\t.claude",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "sb-002",
+      "statement": "ins and animals .claude/settings.json and .claude/sonar-analyze.sh trial-merge cleanly with main's fix; the merged tree is byte-identical to main's copy in both repos.",
+      "kind": "conflict",
+      "ref": "ins/animals: diff between merge-tree result blob and origin/main blob for .claude/settings.json",
+      "quote": "(diff exit 0, no output)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "sb-003",
+      "statement": "main made no changes to any .github/workflows/*.yml file in ins, animals, plants or tests since each repo's respective merge base.",
+      "kind": "structure",
+      "ref": "all four repos: git diff --stat <mergeBase> origin/main -- .github/workflows",
+      "quote": "(empty output in all four repos)",
+      "confidence": "verbatim"
+    }
+  ]
+}

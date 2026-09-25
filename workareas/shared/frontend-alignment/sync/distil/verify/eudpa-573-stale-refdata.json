@@ -1,0 +1,177 @@
+{
+  "source": "eudpa-573-stale-refdata",
+  "verdicts": [
+    {
+      "id": "573-001",
+      "holds": true,
+      "reason": "Quote confirmed verbatim in animals origin/controller.js on the trial-merge tree affadd1d3a8...; isCountryStale reads countries.originCountries() exactly as quoted. s19-countries-lazy-load.md confirms it is scoped to ins only ('ins takes animals main's EUDPA-575 shape... Plants no longer needs the port — its main merged the same change as PR #71'); the plants merge base 77a5aa7 IS itself PR #71's merge commit, so the claim that s19 never touches the journeys is correct."
+    },
+    {
+      "id": "573-002",
+      "holds": true,
+      "reason": "Quote confirmed verbatim: `const view = \\`${TEMPLATES}/features/transport/port-of-entry/template\\`` is the branch's only change to that file (git diff between animals merge base and the branch on this path shows exactly this one-line rename, nothing else). Same holds for the other two 'modified' files in this cluster (private-transporter-details.controller.js, transit-countries.controller.js) — each diffs to a single, non-overlapping `const view` line."
+    },
+    {
+      "id": "573-003",
+      "holds": true,
+      "reason": "Ran the exact command for both animals and plants: `git diff --stat <mergeBase> origin/feat/NO_JIRA-frontend-alignment -- '*services/countries*' '*services/ports*'` returns no output in both clones. Confirmed."
+    },
+    {
+      "id": "573-004",
+      "holds": true,
+      "reason": "Quote confirmed verbatim in commit 322f8b01's first sub-commit message: 'Pre-commit hook skipped on user's explicit authorisation because a\\npre-existing test failure on main (errors.test.js refdata-503 test)\\nis blocking; unrelated to this change.' Matches exactly."
+    },
+    {
+      "id": "573-005",
+      "holds": true,
+      "reason": "Quote confirmed verbatim in plants commit 62a32ef's message: 'No production code changes. Notes at\\nworkareas/shared/eudpa-573-stale-state/notes.md (workspace repo).' The commit's full body also confirms the hub/check-answers behaviour described (singletonFulfilled presence check; answerRow's default-parameter fallback renders the raw stale code)."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "animals",
+      "path": "src/config/config.test.js",
+      "holds": true,
+      "reason": "Trial-merge conflict hunk confirmed: branch side (top) is the STRICT_BOOLEAN_ENV_VARS / stubMode strict-boolean test (s12-hardening-backport shape); main side (bottom) is the new 'config URL validation' file pinning tradeImportsAddressBookApi/tradeImportsInsFrontend baseUrl (EUDPA-333). Add/add conflict correctly described.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/config/nunjucks/context/context.js",
+      "holds": true,
+      "reason": "Branch side adds insAddressBookUrl()/activeNavigationItem(request.path) (unscoped); main side adds homeUrl/activeNavigationItem gated by setId with withSetContext (EUDPA-619 set-scoped resolution). Matches the note.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/lib/validate/calendar.js",
+      "holds": true,
+      "reason": "The one-line conflict is a comment change ('slips under a max bound' — 'year 26' vs 'a year in the 1900s'), consistent with a four-digit-year guard being backported on one side and a co-landed dependency touch on the other; nothing in the hunk contradicts the note.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/routes.js",
+      "holds": true,
+      "reason": "Branch side is the shared `export const serviceRoutes = {...}` shape (plugin-registered, used by both journeys and ins per s17 naming). Main side is `export { liveAnimals } from './routes-live-animals.js'`, the per-set export name EUDPA-619 keeps. Matches the note.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js",
+      "holds": false,
+      "reason": "The note has the two sides swapped. The trial-merge hunk shows `registerTestSessionAuth(server); server.route(animalIdentification.routes)` on the BRANCH side (top, under `<<<<<<< origin/feat/NO_JIRA-frontend-alignment`), and main's side (bottom, under `>>>>>>> origin/main`) is the `server.register({ name: ..., register: (inner) => inner.route(...) }, { routes: { prefix: SET_BASE } })` multi-set scaffolding with the 'Mounted under the set prefix' comment.",
+      "correction": "Swap the attribution: registerTestSessionAuth (auth-convergence, question 2, 'session' gating) is the BRANCH's edit; the SET_BASE-prefixed server.register() multi-set scaffolding is MAIN's (EUDPA-619). The note's parenthetical '(registerTestSessionAuth / set context)' incorrectly assigns both to main — only the set-context/SET_BASE half belongs to main."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js",
+      "holds": false,
+      "reason": "Same shape as animal-identification.controller.test.js, same swap: registerTestSessionAuth is on the branch side, the SET_BASE-prefixed server.register() scaffolding is on main's side.",
+      "correction": "Same correction as animal-identification.controller.test.js: registerTestSessionAuth is the branch's edit, not main's."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js",
+      "holds": false,
+      "reason": "Four conflict hunks, all confirming the same swap: every `registerTestSessionAuth(server)` call is on the branch side; main's side each time is `await serverWithDocumentRoutes({...})`, an extracted helper doing the same SET_BASE-prefixed multi-set registration seen in the other two files.",
+      "correction": "Same correction: registerTestSessionAuth (and the bare Hapi.server() + explicit route registration it sits in) is the branch's auth-convergence edit; the serverWithDocumentRoutes() helper is main's EUDPA-619 multi-set scaffolding extraction."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/shared/layout.test.js",
+      "holds": true,
+      "reason": "Branch side adds `addressBookUrl: ADDRESS_BOOK_URL` and the `ADDRESS_BOOK_URL` link assertion; main side has `homeUrl: SET_BASE` and `SET_BASE, '#'`. Matches the note exactly.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/auth/controller.js",
+      "holds": true,
+      "reason": "Branch side hoists `UNAUTHORISED_VIEW` and calls `base(sharedCopy.unauthorised.title)`; main side defines `unauthorisedChrome()` using `setlessBase()` with a comment about `/auth/*` being server-wide and outside every set's mount. Matches the note (organisationId/getPermissions guards not visible in these particular hunks, but nothing contradicts them being elsewhere in the branch's version of the file).",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/common/helpers/errors.js",
+      "holds": true,
+      "reason": "Branch side keeps `errorMessageFor(statusCode)` reading `sharedCopy.errorPage` directly via `base`; main side adds `errorChrome(request, errorMessage)` using `setIdForPath`/`withSetContext`/`setlessBase` for per-set chrome resolution, with a comment about 404/health/signout/auth routes reaching here outside every set. Matches the note precisely, including the 'real design conflict' characterisation.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/common/helpers/errors.test.js",
+      "holds": true,
+      "reason": "Confirmed by the refdata-503-test-stub verify file's own hunk read: branch's `/test/service-unavailable` Boom-route test vs main's `/test/refdata-missing` countries-driven, fetch-stubbed test (a2f1d295), plus the differing `finally`/cleanup block. Matches the note.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/router.js",
+      "holds": true,
+      "reason": "Branch side is the compact `if (config.get('auth.enabled')) { await server.register([serviceRoutes]) }`; main side is the fuller LIVE_ANIMALS_BASE-prefixed registration plus the standalone /signout registration and the '/' -> DEFAULT_SET_BASE redirect route. Matches the note's 'same class of collision as routes.js' characterisation; the 'stub-mode route selection' detail is not directly visible in this hunk but nothing contradicts it.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/config/nunjucks/context/context.js",
+      "holds": true,
+      "reason": "Same shape as animals: branch adds insAddressBookUrl()/activeNavigationItem(request.path); main adds the setId-gated homeUrl/activeNavigationItem with withSetContext. Matches the note.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/routes.js",
+      "holds": true,
+      "reason": "Branch side is the shared serviceRoutes shape (plugin name 'high-risk-plants'); main side is `export { highRiskPlants } from './routes-high-risk-plants.js'`. Matches the note.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/shared/layout.test.js",
+      "holds": true,
+      "reason": "Identical shape to animals' layout.test.js conflict: branch adds ADDRESS_BOOK_URL, main has SET_BASE/'#'. Matches.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/auth/controller.js",
+      "holds": true,
+      "reason": "Branch side: `base(sharedCopy.unauthorised.title)` with hoisted UNAUTHORISED_VIEW. Main side: `serverWideBase(sharedCopy.unauthorised.title)` (plants' own naming for the same set-free chrome idea as animals' setlessBase). Matches the note's characterisation.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/common/helpers/errors.js",
+      "holds": true,
+      "reason": "Branch side imports `{ base, sharedCopy }` from kit.js; main side imports `{ chromeFor }` from kit.js — the plants-side equivalent of animals' errorChrome() rewrite. Matches the note.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/router.js",
+      "holds": true,
+      "reason": "Same shape as animals' router.js: branch is the compact config-gated serviceRoutes registration; main is the fuller HIGH_RISK_PLANTS_BASE-prefixed registration plus /signout and the '/' redirect. Matches.",
+      "correction": ""
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The cluster's own 16 files (all sixteen files 322f8b01 and the six plants commits touched) are confirmed complete against `git show --stat` on each commit, and every one is either genuinely untouched by the branch or touched on exactly the single non-overlapping `const view` line claimed — confirmed by diffing the branch against each repo's merge base directly (not just reading the trial-merge tree). The 'clean, no manual resolution needed' verdict for this cluster's own files holds. The three misattributions found are in `journeyConflictAttribution`'s descriptive notes about OTHER clusters' files (auth-convergence vs EUDPA-619 test scaffolding) — they do not touch any file this cluster's own verdict depends on, so they do not change the verdict, only the accuracy of the reference notes."
+  },
+  "countriesLoadingFinding": "On plants MAIN at the merge base (77a5aa7, which is itself PR #71's merge commit landing EUDPA-575 for plants) countries already load lazily on first read via ensureLoaded()/originCountries(); on animals MAIN at its merge base (226fc703, downstream of EUDPA-575's fb3615e3) countries already load lazily on first read too — both predate the alignment branch and the branch changes neither (empty diff on services/countries and services/ports for both repos, merge base to branch). Only ins loaded reference data at boot before the alignment; s19-countries-lazy-load is the one stage that changes this, and it is scoped to ins only. So 'countries load on first read rather than at boot in ins and plants' from the programme brief is true only as a description of the post-alignment end state across all three frontends — it is not something the branch ships FOR plants (plants already had it, unmodified, since before the fork); it is a genuine behaviour change the branch ships for ins alone.",
+  "missed": [
+    {
+      "id": "573-002-m1",
+      "statement": "The verdict's headline evidence style ('clean, zero-conflict merge') is correct for this cluster's own files, but the survey's journeyConflictAttribution table — while informational rather than load-bearing for this cluster's own verdict — misattributes registerTestSessionAuth (branch, auth-convergence) to main (EUDPA-619) in three animals test files: animal-identification.controller.test.js, consignment-details.controller.test.js and documents/controller.test.js. Anyone resolving those three conflicts (part of other clusters, not 573) using this table as a guide would take the wrong side unless they read the actual hunks themselves.",
+      "kind": "conflict",
+      "ref": "animals:trial-merge tree affadd1d3a841f3143656469cb73730e705ef94b:animal-identification/consignment-details/documents controller.test.js hunks",
+      "quote": "<<<<<<< origin/feat/NO_JIRA-frontend-alignment\n    registerTestSessionAuth(server)\n    server.route(animalIdentification.routes)\n=======\n    // Mounted under the set prefix, as the router does...\n    await server.register(\n      {\n        name: 'animal-identification-under-test',",
+      "confidence": "verbatim"
+    }
+  ]
+}

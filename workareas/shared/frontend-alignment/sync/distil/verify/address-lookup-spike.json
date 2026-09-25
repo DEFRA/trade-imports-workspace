@@ -1,0 +1,88 @@
+{
+  "source": "address-lookup-spike",
+  "verdicts": [
+    { "id": "als-001", "holds": true, "reason": "Quote matches router.js@4a48670 verbatim; the push is inside the `if (config.get('auth.enabled'))` block, which matters for the wire-in (see wireInVerdicts)." },
+    { "id": "als-002", "holds": true, "reason": "Quote matches config.js@4a48670 verbatim." },
+    { "id": "als-003", "holds": true, "reason": "Quote matches address-lookup-client.js@4a48670 verbatim." },
+    { "id": "als-004", "holds": true, "reason": "Confirmed on origin/feat/NO_JIRA-frontend-alignment: mode.js exports only isStubMode." },
+    { "id": "als-005", "holds": true, "reason": "Confirmed via countries/index.js (per-call isStubMode()) and countries/client.js (getTraceId() internally, no trace param)." },
+    { "id": "als-006", "holds": true, "reason": "Quote matches branch's app/routes.js verbatim." },
+    { "id": "als-007", "holds": true, "reason": "Quote matches branch's kit.js verbatim (routeOptions = {auth:'session'}, pageRoutes signature)." },
+    { "id": "als-008", "holds": true, "reason": "Confirmed: no `imports` key in package.json on branch tip or trial-merge tree d664c0e." },
+    { "id": "als-009", "holds": true, "reason": "Quote matches branch's copy-convention.test.js verbatim; featuresWithTemplates has no dev-only carve-out, computed by recursive .njk scan." },
+    { "id": "als-010", "holds": true, "reason": "Quote matches s04-services-shape.md's move table verbatim; confirmed http-client.js/http-client.test.js exist under app/lib/ on the branch." },
+    { "id": "als-011", "holds": true, "reason": "Quote matches s04-services-shape.md D2 verbatim; confirmed no __mocks__ folder exists under app/services on the branch and ins-backend.test.js/address-book.test.js use runInRealMode()+nock." },
+    { "id": "als-012", "holds": true, "reason": "Quote matches branch's shared/layout.njk verbatim (govuk-grid-row wrapper, journeyContent inner block)." },
+    { "id": "als-013", "holds": true, "reason": "Quote matches main's final index.njk (71af650) verbatim: extends layouts/page.njk, overrides block content." },
+    { "id": "als-014", "holds": true, "reason": "Confirmed: trial-merge tree d664c0e resurrects plugins/router.js verbatim with all the stale imports named in the quote." },
+    { "id": "als-015", "holds": true, "reason": "Confirmed in trial-merge tree: the #router auth gating describe sits below the conflict markers untouched; only the import block and the new EUDPA-390 describe are inside/after the conflict." },
+    { "id": "als-016", "holds": true, "reason": "Confirmed conflict block in trial-merge tree mode.js matches quote (branch isStubMode-only vs main's five-export surface)." },
+    { "id": "als-017", "holds": true, "reason": "Confirmed via `git show 2b4be7c -- src/config/config.js`: format: String -> format: 'url' on tradeImportsAddressBookApi.baseUrl, EUDPA-333." }
+  ],
+  "resolutionVerdicts": [
+    { "repo": "ins", "path": "src/config/config.js", "holds": true, "reason": "Branch's config.js has defraId immediately followed by stubMode at the exact slot the resolution names (lines 197/269 on branch tip); appending cdpEnvironment there and leaving the EUDPA-333 baseUrl hunk alone is correct.", "correction": "Minor framing issue only: the extract's files-list note calls this 'two unrelated hunks land in this one conflict', but `git show <trial-merge-tree>:src/config/config.js` shows the tradeImportsAddressBookApi.baseUrl format:'url' change merges cleanly with no conflict markers around it — only the runMode/cdpEnvironment block is actually inside <<<<<<< / >>>>>>> markers. The resolution's instruction (leave the baseUrl hunk alone, it's EUDPA-333's) is still correct; only the characterisation of it as part of 'this conflict' is imprecise." },
+    { "repo": "ins", "path": "src/server/common/services/mode.js", "holds": true, "reason": "Confirmed mode()/isRealMode()/isStubMode()/isAuthStubMode() all pre-date this cluster's commits (already present at the ins merge base, 4327c97) and are consumed elsewhere (auth.js, server.js) only in ways already resolved by the s03/s17 stages — out of this cluster's scope. Discarding both conflict sides and keeping the branch's isStubMode-only file, relocating only the new isDevOrLocalEnvironment export, is correct and does not drop anything this cluster is responsible for." },
+    { "repo": "ins", "path": "src/server/app/features/address-lookup-spike/is-dev-or-local.js", "holds": false, "reason": "The relocation target itself (a feature-local file, read at import time) is fine in isolation, but the WAY it gets consumed (a one-time ternary baked into features/index.js's top-level `allRoutes` array — see wireInVerdicts) breaks the very test file (router.test.js) this resolution says ports cleanly. This is a downstream consequence of the resolution's placement choice, not the file itself.", "correction": "isDevOrLocalEnvironment() must be evaluated at request/registration time, not at features/index.js's module-load time, or the ported #router EUDPA-390 tests (which call config.set('cdpEnvironment', ...) then createServer() repeatedly in the same test file) will observe a frozen, stale gate result after the first createServer() call. See wireInVerdicts for the concrete fix." },
+    { "repo": "ins", "path": "src/server/plugins/router.js", "holds": true, "reason": "Confirmed: deleting outright and not resurrecting is correct — every import in main's router.js (../routes/home/index.js, #/config/config.js, etc.) is stale on the branch, and the branch's router.js/app/routes.js/features/index.js model has already replaced per-page plugin registration everywhere else." },
+    { "repo": "ins", "path": "src/server/router.test.js", "holds": false, "reason": "The claim that appending main's EUDPA-390 describe block 're-pointed at the branch's own imports... no vi/OIDC mock needed' is correct as far as auth goes, but the resolution is silent on the structural incompatibility between the ported test's per-test config.set('cdpEnvironment', ...) + fresh createServer() pattern and a features/index.js that bakes the gate into a static allRoutes array at module-load time (see wireInVerdicts). As written, most of the 8 ported test cases would fail (or spuriously pass) because allRoutes never re-evaluates.", "correction": "Fix must land in features/index.js/router.js (see wireInVerdicts), not in router.test.js itself; the test's own re-pointed imports are fine." }
+  ],
+  "wireInVerdicts": [
+    {
+      "what": "features/index.js — extend allRoutes with `...(isDevOrLocalEnvironment() ? addressLookupSpike.routes : [])` as a top-level, module-scope splice",
+      "holds": false,
+      "reason": "features/index.js is a static ES module: `export const allRoutes = [...]` evaluates isDevOrLocalEnvironment() exactly once, the first time the module is imported by the process/test file, and the resulting array is then fixed for the lifetime of that module instance. Vitest does not reset modules between test.each() cases within the same describe/file. Main's original gate (`if (isDevOrLocalEnvironment()) { routes.push(addressLookupSpike) }`) lived inside router.js's async register(server), which reruns fresh on every createServer() call — so main's ported router.test.js (`#router EUDPA-390 address lookup spike gating`) calls `config.set('cdpEnvironment', X)` then `createServer()` in a loop across 8 test.each cases and expects each createServer() to re-check the config value at that moment. With the gate baked into a static allRoutes array, only the very first createServer() call in the file observes the real config state; every later test.each case with a different cdpEnvironment value gets the same frozen result (present or absent) regardless of what config.set() just did, and roughly half the 8 cases will fail.",
+      "correction": "Re-evaluate the gate at server-registration time, not at features/index.js's import time. Two ways to keep the rest of the port intact: (a) keep allRoutes static but move the conditional into router.js's/app/routes.js's register() function, e.g. `register: (server) => { server.route(isDevOrLocalEnvironment() ? [...allRoutes, ...addressLookupSpike.routes] : allRoutes) }` — mirrors main's original per-register() evaluation; or (b) make the exported list a function, e.g. `export const routesFor = () => [...staticRoutes, ...(isDevOrLocalEnvironment() ? addressLookupSpike.routes : [])]`, called from serviceRoutes.register(server) as `server.route(routesFor())`. Either keeps routes.test.js's exhaustive allRoutes snapshot working for the unconditional routes while making the conditional one respond live to config.set() in tests, matching main's actual behaviour (gate re-checked on every server start, not cached)."
+    },
+    {
+      "what": "controller.js — h.view(VIEW, { ...kit.base(PAGE_TITLE, { contentColumnClass: kit.surfaceClass('display') }), heading: PAGE_TITLE, ...extra })",
+      "holds": false,
+      "reason": "kit.base()'s actual signature is `base = (title, { backLink, recoverableError = false } = {}) => ({ layout, pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass: SURFACES.form })` — it destructures only backLink and recoverableError from its options argument and always returns contentColumnClass hard-coded to SURFACES.form (the two-thirds default). Passing `{ contentColumnClass: kit.surfaceClass('display') }` as base()'s second argument is silently ignored; base() still returns the two-thirds contentColumnClass, so the spread `...kit.base(...)` in the wire-in's proposed object would put the two-thirds value in the final view model regardless of the (unused) option passed in. The page would render in the narrow two-thirds column, not full-width — the opposite of the wire-in's stated intent and of main's original ungridded layout.",
+      "correction": "Every branch precedent that needs the wide surface (dashboard/controller.js, address-book/list/list.controller.js) sets `contentColumnClass: kit.surfaceClass('display')` as a SIBLING key in the object literal, placed AFTER the `...kit.base(...)` spread, so it overrides base()'s default rather than being passed into base() as an ignored option: `h.view(VIEW, { ...kit.base(PAGE_TITLE, { recoverableError }), contentColumnClass: kit.surfaceClass('display'), heading: PAGE_TITLE, ...extra })`."
+    },
+    {
+      "what": "controller.test.js — replace the mock-auth.js import with 'the branch's sessionAuth/mockOidcConfig split (common/test-helpers/session-auth.js and mock-auth-config.js)'",
+      "holds": false,
+      "reason": "The branch actually splits main's mock-auth.js into THREE helpers, not two, and the extract names the wrong file for mockOidcConfig. Confirmed by reading src/server/app/docs/testing.md and the actual files: session-auth.js exports sessionAuth(sessionId, overrides); mock-oidc-config.js exports mockOidcConfig; mock-auth-config.js exports mockAuthConfig(importOriginal) — a completely different helper (mocks config.get('session').cookie.password for vi.mock('.../config/config.js', ...) in src/server/auth/controller.test.js only) that has nothing to do with OIDC and is not imported by any controller test on the branch (grep confirms its only consumer is auth/controller.test.js). Importing mockOidcConfig from mock-auth-config.js, as the wire-in step names it, would fail outright (no such export).",
+      "correction": "Import sessionAuth from '../../../../common/test-helpers/session-auth.js' and mockOidcConfig from '../../../../common/test-helpers/mock-oidc-config.js' (confirmed against src/server/app/features/address-book/list/list.controller.test.js, which imports both this way and mocks '../../../../../auth/get-oidc-config.js' the same way main's spike test did). Do not touch mock-auth-config.js for this file."
+    },
+    { "what": "controller.js — routes export via kit.pageRoutes('/address-lookup-spike', { get, post })", "holds": true, "reason": "Matches the branch's established convention exactly (dashboard/controller.js, address-book list/add/edit/delete controllers all export `routes` this way)." },
+    { "what": "New app/services/address-lookup/{index.js,client.js,stub.js} following countries'/address-book's shape (stub.js's three names unchanged, client.js drops the traceId parameter for getTraceId() internally, index.js branches per call on isStubMode())", "holds": true, "reason": "Confirmed: main's stub.js/real.js are an object literal with three methods (lookupDefaultPostcode, lookupByPostcode, lookupByFind) taking an unused _traceId in the stub; converting to three top-level named exports matches the branch's countries/address-book shape, and real.js already reads config + throwOnError, needing only the getTraceId()-internal change s04 already applied elsewhere. 'Unchanged' undersells the object-literal-to-named-exports restructuring slightly but is directionally correct — no logic changes beyond the trace-parameter drop." },
+    { "what": "template.njk — extends 'shared/layout.njk', block content -> block journeyContent, strings move to copy/copy.en.js", "holds": true, "reason": "Matches the branch's layout.njk contract (journeyContent is the fill-in block) and copy-convention.test.js's enforced copy/ bundle requirement, both confirmed by direct read." },
+    { "what": "New copy/copy.en.js, copy.cy.js, copy.test.js forced by copy-convention.test.js's featuresWithTemplates sweep", "holds": true, "reason": "Confirmed: copy-convention.test.js scans every features/<x> directory recursively for any .njk file with no dev-only exemption; a template.njk anywhere under address-lookup-spike/ triggers the requirement." },
+    { "what": "New address-lookup.test.js — nock against tradeImportsInsBackendApi.baseUrl inside runInRealMode(), reusing insBackendApi()", "holds": true, "reason": "Confirmed: real-mode.js exports insBackendApi() and ins-backend.test.js (a sibling service test) uses exactly this runInRealMode()+insBackendApi()+hoisted getTraceId mock pattern; directly portable." }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The overall 'port' verdict is directionally right — every gap the extract identifies is real and every target location it proposes (app/services/address-lookup/, app/features/address-lookup-spike/{controller.js,template.njk,copy/}, features/index.js wiring) is the correct convention-matching location. But the extract is not safe to execute blindly: three of its concrete wire-in instructions are wrong in ways that would produce silently broken or outright failing code — (1) baking the dev/local gate into features/index.js's static allRoutes array instead of re-evaluating it at server-registration time would make most of the ported #router EUDPA-390 test cases fail; (2) passing contentColumnClass into kit.base()'s options argument does nothing (base() ignores it), so the page would render in the narrow two-thirds column instead of the intended full-width display surface; (3) the controller.test.js wire-in names the wrong file for mockOidcConfig (mock-auth-config.js, which doesn't export it) instead of the branch's actual mock-oidc-config.js, which would fail the import outright. All three have concrete corrections recorded above; a Sam or an implementer must apply those corrections rather than follow the extract's wireIn section as written."
+  },
+  "missed": [
+    {
+      "id": "als-006-m1",
+      "statement": "features/index.js's allRoutes is a static array computed once at module import; any environment-conditional entry added there will not respond to config changes made after the module first loads within the same process/test file, unlike main's per-createServer()-call gate check inside router.js's register().",
+      "kind": "structure",
+      "ref": "ins:src/server/app/features/index.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const allRoutes = [\n  ...dashboard.routes,\n  ...addressBookList.routes,\n  ...addressBookAdd.routes,\n  ...addressBookView.routes,\n  ...addressBookEdit.routes,\n  ...addressBookDelete.routes\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-007-m1",
+      "statement": "kit.base()'s options argument only destructures backLink and recoverableError; contentColumnClass is hard-coded to SURFACES.form (two-thirds) inside base() and can only be overridden by setting contentColumnClass as a sibling key after spreading kit.base(...), not by passing it into base()'s options.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/shared/kit.js@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const base = (title, { backLink, recoverableError = false } = {}) => ({\n  layout: LAYOUT,\n  pageTitle: title,\n  backLink,\n  sharedCopy,\n  recoverableError,\n  contentColumnClass: SURFACES.form\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "als-005-m1",
+      "statement": "The branch's mock-auth helper surface is split into three files, not two: session-auth.js (sessionAuth), mock-oidc-config.js (mockOidcConfig), and mock-auth-config.js (mockAuthConfig — an unrelated session-cookie-password mock consumed only by src/server/auth/controller.test.js).",
+      "kind": "structure",
+      "ref": "ins:src/server/app/docs/testing.md@origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "`session-auth.js` (`sessionAuth(sessionId, overrides)`),\n`mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`\n(`mockAuthConfig(importOriginal)`), `test-server.js`.",
+      "confidence": "verbatim"
+    }
+  ]
+}

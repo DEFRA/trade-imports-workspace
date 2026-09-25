@@ -41,6 +41,7 @@ const quoted = (names) => names.map((name) => `"${name}"`).join(', ')
 
 const listItemPhrase = (root, items) => {
   const resolved = followRef(root, items)
+  if (resolved?.enum) return `items from ${resolved.enum.join(', ')}, each once`
   if (resolved?.type === 'string') return 'text'
   if (resolved?.type === 'object' && resolved.required?.length) {
     return `objects with ${quoted(resolved.required)}`
@@ -66,6 +67,8 @@ const expectationOf = (root, fieldSchema) => {
   }
   if (resolved.type === 'object') return 'an object'
   if (resolved.type === 'string') return 'text'
+  if (resolved.type === 'boolean') return 'true or false'
+  if (resolved.type === 'null') return 'null'
   return 'what backlog.schema.json says'
 }
 
@@ -162,6 +165,28 @@ const dependencyProblems = (row, where, ids) =>
       )
     : []
 
+const isPlainObject = (value) =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+
+const mergeKeyProblem = (row, where, repoKeys, key) => {
+  if (isTextList(row.repos) && !row.repos.includes(key)) {
+    return [`${where} merges into "${key}", which is not in its "repos".`]
+  }
+  if (repoKeys && !repoKeys.includes(key)) {
+    return [
+      `${where} merges into "${key}", which the backlog's "repos" does not name.`
+    ]
+  }
+  return []
+}
+
+const mergeProblems = (row, where, repoKeys) =>
+  isPlainObject(row?.merge)
+    ? Object.keys(row.merge).flatMap((key) =>
+        mergeKeyProblem(row, where, repoKeys, key)
+      )
+    : []
+
 const duplicateIds = (rows) => {
   const seen = new Set()
   const duplicates = new Set()
@@ -230,8 +255,9 @@ const envelopeProblems = (root, backlog, errors) =>
 /**
  * Every way a backlog departs from backlog.schema.json, the one shape the
  * distiller writes and the build loop reads, plus the rules a schema cannot
- * hold: ids are unique, and every dependency names another row in the
- * backlog without a cycle.
+ * hold: ids are unique, every dependency names another row in the backlog
+ * without a cycle, and every repo a row merges into is one of its own repos
+ * and one the envelope names.
  *
  * @param {unknown} backlog - The parsed backlog.json
  * @param {object} schema - The parsed backlog.schema.json
@@ -247,6 +273,9 @@ export const checkBacklog = (backlog, schema) => {
   const ids = new Set(
     rows.filter((row) => isText(row?.id)).map((row) => row.id)
   )
+  const repoKeys = isPlainObject(backlog.repos)
+    ? Object.keys(backlog.repos)
+    : null
   const rowProblems = (row, index) => {
     const where = nameOf(row, index)
     const rowErrors = errors.filter(
@@ -254,7 +283,8 @@ export const checkBacklog = (backlog, schema) => {
     )
     return [
       ...rowSchemaProblems({ root: schema, row, where, errors: rowErrors }),
-      ...dependencyProblems(row, where, ids)
+      ...dependencyProblems(row, where, ids),
+      ...mergeProblems(row, where, repoKeys)
     ]
   }
   const problems = [

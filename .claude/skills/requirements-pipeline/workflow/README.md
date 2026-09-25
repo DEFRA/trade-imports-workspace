@@ -50,21 +50,22 @@ missing key. The first log line is the resolved configuration.
 | Field | What it is |
 |---|---|
 | `workarea` | Path under `workareas/` holding `backlog.json` — e.g. `shared/plant-products-ched-pp`, `trace-requirements/ched-pp` |
-| `branch` | The base branch each increment's own branch is cut from and merged back into |
+| `branch` | Under `lifecycle: 'full'`, the base branch each increment's own branch is cut from and merged back into. Under `lifecycle: 'branch'`, the working branch itself, which already exists in every backlog repo; `main` and `master` are refused |
+| `lifecycle` | `'full'` (ticket, own branch, PR, CI, merge, ticket done) or `'branch'` (build straight onto `branch` with no Jira and no merge). See [The branch lifecycle](#the-branch-lifecycle) |
 | `scope` | Conventional-commit scope for the landing commit |
-| `executor` | `claude` or `codex` — see below |
+| `executor` | `claude` or `codex` — see below. The branch lifecycle takes `claude` only |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
-| `jiraProject` | Jira project key raised tickets land in |
-| `epic` | Parent epic every raised ticket hangs off |
-| `jiraInProgressStatus` | The board's working status, set when the build starts |
-| `jiraDoneStatus` | The board's finished status, set after the merge |
-| `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA |
+| `jiraProject` | Jira project key raised tickets land in. `null` under the branch lifecycle |
+| `epic` | Parent epic every raised ticket hangs off. `null` under the branch lifecycle |
+| `jiraInProgressStatus` | The board's working status, set when the build starts. `null` under the branch lifecycle |
+| `jiraDoneStatus` | The board's finished status, set after the merge. `null` under the branch lifecycle |
+| `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA. `null` under the branch lifecycle |
 | `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
 | `ciWatchMinutes` | How long one CI watch may block before it counts as RED |
-| `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them |
-| `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open |
-| `repos` | Where `frontend`, `backend` and `tests` live: a workspace-relative `path` and a GitHub `github` slug each. Give it in full — a programme in the plants repos names its own table here |
-| `models` | Required — pass `{}` to inherit the session model for both tiers. Each tier is optional: `heavy` (plan, implement, reviewers, verifiers, judge, fix, CI fix) and `light` (ticket, branch, baseline, ladder, land, PR, CI watch, merge, done) |
+| `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle |
+| `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
+| `repos` | Where the repos live: a workspace-relative `path` and a GitHub `github` slug each. Under the full lifecycle the keys are `frontend`, `backend` and `tests`; under the branch lifecycle they are whatever the backlog envelope's `repos` names. Give it in full, copied from the envelope |
+| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (ticket, branch, branch guard, merge start, baseline, land, preserve, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
@@ -109,6 +110,7 @@ ever.
 {
   workarea: 'shared/plant-products-ched-pp',
   branch: 'main',
+  lifecycle: 'full',
   scope: 'plant-products',
   executor: 'claude',
   planOnly: false,
@@ -202,6 +204,67 @@ Four things to know about codex mode:
   read as approval.
 
 Per increment, codex mode is at most `23 + 3g` agents against Claude's `17 + 3g`.
+
+### The branch lifecycle
+
+`lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already carries an open PR in
+each repo, with no Jira and no merge. When to use it, what it never does and the stop reasons it adds are in
+[`../references/BUILD.md`](../references/BUILD.md#branch-lifecycle). The stages differ from the full lifecycle
+like this:
+
+| Stage | Under `lifecycle: 'branch'` |
+|---|---|
+| Ticket | Does not run. No Jira call of any kind, anywhere in the run |
+| Branch | Creates nothing. Asserts every repo in the envelope's `repos` (not only the row's) is on `branch`, clean, not mid-merge and fast-forwarded to its origin (`fetch`, then `merge --ff-only`), and that the envelope names exactly the configured repos. Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, which the script checks: a merge into a repo the row does not build stops the run as `row-invalid` |
+| Baseline, Ladder | Run only the row's `gatePhases` (all three when it has none; none for `[]`). A ladder without `e2e` does not fail for want of an end-to-end proof: that proof is another row's |
+| Merge start | Runs only for a row with `merge`, between plan and implement. Fetches and runs `git merge --no-ff --no-commit <ref>` per repo, and reports the conflicted paths. The planner previews the same merge with `git merge-tree` and plans every resolution, reading a resolutions file where the row's notes point at one |
+| Implement to ladder | Every stage is told the merge is in progress on purpose. Reviewers read `git diff --staged` as the merge result against the pre-merge HEAD, and judge the resolutions rather than what the merged ref brought. The branch guard never aborts a merge |
+| Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force` |
+| Pull request | Finds the one open PR for `branch` in each repo the row names, and records it. Never creates, edits, retitles, un-drafts or merges one. A repo with none stops the run as `no-open-pr` |
+| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR is a red (`pr-conflicting`), not an API failure. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
+| Merge | Does not run |
+| Done | `tim backlog set <workarea> <id> --status done --commit <sha>`. No ticket to move |
+
+A failure after implement never commits to the shared branch. The preserve step saves the staged and unstaged
+diffs, the unresolved paths and the status to `<workarea>/logs/<id>-preserve-<repo>.*`, aborts any merge in
+progress with `git merge --abort`, stashes whatever is left, and records all of it in the row's `notes`. The tree
+is clean for the next run, and nothing half-resolved ever reaches a reviewer.
+
+A row with `repos: []` changes no backlog repo: its whole output is in the workspace repo, usually under
+`workareas/`. The workspace is not a backlog repo, so the loop leaves those edits unstaged and uncommitted, reviews
+them against HEAD, and lists them in the result's `leftUncommitted` for the orchestrator to commit. Such a row
+normally also sets `gatePhases: []`.
+
+The worked example for the frontend alignment sync:
+
+```js
+{
+  workarea: 'shared/frontend-alignment/sync',
+  branch: 'feat/NO_JIRA-frontend-alignment',
+  lifecycle: 'branch',
+  scope: 'frontend-alignment-sync',
+  executor: 'claude',
+  planOnly: false,
+  jiraProject: null,
+  epic: null,
+  jiraInProgressStatus: null,
+  jiraDoneStatus: null,
+  jiraBoard: null,
+  ciFixAttempts: 3,
+  ciWatchMinutes: 30,
+  requireApproval: null,
+  approvalWaitMinutes: null,
+  repos: {
+    ins: { path: 'repos/trade-imports-ins-frontend', github: 'DEFRA/trade-imports-ins-frontend' },
+    animals: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
+    plants: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
+    tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
+  },
+  models: {},
+  increments: null,
+  stopAfter: 'all'
+}
+```
 
 ### What still stops for a human
 

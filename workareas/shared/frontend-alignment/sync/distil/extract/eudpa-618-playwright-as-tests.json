@@ -1,0 +1,158 @@
+{
+  "cluster": "eudpa-618-playwright-as-tests",
+  "title": "Scan the Playwright suite as tests, not uncovered source (EUDPA-618)",
+  "summary": "ins main fixed its own failing SonarCloud quality gate (new_coverage 88.8% vs 90%, two rule violations) by declaring src/**/fit/** as test code in sonar-project.properties, and by renaming a URL literal to a named constant in get-safe-redirect.js to silence two S5332 false positives. Both changes conflict with the branch, but neither is a real behavioural disagreement: get-safe-redirect.js's fix is a pure no-op refactor (the branch already uses the same https://placeholder value main renames to a constant). sonar-project.properties needs a genuine decide, not a straight take: main's directory-based glob (src/**/fit/**) was written against ins main's OLD tree shape, where every fit spec and its helpers live inside a literal fit/ folder. The alignment branch already restructured ins onto the journeys' feature-folder convention (ruling 14/15), which mostly still puts specs and helpers under <feature>/fit/ but also has one spec outside any fit/ folder (dashboard.fit.spec.js sits directly in features/dashboard/), and animals/plants already carry a different, suffix-based pattern (src/**/*.fit.spec.js) for the same intent. Neither pattern alone covers every case on the branch's tree; the merged config needs the union. Separately, ins runs SonarCloud Automatic Analysis in parallel with its explicit CI scan, which reads a SEPARATE file, .sonarcloud.properties (added on the branch, absent from main), and ignores sonar-project.properties -- so fixing sonar-project.properties alone leaves Automatic Analysis's config out of step unless .sonarcloud.properties is updated too, per that file's own header instruction ('Keep the two files in step').",
+  "repos": ["ins", "animals", "plants"],
+  "mainCommits": {
+    "ins": ["59fb6f2 fix(EUDPA-618): scan the Playwright suite as tests, not uncovered source"],
+    "animals": [],
+    "plants": []
+  },
+  "files": [
+    {
+      "repo": "ins",
+      "mainPath": "sonar-project.properties",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "sonar-project.properties",
+      "trialMerge": "conflict",
+      "note": "Branch already excludes/includes src/**/*.fit.spec.js as tests (the animals/plants-style suffix pattern) but has no directory-based src/**/fit/** pattern, no sonar.coverage.exclusions=src/client/**, and no **/config.js in cpd.exclusions -- main's fix, taken verbatim, would miss the branch's fit/ helper files (address-form.js, seed-address.js, axe.js) exactly as EUDPA-618 diagnosed for main's own old tree."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/auth/get-safe-redirect.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/auth/get-safe-redirect.js",
+      "trialMerge": "conflict",
+      "note": "Mechanical only. Branch's current body already resolves `new URL(redirect, 'https://placeholder')` and compares `resolved.origin !== 'https://placeholder'` (both literals, twice) -- the exact same value main's fix extracts into a named `parseBase` constant with an explanatory comment. No behavioural difference, pure rename-for-Sonar's-benefit."
+    },
+    {
+      "repo": "ins",
+      "mainPath": ".sonarcloud.properties",
+      "mainChange": "none",
+      "branchStatus": "modified",
+      "branchPath": ".sonarcloud.properties",
+      "trialMerge": "clean",
+      "note": "main doesn't have this file at all (`fatal: path '.sonarcloud.properties' does not exist in origin/main`); it was added on the branch during the lighthouse/tooling stage, mirroring plants'. Because main lacks it, git has nothing to conflict over and will keep the branch's version unchanged -- silently leaving it out of step with whatever sonar-project.properties ends up as, unless updated by hand as part of this cluster's resolution."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "sonar-project.properties",
+      "mainChange": "none",
+      "branchStatus": "untouched by main",
+      "branchPath": "sonar-project.properties",
+      "trialMerge": "clean",
+      "note": "main never touched this file in the window (empty `git log mergeBase..main`). Informational only: animals' branch copy already has `src/**/*.fit.spec.js` in exclusions/test.inclusions/cpd.exclusions, plus sonar.coverage.exclusions=src/client/**,... and **/config.js in cpd.exclusions -- the pattern ins's EUDPA-618 commit message explicitly calls out as the reference ('Otherwise this is animals-frontend's config, on a repo that passes')."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "sonar-project.properties",
+      "mainChange": "none",
+      "branchStatus": "untouched by main",
+      "branchPath": "sonar-project.properties",
+      "trialMerge": "clean",
+      "note": "Same as animals: main never touched it; branch already carries the suffix-based pattern plus a .sonarcloud.properties mirror with the same 'keep in step' comment header."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "partial",
+    "evidence": "The branch already treats fit specs as test code by suffix (src/**/*.fit.spec.js) in ins, animals and plants -- the same INTENT as EUDPA-618. But ins's branch tree additionally has fit/ helper files that don't carry the .fit.spec.js suffix (fit/address-form.js, fit/seed-address.js, fit/axe.js), which the suffix pattern does not catch and which main's directory pattern (src/**/fit/**) would catch but not the standalone features/dashboard/dashboard.fit.spec.js outside any fit/ folder. Confirmed by `git ls-tree -r origin/feat/NO_JIRA-frontend-alignment -- src | grep -i fit`."
+  },
+  "verdict": "decide",
+  "verdictWhy": "get-safe-redirect.js is trivially portable (no real decision), but sonar-project.properties needs a union of main's directory pattern and the branch's existing suffix pattern to correctly cover ins's actual (post-alignment) tree shape -- neither side's pattern alone is sufficient, so this cannot be resolved by a plain 'take main' or 'take branch'.",
+  "resolutions": [
+    {
+      "repo": "ins",
+      "path": "sonar-project.properties",
+      "take": "sonar.exclusions=src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** ; sonar.tests=src/ ; sonar.test.inclusions=src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** ; sonar.coverage.exclusions=src/client/** (new, from main -- ins now bundles a browser client via webpack like animals/plants) ; sonar.cpd.exclusions=**/config.js,src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/**",
+      "why": "The suffix pattern (src/**/*.fit.spec.js) catches features/dashboard/dashboard.fit.spec.js, which sits outside any fit/ folder and which the directory pattern alone would miss. The directory pattern (src/**/fit/**) catches the address-book feature's fit/address-form.js, fit/seed-address.js and fit/axe.js helpers, which the suffix pattern alone would miss (the exact problem EUDPA-618 diagnosed for main's own tree, just recurring under a different folder shape). Together they cover every fit-suite file on the branch's actual tree. **/config.js and src/client/** are carried over from main/animals/plants for consistency, since ins now has both."
+    },
+    {
+      "repo": "ins",
+      "path": "src/auth/get-safe-redirect.js",
+      "take": "Apply main's mechanical refactor on top of the branch's current body: extract the repeated 'https://placeholder' literal into a `const parseBase = 'https://placeholder'` with main's explanatory comment, and use `parseBase` in both the `new URL(...)` call and the origin comparison.",
+      "why": "Zero behavioural change -- both sides already agree on the value; this only silences two SonarCloud S5332 false positives by removing the appearance of an outbound URL literal."
+    },
+    {
+      "repo": "ins",
+      "path": ".sonarcloud.properties",
+      "take": "Mirror the same union pattern into this file's four Automatic-Analysis-honoured properties: sonar.sources=src/ ; sonar.exclusions=src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** ; sonar.tests=src/ ; sonar.test.inclusions=src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** ; plus sonar.cpd.exclusions=**/config.js,src/**/*.test.js,src/**/*.fit.spec.js,src/**/fit/** (plants' .sonarcloud.properties proves cpd.exclusions IS honoured by Automatic Analysis even though coverage.exclusions is not carried in either plants' or the branch's current ins copy).",
+      "why": "main has no .sonarcloud.properties to merge against (git has nothing to conflict over, so it would silently stay stale), but the file's own header comment is explicit: 'Keep the two files in step: change one, change the other.' Leaving it unupdated would mean SonarCloud's Automatic Analysis pass keeps flagging the fit suite as uncovered source even after sonar-project.properties is fixed for the explicit CI scan."
+    }
+  ],
+  "preAlign": [
+    {
+      "repo": "ins",
+      "what": "Land both the get-safe-redirect.js constant extraction and the union sonar-project.properties/.sonarcloud.properties glob directly on the branch now, ahead of the main-merge.",
+      "why": "Both are safe, mechanical, zero-behaviour-change edits that remove two files from ins's live conflict list before the real merge, and the union glob is something only the branch's own tree shape can determine correctly -- it cannot be produced by a blind `git merge` regardless of when it's applied."
+    }
+  ],
+  "wireIn": [
+    "None beyond the two properties files -- SonarCloud reads sonar-project.properties for the explicit CI scan step in check-pull-request.yml/publish.yml/publish-hotfix.yml (unchanged, still uncommented on the branch) and .sonarcloud.properties for Automatic Analysis; no code wiring is needed for either."
+  ],
+  "behaviourChanges": [
+    "ins's SonarCloud quality gate (both the explicit CI scan and Automatic Analysis, once .sonarcloud.properties is also updated) stops counting the Playwright fit suite's ~288 lines as uncovered production source, and stops applying rules like S138/S1192 to test code.",
+    "The two S5332 'http is insecure' criticals in get-safe-redirect.js are silenced with no change to runtime behaviour."
+  ],
+  "knockOn": [
+    "Because the union glob also folds in sonar.coverage.exclusions=src/client/** (new to ins, already present in animals/plants), confirm ins's browser bundle output actually lives under src/client/ post-alignment -- it does (webpack.config.js targets src/client/assets.html per the ledger's build-tooling stage), so this is a safe carry-over, not a guess.",
+    "animals and plants are unaffected by this cluster (main made no change there); no action needed on either beyond the informational file rows above."
+  ],
+  "openQuestions": [
+    {
+      "question": "Should ins's sonar.cpd.exclusions also pick up animals/plants' copy.??.js and address-book stub exemptions, for full parity with the two journeys' sonar-project.properties?",
+      "default": "No -- out of this cluster's scope. Those two exemptions exist because animals/plants have parallel-language copy decks and canned stub party records that are duplicate-shaped by design; whether ins's own copy.en.js/copy.cy.js and stub seeds warrant the same treatment is a separate, un-asked question this fix does not need to answer to pass the gate."
+    }
+  ],
+  "claims": [
+    {
+      "id": "e618-001",
+      "statement": "main's EUDPA-618 fix matches by directory (src/**/fit/**) rather than by suffix specifically because ins main's tree has fit/ helper files without the .fit.spec.js suffix.",
+      "kind": "structure",
+      "ref": "ins: 59fb6f2 commit message",
+      "quote": "Matched by directory rather than animals-frontend's `*.fit.spec.js` because two page-object helpers beside the specs don't carry the suffix.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "e618-002",
+      "statement": "ins main's fit/ tree (pre-alignment CDP-template shape) holds exactly the helper files the commit message describes.",
+      "kind": "structure",
+      "ref": "ins:src/server/address-book/fit/ (origin/main)",
+      "quote": "src/server/address-book/fit/address-form.js\nsrc/server/address-book/fit/seed-address.js",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "e618-003",
+      "statement": "The alignment branch's ins tree has a fit/ helper (axe.js) main's fix never saw, plus one fit spec (dashboard.fit.spec.js) that sits outside any fit/ folder at all -- so main's directory-only pattern does not fully cover the branch's shape.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/features/ (origin/feat/NO_JIRA-frontend-alignment)",
+      "quote": "src/server/app/features/address-book/fit/axe.js\nsrc/server/app/features/dashboard/dashboard.fit.spec.js",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "e618-004",
+      "statement": "The branch's get-safe-redirect.js already uses the same https://placeholder value main's fix renames to a constant -- no behavioural difference.",
+      "kind": "behaviour",
+      "ref": "ins:src/auth/get-safe-redirect.js (origin/feat/NO_JIRA-frontend-alignment)",
+      "quote": "const resolved = new URL(redirect, 'https://placeholder')\n    if (resolved.origin !== 'https://placeholder') {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "e618-005",
+      "statement": "ins runs SonarCloud Automatic Analysis in parallel with its explicit CI scan, and Automatic Analysis reads .sonarcloud.properties instead of sonar-project.properties -- a file main does not have.",
+      "kind": "config",
+      "ref": "ins:.sonarcloud.properties (origin/feat/NO_JIRA-frontend-alignment) header comment",
+      "quote": "SonarQube Cloud runs Automatic Analysis on this repo -- the scanner steps in .github/workflows/ are still commented out -- and Automatic Analysis ignores sonar-project.properties. It reads this file instead, and only the subset of properties below. Keep the two files in step: change one, change the other.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "e618-006",
+      "statement": "animals and plants main never touched sonar-project.properties in this window.",
+      "kind": "structure",
+      "ref": "animals/plants: git log <mergeBase>..origin/main -- sonar-project.properties",
+      "quote": "(empty output)",
+      "confidence": "verbatim"
+    }
+  ]
+}

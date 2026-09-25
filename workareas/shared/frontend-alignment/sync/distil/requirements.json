@@ -1,0 +1,577 @@
+{
+  "programme": "frontend-alignment-sync",
+  "precedence": ["rulings:sam-2026-09-24", "repo:main", "ledger:alignment", "repo:branch"],
+  "note": "Sources are eleven change clusters main gained since each repo's merge base (the brief said ten; the survey split tooling into playwright-1.63 and sonar-pre-push-gate). Claim ids cite distil/extract/<cluster>.json and distil/verify/<cluster>.json; an id ending -mN is a verifier's missed claim, and a verifier's resolutionVerdict or cleanMergeFinding is cited as 'verify:<cluster> <path>'. Where a verification refuted or corrected a claim or resolution, the verification was adopted (see conflicts.json). delta is measured against the branch as it stands.",
+  "requirements": [
+    {
+      "id": "req-001",
+      "statement": "All four repos run the Playwright test runner at 1.63.0; in the tests repo the Playwright CLI is 0.1.21 and the container image and the local baseline-update default are v1.63.0-jammy, so runner, CLI and browsers stay in step.",
+      "why": "main bumped Playwright in all four repos; the branch is still on 1.61.x. Landing it before the merge takes the version decision out of ins's much larger package-file conflict.",
+      "claims": ["pw-001", "pw-003", "pw-004", "pw-005", "pw-002"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch pins 1.61.0 (ins, animals, plants) and 1.61.1 with CLI 0.1.14 (tests).",
+      "conflicts": ["c-022"]
+    },
+    {
+      "id": "req-002",
+      "statement": "Every lockfile installs clean in CI: ins, animals and plants lockfiles are regenerated under the pinned npm 11.6.2, never hand-merged; the tests repo's under plain npm.",
+      "why": "plants main shows the same one-line Playwright bump breaking clean install when the lockfile was regenerated under the wrong npm. ins lost its convenience install script in s20, so the pin must be honoured explicitly.",
+      "claims": ["pw-002", "pw-005-m1", "pw-003-m1"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "ins's branch has the pin metadata but not the pinned-install script; plain install uses the ambient npm.",
+      "conflicts": ["c-020"]
+    },
+    {
+      "id": "req-003",
+      "statement": "In ins and animals a push from a Claude Code session runs the real SonarCloud quality gate and is blocked when it fails, replacing the unlicensed no-op Stop hook.",
+      "why": "main fixed this in ins and animals; the merge carries it byte-identical to main.",
+      "claims": ["sb-002"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge: the merged hook settings equal main's (sb-002). The ins and animals merge rows prove it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-004",
+      "statement": "plants gets the same real pre-push quality gate.",
+      "why": "Out of scope: plants' own main has not adopted the fix and main decides behaviour. Raise it as an ordinary fix against plants' main, independent of this sync.",
+      "claims": ["sb-001"],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "plants main and branch carry the identical old Stop hook.",
+      "conflicts": []
+    },
+    {
+      "id": "req-005",
+      "statement": "The sync brings in no CI workflow change in any of the four repos, so no workflow_run job can newly fail against the branch.",
+      "why": "main changed no workflow file since any merge base; the workflow_run jobs that do exist call only the workspace's reusable workflow or scripts the branch already restored.",
+      "claims": ["sb-003", "sb-003-m1", "sb-003-m2"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Empty workflow diff in all four repos (sb-003).",
+      "conflicts": []
+    },
+    {
+      "id": "req-006",
+      "statement": "ins's SonarCloud analysis treats every file of the Playwright fit suite under src as test code, both the specs outside any fit folder and the helper files inside fit folders, and excludes the browser bundle from coverage.",
+      "why": "main's EUDPA-618 fixed ins's failing gate with a directory pattern written for main's old tree; the branch's feature-folder tree needs the union of that pattern and the branch's suffix pattern, or helpers or the dashboard spec count as uncovered source.",
+      "claims": ["e618-001", "e618-002", "e618-003", "e618-003-m1", "e618-006"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch classifies by suffix only; fit/ helpers (address-form, seed-address, axe) are counted as source.",
+      "conflicts": []
+    },
+    {
+      "id": "req-007",
+      "statement": "ins's safe-redirect check names its parse base as a constant, silencing two SonarCloud false positives, with no change to which redirects are allowed.",
+      "why": "main's EUDPA-618 refactor; both sides already use the same value.",
+      "claims": ["e618-004"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch repeats the literal twice.",
+      "conflicts": []
+    },
+    {
+      "id": "req-008",
+      "statement": "ins's Automatic Analysis configuration carries the same test-code classification as its CI scan configuration, for parity with plants.",
+      "why": "The file's own header asks for the two to be kept in step. The verifier showed its premise (Automatic Analysis running beside a CI scan) is probably false, so this is parity, not a live gate fix.",
+      "claims": ["e618-005"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch's Automatic Analysis file has the suffix pattern only.",
+      "conflicts": ["c-002"]
+    },
+    {
+      "id": "req-009",
+      "statement": "ins's duplication exclusions also pick up the journeys' copy-deck and address-book-stub exemptions.",
+      "why": "Out of scope: EUDPA-618 does not need it to pass the gate, and nobody has asked whether ins's copy decks and stub seeds warrant it.",
+      "claims": ["e618-003-m2"],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-010",
+      "statement": "On animals' Amend pages (origin, import reason, port of entry, private transporter details, transit countries) a stored country or port code that has dropped out of reference data is blanked with a 'no longer available' error, and the stored answer is not overwritten by Save and continue.",
+      "why": "main's EUDPA-573 fix; the branch touches only one unrelated line in three of the controllers and never touches the countries or ports readers.",
+      "claims": ["573-001", "573-002", "573-003"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge (573-002, 573-003). The animals merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-011",
+      "statement": "On plants' origin and arrival-details pages a stale country or place-of-landing code is blanked with a 'no longer available' error, scope-aware to the potato commodity gate, and the stored answer is kept.",
+      "why": "main's EUDPA-573 fix for plants; the branch never touches these files.",
+      "claims": ["573-003", "573-005"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge. The plants merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-012",
+      "statement": "The hub's Completed status and the check-answers summary card warn when a stored code has gone stale.",
+      "why": "Out of scope: EUDPA-573 deliberately pinned current behaviour there; no alignment stage touches those pages, so the sync forces no decision.",
+      "claims": ["573-005"],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-013",
+      "statement": "Picking any of animals' six shipped transporters submits an ISO country code for the carrier's address.",
+      "why": "main's EUDPA-620 fix for nightly dead-lettered notifications; the branch never touches the transporters service.",
+      "claims": ["620-001", "620-002", "620-003"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge (620-002). The animals merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-014",
+      "statement": "animals proves the shared error page renders at 503 for an unavailable service behind a page with a test that passes whatever is running on the developer's machine, while the countries and ports readers' own 503-on-load-failure tests stay.",
+      "why": "main patched the flake by stubbing fetch; the branch's s18 already removed its cause by throwing the 503 directly, converging the three repos on one test text. Main's intent (determinism) is met.",
+      "claims": ["503stub-001", "503stub-002", "503stub-003"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Conflict in the animals merge: keep the branch's test, drop main's fetch-stubbed one.",
+      "conflicts": ["c-003"]
+    },
+    {
+      "id": "req-015",
+      "statement": "plants' error-page tests pass whatever is running on the developer's machine: no plants test proves the 503 page by letting a real reference-data read fail.",
+      "why": "The verifier found plants still carries the exact flake class animals fixed on main: an unstubbed reference-data read that reads 200 when a local reference-data service is up.",
+      "claims": ["503stub-003-m1"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Follow-up the branch should carry; plants' merged errors test keeps the unstubbed read.",
+      "conflicts": ["c-004"]
+    },
+    {
+      "id": "req-016",
+      "statement": "ins refuses to start when the address book API or animals frontend base URL is malformed, and has tests pinning both.",
+      "why": "main's EUDPA-333 QA fix: a misconfiguration fails at boot rather than as an opaque fetch failure later.",
+      "claims": ["333-002", "als-017"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "The format change merges with no marker inside ins's otherwise conflicted config, and the new test file lands clean with relative imports. The ins merge row proves both survived.",
+      "conflicts": ["c-017"]
+    },
+    {
+      "id": "req-017",
+      "statement": "Every render of ins's add-address form (first view and every validation or API-error re-render) tells the browser not to store it, and redirects do not, so the back button never replays a stale or submitted form.",
+      "why": "main's EUDPA-333 QA fix lived in a file the branch moved and rewrote; the merge resurrects the old file, which must go, so the header must be placed in the aligned controller.",
+      "claims": ["333-001", "333-003"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Branch has no cache-control handling anywhere (333-003).",
+      "conflicts": []
+    },
+    {
+      "id": "req-018",
+      "statement": "animals refuses to start when the address book API base URL is malformed; its config tests keep the branch's cookie-name and strict-boolean tests and gain main's two URL-validation tests.",
+      "why": "main's EUDPA-333 QA fix for animals; its new config test file collides with the one the branch created (add/add).",
+      "claims": ["333-002"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Config format merges clean (both sides agree on the ins-frontend key); the config test file is an add/add conflict to be unioned.",
+      "conflicts": ["c-018"]
+    },
+    {
+      "id": "req-019",
+      "statement": "animals' party-picker unit test covers all five party types, not only consignor.",
+      "why": "main's EUDPA-333 QA fix; the branch never touched the file.",
+      "claims": ["verify:eudpa-333-handshake-qa party-picker.controller.test.js"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge. The animals merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-020",
+      "statement": "The end-to-end suite proves the ins add-address link for all five party pickers, present outside stub mode and absent in it, and gates those specs correctly on CDP as well as the local stack.",
+      "why": "main's EUDPA-333 tests fixes; the branch never touched these specs or helpers.",
+      "claims": ["verify:eudpa-333-handshake-qa addresses-read-only.spec.ts", "verify:eudpa-333-handshake-qa environment.ts", "333-007"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge. The tests merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-021",
+      "statement": "The tests repo's sign-in fixture mints each service's session cookie under the name that service actually uses: ins-sid for ins and plants-sid for plants on the local stack, sid elsewhere and for animals, with the environment override still winning.",
+      "why": "main made the ins cookie name depend on the host so CDP needs no extra setting; the branch had given plants its own development cookie with the old per-target field. Git merges the two with no marker into a file that no longer compiles and whose plants value is dead, silently reintroducing the animals/plants session collision.",
+      "claims": ["333-004", "333-005", "333-006", "333-m1"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Clean-but-wrong merge; needs main's host-derived mechanism generalised to plants.",
+      "conflicts": ["c-005", "c-028"]
+    },
+    {
+      "id": "req-022",
+      "statement": "main's ZAP and accessibility work reaches the branch intact: boxed warning banners, the partial-run flag, CDP's diagnostic fallback report, the retargeted draft-validation spec, the extended @active and @a11y coverage for live animals, and the ins address-book security spec keeping both the branch's dropped /about visit and main's handshake-token check.",
+      "why": "Five tests-repo commits that merge clean, including one file both sides edited.",
+      "claims": ["tsc-001", "tsc-005", "tsc-005-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge verified with merge-tree. The tests merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-023",
+      "statement": "The end-to-end sign-in spec asserts the sign-out link through the sign-out page's own address (/auth/sign-out), and carries main's root-redirect test and set-prefixed journey address.",
+      "why": "The tests repo's one conflict: main (EUDPA-619) pinned the literal, the branch the page object; both are /auth/sign-out. Git applies main's other additions itself.",
+      "claims": ["tsc-002", "tsc-003", "tsc-004"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "One hand-resolved line at the marker.",
+      "conflicts": ["c-006"]
+    },
+    {
+      "id": "req-024",
+      "statement": "ins serves the dev-only address lookup spike page exactly as main does: only when the CDP environment is dev or local (checked each time the server starts, and only when sign-in is enabled), searching by postcode or free text, showing per-hop timings and a trace id, mapping a chosen result onto the address book's fields and naming what it cannot fill, saving nothing, and working from stub data with the backend down.",
+      "why": "main's EUDPA-390 spike landed after the branch's restructure; the merge leaves it in main's old per-page-plugin shape with imports that no longer resolve, so it must be placed in the aligned structure.",
+      "claims": ["als-001", "als-002", "als-003", "als-005", "als-006", "als-007", "als-008", "als-010", "als-011", "als-014", "als-006-m1"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Branch has nothing for the spike (branchEquivalent none).",
+      "conflicts": ["c-014", "c-016", "c-023", "c-027"]
+    },
+    {
+      "id": "req-025",
+      "statement": "The spike page renders on the wide display surface inside the shared layout, and its copy comes from a copy bundle whose Welsh file carries the same machine-drafted header as every other feature.",
+      "why": "main's page overrode the whole content block for a full-width layout; the branch's shared layout and copy convention require the inner block and a copy bundle. Sam's ruling keeps machine-drafted Welsh.",
+      "claims": ["als-009", "als-012", "als-013", "als-007-m1"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-015"]
+    },
+    {
+      "id": "req-026",
+      "statement": "The run-mode service stays the same text in ins, animals and plants; the spike's environment gate lives with the spike.",
+      "why": "mode is one of the chassis files the alignment made identical across the three frontends; main's spike added an ins-only export to it.",
+      "claims": ["als-004", "als-016"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "The ins merge takes the branch's mode service unchanged; the spike row must not reintroduce the export.",
+      "conflicts": ["c-023"]
+    },
+    {
+      "id": "req-027",
+      "statement": "One place decides every ins address-book path, the address-book URL surface is unchanged, and none of main's old per-page address-book plugin files, its second route-path module, its old navigation builder or its old list helper come back.",
+      "why": "main's EUDPA-311 duplicates the branch's own s06 centralisation; the merge resurrects 16 dead files and conflicts in the view context.",
+      "claims": ["311-001", "311-002", "311-003", "311-004", "311-005"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch already meets the behaviour; the merge must delete the resurrected files and keep the branch's context.",
+      "conflicts": ["c-019"]
+    },
+    {
+      "id": "req-028",
+      "statement": "animals serves live animals under /live-animals: the root redirects there and the set is registered only when sign-in is enabled, so with sign-in disabled both the root and the set's dashboard answer 404.",
+      "why": "main's EUDPA-619 mounts each set under its own prefix; the branch's converged router test pins that nothing but health is registered with auth disabled.",
+      "claims": ["619-001", "619-002", "619-003", "619-m11"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch serves the set at the server root with no set context.",
+      "conflicts": ["c-007"]
+    },
+    {
+      "id": "req-029",
+      "statement": "plants serves high-risk plants under /high-risk-plants on the same terms: root redirect and set registration only when sign-in is enabled.",
+      "why": "main's EUDPA-619 for plants; same gate settled by plants' own router test.",
+      "claims": ["619-002", "619-003", "619-m11"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch serves the set at the server root.",
+      "conflicts": ["c-007"]
+    },
+    {
+      "id": "req-030",
+      "statement": "In animals the sign-in error page renders outside every set, with its text from the shared copy, on all four failure paths: not authenticated, token verification failure, missing organisation and a failing permissions call.",
+      "why": "main moved the page onto set-free chrome; the branch added two failure paths and shared copy. A naive merge leaves those two paths calling a helper that is no longer imported, so they throw.",
+      "claims": ["619-007", "619-m5", "619-m12"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Conflict in animals; silent break in plants.",
+      "conflicts": ["c-012"]
+    },
+    {
+      "id": "req-031",
+      "statement": "In animals the error page takes its chrome from the set the request's path belongs to, falling back to set-free chrome outside every set, with its messages from the shared copy.",
+      "why": "main's EUDPA-619 set-aware error chrome layered on the branch's s18 shared error copy.",
+      "claims": ["619-m12", "619-m7"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Conflict in both journeys.",
+      "conflicts": ["c-009"]
+    },
+    {
+      "id": "req-032",
+      "statement": "animals' co-residency suite passes against the branch's session-gated routes, and asserts /auth/sign-out rather than /signout as the server-wide sign-out route.",
+      "why": "main's co-residency suite merges clean but fails on the merged tree: it boots the real router with no session strategy and pins the /signout route the alignment deleted.",
+      "claims": ["619-m1", "619-m2", "619-m6"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Clean-but-wrong in both journeys; plants also lacks animals' test session helper.",
+      "conflicts": ["c-013"]
+    },
+    {
+      "id": "req-033",
+      "statement": "animals names /signout nowhere except its OIDC sign-out module: no route, no test, no comment and no developer doc.",
+      "why": "The alignment's s17 verification gate; main's EUDPA-619 brings /signout back in comments, docs and two tests.",
+      "claims": ["619-m10"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "13 non-OIDC hits in the animals merged tree, similar in plants.",
+      "conflicts": []
+    },
+    {
+      "id": "req-034",
+      "statement": "animals' live-animals gateway keeps main's set-named export, and the router still imports the shared service-routes name through the routes barrel.",
+      "why": "Sam's ruling: the alignment conforms to EUDPA-619. 619's recipe names each gateway after its set; the alignment's shared name is kept only where router byte-equality needed it, in the barrel.",
+      "claims": ["619-001", "619-m9"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-007"]
+    },
+    {
+      "id": "req-035",
+      "statement": "animals' four-digit-year date guard carries main's wording: a two-digit year such as 27/3/26 would parse as a year in the 1900s.",
+      "why": "main and the branch wrote the identical guard; only one comment differs and main's is the accurate one. Landing it before the merge removes a conflict.",
+      "claims": ["619-008", "619-m4"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch says 'the year 26'.",
+      "conflicts": ["c-008"]
+    },
+    {
+      "id": "req-036",
+      "statement": "plants' identical date guard comment is brought to main's wording.",
+      "why": "Out of scope for this sync, per the verifier: plants' calendar is not in conflict. Flag it for the next plants/animals byte-equality pass.",
+      "claims": ["619-m4"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-008"]
+    },
+    {
+      "id": "req-037",
+      "statement": "ins's links into live animals (each dashboard notification link, 'Start a new notification' and the address-book handshake return URL) carry /live-animals, and ins's unit tests assert the prefixed addresses.",
+      "why": "main's EUDPA-619 ins fix: the frontend root 404s once a set is mounted. Two ins test files do not conflict but still assert the unprefixed addresses and go red once the fix lands.",
+      "claims": ["619-005", "619-006", "619-m8"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Branch links to the animals frontend root.",
+      "conflicts": ["c-010", "c-011"]
+    },
+    {
+      "id": "req-038",
+      "statement": "ins resolves every import on the branch's relative convention: nothing main brings in uses the #/ alias, and main's resurrected old-path tests are gone.",
+      "why": "The branch removed the #/ alias; main's new link helper and two resurrected tests import through it and would fail at load.",
+      "claims": ["619-004", "619-m3", "619-m13", "als-008"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-011", "c-024"]
+    },
+    {
+      "id": "req-039",
+      "statement": "The tests repo's URL layer (page objects, adapters, about twenty specs) runs on the per-set prefixes.",
+      "why": "main's EUDPA-619 tests change; 21 of its 22 files merge clean and the rest is req-023.",
+      "claims": ["619-m14", "tsc-005-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge. The tests merge row proves it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-040",
+      "statement": "main's EUDPA-619 URL-prefix edits to every other animals and plants feature test land byte-identical to main.",
+      "why": "Only the three conflicted animals controller tests differ from main after the merge.",
+      "claims": ["619-m14"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Clean merge. The animals and plants merge rows prove it survived.",
+      "conflicts": []
+    },
+    {
+      "id": "req-041",
+      "statement": "animals' three CSRF-forged-request controller tests register the test session strategy and mount the feature under the set prefix.",
+      "why": "Two independent needs meet in the same tests: the branch's session gating and main's prefix. The survey's attribution of the two sides was swapped; the verifier corrected it.",
+      "claims": ["573-002-m1"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-001"]
+    },
+    {
+      "id": "req-042",
+      "statement": "The tests repo's feature branch contains main's tip through one merge commit (no rebase, no force-push), and PR #227 reports mergeable with the repo's ladder green.",
+      "why": "direction.json: merging costs no more than replaying, keeps the branch name and the four PRs, and keeps the stage SHAs the ledger cites.",
+      "claims": ["pw-004", "sb-002", "503stub-002", "311-004", "tsc-002"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "measure.json: 31 ins, 12 animals, 6 plants and 1 tests conflict files.",
+      "conflicts": []
+    },
+    {
+      "id": "req-043",
+      "statement": "The full local stack runs from the branch in dev mode with the tests repo's suite green, and CI is green on all four pull requests.",
+      "why": "The four merges agree on URLs, cookie names and sign-out only once all have landed; only the end-to-end rung proves the combination.",
+      "claims": ["pw-005", "tsc-005-m1", "333-006"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-044",
+      "statement": "The alignment report reads as a proposal for merge, not a demonstration, and lists every behaviour change and every accepted difference, with countries-on-first-read stated as an ins-only change.",
+      "why": "Sam ruled the branch is to merge; reviewers need the behaviour changes stated plainly. The verifier showed animals and plants already loaded countries on first read on main.",
+      "claims": ["573-001", "als-001", "333-006", "619-m10"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Report frames the work as a demonstration.",
+      "conflicts": ["c-021"]
+    },
+    {
+      "id": "req-045",
+      "statement": "The four pull requests' titles and bodies read as a proposal for merge and carry the same behaviour-changes list and accepted differences.",
+      "why": "Same ruling; each PR is reviewed on its own.",
+      "claims": ["als-001", "333-006"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-021"]
+    },
+    {
+      "id": "req-046",
+      "statement": "The four pull requests stay drafts until Sam says otherwise.",
+      "why": "Only Sam lifts the drafts; no PR merges without him.",
+      "claims": ["rulings:sam-2026-09-24"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-026"]
+    },
+    {
+      "id": "req-047",
+      "statement": "ins takes the journeys' full countries reader surface and their export-block filter.",
+      "why": "Open question 29, blocked on Sam. The alignment's s19 kept ins on a narrower reader (D4).",
+      "claims": ["573-001"],
+      "status": "question",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-025"]
+    },
+    {
+      "id": "req-048",
+      "statement": "animals' router tests prove that with sign-in disabled the set's dashboard address, not only the root, answers 404.",
+      "why": "After EUDPA-619 the dashboard lives at the set prefix, so the branch's root-only assertion no longer covers it.",
+      "claims": ["619-m11"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-049",
+      "statement": "In plants the sign-in error page renders outside every set, with its text from the shared copy, on all four failure paths: not authenticated, token verification failure, missing organisation and a failing permissions call.",
+      "why": "Same as req-030; in plants git auto-merges the import silently, so the two branch-only paths would throw with no conflict marker to warn.",
+      "claims": ["619-m5", "619-m12", "verify:eudpa-619-multi-set plants src/server/auth/controller.js"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Silent break in plants.",
+      "conflicts": ["c-012"]
+    },
+    {
+      "id": "req-050",
+      "statement": "In plants the error page takes its chrome from the set the request's path belongs to, falling back to set-free chrome outside every set, with its messages from the shared copy.",
+      "why": "Same as req-031; plants' set-aware chrome helper differs from animals'.",
+      "claims": ["619-m12", "619-m7"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-009"]
+    },
+    {
+      "id": "req-051",
+      "statement": "plants' co-residency suite passes against the branch's session-gated routes, and asserts /auth/sign-out rather than /signout as the server-wide sign-out route.",
+      "why": "Same failure as animals, and plants lacks animals' test session helper.",
+      "claims": ["619-m1", "619-m2", "619-m6"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-013"]
+    },
+    {
+      "id": "req-052",
+      "statement": "plants names /signout nowhere except its OIDC sign-out module: no route, no test, no comment and no developer doc.",
+      "why": "s17 verification gate.",
+      "claims": ["619-m10"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-053",
+      "statement": "plants' high-risk-plants gateway keeps main's set-named export and its registered plugin name, and the router still imports the shared service-routes name through the routes barrel.",
+      "why": "Conform to EUDPA-619 (ruling).",
+      "claims": ["619-m9", "verify:eudpa-619-multi-set plants src/server/app/routes.js"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": ["c-007"]
+    },
+    {
+      "id": "req-054",
+      "statement": "plants' router tests prove that with sign-in disabled the set's dashboard address, not only the root, answers 404.",
+      "why": "Same as req-048.",
+      "claims": ["619-m11"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-055",
+      "statement": "plants' feature branch contains main's tip through one merge commit (no rebase, no force-push), and PR #69 reports mergeable with the repo's ladder green.",
+      "why": "direction.json.",
+      "claims": ["pw-004", "573-003"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "measure.json: 6 conflict files, 9 hunks.",
+      "conflicts": []
+    },
+    {
+      "id": "req-056",
+      "statement": "animals' feature branch contains main's tip through one merge commit (no rebase, no force-push), and PR #339 reports mergeable with the repo's ladder green.",
+      "why": "direction.json.",
+      "claims": ["pw-004", "sb-002", "503stub-002"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "measure.json: 12 conflict files, 21 hunks.",
+      "conflicts": []
+    },
+    {
+      "id": "req-057",
+      "statement": "ins's feature branch contains main's tip through one merge commit (no rebase, no force-push), the merge commit's tree builds and passes its ladder on its own, and PR #27 reports mergeable.",
+      "why": "direction.json; the ins merge is the largest (31 files, 13 content conflicts and 18 moved files main edited).",
+      "claims": ["311-004", "als-014", "619-m3"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "measure.json: 31 conflict files, 36 hunks.",
+      "conflicts": []
+    }
+  ]
+}

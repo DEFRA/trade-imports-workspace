@@ -1,0 +1,109 @@
+{
+  "source": "playwright-1.63",
+  "verdicts": [
+    {
+      "id": "pw-001",
+      "holds": true,
+      "reason": "Confirmed by direct `git diff <mergeBase>..origin/main -- package.json` in all three repos: ins (4327c97), animals (226fc70), plants (77a5aa7) each show exactly one changed line, `@playwright/test` 1.61.0 -> 1.63.0, nothing else touched. Quote matches verbatim."
+    },
+    {
+      "id": "pw-002",
+      "holds": true,
+      "reason": "Diffed the two non-base stages of the ins package-lock.json merge-tree conflict directly (`git diff <stage2-blob> <stage3-blob>`); the cssnano/cssnano-preset-default/joi lines quoted appear verbatim at the head of the diff, confirming the conflict region is dominated by the branch's own dependency-tree divergence, not the playwright line."
+    },
+    {
+      "id": "pw-003",
+      "holds": true,
+      "reason": "Read package.json directly off origin/feat/NO_JIRA-frontend-alignment in all four repos today: ins/animals/plants all read `\"@playwright/test\": \"1.61.0\"`, tests reads `\"@playwright/test\": \"1.61.1\"` alongside `\"@playwright/cli\": \"0.1.14\"`. Matches the claim verbatim."
+    },
+    {
+      "id": "pw-004",
+      "holds": true,
+      "reason": "Ran `git merge-tree --write-tree origin/feat/NO_JIRA-frontend-alignment origin/main` fresh in both clones; output contains `Auto-merging package-lock.json` then `Auto-merging package.json` with no CONFLICT line for either file, in both animals and plants, matching the quote and order verbatim."
+    },
+    {
+      "id": "pw-005",
+      "holds": true,
+      "reason": "Ran `git log 8f52771..origin/feat/NO_JIRA-frontend-alignment -- package.json package-lock.json Dockerfile bin/update-visual-baselines-linux.sh` in the tests clone: empty output, confirming the branch never touched any of the four files since the merge base."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "ins",
+      "path": "package.json",
+      "holds": true,
+      "reason": "Branch's package.json owns the whole dependency-tree shape and main's diff for this file really is the single @playwright/test line (confirmed under pw-001); taking the branch as base and bumping only that line is correct.",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": "package-lock.json",
+      "holds": true,
+      "reason": "Regenerating under the pinned npm rather than hand-merging is the right call given the tree divergence, and `packageManager: \"npm@11.6.2\"` is indeed present on the branch today (restored by commit f9c9bce after s20-tooling-convergence had deleted it — see lockfileFinding).",
+      "correction": "The resolution's phrasing ('run `npm install`') understates the mechanism. s20's ins commit (1d3869c) deleted the `install:pinned-npm` npm script, and the later f9c9bce follow-up restored only the `packageManager` field and `scripts/npm-version.js`, NOT `install:pinned-npm`. A plain `npm install` on this branch today uses whatever npm is ambient on PATH (11.17.0 in this workspace per s10's own baseline), not 11.6.2, unless corepack is enabled and configured to honour `packageManager` automatically. The safe, already-proven-in-this-repo-family command is `npx --yes \"$(node scripts/npm-version.js)\" install`, then `npm ci` to prove it installs clean under 11.6.2 (see lockfileFinding)."
+    },
+    {
+      "repo": "animals",
+      "path": "package.json / package-lock.json",
+      "holds": true,
+      "reason": "Re-ran `git merge-tree` myself (see pw-004): zero conflict markers for either file. `npm ci` as a post-merge sanity check is sound and cheap.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "package.json / package-lock.json",
+      "holds": true,
+      "reason": "Same clean-merge proof as animals holds for plants (see pw-004). The `npm ci` sanity check is not merely optional belt-and-braces here: plants' own main history for this exact bump (commit ecccaad, then a same-day follow-up 7b121f9 titled 'fix: regenerate package-lock.json with pinned npm version', changing a further 443 lines) is a live example of `npm ci` failing in CI because a lockfile for this identical one-line playwright bump was first regenerated under the wrong local npm. The sanity check is load-bearing, not precautionary.",
+      "correction": ""
+    },
+    {
+      "repo": "tests",
+      "path": "package.json / package-lock.json / Dockerfile / bin/update-visual-baselines-linux.sh",
+      "holds": true,
+      "reason": "Confirmed via `git log <mergeBase>..origin/feat/NO_JIRA-frontend-alignment -- <path>` for all four paths: no commits. Nothing of the branch's to preserve; taking main's content verbatim via the merge is correct.",
+      "correction": ""
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The 'port' verdict and its repo-by-repo split (ins needs manual work + a lockfile regen; animals/plants/tests are clean) is correct and independently reproduced. Two caveats worth flagging: (1) the top-level `summary` sentence overstates scope — it says the playwright bump is 'the ONLY package.json change main made in this window in each repo' for 'all four repos', but tests' package.json actually changed TWO lines (`@playwright/cli` 0.1.14->0.1.21 in addition to `@playwright/test`), which the survey's own `behaviourChanges` and `files` sections correctly capture elsewhere — only the summary sentence is loose. (2) the ins lockfile-regen resolution names the wrong mechanism post-s20 (see resolutionVerdicts and lockfileFinding) — the intent (npm 11.6.2) is right, the literal command ('npm install') is not sufficient on its own."
+  },
+  "lockfileFinding": {
+    "handoverClaim": "An older handover said ins and the tests repo install with plain npm, with only animals and plants pinned to npm 11.6.2 via packageManager.",
+    "packageManagerByRepoAndRef": {
+      "ins": { "main": "absent (no packageManager field)", "branch": "present: \"npm@11.6.2\"" },
+      "animals": { "main": "present: \"npm@11.6.2\"", "branch": "present: \"npm@11.6.2\"" },
+      "plants": { "main": "present: \"npm@11.6.2\"", "branch": "present: \"npm@11.6.2\"" },
+      "tests": { "main": "absent (no packageManager field)", "branch": "absent (no packageManager field)" }
+    },
+    "verdict": "The old handover is stale for ins, accurate as-is for the other three. ins's branch DID lose the pin: s20-tooling-convergence (commit 1d3869c4, 16 Sept) deleted `packageManager`, `scripts/npm-version.js` and `install:pinned-npm` from all three frontends as part of Sam's ruling 17/18 (\"the npm pin goes; the lockfiles get fixed instead\"). But 36 minutes later, commit f9c9bce ('keep npm-version.js for main's workflow_run jobs') re-added `packageManager` and `scripts/npm-version.js` to ins ONLY, because ins main's lighthouse-equivalent workflow_run jobs still read that field and call that script against whatever code is checked out, including this branch's. Reading origin/feat/NO_JIRA-frontend-alignment today confirms ins is pinned again. animals and plants never lost the pin (main has always had `packageManager: \"npm@11.6.2\"`, so nothing there needed restoring). tests has never had a packageManager field, on either main or the branch, and remains genuinely plain-npm today, exactly as the old handover said.",
+    "lockfileRegenerationCommands": {
+      "ins": "After resolving the package.json conflict (branch as base, bump the @playwright/test line to 1.63.0), do NOT run a bare `npm install`/`npm ci` — `install:pinned-npm` no longer exists as an npm script (deleted in s20, never restored). Run `npx --yes \"$(node scripts/npm-version.js)\" install` to regenerate package-lock.json under the pinned npm 11.6.2, then `npm ci` to prove it installs clean.",
+      "animals": "No regen strictly required (trial-merge is clean). As a sanity check run `npm ci` — `packageManager: \"npm@11.6.2\"` is present on both main and branch, so corepack/CI already resolve the right npm; a bare `npm ci` on a machine with corepack enabled is safe here.",
+      "plants": "Same as animals, but treat the `npm ci` check as load-bearing rather than optional: plants' own main history (commits ecccaad then 7b121f9) shows this exact playwright bump broke `npm ci` in CI the first time because the lockfile was regenerated under the wrong local npm, and needed a second full regen under 11.6.2 to fix. Do not skip the check on the assumption a one-line bump can't do this.",
+      "tests": "No regen required and no npm pin to honour — merge takes main's already-CI-proven package.json/package-lock.json/Dockerfile/bin script verbatim (branch never touched any of them). tests' own CI npm comes from `node-version-file`/`.nvmrc` via actions/setup-node, unaffected by this cluster."
+    }
+  },
+  "missed": [
+    {
+      "id": "pw-005-m1",
+      "statement": "plants' main history for this identical playwright bump is direct, concrete evidence for why any lockfile regeneration (branch pre-align or post-merge) must be done under the exact pinned npm 11.6.2, not the ambient host npm: the first commit (ecccaad) regenerated package-lock.json under a mismatched npm and changed 502 lines including the intended playwright entries; `npm ci` then failed in CI, forcing a same-day follow-up commit (7b121f9, 'fix: regenerate package-lock.json with pinned npm version') that rewrote a further 443 lines to match what npm 11.6.2 actually produces.",
+      "kind": "conflict",
+      "ref": "plants: `git show --stat ecccaad` and `git show --stat 7b121f9`",
+      "quote": "npm ci in CI failed because the lockfile was regenerated with a\ndifferent local npm version than the repo's pinned packageManager\n(npm@11.6.2), producing a tree npm ci considered out of sync.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "pw-003-m1",
+      "statement": "s20-tooling-convergence's ins commit (1d3869c4) deleted `install:pinned-npm` from package.json's scripts; the later f9c9bce follow-up restored only `packageManager` and `scripts/npm-version.js`, not the convenience script, so the branch today has the pin metadata but not the one-liner npm script that used to run it.",
+      "kind": "structure",
+      "ref": "ins: `git show 1d3869c4 -- package.json` (removes install:pinned-npm) and `git show f9c9bce --stat` (touches only package.json + scripts/npm-version.js)",
+      "quote": "-    \"install:pinned-npm\": \"npx --yes \\\"$(node scripts/npm-version.js)\\\" install\",",
+      "confidence": "verbatim"
+    }
+  ]
+}

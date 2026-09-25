@@ -1,0 +1,224 @@
+{
+  "cluster": "playwright-1.63",
+  "title": "Playwright bump to 1.63.0",
+  "summary": "Main bumped @playwright/test 1.61.x -> 1.63.0 in all four repos, as the ONLY package.json change main made in this window in each repo. ins's package.json/package-lock.json conflict at merge is caused entirely by the branch's unrelated tooling divergence (Vite->webpack, joi, esbuild, dependency-cruiser etc.), not by the playwright line itself. animals, plants and tests all trial-merge package.json/package-lock.json with zero conflict markers, and for tests the four touched files (package.json, package-lock.json, Dockerfile, bin/update-visual-baselines-linux.sh) were never touched by the branch at all, so the merge takes main's copies verbatim. The branch itself never independently bumped playwright anywhere -- it is still pinned at 1.61.0 (1.61.1 in tests) on all four repos today.",
+  "repos": ["ins", "animals", "plants", "tests"],
+  "mainCommits": {
+    "ins": ["173395d chore(deps): bump Playwright to latest (1.63.0)"],
+    "animals": ["8a3bc877 chore(deps): bump Playwright to latest (1.63.0) (#361) -- squashed PR merge that also folds in the pinned-npm lockfile regen follow-up"],
+    "plants": [
+      "ecccaad chore(deps): bump Playwright to latest (1.63.0)",
+      "7b121f9 fix: regenerate package-lock.json with pinned npm version"
+    ],
+    "tests": ["6f2fa1b chore(deps): bump Playwright to latest (1.63.0) (#234)"]
+  },
+  "files": [
+    {
+      "repo": "ins",
+      "mainPath": "package.json",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "package.json",
+      "trialMerge": "conflict",
+      "note": "Branch's whole devDependency tree diverged (Vite removed, webpack/postcss/esbuild/husky/eslint-plugin-sonarjs added, joi promoted from implicit to explicit dep) so the same textual region as the @playwright/test line conflicts wholesale. Branch is still at 1.61.0 on this line; main's only edit is 1.61.0 -> 1.63.0."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "package-lock.json",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "package-lock.json",
+      "trialMerge": "conflict",
+      "note": "Same root cause as package.json -- the lockfile trees diverged too far for a line merge to be trustworthy even where it would technically resolve."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "package.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "package.json",
+      "trialMerge": "clean",
+      "note": "git merge-tree auto-merges with no conflict message; branch's package.json context around the @playwright/test line is untouched, so main's 1.61.0->1.63.0 edit applies as a clean 3-way merge."
+    },
+    {
+      "repo": "animals",
+      "mainPath": "package-lock.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "package-lock.json",
+      "trialMerge": "clean",
+      "note": "Auto-merges with no conflict. Recommend an `npm ci` verification pass after merge as a safety net even though no textual conflict exists, per the general lockfile-regeneration strategy."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "package.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "package.json",
+      "trialMerge": "clean",
+      "note": "Same as animals."
+    },
+    {
+      "repo": "plants",
+      "mainPath": "package-lock.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "package-lock.json",
+      "trialMerge": "clean",
+      "note": "Same as animals."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "package.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "package.json",
+      "trialMerge": "clean",
+      "note": "Branch never touched this file since the merge base (confirmed by empty `git log -- package.json` over the branch range), so the merge is a straight fast-forward of main's content onto the branch's copy."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "package-lock.json",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "package-lock.json",
+      "trialMerge": "clean",
+      "note": "Same as package.json above."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "Dockerfile",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "Dockerfile",
+      "trialMerge": "clean",
+      "note": "Base image bump mcr.microsoft.com/playwright:v1.61.1-jammy -> v1.63.0-jammy, to keep the ZAP/Playwright container's browser binaries matched to the installed test runner version."
+    },
+    {
+      "repo": "tests",
+      "mainPath": "bin/update-visual-baselines-linux.sh",
+      "mainChange": "M",
+      "branchStatus": "untouched",
+      "branchPath": "bin/update-visual-baselines-linux.sh",
+      "trialMerge": "clean",
+      "note": "PLAYWRIGHT_IMAGE default bumped to match the Dockerfile."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "none",
+    "evidence": "Branch package.json still reads \"@playwright/test\": \"1.61.0\" in ins, animals and plants, and \"1.61.1\" (with \"@playwright/cli\": \"0.1.14\") in tests -- verified today by reading the blob directly from origin/feat/NO_JIRA-frontend-alignment in all four repos. The branch never touched these lines since the merge base."
+  },
+  "verdict": "port",
+  "verdictWhy": "ins needs manual resolution (real conflict, caused by unrelated tooling divergence) plus a lockfile regeneration. animals, plants and tests auto-merge cleanly with no action required beyond an optional `npm ci` sanity check, but the cluster as a whole is not fully 'clean' because of ins.",
+  "resolutions": [
+    {
+      "repo": "ins",
+      "path": "package.json",
+      "take": "Take the branch's package.json as the base (it owns the whole dependency tree shape). Bump the single line \"@playwright/test\": \"1.61.0\" -> \"1.63.0\". Nothing else in main's package.json diff applies (main changed no other dependency).",
+      "why": "main's package.json diff for ins touches exactly one line; every other divergence in this file is the branch's own tooling convergence work, which the ledger already owns."
+    },
+    {
+      "repo": "ins",
+      "path": "package-lock.json",
+      "take": "Do not hand-merge. After resolving package.json, run `npm install` under the pinned npm 11.6.2 (package.json's own packageManager field, already present on the branch) to regenerate package-lock.json from scratch, then `npm ci` to prove it installs clean.",
+      "why": "The lockfile trees are too divergent for a trustworthy line merge; a full regen under the pinned npm version is the only way to guarantee `npm ci` passes in CI, matching how the branch's own earlier lockfile-regen commits (question 17) were done."
+    },
+    {
+      "repo": "animals",
+      "path": "package.json / package-lock.json",
+      "take": "Accept the clean git auto-merge as-is (proven identical to a hand-check: no conflict markers, main's only change was the version bump). Run `npm ci` post-merge as a sanity check, not because a conflict is expected.",
+      "why": "Zero-conflict trial merge already verified with `git merge-tree`; nothing to hand-resolve."
+    },
+    {
+      "repo": "plants",
+      "path": "package.json / package-lock.json",
+      "take": "Same as animals.",
+      "why": "Same reasoning; plants and animals share the same dependency tree shape on this file."
+    },
+    {
+      "repo": "tests",
+      "path": "package.json / package-lock.json / Dockerfile / bin/update-visual-baselines-linux.sh",
+      "take": "Accept main's content verbatim via the merge (branch never touched any of these four files, so there is nothing of the branch's to preserve here).",
+      "why": "Confirmed via `git log <mergeBase>..origin/feat/NO_JIRA-frontend-alignment -- <path>` returning no commits for any of the four files."
+    }
+  ],
+  "preAlign": [
+    {
+      "repo": "ins",
+      "what": "Apply the identical one-line bump (\"@playwright/test\": \"1.61.0\" -> \"1.63.0\") directly on the branch now, ahead of the main merge, then regenerate package-lock.json under npm 11.6.2.",
+      "why": "Removes the playwright-specific decision from the noise of the much larger structural package.json conflict the merge will still have to resolve for other reasons (webpack/joi/etc.); the version to land on is settled and verified before the real merge starts."
+    },
+    {
+      "repo": "animals",
+      "what": "Apply the same one-line bump directly on the branch now and regenerate the lockfile under npm 11.6.2.",
+      "why": "Makes the eventual main-merge a true no-op for this file (nothing left for main to contribute), even though the merge already auto-resolves cleanly today."
+    },
+    {
+      "repo": "plants",
+      "what": "Same pre-align as animals.",
+      "why": "Same reasoning."
+    },
+    {
+      "repo": "tests",
+      "what": "Apply main's four-file change set (package.json's two playwright lines, package-lock.json regen with plain npm, Dockerfile base image, bin/update-visual-baselines-linux.sh default) directly on the branch now.",
+      "why": "The branch has never touched these files, so pre-aligning is a straight copy of main's already-CI-proven change -- there is no branch content to reconcile."
+    }
+  ],
+  "wireIn": [],
+  "behaviourChanges": [
+    "Playwright test runner and bundled browsers move from the 1.61.x line to 1.63.0 across all four repos.",
+    "tests repo additionally bumps @playwright/cli 0.1.14 -> 0.1.21 and the ZAP/Playwright Docker base image + local baseline-update script default from v1.61.1-jammy to v1.63.0-jammy, keeping the CLI, the test runner and the browser image in step."
+  ],
+  "knockOn": [
+    "A newer Playwright/browser build can shift visual baselines or timing-sensitive assertions; a full E2E run (including a `bin/update-visual-baselines-linux.sh` check in the tests repo) after the merge is the way to catch that, not an assumption that the bump is behaviourally inert.",
+    "ins's own Dockerfile does not reference a Playwright image tag (its E2E runs out of the tests repo, not its own image), so no second bump is needed there."
+  ],
+  "openQuestions": [
+    {
+      "question": "Should the pre-align commits (one per repo) be raised as their own visible commits ahead of the main-merge commit, or folded silently into the merge resolution?",
+      "default": "Raise them as their own small commits (\"chore(deps): bump Playwright to 1.63.0, pre-aligning with main\") -- cheap, and it means the subsequent main-merge diff for this file is empty or near-empty, which is easier to review than a merge commit that silently changes a dependency version."
+    }
+  ],
+  "claims": [
+    {
+      "id": "pw-001",
+      "statement": "main's only package.json change in ins, animals and plants since each repo's merge base is the @playwright/test version bump to 1.63.0.",
+      "kind": "structure",
+      "ref": "ins:package.json / animals:package.json / plants:package.json, diffed mergeBase..origin/main",
+      "quote": "-    \"@playwright/test\": \"1.61.0\",\n+    \"@playwright/test\": \"1.63.0\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "pw-002",
+      "statement": "ins's package.json/package-lock.json trial-merge conflicts are caused by the branch's own tooling divergence (Vite -> webpack, joi promoted to a declared dependency, esbuild/husky/eslint-plugin-sonarjs added), not by the playwright line.",
+      "kind": "conflict",
+      "ref": "ins: diff between merge-tree stage-2 and stage-3 blobs for package-lock.json",
+      "quote": "-        \"cssnano\": \"8.0.2\",\n-        \"cssnano-preset-default\": \"8.0.2\",\n+        \"cssnano\": \"7.1.5\",\n+        \"cssnano-preset-default\": \"7.0.13\",\n ...\n-        \"joi\": \"17.13.8\",\n+        \"joi\": \"^17.13.3\",",
+      "confidence": "inferred"
+    },
+    {
+      "id": "pw-003",
+      "statement": "The branch (today) still pins @playwright/test at 1.61.0 in ins/animals/plants and 1.61.1 in tests -- it never independently bumped playwright.",
+      "kind": "structure",
+      "ref": "repo:package.json (origin/feat/NO_JIRA-frontend-alignment, all four repos)",
+      "quote": "\"@playwright/test\": \"1.61.0\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "pw-004",
+      "statement": "animals and plants package.json/package-lock.json auto-merge with git merge-tree and print no conflict message for either file.",
+      "kind": "conflict",
+      "ref": "animals/plants: `git merge-tree --write-tree origin/feat/NO_JIRA-frontend-alignment origin/main` output",
+      "quote": "Auto-merging package-lock.json\nAuto-merging package.json",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "pw-005",
+      "statement": "The tests repo branch never touched package.json, package-lock.json, Dockerfile or bin/update-visual-baselines-linux.sh since its merge base.",
+      "kind": "structure",
+      "ref": "tests: `git log 8f52771..origin/feat/NO_JIRA-frontend-alignment -- package.json package-lock.json Dockerfile bin/update-visual-baselines-linux.sh`",
+      "quote": "(empty output)",
+      "confidence": "verbatim"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "cluster": "refdata-503-test-stub",
+  "title": "De-flake the reference-data-outage 503 test in errors.test.js (animals)",
+  "summary": "Main's '#errors' 503 test drove the page-level outage assertion through a real reference-data read (`countries.originLabel('FR')` on a `/test/refdata-missing` route), toggling stubMode to real and relying on the outbound fetch failing with ECONNREFUSED — which is only true when nothing is listening on the reference-data port. A developer running the workspace stack locally has a real ref-data-service answering there, so the fetch succeeds, the reader returns a value, and the test flakes green-to-red depending on what else is running. Commit a2f1d295 patches this by stubbing global fetch to force the rejection deterministically (`vi.stubGlobal('fetch', ...)`). The alignment branch's s18-chassis-convergence stage (D7) independently rewrote the same test as part of making 'errors.test.js one text in all three' repos: it replaced the whole scenario with a `/test/service-unavailable` route whose handler directly `throw`s `Boom.serverUnavailable()`, removing the dependency on countries/reference-data and stubMode entirely — no fetch, no network boundary, no global stub of any kind. This is a genuine conflict (both sides touch the same three lines: the route registration and the test body) and the branch's version is the one to keep: it eliminates the flake's root cause structurally rather than patching around it, and a `vi.stubGlobal('fetch')` mock is exactly the pattern s19's D10 and the workspace's own network-boundary-mock invariant ban.",
+  "repos": ["animals"],
+  "mainCommits": {
+    "animals": [
+      "a2f1d295 test: stub fetch in refdata-503 test to remove local network flake (#366)"
+    ]
+  },
+  "files": [
+    {
+      "repo": "animals",
+      "mainPath": "src/server/common/helpers/errors.test.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/server/common/helpers/errors.test.js",
+      "trialMerge": "conflict",
+      "note": "Two conflict hunks in the trial-merge tree: (1) the beforeAll route + the third test's opening (main's `/test/refdata-missing` handler calling `countries.originLabel('FR')`, stubMode toggle and `vi.stubGlobal('fetch', ...)` vs the branch's `/test/service-unavailable` handler throwing `Boom.serverUnavailable()` directly); (2) the test body's closing (main's `} finally { vi.unstubAllGlobals(); config.set('stubMode', originalStubMode) }` vs the branch's plain assertion with no cleanup needed). Resolution: take the branch's version wholesale for both hunks (see resolutions)."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "full",
+    "evidence": "The branch's s18-chassis-convergence stage (plan s18-chassis-convergence.md, D7) already ships a 503-page test that proves exactly what a2f1d295 set out to prove — a page that reads reference data and finds it unavailable renders the shared error page at 503 — but does it without touching stubMode, countries, or global fetch at all: `server.route({ method: 'GET', path: '/test/service-unavailable', handler: () => { throw Boom.serverUnavailable() } })`. Because the route throws synchronously with no network call, the test cannot flake on what else is listening on the reference-data port — the exact condition a2f1d295 exists to guard against never arises. The branch's fix is not merely equivalent to a2f1d295's intent, it removes the failure mode a2f1d295 patches around."
+  },
+  "verdict": "clean",
+  "verdictWhy": "This is a real conflict, but it resolves in one direction with no ambiguity: keep the branch's Boom-route test and drop main's fetch-stubbed refdata-missing test entirely. The branch's version already fully satisfies the ticket's intent (a deterministic 503 test independent of what else is running locally) and additionally satisfies invariant D10 (never `vi.stubGlobal('fetch')`, mock only at the network boundary with nock) that a2f1d295's fix violates. Nothing from a2f1d295 needs to be ported forward.",
+  "resolutions": [
+    {
+      "repo": "animals",
+      "path": "src/server/common/helpers/errors.test.js",
+      "take": "branch",
+      "why": "Take origin/feat/NO_JIRA-frontend-alignment's version of both conflicted hunks verbatim: the `/test/service-unavailable` route throwing `Boom.serverUnavailable()` in `beforeAll`, and the third test's plain inject/assert body with no stubMode toggle, no `countries` import, no `config` import, and no `vi.stubGlobal('fetch')`/`vi.unstubAllGlobals()`. Discard main's `/test/refdata-missing` route, its `countries.originLabel('FR')` handler, its `config.get/set('stubMode', ...)` toggle, and the fetch stub a2f1d295 added. This is what the merged tree already shows at trial-merge tree affadd1d3a841f3143656469cb73730e705ef94b — the two hunks marked CONFLICT are the only manual edit this file needs; git's own auto-merge already resolved every other hunk in the file correctly (the dropped 'Prototype' assertion and the hyphenated page-title format are s18's own prior work, not part of this conflict, and needed no intervention)."
+    }
+  ],
+  "preAlign": [],
+  "wireIn": [],
+  "behaviourChanges": [
+    "The merged '#errors' 503 test no longer exercises the countries service, stubMode, or any network boundary at all — it proves the shared error page renders at 503 for any Boom.serverUnavailable() thrown behind a route, a strictly more general and more deterministic proof than main's countries-specific, network-dependent one.",
+    "Countries-outage coverage specifically (as opposed to generic 503 rendering) is no longer asserted in errors.test.js for animals after the merge. This is not a coverage regression: animals' own `services/run-mode.test.js` already pins 'Should reject with a serverUnavailable Boom error on load failure' for the countries and ports readers at the service-boundary level (recorded in s18's D7), so the countries-specific failure mode stays covered — just in a different, more appropriate file — while errors.test.js proves the page-rendering contract generically."
+  ],
+  "knockOn": [
+    "No knock-on to plants or ins: plants' errors.test.js already carries its own 503 test through a different, non-network route (`/test/refdata-missing`-equivalent driven off its own reader — see the eudpa-573-stale-refdata cluster's file-by-file notes for plants' errors.test.js state), and ins's errors.test.js was never touched by a2f1d295 (ins-only repo, this commit is animals-only)."
+  ],
+  "openQuestions": [],
+  "claims": [
+    {
+      "id": "503stub-001",
+      "statement": "a2f1d295's fix stubs global fetch to force a deterministic ECONNREFUSED, explicitly to guard against a developer's locally running ref-data-service answering the un-stubbed request.",
+      "kind": "behaviour",
+      "ref": "animals:src/server/common/helpers/errors.test.js:a2f1d295",
+      "quote": "The \"Should serve the shared error page as a 503 when a page reads\nreference data that will not load\" test relied on the reader's fetch\nfailing with ECONNREFUSED - nothing meant to be listening on the\nreference-data port in tests. A developer running the workspace stack\nlocally has a real ref-data-service on that port that answers with\nstub data, so the un-stubbed fetch succeeds and the reader returns\na value - the test then reads 200 rather than 503.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "503stub-002",
+      "statement": "The branch's trial-merge tree shows two CONFLICT-marked hunks in errors.test.js: the route registration in beforeAll and the third test's body, both pitting main's countries-driven, fetch-stubbed scenario against the branch's Boom-route scenario.",
+      "kind": "conflict",
+      "ref": "animals:src/server/common/helpers/errors.test.js:trial-merge tree affadd1d3a841f3143656469cb73730e705ef94b",
+      "quote": "<<<<<<< origin/feat/NO_JIRA-frontend-alignment\n  test('Should serve the shared error page as a 503 when a service behind the page is unavailable', async () => {\n    const { result, statusCode } = await server.inject({\n      method: 'GET',\n      url: '/test/service-unavailable'\n    })\n=======\n  test('Should serve the shared error page as a 503 when a page reads reference data that will not load', async () => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "503stub-003",
+      "statement": "s18-chassis-convergence's own plan records the design reason for the Boom-route shape: it proves the 503 page 'in a form that does not depend on countries loading' and animals loses no coverage because run-mode.test.js already pins the countries/ports 503 rejection at the service level.",
+      "kind": "config",
+      "ref": "workspace:workareas/shared/frontend-alignment/plans/s18-chassis-convergence.md:D7",
+      "quote": "The 503 test is carried in a form that does not depend on countries loading\n(question 13, out of scope): a `/test/service-unavailable` route whose handler throws `Boom.serverUnavailable()`. animals loses nothing — `app/services/run-mode.test.js` already pins \"Should reject with a serverUnavailable Boom error on load failure\" for the countries and ports readers, and the errors helper only needs a Boom 503 to render.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "503stub-004",
+      "statement": "The workspace's own network-boundary-mock invariant, restated in s19's D10, bans exactly the pattern a2f1d295 introduces.",
+      "kind": "config",
+      "ref": "workspace:workareas/shared/frontend-alignment/plans/s19-countries-lazy-load.md:D10",
+      "quote": "Tests mock at the network boundary with nock — never `vi.stubGlobal('fetch')`. Invariant 8, and ins's own `docs/testing.md` says it in terms: \"never `vi.mock` a service barrel, and never mock `global.fetch`\".",
+      "confidence": "verbatim"
+    }
+  ]
+}

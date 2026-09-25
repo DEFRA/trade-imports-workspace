@@ -1,0 +1,404 @@
+{
+  "cluster": "eudpa-311-address-book-paths",
+  "title": "Centralise address book route paths (ins)",
+  "summary": "Commit 30dab4b adds src/server/common/constants/routes.js — a single module of address-book path builders (list/add/view/edit/delete, plus isAddressBookPath) exported both as functions and pushed into the nunjucks view context, then rewires build-navigation.js, context.js, all five address-book plugin controllers/route files, four .njk templates and address-book-helper.js's pagination default off it, replacing every scattered '/address-book...' string literal. Observable behaviour: no user-visible change (the URL surface is identical) — the change is purely 'one file decides every address-book path'. The alignment branch already did the same job independently and earlier (s06, 16 September): src/server/app/shared/paths.js is the single source of every address-book path, and every href is computed once in each page's controller/view-model and handed to the template as a plain string (listHref, addHref, editHref, deleteHref, backLink) rather than as callable functions pushed through the nunjucks context. Because main's PR (22 September) post-dates and duplicates work the branch had already finished in its own, more advanced shape, git's trial merge resurrects main's edited copies of the OLD src/server/address-book/* plugin files (which s06 deleted on 16 September) as new/modified files in the merge tree — 14 dead files that import a deleted routes.js-style module or don't exist in router.js's route table at all — plus two literal conflicts inside context.js/context.test.js where main's global-function context additions collide with the branch's plain-string context values.",
+  "repos": ["ins"],
+  "mainCommits": {
+    "ins": ["30dab4b feat(EUDPA-311): centralise address book route paths (#29)"]
+  },
+  "files": [
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/constants/routes.js",
+      "mainChange": "A",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "clean",
+      "note": "Pure add on main's side, no branch-path collision, so git adds it with no conflict marker. Superseded by src/server/app/shared/paths.js, which already builds every address-book path (dashboardPath, addressBookPath, addressAddPath, addressPath, addressRoutePath, addressEditPath/RoutePath, addressDeletePath/RoutePath) plus inDashboardSection/inAddressBookSection for nav-active detection — the same job, byte-for-byte-equivalent route set, built 16 September (s06) before this main PR existed. Delete after merge (git rm) so two competing single-sources-of-truth do not coexist."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/constants/routes.test.js",
+      "mainChange": "A",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "clean",
+      "note": "Test for the superseded routes.js. Delete alongside it."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/config/nunjucks/context/build-navigation.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "misplaced",
+      "note": "s06/s21-era branch folded this file's job into context.js's activeNavigationItem(requestPath) (returns 'dashboard'|'addressBook'|null from inDashboardSection/inAddressBookSection) plus a plain navigationItems array built directly in layout.njk from activeNavigationItem, dashboardUrl and addressBookUrl. The file does not exist on the branch; git's modify/delete resolution resurrects main's edited copy verbatim into the merge tree with no conflict markers (git ls-tree confirms the path is present at tree d664c0e912c3ac223e17b1c9aeb8bc796c6c8f81). Delete it again (git rm) after merge — it is dead code nothing on the branch imports."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/config/nunjucks/context/context.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/config/nunjucks/context/context.js",
+      "trialMerge": "conflict",
+      "note": "Real conflict, confined to the import block (lines 3-8 vs the equivalent branch imports) plus the returned-object tail. Main imports { config } from '#/config/config.js', buildNavigation from './build-navigation.js' and the five addressBook* functions from routes.js, then spreads addressBookList, addressBookAdd, addressBookView, addressBookEdit, addressBookDelete (bare function references, not their called values) into the returned context object. Branch imports addressBookPath, dashboardPath, inAddressBookSection, inDashboardSection from '../../../server/app/shared/paths.js' and returns activeNavigationItem: activeNavigationItem(request.path), dashboardUrl: dashboardPath(), addressBookUrl: addressBookPath() as plain strings. No navigation array is built here on the branch (that moved into layout.njk)."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/config/nunjucks/context/context.test.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/config/nunjucks/context/context.test.js",
+      "trialMerge": "conflict",
+      "note": "Two conflict regions (both instances of 'Should provide expected context'), each pitting branch's shared expectedContext constant (activeNavigationItem, dashboardUrl, addressBookUrl as strings) against main's inline object literal asserting a navigation array and addressBookList/Add/View/Edit/Delete: expect.any(Function). Branch's file also carries a separate #activeNavigationItem describe block main has no equivalent of."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/list/controller.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/list/list.controller.js",
+      "trialMerge": "misplaced",
+      "note": "s06 moved+rewrote this to the feature folder (E1), s21 then renamed it list.controller.js. Modify/delete: main's edit (viewLink href via addressBookView()) resurrects at the old, now-nonexistent path with no markers. The equivalent behaviour already exists: the new controller's tableRowsOf() builds the View link from addressPath(address.id) (paths.js), matching main's centralisation goal exactly. Delete the resurrected file."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/list/index.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "misplaced",
+      "note": "The Hapi plugin file s06 deleted (routes now come from kit.pageRoutes(...) exported per controller and spread by features/index.js/routes.js). Resurrected verbatim by the merge (path: addressBookListPath() from the now-superseded routes.js). Delete."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/list/index.njk",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/list/template.njk",
+      "trialMerge": "misplaced",
+      "note": "s06 moved+rewrote (E11) to use listHref/addHref from the view model instead of a global addressBookList()/addressBookAdd() template function call. Delete the resurrected old-path file."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/add/controller.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/add/add.controller.js",
+      "trialMerge": "misplaced",
+      "note": "This resurrected file is the composite of BOTH main commits that touch it (30dab4b's addressBookList() redirects, then 2b4be7c's Cache-Control: no-store wrapper — see eudpa-333-handshake-qa, which owns the no-store behaviour). The 30dab4b portion (redirectAfterAdd/redirectAfterCancel using addressBookList()) is already superseded: the branch's add.controller.js redirects with addressBookPath() from paths.js. Delete the resurrected file; port only the no-store behaviour (tracked under eudpa-333-handshake-qa)."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/add/index.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "misplaced",
+      "note": "Old plugin file, deleted by s06. Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/edit/controller.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/edit/edit.controller.js",
+      "trialMerge": "misplaced",
+      "note": "main's only change here is redirectAfterCancel/redirectAfterAdd → addressBookList() (route-path centralisation). Branch's edit.controller.js already redirects via addressBookPath(). Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/edit/index.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "misplaced",
+      "note": "Old plugin file, deleted by s06. Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/edit/index.njk",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/edit/template.njk",
+      "trialMerge": "misplaced",
+      "note": "main: href: \"/address-book/\" + id → href: addressBookView(id). Branch's template.njk already reads href: backLink, computed by the controller from addressPath(id) (s06 E12). Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/delete/controller.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/delete/delete.controller.js",
+      "trialMerge": "misplaced",
+      "note": "main: h.redirect(`/address-book/${id}`) → h.redirect(addressBookView(id)); h.redirect('/address-book') → h.redirect(addressBookList()). Branch's delete.controller.js already redirects via addressPath(id) / addressBookPath(). Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/delete/index.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "misplaced",
+      "note": "Old plugin file, deleted by s06. Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/delete/index.njk",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/delete/template.njk",
+      "trialMerge": "misplaced",
+      "note": "main: href: \"/address-book/\" + id → href: addressBookView(id). Branch's template.njk already reads href: backLink from the controller (s06 E14). Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/view/index.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": null,
+      "trialMerge": "misplaced",
+      "note": "Old plugin file, deleted by s06. Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/address-book/view/index.njk",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/view/template.njk",
+      "trialMerge": "misplaced",
+      "note": "main: three hrefs (back, Edit, Delete) → addressBookList()/addressBookEdit(id)/addressBookDelete(id). Branch's template.njk already reads backLink/editHref/deleteHref from the controller (s06 E13). Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/server/common/helpers/address-book-helper.js",
+      "mainChange": "M",
+      "branchStatus": "deleted",
+      "branchPath": "src/server/app/features/address-book/view-model/list.js",
+      "trialMerge": "misplaced",
+      "note": "main changes only the buildPaginationLinks default: { baseUrl = '/address-book', ... } → { baseUrl = addressBookList(), ... }. s06 (E21) rewrote this whole file into view-model/list.js with a self-contained buildPaginationLinks that reads addressBookPath() from paths.js directly and folded pagination-helper.js's logic in-line, in a deliberately different shape from the journeys' shared helper (SonarCloud duplication invariant, s06 D7). The resurrected file also still imports './pagination-helper.js', which s06 also deleted — so even taken as-is it would not run. Delete the resurrection."
+    },
+    {
+      "repo": "ins",
+      "mainPath": "src/config/config.js",
+      "mainChange": "M",
+      "branchStatus": "modified",
+      "branchPath": "src/config/config.js",
+      "trialMerge": "conflict",
+      "note": "This file's conflict is NOT ours: the marker region (around the auth/runMode/cdpEnvironment blocks) belongs to the address-lookup-spike cluster (EUDPA-390: runMode/INS_MODE, cdpEnvironment). 30dab4b did not touch config.js at all — it is eudpa-333-handshake-qa's tradeImportsAddressBookApi format:'url' hunk that lands in this same file (see that cluster's file entry), and it merges cleanly with no marker of its own. No eudpa-311 action needed here beyond confirming, once address-lookup-spike's conflict is resolved, that the tradeImportsAddressBookApi block still reads format: 'url'."
+    }
+  ],
+  "branchEquivalent": {
+    "level": "full",
+    "evidence": "src/server/app/shared/paths.js (built 16 September, s06) already centralises every address-book path main's routes.js centralises — dashboardPath, addressBookPath, addressAddPath, addressPath(id), addressRoutePath, addressEditPath(id)/addressEditRoutePath, addressDeletePath(id)/addressDeleteRoutePath, plus inDashboardSection/inAddressBookSection for nav-active detection (main's isAddressBookPath equivalent). s06's plan (D13) states outright: 'Nothing outside paths.js names /address-book after this stage' — grep of the branch's src/server/app confirms no /address-book literal survives outside paths.js. Every controller passes its hrefs (listHref, addHref, editHref, deleteHref, backLink) into the view model from paths.js; nothing calls a path-builder from inside a template."
+  },
+  "verdict": "port",
+  "verdictWhy": "Main's PR adds nothing the branch's own, already-landed centralisation doesn't already do — the branch's version is structurally cleaner (computed-string hrefs in the view model vs. bare functions pushed through the global nunjucks context and called per-template). Nothing here is a real behaviour decision for Sam: every file's resolution is 'keep the branch's shape, delete main's superseded shape'. The only mechanical work is deleting 16 resurrected dead files and stripping two hunks out of context.js/context.test.js.",
+  "resolutions": [
+    {
+      "repo": "ins",
+      "path": "src/server/common/constants/routes.js",
+      "take": "delete",
+      "why": "Superseded by shared/paths.js, built independently and earlier by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/constants/routes.test.js",
+      "take": "delete",
+      "why": "Test for the deleted routes.js."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/nunjucks/context/build-navigation.js",
+      "take": "delete",
+      "why": "Folded into context.js's activeNavigationItem + layout.njk's inline navigationItems array by s06/s21; nothing imports it on the branch."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/nunjucks/context/context.js",
+      "take": "Keep the branch's import block and returned object exactly as they are on origin/feat/NO_JIRA-frontend-alignment (imports from ../../../server/app/shared/paths.js; activeNavigationItem/dashboardUrl/addressBookUrl as plain strings). Discard main's entire import hunk (config, buildNavigation, routes.js) and discard the five addressBookList/Add/View/Edit/Delete lines main adds to the returned object.",
+      "why": "The branch's plain-string context already gives every template what it needs; main's function-reference approach has no consumer on the branch (no template calls a context function directly — s06 D13 moved every href-build into the controller/view-model)."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/nunjucks/context/context.test.js",
+      "take": "Keep the branch's file in full (the shared expectedContext constant and the separate #activeNavigationItem describe block). Discard main's two inline object-literal expectations and the addressBookList/Add/View/Edit/Delete: expect.any(Function) assertions.",
+      "why": "Those five assertions test context functions that no longer exist once context.js is resolved to the branch's shape."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/list/controller.js",
+      "take": "delete",
+      "why": "Superseded by src/server/app/features/address-book/list/list.controller.js, whose tableRowsOf() already builds the View link from addressPath()."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/list/index.js",
+      "take": "delete",
+      "why": "Old Hapi plugin file; routes now come from kit.pageRoutes() + features/index.js."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/list/index.njk",
+      "take": "delete",
+      "why": "Superseded by features/address-book/list/template.njk, which reads listHref/addHref from the view model."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/add/controller.js",
+      "take": "delete",
+      "why": "Superseded by features/address-book/add/add.controller.js, which already redirects via addressBookPath(). The Cache-Control hunk this same resurrected file also carries is ported separately under eudpa-333-handshake-qa."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/add/index.js",
+      "take": "delete",
+      "why": "Old Hapi plugin file, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/edit/controller.js",
+      "take": "delete",
+      "why": "Superseded by features/address-book/edit/edit.controller.js, which already redirects via addressBookPath()."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/edit/index.js",
+      "take": "delete",
+      "why": "Old Hapi plugin file, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/edit/index.njk",
+      "take": "delete",
+      "why": "Superseded by features/address-book/edit/template.njk, which reads backLink from the controller."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/delete/controller.js",
+      "take": "delete",
+      "why": "Superseded by features/address-book/delete/delete.controller.js, which already redirects via addressPath()/addressBookPath()."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/delete/index.js",
+      "take": "delete",
+      "why": "Old Hapi plugin file, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/delete/index.njk",
+      "take": "delete",
+      "why": "Superseded by features/address-book/delete/template.njk, which reads backLink from the controller."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/view/index.js",
+      "take": "delete",
+      "why": "Old Hapi plugin file, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/view/index.njk",
+      "take": "delete",
+      "why": "Superseded by features/address-book/view/template.njk, which reads backLink/editHref/deleteHref from the controller."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/helpers/address-book-helper.js",
+      "take": "delete",
+      "why": "Superseded by features/address-book/view-model/list.js. The resurrected copy also still imports the now-deleted pagination-helper.js, so it would not even load."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/config.js (tradeImportsAddressBookApi block only)",
+      "take": "No eudpa-311 action — this hunk belongs to eudpa-333-handshake-qa and merges cleanly regardless of how config.js's unrelated address-lookup-spike conflict is resolved.",
+      "why": "30dab4b never touched config.js."
+    }
+  ],
+  "preAlign": [],
+  "wireIn": [],
+  "behaviourChanges": [
+    "None. Every href the resurrected files would have produced is byte-identical to the href the branch's paths.js/view-model already produces (confirmed by reading both route tables: /, /address-book, /address-book/add, /address-book/{id}, /address-book/{id}/edit, /address-book/{id}/delete). The merged result, once the 16 dead files are deleted and the two context files resolved to the branch's shape, is behaviourally identical to the branch today."
+  ],
+  "knockOn": [
+    "The 14 resurrected src/server/address-book/* files, if left in place by an unwary merge-conflict resolution, would sit as pure dead code: nothing on the branch's router.js/routes.js imports src/server/address-book/* any more (that whole subtree was git-rm'd by s06 §1). They would not break the build (nothing requires them) but they would resurrect the old CDP-template plugin architecture the alignment explicitly moved away from, and a future grep for '/address-book' literals would find them again.",
+    "src/server/common/constants/routes.js, if kept, would become a second, unused, un-imported single-source-of-truth for the same route set paths.js already owns — an invitation for a future change to update one and not the other."
+  ],
+  "openQuestions": [],
+  "claims": [
+    {
+      "id": "311-001",
+      "statement": "Main's EUDPA-311 adds src/server/common/constants/routes.js as a factory (buildAddressBookRoutes) plus ten flat re-exports, and pushes five of them as bare function references into the nunjucks view context.",
+      "kind": "structure",
+      "ref": "ins:src/server/common/constants/routes.js:30dab4b",
+      "quote": "export const addressBookListPath = addressBookRoutes.list\\nexport const addressBookAddPath = addressBookRoutes.add\\n...\\nexport const isAddressBookPath = addressBookRoutes.isAddressBookPath",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "311-002",
+      "statement": "The branch's shared/paths.js, landed 16 September (s06), already builds the identical route set as plain arrow functions, with encodeURIComponent baked into addressPath(id) rather than applied by each call site.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/shared/paths.js:origin/feat/NO_JIRA-frontend-alignment",
+      "quote": "export const addressPath = (id) => `/address-book/${encodeURIComponent(id)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "311-003",
+      "statement": "s06's plan explicitly rules that every href in the address-book feature comes from the view model built via paths.js, and that nothing outside paths.js names /address-book after the stage.",
+      "kind": "structure",
+      "ref": "workareas/shared/frontend-alignment/plans/s06-address-book-feature.md:D13",
+      "quote": "Every href comes from the view model, built by `paths.js`... Nothing outside `paths.js` names `/address-book` after this stage.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "311-004",
+      "statement": "The trial merge resurrects main's edited copy of src/server/address-book/list/index.js — a plugin file s06 deleted — with no conflict markers, because git treats main's edit against a path the branch deleted as a modify/delete resolved in favour of the modification.",
+      "kind": "conflict",
+      "ref": "ins:d664c0e912c3ac223e17b1c9aeb8bc796c6c8f81:src/server/address-book/list/index.js",
+      "quote": "path: addressBookListPath(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "311-005",
+      "statement": "context.js's conflict is confined to the import block and the tail of the returned object; every other line (activeNavigationItem, buildView etc.) is untouched by either side.",
+      "kind": "conflict",
+      "ref": "ins:d664c0e912c3ac223e17b1c9aeb8bc796c6c8f81:src/config/nunjucks/context/context.js:3-24",
+      "quote": "<<<<<<< origin/feat/NO_JIRA-frontend-alignment\\nimport { config } from '../../config.js'...\\n=======\\nimport { config } from '#/config/config.js'\\nimport { buildNavigation } from './build-navigation.js'...\\n>>>>>>> origin/main",
+      "confidence": "verbatim"
+    }
+  ],
+  "insConflictAttribution": {
+    "package-lock.json": "tooling (chore/NO-JIRA-playwright-upgrade 173395d + eudpa-618 sonar gate)",
+    "package.json": "tooling (chore/NO-JIRA-playwright-upgrade 173395d)",
+    "sonar-project.properties": "eudpa-618-sonar-branch-gate (59fb6f2)",
+    "src/auth/get-safe-redirect.js": "eudpa-618-sonar-branch-gate (59fb6f2 — scan the Playwright suite as tests, not uncovered source)",
+    "src/config/config.js": "address-lookup-spike (EUDPA-390, 4a48670 — runMode/INS_MODE, cdpEnvironment); also carries eudpa-333-handshake-qa's tradeImportsAddressBookApi format:'url' hunk, non-conflicting",
+    "src/config/nunjucks/context/build-navigation.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/config/nunjucks/context/context.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/config/nunjucks/context/context.test.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/add/controller.js": "eudpa-311-address-book-paths (addressBookList() redirects) + eudpa-333-handshake-qa (Cache-Control: no-store) — both land in the same resurrected file",
+    "src/server/address-book/add/controller.test.js": "eudpa-333-handshake-qa (no-store test) + eudpa-619 (unrelated hunk from fd1d21f)",
+    "src/server/address-book/add/index.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/delete/controller.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/delete/index.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/delete/index.njk": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/edit/controller.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/edit/index.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/edit/index.njk": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/list/controller.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/list/index.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/list/index.njk": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/view/index.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/address-book/view/index.njk": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/app/features/address-book/journey-registry.js": "eudpa-619 (multi-set support, fd1d21f — settled ruling: adopt as-is)",
+    "src/server/app/features/dashboard/view-model/list.js": "eudpa-619 (fd1d21f renamed/rewrote notification-dashboard-helper.js)",
+    "src/server/app/features/dashboard/view-model/list.test.js": "eudpa-619 (fd1d21f)",
+    "src/server/common/helpers/address-book-helper.js": "eudpa-311-address-book-paths (this cluster)",
+    "src/server/common/helpers/serve-static-files.test.js": "eudpa-619 (fd1d21f — unbind the static-files test from startServer())",
+    "src/server/common/services/mode.js": "address-lookup-spike (EUDPA-390, 4a48670)",
+    "src/server/plugins/router.js": "address-lookup-spike (EUDPA-390, 4a48670 — registers the spike route)",
+    "src/server/router.test.js": "address-lookup-spike (EUDPA-390, 4a48670 — git rename-matched from src/server/plugins/router.test.js against the branch's flattened src/server/router.test.js)",
+    "src/server/routes/home/controller.test.js": "eudpa-619 (fd1d21f)"
+  }
+}

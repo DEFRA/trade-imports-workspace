@@ -480,8 +480,7 @@ the two countries services stay different files.
     nothing, because it is the reference. Questions 14 and 15 closed
     together: ins's five address-book page folders now hold
     `<page>.controller.js` and `<page>.controller.test.js` with
-    `features/index.js` repointed and the five `template.njk` files
-    untouched, and the dashboard, a single-page feature, keeps its spec
+    `features/index.js` repointed, and the dashboard, a single-page feature, keeps its spec
     beside its controller as `features/dashboard/dashboard.fit.spec.js`,
     no longer reaching across the feature boundary into
     `address-book/fit/address-form.js` but defining its own axe helper
@@ -490,8 +489,12 @@ the two countries services stay different files.
     byte-identical copy of plants' `commodities/fit/axe.js`, and animals
     took four more copies into `transport/`, `commodities/`, `addresses/`
     and `documents/` so every group spec calls its own group's helper;
-    animals also renamed its eleven group page templates to `template.njk`,
-    with the one `const view` line in each controller following, and the
+    on 25 September 2026 Sam reversed this stage's template naming: a page
+    in its own sub-folder of a feature group names its template after the
+    page (`transporters-select/transporters-select.njk`), as animals did on
+    main, while single-page features keep `template.njk`. Animals' eleven,
+    ins's five and plants' two grouped page templates follow it (animals
+    `b7a0fb44`, ins `a6aa764`, plants `abc3c24`), and the
     recipe docs in both repos (ins `architecture.md`, `features.md`,
     `testing.md`, `add-a-page.md`; animals `add-a-section.md`) now
     describe the new shape. Behaviour: the ten animals group axe
@@ -758,7 +761,7 @@ src/server/
     shared/{kit, paths, copy, copy-leaves, copy.en, copy.cy}.js  {layout, error, error-summary}.njk
     features/index.js
     features/dashboard/{controller.js, template.njk, dashboard.fit.spec.js, copy/, view-model/}
-    features/address-book/{list,add,edit,view,delete}/{<page>.controller.js, template.njk}
+    features/address-book/{list,add,edit,view,delete}/{<page>.controller.js, <page>.njk}
     features/address-book/{fields, address-countries, address-id-params, stored-address,
                             success-banner, handshake-context, journey-registry}.js
                            {copy/, view-model/, fit/}

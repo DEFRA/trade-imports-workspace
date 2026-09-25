@@ -21,6 +21,39 @@ const manifestCandidates = () => [
   join(CANONICAL_WORKSPACE_PATH, MANIFEST_FILE)
 ]
 
+/**
+ * Validate every manifest entry's optional `upstream` field: a non-empty
+ * string naming a different repo already in the roster. Exported so
+ * this shape can be unit-tested directly against fabricated manifests,
+ * without reloading the module against a fixture file on disk.
+ *
+ * @throws {TimError} USAGE when any entry's `upstream` is malformed
+ */
+export const assertValidUpstreams = (manifest) => {
+  const names = new Set(manifest.repos.map((repo) => repo.name))
+  for (const repo of manifest.repos) {
+    if (repo.upstream === undefined) continue
+    if (typeof repo.upstream !== 'string' || repo.upstream.trim() === '') {
+      throw new TimError(
+        'USAGE',
+        `${MANIFEST_FILE}: "${repo.name}".upstream must be a non-empty string.`
+      )
+    }
+    if (repo.upstream === repo.name) {
+      throw new TimError(
+        'USAGE',
+        `${MANIFEST_FILE}: "${repo.name}".upstream cannot name itself.`
+      )
+    }
+    if (!names.has(repo.upstream)) {
+      throw new TimError(
+        'USAGE',
+        `${MANIFEST_FILE}: "${repo.name}".upstream "${repo.upstream}" is not a repo in the roster.`
+      )
+    }
+  }
+}
+
 const readManifest = () => {
   const candidates = manifestCandidates()
   const path = candidates.find((candidate) => existsSync(candidate))
@@ -30,7 +63,9 @@ const readManifest = () => {
       `Cannot find the repo roster ${MANIFEST_FILE}. Looked in: ${candidates.join(', ')}.`
     )
   }
-  return JSON.parse(readFileSync(path, 'utf8'))
+  const parsed = JSON.parse(readFileSync(path, 'utf8'))
+  assertValidUpstreams(parsed)
+  return parsed
 }
 
 const manifest = readManifest()
@@ -64,6 +99,26 @@ export const realRepoPath = (workspaceRoot, repoName) => {
   const path = repoPath(workspaceRoot, repoName)
   return existsSync(path) ? realpathSync(path) : path
 }
+
+/**
+ * Repo name -> declared upstream repo name, for the repos that carry an
+ * optional `"upstream"` manifest field (e.g. a designer prototype that
+ * regularly takes changes from its real-service twin).
+ */
+export const UPSTREAM_REPOS = Object.freeze(
+  Object.fromEntries(
+    manifest.repos
+      .filter((repo) => repo.upstream !== undefined)
+      .map((repo) => [repo.name, repo.upstream])
+  )
+)
+
+/**
+ * @param {string} repoName
+ * @returns {string | null} The declared upstream repo name, or null when
+ *   the manifest sets none for this repo.
+ */
+export const upstreamOf = (repoName) => UPSTREAM_REPOS[repoName] ?? null
 
 export const isNodeRepo = (repoName) => NODE_REPOS.includes(repoName)
 

@@ -1,0 +1,45 @@
+{
+  "ticket": "EUDPA-130",
+  "repo": "trade-imports-animals-frontend",
+  "items": [
+    {
+      "id": 1,
+      "line": 71,
+      "severity": "Minor",
+      "category": "test-assertion-strength",
+      "issue": "The 'non-digit characters' onStored test only asserts errors.toHaveProperty('cphCounty'), so it passes on any cphCounty error message, not the specific 'The saved CPH number is no longer valid…' copy that the sibling nine-digit-length test pins down. A copy regression on cphNoLongerValid would go uncaught here.",
+      "fix": "Replace toHaveProperty with the same toEqual({ cphCounty: 'The saved CPH number is no longer valid. Re-enter the county, parish and holding numbers.' }) shape used in the test above, so both non-nine-digit paths pin the exact message.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 57,
+      "severity": "Minor",
+      "category": "naming",
+      "issue": "The stale port is extracted to STALE_PORT but the valid port 'GB ABD' is inlined, breaking the local convention (see the sibling stored-answers.test.js pair of STALE_PORT/KNOWN_PORT).",
+      "fix": "Extract 'GB ABD' as KNOWN_PORT alongside STALE_PORT and reference it in the second test.",
+      "best_practice": "node/code-style.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 30,
+      "severity": "Minor",
+      "category": "test-assertion-specificity",
+      "issue": "The three rejection assertions use toHaveProperty('transporter') and do not pin the error message; onSubmit ('transporterRequired-style not-a-row rejection') and onStored ('transporterNoLongerAvailable') return different copy under the same key, so an accidental swap would still pass.",
+      "fix": "Assert the message with toMatchObject({ transporter: copy.errors.transporterRequired }) for the onSubmit rejection and { transporter: copy.errors.transporterNoLongerAvailable } for the onStored rejection.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/validate.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

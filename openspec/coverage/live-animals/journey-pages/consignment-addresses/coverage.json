@@ -63,6 +63,31 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-CONSIGN-ADDR-005",
+      "name": "The page also lists a CPH number row when a commodity on the notification requires one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONSIGN-ADDR-005-A",
+          "name": "A CPH-eligible commodity brings the CPH row into the list, empty",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "asks a consignment of fish for a CPH number", "strength": "full", "notes": "fish is on no other commodity list, so it rules out an accidental allow-list explanation" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "adds cattle after cats and asserts the row appears, empty state, then fills/changes it" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-005-B",
+          "name": "No CPH-eligible commodity leaves the row off the list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of horses for a CPH number", "strength": "full", "notes": "commodity code 0101 is one of the two design release 1 lets off" },
+            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "asserts the CPH row is hidden for a cats-only consignment" }
+          ]
+        }
+      ]
     }
   ]
 }

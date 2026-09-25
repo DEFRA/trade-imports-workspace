@@ -1,0 +1,62 @@
+{
+  "source": "sonar-pre-push-gate",
+  "verdicts": [
+    {
+      "id": "sb-001",
+      "holds": true,
+      "reason": "Confirmed with `git ls-tree origin/main -- .claude` and `git ls-tree origin/feat/NO_JIRA-frontend-alignment -- .claude` in the plants clone: both print the identical tree object `2ab877fde6624fba05c7b63bcd3b7fe9ebf8d6e4`, matching the quote verbatim. That same tree object also matches ins/animals' BRANCH `.claude` tree (pre-merge), confirming plants main is still on the pre-fix shape both repos' branches came from."
+    },
+    {
+      "id": "sb-002",
+      "holds": true,
+      "reason": "Ran `git diff <trialMergeTree> origin/main -- .claude/settings.json .claude/sonar-analyze.sh` in both ins and animals clones: empty output in both, confirming the merged tree's copies are byte-identical to main's fixed versions."
+    },
+    {
+      "id": "sb-003",
+      "holds": true,
+      "reason": "Ran `git diff --stat <mergeBase> origin/main -- .github/workflows` in all four repos: empty output in every case. Confirmed."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "ins",
+      "path": ".claude/settings.json, .claude/sonar-analyze.sh",
+      "holds": true,
+      "reason": "Merge-tree result is proven byte-identical to main (see sb-002); accepting the merge as-is needs no hand resolution.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": ".claude/settings.json, .claude/sonar-analyze.sh",
+      "holds": true,
+      "reason": "Same proof as ins (see sb-002).",
+      "correction": ""
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The 'clean' verdict holds: ins and animals merge the fix with zero conflicts and a provably byte-identical result; plants correctly stays out of scope because main hasn't adopted the fix there and this sync's own precedence rule is that main decides behaviour, never the branch inventing ahead of it. One coverage gap in the survey's own workflowRisks section, not in its conclusion (see missed): it enumerates only lighthouse.yml per repo as the workflow_run risk to check, but animals, plants and tests each also carry a second workflow_run-triggered file (e2e-tests.yml / workspace-e2e-tests.yml, triggered off 'Publish Branch Image' completion, same as lighthouse.yml) that went unexamined. Checking it directly shows the same 'none' conclusion still holds, so the survey's bottom line is unaffected -- but the coverage claim ('main changed zero .github/workflows/*.yml files... this sync therefore introduces no new workflow_run drift of any kind') implies a completeness that the file list given didn't actually demonstrate for these two files."
+  },
+  "missed": [
+    {
+      "id": "sb-003-m1",
+      "statement": "animals' and plants' main also carry e2e-tests.yml, and tests' main carries workspace-e2e-tests.yml, each triggered by `workflow_run: workflows: [\"Publish Branch Image\"]` -- the identical trigger shape to lighthouse.yml, meaning these too run main's copy of the workflow file against whatever branch the triggering 'Publish Branch Image' run was for. Unlike lighthouse.yml, neither references any repo-local script path (no scripts/, tools/, bin/, .sh, .js/.cjs `run:` step): both jobs consist entirely of `uses: DEFRA/trade-imports-workspace/.github/workflows/e2e-tests.yml@main` (a reusable workflow owned by the workspace repo, not by these repos) plus a status-reporting composite action, so there is no branch-side file this workflow could reference and find missing.",
+      "kind": "structure",
+      "ref": "animals/plants: .github/workflows/e2e-tests.yml@origin/main; tests: .github/workflows/workspace-e2e-tests.yml@origin/main",
+      "quote": "on:\n  workflow_run:\n    workflows: [\"Publish Branch Image\"]\n    types: [completed]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "sb-003-m2",
+      "statement": "ins main has neither a lighthouse.yml nor an e2e-tests.yml workflow file at all (its four workflows are check-pull-request.yml, publish-branch.yml, publish-hotfix.yml, publish.yml, none workflow_run-triggered against a PR branch), so ins carries zero workflow_run risk of any kind from this sync, not just 'none-new' on lighthouse specifically.",
+      "kind": "structure",
+      "ref": "ins: `git ls-tree -r --name-only origin/main -- .github/workflows`",
+      "quote": ".github/workflows/check-pull-request.yml\n.github/workflows/publish-branch.yml\n.github/workflows/publish-hotfix.yml\n.github/workflows/publish.yml",
+      "confidence": "verbatim"
+    }
+  ]
+}

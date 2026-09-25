@@ -80,6 +80,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
   'increment-build-loop.js': [
     'workarea',
     'branch',
+    'lifecycle',
     'scope',
     'executor',
     'planOnly',
@@ -115,6 +116,7 @@ const JIRA_AND_CI_KEYS = [
 const BASE_ARGS = {
   workarea: 'shared/args-fixture',
   branch: 'main',
+  lifecycle: 'full',
   scope: 'args-fixture',
   executor: 'claude',
   planOnly: false,
@@ -132,7 +134,7 @@ const BASE_ARGS = {
       github: 'DEFRA/trade-imports-animals-tests'
     }
   },
-  models: { light: 'fixture-light' },
+  models: { light: 'sonnet' },
   increments: ['inc-900'],
   stopAfter: 1,
   jiraProject: 'EUDPA',
@@ -329,7 +331,7 @@ describe('increment-build-loop', () => {
   test('selects the light model for the workspace-resolution agent', async () => {
     const run = await runJsonStringArgs()
 
-    expect(run.agents[0].options.model).toBe('fixture-light')
+    expect(run.agents[0].options.model).toBe('sonnet')
   })
 
   test('labels the preflight agent', async () => {
@@ -450,6 +452,81 @@ describe('increment-build-loop', () => {
     expect(run.agents).toEqual([])
   })
 
+  describe('the models config', () => {
+    const runPlanOnlyWithModels = (models) =>
+      runWorkflowScript(scriptPath, {
+        args: { ...BASE_ARGS, planOnly: true, models },
+        answers: [
+          WORKSPACE_ANSWER,
+          { ok: true, summary: '1' },
+          {
+            ok: true,
+            summary: 'Planned.',
+            repos: ['frontend'],
+            behaviourChanges: [],
+            decisions: []
+          }
+        ]
+      })
+
+    const modelOf = (run, label) =>
+      run.agents.find((entry) => entry.options.label === label).options.model
+
+    test('resolves the built-in default for every tier when models is empty', async () => {
+      const run = await runPlanOnlyWithModels({})
+
+      expect(modelOf(run, 'workspace')).toBe('haiku')
+      expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+    })
+
+    test('lets a tier be overridden explicitly', async () => {
+      const run = await runPlanOnlyWithModels({ think: 'sonnet' })
+
+      expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+      expect(modelOf(run, 'workspace')).toBe('haiku')
+    })
+
+    test('accepts "inherit" and leaves the session model in place', async () => {
+      const run = await runPlanOnlyWithModels({ light: 'inherit' })
+
+      expect(modelOf(run, 'workspace')).toBeUndefined()
+    })
+
+    test('refuses a model value that is not a known alias or "inherit", naming the tier', async () => {
+      const run = await runPlanOnlyWithModels({ light: 'gpt-5' })
+
+      expect(run.error.message).toContain(
+        'config.models.light must be one of opus, sonnet, haiku, or "inherit"'
+      )
+      expect(run.error.message).toContain('"gpt-5"')
+      expect(run.agents).toEqual([])
+    })
+
+    test('refuses a tier name it does not know', async () => {
+      const run = await runPlanOnlyWithModels({ heavyweight: 'opus' })
+
+      expect(run.error.message).toContain(
+        'config.models has no tier named heavyweight'
+      )
+      expect(run.agents).toEqual([])
+    })
+
+    test('the deprecated heavy alias sets the think tier', async () => {
+      const run = await runPlanOnlyWithModels({ heavy: 'opus' })
+
+      expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+    })
+
+    test('an explicit think value wins over the heavy alias', async () => {
+      const run = await runPlanOnlyWithModels({
+        heavy: 'opus',
+        think: 'sonnet'
+      })
+
+      expect(modelOf(run, 'inc-900 plan')).toBe('sonnet')
+    })
+  })
+
   test('refuses a scope it would once have derived', async () => {
     const run = await runWorkflowScript(scriptPath, {
       args: withoutKey(BASE_ARGS, 'scope')
@@ -556,6 +633,18 @@ describe('increment-build-loop', () => {
     const runFrom = (...answers) =>
       runWorkflowScript(scriptPath, {
         args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          TICKET_ANSWER,
+          BRANCHED_ANSWER,
+          ...answers
+        ]
+      })
+
+    const runFromWithArgs = (argsOverride, ...answers) =>
+      runWorkflowScript(scriptPath, {
+        args: { ...BASE_ARGS, ...argsOverride },
         answers: [
           WORKSPACE_ANSWER,
           PREFLIGHT_ANSWER,
@@ -673,6 +762,40 @@ describe('increment-build-loop', () => {
 
       const runToReview = (changedFiles) =>
         runFrom(BASELINE_ANSWER, PLAN_ANSWER, implementAnswer(changedFiles))
+
+      const modelOf = (run, label) =>
+        run.agents.find((entry) => entry.options.label === label).options.model
+
+      test('runs the planner on the think tier and the implementor on the code tier', async () => {
+        const run = await runToReview(['frontend:src/a.js'])
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+        expect(modelOf(run, 'inc-900 implement')).toBe('sonnet')
+      })
+
+      test('the deprecated heavy alias sets both the think and code tiers', async () => {
+        const run = await runFromWithArgs(
+          { models: { heavy: 'opus' } },
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js'])
+        )
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+        expect(modelOf(run, 'inc-900 implement')).toBe('opus')
+      })
+
+      test('an explicit tier wins over the deprecated heavy alias', async () => {
+        const run = await runFromWithArgs(
+          { models: { heavy: 'opus', code: 'sonnet' } },
+          BASELINE_ANSWER,
+          PLAN_ANSWER,
+          implementAnswer(['frontend:src/a.js'])
+        )
+
+        expect(modelOf(run, 'inc-900 plan')).toBe('opus')
+        expect(modelOf(run, 'inc-900 implement')).toBe('sonnet')
+      })
 
       const labelsInPhase = (run, phaseName) =>
         run.agents
@@ -1246,6 +1369,548 @@ describe('increment-build-loop', () => {
             'inc-900 branch-guard:implement',
             'inc-900 branch-guard:review'
           ])
+        })
+      })
+    })
+  })
+
+  test('refuses a lifecycle it does not know', async () => {
+    const run = await runWorkflowScript(scriptPath, {
+      args: { ...BASE_ARGS, lifecycle: 'trunk' }
+    })
+
+    expect(run.error.message).toContain(
+      'config.lifecycle must be "full" (ticket, own branch, PR, merge, ticket done) or "branch"'
+    )
+    expect(run.agents).toEqual([])
+  })
+
+  describe('under the branch lifecycle', () => {
+    const WORKING_BRANCH = 'feat/NO_JIRA-frontend-alignment'
+    const repo = (name) => ({
+      path: `repos/trade-imports-${name}`,
+      github: `DEFRA/trade-imports-${name}`
+    })
+    const BRANCH_ARGS = {
+      ...BASE_ARGS,
+      branch: WORKING_BRANCH,
+      lifecycle: 'branch',
+      repos: {
+        ins: repo('ins-frontend'),
+        animals: repo('animals-frontend'),
+        plants: repo('plants-frontend'),
+        tests: repo('animals-tests')
+      },
+      jiraProject: null,
+      epic: null,
+      jiraInProgressStatus: null,
+      jiraDoneStatus: null,
+      jiraBoard: null,
+      requireApproval: null,
+      approvalWaitMinutes: null
+    }
+
+    const runBranch = (overrides, ...answers) =>
+      runWorkflowScript(scriptPath, {
+        args: { ...BRANCH_ARGS, ...overrides },
+        answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, ...answers]
+      })
+
+    const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+    const promptOf = (run, label) =>
+      run.agents.find((entry) => entry.options.label === label).prompt
+
+    describe('its configuration', () => {
+      test('takes null for every Jira and approval key, and whatever repo keys the envelope names', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [WORKSPACE_ANSWER, null]
+        })
+
+        expect(run.error.message).toContain('no readable backlog')
+      })
+
+      test('refuses a Jira or approval key that is given a value, naming it', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: { ...BRANCH_ARGS, epic: 'EUDPA-1', requireApproval: false }
+        })
+
+        expect(run.error.message).toBe(
+          'increment-build-loop: lifecycle "branch" makes no Jira call and merges nothing, so epic, requireApproval must be null — got epic="EUDPA-1", requireApproval=false'
+        )
+        expect(run.agents).toEqual([])
+      })
+
+      test('still needs the Jira and approval keys passed, as null', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: withoutKey(BRANCH_ARGS, 'jiraBoard')
+        })
+
+        expect(run.error.message).toBe(
+          'increment-build-loop: args is missing required key jiraBoard. Pass every one in args: this workflow has no defaults'
+        )
+      })
+
+      test.each(['main', 'master'])(
+        'refuses to build onto %s',
+        async (branch) => {
+          const run = await runWorkflowScript(scriptPath, {
+            args: { ...BRANCH_ARGS, branch }
+          })
+
+          expect(run.error.message).toContain(
+            'lifecycle "branch" commits and pushes straight onto config.branch, so it refuses main and master'
+          )
+          expect(run.agents).toEqual([])
+        }
+      )
+
+      test('runs on the claude executor only', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: { ...BRANCH_ARGS, executor: 'codex' }
+        })
+
+        expect(run.error.message).toContain(
+          'lifecycle "branch" runs on executor "claude" only'
+        )
+      })
+
+      test('refuses a repo key that names the workspace itself', async () => {
+        const run = await runWorkflowScript(scriptPath, {
+          args: {
+            ...BRANCH_ARGS,
+            repos: { ...BRANCH_ARGS.repos, workspace: repo('workspace') }
+          }
+        })
+
+        expect(run.error.message).toContain(
+          'Each key is a lower-case word other than "workspace"'
+        )
+      })
+    })
+
+    describe('building a row', () => {
+      const ROW = {
+        ok: true,
+        repos: ['tests'],
+        merge: [],
+        heads: [{ repo: 'tests', head: 'abc1234' }],
+        resumeAt: 'build',
+        summary: 'every repo on the branch'
+      }
+      const MERGE_ROW = {
+        ...ROW,
+        merge: [{ repo: 'tests', ref: 'origin/main' }],
+        gatePhases: ['unit', 'fit']
+      }
+      const BASELINE = { ok: true, green: true, rungs: [], summary: 'green' }
+      const PLAN = {
+        ok: true,
+        summary: 'Resolve the one conflict.',
+        repos: ['tests'],
+        behaviourChanges: [],
+        decisions: []
+      }
+      const MERGE_STARTED = {
+        ok: true,
+        merges: [
+          {
+            repo: 'tests',
+            ref: 'origin/main',
+            mergeHead: 'def5678',
+            alreadyMerged: false,
+            conflicted: ['src/auth.spec.ts']
+          }
+        ],
+        summary: 'started'
+      }
+      const IMPLEMENTED = {
+        ok: true,
+        summary: 'Resolved it.',
+        changedFiles: ['tests:src/auth.spec.ts']
+      }
+      const NO_FINDINGS = { findings: [] }
+      const GREEN_LADDER = {
+        green: true,
+        ran: ['tests lint'],
+        summary: 'green'
+      }
+      const ON_BRANCH = { ok: true, summary: 'on the branch' }
+      const LANDED = {
+        landed: true,
+        pushed: true,
+        commit: 'aaa1111',
+        summary: 'merge committed and pushed'
+      }
+      const FOUND = {
+        ok: true,
+        prs: [
+          {
+            repo: 'tests',
+            url: 'https://github.com/DEFRA/trade-imports-animals-tests/pull/227',
+            number: 227
+          }
+        ],
+        missing: [],
+        summary: 'one open PR'
+      }
+      const CI_GREEN = { green: true, summary: 'every check green' }
+      const MARKED_DONE = { ok: true, summary: 'done' }
+      const NO_GATE = { ok: true, summary: 'no gate' }
+
+      const reviewedAndLanded = [
+        IMPLEMENTED,
+        NO_FINDINGS,
+        NO_FINDINGS,
+        NO_FINDINGS,
+        GREEN_LADDER,
+        ON_BRANCH,
+        LANDED
+      ]
+
+      const runMergeRow = (...after) =>
+        runBranch(
+          {},
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          ...reviewedAndLanded,
+          ...after
+        )
+
+      test('raises no ticket, checks the branch, and merges nothing', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(labelsOf(run)).toEqual([
+          'workspace',
+          'preflight',
+          'inc-900 branch',
+          'inc-900 baseline',
+          'inc-900 plan',
+          'inc-900 merge start',
+          'inc-900 implement',
+          'inc-900 style:tests-javascript',
+          'inc-900 review:tests-javascript',
+          'inc-900 consistency',
+          'inc-900 ladder',
+          'inc-900 branch-guard:land',
+          'inc-900 land',
+          'inc-900 pr',
+          'inc-900 ci watch',
+          'inc-900 done',
+          'inc-900 gate check'
+        ])
+      })
+
+      test('makes no Jira call in any stage', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+        const jiraCallers = run.agents
+          .filter(({ prompt }) =>
+            /tools\/jira|move-to-board|transition-ticket/.test(prompt)
+          )
+          .map(({ options }) => options.label)
+
+        expect(jiraCallers).toEqual([])
+      })
+
+      test('reports the row landed on the working branch with its commit and PR', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-900',
+          branch: WORKING_BRANCH,
+          outcome: 'landed',
+          commit: 'aaa1111',
+          prs: [
+            'https://github.com/DEFRA/trade-imports-animals-tests/pull/227'
+          ],
+          ci: 'green'
+        })
+      })
+
+      test('asserts every configured repo is on the branch and fast-forwards it, creating nothing', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 branch')
+
+        expect(prompt).toContain(
+          `git -C ~/ws/<repoPath> merge --ff-only origin/${WORKING_BRANCH}`
+        )
+        expect(prompt).toContain(
+          'For EACH of ins `~/ws/repos/trade-imports-ins-frontend`, animals `~/ws/repos/trade-imports-animals-frontend`, plants `~/ws/repos/trade-imports-plants-frontend`, tests `~/ws/repos/trade-imports-animals-tests`'
+        )
+        expect(prompt).not.toContain('checkout -b')
+      })
+
+      test('runs only the gate phases the row owes', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 baseline')
+
+        expect(prompt).toContain('--phase fit')
+        expect(prompt).not.toContain('--phase e2e')
+      })
+
+      test('starts the merge itself, without committing, before the implementor', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 merge start')
+
+        expect(prompt).toContain(
+          'git -C ~/ws/<repoPath> merge --no-ff --no-commit <ref>'
+        )
+        expect(prompt).toContain(
+          '- tests (`~/ws/repos/trade-imports-animals-tests`): merge `origin/main`'
+        )
+      })
+
+      test('tells the implementor and the reviewers a merge is in progress', async () => {
+        const run = await runMergeRow(null)
+
+        expect(promptOf(run, 'inc-900 implement')).toContain(
+          'THE MERGE IS YOURS TO RESOLVE'
+        )
+        expect(promptOf(run, 'inc-900 review:tests-javascript')).toContain(
+          'shows the merge result against the PRE-MERGE HEAD'
+        )
+      })
+
+      test('tells the ladder the end-to-end proof is another row’s when the row leaves out e2e', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 ladder')
+
+        expect(prompt).toContain(
+          'gatePhases leave out e2e: its end-to-end proof belongs to another row, so do not fail it for want of one.'
+        )
+        expect(prompt).not.toContain('--phase e2e')
+      })
+
+      test('lands the merge as a two-parent commit and pushes it by a fully qualified refspec', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 land')
+
+        expect(prompt).toContain(
+          `git -C ~/ws/<repoPath> push origin refs/heads/${WORKING_BRANCH}:refs/heads/${WORKING_BRANCH}`
+        )
+        expect(prompt).toContain('rev-list --parents -n 1 HEAD')
+        expect(prompt).toContain('Never `--squash`')
+      })
+
+      test('finds the open PR and never raises, edits or merges one', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+        const prompt = promptOf(run, 'inc-900 pr')
+
+        expect(prompt).toContain(
+          `gh pr list --repo <ghRepo> --head ${WORKING_BRANCH} --state open`
+        )
+        const touchesAPr = run.agents
+          .filter(({ prompt: text }) =>
+            /gh pr (create|edit|ready|merge)/.test(text)
+          )
+          .map(({ options }) => options.label)
+        expect(touchesAPr).toEqual([])
+      })
+
+      test('stops with no-open-pr when a repo has no open PR for the branch', async () => {
+        const run = await runMergeRow({
+          ok: false,
+          prs: [],
+          missing: ['tests'],
+          summary: 'no open PR in tests'
+        })
+
+        expect(run.result.stopped.reason).toBe('no-open-pr')
+        expect(run.result.stopped.detail).toContain(
+          `no open pull request for ${WORKING_BRANCH} in tests`
+        )
+      })
+
+      test('reads mergeability before it waits on the checks', async () => {
+        const prompt = promptOf(
+          await runMergeRow(FOUND, null),
+          'inc-900 ci watch'
+        )
+
+        expect(
+          prompt.indexOf('gh pr view <url> --json mergeable,mergeStateStatus')
+        ).toBeLessThan(
+          prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh')
+        )
+      })
+
+      test('stops at a PR that conflicts with its base without spending a fix attempt', async () => {
+        const run = await runMergeRow(FOUND, {
+          green: false,
+          blocked: 'tests PR conflicts with its base',
+          stopReason: 'pr-conflicting',
+          failures: [
+            'tests PR conflicts with its base: GitHub runs no checks on it'
+          ],
+          summary: 'conflicting'
+        })
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'ci-red',
+          stopReason: 'pr-conflicting',
+          ciFixAttempts: 0
+        })
+        expect(labelsOf(run)).not.toContain('inc-900 ci fix 1')
+      })
+
+      test('tells the CI fixer a re-run does not refresh a check another job posted', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          null
+        )
+
+        expect(promptOf(run, 'inc-900 ci fix 1')).toContain(
+          'Re-running a workflow does not refresh a check that another job posted'
+        )
+      })
+
+      test('marks the row done with its commit through tim', async () => {
+        const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
+
+        expect(promptOf(run, 'inc-900 done')).toContain(
+          'tim backlog set shared/args-fixture inc-900 --status done --commit "aaa1111" --workspace ~/ws --json'
+        )
+      })
+
+      test('does not wait for CI on a row that sets awaitCi false', async () => {
+        const run = await runBranch(
+          {},
+          { ...ROW, awaitCi: false },
+          BASELINE,
+          PLAN,
+          ...reviewedAndLanded,
+          FOUND,
+          MARKED_DONE,
+          NO_GATE
+        )
+
+        expect(labelsOf(run)).not.toContain('inc-900 ci watch')
+        expect(run.result.increments[0].ci).toBe(
+          'not awaited: the row sets awaitCi false'
+        )
+      })
+
+      test('refuses a row that merges into a repo it does not build', async () => {
+        const run = await runBranch(
+          {},
+          {
+            ...ROW,
+            repos: ['ins'],
+            merge: [{ repo: 'tests', ref: 'origin/main' }]
+          }
+        )
+
+        expect(run.result.stopped).toEqual({
+          reason: 'row-invalid',
+          detail:
+            'inc-900: merge names "tests", which is not in the row\'s repos'
+        })
+      })
+
+      describe('when the merge cannot finish', () => {
+        const runToRedLadder = () =>
+          runBranch(
+            {},
+            MERGE_ROW,
+            BASELINE,
+            PLAN,
+            MERGE_STARTED,
+            IMPLEMENTED,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            { green: false, ran: [], failures: ['tests lint'], summary: 'red' },
+            { ok: true, summary: 'patches saved, merge aborted' }
+          )
+
+        test('preserves the attempt as patches and aborts the merge, committing nothing', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect(prompt).toContain('merge --abort')
+          expect(prompt).toContain(
+            'NOTHING from a failed attempt may be committed or pushed to'
+          )
+          expect(prompt).toContain('inc-900-preserve-<repoKey>.staged.patch')
+          expect(prompt).toContain('--diff-filter=U')
+        })
+
+        test('stops the run at ladder-red with what the preserve step kept', async () => {
+          const run = await runToRedLadder()
+
+          expect(run.result.increments[0]).toMatchObject({
+            outcome: 'ladder-red',
+            preserved: 'patches saved, merge aborted'
+          })
+        })
+      })
+
+      describe('a docs row that changes no backlog repo', () => {
+        const runDocsRow = () =>
+          runBranch(
+            {},
+            { ...ROW, repos: [], gatePhases: [] },
+            BASELINE,
+            { ...PLAN, repos: [] },
+            {
+              ok: true,
+              summary: 'Rewrote the report.',
+              changedFiles: [
+                'workspace:workareas/shared/frontend-alignment/report.md'
+              ]
+            },
+            NO_FINDINGS,
+            NO_FINDINGS,
+            GREEN_LADDER,
+            ON_BRANCH,
+            { landed: true, pushed: true, summary: 'nothing to commit' },
+            MARKED_DONE,
+            NO_GATE
+          )
+
+        test('reviews the workspace edits and looks for no pull request', async () => {
+          const run = await runDocsRow()
+
+          expect(labelsOf(run)).toEqual([
+            'workspace',
+            'preflight',
+            'inc-900 branch',
+            'inc-900 baseline',
+            'inc-900 plan',
+            'inc-900 implement',
+            'inc-900 review:workspace-docs',
+            'inc-900 consistency',
+            'inc-900 ladder',
+            'inc-900 branch-guard:land',
+            'inc-900 land',
+            'inc-900 done',
+            'inc-900 gate check'
+          ])
+        })
+
+        test('reports the workspace edits it left for the orchestrator to commit', async () => {
+          const run = await runDocsRow()
+
+          expect(run.result.increments[0]).toMatchObject({
+            outcome: 'landed',
+            leftUncommitted: [
+              'workspace:workareas/shared/frontend-alignment/report.md'
+            ],
+            ci: 'none: the row changes no backlog repo'
+          })
+        })
+
+        test('tells the implementor to leave the workspace edits unstaged', async () => {
+          const prompt = promptOf(await runDocsRow(), 'inc-900 implement')
+
+          expect(prompt).toContain(
+            'never `git add`, commit or stash anything in the workspace'
+          )
+        })
+
+        test('marks it done without a commit', async () => {
+          const prompt = promptOf(await runDocsRow(), 'inc-900 done')
+
+          expect(prompt).toContain(
+            'tim backlog set shared/args-fixture inc-900 --status done --workspace ~/ws --json'
+          )
         })
       })
     })

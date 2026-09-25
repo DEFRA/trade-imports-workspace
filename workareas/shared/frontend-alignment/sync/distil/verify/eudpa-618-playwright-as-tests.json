@@ -1,0 +1,84 @@
+{
+  "source": "eudpa-618-playwright-as-tests",
+  "verdicts": [
+    {
+      "id": "e618-001",
+      "holds": true,
+      "reason": "Verbatim in 59fb6f2's commit message on ins main: 'Matched by directory rather than animals-frontend's `*.fit.spec.js` because two page-object helpers beside the specs don't carry the suffix. Otherwise this is animals-frontend's config, on a repo that passes.' Confirmed by `git log -1 --format=%B 59fb6f2`."
+    },
+    {
+      "id": "e618-002",
+      "holds": true,
+      "reason": "Confirmed by `git ls-tree -r --name-only origin/main -- src | grep -i fit` on ins: src/server/address-book/fit/address-form.js and .../seed-address.js exist exactly as quoted, alongside five .fit.spec.js files."
+    },
+    {
+      "id": "e618-003",
+      "holds": true,
+      "reason": "Confirmed by `git ls-tree -r --name-only origin/feat/NO_JIRA-frontend-alignment` on ins: src/server/app/features/address-book/fit/axe.js and src/server/app/features/dashboard/dashboard.fit.spec.js both exist exactly as quoted. axe.js is outside the suffix pattern; dashboard.fit.spec.js is outside any fit/ directory. Both claims verified true."
+    },
+    {
+      "id": "e618-004",
+      "holds": true,
+      "reason": "Confirmed by reading the branch's src/auth/get-safe-redirect.js: the quoted two lines match verbatim, and main's version (read separately) only extracts the same 'https://placeholder' literal into a const parseBase with an explanatory comment -- zero behavioural difference, confirmed by diffing both bodies."
+    },
+    {
+      "id": "e618-005",
+      "holds": false,
+      "reason": "The quote is verbatim in .sonarcloud.properties's header, but the underlying claim (that ins runs Automatic Analysis in parallel with its CI scan today) is contradicted by direct repo evidence. The header's premise -- 'the scanner steps in .github/workflows/ are still commented out' -- was already false when b28a84b added the file: check-pull-request.yml's/publish.yml's SonarCloud Scan steps were uncommented by 186282c (EUDPA-371) at 2026-09-14 14:20:46+01:00, three hours BEFORE b28a84b added .sonarcloud.properties at 17:20:23 with that stale 'still commented out' text -- and 186282c is an ancestor of the ins merge base (4327c97, 2026-09-16), so this is true on both main and branch today; I read check-pull-request.yml and publish-hotfix.yml directly on the branch and confirmed the SonarCloud Scan step is live and uncommented in all three workflows. Plants shows the same pattern: its scanner step was uncommented by c75fdb2 on 2026-09-09, five days before b28a84b's 'same as plants, still commented out' claim -- so the premise this whole file's rationale rests on was already stale at both repos when it was written, and by the pattern of the DEFRA SonarCloud setup, an active CI-based (push) scan very likely auto-disables Automatic Analysis for that project (the two are mutually exclusive by design, not siblings 'kept in step'). Whether Automatic Analysis genuinely still runs on ins is therefore unconfirmed by anything in the repos and probably false, not verified true as the claim states."
+    },
+    {
+      "id": "e618-006",
+      "holds": true,
+      "reason": "Confirmed empty output for `git log <mergeBase>..origin/main -- sonar-project.properties` on both animals-frontend and plants-frontend."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "ins",
+      "path": "sonar-project.properties",
+      "holds": true,
+      "reason": "Verified the proposed union (src/**/*.fit.spec.js + src/**/fit/**) correctly classifies every fit-suite file on the branch's actual ins tree as test/excluded: dashboard.fit.spec.js (outside any fit/ dir, needs the suffix leg) and address-form.js/seed-address.js/axe.js (no .fit.spec.js suffix, need the directory leg) are each caught by exactly one of the two patterns, and the six *.fit.spec.js files under address-book/fit/ are caught by both. Confirmed against the actual trial-merge conflict markers (git show d664c0e9...:sonar-project.properties), which show precisely the base-vs-union difference the resolution describes. No production file is newly pulled out of coverage: **/config.js only enters sonar.cpd.exclusions (duplication check), never sonar.exclusions/sonar.tests/coverage.exclusions, so src/config/config.js (a real production file matching that glob) still counts for coverage and issues -- verified this file exists and is not caught by any of the coverage/test patterns. sonar.coverage.exclusions=src/client/** is a genuine browser bundle, confirmed via webpack.config.js's `context: path.resolve(dirname, 'src/client')`.",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": "src/auth/get-safe-redirect.js",
+      "holds": true,
+      "reason": "Read both sides directly: the branch's body and main's body differ only by extracting the repeated 'https://placeholder' literal into `const parseBase` with an explanatory comment; the trial-merge conflict markers (git show d664c0e9...:src/auth/get-safe-redirect.js) show exactly this diff and nothing else. Applying main's version on top of the branch is a correct, zero-behaviour-change resolution.",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": ".sonarcloud.properties",
+      "holds": false,
+      "reason": "This resolution's own justification depends on claim e618-005, which does not hold: the 'Automatic Analysis is running and must be kept in step' premise is contradicted by the ins and plants CI workflows both having had their SonarCloud Scan steps active well before .sonarcloud.properties's header text was written (and before either repo's alignment merge base). Mirroring the union pattern into this file is still harmless and keeps ins visually consistent with plants' equivalent file, but the survey's stated urgency ('Leaving it unupdated would mean SonarCloud's Automatic Analysis pass keeps flagging the fit suite as uncovered source') is unconfirmed and probably false, since Automatic Analysis is very likely already disabled for this project once CI-based analysis was configured.",
+      "correction": "Do the file update for parity with plants (low-risk, matches the ledger's shape precedent), but drop the framing that this is closing a live coverage-gate gap. Before or shortly after merge, check the project's Administration > Analysis Method in SonarCloud for trade-imports-ins-frontend to confirm Automatic Analysis is actually off (expected, given the active CI scan step) -- if so, .sonarcloud.properties is presentational only and this resolution carries no functional risk either way; if Automatic Analysis is somehow still on, re-open this as a real fix rather than a cosmetic one."
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The core technical call -- that ins's fit-suite classification needs the union of main's directory pattern and the branch's existing suffix pattern, not either alone -- is verified correct and necessary against the branch's actual tree. The get-safe-redirect.js resolution is also verified correct. The one real defect found is resolution #3 (.sonarcloud.properties): its stated rationale (Automatic Analysis genuinely running in parallel) rests on a premise the repos themselves contradict, so that resolution should be relabelled 'do it for parity' rather than 'do it because Automatic Analysis needs it', without changing the actual file content proposed."
+  },
+  "missed": [
+    {
+      "id": "e618-003-m1",
+      "statement": "The branch's ins tree also has a repo-root fit/ directory (fit/sign-in.js, fit/smoke.fit.spec.js) entirely outside src/ -- neither main's directory pattern nor the branch's suffix pattern nor the proposed union needs to (or does) classify these, because sonar.sources=src/ on both main and branch already puts them outside SonarCloud's scan scope altogether.",
+      "kind": "structure",
+      "ref": "ins: git ls-tree -r --name-only origin/feat/NO_JIRA-frontend-alignment (repo root)",
+      "quote": "fit/sign-in.js\nfit/smoke.fit.spec.js",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "e618-003-m2",
+      "statement": "animals-frontend's branch sonar-project.properties is not actually 'the same suffix-based pattern for the same intent' as a clean parallel to ins's proposed directory-based full exclusion: animals has its own fit/axe.js helpers (four of them, one per group folder) that carry no .fit.spec.js suffix and are NOT caught by animals' sonar.exclusions/sonar.tests/test.inclusions at all -- animals instead keeps them fully analysed for issues and exempts them only from sonar.coverage.exclusions and sonar.cpd.exclusions individually (src/**/fit/axe.js), a materially different mechanism than the full-exclusion directory pattern ins's resolution adopts. This doesn't make ins's resolution wrong (it correctly follows ins main's own precedent, which already used full directory exclusion before the branch existed), but the survey's framing that animals/plants share 'the same intent' pattern understates that animals has a third, hybrid mechanism the union proposal doesn't mirror.",
+      "kind": "structure",
+      "ref": "animals: sonar-project.properties (origin/feat/NO_JIRA-frontend-alignment)",
+      "quote": "sonar.coverage.exclusions=src/client/**,src/server/app/sets/live-animals/journeys/linear/features/documents/client/**,src/**/fit/axe.js",
+      "confidence": "verbatim"
+    }
+  ]
+}

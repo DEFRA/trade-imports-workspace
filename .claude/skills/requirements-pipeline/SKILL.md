@@ -18,7 +18,7 @@ sources ──DISTIL──▶ workareas/<workarea>/backlog.json ──BUILD─�
 | Phase | Read | Use it when |
 |---|---|---|
 | DISTIL | [`references/DISTIL.md`](references/DISTIL.md) | You have requirement sources and no backlog, or new sources to fold into an existing backlog (re-distil keeps every existing id). The skill works out the target repos and precedence from the goal; those repos and their rulings are always a source, so the backlog holds changes, not a rebuild |
-| BUILD | [`references/BUILD.md`](references/BUILD.md) | A backlog in the one shape exists and you want increments built, a stopped run resumed, or a run handed over. The repos come from the backlog envelope; the user gives only the epic |
+| BUILD | [`references/BUILD.md`](references/BUILD.md) | A backlog in the one shape exists and you want increments built, a stopped run resumed, or a run handed over. The repos come from the backlog envelope; the user gives only the epic, or, for a build onto an existing branch with no Jira and no merge, the branch (`lifecycle: 'branch'`) |
 
 Read the phase file in full before you start it, and read
 [`references/backlog.schema.json`](references/backlog.schema.json) and
@@ -72,8 +72,9 @@ nothing else lists the fields. Change it and check the others in the same change
 | [`references/backlog.schema.json`](references/backlog.schema.json) | Defines it: every field, required or not, the statuses, the recipe fields refused |
 | [`references/SHAPE.md`](references/SHAPE.md) | The judgement rules a schema cannot check |
 | DISTIL's consolidate step ([`references/DISTIL.md`](references/DISTIL.md) §4) | Writes it to the schema, and runs `tim backlog check` until it passes |
-| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`) |
+| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`) |
 | The loop's `readIncrement` and plan stage ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row and envelope into every stage's prompt; the planner turns the row into `plans/<id>.md` |
+| The loop's branch stage, under `lifecycle: 'branch'` ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, and the envelope's `repos` keys. The script checks what it copied (`rowFieldProblems`) and drives the merge, gate and CI stages from it. A new lifecycle field starts in the schema and lands here, in its check and in [`references/BUILD.md`](references/BUILD.md#branch-lifecycle) |
 | BUILD's derive and landed checks ([`references/BUILD.md`](references/BUILD.md)) | Relies on `next`'s status-and-dependencies rule and the `status`/`commit`/`prs` fields the loop writes |
 | The Codex briefs ([`workflow/codex/`](workflow/codex/)) | Read the same plan and row under `executor: 'codex'` |
 

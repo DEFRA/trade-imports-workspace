@@ -1,0 +1,72 @@
+{
+  "source": "tests-security-coverage",
+  "verdicts": [
+    {
+      "id": "tsc-001",
+      "holds": true,
+      "reason": "Read the merged blob directly (git show d4ac0a82...:tests/security/ins/address-book.spec.ts): the quoted comment ('The service's one static route...') and goto('/') immediately followed by the handshake-token query-param comment both appear exactly as quoted, confirming the branch's /about removal and main's handshake-token addition survived the 3-way merge together with no conflict."
+    },
+    {
+      "id": "tsc-002",
+      "holds": true,
+      "reason": "Confirmed: `git log 8f52771..origin/main -- tests/e2e/features/auth.spec.ts` returns only 623c3cc. Separately confirmed cd378de (EUDPA-333, #233) touches fixtures/auth-state.ts, tests/e2e/features/addresses-read-only.spec.ts, tests/e2e/pages/contact-address.spec.ts, utils/playwright/environment.ts, and 48ea0c0 (EUDPA-333, #239) touches only addresses-read-only.spec.ts -- neither touches auth.spec.ts, matching the extract's summary exactly."
+    },
+    {
+      "id": "tsc-003",
+      "holds": true,
+      "reason": "Confirmed by reading page-objects/auth/sign-out-page.ts on origin/feat/NO_JIRA-frontend-alignment in the tests repo: `readonly path = '/auth/sign-out';` matches verbatim. Also confirmed main never touched this file since the tests repo's merge base (empty `git log 8f52771..origin/main -- page-objects/auth/sign-out-page.ts`)."
+    },
+    {
+      "id": "tsc-004",
+      "holds": true,
+      "reason": "Confirmed in 623c3cc's full commit body, sub-commit 'fix(EUDPA-619): pin the sign-out link at its real path': 'The sign-out link renders as /auth/sign-out - layout.njk sets signOutUrl to exactly that... but the new assertion expected /signout, which is a different route that the service navigation never links to.' Matches the quote verbatim (aside from an em-dash rendering difference)."
+    },
+    {
+      "id": "tsc-005",
+      "holds": true,
+      "reason": "Confirmed verbatim in cb1ca03's first sub-commit message: 'Scoped to the live-animals journey only -- the high-risk plants frontend isn't wired into the ZAP compose context yet.'"
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "tests",
+      "path": "tests/security/frontend-draft-validation-error.spec.ts, utils/zap/run-and-gate.ts, entrypoint.sh, tests/security/admin/admin-auth.spec.ts, tests/security/frontend-auth.spec.ts, tests/security/frontend-change-context.spec.ts, tests/security/ins/address-book-auth.spec.ts, tests/security/ins/address-book.spec.ts, tests/a11y/notification-journey-conditional-pages.spec.ts, tests/a11y/notification-lifecycle-states.spec.ts, tests/a11y/sign-in.spec.ts",
+      "holds": true,
+      "reason": "Ran `git merge-tree --write-tree --name-only origin/feat/NO_JIRA-frontend-alignment origin/main` directly: it reports exactly one conflict (tests/e2e/features/auth.spec.ts) and auto-merges everything else, including address-book.spec.ts, matching the survey's claim precisely. Spot-checked the five new cb1ca03 specs (admin-auth, frontend-auth, frontend-change-context, address-book-auth, and two a11y specs) -- all drive through existing page objects with no hardcoded /signout, session-cookie-name, CSP form-action, or unanchored root-relative path literal that the branch's changes would break; regex assertions that do check URLs (e.g. /\\/origin\\?change=1$/) are end-anchored only, so they tolerate the branch's SET_BASES path prefixing.",
+      "correction": ""
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/features/auth.spec.ts",
+      "holds": true,
+      "reason": "Read base (merge base), main, branch and the merged-with-markers file directly. The resolution's end state is correct: keep the branch's `.toHaveAttribute('href', pages.signOut.path)` at the conflict, take main's hardcoded-literal alternative nowhere. Confirmed pages.signOut.path resolves to '/auth/sign-out' on the branch (tsc-003) and that main independently pinned the identical literal '/auth/sign-out' after its own self-correction (tsc-004), so the two are behaviourally identical as claimed.",
+      "correction": "One overstatement to fix in the resolution's phrasing, not its outcome: the three EUDPA-619 additions it describes as needing to be 'layered in' (the SET_BASES import, the new 'redirects the service root to the default set's dashboard' test, and the ${SET_BASES.liveAnimals} prefix on the 'allows signing into a page further in the journey' regex) are NOT separate manual edits. Reading the actual merged-with-markers file shows git's own 3-way merge already applies all three automatically, outside and around the single conflict block -- the only genuine hand-decision in the whole file is the one href-assertion line at the conflict marker itself. The resolution's target end state is correct; the amount of manual work it implies is overstated."
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "The five cluster commits genuinely merge clean (verified via merge-tree, not just asserted), EUDPA-619 (not EUDPA-333) is confirmed as the sole source of the auth.spec.ts conflict, and none of the grepped surfaces (signout, sid, form-action, address-book) turn up a new spec or changed spec that depends on something the branch changed. The auth.spec.ts resolution's target end state is correct; only its description of how much of it requires manual work is overstated (see correction above)."
+  },
+  "missed": [
+    {
+      "id": "tsc-003-m1",
+      "statement": "fixtures/auth-state.ts on the merged tree already resolves the ins/plants per-service session-cookie-name question the task flagged as worth checking: AUTH_COOKIE_NAME='sid' is the shared default, but authCookieNameFor() returns INS_COMPOSE_AUTH_COOKIE_NAME='ins-sid' for ins on a local/compose host and AUTH_TARGETS.plants carries its own cookieName default 'plants-sid' -- none of this is touched by the five cluster commits, so there is nothing here that conflicts with the branch's own cookie-naming work.",
+      "kind": "structure",
+      "ref": "tests: fixtures/auth-state.ts and page-objects/base/sets.ts (merged tree d4ac0a82...)",
+      "quote": "export const AUTH_COOKIE_NAME = 'sid';\n\nconst INS_COMPOSE_AUTH_COOKIE_NAME = 'ins-sid';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tsc-005-m1",
+      "statement": "No spec in the merged tests tree asserts on CSP's form-action directive at all (`grep -ni form-action` across tests/, page-objects/, fixtures/, utils/ on the merged tree returns zero hits), so the branch's form-action widening (named sibling origins) carries no risk of breaking any of this cluster's specs -- confirmed empty, not merely assumed.",
+      "kind": "structure",
+      "ref": "tests: merged tree d4ac0a82... (grep across tests/, page-objects/, fixtures/, utils/)",
+      "quote": "(no matches)",
+      "confidence": "verbatim"
+    }
+  ]
+}

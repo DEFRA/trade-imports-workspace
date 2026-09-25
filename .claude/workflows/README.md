@@ -33,6 +33,14 @@ The call sequence is `parseArgs` → `requireKeys` → `logResolvedConfig`, befo
 `log()` and before the first `agent()`. A required key is missing when it is absent or
 `undefined` — an explicit `null` counts as given, because some keys carry meaningful nulls.
 
+A key a script does not use in some mode is still required in that mode, passed as `null`,
+so the args always say plainly what governs the run. The increment build loop is the
+example: under `lifecycle: 'branch'` it makes no Jira call and merges nothing, so
+`jiraProject`, `epic`, `jiraInProgressStatus`, `jiraDoneStatus`, `jiraBoard`,
+`requireApproval` and `approvalWaitMinutes` must each be passed as `null`. Leaving one out
+still stops the run as a missing key, and giving one a value stops it too, naming the key.
+`lifecycle` itself is required in every run: existing callers pass `'full'`.
+
 ## `args-canary.js`
 
 A tracked, zero-agent workflow that proves the contract on *this* runtime, without

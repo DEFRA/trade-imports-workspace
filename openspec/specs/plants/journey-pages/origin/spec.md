@@ -152,3 +152,13 @@ The system MUST send the user to the dashboard when they follow the back link fr
 - **GIVEN** the user has saved at least one answer on the notification
 - **WHEN** they return to the origin of the import page and follow the back link
 - **THEN** Overview is shown
+
+### Requirement: Completing the origin page completes the origin task row
+**ID**: REQ-PLANTS-ORIGIN-011
+The system MUST show the Overview origin task row as completed once a country of origin has been saved.
+
+#### Scenario: Saving a country completes the origin row
+**ID**: SCN-PLANTS-ORIGIN-011-A
+- **GIVEN** the user has chosen a country and saved the origin page
+- **WHEN** they open Overview
+- **THEN** the origin task row reads completed

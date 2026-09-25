@@ -1,0 +1,81 @@
+{
+  "measuredAt": "2026-09-24",
+  "method": "Fresh clones from GitHub under workareas/frontend-alignment-sync/replay/<repo>. For each repo: local branch replay-trial from origin/main, then every NON-MERGE commit of `git rev-list --reverse --no-merges <mergeBase>..origin/feat/NO_JIRA-frontend-alignment` cherry-picked in order. Each commit is first picked plainly; on conflict the conflicting paths (`git diff --name-only --diff-filter=U` plus the CONFLICT lines, which include modify/delete) and the number of conflict hunks (`git grep -c '^<<<<<<< '`, a modify/delete counted as 1) are recorded as the human would meet them, then the pick is aborted and redone with `-X theirs` (overlapping hunks take the commit's side, main's non-overlapping edits kept; modify/delete settled with the commit's side) so the next commit replays on a realistic base. This slightly UNDER-counts later conflicts (a human would keep both sides where -X theirs drops main's) so the replay numbers are a floor. Merge commits are not replayed; their hand-made resolutions (`git show --remerge-diff`) are listed as work a replay throws away. Merge side: `git merge-tree --write-tree origin/feat/NO_JIRA-frontend-alignment origin/main` in the same clones (same tree ids as measure.json), hunks counted with `git grep -c '^<<<<<<< ' <tree>`. ins replay was stopped after 3 of 30 non-merge commits once it was clearly worse than merging.",
+  "repos": {
+    "ins": {
+      "merge": {
+        "conflictFiles": 31,
+        "conflictHunks": 36,
+        "notes": "13 content conflicts carrying 18 hunks (package-lock 2, package.json 1, sonar-project.properties 1, get-safe-redirect 1, config.js 1, nunjucks context.js 1 + context.test.js 2, address-book journey-registry 1, dashboard list.js 1 + list.test.js 3, serve-static-files.test 2, mode.js 1, router.test 1) plus 18 modify/delete: main (mostly the EUDPA-390 address lookup spike, 0.22.0) edited the old src/server/address-book/*, src/server/plugins/router.js, routes/home, address-book-helper and build-navigation, all of which the branch moved into app/features. Those 18 need main's edits ported by hand into the aligned tree, as the branch already did once for EUDPA-333 in 1446fcc. Also a directory-rename-split warning on src/server/common/clients. Hunk total counts each modify/delete as 1."
+      },
+      "replay": {
+        "commitsReplayed": 3,
+        "commitsClean": 0,
+        "commitsConflicting": 3,
+        "distinctConflictFiles": 12,
+        "conflictingStages": ["s01-chassis-moves", "s02-relative-imports"],
+        "notes": "Stopped after 3 of 30 non-merge commits: all 3 conflicted (s01 90ba82a: serve-static-files.test, router.test, plugins/router.js modify/delete; s01 fix 9411358: plugins/auth.test; s02 a62945d: 8 files incl. 6 address-book controllers/indexes, context.js, notification-dashboard-helper). 12 distinct files / 14 hunks already, before s04-s09 which reshape the very address-book files EUDPA-390 changed. A replay would also throw away merge 1446fcc's hand port of EUDPA-333 into the aligned tree (18 files, +231/-1345), which then has to be redone."
+      },
+      "reviewability": "Identical Files changed tab either way (current main plus the restructure). Replay would only rewrite 30 commit SHAs cited in stages.json and report.md, discard the green CI on every stage, and still need a force-push or a new branch and PR.",
+      "recommendation": "merge",
+      "why": "Merging is 31 files / 36 hunks in one sitting; replay conflicted on 3 of the first 3 commits (12 files) with the deepest restructuring stages still ahead, and discards the EUDPA-333 port already done in merge 1446fcc. The branch has 34 commits of restructuring against main's 16, so main is what should be absorbed."
+    },
+    "animals": {
+      "merge": {
+        "conflictFiles": 12,
+        "conflictHunks": 21,
+        "notes": "All content conflicts, no modify/delete. Hunks: documents/controller.test 4, auth/controller 3, router.js 2, layout.test 2, errors.js 2, errors.test 2, and 1 each in config.test (add/add), nunjucks context.js, validate/calendar.js, app/routes.js, animal-identification.controller.test, consignment-details.controller.test. The three controller tests are EUDPA-619 per-set URL prefixes meeting the s17 session-auth test helper."
+      },
+      "replay": {
+        "commitsReplayed": 15,
+        "commitsClean": 11,
+        "commitsConflicting": 4,
+        "distinctConflictFiles": 14,
+        "conflictingStages": ["s12-hardening-backport", "s17-auth-convergence", "s18-chassis-convergence", "s22-address-book-links"],
+        "notes": "22 hunks over 4 conflict events: s12 23311a09 (config.test, plugins/auth.test, shared/copy.en, auth/controller: 4 files / 6 hunks), s17 828d7a55 (routes.js, router.js, the same three EUDPA-619 controller tests: 5 files / 9 hunks), s18 d6f15c56 (calendar.js, errors.js, errors.test: 3 files / 4 hunks), s22 affdce2d (context.js, layout.test: 2 files / 3 hunks). The same 12 files as the merge plus 2 more (plugins/auth.test, copy.en) that the branch's earlier merges 8f5630b0 and 7b0ce48f already resolved and a replay discards. s20's package-lock regeneration replays textually clean but would need regenerating against main's dependencies anyway. Final replayed tree vs main: 100 files, the same as the merged tree vs main."
+      },
+      "reviewability": "Files changed after a merge: 100 files vs current main. After a replay: 100 files vs current main. Same diff. Replay changes only the commit list (15 rewritten commits and no merge commits, instead of 19 + 1 new merge commit).",
+      "recommendation": "merge",
+      "why": "Merge costs 12 files / 21 hunks in one pass; replay costs 14 files / 22 hunks across 4 of 15 commits, so it is no cheaper. The PR's Files changed tab would show the same 100 files against current main either way, and replay adds a new branch name across four repos, fresh CI and stale SHAs in stages.json."
+    },
+    "plants": {
+      "merge": {
+        "conflictFiles": 6,
+        "conflictHunks": 9,
+        "notes": "All content conflicts: auth/controller 2, router.js 2, layout.test 2, nunjucks context.js 1, app/routes.js 1, errors.js 1. EUDPA-619's test ripple auto-merges here."
+      },
+      "replay": {
+        "commitsReplayed": 12,
+        "commitsClean": 8,
+        "commitsConflicting": 4,
+        "distinctConflictFiles": 7,
+        "conflictingStages": ["s12-hardening-backport", "s17-auth-convergence", "s18-chassis-convergence", "s22-address-book-links"],
+        "notes": "11 hunks: s12 e0900d7 (auth/controller 2), s17 791cfc0 (routes.js 1, router.js 2), s18 8c9e9f3 (errors.js 1, errors.test 2), s22 acd27ad (context.js 1, layout.test 2). Same 6 files as the merge plus errors.test, which merge b5b6577 already resolved. Final replayed tree vs main: 54 files, the same as the merged tree vs main."
+      },
+      "reviewability": "Files changed: 54 files vs current main either way. Replay changes only the commit list (12 rewritten commits, no merges).",
+      "recommendation": "merge",
+      "why": "Merge is 6 files / 9 hunks; replay is 7 files / 11 hunks spread over 4 of 12 commits. Nothing to gain for the reviewer, and replaying plants alone would split the cross-repo branch name."
+    },
+    "tests": {
+      "merge": {
+        "conflictFiles": 1,
+        "conflictHunks": 1,
+        "notes": "tests/e2e/features/auth.spec.ts, 1 hunk."
+      },
+      "replay": {
+        "commitsReplayed": 5,
+        "commitsClean": 4,
+        "commitsConflicting": 1,
+        "distinctConflictFiles": 1,
+        "conflictingStages": ["s17-auth-convergence"],
+        "notes": "849558a conflicts on the same auth.spec.ts hunk. Identical cost."
+      },
+      "reviewability": "Identical diff either way (8 files of branch change on top of current main).",
+      "recommendation": "merge",
+      "why": "One file, one hunk either way. Merge keeps the branch name and PR #227."
+    }
+  },
+  "githubDiffFinding": "The Files changed tab of a pull request is a three-dot diff: the head branch against its merge base with the base branch, not against the base branch's tip (GitHub docs, 'About comparing branches in pull requests'). Shown on this repo: animals PR #339 reports changedFiles 101 (+1692/-692), which is exactly `git diff origin/main...origin/feat/NO_JIRA-frontend-alignment` (101 files) and the compare API's merge_base 226fc703; the two-dot diff against main's tip would be 262 files (+2780/-5459). Once main is merged into the branch, the merge base becomes main's tip, so the tab reads as current main plus the restructure. Measured: animals merged tree vs main = 100 files, replayed tree vs main = 100 files; plants 54 vs 54. So a replay changes only the Commits tab: the stage commits without the merge commits (the branch already carries 4 merges of main in animals, 1 in plants, 2 in tests, 2 in ins, so one more is the established pattern). Against that, a replay rewrites every SHA stages.json and report.md cite (15 animals, 12 plants, 5 tests), throws away CI proven green on each stage commit, throws away the hand resolutions in earlier merges (animals 8f5630b0 and 7b0ce48f, plants b5b6577, ins 1446fcc), and cannot reach the existing PRs without a force-push, which is forbidden.",
+  "branchNameConsequence": "A replay cannot land on feat/NO_JIRA-frontend-alignment without force-pushing, which is forbidden, so it needs a new branch name. The cross-repo rule and the stack's --branch probe (branch-tagged image per service, :latest fallback) mean every affected repo must use the same name. Replaying animals and plants alone would split them from ins and tests: the E2E rung would pick up :latest for the two journey frontends while running ins and tests off the old branch, or the reverse. So a replay of any one repo forces a new branch plus new PRs in all four (ins #27, animals #339, plants #69, tests #227 superseded), with ins and tests just copying their merged branch under the new name. Merging needs no rename, no new PRs and no force-push.",
+  "summaryForSam": "Merge main into the branch in all four repos. Replaying the stages onto current main costs no less.\nanimals: merge is 12 files / 21 hunks; replay is 14 files / 22 hunks across 4 of 15 commits. plants: merge 6 / 9, replay 7 / 11 across 4 of 12. tests: 1 / 1 either way.\nins: merge is 31 files (13 content conflicts, 18 moved files main edited). A replay conflicted on each of its first 3 commits (12 files) and would throw away the EUDPA-333 port already done in merge 1446fcc.\nThe PR's Files changed tab looks the same either way, because GitHub diffs against the merge base: animals is 100 files against main whether merged or replayed, and plants is 54. A replay only tidies the commit list.\nA replay would also need a force-push (forbidden), or a new branch name and new PRs in all four repos. It would rewrite every SHA that stages.json cites and lose the green CI on each stage."
+}

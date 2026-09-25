@@ -36,6 +36,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend`, `trade-imports-plants-backend` | `backend` |
 | `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-plants-frontend` | `frontend` |
 | `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
+| `monitoring.compose.yml` | `prometheus` (:9090), `grafana` (:3030) — local view of Micrometer meters | `monitoring` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
 
 ## Choosing between `-d`, `-e`, and `--profile`
@@ -64,10 +65,15 @@ Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002,
 plants-frontend 3003, defra-id-stub 3007, backend 8085, reference-data 8086,
 stub 8087, gateway 8088, address-book 8089, ins-backend 8090, plants-backend 8091.
 
+EUDPA-390 (address lookup spike, dev/local only): the STS simulator in `trade-imports-stub`
+gets its own dedicated port, 8098 — the AWS SDK's `GetWebIdentityToken` always POSTs to the
+root path of its endpoint override, so it can't share a sub-path on 8087 with the other
+simulators. Published in `stubs.compose.yml` alongside 8087.
+
 ## `--profile` semantics (strict)
 
-Repeatable. Valid: `database`, `infrastructure`, `servicebus`, `stubs`, `backend`, `frontend`,
-`security`. Defaults to all six except `security` (the `servicebus` profile brings up mssql
+Repeatable. Valid: `database`, `infrastructure`, `servicebus`, `stubs`, `backend`, `frontend`, `monitoring`,
+`security`. Defaults to all six except the opt-in `security` and `monitoring` (the `servicebus` profile brings up mssql
 + the ASB emulator that the dynamics-gateway connects to). Strict — if you pass only
 `--profile frontend`, compose won't auto-include `database` even though frontend depends_on
 redis (which in turn depends on `infrastructure` services). Spell out the dependency
@@ -130,6 +136,23 @@ workflow, what is scanned and how the run is gated. It's opt-in unlike
 `run-stack.sh`, and it needs `network_mode: host` because the app frontends'
 OIDC redirect URLs are hardcoded to `localhost` — same constraint as the
 hostname rules below.
+
+## Looking at service meters locally (monitoring profile)
+
+```bash
+./scripts/stack/run-stack.sh -d                    # ins-backend built from source (it carries the Prometheus endpoint)
+./scripts/stack/run-stack.sh --profile monitoring  # additive: brings up prometheus + grafana
+open http://localhost:3030                         # anonymous admin; opens on the address lookup dashboard
+```
+
+Prometheus scrapes `host.docker.internal:8090/prometheus` every 5s, so it works
+whether ins-backend runs in docker or natively. That endpoint exists only under
+ins-backend's `local` profile; every other environment keeps the plain registry.
+
+Deployed environments use CDP's Grafana over **CloudWatch**, fed by
+`EmfMetricsPublisher`. This local pair reads **Prometheus** instead: the meter
+names match dev, but the queries don't, so a dashboard here is for checking
+meters, not for promoting. Config lives in `docker/stack/monitoring/`.
 
 ## Running E2E tests against this stack
 

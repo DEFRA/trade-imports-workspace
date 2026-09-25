@@ -1,0 +1,168 @@
+{
+  "source": "eudpa-311-address-book-paths",
+  "verdicts": [
+    {
+      "id": "311-001",
+      "holds": true,
+      "reason": "Confirmed by reading main's blob at 30dab4b:src/server/common/constants/routes.js — buildAddressBookRoutes factory plus the ten flat re-exports (addressBookListPath...isAddressBookPath) and the five bare-function pushes into context.js's returned object are exactly as quoted."
+    },
+    {
+      "id": "311-002",
+      "holds": true,
+      "reason": "Confirmed by reading origin/feat/NO_JIRA-frontend-alignment:src/server/app/shared/paths.js — addressPath(id) reads `/address-book/${encodeURIComponent(id)}` verbatim, and the file builds the identical route set (dashboardPath, addressBookPath, addressAddPath, addressPath, addressRoutePath, addressEditPath/RoutePath, addressDeletePath/RoutePath, inDashboardSection, inAddressBookSection)."
+    },
+    {
+      "id": "311-003",
+      "holds": true,
+      "reason": "Quote matches workareas/shared/frontend-alignment/plans/s06-address-book-feature.md decision D13 verbatim: 'Every href comes from the view model, built by paths.js ... Nothing outside paths.js names /address-book after this stage.'"
+    },
+    {
+      "id": "311-004",
+      "holds": true,
+      "reason": "git show d664c0e912c3ac223e17b1c9aeb8bc796c6c8f81:src/server/address-book/list/index.js returns main's edited plugin file verbatim, no conflict markers, containing 'path: addressBookListPath(),' exactly as quoted."
+    },
+    {
+      "id": "311-005",
+      "holds": true,
+      "reason": "git show d664c0e912c3ac223e17b1c9aeb8bc796c6c8f81:src/config/nunjucks/context/context.js confirms the conflict region is exactly the import block (lines 3-8-ish through the branch/main marker pair) plus the returned-object tail (addressBookList/Add/View/Edit/Delete lines); activeNavigationItem, the JSDoc and the webpack-manifest logic are untouched by either side."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "ins",
+      "path": "src/server/common/constants/routes.js",
+      "holds": true,
+      "reason": "Pure add on main, no branch consumer; paths.js already covers the identical route set. Safe to delete."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/constants/routes.test.js",
+      "holds": true,
+      "reason": "Test for the deleted routes.js; branch's own paths.test.js already covers the equivalent route builders (confirmed present, including an inAddressBookSection-style false-positive case at '/address-bookkeeping') so no coverage is lost by deleting it."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/nunjucks/context/build-navigation.js",
+      "holds": true,
+      "reason": "Confirmed resurrected verbatim at that path in the trial-merge tree (git ls-tree hit) with no branch importer; activeNavigationItem/layout.njk already does this job on the branch. Safe to delete again."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/nunjucks/context/context.js",
+      "holds": true,
+      "reason": "Verified: branch's activeNavigationItem/dashboardUrl/addressBookUrl plain-string context is the only thing layout.njk reads (confirmed by grep — layout.njk uses href: dashboardUrl / addressBookUrl / activeNavigationItem == ...). No template calls addressBookList()/Add()/etc. as a function anywhere on the branch, so discarding main's import hunk and the five function-reference lines is correct and loses nothing."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/nunjucks/context/context.test.js",
+      "holds": true,
+      "reason": "Branch's file already carries the #activeNavigationItem describe block (confirmed) asserting the same nav-active behaviour main's array assertion would have covered, just against the branch's actual shape. Discarding main's two inline-object assertions is correct."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/list/controller.js",
+      "holds": true,
+      "reason": "Confirmed 30dab4b's only edit here (viewLink via addressBookView()) is already produced by list.controller.js's tableRowsOf()/viewLink using addressPath(). No other main commit touches this path."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/list/index.js",
+      "holds": true,
+      "reason": "Old Hapi plugin, deleted by s06; no other main commit touches this path since merge base."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/list/index.njk",
+      "holds": true,
+      "reason": "Superseded by features/address-book/list/template.njk; not touched by any other main commit."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/add/controller.js",
+      "holds": true,
+      "reason": "Confirmed this path is ALSO edited by 2b4be7c (EUDPA-333, Cache-Control no-store) — correctly cross-referenced by the resolution, which defers that half to eudpa-333-handshake-qa rather than dropping it. No other commit touches this path."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/add/index.js",
+      "holds": true,
+      "reason": "Old Hapi plugin, deleted by s06; no other main commit touches it."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/edit/controller.js",
+      "holds": true,
+      "reason": "Confirmed 30dab4b is the only commit touching this path; edit.controller.js already redirects via addressBookPath()."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/edit/index.js",
+      "holds": true,
+      "reason": "Old Hapi plugin, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/edit/index.njk",
+      "holds": true,
+      "reason": "Superseded by features/address-book/edit/template.njk."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/delete/controller.js",
+      "holds": true,
+      "reason": "Confirmed 30dab4b is the only commit touching this path; delete.controller.js already redirects via addressPath()/addressBookPath()."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/delete/index.js",
+      "holds": true,
+      "reason": "Old Hapi plugin, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/delete/index.njk",
+      "holds": true,
+      "reason": "Superseded by features/address-book/delete/template.njk."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/view/index.js",
+      "holds": true,
+      "reason": "Old Hapi plugin, deleted by s06."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/view/index.njk",
+      "holds": true,
+      "reason": "Superseded by features/address-book/view/template.njk."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/helpers/address-book-helper.js",
+      "holds": true,
+      "reason": "Confirmed 30dab4b is the only commit touching this path; view-model/list.js already folds pagination-helper.js's logic in a deliberately different shape (s06 D7). Safe to delete."
+    },
+    {
+      "repo": "ins",
+      "path": "src/config/config.js (tradeImportsAddressBookApi block only)",
+      "holds": true,
+      "reason": "Confirmed 30dab4b's own diff never touches config.js; the format:'url' hunk in this file belongs entirely to eudpa-333-handshake-qa (2b4be7c) and the address-lookup-spike conflict belongs to EUDPA-390 (4a48670). No eudpa-311 action needed, as stated."
+    },
+    {
+      "repo": "ins",
+      "path": "insConflictAttribution.package-lock.json",
+      "holds": false,
+      "reason": "`git log --oneline <mergeBase>..origin/main -- package.json package-lock.json` returns only 173395d (the Playwright bump). 59fb6f2 (EUDPA-618) touches only sonar-project.properties and src/auth/get-safe-redirect.js — verified via `git show --name-status 59fb6f2`. The 392afac 'unlicensed Vortex Stop hook' commit (also loosely 'sonar'-flavoured but not ticketed EUDPA-618) touches only .claude/settings.json and .claude/sonar-analyze.sh. No main commit touching EUDPA-618 or the sonar gate touches package.json or package-lock.json at any point since the merge base.",
+      "correction": "Attribute src/server/common/constants/routes.js/package-lock.json solely to 'tooling (chore/NO-JIRA-playwright-upgrade 173395d)' — drop the '+ eudpa-618 sonar gate' clause. (package.json's attribution, by contrast, is correct as written — only 173395d touches it.)"
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "`git show --name-status -M 30dab4b` lists exactly 19 files; every one is present in the survey's files array (plus config.js added for completeness with a correct 'not ours' note). Every branchEquivalent path/id in main's routes.js has a same-URL branch equivalent in paths.js, confirmed function-by-function. No main commit other than 30dab4b touches any of the 14 resurrected src/server/address-book/* files or build-navigation.js, so deleting them loses no EUDPA-333/EUDPA-390/EUDPA-619 behaviour — those clusters' edits to the shared add/controller.js and add/controller.test.js paths are correctly carved out and deferred to eudpa-333-handshake-qa rather than silently dropped. Port verdict holds."
+  },
+  "missed": []
+}

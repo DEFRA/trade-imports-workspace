@@ -34,7 +34,7 @@ The system MUST treat the journey's flow sections and the Overview page's task r
 
 ### Requirement: Continuing from any page moves to the next still in scope, and finishing a section returns to Overview
 **ID**: REQ-PLANTS-FLOW-003
-The system MUST take the user, on continuing from a page, to the next page in that section whose conditions are met, skipping any that are not, and MUST return them to Overview once no page remains in the section.
+The system MUST take the user, on continuing from a page, to the next page in that section whose conditions are met, skipping any that are not. Once no page remains in the section, the system MUST return them to Overview, unless a newly created notification is still in its opening sequence — that sequence continues to the next in-scope step (REQ-PLANTS-FLOW-007).
 
 #### Scenario: Continuing skips a page that is not in scope
 **ID**: SCN-PLANTS-FLOW-003-A
@@ -44,7 +44,7 @@ The system MUST take the user, on continuing from a page, to the next page in th
 
 #### Scenario: Finishing the last page of a section returns to Overview
 **ID**: SCN-PLANTS-FLOW-003-B
-- **GIVEN** the user is on the last page of a section that is still in scope
+- **GIVEN** the user is on the last page of a section that is still in scope, and the opening sequence has finished
 - **WHEN** they save and continue
 - **THEN** they return to Overview rather than continuing into another section
 

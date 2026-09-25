@@ -1,0 +1,469 @@
+{
+  "source": "eudpa-619-multi-set",
+  "verdicts": [
+    {
+      "id": "619-001",
+      "holds": true,
+      "reason": "Verbatim in animals 9b45dc9e's squash message: 'routes.js becomes a one-line barrel over routes-live-animals.js, and the gateway registers under { routes: { prefix: '/live-animals' } }. / is a server-wide 302 to the default set'. Merged tree affadd1d carries main's routes-live-animals.js and the barrel side of the routes.js conflict."
+    },
+    {
+      "id": "619-002",
+      "holds": true,
+      "reason": "Branch blob of plants src/server/app/routes.js is the whole inline gateway (configureObligationSet(highRiskPlantsObligationSet) etc., no set id, no set-context, no prefix); the only branch change from the merge base is the liveAnimals/highRiskPlants -> serviceRoutes rename (2 lines). Same in animals."
+    },
+    {
+      "id": "619-003",
+      "holds": true,
+      "reason": "Quote is verbatim in plants and animals src/server/router.test.js (branch-added, merges clean). It does settle that the '/' redirect must sit inside the auth.enabled gate. Caveat: after 619 the test injects only '/', so it no longer proves the dashboard (now at DEFAULT_SET_BASE) is unregistered - see cleanMergeFindings."
+    },
+    {
+      "id": "619-004",
+      "holds": true,
+      "reason": "Confirmed from the merged tree d664c0e9: package.json has no \"imports\" field (its only conflict is in devDependencies), and neither vitest.config.js nor jsconfig declares a '#' alias (webpack.config.js alias is client-side only). Confidence can be raised to verbatim."
+    },
+    {
+      "id": "619-005",
+      "holds": false,
+      "reason": "The RETURN_URL half is right (line 49 of the merged add.controller.test.js still lacks /live-animals). The rest is false: git did NOT treat main's edit as an unrelated deletion with no conflict. measure.json lists src/server/address-book/add/controller.test.js as a conflict (modify/delete) and the trial-merge tree d664c0e9 contains that old path, resurrected with main's content and '#/...' imports that do not resolve on the branch. The survey's files[] entry ('plain D with no conflict marker') is wrong, and no resolution deletes the resurrected file."
+    },
+    {
+      "id": "619-006",
+      "holds": true,
+      "reason": "Merged tree lines 146, 173 and 257 of src/server/app/features/dashboard/controller.test.js assert href=\"http://localhost:3000/notifications/...\" and href=\"http://localhost:3000\". Same caveat as 619-005 applies to the old path: src/server/routes/home/controller.test.js is resurrected by a modify/delete conflict, which the claim does not mention."
+    },
+    {
+      "id": "619-007",
+      "holds": false,
+      "reason": "Misattributed. ins fd1d21f touches only the dashboard link builders, the journey registry, set-base-url, journey-set-bases and tests. It says nothing about the sign-in error page, and ins's auth/controller.js is not in the commit. The quoted text is the JSDoc on unauthorisedChrome in ANIMALS main src/server/auth/controller.js (9b45dc9e, 'The sign-in error page now takes kit.setlessBase()...'). The substance is correct but the ref should be animals:9b45dc9e src/server/auth/controller.js."
+    },
+    {
+      "id": "619-008",
+      "holds": true,
+      "reason": "Base->main and base->branch diffs of calendar.js are identical except the one comment line (same DATE_TEXT_SHAPE guard, same calendar.test.js cases '27/3/26' and '5/8/26'). 'kind: config' is a mislabel (it is code), but the statement holds."
+    }
+  ],
+  "resolutionVerdicts": [
+    {
+      "repo": "animals",
+      "path": "src/config/nunjucks/context/context.js",
+      "holds": true,
+      "reason": "The conflict is exactly branch {activeNavigationItem(request.path), addressBookUrl} against main {homeUrl, set-scoped activeNavigationItem}. The imports (setIdForPath/withSetContext/hasSetContext), the hasSetContext() guard, insAddressBookUrl and const setId are already merged clean outside the markers. Combining the two gives a tree that keeps both behaviours. The merged context.test.js (clean) expects exactly {homeUrl: SET_BASE, activeNavigationItem: 'dashboard', addressBookUrl: ...}.",
+      "correction": "None needed for behaviour. Housekeeping for the s17 no-/signout gate: main's activeNavigationItem comment names '`/signout`'; reword it to '/auth/*'."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/lib/validate/calendar.js",
+      "holds": false,
+      "reason": "'Either side's wording' cannot be executed blindly, and only one of the two comments describes the guarded function correctly. date-fns 4.4.0's YearParser reads 'yyyy' with parseNDigits(4) and isTwoDigitYear only for token 'yy', so parse('27/3/26') sets year 26 AD. parseDateText then re-anchors with Date.UTC(parsed.getFullYear(), ...), and Date.UTC maps years 0-99 to 1900+, so the value that would reach the max-bound comparison is 1926-03-27. main's author states the same in 9b45dc9e: '`27/3/26` parsed as 27 March 1926 rather than being refused'.",
+      "correction": "Take main's line verbatim: '// `27/3/26` parses as a year in the 1900s and slips under a `max` bound.' Everything else in the file is identical on both sides. Plants carries the branch wording in the same code (not a conflict there); flag it for the next plants/animals byte-equality pass rather than editing it in this merge."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/routes.js",
+      "holds": false,
+      "reason": "It works (no other file imports liveAnimals; no-set-singletons.test.js and set-completeness.test.js key on the file name and 'assertSetConfigured(server, SET_ID)', not the export name). But it edits a 619-owned file against the ruling that the alignment conforms to 619. 619's model names each gateway after its set: add-a-set.md steps 4-5 say 'Create routes-<set-id>.js ... re-export it from routes.js' and 'await server.register(yourSet, ...)'. A set-agnostic 'serviceRoutes' inside routes-live-animals.js cannot scale to a second gateway. Ruling D3's only need is that router.js imports { serviceRoutes } from './app/routes.js' (s17 D3: 'router.js byte-equality needs one shared export name'). That can be met in the barrel without touching main's gateway.",
+      "correction": "Leave src/server/app/routes-live-animals.js exactly as main has it ('export const liveAnimals = {'). Resolve routes.js to the one-line barrel with an alias: `export { liveAnimals as serviceRoutes } from './routes-live-animals.js'`. router.js keeps `import { serviceRoutes } from './app/routes.js'`."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js",
+      "holds": true,
+      "reason": "Sides verified from the markers. HEAD (origin/feat/NO_JIRA-frontend-alignment) = registerTestSessionAuth(server) + server.route(animalIdentification.routes). origin/main = the SET_BASE-prefixed wrapped register. The resolution assigns them correctly: the helper is the branch's, the scaffolding is main's. Both imports (SET_BASE from set.js; registerTestSessionAuth from engine/test-support.js) are already merged clean, and the merged test-support.js exports registerTestSessionAuth. The strategy must exist before the route is added (Hapi asserts it in auth._setupRoute), and the resolution puts it first.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js",
+      "holds": true,
+      "reason": "Same marker shape at lines 313-326 (HEAD: registerTestSessionAuth + server.route(consignmentDetails.routes); main: wrapped register under SET_BASE). Sides are attributed correctly and both imports are present in the merged file.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js",
+      "holds": true,
+      "reason": "main's serverWithDocumentRoutes helper merged clean (lines 48-66). The four conflict blocks (461, 764, 784, 863) are the branch's inline Hapi.server()/registerJourneyCookie/registerTestSessionAuth against main's helper calls. registerTestSessionAuth right after Hapi.server() inside the helper registers the strategy before the prefixed route register, so every call site gets it. The sides are attributed correctly.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/shared/layout.test.js",
+      "holds": true,
+      "reason": "Merged layout.njk (clean) links href: homeUrl, href: addressBookUrl and signOutUrl '/auth/sign-out'. The combined stub context and the href list [SET_BASE, ADDRESS_BOOK_URL, '#', '/auth/sign-out'] match what the template renders.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/auth/controller.js",
+      "holds": true,
+      "reason": "Confirmed in affadd1d. The import line IS inside a marked conflict here (branch `{ base, sharedCopy }` + UNAUTHORISED_VIEW against main `{ setlessBase }` + unauthorisedChrome). It is not the silent drop plants has. But the two branch-only call sites (organisationId guard, getPermissions catch) sit outside the markers and call base(). Taking main's import side therefore gives 'ReferenceError: base is not defined'. The resolution fixes this: import { setlessBase, sharedCopy }, drop base (otherwise unused, which neostandard's no-unused-vars would fail), unauthorisedChrome = () => setlessBase(sharedCopy.unauthorised.title), and all four sites become h.view(UNAUTHORISED_VIEW, unauthorisedChrome()). The merged kit.js exports both setlessBase and sharedCopy. The merged auth/controller.test.js asserts sharedEn.unauthorised.title in the page title, which this satisfies.",
+      "correction": ""
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/common/helpers/errors.js",
+      "holds": true,
+      "reason": "base is still used inside errorChrome, and setlessBase, sharedCopy and setIdForPath/withSetContext are all used. catchAll's ...errorChrome(request, errorMessage) spread and errorMessageFor are already merged clean outside the markers.",
+      "correction": "Housekeeping only: main's errorChrome JSDoc names '`/signout`'; drop it from the list (s17 verification gate 4)."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/router.js",
+      "holds": true,
+      "reason": "The tree keeps 619's prefixed mount, DEFAULT_SET_BASE export (imported by co-residency.test.js) and '/' 302, and keeps the branch's auth.enabled gate and /signout removal. Putting the '/' route inside the gate is what keeps router.test.js green, and it matches main's own comment ('Takes the server's default auth strategy'), which only exists when auth is enabled. It works with either export name, provided the routes.js alias correction is applied.",
+      "correction": "Drop main's whole /signout comment block along with the signout registration. See cleanMergeFindings for router.test.js."
+    },
+    {
+      "repo": "plants",
+      "path": "src/config/nunjucks/context/context.js",
+      "holds": true,
+      "reason": "Same conflict shape as animals, verified in 171c002c. setIdForPath/withSetContext/hasSetContext imports and insAddressBookUrl are already merged clean. 'Byte-equal' is not literally true: main's two repos differ in one comment ('hapi-vision marshals' vs 'the view is marshalled'), which is harmless.",
+      "correction": "Same /signout comment sweep as animals."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/routes.js",
+      "holds": false,
+      "reason": "Same objection as animals: it renames the export inside main's 619-owned routes-high-risk-plants.js to a set-agnostic name. The plugin's registered name stays 'high-risk-plants' either way (routes.test.js asserts server.registrations has 'high-risk-plants'), so the alias route loses nothing.",
+      "correction": "Keep routes-high-risk-plants.js verbatim from main ('export const highRiskPlants'). routes.js becomes `export { highRiskPlants as serviceRoutes } from './routes-high-risk-plants.js'`."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/shared/layout.test.js",
+      "holds": true,
+      "reason": "Identical conflict shape (lines 22-26 and 55-61) and identical merged layout.njk hrefs.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/auth/controller.js",
+      "holds": true,
+      "reason": "Confirmed silent break in 171c002c: git auto-merged the import to `import { serverWideBase, sharedCopy }` with no marker, while lines ~46 and ~84 (the organisationId guard and getPermissions catch) still call base(sharedCopy.unauthorised.title) outside any conflict. The merged kit.js exports serverWideBase(title) and sharedCopy. Using serverWideBase(sharedCopy.unauthorised.title) with UNAUTHORISED_VIEW at all four sites is correct and needs no wrapper.",
+      "correction": ""
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/common/helpers/errors.js",
+      "holds": false,
+      "reason": "Executed as written, `import { base, chromeFor, sharedCopy }` leaves base unused. The merged body already calls ...chromeFor(errorMessage, request.path) and errorMessageFor reads sharedCopy, so there is no base() call left. plants' eslint.config.js is neostandard, whose no-unused-vars is an error, so `npm run lint` fails. The instruction to replace the bare base(errorMessage) spread is also stale: the merged tree already has chromeFor there.",
+      "correction": "Resolve the import conflict to `import { chromeFor, sharedCopy } from '../../app/shared/kit.js'` and change nothing else."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/router.js",
+      "holds": true,
+      "reason": "Same as animals: the gate placement is settled by plants' router.test.js. plants' routes.test.js (merged clean) asserts the dashboard at SET_BASE and the '/' redirect, both with session credentials under auth enabled, and passes with this layout.",
+      "correction": "Drop main's /signout comment block. With the routes.js correction, register `serviceRoutes` (the alias) under HIGH_RISK_PLANTS_BASE."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-book/journey-registry.js",
+      "holds": true,
+      "reason": "The merged body below the conflict is main's verbatim: baseUrlConfigKey plus setBase in the registry, and buildSetBaseUrl in buildReturnUrl. From src/server/app/features/address-book/, '../../../common/constants/journey-set-bases.js' and '../../../common/helpers/set-base-url.js' resolve to src/server/common/*, and both files exist in d664c0e9. .dependency-cruiser.cjs has no rule against app -> src/server/common, and feature files on the branch already import from there (logger, status-codes).",
+      "correction": "Say it explicitly: drop the branch's `import { config } from '../../../../config/config.js'`, which is unused once the conflict takes main's body."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/dashboard/view-model/list.js",
+      "holds": true,
+      "reason": "In the merged body, dashboardPath is still used by buildPaginationLinks and config is not used anywhere. buildLiveAnimalsSetUrl, buildNotificationLink and buildStartNewNotificationLink are main's. '../../../../common/...' from view-model/ resolves to src/server/common. main's pagination-helper.js does not exist in the merged tree, so the resolution is right not to import it (the pre-rewrite version of this survey got that wrong).",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/dashboard/view-model/list.test.js",
+      "holds": false,
+      "reason": "Hunk (1) is wrong and not executable blindly ('verify at apply time'). The branch's static config mock is already gone from the merged file: main's hoisted configState mock merged clean above the conflict. Main's two new 'does not double the slash' tests set configState.animalsBaseUrl = 'http://localhost:3000/', and the afterEach is what resets it. Line 1 of the merged file imports afterEach from vitest (clean from main), so dropping the afterEach block also leaves an unused import that fails lint. Hunks (2) and (3) are right.",
+      "correction": "Hunk 1: keep BOTH sides. `import { copy } from '../copy/copy.en.js'` and `const REFERENCE_NUMBER = 'GBN-AG-26-000001'` from the branch, then main's `afterEach(() => { configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl })`. Hunks 2-3: `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view` in the SUBMITTED link test and in the mapNotificationRows href."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/helpers/serve-static-files.test.js",
+      "holds": true,
+      "reason": "Main's side re-imports createServer/statusCodes (duplicates of the clean relative imports on lines 1-2) and '#/server/common/test-helpers/mock-auth.js', which is unresolvable and absent. The branch side (`../test-helpers/mock-oidc-config.js`) is correct, and the body is identical on both sides.",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/address-book/add/add.controller.test.js",
+      "holds": true,
+      "reason": "Line 49 of the merged file has the unprefixed RETURN_URL, and lines 324 and 361 derive from it. With journey-registry.js ported, buildReturnUrl emits ANIMALS_BASE_URL + '/live-animals/notifications/...'.",
+      "correction": "Also delete the resurrected old-path copy. See the added resolutionVerdict for src/server/address-book/add/controller.test.js."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/app/features/dashboard/controller.test.js",
+      "holds": true,
+      "reason": "Lines 146, 173 and 257 confirmed. Line 257 must change because toContain('href=\"http://localhost:3000\"') does not match 'href=\"http://localhost:3000/live-animals\"'.",
+      "correction": "Also delete the resurrected src/server/routes/home/controller.test.js (see the added resolutionVerdict)."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/helpers/set-base-url.js",
+      "holds": true,
+      "reason": "Line 1 of the merged blob is `import { config } from '#/config/config.js'`, which is unresolvable on the branch. '../../../config/config.js' from src/server/common/helpers/ is src/config/config.js, the same depth content-security-policy.js uses.",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/helpers/set-base-url.test.js",
+      "holds": true,
+      "reason": "Line 3 of the merged blob is the only '#/' import. The same relative fix applies.",
+      "correction": ""
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/features/auth.spec.ts",
+      "holds": true,
+      "reason": "The merged page-objects/auth/sign-out-page.ts has `readonly path = '/auth/sign-out'`, and page-objects/base/sets.ts exists. The SET_BASES import, the new root-redirect test and the anchored journey regex are all merged clean.",
+      "correction": ""
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/add/controller.test.js",
+      "holds": false,
+      "reason": "MISSING RESOLUTION. This is a modify/delete conflict in measure.json and is present in trial-merge tree d664c0e9, resurrected with main's fd1d21f content. It imports '#/server/server.js' and '#/server/common/test-helpers/mock-auth.js' (both unresolvable), so it would break the unit suite. The pre-rewrite survey deleted it; the rewrite dropped the resolution and misrecorded the file as a 'plain D'.",
+      "correction": "`git rm src/server/address-book/add/controller.test.js`. Its behaviour moves into src/server/app/features/address-book/add/add.controller.test.js per that file's resolution."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/routes/home/controller.test.js",
+      "holds": false,
+      "reason": "MISSING RESOLUTION. Same case: a modify/delete conflict, resurrected in d664c0e9 with '#/'-aliased imports.",
+      "correction": "`git rm src/server/routes/home/controller.test.js`. Its three prefixed assertions move into src/server/app/features/dashboard/controller.test.js."
+    }
+  ],
+  "cleanMergeFindings": [
+    {
+      "repo": "animals",
+      "path": "src/server/app/co-residency.test.js",
+      "ok": false,
+      "problem": "Main-added, merges clean, but fails on the merged tree in two ways. (1) beforeAll builds a bare Hapi.server() with no auth strategy and registers the production router. The branch's kit.js now declares routeOptions = { auth: 'session' } on every page route (branch routes.test.js pins it), and Hapi asserts 'Unknown authentication strategy session in <path>' in auth._setupRoute when the route is added. So server.register([nunjucksConfig, router]) throws and every test in the file fails. On main, routes carried no auth option, so this was fine. (2) The suite pins /signout: the root-route list includes '/signout', and 'Should serve /signout outside every set prefix' fails because ruling 2 deleted /signout.",
+      "fix": "In beforeAll, call registerTestSessionAuth(server) (from './engine/test-support.js') BEFORE `await server.register([nunjucksConfig, router])`. Remove '/signout' from the expected root-route list. Replace the /signout test with one in the 'real composition root' block that asserts realServer's table contains '/auth/sign-out' and no `${LIVE_ANIMALS_BASE}/auth/sign-out`. Reword the file header's /signout sentence. The entry-guard tests then run authenticated, which is what they intend (404 for an unknown journey, 302 to origin for an unopened draft)."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/co-residency.test.js",
+      "ok": false,
+      "problem": "Same two failures as animals (bare Hapi server against routeOptions { auth: 'session' }; '/signout' in the root list and in 'Should serve /signout outside every set prefix'). Plants also has NO registerTestSessionAuth helper: grep over the merged tree finds none, so the animals fix cannot simply be copied.",
+      "fix": "Before registering the router, add a test 'session' strategy: `server.auth.scheme('test-session', () => ({ authenticate: (_r, h) => h.authenticated({ credentials: authenticatedCredentials }) })); server.auth.strategy('session', 'test-session')`, with authenticatedCredentials from './engine/test-support.js'. Better, port animals' registerTestSessionAuth into plants' engine/test-support.js and call that. The root list becomes ['/', SIGN_IN_OIDC_PATH, '/favicon.ico', '/health', '/public/{param*}']. Replace the /signout test as for animals."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/router.test.js",
+      "ok": false,
+      "problem": "Branch-added, merges clean, and passes once the '/' route is inside the gate. But its test 'the dashboard is not registered when auth is disabled' injects only '/'. After 619 the dashboard lives at DEFAULT_SET_BASE, so the test proves only that the redirect is gated, not the set.",
+      "fix": "Keep the '/' assertion and add `await server.inject({ method: 'GET', url: DEFAULT_SET_BASE })` expecting statusCodes.notFound, importing DEFAULT_SET_BASE from './router.js'."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/router.test.js",
+      "ok": false,
+      "problem": "Same as animals: it only checks '/'.",
+      "fix": "Same: also assert DEFAULT_SET_BASE is 404 with auth disabled."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/shared/kit.js; src/server/app/shared/set-context.js; src/server/app/shared/set-context.test.js; src/config/nunjucks/context/context.test.js; src/server/app/docs/add-a-set.md",
+      "ok": false,
+      "problem": "619 text and tests name /signout as a live server-wide route: the setlessBase JSDoc, set-context.js lines 23 and 45, set-context.test.js:98 `setIdForPath('/signout')`, context.test.js:262 `activeNavigationItem('/signout')`, and add-a-set.md lines 95-98 ('`/signout` is the live trap'). s17 verification gate 4 requires `grep -rn \"/signout\" src` to match only get-sign-out-url(.test).js. The tests still pass but document a route that no longer exists.",
+      "fix": "Reword each to /auth/sign-out or drop the item. The add-a-set.md bullet becomes '`/health`, the `/auth/*` routes (including `/auth/sign-out`) and the static-asset route are server-wide', keeping the 'registers happily under a prefix' warning against /auth/sign-out. Delete the two '/signout' test lines: /auth/sign-out is already asserted next to both."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/shared/set-context.js; src/server/app/shared/set-context.test.js; src/server/app/docs/add-a-set.md",
+      "ok": false,
+      "problem": "Same /signout residue in plants (set-context.js lines 27 and 49, set-context.test.js:126, add-a-set.md lines 95-98).",
+      "fix": "Same sweep as animals."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/address-book/add/controller.test.js; src/server/routes/home/controller.test.js",
+      "ok": false,
+      "problem": "The survey's files[] records both as 'trialMerge: broken, plain D with no conflict marker'. In fact both are modify/delete conflicts in measure.json and both are present in d664c0e9. See the added resolutionVerdicts.",
+      "fix": "git rm both."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/routes-live-animals.js (+ services/set-context/index.js, set-completeness.js, shared/set-context.js, sets/live-animals/set.js, test/fixtures/second-set.js, test/fixtures/index.js)",
+      "ok": true,
+      "problem": "",
+      "fix": "Every relative import of main's gateway resolves in `git ls-tree -r affadd1d`: flow/section-status.js, bridge/readiness-config.js, set-completeness.js, shared/set-context.js, sets/live-animals/set.js, obligation-purity.js, addresses/assert-party-bindings.js and addresses/resolve-parties.js. The only directories the animals branch restructured are the .njk -> template.njk renames, and no main-added file references those templates."
+    },
+    {
+      "repo": "animals",
+      "path": "features/*/controller.test.js spot-check: dashboard, origin, contact, addresses/address-return, transport/port-of-entry, commodities/search, change-context.test.js, service-navigation.fit.spec.js",
+      "ok": true,
+      "problem": "",
+      "fix": "`git diff --stat origin/main affadd1d -- <these 8>` is empty, so the merged blobs are main's prefixed versions byte for byte. The whole-tree diff main..merged under src/server/app shows the only feature-test differences are the three conflicted controller tests plus the branch's own features/*/fit/*.fit.spec.js. Those build URLs from journeyUrl(page, ...) with no root-relative literals, as checked by grep."
+    },
+    {
+      "repo": "plants",
+      "path": "features/*/controller.test.js spot-check: arrival-details, arrival-status, cancel-amend, check-answers, commodities/details, commodity-type, dashboard, declaration",
+      "ok": true,
+      "problem": "",
+      "fix": "`git diff --stat origin/main 171c002c -- <these 8>` is empty. The plants branch moved no feature directories, and the main..merged diff under src/ touches no feature test."
+    },
+    {
+      "repo": "plants",
+      "path": "src/server/app/routes.test.js",
+      "ok": true,
+      "problem": "",
+      "fix": "Merges clean with the branch's 'name the session strategy' test and main's SET_BASE dashboard and '/' redirect tests (both injected with session credentials under auth enabled). Consistent with the gated router resolution."
+    },
+    {
+      "repo": "animals",
+      "path": "src/server/app/engine/test-support.js",
+      "ok": true,
+      "problem": "",
+      "fix": "Both sides edited it; the merged file exports registerTestSessionAuth (branch) alongside main's changes, so the three conflicted controller tests' imports resolve."
+    },
+    {
+      "repo": "animals",
+      "path": "src/config/nunjucks/context/context.test.js",
+      "ok": true,
+      "problem": "",
+      "fix": "Clean merge is coherent: registerSetMount(SET_ID, SET_BASE), expected {homeUrl: SET_BASE, activeNavigationItem: 'dashboard', addressBookUrl}, and '/auth/sign-out' -> homeUrl '/'. The only issue is the '/signout' literal on line 262 (see the /signout sweep)."
+    },
+    {
+      "repo": "ins",
+      "path": "src/server/common/constants/journey-set-bases.js; journey-set-bases.test.js; src/server/app/features/address-book/journey-registry.test.js; src/server/app/features/dashboard/dashboard.fit.spec.js",
+      "ok": true,
+      "problem": "",
+      "fix": "No '#/' imports (only relative), and all /live-animals assertions are intact in the merged tree."
+    },
+    {
+      "repo": "tests",
+      "path": "tests/e2e/features/address-book-navigation.spec.ts (branch-added); tests/security/admin/admin-auth.spec.ts, tests/security/frontend-auth.spec.ts, tests/security/ins/address-book-auth.spec.ts (main-added)",
+      "ok": true,
+      "problem": "",
+      "fix": "The branch spec checks only origins and an `a[href^=animalsBaseUrl]` prefix, and the ins start-new link now points to animalsBaseUrl + '/live-animals', which still matches. The main specs use linkSignOut getters. The merged BasePage has 'Log out' and the merged AdminDashboardPage overrides it with 'Sign out'."
+    }
+  ],
+  "filesComplete": {
+    "holds": true,
+    "missing": []
+  },
+  "verdictHolds": {
+    "holds": true,
+    "reason": "'port' is right: every 619 change must come in, and the branch has no equivalent. But the rewritten survey overstates that 'no open judgement call remains'. Executing its 25 resolutions blindly still leaves a red tree. co-residency.test.js fails in beforeAll in BOTH journeys: the branch's explicit auth: 'session' route option meets a bare Hapi server with no session strategy, and the suite also pins the deleted /signout. The survey never looked at this file (marked clean). Other defects: two ins modify/delete resurrections with no resolution; plants errors.js leaves an unused base import that fails lint; ins list.test.js hunk 1 would drop a needed afterEach; calendar.js is left as 'either'. Also, the serviceRoutes rename is done inside main's per-set gateway instead of as a barrel alias. With the corrections above, the port is mechanical."
+  },
+  "calendarQuestion": {
+    "answer": "main's wording ('parses as a year in the 1900s') is the correct description of what the guard prevents. The branch's 'the year 26' describes only date-fns' intermediate result.",
+    "evidence": "date-fns 4.4.0 (the pinned version) parse/_lib/parsers/YearParser.js: token 'yyyy' falls to `parseNDigits(token.length, dateString)`, which matches 1-4 digits, with `isTwoDigitYear: token === \"yy\"` (false). set() then calls `date.setFullYear(26, 0, 1)`, which gives year 26 AD with no century mapping. But calendar.js parseDateText then returns `new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()))`, and ECMAScript's Date.UTC maps years 0-99 to 1900+year. So without the guard, parseDateText('27/3/26') returns 1926-03-27T00:00Z, and that value is what the max bound is compared against. The 9b45dc9e squash message states the same: '`27/3/26` parsed as 27 March 1926 rather than being refused'. Plants' identical code carries the branch wording and is equally imprecise."
+  },
+  "missed": [
+    {
+      "id": "619-m1",
+      "statement": "On the branch every journey page route declares `auth: 'session'` via kit.routeOptions in both animals and plants. On main they declared no auth. Hapi asserts the strategy exists when a route is added, so any bare Hapi.server() that registers set routes without first registering a 'session' strategy throws.",
+      "kind": "behaviour",
+      "ref": "animals:src/server/app/shared/kit.js @affadd1d; plants:src/server/app/shared/kit.js @171c002c; @hapi/hapi lib/auth.js _setupRoute",
+      "quote": "export const routeOptions = { auth: 'session' }  |  Hoek.assert(strategy, 'Unknown authentication strategy', name, 'in', path);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m2",
+      "statement": "Main's co-residency.test.js (both journeys) boots the production router on a bare Hapi.server() with no auth strategy and pins /signout as a server-wide route. It fails on the merged tree and the survey records it as clean.",
+      "kind": "conflict",
+      "ref": "animals:src/server/app/co-residency.test.js @affadd1d lines 153-172, 492-500; plants: same file lines 131-190, 517-525",
+      "quote": "server = Hapi.server({ ... })\n  await server.register([nunjucksConfig, router]) ... it('Should serve /signout outside every set prefix', () => { ... expect(paths).toContain('/signout')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m3",
+      "statement": "The ins trial merge resurrects main's edited old-path tests src/server/address-book/add/controller.test.js and src/server/routes/home/controller.test.js as modify/delete conflicts. Both import unresolvable '#/' paths.",
+      "kind": "conflict",
+      "ref": "measure.json repos.ins.conflicts; `git ls-tree -r --name-only d664c0e9 -- src/server/address-book src/server/routes`",
+      "quote": "src/server/address-book/add/controller.test.js ... src/server/routes/home/controller.test.js",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m4",
+      "statement": "Without the four-digit guard, parseDateText('27/3/26') returns 1926-03-27, not year 26: date-fns yields year 26 and Date.UTC maps 0-99 to 1900+.",
+      "kind": "behaviour",
+      "ref": "animals:9b45dc9e message; animals src/server/app/lib/validate/calendar.js; date-fns 4.4.0 YearParser.js",
+      "quote": "parseDateText read a two-digit year. date-fns reads `yyyy` as one to four digits, so `27/3/26` parsed as 27 March 1926 rather than being refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m5",
+      "statement": "In animals the auth/controller.js import line is inside a marked conflict (base+sharedCopy against setlessBase). Only plants has the fully silent import auto-merge. In both repos the two branch-only base() call sites sit outside the markers.",
+      "kind": "conflict",
+      "ref": "animals:src/server/auth/controller.js @affadd1d lines 6-20; plants:src/server/auth/controller.js @171c002c line 6",
+      "quote": "<<<<<<< origin/feat/NO_JIRA-frontend-alignment\nimport { base, sharedCopy } from '../app/shared/kit.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m6",
+      "statement": "animals has a registerTestSessionAuth helper in engine/test-support.js. plants has none, and its only session strategies are the real cookie strategy in plugins/auth.js and a local one in stub-sign-in.test.js.",
+      "kind": "structure",
+      "ref": "animals:src/server/app/engine/test-support.js @affadd1d; `git grep registerTestSessionAuth 171c002c` (plants: no match)",
+      "quote": "export const registerTestSessionAuth = (server) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m7",
+      "statement": "The frontends lint with neostandard, whose no-unused-vars is an error, so any resolution that keeps an unused import (base in plants errors.js, afterEach in ins list.test.js) fails `npm run lint`.",
+      "kind": "config",
+      "ref": "plants:eslint.config.js @171c002c",
+      "quote": "...neostandard({ env: ['node', 'vitest'], ...",
+      "confidence": "inferred"
+    },
+    {
+      "id": "619-m8",
+      "statement": "Main's ins list.test.js mutates the mocked animals base URL in two tests and resets it in afterEach. The merged file already carries main's configState mock and imports afterEach.",
+      "kind": "structure",
+      "ref": "ins:src/server/app/features/dashboard/view-model/list.test.js @d664c0e9",
+      "quote": "import { afterEach, describe, expect, test, vi } from 'vitest' ... configState.animalsBaseUrl = 'http://localhost:3000/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m9",
+      "statement": "The serviceRoutes name comes from s17 D3, whose sole purpose was byte-equal router.js across ins/plants/animals. After 619 the journeys' router.js imports a per-set SET_BASE and mounts under a prefix, so that byte-equality is gone. 619's own recipe names each gateway after its set and registers it by that name.",
+      "kind": "structure",
+      "ref": "plans/s17-auth-convergence.md D3; animals:src/server/app/docs/add-a-set.md steps 4-5",
+      "quote": "`router.js` byte-equality needs one shared export name for the service's routes plugin.  |  await server.register(yourSet, { routes: { prefix: YOUR_SET_BASE } })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m10",
+      "statement": "s17's verification gate requires no '/signout' anywhere in a frontend's src except the OIDC get-sign-out-url module. 619 brings /signout into comments, docs and two tests in both journeys.",
+      "kind": "config",
+      "ref": "plans/s17-auth-convergence.md verification item 4; `git grep /signout affadd1d -- src` (13 non-OIDC hits)",
+      "quote": "**No `/signout` anywhere** — `grep -rn \"signout\" <repo>/src` in each frontend must match only `get-sign-out-url.js`, ...",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m11",
+      "statement": "The branch's router.test.js asserts only GET / -> 404 with auth disabled. After 619 that no longer covers the set's dashboard, which moves to DEFAULT_SET_BASE.",
+      "kind": "behaviour",
+      "ref": "animals and plants src/server/router.test.js (branch-added)",
+      "quote": "test('the dashboard is not registered when auth is disabled', async () => {\n    const { statusCode } = await server.inject({ method: 'GET', url: '/' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m12",
+      "statement": "The merged kit.js exports the set-free chrome under different names per journey: animals setlessBase(title), plants serverWideBase(title) plus chromeFor(title, requestPath). Both also export sharedCopy.",
+      "kind": "structure",
+      "ref": "animals:src/server/app/shared/kit.js @affadd1d; plants:src/server/app/shared/kit.js @171c002c",
+      "quote": "export const setlessBase = (title) => ({  |  export const serverWideBase = (title) => ({  |  export const chromeFor = (title, requestPath) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "619-m13",
+      "statement": "The ins branch declares no '#/' alias anywhere a test or runtime resolver would read it: no package.json \"imports\" and no vitest alias.",
+      "kind": "config",
+      "ref": "ins: package.json, vitest.config.js, jsconfig.json @d664c0e9",
+      "quote": "(`git grep -n -E \"alias|#/\" d664c0e9 -- vitest.config.js webpack.config.js jsconfig.json` -> only webpack.config.js:53 `alias: {`)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "619-m14",
+      "statement": "main.. merged diffs show the only animals feature tests differing from main are the three conflicted controller tests and the branch's own features/*/fit specs. Every other main 619 URL-prefix edit to a feature test lands byte-identical. The plants merged tree differs from main in no feature test.",
+      "kind": "structure",
+      "ref": "`git diff --stat origin/main affadd1d -- src/server/app`; `git diff --stat origin/main 171c002c -- src`",
+      "quote": "",
+      "confidence": "inferred"
+    }
+  ]
+}

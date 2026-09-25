@@ -47,3 +47,19 @@ The system MUST show Overview's "Roles and addresses" task as Completed once eve
 - **GIVEN** the user has chosen an address for every party role on the consignment addresses page
 - **WHEN** they return to Overview
 - **THEN** the "Roles and addresses" task shows Completed
+
+### Requirement: The page also lists a CPH number row when a commodity on the notification requires one
+**ID**: REQ-CONSIGN-ADDR-005
+The system MUST show an additional row for the County Parish Holding (CPH) number, alongside the five party-role rows, only when at least one commodity line on the notification is one the service treats as requiring a CPH number, and MUST NOT show this row otherwise.
+
+#### Scenario: A CPH-eligible commodity brings the CPH row into the list, empty
+**ID**: SCN-CONSIGN-ADDR-005-A
+- **GIVEN** the notification has a commodity line the service treats as requiring a CPH number
+- **WHEN** the user views the consignment addresses page
+- **THEN** a CPH number row is shown, with no value yet added
+
+#### Scenario: No CPH-eligible commodity leaves the row off the list
+**ID**: SCN-CONSIGN-ADDR-005-B
+- **GIVEN** none of the notification's commodity lines is one the service treats as requiring a CPH number
+- **WHEN** the user views the consignment addresses page
+- **THEN** no CPH number row is shown

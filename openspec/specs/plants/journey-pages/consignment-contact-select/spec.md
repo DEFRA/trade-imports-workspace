@@ -53,7 +53,7 @@ The system MUST keep a row the user has ticked as they move between pages of res
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002
-The system MUST accept a chosen contact address, return the user to Overview with the contact task Completed, and MUST show that address still chosen when the user returns to the page.
+The system MUST accept a chosen contact address, return the user to Overview with the contact task Completed, and MUST show that address still chosen when the user returns to the page. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save the chosen address without continuing the journey.
 
 #### Scenario: Choosing a contact saves, completes the task, and persists on return
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-A
@@ -61,6 +61,19 @@ The system MUST accept a chosen contact address, return the user to Overview wit
 - **WHEN** they choose an address and save and continue
 - **THEN** they reach Overview with the contact task Completed
 - **AND** returning to the page shows that address still chosen
+
+#### Scenario: Save and return to overview saves the address without continuing
+**ID**: SCN-PLANTS-CONTACT-SELECT-002-B
+- **GIVEN** the user is on the contact page
+- **WHEN** they choose an address and select save-and-return-to-overview
+- **THEN** they reach Overview with the contact task Completed
+- **AND** returning to the page shows that address still chosen
+
+#### Scenario: Choosing a different address replaces the one already saved
+**ID**: SCN-PLANTS-CONTACT-SELECT-002-C
+- **GIVEN** a contact address is already saved
+- **WHEN** the user chooses a different address and saves
+- **THEN** only the new address is shown as chosen
 
 ### Requirement: Saving with nothing chosen is allowed and leaves the task incomplete
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
@@ -101,3 +114,13 @@ The system MUST reach Overview without saving a newly checked option when the us
 - **GIVEN** the user is on the contact page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: The page is reachable from Overview's contact task row
+**ID**: REQ-PLANTS-CONTACT-SELECT-008
+The system MUST open this page when the user follows Overview's contact task row.
+
+#### Scenario: Overview's contact row opens the page
+**ID**: SCN-PLANTS-CONTACT-SELECT-008-A
+- **GIVEN** the user is on Overview with a notification that has reached contact
+- **WHEN** they open the contact task row
+- **THEN** the contact page is shown

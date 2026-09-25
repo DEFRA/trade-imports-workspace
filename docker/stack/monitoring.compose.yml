@@ -1,0 +1,42 @@
+services:
+  # Scrapes the services' /prometheus actuator endpoints. Only trade-imports-ins-backend exposes
+  # one today, and only under its local profile. Targets are reached via host.docker.internal so
+  # a service run natively (run-stack.sh -e ins-backend) is scraped just the same.
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.5.0
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - '9090:9090'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:9090/-/ready']
+      interval: 5s
+      retries: 10
+      start_period: 10s
+
+  # Deployed environments use CDP's Grafana over CloudWatch; this one reads Prometheus instead, so
+  # its dashboards are for checking meters locally, not for promoting. Anonymous admin, local only.
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:12.1.1
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/ins-backend-address-lookup.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - '3030:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3000/api/health']
+      interval: 5s
+      retries: 10
+      start_period: 15s

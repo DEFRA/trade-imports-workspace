@@ -15,9 +15,9 @@ the real API does not have.
 **Whose it is.** The address book belongs to the Import Notification Service
 frontend (INS), not to plants. Plants-frontend only reads it
 (`src/server/app/services/address-book/index.js`: `search` and `party`, and
-it says so), and the header's "Address book" link goes to INS, which this
-prototype does not run standalone (it works whenever the INS frontend runs —
-see `references/run-the-prototype.md`, "The INS address-book link"). So
+it says so). In the real service the header's "Address book" link goes to
+INS. In the prototype that link is deliberately dead everywhere and nothing
+can point it at a real INS (see `references/run-the-prototype.md`). So
 address book pages in a design release are flagged **"belongs to the Import
 Notification Service frontend"**, and a hand-off says the change is for the
 INS team, not plants-frontend. Say both to the designer in the opening line.

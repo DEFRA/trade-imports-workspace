@@ -12,8 +12,8 @@ plugin" or "chooser".
 The prototype runs standalone: its `dev` script (or `designer:fresh`) inside
 `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`,
 on its own stubs. **The docker stack is never needed to see a change** — do
-not start it, wait on it, or mention it unless the designer asks about the
-INS address-book link (below) or a CDP deploy.
+not start it, wait on it, or mention it unless the designer asks about a CDP
+deploy. It would not help the address-book link either (see below).
 
 ## Guard rails
 
@@ -256,29 +256,18 @@ when the designer asks "where did my data go":
   for example `example-organisation-b`. Examples made for one organisation
   only show to people signed in to it. To go back, open
   `http://localhost:3103/auth/sign-out`, then the prototypes page. The
-  deployed prototype uses the Defra ID stub instead: pick a test user in the
-  organisation you want.
+  deployed prototype signs in the same way: use the same paths on its
+  address.
 
 ## The INS address-book link
 
-The header's "Address book" link points at the Import Notification Service
-frontend (`trade-imports-ins-frontend`), which this prototype does not run
-standalone. It is the one thing in this skill that does need the stack (or
-the real INS frontend running some other way):
-
-- **Locally**: bring up the workspace stack
-  (`tim docker dev`, or `make start-ins-frontend` for the INS frontend on its
-  own — see
-  `~/git/defra/trade-imports-workspace/docs/reference/workflows.md`) and set
-  `TRADE_IMPORTS_INS_FRONTEND_URL` in the prototype's own `.env` (or shell
-  environment) to where it is listening.
-- **On CDP dev**: `TRADE_IMPORTS_INS_FRONTEND_URL` is set by the deploy
-  config to the real INS frontend's CDP dev address, so the link works there
-  without anything extra.
-- **Every other page in the prototype still needs none of this**: the link is
-  a design gap for the designer to be aware of, not a reason to wait on the
-  stack before showing a change. Never suggest starting the stack for any
-  other reason.
+The header's "Address book" link is deliberately dead. The address book
+belongs to the Import Notification Service (`trade-imports-ins-frontend`),
+which this prototype does not include, and there is no setting — not an
+env var, not a CDP deploy config — that can point the link at a real one,
+locally or in CDP. This is a design gap for the designer to be aware of,
+not something to fix by starting the stack: never suggest starting the
+stack for this link.
 
 ## Step 7: Verify
 

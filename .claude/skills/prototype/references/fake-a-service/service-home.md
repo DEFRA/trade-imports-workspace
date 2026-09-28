@@ -8,7 +8,8 @@ for all my notifications".
 
 The real front door is not plants-frontend's. It belongs to the Import
 Notification Service frontend (`trade-imports-ins-frontend`), which also owns
-the address book: the header's "Address book" link already points there.
+the address book. In the real service the header's "Address book" link
+points there; in the prototype it is deliberately dead.
 Anything built here is a picture of that page for research and design, and
 the hand-off brief must say "belongs to ins-frontend, not plants-frontend".
 The plants team can only link to it.

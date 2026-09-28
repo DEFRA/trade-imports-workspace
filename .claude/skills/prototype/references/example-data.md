@@ -222,8 +222,8 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prot
 ```
 
 Give the designer the new examples' links. For another organisation's example,
-the link signs in as that organisation first (on their computer only; on the
-deployed prototype they sign in as a test user in that organisation).
+the link signs in as that organisation first, on their computer and on the
+deployed prototype alike.
 
 A link opens the page the example stopped at. Add `?page=<page>` to open
 another page of the same notification: `?page=task-list`, or

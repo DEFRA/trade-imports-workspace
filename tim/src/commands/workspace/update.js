@@ -1,6 +1,12 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath } from '../../constants/repos.js'
+import {
+  REPOS,
+  repoPath,
+  isWorkspaceBranchSynced,
+  workspaceSyncSkipLine
+} from '../../constants/repos.js'
+import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { run } from '../../exec/exec.js'
 import {
   assertGitSupportsNegativeRefspecs,
@@ -9,7 +15,30 @@ import {
   pruneGhPagesObjects
 } from '../../exec/git-exclude-gh-pages.js'
 import { runAcross } from '../../exec/parallel.js'
-import { lastLines, makeTaskAction } from './_task-output.js'
+import { OK, USAGE, ERROR, PARTIAL_FAILURE } from '../../constants/exitCodes.js'
+import { isTimError } from '../../errors.js'
+import { lastLines, renderTaskText, renderTaskJson } from './_task-output.js'
+
+const collect = (value, previous) => previous.concat([value])
+
+/**
+ * Split the repo roster into the ones this run should touch and the ones
+ * it should leave alone — a repo opts out via `workspaceBranchSync: false`
+ * unless `include` names it explicitly.
+ *
+ * @param {string[]} [include]
+ * @returns {{targets: string[], skipped: string[]}}
+ */
+export const partitionSyncTargets = (include = []) => {
+  const included = new Set(include)
+  const targets = []
+  const skipped = []
+  for (const repo of REPOS) {
+    if (isWorkspaceBranchSynced(repo) || included.has(repo)) targets.push(repo)
+    else skipped.push(repo)
+  }
+  return { targets, skipped }
+}
 
 const failure = (repo, label, execResult, action) => ({
   repo,
@@ -80,16 +109,35 @@ const updateTask = (workspaceRoot, repo) => {
   return task
 }
 
-export const buildUpdateTasks = (workspaceRoot) =>
-  REPOS.map((repo) => updateTask(workspaceRoot, repo))
+export const buildUpdateTasks = (workspaceRoot, { include = [] } = {}) =>
+  partitionSyncTargets(include).targets.map((repo) =>
+    updateTask(workspaceRoot, repo)
+  )
 
-export const updateAll = async (workspaceRoot) => {
-  const tasks = buildUpdateTasks(workspaceRoot)
+export const updateAll = async (workspaceRoot, { include = [] } = {}) => {
+  const { targets, skipped } = partitionSyncTargets(include)
+  const tasks = targets.map((repo) => updateTask(workspaceRoot, repo))
   const needs = await Promise.all(
     tasks.map((task) => task.needsNegativeRefspecs())
   )
   if (needs.some(Boolean)) await assertGitSupportsNegativeRefspecs()
-  return runAcross(tasks, (task) => task.run())
+  const results = await runAcross(tasks, (task) => task.run())
+  return { results, skipped }
+}
+
+const emit = (text) => process.stdout.write(`${text}\n`)
+const emitError = (text) => process.stderr.write(`${text}\n`)
+
+const emitResultsWithSkips = ({ results, skipped, json, timVersion }) => {
+  if (json) {
+    const payload = JSON.parse(renderTaskJson(results, timVersion))
+    payload.skipped = skipped
+    emit(JSON.stringify(payload))
+    return
+  }
+  const lines = [renderTaskText(results)]
+  for (const repo of skipped) lines.push(workspaceSyncSkipLine(repo))
+  emit(lines.join('\n'))
 }
 
 export const register = (parent, { timVersion }) => {
@@ -98,5 +146,46 @@ export const register = (parent, { timVersion }) => {
     .description(
       'Run `git pull --rebase` in every cloned repo. Clones still fetching gh-pages get the exclusion applied once first.'
     )
-    .action(makeTaskAction({ runTasks: updateAll, timVersion }))
+    .option(
+      '--include <repo>',
+      'Also update a repo that normally sits out of workspace-wide updates (such as the plants prototype). Repeatable.',
+      collect,
+      []
+    )
+    .action(async function updateAction(opts) {
+      const globalOpts = this.optsWithGlobals()
+      try {
+        const workspaceRoot = resolveWorkspaceRoot({
+          explicit: globalOpts.workspace
+        })
+        const { results, skipped } = await updateAll(workspaceRoot, {
+          include: opts.include
+        })
+        emitResultsWithSkips({
+          results,
+          skipped,
+          json: globalOpts.json,
+          timVersion
+        })
+        const someFailed = results.some((r) => !r.ok)
+        process.exit(someFailed ? PARTIAL_FAILURE : OK)
+      } catch (error) {
+        if (isTimError(error) && globalOpts.json) {
+          emit(
+            JSON.stringify({
+              ok: false,
+              schema_version: 1,
+              tim_version: timVersion,
+              result: null,
+              errors: [{ code: error.code, message: error.message }]
+            })
+          )
+        } else {
+          emitError(error.message ?? String(error))
+        }
+        process.exit(
+          isTimError(error) && error.code === 'USAGE' ? USAGE : ERROR
+        )
+      }
+    })
 }

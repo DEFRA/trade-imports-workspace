@@ -1,5 +1,9 @@
 import { createJiraClient } from '../../clients/jira-client.js'
 import { makeClientAction } from '../_client-action.js'
+import { register as registerCreate } from './create.js'
+import { register as registerAttach } from './attach.js'
+import { register as registerLink } from './link.js'
+import { register as registerEpics } from './epics.js'
 
 export const renderTicket = (t) =>
   [
@@ -26,7 +30,9 @@ export const renderComments = (comments) => {
 export const register = (program, { timVersion }) => {
   const jira = program
     .command('jira')
-    .description('Read Jira tickets and comments')
+    .description(
+      'Read Jira tickets and comments, and raise a ticket from a manifest (create, attach, link and epics are dry run by default)'
+    )
 
   jira
     .command('ticket <id>')
@@ -51,4 +57,9 @@ export const register = (program, { timVersion }) => {
         timVersion
       })
     )
+
+  registerCreate(jira, { timVersion })
+  registerAttach(jira, { timVersion })
+  registerLink(jira, { timVersion })
+  registerEpics(jira, { timVersion })
 }

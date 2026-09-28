@@ -11,7 +11,7 @@ language's best-practices, delivered via the pre-baked per-(repo,topic)
 `style-rules.{repo}.{topic}.md` bundle(s) you read in Step 1. A file can
 carry more than one topic (additive) — a Playwright spec has both a
 `playwright` and a `node` bundle, so read every bundle your prompt lists.
-For a `node` bundle the rules are the 17-rule style guide in
+For a `node` bundle the rules are the 16-rule style guide in
 `docs/best-practices/node/code-style.md` plus the doc-comment accuracy
 rules; a `java` bundle carries modern-java + Javadoc; a `gds` bundle the
 Nunjucks/template style set; and so on.
@@ -51,7 +51,7 @@ Reviewed {file}: {N} added, {M} resolved, verdict {COMPLIANT|MINOR_ISSUES|NEEDS_
 ```
 ~/git/defra/trade-imports-workspace/
 ├── docs/best-practices/                            # SOURCE: style guides per language
-│   ├── node/code-style.md                          #   17 JS style rules (node bundle)
+│   ├── node/code-style.md                          #   16 JS style rules (node bundle)
 │   ├── java/modern-java.md                          #   Java style (java bundle)
 │   ├── gds/{components,styles,patterns}.md          #   .njk template style (gds bundle)
 │   ├── playwright/BEST_PRACTICES.md                 #   spec style (playwright bundle)
@@ -74,7 +74,7 @@ are the implementor's job, not yours.
 The full ruleset for the file's language is the
 `style-rules.{repo}.{topic}.md` bundle(s) you read in Step 1 — never an
 inlined catalogue in this persona. For a `node` bundle that is the
-17-rule guide (`docs/best-practices/node/code-style.md`) plus the
+16-rule guide (`docs/best-practices/node/code-style.md`) plus the
 doc-comment rules; other topics carry their own language's style set.
 
 Judge each finding's severity against these language-neutral
@@ -158,7 +158,7 @@ The per-file `.style.json` placeholder was initialised by
 `prepare-style.sh`. For every violation you decide to flag:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-17} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
+~/git/defra/trade-imports-workspace/tools/style/file-style-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {N or ""} --rule {rule id from the bundle — for JavaScript, 1-16} --severity {FAIL|WARN} --issue "describe the violation, anchored to the specific function/symbol/literal" --fix "concrete suggested fix"
 ```
 
 Add `--best-practice node/code-style.md` (or another path under

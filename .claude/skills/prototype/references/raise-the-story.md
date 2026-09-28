@@ -1,0 +1,132 @@
+# Raise the story
+
+Turns a written hand-off folder into a real Jira ticket, with a dry run the
+designer can read in plain words before anything is created. This is the
+workspace's own Jira write surface (`tim jira create`), the same one
+`ticket-creator` uses: nothing here talks to Jira except through `tim`, and
+nothing is created without the designer's own yes.
+
+Use this once `references/hand-off.md` has written the folder
+(`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/`,
+with its `ticket.json`). If there is no hand-off folder yet, go there first.
+
+## Guard rails
+
+- **Never create, edit, comment on or transition a real Jira ticket without
+  the designer's own explicit yes**, given after seeing the dry run. Reading
+  Jira is always fine.
+- **The `yes` must be the designer's own message**, not an inference from
+  "sounds good" earlier in the conversation about the change itself. If in
+  doubt, show the dry run again and ask plainly: "Shall I create this ticket
+  in Jira?"
+- **Never fill a story placeholder yourself.** If `ticket.json` still has one
+  (square brackets, or a summary under 10 characters), stop and ask the
+  designer for those words; do not draft them.
+- **One Bash command per call.**
+
+## Step 1: Check for placeholders
+
+Read
+`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/report.json`.
+If `story.placeholders` is not empty, stop here: tell the designer which
+words are still missing (in plain English, quoting the placeholder text), and
+go back to `references/hand-off.md` step 3 once they answer. Never raise a
+story with a placeholder still in it.
+
+## Step 2: Check Jira access
+
+```bash
+tim auth --json
+```
+
+If it reports no Jira access, say so and fall back to the paste flow in
+`references/hand-off.md`'s "Hand it over by hand instead": give the designer
+the Summary line and the rest of `brief.jira.txt` to paste themselves.
+
+## Step 3: Find the parent epic
+
+1. Read `scripts/designer/prototype.json` (in the prototype repo). If
+   `handOff.parentEpic` is set, use it.
+2. Otherwise:
+
+   ```bash
+   tim jira epics --json
+   ```
+
+   List the plants-related epics in plain words and ask the designer which
+   one this story belongs under, unless there is exactly one obvious match
+   (say which and why, and let them correct you).
+
+## Step 4: Dry run
+
+```bash
+tim jira create --from ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.json --json
+```
+
+With no `--confirm`, this sends nothing: it prints the plan (every field,
+every attachment with its size, and any warning — a remaining placeholder, a
+description over 32,767 characters) and a `planId`. Read the JSON and tell
+the designer, in plain words, not as raw JSON:
+
+- the project and type (a Story in EUDPA)
+- the summary and the parent epic
+- the attachments it will add, by name, with sizes
+- any warning the plan carries, in full
+- that nothing has been created yet
+
+Then ask the one question: "Shall I create this ticket in Jira?" Only the
+designer's own yes in their own message goes on to step 5. A "looks good" or
+silence is not a yes: ask again plainly if you are not sure.
+
+## Step 5: Create it
+
+```bash
+tim jira create --from ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.json --confirm <planId> --json
+```
+
+`<planId>` must be the exact id the dry run just printed: if anything about
+the ticket changed since (the designer asked for a wording tweak, say), run
+step 4 again first, because a stale `planId` is refused with exit code 2. On
+success it creates the ticket, attaches every file, links `relates` where the
+manifest names one, and writes
+`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/ticket.created.json`.
+It refuses to create again from a manifest that already has a
+`ticket.created.json`: that is the guard against a duplicate ticket from an
+accidental second yes.
+
+## Step 6: Record it and save
+
+1. Update the hand-off's status:
+
+   ```bash
+   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:handoff -- --set <set-id> --slug <slug> --status "Ticket: <EUDPA-N>" --status "Branch for the real work: feat/<EUDPA-N>-<slug>"
+   ```
+
+   This adds the two lines to the top of `brief.md` ("Keeping track" in
+   `handoffs/README.md`) without rewriting the rest of the folder. If
+   `designer:handoff` has no `--status` flag yet, add the two lines to
+   `brief.md`'s status section by hand instead, in the same words.
+
+2. Save it:
+
+   ```bash
+   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add handoffs/<folder>
+   ```
+
+   ```bash
+   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:save -- -m "Raise <EUDPA-N> for the hand-off: <title>"
+   ```
+
+3. Tell the designer the ticket key, its link
+   (`https://eaflood.atlassian.net/browse/<EUDPA-N>`, or whatever `tim jira
+create` printed), and that `feat/<EUDPA-N>-<slug>` is the branch name the
+   real work will use — the same name `references/build-it-for-real.md` uses
+   when they say "make this real".
+
+## Verify
+
+- `handoffs/<folder>/ticket.created.json` exists and its key matches what you
+  told the designer.
+- `brief.md`'s status lines name the ticket and the branch.
+- `tim auth --json` was checked before any create, and no create ran without
+  a dry run's `planId` from the same session.

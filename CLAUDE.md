@@ -16,6 +16,7 @@ Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agen
 - Cross-repo branches must share the **same name** across every affected repo — the workspace stack's `--branch` flag probes each repo for a matching branch-tagged image and falls back to `:latest` per service, so mismatched names break the linked-branch pickup.
 - PRs: raise against `main` in the relevant repo.
 - Cross-repo changes: coordinate via the tests repo.
+- **Exempt: the plants prototype's own `design/<set>-<slug>` branches.** `trade-imports-plants-prototype` has no Docker stack service (`dockerStack: null`) and no branch-tagged image to probe for, so a design branch never needs a matching name anywhere else. A hand-off out of the prototype is different work, not a prototype branch: it lands as one real `feat/EUDPA-N-<slug>` (or `feat/NO_JIRA-<slug>` without a ticket yet) across every real repo it touches — `trade-imports-plants-frontend`, `trade-imports-plants-backend`, the tests repo, this workspace's `openspec/` — following the same-name rule above like any other cross-repo change.
 
 ### 3. Banned actions
 
@@ -34,7 +35,7 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `ticket-refiner` | "is ticket ready", "pre-refinement", "refinement check" | Assess whether a ticket is READY / NEEDS WORK / SPIKE REQUIRED. |
 | `ticket` | "plan EUDPA-", "implement EUDPA-", "refactor", "tidy up" | Plan / implement / refactor an existing ticket. |
 | `review` | "review EUDPA-", "re-review", "walk review", "implement review" | Code review across all languages and repos (correctness, security, tests). |
-| `code-style` | "style review EUDPA-", "walk style EUDPA-", "triage style", "fix style EUDPA-", "lint review" | JS code-style review + remediation against the 17-rule guide. |
+| `code-style` | "style review EUDPA-", "walk style EUDPA-", "triage style", "fix style EUDPA-", "lint review" | JS code-style review + remediation against the 16-rule guide. |
 | `npm-upgrade` | "upgrade npm deps", "upgrade dependencies", "walk upgrade EUDPA-X", "implement upgrade EUDPA-X" | Three-phase non-govuk-frontend npm upgrade workflow + interactive manual-side walker. |
 | `govuk-upgrade` | "upgrade govuk-frontend", "govuk upgrade", "walk govuk EUDPA-X", "implement govuk EUDPA-X" | Per-version govuk-frontend upgrade with CHANGELOG-driven plans (JSON-state, dispatcher, walker). |
 | `skill-creator` | "scaffold skill `<name>`", "skill-create `<name>`", "new workspace skill `<name>`", "audit skill `<name>`", "audit skills" | Meta-skill — CREATE scaffolds a new workspace skill; AUDIT walks an existing skill against the 8-pattern checklist. |
@@ -43,6 +44,13 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `requirements-pipeline` | "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil", "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build" | Sources in, one backlog.json of full-stack requirement increments out (DISTIL), then built one increment at a time through the increment build loop (BUILD). The backlog shape, the loop and its Codex briefs live beside it. |
 | `spec-catchup` | "catch-up", "catch-up animals/plants/ins/admin", "catch-up and cover" | **The code does something the spec does not say** — runs one journey set's full suite, walks every `spec.md` in the prefix (not `tim spec gaps`) against the report and source, edits/adds/updates a coverage link/deletes as the evidence dictates. Drives "catch-up and cover" (this skill then `spec-cover`, per set). |
 | `spec-cover` | "cover", "cover animals/plants/ins/admin" | **The spec says something no test proves** — works `tim spec gaps --none` for that prefix, maps every Then to an assert, writes the test, proves it with an invert-red/restore-green probe, commits in the service repo on the same branch name. |
+| `prototype` | "the prototype", "my design release", "crit notes", "research session", "demo", "hand this to the real team", "make this real" | Front door for a designer working on the high-risk plants prototype (`trade-imports-plants-prototype`) from a Claude Code session opened at this workspace root. Holds no steps of its own beyond routing — every change is made by a `references/<name>.md` file it opens for you, read against the real `trade-imports-plants-frontend`, its recipes and `docs/best-practices/` so the result matches house conventions without the designer having to ask. |
+
+A request about pages, words, examples or journeys goes to `prototype` when
+the person is a designer (see `CLAUDE.local.md`, set by `tim prototype
+setup`) or names the prototype, a design release or a `design/*` branch;
+otherwise the developer skills above apply. `frontend-change` and
+`ticket-creator` already say so in their own descriptions.
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 
@@ -62,7 +70,7 @@ Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-refe
 | `repos/trade-imports-ins-frontend` | DEFRA/trade-imports-ins-frontend | Import Notification Service front-door (address-book UI, sign-in, dashboard shell) | Node.js |
 | `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
 | `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (implemented on the shared journey platform; requirements still being reconciled) | Node.js |
-| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend — its `upstream` remote is `trade-imports-plants-frontend`; sync with `git fetch upstream` then `git merge upstream/main` | Node.js |
+| `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend, for designers — its `upstream` remote is `trade-imports-plants-frontend`; sync with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` (overrides-aware, applies `overrides.json`'s `ours`/`deleted` rules — a plain upstream merge would not). Runs standalone on port 3103, by design not part of the Docker stack (`dockerStack: null` in `repos.json`) and not covered by `workspaceBranchSync` — see [`docs/repos/trade-imports-plants-prototype.md`](docs/repos/trade-imports-plants-prototype.md). | Node.js |
 | `repos/trade-imports-plants-backend` | DEFRA/trade-imports-plants-backend | High-risk plants notification persistence | Java / Spring Boot |
 | `repos/trade-imports-schemas` | DEFRA/trade-imports-schemas | Shared schema definitions | Node.js |
 
@@ -91,6 +99,9 @@ tim auth                  # equivalent of tools/auth.sh
 tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
+tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
+tim jira attach|link|epics                     # the rest of the Jira write surface — also dry run by default
+tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
 ```
 
 `tim/` is a sub-project of this repo rather than one of the cloned

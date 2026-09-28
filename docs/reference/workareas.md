@@ -9,10 +9,12 @@ branch for the PR owner to pick up.
 ```
 workareas/reviews/EUDPA-X/                         → ticket.md, repos/, review-index.md, review.{repo}.md
 workareas/reviews/EUDPA-X/file-reviews/{repo}/     → {file}.review.md, _consistency-check.md
+workareas/reviews/local/{repo}/{branch}/           → same shape as EUDPA-X above, keyed on repo:branch — no ticket, no PR
 workareas/code-style-reviews/EUDPA-X/              → .style-meta.json, items.{repo}.json, style-review.{repo}.md, style-rules.{repo}.md
 workareas/code-style-reviews/EUDPA-X/file-reviews/{repo}/ → {file}.style.json
+workareas/code-style-reviews/local/{repo}/{branch}/ → same shape as EUDPA-X above, keyed on repo:branch — no ticket, no PR
 workareas/ticket-creation/.prereqs/                → epics.txt, capabilities.txt, meta.json (refreshed by prepare-ticket-creation.sh)
-workareas/ticket-creation/<slug>/                  → draft.md
+workareas/ticket-creation/<slug>/                  → draft.md, ticket.json (tim-ticket/1 manifest: project, type, summary, descriptionFile, parent, labels, priority, attachments, relates), ticket.description.jira.txt, ticket.created.json (the `tim jira create` receipt, once confirmed)
 workareas/ticket-planning/EUDPA-X/                 → ticket.md, plan.md, .plan-meta.json, .implement-meta.json, best-practices/{repo}.md, .diffs/{repo}.diff
 workareas/ticket-refinement/EUDPA-X/               → ticket.md, review.md, .refinement-meta.json
 workareas/npm-upgrades/EUDPA-X/{repo}/             → packages.{repo}.json, .upgrades-meta.json, best-practices.md, .context/{pkg}/

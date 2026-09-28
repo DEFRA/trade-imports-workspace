@@ -29,7 +29,7 @@ paper trail.
     {
       "id": 1,                        // sequential within this file
       "line": "42",                   // string — allows "12-15" ranges or ""
-      "rule": "2",                    // 17-rule style guide number (string)
+      "rule": "2",                    // 16-rule style guide number (string)
       "severity": "FAIL",             // FAIL | WARN
       "issue": "function declaration where fat-arrow is appropriate",
       "fix": "rewrite as const getRows = () => ...",

@@ -65,7 +65,7 @@ Severity badges:
 - 🛑 **FAIL**
 - ⚠️ **WARN**
 
-`Rule` column: the 17-rule guide number (1-17).
+`Rule` column: the 16-rule guide number (1-16).
 
 Cite column: show the `best_practice` field if present; `—` otherwise.
 

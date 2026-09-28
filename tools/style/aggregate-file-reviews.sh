@@ -31,12 +31,12 @@ WRITE_ITEMS=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        EUDPA-*) TICKET="$1"; shift ;;
         --repo) REPO="$2"; shift 2 ;;
         --section) SECTION="$2"; shift 2 ;;
         --json) JSON=1; shift ;;
         --write-items) WRITE_ITEMS=1; shift ;;
-        *) echo "Unknown arg: $1" >&2; exit 1 ;;
+        -*) echo "Unknown arg: $1" >&2; exit 1 ;;
+        *) TICKET="$1"; shift ;;
     esac
 done
 

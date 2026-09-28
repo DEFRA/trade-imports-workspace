@@ -10,7 +10,7 @@ import {
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS } from '../../constants/repos.js'
+import { REPOS, upstreamFor } from '../../constants/repos.js'
 import {
   createBareRepo,
   createFatClone
@@ -171,6 +171,53 @@ describe('tim workspace setup CLI', () => {
       { reject: false }
     )
     expect(ghPagesObject.exitCode).not.toBe(0)
+  }, 60_000)
+
+  test('adds the fetch-only upstream remote for a repo that declares one, and is a no-op on a second run', async () => {
+    const repo = REPOS.find((candidate) => upstreamFor(candidate))
+    const upstream = upstreamFor(repo)
+    const { barePath } = await createBareRepo(fixturesDir, repo, {
+      withGhPages: false
+    })
+    const dir = join(workspace, 'repos', repo)
+    await createFatClone(barePath, dir)
+    fakeCloneAllExcept(repo)
+
+    const first = await runSetup()
+    expect(first.exitCode).toBe(0)
+    const firstEntry = JSON.parse(first.stdout.trim()).result.find(
+      (entry) => entry.repo === repo
+    )
+    expect(firstEntry.ok).toBe(true)
+    expect(firstEntry.label).toContain('upstream remote added (fetch-only)')
+
+    const remotes = await execa('git', ['-C', dir, 'remote'])
+    expect(remotes.stdout.split('\n')).toContain(upstream.name)
+    const fetchUrl = await execa('git', [
+      '-C',
+      dir,
+      'remote',
+      'get-url',
+      upstream.name
+    ])
+    expect(fetchUrl.stdout.trim()).toBe(upstream.url)
+    const pushUrl = await execa('git', [
+      '-C',
+      dir,
+      'remote',
+      'get-url',
+      '--push',
+      upstream.name
+    ])
+    expect(pushUrl.stdout.trim()).toBe('DISABLED')
+
+    const second = await runSetup()
+    expect(second.exitCode).toBe(0)
+    const secondEntry = JSON.parse(second.stdout.trim()).result.find(
+      (entry) => entry.repo === repo
+    )
+    expect(secondEntry.ok).toBe(true)
+    expect(secondEntry.label).toContain('upstream already set up')
   }, 60_000)
 
   test('reports a clear error when git is older than 2.29', async () => {

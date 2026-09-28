@@ -8,6 +8,12 @@ runs a stale snapshot rather than what is on disk.
 [`.claude/skills/requirements-pipeline/workflow/`](../skills/requirements-pipeline/workflow/README.md),
 beside its Codex briefs and the backlog shape it reads.
 
+**The designer prototyping workflows live with their skill too**, at
+[`.claude/skills/prototype/workflow/`](../skills/prototype/workflow/README.md)
+(`design-session.js`, `wording-sweep.js`, `port-kit-page.js`,
+`prepare-handoff.js`) — launched by the `prototype` skill's references, same
+`scriptPath` launch and args contract as everything below.
+
 ## The args contract
 
 Every workflow script — the shared ones under `.claude/workflows/*.js` and a skill's own

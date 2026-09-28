@@ -1,6 +1,12 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath, repoUrl, REPOS_DIR } from '../../constants/repos.js'
+import {
+  REPOS,
+  repoPath,
+  repoUrl,
+  REPOS_DIR,
+  upstreamFor
+} from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import {
   assertGitSupportsNegativeRefspecs,
@@ -84,6 +90,79 @@ const cloneLight = async (repo, label, dir) => {
   }
 }
 
+/**
+ * Ensure the read-only upstream remote a repo's `repos.json` entry
+ * declares exists, adding it with a disabled push URL when it doesn't.
+ * Idempotent — a repo that already has the remote is left untouched.
+ * A `dir` that is not a working git checkout (nothing to list remotes on)
+ * is left alone rather than treated as a failure.
+ *
+ * @param {string} repo
+ * @param {string} dir - Absolute path to the cloned repo
+ * @returns {Promise<{status: 'not-configured'|'already-set-up'|'added'|'failed', name?: string, stderrTail?: string}>}
+ */
+export const ensureUpstreamRemote = async (repo, dir) => {
+  const upstream = upstreamFor(repo)
+  if (!upstream) return { status: 'not-configured' }
+  const listing = await run('git', ['-C', dir, 'remote'])
+  if (listing.exitCode !== 0) return { status: 'not-configured' }
+  const existing = listing.stdout
+    .split('\n')
+    .map((name) => name.trim())
+    .filter(Boolean)
+  if (existing.includes(upstream.name)) {
+    return { status: 'already-set-up', name: upstream.name }
+  }
+  const add = await run('git', [
+    '-C',
+    dir,
+    'remote',
+    'add',
+    upstream.name,
+    upstream.url
+  ])
+  if (add.exitCode !== 0) {
+    return {
+      status: 'failed',
+      name: upstream.name,
+      stderrTail: lastLines(add.stderr)
+    }
+  }
+  if (upstream.push === 'DISABLED') {
+    await run('git', [
+      '-C',
+      dir,
+      'remote',
+      'set-url',
+      '--push',
+      upstream.name,
+      'DISABLED'
+    ])
+  }
+  return { status: 'added', name: upstream.name }
+}
+
+const UPSTREAM_SUFFIX = {
+  'not-configured': '',
+  'already-set-up': '; upstream already set up',
+  added: '; upstream remote added (fetch-only)'
+}
+
+const withUpstreamCheck = async (repo, dir, base) => {
+  if (base.exitCode !== 0) return base
+  const upstream = await ensureUpstreamRemote(repo, dir)
+  if (upstream.status === 'failed') {
+    return {
+      ...base,
+      label: `${base.label}; FAILED to add upstream remote`,
+      exitCode: 1,
+      action: 'upstream-failed',
+      stderrTail: upstream.stderrTail
+    }
+  }
+  return { ...base, label: `${base.label}${UPSTREAM_SUFFIX[upstream.status]}` }
+}
+
 const cloneTask = (workspaceRoot, repo) => {
   const dir = repoPath(workspaceRoot, repo)
   const alreadyCloned = existsSync(join(dir, '.git'))
@@ -95,17 +174,14 @@ const cloneTask = (workspaceRoot, repo) => {
     alreadyCloned ? needsGhPagesExclusion(dir) : true
   task.run = async () => {
     if (alreadyCloned) {
-      if (await needsGhPagesExclusion(dir)) return healTask(repo, dir)
-      return {
-        repo,
-        label,
-        exitCode: 0,
-        action: 'exists',
-        stderrTail: null
-      }
+      const base = (await needsGhPagesExclusion(dir))
+        ? await healTask(repo, dir)
+        : { repo, label, exitCode: 0, action: 'exists', stderrTail: null }
+      return withUpstreamCheck(repo, dir, base)
     }
     mkdirSync(join(workspaceRoot, REPOS_DIR), { recursive: true })
-    return cloneLight(repo, label, dir)
+    const cloned = await cloneLight(repo, label, dir)
+    return withUpstreamCheck(repo, dir, cloned)
   }
   return task
 }
@@ -126,7 +202,7 @@ export const register = (parent, { timVersion }) => {
   parent
     .command('setup')
     .description(
-      'Clone any missing repos from github.com/DEFRA into repos/. Clones exclude the gh-pages branch; existing clones get the exclusion applied once.'
+      'Clone any missing repos from github.com/DEFRA into repos/. Clones exclude the gh-pages branch; existing clones get the exclusion applied once. A repo that declares an upstream (such as the plants prototype) also gets a fetch-only remote to it.'
     )
     .action(makeTaskAction({ runTasks: setupAll, timVersion }))
 }

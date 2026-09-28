@@ -1,9 +1,13 @@
 #!/bin/bash
 # Append a todo to a per-file style review JSON. Auto-assigns next id.
 # Usage:
-#   file-style-add-item.sh EUDPA-X --repo R --file F \
+#   file-style-add-item.sh ID --repo R --file F \
 #       --line L --rule R --severity S \
 #       --issue "..." --fix "..." [--best-practice PATH]
+#
+# ID is the ticket (EUDPA-X) or, in local mode, the composite
+# local/<repo>/<branch> id — any non-flag first argument is accepted.
+#
 # Prints the new id.
 
 set -e
@@ -13,7 +17,6 @@ ISSUE=""; FIX=""; BEST_PRACTICE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        EUDPA-*) TICKET="$1"; shift ;;
         --repo) REPO="$2"; shift 2 ;;
         --file) FILE="$2"; shift 2 ;;
         --line) LINE="$2"; shift 2 ;;
@@ -22,7 +25,8 @@ while [[ $# -gt 0 ]]; do
         --issue) ISSUE="$2"; shift 2 ;;
         --fix) FIX="$2"; shift 2 ;;
         --best-practice) BEST_PRACTICE="$2"; shift 2 ;;
-        *) echo "Unknown arg: $1" >&2; exit 1 ;;
+        -*) echo "Unknown arg: $1" >&2; exit 1 ;;
+        *) TICKET="$1"; shift ;;
     esac
 done
 

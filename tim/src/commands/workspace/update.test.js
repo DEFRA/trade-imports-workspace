@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS } from '../../constants/repos.js'
+import { REPOS, isWorkspaceBranchSynced } from '../../constants/repos.js'
 import {
   createBareRepo,
   createFatClone,
@@ -14,13 +14,24 @@ import {
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
 
+const syncedRepos = REPOS.filter(isWorkspaceBranchSynced)
+const exemptRepos = REPOS.filter((repo) => !isWorkspaceBranchSynced(repo))
+
 let workspace
 let fixturesDir
 
-const runUpdate = () =>
+const runUpdate = (extraArgs = []) =>
   execa(
     'node',
-    [cliPath, 'workspace', 'update', '--workspace', workspace, '--json'],
+    [
+      cliPath,
+      'workspace',
+      'update',
+      '--workspace',
+      workspace,
+      '--json',
+      ...extraArgs
+    ],
     { reject: false }
   )
 
@@ -37,15 +48,29 @@ afterEach(() => {
 })
 
 describe('tim workspace update CLI', () => {
-  test('reports every repo as skipped when none are cloned', async () => {
+  test('reports every synced repo as skipped when none are cloned', async () => {
     const { stdout, exitCode } = await runUpdate()
     expect(exitCode).toBe(0)
     const payload = JSON.parse(stdout.trim())
     expect(payload.ok).toBe(true)
-    expect(payload.result).toHaveLength(REPOS.length)
+    expect(payload.result).toHaveLength(syncedRepos.length)
     for (const entry of payload.result) {
       expect(entry.label).toContain('(not cloned, skipping)')
     }
+  }, 30_000)
+
+  test('leaves a workspace-branch-sync-exempt repo out unless --include names it', async () => {
+    const exempt = exemptRepos[0]
+
+    const without = await runUpdate()
+    const withoutPayload = JSON.parse(without.stdout.trim())
+    expect(withoutPayload.skipped).toEqual([exempt])
+    expect(withoutPayload.result.some((r) => r.repo === exempt)).toBe(false)
+
+    const withIncluded = await runUpdate(['--include', exempt])
+    const withPayload = JSON.parse(withIncluded.stdout.trim())
+    expect(withPayload.skipped).toEqual([])
+    expect(withPayload.result.some((r) => r.repo === exempt)).toBe(true)
   }, 30_000)
 
   test('heals a fat clone on first update, then pulls without gh-pages', async () => {

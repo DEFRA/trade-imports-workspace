@@ -1,16 +1,17 @@
 ---
 name: frontend-change
-description: 'Make a change to a frontend repo in this workspace (today src/server/app in trade-imports-animals-frontend) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then the openspec behaviour spec and coverage entries it touched, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill).'
+description: 'Make a change to a frontend repo in this workspace (trade-imports-animals-frontend or trade-imports-plants-frontend, per the caller or the build-loop target profile) by following that repo''s own recipe docs as strict scripts — add a field, page, section (feature group + flow section + task row), or collection; maintain obligations (gates, requires/applyTo, scope, cardinality) or journey flow (page order, task rows, entry guards); or a routed general change. One increment, full verification ladder, then the openspec behaviour spec and coverage entries it touched, then stop (triggers: "add a field to the frontend", "add a page to the frontend", "add a section to the frontend", "add a collection to the frontend", "change an obligation", "change the journey flow", "change the frontend", "frontend-change add-field|add-page|add-section|add-collection"). NOT for a multi-increment run over a backlog (use journey-builder, which invokes this skill per increment), NOT for the tests repo''s E2E suite, NOT for planning a Jira ticket (use the ticket skill), NOT for the plants prototype or a design release (use `prototype`).'
 ---
 
 Make one change to a frontend repo in this workspace by following the recipe
 that repo already ships. What a change targets is a **repo and a set** — the
 `src/server/app` platform is set-agnostic by construction and the commodity
 line lives in `sets/<set>`, so the domain is an input here, not something this
-skill is welded to. Today the target is `trade-imports-animals-frontend` and
-`sets/live-animals`; the workspace already holds a second frontend repo and
-expects more, so read the target from the caller (or from the build loop's
-target profile) rather than assuming it.
+skill is welded to. Two targets exist today — `trade-imports-animals-frontend`
+(`sets/live-animals`) and `trade-imports-plants-frontend`
+(`sets/high-risk-plants`) — and the workspace expects more, so read the target
+from the caller (or from the build loop's target profile) rather than
+assuming it. See "Targets" below.
 
 The recipes are the instructions — this skill routes to the right one, adds the
 guard rails the docs assume, runs the verification ladder, and records what
@@ -19,6 +20,43 @@ improvise around a recipe: read it and follow it, varying as little as possible.
 The outcome is one verified increment written but uncommitted in the target
 repo, reported and stopped — commit is the caller's call unless they said
 otherwise.
+
+Not for the high-risk plants **prototype**
+(`repos/trade-imports-plants-prototype`) or a design release built there —
+that repo is not a target profile in `tools/journey-builder/targets.json` and
+carries no verification ladder or behaviour spec of its own; use the
+`prototype` skill instead.
+
+## Targets
+
+The canonical target list lives in
+[`tools/journey-builder/targets.json`](../../../tools/journey-builder/targets.json)
+(read there for the full profile — sources, commit paths, spec IDs). The
+columns this skill actually uses:
+
+| Target | Repo | Set | Unit script | Recipes | openspec namespace |
+|---|---|---|---|---|---|
+| animals (`live-animals-frontend`) | `repos/trade-imports-animals-frontend` | `sets/live-animals` | `test:live-animals` | `sets/live-animals/docs/` | `live-animals/` |
+| plants (`high-risk-plants-frontend`) | `repos/trade-imports-plants-frontend` | `sets/high-risk-plants` | `test:high-risk-plants` | `sets/high-risk-plants/docs/` | `plants/` |
+
+Both repos ship the platform (`docs/README.md`, `architecture.md`,
+`flow-and-gates.md`, `scope-and-wipe.md`, `cardinality.md`, …) and the four
+recipes (`add-a-field.md`, `add-a-page.md`, `add-a-section.md`,
+`add-a-collection.md`) under the same relative paths — only the repo root and
+the set name change. Every `<target repo>` and `<set>` placeholder below
+substitutes from this table; the animals examples in this file are the
+worked case, not the only one.
+
+### Called from a hand-off
+
+A `prototype` hand-off (`build-it-for-real`, route C1) may pass a starting
+patch — `git apply --3way` of the prototype's upstream-ready diff, applied
+before this skill runs. Treat that patch as a **starting point**, not the
+increment: the recipe still governs. Read the recipe end-to-end (Step 1),
+follow it verbatim, and where the patch's shape disagrees with the recipe,
+the recipe wins — reshape what the patch left rather than keeping it as
+given. The verification ladder and spec sync in Steps 4–5 apply exactly as
+they would to a change built from scratch.
 
 ## Path conventions
 
@@ -55,22 +93,25 @@ the rules or the baseline.
 ## When to use
 
 All recipe/guide paths below are inside
-`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend/src/server/app/`.
+`~/git/defra/trade-imports-workspace/<target repo>/src/server/app/` —
+`<target repo>` and the `sets/<set>` prefix substitute from the Targets table
+above (`sets/live-animals` for animals, `sets/high-risk-plants` for plants).
 
 | Trigger | Recipe to follow verbatim |
 |---------|---------------------------|
-| "add a field to the frontend" | `sets/live-animals/docs/add-a-field.md` |
-| "add a page to the frontend" | `sets/live-animals/docs/add-a-page.md` |
-| "add a section to the frontend" (feature group + flow section + task row) | `sets/live-animals/docs/add-a-section.md` |
-| "add a collection to the frontend" (repeatable records) | `sets/live-animals/docs/add-a-collection.md` |
-| "change an obligation" (gate condition, `requires`/`applyTo`, scope, status, cardinality) | Obligation-maintenance guard rails below + `sets/live-animals/docs/obligation-model.md`, `docs/obligation-model.md`, `docs/scope-and-wipe.md`, `docs/cardinality.md` |
-| "change the journey flow" (page order, task rows, entry guards, section gating) | Flow-maintenance guard rails below + `sets/live-animals/docs/journey-flow-and-gates.md`, `docs/flow-and-gates.md` |
+| "add a field to the frontend" | `sets/<set>/docs/add-a-field.md` |
+| "add a page to the frontend" | `sets/<set>/docs/add-a-page.md` |
+| "add a section to the frontend" (feature group + flow section + task row) | `sets/<set>/docs/add-a-section.md` |
+| "add a collection to the frontend" (repeatable records) | `sets/<set>/docs/add-a-collection.md` |
+| "change an obligation" (gate condition, `requires`/`applyTo`, scope, status, cardinality) | Obligation-maintenance guard rails below + `sets/<set>/docs/obligation-model.md`, `docs/obligation-model.md`, `docs/scope-and-wipe.md`, `docs/cardinality.md` |
+| "change the journey flow" (page order, task rows, entry guards, section gating) | Flow-maintenance guard rails below + `sets/<set>/docs/journey-flow-and-gates.md`, `docs/flow-and-gates.md` |
 | "change the frontend" (anything else) | Step 1 routing below — pick the guide(s) for the layer you are touching |
 
 NOT for a multi-increment run over a backlog — that is `journey-builder`, which
 invokes this skill once per increment. NOT for the tests repo
 (`trade-imports-animals-tests` owns the workspace E2E suite), NOT for ticket
-planning (`ticket`).
+planning (`ticket`), NOT for the plants prototype or a design release
+(`prototype`).
 
 ## Step 1: Route and read
 
@@ -95,14 +136,18 @@ Before editing, prove the ground is green so failures are yours:
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals
 ```
 
-**The repo path and the unit script are inputs, not constants.** The
-command above is the live-animals target spelled out; for any other
-target, take the checkout and the script name from the caller or from the
-build loop's target profile (`tools/journey-builder/targets.json` →
-`repo`, `verify.unit`), exactly as Step 5 takes the set. Under
-`journey-builder` the checkout is the run's worktree, not `repos/<name>`.
-Every `npm --prefix` and every repo path in Steps 2 and 4 substitutes the
-same way.
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend run test:high-risk-plants
+```
+
+**The repo path and the unit script are inputs, not constants.** The two
+commands above are the animals and plants targets spelled out (the Targets
+table above); for either one, take the checkout and the script name from
+the caller or from the build loop's target profile
+(`tools/journey-builder/targets.json` → `repo`, `verify.unit`), exactly as
+Step 5 takes the set. Under `journey-builder` the checkout is the run's
+worktree, not `repos/<name>`. Every `npm --prefix` and every repo path in
+Steps 2 and 4 substitutes the same way.
 
 If this is red at baseline, STOP and report — do not build on a broken tree.
 
@@ -173,7 +218,10 @@ report the failure honestly.
 ## Step 4: Verification ladder
 
 Run in order; each must be green before the next. One Playwright run at a time.
-The repo path and the unit script substitute per target, as Step 2 says.
+The repo path and the unit script substitute per target, as Step 2 says — the
+animals paths below are the worked example; swap in
+`repos/trade-imports-plants-frontend` and `test:high-risk-plants` for the
+plants target.
 
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend run test:live-animals

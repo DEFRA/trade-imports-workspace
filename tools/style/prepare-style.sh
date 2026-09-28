@@ -45,7 +45,12 @@ STYLE_DIR="$ROOT/workareas/code-style-reviews/$TICKET"
 STYLE_META="$STYLE_DIR/.style-meta.json"
 
 log() {
-    [[ "$JSON_OUTPUT" == "false" ]] && echo "$1"
+    # `if/fi`, not `[[ ]] && echo` — the latter's own false-test exit status
+    # becomes this function's exit status, which trips `set -e` at the call
+    # site (a bare `log "..."` statement) on every call once --json is on.
+    if [[ "$JSON_OUTPUT" == "false" ]]; then
+        echo "$1"
+    fi
 }
 
 # ---- Step 1: ensure review workspace exists ---------------------------
@@ -150,7 +155,7 @@ while IFS= read -r pair; do
     [[ -z "$pair" ]] && continue
     repo="${pair%%$'\t'*}"
     topic="${pair##*$'\t'}"
-    "$BAKE_BUNDLE" "$TICKET" "$repo" "$topic" > /dev/null
+    "$BAKE_BUNDLE" "$TICKET" "$repo" "$topic" "$REVIEW_DIR/repos/$repo" > /dev/null
     bundles+=("style-rules.${repo}.${topic}.md")
 done < <(jq -r '.source_files[] | .repo as $r | .topics[] | [$r, .] | @tsv' "$STYLE_META" | sort -u)
 

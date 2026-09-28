@@ -27,7 +27,7 @@ helpers under `tools/style/`. Never hand-edit.
       "id": 1,
       "file": "src/path/to/file.js",
       "line": "42",                    // string — allows "12-15" ranges or ""
-      "rule": "2",                     // 17-rule style guide number (string)
+      "rule": "2",                     // 16-rule style guide number (string)
       "severity": "FAIL",              // FAIL | WARN
       "issue": "...",
       "fix": "...",
@@ -48,7 +48,7 @@ style vocabulary.
 
 | Value | Meaning |
 |---|---|
-| `FAIL` | A rule the 17-rule guide marks as a hard violation. |
+| `FAIL` | A rule the 16-rule guide marks as a hard violation. |
 | `WARN` | A guideline / softer convention; reviewer surface for triage. |
 
 ## Disposition values

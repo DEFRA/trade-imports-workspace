@@ -223,5 +223,45 @@ Local branches, stashes and uncommitted files are untouched. The
 tooling also copes with `gh-pages` being absent on the remote (the
 truncate job deletes and re-creates it).
 
+## Designers
+
+Designers working on the high-risk plants prototype
+(`trade-imports-plants-prototype`) onboard the same way as everyone else in
+this workspace — there is no separate, prototype-only setup:
+
+1. **Clone the workspace to the canonical path** (step 1 above) — same
+   command, same path. The prototype does not stand alone with its own
+   copy of the workspace tooling; it is cloned under `repos/` like every
+   other repo (`make setup` / `tim workspace setup`).
+2. **Set `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY` and
+   authenticate `gh`**, exactly as in step 2 and step 3 above. A hand-off
+   raises a real Jira story from the prototype, so the same credentials
+   apply.
+3. **Run `tim prototype setup`** (after
+   `npm --prefix ~/git/defra/trade-imports-workspace/tim link` if `tim` is
+   not already on your `PATH`). It writes a short note into a gitignored
+   `CLAUDE.local.md` at the workspace root ("You are working with a
+   designer…", so every request routes through the `prototype` skill
+   without you ever having to name it), adds the prototype's fetch-only
+   `upstream` remote (`trade-imports-plants-frontend`, push disabled),
+   installs the prototype's dependencies with its pinned npm version, and
+   reports Jira/GitHub readiness. It never touches Jira and never pushes.
+   Re-run it with `--remove` to take the note back out.
+4. **Open Claude Code at the workspace root**
+   (`~/git/defra/trade-imports-workspace`), not inside
+   `repos/trade-imports-plants-prototype`. The agent layer for a designer's
+   requests — the `prototype` skill — only loads from the workspace root;
+   see the routing row in the workspace [`CLAUDE.md`](../CLAUDE.md) and
+   [`docs/repos/trade-imports-plants-prototype.md`](repos/trade-imports-plants-prototype.md).
+5. **Optional:** add a personal `.claude/settings.local.json` at the
+   workspace root disabling the `sonar-*` MCP servers
+   (`"disabledMcpjsonServers": ["sonar-frontend", "sonar-admin", "sonar-backend", "sonar-gateway", "sonar-address-book", "sonar-reference-data", "sonar-ins-backend", "sonar-ins-frontend"]`)
+   — a designer working only in the prototype never needs them, and the
+   file is gitignored so it stays personal.
+
+Once set up, say what you want in your own words — a demo, a wording
+change, a new design release, "hand this to the real team" — from a Claude
+Code session at the workspace root. You never need to name a skill, a
+reference or a file.
 
 

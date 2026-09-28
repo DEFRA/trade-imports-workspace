@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { REPOS } from '../../constants/repos.js'
+import { REPOS, isWorkspaceBranchSynced } from '../../constants/repos.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -251,6 +251,34 @@ describe('workspace branch', () => {
       action: 'skipped',
       ok: true
     })
+  }, 60_000)
+
+  test('excludes a workspace-branch-sync-exempt repo from the report, and lists it as skipped', async () => {
+    await seedWorkspace()
+    const exempt = REPOS.find((repo) => !isWorkspaceBranchSynced(repo))
+
+    const { stdout, exitCode } = await runCli(workspace, ['--json'])
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(byRepo(payload)[exempt]).toBeUndefined()
+    expect(payload.result.skipped).toEqual([exempt])
+  }, 60_000)
+
+  test('reports a workspace-branch-sync-exempt repo when --include names it', async () => {
+    await seedWorkspace()
+    const exempt = REPOS.find((repo) => !isWorkspaceBranchSynced(repo))
+
+    const { stdout, exitCode } = await runCli(workspace, [
+      '--include',
+      exempt,
+      '--json'
+    ])
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(byRepo(payload)[exempt]).toMatchObject({ cloned: false })
+    expect(payload.result.skipped).toEqual([])
   }, 60_000)
 
   test('exits with a usage error for an unresolvable workspace', async () => {

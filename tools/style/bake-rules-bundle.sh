@@ -3,15 +3,24 @@
 # into a single bundle, so per-file reviewers Read once instead of N times per
 # parallel reviewer.
 #
-# Usage: bake-rules-bundle.sh EUDPA-XXXXX REPO TOPIC
+# Usage: bake-rules-bundle.sh ID REPO TOPIC [REPO_DIR]
 #
-# TOPIC is one of the topics emitted by file-topics.sh: node java gds playwright
-# k6. The per-topic source list is read from
+# ID is the ticket (EUDPA-XXXXX) or, in local mode, the composite
+# local/<repo>/<branch> id — it only ever names a directory, so any string
+# works. TOPIC is one of the topics emitted by file-topics.sh: node java gds
+# playwright k6 copy hapi testing. The per-topic source list is read from
 # .claude/skills/code-style/assets/routing.json (`topics.<TOPIC>.bestPractice`),
 # the single place that maps a topic to its best-practices files.
 #
+# REPO_DIR, when given, is the absolute path to that repo's actual checkout
+# (the PR clone under workareas/reviews/<id>/repos/<repo>, or repos/<repo> in
+# local mode). A topic's `repoRelativeBestPractice` entries (e.g. hapi's
+# src/server/app/docs/validation.md) are resolved against it and appended
+# ONLY when the file exists there — "when present", not a routing error, and
+# silently skipped (no REPO_DIR, or the file isn't in this repo).
+#
 # Writes to:
-#   ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/EUDPA-XXXXX/style-rules.{repo}.{topic}.md
+#   ~/git/defra/trade-imports-workspace/workareas/code-style-reviews/ID/style-rules.{repo}.{topic}.md
 #
 # Per-repo (even though today's content is identical across repos) leaves room
 # for per-repo divergence without changing the reviewer's prompt shape.
@@ -21,9 +30,10 @@ set -e
 TICKET="${1:-}"
 REPO="${2:-}"
 TOPIC="${3:-}"
+REPO_DIR="${4:-}"
 
 if [[ -z "$TICKET" ]] || [[ -z "$REPO" ]] || [[ -z "$TOPIC" ]]; then
-    echo "Usage: $0 EUDPA-XXXXX REPO TOPIC" >&2
+    echo "Usage: $0 ID REPO TOPIC [REPO_DIR]" >&2
     exit 1
 fi
 
@@ -76,6 +86,23 @@ done < <(jq -r --arg topic "$TOPIC" '.topics[$topic].bestPractice[]' "$ROUTING")
             echo "## Source: \`$src\` (missing)"
         fi
     done
+
+    # Repo-relative sources — "when present" only: a repo without this file
+    # (or REPO_DIR not given) contributes nothing here, silently.
+    if [[ -n "$REPO_DIR" ]]; then
+        while IFS= read -r rel; do
+            [[ -z "$rel" ]] && continue
+            repo_path="$REPO_DIR/$rel"
+            if [[ -f "$repo_path" ]]; then
+                echo
+                echo "---"
+                echo
+                echo "## Source: \`$REPO:$rel\`"
+                echo
+                cat "$repo_path"
+            fi
+        done < <(jq -r --arg topic "$TOPIC" '.topics[$topic].repoRelativeBestPractice[]? // empty' "$ROUTING")
+    fi
 } > "$out"
 
 echo "$out"

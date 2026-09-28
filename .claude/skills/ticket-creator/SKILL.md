@@ -1,6 +1,6 @@
 ---
 name: ticket-creator
-description: 'Create a new Jira ticket (Bug/Story/Task) end-to-end — gathers requirements via GDS plain-English questions, drafts the ticket to ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md for user iteration, then creates it in Jira via the shared create-ticket script. Use when the user wants to raise, file, log, open or otherwise create a new Jira ticket from scratch (triggers: "create ticket", "raise ticket", "new ticket", "file a bug", "log a story", "open a ticket", "flesh out ticket"). NOT for working an existing ticket (use the ticket skill) and NOT for assessing whether an existing ticket is refinement-ready (use the ticket-refiner skill).'
+description: 'Create a new Jira ticket (Bug/Story/Task) end-to-end — gathers requirements via GDS plain-English questions, drafts the ticket to ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md for user iteration, then creates it in Jira via `tim jira create` (dry run first, confirmed only on explicit approval). Use when the user wants to raise, file, log, open or otherwise create a new Jira ticket from scratch (triggers: "create ticket", "raise ticket", "new ticket", "file a bug", "log a story", "open a ticket", "flesh out ticket"). NOT for working an existing ticket (use the ticket skill), NOT for assessing whether an existing ticket is refinement-ready (use the ticket-refiner skill), and NOT for a change made in the plants prototype (use `prototype`, which raises its own story).'
 context: inline
 allowed-tools: [Bash, Read, Write, Edit]
 argument-hint: '[optional one-line summary]'
@@ -250,6 +250,83 @@ Tell the user what came out:
 
 ## Step 5: Create Ticket
 
+Raise the ticket through `tim jira create`, which is a dry run by default
+and only sends a request with an explicit `--confirm <planId>`. Only move to
+5.3 once the user's own message says to go ahead — the dry run is never
+itself consent.
+
+### 5.1 Write the manifest
+
+Write two files under
+`~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/`:
+
+- `description.jira.txt` — the approved wiki-markup description body from
+  Step 3, verbatim.
+- `ticket.json` — a `tim-ticket/1` manifest:
+
+```json
+{
+  "schema": "tim-ticket/1",
+  "project": "EUDPA",
+  "type": "Story",
+  "summary": "<Summary from Step 1>",
+  "descriptionFile": "description.jira.txt",
+  "parent": "<epic key>",
+  "labels": ["<label>"],
+  "priority": "<priority>",
+  "attachments": ["<filename, relative to this folder>"],
+  "relates": []
+}
+```
+
+`project` is always `EUDPA`. Omit `parent`, `priority`, `labels` or
+`attachments` entirely rather than writing `null` or `""` when the interview
+gave nothing for that field. Copy any screenshots or logs the user gave you
+(Bugs) into this same folder and list their filenames in `attachments`.
+
+### 5.2 Dry run: show the plan
+
+```bash
+tim jira create --from ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/ticket.json --json
+```
+
+This sends no request — `tim` only reads the manifest and the files next to
+it. Read the JSON result and show the user a plain-English plan: type,
+summary, parent, labels, priority, each attachment with its size, and every
+`warnings[]` entry verbatim. A warning almost always means a template
+placeholder was left in (`[Who is this for?`, `[Welsh needed]`,
+`EUDPA-XXXX`, `TODO`) or the description is over Jira's 32,767-character
+limit — fix `draft.md`, rewrite `description.jira.txt`, and re-run the dry
+run before asking to raise it. Note the `planId` — 5.3 needs the exact
+value.
+
+Ask:
+
+> Draft at `~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/draft.md`.
+> This is the plan `tim jira create` will send. Say "raise it" to create the
+> ticket for real, or tell me what to change.
+
+### 5.3 Create for real
+
+Only once the user's own message gives explicit go-ahead:
+
+```bash
+tim jira create --from ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/ticket.json --confirm <planId> --json
+```
+
+Use the exact `planId` 5.2 printed. If the manifest changed since (a fresh
+edit, a swapped attachment), `tim` exits 2 and asks for a new check — go
+back to 5.2, show the new plan, and wait for approval again; never reuse a
+stale `planId`. On success `tim` writes `ticket.created.json` next to the
+manifest and refuses to create from that manifest a second time — that
+receipt, not `draft.md`, is the record of what got raised.
+
+### Fallback: `tools/jira/create-ticket.sh`
+
+Reach for this only when `tim` is not on `PATH` (`which tim` finds
+nothing — `npm --prefix ~/git/defra/trade-imports-workspace/tim link` fixes
+that where possible, so prefer that over falling back):
+
 ```bash
 ~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh [options] "Summary" "Description"
 ```
@@ -262,10 +339,14 @@ Tell the user what came out:
 | -l, --label | Add label (repeatable) | None |
 | -a | Self-assign | No |
 
+This creates immediately — there is no dry run — so only run it once the
+draft's **Status** is `APPROVED`.
+
 ### After Creation
 
-Append the new key and link to the bottom of `draft.md` and update
-**Status** to `CREATED: EUDPA-XXXXX`.
+Read the created key and link from `ticket.created.json` (or from the
+fallback script's own output). Append them to the bottom of `draft.md` and
+update **Status** to `CREATED: EUDPA-XXXXX`.
 
 ```
 Ticket created: EUDPA-XXXXX

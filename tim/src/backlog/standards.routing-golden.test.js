@@ -32,6 +32,13 @@ import {
  * temporary HOME in a script's own stdout/stderr is replaced with
  * `<HOME>` first, so the snapshot does not embed a path unique to one
  * test run.
+ *
+ * A deliberate CONTENT change to `.claude/skills/code-style/assets/
+ * routing.json` (a new topic, a new fileTopics pattern, a topic's
+ * bestPractice list gaining an entry) is expected to move this snapshot —
+ * re-run with `--update` and read the diff as a change-log entry, not a
+ * regression. Group G in `standards.test.js` re-derives the same golden
+ * cases from the JS resolver and will catch a genuine disagreement.
  */
 
 const here = dirname(fileURLToPath(import.meta.url))

@@ -4,6 +4,15 @@ Shared shell scripts called by skills via
 `~/git/defra/trade-imports-workspace/tools/<domain>/<script>`. Environment:
 `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY`.
 
+**The Jira write surface has a library-first `tim` equivalent.** `tim jira
+create|attach|link|epics` (see `tim/README.md`) is dry run by default for
+every one of the four — it prints the plan (fields, attachments, warnings
+for placeholder text) and a `planId`, and only writes to Jira with a
+matching `--confirm <planId>`. The `ticket-creator` skill and the
+`prototype` skill's hand-off both create through it rather than
+`tools/jira/create-ticket.sh` below, which stays as the plain-bash
+alternative and the one the build loop still calls directly.
+
 | Script | Args | Purpose |
 |---|---|---|
 | **auth** | | |

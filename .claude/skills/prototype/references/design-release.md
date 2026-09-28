@@ -178,7 +178,13 @@ to stay as it is.
    (`references/check-my-change.md` explains every message). At most 3
    repairs, then stop and explain.
 
-7. **Take its starting gallery:**
+7. **Say the walkthrough is automatic.** The new release gets its own
+   walkthrough — every example walked through, page by page — made
+   automatically on every pull request and on `designer:walkthrough`.
+   There is nothing to write for it: the real journey's own walkthrough
+   sits beside it on the chooser as the baseline.
+
+8. **Take its starting gallery:**
 
    ```
    npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <release-id> --pages all,chooser
@@ -189,7 +195,7 @@ to stay as it is.
    links. Skip this step when another reference sent you here to make a
    release for its change: that reference's own gallery comes next.
 
-8. **Save it.** Stage exactly these, one `git add` per path:
+9. **Save it.** Stage exactly these, one `git add` per path:
 
    ```
    git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype add src/server/app/sets/<release-id>
@@ -219,7 +225,7 @@ to stay as it is.
    this reference makes without being asked: every change to the release
    builds on it.
 
-9. **Tell the designer**, in these words or close to them: "Everything in
+10. **Tell the designer**, in these words or close to them: "Everything in
    `src/server/app/sets/<release-id>/` is yours. It is a snapshot of the real
    journey today and will not pick up the real team's later changes. To pick
    them up, start a fresh release and carry your changes across. It is at
@@ -227,7 +233,7 @@ to stay as it is.
    that its examples appear on the first signed-in visit, and that the
    chooser links to each one.
 
-10. **Go back.** If another reference sent you here because there was no
+11. **Go back.** If another reference sent you here because there was no
     working release (`change-the-words`, `change-the-journey`,
     `fake-a-service` and the others do), return to that reference's first
     step now and carry on with the designer's change. Do not wait to be
@@ -290,7 +296,9 @@ to stay as it is.
    `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <new-working-id> --pages chooser`.
    Read the picture.
 7. Tell the designer: "`<release-id>` is frozen and tagged Frozen on the
-   chooser. Nobody will change it. Carry on in `<new-working-id>`."
+   chooser. Nobody will change it. Carry on in `<new-working-id>`." Its
+   walkthrough carries on being made from its examples too, so it stays a
+   lasting record of exactly what was designed.
 
 ## D. Copy one change into another release
 
@@ -394,7 +402,9 @@ since the release was made:
 
    It removes the folder and routes file (`git rm`), the mount, the chooser
    description, its two `overrides.json` lines, and its example scenario,
-   fixtures and extra data if it has them. It prints each removal.
+   fixtures and extra data if it has them. It prints each removal. Its
+   walkthrough stops with it: with no folder and no examples left, there is
+   nothing left to walk.
 
    **A release that was never saved** is refused with "was never saved": it
    is not in git history, so removing it is for good. Tell the designer that
@@ -421,7 +431,7 @@ since the release was made:
    ```
 
    If it prints "Nothing was saved", act on the log lines it prints, as in
-   section B, step 8.
+   section B, step 9.
 
 ## G. Two branches that each started a release
 
@@ -462,6 +472,9 @@ so and changes nothing.
 - `designer:release -- list` shows the release with the right kind, "made
   from" and date (or no longer shows it, after retiring). A release just made
   from the real journey shows 0 under "Real journey changed since".
+- For a new release,
+  `designer:walkthrough -- --set <release-id> --no-open` says every story
+  reached its end.
 - `designer:check -- --set <release-id> --full` passes. It includes every
   unit test, so "2 sets are mounted" never appears: no tests are copied.
 - The chooser shows the release's tag, its "Made from … on …" line, its

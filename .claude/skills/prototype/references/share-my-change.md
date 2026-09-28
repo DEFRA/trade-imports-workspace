@@ -224,9 +224,15 @@ and open a pull request so others can see it?", and go on only on a clear yes:
 4. Give the designer the pull request link, and say: "The deployed prototype
    only changes after this is merged to `main`. Send this link to the
    prototype maintainer for a review and say when you need it merged. The
-   pull request's checks include a browser test run; its
-   `frontend-playwright-report` download has a video walking through each
-   design release."
+   pull request's checks publish a walkthrough of every release on this
+   branch as a web page, usually within about ten minutes: a picture of
+   each page, a video and a trace." Read `reportsUrl` from
+   `scripts/designer/prototype.json` (in the prototype repo) and, once you
+   have the pull request's number, give
+   `<reportsUrl>pr-<n>/#?q=@walkthrough` as the link to send stakeholders —
+   that is the demo. If the pull request's comment says GitHub Pages is not
+   turned on yet, give the `prototype-playwright-report` Actions artifact
+   instead and say the prototype maintainer needs to turn Pages on.
 
 ### 7. Check on or merge a pull request (only when asked)
 
@@ -253,7 +259,13 @@ request", "why is my pull request red?" or "merge my pull request":
      then reproduce it locally with `references/check-my-change.md`, fix,
      save (step 5) and send
      (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push`,
-     step 6.1, asking first as always).
+     step 6.1, asking first as always). A red "Walkthroughs" check is a
+     crash, not a red story: treat it like any other failed check.
+   - The report comment (its body starts
+     `<!-- prototype-playwright-report -->`, from
+     `gh pr view --repo DEFRA/trade-imports-plants-prototype <branch> --comments`):
+     read it and say any red story in plain words. A red story is reported,
+     never a reason the merge is blocked.
    - `mergeStateStatus` `DIRTY`: `main` has moved on in the same lines. Offer
      to bring `main` in
      (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,

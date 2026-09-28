@@ -51,8 +51,8 @@ Build one command from what they asked:
 | "compare with the Figma", a design they attached  | `--reference <page>=<image>` (one per page)                                                                                |
 | "compare X with the real journey"                 | `--pages <X> --compare high-risk-plants`                                                                                   |
 | "compare with release X"                          | `--pages <the pages> --compare <X>`                                                                                        |
-| "record a walkthrough", "demo video"              | `--video`                                                                                                                  |
-| "make a review pack"                              | `--pages all --before --errors --mobile --video` (leave out `--before` for a release with no saved changes of its own yet) |
+| "a video in my gallery"                           | `--video`                                                                                                                  |
+| "make a review pack"                              | `--pages all --before --errors --mobile` (leave out `--before` for a release with no saved changes of its own yet), plus a walkthrough run (see "Record a walkthrough" below) for the video and trace |
 | "open it" when done                               | `--open`                                                                                                                   |
 | "the chooser", "the list of prototypes"           | `--pages chooser`                                                                                                          |
 | "where the X example link goes"                   | `--examples <slug>,<slug>`                                                                                                 |
@@ -128,6 +128,62 @@ cropped.
 never been saved has no before picture; the gallery says so. After an undo,
 use `--before-commit HEAD~1`: the last saved version is then the undo itself,
 so a plain `--before` pair would match.
+
+## Record a walkthrough
+
+"record a walkthrough", "demo video", "walk every example through", "the
+walkthrough report" and "the Playwright report" all mean this, not
+`designer:show`. It makes a Playwright report: every example in the release
+walked through page by page, with a picture of each page, a video and a
+trace.
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
+```
+
+Tell the designer it takes a few minutes. When it finishes, read the summary
+lines it prints (for example "The real journey (high-risk-plants): 10 of 10
+stories walked to the end") and open a few of the step pictures under
+`.cache/designer/walkthrough/test-results/` with the Read tool before saying
+anything about them. Name any red story and any "Sent directly" note in
+plain words: a red story is reported, never a reason to stop.
+
+**Always pass `--no-open`.** Serving the report blocks. Tell the designer to
+run it themselves when they want to look:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --show
+```
+
+"Something I can share", "a link for stakeholders", "send stakeholders
+something before the show and tell": pick the first of these that holds.
+
+1. **Check GitHub Pages is on first**, before promising any link:
+
+   ```bash
+   gh api repos/DEFRA/trade-imports-plants-prototype/pages --jq .html_url
+   ```
+
+   A web address back means it is on. "Not Found" means it is off (or `gh`
+   cannot see it): no report link works yet, so go to 4 and tell the
+   designer the prototype maintainer has to turn Pages on (Settings, Pages,
+   Deploy from a branch, `gh-pages`, `/ (root)`).
+2. **The release is already on `main`** (merged, or the real journey): send
+   `<reportsUrl>main/#?q=@<set-id>` now, reading `reportsUrl` from
+   `scripts/designer/prototype.json` in the prototype repo. Nothing to run.
+3. **The release has changes not on `main` yet**: save and open a pull
+   request (`references/share-my-change.md`, steps 5 and 6). Its checks
+   publish the report within about ten minutes and comment the link:
+   `<reportsUrl>pr-<n>/#?q=@<set-id>` is the one to send. For a show and
+   tell on a set day, push at least the day before, so a failed check has
+   time to be fixed.
+4. **No web link yet** (Pages off, or no time for a pull request): zip the
+   local report folder,
+   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/walkthrough/report/`,
+   and send the zip. The person unzips it and opens `index.html` in a
+   browser: the steps, pictures and videos work; only the trace needs the
+   web link or `--show`. Or run `--show` on the designer's laptop and share
+   the screen.
 
 ## Step 3: Run it
 
@@ -215,7 +271,8 @@ folder is self-contained: it can be zipped and sent.
 Then offer:
 
 - **For a pull request:** "Say 'save my work' and I will commit your change
-  and write the pull request from this gallery."
+  and write the pull request from this gallery — and every push publishes
+  this walkthrough as a web page you can send to anyone."
   (`references/share-my-change.md` reads `manifest.json` for its "What it
   looks like" section.)
 - **As a private web page,** only where your host can publish one (for
@@ -254,3 +311,7 @@ team' and I will prepare a brief and a patch for the plants-frontend team."
   how it works (`cli.js` is the entry point)
 - `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/fit/designer-sets.fit.spec.js`:
   the walk every design release gets on every pull request
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/fit/walkthroughs/walkthroughs.walkthrough.spec.js`:
+  the walkthrough spec, generated at run time from each set's examples
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/designer/walkthrough/`:
+  how `designer:walkthrough` works (`cli.js` is the entry point)

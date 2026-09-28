@@ -27,6 +27,14 @@ rows.
 
 All of these are the prototype's own. The weekly update never touches them.
 
+Every example you write also becomes one story in that set's walkthrough — a
+run through the release's pages that shows up in the published report.
+`label` is the story's name, so write it for someone who was not in the
+room: "Submitted, then amended", not "test3". Add a one-sentence `story` to
+say why it exists, for example `story: 'A trader whose potatoes arrived
+yesterday sends the notification late.'` — leave it out and the walkthrough
+names the story after the fixture's use case instead.
+
 ## Guard rails
 
 - **Replay, never write records.** An example is a list of page answers. Never

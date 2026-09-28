@@ -57,6 +57,34 @@ It runs on stubs alone, with no backend, Defra ID, Defra ID stub, Redis or refer
 
 A design release, once saved on its own `design/<set>-<slug>` branch, is data that lives locally at `.cache/designer/data/` (gitignored) — it survives a restart on the same machine and resets per-release via "Reset this prototype's data" on the chooser.
 
+## CI
+
+`.github/workflows/check-pull-request.yml` (prototype-owned, in
+`overrides.json`'s `ours`) runs on every pull request, the weekly sync's own
+pull request, and on `push` to `main`. Alongside its existing jobs (unit
+tests, the production boot check, a security audit and the design release
+canary), two jobs publish a Playwright report:
+
+- **FIT Tests** (`journeys` + `features`) still gates, as before, now with
+  video, screenshots and trace on throughout.
+- **Walkthroughs**, with no `needs`: runs `designer:walkthrough -- --ci`,
+  which walks every set's examples, page by page. It fails only on a crash
+  (no report written, or nothing ran); a red story is reported, never a
+  reason to fail the build.
+- **Merge the Playwright report** combines both into one HTML report
+  (FIT plus the walkthroughs, filterable by `#?q=@<tag>`), and **Publish the
+  Playwright report** pushes it to the `gh-pages` branch: `reports/pr-<n>/`
+  for a pull request, `reports/main/` for `main`. The pull request gets a
+  comment with the link. A nightly `prune-reports.yml` job (a new name,
+  because `cleanup-e2e-reports.yml` is in `overrides.json`'s `deleted`)
+  removes closed pull requests' reports and keeps `gh-pages` to what is
+  live.
+- **Prerequisite**: GitHub Pages must be turned on for this repository
+  (Settings, Pages, "Deploy from a branch", `gh-pages`, `/ (root)`) before
+  the report links resolve. Until then, the checks still pass and each
+  report is uploaded as the `prototype-playwright-report` Actions artifact
+  instead.
+
 ## Deploying (CDP dev)
 
 The prototype has its own multi-stage `Dockerfile` (development / production_build / production targets, `defradigital/node[-development]` parent images, `curl` added for the platform healthcheck), separate from the real frontend's. A CDP dev deploy needs:

@@ -99,6 +99,9 @@ Read these before any change, whatever the request:
     `main` or someone's `feat/*` or `chore/*` included, make
     `design/<release>-<slug>` before the first change (`references/ROUTING.md`,
     "Branches").
+12. **Run `designer:walkthrough` with `--no-open`, always.** Serving the
+    report blocks. Only the designer, never you, runs `-- --show` to watch
+    it themselves.
 
 ## Open `references/ROUTING.md`
 

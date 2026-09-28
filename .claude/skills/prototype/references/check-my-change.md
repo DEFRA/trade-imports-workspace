@@ -57,6 +57,18 @@ Read these before every run.
   never push, never commit (`references/share-my-change.md` commits).
 - **At most 3 repairs**, then stop and explain (step 6).
 
+## A red walkthrough story is not a failed check
+
+If the designer asks about a red story in a walkthrough report, or a pull
+request's "Walkthroughs" check, this is not this reference's job: a red
+story is reported, never a reason a pull request is blocked, and
+`designer:check` never runs the walkthrough. Explain it in plain words (the
+"Walkthroughs" section in
+`docs/designers/checks-and-errors.md` covers "Sent directly" and "the story
+stops here"), and route on: an example that stopped at a page goes to
+`references/example-data.md`, a page or flow problem to
+`references/change-the-journey.md`.
+
 ## Step 1: Find the set
 
 Use the set the designer named. If they did not name one, leave out `--set`:

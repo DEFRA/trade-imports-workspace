@@ -175,6 +175,16 @@ the release.
 
 ### 5. Remind the designer before the session
 
+Run the walkthrough as a dry run first:
+
+```
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
+```
+
+Each task's example is a story, so every story that walks to its end means
+every task link works. With errors off, the error story shows no messages —
+that is expected, not a failure.
+
 Say both of these, every time. When `deployedUrl` in
 `scripts/designer/prototype.json` is `null`, say instead: "The prototype is
 not deployed yet, so run the sessions from this laptop. Start it with
@@ -204,6 +214,11 @@ task link once before the first participant." and the Reset line with
    If a later change touched the same lines, it changes nothing and says so:
    then put each rule in `research-mode.md` back by hand, delete the file, and
    save one change titled `Research mode off for <set-id>`.
+
+   Link the walkthrough report in the write-up of the round too, so anyone
+   who was not there can see what participants saw: read `reportsUrl` from
+   `scripts/designer/prototype.json` and give
+   `<reportsUrl>main/#?q=@<set-id>` once it is merged.
 
 2. If the designer shares findings, draft them as a change list for the **next
    working release**, not this research release. Write

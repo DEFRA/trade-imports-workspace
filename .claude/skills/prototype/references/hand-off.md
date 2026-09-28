@@ -9,13 +9,14 @@ with
   itself: the summary, _As_, _I want_ and _So that_, the description, the
   acceptance criteria as _Given_, _When_, _Then_, and a Tech Notes panel
   (patch, drift, services, tests, recipe, branch). Then: "See the prototype"
-  (links and how to run it locally), "Journey flow" (page order before and
-  after, and gate changes), "Validation" (one row per rule, with the English
-  and Welsh error), "Service to build" for each new service, "Tests to add"
-  and "For the developer or agent". Everything else follows under "Detail":
-  each page with screenshots and a table of changed words, Welsh needed,
-  tests and spec files that quote the old words, what cannot ship as it is,
-  what was left out and why, drift, and how to apply.
+  (links and how to run it locally, plus `[See it walked through|<url>]`
+  once `scripts/designer/prototype.json` has a `reportsUrl`), "Journey flow"
+  (page order before and after, and gate changes), "Validation" (one row per
+  rule, with the English and Welsh error), "Service to build" for each new
+  service, "Tests to add" and "For the developer or agent". Everything else
+  follows under "Detail": each page with screenshots and a table of changed
+  words, Welsh needed, tests and spec files that quote the old words, what
+  cannot ship as it is, what was left out and why, drift, and how to apply.
 - `brief.md`: the same in Markdown, for the repository and a pull request.
 - `ticket.json`: the same story as a `tim-ticket/1` manifest (project, type
   Story, summary, `descriptionFile`, parent, labels `['UCD']`, priority,
@@ -331,15 +332,20 @@ upstream.patch` in their own clone of `trade-imports-plants-frontend`, write
    that is not a placeholder, and at least one acceptance criterion that is
    not a placeholder. Any placeholder left is one you have named to the
    designer.
-2. `upstream.patch` applies: the Tech Notes panel says "applies cleanly", or
+2. The brief carries a link to see it walked through, page by page
+   (`[See it walked through|<url>]` in `brief.jira.txt`), when
+   `scripts/designer/prototype.json` has a `reportsUrl`: `pr-<n>/` before the
+   change has a pull request or is merged, `main/` after. If `reportsUrl` is
+   not set yet, say there is no link yet rather than inventing one.
+3. `upstream.patch` applies: the Tech Notes panel says "applies cleanly", or
    you have told the designer why not. A brief only has no patch, and says
    why.
-3. `brief.md`, `brief.jira.txt` and `ticket.json` all exist.
-4. The brief's "Validation", "Welsh needed" and "Tests that pin the old
+4. `brief.md`, `brief.jira.txt` and `ticket.json` all exist.
+5. The brief's "Validation", "Welsh needed" and "Tests that pin the old
    words" sections match what you told the designer.
-5. The screenshots folder is under 2 MB (the script keeps it there and lists
+6. The screenshots folder is under 2 MB (the script keeps it there and lists
    anything it left out).
-6. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
+7. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status --porcelain`
    prints nothing, and you are back on the designer's branch.
 
 ## Hand-off note

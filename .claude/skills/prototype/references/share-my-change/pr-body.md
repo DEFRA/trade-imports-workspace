@@ -49,8 +49,8 @@ is merged.
 
 ## Checking it
 
-- The checks run on this pull request. Its `frontend-playwright-report`
-  download has a video walking through each design release.
+- The checks publish a walkthrough of every release on this branch. The
+  link appears in a comment on this pull request.
 - The deployed prototype updates only after this is merged to `main`.
 ```
 

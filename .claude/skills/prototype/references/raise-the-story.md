@@ -75,6 +75,9 @@ the designer, in plain words, not as raw JSON:
 - the project and type (a Story in EUDPA)
 - the summary and the parent epic
 - the attachments it will add, by name, with sizes
+- the walkthrough link, if `scripts/designer/prototype.json` has a
+  `reportsUrl` set (`[See it walked through|<url>]` in the description) —
+  say so plainly if it is missing rather than inventing one
 - any warning the plan carries, in full
 - that nothing has been created yet
 

@@ -48,7 +48,7 @@ order.
 
 | They want | They say things like | Do this, in order |
 | --- | --- | --- |
-| A demo or stakeholder review | "we've got a demo on Thursday", "get it ready for the playback", "show and tell", "stakeholder review" | 1. Pick the release to show: the designer's working release, or `plants-working` made now (rule 9 in `SKILL.md`'s neighbour, `references/design-release.md` section B) with a title such as "Stakeholder demo". 2. Examples on the pages to be shown, with links (`references/example-data.md`). 3. A review pack (`references/show-my-change.md`, "make a review pack"), without `--before` when the release has no saved changes of its own yet. 4. Offer to save and open a pull request (`references/share-my-change.md`), and say it must merge before the demo to be seen on the deployed prototype. Until it is deployed, demo from a laptop with `designer:fresh`. |
+| A demo or stakeholder review | "we've got a demo on Thursday", "get it ready for the playback", "show and tell", "stakeholder review", "send this to stakeholders", "something I can share", "a link to the demo" | 1. Pick the release to show: the designer's working release, or `plants-working` made now (`references/design-release.md` section B) with a title such as "Stakeholder demo". 2. Examples on the pages to be shown, with links (`references/example-data.md`). 3. The walkthrough (`references/show-my-change.md`, "record a walkthrough") — every example walked through, page by page. 4. Where they also want before/after pictures, a review pack gallery (`references/show-my-change.md`, "make a review pack"), without `--before` when the release has no saved changes of its own yet. 5. The thing to send stakeholders: follow `references/show-my-change.md`, "Something I can share" — check GitHub Pages is on first, then the `reports/main/` link (release already on `main`), the pull request's report link (save and open one with `references/share-my-change.md`, pushed at least the day before), or the zipped local report when there is no web link yet. For the live session itself, demo from a laptop with `designer:fresh` until the release is deployed. |
 | A research round | "user testing next week", "get ready for research", "the researcher needs…" | `references/research-session.md`. It starts the research release and adds one example per task through the other references. |
 | Crit notes, feedback or any list of changes | "here are my notes from the crit", "work through this feedback", "do all of these" | The `design-session` workflow (see "Workflows"). |
 | I'm new, or what can I do here | "I'm new", "what can I do here?", "where do I start?", "how does this work?" | `references/run-the-prototype.md`, "New here": `tim prototype setup`, start the prototype, then show what they can ask for. |
@@ -75,8 +75,8 @@ reference.
 | `references/fake-a-service.md` | "add a transporter lookup", "saved transporters", "templates", "change the address book", "add an address manually", "delete an address", "copy as new", "add filters to the dashboard", "add tabs with counts", "filter to only the late ones", "how many are late", "let them upload a file", "attach a document", "confirm before deleting", "a success banner after deleting" | Builds what the real service cannot do yet as a prototype-owned service, flagged "needs a real service" |
 | `references/research-session.md` | "get ready for research", "user testing next week", "let participants through", "participants skip the X bit", "participants start past the X page", "turn errors off", "turn errors back on", "print a sheet for the session" | A research release, one link per task, errors off by one revertible commit |
 | `references/check-my-change.md` | "check my changes", "did I break anything", "is it ready", "why won't it start", "what does this error mean", "the tests are failing" | Runs the right check and explains every failure plainly |
-| `references/show-my-change.md` | "show me", "what does it look like", "before and after", "compare with the Figma", "compare with the real journey", "record a walkthrough", "make a review pack", "pictures for the demo, playback or show and tell" | Takes pictures into a gallery, with error states, phone width and video |
-| `references/share-my-change.md` | "save my work", "share this", "make a pull request", "is my pull request merged yet", "merge my pull request", "undo my last change", "throw away what I just did", "go back to how it was" | Branch, commit message from the change, pull request when asked, safe undo |
+| `references/show-my-change.md` | "show me", "what does it look like", "before and after", "compare with the Figma", "compare with the real journey", "record a walkthrough", "make a review pack", "pictures for the demo, playback or show and tell", "walk every example through", "the walkthrough report", "the Playwright report", "send this to stakeholders", "a link I can share" | Takes pictures into a gallery, with error states, phone width and video; records a walkthrough; picks the link or file to send stakeholders ("Something I can share") |
+| `references/share-my-change.md` | "save my work", "share this", "make a pull request", "is my pull request merged yet", "merge my pull request", "undo my last change", "throw away what I just did", "go back to how it was", "where's the report link on my pull request" | Branch, commit message from the change, pull request when asked, safe undo |
 | `references/hand-off.md` | "hand this to the real team", "send this to the developers", "make this real", "write a brief for the developers", "a ticket for the devs", "write it up as a story", "raise a Jira", "put it in the backlog" | Writes a story and brief, screenshots and a checked patch for plants-frontend |
 
 ### When no single row fits
@@ -216,9 +216,10 @@ All run as
 - `designer:where` whose file is it · `designer:check` check a release ·
   `designer:fresh` runs like the prototype's `dev` script but keeps no release data across
   a restart
-- `designer:show` pictures and gallery · `designer:release` list, drift,
-  orders, changes, freeze, carry, retire, remount · `designer:examples`
-  list, check, links, init, fixtures
+- `designer:show` pictures and gallery · `designer:walkthrough` every
+  example walked through page by page, in a report with pictures, video and
+  trace · `designer:release` list, drift, orders, changes, freeze, carry,
+  retire, remount · `designer:examples` list, check, links, init, fixtures
 - `designer:words` find words, page, Welsh report · `designer:research`
   research mode on, off, status, sheet · `designer:handoff` brief and patch
 - `designer:service` new, list and retire prototype-owned services
